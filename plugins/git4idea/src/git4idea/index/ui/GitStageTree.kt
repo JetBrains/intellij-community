@@ -28,12 +28,15 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.FontUtil
 import com.intellij.util.containers.isEmpty
+import git4idea.conflicts.getConflictType
 import git4idea.i18n.GitBundle
 import git4idea.index.GitFileStatus
 import git4idea.index.GitStageTracker
 import git4idea.index.actions.StagingAreaOperation
 import git4idea.index.isRenamed
 import git4idea.index.ui.NodeKind.Companion.sortOrder
+import git4idea.repo.GitConflict
+import git4idea.status.GitStagingAreaHolder
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.PropertyKey
@@ -180,7 +183,10 @@ abstract class GitStageTree(project: Project, parentDisposable: Disposable) : Ch
   private class ChangesBrowserGitFileStatusNode(node: GitFileStatusNode) :
     AbstractChangesBrowserFilePathNode<GitFileStatusNode>(node, node.fileStatus) {
     private val movedRelativePath by lazy { getMovedRelativePath(getUserObject()) }
+    private val conflict by lazy { getUserObject().createConflict() }
+
     override fun filePath(userObject: GitFileStatusNode): FilePath = userObject.filePath
+
     override fun originText(userObject: GitFileStatusNode): String? {
       val originalPath = userObject.origPath ?: return null
       if (movedRelativePath != null) {
@@ -193,6 +199,20 @@ abstract class GitStageTree(project: Project, parentDisposable: Disposable) : Ch
       val origPath = userObject.origPath
       if (origPath == null || origPath.parentPath == userObject.filePath.parentPath) return null
       return PlatformVcsPathPresenter.getPresentableRelativePath(userObject.filePath, origPath)
+    }
+
+    override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
+      super.render(renderer, selected, expanded, hasFocus)
+
+      conflict?.let { conflict ->
+        renderer.append(FontUtil.spaceAndThinSpace() + getConflictType(conflict), SimpleTextAttributes.GRAYED_ATTRIBUTES)
+      }
+    }
+
+    override fun appendParentPath(renderer: ChangesBrowserNodeRenderer, parentPath: FilePath?) {
+      if (conflict == null) {
+        super.appendParentPath(renderer, parentPath)
+      }
     }
   }
 
@@ -371,7 +391,11 @@ data class GitFileStatusNode(val root: VirtualFile, val status: GitFileStatus, v
   val origPath: FilePath? get() = kind.origPath(status)
   val fileStatus: FileStatus get() = kind.status(status)
 
-  override fun toString(): String {
+  override fun toString(): @NonNls String {
     return "GitFileStatusNode.Saved(root=$root, status=$fileStatus, kind=$kind)"
   }
+}
+
+internal fun GitFileStatusNode.createConflict(): GitConflict? {
+  return GitStagingAreaHolder.createConflict(root, status)
 }

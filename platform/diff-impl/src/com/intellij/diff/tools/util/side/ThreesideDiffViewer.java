@@ -119,7 +119,7 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
 
   @NotNull
   protected List<JComponent> createTitles() {
-    return DiffUtil.createSyncHeightComponents(DiffUtil.createSimpleTitles(myRequest));
+    return DiffUtil.createSimpleTitles(myRequest);
   }
 
   //
@@ -259,7 +259,7 @@ public abstract class ThreesideDiffViewer<T extends EditorHolder> extends Listen
       List<String> titles = myRequest.getContentTitles();
       return new SimpleDiffRequest(myRequest.getTitle(),
                                    mySide1.select(contents), mySide2.select(contents),
-                                   mySide1.select(titles), mySide2.select(titles));
+                                   mySide1.select(titles), mySide2.select(titles)); //NON-NLS
     }
   }
 }

@@ -4,12 +4,13 @@ import circlet.client.api.PR_Project
 import circlet.client.api.ProjectKey
 import circlet.client.api.Projects
 import circlet.client.pr
-import com.intellij.space.components.space
 import circlet.platform.client.resolve
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.space.components.space
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.components.JBTextField
@@ -98,13 +99,16 @@ internal class SpaceCreateProjectDialog(parent: JComponent) : DialogWrapper(pare
         projectNameField()
       }
       row(SpaceBundle.message("create.project.dialog.key.label")) {
-        projectKeyField().comment("A short identifier that is used to generate IDs for other objects that belong to this project.<br/>" +
-                                  "Once the project has been created, the key cannot be changed.",
-                                  "A short identifier that is used to generate IDs for other objects that belong to this project.<br/>".length
+        projectKeyField().comment(
+          HtmlBuilder()
+            .append(SpaceBundle.message("create.project.dialog.key.comment")).br()
+            .append(SpaceBundle.message("create.project.dialog.key.comment.cant.be.changed"))
+            .toString(),
+          maxLineLength = SpaceBundle.message("create.project.dialog.key.comment").length
         )
       }
       row(SpaceBundle.message("create.project.dialog.private.label")) {
-        privateCheckbox().comment("A private project is only visible to its members")
+        privateCheckbox().comment(SpaceBundle.message("create.project.dialog.private.comment"))
       }
       row(SpaceBundle.message("create.project.dialog.description.label")) {
         scrollPane(projectDescriptionField)

@@ -10,14 +10,17 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
 import git4idea.i18n.GitBundle
-import org.jetbrains.annotations.NonNls
-import java.awt.*
+import org.jetbrains.annotations.Nls
+import java.awt.AWTEvent
+import java.awt.Dimension
+import java.awt.Graphics
+import java.awt.Toolkit
 import java.awt.event.*
 import javax.swing.JButton
 import javax.swing.JLayeredPane
 
 internal class OptionButton<T>(val option: T,
-                               @NonNls val flag: String,
+                               @Nls val flag: String,
                                val removeClickListener: () -> Unit) : JBLayeredPane() {
 
   private val flagBtn = createFlagButton()

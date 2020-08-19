@@ -4,6 +4,7 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.*;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.actionSystem.ShortcutProvider;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.diagnostic.Logger;
@@ -30,7 +31,7 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
   private final List<IntentionAction> myOptionIntentions = new ArrayList<>();
   private final List<IntentionAction> myOptionErrorFixes = new ArrayList<>();
   private final List<IntentionAction> myOptionInspectionFixes = new ArrayList<>();
-  private final String myText;
+  private final @IntentionName String myText;
   private final IntentionAction myAction;
   private final String myDisplayName;
   private final Icon myIcon;
@@ -54,7 +55,7 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
   }
 
   @NotNull
-  public String getText() {
+  public @IntentionName String getText() {
     return myText;
   }
 
@@ -178,7 +179,6 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
       return DumbService.isDumbAware(myAction);
     }
 
-    @Nls
     @NotNull
     @Override
     public String getText() {

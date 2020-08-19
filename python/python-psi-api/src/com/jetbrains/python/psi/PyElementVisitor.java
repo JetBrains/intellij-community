@@ -38,7 +38,11 @@ public class PyElementVisitor extends PsiElementVisitor {
   }
 
   public void visitPyDecoratorList(final PyDecoratorList node) {
-    visitElement(node);
+    visitPyElement(node);
+  }
+
+  public void visitPyDecorator(final PyDecorator node) {
+    visitPyElement(node);
   }
 
   public void visitPyComprehensionElement(final PyComprehensionElement node) {
@@ -220,7 +224,7 @@ public class PyElementVisitor extends PsiElementVisitor {
   public void visitPyFStringFragment(PyFStringFragment node) {
     visitPyElement(node);
   }
-  
+
   public void visitPyNumericLiteralExpression(final PyNumericLiteralExpression node) {
     visitPyElement(node);
   }

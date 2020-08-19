@@ -129,6 +129,9 @@ class BuildOptions {
    */
   String outputRootPath = System.getProperty("intellij.build.output.root")
 
+  static final String CLEAN_OUTPUT_FOLDER_PROPERTY = "intellij.build.clean.output.root"
+  boolean cleanOutputFolder = SystemProperties.getBooleanProperty(CLEAN_OUTPUT_FOLDER_PROPERTY, true)
+
   /**
    * If {@code true} the build is running in 'Development mode' i.e. its artifacts aren't supposed to be used in production. In development
    * mode build scripts won't fail if some non-mandatory dependencies are missing and will just show warnings.
@@ -178,10 +181,10 @@ class BuildOptions {
   String jdksTargetDir = System.getProperty(JDKS_TARGET_DIR_OPTION)
 
   /**
-   * Specifies JetBrains Runtime version to be used as project SDK, 8 by default.
+   * Specifies JetBrains Runtime version to be used as project SDK, 11 by default.
    */
   static final String JDK_VERSION_OPTION = "intellij.build.jdk.version"
-  int jbrVersion = System.getProperty(JDK_VERSION_OPTION, "8").toInteger()
+  int jbrVersion = System.getProperty(JDK_VERSION_OPTION, "11").toInteger()
 
   /**
    * Specifies an algorithm to build distribution checksums.

@@ -14,11 +14,7 @@ public class ClassFileViewProviderFactory implements FileViewProviderFactory {
                                                           Language language,
                                                           @NotNull PsiManager manager,
                                                           boolean eventSystemEnabled) {
-    ClassFileDecompilers.Decompiler decompiler = ClassFileDecompilers.getInstance().find(file);
-    if (decompiler instanceof Full) {
-      return ((Full)decompiler).createFileViewProvider(file, manager, eventSystemEnabled);
-    }
-
-    return new ClassFileViewProvider(manager, file, eventSystemEnabled);
+    Full decompiler = ClassFileDecompilers.getInstance().find(file, Full.class);
+    return decompiler.createFileViewProvider(file, manager, eventSystemEnabled);
   }
 }

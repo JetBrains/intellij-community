@@ -29,25 +29,20 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 
 
-/**
- * @author ilyas
- */
 public class GroovyFormattingModelBuilder implements FormattingModelBuilder {
   @Override
-  @NotNull
-  public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {
-    ASTNode node = element.getNode();
-    assert node != null;
-    PsiFile containingFile = element.getContainingFile().getViewProvider().getPsi(GroovyLanguage.INSTANCE);
-    assert containingFile != null : element.getContainingFile();
+  public @NotNull FormattingModel createModel(com.intellij.formatting.@NotNull FormattingContext formattingContext) {
+    PsiFile containingFile = formattingContext.getContainingFile().getViewProvider().getPsi(GroovyLanguage.INSTANCE);
+    assert containingFile != null;
     ASTNode astNode = containingFile.getNode();
     assert astNode != null;
+    CodeStyleSettings settings = formattingContext.getCodeStyleSettings();
     CommonCodeStyleSettings groovySettings = settings.getCommonSettings(GroovyLanguage.INSTANCE);
     GroovyCodeStyleSettings customSettings = settings.getCustomSettings(GroovyCodeStyleSettings.class);
 
     final AlignmentProvider alignments = new AlignmentProvider();
     if (customSettings.USE_FLYING_GEESE_BRACES) {
-      element.accept(new PsiRecursiveElementVisitor() {
+      formattingContext.getPsiElement().accept(new PsiRecursiveElementVisitor() {
         @Override
         public void visitElement(@NotNull PsiElement element) {
           if (GeeseUtil.isClosureRBrace(element)) {

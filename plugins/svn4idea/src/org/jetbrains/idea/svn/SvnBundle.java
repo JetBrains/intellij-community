@@ -33,7 +33,7 @@ public final class SvnBundle extends DynamicBundle {
    */
   @Deprecated
   @NotNull
-  public static String getString(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key) {
+  public static @Nls String getString(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key) {
     return message(key);
   }
 }

@@ -54,6 +54,10 @@ public class CreateSubclassTest extends LightMultiFileTestCase {
     doTest();
   }
 
+  public void testSealedWithSameFileInheritors() {
+    doTest();
+  }
+
   private void doTestInner() {
     doTest(() -> {
       PsiClass superClass = myFixture.findClass("Test");

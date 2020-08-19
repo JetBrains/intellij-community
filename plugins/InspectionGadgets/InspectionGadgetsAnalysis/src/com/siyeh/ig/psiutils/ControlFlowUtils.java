@@ -25,6 +25,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,7 +78,7 @@ public final class ControlFlowUtils {
       if (method == null) {
         return true;
       }
-      final String methodName = method.getName();
+      @NonNls final String methodName = method.getName();
       if (!methodName.equals("exit")) {
         return true;
       }
@@ -348,8 +349,8 @@ public final class ControlFlowUtils {
     return systemExitFinder.exitFound();
   }
 
-  public static boolean elementContainsCallToMethod(PsiElement context, String containingClassName, PsiType returnType,
-    String methodName, PsiType... parameterTypes) {
+  public static boolean elementContainsCallToMethod(PsiElement context, @NonNls String containingClassName, PsiType returnType,
+    @NonNls String methodName, PsiType... parameterTypes) {
     final MethodCallFinder methodCallFinder = new MethodCallFinder(containingClassName, returnType, methodName, parameterTypes);
     context.accept(methodCallFinder);
     return methodCallFinder.containsCallToMethod();
@@ -1149,7 +1150,7 @@ public final class ControlFlowUtils {
       if (method == null) {
         return;
       }
-      final String methodName = method.getName();
+      @NonNls final String methodName = method.getName();
       if (!methodName.equals("exit")) {
         return;
       }

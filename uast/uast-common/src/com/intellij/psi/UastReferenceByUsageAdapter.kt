@@ -27,7 +27,7 @@ internal class UastReferenceByUsageAdapter(private val usagePattern: ElementPatt
                                            private val provider: UastReferenceProvider) : UastReferenceProvider(UExpression::class.java) {
 
   override fun acceptsTarget(target: PsiElement): Boolean {
-    return !target.project.isDefault && provider.acceptsTarget(target)
+    return provider.acceptsTarget(target) && !target.project.isDefault
   }
 
   override fun getReferencesByElement(element: UElement, context: ProcessingContext): Array<PsiReference> {
@@ -164,6 +164,7 @@ private fun findVariableUsages(variablePsi: PsiElement, variableName: String, fi
       emptyList<PsiElement>()
     }
     .findAll()
+    .sortedWith(compareBy({ it.containingFile?.virtualFile?.canonicalPath ?: "" }, { it.textOffset }))
 }
 
 private fun getUastScope(originalScope: GlobalSearchScope): GlobalSearchScope {

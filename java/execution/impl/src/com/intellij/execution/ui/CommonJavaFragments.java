@@ -10,6 +10,8 @@ import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.JBUI;
@@ -33,10 +35,11 @@ public final class CommonJavaFragments {
     String run = ExecutionBundle.message("application.configuration.title.run");
     JLabel jLabel = new JLabel(buildAndRun);
     jLabel.setFont(JBUI.Fonts.label().deriveFont(Font.BOLD));
-    RunConfigurationEditorFragment<S, JLabel> fragment = new RunConfigurationEditorFragment<S, JLabel>("doNotBuildBeforeRun",
-                                                                                                       ExecutionBundle.message("do.not.build.before.run"),
-                                                                                                       ExecutionBundle.message("group.java.options"),
-                                                                                                       jLabel, -1) {
+    RunConfigurationEditorFragment<S, JLabel> fragment = new RunConfigurationEditorFragment<>("doNotBuildBeforeRun",
+                                                                                              ExecutionBundle
+                                                                                                .message("do.not.build.before.run"),
+                                                                                              ExecutionBundle.message("group.java.options"),
+                                                                                              jLabel, -1) {
       @Override
       public void resetEditorFrom(@NotNull RunnerAndConfigurationSettingsImpl s) {
         jLabel.setText(hasTask(s) ? buildAndRun : run);
@@ -141,19 +144,39 @@ public final class CommonJavaFragments {
           return;
         }
         if (value.getPathOrName() == null && value.getVersion() == null) {
-          append(value.getDescription());
+          append(StringUtil.notNullize(value.getDescription()));
           return;
         }
         if (index == -1) {
           append("java ");
+          String shortVersion = appendShortVersion(value);
+          if (value.getPathOrName() != null && !value.getPathOrName().equals(shortVersion)) {
+            append(value.getPathOrName() + " ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          }
+          else if (value.getDescription() != null) {
+            append(value.getDescription() + " ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          }
         }
+        else {
+          if (value.getPathOrName() != null) {
+            append(value.getPathOrName() + " ");
+          }
+          else appendShortVersion(value);
+          if (value.getDescription() != null) {
+            append(value.getDescription() + " ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          }
+        }
+      }
+
+      private @Nullable @NlsSafe String appendShortVersion(JrePathEditor.JreComboBoxItem value) {
         if (value.getVersion() != null) {
           JavaSdkVersion version = JavaSdkVersion.fromVersionString(value.getVersion());
           if (version != null) {
             append(version.getDescription() + " ");
+            return version.getDescription();
           }
         }
-        append(value.getDescription(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        return null;
       }
     });
     UIUtil.setMonospaced(comboBox);

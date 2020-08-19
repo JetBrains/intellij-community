@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.ui.DocumentAdapter;
@@ -124,9 +125,7 @@ public class EditContractIntention extends BaseIntentionAction implements LowPri
 
     GridBagConstraints constraints =
       new GridBagConstraints(0, 0, 2, 1, 4.0, 1.0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, JBUI.insets(2), 0, 0);
-    panel.add(Messages.configureMessagePaneUi(new JTextPane(), "<html>Please specify the contract text<p>" +
-                                                                 "Example: <code>_, null -> false</code><br>" +
-                                                                 "<small>See intention action description for more details</small></html>"), constraints);
+    panel.add(Messages.configureMessagePaneUi(new JTextPane(), JavaBundle.message("edit.contract.dialog.hint")), constraints);
     constraints.gridx = 0;
     constraints.gridy = 1;
     constraints.gridwidth = 1;
@@ -166,7 +165,7 @@ public class EditContractIntention extends BaseIntentionAction implements LowPri
   }
 
   private static JCheckBox createPureCheckBox(boolean selected) {
-    JCheckBox pureCB = new NonFocusableCheckBox("Method is pure (has no side effects)");
+    JCheckBox pureCB = new NonFocusableCheckBox(JavaBundle.message("edit.contract.dialog.checkbox.pure.method"));
     pureCB.setMnemonic('p');
     pureCB.setSelected(selected);
     return pureCB;
@@ -188,12 +187,12 @@ public class EditContractIntention extends BaseIntentionAction implements LowPri
   }
 
   @Nullable
-  private static String getMutatesErrorMessage(String mutates, PsiMethod method) {
+  private static @NlsContexts.DialogMessage String getMutatesErrorMessage(String mutates, PsiMethod method) {
     return StringUtil.isEmpty(mutates) ? null : MutationSignature.checkSignature(mutates, method);
   }
 
   @Nullable
-  private static String getContractErrorMessage(String contract, PsiMethod method) {
+  private static @NlsContexts.DialogMessage String getContractErrorMessage(String contract, PsiMethod method) {
     if (StringUtil.isEmpty(contract)) {
       return null;
     }

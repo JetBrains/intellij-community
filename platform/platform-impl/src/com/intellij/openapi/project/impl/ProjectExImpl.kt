@@ -276,7 +276,9 @@ open class ProjectExImpl(filePath: Path, projectName: String?) : ProjectImpl(App
 
   final override fun toString(): String {
     val store = componentStoreValue.valueIfInitialized
-    return "Project(name=$cachedName, containerState=${if (isTemporarilyDisposed) "disposed temporarily" else containerStateName}" +
-           ", componentStore=" + (if (store == null) "<not initialized>" else if (store.storageScheme == StorageScheme.DIRECTORY_BASED) store.projectBasePath.toString() else store.projectFilePath) + ")"
+    val containerState = if (isTemporarilyDisposed) "disposed temporarily" else containerStateName
+    val componentStore = if (store == null) "<not initialized>" else if (store.storageScheme == StorageScheme.DIRECTORY_BASED) store.projectBasePath.toString() else store.projectFilePath
+    val disposedStr = if (isDisposed) " (disposed)" else ""
+    return "Project(name=$cachedName, containerState=$containerState, componentStore=$componentStore)$disposedStr"
   }
 }

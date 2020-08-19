@@ -7,6 +7,7 @@ import com.intellij.ide.util.projectWizard.ProjectTemplateParameterFactory;
 import com.intellij.ide.util.projectWizard.WizardInputField;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -34,14 +35,14 @@ public abstract class ArchivedProjectTemplate implements ProjectTemplate {
   public static final String TEMPLATE = "template";
   public static final String INPUT_DEFAULT = "default";
 
-  protected final String myDisplayName;
+  protected final @NlsContexts.Label String myDisplayName;
   @Nullable private final String myCategory;
 
   private List<WizardInputField<?>> myInputFields = Collections.emptyList();
   private List<String> myFrameworks = new ArrayList<>();
   private List<Artifact> myArtifacts = new ArrayList<>();
 
-  public ArchivedProjectTemplate(@NotNull String displayName, @Nullable String category) {
+  public ArchivedProjectTemplate(@NotNull @NlsContexts.Label String displayName, @Nullable String category) {
     myDisplayName = displayName;
     myCategory = category;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.dsl;
 
 import com.intellij.notification.*;
@@ -7,9 +7,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 
 import javax.swing.event.HyperlinkEvent;
 
@@ -36,8 +39,14 @@ public class DslErrorReporterImpl extends DslErrorReporter {
       return;
     }
 
-    String content = "<p>" + e.getMessage() + "</p><p><a href=\"\">Click here to investigate.</a></p>";
-    NOTIFICATION_GROUP.createNotification("DSL script execution error", content, NotificationType.ERROR,
+    String content = new HtmlBuilder().append(
+      HtmlChunk.tag("p").addText(e.getMessage())
+    ).append(
+      HtmlChunk.tag("p").child(
+        HtmlChunk.link("", GroovyBundle.message("gdsl.investigate.link.label"))
+      )
+    ).toString();
+    NOTIFICATION_GROUP.createNotification(GroovyBundle.message("gdsl.error.notification.title"), content, NotificationType.ERROR,
                                           new NotificationListener() {
                                             @Override
                                             public void hyperlinkUpdate(@NotNull Notification notification,

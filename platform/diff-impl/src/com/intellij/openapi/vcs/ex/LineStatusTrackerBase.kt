@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.impl.DocumentImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.ex.DocumentTracker.Block
 import com.intellij.openapi.vcs.ex.LineStatusTrackerBlockOperations.Companion.isSelectedByLine
 import com.intellij.openapi.vfs.VirtualFile
@@ -287,7 +288,10 @@ abstract class LineStatusTrackerBase<R : Range>(
     }
 
     @CalledInAwt
-    fun updateDocument(project: Project?, document: Document, commandName: String?, task: (Document) -> Unit): Boolean {
+    fun updateDocument(project: Project?,
+                       document: Document,
+                       commandName: @NlsContexts.Command String?,
+                       task: (Document) -> Unit): Boolean {
       if (DiffUtil.isUserDataFlagSet(VCS_DOCUMENT_KEY, document)) {
         document.setReadOnly(false)
         try {

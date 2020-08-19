@@ -34,7 +34,7 @@ class KtPropertyKeyFoldingTest : JavaCodeInsightFixtureTestCase() {
           }
         }
 
-        fun main(args: Array<String>) {
+        fun main() {
             System.out.print(MyClass.getMessage("com.example.localization.welcomeMessage"));
         }
     """.trimIndent())

@@ -1,5 +1,6 @@
 package com.intellij.vcs.log;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,5 +20,6 @@ import java.util.List;
  */
 public interface VcsCommitMetadata extends VcsShortCommitDetails {
   @NotNull
+  @NlsSafe
   String getFullMessage();
 }

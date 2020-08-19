@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.codeInspection.threading;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSynchronizedStatement;
@@ -29,7 +30,7 @@ public class GroovyPublicFieldAccessedInSynchronizedContextInspection extends Ba
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return "Non-private field <code>#ref</code> accessed in synchronized context  #loc";
+    return GroovyBundle.message("inspection.message.non.private.field.accessed.in.synchronized.context");
   }
 
   @NotNull

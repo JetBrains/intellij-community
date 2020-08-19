@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgRevisionNumber;
@@ -178,7 +179,7 @@ public class HgWorkingCopyRevisionsCommand {
    * @return List of revisions.
    */
   public @NotNull List<HgRevisionNumber> getRevisions(@NotNull VirtualFile repo,
-                                              @NotNull String command,
+                                              @NotNull @NonNls String command,
                                               @Nullable FilePath file,
                                               @Nullable HgRevisionNumber revision,
                                               boolean silent) {

@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
@@ -10,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.PatternUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +27,7 @@ public final class IgnoredFileBean implements IgnoredFileDescriptor {
   private final Project myProject;
   private volatile FilePath myCachedResolved;
 
-  IgnoredFileBean(@NotNull String path, @NotNull IgnoreSettingsType type, @Nullable Project project) {
+  IgnoredFileBean(@NotNull @NlsSafe String path, @NotNull IgnoreSettingsType type, @Nullable Project project) {
     myPath = path;
     myType = type;
     myFilenameIfFile = IgnoreSettingsType.FILE.equals(type) ? PathUtilRt.getFileName(path) : null;
@@ -34,7 +36,7 @@ public final class IgnoredFileBean implements IgnoredFileDescriptor {
     myPattern = null;
   }
 
-  IgnoredFileBean(@NotNull String mask) {
+  IgnoredFileBean(@NotNull @NonNls String mask) {
     myType = IgnoreSettingsType.MASK;
     myMask = mask;
     myPattern = PatternUtil.fromMask(mask);
@@ -50,12 +52,14 @@ public final class IgnoredFileBean implements IgnoredFileDescriptor {
 
   @Override
   @Nullable
+  @NlsSafe
   public String getPath() {
     return myPath;
   }
 
   @Override
   @Nullable
+  @NonNls
   public String getMask() {
     return myMask;
   }

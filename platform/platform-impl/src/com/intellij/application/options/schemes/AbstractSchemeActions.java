@@ -56,7 +56,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   protected Collection<String> getSchemeImportersNames() {
     List<String> importersNames = new ArrayList<>();
     for (SchemeImporterEP<T> importerEP : SchemeImporterEP.getExtensions(getSchemeType())) {
-      importersNames.add(importerEP.name);
+      importersNames.add(importerEP.getLocalizedName());
     }
     return importersNames;
   }
@@ -65,7 +65,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   private Collection<String> getSchemeExporterNames() {
     List<String> exporterNames = new ArrayList<>();
     for (SchemeExporterEP<T> exporterEP : SchemeExporterEP.getExtensions(getSchemeType())) {
-      exporterNames.add(exporterEP.name);
+      exporterNames.add(exporterEP.getLocalizedName());
     }
     return exporterNames;
   }

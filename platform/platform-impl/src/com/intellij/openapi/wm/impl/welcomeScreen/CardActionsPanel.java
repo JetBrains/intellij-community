@@ -18,6 +18,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.LightColors;
 import com.intellij.util.ui.CenteredIcon;
 import com.intellij.util.ui.GraphicsUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -38,7 +39,7 @@ public class CardActionsPanel extends JPanel {
     createCardForGroup(rootGroup, "root", null);
   }
 
-  private void createCardForGroup(ActionGroup group, String cardId, final String parentId) {
+  private void createCardForGroup(ActionGroup group, @NonNls String cardId, final String parentId) {
     JPanel card = new JPanel(new BorderLayout());
     if (!USE_ICONS) {
       card.setOpaque(false);

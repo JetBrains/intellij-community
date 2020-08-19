@@ -8,7 +8,6 @@ import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.CardLayoutPanel;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.components.JBSlidingPanel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
@@ -25,10 +24,8 @@ import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentF
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getMainTabListBackground;
 
 public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
-  private final JBSlidingPanel mySlidingPanel = new JBSlidingPanel();
 
   TabbedWelcomeScreen() {
-    mySlidingPanel.add("root", this);
     setBackground(getMainTabListBackground());
 
     CardLayoutPanel<WelcomeScreenTab, WelcomeScreenTab, JPanel> centralPanel = createCardPanel();
@@ -92,11 +89,6 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
   @Override
   public @Nullable Object getData(@NotNull String dataId) {
     return null;
-  }
-
-  @Override
-  public JComponent getWelcomePanel() {
-    return mySlidingPanel;
   }
 
   @Override

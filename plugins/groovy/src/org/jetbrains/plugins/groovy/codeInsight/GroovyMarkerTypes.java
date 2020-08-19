@@ -26,8 +26,10 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -127,7 +129,9 @@ public final class GroovyMarkerTypes {
       PsiElement parent = element.getParent();
       if (!(parent instanceof GrField)) return;
       if (DumbService.isDumb(element.getProject())) {
-        DumbService.getInstance(element.getProject()).showDumbModeNotification("Navigation to overriding classes is not possible during index update");
+        DumbService.getInstance(element.getProject()).showDumbModeNotification(
+          GroovyBundle.message("popup.content.navigation.to.overriding.classes.unavailable")
+        );
         return;
       }
 
@@ -140,7 +144,7 @@ public final class GroovyMarkerTypes {
         for (GrAccessorMethod method : GroovyPropertyUtils.getFieldAccessors(field)) {
           OverridingMethodsSearch.search(method).forEach(collectProcessor);
         }
-      }), "Searching for overriding methods", true, field.getProject(), (JComponent)e.getComponent())) {
+      }), JavaAnalysisBundle.message("searching.for.overriding.methods"), true, field.getProject(), (JComponent)e.getComponent())) {
         return;
       }
 
@@ -150,7 +154,7 @@ public final class GroovyMarkerTypes {
       boolean showMethodNames = !PsiUtil.allMethodsHaveSameSignature(overridings);
       MethodCellRenderer renderer = new MethodCellRenderer(showMethodNames);
       Arrays.sort(overridings, renderer.getComparator());
-      PsiElementListNavigator.openTargets(e, overridings, title, "Overriding Methods of " + field.getName(), renderer);
+      PsiElementListNavigator.openTargets(e, overridings, title, GroovyBundle.message("overriding.methods.of.0",field.getName()) , renderer);
     }
   }
   );
@@ -235,7 +239,8 @@ public final class GroovyMarkerTypes {
         PsiElement parent = element.getParent();
         if (!(parent instanceof GrMethod)) return;
         if (DumbService.isDumb(element.getProject())) {
-          DumbService.getInstance(element.getProject()).showDumbModeNotification("Navigation to overriding classes is not possible during index update");
+          DumbService.getInstance(element.getProject()).showDumbModeNotification(
+            GroovyBundle.message("popup.content.navigation.to.overriding.classes.unavailable"));
           return;
         }
 
@@ -267,7 +272,7 @@ public final class GroovyMarkerTypes {
         Arrays.sort(overridings, renderer.getComparator());
         final OverridingMethodsUpdater methodsUpdater = new OverridingMethodsUpdater(method, renderer);
         PsiElementListNavigator.openTargets(e, overridings, methodsUpdater.getCaption(overridings.length),
-                                            "Overriding Methods of " + method.getName(),
+                                            GroovyBundle.message("overriding.methods.of.0", method.getName()),
                                             renderer, methodsUpdater);
 
       }
@@ -317,7 +322,7 @@ public final class GroovyMarkerTypes {
     }
 
     @Override
-    public String getCaption(int size) {
+    public @Nls String getCaption(int size) {
       return myMethod.hasModifierProperty(PsiModifier.ABSTRACT) ?
              DaemonBundle.message("navigation.title.implementation.method", myMethod.getName(), size) :
              DaemonBundle.message("navigation.title.overrider.method", myMethod.getName(), size);

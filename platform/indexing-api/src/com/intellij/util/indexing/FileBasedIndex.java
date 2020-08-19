@@ -223,11 +223,11 @@ public abstract class FileBasedIndex {
   @ApiStatus.Experimental
   public static class AllKeysQuery<K, V> {
     @NotNull
-    final ID<K, V> indexId;
+    private final ID<K, V> indexId;
     @NotNull
-    final Collection<? extends K> dataKeys;
+    private final Collection<? extends K> dataKeys;
     @Nullable
-    final Condition<? super V> valueChecker;
+    private final Condition<? super V> valueChecker;
 
     public AllKeysQuery(@NotNull ID<K, V> id,
                         @NotNull Collection<? extends K> keys,
@@ -235,6 +235,21 @@ public abstract class FileBasedIndex {
       indexId = id;
       dataKeys = keys;
       valueChecker = checker;
+    }
+
+    @NotNull
+    public ID<K, V> getIndexId() {
+      return indexId;
+    }
+
+    @NotNull
+    public Collection<? extends K> getDataKeys() {
+      return dataKeys;
+    }
+
+    @Nullable
+    public Condition<? super V> getValueChecker() {
+      return valueChecker;
     }
   }
 

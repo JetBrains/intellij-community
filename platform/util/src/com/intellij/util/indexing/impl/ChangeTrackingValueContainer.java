@@ -31,12 +31,13 @@ import java.io.IOException;
  */
 public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>{
   // there is no volatile as we modify under write lock and read under read lock
-  private ValueContainerImpl<Value> myAdded;
-  private TIntHashSet myInvalidated;
-  private volatile ValueContainerImpl<Value> myMerged;
+  protected ValueContainerImpl<Value> myAdded;
+  protected TIntHashSet myInvalidated;
+  protected volatile ValueContainerImpl<Value> myMerged;
   private final Initializer<Value> myInitializer;
   
   public interface Initializer<T> extends Computable<ValueContainer<T>> {
+    @NotNull
     Object getLock();
   }
 
@@ -66,14 +67,6 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
 
     if (myInvalidated == null) myInvalidated = new TIntHashSet(1);
     myInvalidated.add(inputId);
-  }
-
-  // Resets diff of index value for particular fileId
-  public void dropAssociatedValue(int inputId) {
-    myMerged = null;
-
-    if (myAdded != null) myAdded.removeAssociatedValue(inputId);
-    if (myInvalidated != null) myInvalidated.remove(inputId);
   }
 
   @Override
@@ -156,6 +149,16 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
     return (myAdded != null && myAdded.size() > 0) ||
            (myInvalidated != null && !myInvalidated.isEmpty()) ||
            needsCompacting();
+  }
+
+  boolean containsOnlyInvalidatedChange() {
+    return myInvalidated != null &&
+           !myInvalidated.isEmpty() &&
+           (myAdded == null || myAdded.size() == 0);
+  }
+
+  boolean containsCachedMergedData() {
+    return myMerged != null;
   }
   
   @Override

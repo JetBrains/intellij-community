@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diagnostic;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -29,15 +29,15 @@ public class Attachment {
     myIncluded = true;
   }
 
-  public Attachment(@NotNull String path, @NotNull String content) {
+  public Attachment(@NotNull @NonNls String path, @NotNull @NonNls String content) {
     this(path, content, content.getBytes(StandardCharsets.UTF_8), null);
   }
 
-  public Attachment(@NotNull String path, byte @NotNull [] bytes, @NotNull String displayText) {
+  public Attachment(@NotNull @NonNls String path, byte @NotNull [] bytes, @NotNull @NonNls String displayText) {
     this(path, displayText, bytes, null);
   }
 
-  public Attachment(@NotNull String path, @NotNull File temporaryFile, @NotNull String displayText) {
+  public Attachment(@NotNull @NonNls String path, @NotNull File temporaryFile, @NotNull @NonNls String displayText) {
     this(path, displayText, null, temporaryFile);
   }
 

@@ -9,12 +9,13 @@ import com.intellij.openapi.options.SchemeImportException;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Field;
 
 public class EclipseFormatterOptionsHandler implements EclipseFormatterOptions {
-  final static String PROGRAMMATIC_IMPORT_KEY = "<Programmatic>";
+  final static @NonNls String PROGRAMMATIC_IMPORT_KEY = "<Programmatic>";
 
   private static final Logger LOG = Logger.getInstance(EclipseFormatterOptionsHandler.class);
 
@@ -155,7 +156,7 @@ public class EclipseFormatterOptionsHandler implements EclipseFormatterOptions {
     }
   }
 
-  private static void setProgrammatically(@NotNull Object object, @NotNull String key, @NotNull String value) throws SchemeImportException {
+  private static void setProgrammatically(@NotNull Object object, @NotNull @NonNls String key, @NotNull String value) throws SchemeImportException {
     if (key.contains("alignment") && value.matches("\\d*") && object instanceof CommonCodeStyleSettings) {
       if (setAlignmentAndWrappingOptions((CommonCodeStyleSettings)object, key, value)) return;
     }

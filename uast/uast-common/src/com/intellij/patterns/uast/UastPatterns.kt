@@ -67,7 +67,10 @@ open class UElementPattern<T : UElement, Self : UElementPattern<T, Self>>(clazz:
     })
 
   fun filterWithContext(filter: (T, ProcessingContext) -> Boolean): Self =
-    with(object : PatternCondition<T>(null) {
+    filterWithContext(null, filter)
+
+  fun filterWithContext(debugName: String?, filter: (T, ProcessingContext) -> Boolean): Self =
+    with(object : PatternCondition<T>(debugName) {
       override fun accepts(t: T, context: ProcessingContext?): Boolean = filter.invoke(t, context ?: ProcessingContext())
     })
 
@@ -158,6 +161,8 @@ class UCallExpressionPattern : UElementPattern<UCallExpression, UCallExpressionP
   }
 
   fun constructor(classPattern: ElementPattern<PsiClass>, parameterCount: Int): UCallExpressionPattern = filterWithContext { it, context ->
+    if (it.classReference == null) return@filterWithContext false
+
     val psiMethod = it.resolve() ?: return@filterWithContext false
 
     psiMethod.isConstructor
@@ -166,6 +171,8 @@ class UCallExpressionPattern : UElementPattern<UCallExpression, UCallExpressionP
   }
 
   fun constructor(classPattern: ElementPattern<PsiClass>): UCallExpressionPattern = filterWithContext { it, context ->
+    if (it.classReference == null) return@filterWithContext false
+
     val psiMethod = it.resolve() ?: return@filterWithContext false
     psiMethod.isConstructor && classPattern.accepts(psiMethod.containingClass, context)
   }
@@ -244,7 +251,7 @@ open class UExpressionPattern<T : UExpression, Self : UExpressionPattern<T, Self
 class ULiteralExpressionPattern : UExpressionPattern<ULiteralExpression, ULiteralExpressionPattern>(ULiteralExpression::class.java)
 
 fun uAnnotationQualifiedNamePattern(annotationQualifiedName: ElementPattern<String>): UElementPattern<UAnnotation, *> =
-  capture(UAnnotation::class.java).filterWithContext { it, context ->
+  capture(UAnnotation::class.java).filterWithContext(annotationQualifiedName.toString()) { it, context ->
     it.qualifiedName?.let {
       annotationQualifiedName.accepts(it, context)
     } ?: false

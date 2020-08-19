@@ -10,8 +10,10 @@ import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiFile;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
@@ -37,12 +39,12 @@ public class MavenAttachSourcesProvider implements AttachSourcesProvider {
 
     return Collections.singleton(new AttachSourcesAction() {
       @Override
-      public String getName() {
+      public @Nls(capitalization = Nls.Capitalization.Title) String getName() {
         return MavenProjectBundle.message("maven.action.download.sources");
       }
 
       @Override
-      public String getBusyText() {
+      public @NlsContexts.LinkLabel String getBusyText() {
         return MavenProjectBundle.message("maven.action.download.sources.busy.text");
       }
 

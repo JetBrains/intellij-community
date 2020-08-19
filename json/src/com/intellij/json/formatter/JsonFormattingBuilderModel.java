@@ -1,25 +1,24 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.json.formatter;
 
 import com.intellij.formatting.*;
 import com.intellij.json.JsonLanguage;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.json.JsonElementTypes.*;
 
-/**
- * @author Mikhail Golubev
- */
 public class JsonFormattingBuilderModel implements FormattingModelBuilder {
-  @NotNull
   @Override
-  public FormattingModel createModel(PsiElement element, CodeStyleSettings settings) {
+  public @NotNull FormattingModel createModel(@NotNull FormattingContext formattingContext) {
+    CodeStyleSettings settings = formattingContext.getCodeStyleSettings();
     JsonCodeStyleSettings customSettings = settings.getCustomSettings(JsonCodeStyleSettings.class);
     SpacingBuilder spacingBuilder = createSpacingBuilder(settings);
-    final JsonBlock block = new JsonBlock(null, element.getNode(), customSettings, null, Indent.getSmartIndent(Indent.Type.CONTINUATION), null, spacingBuilder);
-    return FormattingModelProvider.createFormattingModelForPsiFile(element.getContainingFile(), block, settings);
+    final JsonBlock block =
+      new JsonBlock(null, formattingContext.getNode(), customSettings, null, Indent.getSmartIndent(Indent.Type.CONTINUATION), null,
+                    spacingBuilder);
+    return FormattingModelProvider.createFormattingModelForPsiFile(formattingContext.getContainingFile(), block, settings);
   }
 
   @NotNull

@@ -25,6 +25,7 @@ import com.intellij.usageView.UsageInfoFactory;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,20 +38,20 @@ import java.util.stream.Stream;
 public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
   private static final Logger LOG = Logger.getInstance(InlineConstantFieldProcessor.class);
   private PsiField myField;
-  private final PsiReferenceExpression myRefExpr;
+  private final PsiElement myRefExpr;
   private final boolean myInlineThisOnly;
   private final boolean mySearchInCommentsAndStrings;
   private final boolean mySearchForTextOccurrences;
   private final boolean myDeleteDeclaration;
   private Map<Language, InlineHandler.Inliner> myInliners;
 
-  public InlineConstantFieldProcessor(PsiField field, Project project, PsiReferenceExpression ref, boolean isInlineThisOnly) {
+  public InlineConstantFieldProcessor(PsiField field, Project project, PsiElement ref, boolean isInlineThisOnly) {
     this(field, project, ref, isInlineThisOnly, false, false, true);
   }
 
   public InlineConstantFieldProcessor(PsiField field,
                                       Project project,
-                                      PsiReferenceExpression ref,
+                                      PsiElement ref,
                                       boolean isInlineThisOnly,
                                       boolean searchInCommentsAndStrings,
                                       boolean searchForTextOccurrences,
@@ -218,13 +219,43 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
   @Override
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usagesIn = refUsages.get();
-    MultiMap<PsiElement, String> conflicts = new MultiMap<>();
+    MultiMap<PsiElement, @Nls String> conflicts = new MultiMap<>();
 
     ReferencedElementsCollector collector = new ReferencedElementsCollector();
     PsiExpression initializer = InlineConstantFieldHandler.getInitializer(myField);
     LOG.assertTrue(initializer != null);
     initializer.accept(collector);
     HashSet<PsiMember> referencedWithVisibility = collector.myReferencedMembers;
+
+    if (!myField.hasInitializer()) {
+      boolean dependsOnContext;
+      PsiMethod[] constructors = Objects.requireNonNull(myField.getContainingClass()).getConstructors();
+      if (constructors.length == 1) {
+        Ref<PsiElement> reference = new Ref<>();
+        dependsOnContext = !PsiTreeUtil.processElements(initializer, element -> {
+          if (element instanceof PsiJavaCodeReferenceElement) {
+            PsiElement resolve = ((PsiJavaCodeReferenceElement)element).resolve();
+            if (resolve != null &&
+                PsiTreeUtil.isAncestor(constructors[0], resolve, true) && 
+                !PsiTreeUtil.isAncestor(initializer, resolve, true)) {
+              reference.set(resolve);
+              return false;
+            }
+          }
+          return true;
+        });
+        if (dependsOnContext) {
+          for (UsageInfo usageInfo : usagesIn) {
+            PsiElement element = usageInfo.getElement();
+            if (element != null && !PsiTreeUtil.isAncestor(constructors[0], element, true)) {
+              conflicts.putValue(element, JavaRefactoringBundle.message("inline.field.initializer.is.not.accessible",
+                                                                        RefactoringUIUtil.getDescription(reference.get(), false),
+                                                                        RefactoringUIUtil.getDescription(ConflictsUtil.getContainer(element), true)));
+            }
+          }
+        }
+      }
+    }
 
     PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(myField.getProject()).getResolveHelper();
     for (UsageInfo info : usagesIn) {
@@ -256,12 +287,12 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
         final PsiElement element = info.getElement();
         if (element instanceof PsiDocMethodOrFieldRef) {
           if (!PsiTreeUtil.isAncestor(myField, element, false)) {
-            conflicts.putValue(element, "Inlined field is used in javadoc");
+            conflicts.putValue(element, JavaRefactoringBundle.message("inline.field.used.in.javadoc"));
           }
         }
         if (element instanceof PsiLiteralExpression &&
             Stream.of(element.getReferences()).anyMatch(JavaLangClassMemberReference.class::isInstance)) {
-          conflicts.putValue(element, "Inlined field is used reflectively");
+          conflicts.putValue(element, JavaRefactoringBundle.message("inline.field.used.in.reflection"));
         }
       }
     }

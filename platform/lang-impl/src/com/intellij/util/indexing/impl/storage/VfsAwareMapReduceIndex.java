@@ -6,6 +6,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.ByteArraySequence;
@@ -143,7 +144,7 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
 
   @NotNull
   @Override
-  protected InputData<Key, Value> mapInput(int inputId, @Nullable FileContent content) {
+  protected final InputData<Key, Value> mapInput(int inputId, @Nullable FileContent content) {
     InputData<Key, Value> data;
     boolean containsSnapshotData = true;
     boolean isPhysical = content instanceof FileContentImpl && ((FileContentImpl)content).isPhysicalContent();
@@ -385,6 +386,17 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
       ApplicationManager.getApplication().invokeLater(action);
     } else {
       action.run();
+    }
+  }
+
+  @Override
+  public void updateWithMap(@NotNull AbstractUpdateData<Key, Value> updateData) throws StorageException {
+    try {
+      super.updateWithMap(updateData);
+    }
+    catch (ProcessCanceledException e) {
+      LOG.error("ProcessCancelledException is not expected here!", e);
+      throw e;
     }
   }
 

@@ -18,10 +18,11 @@ package com.intellij.openapi.ui;
 import com.intellij.ide.ui.SplitterProportionsDataImpl;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
+import org.jetbrains.annotations.NonNls;
 
 public class MasterDetailsState {
   private SplitterProportionsDataImpl proportions = new SplitterProportionsDataImpl();
-  private String lastEditedConfigurable;
+  private @NonNls String lastEditedConfigurable;
 
   @Property(surroundWithTag = false)
   public SplitterProportionsDataImpl getProportions() {
@@ -33,11 +34,11 @@ public class MasterDetailsState {
   }
 
   @Tag("last-edited")
-  public String getLastEditedConfigurable() {
+  public @NonNls String getLastEditedConfigurable() {
     return lastEditedConfigurable;
   }
 
-  public void setLastEditedConfigurable(String lastEditedConfigurable) {
+  public void setLastEditedConfigurable(@NonNls String lastEditedConfigurable) {
     this.lastEditedConfigurable = lastEditedConfigurable;
   }
 }

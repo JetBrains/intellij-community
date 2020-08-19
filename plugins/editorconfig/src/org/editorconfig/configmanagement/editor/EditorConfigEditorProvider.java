@@ -89,7 +89,7 @@ public class EditorConfigEditorProvider implements AsyncFileEditorProvider, Dumb
         TextEditor ecTextEditor = (TextEditor)TextEditorProvider.getInstance().createEditor(myProject, myFile);
         final EditorConfigEditorWithPreview splitEditor = new EditorConfigEditorWithPreview(
           myFile, myProject, ecTextEditor, previewEditor);
-        Disposer.register(splitEditor, previewFile);
+        Disposer.register(splitEditor, () -> previewFile.unregisterListener());
         Disposer.register(splitEditor, statusListener);
         return splitEditor;
       }

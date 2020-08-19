@@ -6,6 +6,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.LocalFilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 @ApiStatus.Internal
@@ -16,7 +17,7 @@ public class DiffVcsFacade {
   }
 
   @NotNull
-  public FilePath getFilePath(@NotNull String path) {
+  public FilePath getFilePath(@NotNull @NonNls String path) {
     return new LocalFilePath(path, false);
   }
 

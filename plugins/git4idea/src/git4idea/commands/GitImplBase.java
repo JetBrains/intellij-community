@@ -34,6 +34,7 @@ import git4idea.rebase.GitUnstructuredEditor;
 import git4idea.util.GitVcsConsoleWriter;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.CalledInBackground;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -416,13 +417,13 @@ public abstract class GitImplBase implements Git {
    */
   private static final Pattern PROGRESS_PATTERN = Pattern.compile(".*:\\s*\\d{1,3}% \\(\\d+/\\d+\\).*");
 
-  private static final String REMOTE_PROGRESS_PREFIX = "remote: ";
+  private static final @NonNls String REMOTE_PROGRESS_PREFIX = "remote: ";
 
   /**
    * 'remote: Counting objects: 198285, done'
    * 'Expanding reachable commits in commit graph: 95907'
    */
-  private static final String[] SUPPRESSED_PROGRESS_INDICATORS = {
+  private static final @NonNls String[] SUPPRESSED_PROGRESS_INDICATORS = {
     "Counting objects: ",
     "Enumerating objects: ",
     "Compressing objects: ",
@@ -436,12 +437,12 @@ public abstract class GitImplBase implements Git {
     "Delta compression using up to "
   };
 
-  private static boolean looksLikeError(@NotNull final String text) {
+  private static boolean looksLikeError(@NotNull @NonNls String text) {
     return ContainerUtil.exists(ERROR_INDICATORS, indicator -> StringUtil.startsWithIgnoreCase(text.trim(), indicator));
   }
 
   // could be upper-cased, so should check case-insensitively
-  public static final String[] ERROR_INDICATORS = {
+  public static final @NonNls String[] ERROR_INDICATORS = {
     "warning:",
     "error:",
     "fatal:",

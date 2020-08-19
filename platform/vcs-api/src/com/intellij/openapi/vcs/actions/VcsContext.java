@@ -17,6 +17,7 @@ package com.intellij.openapi.vcs.actions;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
@@ -35,7 +36,7 @@ import java.util.stream.Stream;
 
 import static java.util.Collections.emptyList;
 
-public interface VcsContext extends PlaceProvider<String> {
+public interface VcsContext extends PlaceProvider {
   @Nullable Project getProject();
 
   @Nullable
@@ -88,5 +89,6 @@ public interface VcsContext extends PlaceProvider<String> {
 
   Change @Nullable [] getSelectedChanges();
 
+  @NlsActions.ActionText
   String getActionName();
 }

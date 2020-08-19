@@ -21,6 +21,7 @@ import com.intellij.openapi.module.*;
 import com.intellij.openapi.module.impl.LoadedModuleDescriptionImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.SortedComboBoxModel;
 import org.jetbrains.annotations.NotNull;
@@ -114,13 +115,13 @@ public final class ModuleDescriptionsComboBox extends ComboBox<ModuleDescription
   }
 
   private static class ModuleDescriptionListCellRenderer extends SimpleListCellRenderer<ModuleDescription> {
-    private final String myEmptySelectionText;
+    private final @NlsContexts.ListItem String myEmptySelectionText;
 
     ModuleDescriptionListCellRenderer() {
       this("[none]");
     }
 
-    ModuleDescriptionListCellRenderer(@NotNull String emptySelectionText) {
+    ModuleDescriptionListCellRenderer(@NotNull @NlsContexts.ListItem String emptySelectionText) {
       myEmptySelectionText = emptySelectionText;
     }
 

@@ -23,9 +23,11 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ui.configuration.ModuleConfigurationState;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ItemRemovable;
 import com.intellij.util.ui.ListTableModel;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -35,11 +37,9 @@ import java.util.Comparator;
 import java.util.List;
 
 class ClasspathTableModel extends ListTableModel<ClasspathTableItem<?>> implements ItemRemovable {
-  private static final ColumnInfo<ClasspathTableItem<?>, Boolean> EXPORT_COLUMN_INFO = new ColumnInfo<ClasspathTableItem<?>, Boolean>(
-    getExportColumnName()) {
-    @Nullable
+  private static final ColumnInfo<ClasspathTableItem<?>, Boolean> EXPORT_COLUMN_INFO = new ColumnInfo<ClasspathTableItem<?>, Boolean>(getExportColumnName()) {
     @Override
-    public Boolean valueOf(ClasspathTableItem<?> item) {
+    public @NotNull Boolean valueOf(ClasspathTableItem<?> item) {
       return item.isExported();
     }
 
@@ -54,7 +54,7 @@ class ClasspathTableModel extends ListTableModel<ClasspathTableItem<?>> implemen
     }
 
     @Override
-    public Class getColumnClass() {
+    public Class<Boolean> getColumnClass() {
       return Boolean.class;
     }
   };
@@ -62,8 +62,7 @@ class ClasspathTableModel extends ListTableModel<ClasspathTableItem<?>> implemen
     (o1, o2) -> o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName());
   private static final Comparator<ClasspathTableItem<?>> CLASSPATH_ITEM_SCOPE_COMPARATOR =
     (o1, o2) -> Comparing.compare(o1.getScope(), o2.getScope(), DEPENDENCY_SCOPE_COMPARATOR);
-  private static final ColumnInfo<ClasspathTableItem<?>, DependencyScope> SCOPE_COLUMN_INFO = new ColumnInfo<ClasspathTableItem<?>, DependencyScope>(
-    getScopeColumnName()) {
+  private static final ColumnInfo<ClasspathTableItem<?>, DependencyScope> SCOPE_COLUMN_INFO = new ColumnInfo<ClasspathTableItem<?>, DependencyScope>(getScopeColumnName()) {
     @Nullable
     @Override
     public DependencyScope valueOf(ClasspathTableItem<?> item) {
@@ -81,13 +80,12 @@ class ClasspathTableModel extends ListTableModel<ClasspathTableItem<?>> implemen
     }
 
     @Override
-    public Class getColumnClass() {
+    public Class<DependencyScope> getColumnClass() {
       return DependencyScope.class;
     }
 
-    @Nullable
     @Override
-    public Comparator<ClasspathTableItem<?>> getComparator() {
+    public @NotNull Comparator<ClasspathTableItem<?>> getComparator() {
       return CLASSPATH_ITEM_SCOPE_COMPARATOR;
     }
   };
@@ -177,16 +175,16 @@ class ClasspathTableModel extends ListTableModel<ClasspathTableItem<?>> implemen
     }
 
     @Override
-    public Class getColumnClass() {
+    public Class<?> getColumnClass() {
       return ClasspathTableItem.class;
     }
   }
 
-  private static String getScopeColumnName() {
+  private static @NlsContexts.ColumnName String getScopeColumnName() {
     return JavaUiBundle.message("modules.order.export.scope.column");
   }
 
-  static String getExportColumnName() {
+  static @NlsContexts.ColumnName String getExportColumnName() {
     return JavaUiBundle.message("modules.order.export.export.column");
   }
 }

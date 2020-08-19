@@ -63,7 +63,7 @@ class GrazieCommitInspection : BaseCommitMessageInspection() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     return object : PsiElementVisitor() {
       override fun visitElement(element: PsiElement) {
-        val typos = GrammarChecker.check(element, strategy)
+        val typos = GrammarChecker.check(listOf(element), strategy)
 
         for (typo in typos.filterNot { suppression.isSuppressed(it) }) {
           holder.registerProblem(GrazieProblemDescriptor(typo, isOnTheFly))

@@ -11,6 +11,7 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -94,13 +95,13 @@ public class FillPermitsListFix extends LocalQuickFixAndIntentionActionOnPsiElem
       parent.addAfter(createPermitsClause(factory, permitsClause), implementsList);
     }
     else {
-      Stream<String> curClasses = Arrays.stream(permitsList.getReferenceElements()).map(ref -> ref.getQualifiedName());
+      Stream<String> curClasses = Arrays.stream(permitsList.getReferenceElements()).map(PsiJavaCodeReferenceElement::getQualifiedName);
       String permitsClause = StreamEx.of(missingInheritors).append(curClasses).sorted().joining(",", "permits ", "");
       permitsList.replace(createPermitsClause(factory, permitsClause));
     }
   }
 
-  private static void reportError(@NotNull Project project, @NotNull String message) {
+  private static void reportError(@NotNull Project project, @NotNull @NlsContexts.HintText String message) {
     Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
     if (editor == null) return;
     HintManager.getInstance().showErrorHint(editor, message);

@@ -76,7 +76,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
 
   public ReformatCodeProcessor(Project project,
                                PsiFile[] files,
-                               String commandName,
+                               @NlsContexts.Command String commandName,
                                @Nullable Runnable postRunnable,
                                boolean processChangedTextOnly)
   {
@@ -172,7 +172,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
     return !myRanges.isEmpty() ? myRanges : ContainerUtil.newArrayList(file.getTextRange());
   }
 
-  private static String getProgressText() {
+  private static @NlsContexts.ProgressText String getProgressText() {
     return CodeInsightBundle.message("reformat.progress.common.text");
   }
 

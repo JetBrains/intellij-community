@@ -5,6 +5,8 @@ import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector;
+import com.intellij.java.JavaBundle;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -99,7 +101,8 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
       if (accessDetector != null) {
         ReadWriteAccessDetector.Access access = accessDetector.getExpressionAccess(element);
         if (access != ReadWriteAccessDetector.Access.Read) {
-          String message = RefactoringUIUtil.getDescription(member, true) + " has write access but is moved to an interface";
+          String message =
+            JavaRefactoringBundle.message("move.member.write.access.in.interface.conflict", RefactoringUIUtil.getDescription(member, true));
           conflicts.putValue(element, StringUtil.capitalize(message));
         }
       }
@@ -108,11 +111,11 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
                member.hasModifierProperty(PsiModifier.FINAL) &&
                PsiUtil.isAccessedForWriting((PsiExpression)usageInfo.reference) &&
                !RefactoringHierarchyUtil.willBeInTargetClass(usageInfo.reference, membersToMove, targetClass, true)) {
-      conflicts.putValue(usageInfo.member, "final variable initializer won't be available after move.");
+      conflicts.putValue(usageInfo.member, JavaBundle.message("move.member.final.initializer.conflict"));
     }
 
     if (toBeConvertedToEnum(moveMembersOptions, member, targetClass) && !isEnumAcceptable(element, targetClass)) {
-      conflicts.putValue(element, "Enum type won't be applicable in the current context");
+      conflicts.putValue(element, JavaBundle.message("move.member.enum.conflict"));
     }
 
     final PsiReference reference = usageInfo.getReference();

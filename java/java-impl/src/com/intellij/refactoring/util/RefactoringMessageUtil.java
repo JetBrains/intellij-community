@@ -13,37 +13,42 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageViewUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
+
+import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
 
 public final class RefactoringMessageUtil {
 
+  @Nls
   public static String getIncorrectIdentifierMessage(String identifierName) {
     return JavaRefactoringBundle.message("0.is.not.a.legal.java.identifier", identifierName);
   }
 
   /**
    * @return null, if can create a class
-   *         an error message, if cannot create a class
-   *
+   * an error message, if cannot create a class
    */
-  public static String checkCanCreateClass(PsiDirectory destinationDirectory, String className) {
+  public static @Nls(capitalization = Sentence) @Nullable String checkCanCreateClass(PsiDirectory destinationDirectory, String className) {
     PsiClass[] classes = JavaDirectoryService.getInstance().getClasses(destinationDirectory);
     VirtualFile file = destinationDirectory.getVirtualFile();
     for (PsiClass aClass : classes) {
       if (className.equals(aClass.getName())) {
         return JavaRefactoringBundle.message("directory.0.already.contains.1.named.2",
-                                         file.getPresentableUrl(), UsageViewUtil.getType(aClass), className);
+                                             file.getPresentableUrl(), UsageViewUtil.getType(aClass), className);
       }
     }
-    @NonNls String fileName = className+".java";
+    @NonNls String fileName = className + ".java";
     return checkCanCreateFile(destinationDirectory, fileName);
   }
-  public static String checkCanCreateFile(PsiDirectory destinationDirectory, String fileName) {
+
+  public static @Nls(capitalization = Sentence) @Nullable String checkCanCreateFile(PsiDirectory destinationDirectory, String fileName) {
     VirtualFile file = destinationDirectory.getVirtualFile();
     VirtualFile child = file.findChild(fileName);
     if (child != null) {
       return JavaRefactoringBundle.message("directory.0.already.contains.a.file.named.1",
-                                       file.getPresentableUrl(), fileName);
+                                           file.getPresentableUrl(), fileName);
     }
     return null;
   }

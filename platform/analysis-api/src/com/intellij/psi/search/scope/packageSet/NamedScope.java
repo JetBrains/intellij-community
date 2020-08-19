@@ -10,7 +10,7 @@ import javax.swing.*;
 
 public class NamedScope {
   public static final NamedScope[] EMPTY_ARRAY = new NamedScope[0];
-  private final String myName;
+  private final @Nls String myName;
   private final Icon myIcon;
   private final PackageSet myValue;
 
@@ -18,14 +18,14 @@ public class NamedScope {
     this(name, AllIcons.Ide.LocalScope, value);
   }
 
-  public NamedScope(@NotNull String name, @NotNull Icon icon, @Nullable PackageSet value) {
+  public NamedScope(@NotNull @Nls String name, @NotNull Icon icon, @Nullable PackageSet value) {
     myIcon = icon;
     myName = name;
     myValue = value;
   }
 
   @NotNull
-  public String getName() {
+  public @Nls String getName() {
     return myName;
   }
 

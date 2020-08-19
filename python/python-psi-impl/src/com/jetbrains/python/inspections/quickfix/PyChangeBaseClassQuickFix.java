@@ -19,13 +19,11 @@ import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyPsiBundle;
-import com.jetbrains.python.PythonUiService;
+import com.jetbrains.python.PythonTemplateRunner;
 import com.jetbrains.python.psi.PyArgumentList;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyExpression;
@@ -49,12 +47,7 @@ public class PyChangeBaseClassQuickFix implements LocalQuickFix {
       final PyExpression argument = expressionList.getArguments()[0];
       final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(argument);
       builder.replaceElement(argument, argument.getText());
-      final VirtualFile virtualFile = element.getContainingFile().getVirtualFile();
-      if (virtualFile != null) {
-        final Editor editor = PythonUiService.getInstance().openTextEditor(project, virtualFile);
-        assert editor != null;
-        builder.run(editor, false);
-      }
+      PythonTemplateRunner.runTemplate(element.getContainingFile(), builder);
     }
   }
 }

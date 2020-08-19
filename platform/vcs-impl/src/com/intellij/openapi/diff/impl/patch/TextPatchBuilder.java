@@ -22,6 +22,7 @@ import java.nio.file.Path;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import static java.util.Collections.singletonList;
@@ -100,21 +101,20 @@ public final class TextPatchBuilder {
 
     TextFilePatch patch = buildPatchHeading(beforeRevision, afterRevision);
 
-    if (beforeContent.equals(afterContent)) {
-      if (beforeRevision.getPath().getPath().equals(afterRevision.getPath().getPath())) return null;
-      // movement
-      return patch;
-    }
-
     List<PatchHunk> hunks = buildPatchHunks(beforeContent, afterContent);
     for (PatchHunk hunk : hunks) {
       patch.addHunk(hunk);
     }
+
+    // skip empty patch
+    if (hunks.isEmpty() && beforeRevision.getPath().getPath().equals(afterRevision.getPath().getPath())) return null;
+
     return patch;
   }
 
   @NotNull
   public static List<PatchHunk> buildPatchHunks(@NotNull String beforeContent, @NotNull String afterContent) {
+    if (beforeContent.equals(afterContent)) return Collections.emptyList();
     if (beforeContent.isEmpty()) {
       return singletonList(createWholeFileHunk(afterContent, true, true));
     }

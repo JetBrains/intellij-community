@@ -118,7 +118,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
     myContext = FileContextUtil.getContextFile(context);
     myContextModules = ContainerUtil.createMaybeSingletonSet(ModuleUtilCore.findModuleForFile(myContext));
 
-    myDefaultPropertyValue = defaultPropertyValue;
+    myDefaultPropertyValue = escapeValue(defaultPropertyValue, context);
     myCustomization = customization != null ? customization:new DialogCustomization();
     setTitle(myCustomization.title != null ? myCustomization.title : PropertiesBundle.message("i18nize.dialog.title"));
 
@@ -216,6 +216,10 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
     if (!ancestorResponsible) init();
   }
 
+  protected String escapeValue(String value, @NotNull PsiFile context) {
+    return value;
+  }
+
   @Override
   protected void init() {
     populatePropertiesFiles();
@@ -240,14 +244,14 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
     // check if property value already exists among properties file values and suggest corresponding key
     List<String> propertyFiles = suggestPropertiesFiles();
     if (!propertyFiles.isEmpty()) {
-      String selectedPath = FileUtil.toSystemIndependentName(myPropertiesFile.getText());
+      String selectedPath = FileUtil.toSystemIndependentName(getPropertiesFilePath());
       propertyFiles.remove(selectedPath);
       propertyFiles.add(0, selectedPath);
       for (String path : propertyFiles) {
         PropertiesFile propertiesFile = getPropertyFileByPath(path);
         if (propertiesFile != null) {
           for (IProperty property : propertiesFile.getProperties()) {
-            if (Comparing.strEqual(property.getValue(), value) && property.getUnescapedKey() != null) {
+            if (Comparing.strEqual(property.getUnescapedValue(), value) && property.getUnescapedKey() != null) {
               result.add(property);
             }
           }
@@ -393,9 +397,12 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
     myPropertiesFile.setHistory(paths);
     if (lastPath != null) {
       myPropertiesFile.setSelectedItem(lastPath);
+      myPropertiesFile.setText(lastPath);
     }
     if (myPropertiesFile.getSelectedIndex() == -1 && !paths.isEmpty()) {
-      myPropertiesFile.setText(paths.get(0));
+      String selectedItem = paths.get(0);
+      myPropertiesFile.setSelectedItem(selectedItem);
+      myPropertiesFile.setText(selectedItem);
     }
   }
 
@@ -415,9 +422,11 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
   }
 
   private void saveLastSelectedFile() {
-    PropertiesFile propertiesFile = getPropertiesFile();
-    if (propertiesFile != null) {
-      LastSelectedPropertiesFileStore.getInstance().saveLastSelectedPropertiesFile(myContext, propertiesFile);
+    if (myCreateNewPropertyRb.isSelected()) {
+      PropertiesFile propertiesFile = getPropertiesFile();
+      if (propertiesFile != null) {
+        LastSelectedPropertiesFileStore.getInstance().saveLastSelectedPropertiesFile(myContext, propertiesFile);
+      }
     }
   }
 
@@ -439,8 +448,15 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
     return I18nUtil.defaultSuggestPropertiesFiles(myProject, myContextModules);
   }
 
+  @Nullable
   protected PropertiesFile getPropertiesFile() {
-    return getPropertyFileByPath(FileUtil.toSystemIndependentName(myPropertiesFile.getText()));
+    String path = getPropertiesFilePath();
+    if (path == null) return null;
+    return getPropertyFileByPath(FileUtil.toSystemIndependentName(path));
+  }
+
+  private String getPropertiesFilePath() {
+    return (String)myPropertiesFile.getSelectedItem();
   }
 
   @Nullable
@@ -461,17 +477,17 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
   
   private boolean createPropertiesFileIfNotExists() {
     if (getPropertiesFile() != null) return true;
-    final String path = FileUtil.toSystemIndependentName(myPropertiesFile.getText());
+    final String path = getPropertiesFilePath();
     if (StringUtil.isEmptyOrSpaces(path)) {
-      String message = PropertiesBundle.message("i18nize.empty.file.path", myPropertiesFile.getText());
+      String message = PropertiesBundle.message("i18nize.empty.file.path", path);
       Messages.showErrorDialog(myProject, message, PropertiesBundle.message("i18nize.error.creating.properties.file"));
       myPropertiesFile.requestFocusInWindow();
       return false;
     }
-    final FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(path);
+    final FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(FileUtil.toSystemIndependentName(path));
     if (fileType != PropertiesFileType.INSTANCE && fileType != StdFileTypes.XML) {
       String message = PropertiesBundle.message("i18nize.cant.create.properties.file.because.its.name.is.associated",
-                                                 myPropertiesFile.getText(), fileType.getDescription());
+                                                getPropertiesFilePath(), fileType.getDescription());
       Messages.showErrorDialog(myProject, message, PropertiesBundle.message("i18nize.error.creating.properties.file"));
       myPropertiesFile.requestFocusInWindow();
       return false;
@@ -529,7 +545,7 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
     for (PropertiesFile propertiesFile : propertiesFiles) {
       IProperty existingProperty = propertiesFile.findPropertyByKey(getKey());
       final String propValue = getValue();
-      if (existingProperty != null && !Comparing.strEqual(existingProperty.getValue(), propValue)) {
+      if (existingProperty != null && !Comparing.strEqual(existingProperty.getUnescapedValue(), propValue)) {
         final String messageText = PropertiesBundle.message("i18nize.dialog.error.property.already.defined.message", getKey(), propertiesFile.getName());
         final int code = Messages.showOkCancelDialog(myProject,
                                                      messageText,

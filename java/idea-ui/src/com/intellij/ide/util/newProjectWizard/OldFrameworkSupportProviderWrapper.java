@@ -18,6 +18,7 @@ import com.intellij.openapi.roots.ui.configuration.libraries.CustomLibraryDescri
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.ui.EmptyIcon;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -88,6 +89,7 @@ public class OldFrameworkSupportProviderWrapper extends FrameworkSupportInModule
 
     @NotNull
     @Override
+    @Nls(capitalization = Nls.Capitalization.Title)
     public String getPresentableName() {
       return GuiUtils.getTextWithoutMnemonicEscaping(myOldProvider.getTitle());
     }

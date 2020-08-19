@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.SavingRequestor;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -177,14 +178,14 @@ public abstract class FileDocumentManager implements SavingRequestor {
     public static final WriteAccessStatus WRITABLE = new WriteAccessStatus(true);
 
     private final boolean myWithWriteAccess;
-    private final @NotNull String myReadOnlyMessage;
+    private final @NotNull @NlsContexts.HintText String myReadOnlyMessage;
 
     private WriteAccessStatus(boolean withWriteAccess) {
       myWithWriteAccess = withWriteAccess;
       myReadOnlyMessage = withWriteAccess ? "" : CoreBundle.message("editing.read.only.file.hint");
     }
 
-    public WriteAccessStatus(@NotNull String readOnlyMessage) {
+    public WriteAccessStatus(@NotNull @NlsContexts.HintText String readOnlyMessage) {
       myWithWriteAccess = false;
       myReadOnlyMessage = readOnlyMessage;
     }
@@ -192,6 +193,6 @@ public abstract class FileDocumentManager implements SavingRequestor {
     public boolean hasWriteAccess() {return myWithWriteAccess;}
 
     @NotNull
-    public String getReadOnlyMessage() {return myReadOnlyMessage;}
+    public @NlsContexts.HintText String getReadOnlyMessage() {return myReadOnlyMessage;}
   }
 }

@@ -13,6 +13,7 @@ import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementType;
 import com.intellij.packaging.ui.ArtifactEditorContext;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,7 +25,9 @@ import java.util.List;
 public abstract class FacetBasedPackagingElementType<E extends PackagingElement<?>, F extends Facet> extends PackagingElementType<E> {
   private final FacetTypeId<F> myFacetType;
 
-  protected FacetBasedPackagingElementType(@NotNull @NonNls String id, @NotNull String presentableName, FacetTypeId<F> facetType) {
+  protected FacetBasedPackagingElementType(@NotNull @NonNls String id,
+                                           @NotNull @Nls(capitalization = Nls.Capitalization.Title) String presentableName,
+                                           FacetTypeId<F> facetType) {
     super(id, presentableName);
     myFacetType = facetType;
   }

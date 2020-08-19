@@ -8,7 +8,7 @@ import com.intellij.util.ui.JBUI
 import java.awt.Graphics
 import javax.swing.border.Border
 
-class CustomHeaderMenuBar(private val delegatingMenuBar: IdeMenuBar?) : IdeMenuBar() {
+class CustomHeaderMenuBar : IdeMenuBar() {
   init {
     isOpaque = false
   }
@@ -26,12 +26,5 @@ class CustomHeaderMenuBar(private val delegatingMenuBar: IdeMenuBar?) : IdeMenuB
     actionMenu.isFocusable = false
 
     return actionMenu
-  }
-
-  override fun getMainMenuActionGroup(): ActionGroup? {
-    if (delegatingMenuBar != null) {
-      return delegatingMenuBar.mainMenuActionGroup
-    }
-    return super.getMainMenuActionGroup()
   }
 }

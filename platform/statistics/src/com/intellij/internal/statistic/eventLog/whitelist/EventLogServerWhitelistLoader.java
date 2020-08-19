@@ -8,12 +8,14 @@ import com.intellij.internal.statistic.service.fus.StatisticsWhitelistLoader;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.concurrent.TimeUnit;
+
 public class EventLogServerWhitelistLoader implements EventLogMetadataLoader {
   @NotNull
   private final EventLogUploadSettingsService mySettingsService;
 
   public EventLogServerWhitelistLoader(@NotNull String recorderId) {
-    mySettingsService = StatisticsUploadAssistant.createExternalSettings(recorderId, false);
+    mySettingsService = StatisticsUploadAssistant.createExternalSettings(recorderId, false, TimeUnit.HOURS.toMillis(1));
   }
 
   @Override

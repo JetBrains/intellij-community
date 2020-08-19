@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.extractMethod;
 
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -22,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
  * This validator should check if name will clash with existing methods 
  */
 public interface ExtractMethodValidator {
-  @Nullable
+  @Nullable @NlsContexts.DialogMessage
   String check(String name);
 
   boolean isValidName(String name);

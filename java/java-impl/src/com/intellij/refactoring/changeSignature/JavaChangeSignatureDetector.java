@@ -19,7 +19,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetector<DetectedJavaChangeInfo> {
-  private static final Logger LOG = Logger.getInstance(JavaChangeSignatureDetector.class);
 
   @NotNull
   @Override
@@ -130,9 +129,6 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
   @Override
   public DetectedJavaChangeInfo createNextChangeInfo(String signature, @NotNull final DetectedJavaChangeInfo currentInfo, boolean delegate) {
     final PsiElement currentInfoMethod = currentInfo.getMethod();
-    if (currentInfoMethod == null) {
-      return null;
-    }
     final Project project = currentInfoMethod.getProject();
 
     final PsiMethod oldMethod = currentInfo.getMethod();

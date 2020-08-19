@@ -391,7 +391,9 @@ internal class WorkspaceEntityStorageBuilderImpl(
             updateChangeLog { it.add(ChangeEntry.ReplaceEntity(clonedEntity, emptyList(), emptyList(), emptyMap())) }
           }
 
-          if (localNode == matchedEntityData) this.indexes.updateExternalMappingForEntityId(oldPid, originStorageIndexes = replaceWith.indexes)
+          if (localNode == matchedEntityData) {
+            this.indexes.updateExternalMappingForEntityId(oldPid, localNode.createPid(), replaceWith.indexes)
+          }
           // Remove added entity
           localMatchedEntities.remove(localNode.identificator(this), localNode)
         }

@@ -13,6 +13,8 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -101,7 +103,7 @@ public class RenameDialog extends RefactoringDialog {
   }
 
   @NotNull
-  protected String getLabelText() {
+  protected @NlsContexts.Label String getLabelText() {
     return RefactoringBundle.message("rename.0.and.its.usages.to", getFullName());
   }
 
@@ -335,6 +337,10 @@ public class RenameDialog extends RefactoringDialog {
     invokeRefactoring(processor);
   }
 
+  public RenameProcessor createRenameProcessorEx(@NotNull String newName) {
+    return createRenameProcessor(newName);
+  }
+
   protected RenameProcessor createRenameProcessor(@NotNull String newName) {
     return new RenameProcessor(getProject(), myPsiElement, newName, getRefactoringScope(), isSearchInComments(), isSearchInNonJavaFiles());
   }
@@ -345,7 +351,7 @@ public class RenameDialog extends RefactoringDialog {
     if (!areButtonsValid()) {
       throw new ConfigurationException(LangBundle.message("dialog.message.valid.identifier", getNewName()));
     }
-    final Function<String, String> inputValidator = RenameInputValidatorRegistry.getInputErrorValidator(myPsiElement);
+    final Function<String, @DialogMessage String> inputValidator = RenameInputValidatorRegistry.getInputErrorValidator(myPsiElement);
     if (inputValidator != null) {
       setErrorText(inputValidator.fun(getNewName()));
     }
@@ -365,7 +371,7 @@ public class RenameDialog extends RefactoringDialog {
     return myCbSearchInComments;
   }
 
-  private static String getRefactoringName() {
+  private static @NlsContexts.DialogTitle String getRefactoringName() {
     return RefactoringBundle.message("rename.title");
   }
 }

@@ -3,4 +3,4 @@ class Kvas:
         pass
 
 
-Kvas()[<error descr="expression expected">]</error>
+Kvas()[<error descr="Expression expected">]</error>

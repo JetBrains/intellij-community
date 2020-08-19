@@ -71,4 +71,8 @@ public final class DecodeDefaultsUtil {
       return null;
     }
   }
+
+  public static void clearResourceCache() {
+    RESOURCE_CACHE.clear();
+  }
 }

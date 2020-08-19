@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.importProject;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
 import com.intellij.ide.util.projectWizard.importSources.DetectedSourceRoot;
@@ -14,6 +15,7 @@ import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
@@ -66,7 +68,7 @@ public final class JavaModuleInsight extends ModuleInsight {
       Map<String, ModuleInfo> moduleInfos = new HashMap<>();
       for (JavaModuleSourceRoot moduleInfoRoot : moduleInfoRoots) {
         final File sourceRoot = moduleInfoRoot.getDirectory();
-        myProgress.setText("Scanning " + sourceRoot.getPath());
+        myProgress.setText(JavaUiBundle.message("module.insight.scan.progress.text.scanning", sourceRoot.getPath()));
         final ModuleInfo moduleInfo = scanModuleInfoFile(sourceRoot);
         if (moduleInfo != null) {
           moduleInfo.descriptor = createModuleDescriptor(moduleInfo.directory, Collections.singletonList(moduleInfoRoot));
@@ -74,7 +76,7 @@ public final class JavaModuleInsight extends ModuleInsight {
           addExportedPackages(sourceRoot, moduleInfo.exportsPackages);
         }
       }
-      myProgress.setText("Building modules layout...");
+      myProgress.setText(JavaUiBundle.message("module.insight.scan.progress.text.building.modules.layout"));
       for (ModuleInfo moduleInfo : moduleInfos.values()) {
         for (String requiresModule : moduleInfo.requiresModules) {
           ModuleInfo requiredModuleInfo = moduleInfos.get(requiresModule);
@@ -101,7 +103,8 @@ public final class JavaModuleInsight extends ModuleInsight {
 
   private ModuleInfo scanModuleInfoFile(@NotNull File directory) {
     File file = new File(directory, PsiJavaModule.MODULE_INFO_FILE);
-    myProgress.setText2(file.getName());
+    @NlsSafe final String name = file.getName();
+    myProgress.setText2(name);
     try {
       String text = FileUtil.loadFile(file);
 

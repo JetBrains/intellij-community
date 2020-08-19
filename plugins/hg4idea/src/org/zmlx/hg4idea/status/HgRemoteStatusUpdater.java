@@ -8,10 +8,13 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgBundle;
@@ -99,6 +102,7 @@ public class HgRemoteStatusUpdater implements Disposable {
     status.setChanges(changesets.size(), new ChangesetFormatter(status, changesets));
   }
 
+  @NlsContexts.ProgressTitle
   private static String getProgressTitle() {
     return HgBundle.message("hg4idea.changesets.checking.progress");
   }
@@ -111,16 +115,19 @@ public class HgRemoteStatusUpdater implements Disposable {
   }
 
   private static final class ChangesetFormatter implements HgChangesetStatus.ChangesetWriter {
-    private final String string;
+    private final @Nls String string;
 
     private ChangesetFormatter(HgChangesetStatus status, List<HgRevisionNumber> changesets) {
-      StringBuilder builder = new StringBuilder();
-      builder.append("<b>").append(status.getStatusName()).append(" changesets</b>:<br>");
+      HtmlBuilder sb = new HtmlBuilder();
+      sb.append(HtmlChunk.text(HgBundle.message("hg4idea.widget.tooltip.title.status.changesets", status.getStatusName())).bold())
+        .append(":").br();
       for (HgRevisionNumber revisionNumber : changesets) {
-        builder.append(revisionNumber.asString()).append(" ").append(revisionNumber.getCommitMessage()).append(" (")
-          .append(revisionNumber.getAuthor()).append(")<br>");
+        sb.append(revisionNumber.asString()).append(" ")
+          .append(revisionNumber.getCommitMessage())
+          .append(" (").append(revisionNumber.getAuthor()).append(")")
+          .br();
       }
-      string = XmlStringUtil.wrapInHtml(builder);
+      string = sb.wrapWithHtmlBody().toString();
     }
 
     @Override

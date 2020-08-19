@@ -1435,6 +1435,11 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
       if (component instanceof ActionToolbarImpl) {
         ActionToolbarImpl toolbar = (ActionToolbarImpl)component;
         myProperties.addAll(UiInspectorUtil.collectActionGroupInfo("Toolbar", toolbar.getActionGroup(), toolbar.getPlace()));
+
+        JComponent targetComponent = ReflectionUtil.getField(ActionToolbarImpl.class, toolbar, JComponent.class, "myTargetComponent");
+        if (targetComponent != null) {
+          myProperties.add(new PropertyBean("Target component", targetComponent.toString(), true));
+        }
       }
     }
 

@@ -176,7 +176,7 @@ private class ContainingBranchesPanel : HtmlPanel() {
   override fun getBody(): String {
     val insets = insets
     val text = getBranchesText(branches, expanded, width - insets.left - insets.right, getFontMetrics(bodyFont))
-    return if (expanded) text else "<nobr>$text</nobr>" // NON-NLS
+    return if (expanded) text else "<nobr>$text</nobr>"
   }
 
   override fun getBackground(): Color = getCommitDetailsBackground()

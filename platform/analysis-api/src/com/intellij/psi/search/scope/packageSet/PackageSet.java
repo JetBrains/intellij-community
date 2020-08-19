@@ -15,8 +15,8 @@
  */
 package com.intellij.psi.search.scope.packageSet;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Function;
@@ -26,7 +26,7 @@ public interface PackageSet {
   boolean contains(@NotNull PsiFile file, NamedScopesHolder holder);
   @NotNull
   PackageSet createCopy();
-  @NonNls @NotNull
+  @NlsSafe @NotNull
   String getText();
   int getNodePriority();
 

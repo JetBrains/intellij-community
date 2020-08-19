@@ -15,6 +15,8 @@
  */
 package org.zmlx.hg4idea.execution;
 
+import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +34,7 @@ public interface HgPromptHandler {
    * @param message standard output message from Mercurial
    * @return
    */
-  boolean shouldHandle(@Nullable String message);
+  boolean shouldHandle(@Nullable @NonNls String message);
 
   /**
    * Change default behavior in commands execution. Execute only if shouldHandle method return true.
@@ -42,7 +44,7 @@ public interface HgPromptHandler {
    * @param defaultChoice
    * @return
    */
-  HgPromptChoice promptUser(@NotNull final String message,
+  HgPromptChoice promptUser(@NotNull @NlsSafe String message,
                             final HgPromptChoice @NotNull [] choices,
                             @NotNull final HgPromptChoice defaultChoice);
 }

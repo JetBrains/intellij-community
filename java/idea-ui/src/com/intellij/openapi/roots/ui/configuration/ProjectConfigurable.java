@@ -29,6 +29,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStr
 import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -39,12 +40,12 @@ import com.intellij.ui.FieldPanel;
 import com.intellij.ui.InsertPathAction;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -149,7 +150,7 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
     myPanel.add(myWholePanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST,
                                                      GridBagConstraints.NONE, JBUI.insetsTop(4), 0, 0));
 
-    myPanel.setBorder(new EmptyBorder(0, 10, 0, 10));
+    myPanel.setBorder(JBUI.Borders.empty(0, 10));
     myProjectCompilerOutput.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
@@ -212,7 +213,7 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
     assert compilerProjectExtension != null : myProject;
 
     if (myProjectName != null && StringUtil.isEmptyOrSpaces(myProjectName.getText())) {
-      throw new ConfigurationException("Please, specify project name!");
+      throw new ConfigurationException(JavaUiBundle.message("project.configurable.dialog.message"));
     }
 
     ApplicationManager.getApplication().runWriteAction(() -> {
@@ -260,7 +261,7 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
   }
 
   @Override
-  public String getBannerSlogan() {
+  public @Nls String getBannerSlogan() {
     return JavaUiBundle.message("project.roots.project.banner.text", myProject.getName());
   }
 
@@ -299,8 +300,12 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
   }
 
   @NotNull
-  public String getProjectName() {
-    return myProjectName != null ? myProjectName.getText().trim() : myProject.getName();
+  public @Nls(capitalization = Nls.Capitalization.Sentence) String getProjectName() {
+    if (myProjectName != null) {
+      @NlsSafe final String text = myProjectName.getText();
+      return text.trim();
+    }
+    return myProject.getName();
   }
 
   @Nullable

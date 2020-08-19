@@ -36,7 +36,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   private String myToolwindowTitle;
   private boolean myCloseable = true;
   private ActionGroup myActions;
-  private String myPlace;
+  private @NonNls String myPlace;
 
   private AlertIcon myAlertIcon;
 

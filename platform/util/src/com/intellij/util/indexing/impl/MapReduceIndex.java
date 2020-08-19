@@ -219,8 +219,17 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
   }
 
   @Override
-  public final @NotNull Computable<Boolean> mapInputAndPrepareUpdate(int inputId, @Nullable Input content) throws MapInputException, ProcessCanceledException {
-    InputData<Key, Value> data = mapInput(inputId, content);
+  public @NotNull Computable<Boolean> mapInputAndPrepareUpdate(int inputId, @Nullable Input content) throws MapInputException, ProcessCanceledException {
+    InputData<Key, Value> data;
+    try {
+      data = mapInput(inputId, content);
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (Exception e) {
+      throw new MapInputException("Failed to map data for input " + inputId + " for index " + myIndexId.getName(), e);
+    }
 
     UpdateData<Key, Value> updateData = new UpdateData<>(
       inputId,
@@ -249,6 +258,10 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     };
   }
 
+  /**
+   * An exception occurred while mapping data for a single file by its associated indexer.
+   * We should not rebuild the whole index if indexing of only one file has failed.
+   */
   public static final class MapInputException extends RuntimeException {
     public MapInputException(String message, Throwable cause) {
       super(message, cause);
@@ -290,15 +303,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
 
   @NotNull
   protected Map<Key, Value> mapByIndexer(int inputId, @NotNull Input content) {
-    try {
-      return myIndexer.map(content);
-    }
-    catch (ProcessCanceledException e) {
-      throw e;
-    }
-    catch (Exception e) {
-      throw new MapInputException("Failed to map data for input " + inputId + " for index " + myIndexId.getName(), e);
-    }
+    return myIndexer.map(content);
   }
 
   public abstract void checkCanceled();
@@ -330,8 +335,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     @Override
     public void process(Key key, Value value, int inputId) throws StorageException {
       myModificationStamp.incrementAndGet();
-      myStorage.removeAllValues(key, inputId);
-      myStorage.addValue(key, inputId, value);
+      myStorage.updateValue(key, inputId, value);
     }
   };
 
@@ -345,6 +349,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
         if (hasDifference) updateData.updateForwardIndex();
       }
       catch (ProcessCanceledException e) {
+        LOG.error("ProcessCanceledException is not expected here!", e);
         throw e;
       }
       catch (Throwable e) { // e.g. IOException, AssertionError

@@ -7,6 +7,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.icons.AllIcons;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.DumbService;
@@ -219,7 +220,7 @@ public final class JavaGenerateMemberCompletionContributor {
   private static AccessToken forceDefaultMethodsInside() {
     CommandProcessor instance = CommandProcessor.getInstance();
     String commandName = instance.getCurrentCommandName();
-    instance.setCurrentCommandName(OverrideImplementUtil.IMPLEMENT_COMMAND_MARKER);
+    instance.setCurrentCommandName(JavaBundle.message("generate.members.implement.command"));
     return new AccessToken() {
       @Override
       public void finish() {

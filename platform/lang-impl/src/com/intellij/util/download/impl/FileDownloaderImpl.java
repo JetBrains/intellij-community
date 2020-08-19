@@ -10,6 +10,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
@@ -45,7 +46,7 @@ class FileDownloaderImpl implements FileDownloader {
   private final JComponent myParentComponent;
   @Nullable private final Project myProject;
   private String myDirectoryForDownloadedFilesPath;
-  private final String myDialogTitle;
+  private final @NlsContexts.DialogTitle String myDialogTitle;
 
   FileDownloaderImpl(@NotNull List<? extends DownloadableFileDescription> fileDescriptions,
                             @Nullable Project project,

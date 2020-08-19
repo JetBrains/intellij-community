@@ -50,9 +50,9 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
   private volatile long startTime;
   private volatile long endTime;
   @Nullable
-  private String myTitle;
+  private @BuildEventsNls.Title String myTitle;
   @Nullable
-  private String myHint;
+  private @BuildEventsNls.Hint String myHint;
   @Nullable
   private volatile EventResult myResult;
   private final boolean myAutoExpandNode;
@@ -116,12 +116,12 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
     return myTitle;
   }
 
-  public void setTitle(@Nullable String title) {
+  public void setTitle(@BuildEventsNls.Title @Nullable String title) {
     assert myIsCorrectThread.get();
     myTitle = title;
   }
 
-  public void setHint(@Nullable String hint) {
+  public void setHint(@BuildEventsNls.Hint @Nullable String hint) {
     assert myIsCorrectThread.get();
     myHint = hint;
   }
@@ -368,7 +368,7 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
     return myChildrenList.stream().filter(filter).findFirst().orElse(null);
   }
 
-  private String getCurrentHint() {
+  private @BuildEventsNls.Hint String getCurrentHint() {
     assert myIsCorrectThread.get();
     String hint = myHint;
     int warnings = myWarnings.get();

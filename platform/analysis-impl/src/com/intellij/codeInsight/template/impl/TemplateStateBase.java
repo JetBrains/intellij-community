@@ -30,9 +30,9 @@ public class TemplateStateBase {
   private TemplateBase myTemplate;
   private TemplateSegments mySegments;
 
-  public TemplateStateBase(Editor editor) {
+  public TemplateStateBase(Editor editor, @NotNull Document document) {
     myEditor = editor;
-    myDocument = editor.getDocument();
+    myDocument = document;
   }
 
   protected void setEditor(Editor editor) {

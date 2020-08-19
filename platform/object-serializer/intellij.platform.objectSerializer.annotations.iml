@@ -5,7 +5,7 @@
     <content url="file://$MODULE_DIR$/annotations">
       <sourceFolder url="file://$MODULE_DIR$/annotations" isTestSource="false" packagePrefix="com.intellij.serialization" />
     </content>
-    <orderEntry type="jdk" jdkName="IDEA jdk" jdkType="JavaSDK" />
+    <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>

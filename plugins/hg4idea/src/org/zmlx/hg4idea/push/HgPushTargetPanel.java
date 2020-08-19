@@ -10,6 +10,7 @@ import com.intellij.dvcs.push.ui.VcsEditableTextComponent;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredTreeCellRenderer;
@@ -27,7 +28,7 @@ import java.util.List;
 public class HgPushTargetPanel extends PushTargetPanel<HgTarget> {
 
   private final HgRepository myRepository;
-  private final String myBranchName;
+  private final @NlsSafe String myBranchName;
   private final TextFieldWithCompletion myDestTargetPanel;
   private final VcsEditableTextComponent myTargetRenderedComponent;
 

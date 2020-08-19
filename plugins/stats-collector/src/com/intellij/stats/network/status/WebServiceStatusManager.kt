@@ -11,7 +11,6 @@ object WebServiceStatusManager {
   private val statuses: MutableMap<String, WebServiceStatus> = mutableMapOf()
 
   init {
-    register(JetStatServiceStatus())
     if (Registry.`is`(USE_ANALYTICS_PLATFORM_REGISTRY, false)) {
       registerAnalyticsPlatformStatus()
     }

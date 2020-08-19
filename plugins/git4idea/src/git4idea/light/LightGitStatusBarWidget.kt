@@ -7,11 +7,11 @@ import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.wm.StatusBar
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.StatusBarWidgetFactory
 import com.intellij.util.Consumer
-import com.intellij.util.ui.UIUtil
 import git4idea.i18n.GitBundle
 import java.awt.Component
 import java.awt.event.MouseEvent
@@ -49,7 +49,7 @@ private class LightGitStatusBarWidget(private val lightGitTracker: LightGitTrack
     val selectedFile = LightEditService.getInstance().selectedFile
     if (selectedFile != null) {
       val statusText = lightGitTracker.getFileStatus(selectedFile).getPresentation()
-      if (statusText.isNotBlank()) return "$locationText${UIUtil.BR}$statusText"
+      if (statusText.isNotBlank()) return HtmlBuilder().append(locationText).br().append(statusText).toString()
     }
     return locationText
   }

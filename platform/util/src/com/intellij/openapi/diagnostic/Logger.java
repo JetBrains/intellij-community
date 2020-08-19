@@ -190,7 +190,7 @@ public abstract class Logger {
   @Contract("false,_->fail") // wrong, but avoid quite a few warnings in the code
   public boolean assertTrue(boolean value, @NonNls @Nullable Object message) {
     if (!value) {
-      String resultMessage = "Assertion failed";
+      @NonNls String resultMessage = "Assertion failed";
       if (message != null) resultMessage += ": " + message;
       error(resultMessage, new Throwable(resultMessage));
     }

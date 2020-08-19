@@ -18,7 +18,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.org.objectweb.asm.Opcodes;
 
 /**
  * @author ven
@@ -161,15 +160,17 @@ public final class ClsParsingUtil {
     return StringUtil.isJavaIdentifier(identifier) && !JavaLexer.isKeyword(identifier, level);
   }
 
-  @Nullable
-  public static JavaSdkVersion getJdkVersionByBytecode(int major) {
-    if (major == Opcodes.V1_1 || major == 45) {
-      return JavaSdkVersion.JDK_1_1;
-    }
-    if (major >= 46) {
-      JavaVersion version = JavaVersion.compose(major - 44);  // 46 = 1.2, 47 = 1.3 etc.
+  // expecting the parameter in the "unsigned short" format
+  public static @Nullable JavaSdkVersion getJdkVersionByBytecode(int major) {
+    if (major >= 44) {
+      JavaVersion version = JavaVersion.compose(major - 44);  // 44 = 1.0, 45 = 1.1, 46 = 1.2 etc.
       return JavaSdkVersion.fromJavaVersion(version);
     }
     return null;
+  }
+
+  // expecting the parameter in the "unsigned short" format
+  public static boolean isPreviewLevel(int minor) {
+    return minor == 0xFFFF;
   }
 }

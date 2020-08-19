@@ -52,7 +52,7 @@ public abstract class RootType {
   }
 
   private final String myId;
-  private final String myDisplayName;
+  private final @Nls String myDisplayName;
 
   protected RootType(@NotNull String id,
                      @Nullable @Nls(capitalization = Nls.Capitalization.Title) String displayName) {

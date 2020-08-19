@@ -14,6 +14,7 @@ import com.intellij.diff.tools.util.DiffDataKeys
 import com.intellij.diff.util.Side
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
+import com.intellij.openapi.diff.DiffBundle
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.Key
@@ -32,7 +33,7 @@ class MutableDiffRequestChain(var content1: DiffContent, var content2: DiffConte
   override fun getRequests(): List<DiffRequestProducer> {
     return listOf(object : DiffRequestProducer {
       override fun getName(): String {
-        return "Change"
+        return DiffBundle.message("diff.files.generic.request.title")
       }
 
       override fun process(context: UserDataHolder, indicator: ProgressIndicator): DiffRequest {

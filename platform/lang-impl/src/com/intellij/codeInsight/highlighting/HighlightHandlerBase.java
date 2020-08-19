@@ -6,6 +6,7 @@ import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,7 +26,7 @@ public abstract class HighlightHandlerBase {
   }
 
   @NotNull
-  public static String getLineTextErrorStripeTooltip(@NotNull Document document, int offset, boolean escape) {
+  public static @NlsContexts.Tooltip String getLineTextErrorStripeTooltip(@NotNull Document document, int offset, boolean escape) {
     final int lineNumber = document.getLineNumber(offset);
     int lineStartOffset = document.getLineStartOffset(lineNumber);
     int lineEndOffset = document.getLineEndOffset(lineNumber);

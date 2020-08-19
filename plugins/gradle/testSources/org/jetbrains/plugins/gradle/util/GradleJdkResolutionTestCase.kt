@@ -5,7 +5,6 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkNo
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtilTestCase
 import com.intellij.openapi.externalSystem.service.execution.nonblockingResolveSdkBySdkName
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProviderImpl
 import com.intellij.openapi.util.io.FileUtil
 import org.gradle.util.GradleVersion
@@ -95,8 +94,7 @@ abstract class GradleJdkResolutionTestCase : ExternalSystemJdkUtilTestCase() {
     assertEquals(java?.homePath, getGradleJavaHome(externalProjectPath))
   }
 
-  fun assertSuggestedGradleVersionFor(gradleVersionString: String?, javaVersionString: String) {
-    val gradleVersion = gradleVersionString?.let(GradleVersion::version)
+  fun assertSuggestedGradleVersionFor(gradleVersion: GradleVersion?, javaVersionString: String) {
     val testJdk = TestSdkGenerator.createNextSdk(javaVersionString)
     withRegisteredSdk(testJdk, isProjectSdk = true) {
       val actualGradleVersion = suggestGradleVersion(project)
@@ -107,13 +105,19 @@ abstract class GradleJdkResolutionTestCase : ExternalSystemJdkUtilTestCase() {
     }
   }
 
+  fun assertSuggestedGradleVersionFor(gradleVersionString: String, javaVersionString: String) {
+    val gradleVersion = GradleVersion.version(gradleVersionString)
+    assertSuggestedGradleVersionFor(gradleVersion, javaVersionString)
+  }
+
   fun withServiceGradleUserHome(action: () -> Unit) {
     val systemSettings = GradleSystemSettings.getInstance()
     val serviceDirectoryPath = systemSettings.serviceDirectoryPath
     systemSettings.serviceDirectoryPath = gradleUserHome
     try {
       action()
-    } finally {
+    }
+    finally {
       systemSettings.serviceDirectoryPath = serviceDirectoryPath
     }
   }

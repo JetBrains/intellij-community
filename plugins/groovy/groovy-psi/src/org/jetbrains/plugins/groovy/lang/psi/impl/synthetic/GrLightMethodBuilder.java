@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.PsiClassImplUtil;
@@ -48,7 +49,7 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
 
   public static final Key<String> KIND_KEY = Key.create("GrLightMethodBuilder.Key");
 
-  protected String myName;
+  protected @NlsSafe String myName;
   private PsiType myReturnType = PsiType.VOID;
   private final GrLightModifierList myModifierList;
   private final GrLightParameterListBuilder myParameterList;
@@ -70,7 +71,7 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
     setNavigationElement(constructedClass);
   }
 
-  public GrLightMethodBuilder(PsiManager manager, String name) {
+  public GrLightMethodBuilder(PsiManager manager, @NlsSafe String name) {
     super(manager, GroovyLanguage.INSTANCE);
     myName = name;
     myModifierList = new GrLightModifierList(this);
@@ -116,13 +117,12 @@ public class GrLightMethodBuilder extends LightElement implements GrMethod, Orig
   }
 
   @Override
-  public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
+  public PsiElement setName(@NlsSafe @NotNull String name) throws IncorrectOperationException {
     throw new IncorrectOperationException("Please don't rename light methods");
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NlsSafe @NotNull String getName() {
     return myName;
   }
 

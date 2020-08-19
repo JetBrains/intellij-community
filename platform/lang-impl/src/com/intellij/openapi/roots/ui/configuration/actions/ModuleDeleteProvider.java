@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.module.impl.LoadedModuleDescriptionImpl;
 import com.intellij.openapi.project.Project;
@@ -21,6 +22,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.project.ProjectKt;
@@ -111,7 +113,7 @@ public class ModuleDeleteProvider  implements DeleteProvider, TitledHandler  {
     }, ProjectBundle.message("module.remove.command"), null);
   }
 
-  private static String getConfirmationText(String names, int numberOfModules) {
+  private static @NlsContexts.DialogMessage String getConfirmationText(String names, int numberOfModules) {
     if (ProjectAttachProcessor.canAttachToProject()) {
       return ProjectBundle.message("project.remove.confirmation.prompt", names, numberOfModules);
     }

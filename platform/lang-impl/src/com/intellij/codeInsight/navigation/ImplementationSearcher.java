@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiInvalidElementAccessException;
@@ -126,7 +127,7 @@ public class ImplementationSearcher {
     protected abstract void processElement(PsiElement element);
   }
 
-  public static String getSearchingForImplementations() {
+  public static @NlsContexts.ProgressTitle String getSearchingForImplementations() {
     return CodeInsightBundle.message("searching.for.implementations");
   }
 }

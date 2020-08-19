@@ -22,3 +22,25 @@ class Test implements Serializable {
     return 1;
   }
 }
+
+record R() implements Serializable {
+  private static final long <warning descr="The 'serialVersionUID' can be annotated with @Serial annotation">serialVersionUID</warning> = 7874493593505141603L;
+  private static final ObjectStreamField[] serialPersistentFields = new ObjectStreamField[0];
+
+  public Object <warning descr="The 'writeReplace' can be annotated with @Serial annotation">writeReplace</warning>() throws ObjectStreamException {
+    return 1;
+  }
+
+  protected Object <warning descr="The 'readResolve' can be annotated with @Serial annotation">readResolve</warning>() throws ObjectStreamException {
+    return 1;
+  }
+
+  private void writeObject(ObjectOutputStream out) throws IOException {
+  }
+
+  private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+  }
+
+  private void readObjectNoData() throws ObjectStreamException {
+  }
+}

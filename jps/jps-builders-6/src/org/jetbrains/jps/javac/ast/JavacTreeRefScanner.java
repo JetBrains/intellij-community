@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.javac.ast;
 
-import com.intellij.util.containers.Stack;
 import com.sun.source.tree.*;
 import com.sun.source.util.TreeScanner;
 import gnu.trove.THashSet;
@@ -14,6 +13,7 @@ import javax.lang.model.element.*;
 import javax.lang.model.type.*;
 import javax.lang.model.util.Types;
 import java.util.EnumSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -56,7 +56,7 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
       return super.visitNewClass(node, collector);
     } else {
       //anonymous class
-      myCurrentAnonymousTree.add(node);
+      myCurrentAnonymousTree.push(node);
       try {
         scan(node.getEnclosingExpression(), collector);
         scan(node.getIdentifier(), collector);
@@ -181,22 +181,22 @@ class JavacTreeRefScanner extends TreeScanner<Tree, JavacReferenceCollectorListe
   }
 
   protected TypeElement getCurrentEnclosingTypeElement() {
-    return myCurrentEnclosingElement.empty()? null : myCurrentEnclosingElement.peek();
+    return myCurrentEnclosingElement.isEmpty()? null : myCurrentEnclosingElement.peek();
   }
 
-  private final Stack<TypeElement> myCurrentEnclosingElement = new Stack<TypeElement>(1);
-  private final Stack<Long> myCurrentEnclosingElementOffset = new Stack<Long>(1);
-  private final Stack<NewClassTree> myCurrentAnonymousTree = new Stack<NewClassTree>(1);
+  private final LinkedList<TypeElement> myCurrentEnclosingElement = new LinkedList<TypeElement>();
+  private final LinkedList<Long> myCurrentEnclosingElementOffset = new LinkedList<Long>();
+  private final LinkedList<NewClassTree> myCurrentAnonymousTree = new LinkedList<NewClassTree>();
 
   @Override
   public Tree visitClass(ClassTree node, JavacReferenceCollectorListener.ReferenceCollector refCollector) {
     TypeElement element = (TypeElement)refCollector.getReferencedElement(node);
     if (element == null) return null;
-    myCurrentEnclosingElement.add(element);
+    myCurrentEnclosingElement.push(element);
     ModifiersTree modifiers = node.getModifiers();
     long modifiersEndOffset = refCollector.getEndOffset(modifiers);
     long startOffset = modifiersEndOffset == -1 ? refCollector.getStartOffset(node) : (modifiersEndOffset + 1);
-    myCurrentEnclosingElementOffset.add(startOffset);
+    myCurrentEnclosingElementOffset.push(startOffset);
     try {
       final TypeMirror superclass = element.getSuperclass();
       final List<? extends TypeMirror> interfaces = element.getInterfaces();

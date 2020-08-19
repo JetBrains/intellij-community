@@ -5,6 +5,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.HighPriorityAction;
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.analysis.JavaAnalysisBundle;
@@ -46,7 +47,7 @@ public class ReplaceGetClassWithClassLiteralFix extends LocalQuickFixAndIntentio
     if (aClass == null) return false;
     String className = aClass.getName();
     if (className == null) return false;
-    myText = "Replace with " + className + "." + PsiKeyword.CLASS;
+    myText = CommonQuickFixBundle.message("fix.replace.with.x", className + "." + PsiKeyword.CLASS);
     return super.isAvailable(project, file, startElement, endElement);
   }
 

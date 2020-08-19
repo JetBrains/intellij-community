@@ -20,6 +20,7 @@ import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.BuildNumber;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
@@ -51,7 +52,7 @@ import java.util.stream.Stream;
 
 // Prefer to use only JDK classes. Any post start-up functionality should be placed in PluginManager class.
 public final class PluginManagerCore {
-  public static final String META_INF = "META-INF/";
+  public static final @NonNls String META_INF = "META-INF/";
   public static final String IDEA_IS_INTERNAL_PROPERTY = "idea.is.internal";
 
   public static final PluginId CORE_ID = PluginId.getId("com.intellij");
@@ -72,9 +73,9 @@ public final class PluginManagerCore {
 
   static final String PROPERTY_PLUGIN_PATH = "plugin.path";
 
-  public static final String DISABLE = "disable";
-  public static final String ENABLE = "enable";
-  public static final String EDIT = "edit";
+  public static final @NonNls String DISABLE = "disable";
+  public static final @NonNls String ENABLE = "enable";
+  public static final @NonNls String EDIT = "edit";
 
   private static Reference<Map<PluginId, Set<String>>> ourBrokenPluginVersions;
   private static volatile IdeaPluginDescriptorImpl[] ourPlugins;
@@ -105,7 +106,7 @@ public final class PluginManagerCore {
   /**
    * Broken plugins stored in IDEA
    */
-  private static final String BROKEN_PLUGIN_FILE = "/brokenPlugins.txt";
+  private static final @NonNls String BROKEN_PLUGIN_FILE = "/brokenPlugins.txt";
 
   /**
    * Bundled plugins that were updated.
@@ -316,7 +317,7 @@ public final class PluginManagerCore {
   }
 
   @ApiStatus.Internal
-  public static @Nullable PluginDescriptor getPluginDescriptorOrPlatformByClassName(@NotNull String className) {
+  public static @Nullable PluginDescriptor getPluginDescriptorOrPlatformByClassName(@NotNull @NonNls String className) {
     List<IdeaPluginDescriptorImpl> loadedPlugins = ourLoadedPlugins;
     if (loadedPlugins == null ||
         className.startsWith("java.") ||
@@ -1404,11 +1405,11 @@ public final class PluginManagerCore {
     return result;
   }
 
-  private static String toPresentableName(@Nullable IdeaPluginDescriptor descriptor) {
+  private static @NlsSafe String toPresentableName(@Nullable IdeaPluginDescriptor descriptor) {
     return toPresentableName(descriptor == null ? null : descriptor.getName());
   }
 
-  private static @NotNull String toPresentableName(@Nullable String s) {
+  private static @NotNull @NlsSafe String toPresentableName(@Nullable String s) {
     return "\"" + (s == null ? "" : s) + "\"";
   }
 

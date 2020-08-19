@@ -4,6 +4,7 @@ package com.intellij.codeInsight.hints.settings
 import com.intellij.codeInsight.hints.ChangeListener
 import com.intellij.codeInsight.hints.ImmediateConfigurable
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiFile
 import javax.swing.JComponent
 
@@ -53,6 +54,7 @@ abstract class InlayProviderSettingsModel(var isEnabled: Boolean, val id: String
    */
   abstract fun reset()
 
+  @get:NlsContexts.Checkbox
   abstract val mainCheckBoxLabel: String
 
   /**

@@ -14,6 +14,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -123,7 +124,7 @@ public final class LocalHistoryImpl extends LocalHistory implements Disposable {
   }
 
   @Override
-  public LocalHistoryAction startAction(String name) {
+  public LocalHistoryAction startAction(@NlsContexts.Label String name) {
     if (!isInitialized()) return LocalHistoryAction.NULL;
 
     LocalHistoryActionImpl a = new LocalHistoryActionImpl(myEventDispatcher, name);
@@ -132,7 +133,7 @@ public final class LocalHistoryImpl extends LocalHistory implements Disposable {
   }
 
   @Override
-  public Label putUserLabel(@NotNull Project p, @NotNull String name) {
+  public Label putUserLabel(@NotNull Project p, @NotNull @NlsContexts.Label String name) {
     if (!isInitialized()) return Label.NULL_INSTANCE;
     myGateway.registerUnsavedDocuments(myVcs);
     return label(myVcs.putUserLabel(name, getProjectId(p)));
@@ -143,7 +144,7 @@ public final class LocalHistoryImpl extends LocalHistory implements Disposable {
   }
 
   @Override
-  public Label putSystemLabel(@NotNull Project p, @NotNull String name, int color) {
+  public Label putSystemLabel(@NotNull Project p, @NotNull @NlsContexts.Label String name, int color) {
     if (!isInitialized()) return Label.NULL_INSTANCE;
     myGateway.registerUnsavedDocuments(myVcs);
     return label(myVcs.putSystemLabel(name, getProjectId(p), color));

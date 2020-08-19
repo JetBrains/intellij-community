@@ -469,7 +469,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       public void hyperlinkUpdate(HyperlinkEvent e) {
         HyperlinkEvent.EventType type = e.getEventType();
         if (type == HyperlinkEvent.EventType.ACTIVATED) {
-          manager.navigateByLink(DocumentationComponent.this, e.getDescription());
+          manager.navigateByLink(DocumentationComponent.this, null, e.getDescription());
         }
       }
     };
@@ -1537,7 +1537,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     HTMLDocument.Iterator link = getLink(n);
     if (link != null) {
       String href = (String)link.getAttributes().getAttribute(HTML.Attribute.HREF);
-      myManager.navigateByLink(this, href);
+      myManager.navigateByLink(this, null, href);
     }
   }
 

@@ -63,7 +63,7 @@ public final class TerminalSessionEditor extends UserDataHolderBase implements F
   }
 
   private void handleCloseSession() {
-    myFile.getTerminalWidget().close();
+    myFile.getTerminalWidget().terminateProcess();
   }
 
   @NotNull

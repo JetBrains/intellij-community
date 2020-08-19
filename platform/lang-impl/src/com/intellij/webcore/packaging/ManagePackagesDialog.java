@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
@@ -449,11 +450,11 @@ public class ManagePackagesDialog extends DialogWrapper {
         if (myVersionCheckBox.isEnabled()) {
           myController.fetchPackageVersions(packageName, new CatchingConsumer<List<String>, Exception>() {
             @Override
-            public void consume(final List<String> releases) {
+            public void consume(final List<@NlsSafe String> releases) {
               ApplicationManager.getApplication().invokeLater(() -> {
                 if (myPackages.getSelectedValue() == pyPackage) {
                   myVersionComboBox.removeAllItems();
-                  for (String release : releases) {
+                  for (@NlsSafe String release : releases) {
                     myVersionComboBox.addItem(release);
                   }
                 }

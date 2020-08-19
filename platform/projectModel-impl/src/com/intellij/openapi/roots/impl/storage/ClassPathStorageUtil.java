@@ -2,6 +2,7 @@
 package com.intellij.openapi.roots.impl.storage;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.serialization.JpsProjectLoader;
@@ -10,7 +11,7 @@ public final class ClassPathStorageUtil {
   @NonNls public static final String DEFAULT_STORAGE = "default";
 
   @NotNull
-  public static String getStorageType(@NotNull Module module) {
+  public static @NlsSafe String getStorageType(@NotNull Module module) {
     String id = module.getOptionValue(JpsProjectLoader.CLASSPATH_ATTRIBUTE);
     return id == null ? DEFAULT_STORAGE : id;
   }

@@ -12,7 +12,7 @@ class MLRankingConfigurable(private val availableProviders: List<RankingModelPro
   private val settings = CompletionMLRankingSettings.getInstance()
 
   override fun createPanel(): DialogPanel {
-    val providers = availableProviders.sortedBy { it.displayNameInSettings }
+    val providers = availableProviders.distinctBy { it.displayNameInSettings }.sortedBy { it.displayNameInSettings }
     return panel {
       var enableRankingCheckbox: CellBuilder<JBCheckBox>? = null
       titledRow(StatsCollectorBundle.message("ml.completion.settings.group")) {

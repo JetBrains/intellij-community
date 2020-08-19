@@ -10,6 +10,7 @@ import com.intellij.lang.LangBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -63,7 +64,7 @@ public abstract class SliceHandler implements CodeInsightActionHandler {
 
   public abstract SliceAnalysisParams askForParams(PsiElement element,
                                                    SliceManager.StoredSettingsBean storedSettingsBean,
-                                                   String dialogTitle);
+                                                   @NlsContexts.DialogTitle String dialogTitle);
 
   public static SliceHandler create(boolean dataFlowToThis) {
     return dataFlowToThis ? new SliceBackwardHandler() : new SliceForwardHandler();

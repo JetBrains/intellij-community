@@ -1,6 +1,7 @@
 <root>
   <item name='java.nio.charset.Charset Charset(java.lang.String, java.lang.String[]) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
   <item name='java.nio.charset.Charset int compareTo(java.nio.charset.Charset) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>

@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.metrics;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.utils.LibraryUtil;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
@@ -15,7 +16,7 @@ public class GroovyMethodParameterCountInspectionBase extends GroovyMethodMetric
 
   @Override
   public String buildErrorString(Object... args) {
-    return "Method '#ref' contains too many parameters (" + args[0] + '>' + args[1] + ')';
+    return GroovyBundle.message("inspection.message.method.ref.contains.too.many.parameters.0.1", args[0], args[1]);
   }
 
   @NotNull

@@ -1,12 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.importProject;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.projectWizard.importSources.DetectedProjectRoot;
 import com.intellij.ide.util.projectWizard.importSources.DetectedSourceRoot;
 import com.intellij.ide.util.projectWizard.importSources.impl.ProjectFromSourcesBuilderImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -91,7 +93,7 @@ public abstract class ModuleInsight {
         if (isIgnoredName(sourceRoot)) {
           continue;
         }
-        myProgress.setText("Scanning " + sourceRoot.getPath());
+        myProgress.setText(JavaUiBundle.message("module.insight.scan.progress.text.scanning", sourceRoot.getPath()));
 
         final HashSet<String> usedPackages = new HashSet<>();
         mySourceRootToReferencedPackagesMap.put(sourceRoot, usedPackages);
@@ -106,7 +108,7 @@ public abstract class ModuleInsight {
       myProgress.popState();
 
       myProgress.pushState();
-      myProgress.setText("Building modules layout...");
+      myProgress.setText(JavaUiBundle.message("module.insight.scan.progress.text.building.modules.layout"));
       Map<File, ModuleCandidate> rootToModule = new HashMap<>();
       for (DetectedSourceRoot sourceRoot : processedRoots) {
         final File srcRoot = sourceRoot.getDirectory();
@@ -210,10 +212,10 @@ public abstract class ModuleInsight {
 
     for (File contentRoot : moduleContentRoots) {
       final ModuleDescriptor checkedModule = contentRootToModules.get(contentRoot);
-      myProgress.setText2("Building library dependencies for module " + checkedModule.getName());
+      myProgress.setText2(JavaUiBundle.message("progress.details.building.library.dependencies.for.module", checkedModule.getName()));
       buildJarDependencies(checkedModule);
 
-      myProgress.setText2("Building module dependencies for module " + checkedModule.getName());
+      myProgress.setText2(JavaUiBundle.message("progress.details.building.module.dependencies.for.module", checkedModule.getName()));
       for (File aContentRoot : moduleContentRoots) {
         final ModuleDescriptor aModule = contentRootToModules.get(aContentRoot);
         if (checkedModule.equals(aModule)) {
@@ -252,13 +254,13 @@ public abstract class ModuleInsight {
     try {
       try {
         for (File root : myEntryPointRoots) {
-          myProgress.setText("Scanning for libraries " + root.getPath());
+          myProgress.setText(JavaUiBundle.message("progress.text.scanning.for.libraries", root.getPath()));
           scanRootForLibraries(root);
         }
       }
       catch (ProcessCanceledException ignored) {
       }
-      myProgress.setText("Building initial libraries layout...");
+      myProgress.setText(JavaUiBundle.message("progress.text.building.initial.libraries.layout"));
       final List<LibraryDescriptor> libraries = buildInitialLibrariesLayout(myJarToPackagesMap.keySet());
       // correct library names so that there are no duplicates
       final Set<String> libNames = new HashSet<>(myExistingProjectLibraryNames);
@@ -463,7 +465,8 @@ public abstract class ModuleInsight {
   protected abstract boolean isSourceFile(final File file);
 
   private void scanSourceFile(File file, final Set<? super String> usedPackages) {
-    myProgress.setText2(file.getName());
+    @NlsSafe final String name = file.getName();
+    myProgress.setText2(name);
     try {
       final char[] chars = FileUtil.loadFileText(file);
       scanSourceFileForImportedPackages(StringFactory.createShared(chars), s -> usedPackages.add(myInterner.intern(s)));
@@ -487,14 +490,14 @@ public abstract class ModuleInsight {
           scanRootForLibraries(file);
         }
         else {
-          final String fileName = file.getName();
+          @NlsSafe final String fileName = file.getName();
           if (isLibraryFile(fileName)) {
             if (!myJarToPackagesMap.containsKey(file)) {
               final HashSet<String> libraryPackages = new HashSet<>();
               myJarToPackagesMap.put(file, libraryPackages);
 
               myProgress.pushState();
-              myProgress.setText2(file.getName());
+              myProgress.setText2(fileName);
               try {
                 scanLibraryForDeclaredPackages(file, s -> {
                   if (!libraryPackages.contains(s)) {

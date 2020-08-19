@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -27,6 +28,7 @@ import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import com.intellij.util.exception.FrequentErrorLogger;
 import com.intellij.util.graph.InboundSemiGraph;
 import com.intellij.util.graph.OutboundSemiGraph;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -99,7 +101,7 @@ public final class DebugUtil {
   }
 
   private static class TreeToBuffer extends RecursiveTreeElementWalkingVisitor {
-    final Appendable buffer;
+    final @NonNls Appendable buffer;
     final boolean skipWhiteSpaces;
     final boolean showRanges;
     final boolean showChildrenRanges;
@@ -190,7 +192,7 @@ public final class DebugUtil {
 
   private static void lightTreeToBuffer(@NotNull final FlyweightCapableTreeStructure<LighterASTNode> tree,
                                         @NotNull final LighterASTNode node,
-                                        @NotNull final Appendable buffer,
+                                        @NotNull @NonNls Appendable buffer,
                                         final int indent,
                                         final boolean skipWhiteSpaces) {
     final IElementType tokenType = node.getTokenType();
@@ -295,7 +297,7 @@ public final class DebugUtil {
     }
   }
 
-  private static void treeToBufferWithUserData(@NotNull Appendable buffer, @NotNull PsiElement root, int indent, boolean skipWhiteSpaces) {
+  private static void treeToBufferWithUserData(@NotNull @NonNls Appendable buffer, @NotNull PsiElement root, int indent, boolean skipWhiteSpaces) {
     if (skipWhiteSpaces && root instanceof PsiWhiteSpace) return;
 
     StringUtil.repeatSymbol(buffer, ' ', indent);
@@ -523,7 +525,7 @@ public final class DebugUtil {
    * @deprecated use {@link #performPsiModification(String, ThrowableRunnable)} instead
    */
   @Deprecated
-  public static void startPsiModification(@Nullable String trace) {
+  public static void startPsiModification(@Nullable @NlsSafe String trace) {
     if (!PsiInvalidElementAccessException.isTrackingInvalidation()) {
       return;
     }
@@ -559,7 +561,7 @@ public final class DebugUtil {
     }
   }
 
-  public static <T extends Throwable> void performPsiModification(String trace, @NotNull ThrowableRunnable<T> runnable) throws T {
+  public static <T extends Throwable> void performPsiModification(@NonNls String trace, @NotNull ThrowableRunnable<T> runnable) throws T {
     startPsiModification(trace);
     try {
       runnable.run();
@@ -569,7 +571,7 @@ public final class DebugUtil {
     }
   }
 
-  public static <T, E extends Throwable> T performPsiModification(String trace, @NotNull ThrowableComputable<T, E> runnable) throws E {
+  public static <T, E extends Throwable> T performPsiModification(@NlsSafe String trace, @NotNull ThrowableComputable<T, E> runnable) throws E {
     startPsiModification(trace);
     try {
       return runnable.compute();
@@ -642,7 +644,7 @@ public final class DebugUtil {
   }
 
   @NotNull
-  public static String diagnosePsiDocumentInconsistency(@NotNull PsiElement element, @NotNull Document document) {
+  public static @NonNls String diagnosePsiDocumentInconsistency(@NotNull PsiElement element, @NotNull Document document) {
     PsiUtilCore.ensureValid(element);
 
     PsiFile file = element.getContainingFile();

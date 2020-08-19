@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.junit2.configuration;
 
+import com.intellij.execution.MethodBrowser;
 import com.intellij.execution.application.ClassEditorField;
 import com.intellij.execution.configuration.BrowseModuleValueActionListener;
 import com.intellij.execution.junit.JUnitConfiguration;
@@ -68,21 +69,24 @@ public class JUnitTestKindFragment extends SettingsEditorFragment<JUnitConfigura
     InsertPathAction.addTo(directoryField.getTextField(), dirFileChooser);
     FileChooserFactory.getInstance().installFileCompletion(directoryField.getTextField(), dirFileChooser, true, null);
 
-    BrowseModuleValueActionListener<?>[] browsers =
-      JUnitConfigurable.createBrowsers(project, moduleSelector, packageField, pattern, category, () -> getClassName());
-    EditorTextField classField = ClassEditorField.createClassField(project, () -> moduleSelector.getModule(),
-                                                               JUnitConfigurable.createClassVisibilityChecker(
-                                                                 (JUnitConfigurable.TestClassBrowser)browsers[CLASS]));
+    BrowseModuleValueActionListener<?>[] browsers = JUnitConfigurable.createBrowsers(project, moduleSelector, packageField, pattern, category, () -> getClassName());
+    JavaCodeFragment.VisibilityChecker classVisibilityChecker = JUnitConfigurable.createClassVisibilityChecker((JUnitConfigurable.TestClassBrowser)browsers[CLASS]);
+    EditorTextField classField = ClassEditorField.createClassField(project, () -> moduleSelector.getModule(), classVisibilityChecker, browsers[CLASS]);
     EditorTextFieldWithBrowseButton methodField = new EditorTextFieldWithBrowseButton(project, true,
                                                                                       JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE,
                                                                                       PlainTextLanguage.INSTANCE.getAssociatedFileType());
 
     setupField(ALL_IN_PACKAGE, packageField, packageField.getChildComponent().getDocument(), browsers[ALL_IN_PACKAGE]);
     setupField(CLASS, classField, classField.getDocument(), null);
+    ((MethodBrowser)browsers[METHOD]).installCompletion(methodField.getChildComponent());
     setupField(METHOD, methodField, methodField.getChildComponent().getDocument(), browsers[METHOD]);
     setupField(PATTERN, pattern, pattern.getTextField().getDocument(), browsers[PATTERN]);
     setupField(DIR, directoryField, directoryField.getTextField().getDocument(), browsers[DIR]);
     setupField(CATEGORY, category, category.getChildComponent().getDocument(), browsers[CATEGORY]);
+  }
+
+  public int getTestKind() {
+    return myTypeChooser.getItem();
   }
 
   private void setupField(int kind, JComponent field, Object document, @Nullable BrowseModuleValueActionListener<?> browser) {
@@ -100,10 +104,11 @@ public class JUnitTestKindFragment extends SettingsEditorFragment<JUnitConfigura
 
   private void kindChanged(int kind) {
     myTypeChooser.setItem(kind);
-    for (JComponent field : myFields) {
-      field.setVisible(false);
-    }
+    Arrays.stream(myFields).forEach(field -> field.setVisible(false));
     myFields[kind].setVisible(true);
+    if (METHOD == kind) {
+      myFields[CLASS].setVisible(true);
+    }
     fireEditorStateChanged();
   }
 

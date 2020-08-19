@@ -12,7 +12,7 @@ fun Disposable.createLifetime(): Lifetime = this.defineNestedLifetime().lifetime
 
 fun Disposable.defineNestedLifetime(): LifetimeDefinition {
   val lifetimeDefinition = Lifetime.Eternal.createNested()
-  if (Disposer.isDisposing(this) || Disposer.isDisposed(this)) {
+  if (Disposer.isDisposed(this)) {
     lifetimeDefinition.terminate()
     return lifetimeDefinition
   }

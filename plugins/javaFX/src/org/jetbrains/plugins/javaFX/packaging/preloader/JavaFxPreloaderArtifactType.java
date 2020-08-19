@@ -22,6 +22,7 @@ import com.intellij.packaging.elements.PackagingElementFactory;
 import com.intellij.packaging.elements.PackagingElementOutputKind;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.javaFX.JavaFXBundle;
 
 import javax.swing.*;
 
@@ -31,7 +32,7 @@ public class JavaFxPreloaderArtifactType extends ArtifactType {
   }
   
   protected JavaFxPreloaderArtifactType() {
-    super("javafx-preloader", "JavaFx Preloader");
+    super("javafx-preloader", JavaFXBundle.message("javafx.preloader.title"));
   }
 
   @NotNull

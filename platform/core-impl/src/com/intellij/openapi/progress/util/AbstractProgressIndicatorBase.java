@@ -176,8 +176,8 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
       Optional<StackTraceElement> first = Arrays.stream(trace)
         .filter(element -> !element.getClassName().startsWith("com.intellij.openapi.progress.util"))
         .findFirst();
-      String message = "This progress indicator is indeterminate, this may lead to visual inconsistency. " +
-                       "Please call setIndeterminate(false) before you start progress.";
+      @NonNls String message = "This progress indicator is indeterminate, this may lead to visual inconsistency. " +
+                               "Please call setIndeterminate(false) before you start progress.";
       if (first.isPresent()) {
         message += "\n" + first.get();
       }

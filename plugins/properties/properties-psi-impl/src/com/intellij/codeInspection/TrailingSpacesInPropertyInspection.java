@@ -69,7 +69,8 @@ public class TrailingSpacesInPropertyInspection extends PropertiesInspectionBase
           PsiElement key = node.getPsi();
           TextRange textRange = getTrailingSpaces(key, myIgnoreVisibleSpaces);
           if (textRange != null) {
-            descriptors.add(manager.createProblemDescriptor(key, textRange, "Trailing spaces", ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true, new RemoveTrailingSpacesFix(myIgnoreVisibleSpaces)));
+            descriptors.add(manager.createProblemDescriptor(key, textRange, PropertiesBundle
+              .message("inspection.trailing.spaces.in.property.trailing.spaces.description"), ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true, new RemoveTrailingSpacesFix(myIgnoreVisibleSpaces)));
           }
         }
       }
@@ -102,7 +103,7 @@ public class TrailingSpacesInPropertyInspection extends PropertiesInspectionBase
     @Override
     @NotNull
     public String getFamilyName() {
-      return "Remove trailing spaces";
+      return PropertiesBundle.message("remove.trailing.spaces.fix.family.name");
     }
 
     @Override

@@ -16,6 +16,7 @@ import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenId;
+import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
@@ -27,7 +28,7 @@ import static icons.OpenapiIcons.RepositoryLibraryLogo;
 
 public class MavenFrameworkSupportProvider extends FrameworkSupportProvider {
   public MavenFrameworkSupportProvider() {
-    super(MavenFrameworkSupportProvider.class.getName(), "Maven");
+    super(MavenFrameworkSupportProvider.class.getName(), MavenProjectBundle.message("maven.name"));
   }
 
   @NotNull

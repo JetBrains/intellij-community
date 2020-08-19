@@ -246,10 +246,10 @@ class CommunityRepositoryModules {
     plugin("intellij.android.smali") {
       withModule("intellij.android.smali")
     },
-    plugin("intellij.statsCollector") {
-      withModule("intellij.statsCollector.logEvents")
-      withModule("intellij.statsCollector.completionRanker")
+    plugin("intellij.mlCompletionModels") {
+      bundlingRestrictions.includeInEapOnly = true
     },
+    plugin("intellij.statsCollector"),
     plugin("intellij.jps.cache"),
     plugin("intellij.space") {
       withProjectLibrary("space-idea-sdk")

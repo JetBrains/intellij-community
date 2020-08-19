@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 public class PyWithParenthesesSurrounder extends PyExpressionSurrounder {
   @Override
   public String getTemplateDescription() {
+    //noinspection DialogTitleCapitalization
     return CodeInsightBundle.message("surround.with.parenthesis.template");
   }
 

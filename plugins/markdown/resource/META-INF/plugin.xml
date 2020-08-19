@@ -110,7 +110,7 @@ Includes the following features:</p>
       <className>org.intellij.plugins.markdown.injection.MarkdownCodeFenceErrorHighlightingIntention</className>
       <category>Markdown</category>
     </intentionAction>
-    <notificationAllowlist groupIds="Markdown headers group;Markdown"/>
+    <notificationGroup id="Markdown" displayType="BALLOON"/>
 
     <registryKey key="markdown.clear.cache.interval"
                  defaultValue="600000"
@@ -135,7 +135,6 @@ Includes the following features:</p>
   </applicationListeners>
 
   <extensions defaultExtensionNs="org.intellij.markdown">
-    <html.panel.provider implementation="org.intellij.plugins.markdown.ui.preview.javafx.JavaFxHtmlPanelProvider" />
     <html.panel.provider implementation="org.intellij.plugins.markdown.ui.preview.jcef.JCEFHtmlPanelProvider" />
 
     <fenceLanguageProvider implementation="org.intellij.plugins.markdown.extensions.common.plantuml.PlantUMLCodeFenceLanguageProvider"/>

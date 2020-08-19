@@ -13,6 +13,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
 import com.intellij.openapi.externalSystem.util.OutputWrapper;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -127,6 +128,9 @@ public class GradleExecutionHelper {
         catch (ExternalSystemException e) {
           throw e;
         }
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
         catch (Throwable e) {
           LOG.warn("Gradle execution error", e);
           Throwable rootCause = ExceptionUtil.getRootCause(e);
@@ -212,6 +216,9 @@ public class GradleExecutionHelper {
           catch (IOException e) {
             LOG.warn("Can't update wrapper", e);
           }
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
         }
         catch (Throwable e) {
           LOG.warn("Can't update wrapper", e);
@@ -309,6 +316,7 @@ public class GradleExecutionHelper {
 
     final String javaHome = settings.getJavaHome();
     if (javaHome != null && new File(javaHome).isDirectory()) {
+      LOG.debug("Java home to set for Gradle operation: " + javaHome);
       operation.setJavaHome(new File(javaHome));
     }
 

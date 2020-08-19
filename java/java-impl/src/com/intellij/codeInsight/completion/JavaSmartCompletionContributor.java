@@ -183,7 +183,7 @@ public final class JavaSmartCompletionContributor {
     };
     JavaCompletionProcessor.Options options =
       JavaCompletionProcessor.Options.DEFAULT_OPTIONS.withFilterStaticAfterInstance(parameters.getInvocationCount() <= 1);
-    return JavaCompletionUtil.processJavaReference(element, reference, checkClass, options, matcher, parameters);
+    return JavaCompletionUtil.processJavaReference(element, reference, checkClass, options, matcher::prefixMatches, parameters);
   }
 
   static void beforeSmartCompletion(@NotNull CompletionInitializationContext context) {

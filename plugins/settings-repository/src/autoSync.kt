@@ -5,7 +5,6 @@ import com.intellij.configurationStore.ComponentStoreImpl
 import com.intellij.notification.Notification
 import com.intellij.notification.Notifications
 import com.intellij.openapi.application.AppUIExecutor
-import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
@@ -80,15 +79,33 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
       }
     }
 
-    val app = ApplicationManager.getApplication()
-
     if (onAppExit) {
-      runBlocking {
-        sync(app, onAppExit)
+      // called on final confirmed exit - no need to restore enabled state
+      enabled = false
+      catchAndLog {
+        runBlocking {
+          icsManager.runInAutoCommitDisabledMode {
+            val repositoryManager = icsManager.repositoryManager
+            val hasUpstream = repositoryManager.hasUpstream()
+            if (hasUpstream && !repositoryManager.canCommit()) {
+              LOG.warn("Auto sync skipped: repository is not committable")
+              return@runInAutoCommitDisabledMode
+            }
+
+            // on app exit fetch and push only if there are commits to push
+            // if no upstream - just update cloud schemes
+            if (hasUpstream && !repositoryManager.commit() && repositoryManager.getAheadCommitsCount() == 0 && icsManager.readOnlySourcesManager.repositories.isEmpty()) {
+              return@runInAutoCommitDisabledMode
+            }
+
+            // use explicit progress task to sync on app exit to make it clear why app is not exited immediately
+            icsManager.syncManager.sync(SyncType.MERGE, onAppExit = true)
+          }
+        }
       }
       return
     }
-    else if (app.isDisposed) {
+    else if (ApplicationManager.getApplication().isDisposed) {
       // will be handled by applicationExiting listener
       return
     }
@@ -97,7 +114,11 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
       try {
         // to ensure that repository will not be in uncompleted state and changes will be pushed
         ShutDownTracker.getInstance().registerStopperThread(Thread.currentThread())
-        sync(app, onAppExit)
+        catchAndLog {
+          icsManager.runInAutoCommitDisabledMode {
+            doSync()
+          }
+        }
       }
       finally {
         autoSyncFuture = null
@@ -106,15 +127,8 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
     }
   }
 
-  private suspend fun sync(app: Application, onAppExit: Boolean) {
-    catchAndLog {
-      icsManager.runInAutoCommitDisabledMode {
-        doSync(app, onAppExit)
-      }
-    }
-  }
-
-  private suspend fun doSync(app: Application, onAppExit: Boolean) {
+  private suspend fun doSync() {
+    val app = ApplicationManager.getApplication()
     val repositoryManager = icsManager.repositoryManager
     val hasUpstream = repositoryManager.hasUpstream()
     if (hasUpstream && !repositoryManager.canCommit()) {
@@ -122,40 +136,27 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
       return
     }
 
-    // on app exit fetch and push only if there are commits to push
-    if (onAppExit) {
-      // if no upstream - just update cloud schemes
-      if (hasUpstream && !repositoryManager.commit() && repositoryManager.getAheadCommitsCount() == 0 && icsManager.readOnlySourcesManager.repositories.isEmpty()) {
-        return
-      }
-
-      // use explicit progress task to sync on app exit to make it clear why app is not exited immediately
-      icsManager.syncManager.sync(SyncType.MERGE, onAppExit = true)
-      return
-    }
-
     // update read-only sources at first (because contain scheme - to ensure that some scheme will exist when it will be set as current by some setting)
     updateCloudSchemes(icsManager)
 
-    if (hasUpstream) {
-      val updater = repositoryManager.fetch()
-      // we merge in EDT non-modal to ensure that new settings will be properly applied
-      withContext(AppUIExecutor.onUiThread(ModalityState.NON_MODAL).coroutineDispatchingContext()) {
-        catchAndLog {
-          val updateResult = updater.merge()
-          if (!onAppExit &&
-              !app.isDisposed &&
-              updateResult != null &&
-              updateStoragesFromStreamProvider(icsManager, app.stateStore as ComponentStoreImpl, updateResult)) {
-            // force to avoid saveAll & confirmation
-            app.exit(true, true, true)
-          }
+    if (!hasUpstream) {
+      return
+    }
+
+    val updater = repositoryManager.fetch()
+    // we merge in EDT non-modal to ensure that new settings will be properly applied
+    withContext(AppUIExecutor.onUiThread(ModalityState.NON_MODAL).coroutineDispatchingContext()) {
+      catchAndLog {
+        val updateResult = updater.merge()
+        if (!app.isDisposed && updateResult != null && updateStoragesFromStreamProvider(icsManager, app.stateStore as ComponentStoreImpl, updateResult)) {
+          // force to avoid saveAll & confirmation
+          app.exit(true, true, true)
         }
       }
+    }
 
-      if (!updater.definitelySkipPush) {
-        repositoryManager.push()
-      }
+    if (!updater.definitelySkipPush) {
+      repositoryManager.push()
     }
   }
 }
@@ -164,7 +165,8 @@ internal inline fun catchAndLog(asWarning: Boolean = false, runnable: () -> Unit
   try {
     runnable()
   }
-  catch (e: ProcessCanceledException) { }
+  catch (e: ProcessCanceledException) {
+  }
   catch (e: Throwable) {
     if (asWarning || e is AuthenticationException || e is NoRemoteRepositoryException) {
       LOG.warn(e)

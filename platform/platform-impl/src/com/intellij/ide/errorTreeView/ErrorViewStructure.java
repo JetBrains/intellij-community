@@ -363,7 +363,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
     return addSimpleMessageElement(new SimpleMessageElement(kind, text, data));
   }
 
-  private ErrorTreeElement addSimpleMessageElement(ErrorTreeElement element) {
+  public ErrorTreeElement addSimpleMessageElement(ErrorTreeElement element) {
     synchronized (myLock) {
       List<ErrorTreeElement> elements = mySimpleMessages.get(element.getKind());
       if (elements == null) {

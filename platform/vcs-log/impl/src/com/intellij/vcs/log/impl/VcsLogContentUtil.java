@@ -4,6 +4,7 @@ package com.intellij.vcs.log.impl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.wm.ToolWindow;
@@ -133,8 +134,8 @@ public final class VcsLogContentUtil {
 
   public static <U extends VcsLogUiEx> U openLogTab(@NotNull Project project, @NotNull VcsLogManager logManager,
                                                     @NotNull @NonNls String groupId,
-                                                    @NotNull Supplier<String> tabGroupDisplayName,
-                                                    @NotNull Function<U, String> tabDisplayName,
+                                                    @NotNull Supplier<@NlsContexts.TabTitle String> tabGroupDisplayName,
+                                                    @NotNull Function<U, @NlsContexts.TabTitle String> tabDisplayName,
                                                     @NotNull VcsLogManager.VcsLogUiFactory<U> factory, boolean focus) {
     U logUi = logManager.createLogUi(factory, VcsLogManager.LogWindowKind.TOOL_WINDOW);
 

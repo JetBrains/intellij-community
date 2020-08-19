@@ -510,12 +510,12 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
 
       myWatcher.stop();
 
-      myReadingProcessor.stop();
-      myResolvingProcessor.stop();
-      myPluginsResolvingProcessor.stop();
-      myFoldersResolvingProcessor.stop();
-      myArtifactsDownloadingProcessor.stop();
-      myPostProcessor.stop();
+    myReadingProcessor.stop();
+    myResolvingProcessor.stop();
+    myPluginsResolvingProcessor.stop();
+    myFoldersResolvingProcessor.stop();
+    myArtifactsDownloadingProcessor.stop();
+    myPostProcessor.stop();
       mySaveQueue.flush();
 
       if (isUnitTestMode()) {

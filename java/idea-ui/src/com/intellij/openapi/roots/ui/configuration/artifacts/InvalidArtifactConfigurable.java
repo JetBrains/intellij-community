@@ -4,12 +4,13 @@ package com.intellij.openapi.roots.ui.configuration.artifacts;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.packaging.impl.artifacts.InvalidArtifact;
 
 import javax.swing.*;
 
 public class InvalidArtifactConfigurable extends ArtifactConfigurableBase {
-  private final String myErrorMessage;
+  private final @NlsContexts.Label String myErrorMessage;
 
   public InvalidArtifactConfigurable(InvalidArtifact originalArtifact,
                                      ArtifactsStructureConfigurableContextImpl artifactsStructureContext,
@@ -46,7 +47,7 @@ public class InvalidArtifactConfigurable extends ArtifactConfigurableBase {
     private MultiLineLabel myDescriptionLabel;
     private JLabel myIconLabel;
 
-    private InvalidArtifactComponent(String errorMessage) {
+    private InvalidArtifactComponent(@NlsContexts.Label String errorMessage) {
       myIconLabel.setIcon(AllIcons.General.BalloonError);
       myDescriptionLabel.setText(errorMessage);
     }

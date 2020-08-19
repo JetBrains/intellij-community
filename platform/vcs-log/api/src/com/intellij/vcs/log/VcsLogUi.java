@@ -15,11 +15,13 @@
  */
 package com.intellij.vcs.log;
 
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 public interface VcsLogUi {
 
   @NotNull
+  @NonNls
   String getId();
 
   @NotNull

@@ -36,12 +36,14 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
     final List<String> list = new ArrayList<>(ADDITIONAL_ANNOTATIONS);
     final List<String> writeList = new ArrayList<>(myWriteAnnotations);
 
-    final JPanel listPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(list, "Mark as entry point if annotated by", true);
+    final JPanel listPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
+      list, JavaBundle.message("separator.mark.as.entry.point.if.annotated.by"), true);
     Predicate<PsiClass> applicableToField = psiClass -> {
       Set<PsiAnnotation.TargetType> annotationTargets = AnnotationTargetUtil.getAnnotationTargets(psiClass);
       return annotationTargets != null && annotationTargets.contains(PsiAnnotation.TargetType.FIELD);
     };
-    final JPanel writtenAnnotationsPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(writeList, "Mark field as implicitly written if annotated by", false, applicableToField);
+    final JPanel writtenAnnotationsPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
+      writeList, JavaBundle.message("separator.mark.field.as.implicitly.written.if.annotated.by"), false, applicableToField);
     new DialogWrapper(myProject) {
       {
         init();

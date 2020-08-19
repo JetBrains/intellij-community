@@ -144,7 +144,7 @@ public class IfCanBeAssertionInspection extends BaseInspection {
     }
 
     private static String buildNewExpressionText(@NotNull PsiExpression nullComparedExpression, @Nullable PsiExpression message) {
-      final StringBuilder result = new StringBuilder("java.util.Objects.requireNonNull(");
+      final @NonNls StringBuilder result = new StringBuilder("java.util.Objects.requireNonNull(");
       result.append(nullComparedExpression.getText());
       if (message != null) {
         result.append(", ");

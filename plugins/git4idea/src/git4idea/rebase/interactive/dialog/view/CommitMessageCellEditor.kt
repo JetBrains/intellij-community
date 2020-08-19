@@ -70,10 +70,7 @@ internal class CommitMessageCellEditor(
    */
   private val commitMessageForEntry = mutableMapOf<GitRebaseEntryWithDetails, CommitMessage>()
 
-  /**
-   * Used in [getCellEditorValue]
-   */
-  private lateinit var lastUsedCommitMessageField: CommitMessage
+  private var lastUsedCommitMessageField: CommitMessage? = null
 
   private val hint = createHint()
 
@@ -131,7 +128,7 @@ internal class CommitMessageCellEditor(
     return hintLabel
   }
 
-  override fun getCellEditorValue() = lastUsedCommitMessageField.text
+  override fun getCellEditorValue() = lastUsedCommitMessageField?.text ?: ""
 
   override fun isCellEditable(e: EventObject?) = when {
     table.selectedRowCount > 1 -> false

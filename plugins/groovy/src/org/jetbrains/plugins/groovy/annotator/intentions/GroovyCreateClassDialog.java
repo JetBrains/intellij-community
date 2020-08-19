@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.CommonBundle;
@@ -15,6 +15,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts.DialogMessage;
+import com.intellij.openapi.util.NlsContexts.DialogTitle;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiNameHelper;
@@ -43,7 +45,7 @@ public class GroovyCreateClassDialog extends DialogWrapper {
   private final Module myModule;
 
   public GroovyCreateClassDialog(Project project,
-                                 String title,
+                                 @DialogTitle String title,
                                  String targetClassName,
                                  String targetPackageName,
                                  Module module) {
@@ -128,7 +130,7 @@ public class GroovyCreateClassDialog extends DialogWrapper {
   protected void doOKAction() {
     final String packageName = getPackageName();
 
-    final Ref<String> errorStringRef = new Ref<>();
+    final Ref<@DialogMessage String> errorStringRef = new Ref<>();
     CommandProcessor.getInstance().executeCommand(myProject, () -> {
       try {
         final PsiDirectory baseDir = myModule == null ? null : PackageUtil.findPossiblePackageDirectoryInModule(myModule, packageName);

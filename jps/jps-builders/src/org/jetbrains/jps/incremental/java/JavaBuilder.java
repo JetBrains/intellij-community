@@ -37,7 +37,6 @@ import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.javac.*;
 import org.jetbrains.jps.javac.ast.api.JavacFileData;
-import org.jetbrains.jps.javac.ast.api.JavacFileReferencesRegistrar;
 import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
@@ -52,7 +51,8 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.service.SharedThreadPool;
 
-import javax.tools.*;
+import javax.tools.Diagnostic;
+import javax.tools.JavaFileObject;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
@@ -82,7 +82,6 @@ public final class JavaBuilder extends ModuleLevelBuilder {
   public static final Key<Boolean> IS_ENABLED = Key.create("_java_compiler_enabled_");
   public static final FileFilter JAVA_SOURCES_FILTER = FileFilters.withExtension(JAVA_EXTENSION);
 
-  private static final int RETIRE_POLICY_VERSIONS_COUNT = 5;
   private static final Key<Boolean> PREFER_TARGET_JDK_COMPILER = GlobalContextKey.create("_prefer_target_jdk_javac_");
   private static final Key<JavaCompilingTool> COMPILING_TOOL = Key.create("_java_compiling_tool_");
   private static final Key<ConcurrentMap<String, Collection<String>>> COMPILER_USAGE_STATISTICS = Key.create("_java_compiler_usage_stats_");
@@ -623,16 +622,24 @@ public final class JavaBuilder extends ModuleLevelBuilder {
       }
     }
 
-    if (compilerSdkVersion < 9 || chunkLanguageLevel <= 0) {
-      // javac up to version 9 supports all previous releases
-      // or
+    if (chunkLanguageLevel <= 0) {
       // was not able to determine jdk version, so assuming in-process compiler
       return false;
     }
-    // compiler version is 9+ here, so:
-    //  - java 5 and older are not supported for sure
-    //  - applying '5 versions back' policy deduced from the current behavior of those JDKs
-    return chunkLanguageLevel < 6 || Math.abs(compilerSdkVersion - chunkLanguageLevel) > RETIRE_POLICY_VERSIONS_COUNT;
+    return !isTargetReleaseSupported(compilerSdkVersion, chunkLanguageLevel);
+  }
+
+  private static boolean isTargetReleaseSupported(int compilerVersion, int targetPlatformVersion) {
+    if (targetPlatformVersion > compilerVersion) {
+      return false;
+    }
+    if (compilerVersion < 9) {
+      return true;
+    }
+    if (compilerVersion <= 11) {
+      return targetPlatformVersion >= 6;
+    }
+    return targetPlatformVersion >= 7;
   }
 
   private static boolean isJavac(final JavaCompilingTool compilingTool) {
@@ -1070,7 +1077,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
     final Pair<JpsSdk<JpsDummyElement>, Integer> sdkVersionPair = getAssociatedSdk(chunk);
     if (sdkVersionPair != null) {
       final int sdkVersion = sdkVersionPair.second;
-      if (sdkVersion >= 6 && (sdkVersion < 9 || Math.abs(sdkVersion - targetLanguageLevel) <= RETIRE_POLICY_VERSIONS_COUNT)) {
+      if (sdkVersion >= 6 && isTargetReleaseSupported(sdkVersion, targetLanguageLevel)) {
         // current javac compiler does support required language level
         return pair(sdkVersionPair.first.getHomePath(), sdkVersion);
       }

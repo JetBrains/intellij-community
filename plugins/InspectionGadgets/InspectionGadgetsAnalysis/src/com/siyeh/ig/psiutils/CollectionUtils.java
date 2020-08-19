@@ -57,7 +57,7 @@ public final class CollectionUtils {
     new HashMap<>();
 
   static {
-    s_allCollectionClassesAndInterfaces = ContainerUtil.immutableSet(
+    s_allCollectionClassesAndInterfaces = Set.of(
     "java.util.AbstractCollection",
     "java.util.AbstractList",
     "java.util.AbstractMap",

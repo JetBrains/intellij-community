@@ -18,9 +18,12 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.VcsException
+import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.openapi.vcs.changes.actions.diff.UnversionedDiffRequestProducer
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
+import com.intellij.openapi.vcs.history.VcsRevisionNumber
+import com.intellij.openapi.vcs.impl.ContentRevisionCache
 import com.intellij.openapi.vcs.merge.MergeUtils.putRevisionInfos
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcsUtil.VcsFileUtil
@@ -33,6 +36,7 @@ import git4idea.index.vfs.GitIndexVirtualFileCache
 import git4idea.merge.GitMergeUtil
 import git4idea.repo.GitRepositoryManager
 import git4idea.util.GitFileUtils
+import org.jetbrains.annotations.Nls
 import java.io.IOException
 
 fun createTwoSidesDiffRequestProducer(project: Project, statusNode: GitFileStatusNode): ChangeDiffRequestChain.Producer {
@@ -54,36 +58,63 @@ fun createThreeSidesDiffRequestProducer(project: Project, statusNode: GitFileSta
   }
 }
 
+fun createChange(project: Project, root: VirtualFile, status: GitFileStatus,
+                 beforeVersion: ContentVersion, afterVersion: ContentVersion): Change? {
+  val bRev = createContentRevision(project, root, status, beforeVersion)
+  val aRev = createContentRevision(project, root, status, afterVersion)
+  return if (bRev != null || aRev != null) Change(bRev, aRev) else null
+}
+
+private fun createContentRevision(project: Project, root: VirtualFile, status: GitFileStatus, version: ContentVersion): ContentRevision? {
+  if (!status.has(version)) return null
+  return when (version) {
+    ContentVersion.HEAD -> HeadContentRevision(project, root, status)
+    ContentVersion.STAGED -> StagedContentRevision(project, root, status)
+    ContentVersion.LOCAL -> CurrentContentRevision(status.path(version))
+  }
+}
+
 @Throws(VcsException::class, IOException::class)
-private fun headContent(project: Project, statusNode: GitFileStatusNode): DiffContent {
+private fun headDiffContent(project: Project, statusNode: GitFileStatusNode): DiffContent {
   if (!statusNode.has(ContentVersion.HEAD)) return DiffContentFactory.getInstance().createEmpty()
 
-  val headContent = GitFileUtils.getFileContent(project, statusNode.root, GitUtil.HEAD,
-                                                VcsFileUtil.relativePath(statusNode.root, statusNode.path(ContentVersion.HEAD)))
+  val headContent = headContentBytes(project, statusNode.root, statusNode.status)
   return DiffContentFactoryEx.getInstanceEx().createFromBytes(project, headContent, statusNode.filePath)
 }
 
 @Throws(VcsException::class)
-private fun stagedContent(project: Project, statusNode: GitFileStatusNode): DiffContent {
+private fun stagedDiffContent(project: Project, statusNode: GitFileStatusNode): DiffContent {
   if (!statusNode.has(ContentVersion.STAGED)) return DiffContentFactory.getInstance().createEmpty()
 
-  val indexFile = project.service<GitIndexVirtualFileCache>().get(statusNode.root, statusNode.path(ContentVersion.STAGED))
+  val indexFile = stagedContentFile(project, statusNode.root, statusNode.status)
   return DiffContentFactory.getInstance().create(project, indexFile)
 }
 
 @Throws(VcsException::class)
-private fun localContent(project: Project, statusNode: GitFileStatusNode): DiffContent {
+private fun localDiffContent(project: Project, statusNode: GitFileStatusNode): DiffContent {
   if (!statusNode.has(ContentVersion.LOCAL)) return DiffContentFactory.getInstance().createEmpty()
 
-  val localFile: VirtualFile = statusNode.path(ContentVersion.LOCAL).virtualFile ?: throw VcsException(
-    "Can't get local file: " + statusNode.filePath)
+  val localFile: VirtualFile = statusNode.path(ContentVersion.LOCAL).virtualFile
+                               ?: throw VcsException("Can't get local file: " + statusNode.filePath)
   return DiffContentFactory.getInstance().create(project, localFile)
+}
+
+@Throws(VcsException::class)
+private fun headContentBytes(project: Project, root: VirtualFile, status: GitFileStatus): ByteArray {
+  val filePath = status.path(ContentVersion.HEAD)
+  return GitFileUtils.getFileContent(project, root, GitUtil.HEAD, VcsFileUtil.relativePath(root, filePath))
+}
+
+@Throws(VcsException::class)
+private fun stagedContentFile(project: Project, root: VirtualFile, statusNode: GitFileStatus): VirtualFile {
+  val filePath = statusNode.path(ContentVersion.STAGED)
+  return project.service<GitIndexVirtualFileCache>().get(root, filePath)
 }
 
 private class UnStagedProducer constructor(private val project: Project, file: GitFileStatusNode) : GitFileStatusNodeProducerBase(file) {
   @Throws(VcsException::class)
   override fun processImpl(): DiffRequest {
-    return StagedDiffRequest(stagedContent(project, statusNode), localContent(project, statusNode),
+    return StagedDiffRequest(stagedDiffContent(project, statusNode), localDiffContent(project, statusNode),
                              GitBundle.message("stage.content.staged"), GitBundle.message("stage.content.local"),
                              getTitle(statusNode))
   }
@@ -92,7 +123,7 @@ private class UnStagedProducer constructor(private val project: Project, file: G
 private class StagedProducer constructor(private val project: Project, file: GitFileStatusNode) : GitFileStatusNodeProducerBase(file) {
   @Throws(VcsException::class, IOException::class)
   override fun processImpl(): DiffRequest {
-    return StagedDiffRequest(headContent(project, statusNode), stagedContent(project, statusNode),
+    return StagedDiffRequest(headDiffContent(project, statusNode), stagedDiffContent(project, statusNode),
                              GitUtil.HEAD, GitBundle.message("stage.content.staged"),
                              getTitle(statusNode))
   }
@@ -103,7 +134,9 @@ class ThreeSidesProducer(private val project: Project,
   @Throws(VcsException::class, IOException::class)
   override fun processImpl(): DiffRequest {
     val title = getTitle(statusNode.status)
-    return StagedDiffRequest(headContent(project, statusNode), stagedContent(project, statusNode), localContent(project, statusNode),
+    return StagedDiffRequest(headDiffContent(project, statusNode),
+                             stagedDiffContent(project, statusNode),
+                             localDiffContent(project, statusNode),
                              GitUtil.HEAD, GitBundle.message("stage.content.staged"), GitBundle.message("stage.content.local"),
                              title).apply { putUserData(DiffUserDataKeys.THREESIDE_DIFF_WITH_RESULT, true) }
   }
@@ -132,14 +165,14 @@ class MergedProducer(private val project: Project,
   }
 }
 
-private class StagedDiffRequest(contents: List<DiffContent>, titles: List<String>, title: String? = null) :
+private class StagedDiffRequest(contents: List<DiffContent>, titles: List<String>, @Nls title: String? = null) :
   SimpleDiffRequest(title, contents, titles) {
 
-  constructor(content1: DiffContent, content2: DiffContent, title1: String, title2: String, title: String? = null) :
+  constructor(content1: DiffContent, content2: DiffContent, @Nls title1: String, @Nls title2: String, @Nls title: String? = null) :
     this(listOf(content1, content2), listOf(title1, title2), title)
 
   constructor(content1: DiffContent, content2: DiffContent, content3: DiffContent,
-              title1: String, title2: String, title3: String, title: String? = null) :
+              @Nls title1: String, @Nls title2: String, @Nls title3: String, @Nls title: String? = null) :
     this(listOf(content1, content2, content3), listOf(title1, title2, title3), title)
 
   override fun onAssigned(isAssigned: Boolean) {
@@ -199,13 +232,35 @@ abstract class GitFileStatusNodeProducerBase(val statusNode: GitFileStatusNode) 
   }
 }
 
+private class HeadContentRevision(val project: Project, val root: VirtualFile, val status: GitFileStatus) : ByteBackedContentRevision {
+  override fun getFile(): FilePath = status.path(ContentVersion.HEAD)
+  override fun getRevisionNumber(): VcsRevisionNumber = TextRevisionNumber(GitUtil.HEAD)
+
+  override fun getContent(): String? = ContentRevisionCache.getAsString(contentAsBytes, file, null)
+
+  @Throws(VcsException::class)
+  override fun getContentAsBytes(): ByteArray = headContentBytes(project, root, status)
+}
+
+private class StagedContentRevision(val project: Project, val root: VirtualFile, val status: GitFileStatus) : ByteBackedContentRevision {
+  override fun getFile(): FilePath = status.path(ContentVersion.STAGED)
+  override fun getRevisionNumber(): VcsRevisionNumber = TextRevisionNumber(GitBundle.message("stage.content.staged"))
+
+  override fun getContent(): String? = ContentRevisionCache.getAsString(contentAsBytes, file, null)
+
+  @Throws(VcsException::class)
+  override fun getContentAsBytes(): ByteArray = stagedContentFile(project, root, status).contentsToByteArray()
+}
+
 private fun GitFileStatusNode.has(contentVersion: ContentVersion): Boolean = status.has(contentVersion)
 private fun GitFileStatusNode.path(contentVersion: ContentVersion): FilePath = status.path(contentVersion)
 
+@Nls
 private fun getTitle(statusNode: GitFileStatusNode): String {
   return DiffRequestFactoryImpl.getTitle(statusNode.filePath, statusNode.origPath, DiffRequestFactoryImpl.DIFF_TITLE_RENAME_SEPARATOR)
 }
 
+@Nls
 private fun getTitle(status: GitFileStatus): String {
   return DiffRequestFactoryImpl.getTitle(status.path, status.origPath, DiffRequestFactoryImpl.DIFF_TITLE_RENAME_SEPARATOR)
 }

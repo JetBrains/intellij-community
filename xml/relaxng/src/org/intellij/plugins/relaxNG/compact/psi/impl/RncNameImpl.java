@@ -152,7 +152,7 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
   public String getUnresolvedMessagePattern() {
     //The format substitution is performed at the call site
     //noinspection UnresolvedPropertyKey
-    return RelaxngBundle.message("unresolved.namespace.prefix.0");
+    return RelaxngBundle.message("relaxng.annotator.unresolved-namespace-prefix");
   }
 
   @Override
@@ -215,7 +215,7 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
     @Override
     @NotNull
     public String getName() {
-      return RelaxngBundle.message("create.0.declaration.1", StringUtil.toLowerCase(myReference.getKind().name()), myReference.getPrefix());
+      return RelaxngBundle.message("relaxng.quickfix.create-declaration.name", StringUtil.toLowerCase(myReference.getKind().name()), myReference.getPrefix());
     }
 
     @Override

@@ -24,7 +24,6 @@ import com.intellij.util.containers.JBTreeTraverser;
 import org.intellij.lang.annotations.JdkConstants;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.*;
-import sun.awt.HeadlessToolkit;
 
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
@@ -385,7 +384,7 @@ public final class UIUtil {
   public enum FontColor {NORMAL, BRIGHTER}
 
   public static final char MNEMONIC = BundleBase.MNEMONIC;
-  @NonNls public static final String HTML_MIME = "text/html";
+  @NlsSafe public static final String HTML_MIME = "text/html";
   @NonNls public static final String JSLIDER_ISFILLED = "JSlider.isFilled";
   @NonNls public static final String TABLE_FOCUS_CELL_BACKGROUND_PROPERTY = "Table.focusCellBackground";
   /**
@@ -767,13 +766,14 @@ public final class UIUtil {
     return ArrayUtilRt.toStringArray(lines);
   }
 
-  public static void setActionNameAndMnemonic(@NotNull String text, @NotNull Action action) {
+  public static void setActionNameAndMnemonic(@NotNull @Nls String text, @NotNull Action action) {
     assignMnemonic(text, action);
 
+    //noinspection HardCodedStringLiteral
     text = text.replaceAll("&", "");
     action.putValue(Action.NAME, text);
   }
-  public static void assignMnemonic(@NotNull String text, @NotNull Action action) {
+  public static void assignMnemonic(@NotNull @Nls String text, @NotNull Action action) {
     int mnemoPos = text.indexOf('&');
     if (mnemoPos >= 0 && mnemoPos < text.length() - 2) {
       String mnemoChar = text.substring(mnemoPos + 1, mnemoPos + 2).trim();
@@ -876,6 +876,7 @@ public final class UIUtil {
     return JBColor.namedColor("Label.infoForeground", new JBColor(Gray.x78, Gray.x8C));
   }
 
+  @SuppressWarnings("HardCodedStringLiteral")
   public static @Nls @NotNull String removeMnemonic(@Nls @NotNull String s) {
     if (s.indexOf('&') != -1) {
       s = StringUtil.replace(s, "&", "");
@@ -2197,20 +2198,20 @@ public final class UIUtil {
     }
   }
 
-  public static @NotNull String toHtml(@NotNull String html) {
+  public static @NotNull @NlsSafe String toHtml(@NotNull @Nls String html) {
     return toHtml(html, 0);
   }
 
   @NonNls
-  public static @NotNull String toHtml(@NotNull String html, final int hPadding) {
-    html = CLOSE_TAG_PATTERN.matcher(html).replaceAll("<$1$2></$1>");
+  public static @NotNull @NlsSafe String toHtml(@NotNull @Nls String html, final int hPadding) {
+    @NlsSafe final String withClosedTag = CLOSE_TAG_PATTERN.matcher(html).replaceAll("<$1$2></$1>");
     Font font = StartupUiUtil.getLabelFont();
     @NonNls String family = font != null ? font.getFamily() : "Tahoma";
     int size = font != null ? font.getSize() : JBUIScale.scale(11);
     return "<html><style>body { font-family: "
            + family + "; font-size: "
            + size + ";} ul li {list-style-type:circle;}</style>"
-           + addPadding(html, hPadding) + "</html>";
+           + addPadding(withClosedTag, hPadding) + "</html>";
   }
 
   public static @NotNull String addPadding(@NotNull String html, int hPadding) {
@@ -2355,9 +2356,13 @@ public final class UIUtil {
 
   public static void fixFormattedField(@NotNull JFormattedTextField field) {
     if (SystemInfo.isMac) {
-      final Toolkit toolkit = Toolkit.getDefaultToolkit();
-      if (toolkit instanceof HeadlessToolkit) return;
-      final int commandKeyMask = toolkit.getMenuShortcutKeyMask();
+      final int commandKeyMask;
+      try {
+        commandKeyMask = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
+      }
+      catch (HeadlessException e) {
+        return;
+      }
       final InputMap inputMap = field.getInputMap();
       final KeyStroke copyKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_C, commandKeyMask);
       inputMap.put(copyKeyStroke, "copy-to-clipboard");
@@ -2988,14 +2993,17 @@ public final class UIUtil {
     }, "play sound").start();
   }
 
+  @NlsSafe
   public static @NotNull String leftArrow() {
     return FontUtil.leftArrow(StartupUiUtil.getLabelFont());
   }
 
+  @NlsSafe
   public static @NotNull String rightArrow() {
     return FontUtil.rightArrow(StartupUiUtil.getLabelFont());
   }
 
+  @NlsSafe
   public static @NotNull String upArrow(@NotNull String defaultValue) {
     return FontUtil.upArrow(StartupUiUtil.getLabelFont(), defaultValue);
   }
@@ -3489,7 +3497,7 @@ public final class UIUtil {
   /**
    * This method (as opposed to {@link JEditorPane#scrollToReference}) supports also targets using {@code id} HTML attribute.
    */
-  public static void scrollToReference(@NotNull JEditorPane editor, @NotNull String reference) {
+  public static void scrollToReference(@NotNull JEditorPane editor, @NotNull @NonNls String reference) {
     Document document = editor.getDocument();
     if (document instanceof HTMLDocument) {
       Element elementById = ((HTMLDocument) document).getElement(reference);

@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.LanguageTextField;
@@ -96,6 +97,7 @@ class MultilinePopupBuilder {
   }
 
   @NotNull
+  @NlsContexts.PopupAdvertisement
   private String getAdText() {
     return VcsLogBundle.message("vcs.log.filter.popup.advertisement.with.key.text", getSeparatorsText(mySeparators),
                                 KeymapUtil.getShortcutsText(CommonShortcuts.CTRL_ENTER.getShortcuts()));

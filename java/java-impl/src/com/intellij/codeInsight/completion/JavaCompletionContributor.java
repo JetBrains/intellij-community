@@ -20,8 +20,10 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -66,7 +68,7 @@ import static com.intellij.patterns.PsiJavaPatterns.*;
 /**
  * @author peter
  */
-public class JavaCompletionContributor extends CompletionContributor {
+public class JavaCompletionContributor extends CompletionContributor implements DumbAware {
   private static final ElementPattern<PsiElement> UNEXPECTED_REFERENCE_AFTER_DOT =
     psiElement().afterLeaf(".").insideStarting(psiExpressionStatement());
   private static final PsiNameValuePairPattern NAME_VALUE_PAIR =
@@ -115,7 +117,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     if (JavaKeywordCompletion.isDeclarationStart(position) ||
         JavaKeywordCompletion.isInsideParameterList(position) ||
         isInsideAnnotationName(position) ||
-        psiElement().inside(PsiReferenceParameterList.class).accepts(position) ||
+        PsiTreeUtil.getParentOfType(position, PsiReferenceParameterList.class, false, PsiAnnotation.class) != null ||
         isDefinitelyVariableType(position)) {
       return new OrFilter(ElementClassFilter.CLASS, ElementClassFilter.PACKAGE);
     }
@@ -273,8 +275,8 @@ public class JavaCompletionContributor extends CompletionContributor {
 
       List<LookupElement> refSuggestions = Collections.emptyList();
       if (parent instanceof PsiJavaCodeReferenceElement && mayCompleteReference) {
-        refSuggestions = completeReference(parameters, (PsiJavaCodeReferenceElement)parent, session, expectedInfos);
-        List<LookupElement> filtered = filterReferenceSuggestions(parameters, result, (PsiJavaCodeReferenceElement)parent, expectedInfos, refSuggestions);
+        refSuggestions = completeReference(parameters, (PsiJavaCodeReferenceElement)parent, session, expectedInfos, matcher::prefixMatches);
+        List<LookupElement> filtered = filterReferenceSuggestions(parameters, expectedInfos, refSuggestions);
         hasTypeMatchingSuggestions |= ContainerUtil.exists(filtered, item ->
           ReferenceExpressionCompletionContributor.matchesExpectedType(item, expectedInfos));
         session.registerBatchItems(filtered);
@@ -290,8 +292,12 @@ public class JavaCompletionContributor extends CompletionContributor {
 
       if ((!hasTypeMatchingSuggestions || parameters.getInvocationCount() >= 2) &&
           parent instanceof PsiJavaCodeReferenceElement &&
+          !expectedInfos.isEmpty() &&
           JavaSmartCompletionContributor.INSIDE_EXPRESSION.accepts(position)) {
-        SlowerTypeConversions.addChainedSuggestions(parameters, result, expectedInfos, refSuggestions);
+        List<LookupElement> base = ContainerUtil.concat(
+          refSuggestions,
+          completeReference(parameters, (PsiJavaCodeReferenceElement)parent, session, expectedInfos, s -> !matcher.prefixMatches(s)));
+        SlowerTypeConversions.addChainedSuggestions(parameters, result, expectedInfos, base);
       }
 
       if (smart && parameters.getInvocationCount() > 1 && shouldAddExpressionVariants) {
@@ -339,16 +345,12 @@ public class JavaCompletionContributor extends CompletionContributor {
   }
 
   private static List<LookupElement> filterReferenceSuggestions(CompletionParameters parameters,
-                                                                CompletionResultSet result,
-                                                                PsiJavaCodeReferenceElement parent,
                                                                 Set<ExpectedTypeInfo> expectedInfos,
                                                                 List<LookupElement> refSuggestions) {
     if (parameters.getCompletionType() == CompletionType.SMART) {
-      refSuggestions = ReferenceExpressionCompletionContributor.smartCompleteReference(refSuggestions, expectedInfos);
+      return ReferenceExpressionCompletionContributor.smartCompleteReference(refSuggestions, expectedInfos);
     }
-    List<LookupElement> matching = ContainerUtil.findAll(refSuggestions, result.getPrefixMatcher()::prefixMatches);
-    if (parameters.getInvocationCount() >= 2) return matching;
-    return JavaCompletionProcessor.dispreferStaticAfterInstance(parent, matching);
+    return refSuggestions;
   }
 
   private static void smartCompleteNonExpression(CompletionParameters parameters, CompletionResultSet result) {
@@ -542,7 +544,8 @@ public class JavaCompletionContributor extends CompletionContributor {
   private static List<LookupElement> completeReference(CompletionParameters parameters,
                                                        PsiJavaCodeReferenceElement ref,
                                                        JavaCompletionSession session,
-                                                       Set<ExpectedTypeInfo> expectedTypes) {
+                                                       Set<ExpectedTypeInfo> expectedTypes,
+                                                       Condition<String> nameCondition) {
     PsiElement position = parameters.getPosition();
     ElementFilter filter = getReferenceFilter(position);
     if (filter == null) return Collections.emptyList();
@@ -581,14 +584,14 @@ public class JavaCompletionContributor extends CompletionContributor {
     JavaCompletionProcessor.Options options =
       JavaCompletionProcessor.Options.DEFAULT_OPTIONS
         .withCheckAccess(first)
-        .withFilterStaticAfterInstance(false)
+        .withFilterStaticAfterInstance(first)
         .withShowInstanceInStaticContext(!first && !smart);
 
     for (LookupElement element : JavaCompletionUtil.processJavaReference(position,
                                                                          ref,
                                                                          new ElementExtractorFilter(filter),
                                                                          options,
-                                                                         PrefixMatcher.ALWAYS_TRUE, parameters)) {
+                                                                         nameCondition, parameters)) {
       if (session.alreadyProcessed(element)) {
         continue;
       }

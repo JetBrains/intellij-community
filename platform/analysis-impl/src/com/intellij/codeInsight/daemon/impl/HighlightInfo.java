@@ -34,6 +34,7 @@ import com.intellij.util.BitUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -75,8 +76,8 @@ public class HighlightInfo implements Segment {
   public List<Pair<IntentionActionDescriptor, TextRange>> quickFixActionRanges;
   public List<Pair<IntentionActionDescriptor, RangeMarker>> quickFixActionMarkers;
 
-  private final String description;
-  private final String toolTip;
+  private final @DetailedDescription String description;
+  private final @Tooltip String toolTip;
   @NotNull
   private final HighlightSeverity severity;
   private final GutterMark gutterIconRenderer;
@@ -102,8 +103,8 @@ public class HighlightInfo implements Segment {
                           @NotNull HighlightInfoType type,
                           int startOffset,
                           int endOffset,
-                          @Nullable String escapedDescription,
-                          @Nullable String escapedToolTip,
+                          @Nullable @DetailedDescription String escapedDescription,
+                          @Nullable @Tooltip String escapedToolTip,
                           @NotNull HighlightSeverity severity,
                           boolean afterEndOfLine,
                           @Nullable Boolean needsUpdateOnTyping,
@@ -176,7 +177,7 @@ public class HighlightInfo implements Segment {
    * @return encoded tooltip (stripped html text with one or more placeholder characters)
    *         or tooltip without changes.
    */
-  private static String encodeTooltip(String tooltip, String description) {
+  private static @Tooltip String encodeTooltip(@Tooltip String tooltip, @DetailedDescription String description) {
     if (tooltip == null || description == null || description.isEmpty()) return tooltip;
 
     String encoded = StringUtil.replace(tooltip, XmlStringUtil.escapeString(description), DESCRIPTION_PLACEHOLDER);
@@ -309,7 +310,7 @@ public class HighlightInfo implements Segment {
   }
 
   @Nullable
-  private static String htmlEscapeToolTip(@Nullable String unescapedTooltip) {
+  private static @Tooltip String htmlEscapeToolTip(@Nullable @Tooltip String unescapedTooltip) {
     return unescapedTooltip == null ? null : XmlStringUtil.wrapInHtml(XmlStringUtil.escapeString(unescapedTooltip));
   }
 
@@ -448,8 +449,8 @@ public class HighlightInfo implements Segment {
     private int startOffset = -1;
     private int endOffset = -1;
 
-    private String escapedDescription;
-    private String escapedToolTip;
+    private @DetailedDescription String escapedDescription;
+    private @Tooltip String escapedToolTip;
     private HighlightSeverity severity;
 
     private boolean isAfterEndOfLine;

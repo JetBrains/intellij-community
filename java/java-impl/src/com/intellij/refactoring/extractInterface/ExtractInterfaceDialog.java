@@ -102,8 +102,8 @@ class ExtractInterfaceDialog extends JavaExtractSuperBaseDialog {
   @Override
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout());
-    final MemberSelectionPanel memberSelectionPanel = new MemberSelectionPanel(RefactoringBundle.message("members.to.form.interface"),
-                                                                               myMemberInfos, RefactoringBundle.message("make.abstract"));
+    String title = JavaRefactoringBundle.message("members.to.form.interface.title");
+    final MemberSelectionPanel memberSelectionPanel = new MemberSelectionPanel(title, myMemberInfos, RefactoringBundle.message("make.abstract"));
     memberSelectionPanel.getTable()
       .setMemberInfoModel(new DelegatingMemberInfoModel<PsiMember, MemberInfo>(memberSelectionPanel.getTable().getMemberInfoModel()) {
         @Override

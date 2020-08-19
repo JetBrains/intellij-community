@@ -3,13 +3,9 @@ package com.intellij.util;
 
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.ui.content.*;
 import com.intellij.ui.content.impl.TabbedContentImpl;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +24,7 @@ public final class ContentUtilEx extends ContentsUtil {
   public static void addTabbedContent(@NotNull ContentManager manager,
                                       @NotNull JComponent contentComponent,
                                       @NotNull @NonNls String groupPrefix,
-                                      @NotNull @Nls String tabName,
+                                      @NotNull @NlsContexts.TabTitle String tabName,
                                       boolean select,
                                       @Nullable Disposable childDisposable) {
     addTabbedContent(manager, new TabGroupId(groupPrefix, groupPrefix),
@@ -38,8 +34,8 @@ public final class ContentUtilEx extends ContentsUtil {
   public static void addTabbedContent(@NotNull ContentManager manager,
                                       @NotNull JComponent contentComponent,
                                       @NotNull @NonNls String groupId,
-                                      @NotNull Supplier<@Nls String> groupDisplayName,
-                                      @NotNull Supplier<@Nls String> tabDisplayName,
+                                      @NotNull Supplier<@NlsContexts.TabTitle String> groupDisplayName,
+                                      @NotNull Supplier<@NlsContexts.TabTitle String> tabDisplayName,
                                       boolean select,
                                       @Nullable Disposable childDisposable) {
     addTabbedContent(manager, new TabGroupId(groupId, groupDisplayName),
@@ -116,7 +112,8 @@ public final class ContentUtilEx extends ContentsUtil {
   }
 
   @NotNull
-  public static String getFullName(@NotNull String groupPrefix, @NotNull String tabName) {
+  @NlsContexts.TabTitle
+  public static String getFullName(@NotNull @NlsContexts.TabTitle String groupPrefix, @NotNull @NlsContexts.TabTitle String tabName) {
     if (tabName.isEmpty()) return groupPrefix;
     return groupPrefix + ": " + tabName;
   }

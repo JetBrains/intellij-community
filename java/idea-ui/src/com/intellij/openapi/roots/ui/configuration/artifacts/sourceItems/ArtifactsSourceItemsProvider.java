@@ -2,6 +2,7 @@
 package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.PackagingElement;
@@ -72,7 +73,7 @@ public class ArtifactsSourceItemsProvider extends PackagingSourceItemsProvider {
       public void render(@NotNull PresentationData presentationData, SimpleTextAttributes mainAttributes,
                          SimpleTextAttributes commentAttributes) {
         presentationData.setIcon(AllIcons.Nodes.Artifact);
-        presentationData.addText("Artifacts", mainAttributes);
+        presentationData.addText(JavaUiBundle.message("display.name.artifacts"), mainAttributes);
       }
 
       @Override

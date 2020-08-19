@@ -398,7 +398,7 @@ public final class NewMappings implements Disposable {
 
   private void dumpMappingsToLog() {
     for (VcsDirectoryMapping mapping : myMappings) {
-      String path = mapping.isDefaultMapping() ? VcsDirectoryMapping.PROJECT_CONSTANT : mapping.getDirectory();
+      String path = mapping.isDefaultMapping() ? "<Project>" : mapping.getDirectory();
       String vcs = mapping.getVcs();
       LOG.info(String.format("VCS Root: [%s] - [%s]", vcs, path));
     }

@@ -13,6 +13,9 @@ import com.intellij.openapi.command.CommandListener
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.undo.BasicUndoableAction
 import com.intellij.openapi.command.undo.UndoManager
+import com.intellij.openapi.diff.DefaultFlagsProvider
+import com.intellij.openapi.diff.DefaultLineFlags
+import com.intellij.openapi.diff.LineStatusMarkerDrawUtil
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
@@ -514,7 +517,7 @@ class ChangelistsLocalLineStatusTracker(project: Project,
 
     override fun paint(editor: Editor, g: Graphics) {
       val flagsProvider = MyFlagsProvider(tracker.defaultMarker.changelistId)
-      LineStatusMarkerRenderer.paintDefault(editor, g, myTracker, flagsProvider, 0)
+      LineStatusMarkerDrawUtil.paintDefault(editor, g, myTracker, flagsProvider, 0)
     }
 
     class MyFlagsProvider(val defaultChangelistId: String) : DefaultFlagsProvider() {
@@ -595,11 +598,6 @@ class ChangelistsLocalLineStatusTracker(project: Project,
         tracker.moveToChangelist(range, changelist)
         reopenRange(editor, range, mousePosition)
       }
-    }
-
-    private fun reopenRange(editor: Editor, range: Range, mousePosition: Point?) {
-      val newRange = tracker.findRange(range)
-      if (newRange != null) tracker.renderer.showHintAt(editor, newRange, mousePosition)
     }
   }
 

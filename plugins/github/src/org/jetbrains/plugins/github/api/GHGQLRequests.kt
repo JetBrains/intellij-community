@@ -10,6 +10,7 @@ import org.jetbrains.plugins.github.api.data.graphql.query.GHGQLSearchQueryRespo
 import org.jetbrains.plugins.github.api.data.pullrequest.*
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
 import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewComment
+import org.jetbrains.plugins.github.api.util.GHSchemaPreview
 
 object GHGQLRequests {
   object Organization {
@@ -79,7 +80,7 @@ object GHGQLRequests {
                                                     "number" to number),
                                               GHPullRequest::class.java,
                                               "repository", "pullRequest").apply {
-        acceptMimeType = "application/vnd.github.shadow-cat-preview+json"
+        acceptMimeType = GHSchemaPreview.PR_DRAFT.mimeType
       }
     }
 
@@ -91,7 +92,7 @@ object GHGQLRequests {
       return GQLQuery.TraversedParsed(repository.serverPath.toGraphQLUrl(), GHGQLQueries.updatePullRequest, parameters,
                                       GHPullRequest::class.java,
                                       "updatePullRequest", "pullRequest").apply {
-        acceptMimeType = "application/vnd.github.shadow-cat-preview+json"
+        acceptMimeType = GHSchemaPreview.PR_DRAFT.mimeType
       }
     }
 
@@ -99,7 +100,7 @@ object GHGQLRequests {
       GQLQuery.Parsed(repository.serverPath.toGraphQLUrl(), GHGQLQueries.markPullRequestReadyForReview,
                       mutableMapOf<String, Any>("pullRequestId" to pullRequestId),
                       Any::class.java).apply {
-        acceptMimeType = "application/vnd.github.shadow-cat-preview+json"
+        acceptMimeType = GHSchemaPreview.PR_DRAFT.mimeType
       }
 
     fun mergeabilityData(repository: GHRepositoryCoordinates, number: Long): GQLQuery<GHPullRequestMergeabilityData?> =
@@ -109,7 +110,7 @@ object GHGQLRequests {
                                              "number" to number),
                                        GHPullRequestMergeabilityData::class.java,
                                        "repository", "pullRequest").apply {
-        acceptMimeType = "application/vnd.github.antiope-preview+json,application/vnd.github.merge-info-preview+json"
+        acceptMimeType = "${GHSchemaPreview.CHECKS.mimeType},${GHSchemaPreview.PR_MERGE_INFO.mimeType}"
       }
 
     fun search(server: GithubServerPath, query: String, pagination: GHGQLRequestPagination? = null)
@@ -120,7 +121,7 @@ object GHGQLRequests {
                                    "pageSize" to pagination?.pageSize,
                                    "cursor" to pagination?.afterCursor),
                              PRSearch::class.java).apply {
-        acceptMimeType = "application/vnd.github.shadow-cat-preview+json"
+        acceptMimeType = GHSchemaPreview.PR_DRAFT.mimeType
       }
     }
 
@@ -170,7 +171,9 @@ object GHGQLRequests {
                                               "cursor" to pagination?.afterCursor,
                                               "since" to pagination?.since),
                                         TimelineConnection::class.java,
-                                        "repository", "pullRequest", "timelineItems")
+                                        "repository", "pullRequest", "timelineItems").apply {
+          acceptMimeType = GHSchemaPreview.PR_DRAFT.mimeType
+        }
       }
 
       private class TimelineConnection(pageInfo: GHGQLPageInfo, nodes: List<GHPRTimelineItem>)

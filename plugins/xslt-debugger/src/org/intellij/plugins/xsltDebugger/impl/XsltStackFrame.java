@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.xsltDebugger.impl;
 
 import com.intellij.openapi.vfs.VfsUtil;
@@ -9,6 +10,7 @@ import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
 import com.intellij.xdebugger.frame.*;
 import org.intellij.plugins.xsltDebugger.VMPausedException;
+import org.intellij.plugins.xsltDebugger.XsltDebuggerBundle;
 import org.intellij.plugins.xsltDebugger.XsltDebuggerSession;
 import org.intellij.plugins.xsltDebugger.rt.engine.Debugger;
 import org.intellij.plugins.xsltDebugger.rt.engine.DebuggerStoppedException;
@@ -97,7 +99,7 @@ public class XsltStackFrame extends XStackFrame {
         super.computeChildren(node);
       }
     } catch (VMPausedException ignored) {
-      node.setErrorMessage(VMPausedException.MESSAGE);
+      node.setErrorMessage(XsltDebuggerBundle.message("dialog.message.target.vm.not.responding"));
     }
   }
 
@@ -201,7 +203,7 @@ public class XsltStackFrame extends XStackFrame {
         final Value eval = myFrame.eval(expression);
         callback.evaluated(new MyValue(new ExpressionResult(eval)));
       } catch (VMPausedException ignored) {
-        callback.errorOccurred(VMPausedException.MESSAGE);
+        callback.errorOccurred(XsltDebuggerBundle.message("dialog.message.target.vm.not.responding"));
       } catch (Debugger.EvaluationException e) {
         callback.errorOccurred(e.getMessage() != null ? e.getMessage() : e.toString());
       }

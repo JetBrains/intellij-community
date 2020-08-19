@@ -17,6 +17,8 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.text.HtmlChunk
+import com.intellij.openapi.util.text.HtmlChunk.Element.html
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.DocumentAdapter
@@ -29,6 +31,7 @@ import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import git4idea.GitUtil
 import git4idea.GitVcs
+import git4idea.branch.GitBranchUtil
 import git4idea.branch.GitBranchUtil.equalBranches
 import git4idea.config.GitExecutableManager
 import git4idea.config.GitVersionSpecialty.NO_VERIFY_SUPPORTED
@@ -47,6 +50,7 @@ import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import java.awt.BorderLayout
 import java.awt.Insets
+import java.awt.event.InputEvent
 import java.awt.event.ItemEvent
 import java.awt.event.KeyEvent
 import javax.swing.JComponent
@@ -154,7 +158,7 @@ class GitPullDialog(private val project: Project,
     val repository = getSelectedRepository()
     val remote = getSelectedRemote()
 
-    val branches = getRemoteBranches(repository, remote)
+    val branches = GitBranchUtil.sortBranchNames(getRemoteBranches(repository, remote))
 
     val model = branchField.model as MutableCollectionComboBoxModel
 
@@ -228,6 +232,24 @@ class GitPullDialog(private val project: Project,
       { selectedOptions },
       ::isOptionEnabled
     )
+
+    override fun handleSelect(handleFinalChoices: Boolean) {
+      if (handleFinalChoices) {
+        handleSelect()
+      }
+    }
+
+    override fun handleSelect(handleFinalChoices: Boolean, e: InputEvent?) {
+      if (handleFinalChoices) {
+        handleSelect()
+      }
+    }
+
+    private fun handleSelect() {
+      (selectedValues.firstOrNull() as? GitPullOption)?.let { option -> optionChosen(option) }
+
+      list.repaint()
+    }
   }
 
   private fun getOptionInfo(option: GitPullOption) = optionInfos.computeIfAbsent(option) {
@@ -374,7 +396,9 @@ class GitPullDialog(private val project: Project,
 
   private fun createRemoteField() = ComboBox<GitRemote>(MutableCollectionComboBoxModel()).apply {
     isSwingPopup = false
-    renderer = SimpleListCellRenderer.create(GitBundle.message("util.remote.renderer.none")) { it.name }
+    renderer = SimpleListCellRenderer.create(
+      HtmlChunk.text(GitBundle.message("util.remote.renderer.none")).italic().wrapWith(html()).toString()
+    ) { it.name }
     @Suppress("UsePropertyAccessSyntax")
     setUI(FlatComboBoxUI(
       outerInsets = Insets(BW.get(), 0, BW.get(), 0),
@@ -417,11 +441,12 @@ class GitPullDialog(private val project: Project,
 
     prototypeDisplayValue = COMBOBOX_VALUE_PROTOTYPE
     renderer = ComboBoxPrototypeRenderer.create(this) { it }
-    ui = FlatComboBoxUI(
+    @Suppress("UsePropertyAccessSyntax")
+    setUI(FlatComboBoxUI(
       Insets(1, 0, 1, 1),
       Insets(BW.get(), 0, BW.get(), BW.get()),
       GitBundle.message("pull.branch.nothing.to.pull"),
-      this@GitPullDialog::createBranchFieldPopupComponent)
+      this@GitPullDialog::createBranchFieldPopupComponent))
   }
 
   private fun createBranchFieldPopupComponent(content: JComponent): JComponent {

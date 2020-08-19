@@ -8,6 +8,6 @@ import java.lang.annotation.ElementType;
 import java.lang.annotation.Target;
 @NlsContext(prefix = "intention.name")
 @Nls(capitalization = Nls.Capitalization.Sentence)
-@Target({ElementType.TYPE_USE, ElementType.PARAMETER})
+@Target({ElementType.TYPE_USE, ElementType.PARAMETER, ElementType.METHOD, ElementType.FIELD})
 public @interface IntentionName {
 }

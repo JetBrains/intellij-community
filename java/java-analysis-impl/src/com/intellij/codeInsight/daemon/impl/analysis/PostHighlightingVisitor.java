@@ -340,7 +340,7 @@ class PostHighlightingVisitor {
   }
 
   @NotNull
-  private static String getNotUsedForReadingMessage(@NotNull final PsiField field, @NotNull final PsiIdentifier identifier) {
+  private static @NlsContexts.DetailedDescription String getNotUsedForReadingMessage(@NotNull final PsiField field, @NotNull final PsiIdentifier identifier) {
     final String visibility = VisibilityUtil.getVisibilityStringToDisplay(field);
 
     final String message = JavaErrorBundle.message("field.is.not.used.for.reading", visibility, identifier.getText());
@@ -560,7 +560,8 @@ class PostHighlightingVisitor {
     VirtualFile file = PsiUtilCore.getVirtualFile(myFile);
     Set<String> imports = file != null ? file.getCopyableUserData(ImportsHighlightUtil.IMPORTS_FROM_TEMPLATE) : null;
     boolean predefinedImport = imports != null && imports.contains(importStatement.getText());
-    String description = !predefinedImport ? JavaAnalysisBundle.message("unused.import.statement") : "Unused import (specified in template)";
+    String description = !predefinedImport ? JavaAnalysisBundle.message("unused.import.statement") :
+                         JavaAnalysisBundle.message("text.unused.import.in.template");
     HighlightInfo info = HighlightInfo.newHighlightInfo(JavaHighlightInfoTypes.UNUSED_IMPORT)
         .range(importStatement)
         .descriptionAndTooltip(description)

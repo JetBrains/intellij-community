@@ -24,14 +24,12 @@ import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class LibraryProjectStructureElement extends ProjectStructureElement {
   private final Library myLibrary;
@@ -80,9 +78,14 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
   private static String createInvalidRootsDescription(List<String> invalidClasses, String rootName, String libraryName) {
     HtmlBuilder buffer = new HtmlBuilder();
     final String name = StringUtil.escapeXmlEntities(libraryName);
-    buffer.append("Library ");
-    buffer.appendLink("http://library/"+name, name);
-    buffer.append(" has broken " + rootName + " " + StringUtil.pluralize("path", invalidClasses.size()) + ":");
+    final HtmlChunk.Element link = HtmlChunk.link("http://library/" + name, name);
+    buffer.appendRaw(
+      JavaUiBundle.message("library.project.structure.invalid.roots.description",
+                           link,
+                           rootName,
+                           invalidClasses.size()
+      )
+    );
     for (String url : invalidClasses) {
       buffer.br().nbsp(2);
       buffer.append(PathUtil.toPresentableUrl(url));
@@ -137,20 +140,27 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
   @Override
   public ProjectStructureProblemDescription createUnusedElementWarning() {
     final List<ConfigurationErrorQuickFix> fixes = Arrays.asList(new AddLibraryToDependenciesFix(), new RemoveLibraryFix(), new RemoveAllUnusedLibrariesFix());
-    String libraryName = HtmlChunk.link("http://library/" + myLibrary.getName(), myLibrary.getName()).toString();
-    return new ProjectStructureProblemDescription(XmlStringUtil.wrapInHtml("Library " + libraryName + " is not used"), null, createPlace(),
-                                                  ProjectStructureProblemType.unused("unused-library"), ProjectStructureProblemDescription.ProblemLevel.PROJECT,
-                                                  fixes, false);
+    final String name = Objects.toString(myLibrary.getName());
+    final String libraryName = HtmlChunk.link("http://library/" + name, name).toString();
+
+    @Nls final String result = JavaUiBundle.message("library.0.is.not.used", libraryName);
+    return new ProjectStructureProblemDescription(XmlStringUtil.wrapInHtml(result),
+                                                  null,
+                                                  createPlace(),
+                                                  ProjectStructureProblemType.unused("unused-library"),
+                                                  ProjectStructureProblemDescription.ProblemLevel.PROJECT,
+                                                  fixes,
+                                                  false);
   }
 
   @Override
-  public String getPresentableName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) String getPresentableName() {
     return myLibrary.getName();
   }
 
   @Override
-  public String getTypeName() {
-    return "Library";
+  public @Nls(capitalization = Nls.Capitalization.Sentence) String getTypeName() {
+    return JavaUiBundle.message("configurable.library.prefix");
   }
 
   @Override
@@ -164,7 +174,7 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
     private final List<String> myInvalidUrls;
 
     RemoveInvalidRootsQuickFix(Library library, OrderRootType type, List<String> invalidUrls) {
-      super("Remove invalid " + StringUtil.pluralize("root", invalidUrls.size()));
+      super(JavaUiBundle.message("label.remove.invalid.roots", invalidUrls.size()));
       myLibrary = library;
       myType = type;
       myInvalidUrls = invalidUrls;
@@ -192,7 +202,7 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
 
   private final class AddLibraryToDependenciesFix extends ConfigurationErrorQuickFix {
     private AddLibraryToDependenciesFix() {
-      super("Add to Dependencies...");
+      super(JavaUiBundle.message("label.add.to.dependencies"));
     }
 
     @Override
@@ -203,7 +213,7 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
 
   private final class RemoveLibraryFix extends ConfigurationErrorQuickFix {
     private RemoveLibraryFix() {
-      super("Remove Library");
+      super(JavaUiBundle.message("label.remove.library"));
     }
 
     @Override
@@ -214,7 +224,7 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
 
   private final class RemoveAllUnusedLibrariesFix extends ConfigurationErrorQuickFix {
     private RemoveAllUnusedLibrariesFix() {
-      super("Remove All Unused Libraries");
+      super(JavaUiBundle.message("label.remove.all.unused.libraries"));
     }
 
     @Override

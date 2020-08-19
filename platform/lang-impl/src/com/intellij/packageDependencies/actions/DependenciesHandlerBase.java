@@ -26,6 +26,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.packageDependencies.DependenciesBuilder;
 import com.intellij.packageDependencies.DependenciesToolWindow;
 import com.intellij.packageDependencies.ui.DependenciesPanel;
@@ -93,9 +94,9 @@ public abstract class DependenciesHandlerBase {
     return true;
   }
 
-  protected abstract String getProgressTitle();
+  protected abstract @NlsContexts.ProgressTitle String getProgressTitle();
 
-  protected abstract String getPanelDisplayName(AnalysisScope scope);
+  protected abstract @NlsContexts.TabTitle String getPanelDisplayName(AnalysisScope scope);
 
   protected abstract DependenciesBuilder createDependenciesBuilder(AnalysisScope scope);
 
@@ -131,7 +132,7 @@ public abstract class DependenciesHandlerBase {
     });
   }
 
-  protected String getPanelDisplayName(List<? extends DependenciesBuilder> builders) {
+  protected @NlsContexts.TabTitle String getPanelDisplayName(List<? extends DependenciesBuilder> builders) {
     return getPanelDisplayName(builders.get(0).getScope());
   }
 }

@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.util.IconUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,7 +26,7 @@ public abstract class ReorderableListController <T> {
     return myList;
   }
 
-  public RemoveActionDescription addRemoveAction(final String actionName) {
+  public RemoveActionDescription addRemoveAction(final @NlsActions.ActionText String actionName) {
     final RemoveActionDescription description = new RemoveActionDescription(actionName);
     addActionDescription(description);
     return description;
@@ -131,7 +132,7 @@ public abstract class ReorderableListController <T> {
 
     protected abstract Icon getActionIcon();
 
-    protected abstract String getActionName();
+    protected abstract @NlsActions.ActionText String getActionName();
 
     public void setShowText(final boolean showText) {
       myShowText = showText;
@@ -142,7 +143,7 @@ public abstract class ReorderableListController <T> {
       private final CustomActionDescription<? super V> myCustomActionDescription;
 
       public BaseAction(final CustomActionDescription<? super V> customActionDescription,
-                        final String text, final String description, final Icon icon, final ActionBehaviour<? extends V> behaviour) {
+                        final @NlsActions.ActionText String text, final @NlsActions.ActionDescription String description, final Icon icon, final ActionBehaviour<? extends V> behaviour) {
         super(text, description, icon);
         myBehaviour = behaviour;
         this.myCustomActionDescription = customActionDescription;
@@ -162,8 +163,8 @@ public abstract class ReorderableListController <T> {
     }
 
     private static class ActionWithText<V> extends BaseAction  {
-      ActionWithText(final CustomActionDescription<? super V> customActionDescription, final String text,
-                            final String description,
+      ActionWithText(final CustomActionDescription<? super V> customActionDescription, final @NlsActions.ActionText String text,
+                            final @NlsActions.ActionDescription String description,
                             final Icon icon,
                             final ActionBehaviour<? extends V> behaviour) {
         super(customActionDescription, text, description, icon, behaviour);
@@ -182,11 +183,11 @@ public abstract class ReorderableListController <T> {
   }
 
   public class RemoveActionDescription extends CustomActionDescription<List<T>> {
-    private final String myActionName;
+    private final @NlsActions.ActionText String myActionName;
     private Condition<? super List<T>> myConfirmation;
     private Condition<? super T> myEnableCondition;
 
-    public RemoveActionDescription(final String actionName) {
+    public RemoveActionDescription(final @NlsActions.ActionText String actionName) {
       myActionName = actionName;
     }
 
@@ -235,7 +236,7 @@ public abstract class ReorderableListController <T> {
   }
 
   public abstract static class AddActionDescriptionBase<V> extends CustomActionDescription<V> {
-    private final String myActionDescription;
+    private final @NlsActions.ActionText String myActionDescription;
     private final Factory<? extends V> myAddHandler;
     private final boolean myCreateShortcut;
     private Icon myIcon = IconUtil.getAddIcon();

@@ -14,6 +14,7 @@
 package com.intellij.util.net.ssl;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
@@ -116,7 +117,7 @@ public class CertificateInfoPanel extends JPanel {
     return pane;
   }
 
-  private static JComponent createColoredComponent(String mainText, String errorText, boolean hasError) {
+  private static JComponent createColoredComponent(@NlsContexts.Label String mainText, @NlsContexts.Label String errorText, boolean hasError) {
     SimpleColoredComponent component = new SimpleColoredComponent();
     if (hasError) {
       component.append(mainText + " (" + errorText + ")", new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor.RED));

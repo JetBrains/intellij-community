@@ -1,4 +1,4 @@
-final class A {
+class A {
   void doSmth() {}
 }
 

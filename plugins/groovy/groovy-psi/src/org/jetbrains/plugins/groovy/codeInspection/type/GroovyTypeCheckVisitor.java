@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.codeInspection.type;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -319,7 +320,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
 
   @Override
   protected void registerError(@NotNull PsiElement location,
-                               @NotNull String description,
+                               @InspectionMessage @NotNull String description,
                                LocalQuickFix @Nullable [] fixes,
                                ProblemHighlightType highlightType) {
     if (PsiUtil.isCompileStatic(location)) {

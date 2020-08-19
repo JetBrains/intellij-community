@@ -86,8 +86,8 @@ internal class MermaidCodeGeneratingProviderExtension(
     if (data.isEmpty()) {
       return
     }
-    val key = data.substring(0, data.indexOf(';'));
-    val content = data.substring(data.indexOf(';') + 1);
+    val key = data.substring(0, data.indexOf(';'))
+    val content = data.substring(data.indexOf(';') + 1)
     store(key, content.toByteArray())
   }
 

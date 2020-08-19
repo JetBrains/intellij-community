@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEdito
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NotNullComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -113,7 +114,6 @@ public class LibraryOptionsPanel implements Disposable {
       description.fetchVersions(new DownloadableFileSetVersions.FileSetVersionsCallback<FrameworkLibraryVersion>() {
         @Override
         public void onSuccess(@NotNull final List<? extends FrameworkLibraryVersion> versions) {
-          //noinspection SSBasedInspection
           SwingUtilities.invokeLater(() -> {
             if (!myDisposed) {
               showSettingsPanel(libraryDescription, pathProvider, versionFilter, showDoNotCreateOption, versions);
@@ -223,7 +223,7 @@ public class LibraryOptionsPanel implements Disposable {
       protected void customizeCellRenderer(@NotNull JList<? extends LibraryEditor> list, LibraryEditor value, int index, boolean selected,
                                            boolean hasFocus) {
         if (value == null) {
-          append("[No library selected]");
+          append(JavaUiBundle.message("library.options.panel.existing.library.combobox.label.no.library.selected"));
         }
         else if (value instanceof ExistingLibraryEditor) {
           final Library library = ((ExistingLibraryEditor)value).getLibrary();
@@ -233,7 +233,7 @@ public class LibraryOptionsPanel implements Disposable {
         else if (value instanceof NewLibraryEditor) {
           setIcon(PlatformIcons.LIBRARY_ICON);
           final String name = value.getName();
-          append(name != null ? name : "<unnamed>");
+          append(name != null ? name : JavaUiBundle.message("unnamed.title"));
         }
       }
     });
@@ -413,7 +413,8 @@ public class LibraryOptionsPanel implements Disposable {
         break;
       case USE_FROM_PROVIDER:
         if (myLibraryProvider != null) {
-          message = "Library from " + myLibraryProvider.getPresentableName() + " will be used";
+          message =
+            JavaUiBundle.message("library.options.panel.update.state.library.from.0.will.be.used", myLibraryProvider.getPresentableName());
         }
         myConfigureButton.setVisible(false);
         break;
@@ -421,7 +422,7 @@ public class LibraryOptionsPanel implements Disposable {
         final Object item = myExistingLibraryComboBox.getSelectedItem();
         if (item == null) {
           myMessageLabel.setIcon(AllIcons.General.BalloonError);
-          message = "<b>Error:</b> library is not specified";
+          message = JavaUiBundle.message("library.options.panel.update.state.error.library.is.not.specified");
           myConfigureButton.setVisible(false);
         }
         else if (item instanceof NewLibraryEditor) {
@@ -453,7 +454,7 @@ public class LibraryOptionsPanel implements Disposable {
     myMessageLabel.setText(XmlStringUtil.wrapInHtml(message));
   }
 
-  private String getDownloadFilesMessage() {
+  private @NlsContexts.Label String getDownloadFilesMessage() {
     final LibraryDownloadSettings downloadSettings = mySettings.getDownloadSettings();
     if (downloadSettings == null) return "";
 
@@ -466,12 +467,11 @@ public class LibraryOptionsPanel implements Disposable {
     else {
       path = PathUtil.getFileName(downloadPath);
     }
-    return MessageFormat.format("{0} {0, choice, 1#JAR|2#JARs} will be downloaded into <b>{1}</b> directory<br>" +
-                                   "{2} library <b>{3}</b> will be created",
-                                   downloadSettings.getSelectedDownloads().size(),
-                                   path,
-                                   downloadSettings.getLibraryLevel(),
-                                   downloadSettings.getLibraryName());
+    return JavaUiBundle.message("library.options.panel.update.state.download.files.message",
+                                downloadSettings.getSelectedDownloads().size(),
+                                path,
+                                downloadSettings.getLibraryLevel(),
+                                downloadSettings.getLibraryName());
   }
 
   public LibraryCompositionSettings getSettings() {

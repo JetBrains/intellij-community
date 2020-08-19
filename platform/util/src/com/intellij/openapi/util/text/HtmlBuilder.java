@@ -25,24 +25,32 @@ public final class HtmlBuilder {
    */
   @Contract("_ -> this")
   public HtmlBuilder append(@NotNull HtmlChunk chunk) {
-    myChunks.add(chunk);
+    if (!chunk.isEmpty()) {
+      myChunks.add(chunk);
+    }
+    return this;
+  }
+
+  @Contract("_ -> this")
+  public HtmlBuilder append(@NotNull HtmlBuilder builder) {
+    myChunks.addAll(builder.myChunks);
     return this;
   }
 
   /**
    * Appends a text chunk to this builder
    *
-   * @param text text to append (must not be escaped by caller)
+   * @param text text to append (must not be escaped by caller).
+   *             All {@code '\n'} characters will be converted to {@code <br/>}
    * @return this builder
    */
   @Contract("_ -> this")
   public HtmlBuilder append(@NotNull @Nls String text) {
-    myChunks.add(HtmlChunk.text(text));
-    return this;
+    return append(HtmlChunk.text(text));
   }
 
   /**
-   * Appends a raw html text to this builder. Should be sued with care.
+   * Appends a raw html text to this builder. Should be used with care.
    * The purpose of this method is to be able to externalize the text with embedded link. E.g.:
    * {@code "Click <a href=\"...\">here</a> for details"}.
    *
@@ -51,8 +59,7 @@ public final class HtmlBuilder {
    */
   @Contract("_ -> this")
   public HtmlBuilder appendRaw(@NotNull @Nls String rawHtml) {
-    myChunks.add(HtmlChunk.raw(rawHtml));
-    return this;
+    return append(HtmlChunk.raw(rawHtml));
   }
 
   /**
@@ -64,8 +71,7 @@ public final class HtmlBuilder {
    */
   @Contract("_, _ -> this")
   public HtmlBuilder appendLink(@NotNull @NonNls String target, @NotNull @Nls String text) {
-    myChunks.add(HtmlChunk.link(target, text));
-    return this;
+    return append(HtmlChunk.link(target, text));
   }
 
   /**
@@ -89,6 +95,16 @@ public final class HtmlBuilder {
   }
 
   /**
+   * Appends a non-breaking space ({@code &nbsp;} entity).
+   * 
+   * @return this builder
+   */
+  @Contract(" -> this")
+  public HtmlBuilder nbsp() {
+    return append(HtmlChunk.nbsp());
+  }
+
+  /**
    * Appends a series of non-breaking spaces ({@code &nbsp;} entities).
    * 
    * @param count number of non-breaking spaces to append
@@ -96,8 +112,7 @@ public final class HtmlBuilder {
    */
   @Contract("_ -> this")
   public HtmlBuilder nbsp(int count) {
-    myChunks.add(HtmlChunk.nbsp(count));
-    return this;
+    return append(HtmlChunk.nbsp(count));
   }
 
   /**
@@ -107,19 +122,50 @@ public final class HtmlBuilder {
    */
   @Contract(" -> this")
   public HtmlBuilder br() {
-    myChunks.add(HtmlChunk.br());
-    return this;
+    return append(HtmlChunk.br());
+  }
+
+  /**
+   * Appends a horizontal-rule ({@code <hr/>}).
+   *
+   * @return this builder
+   */
+  @Contract(" -> this")
+  public HtmlBuilder hr() {
+    return append(HtmlChunk.hr());
   }
 
   /**
    * Wraps this builder content with a specified tag
    * 
    * @param tag name of the tag to wrap with
-   * @return a new Element object that contains elements from this builder
+   * @return a new Element object that contains chunks from this builder
    */
   @Contract(pure = true)
   public @NotNull Element wrapWith(@NotNull @NonNls String tag) {
     return HtmlChunk.tag(tag).children(myChunks.toArray(new HtmlChunk[0]));
+  }
+
+  /**
+   * Wraps this builder content with a specified element
+   * 
+   * @param element name of the tag to wrap with
+   * @return a new Element object that contains chunks from this builder
+   */
+  @Contract(pure = true)
+  public @NotNull Element wrapWith(@NotNull HtmlChunk.Element element) {
+    return element.children(myChunks.toArray(new HtmlChunk[0]));
+  }
+
+  /**
+   * Wraps this builder content with a {@code <html><body></body></html>}.
+   * 
+   * @return a new HTML Element object that wraps BODY Element that contains 
+   * chunks from this builder
+   */
+  @Contract(pure = true)
+  public @NotNull Element wrapWithHtmlBody() {
+    return wrapWith("body").wrapWith("html");
   }
 
   /**
@@ -130,6 +176,13 @@ public final class HtmlBuilder {
     return myChunks.isEmpty();
   }
 
+  /**
+   * @return a fragment chunk that contains all the chunks of this builder.
+   */
+  public HtmlChunk toFragment() {
+    return new HtmlChunk.Fragment(new ArrayList<>(myChunks));
+  }
+  
   /**
    * @return a rendered HTML representation of all the chunks in this builder.
    */

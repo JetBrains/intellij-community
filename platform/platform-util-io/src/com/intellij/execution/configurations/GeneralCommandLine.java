@@ -9,6 +9,7 @@ import com.intellij.execution.Platform;
 import com.intellij.execution.process.ProcessNotCreatedException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.io.FileUtil;
@@ -233,11 +234,11 @@ public class GeneralCommandLine implements UserDataHolder {
     return env;
   }
 
-  public void addParameters(String @NotNull ... parameters) {
+  public void addParameters(@NonNls String @NotNull ... parameters) {
     withParameters(parameters);
   }
 
-  public void addParameters(@NotNull List<String> parameters) {
+  public void addParameters(@NotNull List<@NonNls String> parameters) {
     withParameters(parameters);
   }
 
@@ -253,7 +254,7 @@ public class GeneralCommandLine implements UserDataHolder {
     return this;
   }
 
-  public void addParameter(@NotNull String parameter) {
+  public void addParameter(@NonNls @NotNull String parameter) {
     myProgramParams.add(parameter);
   }
 
@@ -307,6 +308,7 @@ public class GeneralCommandLine implements UserDataHolder {
    *
    * @return single-string representation of this command line.
    */
+  @NlsSafe
   @NotNull
   public String getCommandLineString() {
     return getCommandLineString(null);

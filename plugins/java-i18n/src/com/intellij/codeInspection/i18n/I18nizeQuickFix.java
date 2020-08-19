@@ -45,7 +45,7 @@ import java.util.stream.Stream;
 
 public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler, HighPriorityAction {
   private static final Logger LOG = Logger.getInstance(I18nizeQuickFix.class);
-  private static final Set<String> AUXILIARY_WORDS = ContainerUtil.immutableSet("is", "the", "of", "and", "a", "an");
+  private static final Set<String> AUXILIARY_WORDS = Set.of("is", "the", "of", "and", "a", "an");
   private final NlsInfo.Localized myInfo;
   private TextRange mySelectionRange;
 

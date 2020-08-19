@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,17 +36,17 @@ public class HgCommonBranchActions extends BranchActionGroup {
 
   @NotNull protected final Project myProject;
   @NotNull private final HgBranchManager myBranchManager;
-  @NotNull protected final String myBranchName;
+  @NotNull protected final @NlsSafe String myBranchName;
   @NotNull protected final List<HgRepository> myRepositories;
   @Nullable private final HgBranchType myBranchType;
 
-  HgCommonBranchActions(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull String branchName) {
+  HgCommonBranchActions(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull @NlsSafe String branchName) {
     this(project, repositories, branchName, null);
   }
 
   HgCommonBranchActions(@NotNull Project project,
                         @NotNull List<HgRepository> repositories,
-                        @NotNull String branchName,
+                        @NotNull @NlsSafe String branchName,
                         @Nullable HgBranchType branchType) {
     myProject = project;
     myBranchName = branchName;

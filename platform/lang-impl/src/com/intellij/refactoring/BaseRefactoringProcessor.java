@@ -32,6 +32,7 @@ import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.NlsContexts.Command;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
@@ -177,8 +178,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
-  protected abstract String getCommandName();
+  protected abstract @NotNull @Command String getCommandName();
 
   protected void doRun() {
     if (!PsiDocumentManager.getInstance(myProject).commitAllDocumentsUnderProgress()) {
@@ -318,6 +318,10 @@ public abstract class BaseRefactoringProcessor implements Runnable {
   private static boolean ensureFilesWritable(@NotNull Project project, @NotNull Collection<? extends PsiElement> elements) {
     PsiElement[] psiElements = PsiUtilCore.toPsiElementArray(elements);
     return CommonRefactoringUtil.checkReadOnlyStatus(project, psiElements);
+  }
+
+  public void executeEx(final UsageInfo @NotNull [] usages) {
+    execute(usages);
   }
 
   protected void execute(final UsageInfo @NotNull [] usages) {

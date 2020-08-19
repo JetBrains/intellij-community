@@ -3,10 +3,12 @@ package com.intellij.model.documentation.impl
 
 import com.intellij.model.Symbol
 import com.intellij.model.presentation.SymbolPresentationService
+import org.jetbrains.annotations.Nls
 
 /**
  * Entry point for obtaining Symbol documentation
  */
+@Nls(capitalization = Nls.Capitalization.Sentence)
 fun getSymbolDocumentation(symbol: Symbol): String {
   // TODO extension
   return SymbolPresentationService.getLongDescription(symbol) // derive from presentation

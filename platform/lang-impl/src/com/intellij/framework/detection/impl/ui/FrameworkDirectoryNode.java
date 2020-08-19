@@ -17,6 +17,7 @@ package com.intellij.framework.detection.impl.ui;
 
 import com.intellij.framework.detection.DetectionExcludesConfiguration;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTreeCellRenderer;
@@ -40,7 +41,7 @@ class FrameworkDirectoryNode extends DetectedFrameworkTreeNodeBase {
     renderer.append(getRelativePath());
   }
 
-  private String getRelativePath() {
+  private @NlsSafe String getRelativePath() {
     final TreeNode parent = getParent();
     String path;
     if (parent instanceof FrameworkDirectoryNode) {

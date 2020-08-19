@@ -252,12 +252,18 @@
     <action id="Git.Stage.Add" class="git4idea.index.actions.GitAddAction" use-shortcut-of="ChangesView.AddUnversioned"/>
     <action id="Git.Stage.Reset" class="git4idea.index.actions.GitResetAction" use-shortcut-of="ChangesView.Revert"/>
     <action id="Git.Stage.Revert" class="git4idea.index.actions.GitRevertAction" use-shortcut-of="ChangesView.Revert"/>
+    <action id="Git.Stage.AcceptTheirs" class="git4idea.index.actions.GitAcceptTheirsAction"/>
+    <action id="Git.Stage.AcceptYours" class="git4idea.index.actions.GitAcceptYoursAction"/>
+    <action id="Git.Stage.Merge" class="git4idea.index.actions.GitMergeConflictAction"/>
 
     <group id="Git.Stage.Toolbar">
       <reference id="Diff.ShowDiff"/>
       <reference id="Git.Stage.Refresh"/>
     </group>
     <group id="Git.Stage.Tree.Menu">
+      <reference id="Git.Stage.Merge"/>
+      <reference id="Git.Stage.AcceptTheirs"/>
+      <reference id="Git.Stage.AcceptYours"/>
       <reference id="Git.Stage.Add"/>
       <reference id="Git.Stage.Reset"/>
       <reference id="Git.Stage.Revert"/>
@@ -265,6 +271,9 @@
       <reference id="Git.Ignore.File"/>
       <separator/>
       <reference id="Diff.ShowDiff"/>
+      <reference ref="ChangesView.CreatePatchFromChanges"/>
+      <reference ref="ChangesView.CreatePatchToClipboard"/>
+      <separator/>
       <reference id="Vcs.ShowTabbedFileHistory"/>
       <reference id="LocalHistory"/>
     </group>
@@ -493,7 +502,7 @@
 
     <projectService serviceImplementation="git4idea.index.GitStageManager"/>
     <projectService serviceImplementation="git4idea.index.GitStageTracker"/>
-    <openapi.vcs.impl.LocalLineStatusTrackerProvider implementation="git4idea.index.lst.GitStageLineStatusTrackerProvider"/>
+    <openapi.vcs.impl.LocalLineStatusTrackerProvider implementation="git4idea.index.GitStageLineStatusTrackerProvider"/>
 
     <backgroundPostStartupActivity implementation="git4idea.index.GitStageStartupActivity"/>
 
@@ -506,6 +515,10 @@
     <editorTabTitleProvider implementation="git4idea.index.vfs.GitIndexVirtualFileTabTitleProvider"/>
 
     <diff.actions.ShowDiffAction.ExtensionProvider implementation="git4idea.index.actions.GitStageDiffAction"/>
+    <openapi.vcs.changes.actions.CreatePatchFromChangesAction.Dialog.ExtensionProvider
+      implementation="git4idea.index.actions.GitStageCreatePatchActionProvider$Dialog"/>
+    <openapi.vcs.changes.actions.CreatePatchFromChangesAction.Clipboard.ExtensionProvider
+      implementation="git4idea.index.actions.GitStageCreatePatchActionProvider$Clipboard"/>
 
     <vcs.consoleFolding implementation="git4idea.console.GitConsoleFolding"/>
     <console.folding implementation="git4idea.console.GitProgressOutputConsoleFolding"/>

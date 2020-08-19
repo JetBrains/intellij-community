@@ -23,18 +23,17 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderEnumerator
-import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.libraries.LibraryUtil
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.io.systemIndependentPath
 import com.intellij.task.ProjectTaskManager
 import com.intellij.util.PathUtil
 import com.intellij.util.Restarter
-import com.intellij.util.SystemProperties
+import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.util.PsiUtil
 import java.io.File
 import java.util.*
@@ -47,9 +46,10 @@ private val notificationGroup by lazy {
 }
 
 internal open class UpdateIdeFromSourcesAction
- @JvmOverloads constructor(private val forceShowSettings: Boolean = false)
-  : AnAction(if (forceShowSettings) "Update IDE from Sources Settings..." else "Update IDE from Sources...",
-             "Builds an installation of IntelliJ IDEA from the currently opened sources and replace the current installation by it.", null), DumbAware {
+@JvmOverloads constructor(private val forceShowSettings: Boolean = false)
+  : AnAction(if (forceShowSettings) DevKitBundle.message("action.UpdateIdeFromSourcesAction.update.show.settings.text")
+             else DevKitBundle.message("action.UpdateIdeFromSourcesAction.update.text"),
+             DevKitBundle.message("action.UpdateIdeFromSourcesAction.update.description"), null), DumbAware {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
     if (forceShowSettings || UpdateFromSourcesSettings.getState().showSettings) {
@@ -133,7 +133,7 @@ internal open class UpdateIdeFromSourcesAction
                               workIdeHome: String,
                               builtDistPath: String,
                               backupDir: String) {
-    object : Task.Backgroundable(project, "Updating from Sources", true) {
+    object : Task.Backgroundable(project, DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.title"), true) {
       override fun run(indicator: ProgressIndicator) {
         indicator.text = "Updating IDE from sources..."
         backupImportantFilesIfNeeded(workIdeHome, backupDir, indicator)
@@ -141,7 +141,7 @@ internal open class UpdateIdeFromSourcesAction
         FileUtil.delete(File(builtDistPath))
         indicator.text2 = "Starting gant script"
         val scriptHandler = params.createOSProcessHandler()
-        val errorLines = Collections.synchronizedList(ArrayList<String>())
+        val errorLines = Collections.synchronizedList(ArrayList<@NlsSafe String>())
         scriptHandler.addProcessListener(object : ProcessAdapter() {
           override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
             LOG.debug("script: ${event.text}")
@@ -160,8 +160,8 @@ internal open class UpdateIdeFromSourcesAction
 
             if (event.exitCode != 0) {
               val errorText = errorLines.joinToString("\n")
-              notificationGroup.createNotification(title = "Update from Sources Failed",
-                                                   content = "Build script finished with ${event.exitCode}: $errorText",
+              notificationGroup.createNotification(title = DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.failed.title"),
+                                                   content = DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.failed.content", event.exitCode, errorText),
                                                    type = NotificationType.ERROR).notify(project)
               return
             }
@@ -176,8 +176,8 @@ internal open class UpdateIdeFromSourcesAction
               restartWithCommand(command)
             }
             else {
-              notificationGroup.createNotification(title = "Update from Sources",
-                                                   content = "New installation is prepared from sources. <a href=\"#\">Restart</a>?",
+              notificationGroup.createNotification(title = DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.success.title"),
+                                                   content = DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.success.content"),
                                                    listener = NotificationListener { _, _ -> restartWithCommand(command) }).notify(project)
             }
           }
@@ -213,7 +213,7 @@ internal open class UpdateIdeFromSourcesAction
   }
 
   private fun startCopyingFiles(builtDistPath: String, workIdeHome: String, project: Project) {
-    object : Task.Backgroundable(project, "Updating from Sources", true) {
+    object : Task.Backgroundable(project, DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.title"), true) {
       override fun run(indicator: ProgressIndicator) {
         indicator.text = "Copying files to IDE distribution..."
         indicator.text2 = "Deleting old files"
@@ -222,7 +222,8 @@ internal open class UpdateIdeFromSourcesAction
         indicator.text2 = "Copying new files"
         FileUtil.copyDir(File(builtDistPath), File(workIdeHome))
         indicator.checkCanceled()
-        Notification("Update from Sources", "Update from Sources", "New installation is prepared at $workIdeHome.",
+        Notification("Update from Sources", DevKitBundle.message("action.UpdateIdeFromSourcesAction.notification.title"),
+                     DevKitBundle.message("action.UpdateIdeFromSourcesAction.notification.content", workIdeHome),
                      NotificationType.INFORMATION).notify(project)
       }
     }.queue()

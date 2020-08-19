@@ -18,7 +18,7 @@ class ImplicitTypeInlayProvider : InlayHintsProvider<NoSettings> {
           if (element.typeElement.isInferredType) {
             val presentation = JavaTypeHintsPresentationFactory.presentationWithColon(element.type, factory)
             val shifted = factory.inset(presentation, left = 3)
-            sink.addInlineElement(identifier.textRange.endOffset, true, shifted)
+            sink.addInlineElement(identifier.textRange.endOffset, true, shifted, false)
           }
         }
         return true

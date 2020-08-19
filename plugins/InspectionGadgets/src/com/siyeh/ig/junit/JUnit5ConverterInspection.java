@@ -179,8 +179,11 @@ public class JUnit5ConverterInspection extends BaseInspection {
               return true;
             });
             if (!inheritors.isEmpty()) {
-              conflicts.putValue(psiClass, "Class " + RefactoringUIUtil.getDescription(psiClass, true) + " can't be converted to JUnit 5, cause there are incompatible inheritor(s): " +
-                                           StringUtil.join(inheritors, aClass -> aClass.getQualifiedName(), ", "));
+              @Nls final String problem = "Class " +
+                                   RefactoringUIUtil.getDescription(psiClass, true) +
+                                   " can't be converted to JUnit 5, cause there are incompatible inheritor(s): " +
+                                   StringUtil.join(inheritors, aClass -> aClass.getQualifiedName(), ", ");
+              conflicts.putValue(psiClass, problem);
             }
           }
         }
@@ -218,7 +221,8 @@ public class JUnit5ConverterInspection extends BaseInspection {
           }
         }
         super.performRefactoring(migrateUsages.toArray(UsageInfo.EMPTY_ARRAY));
-        CleanupInspectionUtil.getInstance().applyFixes(myProject, "Convert Assertions", descriptions, JUnit5AssertionsConverterInspection.ReplaceObsoleteAssertsFix.class, false);
+        CleanupInspectionUtil.getInstance().applyFixes(myProject, InspectionGadgetsBundle.message("junit5.converter.fixes.presentation.text"),
+                                                       descriptions, JUnit5AssertionsConverterInspection.ReplaceObsoleteAssertsFix.class, false);
       }
 
       @Override

@@ -3,6 +3,7 @@ package com.intellij.refactoring.changeSignature;
 
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.RefactoringBundle;
@@ -59,7 +60,7 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo, TableItem
     private TableCellRenderer myRenderer;
     private TableCellEditor myEditor;
 
-    public ColumnInfoBase(String name) {
+    public ColumnInfoBase(@NlsContexts.ColumnName String name) {
       super(name);
     }
 
@@ -114,7 +115,7 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo, TableItem
       this(project, fileType, RefactoringBundle.message("column.name.type"));
     }
 
-    public TypeColumn(Project project, FileType fileType, String title) {
+    public TypeColumn(Project project, FileType fileType, @NlsContexts.ColumnName String title) {
       super(title);
       myProject = project;
       myFileType = fileType;

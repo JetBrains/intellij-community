@@ -9,6 +9,6 @@ PyFile:EmptySubscription.py
       PyStringLiteralExpression: 
         PsiElement(Py:SINGLE_QUOTED_STRING)('''')
       PsiElement(Py:LBRACKET)('[')
-      PsiErrorElement:expression expected
+      PsiErrorElement:Expression expected
         <empty list>
       PsiElement(Py:RBRACKET)(']')

@@ -16,16 +16,17 @@
 
 package com.intellij.refactoring.inlineSuperClass.usageInfo;
 
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nls;
 
 public class ReplaceConstructorUsageInfo extends FixableUsageInfo{
   private final PsiType myNewType;
-  private String myConflict;
-  private static final String CONSTRUCTOR_MATCHING_SUPER_NOT_FOUND = "Constructor matching super not found";
+  private @Nls String myConflict;
 
   public ReplaceConstructorUsageInfo(PsiNewExpression element, PsiType newType, final PsiClass[] targetClasses) {
     super(element);
@@ -35,7 +36,7 @@ public class ReplaceConstructorUsageInfo extends FixableUsageInfo{
     if (constructor == null) {
       if (element.getArgumentList() != null) {
         if (constructors.length == 1 && !constructors[0].getParameterList().isEmpty() || constructors.length > 1) {
-          myConflict = CONSTRUCTOR_MATCHING_SUPER_NOT_FOUND;
+          myConflict = JavaRefactoringBundle.message("inline.super.no.ctor");
         }
       }
     } else {
@@ -55,33 +56,33 @@ public class ReplaceConstructorUsageInfo extends FixableUsageInfo{
         }
       }
       if (!foundMatchingConstructor) {
-        myConflict = CONSTRUCTOR_MATCHING_SUPER_NOT_FOUND;
+        myConflict = JavaRefactoringBundle.message("inline.super.no.ctor");
       }
 
     }
 
     PsiType type = element.getType();
     if (type == null) {
-      appendConflict("Type is unknown");
+      appendConflict(JavaRefactoringBundle.message("inline.super.unknown.type"));
       return;
     } else {
       type = type.getDeepComponentType();
     }
 
     if (!TypeConversionUtil.isAssignable(type, newType)) {
-      final String conflict = "Type parameters do not agree in " + element.getText() + ". " +
-                              "Expected " + newType.getPresentableText() + " but found " + type.getPresentableText();
+      final String conflict = JavaRefactoringBundle.message("inline.super.type.params.differ", element.getText(), newType.getPresentableText(), type.getPresentableText());
       appendConflict(conflict);
     }
 
     if (targetClasses.length > 1) {
-      final String conflict = "Constructor " + element.getText() + " can be replaced with any of " + StringUtil.join(targetClasses,
-                                                                                                                     psiClass -> psiClass.getQualifiedName(), ", ");
+      final String conflict =
+        JavaRefactoringBundle.message("inline.super.ctor.can.be.replaced", element.getText(),
+                                      StringUtil.join(targetClasses, psiClass -> psiClass.getQualifiedName(), ", "));
       appendConflict(conflict);
     }
   }
 
-  private void appendConflict(final String conflict) {
+  private void appendConflict(@Nls final String conflict) {
     if (myConflict == null) {
       myConflict = conflict;
     } else {

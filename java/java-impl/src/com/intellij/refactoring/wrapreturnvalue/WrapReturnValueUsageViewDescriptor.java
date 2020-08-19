@@ -4,7 +4,6 @@ package com.intellij.refactoring.wrapreturnvalue;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.refactoring.RefactorJBundle;
-import com.intellij.refactoring.psi.MyUsageViewUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import org.jetbrains.annotations.NotNull;
@@ -33,7 +32,6 @@ class WrapReturnValueUsageViewDescriptor implements UsageViewDescriptor {
     @NotNull
     @Override
     public String getCodeReferencesText(int usagesCount, int filesCount){
-        return RefactorJBundle.message("references.to.be.modified.usage.view",
-                MyUsageViewUtil.getUsageCountInfo(usagesCount, filesCount, RefactorJBundle.message("reference")));
+        return RefactorJBundle.message("references.to.be.modified.usage.view", usagesCount, filesCount);
     }
 }

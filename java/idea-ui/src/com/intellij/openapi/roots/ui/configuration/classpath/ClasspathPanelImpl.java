@@ -107,7 +107,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     myEntryTable.setDefaultRenderer(ClasspathTableItem.class, new TableItemRenderer(getStructureConfigurableContext()));
     myEntryTable.setDefaultRenderer(Boolean.class, new ExportFlagRenderer(myEntryTable.getDefaultRenderer(Boolean.class)));
 
-    JComboBox scopeEditor = new ComboBox<>(new EnumComboBoxModel<>(DependencyScope.class));
+    JComboBox<DependencyScope> scopeEditor = new ComboBox<>(new EnumComboBoxModel<>(DependencyScope.class));
     myEntryTable.setDefaultEditor(DependencyScope.class, new DefaultCellEditor(scopeEditor));
     myEntryTable.setDefaultRenderer(DependencyScope.class, new ComboBoxTableRenderer<DependencyScope>(DependencyScope.values()) {
         @Override
@@ -346,11 +346,6 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       }
     };
 
-    //addButton.setShortcut(CustomShortcutSet.fromString("alt A", "INSERT"));
-    //removeButton.setShortcut(CustomShortcutSet.fromString("alt DELETE"));
-    //upButton.setShortcut(CustomShortcutSet.fromString("alt UP"));
-    //downButton.setShortcut(CustomShortcutSet.fromString("alt DOWN"));
-
     final ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myEntryTable);
     AnActionButtonUpdater moveUpDownUpdater = e -> {
       for (RowSorter.SortKey key : myEntryTable.getRowSorter().getSortKeys()) {
@@ -395,7 +390,9 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
               return "&" + value.getIndex() + "  " + value.getTitle();
             }
           });
-        popup.show(button.getPreferredPopupPoint());
+        final RelativePoint point = button.getPreferredPopupPoint();
+        if (point == null) return;
+        popup.show(point);
       }
     })
       .setRemoveAction(new AnActionButtonRunnable() {
@@ -456,7 +453,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     ModuleStructureConfigurable.getInstance(myState.getProject()).getTree().repaint();
   }
 
-  private void removeSelectedItems(final List removedRows) {
+  private void removeSelectedItems(final List<Object[]> removedRows) {
     if (removedRows.isEmpty()) {
       return;
     }

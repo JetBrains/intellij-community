@@ -267,6 +267,9 @@ public class SearchTextField extends JPanel {
     }
   }
 
+  protected void historyItemChosen(String item) {
+  }
+
   private void addMenuItem(final String item) {
     if (myNativeSearchPopup != null) {
       myNativeSearchPopup.remove(myNoItems);
@@ -275,6 +278,7 @@ public class SearchTextField extends JPanel {
       menuItem.addActionListener(e -> {
         myTextField.setText(item);
         addCurrentTextToHistory();
+        historyItemChosen(item);
       });
     }
   }

@@ -3,6 +3,8 @@ package org.jetbrains.plugins.groovy.gant;
 
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.util.NlsContexts.DialogMessage;
+import com.intellij.openapi.util.NlsContexts.DialogTitle;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -10,6 +12,7 @@ import com.intellij.util.IncorrectOperationException;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplates;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory;
 import org.jetbrains.plugins.groovy.actions.NewGroovyActionBase;
@@ -23,7 +26,7 @@ import java.util.Objects;
 public class NewGantScriptAction extends NewGroovyActionBase {
 
   public NewGantScriptAction() {
-    super("Gant Script", "Create new Gant Script", JetgroovyIcons.Groovy.Gant_16x16);
+    super(GroovyBundle.message("new.gant.script.action.text"), GroovyBundle.message("new.gant.script.action.description"), JetgroovyIcons.Groovy.Gant_16x16);
   }
 
   @Override
@@ -32,13 +35,13 @@ public class NewGantScriptAction extends NewGroovyActionBase {
   }
 
   @Override
-  protected String getDialogPrompt() {
-    return "Enter name for new Gant Script";
+  protected @DialogMessage String getDialogPrompt() {
+    return GroovyBundle.message("new.gant.script.dialog.message");
   }
 
   @Override
-  protected String getDialogTitle() {
-    return "New Gant Script";
+  protected @DialogTitle String getDialogTitle() {
+    return GroovyBundle.message("new.gant.script.dialog.title");
   }
 
   @Override

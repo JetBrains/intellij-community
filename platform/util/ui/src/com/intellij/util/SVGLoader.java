@@ -270,8 +270,8 @@ public final class SVGLoader {
   }
 
   private static ImageLoader.Dimension2DDouble getDocumentSize(double scale, @NotNull TranscoderInput input) {
-    SVGOMDocument document = (SVGOMDocument)input.getDocument();
-    BridgeContext ctx = new MyTranscoder(scale).createBridgeContext(document);
+    Document document = input.getDocument();
+    BridgeContext ctx = new MyTranscoder(scale).createBridgeContext((SVGOMDocument)document);
     new GVTBuilder().build(ctx, document);
     Dimension2D size = ctx.getDocumentSize();
     return new ImageLoader.Dimension2DDouble(size.getWidth() * scale, size.getHeight() * scale);

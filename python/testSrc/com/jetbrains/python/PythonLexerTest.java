@@ -415,14 +415,14 @@ public class PythonLexerTest extends PyLexerTestCase {
   public void testFStringUnmatchedQuotesAsTextParts() {
     doTest("s = f'foo\"bar'", 
            "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", 
-           "Py:FSTRING_START", "Py:FSTRING_TEXT", "Py:FSTRING_TEXT", "Py:FSTRING_TEXT", "Py:FSTRING_END", "Py:STATEMENT_BREAK");
+           "Py:FSTRING_START", "Py:FSTRING_TEXT", "Py:FSTRING_END", "Py:STATEMENT_BREAK");
   }
 
   public void testFStringUnmatchedLineBreaksAsTextParts() {
     doTest("s = f'''foo\n" +
            "bar'''",
            "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", 
-           "Py:FSTRING_START", "Py:FSTRING_TEXT", "Py:FSTRING_TEXT", "Py:FSTRING_TEXT", "Py:FSTRING_END", "Py:STATEMENT_BREAK");
+           "Py:FSTRING_START", "Py:FSTRING_TEXT", "Py:FSTRING_END", "Py:STATEMENT_BREAK");
   }
 
   public void testFStringNamedUnicodeEscapes() {
@@ -440,15 +440,15 @@ public class PythonLexerTest extends PyLexerTestCase {
   public void testFStringBackslashEscapedBraces() {
     doTest("s = f'foo\\{x}'", 
            "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", 
-           "Py:FSTRING_START", "Py:FSTRING_TEXT", "Py:FSTRING_TEXT", 
+           "Py:FSTRING_START", "Py:FSTRING_TEXT",
            "Py:FSTRING_FRAGMENT_START", "Py:IDENTIFIER", "Py:FSTRING_FRAGMENT_END", 
            "Py:FSTRING_END", "Py:STATEMENT_BREAK");
     doTest("s = f'{x:foo\\{y}bar\\}'", 
            "Py:IDENTIFIER", "Py:SPACE", "Py:EQ", "Py:SPACE", 
            "Py:FSTRING_START", "Py:FSTRING_FRAGMENT_START", "Py:IDENTIFIER", 
-           "Py:FSTRING_FRAGMENT_FORMAT_START", "Py:FSTRING_TEXT", "Py:FSTRING_TEXT", 
+           "Py:FSTRING_FRAGMENT_FORMAT_START", "Py:FSTRING_TEXT",
            "Py:FSTRING_FRAGMENT_START", "Py:IDENTIFIER", "Py:FSTRING_FRAGMENT_END", 
-           "Py:FSTRING_TEXT", "Py:FSTRING_TEXT", 
+           "Py:FSTRING_TEXT",
            "Py:FSTRING_FRAGMENT_END", "Py:FSTRING_END", "Py:STATEMENT_BREAK");
   }
 

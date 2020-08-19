@@ -20,6 +20,7 @@ import com.intellij.find.FindManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -95,7 +96,7 @@ public class ReplacePromptDialog extends DialogWrapper {
     return panel;
   }
 
-  protected String getMessage() {
+  protected @NlsContexts.Label String getMessage() {
     return myException == null ? UIBundle.message("replace.prompt.replace.occurrence.label") : myException.getMessage();
   }
 
@@ -112,7 +113,7 @@ public class ReplacePromptDialog extends DialogWrapper {
   private class DoAction extends AbstractAction {
     private final int myExitCode;
 
-    DoAction(String name,int exitCode) {
+    DoAction(@NlsActions.ActionText String name, int exitCode) {
       putValue(Action.NAME, name);
       myExitCode = exitCode;
     }

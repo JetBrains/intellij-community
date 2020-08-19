@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotifications
+import org.editorconfig.Utils
 import org.editorconfig.language.filetype.EditorConfigFileConstants
 import java.io.IOException
 
@@ -67,14 +68,14 @@ class EditorConfigWrongFileNameNotificationProvider : EditorNotifications.Provid
       update(file, project)
     }
 
-    return result.text(EditorConfigBundle["notification.rename.message"])
+    return result.text(EditorConfigBundle.get("notification.rename.message"))
   }
 
   private fun findEditorConfig(file: VirtualFile) =
     runReadAction { file.parent.findChild(EditorConfigFileConstants.FILE_NAME) }
 
   private fun error(message: String, project: Project) {
-    val notification = Notification("editorconfig", "EditorConfig", message, NotificationType.ERROR)
+    val notification = Notification("editorconfig", Utils.EDITOR_CONFIG_NAME, message, NotificationType.ERROR)
     Notifications.Bus.notify(notification, project)
   }
 

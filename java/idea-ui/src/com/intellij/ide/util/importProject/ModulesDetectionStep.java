@@ -35,7 +35,7 @@ public class ModulesDetectionStep extends AbstractStepWithProgress<List<ModuleDe
                               ProjectDescriptor projectDescriptor, final ModuleInsight insight,
                               Icon icon,
                               @NonNls String helpId) {
-    super("Stop module analysis?");
+    super(JavaUiBundle.message("module.detection.dialog.message.stop.module.analysis"));
     myDetector = detector;
     myBuilder = builder;
     myProjectDescriptor = projectDescriptor;

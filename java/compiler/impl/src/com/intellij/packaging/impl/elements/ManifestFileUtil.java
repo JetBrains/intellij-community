@@ -288,7 +288,8 @@ public final class ManifestFileUtil {
     final GlobalSearchScope searchScope = GlobalSearchScope.allScope(project);
     final PsiClass aClass = initialClassName != null ? JavaPsiFacade.getInstance(project).findClass(initialClassName, searchScope) : null;
     final TreeClassChooser chooser =
-        chooserFactory.createWithInnerClassesScopeChooser("Select Main Class", searchScope, new MainClassFilter(), aClass);
+        chooserFactory.createWithInnerClassesScopeChooser(JavaCompilerBundle.message("dialog.title.manifest.select.main.class"),
+                                                          searchScope, new MainClassFilter(), aClass);
     chooser.showDialog();
     return chooser.getSelected();
   }

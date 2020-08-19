@@ -36,6 +36,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.serviceContainer.ComponentManagerImpl;
@@ -583,6 +584,11 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
   }
 
+  @Override
+  public final boolean isExitInProgress() {
+    return myExitInProgress;
+  }
+
   private void doExit(int flags, boolean restart, String[] beforeRestart) {
     boolean force = BitUtil.isSet(flags, FORCE_EXIT);
     try {
@@ -598,6 +604,12 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       }
 
       stopServicePreloading();
+
+      if (isInstantShutdownPossible()) {
+        for (Frame frame : Frame.getFrames()) {
+          frame.setVisible(false);
+        }
+      }
 
       lifecycleListener.appWillBeClosed(restart);
       LifecycleUsageTriggerCollector.onIdeClose(restart);
@@ -632,6 +644,14 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     finally {
       myExitInProgress = false;
     }
+  }
+
+  private static boolean isInstantShutdownPossible() {
+    if (!Registry.is("ide.instant.shutdown")) {
+      return false;
+    }
+
+    return !ProgressManager.getInstance().hasProgressIndicator();
   }
 
   private @NotNull CompletableFuture<ProgressWindow> createProgressWindowAsyncIfNeeded(@NotNull String progressTitle,

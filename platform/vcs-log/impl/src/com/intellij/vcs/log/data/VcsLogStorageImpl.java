@@ -18,6 +18,7 @@ import com.intellij.vcs.log.util.PersistentUtil;
 import com.intellij.vcs.log.util.StorageId;
 import gnu.trove.TObjectIntHashMap;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,9 +34,9 @@ import java.util.function.Predicate;
  */
 public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
   @NotNull private static final Logger LOG = Logger.getInstance(VcsLogStorage.class);
-  @NotNull private static final String HASHES_STORAGE = "hashes"; // NON-NLS
-  @NotNull private static final String REFS_STORAGE = "refs"; // NON-NLS
-  @NotNull private static final String STORAGE = "storage"; // NON-NLS
+  @NotNull @NonNls private static final String HASHES_STORAGE = "hashes";
+  @NotNull @NonNls private static final String REFS_STORAGE = "refs";
+  @NotNull @NonNls private static final String STORAGE = "storage";
   @NotNull public static final VcsLogStorage EMPTY = new EmptyLogStorage();
 
   public static final int VERSION = 8;

@@ -11,6 +11,7 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.INativeFileType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.vfs.PersistentFSConstants;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
@@ -145,11 +146,11 @@ public abstract class AutoScrollToSourceHandler {
     }
   }
 
-  protected String getActionName() {
+  protected @NlsActions.ActionText String getActionName() {
     return UIBundle.message("autoscroll.to.source.action.name");
   }
 
-  protected String getActionDescription() {
+  protected @NlsActions.ActionDescription String getActionDescription() {
     return UIBundle.message("autoscroll.to.source.action.description");
   }
 
@@ -191,7 +192,7 @@ public abstract class AutoScrollToSourceHandler {
   }
 
   private class AutoscrollToSourceAction extends ToggleAction implements DumbAware {
-    AutoscrollToSourceAction(String actionName, String actionDescription) {
+    AutoscrollToSourceAction(@NlsActions.ActionText String actionName, @NlsActions.ActionDescription String actionDescription) {
       super(actionName, actionDescription, AllIcons.General.AutoscrollToSource);
     }
 

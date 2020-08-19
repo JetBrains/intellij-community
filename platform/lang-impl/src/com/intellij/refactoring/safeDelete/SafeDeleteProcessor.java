@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -406,11 +407,11 @@ public final class SafeDeleteProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  private String calcCommandName() {
+  private @NlsContexts.Command String calcCommandName() {
     return RefactoringBundle.message("safe.delete.command", RefactoringUIUtil.calculatePsiElementDescriptionList(myElements));
   }
 
-  private String myCachedCommandName = null;
+  private @NlsContexts.Command String myCachedCommandName = null;
   @NotNull
   @Override
   protected String getCommandName() {

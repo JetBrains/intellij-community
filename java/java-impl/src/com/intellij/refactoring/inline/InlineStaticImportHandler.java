@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.inline;
 
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -52,13 +53,14 @@ public class InlineStaticImportHandler extends JavaInlineActionHandler {
     project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted(REFACTORING_ID, data);
 
 
-    WriteCommandAction.writeCommandAction(project).withName("Expand static import").run(() -> replaceAllAndDeleteImport(referenceElements, null, staticStatement));
+    WriteCommandAction.writeCommandAction(project).withName(
+      JavaBundle.message("action.expand.static.import.text")).run(() -> replaceAllAndDeleteImport(referenceElements, null, staticStatement));
     project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone(REFACTORING_ID, null);
   }
 
   @Nullable
   @Override
   public String getActionName(PsiElement element) {
-    return "Expand static import";
+    return JavaBundle.message("action.expand.static.import.text");
   }
 }

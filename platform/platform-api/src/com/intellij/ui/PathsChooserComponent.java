@@ -19,6 +19,7 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.ComponentWithEmptyText;
@@ -39,8 +40,8 @@ public class PathsChooserComponent implements ComponentWithEmptyText {
   private final JBList myList;
   private final DefaultListModel myListModel;
 
-  private List<String> myWorkingCollection;
-  private final List<String> myInitialCollection;
+  private List<@NlsSafe String> myWorkingCollection;
+  private final List<@NlsSafe String> myInitialCollection;
   @Nullable private final Project myProject;
 
   public PathsChooserComponent(@NotNull final List<String> collection, @NotNull final PathProcessor processor) {
@@ -110,7 +111,7 @@ public class PathsChooserComponent implements ComponentWithEmptyText {
   public void reset() {
     myListModel.clear();
     myWorkingCollection = new ArrayList<>(myInitialCollection);
-    for (String path : myWorkingCollection) {
+    for (@NlsSafe String path : myWorkingCollection) {
       myListModel.addElement(path);
     }
   }

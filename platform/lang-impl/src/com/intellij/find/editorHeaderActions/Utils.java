@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.containers.ContainerUtil;
@@ -32,17 +33,17 @@ public final class Utils {
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public static void showCompletionPopup(JComponent toolbarComponent,
                                          final JList list,
-                                         String title,
+                                         @NlsContexts.PopupTitle String title,
                                          final JTextComponent textField,
-                                         String ad) {
+                                         @NlsContexts.PopupAdvertisement String ad) {
     showCompletionPopup(toolbarComponent, list, title, textField, ad, null);
   }
 
   public static void showCompletionPopup(JComponent toolbarComponent,
                                          final JList list,
-                                         String title,
+                                         @NlsContexts.PopupTitle String title,
                                          final JTextComponent textField,
-                                         String ad,
+                                         @NlsContexts.PopupAdvertisement String ad,
                                          JBPopupListener listener) {
 
     final Runnable callback = () -> {

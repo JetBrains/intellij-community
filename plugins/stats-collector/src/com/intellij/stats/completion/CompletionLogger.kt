@@ -16,12 +16,13 @@
 package com.intellij.stats.completion
 
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.lang.Language
 import com.intellij.openapi.components.ServiceManager
 
 
 abstract class CompletionLoggerProvider {
 
-    abstract fun newCompletionLogger(): CompletionLogger
+    abstract fun newCompletionLogger(language: Language): CompletionLogger
 
     open fun dispose(): Unit = Unit
 
@@ -42,8 +43,8 @@ abstract class CompletionLogger {
     abstract fun downPressed(lookup: LookupImpl, timestamp: Long)
     abstract fun upPressed(lookup: LookupImpl, timestamp: Long)
 
-    abstract fun itemSelectedCompletionFinished(lookup: LookupImpl, performance: Map<String, Long>, timestamp: Long)
-    abstract fun completionCancelled(performance: Map<String, Long>, timestamp: Long)
+    abstract fun itemSelectedCompletionFinished(lookup: LookupImpl, completionChar: Char, performance: Map<String, Long>, timestamp: Long)
+    abstract fun completionCancelled(explicitly: Boolean, performance: Map<String, Long>, timestamp: Long)
     abstract fun itemSelectedByTyping(lookup: LookupImpl, performance: Map<String, Long>, timestamp: Long)
 
     abstract fun customMessage(message: String, timestamp: Long)

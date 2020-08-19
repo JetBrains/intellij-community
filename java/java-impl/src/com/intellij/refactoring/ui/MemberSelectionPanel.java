@@ -32,7 +32,7 @@ public class MemberSelectionPanel extends AbstractMemberSelectionPanel<PsiMember
   /**
    * @param title if title contains 'm' - it would look and feel as mnemonic
    */
-  public MemberSelectionPanel(@NlsContexts.Separator String title, List<MemberInfo> memberInfo, String abstractColumnHeader) {
+  public MemberSelectionPanel(@NlsContexts.Separator String title, List<MemberInfo> memberInfo, @NlsContexts.ColumnName String abstractColumnHeader) {
     super();
     setLayout(new BorderLayout());
 
@@ -42,7 +42,7 @@ public class MemberSelectionPanel extends AbstractMemberSelectionPanel<PsiMember
     add(scrollPane, BorderLayout.CENTER);
   }
 
-  protected MemberSelectionTable createMemberSelectionTable(List<MemberInfo> memberInfo, String abstractColumnHeader) {
+  protected MemberSelectionTable createMemberSelectionTable(List<MemberInfo> memberInfo, @NlsContexts.ColumnName String abstractColumnHeader) {
     return new MemberSelectionTable(memberInfo, abstractColumnHeader);
   }
 

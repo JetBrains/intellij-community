@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.ui.tree.TreeCollector.TreePathRoots;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -93,7 +94,7 @@ abstract class TreeNodeExclusionAction<T extends TreeNode> extends AnAction {
     exclusionProcessor.onDone(myIsExclude);
   }
 
-  private String getActionText() {
+  private @NlsActions.ActionText String getActionText() {
     return myIsExclude ? "Exclude" : "Include";
   }
 }

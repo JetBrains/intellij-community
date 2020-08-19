@@ -22,6 +22,7 @@ import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -42,7 +43,7 @@ import java.util.List;
 import java.util.Set;
 
 public abstract class DiffApplicationBase extends ApplicationStarterBase {
-  protected static final String NULL_PATH = "/dev/null";
+  @NlsSafe protected static final String NULL_PATH = "/dev/null";
 
   protected static final Logger LOG = Logger.getInstance(DiffApplicationBase.class);
 

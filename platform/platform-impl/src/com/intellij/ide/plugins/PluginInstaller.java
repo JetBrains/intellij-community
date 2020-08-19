@@ -179,7 +179,7 @@ public final class PluginInstaller {
     PluginStateManager.fireState(descriptor, true);
   }
 
-  public static @Nullable Path installWithoutRestart(@NotNull Path sourceFile, IdeaPluginDescriptorImpl descriptor, Component parent) {
+  private static @Nullable Path installWithoutRestart(@NotNull Path sourceFile, IdeaPluginDescriptorImpl descriptor, Component parent) {
     Ref<Throwable> ref = new Ref<>();
     Ref<Path> refTarget = new Ref<>();
     String pluginName = descriptor.getName();
@@ -193,9 +193,6 @@ public final class PluginInstaller {
       }
     }, IdeBundle.message("progress.title.installing.plugin", pluginName), false, null, parent instanceof JComponent ? (JComponent)parent : null);
     Throwable exception = ref.get();
-    if (exception != null) {
-      Messages.showErrorDialog(parent, IdeBundle.message("message.plugin.installation.failed.0.1", pluginName, exception.getMessage()));
-    }
     PluginStateManager.fireState(descriptor, true);
     return exception != null ? null : refTarget.get();
   }
@@ -342,6 +339,9 @@ public final class PluginInstaller {
     return false;
   }
 
+  /**
+   * @return true if plugin was successfully installed without restart, false if restart is required
+   */
   public static boolean installAndLoadDynamicPlugin(@NotNull Path file,
                                                     @Nullable Component parent,
                                                     IdeaPluginDescriptorImpl pluginDescriptor) {
@@ -352,7 +352,7 @@ public final class PluginInstaller {
         return DynamicPlugins.loadPlugin(targetDescriptor);
       }
     }
-    return true;
+    return false;
   }
 
   private static void checkInstalledPluginDependencies(@NotNull InstalledPluginsTableModel model,

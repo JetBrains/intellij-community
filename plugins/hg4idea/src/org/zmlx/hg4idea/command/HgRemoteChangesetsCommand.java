@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgBundle;
@@ -43,7 +44,7 @@ public abstract class HgRemoteChangesetsCommand extends HgChangesetsCommand {
 
   private static final Logger LOG = Logger.getInstance(HgRemoteChangesetsCommand.class);
 
-  public HgRemoteChangesetsCommand(Project project, String command) {
+  public HgRemoteChangesetsCommand(Project project, @NonNls String command) {
     super(project, command);
   }
 

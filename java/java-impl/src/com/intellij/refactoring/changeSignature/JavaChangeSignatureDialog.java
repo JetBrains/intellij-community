@@ -282,13 +282,13 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
           final String defaultValue = item.defaultValueCodeFragment.getText();
           String tail = "";
           if (StringUtil.isNotEmpty(defaultValue)) {
-            tail += " default value = " + defaultValue;
+            tail += " " + RefactoringBundle.message("changeSignature.default.value.label") + " " + defaultValue;
           }
           if (item.parameter.isUseAnySingleVariable()) {
             if (StringUtil.isNotEmpty(defaultValue)) {
               tail += ";";
             }
-            tail += " Use any var.";
+            tail += " " + JavaRefactoringBundle.message("changeSignature.use.any.var");
           }
           if (!StringUtil.isEmpty(tail)) {
             text += " //" + tail;

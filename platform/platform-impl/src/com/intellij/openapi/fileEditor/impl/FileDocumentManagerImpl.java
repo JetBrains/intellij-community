@@ -718,7 +718,19 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
     VirtualFile virtualFile = event.getFile();
     Document document = getCachedDocument(virtualFile);
 
+    boolean shouldTraceEvent = document != null && LOG.isTraceEnabled();
+    String eventMessage = null;
+
+    if (shouldTraceEvent) {
+      eventMessage = "content changed for " + event.getFile() + " with document stamp =  " + document.getModificationStamp();
+    }
+
     if (event.isFromSave()) {
+      if (shouldTraceEvent) {
+        eventMessage += " , dispatched from save";
+        LOG.trace(eventMessage);
+      }
+
       return;
     }
 
@@ -726,8 +738,15 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
       myMultiCaster.fileWithNoDocumentChanged(virtualFile); // This will generate PSI event at FileManagerImpl
     }
 
-    if (document != null && (document.getModificationStamp() == event.getOldModificationStamp() || !isDocumentUnsaved(document))) {
-      reloadFromDisk(document);
+    if (document != null) {
+      if (shouldTraceEvent) {
+        eventMessage += " event old modification stamp = " + event.getOldModificationStamp() + ", is unsaved = " + isDocumentUnsaved(document);
+        LOG.trace(eventMessage);
+      }
+
+      if (document.getModificationStamp() == event.getOldModificationStamp() || !isDocumentUnsaved(document)) {
+        reloadFromDisk(document);
+      }
     }
   }
 

@@ -55,7 +55,7 @@ internal fun UndoPossibility.Impossible.notifyUndoImpossible(project: Project, @
   val notifier = VcsNotifier.getInstance(project)
   when (this) {
     UndoPossibility.Impossible.HeadMoved -> {
-      notifier.notifyError(title, GitBundle.getString("rebase.log.reword.action.notification.undo.not.allowed.repository.changed.message"))
+      notifier.notifyError(title, GitBundle.message("rebase.log.reword.action.notification.undo.not.allowed.repository.changed.message"))
     }
     is UndoPossibility.Impossible.PushedToProtectedBranch -> {
       notifier.notifyError(title, GitBundle.message("rebase.log.undo.impossible.pushed.to.protected.branch.notification.text", branch))

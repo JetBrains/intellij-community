@@ -317,7 +317,7 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
      */
     public static final WidgetState NO_CHANGE_MAKE_VISIBLE = new WidgetState();
 
-    protected final String toolTip;
+    protected final @Tooltip String toolTip;
     private final String text;
     private final boolean actionEnabled;
     private Icon icon;
@@ -354,7 +354,7 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
       return text;
     }
 
-    public String getToolTip() {
+    public @Tooltip String getToolTip() {
       return toolTip;
     }
 

@@ -420,6 +420,12 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.fullPathsInWindowHeader = value
     }
 
+  var mergeMainMenuWithWindowTitle: Boolean
+    get() = state.mergeMainMenuWithWindowTitle
+    set(value) {
+      state.mergeMainMenuWithWindowTitle = value
+    }
+
   init {
     // TODO Remove the registry keys and migration code in 2019.3
     if (SystemProperties.`is`("tabs.alphabetical")) {
@@ -563,6 +569,11 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       LOG.info("Loaded: fontSize=$readSize, fontScale=$readScale; restored: fontSize=$size, fontScale=$defFontScale")
       return size
     }
+
+    const val MERGE_MAIN_MENU_WITH_WINDOW_TITLE_PROPERTY = "ide.win.frame.decoration"
+    @JvmStatic
+    val mergeMainMenuWithWindowTitleOverrideValue = System.getProperty(MERGE_MAIN_MENU_WITH_WINDOW_TITLE_PROPERTY)?.toBoolean()
+    val isMergeMainMenuWithWindowTitleOverridden = mergeMainMenuWithWindowTitleOverrideValue != null
   }
 
   @Suppress("DeprecatedCallableAddReplaceWith")
@@ -642,7 +653,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
   @Suppress("DEPRECATION")
   private fun migrateOldSettings() {
     if (state.ideAAType != AntialiasingType.SUBPIXEL) {
-      editorAAType = state.ideAAType
+      ideAAType = state.ideAAType
       state.ideAAType = AntialiasingType.SUBPIXEL
     }
     if (state.editorAAType != AntialiasingType.SUBPIXEL) {

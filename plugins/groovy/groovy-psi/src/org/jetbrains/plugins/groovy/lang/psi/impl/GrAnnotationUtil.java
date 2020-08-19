@@ -7,6 +7,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 
@@ -24,6 +25,15 @@ public final class GrAnnotationUtil {
   public static String inferStringAttribute(@NotNull PsiAnnotation annotation, @NotNull String attributeName) {
     final PsiAnnotationMemberValue targetValue = annotation.findAttributeValue(attributeName);
     return getString(targetValue);
+  }
+
+  @Nullable
+  public static GrClosableBlock inferClosureAttribute(@NotNull PsiAnnotation annotation, @NotNull String attributeName) {
+    PsiAnnotationMemberValue targetValue = annotation.findAttributeValue(attributeName);
+    if (targetValue instanceof GrClosableBlock) {
+      return (GrClosableBlock)targetValue;
+    }
+    return null;
   }
 
   @Nullable

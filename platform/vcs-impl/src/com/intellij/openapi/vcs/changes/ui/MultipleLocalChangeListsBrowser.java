@@ -363,7 +363,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
   private static boolean containsCollapsedUnversionedNode(@NotNull VcsTreeModelData treeModelData) {
     Optional<ChangesBrowserNode<?>> node = treeModelData.nodesStream()
       .filter(it -> it instanceof ChangesBrowserUnversionedFilesNode).findAny();
-    if (!node.isPresent()) return false;
+    if (node.isEmpty()) return false;
 
     ChangesBrowserUnversionedFilesNode unversionedFilesNode = (ChangesBrowserUnversionedFilesNode)node.get();
     return unversionedFilesNode.isManyFiles();

@@ -1209,12 +1209,6 @@
     <name>Java Stream Debugger</name>
     <depends>com.intellij.modules.java</depends>
   </idea-plugin>
-  <idea-plugin url="file://out/intellij.akka/META-INF/plugin.xml">
-    <id>-com-intellij-frameworks-akka-</id>
-    <name>Akka</name>
-    <depends>com.intellij.modules.java</depends>
-    <depends>com.intellij.modules.ultimate</depends>
-  </idea-plugin>
   <idea-plugin url="file://out/intellij.php.docker/META-INF/plugin.xml">
     <id>-org-jetbrains-plugins-phpstorm-docker-</id>
     <name>PHP Docker</name>

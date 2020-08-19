@@ -25,13 +25,13 @@ public final class WindowDressing implements ProjectManagerListener, LightEditSe
   }
 
   @Override
-  public void lightEditWindowOpened() {
-    getWindowActionGroup().addProject(LightEditService.getInstance().getProject());
+  public void lightEditWindowOpened(@NotNull Project project) {
+    getWindowActionGroup().addProject(project);
   }
 
   @Override
-  public void lightEditWindowClosed() {
-    getWindowActionGroup().removeProject(LightEditService.getInstance().getProject());
+  public void lightEditWindowClosed(@NotNull Project project) {
+    getWindowActionGroup().removeProject(project);
   }
 
 }

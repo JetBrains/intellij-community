@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
@@ -56,8 +57,7 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
   }
 
   @Override
-  @NotNull
-  public String getSDKVersion(@NotNull final String path) {
+  public @Nullable String getSDKVersionOrNull(@NotNull String path) {
     String groovyJarVersion = getSDKJarVersion(path + "/lib", GROOVY_JAR_PATTERN, MANIFEST_PATH);
     if (groovyJarVersion == null) {
       groovyJarVersion = getSDKJarVersion(path + "/lib", GROOVY_ALL_JAR_PATTERN, MANIFEST_PATH);
@@ -71,7 +71,7 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
     if (groovyJarVersion == null) {
       groovyJarVersion = getSDKJarVersion(path, GROOVY_JAR_PATTERN, MANIFEST_PATH);
     }
-    return groovyJarVersion == null ? UNDEFINED_VERSION : groovyJarVersion;
+    return groovyJarVersion;
   }
 
   @Override
@@ -81,6 +81,7 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
   }
 
   @Nullable
+  @NlsSafe
   public String getSDKVersion(@NotNull final Module module) {
     return GroovyConfigUtilsKt.getSdkVersion(module);
   }
@@ -98,6 +99,7 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
   }
 
   @NotNull
+  @NlsSafe
   public String getSDKVersion(PsiElement psiElement) {
     final Module module = ModuleUtilCore.findModuleForPsiElement(psiElement);
     if (module == null) {

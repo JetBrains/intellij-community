@@ -3,6 +3,7 @@ package com.intellij.grazie.ide.inspection.grammar
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.GrazieConfig
@@ -16,11 +17,13 @@ import com.intellij.grazie.ide.language.LanguageGrammarChecking
 import com.intellij.grazie.ide.msg.GrazieStateLifecycle
 import com.intellij.grazie.utils.lazyConfig
 import com.intellij.lang.injection.InjectedLanguageManager
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.util.elementType
 import com.intellij.util.containers.CollectionFactory
+import java.util.*
 
 class GrazieInspection : LocalInspectionTool() {
   companion object : GrazieStateLifecycle {
@@ -49,9 +52,11 @@ class GrazieInspection : LocalInspectionTool() {
     }
   }
 
+  private val CHECKED_ELEMENTS: Key<Set<PsiElement>> = Key.create("Grazie.Grammar.Checked")
+
   override fun getDisplayName() = GrazieBundle.message("grazie.grammar.inspection.grammar.text")
 
-  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
+  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
     if (InjectedLanguageManager.getInstance(holder.project).isInjectedFragment(holder.file)) return PsiElementVisitor.EMPTY_VISITOR
     return object : PsiElementVisitor() {
       override fun visitElement(element: PsiElement) {
@@ -60,7 +65,8 @@ class GrazieInspection : LocalInspectionTool() {
         val strategies = LanguageGrammarChecking.getStrategiesForElement(element, enabledStrategiesIDs, disabledStrategiesIDs)
 
         for (strategy in strategies) {
-          val isCheckNeeded = ApplicationManager.getApplication().isUnitTestMode || when (strategy.getContextRootTextDomain(element)) {
+          val domain = strategy.getContextRootTextDomain(element)
+          val isCheckNeeded = when (domain) {
             GrammarCheckingStrategy.TextDomain.NON_TEXT -> false
             GrammarCheckingStrategy.TextDomain.LITERALS -> checking.isCheckInStringLiteralsEnabled
             GrammarCheckingStrategy.TextDomain.COMMENTS -> checking.isCheckInCommentsEnabled
@@ -68,7 +74,25 @@ class GrazieInspection : LocalInspectionTool() {
             GrammarCheckingStrategy.TextDomain.PLAIN_TEXT -> true
           }
 
-          if (isCheckNeeded) typos.addAll(GrammarChecker.check(element, strategy))
+          if (isCheckNeeded) {
+            val roots = strategy.getRootsChain(element)
+            require(roots.isNotEmpty()) { "Roots chain MUST contain at least one element (self)" }
+
+            if (!checkIfAlreadyProcessed(roots.first(), session)) {
+              val whitespaceTokens = strategy.getWhiteSpaceTokens()
+              val rootsWithoutWhitespaces = roots.filter { it.elementType !in whitespaceTokens }
+
+              require(rootsWithoutWhitespaces.all {
+                strategy in LanguageGrammarChecking.getStrategiesForElement(element, enabledStrategiesIDs, disabledStrategiesIDs)
+              }) { "Chain roots MUST have the same GrammarCheckingStrategy" }
+
+              require(rootsWithoutWhitespaces.all { strategy.getContextRootTextDomain(it) == domain }) {
+                "Chain roots must be from the same TextDomain"
+              }
+
+              typos.addAll(GrammarChecker.check(roots, strategy))
+            }
+          }
         }
 
         for (typo in typos.asSequence().filterNot { suppression.isSuppressed(it) }) {
@@ -76,6 +100,17 @@ class GrazieInspection : LocalInspectionTool() {
         }
 
         super.visitElement(element)
+      }
+
+      fun checkIfAlreadyProcessed(element: PsiElement, session: LocalInspectionToolSession): Boolean {
+        var data: MutableSet<PsiElement>? = session.getUserData(CHECKED_ELEMENTS) as MutableSet<PsiElement>?
+        if (data == null) {
+          data = HashSet()
+          session.putUserData(CHECKED_ELEMENTS, data)
+        }
+        if (data.contains(element)) return true
+        data.add(element)
+        return false
       }
     }
   }

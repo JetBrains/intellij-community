@@ -6,6 +6,7 @@ import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.ComboBoxPopupState;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.Producer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,7 +20,7 @@ public final class SdkListModel extends AbstractListModel<SdkListItem> implement
   private final boolean myIsSearching;
   private final ImmutableList<SdkListItem> myItems;
   private final Producer<? extends Sdk> myGetProjectSdk;
-  private final ImmutableMap<SdkListItem, String> mySeparators;
+  private final ImmutableMap<SdkListItem, @NlsContexts.Separator String> mySeparators;
 
   @NotNull
   public static SdkListModel emptyModel() {
@@ -113,7 +114,7 @@ public final class SdkListModel extends AbstractListModel<SdkListItem> implement
   }
 
   @Nullable
-  public String getSeparatorTextAbove(@NotNull SdkListItem value) {
+  public @NlsContexts.Separator String getSeparatorTextAbove(@NotNull SdkListItem value) {
     return mySeparators.get(value);
   }
 

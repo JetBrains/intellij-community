@@ -6,6 +6,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.Tooltip;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
@@ -108,9 +109,9 @@ public class HelpTooltip {
   private static final String PARAGRAPH_SPLITTER = "<p/?>";
   private static final String TOOLTIP_PROPERTY = "JComponent.helpTooltip";
 
-  private String title;
-  private String shortcut;
-  private String description;
+  private @TooltipTitle String title;
+  private @NlsSafe String shortcut;
+  private @Tooltip String description;
   private LinkLabel<?> link;
   private boolean neverHide;
   private Alignment alignment = Alignment.CURSOR;
@@ -195,7 +196,7 @@ public class HelpTooltip {
    * @param shortcut text for shortcut.
    * @return {@code this}
    */
-  public HelpTooltip setShortcut(@Nullable String shortcut) {
+  public HelpTooltip setShortcut(@Nullable @NlsSafe String shortcut) {
     this.shortcut = shortcut;
     return this;
   }

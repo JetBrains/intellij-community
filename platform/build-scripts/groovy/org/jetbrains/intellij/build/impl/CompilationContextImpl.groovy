@@ -265,7 +265,12 @@ class CompilationContextImpl implements CompilationContext {
 
     suppressWarnings(project)
     exportModuleOutputProperties()
-    cleanOutput(outputDirectoriesToKeep)
+
+    if (options.cleanOutputFolder) {
+      cleanOutput(outputDirectoriesToKeep)
+    } else {
+      messages.info("cleanOutput step was skipped")
+    }
   }
 
   /**

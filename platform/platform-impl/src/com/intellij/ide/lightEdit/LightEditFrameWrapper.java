@@ -2,12 +2,13 @@
 package com.intellij.ide.lightEdit;
 
 import com.intellij.diagnostic.IdeMessagePanel;
-import com.intellij.ide.lightEdit.menuBar.LightEditMenuBar;
+import com.intellij.ide.lightEdit.menuBar.LightEditMainMenuHelper;
 import com.intellij.ide.lightEdit.statusBar.LightEditAutosaveWidget;
 import com.intellij.ide.lightEdit.statusBar.LightEditEncodingWidgetWrapper;
 import com.intellij.ide.lightEdit.statusBar.LightEditLineSeparatorWidgetWrapper;
 import com.intellij.ide.lightEdit.statusBar.LightEditPositionWidget;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -111,8 +112,8 @@ final class LightEditFrameWrapper extends ProjectFrameHelper implements Disposab
     }
 
     @Override
-    protected @NotNull IdeMenuBar createMenuBar() {
-      return new LightEditMenuBar();
+    protected @Nullable ActionGroup getMainMenuActionGroup() {
+      return new LightEditMainMenuHelper().getMainMenuActionGroup();
     }
 
     @NotNull
@@ -134,9 +135,9 @@ final class LightEditFrameWrapper extends ProjectFrameHelper implements Disposab
     }
   }
 
-  static @NotNull LightEditFrameWrapper allocate(@NotNull BooleanSupplier closeHandler) {
+  static @NotNull LightEditFrameWrapper allocate(@NotNull Project project, @NotNull BooleanSupplier closeHandler) {
     return (LightEditFrameWrapper)((WindowManagerImpl)WindowManager.getInstance()).allocateFrame(
-      LightEditUtil.getProject(),
+      project,
       () -> new LightEditFrameWrapper(ProjectFrameAllocatorKt.createNewProjectFrame(false), closeHandler));
   }
 

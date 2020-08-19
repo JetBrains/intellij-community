@@ -149,7 +149,7 @@ public class ReplaceImplementsWithStaticImportAction extends BaseIntentionAction
           }
         }
       }
-    }), "Find Constant Field Usages...", true, project)) {
+    }), JavaBundle.message("replace.implements.with.static.import.field.usages.progress"), true, project)) {
       return;
     }
 

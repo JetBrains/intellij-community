@@ -17,6 +17,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -59,7 +60,7 @@ public final class LiveTemplateSettingsEditor extends JPanel {
   private final Editor myTemplateEditor;
 
   private JComboBox myExpandByCombo;
-  private final String myDefaultShortcutItem;
+  private final @NlsContexts.ListItem String myDefaultShortcutItem;
   private JCheckBox myCbReformat;
 
   private JButton myEditVariablesButton;
@@ -586,19 +587,19 @@ public final class LiveTemplateSettingsEditor extends JPanel {
     return map;
   }
 
-  private static String getSpace() {
+  private static @NlsContexts.ListItem String getSpace() {
     return CodeInsightBundle.message("template.shortcut.space");
   }
 
-  private static String getTab() {
+  private static @NlsContexts.ListItem String getTab() {
     return CodeInsightBundle.message("template.shortcut.tab");
   }
 
-  private static String getEnter() {
+  private static @NlsContexts.ListItem String getEnter() {
     return CodeInsightBundle.message("template.shortcut.enter");
   }
 
-  private static String getNone() {
+  private static @NlsContexts.ListItem String getNone() {
     return CodeInsightBundle.message("template.shortcut.none");
   }
 }

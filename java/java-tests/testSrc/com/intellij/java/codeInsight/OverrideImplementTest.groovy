@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.ServiceContainerUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
@@ -327,6 +328,16 @@ class Test implements A {
               return null;
           }
       }""".stripIndent()
+  }
+
+  void "test invocation before orphan type parameters does not lead to stub-AST mismatches"() {
+    myFixture.configureByText 'a.java', '''
+public class Test implements Runnable{
+    int i = ; <caret><X>
+}'''
+    invokeAction(true)
+    PsiTestUtil.checkStubsMatchText(file)
+    assert file.text.contains('run()')
   }
 
   private void doTest(boolean toImplement) {

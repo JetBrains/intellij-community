@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.Toggleable;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
@@ -84,7 +85,7 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementUi
     init();
   }
 
-  public void setError(@Nullable String message) {
+  public void setError(@NlsContexts.DialogMessage @Nullable String message) {
     myRowIndexControl.setError(StringUtil.isNotEmpty(message));
     setToolTipText(message);
   }

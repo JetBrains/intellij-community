@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -179,7 +180,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
           icon = renderer.getIcon();
         }
         PsiElement element = dom.getElement();
-        final String elementPresentation;
+        @NlsSafe String elementPresentation;
         if (element == null) {
           elementPresentation = IdeBundle.message("node.structureview.invalid");
         }

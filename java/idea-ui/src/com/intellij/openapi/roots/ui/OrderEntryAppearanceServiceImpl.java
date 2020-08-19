@@ -85,7 +85,7 @@ public class OrderEntryAppearanceServiceImpl extends OrderEntryAppearanceService
 
     final String[] files = library.getUrls(OrderRootType.CLASSES);
     if (files.length == 0) {
-      return SimpleTextCellAppearance.invalid(ProjectModelBundle.message("library.empty.library.item"), PlatformIcons.LIBRARY_ICON);
+      return SimpleTextCellAppearance.invalid(ProjectModelBundle.message("empty.library.title"), PlatformIcons.LIBRARY_ICON);
     }
     else if (files.length == 1) {
       return forVirtualFilePointer(new LightFilePointer(files[0]));

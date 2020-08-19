@@ -56,7 +56,7 @@ internal class CompletionLoggerInitializer(private val actionListener: LookupAct
   private fun actionsTracker(lookup: LookupImpl,
                              storage: MutableLookupStorage,
                              experimentInfo: ExperimentInfo): CompletionActionsListener {
-    val logger = CompletionLoggerProvider.getInstance().newCompletionLogger()
+    val logger = CompletionLoggerProvider.getInstance().newCompletionLogger(storage.language)
     val actionsTracker = CompletionActionsTracker(lookup, storage, logger, experimentInfo)
     return LoggerPerformanceTracker(actionsTracker, storage.performanceTracker)
   }

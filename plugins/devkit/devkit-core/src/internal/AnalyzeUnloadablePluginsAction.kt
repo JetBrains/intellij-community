@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.internal
 
 import com.intellij.ide.plugins.PluginManagerCore
@@ -16,6 +16,7 @@ import com.intellij.psi.search.GlobalSearchScopesCore
 import com.intellij.psi.xml.XmlFile
 import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.text.DateFormatUtil
+import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.Dependency
 import org.jetbrains.idea.devkit.dom.IdeaPlugin
 import org.jetbrains.idea.devkit.util.DescriptorUtil
@@ -62,7 +63,7 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
             pi.text = status.pluginId
           }
         }
-      }, "Analyzing Plugins (${dir?.name ?: "Project"})", true, e.project)
+      }, DevKitBundle.message("action.AnalyzeUnloadablePlugins.progress.title", dir?.name ?: "Project"), true, e.project)
 
     if (show) showReport(project, result)
   }

@@ -124,6 +124,8 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
         myModel.reloadTestKindModel(JUnitConfigurable.this.myTypeChooser, myModuleSelector.getModule());
       }
     });
+    final TestClassBrowser classBrowser = new TestClassBrowser(myProject, myModuleSelector, myPackage.getComponent());
+    myClass.setComponent(new EditorTextFieldWithBrowseButton(myProject, true, createClassVisibilityChecker(classBrowser)));
 
     myModel.reloadTestKindModel(myTypeChooser, myModuleSelector.getModule());
     myTypeChooser.setRenderer(SimpleListCellRenderer.create("", value -> JUnitConfigurationModel.getKindName(value)));
@@ -173,9 +175,10 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     myRepeatCb.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        int item = (Integer)Objects.requireNonNull(myTypeChooser.getSelectedItem());
-        if (item == JUnitConfigurationModel.CLASS || item == JUnitConfigurationModel.METHOD) {
-          myForkCb.setModel(getForkModelBasedOnRepeat());
+        int testType = (Integer)Objects.requireNonNull(myTypeChooser.getSelectedItem());
+        if (testType == JUnitConfigurationModel.CLASS || testType == JUnitConfigurationModel.METHOD) {
+          String[] model = getForkModel(testType, JUnitConfigurable.this.myRepeatCb.getSelectedItem());
+          myForkCb.setModel(new DefaultComboBoxModel<>(model));
         }
       }
     });
@@ -367,30 +370,31 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     myTagsField.setVisible(selectedType == JUnitConfigurationModel.TAGS);
     myChangeListLabeledComponent.setVisible(selectedType == JUnitConfigurationModel.BY_SOURCE_CHANGES);
 
-    //set fork model
-    String selectedItem = (String)myForkCb.getSelectedItem();
-    if (selectedItem == null) {
-      selectedItem = JUnitConfiguration.FORK_NONE;
-    }
-    else if (selectedType == JUnitConfigurationModel.CLASS && selectedItem == JUnitConfiguration.FORK_KLASS) {
-      selectedItem = JUnitConfiguration.FORK_METHOD;
-    }
-    if (selectedType == JUnitConfigurationModel.CLASS || 
-        selectedType == JUnitConfigurationModel.METHOD || 
-        selectedType == JUnitConfigurationModel.BY_SOURCE_POSITION) {
-      myForkCb.setModel(getForkModelBasedOnRepeat());
-    }
-    else {
-      myForkCb.setModel(new DefaultComboBoxModel<>(FORK_MODE_ALL));
-    }
-    myForkCb.setSelectedItem(selectedItem);
+    myForkCb.setModel(new DefaultComboBoxModel<>(getForkModel(selectedType, myRepeatCb.getSelectedItem())));
+    myForkCb.setSelectedItem(updateForkMethod(selectedType, (String)myForkCb.getSelectedItem()));
   }
 
-  private DefaultComboBoxModel<String> getForkModelBasedOnRepeat() {
-    int selectedType = (Integer)Objects.requireNonNull(myTypeChooser.getSelectedItem());
-    boolean isMethod = selectedType == JUnitConfigurationModel.METHOD || 
+  @NotNull
+  public static String updateForkMethod(Integer selectedType, String forkMethod) {
+    if (forkMethod == null) {
+      forkMethod = JUnitConfiguration.FORK_NONE;
+    }
+    else if (selectedType == JUnitConfigurationModel.CLASS && forkMethod == JUnitConfiguration.FORK_KLASS) {
+      forkMethod = JUnitConfiguration.FORK_METHOD;
+    }
+    return forkMethod;
+  }
+
+  public static String[] getForkModel(int selectedType, Object repeat) {
+    if (selectedType != JUnitConfigurationModel.CLASS &&
+        selectedType != JUnitConfigurationModel.METHOD &&
+        selectedType != JUnitConfigurationModel.BY_SOURCE_POSITION) {
+      return FORK_MODE_ALL;
+    }
+
+    boolean isMethod = selectedType == JUnitConfigurationModel.METHOD ||
                        selectedType == JUnitConfigurationModel.BY_SOURCE_POSITION;
-    boolean once = RepeatCount.ONCE.equals(myRepeatCb.getSelectedItem());
+    boolean once = RepeatCount.ONCE.equals(repeat);
     String[] model = FORK_MODE;
     if (once && isMethod) {
       model = FORK_MODE_NONE;
@@ -398,7 +402,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     else if (!once && !isMethod) {
       model = FORK_MODE_ALL;
     }
-    return new DefaultComboBoxModel<>(model);
+    return model;
   }
 
   public ModuleDescriptionsComboBox getModulesComponent() {
@@ -447,10 +451,6 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
   private void createUIComponents() {
     myPackage = new LabeledComponent<>();
     myPackage.setComponent(new EditorTextFieldWithBrowseButton(myProject, false));
-
-    myClass = new LabeledComponent<>();
-    final TestClassBrowser classBrowser = new TestClassBrowser(myProject, myModuleSelector, myPackage.getComponent());
-    myClass.setComponent(new EditorTextFieldWithBrowseButton(myProject, true, createClassVisibilityChecker(classBrowser)));
 
     myCategory = new LabeledComponent<>();
     myCategory.setComponent(new EditorTextFieldWithBrowseButton(myProject, true, new JavaCodeFragment.VisibilityChecker() {

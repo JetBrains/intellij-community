@@ -170,7 +170,7 @@ class DumbServiceImplTest extends BasePlatformTestCase {
           ProgressIndicatorUtils.withTimeout(20_000) {
             def index = FileBasedIndex.getInstance() as FileBasedIndexImpl
             new IndexUpdateRunner(index, ConcurrencyUtil.newSameThreadExecutorService(), 1)
-              .indexFiles(project, [child], indicator)
+              .indexFiles(project, "child", [child], indicator)
           }
         }
         catch (ProcessCanceledException e) {

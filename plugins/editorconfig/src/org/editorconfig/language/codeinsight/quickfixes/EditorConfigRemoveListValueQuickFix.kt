@@ -11,7 +11,7 @@ import org.editorconfig.language.services.EditorConfigElementFactory
 import org.editorconfig.language.util.EditorConfigPsiTreeUtil
 
 class EditorConfigRemoveListValueQuickFix : LocalQuickFix {
-  override fun getFamilyName() = EditorConfigBundle["quickfix.value.remove.description"]
+  override fun getFamilyName() = EditorConfigBundle.get("quickfix.value.remove.description")
 
   override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
     val element = descriptor.psiElement

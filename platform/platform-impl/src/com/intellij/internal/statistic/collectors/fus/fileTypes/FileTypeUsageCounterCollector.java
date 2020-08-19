@@ -76,30 +76,32 @@ public class FileTypeUsageCounterCollector extends CounterUsagesCollector {
   }
 
   public static void triggerOpen(@NotNull Project project, @NotNull VirtualFile file) {
-    OPEN.log(project, ArrayUtil.append(buildCommonEventPairs(file), IS_WRITABLE.with(file.isWritable())));
+    OPEN.log(project, ArrayUtil.append(buildCommonEventPairs(project, file), IS_WRITABLE.with(file.isWritable())));
   }
 
   public static void triggerClosed(@NotNull Project project, @NotNull VirtualFile file) {
-    CLOSE.log(project, ArrayUtil.append(buildCommonEventPairs(file), IS_WRITABLE.with(file.isWritable())));
+    CLOSE.log(project, ArrayUtil.append(buildCommonEventPairs(project, file), IS_WRITABLE.with(file.isWritable())));
   }
 
   private static void log(@NotNull VarargEventId eventId, @NotNull Project project, @NotNull VirtualFile file) {
-    eventId.log(project, buildCommonEventPairs(file));
+    eventId.log(project, buildCommonEventPairs(project, file));
   }
 
-  private static EventPair<?> @NotNull [] buildCommonEventPairs(@NotNull VirtualFile file) {
+  private static EventPair<?> @NotNull [] buildCommonEventPairs(@NotNull Project project,
+                                                                @NotNull VirtualFile file) {
     FileType fileType = file.getFileType();
     return new EventPair[]{EventFields.PluginInfoFromInstance.with(fileType),
       FILE_TYPE.with(FileTypeUsagesCollector.getSafeFileTypeName(fileType)),
       EventFields.AnonymizedPath.with(file.getPath()),
-      SCHEMA.with(findSchema(file))};
+      SCHEMA.with(findSchema(project, file))};
   }
 
   private static void logEmptyFile() {
     SELECT.log(EventFields.AnonymizedPath.with(null));
   }
 
-  private static @Nullable String findSchema(@NotNull VirtualFile file) {
+  public static @Nullable String findSchema(@NotNull Project project,
+                                            @NotNull VirtualFile file) {
     for (FileTypeUsageSchemaDescriptorEP<FileTypeUsageSchemaDescriptor> ext : EP.getExtensionList()) {
       FileTypeUsageSchemaDescriptor instance = ext.getInstance();
       if (ext.schema == null) {
@@ -107,7 +109,7 @@ public class FileTypeUsageCounterCollector extends CounterUsagesCollector {
         continue;
       }
 
-      if(instance.describes(file)) {
+      if (instance.describes(project, file)) {
         return getPluginInfo(instance.getClass()).isSafeToReport() ? ext.schema : "third.party";
       }
     }

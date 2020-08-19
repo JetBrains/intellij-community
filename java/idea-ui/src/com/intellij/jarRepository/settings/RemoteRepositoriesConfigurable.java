@@ -12,6 +12,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.IdeBorderFactory;
@@ -20,6 +21,7 @@ import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -104,14 +106,8 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
                                          JavaUiBundle.message("settings.remote.repo.service.connection.failed"), Messages.getWarningIcon());
             }
             else {
-              final StringBuilder sb = new StringBuilder();
-              sb.append(infos.size()).append(" ").append(StringUtil.pluralize("repository", infos.size())).append(" found");
-              //for (MavenRepositoryInfo info : infos) {
-              //  sb.append("\n  ");
-              //  sb.append(info.getId()).append(" (").append(info.getName()).append(")").append(": ").append(info.getUrl());
-              //}
-              Messages.showMessageDialog(sb.toString(), JavaUiBundle.message("settings.remote.repo.service.connection.successful"),
-                                         Messages.getInformationIcon());
+              Messages.showMessageDialog(JavaUiBundle.message("settings.remote.repo.repositories.found", infos.size()),
+                                         JavaUiBundle.message("settings.remote.repo.service.connection.successful"), Messages.getInformationIcon());
             }
             return true;
           });
@@ -135,7 +131,7 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
   private interface DataAdapter<Data, Presentation> {
     DataAdapter<String, String> STRING_ADAPTER = new DataAdapter<String, String>() {
       @Override
-      public String toPresentation(String s) {
+      public @Nls String toPresentation(@Nls String s) {
         return s;
       }
 
@@ -152,7 +148,7 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
 
     DataAdapter<RemoteRepositoryDescription, String> REPOSITORY_DESCRIPTION_ADAPTER = new DataAdapter<RemoteRepositoryDescription, String>() {
       @Override
-      public String toPresentation(RemoteRepositoryDescription description) {
+      public @Nls String toPresentation(RemoteRepositoryDescription description) {
         return description.getUrl();
       }
 
@@ -167,7 +163,7 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
         return new RemoteRepositoryDescription(current.getId(), current.getName(), url);
       }
     };
-    Presentation toPresentation(Data data);
+    @Nls Presentation toPresentation(Data data);
     Data create(Presentation presentation);
     Data change(Data current, Presentation changes);
   }
@@ -177,9 +173,9 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
                                             final JButton addButton,
                                             final JButton editButton,
                                             final JButton removeButton,
-                                            final String modificationDialogTitle,
+                                            final @NlsContexts.DialogMessage String modificationDialogTitle,
                                             final String modificationDialogHint,
-                                            final String emptyListHint, DataAdapter<T, String> adapter) {
+                                            final @NlsContexts.StatusText String emptyListHint, DataAdapter<T, String> adapter) {
     list.setModel(model);
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     list.setCellRenderer(SimpleListCellRenderer.create("", adapter::toPresentation));
@@ -191,7 +187,7 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
         String initialValue = value == null ? defaultValue : adapter.toPresentation(value);
         final String text = Messages.showInputDialog(
           modificationDialogTitle, JavaUiBundle.message("dialog.title.add.repository.0", modificationDialogHint), Messages.getQuestionIcon(),
-          initialValue, new URLInputVaslidator()
+          initialValue, new URLInputValidator()
         );
         if (StringUtil.isNotEmpty(text)) {
           model.add(adapter.create(text));
@@ -205,7 +201,7 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
         final int index = list.getSelectedIndex();
         final T element = model.getElementAt(index);
         final String text = Messages.showInputDialog(
-          modificationDialogTitle, JavaUiBundle.message("dialog.title.edit.repository.0", modificationDialogHint), Messages.getQuestionIcon(), adapter.toPresentation(element), new URLInputVaslidator()
+          modificationDialogTitle, JavaUiBundle.message("dialog.title.edit.repository.0", modificationDialogHint), Messages.getQuestionIcon(), adapter.toPresentation(element), new URLInputValidator()
         );
         if (StringUtil.isNotEmpty(text)) {
           model.setElementAt(adapter.change(element, text), index);
@@ -265,7 +261,7 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
     myReposModel.replaceAll(repositories);
   }
 
-  private static final class URLInputVaslidator implements InputValidator {
+  private static final class URLInputValidator implements InputValidator {
     @Override
     public boolean checkInput(String inputString) {
       try {

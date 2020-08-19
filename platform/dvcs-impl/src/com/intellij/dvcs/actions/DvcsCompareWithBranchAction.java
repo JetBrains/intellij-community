@@ -13,7 +13,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
@@ -85,8 +85,8 @@ public abstract class DvcsCompareWithBranchAction<T extends Repository> extends 
 
   private void showDiffWithBranchUnderModalProgress(@NotNull final Project project,
                                                     @NotNull final VirtualFile file,
-                                                    @NotNull final String head,
-                                                    @NotNull final String compare) {
+                                                    @NotNull final @NlsSafe String head,
+                                                    @NotNull final @NlsSafe String compare) {
     new Task.Backgroundable(project, DvcsBundle.message("progress.title.collecting.changes"), true) {
       private Collection<Change> changes;
 
@@ -96,8 +96,10 @@ public abstract class DvcsCompareWithBranchAction<T extends Repository> extends 
           changes = getDiffChanges(project, file, compare);
         }
         catch (VcsException e) {
-          VcsNotifier.getInstance(project).notifyImportantWarning(DvcsBundle.message("notification.title.couldn.t.compare.with.branch"), String
-            .format("Couldn't compare " + DvcsUtil.fileOrFolder(file) + " [%s] with branch [%s];\n %s", file, compare, e.getMessage()));
+          VcsNotifier.getInstance(project).notifyImportantWarning(
+            DvcsBundle.message("notification.title.couldn.t.compare.with.branch"),
+            DvcsBundle.message("notification.message.couldn.t.compare.with.branch",
+                               file.isDirectory() ? 1 : 0, file.getPresentableUrl(), compare, e.getMessage()));
         }
       }
 
@@ -112,9 +114,9 @@ public abstract class DvcsCompareWithBranchAction<T extends Repository> extends 
     }.queue();
   }
 
+  @NlsSafe
   protected static String fileDoesntExistInBranchError(@NotNull VirtualFile file, @NotNull String branchToCompare) {
-    return String.format("%s <code>%s</code> doesn't exist in branch <code>%s</code>",
-                         StringUtil.capitalize(DvcsUtil.fileOrFolder(file)), file.getPresentableUrl(),
-                         branchToCompare);
+    return DvcsBundle.message("error.text.file.not.found.in.branch",
+                              file.isDirectory() ? 1 : 0, file.getPresentableUrl(), branchToCompare);
   }
 }

@@ -197,8 +197,8 @@ public final class JavaOverrideImplementMemberChooser extends MemberChooser<PsiM
 
   private class MySortByOverridingAction extends ToggleAction {
     MySortByOverridingAction() {
-      super("Sort by Percent of Classes which Overrides a Method", 
-            "Sort by Percent of Classes which Overrides a Method", AllIcons.ObjectBrowser.SortedByUsage);
+      super(JavaBundle.message("action.sort.by.percent.classes.which.overrides.method.text"),
+            JavaBundle.message("action.sort.by.percent.classes.which.overrides.method.description"), AllIcons.ObjectBrowser.SortedByUsage);
       registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_U, InputEvent.ALT_MASK)), myTree);
     }
 

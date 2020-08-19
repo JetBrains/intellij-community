@@ -9,6 +9,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.roots.CompilerModuleExtension;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -23,7 +24,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
@@ -35,8 +35,8 @@ public class BuildElementsEditor extends ModuleElementsEditor {
   private JRadioButton myInheritCompilerOutput;
   private JRadioButton myPerModuleCompilerOutput;
 
-  private CommitableFieldPanel myOutputPathPanel;
-  private CommitableFieldPanel myTestsOutputPathPanel;
+  private CommittableFieldPanel myOutputPathPanel;
+  private CommittableFieldPanel myTestsOutputPathPanel;
   private JCheckBox myCbExcludeOutput;
   private JLabel myOutputLabel;
   private JLabel myTestOutputLabel;
@@ -180,7 +180,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
     fireModuleConfigurationChanged();
   }
 
-  private CommitableFieldPanel createOutputPathPanel(final String title, final CommitPathRunnable commitPathRunnable) {
+  private CommittableFieldPanel createOutputPathPanel(final @NlsContexts.DialogTitle String title, final CommitPathRunnable commitPathRunnable) {
     final JTextField textField = new ExtendableTextField();
     final FileChooserDescriptor outputPathsChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     outputPathsChooserDescriptor.putUserData(LangDataKeys.MODULE_CONTEXT, getModel().getModule());
@@ -223,7 +223,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
       }
     });
 
-    return new CommitableFieldPanel(textField, null, null, new BrowseFilesListener(textField, title, "", outputPathsChooserDescriptor) {
+    return new CommittableFieldPanel(textField, null, null, new BrowseFilesListener(textField, title, "", outputPathsChooserDescriptor) {
       @Override
       public void actionPerformed(ActionEvent e) {
         super.actionPerformed(e);
@@ -253,7 +253,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
 
   @Override
   public void moduleStateChanged() {
-    //if content enties tree was changed
+    //if content entries tree was changed
     myCbExcludeOutput.setSelected(getCompilerExtension().isExcludeOutput());
   }
 
@@ -281,15 +281,15 @@ public class BuildElementsEditor extends ModuleElementsEditor {
     void saveUrl(String url);
   }
 
-  private static class CommitableFieldPanel extends FieldPanel {
+  private static class CommittableFieldPanel extends FieldPanel {
     private final Runnable myCommitRunnable;
 
-    CommitableFieldPanel(final JTextField textField,
-                                String labelText,
-                                final String viewerDialogTitle,
-                                ActionListener browseButtonActionListener,
-                                final Runnable documentListener,
-                                final Runnable commitPathRunnable) {
+    CommittableFieldPanel(final JTextField textField,
+                          String labelText,
+                          final String viewerDialogTitle,
+                          ActionListener browseButtonActionListener,
+                          final Runnable documentListener,
+                          final Runnable commitPathRunnable) {
       super(textField, labelText, viewerDialogTitle, browseButtonActionListener, documentListener);
       myCommitRunnable = commitPathRunnable;
     }

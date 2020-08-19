@@ -2,6 +2,7 @@
 package com.intellij.dvcs
 
 import com.intellij.dvcs.DvcsUtil.joinWithAnd
+import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -34,16 +35,17 @@ open class MultiMessage<Aspect>(private val allValues: Collection<Aspect>,
   fun asString(): String {
     if (messages.isEmpty()) return ""
     if (allValues.size == 1) return messages.values.first()
-    if (messages.size == 1) {
-      val (aspect, message) = messages.entries.first()
-      return if (aspectInPrefix) "${shortPresentation(aspect)}: $message" else "$message in ${shortPresentation(aspect)}"
-    }
     val grouped = messages.keys.groupBy { messages[it]!!.trim() }
     if (grouped.size == 1 && allValues.size == messages.size) return messages.values.first()
     return grouped.keys.joinToString(lineSeparator) {
-      val presentableNames = grouped[it]!!.map { shortPresentation(it) }
+      val presentableNames = grouped.getValue(it).map { shortPresentation(it) }
       val names = joinWithAnd(presentableNames, 5)
-      if (aspectInPrefix) "$names: $it" else "$it in $names"
+      if (aspectInPrefix) {
+        DvcsBundle.message("multi.message.line.prefix.form", names, it)
+      }
+      else {
+        DvcsBundle.message("multi.message.line.suffix.form", names, it)
+      }
     }
   }
 

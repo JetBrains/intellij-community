@@ -8,6 +8,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.reference.*;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -690,15 +691,15 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     }
   }
 
-  private static String getCanBePrivate() {
+  private static @InspectionMessage String getCanBePrivate() {
     return JavaAnalysisBundle.message("inspection.visibility.compose.suggestion", VisibilityUtil.toPresentableText(PsiModifier.PRIVATE));
   }
 
-  private static String getCanBePackageLocal() {
+  private static @InspectionMessage String getCanBePackageLocal() {
     return JavaAnalysisBundle.message("inspection.visibility.compose.suggestion", VisibilityUtil.toPresentableText(PsiModifier.PACKAGE_LOCAL));
   }
 
-  private static String getCanBeProtected() {
+  private static @InspectionMessage String getCanBeProtected() {
     return JavaAnalysisBundle.message("inspection.visibility.compose.suggestion", VisibilityUtil.toPresentableText(PsiModifier.PROTECTED));
   }
 }

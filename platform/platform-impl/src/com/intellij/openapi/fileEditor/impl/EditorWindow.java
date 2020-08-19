@@ -415,6 +415,7 @@ public final class EditorWindow {
           return myEditor.getFocusComponent();
         }
       });
+      setFocusCycleRoot(true);
     }
 
     @Override

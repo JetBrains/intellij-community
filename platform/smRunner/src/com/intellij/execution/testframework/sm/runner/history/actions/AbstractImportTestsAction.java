@@ -25,9 +25,16 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.xml.sax.Attributes;
+import org.xml.sax.SAXException;
+import org.xml.sax.helpers.DefaultHandler;
 
 import javax.swing.*;
+import javax.xml.parsers.SAXParserFactory;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.io.StringReader;
 import java.util.Arrays;
 
 /**
@@ -132,29 +139,77 @@ public abstract class AbstractImportTestsAction extends AnAction {
     public ImportRunProfile(VirtualFile file, Project project) {
       myFile = file;
       myProject = project;
-      try {
-        final Element config = JDOMUtil.load(VfsUtilCore.virtualToIoFile(myFile)).getChild("config");
-        if (config != null) {
-          String configTypeId = config.getAttributeValue("configId");
-          if (configTypeId != null) {
-            final ConfigurationType configurationType = ConfigurationTypeUtil.findConfigurationType(configTypeId);
-            if (configurationType != null) {
-              myConfiguration = configurationType.getConfigurationFactories()[0].createTemplateConfiguration(project);
-              myConfiguration.setName(config.getAttributeValue("name"));
-              myConfiguration.readExternal(config);
-
-              final Executor executor = ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID);
-              if (executor != null) {
-                if (myConfiguration instanceof SMRunnerConsolePropertiesProvider) {
-                  myProperties = ((SMRunnerConsolePropertiesProvider)myConfiguration).createTestConsoleProperties(executor);
-                }
+      class TerminateParsingException extends SAXException { }
+      try (InputStream inputStream = new FileInputStream(VfsUtilCore.virtualToIoFile(myFile))) {
+        SAXParserFactory.newInstance().newSAXParser().parse(inputStream, new DefaultHandler() {
+          boolean isConfigContent = false;
+          final StringBuilder builder = new StringBuilder();
+          
+          @Override
+          public void startElement(String uri, String localName, String qName, Attributes attributes) {
+            if (qName.equals("config")) {
+              isConfigContent = true;
+            }
+            if (isConfigContent) {
+              builder.append("<").append(qName);
+              for (int i = 0; i < attributes.getLength(); i++) {
+                builder.append(" ")
+                  .append(attributes.getQName(i))
+                  .append("=\"")
+                  .append(attributes.getValue(i))
+                  .append("\"");
               }
+              builder.append(">");
             }
           }
-          myTargetId = config.getAttributeValue("target");
-        }
+
+          @Override
+          public void characters(char[] ch, int start, int length) {
+            if (isConfigContent) {
+              builder.append(ch, start, length);
+            }
+          }
+
+          @Override
+          public void endElement(String uri, String localName, String qName) throws SAXException {
+            if (isConfigContent) {
+              builder.append("</").append(qName).append(">");
+            }
+            if (qName.equals("config")) {
+              isConfigContent = false;
+              try {
+                Element config = JDOMUtil.load(new StringReader(builder.toString()));
+                String configTypeId = config.getAttributeValue("configId");
+                if (configTypeId != null) {
+                  final ConfigurationType configurationType = ConfigurationTypeUtil.findConfigurationType(configTypeId);
+                  if (configurationType != null) {
+                    myConfiguration = configurationType.getConfigurationFactories()[0].createTemplateConfiguration(project);
+                    myConfiguration.setName(config.getAttributeValue("name"));
+                    myConfiguration.readExternal(config);
+  
+                    final Executor executor = ExecutorRegistry.getInstance().getExecutorById(DefaultRunExecutor.EXECUTOR_ID);
+                    if (executor != null) {
+                      if (myConfiguration instanceof SMRunnerConsolePropertiesProvider) {
+                        myProperties = ((SMRunnerConsolePropertiesProvider)myConfiguration).createTestConsoleProperties(executor);
+                      }
+                    }
+                  }
+                }
+                myTargetId = config.getAttributeValue("target");
+              }
+              catch (Exception e) { 
+                LOG.debug(e);
+              }
+              throw new TerminateParsingException();
+            }
+          }
+        });
       }
-      catch (Exception ignore) {
+      catch (TerminateParsingException ignored) {
+        //expected termination
+      }
+      catch (Exception e) {
+        LOG.debug(e);
       }
     }
 

@@ -71,7 +71,7 @@ public class NonSerializableFieldInSerializableClassInspection extends Serializa
       if (ignoreAnonymousInnerClasses && aClass instanceof PsiAnonymousClass) {
         return;
       }
-      if (!SerializationUtils.isSerializable(aClass)) {
+      if (aClass.isRecord() || !SerializationUtils.isSerializable(aClass)) {
         return;
       }
       PsiType fieldType = field.getType();

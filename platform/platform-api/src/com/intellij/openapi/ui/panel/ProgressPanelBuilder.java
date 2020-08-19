@@ -1,9 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui.panel;
 
+import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.ui.popup.IconButton;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.InplaceButton;
@@ -30,7 +32,7 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
   private Runnable resumeAction;
   private Runnable pauseAction;
 
-  private String  cancelText = "Cancel";
+  private @NlsContexts.Button String  cancelText = CommonBundle.getCancelButtonText();
   private boolean cancelAsButton;
   private boolean smallVariant;
 
@@ -191,7 +193,7 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
     private final JLabel comment;
     private final JLabel text2;
 
-    private String myCommentText = emptyComment();
+    private @NlsContexts.DetailedDescription String myCommentText = emptyComment();
     private boolean myServiceComment = false;
 
     private final IconButton cancelIcon;

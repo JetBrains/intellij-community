@@ -53,10 +53,7 @@ import git4idea.status.GitChangeProvider;
 import git4idea.update.GitUpdateEnvironment;
 import git4idea.util.GitVcsConsoleWriter;
 import git4idea.vfs.GitVFSListener;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
@@ -66,8 +63,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * Git VCS implementation
  */
 public final class GitVcs extends AbstractVcs {
-  public static final String NAME = "Git";
-  public static final String ID = "git";
+  public static final @NonNls String NAME = "Git";
+  public static final @NonNls String ID = "git";
 
   private static final Logger LOG = Logger.getInstance(GitVcs.class.getName());
   private static final VcsKey ourKey = createKey(NAME);
@@ -248,7 +245,7 @@ public final class GitVcs extends AbstractVcs {
    * @param list   a list of errors
    * @param action an action
    */
-  public void showErrors(@NotNull List<? extends VcsException> list, @NotNull String action) {
+  public void showErrors(@NotNull List<? extends VcsException> list, @NotNull @Nls String action) {
     if (list.size() > 0) {
       StringBuilder buffer = new StringBuilder();
       buffer.append("\n");
@@ -275,7 +272,7 @@ public final class GitVcs extends AbstractVcs {
    * @deprecated use {@link GitVcsConsoleWriter}
    */
   @Deprecated
-  public void showCommandLine(final String cmdLine) {
+  public void showCommandLine(@Nls String cmdLine) {
     GitVcsConsoleWriter.getInstance(myProject).showCommandLine(cmdLine);
   }
 

@@ -1,10 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
 import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.TaskExecutor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,7 +20,7 @@ public abstract class BaseProcessHandler<T extends Process> extends ProcessHandl
   protected final T myProcess;
   protected final String myCommandLine;
   protected final Charset myCharset;
-  protected final String myPresentableName;
+  protected final @NonNls String myPresentableName;
   protected final ProcessWaitFor myWaitFor;
 
   /**
@@ -41,7 +43,7 @@ public abstract class BaseProcessHandler<T extends Process> extends ProcessHandl
   }
 
   /*@NotNull*/
-  public String getCommandLine() {
+  public @NlsSafe String getCommandLine() {
     return myCommandLine;
   }
 

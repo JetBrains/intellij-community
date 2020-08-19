@@ -122,8 +122,7 @@ public final class PsiTypesUtil {
    * @return unboxed type name if available; same value otherwise
    */
   @Contract("null -> null; !null -> !null")
-  @Nullable
-  public static String unboxIfPossible(@Nullable String type) {
+  public static @Nullable @NonNls String unboxIfPossible(@Nullable @NonNls String type) {
     if (type == null) return null;
     final String s = ourUnboxedTypes.get(type);
     return s == null? type : s;
@@ -248,7 +247,8 @@ public final class PsiTypesUtil {
       }
     }
     else if (parent instanceof PsiAssignmentExpression) {
-      if (PsiUtil.checkSameExpression(element, ((PsiAssignmentExpression)parent).getRExpression())) {
+      if (((PsiAssignmentExpression)parent).getOperationSign().getTokenType() == JavaTokenType.EQ && 
+          PsiUtil.checkSameExpression(element, ((PsiAssignmentExpression)parent).getRExpression())) {
         PsiType type = ((PsiAssignmentExpression)parent).getLExpression().getType();
         return !PsiType.NULL.equals(type) ? type : null;
       }

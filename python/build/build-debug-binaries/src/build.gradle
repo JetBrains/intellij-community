@@ -8,12 +8,16 @@ ext {
   pydevDir = new File(projectDir, '/../../../helpers/pydev/')
 }
 
+boolean isWindows = Os.isFamily(Os.FAMILY_WINDOWS)
+boolean isMac = Os.isFamily(Os.FAMILY_MAC)
+
 envs {
   String python27version = "2.7.16"
   String python35version = "3.5.7"
   String python36version = "3.6.8"
   String python37version = "3.7.6"
   String python38version = "3.8.1"
+  String python39version = isWindows ? "3.9.0b4" : "3.9-dev"
 
   def customBuildDir = System.getenv().get("PYCHARM_BUILD_DIR")
   project.buildDir = customBuildDir? new File(customBuildDir): buildDir
@@ -21,7 +25,7 @@ envs {
   envsDirectory = new File(buildDir, 'envs')
 
   zipRepository = new URL("https://repo.labs.intellij.net/pycharm/python-archives-windows/")
-  shouldUseZipsFromRepository = Os.isFamily(Os.FAMILY_WINDOWS)
+  shouldUseZipsFromRepository = isWindows
 
   python "python27_64", python27version, "64"
   virtualenv "py27_64", "python27_64", ["cython"]
@@ -38,7 +42,10 @@ envs {
   python "python38_64", python38version, "64"
   virtualenv "py38_64", "python38_64", ["cython"]
 
-  if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+  python "python39_64", python39version, "64"
+  virtualenv "py39_64", "python39_64", ["cython"]
+
+  if (isWindows) {
     python "python27_32", python27version, "32"
     virtualenv "py27_32", "python27_32", ["cython"]
 
@@ -53,10 +60,13 @@ envs {
 
     python "python38_32", python38version, "32"
     virtualenv "py38_32", "python38_32", ["cython"]
+
+    python "python39_32", python39version, "32"
+    virtualenv "py39_32", "python39_32", ["cython"]
   }
 }
 
-task buildBinariesOnWindows(dependsOn: 'build_envs') << {
+task buildBinariesOnWindows(dependsOn: 'build_envs') doLast {
   exec {
     workingDir pydevDir
 
@@ -68,7 +78,7 @@ task buildBinariesOnWindows(dependsOn: 'build_envs') << {
   }
 }
 
-task buildBinariesOnMac(dependsOn: 'build_envs') << {
+task buildBinariesOnMac(dependsOn: 'build_envs') doLast {
   exec {
     workingDir pydevDir
 
@@ -80,14 +90,14 @@ task buildBinariesOnMac(dependsOn: 'build_envs') << {
 }
 
 task buildBinaries() {
-  if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+  if (isWindows) {
     dependsOn buildBinariesOnWindows
   }
-  else if (Os.isFamily(Os.FAMILY_MAC)) {
+  else if (isMac) {
     dependsOn buildBinariesOnMac
   }
 }
 
-task wrapper(type: Wrapper) << {
+task wrapper(type: Wrapper) doLast {
   gradleVersion = '4.2'
 }

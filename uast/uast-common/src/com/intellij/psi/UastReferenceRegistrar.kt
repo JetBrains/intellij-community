@@ -32,22 +32,38 @@ fun PsiReferenceRegistrar.registerUastReferenceProvider(pattern: ElementPattern<
 }
 
 fun uastInjectionHostReferenceProvider(provider: (UExpression, PsiLanguageInjectionHost) -> Array<PsiReference>): UastInjectionHostReferenceProvider =
+  uastInjectionHostReferenceProvider(null, provider)
+
+fun uastInjectionHostReferenceProvider(targetClass: Class<out PsiElement>?,
+                                       provider: (UExpression, PsiLanguageInjectionHost) -> Array<PsiReference>): UastInjectionHostReferenceProvider =
   object : UastInjectionHostReferenceProvider() {
     override fun getReferencesForInjectionHost(uExpression: UExpression,
                                                host: PsiLanguageInjectionHost,
                                                context: ProcessingContext): Array<PsiReference> = provider(uExpression, host)
 
+    override fun acceptsTarget(target: PsiElement): Boolean {
+      return targetClass?.isInstance(target) ?: true
+    }
+
     override fun toString(): String = "uastInjectionHostReferenceProvider($provider)"
   }
 
-fun <T : UElement> uastReferenceProvider(cls: Class<T>, provider: (T, PsiElement) -> Array<PsiReference>): UastReferenceProvider =
+fun <T : UElement> uastReferenceProvider(cls: Class<T>, targetClass: Class<out PsiElement>?,
+                                         provider: (T, PsiElement) -> Array<PsiReference>): UastReferenceProvider =
   object : UastReferenceProvider(cls) {
 
     override fun getReferencesByElement(element: UElement, context: ProcessingContext): Array<PsiReference> =
       provider(cls.cast(element), context[REQUESTED_PSI_ELEMENT])
 
+    override fun acceptsTarget(target: PsiElement): Boolean {
+      return targetClass?.isInstance(target) ?: true
+    }
+
     override fun toString(): String = "uastReferenceProvider($provider)"
   }
+
+fun <T : UElement> uastReferenceProvider(cls: Class<T>, provider: (T, PsiElement) -> Array<PsiReference>): UastReferenceProvider =
+  uastReferenceProvider(cls, null, provider)
 
 inline fun <reified T : UElement> uastReferenceProvider(noinline provider: (T, PsiElement) -> Array<PsiReference>): UastReferenceProvider =
   uastReferenceProvider(T::class.java, provider)
@@ -99,6 +115,10 @@ private fun adaptPattern(pattern: (UElement, ProcessingContext) -> Boolean,
   return uastPatternAdapter
 }
 
+@ApiStatus.Experimental
+fun uastReferenceProviderByUsage(provider: (UExpression, referencePsi: PsiLanguageInjectionHost, usagePsi: PsiElement) -> Array<PsiReference>): UastReferenceProvider =
+  uastReferenceProviderByUsage(null, provider)
+
 /**
  * Creates UAST reference provider that accepts additional PSI element that could be either the same as reference PSI element or reference
  * element that is used in the same file and satisfy usage pattern.
@@ -106,7 +126,8 @@ private fun adaptPattern(pattern: (UElement, ProcessingContext) -> Boolean,
  * @see registerReferenceProviderByUsage
  */
 @ApiStatus.Experimental
-fun uastReferenceProviderByUsage(provider: (UExpression, referencePsi: PsiLanguageInjectionHost, usagePsi: PsiElement) -> Array<PsiReference>): UastReferenceProvider =
+fun uastReferenceProviderByUsage(targetClass: Class<out PsiElement>?,
+                                 provider: (UExpression, referencePsi: PsiLanguageInjectionHost, usagePsi: PsiElement) -> Array<PsiReference>): UastReferenceProvider =
   object : UastReferenceProvider(UInjectionHost::class.java) {
     override fun getReferencesByElement(element: UElement, context: ProcessingContext): Array<PsiReference> {
       val uLiteral = element as? UExpression ?: return PsiReference.EMPTY_ARRAY
@@ -114,6 +135,10 @@ fun uastReferenceProviderByUsage(provider: (UExpression, referencePsi: PsiLangua
       val usagePsi = context[USAGE_PSI_ELEMENT] ?: context[REQUESTED_PSI_ELEMENT]
 
       return provider(uLiteral, host, usagePsi)
+    }
+
+    override fun acceptsTarget(target: PsiElement): Boolean {
+      return targetClass?.isInstance(target) ?: true
     }
 
     override fun toString(): String = "uastByUsageReferenceProvider($provider)"

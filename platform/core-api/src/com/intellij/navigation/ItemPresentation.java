@@ -15,7 +15,7 @@
  */
 package com.intellij.navigation;
 
-import org.jetbrains.annotations.Nls;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -33,8 +33,7 @@ public interface ItemPresentation {
    *
    * @return the object name.
    */
-  @Nullable @Nls
-  String getPresentableText();
+  @NlsSafe @Nullable String getPresentableText();
 
   /**
    * Returns the location of the object (for example, the package of a class). The location
@@ -42,8 +41,7 @@ public interface ItemPresentation {
    *
    * @return the location description, or null if none is applicable.
    */
-  @Nullable
-  String getLocationString();
+  @NlsSafe @Nullable String getLocationString();
 
   /**
    * Returns the icon representing the object.

@@ -14,6 +14,7 @@ import groovy.lang.GroovyObjectSupport;
 import groovy.lang.MetaMethod;
 import org.codehaus.groovy.runtime.DefaultGroovyMethods;
 import org.codehaus.groovy.runtime.InvokerHelper;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.dsl.dsltop.GdslMembersProvider;
@@ -41,7 +42,7 @@ import java.util.function.Consumer;
 public class CustomMembersGenerator extends GroovyObjectSupport implements GdslMembersHolderConsumer {
   private static final Logger LOG = Logger.getInstance(CustomMembersGenerator.class);
   private static final GdslMembersProvider[] PROVIDERS = GdslMembersProvider.EP_NAME.getExtensions();
-  public static final String THROWS = "throws";
+  public static final @NonNls String THROWS = "throws";
   private FList<Map> myDeclarations = FList.emptyList();
   private final Project myProject;
   private final CompoundMembersHolder myDepot = new CompoundMembersHolder();

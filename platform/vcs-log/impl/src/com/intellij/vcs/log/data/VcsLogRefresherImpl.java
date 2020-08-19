@@ -207,7 +207,14 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
           mySingleTaskController.taskCompleted(dataPack);
           break;
         }
-        dataPack = doRefresh(rootsToRefresh);
+
+        try {
+          dataPack = doRefresh(rootsToRefresh);
+        }
+        catch (ProcessCanceledException e) {
+          mySingleTaskController.taskCompleted(null);
+          throw e;
+        }
       }
     }
 

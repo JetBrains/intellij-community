@@ -402,10 +402,10 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
   }
 
   override fun getModifiableModel(): ModifiableModuleModel =
-    ModifiableModuleModelBridge(project, this, WorkspaceEntityStorageBuilder.from(entityStore.current))
+    ModifiableModuleModelBridgeImpl(project, this, WorkspaceEntityStorageBuilder.from(entityStore.current))
 
   fun getModifiableModel(diff: WorkspaceEntityStorageBuilder): ModifiableModuleModel =
-    ModifiableModuleModelBridge(project, this, diff)
+    ModifiableModuleModelBridgeImpl(project, this, diff, false)
 
   override fun newModule(filePath: String, moduleTypeId: String): Module {
     incModificationCount()

@@ -23,6 +23,7 @@ import com.intellij.refactoring.typeCook.Settings;
 import com.intellij.refactoring.typeCook.Util;
 import com.intellij.refactoring.typeCook.deductive.resolver.Binding;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.HashSet;
@@ -160,7 +161,7 @@ public class Result {
     return ratio + (y != 0 ? " (" + (x * 100 / y) + "%)" : "");
   }
 
-  public String getReport() {
+  public @Nls String getReport() {
     return JavaRefactoringBundle.message("type.cook.report", getRatio(myCookedNumber, myVictims.size()),
                                      getRatio(myCastsRemoved, myCastsNumber));
   }

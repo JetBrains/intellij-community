@@ -18,7 +18,7 @@ import java.util.*
 import javax.swing.*
 import javax.swing.event.ChangeListener
 
-class MainFrameHeader(frame: JFrame, menuBar: IdeMenuBar?) : FrameHeader(frame){
+class MainFrameHeader(frame: JFrame) : FrameHeader(frame){
   private val mySelectedEditorFilePath: CustomDecorationPath
   private val myIdeMenu: IdeMenuBar
   private val menuHolder: JComponent
@@ -35,7 +35,7 @@ class MainFrameHeader(frame: JFrame, menuBar: IdeMenuBar?) : FrameHeader(frame){
     productIcon.border = empty
     add(productIcon)
 
-    myIdeMenu = CustomHeaderMenuBar(menuBar)
+    myIdeMenu = CustomHeaderMenuBar()
 
     changeListener = ChangeListener {
       updateCustomDecorationHitTestSpots()
@@ -68,6 +68,10 @@ class MainFrameHeader(frame: JFrame, menuBar: IdeMenuBar?) : FrameHeader(frame){
 
   fun setProject(project: Project) {
     mySelectedEditorFilePath.project = project
+  }
+
+  fun updateMenuActions(forceRebuild: Boolean) {
+    myIdeMenu.updateMenuActions(forceRebuild)
   }
 
   override fun updateActive() {

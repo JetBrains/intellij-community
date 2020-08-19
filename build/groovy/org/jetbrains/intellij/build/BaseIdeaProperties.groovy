@@ -63,6 +63,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.platform.langInjection",
     "intellij.java.debugger.streams",
     "intellij.android.smali",
+    "intellij.mlCompletionModels",
     "intellij.statsCollector",
     "intellij.sh",
     "intellij.vcs.changeReminder",
@@ -72,7 +73,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.grazie"
   ]
   protected static final Map<String, String> CE_CLASS_VERSIONS = [
-    ""                                                          : "1.8",
+    ""                                                          : "11",
     "lib/idea_rt.jar"                                           : "1.6",
     "lib/forms_rt.jar"                                          : "1.6",
     "lib/annotations.jar"                                       : "1.6",

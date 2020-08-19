@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
+import com.intellij.util.DeprecatedMethodException;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.CollectionFactory;
@@ -34,10 +35,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Set;
+import java.util.*;
 
 public final class VfsRootAccess {
   private static final boolean SHOULD_PERFORM_ACCESS_CHECK =
@@ -192,7 +190,7 @@ public final class VfsRootAccess {
   @TestOnly
   public static void allowRootAccess(@NotNull Disposable disposable, @NotNull String @NotNull ... roots) {
     if (roots.length == 0) return;
-    allowRootAccess(roots);
+    doAllow(roots);
     Disposer.register(disposable, () -> disallowRootAccess(roots));
   }
 
@@ -200,15 +198,22 @@ public final class VfsRootAccess {
   @Deprecated
   @TestOnly
   public static void allowRootAccess(String @NotNull ... roots) {
+    DeprecatedMethodException.report("Use `allowRootAccess(Disposable, String...)` instead");
+    doAllow(roots);
+  }
+
+  private static void doAllow(String @NotNull ... roots) {
     for (String root : roots) {
-      ourAdditionalRoots.add(StringUtil.trimEnd(FileUtil.toSystemIndependentName(root), '/'));
+      String path = StringUtil.trimEnd(FileUtil.toSystemIndependentName(root), '/');
+      if (path.isEmpty()) {
+        throw new IllegalArgumentException("Must not pass empty pat but got: '" + Arrays.toString(roots) + "'");
+      }
+      ourAdditionalRoots.add(path);
     }
   }
 
-  /** @deprecated Use {@link #allowRootAccess(Disposable, String...)} instead */
-  @Deprecated
   @TestOnly
-  public static void disallowRootAccess(String @NotNull ... roots) {
+  private static void disallowRootAccess(String @NotNull ... roots) {
     for (String root : roots) {
       ourAdditionalRoots.remove(StringUtil.trimEnd(FileUtil.toSystemIndependentName(root), '/'));
     }

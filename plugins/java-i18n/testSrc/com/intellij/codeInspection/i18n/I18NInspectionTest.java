@@ -19,6 +19,16 @@ public class I18NInspectionTest extends LightJavaCodeInsightFixtureTestCase {
     myFixture.testHighlighting("i18n/" + getTestName(false) + ".java");
   }
 
+  private void doTestNlsMode() {
+    boolean old = myTool.setIgnoreForAllButNls(true);
+    try {
+      doTest();
+    }
+    finally {
+      myTool.setIgnoreForAllButNls(old);
+    }
+  }
+
   @Override
   protected @NotNull LightProjectDescriptor getProjectDescriptor() {
     return JAVA_8;
@@ -51,38 +61,27 @@ public class I18NInspectionTest extends LightJavaCodeInsightFixtureTestCase {
     myTool.setNonNlsCommentPattern("MYNON-NLS");
     doTest();
   }
+  public void testPropagateToInterfaceMethod() {
+    doTest();
+  }
 
   public void testNlsOnly() {
-    boolean old = myTool.setIgnoreForAllButNls(true);
-    try {
-      doTest();
-    }
-    finally {
-      myTool.setIgnoreForAllButNls(old);
-    }
+    doTestNlsMode();
+  }
+  
+  public void testNlsOnlyTernary() {
+    doTestNlsMode();
   }
   
   public void testNlsOnlyFields() {
-    boolean old = myTool.setIgnoreForAllButNls(true);
-    try {
-      doTest();
-    }
-    finally {
-      myTool.setIgnoreForAllButNls(old);
-    }
+    doTestNlsMode();
   }
 
   public void testNlsPackage() {
     myFixture.addFileToProject("package-info.java", "@Nls\n" +
                                                     "package foo;\n" +
                                                     "import org.jetbrains.annotations.Nls;");
-    boolean old = myTool.setIgnoreForAllButNls(true);
-    try {
-      doTest();
-    }
-    finally {
-      myTool.setIgnoreForAllButNls(old);
-    }
+    doTestNlsMode();
   }
 
   public void testAnnotationArgument() { doTest(); }
@@ -111,57 +110,35 @@ public class I18NInspectionTest extends LightJavaCodeInsightFixtureTestCase {
     }
   }
   
-  public void testNlsTypeUse() {
-    boolean old = myTool.setIgnoreForAllButNls(true);
-    try {
-      doTest();
-    }
-    finally {
-      myTool.setIgnoreForAllButNls(old);
-    }
+  public void testNlsTypeUse() { doTestNlsMode(); }
+
+  public void testNonNlsIndirect() { doTest(); }
+
+  public void testNlsIndirect() { doTestNlsMode(); }
+  
+  public void testNonNlsMeta() { doTest(); }
+  
+  public void testNlsMeta() { doTestNlsMode(); }
+  
+  public void testUseConstant() { doTest(); }
+
+  public void testNonNlsOnContainer() { doTest(); }
+  
+  public void testUseConstantNls() { doTestNlsMode(); }
+  
+  public void testHtmlEntitiesNlsMode() {
+    doTestNlsMode();
   }
 
-  public void testNonNlsIndirect() {
-    doTest();
-  }
+  public void testArrayInitializerInNlsMode() { doTestNlsMode(); }
 
-  public void testNlsIndirect() {
-    boolean old = myTool.setIgnoreForAllButNls(true);
-    try {
-      doTest();
-    }
-    finally {
-      myTool.setIgnoreForAllButNls(old);
-    }
-  }
+  public void testSwitchInNlsMode() { doTestNlsMode(); }
 
-  public void testNonNlsMeta() {
-    doTest();
-  }
+  public void testReturnCallWithArgs() { doTest(); }
   
-  public void testNlsMeta() {
-    boolean old = myTool.setIgnoreForAllButNls(true);
-    try {
-      doTest();
-    }
-    finally {
-      myTool.setIgnoreForAllButNls(old);
-    }
-  }
+  public void testConverterMethods() { doTestNlsMode(); }
   
-  public void testUseConstant() {
-    doTest();
-  }
-  
-  public void testUseConstantNls() {
-    boolean old = myTool.setIgnoreForAllButNls(true);
-    try {
-      doTest();
-    }
-    finally {
-      myTool.setIgnoreForAllButNls(old);
-    }
-  }
+  public void testNlsSafeStringBuilder() { doTestNlsMode(); }
 
   @Override
   protected String getTestDataPath() {

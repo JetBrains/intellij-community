@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
@@ -191,21 +192,21 @@ public abstract class GitHandler {
     addParameters(Arrays.asList(parameters));
   }
 
-  public void addParameters(@NotNull List<String> parameters) {
+  public void addParameters(@NotNull List<@NonNls String> parameters) {
     for (String parameter : parameters) {
       myCommandLine.addParameter(escapeParameterIfNeeded(parameter));
     }
   }
 
   @NotNull
-  private String escapeParameterIfNeeded(@NotNull String parameter) {
+  private String escapeParameterIfNeeded(@NotNull @NonNls String parameter) {
     if (escapeNeeded(parameter)) {
       return parameter.replaceAll("\\^", "^^^^");
     }
     return parameter;
   }
 
-  private boolean escapeNeeded(@NotNull String parameter) {
+  private boolean escapeNeeded(@NotNull @NonNls String parameter) {
     return SystemInfo.isWindows && isCmd() && parameter.contains("^");
   }
 
@@ -254,6 +255,7 @@ public abstract class GitHandler {
   /**
    * @return a command line with full path to executable replace to "git"
    */
+  @NlsSafe
   public String printableCommandLine() {
     return unescapeCommandLine(myCommandLine.getCommandLineString("git"));
   }
@@ -342,15 +344,15 @@ public abstract class GitHandler {
    * @param name  the variable name
    * @param value the variable value
    */
-  public void addCustomEnvironmentVariable(@NotNull String name, @Nullable String value) {
+  public void addCustomEnvironmentVariable(@NotNull @NonNls String name, @Nullable @NonNls String value) {
     myCustomEnv.put(name, value);
   }
 
-  public void addCustomEnvironmentVariable(@NotNull String name, @NotNull File file) {
+  public void addCustomEnvironmentVariable(@NotNull @NonNls String name, @NotNull File file) {
     myCustomEnv.put(name, myExecutable.convertFilePath(file));
   }
 
-  public boolean containsCustomEnvironmentVariable(@NotNull String key) {
+  public boolean containsCustomEnvironmentVariable(@NotNull @NonNls String key) {
     return myCustomEnv.containsKey(key);
   }
 

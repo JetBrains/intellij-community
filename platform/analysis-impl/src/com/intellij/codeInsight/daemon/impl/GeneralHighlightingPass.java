@@ -24,10 +24,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.ProperTextRange;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.UserDataHolderEx;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.Problem;
@@ -46,6 +43,7 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.Stack;
 import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -506,11 +504,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       TextRange textRange = todoItem.getTextRange();
       List<TextRange> additionalRanges = todoItem.getAdditionalTextRanges();
 
-      StringJoiner joiner = new StringJoiner("\n");
-      JBIterable.of(textRange).append(additionalRanges).forEach(
-        range -> joiner.add(text.subSequence(range.getStartOffset(), range.getEndOffset()))
-      );
-      String description = joiner.toString();
+      String description = formatDescription(text, textRange, additionalRanges);
       String tooltip = XmlStringUtil.escapeString(StringUtil.shortenPathWithEllipsis(description, 1024)).replace("\n", "<br>");
 
       TextAttributes attributes = todoItem.getPattern().getAttributes().getTextAttributes();
@@ -526,20 +520,30 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     }
   }
 
+  private static @NlsSafe String formatDescription(@NotNull CharSequence text, TextRange textRange, List<TextRange> additionalRanges) {
+    StringJoiner joiner = new StringJoiner("\n");
+    JBIterable.of(textRange).append(additionalRanges).forEach(
+      range -> joiner.add(text.subSequence(range.getStartOffset(), range.getEndOffset()))
+    );
+    return joiner.toString();
+  }
+
   private static void addTodoItem(int restrictStartOffset,
                                   int restrictEndOffset,
                                   @NotNull ProperTextRange priorityRange,
                                   @NotNull Collection<? super HighlightInfo> insideResult,
                                   @NotNull Collection<? super HighlightInfo> outsideResult,
                                   @NotNull TextAttributes attributes,
-                                  @NotNull String description, @NotNull String tooltip, @NotNull TextRange range) {
+                                  @NotNull @NlsContexts.DetailedDescription String description,
+                                  @NotNull @NlsContexts.Tooltip String tooltip,
+                                  @NotNull TextRange range) {
     if (range.getStartOffset() >= restrictEndOffset || range.getEndOffset() <= restrictStartOffset) return;
     HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.TODO)
-                                      .range(range)
-                                      .textAttributes(attributes)
-                                      .description(description)
-                                      .escapedToolTip(tooltip)
-                                      .createUnconditionally();
+      .range(range)
+      .textAttributes(attributes)
+      .description(description)
+      .escapedToolTip(tooltip)
+      .createUnconditionally();
     Collection<? super HighlightInfo> result = priorityRange.containsRange(info.getStartOffset(), info.getEndOffset()) ? insideResult : outsideResult;
     result.add(info);
   }
@@ -585,7 +589,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return super.toString() + " updateAll="+myUpdateAll+" range= "+myRestrictRange;
   }
 
-  private static String getPresentableNameText() {
+  private static @Nls String getPresentableNameText() {
     return AnalysisBundle.message("pass.syntax");
   }
 }

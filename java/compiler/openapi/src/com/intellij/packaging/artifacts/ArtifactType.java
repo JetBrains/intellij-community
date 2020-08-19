@@ -2,12 +2,14 @@
 package com.intellij.packaging.artifacts;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementOutputKind;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.ui.ArtifactProblemsHolder;
 import com.intellij.packaging.ui.PackagingSourceItem;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,18 +21,18 @@ import java.util.List;
 public abstract class ArtifactType {
   public static final ExtensionPointName<ArtifactType> EP_NAME = ExtensionPointName.create("com.intellij.packaging.artifactType");
   private final String myId;
-  private final String myTitle;
+  private final @Nls(capitalization = Nls.Capitalization.Sentence) String myTitle;
 
-  protected ArtifactType(@NonNls String id, String title) {
+  protected ArtifactType(@NonNls String id, @Nls(capitalization = Nls.Capitalization.Sentence) String title) {
     myId = id;
     myTitle = title;
   }
 
-  public final String getId() {
+  public final @NonNls String getId() {
     return myId;
   }
 
-  public String getPresentableName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) String getPresentableName() {
     return myTitle;
   }
 
@@ -43,7 +45,7 @@ public abstract class ArtifactType {
   }
 
   @Nullable
-  public abstract String getDefaultPathFor(@NotNull PackagingElementOutputKind kind);
+  public abstract @NlsSafe String getDefaultPathFor(@NotNull PackagingElementOutputKind kind);
 
   public boolean isSuitableItem(@NotNull PackagingSourceItem sourceItem) {
     return true;

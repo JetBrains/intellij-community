@@ -4,6 +4,7 @@ package com.jetbrains.python.inspections.unusedLocal;
 import com.google.common.collect.ImmutableMap;
 import com.intellij.codeInsight.controlflow.ControlFlowUtil;
 import com.intellij.codeInsight.controlflow.Instruction;
+import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInspection.*;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.project.Project;
@@ -22,10 +23,6 @@ import com.jetbrains.python.codeInsight.dataflow.scope.Scope;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.inspections.PyInspectionExtension;
 import com.jetbrains.python.inspections.PyInspectionVisitor;
-import com.jetbrains.python.inspections.quickfix.AddFieldQuickFix;
-import com.jetbrains.python.inspections.quickfix.PyRemoveExceptionTargetQuickFix;
-import com.jetbrains.python.inspections.quickfix.PyRemoveParameterQuickFix;
-import com.jetbrains.python.inspections.quickfix.PyRemoveStatementQuickFix;
 import com.jetbrains.python.inspections.quickfix.*;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.*;
@@ -406,6 +403,11 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
             continue;
           }
 
+          if (isComprehensionTarget(element)) {
+            registerWarning(element, warningMsg, new ReplaceWithWildCard());
+            continue;
+          }
+
           final PyExceptPart exceptPart = PyExceptPartNavigator.getPyExceptPartByTarget(element);
           if (exceptPart != null) {
             registerWarning(element, warningMsg, new PyRemoveExceptionTargetQuickFix());
@@ -423,10 +425,28 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
             continue;
           }
 
-          registerWarning(element, warningMsg, new PyRemoveStatementQuickFix());
+          final PyAssignmentStatement assignmentStatement = PsiTreeUtil.getParentOfType(element, PyAssignmentStatement.class);
+          if (assignmentStatement != null && PsiTreeUtil.isAncestor(assignmentStatement.getLeftHandSideExpression(), element, false)) {
+            if (assignmentStatement.getRawTargets().length > 1) {
+              // TODO: consider assignmentStatement.getRawTargets().length > 1 in PY-28782
+              continue;
+            }
+            if (assignmentStatement.getLeftHandSideExpression() != element) {
+              registerWarning(element, warningMsg, new ReplaceWithWildCard());
+              continue;
+            }
+            registerWarning(element, warningMsg, new PyRemoveAssignmentStatementTargetQuickFix(), new PyRemoveStatementQuickFix());
+          }
         }
       }
     }
+  }
+
+  private static boolean isComprehensionTarget(@NotNull PsiElement element) {
+    final PyComprehensionElement comprehensionExpr = PsiTreeUtil.getParentOfType(element, PyComprehensionElement.class);
+    if (comprehensionExpr == null) return false;
+    return ContainerUtil.exists(comprehensionExpr.getForComponents(),
+                                it -> PsiTreeUtil.isAncestor(it.getIteratorVariable(), element, false));
   }
 
   private boolean isRangeIteration(@NotNull PyForStatement forStatement) {

@@ -177,7 +177,7 @@ public final class NanoXmlUtil {
       return StringFactory.createShared(StreamUtil.readTextAndConvertSeparators(reader));
     }
 
-    protected String getLocation() {
+    protected @NonNls String getLocation() {
       return myLocation.peek();
     }
   }

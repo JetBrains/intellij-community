@@ -10,9 +10,9 @@ PyFile:SingleLineFStringContainsCommentInsteadOfExpression.py
         PsiElement(Py:FSTRING_START)('f'')
         PyFStringFragment
           PsiElement(Py:FSTRING_FRAGMENT_START)('{')
-          PsiErrorElement:expression expected
+          PsiErrorElement:Expression expected
             PsiComment(Py:END_OF_LINE_COMMENT)('# comment}'')
-          PsiErrorElement:type conversion, : or } expected
+          PsiErrorElement:Type conversion, ':' or '}' expected
             <empty list>
         PsiErrorElement:' expected
           <empty list>

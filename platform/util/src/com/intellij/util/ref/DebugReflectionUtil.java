@@ -15,7 +15,6 @@ import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.misc.Unsafe;
 
 import java.lang.ref.Reference;
 import java.lang.reflect.Field;
@@ -39,7 +38,18 @@ public final class DebugReflectionUtil {
   });
 
   private static final Field[] EMPTY_FIELD_ARRAY = new Field[0];
-  private static final Method Unsafe_shouldBeInitialized = ReflectionUtil.getDeclaredMethod(Unsafe.class, "shouldBeInitialized", Class.class);
+  private static final Method Unsafe_shouldBeInitialized;
+
+  static {
+    Method shouldBeInitialized;
+    try {
+      shouldBeInitialized = ReflectionUtil.getDeclaredMethod(Class.forName("sun.misc.Unsafe"), "shouldBeInitialized", Class.class);
+    }
+    catch (ClassNotFoundException ignored) {
+      shouldBeInitialized = null;
+    }
+    Unsafe_shouldBeInitialized = shouldBeInitialized;
+  }
 
   private static Field @NotNull [] getAllFields(@NotNull Class<?> aClass) {
     Field[] cached = allFields.get(aClass);

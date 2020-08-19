@@ -41,6 +41,6 @@ public class SubmemberHidesMemberUsageInfo extends UnresolvableCollisionUsageInf
                                         RefactoringUIUtil.getDescription(getElement(), true),
                                         UsageViewUtil.getType(getElement()));
     }
-    return StringUtil.capitalize(descr);
+    return descr;
   }
 }

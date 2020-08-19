@@ -1,25 +1,37 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase
 
+import git4idea.config.GitVersion
+import git4idea.config.GitVersionSpecialty.REBASE_MERGES_REPLACES_PRESERVE_MERGES
 import git4idea.i18n.GitBundle
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 
-enum class GitRebaseOption(@NonNls val option: String,
+enum class GitRebaseOption(@NonNls private val option: String,
                            @Nls val description: String) {
 
   SWITCH_BRANCH(GitBundle.message("rebase.option.switch.to.branch"), ""),
 
   ONTO("--onto", GitBundle.message("rebase.option.onto")),
   INTERACTIVE("--interactive", GitBundle.message("rebase.option.interactive")),
-  PRESERVE_MERGES("--preserve-merges", GitBundle.message("rebase.option.rebase.merges"));
-
-  fun isOptionSuitable(option: GitRebaseOption): Boolean {
-    return when (this) {
-      SWITCH_BRANCH -> true
-      ONTO -> true
-      INTERACTIVE -> option != PRESERVE_MERGES
-      PRESERVE_MERGES -> option != INTERACTIVE
+  REBASE_MERGES("--rebase-merges", GitBundle.message("rebase.option.rebase.merges")) {
+    override fun getOption(gitVersion: GitVersion): String {
+      return if (REBASE_MERGES_REPLACES_PRESERVE_MERGES.existsIn(gitVersion))
+        "--rebase-merges"
+      else
+        "--preserve-merges"
     }
-  }
+  },
+  KEEP_EMPTY("--keep-empty", GitBundle.message("rebase.option.keep.empty")),
+  ROOT("--root", GitBundle.message("rebase.option.root"));
+
+  open fun getOption(gitVersion: GitVersion) = option
 }
+
+/**
+ * Set of options that are used without any additional params
+ */
+val REBASE_FLAGS = setOf(GitRebaseOption.INTERACTIVE,
+                         GitRebaseOption.REBASE_MERGES,
+                         GitRebaseOption.KEEP_EMPTY,
+                         GitRebaseOption.ROOT)

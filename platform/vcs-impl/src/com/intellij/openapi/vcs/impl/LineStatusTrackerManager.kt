@@ -343,35 +343,11 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
     }
   }
 
-
-  private fun canGetBaseRevisionFor(virtualFile: VirtualFile?): Boolean {
+  private fun canCreateTrackerFor(virtualFile: VirtualFile?): Boolean {
     if (isDisposed) return false
     if (virtualFile == null || virtualFile is LightVirtualFile) return false
     if (runReadAction { !virtualFile.isValid || virtualFile.fileType.isBinary || FileUtilRt.isTooLarge(virtualFile.length) }) return false
-    if (!VcsFileStatusProvider.getInstance(project).isSupported(virtualFile)) return false
-
-    val status = FileStatusManager.getInstance(project).getStatus(virtualFile)
-    if (status == FileStatus.ADDED ||
-        status == FileStatus.DELETED ||
-        status == FileStatus.UNKNOWN ||
-        status == FileStatus.IGNORED) {
-      return false
-    }
     return true
-  }
-
-  private fun canCreatePartialTrackerFor(virtualFile: VirtualFile): Boolean {
-    if (!arePartialChangelistsEnabled(virtualFile)) return false
-
-    val status = FileStatusManager.getInstance(project).getStatus(virtualFile)
-    if (status != FileStatus.MODIFIED &&
-        status != ChangelistConflictFileStatusProvider.MODIFIED_OUTSIDE &&
-        status != FileStatus.NOT_CHANGED) return false
-
-    val change = ChangeListManager.getInstance(project).getChange(virtualFile)
-    return change != null && change.javaClass == Change::class.java &&
-           (change.type == Change.Type.MODIFICATION || change.type == Change.Type.MOVED) &&
-           change.afterRevision is CurrentContentRevision
   }
 
   override fun arePartialChangelistsEnabled(virtualFile: VirtualFile): Boolean {
@@ -423,17 +399,12 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
   }
 
   private fun getTrackerProvider(virtualFile: VirtualFile): LocalLineStatusTrackerProvider? {
-    if (!canGetBaseRevisionFor(virtualFile)) return null
+    if (!canCreateTrackerFor(virtualFile)) return null
 
     val customTracker = LocalLineStatusTrackerProvider.EP_NAME.findFirstSafe { it.isTrackedFile(project, virtualFile) }
     if (customTracker != null) return customTracker
 
-    if (canCreatePartialTrackerFor(virtualFile)) {
-      return ChangelistsLocalStatusTrackerProvider
-    }
-    else {
-      return DefaultLocalStatusTrackerProvider
-    }
+    return listOf(ChangelistsLocalStatusTrackerProvider, DefaultLocalStatusTrackerProvider).find { it.isTrackedFile(project, virtualFile) }
   }
 
   @CalledInAwt
@@ -494,8 +465,8 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
         return Result.Error()
       }
 
-      if (!canGetBaseRevisionFor(virtualFile)) {
-        log("Loading error: cant get base revision", virtualFile)
+      if (!canCreateTrackerFor(virtualFile) || !loader.isTrackedFile(project, virtualFile)) {
+        log("Loading error: virtual file is not a tracked file", virtualFile)
         return Result.Error()
       }
 
@@ -1280,7 +1251,21 @@ private sealed class Result<T> {
 }
 
 private object ChangelistsLocalStatusTrackerProvider : BaseRevisionStatusTrackerContentLoader() {
-  override fun isTrackedFile(project: Project, file: VirtualFile): Boolean = throw UnsupportedOperationException()
+  override fun isTrackedFile(project: Project, file: VirtualFile): Boolean {
+    if (!LineStatusTrackerManager.getInstance(project).arePartialChangelistsEnabled(file)) return false
+    if (!super.isTrackedFile(project, file)) return false
+
+    val status = FileStatusManager.getInstance(project).getStatus(file)
+    if (status != FileStatus.MODIFIED &&
+        status != ChangelistConflictFileStatusProvider.MODIFIED_OUTSIDE &&
+        status != FileStatus.NOT_CHANGED) return false
+
+    val change = ChangeListManager.getInstance(project).getChange(file)
+    return change != null && change.javaClass == Change::class.java &&
+           (change.type == Change.Type.MODIFICATION || change.type == Change.Type.MOVED) &&
+           change.afterRevision is CurrentContentRevision
+  }
+
   override fun isMyTracker(tracker: LocalLineStatusTracker<*>): Boolean = tracker is ChangelistsLocalLineStatusTracker
 
   override fun createTracker(project: Project, file: VirtualFile): LocalLineStatusTracker<*>? {
@@ -1290,7 +1275,6 @@ private object ChangelistsLocalStatusTrackerProvider : BaseRevisionStatusTracker
 }
 
 private object DefaultLocalStatusTrackerProvider : BaseRevisionStatusTrackerContentLoader() {
-  override fun isTrackedFile(project: Project, file: VirtualFile): Boolean = throw UnsupportedOperationException()
   override fun isMyTracker(tracker: LocalLineStatusTracker<*>): Boolean = tracker is SimpleLocalLineStatusTracker
 
   override fun createTracker(project: Project, file: VirtualFile): LocalLineStatusTracker<*>? {
@@ -1300,6 +1284,19 @@ private object DefaultLocalStatusTrackerProvider : BaseRevisionStatusTrackerCont
 }
 
 private abstract class BaseRevisionStatusTrackerContentLoader : LineStatusTrackerContentLoader {
+  override fun isTrackedFile(project: Project, file: VirtualFile): Boolean {
+    if (!VcsFileStatusProvider.getInstance(project).isSupported(file)) return false
+
+    val status = FileStatusManager.getInstance(project).getStatus(file)
+    if (status == FileStatus.ADDED ||
+        status == FileStatus.DELETED ||
+        status == FileStatus.UNKNOWN ||
+        status == FileStatus.IGNORED) {
+      return false
+    }
+    return true
+  }
+
   override fun getContentInfo(project: Project, file: VirtualFile): ContentInfo? {
     val baseContent = VcsFileStatusProvider.getInstance(project).getBaseRevision(file) ?: return null
     return BaseRevisionContentInfo(baseContent, file.charset)

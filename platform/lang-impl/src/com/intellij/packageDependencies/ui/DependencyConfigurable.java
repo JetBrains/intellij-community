@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.packageDependencies.DependencyRule;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
@@ -171,7 +172,7 @@ public class DependencyConfigurable implements Configurable {
     };
 
   public abstract class MyColumnInfo extends ColumnInfo<DependencyRule, NamedScope> {
-    protected MyColumnInfo(String name) {
+    protected MyColumnInfo(@NlsContexts.ColumnName String name) {
       super(name);
     }
 
@@ -209,7 +210,7 @@ public class DependencyConfigurable implements Configurable {
 
 
   private class RightColumn extends MyColumnInfo {
-    RightColumn(final String name) {
+    RightColumn(final @NlsContexts.ColumnName String name) {
       super(name);
     }
 
@@ -225,7 +226,7 @@ public class DependencyConfigurable implements Configurable {
   }
 
   private class LeftColumn extends MyColumnInfo {
-    LeftColumn(final String name) {
+    LeftColumn(final @NlsContexts.ColumnName String name) {
       super(name);
     }
 

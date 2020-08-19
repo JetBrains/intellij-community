@@ -62,6 +62,8 @@ import java.util.concurrent.*;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Predicate;
 
+import static com.intellij.codeInspection.targets.TargetsKt.runAnalysisByTargets;
+
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public final class InspectionApplication implements CommandLineInspectionProgressReporter {
   static final Logger LOG = Logger.getInstance(InspectionApplication.class);
@@ -74,7 +76,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
   String myProfileName;
   String myProfilePath;
   public boolean myRunWithEditorSettings;
-  boolean myRunGlobalToolsOnly;
+  public boolean myRunGlobalToolsOnly;
   boolean myAnalyzeChanges;
   boolean myPathProfiling;
   private int myVerboseLevel;
@@ -82,8 +84,9 @@ public final class InspectionApplication implements CommandLineInspectionProgres
   private final MultiMap<Pair<String, Integer>, String> originalWarnings = MultiMap.createConcurrent();
   private final AsyncPromise<Void> isMappingLoaded = new AsyncPromise<>();
   public String myOutputFormat;
-  private InspectionProfileImpl myInspectionProfile;
+  public InspectionProfileImpl myInspectionProfile;
 
+  public String myTargets;
   public boolean myErrorCodeRequired = true;
   public String myScopePattern;
   Map<Path, Long> myCompleteProfile;
@@ -267,7 +270,11 @@ public final class InspectionApplication implements CommandLineInspectionProgres
         scope = new AnalysisScope(Objects.requireNonNull(psiDirectory));
       }
       LOG.info("Used scope: " + scope.toString());
-      runAnalysisOnScope(projectPath, parentDisposable, project, myInspectionProfile, scope);
+      if (myTargets != null) {
+        runAnalysisByTargets(this, projectPath, project, myInspectionProfile, scope);
+      } else {
+        runAnalysisOnScope(projectPath, parentDisposable, project, myInspectionProfile, scope);
+      }
     }
   }
 
@@ -306,7 +313,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
     }
   }
 
-  private @NotNull GlobalInspectionContextEx createGlobalInspectionContext(Project project) {
+  public @NotNull GlobalInspectionContextEx createGlobalInspectionContext(Project project) {
     final InspectionManagerBase im = (InspectionManagerBase)InspectionManager.getInstance(project);
     GlobalInspectionContextEx context = (GlobalInspectionContextEx)im.createNewGlobalContext();
     context.setExternalProfile(myInspectionProfile);
@@ -317,7 +324,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
     return context;
   }
 
-  private void runAnalysisOnScope(Path projectPath,
+  public void runAnalysisOnScope(Path projectPath,
                                   @NotNull Disposable parentDisposable,
                                   Project project,
                                   InspectionProfileImpl inspectionProfile, AnalysisScope scope)
@@ -348,7 +355,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
     runAnalysis(project, projectPath, inspectionProfile, scope, reportConverter, resultsDataPath);
   }
 
-  private void configureProject(@NotNull Path projectPath, @NotNull Project project, @NotNull AnalysisScope scope) {
+  public void configureProject(@NotNull Path projectPath, @NotNull Project project, @NotNull AnalysisScope scope) {
     for (CommandLineInspectionProjectConfigurator configurator : CommandLineInspectionProjectConfigurator.EP_NAME.getIterable()) {
       CommandLineInspectionProjectConfigurator.ConfiguratorContext context = configuratorContext(projectPath, scope);
       if (configurator.isApplicable(context)) {
@@ -531,7 +538,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
   private boolean secondAnalysisFilter(ChangeListManager changeListManager, String text, VirtualFile file, int line) {
     List<Range> ranges = getOrComputeUnchangedRanges(file, changeListManager);
     Optional<Range> first = StreamEx.of(ranges).findFirst(it -> it.start1 <= line && line < it.end1);
-    if (!first.isPresent()) {
+    if (first.isEmpty()) {
       logNotFiltered(text, file, line, -1);
       return true;
     }
@@ -591,7 +598,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
     }, createProcessIndicator());
   }
 
-  private @NotNull ProgressIndicatorBase createProcessIndicator() {
+  public @NotNull ProgressIndicatorBase createProcessIndicator() {
     return new ProgressIndicatorBase() {
       private String lastPrefix = "";
       private int myLastPercent = -1;
@@ -648,7 +655,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
     VcsPreservingExecutor.executeOperation(project, versionedRoots, message, progressIndicator, afterShelve);
   }
 
-  private void gracefulExit() {
+  public void gracefulExit() {
     if (myErrorCodeRequired) {
       System.exit(1);
     }

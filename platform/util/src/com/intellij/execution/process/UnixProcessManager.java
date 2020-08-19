@@ -10,13 +10,16 @@ import com.intellij.util.Processor;
 import com.intellij.util.ReflectionUtil;
 import com.sun.jna.Library;
 import com.sun.jna.Native;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import sun.misc.Signal;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
+import java.lang.invoke.MethodType;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
@@ -25,6 +28,19 @@ import java.util.*;
  */
 public final class UnixProcessManager {
   private static final Logger LOG = Logger.getInstance(UnixProcessManager.class);
+
+  private static final MethodHandle signalStringToIntConverter;
+  static {
+    try {
+      Class<?> signalClass = Class.forName("sun.misc.Signal");
+      MethodHandle signalConstructor = MethodHandles.publicLookup().findConstructor(signalClass, MethodType.methodType(void.class, String.class));
+      MethodHandle getNumber = MethodHandles.publicLookup().findVirtual(signalClass, "getNumber", MethodType.methodType(int.class));
+      signalStringToIntConverter = MethodHandles.filterReturnValue(signalConstructor, getNumber);
+    }
+    catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
 
   // https://en.wikipedia.org/wiki/Signal_(IPC)#POSIX_signals
   public static final int SIGINT = 2;
@@ -58,14 +74,15 @@ public final class UnixProcessManager {
    * @return -1 for unknown signal
    */
   public static int getSignalNumber(@NotNull String signalName) {
-    final Signal signal;
     try {
-      signal = new Signal(signalName);
+      return (int)signalStringToIntConverter.invokeExact(signalName);
     }
     catch (IllegalArgumentException e) {
       return -1;
     }
-    return signal.getNumber();
+    catch (Throwable t) {
+      throw new RuntimeException(t);
+    }
   }
 
   public static int sendSignal(int pid, @NotNull String signalName) {
@@ -195,7 +212,7 @@ public final class UnixProcessManager {
         if (skipFirstLine) {
           stdOutput.readLine(); //ps output header
         }
-        String s;
+        @NonNls String s;
         while ((s = stdOutput.readLine()) != null) {
           processor.process(s);
         }
@@ -227,7 +244,7 @@ public final class UnixProcessManager {
       return new String[]{psCommand, "-e", "--format", commandLineOnly ? "%a" : "%P%p%a"};
     }
     else if (SystemInfo.isMac || SystemInfo.isFreeBSD) {
-      final String command = isShortenCommand ? "comm" : "command";
+      @NonNls String command = isShortenCommand ? "comm" : "command";
       return new String[]{psCommand, "-ax", "-o", commandLineOnly ? command : "ppid,pid," + command};
     }
     else {

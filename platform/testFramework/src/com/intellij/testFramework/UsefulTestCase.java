@@ -1092,7 +1092,11 @@ public abstract class UsefulTestCase extends TestCase {
 
       if (shouldOccur) {
         wasThrown = true;
-        assertInstanceOf(cause, exceptionCase.getExpectedExceptionClass());
+        Class<T> expected = exceptionCase.getExpectedExceptionClass();
+        if (!expected.isInstance(cause)) {
+          throw new AssertionError("Expected instance of: " + expected + " actual: " + cause.getClass(), cause);
+        }
+
         if (expectedErrorMsgPart != null) {
           assertTrue(cause.getMessage(), cause.getMessage().contains(expectedErrorMsgPart));
         }

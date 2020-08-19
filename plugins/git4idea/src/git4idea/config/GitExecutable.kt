@@ -20,7 +20,7 @@ sealed class GitExecutable {
     private const val CYGDRIVE_PREFIX = "/cygdrive/"
   }
 
-  abstract val id: String
+  abstract val id: @NonNls String
   abstract val exePath: String
   abstract val isLocal: Boolean
 

@@ -33,56 +33,64 @@ internal object PreviewColorThemeStyles {
         "rgba($red, $blue, $green, ${alpha / 255.0})"
       }
       val contrastedForeground = defaultForeground.contrast(0.1)
-      val contrastedBackground = panelBackground.contrast(0.1)
       val linkColor = getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR).foregroundColor
       // language=CSS
       return """
-        body {
-          background-color: ${defaultBackground.webRgba()};
-          color: ${defaultForeground.webRgba()};
-        }
-        a {
-          color: ${linkColor.webRgba()};
-        }
-        hr {
-          background-color: ${panelBackground.webRgba()};
-        }
-        h6 {
-          color: ${contrastedForeground.webRgba()};
-        }
-        pre {
-          background-color: ${panelBackground.webRgba()};
-        }
-        pre > code {
-          color: ${defaultForeground.webRgba()};
-        }
-        table tr {
-          color: ${defaultForeground.webRgba()};
-        }
-        table th, table td, table tr {
-          background-color: ${defaultBackground.webRgba()};
-          border-color: ${defaultBackground.contrast(0.85).webRgba()};
-        }
-        table tr:nth-child(even) td {
-          background-color: ${defaultBackground.contrast(0.93).webRgba()};
-        }
-        blockquote {
-          border-left-color: ${contrastedBackground.webRgba()};
-        }
-        blockquote > p {
-          color: ${contrastedForeground.webRgba()};
-        }
-        :checked + .radio-label {
-          border-color: ${panelBackground.webRgba()};
-        }
-        ::-webkit-scrollbar-thumb {
-          background-color: $scrollbarColor;
-        }
+              body {
+                  background-color: ${defaultBackground.webRgba()};
+                  color: ${defaultForeground.webRgba()};
+              }
+              
+              p, ul, ol, dl {
+                  color: ${defaultForeground.webRgba()};
+              }
+              
+              a {
+                  color: ${linkColor.webRgba()};
+              }
+              
+              hr {
+                  background-color: ${panelBackground.webRgba()};
+              }
+              
+              h6 {
+                  color: ${contrastedForeground.webRgba()};
+              }
+              
+              pre, code, blockquote {
+                  background-color: ${panelBackground.webRgba(alpha = 0.6)};
+                  color: ${defaultForeground.webRgba()};
+              }
+              
+              table {
+                  color: ${defaultForeground.webRgba()};
+              }
+
+              table tr {
+                  border-top: ${panelBackground.webRgba()};  
+                  color: ${defaultForeground.webRgba()};
+              }
+              table th, table td, table tr {
+                  background-color: ${defaultBackground.webRgba()};
+                  border-color: ${defaultBackground.contrast(0.85).webRgba()};
+              }
+              
+              table tr:nth-child(even) td {
+                  background-color: ${defaultBackground.contrast(0.93).webRgba()};
+              }
+              
+              :checked {
+                  border-color: ${panelBackground.webRgba()};
+              }
+              
+              ::-webkit-scrollbar-thumb {
+                  background-color: $scrollbarColor;
+              }
       """.trimIndent()
     }
   }
 
-  private fun Color.webRgba() = "rgba($red, $green, $blue, $alpha)"
+  private fun Color.webRgba(alpha: Double = this.alpha.toDouble()) = "rgba($red, $green, $blue, $alpha)"
 
   /**
    * Simple linear contrast function.

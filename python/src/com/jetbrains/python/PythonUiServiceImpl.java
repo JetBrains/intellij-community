@@ -9,10 +9,12 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.ElementsChooser;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -68,6 +70,17 @@ public final class PythonUiServiceImpl extends PythonUiService {
   @Override
   public void showBalloonError(Project project, @PopupContent String message) {
     PyUiUtil.showBalloon(project, message, MessageType.ERROR);
+  }
+
+  @Override
+  public FileEditor getSelectedEditor(@NotNull Project project, VirtualFile virtualFile) {
+    return FileEditorManager.getInstance(project).getSelectedEditor(virtualFile);
+  }
+
+  @Override
+  public Editor openTextEditor(@NotNull Project project, PsiElement anchor) {
+    PsiFile file = InjectedLanguageManager.getInstance(project).getTopLevelFile(anchor);
+    return openTextEditor(project, file.getVirtualFile());
   }
 
   @Override

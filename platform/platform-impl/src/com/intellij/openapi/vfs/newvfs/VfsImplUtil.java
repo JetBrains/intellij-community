@@ -16,6 +16,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -155,18 +156,18 @@ public final class VfsImplUtil {
 
   /**
    * Guru method for force synchronous file refresh.
-   *
+   * <p>
    * Refreshing files via {@link #refresh(NewVirtualFileSystem, boolean)} doesn't work well if the file was changed
    * twice in short time and content length wasn't changed (for example file modification timestamp for HFS+ works per seconds).
-   *
+   * <p>
    * If you're sure that a file is changed twice in a second and you have to get the latest file's state - use this method.
-   *
+   * <p>
    * Likely you need this method if you have following code:
    *
    * <code>
-   *  FileDocumentManager.getInstance().saveDocument(document);
-   *  runExternalToolToChangeFile(virtualFile.getPath()) // changes file externally in milliseconds, probably without changing file's length
-   *  VfsUtil.markDirtyAndRefresh(true, true, true, virtualFile); // might be replaced with {@link #forceSyncRefresh(VirtualFile)}
+   * FileDocumentManager.getInstance().saveDocument(document);
+   * runExternalToolToChangeFile(virtualFile.getPath()) // changes file externally in milliseconds, probably without changing file's length
+   * VfsUtil.markDirtyAndRefresh(true, true, true, virtualFile); // might be replaced with {@link #forceSyncRefresh(VirtualFile)}
    * </code>
    */
   public static void forceSyncRefresh(@NotNull VirtualFile file) {
@@ -175,7 +176,8 @@ public final class VfsImplUtil {
 
   private static final AtomicBoolean ourSubscribed = new AtomicBoolean(false);
   private static final Object ourLock = new Object();
-  private static final Map<String, Pair<ArchiveFileSystem, ArchiveHandler>> ourHandlerCache = CollectionFactory.createFilePathMap(); // guarded by ourLock
+  private static final Map<String, Pair<ArchiveFileSystem, ArchiveHandler>> ourHandlerCache = CollectionFactory.createFilePathMap();
+    // guarded by ourLock
   private static final Map<String, Set<String>> ourDominatorsMap = CollectionFactory.createFilePathMap();
 
   @NotNull
@@ -293,7 +295,16 @@ public final class VfsImplUtil {
                                                                 @NotNull VirtualFile file) {
     FileAttributes attributes = fs.getAttributes(file);
     if (attributes != null && !attributes.hasCaseSensitivityInformation()) {
-      LOG.warn("File system " + fs + " returned file attributes without case sensitivity info: " + attributes + " for path '" + file.getPath() + "'");
+      LOG.warn("File system " + fs + " returned file attributes without case sensitivity info: " +
+               attributes + " for path '" + file.getPath() + "'");
+    }
+    return getAttributesWithCaseSensitivity(fs, attributes);
+  }
+
+  @Contract("_, null -> null")
+  public static FileAttributes getAttributesWithCaseSensitivity(@NotNull NewVirtualFileSystem fs,
+                                                                @Nullable FileAttributes attributes) {
+    if (attributes != null && !attributes.hasCaseSensitivityInformation()) {
       return attributes.withCaseSensitivity(fs.isCaseSensitive());
     }
     return attributes;
@@ -334,7 +345,8 @@ public final class VfsImplUtil {
    * For example, "delete/change/move '/tmp/x.jar'" event should generate "delete jar:///tmp/x.jar!/" events.
    */
   @NotNull
-  public static List<VFileDeleteEvent> getJarInvalidationEvents(@NotNull VFileEvent event, @NotNull List<? super Runnable> outApplyActions) {
+  public static List<VFileDeleteEvent> getJarInvalidationEvents(@NotNull VFileEvent event,
+                                                                @NotNull List<? super Runnable> outApplyActions) {
     if (!(event instanceof VFileDeleteEvent ||
           event instanceof VFileMoveEvent ||
           event instanceof VFilePropertyChangeEvent && VirtualFile.PROP_NAME.equals(((VFilePropertyChangeEvent)event).getPropertyName()))) {

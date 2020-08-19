@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.EditorKind;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -35,6 +36,7 @@ public final class DocRenderManager {
    * @see #setDocRenderingEnabled(Editor, Boolean)
    */
   public static boolean isDocRenderingEnabled(@NotNull Editor editor) {
+    if (editor.getEditorKind() == EditorKind.DIFF) return false;
     Boolean value = editor.getUserData(DOC_RENDER_ENABLED);
     return value == null ? EditorSettingsExternalizable.getInstance().isDocCommentRenderingEnabled() : value;
   }

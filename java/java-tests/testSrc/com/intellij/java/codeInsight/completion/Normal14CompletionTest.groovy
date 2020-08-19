@@ -30,4 +30,8 @@ class Normal14CompletionTest extends NormalCompletionTestCase {
   void testRecordAccessorDeclaration() {
     doTest()
   }
+
+  void testTopLevelPublicRecord() { doTest() }
+  void testTopLevelPublicRecordParenthesisExists() { doTest() }
+  void testTopLevelPublicRecordBraceExists() { doTest() }
 }

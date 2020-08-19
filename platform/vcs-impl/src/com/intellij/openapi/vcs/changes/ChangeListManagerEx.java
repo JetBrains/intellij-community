@@ -16,10 +16,7 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.CalledInBackground;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.Collection;
 
@@ -32,9 +29,9 @@ public abstract class ChangeListManagerEx extends ChangeListManager {
   public abstract Collection<LocalChangeList> getAffectedLists(@NotNull Collection<? extends Change> changes);
 
   @NotNull
-  public abstract LocalChangeList addChangeList(@NotNull String name, @Nullable String comment, @Nullable ChangeListData data);
+  public abstract LocalChangeList addChangeList(@NotNull @NonNls String name, @Nullable @NonNls String comment, @Nullable ChangeListData data);
 
-  public abstract boolean editChangeListData(@NotNull String name, @Nullable ChangeListData newData);
+  public abstract boolean editChangeListData(@NotNull @NonNls String name, @Nullable ChangeListData newData);
 
   /**
    * @param automatic true is changelist switch operation was not triggered by user (and, for example, will be reverted soon)
@@ -55,7 +52,7 @@ public abstract class ChangeListManagerEx extends ChangeListManager {
    * Temporarily disable CLM update
    * For example, to preserve FilePath->ChangeList mapping during "stash-do_smth-unstash" routine.
    */
-  public abstract void freeze(@NotNull String reason);
+  public abstract void freeze(@NotNull @Nls String reason);
   public abstract void unfreeze();
 
   /**

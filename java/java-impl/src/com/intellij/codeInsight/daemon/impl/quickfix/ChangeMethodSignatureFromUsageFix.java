@@ -6,6 +6,7 @@ import com.intellij.codeInsight.JavaTargetElementEvaluator;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.find.FindManager;
 import com.intellij.find.findUsages.FindUsagesHandler;
@@ -53,7 +54,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
   private final boolean myChangeAllUsages;
   private final int myMinUsagesNumberToShowDialog;
   ParameterInfoImpl[] myNewParametersInfo;
-  private String myShortName;
+  private @IntentionName String myShortName;
   private static final Logger LOG = Logger.getInstance(ChangeMethodSignatureFromUsageFix.class);
 
   public ChangeMethodSignatureFromUsageFix(@NotNull PsiMethod targetMethod,
@@ -82,10 +83,10 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
                                   formatTypesList(myNewParametersInfo, myContext));
   }
 
-  private String getShortText(final StringBuilder buf,
-                              final HashSet<? extends ParameterInfoImpl> newParams,
-                              final HashSet<? extends ParameterInfoImpl> removedParams,
-                              final HashSet<? extends ParameterInfoImpl> changedParams) {
+  private @IntentionName String getShortText(final StringBuilder buf,
+                                             final HashSet<? extends ParameterInfoImpl> newParams,
+                                             final HashSet<? extends ParameterInfoImpl> removedParams,
+                                             final HashSet<? extends ParameterInfoImpl> changedParams) {
     final String targetMethodName = myTargetMethod.getName();
     PsiClass aClass = myTargetMethod.getContainingClass();
     if (aClass != null && aClass.findMethodsByName(targetMethodName, true).length == 1) {

@@ -74,13 +74,12 @@ public class SerialAnnotationUsedOnWrongMemberInspection extends BaseInspection 
       boolean isWellAnnotatedElement;
       if (SerializationUtils.isExternalizable(psiClass)) {
         isWellAnnotatedElement = psiField == null ? MissingSerialAnnotationInspection.isSerialMethodInExternalizable(psiMethod)
-                                                  : MissingSerialAnnotationInspection.isConstant(psiField) &&
-                                                    MissingSerialAnnotationInspection.isSerialFieldInExternalizable(psiField);
+                                                  : SerializationUtils.isSerialVersionUid(psiField);
       }
       else {
         isWellAnnotatedElement = psiField == null ? MissingSerialAnnotationInspection.isSerialMethodInSerializable(psiMethod)
-                                                  : MissingSerialAnnotationInspection.isConstant(psiField) &&
-                                                    MissingSerialAnnotationInspection.isSerialFieldInSerializable(psiField);
+                                                  : SerializationUtils.isSerialVersionUid(psiField) ||
+                                                    SerializationUtils.isSerialPersistentFields(psiField);
       }
       if (!isWellAnnotatedElement) {
         registerError(annotation, annotation);

@@ -2,6 +2,7 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndexImpl;
@@ -72,28 +73,34 @@ class StubCumulativeInputDiffBuilder extends DirectInputDataDiffBuilder<Integer,
   }
 
   private void updateStubIndices(@Nullable SerializedStubTree newTree) {
-    Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> oldForwardIndex =
-      myCurrentTree == null ? Collections.emptyMap() : myCurrentTree.getStubIndicesValueMap();
+    try {
+      Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> oldForwardIndex =
+        myCurrentTree == null ? Collections.emptyMap() : myCurrentTree.getStubIndicesValueMap();
 
-    Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> newForwardIndex =
-      newTree == null ? Collections.emptyMap() : newTree.getStubIndicesValueMap();
+      Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> newForwardIndex =
+        newTree == null ? Collections.emptyMap() : newTree.getStubIndicesValueMap();
 
-    Collection<StubIndexKey<?, ?>> affectedIndexes =
-      ContainerUtil.union(oldForwardIndex.keySet(), newForwardIndex.keySet());
+      Collection<StubIndexKey<?, ?>> affectedIndexes =
+        ContainerUtil.union(oldForwardIndex.keySet(), newForwardIndex.keySet());
 
-    if (FileBasedIndexImpl.DO_TRACE_STUB_INDEX_UPDATE) {
-      StubIndexImpl.LOG.info("stub indexes" + (newTree == null ? "deletion" : "update") + ": file = " + myInputId + " indexes " + affectedIndexes);
-    }
+      if (FileBasedIndexImpl.DO_TRACE_STUB_INDEX_UPDATE) {
+        StubIndexImpl.LOG
+          .info("stub indexes" + (newTree == null ? "deletion" : "update") + ": file = " + myInputId + " indexes " + affectedIndexes);
+      }
 
-    StubIndexImpl stubIndex = (StubIndexImpl)StubIndex.getInstance();
-    //noinspection rawtypes
-    for (StubIndexKey key : affectedIndexes) {
-      // StubIdList-s are ignored.
-      Set<Object> oldKeys = oldForwardIndex.getOrDefault(key, Collections.emptyMap()).keySet();
-      Set<Object> newKeys = newForwardIndex.getOrDefault(key, Collections.emptyMap()).keySet();
+      StubIndexImpl stubIndex = (StubIndexImpl)StubIndex.getInstance();
+      //noinspection rawtypes
+      for (StubIndexKey key : affectedIndexes) {
+        // StubIdList-s are ignored.
+        Set<Object> oldKeys = oldForwardIndex.getOrDefault(key, Collections.emptyMap()).keySet();
+        Set<Object> newKeys = newForwardIndex.getOrDefault(key, Collections.emptyMap()).keySet();
 
-      //noinspection unchecked
-      stubIndex.updateIndex(key, myInputId, oldKeys, newKeys);
+        //noinspection unchecked
+        stubIndex.updateIndex(key, myInputId, oldKeys, newKeys);
+      }
+    } catch (ProcessCanceledException e) {
+      LOG.error("ProcessCanceledException is not expected here", e);
+      throw e;
     }
   }
 

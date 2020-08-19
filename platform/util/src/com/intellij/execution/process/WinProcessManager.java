@@ -10,6 +10,7 @@ import com.intellij.util.ReflectionUtil;
 import com.sun.jna.Pointer;
 import com.sun.jna.platform.win32.Kernel32;
 import com.sun.jna.platform.win32.WinNT;
+import org.jetbrains.annotations.NonNls;
 
 import java.util.Objects;
 
@@ -59,7 +60,7 @@ public final class WinProcessManager {
       if (process != null) {
         pid = getProcessId(process);
       }
-      String[] cmdArray = {"taskkill", "/f", "/pid", String.valueOf(pid), tree ? "/t" : ""};
+      @NonNls String[] cmdArray = {"taskkill", "/f", "/pid", String.valueOf(pid), tree ? "/t" : ""};
       if (LOG.isDebugEnabled()) {
         LOG.debug(StringUtil.join(cmdArray, " "));
       }

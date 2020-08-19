@@ -19,6 +19,7 @@ import com.intellij.application.options.colors.ColorAndFontSettingsListener;
 import com.intellij.application.options.colors.PreviewPanel;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diff.DiffBundle;
+import com.intellij.openapi.diff.LineStatusMarkerDrawUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.TextAnnotationGutterProvider;
@@ -31,7 +32,6 @@ import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.markup.ActiveGutterRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.ex.LineStatusMarkerRenderer;
 import com.intellij.openapi.vcs.ex.Range;
 import com.intellij.openapi.vcs.ex.Range.InnerRange;
 import com.intellij.util.EventDispatcher;
@@ -131,16 +131,16 @@ class VcsPreviewPanel implements PreviewPanel {
   }
 
   private void addHighlighter(@NotNull Range range, boolean isIgnored, @NotNull ColorKey colorKey) {
-    RangeHighlighter highlighter = LineStatusMarkerRenderer.createTooltipRangeHighlighter(range, myEditor.getMarkupModel());
+    RangeHighlighter highlighter = LineStatusMarkerDrawUtil.createTooltipRangeHighlighter(range, myEditor.getMarkupModel());
     highlighter.setLineMarkerRenderer(new ActiveGutterRenderer() {
       @Override
       public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r) {
-        LineStatusMarkerRenderer.paintRange(g, myEditor, range, 0, isIgnored);
+        LineStatusMarkerDrawUtil.paintRange(g, myEditor, range, 0, isIgnored);
       }
 
       @Override
       public boolean canDoAction(@NotNull MouseEvent e) {
-        return LineStatusMarkerRenderer.isInsideMarkerArea(e);
+        return LineStatusMarkerDrawUtil.isInsideMarkerArea(e);
       }
 
       @Override

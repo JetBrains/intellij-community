@@ -17,6 +17,7 @@ package com.intellij.openapi.projectRoots;
 
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.RootProvider;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.ApiStatus;
@@ -34,10 +35,10 @@ public interface Sdk extends UserDataHolder {
   SdkTypeId getSdkType();
 
   @NotNull
-  String getName();
+  @NlsSafe String getName();
 
   @Nullable
-  String getVersionString();
+  @NlsSafe String getVersionString();
 
   @Nullable
   String getHomePath();

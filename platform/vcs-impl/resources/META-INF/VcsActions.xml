@@ -208,9 +208,8 @@
       <separator/>
       <reference ref="ChangesView.GroupBy"/>
       <reference ref="ShelvedChanges.ShowHideDeleted"/>
-      <separator/>
-      <action id="ShelfChanges.Settings" class="com.intellij.openapi.vcs.changes.shelf.OpenShelfSettings"
-              icon="AllIcons.General.Settings"/>
+      <reference ref="ExpandAll"/>
+      <reference ref="CollapseAll"/>
     </group>
 
     <!--a group for plugins to add their actions-->
@@ -392,7 +391,6 @@
       <separator/>
       <reference ref="ShelvedChanges.ShowHideDeleted"/>
       <reference ref="ShelvedChanges.CleanMarkedToDelete"/>
-      <reference ref="ShelfChanges.Settings"/>
       <separator/>
 
       <add-to-group group-id="Vcs.KeymapGroup" anchor="first"/>

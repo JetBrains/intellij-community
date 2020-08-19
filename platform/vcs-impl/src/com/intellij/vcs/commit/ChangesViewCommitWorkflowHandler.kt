@@ -73,6 +73,7 @@ internal class ChangesViewCommitWorkflowHandler(
     ui.addInclusionListener(this, this)
     ui.inclusionModel = inclusionModel
     Disposer.register(inclusionModel, Disposable { ui.inclusionModel = null })
+    ui.setCompletionContext(changeListManager.changeLists)
 
     ProjectManager.TOPIC.subscribe(this, this)
     CheckinHandlerFactory.EP_NAME.addChangeListener(Runnable { commitHandlersChanged() }, this)

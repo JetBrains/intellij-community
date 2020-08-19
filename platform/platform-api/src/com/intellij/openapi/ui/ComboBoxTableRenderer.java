@@ -4,6 +4,7 @@ package com.intellij.openapi.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
@@ -83,7 +84,7 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
                          Math.max(d.height, AllIcons.General.ArrowDown.getIconHeight()));
   }
 
-  protected String getTextFor(@NotNull T value) {
+  protected @NlsContexts.Label String getTextFor(@NotNull T value) {
     return value.toString();
   }
 

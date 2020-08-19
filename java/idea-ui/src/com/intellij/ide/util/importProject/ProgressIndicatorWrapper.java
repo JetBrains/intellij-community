@@ -17,6 +17,7 @@ package com.intellij.ide.util.importProject;
 
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -34,13 +35,13 @@ public class ProgressIndicatorWrapper {
     return myIndicator != null && myIndicator.isCanceled();
   }
 
-  public void setText(final String text) {
+  public void setText(final @NlsContexts.ProgressText String text) {
     if (myIndicator != null) {
       myIndicator.setText(text);
     }
   }
 
-  public void setText2(final String text) {
+  public void setText2(final @NlsContexts.ProgressDetails String text) {
     if (myIndicator != null) {
       myIndicator.setText2(text);
     }

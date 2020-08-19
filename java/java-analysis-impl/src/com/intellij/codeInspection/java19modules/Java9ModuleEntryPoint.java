@@ -44,7 +44,7 @@ public class Java9ModuleEntryPoint extends EntryPointWithVisibilityLevel {
 
   @Override
   public String getTitle() {
-    return "Suggest package-private visibility level for classes in exported packages (Java 9+)";
+    return JavaAnalysisBundle.message("suggest.package.private.visibility.level.for.classes.in.exported.packages.java.9");
   }
 
   @Override

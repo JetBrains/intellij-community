@@ -34,7 +34,10 @@ import com.intellij.util.io.ReplicatorInputStream;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -177,12 +180,29 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       for (ChildInfo currentChild : currentChildren) {
         toAddNames.remove(currentChild.getName().toString());
       }
-      List<ChildInfo> toAddChildren = new ArrayList<>(toAddNames.size());
-      for (String newName : toAddNames) {
-        Pair<@NotNull FileAttributes, String> childData = getChildData(fs, file, newName, null, null);
-        if (childData != null) {
-          ChildInfo newChild = justCreated.computeIfAbsent(newName, name->makeChildRecord(file, id, name, childData, fs, null));
+      
+      var toAddChildren = new ArrayList<ChildInfo>(toAddNames.size());
+      var map = fs instanceof BatchingFileSystem ?
+                                        ((BatchingFileSystem)fs).listWithAttributes(file, toAddNames) :
+                                        null;
+      if (map != null) {
+        for (var entry : map.entrySet()) {
+          var attributes = VfsImplUtil.getAttributesWithCaseSensitivity(fs, entry.getValue());
+          var newName = entry.getKey();
+          // copy paste from getChildData
+          var symlinkTarget = attributes.isSymLink() ? fs.resolveSymLink(new FakeVirtualFile(file, newName)) : null;
+          var childData = pair(attributes, symlinkTarget);
+          ChildInfo newChild = justCreated.computeIfAbsent(newName, name -> makeChildRecord(file, id, name, childData, fs, null));
           toAddChildren.add(newChild);
+        }
+      }
+      else {
+        for (String newName : toAddNames) {
+          var childData = getChildData(fs, file, newName, null, null);
+          if (childData != null) {
+            ChildInfo newChild = justCreated.computeIfAbsent(newName, name -> makeChildRecord(file, id, name, childData, fs, null));
+            toAddChildren.add(newChild);
+          }
         }
       }
 

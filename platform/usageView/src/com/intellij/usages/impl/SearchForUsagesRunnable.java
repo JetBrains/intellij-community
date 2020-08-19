@@ -102,7 +102,7 @@ final class SearchForUsagesRunnable implements Runnable {
     HtmlBuilder builder = new HtmlBuilder()
       .appendLink(FIND_OPTIONS_HREF_TARGET, "Find Options...");
     if (shortcut != null) {
-      builder.nbsp(1).append("(" + KeymapUtil.getShortcutText(shortcut) + ")");
+      builder.nbsp().append("(" + KeymapUtil.getShortcutText(shortcut) + ")");
     }
     return builder.toString();
   }

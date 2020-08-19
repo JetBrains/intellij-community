@@ -12,16 +12,16 @@
  */
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
-import com.intellij.openapi.util.NlsContexts.Label;
+import org.jetbrains.annotations.Nls;
 
 public abstract class ConfigurationErrorQuickFix {
-  private final String myActionName;
+  private final @Nls(capitalization = Nls.Capitalization.Title) String myActionName;
 
-  protected ConfigurationErrorQuickFix(@Label String actionName) {
+  protected ConfigurationErrorQuickFix(@Nls(capitalization = Nls.Capitalization.Title) String actionName) {
     myActionName = actionName;
   }
 
-  public String getActionName() {
+  public @Nls(capitalization = Nls.Capitalization.Title) String getActionName() {
     return myActionName;
   }
 

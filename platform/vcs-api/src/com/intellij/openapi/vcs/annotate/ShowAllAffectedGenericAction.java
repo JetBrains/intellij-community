@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class ShowAllAffectedGenericAction extends AnAction implements DumbAware {
 
-  private static final String ACTION_ID = "VcsHistory.ShowAllAffected";
+  private static final @NonNls String ACTION_ID = "VcsHistory.ShowAllAffected";
 
  // use getInstance()
   private ShowAllAffectedGenericAction() {

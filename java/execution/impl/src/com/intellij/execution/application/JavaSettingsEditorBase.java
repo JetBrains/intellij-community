@@ -8,7 +8,6 @@ import com.intellij.execution.JavaRunConfigurationBase;
 import com.intellij.execution.JavaRunConfigurationExtensionManager;
 import com.intellij.execution.ui.*;
 import com.intellij.ide.macro.MacrosDialog;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Computable;
 import com.intellij.ui.RawCommandLineEditor;
@@ -22,11 +21,8 @@ import static com.intellij.execution.ui.CommandLinePanel.setMinimumWidth;
 import static com.intellij.openapi.util.text.StringUtil.isNotEmpty;
 
 public abstract class JavaSettingsEditorBase<T extends JavaRunConfigurationBase> extends RunConfigurationFragmentedEditor<T> {
-  protected final Project myProject;
-
   public JavaSettingsEditorBase(T runConfiguration) {
     super(runConfiguration, JavaRunConfigurationExtensionManager.getInstance());
-    myProject = runConfiguration.getProject();
   }
 
   @Override
@@ -42,7 +38,7 @@ public abstract class JavaSettingsEditorBase<T extends JavaRunConfigurationBase>
 
     fragments.add(CommonTags.parallelRun());
 
-    CommonParameterFragments<T> commonParameterFragments = new CommonParameterFragments<>(myProject, hasModule);
+    CommonParameterFragments<T> commonParameterFragments = new CommonParameterFragments<>(getProject(), hasModule);
     fragments.addAll(commonParameterFragments.getFragments());
     fragments.add(CommonJavaFragments.createBuildBeforeRun(beforeRunComponent));
 
@@ -77,24 +73,22 @@ public abstract class JavaSettingsEditorBase<T extends JavaRunConfigurationBase>
   protected SettingsEditorFragment<T, LabeledComponent<ShortenCommandLineModeCombo>> createShortenClasspath(ModuleClasspathCombo classpathCombo,
                                                                                                             SettingsEditorFragment<T, JrePathEditor> jrePath,
                                                                                                             boolean productionOnly) {
-    ShortenCommandLineModeCombo combo =
-      new ShortenCommandLineModeCombo(myProject, jrePath.component(), () -> classpathCombo.getSelectedModule(),
-                                      listener -> classpathCombo.addActionListener(listener)) {
-        @Override
-        protected boolean productionOnly() {
-          return productionOnly;
-        }
-      };
+    ShortenCommandLineModeCombo combo = new ShortenCommandLineModeCombo(getProject(), jrePath.component(),
+                                                                        () -> classpathCombo.getSelectedModule(),
+                                                                        listener -> classpathCombo.addActionListener(listener)) {
+      @Override
+      protected boolean productionOnly() {
+        return productionOnly;
+      }
+    };
     LabeledComponent<ShortenCommandLineModeCombo> component = LabeledComponent.create(combo,
                                                                                       ExecutionBundle.message("application.configuration.shorten.command.line.label"),
                                                                                       BorderLayout.WEST);
     return new SettingsEditorFragment<>("shorten.command.line",
                                         ExecutionBundle.message("application.configuration.shorten.command.line"),
                                         ExecutionBundle.message("group.java.options"), component,
-                                        (configuration, c) -> c
-                                          .getComponent().setItem(configuration.getShortenCommandLine()),
-                                        (configuration, c) -> configuration.setShortenCommandLine(
-                                            c.isVisible() ? c.getComponent().getSelectedItem(): null),
+                                        (t, c) -> c.getComponent().setItem(t.getShortenCommandLine()),
+                                        (t, c) -> t.setShortenCommandLine(c.isVisible() ? c.getComponent().getSelectedItem(): null),
                                         configuration -> configuration.getShortenCommandLine() != null);
   }
 

@@ -3,7 +3,10 @@ package com.intellij.openapi.util.text;
 
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.containers.UnmodifiableHashMap;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
@@ -13,6 +16,19 @@ import java.util.*;
  * @see HtmlBuilder
  */
 public abstract class HtmlChunk {
+  private static class Empty extends HtmlChunk {
+    private static final Empty INSTANCE = new Empty();
+    
+    @Override
+    public boolean isEmpty() {
+      return true;
+    }
+    
+    @Override
+    public void appendTo(@NotNull StringBuilder builder) {
+    }
+  }
+  
   private static class Text extends HtmlChunk {
     private final String myContent;
 
@@ -22,7 +38,7 @@ public abstract class HtmlChunk {
 
     @Override
     public void appendTo(@NotNull StringBuilder builder) {
-      builder.append(StringUtil.escapeXmlEntities(myContent));
+      builder.append(StringUtil.escapeXmlEntities(myContent).replaceAll("\n", "<br/>"));
     }
   }
   
@@ -39,7 +55,23 @@ public abstract class HtmlChunk {
     }
   }
   
+  static class Fragment extends HtmlChunk {
+    private final List<HtmlChunk> myContent;
+
+    Fragment(List<HtmlChunk> content) {
+      myContent = content;
+    }
+
+    @Override
+    public void appendTo(@NotNull StringBuilder builder) {
+      for (HtmlChunk chunk : myContent) {
+        chunk.appendTo(builder);
+      }
+    }
+  }
+  
   private static class Nbsp extends HtmlChunk {
+    private static final HtmlChunk ONE = new Nbsp(1);
     private final int myCount;
 
     private Nbsp(int count) {
@@ -56,6 +88,7 @@ public abstract class HtmlChunk {
     private static final Element BODY = tag("body");
     private static final Element HTML = tag("html");
     private static final Element BR = tag("br");
+    private static final Element HR = tag("hr");
     private static final Element DIV = tag("div");
     private static final Element SPAN = tag("span");
 
@@ -157,6 +190,23 @@ public abstract class HtmlChunk {
   }
 
   /**
+   * @param element element to wrap with
+   * @return an element that wraps this element
+   */
+  @Contract(pure = true)
+  public @NotNull Element wrapWith(@NotNull Element element) {
+    return element.child(this);
+  }
+
+  /**
+   * @return a CODE element that wraps this element
+   */
+  @Contract(pure = true)
+  public @NotNull Element code() {
+    return wrapWith("code");
+  }
+
+  /**
    * @return a B element that wraps this element
    */
   @Contract(pure = true)
@@ -170,6 +220,14 @@ public abstract class HtmlChunk {
   @Contract(pure = true)
   public @NotNull Element italic() {
     return wrapWith("i");
+  }
+
+  /**
+   * @return an S element that wraps this element
+   */
+  @Contract(pure = true)
+  public @NotNull Element strikethrough() {
+    return wrapWith("s");
   }
 
   /**
@@ -222,6 +280,14 @@ public abstract class HtmlChunk {
   }
 
   /**
+   * @return a &lt;hr&gt; element.
+   */
+  @Contract(pure = true)
+  public static @NotNull Element hr() {
+    return Element.HR;
+  }
+
+  /**
    * @return a &lt;body&gt; element.
    */
   @Contract(pure = true)
@@ -235,6 +301,16 @@ public abstract class HtmlChunk {
   @Contract(pure = true)
   public static @NotNull Element html() {
     return Element.HTML;
+  }
+
+  /**
+   * Creates a HTML text node that represents a non-breaking space ({@code &nbsp;}).
+   * 
+   * @return HtmlChunk that represents a sequence of non-breaking spaces
+   */
+  @Contract(pure = true)
+  public static @NotNull HtmlChunk nbsp() {
+    return Nbsp.ONE;
   }
 
   /**
@@ -254,12 +330,21 @@ public abstract class HtmlChunk {
   /**
    * Creates a HTML text node
    * 
-   * @param text text to display (no escaping should be done by caller).
+   * @param text text to display (no escaping should be done by caller). 
+   *             All {@code '\n'} characters will be converted to {@code <br/>}
    * @return HtmlChunk that represents a HTML text node.
    */
   @Contract(pure = true)
   public static @NotNull HtmlChunk text(@NotNull @Nls String text) {
-    return new Text(text);
+    return text.isEmpty() ? empty() : new Text(text);
+  }
+
+  /**
+   * @return an empty HtmlChunk
+   */
+  @Contract(pure = true)
+  public static @NotNull HtmlChunk empty() {
+    return Empty.INSTANCE;
   }
 
   /**
@@ -272,7 +357,7 @@ public abstract class HtmlChunk {
    */
   @Contract(pure = true)
   public static @NotNull HtmlChunk raw(@NotNull @Nls String rawHtml) {
-    return new Raw(rawHtml);
+    return rawHtml.isEmpty() ? empty() : new Raw(rawHtml);
   }
 
   /**
@@ -288,11 +373,20 @@ public abstract class HtmlChunk {
   }
 
   /**
+   * @return true if this chunk is empty (doesn't produce any text) 
+   */
+  @Contract(pure = true)
+  public boolean isEmpty() {
+    return false;
+  }
+  
+
+  /**
    * Appends the rendered HTML representation of this chunk to the supplied builder
    * 
    * @param builder builder to append to.
    */
-  abstract public void appendTo(@NotNull StringBuilder builder);
+  public abstract void appendTo(@NotNull StringBuilder builder);
 
   /**
    * @return the rendered HTML representation of this chunk.

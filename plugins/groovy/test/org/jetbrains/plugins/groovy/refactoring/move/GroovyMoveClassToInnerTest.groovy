@@ -116,7 +116,7 @@ class GroovyMoveClassToInnerTest extends GroovyMoveTestBase {
   }
 
   void testMoveIntoPrivateInnerClass() throws Exception {
-    doTestConflicts("pack1.Class1", "pack1.A.PrivateInner", "Class <b><code>Class1</code></b> will no longer be accessible from class <b><code>pack1.Class2</code></b>")
+    doTestConflicts("pack1.Class1", "pack1.A.PrivateInner", "Class <b><code>pack1.Class1</code></b> will no longer be accessible from class <b><code>pack1.Class2</code></b>")
   }
 
   void _testMoveWithPackageLocalMember() throws Exception {

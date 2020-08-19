@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.grape;
 
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -61,6 +47,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
@@ -86,13 +73,13 @@ public class GrabDependencies implements IntentionAction {
   @Override
   @NotNull
   public String getText() {
-    return "Grab the artifacts";
+    return GroovyBundle.message("grab.intention.name");
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return "Grab";
+    return GroovyBundle.message("grab.family.name");
   }
 
   @Override
@@ -168,8 +155,10 @@ public class GrabDependencies implements IntentionAction {
     assert vfile != null;
 
     if (JavaPsiFacade.getInstance(project).findClass("org.apache.ivy.core.report.ResolveReport", file.getResolveScope()) == null) {
-      Messages.showErrorDialog("Sorry, but IDEA cannot @Grab the dependencies without Ivy. Please add Ivy to your module dependencies and re-run the action.",
-                               "Ivy Missing");
+      Messages.showErrorDialog(
+        GroovyBundle.message("grab.error.ivy.missing.message"),
+        GroovyBundle.message("grab.error.ivy.missing.title")
+      );
       return;
     }
 
@@ -190,13 +179,14 @@ public class GrabDependencies implements IntentionAction {
         lines.put(grabText, javaParameters.toCommandLine());
       }
       catch (CantRunException e) {
-        String title = "Can't run @Grab: " + ExceptionUtil.getMessage(e);
+        String title = GroovyBundle.message("grab.error.0.title", ExceptionUtil.getMessage(e));
+        //noinspection HardCodedStringLiteral
         NOTIFICATION_GROUP.createNotification(title, ExceptionUtil.getThrowableText(e), NotificationType.ERROR, null).notify(project);
         return;
       }
     }
 
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, "Processing @Grab Annotations") {
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, GroovyBundle.message("grab.progress.title")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         int jarCount = 0;
@@ -217,9 +207,8 @@ public class GrabDependencies implements IntentionAction {
           }
         }
 
-        final String finalMessages = messages;
-        final String title = jarCount + " Grape dependency jar" + (jarCount == 1 ? "" : "s") + " added";
-        NOTIFICATION_GROUP.createNotification(title, finalMessages, NotificationType.INFORMATION, null).notify(project);
+        final String title = GroovyBundle.message("grab.result.title", jarCount);
+        NOTIFICATION_GROUP.createNotification(title, messages, NotificationType.INFORMATION, null).notify(project);
       }
     });
   }

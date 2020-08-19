@@ -11,10 +11,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.UrlClassLoader;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.awt.*;
 import java.io.File;
@@ -236,7 +233,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
     "kotlin.properties.ReadWriteProperty",
     "kotlin.properties.ReadOnlyProperty");
 
-  private static boolean mustBeLoadedByPlatform(String className) {
+  private static boolean mustBeLoadedByPlatform(@NonNls String className) {
     if (className.startsWith("java.")) {
       return true;
     }

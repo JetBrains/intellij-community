@@ -5,6 +5,7 @@ import com.google.gson.Gson
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.lang.Language
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 
 class ClientExperimentStatus : ExperimentStatus {
@@ -61,7 +62,9 @@ class ClientExperimentStatus : ExperimentStatus {
   }
 
   override fun forLanguage(language: Language): ExperimentInfo {
-    val matchingLanguage = findMatchingLanguage(language) ?: return ExperimentInfo(false, experimentConfig.version)
+    if (ApplicationManager.getApplication().isUnitTestMode) return ExperimentInfo(false, 0)
+    val matchingLanguage = findMatchingLanguage(language) ?: return ExperimentInfo(
+      false, experimentConfig.version)
     return language2group[matchingLanguage] ?: ExperimentInfo(false, experimentConfig.version)
   }
 

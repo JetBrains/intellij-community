@@ -41,25 +41,20 @@ public final class FxmlConstants {
   @NonNls public static final String NULL_EXPRESSION = "${null}";
   @NonNls private static final String NULL_VALUE = "$null";
 
-  public static final Set<String> FX_BUILT_IN_ATTRIBUTES =
-    ContainerUtil.immutableSet(FX_ID, FX_CONTROLLER, VALUE, FX_VALUE, FX_FACTORY, FX_CONSTANT);
+  public static final Set<String> FX_BUILT_IN_ATTRIBUTES = Set.of(FX_ID, FX_CONTROLLER, VALUE, FX_VALUE, FX_FACTORY, FX_CONSTANT);
 
-  public static final Set<String> FX_BUILT_IN_TAGS = ContainerUtil.immutableSet(FX_INCLUDE, FX_REFERENCE, FX_COPY, FX_DEFINE, FX_SCRIPT);
+  public static final Set<String> FX_BUILT_IN_TAGS = Set.of(FX_INCLUDE, FX_REFERENCE, FX_COPY, FX_DEFINE, FX_SCRIPT);
 
   public static final Map<String, List<String>> FX_BUILT_IN_TAG_SUPPORTED_ATTRIBUTES =
-    ContainerUtil.<String, List<String>>immutableMapBuilder()
-      .put(FX_INCLUDE, ContainerUtil.immutableList(SOURCE, FX_ID, RESOURCES, CHARSET))
-      .put(FX_REFERENCE, Collections.singletonList(SOURCE))
-      .put(FX_COPY, Collections.singletonList(SOURCE))
-      .put(FX_SCRIPT, Collections.singletonList(SOURCE))
-      .build();
+    Map.of(FX_INCLUDE, List.of(SOURCE, FX_ID, RESOURCES, CHARSET),
+           FX_REFERENCE, List.of(SOURCE),
+           FX_COPY, List.of(SOURCE),
+           FX_SCRIPT, List.of(SOURCE));
 
   public static final Map<String, List<String>> FX_BUILT_IN_TAG_REQUIRED_ATTRIBUTES =
-    ContainerUtil.<String, List<String>>immutableMapBuilder()
-      .put(FX_INCLUDE, Collections.singletonList(SOURCE))
-      .put(FX_REFERENCE, Collections.singletonList(SOURCE))
-      .put(FX_COPY, Collections.singletonList(SOURCE))
-      .build();
+    Map.of(FX_INCLUDE, List.of(SOURCE),
+           FX_REFERENCE, List.of(SOURCE),
+           FX_COPY, List.of(SOURCE));
 
   public static boolean isNullValue(@NotNull String value) {
     return NULL_VALUE.equals(StringUtil.trimTrailing(value));

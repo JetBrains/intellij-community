@@ -23,7 +23,9 @@ import com.intellij.diff.merge.TextMergeRequest;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.ThreeSide;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,15 +38,15 @@ public class TextMergeRequestImpl extends TextMergeRequest {
 
   @NotNull private final CharSequence myOriginalContent;
 
-  @Nullable private final String myTitle;
+  @Nullable private final @NlsContexts.DialogTitle String myTitle;
   @NotNull private final List<String> myTitles;
 
   public TextMergeRequestImpl(@Nullable Project project,
                               @NotNull DocumentContent output,
                               @NotNull CharSequence originalContent,
                               @NotNull List<DocumentContent> contents,
-                              @Nullable String title,
-                              @NotNull List<String> contentTitles) {
+                              @Nullable @NlsContexts.DialogTitle String title,
+                              @NotNull List<@Nls String> contentTitles) {
     assert contents.size() == 3;
     assert contentTitles.size() == 3;
     myProject = project;

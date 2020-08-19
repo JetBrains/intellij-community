@@ -15,6 +15,7 @@
  */
 package com.intellij.framework.library;
 
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,7 +27,7 @@ import java.net.URL;
  */
 @Deprecated
 public abstract class DownloadableLibraryTypeBase extends DownloadableLibraryType {
-  protected DownloadableLibraryTypeBase(@NotNull String libraryCategoryName,
+  protected DownloadableLibraryTypeBase(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String libraryCategoryName,
                                         @NotNull String libraryTypeId,
                                         @NotNull String groupId,
                                         @Nullable Icon icon,

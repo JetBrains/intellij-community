@@ -3,7 +3,7 @@ package org.intellij.plugins.markdown.extensions.jcef
 
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.jcef.JBCefPsiNavigationUtils
-import org.intellij.plugins.markdown.ui.preview.MarkdownAccessor
+import org.intellij.plugins.markdown.ui.preview.accessor.MarkdownAccessor
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
 
 internal class ProcessLinksExtension : MarkdownJCEFPreviewExtension, ResourceProvider {
@@ -14,7 +14,7 @@ internal class ProcessLinksExtension : MarkdownJCEFPreviewExtension, ResourcePro
     if (JBCefPsiNavigationUtils.navigateTo(link)) {
       return
     }
-    MarkdownAccessor.getSafeOpenerAccessor().openLink(link);
+    MarkdownAccessor.getSafeOpenerAccessor().openLink(link)
   }
 
   override val events: Map<String, (String) -> Unit> = mapOf("openLink" to this::openLink)

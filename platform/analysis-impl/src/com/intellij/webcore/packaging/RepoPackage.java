@@ -1,5 +1,6 @@
 package com.intellij.webcore.packaging;
 
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -31,7 +32,7 @@ public class RepoPackage implements Comparable {
   }
 
   @Nullable
-  public String getRepoUrl() {
+  public @NlsSafe String getRepoUrl() {
     return myRepoUrl;
   }
 

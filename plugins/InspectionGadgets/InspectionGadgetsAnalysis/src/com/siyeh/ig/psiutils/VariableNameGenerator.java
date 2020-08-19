@@ -23,7 +23,7 @@ public final class VariableNameGenerator {
   private final @NotNull JavaCodeStyleManager myManager;
   private final @NotNull PsiElement myContext;
   private final @NotNull VariableKind myKind;
-  private final Set<String> candidates = new LinkedHashSet<>();
+  private final @NonNls Set<String> candidates = new LinkedHashSet<>();
 
   /**
    * Constructs a new generator
@@ -102,7 +102,8 @@ public final class VariableNameGenerator {
   @NotNull
   public String generate(boolean lookForward) {
     String suffixed = null;
-    for (String candidate : candidates.isEmpty() ? Collections.singleton("v") : candidates) {
+    @NonNls final Set<String> candidates = this.candidates.isEmpty() ? Collections.singleton("v") : this.candidates;
+    for (String candidate : candidates) {
       String name = myManager.suggestUniqueVariableName(candidate, myContext, lookForward);
       if (name.equals(candidate)) return name;
       if (suffixed == null) {

@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.io.BaseDataReader;
 import git4idea.config.GitExecutable;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,7 +70,7 @@ public class GitLineHandler extends GitTextHandler {
     super(project, directory, executable, command, configParameters);
   }
 
-  public void setUrl(@NotNull String url) {
+  public void setUrl(@NotNull @NonNls String url) {
     setUrls(Collections.singletonList(url));
   }
 
@@ -167,7 +168,7 @@ public class GitLineHandler extends GitTextHandler {
     };
   }
 
-  public void overwriteConfig(String ... params) {
+  public void overwriteConfig(@NonNls String ... params) {
     for (String param : params) {
       myCommandLine.getParametersList().prependAll("-c", param);
     }

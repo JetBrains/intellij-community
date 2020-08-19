@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.openapi.util.NlsContext;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -10,7 +11,7 @@ import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
-import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.TypeUtils;
 import gnu.trove.THashSet;
 import kotlin.Pair;
 import org.jetbrains.annotations.Nls;
@@ -30,9 +31,9 @@ import java.util.stream.IntStream;
  * which may provide additional information.
  */
 public abstract class NlsInfo {
-  private static final @NotNull Set<String> ANNOTATION_NAMES = ContainerUtil.immutableSet(AnnotationUtil.NLS, AnnotationUtil.NON_NLS);
   private static final @NotNull String NLS_CONTEXT = "com.intellij.openapi.util.NlsContext";
   static final String NLS_SAFE = "com.intellij.openapi.util.NlsSafe";
+  private static final @NotNull Set<String> ANNOTATION_NAMES = Set.of(AnnotationUtil.NLS, AnnotationUtil.NON_NLS, NLS_SAFE);
 
   /**
    * Describes a string that should be localized
@@ -188,6 +189,7 @@ public abstract class NlsInfo {
    * @return localization status
    */
   public static @NotNull NlsInfo forExpression(@NotNull UExpression expression) {
+    expression = goUp(expression);
     NlsInfo info = fromMethodReturn(expression);
     if (info != Unspecified.UNKNOWN) return info;
     info = fromInitializer(expression);
@@ -228,49 +230,79 @@ public abstract class NlsInfo {
   }
 
   private static NlsInfo fromInitializer(UExpression expression) {
-    UElement parent;
+    UElement parent = expression.getUastParent();
     PsiElement var = null;
-    while (true) {
-      parent = expression.getUastParent();
-      if (!(parent instanceof UParenthesizedExpression || parent instanceof UIfExpression ||
-            (parent instanceof UPolyadicExpression && ((UPolyadicExpression)parent).getOperator() == UastBinaryOperator.PLUS))) {
-        break;
-      }
-      expression = (UExpression)parent;
+    
+    if (parent instanceof UVariable) {
+      var = parent.getJavaPsi();
     }
-    if (parent instanceof UBinaryExpression) {
+    else if (parent instanceof UBinaryExpression) {
       UBinaryExpression binOp = (UBinaryExpression)parent;
       UastBinaryOperator operator = binOp.getOperator();
+      UExpression rightOperand = binOp.getRightOperand();
       if ((operator == UastBinaryOperator.ASSIGN || operator == UastBinaryOperator.PLUS_ASSIGN) &&
-          expression.equals(binOp.getRightOperand())) {
-        UReferenceExpression lValue = ObjectUtils.tryCast(UastUtils.skipParenthesizedExprDown(binOp.getLeftOperand()),
-                                                          UReferenceExpression.class);
+          expressionsAreEquivalent(expression, rightOperand)) {
+        UExpression leftOperand = UastUtils.skipParenthesizedExprDown(binOp.getLeftOperand());
+        UReferenceExpression lValue = ObjectUtils.tryCast(leftOperand, UReferenceExpression.class);
         if (lValue != null) {
           var = lValue.resolve();
         }
+        else {
+          while (leftOperand instanceof UArrayAccessExpression) {
+            leftOperand = ((UArrayAccessExpression)leftOperand).getReceiver();
+          }
+          if (leftOperand instanceof UResolvable) {
+            var = ((UResolvable)leftOperand).resolve();
+          }
+        }
       }
     }
-    else if (parent instanceof UVariable) {
-      var = parent.getJavaPsi();
+    else if (parent instanceof USwitchClauseExpression) {
+      if (((USwitchClauseExpression)parent).getCaseValues().contains(expression)) {
+        USwitchExpression switchExpression = UastUtils.getParentOfType(parent, USwitchExpression.class);
+        if (switchExpression != null) {
+          UExpression selector = switchExpression.getExpression();
+          if (selector instanceof UResolvable) {
+            var = ((UResolvable)selector).resolve();
+          }
+        }
+      }
     }
+
     if (var instanceof PsiVariable) {
       NlsInfo info = fromAnnotationOwner(((PsiVariable)var).getModifierList());
       if (info != Unspecified.UNKNOWN) return info;
-      return fromType(((PsiVariable)var).getType());
+      info = fromType(((PsiVariable)var).getType());
+      if (info != Unspecified.UNKNOWN) return info;
+      if (var instanceof PsiField) {
+        info = fromContainer((PsiField)var);
+        if (info != Unspecified.UNKNOWN) return info;
+      }
+      return parent instanceof UCallExpression ? Unspecified.UNKNOWN 
+                                               : new Unspecified((PsiVariable)var);
+    }
+    if (var instanceof PsiMethod) {
+      return forModifierListOwner((PsiMethod)var);
     }
     return Unspecified.UNKNOWN;
   }
 
-  private static @NotNull NlsInfo fromArgument(@NotNull UExpression expression) {
-    UElement parent = UastUtils.skipParenthesizedExprUp(expression.getUastParent());
-    while (true) {
-      if (parent instanceof UPolyadicExpression && ((UPolyadicExpression)parent).getOperator() == UastBinaryOperator.PLUS ||
-          parent instanceof UParenthesizedExpression || parent instanceof UIfExpression) {
-        parent = parent.getUastParent();
-      } else {
-        break;
+  static boolean expressionsAreEquivalent(UExpression expr1, UExpression expr2) {
+    return normalize(expr1).equals(normalize(expr2));
+  }
+
+  private static @NotNull UExpression normalize(@NotNull UExpression expression) {
+    if (expression instanceof UPolyadicExpression && ((UPolyadicExpression)expression).getOperator() == UastBinaryOperator.PLUS) {
+      List<UExpression> operands = ((UPolyadicExpression)expression).getOperands();
+      if (operands.size() == 1) {
+        return operands.get(0);
       }
     }
+    return expression;
+  }
+
+  private static @NotNull NlsInfo fromArgument(@NotNull UExpression expression) {
+    UElement parent = expression.getUastParent();
     UCallExpression callExpression = UastUtils.getUCallExpression(parent, 1);
     if (callExpression == null) return Unspecified.UNKNOWN;
 
@@ -279,7 +311,7 @@ public abstract class NlsInfo {
       .filter(i -> UastUtils.isUastChildOf(expression, UastLiteralUtils.wrapULiteral(arguments.get(i)), false))
       .findFirst();
 
-    if (!idx.isPresent()) return Unspecified.UNKNOWN;
+    if (idx.isEmpty()) return Unspecified.UNKNOWN;
 
     PsiMethod method = callExpression.resolve();
     if (method == null) return Unspecified.UNKNOWN;
@@ -317,6 +349,79 @@ public abstract class NlsInfo {
     return result.get();
   }
 
+  static @NotNull UExpression goUp(@NotNull UExpression expression) {
+    UExpression parent = expression;
+    while (true) {
+      UExpression next = ObjectUtils.tryCast(parent.getUastParent(), UExpression.class);
+      if (next == null ||
+          next instanceof UReturnExpression ||
+          next instanceof USwitchClauseExpression ||
+          next instanceof UNamedExpression) {
+        return parent;
+      }
+      if (next instanceof ULambdaExpression) {
+        next = ObjectUtils.tryCast(next.getUastParent(), UExpression.class);
+        if (!(next instanceof UCallExpression)) {
+          return parent;
+        }
+        PsiMethod method = ((UCallExpression)next).resolve();
+        if (method == null || !isKotlinPassthroughMethod(method)) {
+          return parent;
+        }
+      }
+      if (next instanceof UQualifiedReferenceExpression && !TypeUtils.isJavaLangString(next.getExpressionType())) {
+        return parent;
+      }
+      if (next instanceof UPolyadicExpression && ((UPolyadicExpression)next).getOperator() != UastBinaryOperator.PLUS) return parent;
+      if (next instanceof UCallExpression) {
+        if (!UastExpressionUtils.isArrayInitializer(next) && !UastExpressionUtils.isNewArrayWithInitializer(next)) {
+          PsiMethod method = ((UCallExpression)next).resolve();
+          if (!(TypeUtils.isJavaLangString(next.getExpressionType()) && isStringProcessingMethod(method))) {
+            return parent;
+          }
+        }
+      }
+      if (next instanceof UIfExpression && expressionsAreEquivalent(parent, ((UIfExpression)next).getCondition())) return parent;
+      parent = next;
+    }
+  }
+
+  /**
+   * Checks if the method is detected to be a string-processing method. A string processing method is a method that:
+   * <ul>
+   *   <li>Pure (either explicitly marked or inferred)</li>
+   *   <li>Accepts parameters</li>
+   *   <li>No parameters are marked using Nls annotations</li>
+   *   <li>Return value is not marked using Nls annotations</li>
+   * </ul>
+   * 
+   * @param method method to check
+   * @return true if method is detected to be a string-processing method. A string processing method is a method that:
+   */
+  static boolean isStringProcessingMethod(PsiMethod method) {
+    if (method == null) return false;
+    if (!(forModifierListOwner(method) instanceof Unspecified)) return false;
+    if (!JavaMethodContractUtil.isPure(method) && !isKotlinPassthroughMethod(method)) return false;
+    PsiParameter[] parameters = method.getParameterList().getParameters();
+    if (parameters.length == 0) return false;
+    for (PsiParameter parameter : parameters) {
+      if (!(forModifierListOwner(parameter) instanceof Unspecified)) return false;
+    }
+    return true;
+  }
+
+  private static boolean isKotlinPassthroughMethod(PsiMethod method) {
+    if ((method.getName().equals("let") || method.getName().equals("run")) &&
+        method.getModifierList().textMatches("public inline")) {
+      PsiParameter[] parameters = method.getParameterList().getParameters();
+      if (parameters.length == 2 && parameters[0].getName().equals("$this$" + method.getName()) &&
+          parameters[1].getName().equals("block")) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   private static @NotNull NlsInfo fromMethodReturn(@NotNull UExpression expression) {
     PsiMethod method;
     PsiType returnType = null;
@@ -325,17 +430,8 @@ public abstract class NlsInfo {
       method = UastUtils.getAnnotationMethod(nameValuePair);
     }
     else {
-      UElement parent = UastUtils.skipParenthesizedExprUp(expression.getUastParent());
-      while (parent instanceof UCallExpression &&
-             (UastExpressionUtils.isArrayInitializer(parent) || UastExpressionUtils.isNewArrayWithInitializer(parent))) {
-        parent = UastUtils.skipParenthesizedExprUp(parent.getUastParent());
-      }
-      if (parent == null) return Unspecified.UNKNOWN;
-      final UReturnExpression returnStmt =
-        UastUtils.getParentOfType(parent, UReturnExpression.class, false, UCallExpression.class, ULambdaExpression.class);
-      if (returnStmt == null) {
-        return Unspecified.UNKNOWN;
-      }
+      UReturnExpression returnStmt = ObjectUtils.tryCast(expression.getUastParent(), UReturnExpression.class);
+      if (returnStmt == null) return Unspecified.UNKNOWN;
       UElement jumpTarget = returnStmt.getJumpTarget();
       if (jumpTarget instanceof UMethod) {
         method = ((UMethod)jumpTarget).getJavaPsi();
@@ -382,6 +478,10 @@ public abstract class NlsInfo {
         NlsInfo superInfo = fromMethodReturn(superMethod, null, processed);
         if (superInfo != Unspecified.UNKNOWN) return superInfo;
       }
+    }
+    NlsInfo fromContainer = fromContainer(method);
+    if (fromContainer != Unspecified.UNKNOWN) {
+      return fromContainer;
     }
     return new Unspecified(method);
   }
@@ -497,6 +597,10 @@ public abstract class NlsInfo {
       if (lastParam == null || !lastParam.isVarArgs()) return Unspecified.UNKNOWN;
       param = lastParam;
     }
+    else if (params[0].getName().equals("$this$" + method.getName())) {
+      if (idx + 1 == params.length) return Unspecified.UNKNOWN;
+      param = params[idx + 1];
+    }
     else {
       param = params[idx];
     }
@@ -519,9 +623,9 @@ public abstract class NlsInfo {
     return fromContainer(method);
   }
 
-  private static @NotNull NlsInfo fromContainer(@NotNull PsiMethod method) {
+  private static @NotNull NlsInfo fromContainer(@NotNull PsiMember member) {
     // From class
-    PsiClass containingClass = method.getContainingClass();
+    PsiClass containingClass = member.getContainingClass();
     while (containingClass != null) {
       NlsInfo classInfo = fromAnnotationOwner(containingClass.getModifierList());
       if (classInfo != Unspecified.UNKNOWN) {
@@ -531,10 +635,10 @@ public abstract class NlsInfo {
     }
 
     // From package
-    PsiFile containingFile = method.getContainingFile();
+    PsiFile containingFile = member.getContainingFile();
     if (containingFile instanceof PsiClassOwner) {
       String packageName = ((PsiClassOwner)containingFile).getPackageName();
-      PsiPackage aPackage = JavaPsiFacade.getInstance(method.getProject()).findPackage(packageName);
+      PsiPackage aPackage = JavaPsiFacade.getInstance(member.getProject()).findPackage(packageName);
       if (aPackage != null) {
         NlsInfo info = fromAnnotationOwner(aPackage.getAnnotationList());
         if (info != Unspecified.UNKNOWN) {

@@ -37,7 +37,7 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
             logger.itemSelectedByTyping(lookup, performance, timestamp)
         }
         else {
-            logger.completionCancelled(performance, timestamp)
+            logger.completionCancelled(event.isCanceledExplicitly, performance, timestamp)
         }
     }
 
@@ -63,7 +63,7 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
             logger.itemSelectedByTyping(lookup, performance, timestamp)
         }
         else {
-            logger.itemSelectedCompletionFinished(lookup, performance, timestamp)
+            logger.itemSelectedCompletionFinished(lookup, event.completionChar, performance, timestamp)
         }
     }
 

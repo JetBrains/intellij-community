@@ -33,7 +33,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.ErrorHandler;
-import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
 public final class XmlInstanceValidator {
@@ -82,30 +81,30 @@ public final class XmlInstanceValidator {
     }
 
     @Override
-    public void warning(SAXParseException exception) throws SAXException {
+    public void warning(SAXParseException exception) {
       RngSchemaValidator.handleError(exception, myFile, myDocument, new RngSchemaValidator.ValidationMessageConsumer() {
         @Override
-        public void onMessage(PsiElement context, String message) {
+        public void onMessage(@NotNull PsiElement context, @NotNull String message) {
           myHost.addMessage(context, message, Validator.ValidationHost.ErrorType.WARNING);
         }
       });
     }
 
     @Override
-    public void error(SAXParseException exception) throws SAXException {
+    public void error(SAXParseException exception) {
       RngSchemaValidator.handleError(exception, myFile, myDocument, new RngSchemaValidator.ValidationMessageConsumer() {
         @Override
-        public void onMessage(PsiElement context, String message) {
+        public void onMessage(@NotNull PsiElement context, @NotNull String message) {
           myHost.addMessage(context, message, Validator.ValidationHost.ErrorType.ERROR);
         }
       });
     }
 
     @Override
-    public void fatalError(SAXParseException exception) throws SAXException {
+    public void fatalError(SAXParseException exception) {
       RngSchemaValidator.handleError(exception, myFile, myDocument, new RngSchemaValidator.ValidationMessageConsumer() {
         @Override
-        public void onMessage(PsiElement context, String message) {
+        public void onMessage(@NotNull PsiElement context, @NotNull String message) {
           myHost.addMessage(context, message, Validator.ValidationHost.ErrorType.ERROR);
         }
       });

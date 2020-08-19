@@ -5,13 +5,14 @@ import com.intellij.facet.ui.FacetEditorContext;
 import com.intellij.facet.ui.FacetEditorTab;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public class InvalidFacetEditor extends FacetEditorTab {
-  private final String myErrorMessage;
+  private final @NlsContexts.DialogMessage String myErrorMessage;
   private JPanel myMainPanel;
   private MultiLineLabel myDescriptionLabel;
   private JCheckBox myIgnoreCheckBox;
@@ -19,7 +20,7 @@ public class InvalidFacetEditor extends FacetEditorTab {
   private final InvalidFacetManager myInvalidFacetManager;
   private final InvalidFacet myFacet;
 
-  public InvalidFacetEditor(FacetEditorContext context, String errorMessage) {
+  public InvalidFacetEditor(FacetEditorContext context, @NlsContexts.DialogMessage String errorMessage) {
     myErrorMessage = errorMessage;
     myFacet = (InvalidFacet)context.getFacet();
     myInvalidFacetManager = InvalidFacetManager.getInstance(context.getProject());

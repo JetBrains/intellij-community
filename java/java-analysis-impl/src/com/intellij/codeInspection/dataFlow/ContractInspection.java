@@ -8,6 +8,7 @@ import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.TextRange;
@@ -145,9 +146,9 @@ public class ContractInspection extends AbstractBaseJavaLocalInspectionTool {
   }
 
   @Nullable
-  private static String getConstraintProblem(PsiMethod method,
-                                             StandardMethodContract contract,
-                                             ValueConstraint constraint, PsiParameter parameter) {
+  private static @InspectionMessage String getConstraintProblem(PsiMethod method,
+                                                                StandardMethodContract contract,
+                                                                ValueConstraint constraint, PsiParameter parameter) {
     PsiType type = parameter.getType();
     switch (constraint) {
       case NULL_VALUE: {

@@ -392,9 +392,9 @@ public class XPathEvalAction extends XPathAction {
         }
 
         SwingUtilities.invokeLater(() -> {
-            final StatusBar statusBar = WindowManager.getInstance().getStatusBar(editor.getProject());
-            final String s = StringUtil.pluralize("match", list.size());
-            statusBar.setInfo(list.size() + " XPath " + s + " found (press Escape to remove the highlighting)");
+          final StatusBar statusBar = WindowManager.getInstance().getStatusBar(editor.getProject());
+          statusBar.setInfo(XPathBundle.message("status.bar.text.xpath.choice.match.matches.found.press.escape.to.remove.highlighting",
+                                                list.size(), list.size() == 1 ? 0 : 1));
         });
     }
 

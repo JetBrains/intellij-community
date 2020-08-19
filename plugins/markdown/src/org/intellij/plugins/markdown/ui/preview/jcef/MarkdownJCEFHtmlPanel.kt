@@ -8,7 +8,7 @@ import org.cef.browser.CefBrowser
 import org.cef.handler.CefLoadHandlerAdapter
 import org.intellij.markdown.html.HtmlGenerator
 import org.intellij.plugins.markdown.extensions.jcef.MarkdownJCEFPreviewExtension
-import org.intellij.plugins.markdown.ui.preview.MarkdownAccessor
+import org.intellij.plugins.markdown.ui.preview.accessor.MarkdownAccessor
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
 import org.intellij.plugins.markdown.ui.preview.PreviewStaticServer
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
@@ -66,8 +66,7 @@ class MarkdownJCEFHtmlPanel : JCEFHtmlPanel(getClassUrl()), MarkdownHtmlPanel {
   }
 
   override fun prepareHtml(html: String): String {
-    return MarkdownAccessor.getImageRefreshFixAccessor().setStamps(
-      html.replace(
+    return html.replace(
         "<head>",
         // language=HTML
         """
@@ -77,7 +76,6 @@ class MarkdownJCEFHtmlPanel : JCEFHtmlPanel(getClassUrl()), MarkdownHtmlPanel {
           $scriptingLines
         """.trimIndent()
       )
-    )
   }
 
   override fun dispose() {

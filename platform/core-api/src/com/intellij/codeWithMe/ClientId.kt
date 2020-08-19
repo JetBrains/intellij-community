@@ -7,7 +7,6 @@ import com.intellij.util.Processor
 import java.util.concurrent.Callable
 import java.util.function.BiConsumer
 import java.util.function.Function
-import kotlin.jvm.JvmStatic
 
 /**
  * ClientId is a global context class that is used to distinguish the originator of an action in multi-client systems
@@ -51,7 +50,6 @@ data class ClientId(val value: String) {
          */
         @JvmStatic
         var localId = defaultLocalId
-            get
             private set
 
         /**
@@ -76,7 +74,7 @@ data class ClientId(val value: String) {
          */
         @JvmStatic
         val currentOrNull: ClientId?
-            get() = ClientIdValueStoreService.tryGetInstance()?.value?.let(::ClientId)
+            get() = ClientIdService.tryGetInstance()?.clientIdValue?.let(::ClientId)
 
         /**
          * Overrides the ID that is considered to be local to this process. Can be only invoked once.
@@ -119,12 +117,14 @@ data class ClientId(val value: String) {
          */
         @JvmStatic
         inline fun <T> withClientId(clientId: ClientId?, action: () -> T): T {
-            val clientIdStore = ClientIdValueStoreService.tryGetInstance() ?: return action()
+            val clientIdService = ClientIdService.tryGetInstance() ?: return action()
 
-            val foreignMainThreadActivity = ApplicationManager.getApplication().isDispatchThread && !clientId.isLocal
-            val old = clientIdStore.value
+            val foreignMainThreadActivity = clientIdService.checkLongActivity &&
+                                            ApplicationManager.getApplication().isDispatchThread &&
+                                            !clientId.isLocal
+            val old = clientIdService.clientIdValue
             try {
-                clientIdStore.value = clientId?.value
+                clientIdService.clientIdValue = clientId?.value
                 if (foreignMainThreadActivity) {
                     val beforeActionTime = System.currentTimeMillis()
                     val result = action()
@@ -136,12 +136,12 @@ data class ClientId(val value: String) {
                 } else
                     return action()
             } finally {
-                clientIdStore.value = old
+                clientIdService.clientIdValue = old
             }
         }
 
         @JvmStatic
-        fun decorateRunnable(runnable: java.lang.Runnable) : java.lang.Runnable {
+        fun decorateRunnable(runnable: Runnable) : Runnable {
             if (!propagateAcrossThreads) return runnable
             val currentId = currentOrNull
             return Runnable { withClientId(currentId, runnable) }

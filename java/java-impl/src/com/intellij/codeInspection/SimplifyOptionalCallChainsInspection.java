@@ -293,7 +293,7 @@ public class SimplifyOptionalCallChainsInspection extends AbstractBaseJavaLocalI
         .mapAll(expression)
         .filter(f -> f.myInspection.isAppropriateLanguageLevel(myLevel))
         .findAny();
-      if (!fix.isPresent()) return;
+      if (fix.isEmpty()) return;
       handleSimplification(expression, fix.get());
     }
 

@@ -111,8 +111,8 @@ internal class SpaceCloneListItemRenderer : ListCellRenderer<SpaceCloneListItem>
     SpaceBundle.message(
       "clone.dialog.projects.list.repository.description",
       FileUtil.formatFileSize(size.size, withWhitespace = true),
-      totalCommits,
       totalBranches,
+      totalCommits,
       repo.description
     )
   }

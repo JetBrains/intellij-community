@@ -111,9 +111,19 @@ public class InlineConstantFieldHandler extends JavaInlineActionHandler {
 
     if (!BaseRefactoringProcessor.processConflicts(project, conflicts)) return;
 
-    PsiReferenceExpression refExpression = reference instanceof PsiReferenceExpression ? (PsiReferenceExpression)reference : null;
-    InlineFieldDialog dialog = new InlineFieldDialog(project, field, refExpression);
-    dialog.show();
+    PsiElement referenceElement = reference != null ? reference.getElement() : null;
+    if (referenceElement != null && 
+        referenceElement.getLanguage() == JavaLanguage.INSTANCE &&
+        !(referenceElement instanceof PsiReferenceExpression)) {
+      referenceElement = null; 
+    }
+    InlineFieldDialog dialog = new InlineFieldDialog(project, field, referenceElement);
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      dialog.doAction();
+    }
+    else {
+      dialog.show();
+    }
   }
 
   private static boolean isAccessedForWriting(PsiElement referenceElement) {
@@ -176,7 +186,7 @@ public class InlineConstantFieldHandler extends JavaInlineActionHandler {
   @Nullable
   @Override
   public String getActionName(PsiElement element) {
-    return getRefactoringName() + "...";
+    return JavaRefactoringBundle.message("inline.field.action.name");
   }
 
   private static @NlsActions.ActionText String getRefactoringName() {

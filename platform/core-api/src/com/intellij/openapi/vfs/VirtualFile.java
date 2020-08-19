@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.core.CoreBundle;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -55,7 +56,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @see VirtualFileListener#propertyChanged
    * @see VirtualFilePropertyEvent#getPropertyName
    */
-  public static final String PROP_NAME = "name";
+  public static final @NonNls String PROP_NAME = "name";
 
   /**
    * Used as a property name in the {@link VirtualFilePropertyEvent} fired when the encoding of a {@link VirtualFile} changes.
@@ -63,7 +64,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @see VirtualFileListener#propertyChanged
    * @see VirtualFilePropertyEvent#getPropertyName
    */
-  public static final String PROP_ENCODING = "encoding";
+  public static final @NonNls String PROP_ENCODING = "encoding";
 
   /**
    * Used as a property name in the {@link VirtualFilePropertyEvent} fired when write permission of a {@link VirtualFile} changes.
@@ -71,7 +72,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @see VirtualFileListener#propertyChanged
    * @see VirtualFilePropertyEvent#getPropertyName
    */
-  public static final String PROP_WRITABLE = "writable";
+  public static final @NonNls String PROP_WRITABLE = "writable";
 
   /**
    * Used as a property name in the {@link VirtualFilePropertyEvent} fired when a visibility of a {@link VirtualFile} changes.
@@ -79,7 +80,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @see VirtualFileListener#propertyChanged
    * @see VirtualFilePropertyEvent#getPropertyName
    */
-  public static final String PROP_HIDDEN = "HIDDEN";
+  public static final @NonNls String PROP_HIDDEN = "HIDDEN";
 
   /**
    * Used as a property name in the {@link VirtualFilePropertyEvent} fired when a symlink target of a {@link VirtualFile} changes.
@@ -87,7 +88,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @see VirtualFileListener#propertyChanged
    * @see VirtualFilePropertyEvent#getPropertyName
    */
-  public static final String PROP_SYMLINK_TARGET = "symlink";
+  public static final @NonNls String PROP_SYMLINK_TARGET = "symlink";
 
   /**
    * Acceptable values for "propertyName" argument of {@link VFilePropertyChangeEvent#VFilePropertyChangeEvent VFilePropertyChangeEvent()}.
@@ -99,7 +100,12 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   private static final Key<byte[]> BOM_KEY = Key.create("BOM");
   private static final Key<Charset> CHARSET_KEY = Key.create("CHARSET");
 
-  protected VirtualFile() { }
+  protected VirtualFile() {
+    if (this instanceof Disposable) {
+      throw new IllegalStateException("VirtualFile must not implement Disposable because of life-cycle requirements. " +
+                                      "E.g. VirtualFile should exist throughout the application and may not be disposed half-way.");
+    }
+  }
 
   /**
    * Gets the name of this file.
@@ -193,7 +199,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    *
    * @return the name without extension
    */
-  public @NotNull String getNameWithoutExtension() {
+  public @NlsSafe @NotNull String getNameWithoutExtension() {
     return FileUtilRt.getNameWithoutExtension(getNameSequence()).toString();
   }
 
@@ -657,7 +663,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    */
   public abstract void refresh(boolean asynchronous, boolean recursive, @Nullable Runnable postRunnable);
 
-  public String getPresentableName() {
+  public @NlsSafe String getPresentableName() {
     return getName();
   }
 

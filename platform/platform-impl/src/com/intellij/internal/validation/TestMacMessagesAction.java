@@ -60,8 +60,10 @@ public class TestMacMessagesAction extends AnAction {
                 num++;
                 b.addActionListener(new ActionListener() {
                   @Override
-                  public void actionPerformed(ActionEvent e) {
-                    Messages.showYesNoDialog(b, "Blah-blah", "Error", Messages.getQuestionIcon());
+                  public void actionPerformed(ActionEvent e1) {
+                    if (Messages.showYesNoDialog(b, "Show multi buttons alert?", "Title", Messages.getQuestionIcon()) == Messages.YES) {
+                      Messages.showDialog(b, "Message", "Title", new String[]{"AAAA", "BBB", "CCC"}, 0, null);
+                    }
                   }
                 });
                 return b;

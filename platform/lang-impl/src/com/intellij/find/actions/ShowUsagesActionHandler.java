@@ -3,6 +3,7 @@ package com.intellij.find.actions;
 
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.usages.UsageSearchPresentation;
 import com.intellij.usages.UsageSearcher;
@@ -27,7 +28,7 @@ interface ShowUsagesActionHandler {
 
   @NotNull SearchScope getMaximalScope();
 
-  static @Nullable String getSecondInvocationTitle(@NotNull ShowUsagesActionHandler actionHandler) {
+  static @Nullable @NlsContexts.PopupAdvertisement String getSecondInvocationTitle(@NotNull ShowUsagesActionHandler actionHandler) {
     KeyboardShortcut shortcut = ShowUsagesAction.getShowUsagesShortcut();
     if (shortcut == null) {
       return null;

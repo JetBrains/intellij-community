@@ -52,8 +52,7 @@
                         testServiceImplementation="com.intellij.mocks.TestStatisticSender"/>
 
     <applicationService serviceInterface="com.intellij.stats.experiment.ExperimentStatus"
-                        serviceImplementation="com.intellij.stats.experiment.ClientExperimentStatus"
-                        testServiceImplementation="com.intellij.mocks.TestExperimentStatus"/>
+                        serviceImplementation="com.intellij.stats.experiment.ClientExperimentStatus"/>
 
     <applicationService serviceInterface="com.intellij.stats.network.service.RequestService"
                         serviceImplementation="com.intellij.stats.network.service.SimpleRequestService"
@@ -76,9 +75,6 @@
 
     <projectService serviceImplementation="com.intellij.completion.ngram.NGramModelRunnerManager"/>
 
-    <completion.ml.model implementation="com.jetbrains.completion.ranker.FallbackKotlinMLRankingProvider"/>
-    <completion.ml.model implementation="com.jetbrains.completion.ranker.FallbackScalaMLRankingProvider"/>
-<!--    <completion.ml.model implementation="com.jetbrains.completion.ranker.PythonMLRankingProvider"/>-->
     <weigher key="completion" id="ml_weigh" implementationClass="com.intellij.completion.ml.MLCompletionWeigher" order="last"/>
     <completion.contributor language="any" order="first" id="ml_context"
                             implementationClass="com.intellij.stats.completion.ContextFeaturesContributor"/>
@@ -98,7 +94,7 @@
     <registryKey key="completion.stats.enable.session.factors" defaultValue="true"
                  description="Use inside single session factors"/>
 
-    <registryKey key="stats.collector.analytics.platform.send" defaultValue="false"
+    <registryKey key="stats.collector.analytics.platform.send" defaultValue="true"
                  description="Send completion logs to Analytics Platform"/>
 
     <registryKey key="stats.collector.analytics.platform.url" defaultValue="default"

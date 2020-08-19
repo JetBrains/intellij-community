@@ -3,33 +3,57 @@ package com.intellij.openapi.util.text;
 
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * An immutable object which represents a text string with mnemonic character.
  */
 public final class TextWithMnemonic {
-  @NotNull private final String myText;
-  private final int myMnemonicIndex;
+  public static final Pattern MNEMONIC = Pattern.compile(" ?\\(_?[A-Z]\\)");
 
-  private TextWithMnemonic(@NotNull String text, int mnemonicIndex) {
+  @NotNull private final @Nls String myText;
+  /**
+   * Mnemonic index (-1 = no mnemonic)
+   */
+  private final int myMnemonicIndex;
+  /**
+   * A text that should be appended to myText to display a mnemonic
+   */
+  private final String myMnemonicSuffix;
+
+  private TextWithMnemonic(@NotNull @Nls String text, int mnemonicIndex, String mnemonicSuffix) {
     myText = StringUtil.internEmptyString(text);
     myMnemonicIndex = mnemonicIndex;
+    myMnemonicSuffix = mnemonicSuffix;
   }
 
   /**
    * @return plain text without mnemonic
    */
   @NotNull
-  public String getText() {
+  public @Nls String getText() {
     return myText;
+  }
+
+  /**
+   * @param complete if true add the mnemonic suffix (but without mnemonic)
+   * @return plain text without mnemonic
+   */
+  @NotNull
+  public @Nls String getText(boolean complete) {
+    //noinspection HardCodedStringLiteral
+    return complete ? myText + myMnemonicSuffix : myText;
   }
 
   /**
    * @return a mnemonic character (upper-cased) if mnemonic is set; 0 otherwise
    */
   public int getMnemonic() {
-    return hasMnemonic() ? Character.toUpperCase(myText.charAt(myMnemonicIndex)) : 0;
+    return hasMnemonic() ? Character.toUpperCase((myText + myMnemonicSuffix).charAt(myMnemonicIndex)) : 0;
   }
 
   /**
@@ -50,8 +74,15 @@ public final class TextWithMnemonic {
    * Drops a mnemonic
    * @return a TextWithMnemonic object where mnemonic is not set
    */
-  public TextWithMnemonic dropMnemonic() {
-    return hasMnemonic() ? fromPlainText(myText) : this;
+  public TextWithMnemonic dropMnemonic(boolean forceRemove) {
+    if (!hasMnemonic()) return this;
+    if (!forceRemove) return fromPlainText(myText);
+
+    Matcher matcher = MNEMONIC.matcher(myText);
+    if (matcher.find()) {
+      return fromPlainText(matcher.replaceAll(""));
+    }
+    return this;
   }
 
   /**
@@ -60,10 +91,10 @@ public final class TextWithMnemonic {
    * @return a TextWithMnemonic object with mnemonic set at given index
    */
   public TextWithMnemonic setMnemonicAt(int index) {
-    if (index < 0 || index >= myText.length()) {
+    if (index < 0 || index >= myText.length() + myMnemonicSuffix.length()) {
       throw new IndexOutOfBoundsException(String.valueOf(index));
     }
-    return index == myMnemonicIndex ? this : new TextWithMnemonic(myText, index);
+    return index == myMnemonicIndex ? this : new TextWithMnemonic(myText, index, myMnemonicSuffix);
   }
 
   /**
@@ -72,8 +103,8 @@ public final class TextWithMnemonic {
    * @param textToAppend text to append. Appended text is treated as a plain text, without mnemonic, so mnemonic position is unchanged.
    * @return TextWithMnemonic object which text is the concatenation of this object text and supplied text.
    */
-  public TextWithMnemonic append(@NotNull String textToAppend) {
-    return new TextWithMnemonic(myText + textToAppend, myMnemonicIndex);
+  public TextWithMnemonic append(@NotNull @Nls String textToAppend) {
+    return new TextWithMnemonic(myText + textToAppend, myMnemonicIndex, myMnemonicSuffix);
   }
 
   /**
@@ -93,7 +124,7 @@ public final class TextWithMnemonic {
     int resultIndex = myMnemonicIndex < index ? myMnemonicIndex : 
                       myMnemonicIndex >= index + target.length() ? myMnemonicIndex - target.length() + replacement.length() :
                       -1;
-    return new TextWithMnemonic(resultText, resultIndex);
+    return new TextWithMnemonic(resultText, resultIndex, myMnemonicSuffix);
   }
 
   /**
@@ -103,8 +134,30 @@ public final class TextWithMnemonic {
    */
   @NotNull
   @Contract(pure = true)
-  public static TextWithMnemonic fromPlainText(@NotNull String text) {
-    return new TextWithMnemonic(text, -1);
+  public static TextWithMnemonic fromPlainText(@NotNull @Nls String text) {
+    return new TextWithMnemonic(text, -1, "");
+  }
+
+  /**
+   * Creates a TextWithMnemonic object from a plain text without mnemonic.
+   * @param text a plain text to create a TextWithMnemonic object from
+   * @param mnemonicChar mnemonic character (0 = absent mnemonic)
+   * @return new TextWithMnemonic object which has given mnemonic character. 
+   * If the text doesn't contain the supplied character then mnemonicChar is appended in parentheses.
+   */
+  @NotNull
+  @Contract(pure = true)
+  public static TextWithMnemonic fromPlainText(@NotNull @Nls String text, char mnemonicChar) {
+    if (mnemonicChar == 0) {
+      return fromPlainText(text);
+    }
+    mnemonicChar = Character.toUpperCase(mnemonicChar);
+    for (int i = 0; i < text.length(); i++) {
+      if (Character.toUpperCase(text.charAt(i)) == mnemonicChar) {
+        return new TextWithMnemonic(text, i, "");
+      }
+    }
+    return new TextWithMnemonic(text, text.length() + 2, "(" + mnemonicChar + ")");
   }
 
   /**
@@ -119,13 +172,13 @@ public final class TextWithMnemonic {
    */
   @NotNull
   @Contract(pure = true)
-  public static TextWithMnemonic parse(@NotNull String text) {
+  public static TextWithMnemonic parse(@NotNull @Nls String text) {
     if (text.indexOf(UIUtil.MNEMONIC) >= 0) {
       text = text.replace(UIUtil.MNEMONIC, '&');
     }
 
     if (text.contains("_") || text.contains("&")) {
-      StringBuilder plainText = new StringBuilder();
+      @Nls StringBuilder plainText = new StringBuilder();
       int mnemonicIndex = -1;
 
       int backShift = 0;
@@ -145,7 +198,12 @@ public final class TextWithMnemonic {
         }
         plainText.append(ch);
       }
-      return new TextWithMnemonic(plainText.toString(), mnemonicIndex);
+      String plain = plainText.toString();
+      int length = plain.length();
+      if (length > 3 && mnemonicIndex == length - 2 && plain.charAt(length - 1) == ')' && plain.charAt(length - 3) == '(') {
+        return new TextWithMnemonic(plain.substring(0, length - 3), mnemonicIndex, plain.substring(length - 3));
+      }
+      return new TextWithMnemonic(plain, mnemonicIndex, "");
     }
     return fromPlainText(text);
   }
@@ -156,12 +214,13 @@ public final class TextWithMnemonic {
     if (o == null || getClass() != o.getClass()) return false;
     TextWithMnemonic mnemonic = (TextWithMnemonic)o;
     return myMnemonicIndex == mnemonic.myMnemonicIndex &&
-           myText.equals(mnemonic.myText);
+           myText.equals(mnemonic.myText) &&
+           myMnemonicSuffix.equals(mnemonic.myMnemonicSuffix);
   }
 
   @Override
   public int hashCode() {
-    return myText.hashCode() * 31 + myMnemonicIndex;
+    return (myText.hashCode() * 31 + myMnemonicIndex) * 31 + myMnemonicSuffix.hashCode();
   }
 
   /**
@@ -171,8 +230,9 @@ public final class TextWithMnemonic {
   @Override
   public String toString() {
     if (myMnemonicIndex > -1) {
-      String prefix = StringUtil.escapeMnemonics(myText.substring(0, myMnemonicIndex));
-      String suffix = myText.substring(myMnemonicIndex);
+      String completeText = myText + myMnemonicSuffix;
+      String prefix = StringUtil.escapeMnemonics(completeText.substring(0, myMnemonicIndex));
+      String suffix = completeText.substring(myMnemonicIndex);
       return prefix + "_" + suffix;
     }
     return StringUtil.escapeMnemonics(myText);

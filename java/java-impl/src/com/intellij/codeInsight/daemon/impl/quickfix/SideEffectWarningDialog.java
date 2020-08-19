@@ -6,6 +6,7 @@ import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.PsiVariable;
 import com.intellij.ui.components.JBLabel;
@@ -121,7 +122,7 @@ public class SideEffectWarningDialog extends DialogWrapper {
     return JavaBundle.partialMessage("side.effects.pattern.message", 3);
   }
 
-  protected String sideEffectsDescription() {
+  protected @NlsContexts.Label String sideEffectsDescription() {
     if (myCanCopeWithSideEffects) {
       return MessageFormat.format(getFormatString(),
                                   JavaBundle.message("side.effects.expressions.assigned.to.the.variable", myVariable.getName()),

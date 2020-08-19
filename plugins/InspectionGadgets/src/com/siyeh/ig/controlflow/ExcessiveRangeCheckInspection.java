@@ -19,6 +19,7 @@ import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -154,7 +155,7 @@ public class ExcessiveRangeCheckInspection extends AbstractBaseJavaLocalInspecti
       return result == null ? LongRangeSet.all() : result;
     }
 
-    String getExpressionSuffix() {
+    @NonNls String getExpressionSuffix() {
       if (myField == null) return "";
       switch (myField) {
         case ARRAY_LENGTH:

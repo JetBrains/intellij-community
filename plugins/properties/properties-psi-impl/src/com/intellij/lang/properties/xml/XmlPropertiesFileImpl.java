@@ -32,7 +32,7 @@ import java.util.*;
  * @author Dmitry Avdeev
  */
 public final class XmlPropertiesFileImpl extends XmlPropertiesFile {
-  public static final String ENTRY_TAG_NAME = "entry";
+  public static final @NonNls String ENTRY_TAG_NAME = "entry";
 
   private static final Key<CachedValue<PropertiesFile>> KEY = Key.create("xml properties file");
   private final XmlFile myFile;

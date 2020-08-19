@@ -41,6 +41,7 @@ import git4idea.config.GitExecutableManager
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepositoryImpl
 import git4idea.repo.GitRepositoryManager
+import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.io.File
 import javax.swing.JComponent
@@ -146,6 +147,7 @@ private fun calcLogId(roots: List<VirtualFile>): String {
   return "$EXTERNAL " + roots.joinToString(File.pathSeparator) { obj: VirtualFile -> obj.path }
 }
 
+@Nls
 private fun calcTabName(cm: ContentManager, roots: List<VirtualFile>): String {
   val name = VcsLogBundle.message("vcs.log.tab.name") + " (" + roots.first().name + (if (roots.size > 1) "+" else "") + ")"
   var candidate = name

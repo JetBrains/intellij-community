@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
@@ -51,22 +52,25 @@ public final class NamePathComponent extends JPanel {
   private boolean myIsNamePathSyncEnabled = true;
   private boolean myShouldBeAbsolute;
 
-  public NamePathComponent(String nameLabelText, String pathLabelText, String pathChooserTitle, String pathChooserDescription) {
+  public NamePathComponent(@NlsContexts.Label String nameLabelText,
+                           @NlsContexts.Label String pathLabelText,
+                           @NlsContexts.DialogTitle String pathChooserTitle,
+                           @NlsContexts.Label String pathChooserDescription) {
     this(nameLabelText, pathLabelText, pathChooserTitle, pathChooserDescription, true);
   }
 
-  public NamePathComponent(String nameLabelText,
-                           String pathLabelText,
-                           String pathChooserTitle,
-                           String pathChooserDescription,
+  public NamePathComponent(@NlsContexts.Label String nameLabelText,
+                           @NlsContexts.Label String pathLabelText,
+                           @NlsContexts.DialogTitle String pathChooserTitle,
+                           @NlsContexts.Label String pathChooserDescription,
                            boolean hideIgnored) {
     this(nameLabelText, pathLabelText, pathChooserTitle, pathChooserDescription, hideIgnored, true);
   }
 
-  public NamePathComponent(String nameLabelText,
-                           String pathLabelText,
-                           String pathChooserTitle,
-                           String pathChooserDescription,
+  public NamePathComponent(@NlsContexts.Label String nameLabelText,
+                           @NlsContexts.Label String pathLabelText,
+                           @NlsContexts.DialogTitle String pathChooserTitle,
+                           @NlsContexts.Label String pathChooserDescription,
                            boolean hideIgnored,
                            boolean bold) {
     super(new GridBagLayout());
@@ -133,7 +137,7 @@ public final class NamePathComponent extends JPanel {
       throw new ConfigurationException(JavaUiBundle.message("prompt.enter.project.file.location", context.getPresentationName()));
     }
     if (myShouldBeAbsolute && !new File(projectDirectoryPath).isAbsolute()) {
-      throw new ConfigurationException(StringUtil.capitalize(JavaUiBundle.message("file.location.should.be.absolute", context.getPresentationName())));
+      throw new ConfigurationException(JavaUiBundle.message("file.location.should.be.absolute", StringUtil.capitalize(context.getPresentationName())));
     }
 
     boolean shouldPromptCreation = isPathChangedByUser();

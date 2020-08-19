@@ -6,10 +6,12 @@ import circlet.pipelines.config.api.printJson
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectCachePath
 import com.intellij.util.io.safeOutputStream
-import libraries.io.channels.readUTF8Line
 import libraries.klogging.logger
 import java.io.IOException
-import java.nio.file.*
+import java.nio.file.FileSystemException
+import java.nio.file.Files
+import java.nio.file.NoSuchFileException
+import java.nio.file.Path
 import java.nio.file.attribute.BasicFileAttributes
 
 private val log = logger<ScriptKtsPersistentState>()
@@ -32,19 +34,17 @@ class ScriptKtsPersistentState(val project: Project) {
       return null
     }
 
-    val channel = try {
-      Files.newByteChannel(path, setOf(StandardOpenOption.READ))
+    return try {
+      Files.newBufferedReader(path, Charsets.UTF_8).use { reader ->
+        reader.readLine().parseProjectConfig()
+      }
     }
     catch (e: NoSuchFileException) {
-      return null
+      null
     }
     catch (e: IOException) {
       log.error(e)
-      return null
-    }
-
-    channel.use {
-      return channel.readUTF8Line().parseProjectConfig()
+      null
     }
   }
 
@@ -55,7 +55,7 @@ class ScriptKtsPersistentState(val project: Project) {
   fun save(config: ScriptConfig) {
     val path = getCacheFile(project)
     path.safeOutputStream().use {
-      it.write(config.printJson().toByteArray())
+      it.write(config.printJson().toByteArray(Charsets.UTF_8))
     }
   }
 

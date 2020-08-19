@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel
@@ -6,6 +6,7 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemHighlightType.*
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.util.InspectionMessage
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.psi.PsiElement
 import org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter
@@ -23,7 +24,7 @@ internal class UnresolvedReferenceInspectionSink(private val problemsHolder: Pro
     problemsHolder.registerProblem(highlightElement, message, highlightType, *fixes)
   }
 
-  private fun handleSpecial(element: PsiElement, message: String, vararg fixes: LocalQuickFix?): Boolean {
+  private fun handleSpecial(element: PsiElement, @InspectionMessage message: String, vararg fixes: LocalQuickFix?): Boolean {
     // at this point we register the problem with LIKE_UNKNOWN_SYMBOL type.
     val level = GrUnresolvedAccessInspection.getHighlightDisplayLevel(element)
     when (level) {

@@ -15,6 +15,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.RegisterToolWindowTask;
@@ -137,7 +138,7 @@ public final class BuildContentManagerImpl implements BuildContentManager {
     });
   }
 
-  public void updateTabDisplayName(Content content, String tabName) {
+  public void updateTabDisplayName(Content content, @NlsContexts.TabTitle String tabName) {
     invokeLaterIfNeeded(() -> {
       if (!tabName.equals(content.getDisplayName())) {
         // we are going to adjust display name, so we need to ensure tab name is not retrieved based on display name

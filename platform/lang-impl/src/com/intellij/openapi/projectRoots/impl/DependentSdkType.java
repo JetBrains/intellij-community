@@ -6,6 +6,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModel;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
@@ -34,7 +35,7 @@ public abstract class DependentSdkType extends SdkType {
   protected abstract boolean isValidDependency(@NotNull Sdk sdk);
 
   @NotNull
-  public abstract String getUnsatisfiedDependencyMessage();
+  public abstract @NlsContexts.DialogMessage String getUnsatisfiedDependencyMessage();
 
   @Override
   public boolean supportsCustomCreateUI() {

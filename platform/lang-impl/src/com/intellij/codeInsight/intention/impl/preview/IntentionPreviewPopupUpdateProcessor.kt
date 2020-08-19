@@ -20,6 +20,7 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiFile
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.popup.PopupPositionManager
@@ -38,7 +39,7 @@ class IntentionPreviewPopupUpdateProcessor(private val project: Project,
 
   private lateinit var popup: JBPopup
   private lateinit var component: IntentionPreviewComponent
-  private lateinit var updateAdvertiserText: (String) -> Unit
+  private lateinit var updateAdvertiserText: (@NlsContexts.PopupAdvertisement String) -> Unit
 
   override fun updatePopup(intentionAction: Any?) {
     if (!show) return

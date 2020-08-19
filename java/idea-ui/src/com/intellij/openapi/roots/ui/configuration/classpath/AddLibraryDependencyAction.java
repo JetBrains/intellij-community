@@ -30,6 +30,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.classpath.ChooseLibrariesFromTablesDialog;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,8 +40,10 @@ import java.util.function.Predicate;
 class AddLibraryDependencyAction extends AddItemPopupAction<Library> {
   private final StructureConfigurableContext myContext;
 
-  AddLibraryDependencyAction(ClasspathPanel classpathPanel, final int index, final String title,
-                                    final StructureConfigurableContext context) {
+  AddLibraryDependencyAction(ClasspathPanel classpathPanel,
+                             final int index,
+                             final @Nls(capitalization = Nls.Capitalization.Title) String title,
+                             final StructureConfigurableContext context) {
     super(classpathPanel, index, title, PlatformIcons.LIBRARY_ICON);
     myContext = context;
   }
@@ -81,7 +84,7 @@ class AddLibraryDependencyAction extends AddItemPopupAction<Library> {
     return false;
   }
 
-  private java.util.function.Predicate<Library> getNotAddedSuitableLibrariesCondition() {
+  private Predicate<Library> getNotAddedSuitableLibrariesCondition() {
     ProjectFacetsConfigurator facetsConfigurator = myContext.getModulesConfigurator().getFacetsConfigurator();
     return LibraryEditingUtil.getNotAddedSuitableLibrariesCondition(myClasspathPanel.getRootModel(), facetsConfigurator);
   }

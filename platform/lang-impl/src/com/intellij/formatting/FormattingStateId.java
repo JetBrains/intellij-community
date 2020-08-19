@@ -16,6 +16,7 @@
 package com.intellij.formatting;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
@@ -65,7 +66,7 @@ public enum FormattingStateId {
   /**
    * @return    human-readable textual description of the current state id
    */
-  public String getDescription() {
+  public @NlsContexts.ProgressText String getDescription() {
     return myDescription;
   }
 

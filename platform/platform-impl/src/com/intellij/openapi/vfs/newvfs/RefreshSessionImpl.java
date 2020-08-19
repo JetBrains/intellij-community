@@ -10,6 +10,8 @@ import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.util.ProgressWindow;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.AsyncFileListener;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -164,9 +166,10 @@ final class RefreshSessionImpl extends RefreshSession {
       }
       else if (REFRESH_SESSION_DURATION_REPORT_THRESHOLD_SECONDS > 0 && t > REFRESH_SESSION_DURATION_REPORT_THRESHOLD_SECONDS * 1000L) {
         snapshot.logResponsivenessSinceCreation(String.format(
-          "Refresh session (queue size: %s, file types: %s, result: %s, tries: %s, events: %d)",
+          "Refresh session (queue size: %s, root types: %s, result: %s, tries: %s, events: %d)",
           workQueue.size(),
-          workQueue.stream().collect(Collectors.groupingBy(f -> f.isDirectory() ? "dir" : String.valueOf(f.getExtension()), Collectors.counting())),
+          workQueue.stream().collect(
+            Collectors.groupingBy(f -> !f.isDirectory() ? "file" : f.getFileSystem() instanceof ArchiveFileSystem ? "arc" : "dir", Collectors.counting())),
           myCancelled ? "cancelled" : "done",
           count,
           myEvents.size()));
@@ -193,7 +196,17 @@ final class RefreshSessionImpl extends RefreshSession {
         WriteAction.run(() -> {
           app.runWriteActionWithNonCancellableProgressInDispatchThread(IdeBundle.message("progress.title.file.system.synchronization"), null, null, indicator -> {
             indicator.setText(IdeBundle.message("progress.text.processing.detected.file.changes", events.size()));
+            int progressThresholdMillis = 5_000;
+            ((ProgressWindow) indicator).setDelayInMillis(progressThresholdMillis);
+            long start = System.currentTimeMillis();
+
             fireEventsInWriteAction(events, appliers);
+
+            long elapsed = System.currentTimeMillis() - start;
+            if (elapsed > progressThresholdMillis) {
+              LOG.warn("Long VFS change processing (" + elapsed + "ms, " + events.size() + " events): " +
+                       StringUtil.trimLog(events.toString(), 10_000));
+            }
           });
         });
       }

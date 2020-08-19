@@ -19,6 +19,8 @@ public class HtmlBuilderTest {
   @Test
   public void isEmpty() {
     assertTrue(new HtmlBuilder().isEmpty());
+    assertTrue(new HtmlBuilder().append("").isEmpty());
+    assertTrue(new HtmlBuilder().appendRaw("").isEmpty());
     assertFalse(new HtmlBuilder().append("foo").isEmpty());
   }
   
@@ -27,6 +29,7 @@ public class HtmlBuilderTest {
     assertEquals("hello world!", new HtmlBuilder().append("hello ").append("world!").toString());
     assertEquals("&lt;click here&gt;", new HtmlBuilder().append("<click here>").toString());
     assertEquals("<br/>&lt;click here&gt;", new HtmlBuilder().append(HtmlChunk.br()).append("<click here>").toString());
+    assertEquals("1234", new HtmlBuilder().append("1").append(new HtmlBuilder().append("2").append("3")).append("4").toString());
   }
   
   @Test
@@ -46,5 +49,17 @@ public class HtmlBuilderTest {
   public void wrapWith() {
     assertEquals("<html>Click <a href=\"foo\">here</a></html>", 
                  new HtmlBuilder().append("Click ").appendLink("foo", "here").wrapWith("html").toString());
+    assertEquals("<div style=\"color:blue\">&amp;&amp;</div>", new HtmlBuilder().append("&&").wrapWith(HtmlChunk.div().style("color:blue")).toString());
+  }
+  
+  @Test
+  public void wrapWithHtmlBody() {
+    assertEquals("<html><body>Hello</body></html>", new HtmlBuilder().append("Hello").wrapWithHtmlBody().toString());
+  }
+  
+  @Test
+  public void toFragment() {
+    HtmlChunk fragment = new HtmlBuilder().appendLink("1", "1").appendLink("2", "2").toFragment();
+    assertEquals("<a href=\"1\">1</a><a href=\"2\">2</a>", fragment.toString());
   }
 }

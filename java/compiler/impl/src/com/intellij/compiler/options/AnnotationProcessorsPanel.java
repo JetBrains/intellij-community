@@ -160,8 +160,8 @@ public class AnnotationProcessorsPanel extends JPanel {
               return null;
             }
             return StringUtil.isEmpty(inputString)
-              ? "Profile name shouldn't be empty"
-              : "Profile " + inputString + " already exists";
+              ? JavaCompilerBundle.message("text.empty.profile")
+              : JavaCompilerBundle.message("text.profile.exists", inputString);
           }
         });
       if (newProfileName != null) {

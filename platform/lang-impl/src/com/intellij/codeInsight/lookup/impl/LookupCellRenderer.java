@@ -34,6 +34,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import it.unimi.dsi.fastutil.ints.Int2BooleanOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -354,7 +355,7 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
   private void renderItemName(LookupElement item,
                       Color foreground,
                       @SimpleTextAttributes.StyleAttributeConstant int style,
-                      String name,
+                      @Nls String name,
                       final SimpleColoredComponent nameComponent) {
     final SimpleTextAttributes base = new SimpleTextAttributes(style, foreground);
 

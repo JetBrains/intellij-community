@@ -6,6 +6,7 @@ import com.intellij.configurationStore.XmlSerializer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -27,6 +28,7 @@ import com.intellij.packaging.elements.*;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -144,6 +146,7 @@ public final class ArtifactManagerImpl extends ArtifactManager implements Persis
 
   @Nullable
   private static <S> ArtifactPropertiesState serializeProperties(ArtifactPropertiesProvider provider, ArtifactProperties<S> properties) {
+    if (properties.getState() == null) return null;
     final Element options = XmlSerializer.serialize(properties.getState());
     if (options == null) {
       return null;
@@ -184,9 +187,8 @@ public final class ArtifactManagerImpl extends ArtifactManager implements Persis
       XmlSerializer.deserializeInto(element, state);
       packagingElement.loadState(state);
     }
-    final List children = element.getChildren(PACKAGING_ELEMENT_NAME);
-    //noinspection unchecked
-    for (Element child : (List<? extends Element>)children) {
+    final List<? extends Element> children = element.getChildren(PACKAGING_ELEMENT_NAME);
+    for (Element child : children) {
       ((CompositePackagingElement<?>)packagingElement).addOrFindChild(deserializeElement(child));
     }
     return packagingElement;
@@ -218,7 +220,7 @@ public final class ArtifactManagerImpl extends ArtifactManager implements Persis
     ArtifactType type = ArtifactType.findById(state.getArtifactType());
     ProjectModelExternalSource externalSource = findExternalSource(state.getExternalSystemId());
     if (type == null) {
-      return createInvalidArtifact(state, externalSource, "Unknown artifact type: " + state.getArtifactType());
+      return createInvalidArtifact(state, externalSource, JavaCompilerBundle.message("unknown.artifact.type.0", state.getArtifactType()));
     }
 
     final Element element = state.getRootElement();
@@ -229,7 +231,7 @@ public final class ArtifactManagerImpl extends ArtifactManager implements Persis
         rootElement = (CompositePackagingElement<?>)deserializeElement(element);
       }
       catch (UnknownPackagingElementTypeException e) {
-        return createInvalidArtifact(state, externalSource, "Unknown element: " + e.getTypeId());
+        return createInvalidArtifact(state, externalSource, JavaCompilerBundle.message("unknown.element.0", e.getTypeId()));
       }
     }
     else {
@@ -245,13 +247,16 @@ public final class ArtifactManagerImpl extends ArtifactManager implements Persis
         deserializeProperties(artifact.getProperties(provider), propertiesState);
       }
       else {
-        return createInvalidArtifact(state, externalSource, "Unknown artifact properties: " + propertiesState.getId());
+        final String message = JavaCompilerBundle.message("unknown.artifact.properties.0", propertiesState.getId());
+        return createInvalidArtifact(state, externalSource, message);
       }
     }
     return artifact;
   }
 
-  private InvalidArtifact createInvalidArtifact(ArtifactState state, ProjectModelExternalSource externalSource, String errorMessage) {
+  private InvalidArtifact createInvalidArtifact(ArtifactState state,
+                                                ProjectModelExternalSource externalSource,
+                                                @Nls(capitalization = Nls.Capitalization.Sentence) String errorMessage) {
     final InvalidArtifact artifact = new InvalidArtifact(state, errorMessage, externalSource);
     ProjectLoadingErrorsNotifier.getInstance(myProject).registerError(new ArtifactLoadingErrorDescription(myProject, artifact));
     UnknownFeaturesCollector.getInstance(myProject).registerUnknownFeature(FEATURE_TYPE, state.getArtifactType(), "Artifact");

@@ -114,7 +114,10 @@ public final class CompileDriver {
       if (indicator.isCanceled() || myProject.isDisposed()) {
         return;
       }
+      final BuildManager buildManager = BuildManager.getInstance();
       try {
+        buildManager.postponeBackgroundTasks();
+        buildManager.cancelAutoMakeTasks(myProject);
         TaskFuture<?> future = compileInExternalProcess(compileContext, true);
         if (future != null) {
           while (!future.waitFor(200L, TimeUnit.MILLISECONDS)) {
@@ -131,6 +134,7 @@ public final class CompileDriver {
         ExitStatus exitStatus = COMPILE_SERVER_BUILD_STATUS.get(compileContext);
         task.setEndCompilationStamp(exitStatus, System.currentTimeMillis());
         result.set(exitStatus);
+        buildManager.allowBackgroundTasks();
         if (!myProject.isDisposed()) {
           CompilerCacheManager.getInstance(myProject).flushCaches();
         }
@@ -242,9 +246,7 @@ public final class CompileDriver {
     }
 
     Map<String, List<Artifact>> outputToArtifact = ArtifactCompilerUtil.containsArtifacts(scopes) ? ArtifactCompilerUtil.createOutputToArtifactMap(myProject) : null;
-    final BuildManager buildManager = BuildManager.getInstance();
-    buildManager.cancelAutoMakeTasks(myProject);
-    return buildManager.scheduleBuild(myProject, compileContext.isRebuild(), compileContext.isMake(), onlyCheckUpToDate, scopes, paths, builderParams, new DefaultMessageHandler(myProject) {
+    return BuildManager.getInstance().scheduleBuild(myProject, compileContext.isRebuild(), compileContext.isMake(), onlyCheckUpToDate, scopes, paths, builderParams, new DefaultMessageHandler(myProject) {
       @Override
       public void sessionTerminated(@NotNull UUID sessionId) {
         if (compileContext.shouldUpdateProblemsView()) {
@@ -404,13 +406,16 @@ public final class CompileDriver {
         return;
       }
       CompilerCacheManager compilerCacheManager = CompilerCacheManager.getInstance(myProject);
+      final BuildManager buildManager = BuildManager.getInstance();
       try {
+        buildManager.postponeBackgroundTasks();
+        buildManager.cancelAutoMakeTasks(myProject);
         LOG.info("COMPILATION STARTED (BUILD PROCESS)");
         if (message != null) {
           compileContext.addMessage(message);
         }
         if (isRebuild) {
-          CompilerUtil.runInContext(compileContext, "Clearing build system data...",
+          CompilerUtil.runInContext(compileContext, JavaCompilerBundle.message("progress.text.clearing.build.system.data"),
                                     (ThrowableRunnable<Throwable>)() -> compilerCacheManager
                                       .clearCaches(compileContext));
         }
@@ -444,6 +449,7 @@ public final class CompileDriver {
         LOG.error(e); // todo
       }
       finally {
+        buildManager.allowBackgroundTasks();
         compilerCacheManager.flushCaches();
 
         final long duration = notifyCompilationCompleted(compileContext, callback, COMPILE_SERVER_BUILD_STATUS.get(compileContext));
@@ -549,15 +555,16 @@ public final class CompileDriver {
       message = JavaCompilerBundle.message("status.all.up.to.date");
     }
     else  {
+      String durationString = StringUtil.formatDurationApproximate(duration);
       if (status == ExitStatus.SUCCESS) {
         message = warningCount > 0
-               ? JavaCompilerBundle.message("status.compilation.completed.successfully.with.warnings", warningCount)
-               : JavaCompilerBundle.message("status.compilation.completed.successfully");
+               ? JavaCompilerBundle.message("status.compilation.completed.successfully.with.warnings", warningCount, durationString)
+               : JavaCompilerBundle.message("status.compilation.completed.successfully", durationString);
       }
       else {
-        message = JavaCompilerBundle.message("status.compilation.completed.successfully.with.warnings.and.errors", errorCount, warningCount);
+        message = JavaCompilerBundle.message("status.compilation.completed.successfully.with.warnings.and.errors", 
+                                             errorCount, warningCount, durationString);
       }
-      message = message + " in " + StringUtil.formatDurationApproximate(duration);
     }
     return message;
   }

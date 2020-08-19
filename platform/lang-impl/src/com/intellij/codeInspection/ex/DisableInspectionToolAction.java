@@ -15,12 +15,12 @@
  */
 package com.intellij.codeInspection.ex;
 
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.IntentionAndQuickFixAction;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -78,7 +78,7 @@ public class DisableInspectionToolAction extends IntentionAndQuickFixAction impl
     return AllIcons.Actions.Cancel;
   }
 
-  public static String getNameText() {
+  public static @IntentionName String getNameText() {
     return InspectionsBundle.message("disable.inspection.action.name");
   }
 }

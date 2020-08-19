@@ -2,15 +2,11 @@
 package org.intellij.plugins.markdown.extensions.common
 
 import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
-import org.intellij.plugins.markdown.extensions.javafx.MarkdownJavaFXPreviewExtension
 import org.intellij.plugins.markdown.extensions.jcef.MarkdownJCEFPreviewExtension
 import org.intellij.plugins.markdown.settings.MarkdownApplicationSettings
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
 
-internal class InlineStylesExtension :
-  MarkdownJCEFPreviewExtension,
-  MarkdownJavaFXPreviewExtension,
-  ResourceProvider {
+internal class InlineStylesExtension : MarkdownJCEFPreviewExtension, ResourceProvider {
   override val priority: MarkdownBrowserPreviewExtension.Priority
     get() = MarkdownBrowserPreviewExtension.Priority.AFTER_ALL
 

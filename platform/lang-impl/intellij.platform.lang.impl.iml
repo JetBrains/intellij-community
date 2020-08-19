@@ -49,5 +49,6 @@
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="library" name="Trove4j" level="project" />
     <orderEntry type="library" name="Log4J" level="project" />
+    <orderEntry type="library" name="pty4j" level="project" />
   </component>
 </module>

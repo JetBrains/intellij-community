@@ -14,6 +14,8 @@ import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ReflectionUtil;
 import com.siyeh.ig.callMatcher.CallMapper;
@@ -117,7 +119,7 @@ final class CustomMethodHandlers {
               (args, memState, factory, method) -> enumName(args.myQualifier, memState, method.getReturnType()))
     .register(staticCall(JAVA_UTIL_COLLECTIONS, "emptyList", "emptySet", "emptyMap").parameterCount(0),
               (args, memState, factory, method) -> getEmptyCollectionConstant(method))
-    .register(exactInstanceCall(JAVA_LANG_CLASS, "getName", "getSimpleName").parameterCount(0),
+    .register(exactInstanceCall(JAVA_LANG_CLASS, "getName", "getSimpleName", "getCanonicalName").parameterCount(0),
               (args, memState, factory, method) -> className(memState, args.myQualifier, method.getName(), method.getReturnType()))
     .register(anyOf(
       staticCall(JAVA_UTIL_COLLECTIONS, "singleton", "singletonList", "singletonMap"),
@@ -383,7 +385,22 @@ final class CustomMethodHandlers {
     if (type != null) {
       PsiClass psiClass = type.resolve();
       if (psiClass != null) {
-        return constant(name.equals("getSimpleName") ? psiClass.getName() : psiClass.getQualifiedName(), stringType);
+        String result;
+        switch (name) {
+          case "getSimpleName":
+            result = psiClass instanceof PsiAnonymousClass ? "" : psiClass.getName();
+            break;
+          case "getName":
+            if (PsiUtil.isLocalOrAnonymousClass(psiClass)) {
+              return TOP;
+            }
+            result = ClassUtil.getJVMClassName(psiClass);
+            break;
+          default:
+            result = psiClass.getQualifiedName();
+            break;
+        }
+        return constant(result, stringType);
       }
     }
     return TOP;

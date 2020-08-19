@@ -26,6 +26,7 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.processOpenedProjects
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile
@@ -322,6 +323,7 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
 
 private val saveAppAndProjectsSettingsTask = SaveAndSyncHandler.SaveTask()
 
+@NlsContexts.ProgressTitle
 private fun getProgressTitle(componentManager: ComponentManager): String {
   return when {
     componentManager is Application -> CommonBundle.message("title.save.app")

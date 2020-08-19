@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.project
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.LibraryOrderEntry
@@ -13,7 +14,8 @@ import com.intellij.workspaceModel.storage.bridgeEntities.*
 
 internal class ProjectRootsChangeListener(private val project: Project) {
   fun beforeChanged(event: VersionedStorageChange) {
-    if (project.isDisposed || Disposer.isDisposing(project)) return
+    ApplicationManager.getApplication().assertWriteAccessAllowed()
+    if (project.isDisposed) return
     val projectRootManager = ProjectRootManager.getInstance(project)
     if (projectRootManager !is ProjectRootManagerBridge) return
     val performUpdate = shouldFireRootsChanged(event, project)
@@ -21,7 +23,8 @@ internal class ProjectRootsChangeListener(private val project: Project) {
   }
 
   fun changed(event: VersionedStorageChange) {
-    if (project.isDisposed || Disposer.isDisposing(project)) return
+    ApplicationManager.getApplication().assertWriteAccessAllowed()
+    if (project.isDisposed) return
     val projectRootManager = ProjectRootManager.getInstance(project)
     if (projectRootManager !is ProjectRootManagerBridge) return
     val performUpdate = shouldFireRootsChanged(event, project)

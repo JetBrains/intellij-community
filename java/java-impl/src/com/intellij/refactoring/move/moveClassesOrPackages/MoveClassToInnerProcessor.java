@@ -219,7 +219,8 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
   @NotNull
   protected String getCommandName() {
     return JavaRefactoringBundle.message("move.class.to.inner.command.name",
-                                     (myClassesToMove.length > 1 ? "classes " : "class ") + StringUtil.join(myClassesToMove, psiClass -> psiClass.getName(), ", "),
+                                     myClassesToMove.length,
+                                     StringUtil.join(myClassesToMove, psiClass -> psiClass.getName(), ", "),
                                      myTargetClass.getQualifiedName());
   }
 
@@ -331,9 +332,7 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
       PsiElement container = ConflictsUtil.getContainer(sourceElement);
       if (!myReportedContainers.contains(container)) {
         myReportedContainers.add(container);
-        String targetDescription = (targetElement == myClassToMove)
-                                   ? "Class " + CommonRefactoringUtil.htmlEmphasize(myClassToMove.getName())
-                                   : StringUtil.capitalize(RefactoringUIUtil.getDescription(targetElement, true));
+        String targetDescription = StringUtil.capitalize(RefactoringUIUtil.getDescription(targetElement, true));
         final String message = JavaRefactoringBundle.message("element.will.no.longer.be.accessible",
                                                          targetDescription,
                                                          RefactoringUIUtil.getDescription(container, true));

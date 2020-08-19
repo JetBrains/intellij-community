@@ -226,4 +226,9 @@ public interface ApplicationEx extends Application {
   default void runIntendedWriteActionOnCurrentThread(@NotNull Runnable action) {
     action.run();
   }
+
+  @ApiStatus.Internal
+  default boolean isExitInProgress() {
+    return false;
+  }
 }

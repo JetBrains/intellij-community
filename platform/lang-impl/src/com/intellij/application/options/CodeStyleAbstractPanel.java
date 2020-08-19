@@ -23,6 +23,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.OnePixelDivider;
+import com.intellij.openapi.util.NlsContexts.TabTitle;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -615,8 +616,8 @@ public abstract class CodeStyleAbstractPanel implements Disposable, ComponentHig
     return myDefaultLanguage;
   }
 
-  protected String getTabTitle() {
-    return "Other";
+  protected @TabTitle @NotNull String getTabTitle() {
+    return ApplicationBundle.message("settings.code.style.tab.title.other");
   }
 
   protected CodeStyleSettings getCurrentSettings() {

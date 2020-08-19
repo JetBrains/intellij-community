@@ -3,31 +3,38 @@
   "groups": [
     {
       "number": 7,
-      "description": "Default",
+      "description": "Standard completion",
       "useMLRanking": false,
       "showArrows": false,
       "calculateFeatures": true
     },
     {
       "number": 8,
-      "description": "ML without arrows",
+      "description": "Default ML model without arrows",
       "useMLRanking": true,
       "showArrows": false,
       "calculateFeatures": true
     },
     {
       "number": 11,
-      "description": "ML with arrows",
+      "description": "Default ML model with arrows",
       "useMLRanking": true,
       "showArrows": true,
       "calculateFeatures": true
     },
     {
       "number": 12,
-      "description": "Default without calculation features",
+      "description": "Standard completion without calculation features",
       "useMLRanking": false,
       "showArrows": false,
       "calculateFeatures": false
+    },
+    {
+      "number": 13,
+      "description": "New ML model without arrows",
+      "useMLRanking": true,
+      "showArrows": false,
+      "calculateFeatures": true
     }
   ],
   "languages": [
@@ -44,12 +51,12 @@
     {
       "id": "kotlin",
       "experimentBucketsCount": 8,
-      "includeGroups": [ 7, 8, 11, 12 ]
+      "includeGroups": [ 7, 8, 11, 12, 13 ]
     },
     {
       "id": "scala",
       "experimentBucketsCount": 8,
-      "includeGroups": [ 7, 8, 11, 12 ]
+      "includeGroups": [ 7, 8, 11, 12, 13 ]
     },
     {
       "id": "php",

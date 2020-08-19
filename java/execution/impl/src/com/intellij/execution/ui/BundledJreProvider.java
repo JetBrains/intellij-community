@@ -16,7 +16,11 @@ public class BundledJreProvider implements JreProvider {
   @Override
   public String getJrePath() {
     assert myBundle != null;
-    String path = myBundle.getLocation().getPath();
+    return getPatchedJrePath(myBundle.getLocation().getPath());
+  }
+
+  @NotNull
+  public static String getPatchedJrePath(@NotNull String path) {
     if (SystemInfo.isMac && !path.endsWith("/Contents/Home")) {
       path += "/Contents/Home";
     }

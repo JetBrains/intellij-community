@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.codeStyle.arrangement.std;
 
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -29,5 +30,5 @@ public interface InvertibleArrangementSettingsToken {
    * Inverted representation value that will be used in UI
    */
   @NotNull
-  String getInvertedRepresentationValue();
+  @Nls String getInvertedRepresentationValue();
 }

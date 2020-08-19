@@ -33,7 +33,7 @@ public final class VerticalLayout implements LayoutManager2 {
 
   /**
    * Creates a layout with the specified gap.
-   * All components will have preferred widths,
+   * All components will have preferred heights,
    * but their widths will be set according to the container.
    *
    * @param gap vertical gap between components

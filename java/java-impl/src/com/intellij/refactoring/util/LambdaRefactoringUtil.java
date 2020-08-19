@@ -23,6 +23,7 @@ import com.intellij.util.text.UniqueNameGenerator;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.SideEffectChecker;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -145,7 +146,7 @@ public final class LambdaRefactoringUtil {
       map.put(parameter, parameterName);
       return parameterName;
     };
-    StringBuilder buf = new StringBuilder();
+    @NonNls StringBuilder buf = new StringBuilder();
     if (parameters.length == 1) {
       buf.append(paramPresentationFunction.fun(parameters[0]));
     }

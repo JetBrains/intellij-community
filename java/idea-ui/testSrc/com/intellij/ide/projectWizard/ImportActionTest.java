@@ -98,7 +98,7 @@ public class ImportActionTest extends ProjectWizardTestCase<AddModuleWizard> {
     File file = createTempFile("Foo.java", "class Foo {}");
     Module module = importProjectFrom(file.getParent(), step -> {
       if (step != null) {
-        assertEquals("Existing Sources", myWizard.getSequence().getSelectedType());
+        assertEquals("Existing sources", myWizard.getSequence().getSelectedType());
       }
     }, new ImportFromSourcesProvider());
 

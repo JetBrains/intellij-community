@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Comparator;
 
 /**
- * Implementation of <a href="http://www.codinghorror.com/blog/2007/12/sorting-for-humans-natural-sort-order.html"/>
+ * Implementation of <a href="http://www.codinghorror.com/blog/2007/12/sorting-for-humans-natural-sort-order.html">
  * "Sorting for Humans: Natural Sort Order"</a>
  * @author Bas Leijdekkers
  */

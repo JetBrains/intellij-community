@@ -5,6 +5,7 @@ package com.intellij.ui;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicHTML;
@@ -43,7 +44,7 @@ public class TitlePanel extends CaptionPanel {
     myLabel.setForeground(active ? UIUtil.getLabelForeground() : UIUtil.getLabelDisabledForeground());
   }
 
-  public void setText(String titleText) {
+  public void setText(@Nls String titleText) {
     myHtml = BasicHTML.isHTMLString(titleText);
     myLabel.setText(titleText);
   }

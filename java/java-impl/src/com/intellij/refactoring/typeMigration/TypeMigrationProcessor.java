@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.typeMigration;
 
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -15,6 +16,7 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.typeMigration.ui.FailedConversionsDialog;
 import com.intellij.refactoring.typeMigration.ui.MigrationPanel;
 import com.intellij.refactoring.typeMigration.usageInfo.TypeMigrationUsageInfo;
+import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageInfo;
@@ -165,7 +167,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
       String toType = myRootTypes.fun(myRoots[0]).getPresentableText();
       String text;
       text = getPresentation(myRoots[0]);
-      name = "Migrate Type of " + text + " from '" + fromType + "' to '" + toType + "'";
+      name = JavaBundle.message("type.migration.single.root.toolwindow.title", text, fromType, toType);
     } else {
       final int rootsInPresentationCount = Math.min(myRoots.length, MAX_ROOT_IN_PREVIEW_PRESENTATION);
       String[] rootsPresentation = new String[rootsInPresentationCount];
@@ -174,7 +176,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
         rootsPresentation[i] = root instanceof PsiNamedElement ? ((PsiNamedElement)root).getName() : root.getText();
       }
       rootsPresentation = StringUtil.surround(rootsPresentation, "'", "'");
-      name = "Migrate Type of " + StringUtil.join(rootsPresentation, ", ");
+      name = JavaBundle.message("type.migration.multi.root.toolwindow.title", StringUtil.join(rootsPresentation, ", "));
       if (myRoots.length > MAX_ROOT_IN_PREVIEW_PRESENTATION) {
         name += "...";
       }
@@ -185,23 +187,7 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
   }
 
   public static String getPresentation(PsiElement element) {
-    String text;
-    if (element instanceof PsiField) {
-      text = "field '" + ((PsiField)element).getName() + "'";
-    }
-    else if (element instanceof PsiParameter) {
-      text = "parameter '" + ((PsiParameter)element).getName() + "'";
-    }
-    else if (element instanceof PsiLocalVariable) {
-      text = "variable '" + ((PsiLocalVariable)element).getName() + "'";
-    }
-    else if (element instanceof PsiMethod) {
-      text = "method '" + ((PsiMethod)element).getName() + "' return";
-    }
-    else {
-      text = element.getText();
-    }
-    return text;
+    return RefactoringUIUtil.getDescription(element, false);
   }
 
   @Override
@@ -283,6 +269,6 @@ public class TypeMigrationProcessor extends BaseRefactoringProcessor {
   @NotNull
   @Override
   protected String getCommandName() {
-    return "TypeMigration";
+    return JavaBundle.message("type.migration.command.name");
   }
 }

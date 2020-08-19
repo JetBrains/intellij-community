@@ -16,7 +16,7 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
-import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.ModifiableFacetModelBridge
+import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.ModifiableFacetModelBridgeImpl
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
 import org.junit.Assert
@@ -71,7 +71,7 @@ class FacetModelBridgeTest {
     assertEquals(facetConfigXml, facetEntity.configurationXmlTag)
 
     getFacetManager().createModifiableModel().let { modifiableModel ->
-      modifiableModel as ModifiableFacetModelBridge
+      modifiableModel as ModifiableFacetModelBridgeImpl
       assertEquals(facetConfigXml, modifiableModel.getEntity(facet)!!.configurationXmlTag)
     }
   }

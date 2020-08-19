@@ -2,6 +2,7 @@
 
 package com.intellij.find;
 
+import com.intellij.BundleBase;
 import com.intellij.execution.impl.ConsoleViewUtil;
 import com.intellij.find.editorHeaderActions.*;
 import com.intellij.find.impl.HelpID;
@@ -16,6 +17,7 @@ import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.ex.DefaultCustomComponentAction;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.editor.event.EditorFactoryListener;
@@ -26,11 +28,14 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SmartList;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -45,6 +50,7 @@ import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -58,6 +64,7 @@ public class EditorSearchSession implements SearchSession,
                                             SearchReplaceComponent.Listener {
   private static final String FIND_TYPE = "FindInFile";
   public static final DataKey<EditorSearchSession> SESSION_KEY = DataKey.create("EditorSearchSession");
+  public static final Logger SELECTION_UPDATE_LOGGER = Logger.getInstance("com.intellij.find.selection");
 
   private final Editor myEditor;
   private final LivePreviewController myLivePreviewController;
@@ -411,9 +418,27 @@ public class EditorSearchSession implements SearchSession,
     }
   }
 
+  private static void checkOption(List<String> chosenOptions, boolean state, String key) {
+    if (state) chosenOptions.add(StringUtil.toLowerCase(FindBundle.message(key).replace(BundleBase.MNEMONIC_STRING, "")));
+  }
+
   @NotNull
-  private String getEmptyText() {
-    if (myFindModel.isGlobal() || !myFindModel.getStringToFind().isEmpty()) return "";
+  private @NlsContexts.StatusText String getEmptyText() {
+    if (!myFindModel.getStringToFind().isEmpty()) return "";
+    if (myFindModel.isGlobal()) {
+      SmartList<String> chosenOptions = new SmartList<>();
+      checkOption(chosenOptions, myFindModel.isCaseSensitive(), "find.case.sensitive");
+      checkOption(chosenOptions, myFindModel.isWholeWordsOnly() && !myFindModel.isRegularExpressions(), "find.whole.words");
+      checkOption(chosenOptions, myFindModel.isRegularExpressions(), "find.regex");
+      if (chosenOptions.isEmpty()) {
+        return "";
+      }
+      if (chosenOptions.size() == 1) {
+        return FindBundle.message("emptyText.used.option", chosenOptions.get(0));
+      }
+      return FindBundle.message("emptyText.used.options", chosenOptions.get(0), chosenOptions.get(1));
+    }
+
     String text = getEditor().getSelectionModel().getSelectedText();
     if (text != null && text.contains("\n")) {
       boolean replaceState = myFindModel.isReplaceState();
@@ -555,6 +580,13 @@ public class EditorSearchSession implements SearchSession,
     }
     myEditor.getCaretModel().moveToOffset(Math.min(myStartSessionCaretMarker.getEndOffset(), myEditor.getDocument().getTextLength()));
     myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    logSelectionUpdate();
+  }
+
+  public static void logSelectionUpdate() {
+    if (SELECTION_UPDATE_LOGGER.isDebugEnabled()) {
+      SELECTION_UPDATE_LOGGER.debug(new Throwable());
+    }
   }
 
   private void updateUIWithEmptyResults() {
@@ -590,10 +622,10 @@ public class EditorSearchSession implements SearchSession,
 
 
   private abstract static class ButtonAction extends DumbAwareAction implements CustomComponentAction, ActionListener {
-    private final String myTitle;
+    private final @NlsActions.ActionText String myTitle;
     private final char myMnemonic;
 
-    ButtonAction(@NotNull String title, char mnemonic) {
+    ButtonAction(@NotNull @NlsActions.ActionText String title, char mnemonic) {
       myTitle = title;
       myMnemonic = mnemonic;
     }
