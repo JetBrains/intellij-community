@@ -25,7 +25,7 @@ public final class UIVcsUtil {
     return wrapper;
   }
 
-  public static JPanel infoPanel(@NotNull String header, @Nls @NotNull String text) {
+  public static JPanel infoPanel(@NotNull @Nls String header, @Nls @NotNull String text) {
     //noinspection HardCodedStringLiteral
     final JLabel label = new JLabel(XmlStringUtil.wrapInHtml(
       "<h4>" + StringUtil.escapeXmlEntities(header) + "</h4>" + escapeXmlAndAddBr(text)));

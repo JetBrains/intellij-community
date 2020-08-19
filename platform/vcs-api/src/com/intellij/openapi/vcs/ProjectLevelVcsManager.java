@@ -72,7 +72,7 @@ public abstract class ProjectLevelVcsManager {
    * @return the VCS instance, or {@code null} if the file does not belong to any module or the module
    *         it belongs to is not under version control.
    */
-  public abstract @Nullable AbstractVcs getVcsFor(FilePath file);
+  public abstract @Nullable AbstractVcs getVcsFor(@NotNull FilePath file);
 
   /**
    * Return the parent directory of the specified file which is mapped to a VCS.
