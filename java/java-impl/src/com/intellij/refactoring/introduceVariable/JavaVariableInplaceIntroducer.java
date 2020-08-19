@@ -399,9 +399,9 @@ public class JavaVariableInplaceIntroducer extends AbstractJavaInplaceIntroducer
   }
 
   @Nullable
-  private static String getAdvertisementText(final PsiDeclarationStatement declaration,
-                                             final PsiType type,
-                                             final boolean hasTypeSuggestion) {
+  private static @NlsContexts.PopupAdvertisement String getAdvertisementText(final PsiDeclarationStatement declaration,
+                                                                             final PsiType type,
+                                                                             final boolean hasTypeSuggestion) {
     final VariablesProcessor processor = ReassignVariableUtil.findVariablesOfType(declaration, type);
     if (processor.size() > 0) {
       final Shortcut shortcut = KeymapUtil.getPrimaryShortcut("IntroduceVariable");
