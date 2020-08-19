@@ -289,9 +289,9 @@ public final class TestsUIUtil {
         if (failedCount > 0) {
           myTitle = ExecutionBundle.message("junit.runing.info.tests.failed.label");
           myBalloonText = TestRunnerBundle.message("tests.failed.0.passed.1.ignored.2.not.started.3",
-                                                   failedCount, passedCount, ignoredCount, notStartedCount);
+                                                   failedCount, passedCount, ignoredCount, ignoredCount > 0 ? 0 : notStartedCount);
           myText = TestRunnerBundle.message("0.failed.1.passed.2.ignored.3.not.started",
-                                            failedCount, passedCount, ignoredCount, notStartedCount);
+                                            failedCount, passedCount, ignoredCount, ignoredCount > 0 ? 0: notStartedCount);
           myType = MessageType.ERROR;
         }
         else if (ignoredCount > 0) {
