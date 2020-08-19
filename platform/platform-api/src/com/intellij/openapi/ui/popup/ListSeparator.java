@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.ui.popup;
 
+import com.intellij.openapi.util.NlsContexts.Separator;
+
 import javax.swing.*;
 
 public class ListSeparator {
@@ -26,11 +28,11 @@ public class ListSeparator {
     this("");
   }
 
-  public ListSeparator(String aText) {
+  public ListSeparator(@Separator String aText) {
     this(aText, null);
   }
 
-  public ListSeparator(String name, Icon icon) {
+  public ListSeparator(@Separator String name, Icon icon) {
     myText = name;
     myIcon = icon;
   }
