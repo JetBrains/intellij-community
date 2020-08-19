@@ -40,6 +40,7 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import gnu.trove.THashSet;
 import org.intellij.lang.annotations.RegExp;
 import org.jdom.Element;
@@ -775,7 +776,8 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     if (uastParent instanceof ULocalVariable) {
       uVar = (ULocalVariable)uastParent;
     } else if (uastParent instanceof UBinaryExpression &&
-               ((UBinaryExpression)uastParent).getOperator() == UastBinaryOperator.ASSIGN &&
+               (((UBinaryExpression)uastParent).getOperator() == UastBinaryOperator.ASSIGN ||
+                ((UBinaryExpression)uastParent).getOperator() == UastBinaryOperator.PLUS_ASSIGN) &&
                NlsInfo.expressionsAreEquivalent(((UBinaryExpression)uastParent).getRightOperand(), passThrough)){
       UExpression left = ((UBinaryExpression)uastParent).getLeftOperand();
       if (left instanceof UResolvable) {
@@ -796,14 +798,22 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
           if (NlsInfo.forModifierListOwner(local).getNlsStatus() == ThreeState.UNSURE) {
             PsiElement codeBlock = PsiUtil.getVariableCodeBlock(local, null);
             if (codeBlock instanceof PsiCodeBlock) {
-              PsiElement[] refs = DefUseUtil.getRefs(((PsiCodeBlock)codeBlock), local, psi);
-              return ContainerUtil.mapNotNull(refs, ref -> UastContextKt.toUElement(ref, UExpression.class));
+              List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(local, codeBlock);
+              return ContainerUtil.mapNotNull(
+                refs, ref -> PsiUtil.isAccessedForWriting(ref) ? null : UastContextKt.toUElement(ref, UExpression.class));
             }
           }
         } else {
           // Kotlin
           Collection<PsiReference> refs = ReferencesSearch.search(psiVar, psiVar.getUseScope()).findAll();
-          return ContainerUtil.mapNotNull(refs, ref -> UastContextKt.toUElement(ref.getElement(), UExpression.class));
+          return ContainerUtil.mapNotNull(refs, ref -> {
+            UExpression expr = UastContextKt.toUElement(ref.getElement(), UExpression.class);
+            if (expr != null && expr.getUastParent() instanceof UBinaryExpression &&
+                NlsInfo.expressionsAreEquivalent(((UBinaryExpression)expr.getUastParent()).getLeftOperand(), expr)) {
+              return null;
+            }
+            return expr;
+          });
         }
       }
     }

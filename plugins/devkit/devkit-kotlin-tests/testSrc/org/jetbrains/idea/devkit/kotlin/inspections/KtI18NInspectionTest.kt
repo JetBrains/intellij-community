@@ -1,12 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.kotlin.inspections
 
+import com.intellij.codeInspection.i18n.I18nInspection
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
 
   fun testFunctionParameters() {
-    myFixture.enableInspections(com.intellij.codeInspection.i18n.I18nInspection())
+    myFixture.enableInspections(I18nInspection())
     myFixture.configureByText("Foo.kt", """
        class Foo {
           fun foo(s: String) {
@@ -20,7 +21,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
   }
 
   fun testPropagateToReceiver() {
-    myFixture.enableInspections(com.intellij.codeInspection.i18n.I18nInspection())
+    myFixture.enableInspections(I18nInspection())
     myFixture.configureByText("Foo.kt", """
        public fun String.trimIndent(): String = this
        fun foo(@org.jetbrains.annotations.NonNls <warning descr="[UNUSED_PARAMETER] Parameter 'message' is never used">message</warning>: String) { }
@@ -33,7 +34,24 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
   }
   
   fun testPropagateThroughLocal() {
-    val inspection = com.intellij.codeInspection.i18n.I18nInspection()
+    myFixture.enableInspections(I18nInspection())
+    myFixture.configureByText("Foo.kt", """
+       fun foo(@org.jetbrains.annotations.NonNls <warning descr="[UNUSED_PARAMETER] Parameter 'message' is never used">message</warning>: String) { }
+       fun foo1(<warning descr="[UNUSED_PARAMETER] Parameter 'message' is never used">message</warning>: String) { }
+       fun bar() {
+          var text = <warning descr="[VARIABLE_WITH_REDUNDANT_INITIALIZER] Variable 'text' initializer is redundant">"foo"</warning>
+          text = "bar"
+          foo(text)
+          var text2 = <warning descr="Hardcoded string literal: \"foo\""><warning descr="[VARIABLE_WITH_REDUNDANT_INITIALIZER] Variable 'text2' initializer is redundant">"foo"</warning></warning>
+          text2 = <warning descr="Hardcoded string literal: \"bar\"">"bar"</warning>
+          foo1(text2)
+       }
+    """.trimIndent())
+    myFixture.testHighlighting()
+  }
+  
+  fun testPropagateThroughLocalNls() {
+    val inspection = I18nInspection()
     inspection.setIgnoreForAllButNls(true)
     myFixture.enableInspections(inspection)
     myFixture.configureByText("Foo.kt", """
@@ -41,6 +59,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
        fun bar() {
           var text = <warning descr="Hardcoded string literal: \"foo\""><warning descr="[VARIABLE_WITH_REDUNDANT_INITIALIZER] Variable 'text' initializer is redundant">"foo"</warning></warning>
           text = <warning descr="Hardcoded string literal: \"bar\"">"bar"</warning>
+          text += <warning descr="Hardcoded string literal: \"baz\"">"baz"</warning>
           foo(text)
        }
     """.trimIndent())
@@ -48,7 +67,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
   }
   
   fun testPropertyAssignment() {
-    val inspection = com.intellij.codeInspection.i18n.I18nInspection()
+    val inspection = I18nInspection()
     inspection.setIgnoreForAllButNls(true)
     myFixture.enableInspections(inspection)
     myFixture.addClass(
@@ -73,7 +92,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
   }
   
   fun testFunctionParametersOnlyNls() {
-    val inspection = com.intellij.codeInspection.i18n.I18nInspection()
+    val inspection = I18nInspection()
     inspection.setIgnoreForAllButNls(true)
     myFixture.enableInspections(inspection)
     myFixture.configureByText("Foo.kt", """
@@ -88,7 +107,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
   }
 
   fun testConstructorParameter() {
-    myFixture.enableInspections(com.intellij.codeInspection.i18n.I18nInspection())
+    myFixture.enableInspections(I18nInspection())
     myFixture.configureByText("Foo.kt", """
       import org.jetbrains.annotations.Nls
       
@@ -100,7 +119,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
   }
 
   fun testReturnValues() {
-    myFixture.enableInspections(com.intellij.codeInspection.i18n.I18nInspection())
+    myFixture.enableInspections(I18nInspection())
     myFixture.configureByText("Foo.kt", """
         val a = <warning descr="Hardcoded string literal: \"Test text\"">"Test text"</warning>
         val b get() = <warning descr="Hardcoded string literal: \"Test text\"">"Test text"</warning>
