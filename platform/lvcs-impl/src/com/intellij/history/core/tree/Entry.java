@@ -23,6 +23,7 @@ import com.intellij.history.core.revisions.Difference;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -170,6 +171,7 @@ public abstract class Entry {
     throw new UnsupportedOperationException(formatAddRemove(child));
   }
 
+  @NonNls
   private String formatAddRemove(Entry child) {
     return "add/remove " + child.formatPath() + " to " + formatPath();
   }
@@ -252,6 +254,7 @@ public abstract class Entry {
     return getName();
   }
 
+  @NonNls
   private String formatPath() {
     String type = isDirectory() ? "dir: " : "file: ";
     return type + getPath();
