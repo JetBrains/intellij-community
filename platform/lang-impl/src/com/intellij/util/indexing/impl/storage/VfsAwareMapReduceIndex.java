@@ -259,6 +259,9 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
 
   @Override
   public void removeTransientDataForFile(int inputId) {
+    if (IndexDebugProperties.DEBUG) {
+      LOG.assertTrue(ProgressManager.getInstance().isInNonCancelableSection());
+    }
     getLock().writeLock().lock();
     try {
       Map<Key, Value> keyValueMap;
