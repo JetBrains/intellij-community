@@ -7,6 +7,11 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties.VcsLogUiProperty
 
 internal fun VcsLogUiProperties.supportsColumnsReordering() = exists(CommonUiProperties.COLUMN_ID_ORDER)
 
+internal fun VcsLogUiProperties.supportsColumnsToggling(): Boolean {
+  val commitColumnProperties = VcsLogColumnManager.getInstance().getProperties(Commit)
+  return exists(commitColumnProperties.visibility) && supportsColumnsReordering()
+}
+
 internal fun isValidColumnOrder(columnOrder: List<VcsLogColumn<*>>): Boolean {
   return Root in columnOrder && Commit in columnOrder
 }

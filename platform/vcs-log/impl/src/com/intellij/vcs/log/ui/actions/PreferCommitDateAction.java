@@ -24,7 +24,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.intellij.vcs.log.ui.table.column.VcsLogColumnUtilKt.isVisible;
-import static com.intellij.vcs.log.ui.table.column.VcsLogColumnUtilKt.supportsColumnsReordering;
+import static com.intellij.vcs.log.ui.table.column.VcsLogColumnUtilKt.supportsColumnsToggling;
 
 public class PreferCommitDateAction extends BooleanPropertyToggleAction implements DumbAware {
   public PreferCommitDateAction() {
@@ -63,7 +63,7 @@ public class PreferCommitDateAction extends BooleanPropertyToggleAction implemen
   }
 
   private static boolean isDateDisplayed(@Nullable VcsLogUiProperties properties) {
-    if (properties != null && supportsColumnsReordering(properties)) {
+    if (properties != null && supportsColumnsToggling(properties)) {
       return isVisible(Date.INSTANCE, properties);
     }
     return false;

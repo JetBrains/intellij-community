@@ -991,7 +991,9 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     @Override
     public void moveColumn(int columnIndex, int newIndex) {
       VcsLogColumn<?> column = getVcsLogColumn(columnIndex);
-      if (column == null || column == Root.INSTANCE || getVcsLogColumn(newIndex) == Root.INSTANCE) {
+      if (column == null ||
+          column == Root.INSTANCE || getVcsLogColumn(newIndex) == Root.INSTANCE ||
+          !supportsColumnsReordering(myProperties)) {
         return;
       }
       super.moveColumn(columnIndex, newIndex);

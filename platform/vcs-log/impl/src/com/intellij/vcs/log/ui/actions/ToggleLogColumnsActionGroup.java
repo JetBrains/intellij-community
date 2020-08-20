@@ -57,7 +57,7 @@ public class ToggleLogColumnsActionGroup extends ActionGroup implements DumbAwar
 
   private static boolean isEnabledAndVisible(@NotNull AnActionEvent e) {
     VcsLogUiProperties properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
-    return properties != null && supportsColumnsReordering(properties);
+    return properties != null && supportsColumnsToggling(properties);
   }
 
   private static final class ToggleColumnAction extends ToggleAction implements DumbAware {
@@ -71,7 +71,7 @@ public class ToggleLogColumnsActionGroup extends ActionGroup implements DumbAwar
     @Override
     public boolean isSelected(@NotNull AnActionEvent e) {
       VcsLogUiProperties properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
-      if (properties != null && supportsColumnsReordering(properties)) {
+      if (properties != null) {
         return isVisible(myColumn, properties);
       }
       return false;
@@ -82,7 +82,7 @@ public class ToggleLogColumnsActionGroup extends ActionGroup implements DumbAwar
       VcsLogUsageTriggerCollector.triggerUsage(e, this);
 
       VcsLogUiProperties properties = e.getRequiredData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
-      assert supportsColumnsReordering(properties);
+      assert supportsColumnsToggling(properties);
 
       if (state) {
         addColumn(properties, myColumn);
