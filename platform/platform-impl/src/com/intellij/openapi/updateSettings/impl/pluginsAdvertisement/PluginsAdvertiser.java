@@ -162,7 +162,7 @@ public final class PluginsAdvertiser {
           List<PluginNode> marketplacePlugins =  MarketplaceRequests.getInstance().loadLastCompatiblePluginDescriptors(ids);
           myCustomPlugins = RepositoryHelper.loadPluginsFromCustomRepositories(indicator);
 
-          myRepositoryPlugins = UpdateChecker.mergePluginsFromRepositories(marketplacePlugins, myCustomPlugins);
+          myRepositoryPlugins = UpdateChecker.mergePluginsFromRepositories(marketplacePlugins, myCustomPlugins, true);
 
           for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
             if (!descriptor.isEnabled() && pluginIds.contains(descriptor.getPluginId()) && PluginManagerCore.isCompatible(descriptor)) {
