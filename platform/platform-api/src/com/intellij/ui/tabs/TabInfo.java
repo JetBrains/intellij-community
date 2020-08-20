@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-public final class TabInfo implements Queryable, PlaceProvider<String> {
+public final class TabInfo implements Queryable, PlaceProvider {
 
   public static final String ACTION_GROUP = "actionGroup";
   public static final String ICON = "icon";

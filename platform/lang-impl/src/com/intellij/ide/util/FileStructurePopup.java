@@ -1064,7 +1064,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
     return false;
   }
 
-  static class MyTree extends DnDAwareTree implements PlaceProvider<String> {
+  static class MyTree extends DnDAwareTree implements PlaceProvider {
 
     MyTree(TreeModel treeModel) {
       super(treeModel);
