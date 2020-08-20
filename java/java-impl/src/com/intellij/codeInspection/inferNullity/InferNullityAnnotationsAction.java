@@ -148,9 +148,9 @@ public class InferNullityAnnotationsAction extends BaseAnalysisAction {
                                                  @NotNull String annoFQN, final @NlsContexts.DialogTitle String title) {
     final Library annotationsLib = LibraryUtil.findLibraryByClass(annoFQN, project);
     if (annotationsLib != null) {
-      String message = JavaBundle.message("dialog.message.modules.dont.refer.to.existing.annotations.library", 
-                                          modulesWithoutAnnotations.size(), 
-                                          StringUtil.join(modulesWithoutAnnotations, Module::getName, ", "), 
+      String message = JavaBundle.message("dialog.message.modules.dont.refer.to.existing.annotations.library",
+                                          modulesWithoutAnnotations.size(),
+                                          StringUtil.join(modulesWithoutAnnotations, Module::getName, ", "),
                                           annotationsLib.getName());
       if (Messages.showOkCancelDialog(project, message, title, Messages.getErrorIcon()) == Messages.OK) {
         ApplicationManager.getApplication().runWriteAction(() -> {

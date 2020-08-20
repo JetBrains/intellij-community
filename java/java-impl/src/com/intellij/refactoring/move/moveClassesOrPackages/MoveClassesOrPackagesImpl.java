@@ -137,8 +137,9 @@ public final class MoveClassesOrPackagesImpl {
       }
       message.append("\n");
       message.append(RefactoringBundle.message("do.you.wish.to.continue"));
-      int ret =
-        Messages.showYesNoDialog(project, message.toString(), RefactoringBundle.message("warning.title"), Messages.getWarningIcon());
+      //noinspection HardCodedStringLiteral
+      String resultMessage = message.toString();
+      int ret = Messages.showYesNoDialog(project, resultMessage, RefactoringBundle.message("warning.title"), Messages.getWarningIcon());
       if (ret != Messages.YES) {
         return false;
       }

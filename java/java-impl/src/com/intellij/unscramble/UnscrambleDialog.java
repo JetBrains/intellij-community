@@ -121,7 +121,7 @@ public class UnscrambleDialog extends DialogWrapper {
     myLogFile.setHistorySize(10);
     myLogFile.setHistory(savedUrls);
 
-    String lastUrl = getPropertyValue(PROPERTY_LOG_FILE_LAST_URL);
+    String lastUrl = getPropertyValue(PROPERTY_LOG_FILE_LAST_URL); //NON-NLS URL is safe to show
     if (lastUrl == null && !savedUrls.isEmpty()) {
       lastUrl = savedUrls.get(savedUrls.size() - 1);
     }

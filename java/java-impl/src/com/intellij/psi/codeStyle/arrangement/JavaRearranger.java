@@ -2,6 +2,7 @@
 package com.intellij.psi.codeStyle.arrangement;
 
 import com.intellij.ide.highlighter.JavaHighlightingColors;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -57,8 +58,7 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
     );
   @NotNull private static final List<ArrangementSettingsToken> SUPPORTED_ORDERS =
     ContainerUtil.newArrayList(KEEP, BY_NAME);
-  @NotNull private static final ArrangementSettingsToken NO_TYPE =
-    new ArrangementSettingsToken("NO_TYPE", "NO_TYPE");
+  @NotNull private static final ArrangementSettingsToken NO_TYPE = new ArrangementSettingsToken("NO_TYPE", "NO_TYPE"); //NON-NLS not visible in settings
   @NotNull
   private static final Map<ArrangementSettingsToken, Set<ArrangementSettingsToken>> MODIFIERS_BY_TYPE =
     new HashMap<>();

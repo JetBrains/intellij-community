@@ -33,7 +33,7 @@ public class SideEffectWarningDialog extends DialogWrapper {
   private AbstractAction myRemoveAllAction;
   private AbstractAction myCancelAllAction;
 
-  public SideEffectWarningDialog(Project project, boolean canBeParent, PsiVariable variable, String beforeText, String afterText, boolean canCopeWithSideEffects) {
+  public SideEffectWarningDialog(Project project, boolean canBeParent, PsiVariable variable, @NlsSafe String beforeText, @NlsSafe String afterText, boolean canCopeWithSideEffects) {
     super(project, canBeParent);
     myVariable = variable;
     myBeforeText = beforeText;
