@@ -38,15 +38,16 @@ public abstract class DownloadableLibraryType extends LibraryType<LibraryVersion
   /**
    * Creates instance of library type. You also <strong>must</strong> override {@link #getLibraryTypeIcon()} method and return non-null value
    * from it.
+   *
    * @param libraryCategoryName presentable description of the library type
-   * @param libraryTypeId unique id of the library type, used for serialization
-   * @param groupId name of directory on https://frameworks.jetbrains.com site which contains information about available library versions
-   * @param localUrls URLs of xml files containing information about the library versions (see /contrib/osmorc/src/org/osmorc/facet/osgi.core.xml for example)
+   * @param libraryTypeId       unique id of the library type, used for serialization
+   * @param groupId             name of directory on https://frameworks.jetbrains.com site which contains information about available library versions
+   * @param localUrls           URLs of xml files containing information about the library versions (see /contrib/osmorc/src/org/osmorc/facet/osgi.core.xml for example)
    */
   protected DownloadableLibraryType(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String libraryCategoryName,
-                               @NotNull String libraryTypeId,
-                               @NotNull String groupId,
-                               URL @NotNull ... localUrls) {
+                                    @NotNull String libraryTypeId,
+                                    @NotNull String groupId,
+                                    URL @NotNull ... localUrls) {
     this(libraryCategoryName, libraryTypeId, groupId, null, localUrls);
   }
 
@@ -59,7 +60,7 @@ public abstract class DownloadableLibraryType extends LibraryType<LibraryVersion
                                  @NotNull String groupId,
                                  @Nullable Icon icon,
                                  URL @NotNull ... localUrls) {
-    super(new PersistentLibraryKind<LibraryVersionProperties>(libraryTypeId) {
+    super(new PersistentLibraryKind<>(libraryTypeId) {
       @NotNull
       @Override
       public LibraryVersionProperties createDefaultProperties() {
@@ -116,7 +117,9 @@ public abstract class DownloadableLibraryType extends LibraryType<LibraryVersion
   @NotNull
   public Icon getLibraryTypeIcon() {
     if (myIcon == null) {
-      throw PluginException.createByClass("'DownloadableLibraryType::getLibraryTypeIcon' isn't overriden or returns 'null' in " + getClass().getName(), null, getClass());
+      throw PluginException
+        .createByClass("'DownloadableLibraryType::getLibraryTypeIcon' isn't overriden or returns 'null' in " + getClass().getName(), null,
+                       getClass());
     }
     return myIcon;
   }
