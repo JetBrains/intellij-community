@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands;
 
 import com.intellij.execution.process.AnsiEscapeDecoder;
@@ -12,10 +12,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -239,8 +236,8 @@ public abstract class GitImplBase implements Git {
   public static boolean loadFileAndShowInSimpleEditor(@NotNull Project project,
                                                       @Nullable VirtualFile root,
                                                       @NotNull File file,
-                                                      @NotNull String dialogTitle,
-                                                      @NotNull String okButtonText) throws IOException {
+                                                      @NotNull @NlsContexts.DialogTitle String dialogTitle,
+                                                      @NotNull @NlsContexts.Button String okButtonText) throws IOException {
     String encoding = root == null ? CharsetToolkit.UTF8 : GitConfigUtil.getCommitEncoding(project, root);
     String initialText = trimLeading(ignoreComments(FileUtil.loadFile(file, encoding)));
 
@@ -257,9 +254,9 @@ public abstract class GitImplBase implements Git {
   @Nullable
   private static String showUnstructuredEditorAndWait(@NotNull Project project,
                                                       @Nullable VirtualFile root,
-                                                      @NotNull String initialText,
-                                                      @NotNull String dialogTitle,
-                                                      @NotNull String okButtonText) {
+                                                      @NotNull @NonNls String initialText,
+                                                      @NotNull @NlsContexts.DialogTitle String dialogTitle,
+                                                      @NotNull @NlsContexts.Button String okButtonText) {
     Ref<String> newText = Ref.create();
     ApplicationManager.getApplication().invokeAndWait(() -> {
       GitUnstructuredEditor editor = new GitUnstructuredEditor(project, root, initialText, dialogTitle, okButtonText);
