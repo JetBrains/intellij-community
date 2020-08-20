@@ -41,7 +41,7 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
   private final Set<String> myAllowedOptions = new HashSet<>();
   private boolean myAllOptionsAllowed = false;
   private boolean myIsFirstUpdate = true;
-  private final Map<String, String> myRenamedFields = new THashMap<>();
+  private final Map<String, @NlsContexts.Label String> myRenamedFields = new THashMap<>();
 
   private final MultiMap<String, IntOption> myCustomOptions = new MultiMap<>();
 

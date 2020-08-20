@@ -62,7 +62,7 @@ public abstract class OptionTableWithPreviewPanel extends CustomizableLanguageCo
   private final List<Option> myOptions = new ArrayList<>();
   private final List<Option> myCustomOptions = new ArrayList<>();
   private final Set<String> myAllowedOptions = new THashSet<>();
-  private final Map<String, String> myRenamedFields = new THashMap<>();
+  private final Map<String, @NlsContexts.Label String> myRenamedFields = new THashMap<>();
   private boolean myShowAllStandardOptions;
   protected boolean isFirstUpdate = true;
 

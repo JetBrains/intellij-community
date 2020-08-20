@@ -40,8 +40,8 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
   private final Set<String> myAllowedOptions = new HashSet<>();
   protected MultiMap<String, CustomBooleanOptionInfo> myCustomOptions = new MultiMap<>();
   protected boolean isFirstUpdate = true;
-  private final Map<String, String> myRenamedFields = new THashMap<>();
-  private final Map<String, String> myRemappedGroups = new THashMap<>();
+  private final Map<String, @NlsContexts.Label String> myRenamedFields = new THashMap<>();
+  private final Map<String, @NlsContexts.Label String> myRemappedGroups = new THashMap<>();
 
   private SpeedSearchHelper mySearchHelper;
 
