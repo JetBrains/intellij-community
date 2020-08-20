@@ -304,7 +304,7 @@ internal class GitVcsPanel(private val project: Project) :
         label(message("settings.clean.working.tree"))
         buttonGroup({ projectSettings.saveChangesPolicy }, { projectSettings.saveChangesPolicy = it }) {
           GitSaveChangesPolicy.values().forEach { saveSetting ->
-            radioButton(saveSetting.name.toLowerCase().capitalize(), saveSetting)
+            radioButton(saveSetting.text, saveSetting)
           }
         }
       }
