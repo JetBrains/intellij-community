@@ -77,7 +77,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     myContentPane.addMouseMotionListener(new MouseMotionAdapter() {
     });
 
-    IdeMenuBar menu = IdeMenuBar.createMenuBar();
+    IdeMenuBar menu = createMenuBar();
     myDecoratedMenu = IdeFrameDecorator.isCustomDecorationActive();
 
     if (!isDecoratedMenu() && !FrameInfoHelper.isFloatingMenuBarSupported()) {
@@ -87,9 +87,8 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
       if (isDecoratedMenu()) {
         JdkEx.setHasCustomDecoration(frame);
 
-        myCustomFrameTitlePane = CustomHeader.createMainFrameHeader(frame);
+        myCustomFrameTitlePane = CustomHeader.createMainFrameHeader(frame, createMenuBar());
         getLayeredPane().add(myCustomFrameTitlePane, JLayeredPane.DEFAULT_LAYER - 2);
-        menu.setVisible(false);
       }
 
       if (FrameInfoHelper.isFloatingMenuBarSupported()) {
@@ -115,6 +114,10 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     updateMainMenuVisibility();
 
     myContentPane.add(getCenterComponent(frame, parentDisposable), BorderLayout.CENTER);
+  }
+
+  protected @NotNull IdeMenuBar createMenuBar() {
+    return IdeMenuBar.createMenuBar();
   }
 
   protected @NotNull Component getCenterComponent(@NotNull JFrame frame, @NotNull Disposable parentDisposable) {
@@ -227,10 +230,6 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
       myCustomFrameTitlePane.updateMenuActions(false);
       myCustomFrameTitlePane.repaint();
     }
-  }
-
-  protected @Nullable ActionGroup getMainMenuActionGroup() {
-    return null;
   }
 
   private static @NotNull JComponent createToolbar() {
@@ -480,6 +479,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
         Dimension tpd = myCustomFrameTitlePane.getPreferredSize();
         if (tpd != null) {
           int tpHeight = tpd.height;
+
           myCustomFrameTitlePane.setBounds(0, 0, w, tpHeight);
           contentY += tpHeight;
         }

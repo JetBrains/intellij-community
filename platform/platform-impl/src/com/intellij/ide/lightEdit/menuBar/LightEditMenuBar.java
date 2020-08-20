@@ -11,7 +11,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
-public final class LightEditMainMenuHelper {
+public final class LightEditMenuBar extends IdeMenuBar {
+  @Override
   public @NotNull ActionGroup getMainMenuActionGroup() {
     DefaultActionGroup topGroup = new DefaultActionGroup();
     topGroup.add(

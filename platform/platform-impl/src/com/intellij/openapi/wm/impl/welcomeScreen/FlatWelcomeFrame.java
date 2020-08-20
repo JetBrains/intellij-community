@@ -32,6 +32,8 @@ import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.openapi.wm.impl.IdeMenuBar;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent;
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader;
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.FrameHeader;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBTextField;
@@ -78,7 +80,7 @@ import static com.intellij.util.ui.update.UiNotifyConnector.doWhenFirstShown;
  */
 public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, AccessibleContextAccessor, WelcomeFrameUpdater {
   public static final String BOTTOM_PANEL = "BOTTOM_PANEL";
-  public static final int DEFAULT_HEIGHT = Registry.is("use.tabbed.welcome.screen") ? 600 : 460 ;
+  public static final int DEFAULT_HEIGHT = Registry.is("use.tabbed.welcome.screen") ? 600 : 460;
   public static final int MAX_DEFAULT_WIDTH = 800;
   private final AbstractWelcomeScreen myScreen;
   private WelcomeBalloonLayoutImpl myBalloonLayout;
@@ -106,13 +108,21 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     int defaultHeight = DEFAULT_HEIGHT;
 
     if (IdeFrameDecorator.isCustomDecorationActive()) {
-      JComponent holder = CustomFrameDialogContent
-        .getCustomContentHolder(this, myScreen.getWelcomePanel(), UIManager.getColor("WelcomeScreen.background"),
-                                useTabWelcomeScreen ? new WelcomeFrameMenuBar() : null);
-      setContentPane(holder);
+      Color backgroundColor = UIManager.getColor("WelcomeScreen.background");
 
-      if(holder instanceof CustomFrameDialogContent)
-      defaultHeight+= ((CustomFrameDialogContent)holder).getHeaderHeight();
+      FrameHeader header = CustomHeader.createFrameHeader(this, useTabWelcomeScreen ? new WelcomeFrameMenuBar() : null);
+
+      if (backgroundColor != null) {
+        header.setBackground(backgroundColor);
+      }
+
+      JComponent holder = CustomFrameDialogContent
+        .getCustomContentHolder(this, myScreen.getWelcomePanel(), header);
+
+      setContentPane(holder);
+      if (holder instanceof CustomFrameDialogContent) {
+        defaultHeight += ((CustomFrameDialogContent)holder).getHeaderHeight();
+      }
     }
     else {
       if (useTabWelcomeScreen) {
@@ -329,7 +339,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
         Color backgroundBorder = JBColor.namedColor("DragAndDrop.areaBorderColor", new Color(137, 178, 222));
         g.setColor(backgroundBorder);
         g.drawRect(bounds.x, bounds.y, bounds.width, bounds.height);
-        g.drawRect(bounds.x + 1 , bounds.y + 1, bounds.width - 2, bounds.height - 2);
+        g.drawRect(bounds.x + 1, bounds.y + 1, bounds.width - 2, bounds.height - 2);
 
         Color foreground = JBColor.namedColor("DragAndDrop.areaForeground", Gray._120);
         g.setColor(foreground);
@@ -369,10 +379,12 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       toolbar.setLayout(new BoxLayout(toolbar, BoxLayout.X_AXIS));
       toolbar.add(createErrorsLink(this));
       toolbar.add(createEventsLink());
-      toolbar.add(createActionLink(FlatWelcomeFrame.this, IdeBundle.message("action.Anonymous.text.configure"), IdeActions.GROUP_WELCOME_SCREEN_CONFIGURE,
+      toolbar.add(createActionLink(FlatWelcomeFrame.this, IdeBundle.message("action.Anonymous.text.configure"),
+                                   IdeActions.GROUP_WELCOME_SCREEN_CONFIGURE,
                                    AllIcons.General.GearPlain, UIUtil.findComponentOfType(frame.getRootPane(), JList.class)));
-      toolbar.add(createActionLink(FlatWelcomeFrame.this, IdeBundle.message("action.GetHelp"), IdeActions.GROUP_WELCOME_SCREEN_DOC, null, null
-      ));
+      toolbar
+        .add(createActionLink(FlatWelcomeFrame.this, IdeBundle.message("action.GetHelp"), IdeActions.GROUP_WELCOME_SCREEN_DOC, null, null
+        ));
       panel.add(toolbar, BorderLayout.EAST);
 
       panel.setBorder(JBUI.Borders.empty(0, 0, 8, 11));
@@ -389,7 +401,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       ActionGroup quickStart = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART);
       collectAllActions(group, quickStart);
 
-      ActionPanel mainPanel = new ActionPanel(new MigLayout("ins 0, novisualpadding, gap " + JBUI.scale(5) + ", flowy", "push[pref!, center]push"));
+      ActionPanel mainPanel =
+        new ActionPanel(new MigLayout("ins 0, novisualpadding, gap " + JBUI.scale(5) + ", flowy", "push[pref!, center]push"));
       mainPanel.setOpaque(false);
 
       JPanel panel = new JPanel(new VerticalLayout(JBUI.scale(5))) {
@@ -398,7 +411,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
         @Override
         public Component add(Component comp) {
           Component cmp = super.add(comp);
-          if(firstAction == null) {
+          if (firstAction == null) {
             firstAction = cmp;
           }
           return cmp;
@@ -408,10 +421,9 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
         public void addNotify() {
           super.addNotify();
 
-          if(firstAction != null) {
+          if (firstAction != null) {
             onFirstActionShown(firstAction);
           }
-
         }
       };
       panel.setOpaque(false);
@@ -461,8 +473,9 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     @Nullable
     @Override
     public Object getData(@NotNull String dataId) {
-      if (TouchbarDataKeys.ACTIONS_KEY.is(dataId))
+      if (TouchbarDataKeys.ACTIONS_KEY.is(dataId)) {
         return myTouchbarActions;
+      }
       return null;
     }
 
@@ -489,7 +502,6 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       myUpdatePluginsLink.setListener(null, null);
       myUpdatePluginsLink.setVisible(false);
     }
-
   }
 
   protected void extendActionsGroup(JPanel panel) {

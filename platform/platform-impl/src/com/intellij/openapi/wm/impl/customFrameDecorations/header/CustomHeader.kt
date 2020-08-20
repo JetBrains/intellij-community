@@ -63,16 +63,10 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
             return WindowsRegistryUtil.readRegistryValue("HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "ReleaseId")
         }
 
-        fun create(frame: JFrame, ideMenuBar: IdeMenuBar? = null): CustomHeader {
-            return ideMenuBar?.let {
-                createFrameHeader(frame, ideMenuBar)
-            } ?: create(frame as Window)
-        }
-
         fun create(window: Window): CustomHeader {
             return if (window is JFrame) {
                 if(window.rootPane is IdeRootPane) {
-                    createMainFrameHeader(window)
+                    createMainFrameHeader(window, IdeMenuBar.createMenuBar())
                 } else {
                     createFrameHeader(window)
                 }
@@ -81,13 +75,17 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
             }
         }
 
-        private fun createFrameHeader(frame: JFrame, ideMenuBar: IdeMenuBar? = null): FrameHeader {
+        @JvmStatic
+        fun createFrameHeader(frame: JFrame, ideMenuBar: IdeMenuBar? = null): FrameHeader {
             return ideMenuBar?.let {
                 FrameWithMenuHeader(frame, ideMenuBar)
             } ?: DefaultFrameHeader(frame)
         }
+
         @JvmStatic
-        fun createMainFrameHeader(frame: JFrame): MainFrameHeader = MainFrameHeader(frame)
+        fun createMainFrameHeader(frame: JFrame, menuBar: IdeMenuBar): MainFrameHeader {
+          return MainFrameHeader(frame, menuBar)
+        }
 
         private val windowBorderThicknessInPhysicalPx: Int = run {
             // Windows 10 (tested on 1809) determines the window border size by the main display scaling, rounded down. This value is
