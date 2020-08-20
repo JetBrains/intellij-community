@@ -10,7 +10,7 @@ import git4idea.checkin.GitCommitAndPushExecutor
 class GitCommitAndPushExecutorAction : BaseCommitExecutorAction() {
   override fun update(e: AnActionEvent) {
     super.update(e)
-    e.presentation.text = e.getAmendCommitModePrefix() + templateText
+    e.presentation.text = e.useAmendPrefixIfNeeded(templateText)
   }
 
   override val executorId: String = GitCommitAndPushExecutor.ID

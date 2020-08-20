@@ -9,6 +9,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
@@ -68,6 +69,6 @@ public class RefreshAction extends AnAction implements DumbAware {
       Collection<FilePath> unversionedAfter = changeListManager.getUnversionedFilesPaths();
 
       logRefreshActionPerformed(changesBeforeUpdate, changesAfterUpdate, unversionedBefore, unversionedAfter, wasUpdatingBefore);
-    }, InvokeAfterUpdateMode.SILENT, "Refresh Action", ModalityState.current());
+    }, InvokeAfterUpdateMode.SILENT, VcsBundle.message("changes.progress.title.refresh.action"), ModalityState.current());
   }
 }

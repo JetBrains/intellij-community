@@ -20,7 +20,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -170,19 +169,5 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
 
   public static Dimension getDialogPreferredSize() {
     return new Dimension(500, 400);
-  }
-
-  @NotNull
-  public static String getTheseFilesMessage(Collection<? extends VirtualFile> files) {
-    boolean dirsOnly = true;
-    for (VirtualFile each : files) {
-      if (!each.isDirectory()) {
-        dirsOnly = false;
-        break;
-      }
-    }
-
-    int size = files.size();
-    return StringUtil.pluralize("this", size) + " " + StringUtil.pluralize((dirsOnly ? "directory" : "file"), size);
   }
 }

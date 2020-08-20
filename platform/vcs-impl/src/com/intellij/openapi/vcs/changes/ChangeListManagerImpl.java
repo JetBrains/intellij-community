@@ -54,6 +54,7 @@ import com.intellij.vcs.commit.ChangeListCommitState;
 import com.intellij.vcs.commit.ShowNotificationCommitResultHandler;
 import com.intellij.vcs.commit.SingleChangeListCommitter;
 import com.intellij.vcsUtil.VcsUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import kotlin.text.StringsKt;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
@@ -67,6 +68,7 @@ import java.util.concurrent.*;
 import static com.intellij.openapi.progress.util.ProgressIndicatorUtils.awaitWithCheckCanceled;
 import static com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED;
 import static com.intellij.util.containers.ContainerUtil.mapNotNull;
+import static com.intellij.util.ui.UIUtil.BR;
 import static java.util.stream.Collectors.toSet;
 
 @State(name = "ChangeListManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
@@ -98,7 +100,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
   private Factory<JComponent> myAdditionalInfo;
   private volatile boolean myShowLocalChangesInvalidated;
 
-  private volatile String myFreezeName;
+  private volatile @Nls String myFreezeName;
 
   @NotNull private final Set<String> myListsToBeDeletedSilently = new HashSet<>();
   @NotNull private final Set<String> myListsToBeDeleted = new HashSet<>();
@@ -255,15 +257,12 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
       return false;
     }
 
-    final String question;
-    if (lists.size() == 1) {
-      question = String.format("<html>The empty changelist '%s' is no longer active.<br>Do you want to remove it?</html>",
-                               StringUtil.first(lists.iterator().next().getName(), 30, true));
-    }
-    else {
-      question = String.format("<html>Empty changelists<br/>%s are no longer active.<br>Do you want to remove them?</html>",
-                               StringUtil.join(lists, list -> StringUtil.first(list.getName(), 30, true), "<br/>"));
-    }
+
+    String changeListName = lists.size() == 1
+                            ? StringUtil.first(lists.iterator().next().getName(), 30, true)
+                            : StringUtil.join(lists, list -> StringUtil.first(list.getName(), 30, true), BR);
+    String question = VcsBundle.message("changes.empty.changelists.no.longer.active", lists.size(), changeListName);
+
 
     VcsConfirmationDialog dialog =
       new VcsConfirmationDialog(project, VcsBundle.message("dialog.title.remove.empty.changelist"), VcsBundle.message("button.remove"),
@@ -282,7 +281,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
       public boolean isPersistent() {
         return true;
       }
-    }, question, VcsBundle.message("checkbox.remember.my.choice"));
+    }, XmlStringUtil.wrapInHtml(question), VcsBundle.message("checkbox.remember.my.choice"));
     return dialog.showAndGet();
   }
 
@@ -387,7 +386,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
   }
 
   @Override
-  public void waitForUpdate(@Nullable String operationName) {
+  public void waitForUpdate(@Nullable @NlsContexts.ProgressTitle String operationName) {
     assert !ApplicationManager.getApplication().isDispatchThread();
     CountDownLatch waiter = new CountDownLatch(1);
     invokeAfterUpdate(waiter::countDown, InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED, operationName, ModalityState.NON_MODAL);
@@ -1367,7 +1366,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
     @NotNull
     @Override
     public String getIgnoredGroupDescription() {
-      return "Default ignored files";
+      return VcsBundle.message("changes.text.default.ignored.files");
     }
   }
 

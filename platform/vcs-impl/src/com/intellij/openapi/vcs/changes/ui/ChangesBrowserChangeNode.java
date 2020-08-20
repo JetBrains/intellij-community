@@ -5,6 +5,7 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
@@ -86,7 +87,8 @@ public class ChangesBrowserChangeNode extends ChangesBrowserNode<Change> impleme
     if (file != null && myProject != null && !myProject.isDefault() && !myProject.isDisposed()) {
       String branch = ChangeListManager.getInstance(myProject).getSwitchedBranch(file);
       if (branch != null) {
-        renderer.append(spaceAndThinSpace() + "[switched to " + branch + "]", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        String switchedToBranch = "[" + VcsBundle.message("changes.switched.to.branch.name", branch) + "]";
+        renderer.append(spaceAndThinSpace() + switchedToBranch, SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
     }
   }

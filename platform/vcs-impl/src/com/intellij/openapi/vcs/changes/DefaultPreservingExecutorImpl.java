@@ -72,7 +72,7 @@ class DefaultPreservingExecutorImpl {
         LOG.info("Couldn't save local changes", e);
         VcsNotifier.getInstance(myProject).notifyError(
           VcsBundle.message("notification.title.couldn.t.save.uncommitted.changes"),
-          String.format("Tried to save uncommitted changes in shelve before %s, but failed with an error.<br/>%s",
+          String.format(VcsBundle.message("changes.tried.to.save.uncommitted.changes.in.shelve.before.s.but.failed.with.an.error.br.s"),
                         myOperationTitle, join(e.getMessages())));
         return false;
       }

@@ -16,7 +16,7 @@ import java.util.*
 import kotlin.collections.ArrayList
 
 
-private const val CHANGELIST_DATA: String = "changelist_data"
+private const val CHANGELIST_DATA: String = "changelist_data" // NON-NLS
 
 val LocalChangeList.changeListData: ChangeListData? get() = (data as? ChangeListData)?.nullize()
 val LocalChangeList.author: VcsUser? get() = changeListData?.author

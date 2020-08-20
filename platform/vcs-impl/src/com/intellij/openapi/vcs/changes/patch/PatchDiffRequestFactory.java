@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -44,7 +45,7 @@ public final class PatchDiffRequestFactory {
                                               @NotNull ProgressIndicator indicator)
     throws DiffRequestProducerException {
     ChangeDiffRequestProducer proxyProducer = ChangeDiffRequestProducer.create(project, change);
-    if (proxyProducer == null) throw new DiffRequestProducerException("Can't show diff for '" + name + "'");
+    if (proxyProducer == null) throw new DiffRequestProducerException(VcsBundle.message("changes.error.can.t.show.diff.for",  name));
     return proxyProducer.process(context, indicator);
   }
 
@@ -57,8 +58,11 @@ public final class PatchDiffRequestFactory {
                                                       @NotNull final ApplyPatchForBaseRevisionTexts texts,
                                                       @NotNull String name)
     throws DiffRequestProducerException {
-    if (file == null) throw new DiffRequestProducerException("Can't show diff for '" + name + "'");
-    if (file.getFileType().isBinary()) throw new DiffRequestProducerException("Can't show diff for binary file '" + name + "'");
+    if (file == null) throw new DiffRequestProducerException(VcsBundle.message("changes.error.can.t.show.diff.for",  name));
+
+    if (file.getFileType().isBinary()) {
+      throw new DiffRequestProducerException(VcsBundle.message("changes.error.can.t.show.diff.for.binary.file", name));
+    }
 
     if (texts.getBase() == null) {
       String localContent = texts.getLocal();
@@ -85,7 +89,7 @@ public final class PatchDiffRequestFactory {
   public static DiffRequest createDiffRequest(@Nullable Project project,
                                               @Nullable VirtualFile file,
                                               @NotNull List<String> contents,
-                                              @Nullable String windowTitle,
+                                              @Nullable @NlsContexts.DialogTitle String windowTitle,
                                               @NotNull List<String> titles) {
     assert contents.size() == 3;
     assert titles.size() == 3;
@@ -205,7 +209,7 @@ public final class PatchDiffRequestFactory {
   }
 
   @NotNull
-  private static String getPatchTitle(@Nullable VirtualFile file) {
+  private static @NlsContexts.DialogTitle String getPatchTitle(@Nullable VirtualFile file) {
     if (file != null) {
       return VcsBundle.message("patch.apply.conflict.for.title", getPresentablePath(file));
     }

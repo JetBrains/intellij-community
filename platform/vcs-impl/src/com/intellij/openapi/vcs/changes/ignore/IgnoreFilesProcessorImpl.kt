@@ -200,7 +200,7 @@ class IgnoreFilesProcessorImpl(project: Project, private val vcs: AbstractVcs, p
   override fun notificationTitle() = ""
   override fun notificationMessage(): String = VcsBundle.message("ignored.file.manage.with.files.message",
                                                                  ApplicationNamesInfo.getInstance().fullProductName,
-                                                                 findIgnoredFileContentProvider(vcs)?.fileName ?: "ignore file")
+                                                                 findIgnoredFileContentProvider(vcs)?.fileName ?: VcsBundle.message("changes.ignore.file"))
 
   private fun isUnder(parents: Collection<VirtualFile>, child: VirtualFile) = generateSequence(child) { it.parent }.any { it in parents }
 

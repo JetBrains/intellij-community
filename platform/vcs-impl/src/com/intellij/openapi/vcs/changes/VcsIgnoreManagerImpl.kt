@@ -72,7 +72,8 @@ class VcsIgnoreManagerImpl(private val project: Project) : VcsIgnoreManager {
       val checkForIgnore = { checkConfigurationVcsIgnored(project, configurationFileName) is Ignored }
       return ProgressManager.getInstance()
         .runProcessWithProgressSynchronously<Boolean, IOException>(checkForIgnore,
-                                                                   "Checking configuration $configurationName for ignore...",
+                                                                   VcsBundle.message("changes.checking.configuration.0.for.ignore",
+                                                                                     configurationName),
                                                                    false, project)
     }
     catch (e: IOException) {
@@ -86,7 +87,8 @@ class VcsIgnoreManagerImpl(private val project: Project) : VcsIgnoreManager {
       val removeFromIgnore = { removeConfigurationFromVcsIgnore(project, configurationName) }
       ProgressManager.getInstance()
         .runProcessWithProgressSynchronously<Unit, IOException>(removeFromIgnore,
-                                                                "Removing configuration ${configurationName} from ignore...",
+                                                                VcsBundle.message("changes.removing.configuration.0.from.ignore",
+                                                                                  configurationName),
                                                                 false, project)
     }
     catch (io: IOException) {
@@ -142,8 +144,9 @@ private fun checkConfigurationVcsIgnored(project: Project, configurationFileName
   if (dotIdea != null) {
     val dotIdeaVcsPath = VcsContextFactory.SERVICE.getInstance().createFilePath(dotIdea, true)
     val vcsRootForIgnore = VcsUtil.getVcsRootFor(project, dotIdeaVcsPath) ?: return NotIgnored
+    val filePattern = "${dotIdea.systemIndependentPath}/$RUN_CONFIGURATIONS_DIRECTORY/$configurationFileName*.xml" // NON-NLS
     return getCheckerForFile(project, dotIdeaVcsPath)
-             ?.isFilePatternIgnored(vcsRootForIgnore, "${dotIdea.systemIndependentPath}/$RUN_CONFIGURATIONS_DIRECTORY/$configurationFileName*.xml") ?: NotIgnored
+             ?.isFilePatternIgnored(vcsRootForIgnore, filePattern) ?: NotIgnored
   }
   else {
     val projectFile = stateStore.projectFilePath
@@ -165,6 +168,6 @@ private fun configurationNameToFileName(configurationName: String): String {
 
 private fun checkProjectNotDefault(project: Project) {
   if (project.isDefault) {
-    throw UnsupportedOperationException("Default project not supported")
+    throw UnsupportedOperationException(VcsBundle.message("changes.error.default.project.not.supported"))
   }
 }

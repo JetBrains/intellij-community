@@ -8,10 +8,8 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.AbstractVcsHelper;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ChangesViewManager;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
@@ -51,7 +49,7 @@ public abstract class AbstractMissingFilesAction extends AnAction implements Dum
       }
       ChangesViewManager.getInstance(project).scheduleRefresh();
       if (allExceptions.size() > 0) {
-        AbstractVcsHelper.getInstance(project).showErrors(allExceptions, "VCS Errors");
+        AbstractVcsHelper.getInstance(project).showErrors(allExceptions, VcsBundle.message("changes.tab.title.vcs.errors"));
       }
     };
     if (synchronously()) {
@@ -62,7 +60,7 @@ public abstract class AbstractMissingFilesAction extends AnAction implements Dum
   }
 
   protected abstract boolean synchronously();
-  protected abstract String getName();
+  protected abstract @NlsContexts.ProgressTitle String getName();
 
   protected abstract List<VcsException> processFiles(final AbstractVcs vcs, final List<? extends FilePath> files);
 }

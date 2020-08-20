@@ -60,7 +60,7 @@ private fun showCommittedChanges(vcs: AbstractVcs, file: VirtualFile, settings: 
 
   val repositoryLocation = CommittedChangesCache.getInstance(vcs.project).locationCache.getLocation(vcs, getFilePath(file), false)
   if (repositoryLocation == null) {
-    showOverVersionControlView(vcs.project, "Repository location not found for ${file.presentableUrl}", MessageType.ERROR)
+    showOverVersionControlView(vcs.project, message("changes.notification.content.repository.location.not.found.for", file.presentableUrl), MessageType.ERROR)
     return
   }
 

@@ -58,7 +58,7 @@ public final class RemoteRevisionsCache implements VcsListener {
         }
       }
       return shouldBeDone;
-    }, "Finishing \"changed on server\" update", DEFAULT_REFRESH_INTERVAL);
+    }, VcsBundle.message("changes.finishing.changed.on.server.update"), DEFAULT_REFRESH_INTERVAL);
 
     MessageBusConnection connection = myProject.getMessageBus().connect();
     connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, this);
