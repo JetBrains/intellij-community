@@ -80,7 +80,7 @@ public final class GitUtil {
 
   public static final @NonNls String ORIGIN_HEAD = "origin/HEAD";
 
-  public static final @NonNls String HEAD = "HEAD";
+  public static final @NlsSafe String HEAD = "HEAD";
   public static final @NonNls String CHERRY_PICK_HEAD = "CHERRY_PICK_HEAD";
   public static final @NonNls String MERGE_HEAD = "MERGE_HEAD";
   public static final @NonNls String REBASE_HEAD = "REBASE_HEAD";
