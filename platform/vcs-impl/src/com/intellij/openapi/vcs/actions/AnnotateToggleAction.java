@@ -394,7 +394,8 @@ public class AnnotateToggleAction extends ToggleAction implements DumbAware {
       setText(VcsBundle.message("annotation.wrong.line.number.notification.text", vcs.getDisplayName()));
 
       createActionLabel(VcsBundle.message("link.label.display.anyway"), () -> showAnnotations());
-      createActionLabel(VcsBundle.message("link.label.hide"), () -> hideNotification()).setToolTipText("Hide this notification");
+      createActionLabel(VcsBundle.message("link.label.hide"), () -> hideNotification()).setToolTipText(
+        VcsBundle.message("hide.this.notification"));
     }
 
     public void showAnnotations() {
