@@ -181,7 +181,7 @@ public abstract class PackageManagementService {
     @Nullable private final @NlsContexts.DetailedDescription String mySolution;
 
     @Nullable
-    public static ErrorDescription fromMessage(@Nullable String message) {
+    public static ErrorDescription fromMessage(@Nullable @NlsContexts.DetailedDescription String message) {
       return message != null ? new ErrorDescription(message, null, null, null) : null;
     }
 
