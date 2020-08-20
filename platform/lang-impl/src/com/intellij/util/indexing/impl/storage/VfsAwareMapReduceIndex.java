@@ -265,8 +265,8 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
       try {
         removeTransientDataForInMemoryKeys(inputId, keyValueMap);
         InputDataDiffBuilder<Key, Value> builder = getKeysDiffBuilder(inputId);
-        removeTransientDataForKeys(inputId, getKeys(builder));
-      } catch (StorageException | IOException throwable) {
+        removeTransientDataForKeys(inputId, builder);
+      } catch (IOException throwable) {
         throw new RuntimeException(throwable);
       }
     } finally {
@@ -274,15 +274,15 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
     }
   }
 
-  protected void removeTransientDataForInMemoryKeys(int inputId, @NotNull Map<? extends Key, ? extends Value> map) {
-    removeTransientDataForKeys(inputId, map.keySet());
+  protected void removeTransientDataForInMemoryKeys(int inputId, @NotNull Map<Key, Value> map) throws IOException {
+    removeTransientDataForKeys(inputId, getKeysDiffBuilder(inputId, map));
   }
 
   @Override
-  public void removeTransientDataForKeys(int inputId, @NotNull Collection<? extends Key> keys) {
+  public void removeTransientDataForKeys(int inputId, @NotNull InputDataDiffBuilder<Key, Value> diffBuilder) {
     TransientChangesIndexStorage<Key, Value> memoryIndexStorage = (TransientChangesIndexStorage<Key, Value>)getStorage();
     boolean modified = false;
-    for (Key key : keys) {
+    for (Key key : ((DirectInputDataDiffBuilder<Key, Value>)diffBuilder).getKeys()) {
       if (memoryIndexStorage.clearMemoryMapForId(key, inputId) && !modified) {
         modified = true;
       }

@@ -27,6 +27,7 @@ import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.AbstractUpdateData;
 import com.intellij.util.indexing.impl.KeyValueUpdateProcessor;
+import com.intellij.util.indexing.impl.MapInputDataDiffBuilder;
 import com.intellij.util.indexing.impl.RemovedKeyProcessor;
 import com.intellij.util.indexing.impl.storage.TransientChangesIndexStorage;
 import com.intellij.util.indexing.impl.storage.VfsAwareMapIndexStorage;
@@ -581,9 +582,9 @@ public final class StubIndexImpl extends StubIndexEx {
     }
   }
 
-  <K> void removeTransientDataForFile(@NotNull StubIndexKey<K, ?> key, int inputId, @NotNull Collection<? extends K> keys) {
-    UpdatableIndex<K, Void, FileContent> index = getIndex(key);
-    index.removeTransientDataForKeys(inputId, keys);
+  <K> void removeTransientDataForFile(@NotNull StubIndexKey<K, ?> key, int inputId, Map<K, StubIdList> keys) {
+    UpdatableIndex<Object, Void, FileContent> index = (UpdatableIndex)getIndex(key);
+    index.removeTransientDataForKeys(inputId, new MapInputDataDiffBuilder(inputId, keys));
   }
 
   public <K> void updateIndex(@NotNull StubIndexKey<K, ?> stubIndexKey,
