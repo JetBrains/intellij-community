@@ -24,6 +24,7 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.*;
 
 import javax.swing.*;
@@ -164,7 +165,7 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
     @NotNull
     @Override
     public String getUnresolvedMessagePattern() {
-      return "Cannot resolve property bundle";
+      return DevKitBundle.message("plugin.xml.convert.property.bundle");
     }
   }
 }
