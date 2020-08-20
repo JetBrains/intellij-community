@@ -202,7 +202,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
                                         boolean movable,
                                         String dimensionServiceKey,
                                         boolean resizable,
-                                        @Nullable String caption,
+                                        @NlsContexts.PopupTitle @Nullable String caption,
                                         @Nullable Computable<Boolean> callback,
                                         boolean cancelOnClickOutside,
                                         @NotNull Set<? extends JBPopupListener> listeners,

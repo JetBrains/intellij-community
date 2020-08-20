@@ -30,10 +30,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -61,6 +58,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -494,7 +492,7 @@ public final class Switcher extends AnAction implements DumbAware {
 
       final ListSelectionListener filesSelectionListener = new ListSelectionListener() {
         @Nullable
-        private String getTitle2Text(@Nullable String fullText) {
+        private @NlsSafe String getTitle2Text(@Nullable String fullText) {
           int labelWidth = pathLabel.getWidth();
           if (fullText == null || fullText.length() == 0) return " ";
           while (pathLabel.getFontMetrics(pathLabel.getFont()).stringWidth(fullText) > labelWidth) {
@@ -685,7 +683,7 @@ public final class Switcher extends AnAction implements DumbAware {
       };
     }
 
-    static String getRecentLocationsLabel(@NotNull Supplier<Boolean> showEdited) {
+    static @Nls String getRecentLocationsLabel(@NotNull Supplier<Boolean> showEdited) {
       return showEdited.get() ? IdeBundle.message("recent.locations.changed.locations") : IdeBundle.message("recent.locations.popup.title");
     }
 
@@ -1398,7 +1396,7 @@ public final class Switcher extends AnAction implements DumbAware {
       setFocusable(false);
     }
 
-    private static String layoutText(@NotNull String actionId) {
+    private static @NlsContexts.Checkbox String layoutText(@NotNull String actionId) {
       String text = "<html>" + IdeBundle.message("recent.files.checkbox.label");
       ShortcutSet shortcuts = getActiveKeymapShortcuts(actionId);
       if (shortcuts.getShortcuts().length > 0) {

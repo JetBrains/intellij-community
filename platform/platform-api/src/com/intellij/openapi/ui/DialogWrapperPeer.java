@@ -103,7 +103,7 @@ public abstract class DialogWrapperPeer {
   /**
    * @see JDialog#setTitle
    */
-  public abstract void setTitle(String title);
+  public abstract void setTitle(@NlsContexts.DialogTitle String title);
 
   /**
    * @see JDialog#isResizable

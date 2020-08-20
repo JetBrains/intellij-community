@@ -15,6 +15,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
@@ -233,7 +234,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
   }
 
   @Nullable
-  public static String getAdText(CompletionResult result) {
+  public static @NlsContexts.PopupAdvertisement String getAdText(CompletionResult result) {
     if (result.myCompletionBase == null) return null;
     if (result.myCompletionBase.length() == result.myFieldText.length()) return null;
 

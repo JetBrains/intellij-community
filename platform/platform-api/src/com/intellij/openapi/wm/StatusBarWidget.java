@@ -89,7 +89,7 @@ public interface StatusBarWidget extends Disposable {
     @Nullable("null means the widget is unable to show the popup")
     ListPopup getPopupStep();
 
-    @Nullable
+    @Nullable @NlsContexts.StatusBarText
     String getSelectedValue();
 
     /**

@@ -5,6 +5,7 @@ import com.intellij.diagnostic.EventWatcher;
 import com.intellij.diagnostic.RunnablesListener;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.ui.components.JBScrollPane;
@@ -123,7 +124,7 @@ public final class EventWatcherToolWindowFactory implements ToolWindowFactory, D
     }
 
     @NotNull
-    private static Content createTableContent(@NotNull String tableName,
+    private static Content createTableContent(@NotNull @NlsContexts.TabTitle String tableName,
                                               @NotNull ListTableModel<?> tableModel) {
       JPanel panel = new JPanel(new BorderLayout());
       panel.add(
@@ -146,7 +147,7 @@ public final class EventWatcherToolWindowFactory implements ToolWindowFactory, D
       @NotNull
       private final Comparator<Item> myComparator;
 
-      private FunctionBasedColumnInfo(@NotNull String name,
+      private FunctionBasedColumnInfo(@NotNull @NlsContexts.ColumnName String name,
                                       @NotNull Class<? extends Aspect> columnClass,
                                       @NotNull Function<? super Item, ? extends Aspect> extractor,
                                       @NotNull Comparator<Item> comparator) {

@@ -244,7 +244,7 @@ public class ActionGroupPanelWrapper {
     return groups;
   }
 
-  private static String getParentGroupName(@NotNull final AnAction value) {
+  private static @NlsContexts.Separator String getParentGroupName(@NotNull final AnAction value) {
     return (String)value.getTemplatePresentation().getClientProperty(ACTION_GROUP_KEY);
   }
 

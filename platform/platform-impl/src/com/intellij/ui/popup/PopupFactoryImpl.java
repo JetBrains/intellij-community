@@ -686,7 +686,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     private final Icon myIcon;
     private final Icon mySelectedIcon;
     private final boolean myPrependWithSeparator;
-    private final String mySeparatorText;
+    private final @NlsContexts.Separator String mySeparatorText;
     private final String myDescription;
 
     ActionItem(@NotNull AnAction action,
@@ -696,7 +696,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                @Nullable Icon icon,
                @Nullable Icon selectedIcon,
                final boolean prependWithSeparator,
-               String separatorText) {
+               @NlsContexts.Separator String separatorText) {
       myAction = action;
       myText = text;
       myIsEnabled = enabled;
@@ -732,7 +732,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       return myPrependWithSeparator;
     }
 
-    public String getSeparatorText() {
+    public @NlsContexts.Separator String getSeparatorText() {
       return mySeparatorText;
     }
 

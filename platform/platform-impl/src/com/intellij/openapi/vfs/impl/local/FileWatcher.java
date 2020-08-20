@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -175,7 +176,7 @@ public final class FileWatcher {
     }
   }
 
-  public void notifyOnFailure(@NotNull String cause, @Nullable NotificationListener listener) {
+  public void notifyOnFailure(@NotNull @NlsContexts.NotificationContent String cause, @Nullable NotificationListener listener) {
     LOG.warn(cause);
 
     if (myFailureShown.compareAndSet(false, true)) {

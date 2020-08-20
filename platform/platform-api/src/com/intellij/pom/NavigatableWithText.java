@@ -15,12 +15,12 @@
  */
 package com.intellij.pom;
 
+import com.intellij.openapi.util.NlsActions;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
  */
 public interface NavigatableWithText extends Navigatable {
-  @Nullable
-  String getNavigateActionText(boolean focusEditor);
+  @NlsActions.ActionText @Nullable String getNavigateActionText(boolean focusEditor);
 }

@@ -21,8 +21,8 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 
 public class ContentImpl extends UserDataHolderBase implements Content {
-  private String myDisplayName;
-  private String myDescription;
+  private @NlsContexts.TabTitle String myDisplayName;
+  private @NlsContexts.Tooltip String myDescription;
   private JComponent myComponent;
   private Icon myIcon;
   private final PropertyChangeSupport myChangeSupport = new PropertyChangeSupport(this);

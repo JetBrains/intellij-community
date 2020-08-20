@@ -276,7 +276,7 @@ public class Notification {
   }
 
   @NotNull
-  public String getDropDownText() {
+  public @LinkLabel String getDropDownText() {
     if (myDropDownText == null) {
       myDropDownText = "Actions";
     }

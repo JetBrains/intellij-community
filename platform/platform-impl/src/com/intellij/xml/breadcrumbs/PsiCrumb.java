@@ -6,6 +6,7 @@ import com.intellij.internal.statistic.service.fus.collectors.UIEventId;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiAnchor;
 import com.intellij.psi.PsiElement;
@@ -18,7 +19,7 @@ import org.jetbrains.annotations.Nullable;
 final class PsiCrumb extends Crumb.Impl implements NavigatableCrumb, LazyTooltipCrumb {
   private final PsiAnchor anchor;
   private volatile BreadcrumbsProvider provider;
-  private volatile String tooltip;
+  private volatile @NlsContexts.Tooltip String tooltip;
   final CrumbPresentation presentation;
 
   PsiCrumb(@NotNull PsiElement element, @NotNull BreadcrumbsProvider provider, @Nullable CrumbPresentation presentation) {

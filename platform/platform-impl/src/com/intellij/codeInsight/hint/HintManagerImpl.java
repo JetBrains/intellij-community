@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
@@ -711,7 +712,7 @@ public class HintManagerImpl extends HintManager {
   }
 
   private void showInformationHint(@NotNull Editor editor,
-                                   @NotNull String text,
+                                   @NotNull @NlsContexts.HintText String text,
                                    @Nullable HyperlinkListener listener,
                                    @PositionFlags short position) {
     JComponent label = HintUtil.createInformationLabel(text, listener, null, null);

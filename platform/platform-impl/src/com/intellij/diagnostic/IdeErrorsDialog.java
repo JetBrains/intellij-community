@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -787,7 +788,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private static class AttachmentsList extends CheckBoxList<String> {
     private boolean myEditable = true;
 
-    private void addItem(String item, boolean selected) {
+    private void addItem(@NlsContexts.Checkbox String item, boolean selected) {
       addItem(item, item + "  ", selected);
     }
 

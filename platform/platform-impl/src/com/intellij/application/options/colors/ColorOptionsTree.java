@@ -4,6 +4,7 @@ package com.intellij.application.options.colors;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptor;
 import com.intellij.openapi.editor.colors.EditorSchemeAttributeDescriptorWithPath;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
@@ -59,7 +60,7 @@ public class ColorOptionsTree extends Tree {
     myTreeModel.setRoot(root);
   }
 
-  public void setEmptyText(@NotNull String text, @Nullable ActionListener linkListener) {
+  public void setEmptyText(@NotNull @NlsContexts.StatusText String text, @Nullable ActionListener linkListener) {
     StatusText statusText = getEmptyText();
     if (linkListener != null) {
       statusText.clear();

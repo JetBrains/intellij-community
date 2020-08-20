@@ -65,9 +65,9 @@ public interface PluginDescriptor {
   @Deprecated
   PluginId @NotNull [] getOptionalDependentPluginIds();
 
-  String getVendor();
+  @NlsSafe String getVendor();
 
-  String getVersion();
+  @NlsSafe String getVersion();
 
   String getResourceBundleBaseName();
 

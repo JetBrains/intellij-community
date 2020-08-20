@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.readOnlyHandler;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -85,7 +86,7 @@ public class ReadOnlyStatusDialog extends OptionsDialog {
 
         myChangelist.setRenderer(new ColoredListCellRenderer<String>() {
           @Override
-          protected void customizeCellRenderer(@NotNull JList<? extends String> list, String value, int index, boolean selected, boolean hasFocus) {
+          protected void customizeCellRenderer(@NotNull JList<? extends String> list, @NlsSafe String value, int index, boolean selected, boolean hasFocus) {
             if (value == null) return;
             String trimmed = StringUtil.first(value, 50, true);
             if (value.equals(defaultChangelist)) {

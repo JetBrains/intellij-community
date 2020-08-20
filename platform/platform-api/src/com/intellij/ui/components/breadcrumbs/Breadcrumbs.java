@@ -3,6 +3,7 @@ package com.intellij.ui.components.breadcrumbs;
 
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
@@ -122,7 +123,7 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
   }
 
   @Override
-  public String getToolTipText(MouseEvent event) {
+  public @NlsContexts.Tooltip String getToolTipText(MouseEvent event) {
     return hovered == null ? null : hovered.getTooltip();
   }
 

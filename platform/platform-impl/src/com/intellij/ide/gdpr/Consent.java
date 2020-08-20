@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.gdpr;
 
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -8,7 +9,7 @@ import org.jetbrains.annotations.NonNls;
  * Date: 06-Dec-17
  */
 public final class Consent extends ConsentBase {
-  private final String myName;
+  private final @NlsSafe String myName;
   private final String myText;
   private final boolean myAccepted;
   private final boolean myDeleted;
@@ -17,7 +18,7 @@ public final class Consent extends ConsentBase {
     this(attributes.consentId, Version.fromString(attributes.version), attributes.printableName, attributes.text, attributes.accepted, attributes.deleted);
   }
 
-  public Consent(String id, Version version, String name, String text, boolean isAccepted, boolean deleted) {
+  public Consent(String id, Version version, @NlsSafe String name, String text, boolean isAccepted, boolean deleted) {
     super(id, version);
     myName = name;
     myText = text;
@@ -25,7 +26,7 @@ public final class Consent extends ConsentBase {
     myDeleted = deleted;
   }
 
-  public String getName() {
+  public @NlsSafe String getName() {
     return myName;
   }
 

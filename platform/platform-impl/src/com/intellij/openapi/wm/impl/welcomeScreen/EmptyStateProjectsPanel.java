@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
@@ -96,7 +97,7 @@ public class EmptyStateProjectsPanel extends JPanel {
   }
 
   @NotNull
-  static JBLabel createCommentLabel(@NotNull String text) {
+  static JBLabel createCommentLabel(@NlsContexts.HintText @NotNull String text) {
     JBLabel commentFirstLabel = new JBLabel(text, SwingConstants.CENTER);
     commentFirstLabel.setOpaque(false);
     commentFirstLabel.setForeground(UIUtil.getContextHelpForeground());

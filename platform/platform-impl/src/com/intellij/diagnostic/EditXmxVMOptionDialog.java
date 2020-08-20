@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.components.JBLabel;
@@ -99,7 +100,7 @@ public class EditXmxVMOptionDialog extends DialogWrapper {
   }
 
   private class SaveAction extends AbstractAction {
-    SaveAction(String actionName) {
+    SaveAction(@NlsActions.ActionText String actionName) {
       super(actionName);
     }
 

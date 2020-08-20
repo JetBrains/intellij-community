@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.changes.RefreshablePanel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -28,7 +29,6 @@ import java.awt.event.MouseEvent;
 public abstract class AbstractTitledSeparatorWithIcon extends JPanel {
   protected RefreshablePanel myDetailsComponent;
   protected final JLabel myLabel;
-  private final String originalText;
   protected final JPanel myWrapper;
   protected boolean myOn;
   protected final Icon myIcon;
@@ -37,7 +37,7 @@ public abstract class AbstractTitledSeparatorWithIcon extends JPanel {
 
   public AbstractTitledSeparatorWithIcon(@NotNull final Icon icon,
                                          @NotNull final Icon iconOpen,
-                                         @NotNull final String text) {
+                                         @NlsContexts.Separator @NotNull final String text) {
     myIcon = icon;
     myIconOpen = iconOpen;
     setLayout(new GridBagLayout());
@@ -54,8 +54,7 @@ public abstract class AbstractTitledSeparatorWithIcon extends JPanel {
     setBorder(JBUI.Borders.empty(3, 0, 5, 5));
     myLabel.setFont(UIUtil.getTitledBorderFont());
     myLabel.setForeground(UIUtil.getLabelForeground());
-    originalText = text;
-    myLabel.setText(UIUtil.replaceMnemonicAmpersand(originalText));
+    myLabel.setText(UIUtil.replaceMnemonicAmpersand(text));
 
     ++ gb.gridy;
     gb.gridx = 0;
@@ -87,7 +86,7 @@ public abstract class AbstractTitledSeparatorWithIcon extends JPanel {
     });
   }
   
-  public void setText(final String text) {
+  public void setText(@NlsContexts.Separator String text) {
     myLabel.setText(UIUtil.replaceMnemonicAmpersand(text));
   }
 

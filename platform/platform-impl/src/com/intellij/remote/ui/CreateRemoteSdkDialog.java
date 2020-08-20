@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.remote.RemoteSdkAdditionalData;
 import com.intellij.remote.RemoteSdkException;
@@ -203,7 +204,7 @@ public abstract class CreateRemoteSdkDialog<T extends RemoteSdkAdditionalData> e
     }
   }
 
-  protected boolean validationFailed(String validation, boolean askSaveUnfinished) {
+  protected boolean validationFailed(@NlsContexts.DialogMessage String validation, boolean askSaveUnfinished) {
     if (StringUtil.isEmpty(validation)) {
       validation = "Communication error";
     }

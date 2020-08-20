@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.colorpicker
 
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
 import java.awt.Color
@@ -63,6 +64,6 @@ class OperationPanel(private val model: ColorPickerModel,
 /**
  * TODO: Remove this after [CommonButton.isFocusable] returns true.
  */
-private class MyButton(text: String) : CommonButton(text) {
+private class MyButton(@NlsContexts.Button text: String) : CommonButton(text) {
   override fun isFocusable(): Boolean = true
 }

@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -108,8 +109,8 @@ public final class LightEditUtil {
     return LightEditService.getInstance().getProject();
   }
 
-  static boolean confirmClose(@NotNull String message,
-                              @NotNull String title,
+  static boolean confirmClose(@NotNull @NlsContexts.DialogMessage String message,
+                              @NotNull @NlsContexts.DialogTitle String title,
                               @NotNull LightEditSaveConfirmationHandler handler) {
     final String[] options = {getCloseSave(), getCloseDiscard(), getCloseCancel()};
     int result = Messages.showDialog(getProject(), message, title, options, 0, Messages.getWarningIcon());
@@ -152,15 +153,15 @@ public final class LightEditUtil {
           .map(fileType -> fileType.getDefaultExtension()).sorted().distinct().collect(Collectors.toList()));
   }
 
-  private static String getCloseSave() {
+  private static @NlsContexts.Button String getCloseSave() {
     return ApplicationBundle.message("light.edit.close.save");
   }
 
-  private static String getCloseDiscard() {
+  private static @NlsContexts.Button String getCloseDiscard() {
     return ApplicationBundle.message("light.edit.close.discard");
   }
 
-  private static String getCloseCancel() {
+  private static @NlsContexts.Button String getCloseCancel() {
     return ApplicationBundle.message("light.edit.close.cancel");
   }
 

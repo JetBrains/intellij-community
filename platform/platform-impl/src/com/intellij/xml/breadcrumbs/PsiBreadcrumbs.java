@@ -10,11 +10,11 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.breadcrumbs.Breadcrumbs;
 import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
 
@@ -72,7 +72,7 @@ final class PsiBreadcrumbs extends Breadcrumbs {
     }
 
     final Crumb crumb = hovered;
-    Promise<String> tooltipLazy;
+    Promise<@NlsContexts.Tooltip String> tooltipLazy;
     synchronized (scheduledTooltipTasks) {
       tooltipLazy = scheduledTooltipTasks.get(crumb);
       if (tooltipLazy == null) {
@@ -105,11 +105,6 @@ final class PsiBreadcrumbs extends Breadcrumbs {
         LOG.error(e);
       }
     }
-    return getLazyTooltipProgressText();
-  }
-
-  @NotNull
-  private static String getLazyTooltipProgressText() {
     return UIBundle.message("crumbs.calculating.tooltip");
   }
 

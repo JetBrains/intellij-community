@@ -2,6 +2,7 @@
 package com.intellij.openapi.ui.ex;
 
 import com.intellij.openapi.ui.MultiLineLabelUI;
+import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -10,7 +11,7 @@ public class MultiLineLabel extends JLabel{
   public MultiLineLabel(){
   }
 
-  public MultiLineLabel(String text){
+  public MultiLineLabel(@Nls String text){
     super(text);
   }
 

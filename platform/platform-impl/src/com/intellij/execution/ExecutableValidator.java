@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
@@ -41,8 +42,8 @@ public abstract class ExecutableValidator {
                                                                               STICKY_BALLOON, true);
   @NotNull protected final Project myProject;
 
-  @NotNull private final String myNotificationErrorTitle;
-  @NotNull private final String myNotificationErrorDescription;
+  @NotNull private final @NlsContexts.DialogTitle String myNotificationErrorTitle;
+  @NotNull private final @NlsContexts.DialogMessage String myNotificationErrorDescription;
 
   /**
    * Configures notification and dialog by setting text messages and titles specific to the whoever uses the validator.
@@ -50,8 +51,8 @@ public abstract class ExecutableValidator {
    * @param notificationErrorDescription description of this notification with a link to fix it (link action is defined by
    *                                     {@link #showSettingsAndExpireIfFixed(Notification)}
    */
-  public ExecutableValidator(@NotNull Project project, @NotNull String notificationErrorTitle,
-                             @NotNull String notificationErrorDescription) {
+  public ExecutableValidator(@NotNull Project project, @NotNull @NlsContexts.DialogTitle String notificationErrorTitle,
+                             @NotNull @NlsContexts.DialogMessage String notificationErrorDescription) {
     myProject = project;
     myNotificationErrorTitle = notificationErrorTitle;
     myNotificationErrorDescription = notificationErrorDescription;
@@ -133,7 +134,7 @@ public abstract class ExecutableValidator {
   }
 
   @NotNull
-  protected String prepareDescription(@NotNull String description, boolean appendFixIt) {
+  protected @NlsContexts.NotificationContent String prepareDescription(@NotNull String description, boolean appendFixIt) {
     StringBuilder result = new StringBuilder();
     String executable = getCurrentExecutable();
 
@@ -230,7 +231,7 @@ public abstract class ExecutableValidator {
       this(prepareDescription(description, true), NotificationType.ERROR);
     }
 
-    public ExecutableNotValidNotification(@NotNull String preparedDescription, @NotNull NotificationType type) {
+    public ExecutableNotValidNotification(@NotNull @NlsContexts.NotificationContent String preparedDescription, @NotNull NotificationType type) {
       super(ourNotificationGroup.getDisplayId(), "", preparedDescription, type, new NotificationListener.Adapter() {
         @Override
         protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent event) {

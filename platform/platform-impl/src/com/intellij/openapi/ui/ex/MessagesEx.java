@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.openapi.util.NlsContexts.DialogTitle;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.messages.ChooseDialog;
@@ -61,8 +62,8 @@ public final class MessagesEx extends Messages {
 
   public abstract static class BaseDialogInfo<ThisClass extends BaseDialogInfo> {
     private final Project myProject;
-    private String myMessage;
-    private String myTitle;
+    private @DialogMessage String myMessage;
+    private @DialogTitle String myTitle;
     private Icon myIcon;
     private String[] myOptions = {CommonBundle.getOkButtonText()};
     private int myDefaultOption = 0;
@@ -84,7 +85,7 @@ public final class MessagesEx extends Messages {
       return getThis();
     }
 
-    public String getMessage() {
+    public @DialogMessage String getMessage() {
       return myMessage;
     }
 
@@ -116,7 +117,7 @@ public final class MessagesEx extends Messages {
       return myProject;
     }
 
-    public String getTitle() {
+    public @DialogTitle String getTitle() {
       return myTitle;
     }
 
@@ -134,7 +135,7 @@ public final class MessagesEx extends Messages {
   }
 
   public static class MessageInfo extends BaseDialogInfo<MessageInfo> {
-    public MessageInfo(Project project, String message, String title) {
+    public MessageInfo(Project project, @DialogMessage String message, @DialogTitle String title) {
       super(project, message, title, getErrorIcon());
     }
 
@@ -166,7 +167,7 @@ public final class MessagesEx extends Messages {
 
   public static class ChoiceInfo extends BaseInputInfo<ChoiceInfo> {
     private String[] myChoises = ArrayUtilRt.EMPTY_STRING_ARRAY;
-    private String myDefaultChoice = null;
+    private @NlsSafe String myDefaultChoice = null;
 
     public ChoiceInfo(Project project) {
       super(project);

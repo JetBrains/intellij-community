@@ -46,9 +46,7 @@ import com.intellij.openapi.keymap.impl.DefaultKeymap;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.ProjectType;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -322,7 +320,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     });
   }
 
-  private static String computeDescription(ResourceBundle bundle, String id, String elementType, String descriptionValue) {
+  @SuppressWarnings("HardCodedStringLiteral")
+  private static @NlsActions.ActionDescription String computeDescription(ResourceBundle bundle, String id, String elementType, String descriptionValue) {
     if (bundle != null) {
       final String key = elementType + "." + id + ".description";
       return AbstractBundle.messageOrDefault(bundle, key, StringUtil.notNullize(descriptionValue));
@@ -332,7 +331,8 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     }
   }
 
-  private static String computeActionText(ResourceBundle bundle, String id, String elementType, String textValue) {
+  @SuppressWarnings("HardCodedStringLiteral")
+  private static @NlsActions.ActionText String computeActionText(ResourceBundle bundle, String id, String elementType, String textValue) {
     return AbstractBundle.messageOrDefault(bundle, elementType + "." + id + "." + TEXT_ATTR_NAME, StringUtil.notNullize(textValue));
   }
 
@@ -960,6 +960,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       reportActionError(pluginId, "unexpected name of element \"" + element.getName() + "\"");
       return;
     }
+    @SuppressWarnings("HardCodedStringLiteral")
     String text = element.getAttributeValue(TEXT_ATTR_NAME);
     String key = element.getAttributeValue(KEY_ATTR_NAME);
     Separator separator =
