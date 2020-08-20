@@ -31,7 +31,7 @@ class OpenFileInDefaultBrowserAction : DumbAwareAction() {
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    openInBrowser(e, findUsingBrowser())
+    BaseOpenInBrowserAction.openInBrowser(e, findUsingBrowser())
   }
 }
 

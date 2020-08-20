@@ -47,8 +47,6 @@ import javax.swing.JLabel
 import javax.swing.LayoutFocusTraversalPolicy
 import kotlin.math.abs
 
-private val LOG = logger<ToolWindowImpl>()
-
 internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
                               private val id: String,
                               private val canCloseContent: Boolean,
@@ -401,6 +399,9 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     toolWindowManager.toolWindowPropertyChanged(this, ToolWindowProperty.ICON)
   }
 
+  companion object {
+    private val LOG = logger<ToolWindowImpl>()
+  }
   internal fun doSetIcon(newIcon: Icon) {
     val oldIcon = icon
     if (EventLog.LOG_TOOL_WINDOW_ID != id) {

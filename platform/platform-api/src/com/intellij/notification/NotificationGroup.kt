@@ -12,7 +12,6 @@ import org.jetbrains.annotations.NonNls
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.Icon
 
-private val LOG = logger<NotificationGroup>()
 private val registeredGroups: MutableMap<String, NotificationGroup> = ConcurrentHashMap()
 private val registeredTitles: MutableMap<@NonNls String, @NotificationTitle String> = ConcurrentHashMap()
 
@@ -67,6 +66,8 @@ class NotificationGroup private constructor(@param:NonNls val displayId: String,
   }
 
   companion object {
+    private val LOG = logger<NotificationGroup>()
+
     @JvmStatic
     fun create(@NonNls displayId: String,
                displayType: NotificationDisplayType,

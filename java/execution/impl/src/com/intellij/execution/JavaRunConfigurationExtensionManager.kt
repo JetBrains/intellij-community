@@ -10,10 +10,10 @@ import com.intellij.openapi.components.serviceOrNull
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 
-private val LOG = logger<RunConfigurationExtension>()
 
 class JavaRunConfigurationExtensionManager : RunConfigurationExtensionsManager<RunConfigurationBase<*>, RunConfigurationExtension>(RunConfigurationExtension.EP_NAME) {
   companion object {
+    private val LOG = logger<RunConfigurationExtension>()
     @JvmStatic
     val instance: JavaRunConfigurationExtensionManager
       get() = service()

@@ -14,12 +14,12 @@ import java.io.File
 import java.io.FileReader
 import java.io.IOException
 
-private val LOG = Logger.getInstance(PowerStatus::class.java)
 
 enum class PowerStatus {
   UNKNOWN, AC, BATTERY;
 
   companion object {
+    val LOG = Logger.getInstance(PowerStatus::class.java)
     @JvmStatic fun getPowerStatus(): PowerStatus =
       try { service.status() }
       catch (t: Throwable) {
@@ -44,7 +44,7 @@ private val service: PowerService by lazy {
     }
   }
   catch (t: Throwable) {
-    LOG.warn(t)
+    PowerStatus.LOG.warn(t)
     NullPowerService()
   }
 }
@@ -63,7 +63,7 @@ private class WinPowerService : PowerService {
       throw IOException("GetSystemPowerStatus(): ${kernel32.GetLastError()}")
     }
     else {
-      if (LOG.isDebugEnabled) LOG.debug("ACLineStatus=${status.ACLineStatus}")
+      if (PowerStatus.LOG.isDebugEnabled) PowerStatus.LOG.debug("ACLineStatus=${status.ACLineStatus}")
       return when (status.ACLineStatus.toInt()) {
         0 -> PowerStatus.BATTERY
         1 -> PowerStatus.AC
@@ -107,13 +107,13 @@ private class MacPowerService : PowerService {
         var upsState: PowerStatus? = null
 
         val count = ioKit.CFArrayGetCount(psList)
-        if (LOG.isDebugEnabled) LOG.debug("count=${count}")
+        if (PowerStatus.LOG.isDebugEnabled) PowerStatus.LOG.debug("count=${count}")
         for (i in 0 until count) {
           val ps = ioKit.IOPSGetPowerSourceDescription(psBlob, ioKit.CFArrayGetValueAtIndex(psList, i))
           if (isTrue(ioKit.CFDictionaryGetValue(ps, kIOPSIsPresentKey))) {
             val type = ioKit.CFDictionaryGetValue(ps, kIOPSTypeKey)
             val state = ioKit.CFDictionaryGetValue(ps, kIOPSPowerSourceStateKey)
-            if (LOG.isDebugEnabled) LOG.debug("${i}: type='${str(type)}' state='${str(state)}'")
+            if (PowerStatus.LOG.isDebugEnabled) PowerStatus.LOG.debug("${i}: type='${str(type)}' state='${str(state)}'")
             if (strEquals(type, kIOPSInternalBatteryType)) {
               batteryState = if (strEquals(state, kIOPSBatteryPowerValue)) PowerStatus.BATTERY else PowerStatus.AC
               break
@@ -195,22 +195,22 @@ private class LinuxPowerService : PowerService {
    */
   override fun status(): PowerStatus {
     val devices = classDirectory.listFiles() ?: throw IOException("can't enumerate devices")
-    if (LOG.isDebugEnabled) LOG.debug("devices=${devices.size}")
+    if (PowerStatus.LOG.isDebugEnabled) PowerStatus.LOG.debug("devices=${devices.size}")
 
     var online = false
     var discharging = false
 
     for (device in devices) {
       val type = read(device, "type")
-      if (LOG.isDebugEnabled) LOG.debug("${device.name} type=${type}")
+      if (PowerStatus.LOG.isDebugEnabled) PowerStatus.LOG.debug("${device.name} type=${type}")
       if (type == "Mains") {
         val state = read(device, "online")
-        if (LOG.isDebugEnabled) LOG.debug("  online=${state}")
+        if (PowerStatus.LOG.isDebugEnabled) PowerStatus.LOG.debug("  online=${state}")
         if (state == "1") online = true
       }
       else if (type == "Battery") {
         val state = read(device, "status")
-        if (LOG.isDebugEnabled) LOG.debug("  status=${state}")
+        if (PowerStatus.LOG.isDebugEnabled) PowerStatus.LOG.debug("  status=${state}")
         if (state == "Discharging") discharging = true
       }
     }

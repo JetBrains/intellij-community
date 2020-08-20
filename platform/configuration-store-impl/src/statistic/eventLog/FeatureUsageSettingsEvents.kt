@@ -20,7 +20,6 @@ import com.intellij.util.xmlb.BeanBinding
 import org.jdom.Element
 import java.util.concurrent.atomic.AtomicInteger
 
-private val LOG = Logger.getInstance("com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEventPrinter")
 private val GROUP = EventLogGroup("settings", 9)
 private const val CHANGES_GROUP = "settings.changes"
 private const val ID_FIELD = "id"
@@ -120,6 +119,8 @@ open class FeatureUsageSettingsEventPrinter(private val recordDefault: Boolean) 
   }
 
   companion object {
+    private val LOG = Logger.getInstance(FeatureUsageSettingsEventPrinter::class.java)
+
     private val counter = AtomicInteger(0)
 
     fun createComponentData(project: Project?, componentName: String, pluginInfo: PluginInfo): FeatureUsageData {

@@ -32,10 +32,8 @@ import javax.xml.parsers.SAXParserFactory
 
 @ApiStatus.Internal
 open class MarketplaceRequests {
-
-  private val LOG = Logger.getInstance(MarketplaceRequests::class.java)
-
   companion object {
+    private val LOG = Logger.getInstance(MarketplaceRequests::class.java)
     private const val TAG_EXT = ".etag"
 
     private const val FULL_PLUGINS_XML_IDS_FILENAME = "pluginsXMLIds.json"

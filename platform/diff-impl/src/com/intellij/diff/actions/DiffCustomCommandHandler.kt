@@ -14,7 +14,6 @@ import java.nio.file.Path
 import java.nio.file.Paths
 
 class DiffCustomCommandHandler : TerminalShellCommandHandler {
-  private val LOG = Logger.getInstance(DiffCustomCommandHandler::class.java)
   override fun execute(project: Project, workingDirectory: String?, localSession: Boolean, command: String, executor: Executor): Boolean {
     val parameters = parse(workingDirectory, localSession, command)
 
@@ -37,6 +36,7 @@ class DiffCustomCommandHandler : TerminalShellCommandHandler {
 
     return true
   }
+
 
   override fun matches(project: Project, workingDirectory: String?, localSession: Boolean, command: String): Boolean {
     return parse(workingDirectory, localSession, command) != null
@@ -65,5 +65,9 @@ class DiffCustomCommandHandler : TerminalShellCommandHandler {
     }
 
     return Pair(path1, path2)
+  }
+
+  companion object {
+    private val LOG = Logger.getInstance(DiffCustomCommandHandler::class.java)
   }
 }

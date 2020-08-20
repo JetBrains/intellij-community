@@ -29,7 +29,9 @@ internal class ModifiableContentEntryBridge(
   private val modifiableRootModel: ModifiableRootModelBridgeImpl,
   val contentEntryUrl: VirtualFileUrl
 ): ContentEntry {
-  private val LOG = Logger.getInstance(javaClass)
+  companion object {
+    private val LOG = Logger.getInstance(javaClass)
+  }
   private val virtualFileManager = VirtualFileUrlManager.getInstance(modifiableRootModel.project)
 
   private val currentContentEntry = CachedValueImpl<ContentEntryBridge> {

@@ -82,8 +82,6 @@ import javax.swing.event.HyperlinkListener
 import kotlin.collections.ArrayList
 import kotlin.collections.HashSet
 
-private val LOG = logger<ToolWindowManagerImpl>()
-
 @State(
   name = "ToolWindowManager",
   defaultStateAsResource = true,
@@ -119,6 +117,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   }
 
   companion object {
+    private val LOG = logger<ToolWindowManagerImpl>()
     @JvmStatic
     @ApiStatus.Internal
     fun getRegisteredMutableInfoOrLogError(decorator: InternalDecorator): WindowInfoImpl {
@@ -1948,6 +1947,39 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       LOG.error("Invariants failed: \n${violations.joinToString("\n")}\nContext: $additionalMessage")
     }
   }
+
+  private fun getStripeTitleSupplier(id: String, pluginDescriptor: PluginDescriptor): Supplier<String>? {
+    val classLoader = pluginDescriptor.pluginClassLoader
+    val bundleName = when (pluginDescriptor.pluginId) {
+      PluginManagerCore.CORE_ID -> IdeBundle.BUNDLE
+      else -> pluginDescriptor.resourceBundleBaseName ?: return null
+    }
+
+    try {
+      val bundle = DynamicBundle.INSTANCE.getResourceBundle(bundleName, classLoader)
+      val key = "toolwindow.stripe.$id".replace(" ", "_")
+      val label = BundleBase.messageOrDefault(bundle, key, id)
+      return Supplier { label }
+    }
+    catch (e: MissingResourceException) {
+      LOG.warn("Missing bundle $bundleName at $classLoader", e)
+    }
+    return null
+  }
+
+  private inline fun processDescriptors(crossinline handler: (bean: ToolWindowEP, pluginDescriptor: PluginDescriptor) -> Unit) {
+    ToolWindowEP.EP_NAME.processWithPluginDescriptor { bean, pluginDescriptor ->
+      try {
+        handler(bean, pluginDescriptor)
+      }
+      catch (e: ProcessCanceledException) {
+        throw e
+      }
+      catch (e: Throwable) {
+        LOG.error("Cannot process toolwindow ${bean.id}", e)
+      }
+    }
+  }
 }
 
 private enum class KeyState {
@@ -2033,25 +2065,6 @@ private fun isInActiveToolWindow(component: Any?, activeToolWindow: ToolWindowIm
   return source != null
 }
 
-private fun getStripeTitleSupplier(id: String, pluginDescriptor: PluginDescriptor): Supplier<String>? {
-  val classLoader = pluginDescriptor.pluginClassLoader
-  val bundleName = when (pluginDescriptor.pluginId) {
-    PluginManagerCore.CORE_ID -> IdeBundle.BUNDLE
-    else -> pluginDescriptor.resourceBundleBaseName ?: return null
-  }
-
-  try {
-    val bundle = DynamicBundle.INSTANCE.getResourceBundle(bundleName, classLoader)
-    val key = "toolwindow.stripe.$id".replace(" ", "_")
-    val label = BundleBase.messageOrDefault(bundle, key, id)
-    return Supplier { label }
-  }
-  catch (e: MissingResourceException) {
-    LOG.warn("Missing bundle $bundleName at $classLoader", e)
-  }
-  return null
-}
-
 private fun findIconFromBean(bean: ToolWindowEP, factory: ToolWindowFactory): Icon? {
   IconLoader.findIcon(bean.icon ?: return null, factory.javaClass)?.let {
     return it
@@ -2067,20 +2080,6 @@ private fun findIconFromBean(bean: ToolWindowEP, factory: ToolWindowFactory): Ic
 
 private fun addStripeButton(button: StripeButton, stripe: Stripe) {
   stripe.addButton(button) { o1, o2 -> windowInfoComparator.compare(o1.windowInfo, o2.windowInfo) }
-}
-
-private inline fun processDescriptors(crossinline handler: (bean: ToolWindowEP, pluginDescriptor: PluginDescriptor) -> Unit) {
-  ToolWindowEP.EP_NAME.processWithPluginDescriptor { bean, pluginDescriptor ->
-    try {
-      handler(bean, pluginDescriptor)
-    }
-    catch (e: ProcessCanceledException) {
-      throw e
-    }
-    catch (e: Throwable) {
-      LOG.error("Cannot process toolwindow ${bean.id}", e)
-    }
-  }
 }
 
 private fun removeStripeButton(button: StripeButton) {

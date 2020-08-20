@@ -1,15 +1,12 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs.layout
 
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo
 import com.intellij.ui.tabs.layout.singleRowLayout.CompressibleSingleRowLayout
 import com.intellij.ui.tabs.layout.singleRowLayout.ScrollableSingleRowLayout
 import com.intellij.ui.tabs.layout.tableLayout.TableLayoutInfo
 
 class TabsLayoutSettingsHolder {
-  private val LOG = Logger.getInstance(TabsLayoutSettingsHolder::class.java)
-
   companion object {
     @JvmStatic
     val instance = TabsLayoutSettingsHolder()

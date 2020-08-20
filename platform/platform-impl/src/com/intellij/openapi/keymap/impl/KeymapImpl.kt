@@ -54,20 +54,12 @@ private const val NAME_ATTRIBUTE = "name"
 private const val ID_ATTRIBUTE = "id"
 private const val MOUSE_SHORTCUT = "mouse-shortcut"
 
-private val LOG = logger<KeymapImpl>()
-
 fun KeymapImpl(name: String, dataHolder: SchemeDataHolder<KeymapImpl>): KeymapImpl {
   val result = KeymapImpl(dataHolder)
   result.name = name
   result.schemeState = SchemeState.UNCHANGED
   return result
 }
-
-private val NOTIFICATION_MANAGER by lazy {
-  // we use name "Password Safe" instead of "Credentials Store" because it was named so previously (and no much sense to rename it)
-  SingletonNotificationManager(NotificationGroup("Keymap", NotificationDisplayType.STICKY_BALLOON, true), NotificationType.ERROR)
-}
-
 
 open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDataHolder<KeymapImpl>? = null) : ExternalizableSchemeAdapter(), Keymap, SerializableScheme {
   private var parent: KeymapImpl? = null
@@ -708,6 +700,15 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
   }
 
   override fun hashCode(): Int = name.hashCode()
+
+  companion object {
+    private val LOG = logger<KeymapImpl>()
+
+    internal val NOTIFICATION_MANAGER by lazy {
+      // we use name "Password Safe" instead of "Credentials Store" because it was named so previously (and no much sense to rename it)
+      SingletonNotificationManager(NotificationGroup("Keymap", NotificationDisplayType.STICKY_BALLOON, true), NotificationType.ERROR)
+    }
+  }
 }
 
 private fun sortInRegistrationOrder(ids: MutableList<String>) {
@@ -825,7 +826,7 @@ internal fun notifyAboutMissingKeymap(keymapName: String, @NlsContexts.Notificat
               }
             }
           }
-          NOTIFICATION_MANAGER.notify(IdeBundle.message("notification.group.missing.keymap"), message, action = action)
+          KeymapImpl.NOTIFICATION_MANAGER.notify(IdeBundle.message("notification.group.missing.keymap"), message, action = action)
         }, ModalityState.NON_MODAL)
     }
   }

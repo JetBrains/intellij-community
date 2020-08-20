@@ -8,11 +8,8 @@ import com.intellij.execution.actions.ConfigurationFromContext
 import com.intellij.execution.configurations.LocatableConfiguration
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Key
 
-private val LOG = logger<ExecutorAction>()
-private val CONFIGURATION_CACHE = Key.create<List<ConfigurationFromContext>>("ConfigurationFromContext")
 
 /**
  * @author Dmitry Avdeev
@@ -26,6 +23,7 @@ class ExecutorAction private constructor(val origin: AnAction,
   }
 
   companion object {
+    private val CONFIGURATION_CACHE = Key.create<List<ConfigurationFromContext>>("ConfigurationFromContext")
     @JvmStatic
     @JvmOverloads
     fun getActions(order: Int = 0) = getActionList(order).toTypedArray()

@@ -53,11 +53,11 @@ import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.SwingUtilities
 
-private val LOG = logger<ExecutionManagerImpl>()
-private val EMPTY_PROCESS_HANDLERS = emptyArray<ProcessHandler>()
 
 class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), Disposable {
   companion object {
+    val LOG = logger<ExecutionManagerImpl>()
+    private val EMPTY_PROCESS_HANDLERS = emptyArray<ProcessHandler>()
     @JvmField
     val EXECUTION_SESSION_ID_KEY = Key.create<Any>("EXECUTION_SESSION_ID_KEY")
 
@@ -703,7 +703,7 @@ private fun createEnvironmentBuilder(project: Project,
 
   val runner = configuration?.let { ProgramRunner.getRunner(executor.id, it.configuration) }
   if (runner == null && configuration != null) {
-    LOG.error("Cannot find runner for ${configuration.name}")
+    ExecutionManagerImpl.LOG.error("Cannot find runner for ${configuration.name}")
   }
   else if (runner != null) {
     builder.runnerAndSettings(runner, configuration)

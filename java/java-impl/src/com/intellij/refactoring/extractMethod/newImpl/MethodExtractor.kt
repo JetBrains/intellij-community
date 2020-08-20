@@ -40,8 +40,6 @@ class MethodExtractor {
 
   data class ExtractedElements(val callElements: List<PsiElement>, val method: PsiMethod)
 
-  private val LOG = Logger.getInstance(MethodExtractor::class.java)
-
   fun doExtract(file: PsiFile, range: TextRange, @NlsContexts.DialogTitle refactoringName: String, helpId: String) {
     val project = file.project
     val editor = PsiEditorUtil.findEditor(file) ?: return
@@ -247,6 +245,10 @@ class MethodExtractor {
 
   private fun needsNullabilityAnnotations(project: Project): Boolean {
     return PropertiesComponent.getInstance(project).getBoolean(ExtractMethodDialog.EXTRACT_METHOD_GENERATE_ANNOTATIONS, true)
+  }
+
+  companion object {
+    private val LOG = Logger.getInstance(MethodExtractor::class.java)
   }
 }
 
