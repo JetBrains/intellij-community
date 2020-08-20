@@ -1145,7 +1145,7 @@ class DistributionJARsBuilder {
     if (text.contains("<product-descriptor ")) {
       def releaseDate = buildContext.applicationInfo.majorReleaseDate ?:
               ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("uuuuMMdd"))
-      def releaseVersion = "${buildContext.applicationInfo.majorVersion}${buildContext.applicationInfo.minorVersion}00"
+      def releaseVersion = "${buildContext.applicationInfo.majorVersion}${buildContext.applicationInfo.minorVersionMainPart}00"
       text = text.replaceFirst(
               "<product-descriptor code=\"([\\w]*)\"\\s+release-date=\"[^\"]*\"\\s+release-version=\"[^\"]*\"/>",
               !toPublish ? "" :
