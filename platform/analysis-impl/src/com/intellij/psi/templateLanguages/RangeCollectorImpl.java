@@ -19,7 +19,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.function.Function;
@@ -176,23 +175,25 @@ public class RangeCollectorImpl extends TemplateDataElementType.RangeCollector {
         currentLeafOrLazyParseable = findNextSuitableElement(currentLeafOrLazyParseable);
       }
 
-      boolean addRangeToLazyParseableCollector = false;
       if (rangeToProcess instanceof RangeToRemove) {
         if (currentLeafOrLazyParseable == null) {
-          Logger.getInstance(TemplateDataElementType.RangeCollector.class).error(
+          Logger.getInstance(RangeCollectorImpl.class).error(
             "RangeToRemove's range is out of original text bound",
-            new Attachment("myOuterAndRemoveRanges", StringUtil.join(myOuterAndRemoveRanges, TextRange::toString, ", ")),
+            new Attachment("myOuterAndRemoveRanges", StringUtil.join(myOuterAndRemoveRanges, Object::toString, ", ")),
             new Attachment("rangeToProcess", rangeToProcess.toString()),
             new Attachment("sourceCode", sourceCode.toString()));
           continue;
         }
-        currentLeafOrLazyParseable =
-          removeElementsForRange(currentLeafOrLazyParseable, currentLeafOffset, rangeToProcess, templateTreePatcher, charTable);
-        if (currentLeafOrLazyParseable != null &&
-            !(currentLeafOrLazyParseable instanceof LeafElement) &&
-            ((RangeToRemove)rangeToProcess).myTextToRemove != null) {
-          addRangeToLazyParseableCollector = true;
+
+        if (currentLeafOffset > rangeToProcess.getStartOffset() ||
+            currentLeafOffset + currentLeafOrLazyParseable.getTextLength() < rangeToProcess.getStartOffset()) {
+          Logger.getInstance(RangeCollectorImpl.class).error("startLeaf doesn't contain rangeToRemove start offset");
+          continue;
         }
+
+        // don't modify currentLeafOffset as it stays the same as in original file because we are removing artificial insertion
+        // currentLeafOrLazyParseable changes because leaf is changed and old one is invalidated
+        currentLeafOrLazyParseable = removeElementsForRange(currentLeafOrLazyParseable, currentLeafOffset, rangeToProcess, charTable);
       }
       else {
         if (currentLeafOrLazyParseable instanceof LeafElement && currentLeafOffset < rangeStartOffset) {
@@ -207,16 +208,7 @@ public class RangeCollectorImpl extends TemplateDataElementType.RangeCollector {
           currentLeafOrLazyParseable =
             insertOuterElementFromRange(currentLeafOrLazyParseable, currentLeafOffset, rangeToProcess, sourceCode, templateTreePatcher,
                                         charTable);
-          if (!(currentLeafOrLazyParseable instanceof LeafElement)) {
-            addRangeToLazyParseableCollector = true;
-          }
-        }
-      }
-      if (addRangeToLazyParseableCollector) {
-        RangeCollectorImpl lazyParseableCollector = currentLeafOrLazyParseable.getUserData(OUTER_ELEMENT_RANGES);
-        if (lazyParseableCollector != null) {
-          assert lazyParseableCollector != this;
-          lazyParseableCollector.myOuterAndRemoveRanges.add(rangeToProcess.shiftLeft(currentLeafOffset));
+          addRangeToLazyParseableCollector(currentLeafOrLazyParseable, rangeToProcess.shiftLeft(currentLeafOffset));
         }
       }
     }
@@ -225,6 +217,15 @@ public class RangeCollectorImpl extends TemplateDataElementType.RangeCollector {
       String after = templateFileElement.getText();
       assert after.contentEquals(sourceCode) :
         "Text presentation for the new tree must be the same: \nbefore: " + sourceCode + "\nafter: " + after;
+    }
+  }
+
+  private void addRangeToLazyParseableCollector(@NotNull TreeElement leafOrLazyParseable, @NotNull TextRange rangeWithinLazyParseable) {
+    if (rangeWithinLazyParseable instanceof RangeToRemove && ((RangeToRemove)rangeWithinLazyParseable).myTextToRemove == null) return;
+    RangeCollectorImpl lazyParseableCollector = leafOrLazyParseable.getUserData(OUTER_ELEMENT_RANGES);
+    if (lazyParseableCollector != null) {
+      assert lazyParseableCollector != this;
+      lazyParseableCollector.myOuterAndRemoveRanges.add(rangeWithinLazyParseable);
     }
   }
 
@@ -319,72 +320,53 @@ public class RangeCollectorImpl extends TemplateDataElementType.RangeCollector {
     return newElement;
   }
 
+  /**
+   * @return null if all elements up to the end are removed, or a leaf which is in place of startLeaf after removal
+   */
   @Nullable
   private TreeElement removeElementsForRange(@NotNull TreeElement startLeaf,
                                              int startLeafOffset,
                                              @NotNull TextRange rangeToRemove,
-                                             @NotNull TreePatcher templateTreePatcher,
                                              @NotNull CharTable charTable) {
-    @Nullable TreeElement nextLeaf = startLeaf;
-    int nextLeafStartOffset = startLeafOffset;
-    Collection<TreeElement> leavesToRemove = new ArrayList<>();
-    while (nextLeaf != null && rangeToRemove.containsRange(nextLeafStartOffset, nextLeafStartOffset + nextLeaf.getTextLength())) {
-      leavesToRemove.add(nextLeaf);
-      nextLeafStartOffset += nextLeaf.getTextLength();
-      nextLeaf = findNextSuitableElement(nextLeaf);
+    TreeElement updatedStartLeaf = null;
+    TreeElement currentLeaf = startLeaf;
+    // leaf offset is in terms of RangeToRemove, i.e. it's start is position in original code and length is a length of artificial text
+    int leafOffset = startLeafOffset;
+    if (rangeToRemove.getEndOffset() > startLeafOffset + startLeaf.getTextLength()) {
+      leafOffset += startLeaf.getTextLength();
+      updatedStartLeaf = cutPartOfLeaf(startLeaf, startLeafOffset, rangeToRemove, charTable);
+      currentLeaf = findNextSuitableElement(updatedStartLeaf);
     }
 
-    nextLeaf = splitOrRemoveRangeInsideLeafIfOverlap(nextLeaf, nextLeafStartOffset, rangeToRemove, templateTreePatcher, charTable);
-
-    for (TreeElement element : leavesToRemove) {
-      element.rawRemove();
+    while (currentLeaf != null && rangeToRemove.containsRange(leafOffset, leafOffset + currentLeaf.getTextLength())) {
+      TreeElement leafToRemove = currentLeaf;
+      leafOffset += currentLeaf.getTextLength();
+      currentLeaf = findNextSuitableElement(currentLeaf);
+      leafToRemove.rawRemove();
     }
-    return nextLeaf;
+    TreeElement leafAfterCompletelyRemoved = currentLeaf;
+
+    TreeElement updatedLastLeaf = null;
+    if (currentLeaf != null && leafOffset < rangeToRemove.getEndOffset()) {
+      updatedLastLeaf = cutPartOfLeaf(currentLeaf, leafOffset, rangeToRemove, charTable);
+    }
+
+    return updatedStartLeaf != null ? updatedStartLeaf :
+           updatedLastLeaf != null ? updatedLastLeaf :
+           leafAfterCompletelyRemoved;
   }
 
-
-  /**
-   * Removes part the nextLeaf that intersects rangeToRemove.
-   * If nextLeaf doesn't intersect rangeToRemove the method returns the nextLeaf without changes
-   *
-   * @return new leaf after removing the range or original nextLeaf if nothing changed
-   */
-  @Nullable
-  private TreeElement splitOrRemoveRangeInsideLeafIfOverlap(@Nullable TreeElement nextLeaf,
-                                                            int nextLeafStartOffset,
-                                                            @NotNull TextRange rangeToRemove,
-                                                            @NotNull TreePatcher templateTreePatcher,
-                                                            @NotNull CharTable charTable) {
-    if (nextLeaf == null) return null;
-    if (nextLeafStartOffset >= rangeToRemove.getEndOffset()) return nextLeaf;
-
-    if (rangeToRemove.getStartOffset() > nextLeafStartOffset) {
-      return removeRange(nextLeaf, rangeToRemove.shiftLeft(nextLeafStartOffset), charTable);
-    }
-
-    int offsetToSplit = rangeToRemove.getEndOffset() - nextLeafStartOffset;
-    return removeLeftPartOfLeaf(nextLeaf, offsetToSplit, templateTreePatcher, charTable);
-  }
-
-  /**
-   * Splits the node according to the offsetToSplit and remove left leaf
-   *
-   * @return right part of the split node
-   */
-  @NotNull
-  private TreeElement removeLeftPartOfLeaf(@NotNull TreeElement nextLeaf,
-                                           int offsetToSplit,
-                                           @NotNull TreePatcher templateTreePatcher,
-                                           @NotNull CharTable charTable) {
-    if (offsetToSplit == 0) return nextLeaf;
-    if (!(nextLeaf instanceof LeafElement)) {
-      return removeRange(nextLeaf, TextRange.from(0, offsetToSplit), charTable);
-    }
-    LeafElement rLeaf = templateTreePatcher.split((LeafElement)nextLeaf, offsetToSplit, charTable);
-    LeafElement lLeaf = (LeafElement)TreeUtil.prevLeaf(rLeaf);
-    assert lLeaf != null;
-    lLeaf.rawRemove();
-    return rLeaf;
+  private @NotNull TreeElement cutPartOfLeaf(@NotNull TreeElement currentLeafOrLazyParseable,
+                                             int currentLeafOffset,
+                                             @NotNull TextRange rangeToProcess,
+                                             @NotNull CharTable charTable) {
+    TextRange intersection =
+      rangeToProcess.intersection(TextRange.from(currentLeafOffset, currentLeafOrLazyParseable.getTextLength()));
+    assert intersection != null;
+    TextRange rangeWithinLeaf = intersection.shiftLeft(currentLeafOffset);
+    currentLeafOrLazyParseable = removeRange(currentLeafOrLazyParseable, rangeWithinLeaf, charTable);
+    addRangeToLazyParseableCollector(currentLeafOrLazyParseable, rangeWithinLeaf);
+    return currentLeafOrLazyParseable;
   }
 
   /**
@@ -495,6 +477,16 @@ public class RangeCollectorImpl extends TemplateDataElementType.RangeCollector {
     }
 
     @Override
+    public @NotNull TextRange intersection(@NotNull TextRange range) {
+      int newStart = Math.max(getStartOffset(), range.getStartOffset());
+      int newEnd = Math.min(getEndOffset(), range.getEndOffset());
+      assertProperRange(newStart, newEnd, "Invalid range");
+      return myTextToRemove != null
+             ? new RangeToRemove(newStart, myTextToRemove.subSequence(newStart - getStartOffset(), newEnd - getStartOffset()))
+             : new RangeToRemove(newStart, newEnd);
+    }
+
+    @Override
     public String toString() {
       return "RangeToRemove" + super.toString();
     }
@@ -510,6 +502,14 @@ public class RangeCollectorImpl extends TemplateDataElementType.RangeCollector {
     public @NotNull TextRange shiftLeft(int delta) {
       if (delta == 0) return this;
       return new InsertionRange(getStartOffset() - delta, getEndOffset() - delta);
+    }
+
+    @Override
+    public @NotNull TextRange intersection(@NotNull TextRange range) {
+      int newStart = Math.max(getStartOffset(), range.getStartOffset());
+      int newEnd = Math.min(getEndOffset(), range.getEndOffset());
+      assertProperRange(newStart, newEnd, "Invalid range");
+      return new InsertionRange(newStart, newEnd);
     }
 
     @Override
