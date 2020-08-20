@@ -4,9 +4,11 @@ package com.jetbrains.python.inspections
 import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.jetbrains.python.PyNames
+import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.functionTypeComments.psi.PyFunctionTypeAnnotation
@@ -33,8 +35,10 @@ class PyFinalInspection : PyInspection() {
       node.getSuperClasses(myTypeEvalContext).filter { isFinal(it) }.let { finalSuperClasses ->
         if (finalSuperClasses.isEmpty()) return@let
 
-        val postfix = " ${if (finalSuperClasses.size == 1) "is" else "are"} marked as '@final' and should not be subclassed"
-        registerProblem(node.nameIdentifier, finalSuperClasses.joinToString(postfix = postfix) { "'${it.name}'" })
+        @NlsSafe val superClassList = finalSuperClasses.joinToString { "'${it.name}'" }
+        registerProblem(node.nameIdentifier,
+                        PyPsiBundle.message("INSP.final.super.classes.are.marked.as.final.and.should.not.be.subclassed",
+                                            superClassList, finalSuperClasses.size))
       }
 
       if (PyiUtil.isInsideStub(node)) {
@@ -43,7 +47,7 @@ class PyFinalInspection : PyInspection() {
         node.visitMethods(
           { m ->
             if (!visitedNames.add(m.name) && isFinal(m)) {
-              registerProblem(m.nameIdentifier, "'@final' should be placed on the first overload")
+              registerProblem(m.nameIdentifier, PyPsiBundle.message("INSP.final.final.should.be.placed.on.first.overload"))
             }
             true
           },
@@ -71,13 +75,14 @@ class PyFinalInspection : PyInspection() {
           .filterIsInstance<PyFunction>()
           .firstOrNull { isFinal(it) }
           ?.let {
-            val qualifiedName = it.qualifiedName ?: it.containingClass?.name + "." + it.name
-            registerProblem(node.nameIdentifier, "'$qualifiedName' is marked as '@final' and should not be overridden")
+            @NlsSafe val qualifiedName = it.qualifiedName ?: it.containingClass?.name + "." + it.name
+            registerProblem(node.nameIdentifier,
+                            PyPsiBundle.message("INSP.final.method.marked.as.final.should.not.be.overridden", qualifiedName))
           }
 
         if (!PyiUtil.isInsideStub(node)) {
           if (isFinal(node) && PyiUtil.isOverload(node, myTypeEvalContext)) {
-            registerProblem(node.nameIdentifier, "'@final' should be placed on the implementation")
+            registerProblem(node.nameIdentifier, PyPsiBundle.message("INSP.final.final.should.be.placed.on.implementation"))
           }
 
           checkInstanceFinalsOutsideInit(node)
@@ -85,31 +90,34 @@ class PyFinalInspection : PyInspection() {
 
         if (PyKnownDecoratorUtil.hasAbstractDecorator(node, myTypeEvalContext)) {
           if (isFinal(node)) {
-            registerProblem(node.nameIdentifier, "'Final' could not be mixed with abstract decorators")
+            registerProblem(node.nameIdentifier, PyPsiBundle.message("INSP.final.final.could.not.be.mixed.with.abstract.decorators"))
           }
           else if (isFinal(cls)) {
-            val message = "'Final' class could not contain abstract methods"
+            val message = PyPsiBundle.message("INSP.final.final.class.could.not.contain.abstract.methods")
             registerProblem(node.nameIdentifier, message)
             registerProblem(cls.nameIdentifier, message)
           }
         }
         else if (isFinal(node) && isFinal(cls)) {
-          registerProblem(node.nameIdentifier, "No need to mark method in 'Final' class as '@final'", ProblemHighlightType.WEAK_WARNING)
+          registerProblem(node.nameIdentifier, PyPsiBundle.message("INSP.final.no.need.to.mark.method.in.final.class.as.final"),
+                          ProblemHighlightType.WEAK_WARNING)
         }
       }
       else if (isFinal(node)) {
-        registerProblem(node.nameIdentifier, "Non-method function could not be marked as '@final'")
+        registerProblem(node.nameIdentifier, PyPsiBundle.message("INSP.final.non.method.function.could.not.be.marked.as.final"))
       }
 
       getFunctionTypeAnnotation(node)?.let { comment ->
         if (comment.parameterTypeList.parameterTypes.any { resolvesToFinal(if (it is PySubscriptionExpression) it.operand else it) }) {
-          registerProblem(node.typeComment, "'Final' could not be used in annotations for function parameters")
+          registerProblem(node.typeComment,
+                          PyPsiBundle.message("INSP.final.final.could.not.be.used.in.annotations.for.function.parameters"))
         }
       }
 
       getReturnTypeAnnotation(node, myTypeEvalContext)?.let {
         if (resolvesToFinal(if (it is PySubscriptionExpression) it.operand else it)) {
-          registerProblem(node.typeComment ?: node.annotation, "'Final' could not be used in annotation for function return value")
+          registerProblem(node.typeComment ?: node.annotation,
+                          PyPsiBundle.message("INSP.final.final.could.not.be.used.in.annotation.for.function.return.value"))
         }
       }
     }
@@ -121,12 +129,13 @@ class PyFinalInspection : PyInspection() {
         node.annotation?.value?.let {
           if (PyiUtil.isInsideStub(node) || ScopeUtil.getScopeOwner(node) is PyClass) {
             if (resolvesToFinal(it)) {
-              registerProblem(it, "If assigned value is omitted, there should be an explicit type argument to 'Final'")
+              registerProblem(it,
+                              PyPsiBundle.message("INSP.final.if.assigned.value.omitted.there.should.be.explicit.type.argument.to.final"))
             }
           }
           else {
             if (resolvesToFinal(if (it is PySubscriptionExpression) it.operand else it)) {
-              registerProblem(node, "'Final' name should be initialized with a value")
+              registerProblem(node, PyPsiBundle.message("INSP.final.final.name.should.be.initialized.with.value"))
             }
           }
         }
@@ -136,7 +145,7 @@ class PyFinalInspection : PyInspection() {
       }
 
       if (isFinal(node) && PyUtil.multiResolveTopPriority(node, resolveContext).any { it != node }) {
-        registerProblem(node, "Already declared name could not be redefined as 'Final'")
+        registerProblem(node, PyPsiBundle.message("INSP.final.already.declared.name.could.not.be.redefined.as.final"))
       }
     }
 
@@ -144,7 +153,8 @@ class PyFinalInspection : PyInspection() {
       super.visitPyNamedParameter(node)
 
       if (isFinal(node)) {
-        registerProblem(node.annotation?.value ?: node.typeComment, "'Final' could not be used in annotations for function parameters")
+        registerProblem(node.annotation?.value ?: node.typeComment,
+                        PyPsiBundle.message("INSP.final.final.could.not.be.used.in.annotations.for.function.parameters"))
       }
     }
 
@@ -209,7 +219,7 @@ class PyFinalInspection : PyInspection() {
                                                     initAttributes: Map<String, PyTargetExpression>) {
       classLevelFinals.forEach { (name, psi) ->
         if (!psi.hasAssignedValue() && name !in initAttributes) {
-          registerProblem(psi, "'Final' name should be initialized with a value")
+          registerProblem(psi, PyPsiBundle.message("INSP.final.final.name.should.be.initialized.with.value"))
         }
       }
     }
@@ -221,10 +231,10 @@ class PyFinalInspection : PyInspection() {
 
         if (sameNameClassLevelFinal != null && isFinal(initAttribute)) {
           if (sameNameClassLevelFinal.hasAssignedValue()) {
-            registerProblem(initAttribute, "Already declared name could not be redefined as 'Final'")
+            registerProblem(initAttribute, PyPsiBundle.message("INSP.final.already.declared.name.could.not.be.redefined.as.final"))
           }
           else {
-            val message = "Either instance attribute or class attribute could be type hinted as 'Final'"
+            val message = PyPsiBundle.message("INSP.final.either.instance.attribute.or.class.attribute.could.be.type.hinted.as.final")
             registerProblem(sameNameClassLevelFinal, message)
             registerProblem(initAttribute, message)
           }
@@ -256,7 +266,8 @@ class PyFinalInspection : PyInspection() {
       if (notRegistered.isEmpty()) return
 
       for (commonFinal in newFinals.keys.intersect(inheritedFinals.keys)) {
-        registerProblem(newFinals[commonFinal], "'$ancestorName.$commonFinal' is 'Final' and could not be overridden")
+        @NlsSafe val qualifiedName = "$ancestorName.$commonFinal"
+        registerProblem(newFinals[commonFinal], PyPsiBundle.message("INSP.final.final.attribute.could.not.be.overridden", qualifiedName))
         notRegistered.remove(commonFinal)
       }
     }
@@ -267,7 +278,7 @@ class PyFinalInspection : PyInspection() {
       val instanceAttributes = mutableMapOf<String, PyTargetExpression>()
       PyClassImpl.collectInstanceAttributes(method, instanceAttributes)
       instanceAttributes.values.forEach {
-        if (isFinal(it)) registerProblem(it, "'Final' attribute should be declared in class body or '__init__'")
+        if (isFinal(it)) registerProblem(it, PyPsiBundle.message("INSP.final.final.attribute.should.be.declared.in.class.body.or.init"))
       }
     }
 
@@ -285,7 +296,7 @@ class PyFinalInspection : PyInspection() {
       }
 
       if (resolved.any { it is PyTargetExpression && isFinal(it) }) {
-        registerProblem(target, "'${target.name}' is 'Final' and could not be reassigned")
+        registerProblem(target, PyPsiBundle.message("INSP.final.final.target.could.not.be.reassigned", target.name))
         return
       }
 
@@ -293,7 +304,7 @@ class PyFinalInspection : PyInspection() {
         if (myTypeEvalContext.maySwitchToAST(e) &&
             e.parent.let { it is PyNonlocalStatement || it is PyGlobalStatement } &&
             PyUtil.multiResolveTopPriority(e, resolveContext).any { it is PyTargetExpression && isFinal(it) }) {
-          registerProblem(target, "'${target.name}' is 'Final' and could not be reassigned")
+          registerProblem(target, PyPsiBundle.message("INSP.final.final.target.could.not.be.reassigned", target.name))
           return
         }
       }
@@ -315,13 +326,14 @@ class PyFinalInspection : PyInspection() {
             ScopeUtil.getScopeOwner(target).let { it is PyFunction && PyUtil.turnConstructorIntoClass(it) == cls }) {
           return
         }
-        registerProblem(target, "'$name' is 'Final' and could not be reassigned")
+        registerProblem(target, PyPsiBundle.message("INSP.final.final.target.could.not.be.reassigned", name))
       }
 
       for (ancestor in cls.getAncestorClasses(myTypeEvalContext)) {
         val inheritedClassAttribute = ancestor.findClassAttribute(name, false, myTypeEvalContext)
         if (inheritedClassAttribute != null && !inheritedClassAttribute.hasAssignedValue() && isFinal(inheritedClassAttribute)) {
-          registerProblem(target, "'${ancestor.name}.$name' is 'Final' and could not be reassigned")
+          @NlsSafe val qualifiedName = "${ancestor.name}.$name"
+          registerProblem(target, PyPsiBundle.message("INSP.final.final.target.could.not.be.reassigned", qualifiedName))
           return
         }
       }
@@ -332,8 +344,8 @@ class PyFinalInspection : PyInspection() {
           val attributesInInit = mutableMapOf<String, PyTargetExpression>()
           PyClassImpl.collectInstanceAttributes(init, attributesInInit)
           if (attributesInInit[name]?.let { it != target && isFinal(it) } == true) {
-            val qualifier = if (cls == current) "" else "${current.name}."
-            registerProblem(target, "'$qualifier$name' is 'Final' and could not be reassigned")
+            @NlsSafe val qualifiedName = (if (cls == current) "" else "${current.name}.") + name
+            registerProblem(target, PyPsiBundle.message("INSP.final.final.target.could.not.be.reassigned", qualifiedName))
             break
           }
         }
@@ -347,7 +359,8 @@ class PyFinalInspection : PyInspection() {
         val ancestorClassAttribute = ancestor.findClassAttribute(name, false, myTypeEvalContext)
 
         if (ancestorClassAttribute != null && ancestorClassAttribute.hasAssignedValue() && isFinal(ancestorClassAttribute)) {
-          registerProblem(target, "'${ancestor.name}.$name' is 'Final' and could not be reassigned")
+          @NlsSafe val qualifiedName = "${ancestor.name}.$name"
+          registerProblem(target, PyPsiBundle.message("INSP.final.final.target.could.not.be.reassigned", qualifiedName))
           break
         }
       }
@@ -360,7 +373,7 @@ class PyFinalInspection : PyInspection() {
       }
 
       if (isInAnnotationOrTypeComment(node) && resolvesToFinal(node)) {
-        registerProblem(node, "'Final' could only be used as the outermost type")
+        registerProblem(node, PyPsiBundle.message("INSP.final.final.could.only.be.used.as.outermost.type"))
       }
     }
 
@@ -376,7 +389,7 @@ class PyFinalInspection : PyInspection() {
           override fun visitPyWhileStatement(node: PyWhileStatement) {}
 
           override fun visitPyTargetExpression(node: PyTargetExpression) {
-            if (isFinal(node)) registerProblem(node, "'Final' could not be used inside a loop")
+            if (isFinal(node)) registerProblem(node, PyPsiBundle.message("INSP.final.final.could.not.be.used.inside.loop"))
           }
         }
       )

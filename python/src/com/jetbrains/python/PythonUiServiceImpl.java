@@ -153,7 +153,7 @@ public final class PythonUiServiceImpl extends PythonUiService {
   }
 
   @Override
-  public JComponent createSingleCheckboxOptionsPanel(String label, InspectionProfileEntry inspection, String property) {
+  public JComponent createSingleCheckboxOptionsPanel(@NlsContexts.Checkbox String label, InspectionProfileEntry inspection, String property) {
     return new SingleCheckboxOptionsPanel(label, inspection, property);
   }
 
@@ -228,7 +228,7 @@ public final class PythonUiServiceImpl extends PythonUiService {
   }
 
   @Override
-  public JCheckBox createInspectionCheckBox(String message, InspectionProfileEntry inspection, String property) {
+  public JCheckBox createInspectionCheckBox(@NlsContexts.Checkbox String message, InspectionProfileEntry inspection, String property) {
     return new CheckBox(message, inspection, property);
   }
 
@@ -243,7 +243,7 @@ public final class PythonUiServiceImpl extends PythonUiService {
   }
 
   @Override
-  public JComponent createListEditForm(String title, List<String> stringList) {
+  public JComponent createListEditForm(@NlsContexts.ColumnName String title, List<String> stringList) {
     final ListEditForm form = new ListEditForm(title, stringList);
     return form.getContentPanel();
   }
