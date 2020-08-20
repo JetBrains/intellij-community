@@ -59,7 +59,7 @@ class GitMultiRepoRebaseTest : GitRebaseBaseTest() {
     val localChange = LocalChange(community, "new.txt", "Some content")
     `fail with critical error while rebasing 2nd root`(localChange)
 
-    assertErrorNotification("Rebase Failed",
+    assertErrorNotification("Rebase failed",
         """
         contrib: $UNKNOWN_ERROR_TEXT <br/>
         $LOCAL_CHANGES_WARNING

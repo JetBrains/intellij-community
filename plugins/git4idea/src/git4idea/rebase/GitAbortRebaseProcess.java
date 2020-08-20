@@ -166,7 +166,7 @@ class GitAbortRebaseProcess {
     boolean[] success = new boolean[1];
 
     new GitFreezingProcess(myProject, "rebase", () -> {
-      try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, "Rebase")) {
+      try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, GitBundle.message("activity.name.rebase"))) {
         if (myRepositoryToAbort != null) {
           myIndicator.setText2(GitBundle.message(
             "rebase.abort.progress.indicator.command.in.repo.title",
@@ -180,7 +180,7 @@ class GitAbortRebaseProcess {
           }
           else {
             myNotifier.notifyError(
-              GitBundle.getString("rebase.abort.notification.failed.title"),
+              GitBundle.message("rebase.abort.notification.failed.title"),
               result.getErrorOutputAsHtmlString() + mentionLocalChangesRemainingInStash(mySaver),
               true);
             return;
@@ -229,7 +229,7 @@ class GitAbortRebaseProcess {
                 );
               }
               myNotifier.notifyImportantWarning(
-                GitBundle.getString("rebase.abort.notification.warning.rollback.failed.title"),
+                GitBundle.message("rebase.abort.notification.warning.rollback.failed.title"),
                 description
               );
               return;
