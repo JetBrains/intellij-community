@@ -3,6 +3,7 @@ package com.intellij.internal.statistics;
 
 import com.intellij.internal.statistic.FUCounterCollectorTestCase;
 import com.intellij.internal.statistic.eventLog.*;
+import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import junit.framework.TestCase;

@@ -2,7 +2,7 @@
 package com.intellij.internal.statistic.eventLog.whitelist
 
 import com.google.gson.GsonBuilder
-import com.intellij.internal.statistic.eventLog.*
+import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
 import com.intellij.internal.statistic.service.fus.collectors.FeatureUsagesCollector

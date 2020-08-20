@@ -3,6 +3,9 @@ package com.intellij.completion.settings
 
 import com.intellij.completion.ranker.ExperimentModelProvider
 import com.intellij.internal.statistic.eventLog.*
+import com.intellij.internal.statistic.eventLog.events.BooleanEventField
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.StringEventField
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
