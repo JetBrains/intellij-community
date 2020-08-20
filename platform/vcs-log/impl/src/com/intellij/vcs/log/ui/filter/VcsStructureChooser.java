@@ -301,6 +301,7 @@ public class VcsStructureChooser extends DialogWrapper {
                                           boolean leaf,
                                           int row,
                                           boolean hasFocus) {
+          //noinspection HardCodedStringLiteral
           append(value.toString());
         }
       };

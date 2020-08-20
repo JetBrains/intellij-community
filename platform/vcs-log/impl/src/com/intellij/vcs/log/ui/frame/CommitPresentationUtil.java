@@ -97,6 +97,7 @@ public final class CommitPresentationUtil {
     StringBuffer result = new StringBuffer();
 
     while (matcher.find()) {
+      //noinspection HardCodedStringLiteral
       String hash = matcher.group();
 
       if (resolvedHashes.contains(hash)) {

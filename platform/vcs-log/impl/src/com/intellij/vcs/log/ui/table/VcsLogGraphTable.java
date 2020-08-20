@@ -182,8 +182,9 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
 
   protected void setErrorEmptyText(@NotNull Throwable error, @NlsContexts.StatusText @NotNull String defaultText) {
     String message = ObjectUtils.chooseNotNull(error.getLocalizedMessage(), defaultText);
-    message = StringUtil.shortenTextWithEllipsis(message, 150, 0, true).replace('\n', ' ');
-    getEmptyText().setText(message);
+    String shortenedMessage = StringUtil.shortenTextWithEllipsis(message, 150, 0, true);
+    //noinspection HardCodedStringLiteral
+    getEmptyText().setText(shortenedMessage.replace('\n', ' '));
   }
 
   protected void appendActionToEmptyText(@Nls @NotNull String text, @NotNull Runnable action) {
@@ -766,6 +767,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
       if (value == null) {
         return;
       }
+      //noinspection HardCodedStringLiteral
       append(value.toString(), applyHighlighters(this, row, column, hasFocus, selected));
       if (column == getColumnViewIndex(VcsLogColumn.COMMIT) || column == getColumnViewIndex(VcsLogColumn.AUTHOR)) {
         SpeedSearchUtil.applySpeedSearchHighlighting(table, this, false, selected);
