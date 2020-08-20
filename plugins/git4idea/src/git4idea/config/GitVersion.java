@@ -121,8 +121,8 @@ public final class GitVersion implements Comparable<GitVersion> {
     if (type == null) {
       if (SystemInfo.isWindows) {
         String suffix = getStringGroup(m, 5);
-        if (StringUtil.toLowerCase(suffix).contains("msysgit") ||
-            StringUtil.toLowerCase(suffix).contains("windows")) {
+        if (StringUtil.toLowerCase(suffix).contains("msysgit") || //NON-NLS
+            StringUtil.toLowerCase(suffix).contains("windows")) { //NON-NLS
           type = Type.MSYS;
         }
         else {

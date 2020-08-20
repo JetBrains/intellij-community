@@ -22,7 +22,7 @@ sealed class GitExecutable {
   }
 
   abstract val id: @NonNls String
-  abstract val exePath: String
+  abstract val exePath: @NonNls String
   abstract val isLocal: Boolean
 
   /**

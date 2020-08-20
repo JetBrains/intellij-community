@@ -54,10 +54,7 @@ import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitSimplePathsBrowser;
 import git4idea.util.GitUIUtil;
 import git4idea.util.StringScanner;
-import org.jetbrains.annotations.CalledInBackground;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -867,11 +864,13 @@ public final class GitUtil {
     return StringUtil.join(repositories, repository -> repository.getPresentableUrl(), UIUtil.BR);
   }
 
+  @Nls
   @NotNull
   public static String mention(@NotNull GitRepository repository) {
     return getRepositoryManager(repository.getProject()).moreThanOneRoot() ? " in " + getShortRepositoryName(repository) : "";
   }
 
+  @Nls
   @NotNull
   public static String mention(@NotNull Collection<? extends GitRepository> repositories) {
     if (repositories.isEmpty()) return "";

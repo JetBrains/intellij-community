@@ -93,7 +93,7 @@ internal class GitVcsPanel(private val project: Project) :
   private lateinit var supportedBranchUpLabel: JLabel
 
   private val pathSelector: VcsExecutablePathSelector by lazy {
-    VcsExecutablePathSelector("Git", disposable!!, object : VcsExecutablePathSelector.ExecutableHandler {
+    VcsExecutablePathSelector(GitVcs.NAME, disposable!!, object : VcsExecutablePathSelector.ExecutableHandler {
       override fun patchExecutable(executable: String): String? {
         return GitExecutableDetector.patchExecutablePath(executable)
       }
@@ -271,7 +271,7 @@ internal class GitVcsPanel(private val project: Project) :
     if (project.isDefault || GitRepositoryManager.getInstance(project).moreThanOneRoot()) {
       row {
         checkBox(cdSyncBranches(project)).applyToComponent {
-          toolTipText = DvcsBundle.message("sync.setting.description", "Git")
+          toolTipText = DvcsBundle.message("sync.setting.description", GitVcs.NAME)
         }
       }
     }
