@@ -90,7 +90,7 @@ class StubCumulativeInputDiffBuilder extends DirectInputDataDiffBuilder<Integer,
 
       if (FileBasedIndexImpl.DO_TRACE_STUB_INDEX_UPDATE) {
         StubIndexImpl.LOG
-          .info("stub indexes" + (newTree == null ? "deletion" : "update") + ": file = " + myInputId + " indexes " + affectedIndexes);
+          .info("stub indexes " + (newTree == null ? "deletion" : "update") + ": file = " + myInputId + " indexes " + affectedIndexes);
       }
 
       StubIndexImpl stubIndex = (StubIndexImpl)StubIndex.getInstance();

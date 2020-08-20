@@ -606,11 +606,6 @@ public final class StubIndexImpl extends StubIndexEx {
           protected boolean iterateKeys(@NotNull KeyValueUpdateProcessor<? super K, ? super Void> addProcessor,
                                         @NotNull KeyValueUpdateProcessor<? super K, ? super Void> updateProcessor,
                                         @NotNull RemovedKeyProcessor<? super K> removeProcessor) throws StorageException {
-
-            if (FileBasedIndexImpl.DO_TRACE_STUB_INDEX_UPDATE) {
-              LOG.info("iterating keys updated_id = " + System.identityHashCode(newKeys));
-            }
-
             boolean modified = false;
 
             for (K oldKey : oldKeys) {
