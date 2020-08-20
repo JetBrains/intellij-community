@@ -63,7 +63,7 @@ public final class CommitPresentationUtil {
   @NotNull
   @Nls
   private static String escapeMultipleSpaces(@NotNull @Nls String text) {
-    StringBuilder result = new StringBuilder();
+    @Nls StringBuilder result = new StringBuilder();
     for (int i = 0; i < text.length(); i++) {
       if (text.charAt(i) == ' ') {
         if (i == text.length() - 1 || text.charAt(i + 1) != ' ') {
