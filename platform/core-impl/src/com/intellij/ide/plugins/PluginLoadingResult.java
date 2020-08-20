@@ -3,6 +3,7 @@ package com.intellij.ide.plugins;
 
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.BuildNumber;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.text.VersionComparatorUtil;
@@ -98,8 +99,8 @@ final class PluginLoadingResult {
     }
   }
 
-  void reportIncompatiblePlugin(@NotNull IdeaPluginDescriptorImpl plugin, @NotNull @Nls String reason, 
-                                @Nullable @NonNls String since, @Nullable @NonNls String until) {
+  void reportIncompatiblePlugin(@NotNull IdeaPluginDescriptorImpl plugin, @NotNull @Nls String reason,
+                                @Nullable @NlsSafe String since, @Nullable @NlsSafe String until) {
     // do not report if some compatible plugin were already added
     // no race condition here — plugins from classpath are loaded before and not in parallel to loading from plugin dir
     if (idMap.containsKey(plugin.getPluginId())) {

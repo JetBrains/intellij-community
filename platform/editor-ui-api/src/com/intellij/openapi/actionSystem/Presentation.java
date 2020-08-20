@@ -216,6 +216,7 @@ public final class Presentation implements Cloneable {
   /**
    * @return the text with mnemonic, properly escaped, so it could be passed to {@link #setText(String)} (e.g. to copy the presentation).
    */
+  @ActionText
   @Nullable
   public String getTextWithMnemonic() {
     TextWithMnemonic textWithMnemonic = myTextWithMnemonicSupplier.get();

@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.impl.InternalDecorator;
@@ -101,7 +102,7 @@ final class ServiceViewDragHelper {
   }
 
   static @NlsContexts.TabTitle String getDisplayName(ItemPresentation presentation) {
-    StringBuilder result = new StringBuilder();
+    @NlsSafe StringBuilder result = new StringBuilder();
     if (presentation instanceof PresentationData) {
       List<PresentableNodeDescriptor.ColoredFragment> fragments = ((PresentationData)presentation).getColoredText();
       if (fragments.isEmpty() && presentation.getPresentableText() != null) {

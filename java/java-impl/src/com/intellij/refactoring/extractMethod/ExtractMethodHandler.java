@@ -315,7 +315,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
     return FileEditorManager.getInstance(project).openTextEditor(fileDescriptor, false);
   }
 
-  public static @Nls String getRefactoringName() {
+  public static @NlsContexts.DialogTitle String getRefactoringName() {
     return RefactoringBundle.message("extract.method.title");
   }
 }

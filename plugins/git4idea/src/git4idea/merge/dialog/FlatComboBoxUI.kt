@@ -4,6 +4,7 @@ package git4idea.merge.dialog
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI
 import com.intellij.ide.ui.laf.darcula.ui.DarculaJBPopupComboPopup
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.popup.list.ComboBoxPopup
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.ComponentWithEmptyText
@@ -33,7 +34,7 @@ import javax.swing.plaf.basic.ComboPopup
  */
 internal class FlatComboBoxUI(var border: Insets = Insets(1, 1, 1, 1),
                               var outerInsets: Insets = JBInsets.create(DarculaUIUtil.BW.get(), DarculaUIUtil.BW.get()),
-                              private val popupEmptyText: String = StatusText.getDefaultEmptyText(),
+                              @NlsContexts.StatusText private val popupEmptyText: String = StatusText.getDefaultEmptyText(),
                               private val popupComponentProvider: ((JComponent) -> JComponent)? = null)
   : DarculaComboBoxUI(0f, Insets(1, 0, 1, 0), false) {
 

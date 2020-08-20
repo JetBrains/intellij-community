@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.groovydoc.parser.elements;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiBuilderFactory;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +29,7 @@ public class GroovyDocTagValueTokenType extends GroovyDocChameleonElementType im
 
   private static final Set<String> TAGS_WITH_REFERENCES = new HashSet<>();
   private static final Set<String> INLINED_TAGS_WITH_REFERENCES = new HashSet<>();
-  private static final Set<String> BUILT_IN_TYPES = new HashSet<>();
+  private static final Set<@NlsSafe String> BUILT_IN_TYPES = new HashSet<>();
 
   static {
     BUILT_IN_TYPES.addAll(Arrays.asList("double", "long", "float", "short", "any", "char", "int", "byte", "boolean"));

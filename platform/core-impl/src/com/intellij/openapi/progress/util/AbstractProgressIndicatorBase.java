@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.mac.foundation.MacUtil;
@@ -31,9 +32,9 @@ import java.util.Set;
 public class AbstractProgressIndicatorBase extends UserDataHolderBase implements ProgressIndicator {
   private static final Logger LOG = Logger.getInstance(AbstractProgressIndicatorBase.class);
 
-  private volatile String myText;
+  private volatile @NlsContexts.ProgressText String myText;
   private volatile double myFraction;
-  private volatile String myText2;
+  private volatile @NlsContexts.ProgressDetails String myText2;
 
   private volatile boolean myCanceled;
   private volatile boolean myRunning;
@@ -43,9 +44,9 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   private volatile MacUtil.Activity myMacActivity;
   private volatile boolean myShouldStartActivity = true;
 
-  private Stack<String> myTextStack; // guarded by this
+  private Stack<@NlsContexts.ProgressText String> myTextStack; // guarded by this
   private DoubleArrayList myFractionStack; // guarded by this
-  private Stack<String> myText2Stack; // guarded by this
+  private Stack<@NlsContexts.ProgressDetails String> myText2Stack; // guarded by this
 
   private ProgressIndicator myModalityProgress;
   private volatile ModalityState myModalityState = ModalityState.NON_MODAL;

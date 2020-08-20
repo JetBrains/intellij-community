@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.VolatileNotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
@@ -11,6 +12,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
@@ -98,6 +100,7 @@ public abstract class GrMapType extends GrLiteralClassType {
     return myParameters.getValue();
   }
 
+  @NlsSafe
   @Override
   @NotNull
   public String getInternalCanonicalText() {
@@ -128,6 +131,7 @@ public abstract class GrMapType extends GrLiteralClassType {
     return "[" + StringUtil.join(theFirst, ", ") + (tooMany ? ",..." : "") + "]";
   }
 
+  @NlsSafe
   @NotNull
   private static String getInternalText(@Nullable PsiType param) {
     return param == null ? "null" : param.getInternalCanonicalText();
@@ -169,6 +173,7 @@ public abstract class GrMapType extends GrLiteralClassType {
     return new GrMapTypeFromNamedArgs(context, args);
   }
 
+  @NonNls
   @Override
   public String toString() {
     return "map type";

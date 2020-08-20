@@ -17,6 +17,7 @@ package com.intellij.refactoring.typeCook.deductive.builder;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.typeCook.Settings;
@@ -161,7 +162,7 @@ public class Result {
     return ratio + (y != 0 ? " (" + (x * 100 / y) + "%)" : "");
   }
 
-  public @Nls String getReport() {
+  public @NlsContexts.StatusBarText String getReport() {
     return JavaRefactoringBundle.message("type.cook.report", getRatio(myCookedNumber, myVictims.size()),
                                      getRatio(myCastsRemoved, myCastsNumber));
   }

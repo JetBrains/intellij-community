@@ -22,13 +22,11 @@ import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.Nls;
@@ -52,7 +50,7 @@ public class DeleteElementFix extends LocalQuickFixAndIntentionActionOnPsiElemen
   @NotNull
   @Override
   public String getText() {
-    return StringUtil.notNullize(myText, getFamilyName());
+    return myText == null ? getFamilyName() : myText;
   }
 
   @Nls

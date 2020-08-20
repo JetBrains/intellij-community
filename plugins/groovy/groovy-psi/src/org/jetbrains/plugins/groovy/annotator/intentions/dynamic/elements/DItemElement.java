@@ -17,21 +17,10 @@ public abstract class DItemElement implements DNamedElement, DTypedElement, Comp
   public Boolean myStatic;
   public String myName;
 
-//  @NotNull
-  public String myHighlightedText = null;
-
   public DItemElement(@Nullable Boolean isStatic, @Nullable String name, @Nullable String type) {
     myStatic = isStatic;
     myName = name;
     myType = type;
-  }
-
-  public String getHighlightedText() {
-    return myHighlightedText;
-  }
-
-  public void setHighlightedText(String highlightedText) {
-    myHighlightedText = highlightedText;
   }
 
   public boolean equals(Object o) {

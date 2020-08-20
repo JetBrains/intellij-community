@@ -64,7 +64,7 @@ public final class ResolveProfiler {
     return getThreadInfo().finish();
   }
 
-  public static void write(String prefix, @NotNull PsiElement expression, long time) {
+  public static void write(@NonNls String prefix, @NotNull PsiElement expression, long time) {
     if (DISABLED) return;
 
     write(getInfo(prefix, expression, time));

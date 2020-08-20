@@ -132,7 +132,7 @@ public class NlsContexts {
    * Annotate by {@code #AttributeDescriptor} text attribute keys, see {@link com.intellij.openapi.options.colors.AttributesDescriptor}
    */
   @NlsContext(prefix = "attribute.descriptor")
-  @Nls(capitalization = Nls.Capitalization.Title)
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   @Target({ElementType.TYPE_USE, ElementType.PARAMETER, ElementType.METHOD})
   public @interface AttributeDescriptor {
   }

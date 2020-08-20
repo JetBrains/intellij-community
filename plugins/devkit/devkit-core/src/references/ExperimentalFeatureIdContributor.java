@@ -16,6 +16,7 @@ import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Extension;
 
 import java.util.Collections;
@@ -59,7 +60,7 @@ class ExperimentalFeatureIdContributor extends PsiReferenceContributor {
     @NotNull
     @Override
     public String getUnresolvedMessagePattern() {
-      return "Cannot resolve feature '" + getValue() + "'";
+      return DevKitBundle.message("code.convert.experimental.feature.id.cannot.resolve", getValue());
     }
 
     @Override

@@ -2940,6 +2940,7 @@
   </item>
   <item name='java.util.ResourceBundle java.lang.String getString(java.lang.String)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.Nls'/>
   </item>
   <item name='java.util.ResourceBundle java.lang.String getString(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -3059,30 +3060,35 @@
   </item>
   <item name='java.util.Scanner boolean hasNext(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
   <item name='java.util.Scanner boolean hasNext(java.util.regex.Pattern) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.util.Scanner java.lang.String findInLine(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
   <item name='java.util.Scanner java.lang.String findInLine(java.util.regex.Pattern) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.util.Scanner java.lang.String findWithinHorizon(java.lang.String, int) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
   <item name='java.util.Scanner java.lang.String findWithinHorizon(java.util.regex.Pattern, int) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.util.Scanner java.lang.String next(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
   <item name='java.util.Scanner java.lang.String next(java.util.regex.Pattern) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.util.Scanner java.util.Scanner skip(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
   <item name='java.util.Scanner java.util.Scanner skip(java.util.regex.Pattern) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>

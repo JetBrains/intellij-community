@@ -68,7 +68,7 @@ public class GrChangeSignatureHandler implements ChangeSignatureHandler {
     if (!CommonRefactoringUtil.checkReadOnlyStatus(project, method)) return;
     if (method instanceof GrReflectedMethod) method = ((GrReflectedMethod)method).getBaseMethod();
 
-    PsiMethod newMethod = SuperMethodWarningUtil.checkSuperMethod(method, RefactoringBundle.message("to.refactor"));
+    PsiMethod newMethod = SuperMethodWarningUtil.checkSuperMethod(method);
     if (newMethod == null) return;
 
     if (!newMethod.equals(method)) {

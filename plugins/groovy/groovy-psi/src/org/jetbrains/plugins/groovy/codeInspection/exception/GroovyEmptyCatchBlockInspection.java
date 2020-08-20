@@ -19,6 +19,7 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -38,6 +39,7 @@ import javax.swing.*;
 public class GroovyEmptyCatchBlockInspection extends BaseInspection {
   public boolean myIgnore = true;
   public boolean myCountCommentsAsContent = true;
+  @NlsSafe private static final String NEW_NAME = "ignored";
 
   @Override
   @NotNull
@@ -68,7 +70,7 @@ public class GroovyEmptyCatchBlockInspection extends BaseInspection {
       if (parameter == null) return;
       if (myIgnore && GrExceptionUtil.ignore(parameter)) return;
 
-      LocalQuickFix fix = QuickFixFactory.getInstance().createRenameElementFix(parameter, "ignored");
+      LocalQuickFix fix = QuickFixFactory.getInstance().createRenameElementFix(parameter, NEW_NAME);
       final LocalQuickFix[] fixes = myIgnore
                                     ? new LocalQuickFix[]{fix}
                                     : LocalQuickFix.EMPTY_ARRAY;

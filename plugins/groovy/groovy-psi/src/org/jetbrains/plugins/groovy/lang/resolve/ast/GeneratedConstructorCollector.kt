@@ -16,7 +16,7 @@ class GeneratedConstructorCollector(tupleConstructor: PsiAnnotation?,
                                     immutable: Boolean,
                                     val builder: GrLightMethodBuilder) {
 
-  val optional: Boolean = !immutable && tupleConstructor?.run { PsiUtil.getAnnoAttributeValue(this, "defaults", true) } ?: true
+  val optional: Boolean = !immutable && tupleConstructor?.run { PsiUtil.getAnnoAttributeValue(this, TupleConstructorAttributes.DEFAULTS, true) } ?: true
 
   val collector: MutableList<GrParameter> = mutableListOf()
 

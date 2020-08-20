@@ -11,8 +11,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.util.NlsActions.ActionDescription;
-import com.intellij.openapi.util.NlsActions.ActionText;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
@@ -34,12 +33,19 @@ import java.util.Objects;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
 public abstract class AnnotateRevisionActionBase extends DumbAwareAction {
-  public AnnotateRevisionActionBase(@Nullable @ActionText String text,
-                                    @Nullable @ActionDescription String description,
+  public AnnotateRevisionActionBase(@Nullable @NlsActions.ActionText String text,
+                                    @Nullable @NlsActions.ActionDescription String description,
                                     @Nullable Icon icon) {
     super(text, description, icon);
+  }
+
+  public AnnotateRevisionActionBase(@NotNull Supplier<String> dynamicText,
+                                    @NotNull Supplier<String> dynamicDescription,
+                                    @Nullable Icon icon) {
+    super(dynamicText, dynamicDescription, icon);
   }
 
   @Nullable
