@@ -6,6 +6,6 @@ import org.jetbrains.annotations.PropertyKey
 
 object GitBundleExtensions {
   fun messagePointer(@NotNull @PropertyKey(resourceBundle = GitBundle.BUNDLE) key: String, vararg params: Any): () -> String = {
-    GitBundle.message(key, params)
+    GitBundle.message(key, *params)
   }
 }
