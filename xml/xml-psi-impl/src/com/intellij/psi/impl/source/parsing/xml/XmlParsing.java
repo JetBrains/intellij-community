@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.source.parsing.xml;
 
-import com.intellij.codeInsight.daemon.XmlErrorBundle;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.ICustomParsingType;
@@ -79,7 +78,7 @@ public class XmlParsing {
     }
 
     if (error != null) {
-      error.error(XmlPsiBundle.message("top.level.element.is.not.completed"));
+      error.error(XmlPsiBundle.message("xml.parsing.top.level.element.is.not.completed"));
     }
 
     if (rootTagCount == 0) {
@@ -135,7 +134,7 @@ public class XmlParsing {
         if (!tagName.equals(endName) && myTagNamesStack.contains(endName)) {
           footer.rollbackTo();
           myTagNamesStack.pop();
-          tag.doneBefore(XML_TAG, content, XmlErrorBundle.message("named.element.is.not.closed", tagName));
+          tag.doneBefore(XML_TAG, content, XmlPsiBundle.message("xml.parsing.named.element.is.not.closed", tagName));
           content.drop();
           return;
         }
@@ -216,14 +215,14 @@ public class XmlParsing {
       advance();
     }
     else {
-      error(XmlPsiBundle.message("tag.start.is.not.closed"));
+      error(XmlPsiBundle.message("xml.parsing.tag.start.is.not.closed"));
       myTagNamesStack.pop();
       tag.done(XML_TAG);
       return null;
     }
 
     if (myTagNamesStack.size() > BALANCING_DEPTH_THRESHOLD) {
-      error(XmlPsiBundle.message("way.too.unbalanced"));
+      error(XmlPsiBundle.message("xml.parsing.way.too.unbalanced"));
       tag.done(XML_TAG);
       return null;
     }
@@ -267,7 +266,7 @@ public class XmlParsing {
         xmlText = startText(xmlText);
         final PsiBuilder.Marker error = mark();
         advance();
-        error.error(XmlPsiBundle.message("unescaped.ampersand.or.nonterminated.character.entity.reference"));
+        error.error(XmlPsiBundle.message("xml.parsing.unescaped.ampersand.or.nonterminated.character.entity.reference"));
       }
       else if (tt instanceof ICustomParsingType || tt instanceof ILazyParseableElementType) {
         xmlText = terminateText(xmlText);
@@ -369,7 +368,7 @@ public class XmlParsing {
       att.done(XML_ATTRIBUTE);
     }
     else {
-      error(XmlErrorBundle.message("expected.attribute.eq.sign"));
+      error(XmlPsiBundle.message("xml.parsing.expected.attribute.eq.sign"));
       att.done(XML_ATTRIBUTE);
     }
   }
@@ -387,7 +386,7 @@ public class XmlParsing {
         if (tt == XML_BAD_CHARACTER) {
           final PsiBuilder.Marker error = mark();
           advance();
-          error.error(XmlPsiBundle.message("unescaped.ampersand.or.nonterminated.character.entity.reference"));
+          error.error(XmlPsiBundle.message("xml.parsing.unescaped.ampersand.or.nonterminated.character.entity.reference"));
         }
         else if (tt == XML_ENTITY_REF_TOKEN) {
           parseReference();
@@ -457,7 +456,7 @@ public class XmlParsing {
           advance();
         }
         else {
-          error(XmlErrorBundle.message("expected.attribute.eq.sign"));
+          error(XmlPsiBundle.message("xml.parsing.expected.attribute.eq.sign"));
         }
         parseAttributeValue();
       }

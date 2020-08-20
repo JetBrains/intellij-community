@@ -16,9 +16,9 @@
 
 package org.intellij.plugins.relaxNG.compact.parser;
 
-import com.intellij.codeInsight.daemon.XmlErrorBundle;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.xml.psi.XmlPsiBundle;
 import org.intellij.plugins.relaxNG.RelaxngBundle;
 import org.intellij.plugins.relaxNG.compact.RncElementTypes;
 
@@ -77,7 +77,7 @@ public abstract class DeclarationParsing extends AbstractParsing {
     } else if (IDENTIFIERS.contains(t)) {
       parseDefine();
     } else {
-      error(XmlErrorBundle.message("xml.parsing.unexpected.token"));
+      error(XmlPsiBundle.message("xml.parsing.unexpected.token"));
       advance();
     }
   }

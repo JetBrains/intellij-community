@@ -3,7 +3,6 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.application.options.XmlSettings;
 import com.intellij.codeInsight.completion.ExtendedTagInsertHandler;
-import com.intellij.codeInsight.daemon.XmlErrorBundle;
 import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
 import com.intellij.codeInsight.daemon.impl.VisibleHighlightingPassFactory;
 import com.intellij.codeInsight.hint.HintManager;
@@ -43,6 +42,7 @@ import com.intellij.xml.XmlNamespaceHelper;
 import com.intellij.xml.XmlSchemaProvider;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.impl.schema.XmlNSDescriptorImpl;
+import com.intellij.xml.psi.XmlPsiBundle;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -86,7 +86,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   @NotNull
   public String getText() {
     final String alias = getXmlNamespaceHelper().getNamespaceAlias(getFile());
-    return XmlErrorBundle.message("create.namespace.declaration.quickfix", alias);
+    return XmlPsiBundle.message("xml.quickfix.create.namespace.declaration.text", alias);
   }
 
   private XmlNamespaceHelper getXmlNamespaceHelper() {
@@ -96,7 +96,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   @Override
   @NotNull
   public String getFamilyName() {
-    return XmlErrorBundle.message("create.namespace.declaration.quickfix.family");
+    return XmlPsiBundle.message("xml.quickfix.create.namespace.declaration.family");
   }
 
   @Override
@@ -176,7 +176,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
             }
           });
         }
-      }, getTitle(),
+      }, getSelectNSActionTitle(),
       this,
       editor);
   }
@@ -197,8 +197,8 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
     return null;
   }
 
-  private String getTitle() {
-    return XmlErrorBundle.message("select.namespace.title", StringUtil.capitalize(getXmlNamespaceHelper().getNamespaceAlias(getFile())));
+  private String getSelectNSActionTitle() {
+    return XmlPsiBundle.message("xml.action.select.namespace.title", StringUtil.capitalize(getXmlNamespaceHelper().getNamespaceAlias(getFile())));
   }
 
   @Override
@@ -221,7 +221,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
     final List<String> namespaces = getNamespaces(element, getFile());
     if (!namespaces.isEmpty()) {
       final String message = ShowAutoImportPass.getMessage(namespaces.size() > 1, namespaces.iterator().next());
-      final String title = getTitle();
+      final String title = getSelectNSActionTitle();
       final ImportNSAction action = new ImportNSAction(namespaces, getFile(), element, editor, title);
       if (element instanceof XmlTag && token != null) {
         if (VisibleHighlightingPassFactory.calculateVisibleRange(editor).contains(token.getTextRange())) {
@@ -325,7 +325,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
                                          final ExternalUriProcessor processor) {
     ProgressManager.getInstance().runProcessWithProgressSynchronously(
       () -> ReadAction.run(() -> processExternalUrisImpl(metaHandler, file, processor)),
-      XmlErrorBundle.message("finding.acceptable.uri"),
+      XmlPsiBundle.message("xml.progress.finding.acceptable.uri"),
       false,
       file.getProject()
     );
@@ -369,7 +369,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
     final String searchFor = metaHandler.searchFor();
 
     if (pi != null) {
-      pi.setText(XmlErrorBundle.message("looking.in.schemas"));
+      pi.setText(XmlPsiBundle.message("xml.progress.looking.in.schemas"));
       pi.setIndeterminate(false);
     }
     final ExternalResourceManager instanceEx = ExternalResourceManager.getInstance();
