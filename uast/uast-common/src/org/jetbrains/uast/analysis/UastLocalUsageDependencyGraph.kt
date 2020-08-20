@@ -413,7 +413,7 @@ private val UExpression.lastExpression: UExpression?
   }
 
 //FIXME: workaround for IDEA-248484, and fixed KT-35574
-@ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+@ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
 @Deprecated("hack")
 private fun isKotlinNeedsWorkaround(): Boolean {
   val actualKotlinVersion = PluginManagerCore.getPlugin(PluginId.getId("org.jetbrains.kotlin"))?.version
