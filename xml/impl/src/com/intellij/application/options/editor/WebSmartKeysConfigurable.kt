@@ -60,7 +60,7 @@ internal class WebSmartKeysConfigurable : BoundCompositeConfigurable<UnnamedConf
           checkBox(mySyncTagEditing)
         }
       }
-      titledRow("CSS") {
+      titledRow(XmlBundle.message("xml.editor.options.css.title")) {
         row {
           checkBox(mySelectWholeCssIdentifierOnDoubleClick)
         }

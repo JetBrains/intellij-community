@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.daemon.RelatedItemLineMarkerInfo;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.lang.annotation.Annotation;
@@ -11,6 +12,9 @@ import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NlsContexts.PopupContent;
+import com.intellij.openapi.util.NlsContexts.PopupTitle;
+import com.intellij.openapi.util.NlsContexts.Tooltip;
 import com.intellij.openapi.util.NotNullFactory;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Ref;
@@ -49,10 +53,10 @@ public class NavigationGutterIconBuilder<T> {
 
   protected NotNullLazyValue<Collection<? extends T>> myTargets;
   private boolean myLazy;
-  protected String myTooltipText;
-  protected String myPopupTitle;
-  protected String myEmptyText;
-  protected String myTooltipTitle;
+  protected @Tooltip String myTooltipText;
+  protected @PopupTitle String myPopupTitle;
+  protected @PopupContent String myEmptyText;
+  protected @PopupTitle String myTooltipTitle;
   protected GutterIconRenderer.Alignment myAlignment = GutterIconRenderer.Alignment.CENTER;
   private Computable<PsiElementListCellRenderer<?>> myCellRenderer;
   private @NotNull NullableFunction<? super T, String> myNamer = ElementPresentationManager.namer();
@@ -66,7 +70,7 @@ public class NavigationGutterIconBuilder<T> {
     return Collections.emptyList();
   };
   protected static final NotNullFunction<PsiElement, Collection<? extends GotoRelatedItem>> PSI_GOTO_RELATED_ITEM_PROVIDER =
-    dom -> Collections.singletonList(new GotoRelatedItem(dom, "XML"));
+    dom -> Collections.singletonList(new GotoRelatedItem(dom, InspectionsBundle.message("xml.goto.group")));
 
   protected NavigationGutterIconBuilder(@NotNull final Icon icon, @NotNull NotNullFunction<? super T, ? extends Collection<? extends PsiElement>> converter) {
     this(icon, converter, null);
@@ -126,7 +130,7 @@ public class NavigationGutterIconBuilder<T> {
   }
 
   @NotNull
-  public NavigationGutterIconBuilder<T> setTooltipText(@NotNull String tooltipText) {
+  public NavigationGutterIconBuilder<T> setTooltipText(@NotNull @Tooltip String tooltipText) {
     myTooltipText = tooltipText;
     return this;
   }
@@ -144,13 +148,13 @@ public class NavigationGutterIconBuilder<T> {
   }
 
   @NotNull
-  public NavigationGutterIconBuilder<T> setEmptyPopupText(@NotNull String emptyText) {
+  public NavigationGutterIconBuilder<T> setEmptyPopupText(@NotNull @PopupContent String emptyText) {
     myEmptyText = emptyText;
     return this;
   }
 
   @NotNull
-  public NavigationGutterIconBuilder<T> setTooltipTitle(@NotNull final String tooltipTitle) {
+  public NavigationGutterIconBuilder<T> setTooltipTitle(final @NotNull @PopupTitle String tooltipTitle) {
     myTooltipTitle = tooltipTitle;
     return this;
   }
@@ -254,7 +258,7 @@ public class NavigationGutterIconBuilder<T> {
           names.add(MessageFormat.format(PATTERN, text));
         }
       }
-      @NonNls StringBuilder sb = new StringBuilder("<html><body>");
+      @Nls StringBuilder sb = new StringBuilder("<html><body>");
       if (myTooltipTitle != null) {
         sb.append(myTooltipTitle).append("<br>");
       }
@@ -336,13 +340,13 @@ public class NavigationGutterIconBuilder<T> {
   private static class MyNavigationGutterIconRenderer extends NavigationGutterIconRenderer {
     private final Alignment myAlignment;
     private final Icon myIcon;
-    private final String myTooltipText;
+    private final @Tooltip String myTooltipText;
     private final boolean myEmpty;
 
     MyNavigationGutterIconRenderer(@NotNull NavigationGutterIconBuilder<?> builder,
                                    @NotNull Alignment alignment,
                                    final Icon icon,
-                                   @Nullable final String tooltipText,
+                                   @Nullable final @Tooltip String tooltipText,
                                    @NotNull NotNullLazyValue<List<SmartPsiElementPointer<?>>> pointers,
                                    @NotNull Computable<PsiElementListCellRenderer<?>> cellRenderer,
                                    boolean empty) {

@@ -21,7 +21,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.XmlElementFactory;
@@ -46,16 +45,15 @@ import java.util.Set;
  * @author Konstantin Bulenkov
  */
 public class AddSchemaPrefixIntention extends PsiElementBaseIntentionAction {
-  public static final String NAME = "Insert namespace prefix";
 
   public AddSchemaPrefixIntention() {
-    setText(NAME);
+    setText(XmlBundle.message("xml.intention.insert.namespace.prefix.name"));
   }
 
   @NotNull
   @Override
   public String getFamilyName() {
-    return NAME;
+    return getText();
   }
 
   @Override
@@ -73,7 +71,9 @@ public class AddSchemaPrefixIntention extends PsiElementBaseIntentionAction {
     if (tag != null) {
       final Set<String> ns = tag.getLocalNamespaceDeclarations().keySet();
       final String nsPrefix =
-        Messages.showInputDialog(project, XmlBundle.message("namespace.prefix"), StringUtil.capitalize(NAME), Messages.getInformationIcon(), "",
+        Messages.showInputDialog(project, XmlBundle.message("namespace.prefix"),
+                                 XmlBundle.message("xml.intention.insert.namespace.prefix.command"),
+                                 Messages.getInformationIcon(), "",
                                  new InputValidator() {
                                    @Override
                                    public boolean checkInput(String inputString) {
@@ -88,7 +88,8 @@ public class AddSchemaPrefixIntention extends PsiElementBaseIntentionAction {
       if (nsPrefix == null) return;
       final List<XmlTag> tags = new ArrayList<>();
       final List<XmlAttributeValue> values = new ArrayList<>();
-      WriteCommandAction.writeCommandAction(project, tag.getContainingFile()).withName(NAME).run(() -> {
+      WriteCommandAction.writeCommandAction(project, tag.getContainingFile())
+        .withName(XmlBundle.message("xml.intention.insert.namespace.prefix.command")).run(() -> {
         tag.accept(new XmlRecursiveElementVisitor() {
           @Override
           public void visitXmlTag(XmlTag tag) {
@@ -164,7 +165,8 @@ public class AddSchemaPrefixIntention extends PsiElementBaseIntentionAction {
           tag = tag.getParentTag();
         }
       }
-    } else if (parent instanceof XmlAttribute && ((XmlAttribute)parent).getName().equals("xmlns")) {
+    }
+    else if (parent instanceof XmlAttribute && ((XmlAttribute)parent).getName().equals("xmlns")) {
       return (XmlAttribute)parent;
     }
     return null;

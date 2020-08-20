@@ -53,14 +53,15 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
           final String xmlElementName = element.getXmlElementName();
           String namespace = element.getXmlElementNamespace();
           if (element instanceof GenericAttributeValue) {
-            return Collections.singletonList(holder.createProblem(element, XmlDomBundle.message("attribute.0.should.be.defined", xmlElementName),
+            return Collections.singletonList(holder.createProblem(element, XmlDomBundle.message(
+              "dom.inspections.attribute.0.should.be.defined", xmlElementName),
                                                               new DefineAttributeQuickFix(xmlElementName, namespace)));
           }
           return Collections.singletonList(
             holder.createProblem(
               element,
               HighlightSeverity.ERROR,
-              XmlDomBundle.message("child.tag.0.should.be.defined", xmlElementName),
+              XmlDomBundle.message("dom.inspections.child.tag.0.should.be.defined", xmlElementName),
               new AddRequiredSubtagFix(xmlElementName, namespace)
             )
           );
@@ -78,7 +79,7 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
           final DomCollectionChildDescription childDescription = (DomCollectionChildDescription)description;
           final Required annotation = description.getAnnotation(Required.class);
           if (annotation != null && annotation.value()) {
-            list.add(holder.createProblem(element, childDescription, XmlDomBundle.message("child.tag.0.should.be.defined", ((DomCollectionChildDescription)description).getXmlElementName())));
+            list.add(holder.createProblem(element, childDescription, XmlDomBundle.message("dom.inspections.child.tag.0.should.be.defined", ((DomCollectionChildDescription)description).getXmlElementName())));
           }
         }
       }
@@ -151,9 +152,9 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
         final GenericDomValue genericDomValue = domElement.getGenericInfo().getNameDomElement(element);
         if (genericDomValue != null) {
           return Collections.singletonList(holder.createProblem(genericDomValue, DomUtil.getFile(domElement).equals(DomUtil.getFile(element))
-                                                                 ? XmlDomBundle.message("model.highlighting.identity", typeName)
-                                                                 : XmlDomBundle.message("model.highlighting.identity.in.other.file", typeName,
-                                                                                     domElement.getXmlTag().getContainingFile()
+                                                                 ? XmlDomBundle.message("dom.inspections.identity", typeName)
+                                                                 : XmlDomBundle.message("dom.inspections.identity.in.other.file", typeName,
+                                                                                        domElement.getXmlTag().getContainingFile()
                                                                                        .getName())));
         }
       }
@@ -184,10 +185,10 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
     if (stringValue == null) return null;
 
     if (required.nonEmpty() && isEmpty(child, stringValue)) {
-      return annotator.createProblem(child, XmlDomBundle.message("value.must.not.be.empty"));
+      return annotator.createProblem(child, XmlDomBundle.message("dom.inspections.value.must.not.be.empty"));
     }
     if (required.identifier() && !isIdentifier(stringValue)) {
-      return annotator.createProblem(child, XmlDomBundle.message("value.must.be.identifier"));
+      return annotator.createProblem(child, XmlDomBundle.message("dom.inspections.value.must.be.identifier"));
     }
     return null;
   }
@@ -230,13 +231,13 @@ public class DomHighlightingHelperImpl extends DomHighlightingHelper {
     @Override
     @NotNull
     public String getName() {
-      return XmlDomBundle.message("insert.required.tag.fix", tagName);
+      return XmlDomBundle.message("dom.quickfix.insert.required.tag.text", tagName);
     }
 
     @Override
     @NotNull
     public String getFamilyName() {
-      return XmlDomBundle.message("insert.required.tag.fix.family");
+      return XmlDomBundle.message("dom.quickfix.insert.required.tag.family");
     }
 
     @Override

@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.daemon;
 
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,7 +33,7 @@ public interface Validator<T extends PsiElement> {
       WARNING, ERROR, INFO
     }
 
-    void addMessage(PsiElement context, String message, @NotNull ErrorType type);
+    void addMessage(PsiElement context, @InspectionMessage String message, @NotNull ErrorType type);
   }
 
 

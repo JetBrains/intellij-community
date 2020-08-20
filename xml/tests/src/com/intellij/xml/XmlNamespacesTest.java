@@ -89,7 +89,7 @@ public class XmlNamespacesTest extends LightJavaCodeInsightFixtureTestCase {
                             "        xmlns:x=\"http://www.w3.org/2001/XMLSchema\"\n" +
                             "        xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
                             "/>",
-                            XmlUnusedNamespaceInspection.RemoveNamespaceLocationFix.NAME);
+                            XmlAnalysisBundle.message("xml.intention.remove.unused.namespace.location"));
   }
 
   public void testUnusedLocationOnly() {
@@ -115,7 +115,7 @@ public class XmlNamespacesTest extends LightJavaCodeInsightFixtureTestCase {
                             "        xmlns:x=\"http://www.w3.org/2001/XMLSchema\"\n" +
                             "        xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"\n" +
                             "/>",
-                            XmlUnusedNamespaceInspection.RemoveNamespaceLocationFix.NAME);
+                            XmlAnalysisBundle.message("xml.intention.remove.unused.namespace.location"));
   }
 
   public void testKeepFormatting() {

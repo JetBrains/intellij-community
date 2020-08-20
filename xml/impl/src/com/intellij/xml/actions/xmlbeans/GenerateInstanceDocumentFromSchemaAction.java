@@ -69,7 +69,7 @@ public final class GenerateInstanceDocumentFromSchemaAction extends AnAction {
     }
     final PsiFile file = PsiManager.getInstance(project).findFile(relativeFile);
     if (!(file instanceof XmlFile)) {
-      Messages.showErrorDialog(project, " (" + file.getFileType().getName() + ")", XmlBundle.message("error"));
+      Messages.showErrorDialog(project, " (" + file.getFileType().getDescription() + ")", XmlBundle.message("error"));
       return;
     }
 

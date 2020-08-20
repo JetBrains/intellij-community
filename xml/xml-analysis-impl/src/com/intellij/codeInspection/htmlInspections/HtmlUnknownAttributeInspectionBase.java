@@ -34,11 +34,10 @@ import com.intellij.xml.analysis.XmlAnalysisBundle;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.util.HtmlUtil;
 import com.intellij.xml.util.XmlUtil;
+import java.util.ArrayList;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
 
 public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownElementInspection {
   private static final Key<HtmlUnknownElementInspection> ATTRIBUTE_KEY = Key.create(ATTRIBUTE_SHORT_NAME);
@@ -101,7 +100,7 @@ public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownElementInspec
           }
           addSimilarAttributesQuickFixes(tag, name, quickfixes);
 
-          registerProblemOnAttributeName(attribute, XmlAnalysisBundle.message("xml.annotator.attribute.is.not.allowed.here", attribute.getName()), holder,
+          registerProblemOnAttributeName(attribute, XmlAnalysisBundle.message("xml.inspections.attribute.is.not.allowed.here", attribute.getName()), holder,
                                          quickfixes.toArray(LocalQuickFix.EMPTY_ARRAY));
         }
       }

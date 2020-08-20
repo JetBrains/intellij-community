@@ -7,6 +7,7 @@ package com.intellij.lang.html;
 
 import com.intellij.codeInsight.completion.CompletionUtilCore;
 import com.intellij.lang.PsiBuilder;
+import com.intellij.openapi.util.NlsContexts.ParsingError;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.tree.ICustomParsingType;
 import com.intellij.psi.tree.IElementType;
@@ -16,11 +17,10 @@ import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.containers.Stack;
 import com.intellij.xml.psi.XmlPsiBundle;
 import com.intellij.xml.util.HtmlUtil;
+import java.util.Objects;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Objects;
 
 public class HtmlParsing {
   @NonNls private static final String TR_TAG = "tr";
@@ -617,7 +617,7 @@ public class HtmlParsing {
     myBuilder.advanceLexer();
   }
 
-  protected void error(@NotNull String message) {
+  protected void error(@NotNull @ParsingError String message) {
     myBuilder.error(message);
   }
 }
