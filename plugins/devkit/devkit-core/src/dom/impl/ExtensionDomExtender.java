@@ -18,6 +18,7 @@ import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.dom.With;
@@ -324,7 +325,7 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
 
       @Override
       public String getErrorMessage(@Nullable String s, ConvertContext context) {
-        return "Cannot resolve '" + s + "' in " + fieldPsiClass.getQualifiedName();
+        return DevKitBundle.message("plugin.xml.convert.enum.cannot.resolve", s, fieldPsiClass.getQualifiedName());
       }
 
       @NotNull
