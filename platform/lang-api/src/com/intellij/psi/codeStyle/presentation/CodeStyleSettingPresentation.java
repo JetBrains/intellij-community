@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle.presentation;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,9 +14,10 @@ public class CodeStyleSettingPresentation {
 
   public static class SettingsGroup {
     @Nullable
+    @NlsContexts.Label
     public final String name;
 
-    public SettingsGroup(@Nullable String name) {
+    public SettingsGroup(@Nullable @NlsContexts.Label String name) {
       this.name = name;
     }
 
@@ -43,9 +45,10 @@ public class CodeStyleSettingPresentation {
   protected String myFieldName;
 
   @NotNull
+  @NlsContexts.Label
   protected String myUiName;
 
-  public CodeStyleSettingPresentation(@NotNull String fieldName, @NotNull String uiName) {
+  public CodeStyleSettingPresentation(@NotNull String fieldName, @NotNull @NlsContexts.Label String uiName) {
     myFieldName = fieldName;
     myUiName = uiName;
   }
@@ -56,11 +59,12 @@ public class CodeStyleSettingPresentation {
   }
 
   @NotNull
+  @NlsContexts.Label
   public String getUiName() {
     return myUiName;
   }
 
-  public void setUiName(@NotNull String newName) {
+  public void setUiName(@NotNull @NlsContexts.Label String newName) {
     myUiName = newName;
   }
 
