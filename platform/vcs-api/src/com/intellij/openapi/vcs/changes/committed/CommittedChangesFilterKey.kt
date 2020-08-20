@@ -16,5 +16,5 @@ data class CommittedChangesFilterKey(
   private val priority: CommittedChangesFilterPriority
 ) : Comparable<CommittedChangesFilterKey> {
 
-  override fun compareTo(other: CommittedChangesFilterKey): Int = compareValuesBy(this, other) { priority.priority }
+  override fun compareTo(other: CommittedChangesFilterKey): Int = compareValuesBy(this, other) { it.priority.priority }
 }
