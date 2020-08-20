@@ -35,7 +35,7 @@ import java.awt.event.KeyEvent;
 public class TemplateKindCombo extends ComboboxWithBrowseButton {
   public TemplateKindCombo() {
     getComboBox().setRenderer(
-      SimpleListCellRenderer.<Trinity<String, Icon, String>>create(
+      SimpleListCellRenderer.create(
         (JBLabel label, Trinity<@NlsContexts.ListItem String, Icon, String> value, int index) -> {
         if (value != null) {
           label.setText(value.first);
