@@ -135,7 +135,7 @@ public class LombokAugmentProvider extends PsiAugmentProvider {
     @Nullable
     @Override
     public Result<List<Psi>> compute() {
-//      return compute2();
+//      return computeIntern();
       return recursionGuard.doPreventingRecursion(psiClass, true, this::computeIntern);
     }
 

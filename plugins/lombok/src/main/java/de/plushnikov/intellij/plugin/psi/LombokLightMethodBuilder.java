@@ -288,7 +288,7 @@ public class LombokLightMethodBuilder extends LightMethodBuilder implements Synt
       return false;
     }
 
-    return isValid() == that.isValid() && Objects.equals(myReturnTypeAsText, that.myReturnTypeAsText);
+    return Objects.equals(myReturnTypeAsText, that.myReturnTypeAsText);
   }
 
   @Override

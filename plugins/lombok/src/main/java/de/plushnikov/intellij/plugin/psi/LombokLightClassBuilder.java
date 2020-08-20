@@ -187,7 +187,7 @@ public class LombokLightClassBuilder extends LightPsiClassBuilder implements Psi
 
     LombokLightClassBuilder that = (LombokLightClassBuilder) o;
 
-    return isValid() == that.isValid() && myQualifiedName.equals(that.myQualifiedName);
+    return myQualifiedName.equals(that.myQualifiedName);
   }
 
   @Override

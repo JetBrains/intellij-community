@@ -150,7 +150,7 @@ public class LombokLightFieldBuilder extends LightFieldBuilder implements Synthe
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     LombokLightFieldBuilder that = (LombokLightFieldBuilder) o;
-    return isValid() == that.isValid() &&
+    return
       Objects.equals(myName, that.myName) &&
       Objects.equals(myNameIdentifier, that.myNameIdentifier) &&
       Objects.equals(myModifierList, that.myModifierList);
