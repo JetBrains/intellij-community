@@ -3,6 +3,7 @@ package org.jetbrains.plugins.feature.suggester
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupManagerImpl
 import com.intellij.lang.Language
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorEventMulticasterEx
 import com.intellij.openapi.editor.ex.FocusChangeListener
@@ -15,7 +16,7 @@ import org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport
 import org.jetbrains.plugins.feature.suggester.ui.NotificationSuggestionPresenter
 import org.jetbrains.plugins.feature.suggester.ui.SuggestionPresenter
 
-class FeatureSuggestersManager(val project: Project) {
+class FeatureSuggestersManager(val project: Project) : Disposable {
     private val MAX_ACTIONS_NUMBER: Int = 100
     private val actionsHistory = UserActionsHistory(MAX_ACTIONS_NUMBER)
     private val suggestionPresenter: SuggestionPresenter =
@@ -78,7 +79,11 @@ class FeatureSuggestersManager(val project: Project) {
                     timeMillis = System.currentTimeMillis()
                 )
             )
-        }, project)
+        }, this)
+    }
+
+    override fun dispose() {
+        actionsHistory.clear()
     }
 
     private fun FeatureSuggester.isEnabled(): Boolean {
