@@ -19,7 +19,6 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
@@ -336,7 +335,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
     if (recordComponent != null) {
       return recordComponent;
     }
-    return SuperMethodWarningUtil.checkSuperMethod(psiMethod, RefactoringBundle.message("to.rename"));
+    return SuperMethodWarningUtil.checkSuperMethod(psiMethod);
   }
 
   @Override

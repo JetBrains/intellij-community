@@ -30,7 +30,6 @@ import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
 import com.intellij.psi.util.*;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.JavaChangeSignatureDialog;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
@@ -174,7 +173,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
   public void invoke(@NotNull final Project project, Editor editor, final PsiFile file) {
     if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
 
-    final PsiMethod method = SuperMethodWarningUtil.checkSuperMethod(myTargetMethod, RefactoringBundle.message("to.refactor"));
+    final PsiMethod method = SuperMethodWarningUtil.checkSuperMethod(myTargetMethod);
     if (method == null) return;
     myNewParametersInfo = getNewParametersInfo(myExpressions, myTargetMethod, mySubstitutor);
 
