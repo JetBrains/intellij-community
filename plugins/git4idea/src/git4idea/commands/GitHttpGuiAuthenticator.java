@@ -49,7 +49,6 @@ import java.util.function.Function;
 class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
 
   private static final Logger LOG = Logger.getInstance(GitHttpGuiAuthenticator.class);
-  private static final Class<GitHttpAuthenticator> PASS_REQUESTER = GitHttpAuthenticator.class;
   private static final String HTTP_SCHEME_URL_PREFIX = "http" + URLUtil.SCHEME_SEPARATOR;
 
   @NotNull private final Project myProject;
@@ -456,7 +455,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     @Nullable
     public AuthData getDataForKnownLogin(@NotNull String login) {
       String key = makeKey(myUrl, login);
-      Credentials credentials = CredentialAttributesKt.getAndMigrateCredentials(oldCredentialAttributes(key), credentialAttributes(key));
+      Credentials credentials = PasswordSafe.getInstance().get(credentialAttributes(key));
       String password = StringUtil.nullize(credentials == null ? null : credentials.getPasswordAsString());
       return (myData = new AuthData(login, password));
     }
@@ -499,12 +498,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     @VisibleForTesting
     @NotNull
     static CredentialAttributes credentialAttributes(@NotNull String key) {
-      return new CredentialAttributes(CredentialAttributesKt.generateServiceName("Git HTTP", key), key, PASS_REQUESTER);
-    }
-
-    @NotNull
-    private static CredentialAttributes oldCredentialAttributes(@NotNull String key) {
-      return CredentialAttributesKt.CredentialAttributes(PASS_REQUESTER, key);
+      return new CredentialAttributes(CredentialAttributesKt.generateServiceName("Git HTTP", key), key);
     }
 
     /**
