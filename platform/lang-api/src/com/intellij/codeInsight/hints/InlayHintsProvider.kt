@@ -130,7 +130,7 @@ interface ImmediateConfigurable {
       get() = loadFromSettings()
       set(value) = onUserChanged(value)
 
-    constructor(@Nls name: String, id: String, property: KMutableProperty0<Boolean>, extendedDescription: String? = null) : this(
+    constructor(@Nls name: String, id: String, property: KMutableProperty0<Boolean>, @NlsContexts.DetailedDescription extendedDescription: String? = null) : this(
       name,
       id,
       { property.get() },

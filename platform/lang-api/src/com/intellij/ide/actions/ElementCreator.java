@@ -106,7 +106,7 @@ public abstract class ElementCreator implements WriteActionAware {
     Messages.showMessageDialog(myProject, errorMessage, myErrorTitle, Messages.getErrorIcon());
   }
 
-  public static String getErrorMessage(Throwable t) {
+  public static @NlsContexts.DialogMessage String getErrorMessage(Throwable t) {
     String errorMessage = CreateElementActionBase.filterMessage(t.getMessage());
     if (StringUtil.isEmpty(errorMessage)) {
       errorMessage = t.toString();

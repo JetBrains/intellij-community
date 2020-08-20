@@ -38,6 +38,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -1491,7 +1492,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
   }
 
   private static final class HintLabel extends JLabel {
-    private HintLabel(@NotNull String text) {
+    private HintLabel(@NlsContexts.Label @NotNull String text) {
       super(text, RIGHT);
       setForeground(JBColor.DARK_GRAY);
     }

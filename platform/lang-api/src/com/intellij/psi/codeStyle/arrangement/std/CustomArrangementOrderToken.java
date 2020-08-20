@@ -4,6 +4,7 @@ package com.intellij.psi.codeStyle.arrangement.std;
 import com.intellij.psi.codeStyle.arrangement.ArrangementEntry;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementMatchRule;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
@@ -16,7 +17,7 @@ import java.util.Comparator;
  * @see ArrangementMatchRule#getOrderType()
  */
 public abstract class CustomArrangementOrderToken extends ArrangementSettingsToken {
-  protected CustomArrangementOrderToken(@NotNull String id, @NotNull String name) {
+  protected CustomArrangementOrderToken(@NotNull String id, @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String name) {
     super(id, name);
   }
 

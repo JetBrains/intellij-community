@@ -228,7 +228,7 @@ public class Notification {
   }
 
   @NotNull
-  public Notification setContent(@Nullable String content) {
+  public Notification setContent(@NotificationContent @Nullable String content) {
     myContent = StringUtil.notNullize(content);
     return this;
   }

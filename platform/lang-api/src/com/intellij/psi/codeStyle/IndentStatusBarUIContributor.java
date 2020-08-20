@@ -69,14 +69,12 @@ public abstract class IndentStatusBarUIContributor implements CodeStyleStatusBar
   @NotNull
   @Override
   public String getStatusText(@NotNull PsiFile psiFile) {
-    String indentInfo = getIndentInfo(myIndentOptions);
-    StringBuilder widgetText = new StringBuilder();
-    widgetText.append(indentInfo);
+    String widgetText = getIndentInfo(myIndentOptions);
     IndentOptions projectIndentOptions = CodeStyle.getSettings(psiFile.getProject()).getLanguageIndentOptions(psiFile.getLanguage());
     if (!projectIndentOptions.equals(myIndentOptions)) {
-      widgetText.append("*");
+      widgetText += "*";
     }
-    return widgetText.toString();
+    return widgetText;
   }
 }
 

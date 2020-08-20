@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
@@ -27,7 +28,7 @@ public class FragmentHintManager {
   private final @NotNull Consumer<? super String> myHintConsumer;
   private final String myDefaultHint;
 
-  public FragmentHintManager(@NotNull Consumer<? super String> hintConsumer, @Nullable String defaultHint) {
+  public FragmentHintManager(@NotNull Consumer<? super @NlsContexts.DialogMessage String> hintConsumer, @NlsContexts.DialogMessage @Nullable String defaultHint) {
     myHintConsumer = hintConsumer;
     myDefaultHint = defaultHint;
     hintConsumer.consume(defaultHint);

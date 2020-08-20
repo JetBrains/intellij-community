@@ -4,6 +4,7 @@ package com.intellij.openapi.roots.ui.util;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.roots.ui.ModifiableCellAppearanceEx;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.PlatformIcons;
@@ -121,7 +122,7 @@ public class CompositeAppearance implements ModifiableCellAppearanceEx {
     return single(text, SimpleTextAttributes.REGULAR_ATTRIBUTES);
   }
 
-  public static CompositeAppearance invalid(String absolutePath) {
+  public static CompositeAppearance invalid(@NlsSafe String absolutePath) {
     CompositeAppearance appearance = new CompositeAppearance();
     appearance.setIcon(PlatformIcons.INVALID_ENTRY_ICON);
     appearance.getEnding().addText(absolutePath, SimpleTextAttributes.ERROR_ATTRIBUTES);
@@ -164,11 +165,11 @@ public class CompositeAppearance implements ModifiableCellAppearanceEx {
   }
 
   public abstract class DequeEnd {
-    public void addText(String text, SimpleTextAttributes textAttributes) {
+    public void addText(@Nls String text, SimpleTextAttributes textAttributes) {
       addText(text, textAttributes.toTextAttributes());
     }
 
-    public void addText(String text) {
+    public void addText(@Nls String text) {
       addText(text, SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
 
@@ -178,7 +179,7 @@ public class CompositeAppearance implements ModifiableCellAppearanceEx {
       addSection(new TextSection(text, attributes));
     }
 
-    public void addSurrounded(String text, String prefix, String suffix, SimpleTextAttributes textAttributes) {
+    public void addSurrounded(@NlsSafe String text, @NlsSafe String prefix, @NlsSafe String suffix, SimpleTextAttributes textAttributes) {
       if (text != null && !text.trim().isEmpty()) {
         addText(prefix + text + suffix, textAttributes);
       }

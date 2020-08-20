@@ -409,7 +409,7 @@ public final class EditorModificationUtil {
   /**
    * @see #setReadOnlyHint(Editor, String, HyperlinkListener)
    */
-  public static void setReadOnlyHint(@NotNull Editor editor, @Nullable String message) {
+  public static void setReadOnlyHint(@NotNull Editor editor, @Nullable @NlsContexts.HintText String message) {
     setReadOnlyHint(editor, message, null);
   }
 

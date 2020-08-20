@@ -50,7 +50,7 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
   private @NlsSafe String myLocationString;
   private @NlsSafe String myPresentableText;
 
-  private String myTooltip;
+  private @Tooltip String myTooltip;
   private TextAttributesKey myAttributesKey;
 
   private Color myForcedTextForeground;
@@ -223,7 +223,7 @@ public class PresentationData implements ColoredItemPresentation, ComparableObje
     myAttributesKey = attributesKey;
   }
 
-  public String getTooltip() {
+  public @Tooltip String getTooltip() {
     return myTooltip;
   }
 

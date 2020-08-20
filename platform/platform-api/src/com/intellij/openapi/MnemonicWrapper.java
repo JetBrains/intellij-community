@@ -136,7 +136,7 @@ abstract class MnemonicWrapper<T extends JComponent> implements Runnable, Proper
       int code = KeyEvent.VK_UNDEFINED;
       int index = -1;
       int length = text.length();
-      StringBuilder sb = new StringBuilder(length);
+      @Nls StringBuilder sb = new StringBuilder(length);
       for (int i = 0; i < length; i++) {
         char ch = text.charAt(i);
         if (ch != UIUtil.MNEMONIC) {

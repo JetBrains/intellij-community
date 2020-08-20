@@ -587,7 +587,7 @@ public final class KeymapUtil {
   }
 
   @NotNull
-  public static String createTooltipText(@Nullable String name, @NotNull AnAction action) {
+  public static @NlsSafe String createTooltipText(@Nullable String name, @NotNull AnAction action) {
     String toolTipText = name == null ? "" : name;
     while (StringUtil.endsWithChar(toolTipText, '.')) {
       toolTipText = toolTipText.substring(0, toolTipText.length() - 1);

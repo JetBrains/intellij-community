@@ -20,7 +20,7 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public class GotoRelatedItem {
-  private final String myGroup;
+  private final @Separator String myGroup;
   private final int myMnemonic;
   @Nullable private final SmartPsiElementPointer<PsiElement> myElementPointer;
   public static final String DEFAULT_GROUP_NAME = "";

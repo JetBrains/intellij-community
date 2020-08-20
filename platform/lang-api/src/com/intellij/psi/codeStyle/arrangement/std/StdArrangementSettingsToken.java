@@ -17,6 +17,7 @@ package com.intellij.psi.codeStyle.arrangement.std;
 
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
@@ -53,7 +54,7 @@ public class StdArrangementSettingsToken extends ArrangementSettingsToken {
   }
 
   public StdArrangementSettingsToken(@NotNull String id,
-                                     @NotNull String uiName,
+                                     @NotNull @Nls String uiName,
                                      @NotNull StdArrangementTokenType tokenType) {
     super(id, uiName);
     myTokenType = tokenType;

@@ -13,6 +13,7 @@ import com.intellij.ui.PlaceProvider;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.content.AlertIcon;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -48,7 +49,7 @@ public final class TabInfo implements Queryable, PlaceProvider {
   private final PropertyChangeSupport myChangeSupport = new PropertyChangeSupport(this);
 
   private Icon myIcon;
-  private String myPlace;
+  private @NonNls String myPlace;
   private Object myObject;
   private JComponent mySideComponent;
   private Reference<JComponent> myLastFocusOwner;
@@ -195,7 +196,7 @@ public final class TabInfo implements Queryable, PlaceProvider {
   }
 
   @NotNull
-  public TabInfo setActions(ActionGroup group, String place) {
+  public TabInfo setActions(ActionGroup group, @NonNls String place) {
     ActionGroup old = myGroup;
     myGroup = group;
     myPlace = place;

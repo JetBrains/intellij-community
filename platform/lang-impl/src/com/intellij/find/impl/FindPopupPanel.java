@@ -1048,7 +1048,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     }
     myFileMaskField.removeAllItems();
     List<@NlsSafe String> variants = Arrays.asList(ArrayUtil.reverseArray(FindSettings.getInstance().getRecentFileMasks()));
-    for (String variant : variants) {
+    for (@NlsSafe String variant : variants) {
       myFileMaskField.addItem(variant);
     }
     if (!variants.isEmpty()) {
