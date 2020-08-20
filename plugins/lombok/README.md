@@ -16,8 +16,8 @@ Provides support for lombok annotations to write great Java code with IntelliJ I
 **Last version (0.29) released on 01.03.2020**
 
 ---
-## Unfortunately the current plugin version has a major bug on new IntelliJ 2020.2 and can't be used normally.
-## Use previous IntelliJ version 2020.1 during we work on a fix.
+## Unfortunately the current IntelliJ 2020.2 version has a bug and lombok plugin can't be used normally.
+## Use previous IntelliJ version 2020.1 or update to IntelliJ IDEA 2020.2.1 RC.
 ---
 
 34th version of plugin released.
