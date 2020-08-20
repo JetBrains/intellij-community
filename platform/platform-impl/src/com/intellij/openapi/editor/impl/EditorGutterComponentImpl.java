@@ -446,7 +446,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
     if (w == 0) return;
 
-    int viewportStartY = myEditor.getVerticalScrollBar().getValue();
+    int viewportStartY = myEditor.getScrollingModel().getVisibleArea().y;
 
     AffineTransform old = setMirrorTransformIfNeeded(g, x, w);
     try {
@@ -604,7 +604,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     Color colorUnderCaretRow = myEditor.getColorsScheme().getColor(EditorColors.LINE_NUMBER_ON_CARET_ROW_COLOR);
     Font font = getFontForLineNumbers();
     g.setFont(font);
-    int viewportStartY = myEditor.getVerticalScrollBar().getValue();
+    int viewportStartY = myEditor.getScrollingModel().getVisibleArea().y;
 
     AffineTransform old = setMirrorTransformIfNeeded(g, getLineNumberAreaOffset(), getLineNumberAreaWidth());
     try {
