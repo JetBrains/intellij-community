@@ -83,7 +83,7 @@ open class MultipleFileMergeDialog(
   private lateinit var mergeButton: JButton
   private val tableModel = ListTreeTableModelOnColumns(DefaultMutableTreeNode(), createColumns())
 
-  private val descriptionLabel = Label("Loading merge details...")
+  private val descriptionLabel = Label(VcsBundle.message("merge.loading.merge.details"))
 
   private var groupByDirectory: Boolean = false
     get() = when {
