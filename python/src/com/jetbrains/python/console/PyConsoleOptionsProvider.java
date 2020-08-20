@@ -17,6 +17,7 @@ package com.jetbrains.python.console;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 
 /**
  * @author yole
@@ -25,6 +26,7 @@ public interface PyConsoleOptionsProvider {
   ExtensionPointName<PyConsoleOptionsProvider> EP_NAME = ExtensionPointName.create("Pythonid.consoleOptionsProvider");
 
   boolean isApplicableTo(Project project);
+  @NlsContexts.ConfigurableName
   String getName();
   String getHelpTopic();
   PyConsoleOptions.PyConsoleSettings getSettings(Project project);
