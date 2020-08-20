@@ -1053,10 +1053,9 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       final int[] thinYStart = new int[1];  // in range 0..yStart all spots are drawn
       final int[] wideYStart = new int[1];  // in range 0..yStart all spots are drawn
 
-      MarkupIterator<ErrorStripeMarkerImpl> iterator = myErrorStripeMarkersModel.overlappingIterator(startOffset, endOffset);
+      MarkupIterator<RangeHighlighterEx> iterator = myErrorStripeMarkersModel.highlighterIterator(startOffset, endOffset);
       try {
-        ContainerUtil.process(iterator, errorStripeMarker -> {
-          RangeHighlighterEx highlighter = errorStripeMarker.getHighlighter();
+        ContainerUtil.process(iterator, highlighter -> {
           boolean isThin = highlighter.isThinErrorStripeMark();
           int[] yStart = isThin ? thinYStart : wideYStart;
           List<PositionedStripe> stripes = isThin ? thinStripes : wideStripes;
