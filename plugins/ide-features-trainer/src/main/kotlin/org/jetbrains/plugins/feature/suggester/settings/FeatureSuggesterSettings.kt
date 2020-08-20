@@ -46,10 +46,6 @@ class FeatureSuggesterSettings : SimplePersistentStateComponent<FeatureSuggester
         state.disabledSuggesters.add(suggestingActionDisplayName)
     }
 
-    fun enableSuggester(suggestingActionDisplayName: String) {
-        state.disabledSuggesters.remove(suggestingActionDisplayName)
-    }
-
     var suggestingIntervalDays: Int
         get() = state.suggestingIntervalDays
         set(value) {

@@ -17,7 +17,10 @@ import org.jetbrains.plugins.feature.suggester.ui.SuggestionPresenter
 import java.lang.ref.WeakReference
 
 class FeatureSuggestersManager(val project: Project) : Disposable {
-    private val MAX_ACTIONS_NUMBER: Int = 100
+    companion object {
+        private const val MAX_ACTIONS_NUMBER: Int = 100
+    }
+
     private val actionsHistory = UserActionsHistory(MAX_ACTIONS_NUMBER)
     private val suggestionPresenter: SuggestionPresenter =
         NotificationSuggestionPresenter()

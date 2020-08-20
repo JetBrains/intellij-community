@@ -37,10 +37,6 @@ internal fun PsiElement.getParentByPredicate(predicate: (PsiElement) -> Boolean)
     return parents.find(predicate)
 }
 
-internal fun PsiElement.resolveRef(): PsiElement? {
-    return reference?.resolve()
-}
-
 internal fun Transferable.asString(): String? {
     return try {
         getTransferData(DataFlavor.stringFlavor) as? String

@@ -1,10 +1,6 @@
 package org.jetbrains.plugins.feature.suggester.ui
 
-import com.intellij.codeInsight.hint.HintManager
-import com.intellij.codeInsight.hint.HintManagerImpl
-import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.ide.BrowserUtil
-import com.intellij.ide.IdeTooltipManager
 import com.intellij.ide.util.TipAndTrickBean
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationDisplayType
@@ -12,9 +8,7 @@ import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
-import com.intellij.ui.LightweightHint
 import org.jetbrains.plugins.feature.suggester.DocumentationSuggestion
 import org.jetbrains.plugins.feature.suggester.PopupSuggestion
 import org.jetbrains.plugins.feature.suggester.TipSuggestion
@@ -24,26 +18,9 @@ import org.jetbrains.plugins.feature.suggester.statistics.FeatureSuggestersStati
 import org.jetbrains.plugins.feature.suggester.statistics.FeatureSuggestersStatisticsCollector.Companion.NOTIFICATION_LEARN_MORE_EVENT_ID
 import org.jetbrains.plugins.feature.suggester.statistics.FeatureSuggestersStatisticsCollector.Companion.NOTIFICATION_SHOWED_EVENT_ID
 import org.jetbrains.plugins.feature.suggester.statistics.FeatureSuggestersStatisticsCollector.Companion.NOTIFICATION_THANKS_EVENT_ID
-import java.awt.Point
 
 interface SuggestionPresenter {
     fun showSuggestion(project: Project, suggestion: PopupSuggestion)
-}
-
-class HintSuggestionPresenter : SuggestionPresenter {
-    override fun showSuggestion(project: Project, suggestion: PopupSuggestion) {
-        val editor = FileEditorManager.getInstance(project).selectedTextEditor ?: return
-        val hint = createHint(suggestion.message)
-        val hintManager = HintManager.getInstance() as HintManagerImpl
-        val point: Point = hintManager.getHintPosition(hint, editor, HintManager.ABOVE)
-        IdeTooltipManager.getInstance().hideCurrentNow(false)
-        hintManager.showEditorHint(hint, editor, point, HintManager.HIDE_BY_ESCAPE, 0, false)
-    }
-
-    private fun createHint(message: String): LightweightHint {
-        val label = HintUtil.createQuestionLabel(message)
-        return LightweightHint(label)
-    }
 }
 
 @Suppress("UnstableApiUsage")

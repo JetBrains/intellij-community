@@ -64,17 +64,21 @@ class IntroduceVariableSuggester : FeatureSuggester {
             is ChildReplacedAction -> {
                 if (extractedExprData == null) return NoSuggestion
                 with(action) {
-                    if (isVariableDeclarationAdded()) {
-                        extractedExprData!!.declaration = newChild
-                    } else if (newChild.text.trim() == extractedExprData!!.changedStatementText) {
-                        extractedExprData!!.changedStatement = newChild
-                    } else if (isVariableInserted()) {
-                        extractedExprData = null
-                        return createTipSuggestion(
-                            createMessageWithShortcut(SUGGESTING_ACTION_ID, POPUP_MESSAGE),
-                            suggestingActionDisplayName,
-                            SUGGESTING_TIP_FILENAME
-                        )
+                    when {
+                        isVariableDeclarationAdded() -> {
+                            extractedExprData!!.declaration = newChild
+                        }
+                        newChild.text.trim() == extractedExprData!!.changedStatementText -> {
+                            extractedExprData!!.changedStatement = newChild
+                        }
+                        isVariableInserted() -> {
+                            extractedExprData = null
+                            return createTipSuggestion(
+                                createMessageWithShortcut(SUGGESTING_ACTION_ID, POPUP_MESSAGE),
+                                suggestingActionDisplayName,
+                                SUGGESTING_TIP_FILENAME
+                            )
+                        }
                     }
                 }
             }

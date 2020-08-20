@@ -3,9 +3,9 @@ package org.jetbrains.plugins.feature.suggester.history
 import org.jetbrains.plugins.feature.suggester.actions.Action
 import java.util.*
 
-open class ChangesHistory<EventType>(val maxHistorySize: Int) {
+open class ChangesHistory<EventType>(private val maxHistorySize: Int) {
 
-    private val history: MutableList<EventType> = LinkedList<EventType>()
+    private val history: MutableList<EventType> = LinkedList()
 
     val size: Int
         get() = history.size
