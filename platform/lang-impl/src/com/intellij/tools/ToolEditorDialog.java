@@ -132,7 +132,7 @@ public class ToolEditorDialog extends DialogWrapper {
 
     myAdvancedOptionsSeparator = new AbstractTitledSeparatorWithIcon(AllIcons.General.ArrowRight,
                                                                      AllIcons.General.ArrowDown,
-                                                                     "Advanced Options") {
+                                                                     ToolsBundle.message("dialog.separator.advanced.options")) {
       @Override
       protected RefreshablePanel createPanel() {
         return new RefreshablePanel() {

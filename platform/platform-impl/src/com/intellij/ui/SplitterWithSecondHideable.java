@@ -5,6 +5,7 @@ import com.intellij.openapi.ui.Divider;
 import com.intellij.openapi.ui.PseudoSplitter;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.changes.RefreshablePanel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBUI.Panels;
@@ -32,7 +33,7 @@ public abstract class SplitterWithSecondHideable {
   private float myPreviousProportion;
 
   public SplitterWithSecondHideable(boolean vertical,
-                                    @NotNull String separatorText,
+                                    @NotNull @NlsContexts.Separator String separatorText,
                                     @NotNull JComponent firstComponent,
                                     @NotNull OnOffListener listener) {
     myListener = listener;
@@ -84,7 +85,7 @@ public abstract class SplitterWithSecondHideable {
   }
 
   private class MyTitledSeparator extends AbstractTitledSeparatorWithIcon {
-    MyTitledSeparator(@NotNull String separatorText, boolean vertical) {
+    MyTitledSeparator(@NotNull @NlsContexts.Separator String separatorText, boolean vertical) {
       super(ArrowRight, vertical ? ArrowDown : Objects.requireNonNull(IconLoader.getDisabledIcon(ArrowRight)), separatorText);
     }
 
