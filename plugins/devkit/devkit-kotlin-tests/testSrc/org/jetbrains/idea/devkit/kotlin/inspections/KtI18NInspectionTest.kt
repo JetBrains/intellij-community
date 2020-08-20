@@ -106,6 +106,33 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
 
+  fun testDslNls() {
+    val inspection = I18nInspection()
+    inspection.setIgnoreForAllButNls(true)
+    myFixture.enableInspections(inspection)
+    myFixture.configureByText("Foo.kt", """
+        class ReferredClass {
+          val instance = "value"
+          companion object {
+            const val static = "value"
+          }
+        }
+        val a = createContext<Any> {
+          another {
+            myFun(<warning descr="Hardcoded string literal: \"Highlight\"">"Highlight"</warning>, ReferredClass.static)
+            myFun(<warning descr="Hardcoded string literal: \"Highlight\"">"Highlight"</warning>, ReferredClass().instance)
+          }
+        }
+        fun <T : Any> createContext(<warning descr="[UNUSED_PARAMETER] Parameter 'exec' is never used">exec</warning>: ContextClass<T>.() -> Unit) { }
+        class WrapperClass
+        class ContextClass<T : Any> {
+          fun another(<warning descr="[UNUSED_PARAMETER] Parameter 'exec' is never used">exec</warning>: WrapperClass.() -> Unit) { }
+          fun WrapperClass.myFun(@org.jetbrains.annotations.Nls <warning descr="[UNUSED_PARAMETER] Parameter 'text' is never used">text</warning>: String, <warning descr="[UNUSED_PARAMETER] Parameter 'any' is never used">any</warning>: T) { }
+        }
+        """.trimIndent())
+    myFixture.testHighlighting()
+  }
+
   fun testConstructorParameter() {
     myFixture.enableInspections(I18nInspection())
     myFixture.configureByText("Foo.kt", """

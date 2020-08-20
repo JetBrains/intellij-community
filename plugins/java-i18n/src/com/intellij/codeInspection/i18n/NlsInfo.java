@@ -576,6 +576,10 @@ public abstract class NlsInfo {
       if (lastParam == null || !lastParam.isVarArgs()) return Unspecified.UNKNOWN;
       param = lastParam;
     }
+    else if (params[0].getName().equals("$this$" + method.getName())) {
+      if (idx + 1 == params.length) return Unspecified.UNKNOWN;
+      param = params[idx + 1];
+    }
     else {
       param = params[idx];
     }
