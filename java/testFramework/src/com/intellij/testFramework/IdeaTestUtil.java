@@ -127,6 +127,10 @@ public final class IdeaTestUtil {
     return getMockJdk(JavaVersion.compose(4));
   }
 
+  public static @NotNull Sdk getMockJdk16() {
+    return getMockJdk(JavaVersion.compose(6));
+  }
+
   public static @NotNull Sdk getMockJdk17() {
     return getMockJdk(JavaVersion.compose(7));
   }
