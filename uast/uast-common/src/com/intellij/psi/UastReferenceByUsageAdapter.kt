@@ -5,6 +5,7 @@ import com.intellij.codeInsight.completion.CompletionUtilCoreImpl
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.model.search.SearchService
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.Key
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.uast.injectionHostUExpression
@@ -89,8 +90,11 @@ private fun getOriginalUastParent(element: UElement): UElement? {
 
 private fun getDirectVariableUsages(uVar: UVariable): Sequence<PsiElement> {
   val variablePsi = uVar.sourcePsi ?: return emptySequence()
+  val project = variablePsi.project
 
-  val cachedValue = CachedValuesManager.getManager(variablePsi.project).getCachedValue(variablePsi, CachedValueProvider {
+  if (DumbService.isDumb(project)) return emptySequence() // do not try to search in dumb mode
+
+  val cachedValue = CachedValuesManager.getManager(project).getCachedValue(variablePsi, CachedValueProvider {
     val anchors = findDirectVariableUsages(variablePsi).map(PsiAnchor::create)
     Result.createSingleDependency(anchors, PsiModificationTracker.MODIFICATION_COUNT)
   })
@@ -119,7 +123,7 @@ private fun findDirectVariableUsages(variablePsi: PsiElement): Iterable<PsiEleme
   val uastScope = getUastScope(module.moduleScope)
 
   val searchHelper = PsiSearchHelper.getInstance(variablePsi.project)
-  if (searchHelper.isCheapEnoughToSearch(variableName, uastScope, null, null) != SearchCostResult.FEW_OCCURRENCES) {
+  if (searchHelper.isCheapEnoughToSearch(variableName, uastScope, currentFile, null) != SearchCostResult.FEW_OCCURRENCES) {
     return localUsages
   }
 
