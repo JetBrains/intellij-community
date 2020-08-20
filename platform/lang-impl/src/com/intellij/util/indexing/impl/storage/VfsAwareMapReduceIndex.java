@@ -13,6 +13,7 @@ import com.intellij.openapi.util.io.ByteArraySequence;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.*;
@@ -25,8 +26,6 @@ import com.intellij.util.indexing.snapshot.SnapshotSingleValueIndexStorage;
 import com.intellij.util.indexing.snapshot.UpdatableSnapshotInputMappingIndex;
 import com.intellij.util.io.IOUtil;
 import gnu.trove.THashSet;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -58,7 +57,7 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
   }
 
   private final AtomicBoolean myInMemoryMode = new AtomicBoolean();
-  private final Int2ObjectMap<Map<Key, Value>> myInMemoryKeysAndValues = new Int2ObjectOpenHashMap<>();
+  private final ConcurrentIntObjectMap<Map<Key, Value>> myInMemoryKeysAndValues = ContainerUtil.createConcurrentIntObjectMap();
 
   @SuppressWarnings("rawtypes")
   private final PersistentSubIndexerRetriever mySubIndexerRetriever;
@@ -180,11 +179,9 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
       return super.getKeysDiffBuilder(inputId);
     }
     if (myInMemoryMode.get()) {
-      synchronized (myInMemoryKeysAndValues) {
-        Map<Key, Value> keysAndValues = myInMemoryKeysAndValues.get(inputId);
-        if (keysAndValues != null) {
-          return getKeysDiffBuilder(inputId, keysAndValues);
-        }
+      Map<Key, Value> keysAndValues = myInMemoryKeysAndValues.get(inputId);
+      if (keysAndValues != null) {
+        return getKeysDiffBuilder(inputId, keysAndValues);
       }
     }
     return super.getKeysDiffBuilder(inputId);
@@ -198,9 +195,7 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
   @Override
   protected void updateForwardIndex(int inputId, @NotNull InputData<Key, Value> data) throws IOException {
     if (myInMemoryMode.get()) {
-      synchronized (myInMemoryKeysAndValues) {
-        myInMemoryKeysAndValues.put(inputId, data.getKeyValues());
-      }
+      myInMemoryKeysAndValues.put(inputId, data.getKeyValues());
     } else {
       super.updateForwardIndex(inputId, data);
     }
@@ -264,11 +259,7 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
     }
     getLock().writeLock().lock();
     try {
-      Map<Key, Value> keyValueMap;
-      synchronized (myInMemoryKeysAndValues) {
-        keyValueMap = myInMemoryKeysAndValues.remove(inputId);
-      }
-
+      Map<Key, Value> keyValueMap = myInMemoryKeysAndValues.remove(inputId);
       if (keyValueMap == null) return;
 
       try {
@@ -479,9 +470,7 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
 
         @Override
         public void memoryStorageCleared() {
-          synchronized (myInMemoryKeysAndValues) {
-            myInMemoryKeysAndValues.clear();
-          }
+          myInMemoryKeysAndValues.clear();
         }
       });
     }
