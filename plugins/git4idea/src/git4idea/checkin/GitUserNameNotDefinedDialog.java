@@ -19,15 +19,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xml.util.XmlStringUtil;
 import git4idea.config.GitVcsSettings;
+import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,15 +65,15 @@ class GitUserNameNotDefinedDialog extends DialogWrapper {
 
     myProposedValues = calcProposedValues(rootsWithDefinedProps);
 
-    setTitle("Git User Name Is Not Defined");
-    setOKButtonText("Set and Commit");
+    setTitle(GitBundle.message("title.user.name.email.not.specified"));
+    setOKButtonText(GitBundle.message("button.set.name.and.commit"));
 
     init();
   }
 
   @Override
   protected ValidationInfo doValidate() {
-    String message = "You have to specify user name and email for Git";
+    String message = GitBundle.message("validation.warning.set.name.email.for.git");
     if (isEmptyOrSpaces(getUserName())) {
       return new ValidationInfo(message, myNameTextField);
     }
@@ -109,12 +111,12 @@ class GitUserNameNotDefinedDialog extends DialogWrapper {
     JLabel description = new JLabel(getMessageText());
 
     myNameTextField = new JTextField(20);
-    JBLabel nameLabel = new JBLabel("Name: ");
+    JBLabel nameLabel = new JBLabel(GitBundle.message("label.user.name") + " ");
     nameLabel.setDisplayedMnemonic('n');
     nameLabel.setLabelFor(myNameTextField);
 
     myEmailTextField = new JTextField(20);
-    JBLabel emailLabel = new JBLabel("E-mail: ");
+    JBLabel emailLabel = new JBLabel(GitBundle.message("label.user.email") + " ");
     emailLabel.setDisplayedMnemonic('e');
     emailLabel.setLabelFor(myEmailTextField);
 
@@ -126,20 +128,20 @@ class GitUserNameNotDefinedDialog extends DialogWrapper {
       myNameTextField.setText(SystemProperties.getUserName());
     }
 
-    myGlobalCheckbox = new JBCheckBox("Set properties globally", mySettings.shouldSetUserNameGlobally());
+    myGlobalCheckbox = new JBCheckBox(GitBundle.message("checkbox.set.config.property.globally"), mySettings.shouldSetUserNameGlobally());
     myGlobalCheckbox.setMnemonic('g');
 
     JPanel rootPanel = new JPanel(new GridBagLayout());
     GridBag g = new GridBag()
-      .setDefaultInsets(new Insets(0, 0, DEFAULT_VGAP, DEFAULT_HGAP))
+      .setDefaultInsets(JBUI.insets(0, 0, DEFAULT_VGAP, DEFAULT_HGAP))
       .setDefaultAnchor(GridBagConstraints.LINE_START)
       .setDefaultFill(GridBagConstraints.HORIZONTAL);
 
     rootPanel.add(description, g.nextLine().next().coverLine(3).pady(DEFAULT_HGAP));
     rootPanel.add(icon, g.nextLine().next().coverColumn(3));
-    rootPanel.add(nameLabel, g.next().fillCellNone().insets(new Insets(0, 6, DEFAULT_VGAP, DEFAULT_HGAP)));
+    rootPanel.add(nameLabel, g.next().fillCellNone().insets(JBUI.insets(0, 6, DEFAULT_VGAP, DEFAULT_HGAP)));
     rootPanel.add(myNameTextField, g.next());
-    rootPanel.add(emailLabel, g.nextLine().next().next().fillCellNone().insets(new Insets(0, 6, DEFAULT_VGAP, DEFAULT_HGAP)));
+    rootPanel.add(emailLabel, g.nextLine().next().next().fillCellNone().insets(JBUI.insets(0, 6, DEFAULT_VGAP, DEFAULT_HGAP)));
     rootPanel.add(myEmailTextField, g.next());
     rootPanel.add(myGlobalCheckbox, g.nextLine().next().next().coverLine(2));
 
@@ -151,16 +153,18 @@ class GitUserNameNotDefinedDialog extends DialogWrapper {
     return null;
   }
 
+  @NlsContexts.Label
   @NotNull
   private String getMessageText() {
     if (myAllRootsAffectedByCommit.size() == myRootsWithUndefinedProps.size()) {
       return "";
     }
-    String text = "Git user.name and user.email properties are not defined in " + StringUtil.pluralize("root", myRootsWithUndefinedProps.size()) + "<br/>";
+    HtmlBuilder sb = new HtmlBuilder()
+      .append(GitBundle.message("label.name.email.not.defined.in.n.roots", myRootsWithUndefinedProps.size()));
     for (VirtualFile root : myRootsWithUndefinedProps) {
-      text += root.getPresentableUrl() + "<br/>";
+      sb.br().append(root.getPresentableUrl());
     }
-    return XmlStringUtil.wrapInHtml(text);
+    return sb.wrapWithHtmlBody().toString();
   }
 
   public String getUserName() {

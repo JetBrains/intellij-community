@@ -18,6 +18,7 @@ import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.*;
+import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.util.StringScanner;
 import org.jetbrains.annotations.NonNls;
@@ -139,7 +140,7 @@ public final class GitChangeUtils {
           after = filePath;
           break;
         default:
-          throw new VcsException("Unknown file status: " + Arrays.asList(tokens));
+          throw new VcsException(GitBundle.message("error.git.parse.unknown.file.status", Arrays.asList(tokens)));
       }
       consumer.consume(status, before, after);
     }
@@ -172,8 +173,7 @@ public final class GitChangeUtils {
       catch (VcsException e) {
         LOG.info("Exception while trying to get some diagnostics info", e);
       }
-      throw new VcsException(String.format("The string '%s' does not represent a revision number. Output: [%s]\n Root: %s",
-                                           reference, output, vcsRoot));
+      throw new VcsException(GitBundle.message("error.git.parse.not.a.revision.number", reference));
     }
     Date timestamp = GitUtil.parseTimestampWithNFEReport(stk.nextToken(), handler, output);
     return new GitRevisionNumber(stk.nextToken(), timestamp);

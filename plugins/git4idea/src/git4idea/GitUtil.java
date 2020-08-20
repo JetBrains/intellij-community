@@ -837,9 +837,10 @@ public final class GitUtil {
     builder.show();
   }
 
+  @NlsSafe
   @NotNull
-  public static String cleanupErrorPrefixes(@NotNull String msg) {
-    final String[] PREFIXES = { "fatal:", "error:" };
+  public static String cleanupErrorPrefixes(@NotNull @NlsSafe String msg) {
+    final @NonNls String[] PREFIXES = { "fatal:", "error:" };
     msg = msg.trim();
     for (String prefix : PREFIXES) {
       if (msg.startsWith(prefix)) {

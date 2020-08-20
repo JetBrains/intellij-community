@@ -78,6 +78,7 @@ public class AnnotationTooltipBuilder {
     return sb.toString();
   }
 
+  @Nls
   @NotNull
   public static String buildSimpleTooltip(@NotNull Project project,
                                           boolean asHtml,
