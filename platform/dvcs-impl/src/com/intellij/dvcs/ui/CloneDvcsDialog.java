@@ -284,11 +284,11 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
         showRepositoryUrlAutoCompletionTooltip();
         if (!myErrors.isEmpty()) {
           for (RepositoryListLoadingException error : myErrors) {
-            StringBuilder errorMessageBuilder = new StringBuilder();
+            @Nls StringBuilder errorMessageBuilder = new StringBuilder();
             errorMessageBuilder.append(error.getMessage());
             Throwable cause = error.getCause();
             if (cause != null) errorMessageBuilder.append(": ").append(cause.getMessage());
-            @Nls String message = errorMessageBuilder.toString(); //NON-NLS
+            @Nls String message = errorMessageBuilder.toString();
             myRepositoryListLoadingErrors.add(new ValidationInfo(message).asWarning().withOKEnabled());
           }
           startTrackingValidation();

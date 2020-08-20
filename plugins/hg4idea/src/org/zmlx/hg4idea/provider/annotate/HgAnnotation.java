@@ -118,7 +118,7 @@ public class HgAnnotation extends FileAnnotation {
     atb.appendLine(HgBundle.message("hg4idea.annotation.date", revision.getRevisionDate()));
     String message = revision.getCommitMessage();
     if (message != null) atb.appendCommitMessageBlock(message);
-    return atb.toString(); //NON-NLS
+    return atb.toString();
   }
 
   @Override
