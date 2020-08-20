@@ -2,7 +2,7 @@ package org.jetbrains.plugins.feature.suggester.suggesters.lang
 
 import com.intellij.psi.*
 import com.intellij.psi.util.findDescendantOfType
-import org.jetbrains.plugins.feature.suggester.suggesters.getParentOfType
+import org.jetbrains.plugins.feature.suggester.getParentOfType
 
 class JavaLanguageSupport : LanguageSupport {
 

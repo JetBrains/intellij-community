@@ -5,7 +5,7 @@ import com.intellij.lang.javascript.psi.*
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.findDescendantOfType
-import org.jetbrains.plugins.feature.suggester.suggesters.getParentOfType
+import org.jetbrains.plugins.feature.suggester.getParentOfType
 
 class JavaScriptLanguageSupport : LanguageSupport {
 

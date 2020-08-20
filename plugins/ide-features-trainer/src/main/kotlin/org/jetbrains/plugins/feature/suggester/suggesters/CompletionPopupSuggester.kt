@@ -1,12 +1,10 @@
 package org.jetbrains.plugins.feature.suggester.suggesters
 
 import com.intellij.psi.PsiComment
-import org.jetbrains.plugins.feature.suggester.FeatureSuggester
-import org.jetbrains.plugins.feature.suggester.FeatureSuggester.Companion.createMessageWithShortcut
-import org.jetbrains.plugins.feature.suggester.NoSuggestion
-import org.jetbrains.plugins.feature.suggester.Suggestion
+import org.jetbrains.plugins.feature.suggester.*
 import org.jetbrains.plugins.feature.suggester.actions.*
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
+import org.jetbrains.plugins.feature.suggester.suggesters.FeatureSuggester.Companion.createMessageWithShortcut
 import org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport
 import java.util.concurrent.TimeUnit
 
@@ -31,23 +29,22 @@ class CompletionPopupSuggester : FeatureSuggester {
     private var editedStatementData: EditedStatementData? = null
 
     override fun getSuggestion(actions: UserActionsHistory): Suggestion {
-        when (val lastAction = actions.lastOrNull()) {
-            is EditorFocusGainedAction -> return NoSuggestion
+        when (val action = actions.lastOrNull()) {
             is BeforeEditorTextRemovedAction -> {
-                if (lastAction.text == ".") {
-                    editedStatementData = createEditedStatementData(lastAction, lastAction.offset)
+                if (action.text == ".") {
+                    editedStatementData = createEditedStatementData(action, action.caretOffset)
                 }
             }
             is BeforeEditorTextInsertedAction -> {
                 if (editedStatementData != null &&
-                    lastAction.text == "."
-                    && lastAction.offset == editedStatementData!!.dotOffset
+                    action.text == "."
+                    && action.caretOffset == editedStatementData!!.dotOffset
                 ) {
                     editedStatementData!!.completionStarted = true
                 }
             }
             is BeforeCompletionChooseItemAction -> {
-                if (editedStatementData?.isAroundDot(lastAction.offset) == true) {
+                if (editedStatementData?.isAroundDot(action.caretOffset) == true) {
                     editedStatementData = null
                     return createTipSuggestion(
                         createMessageWithShortcut(SUGGESTING_ACTION_ID, POPUP_MESSAGE),
@@ -55,6 +52,9 @@ class CompletionPopupSuggester : FeatureSuggester {
                         SUGGESTING_TIP_FILENAME
                     )
                 }
+                editedStatementData = null
+            }
+            is EditorEscapeAction -> {
                 editedStatementData = null
             }
         }
@@ -73,8 +73,7 @@ class CompletionPopupSuggester : FeatureSuggester {
 
     @Suppress("DuplicatedCode")
     private fun createEditedStatementData(action: EditorAction, offset: Int): EditedStatementData? {
-        val psiFile = action.psiFileRef.get() ?: return null
-        val curElement = psiFile.findElementAt(offset) ?: return null
+        val curElement = action.psiFile?.findElementAt(offset) ?: return null
         return if (curElement.getParentByPredicate(langSupport::isLiteralExpression) == null
             && curElement.getParentOfType<PsiComment>() == null
         ) {

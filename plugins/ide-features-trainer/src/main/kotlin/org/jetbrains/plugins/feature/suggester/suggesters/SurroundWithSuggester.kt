@@ -3,15 +3,16 @@ package org.jetbrains.plugins.feature.suggester.suggesters
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiErrorElement
 import org.jetbrains.kotlin.psi.psiUtil.startOffset
-import org.jetbrains.plugins.feature.suggester.FeatureSuggester
-import org.jetbrains.plugins.feature.suggester.FeatureSuggester.Companion.createMessageWithShortcut
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
 import org.jetbrains.plugins.feature.suggester.actions.BeforeChildReplacedAction
 import org.jetbrains.plugins.feature.suggester.actions.ChildAddedAction
 import org.jetbrains.plugins.feature.suggester.actions.ChildReplacedAction
 import org.jetbrains.plugins.feature.suggester.actions.PsiAction
+import org.jetbrains.plugins.feature.suggester.actionsLocalSummary
+import org.jetbrains.plugins.feature.suggester.createTipSuggestion
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
+import org.jetbrains.plugins.feature.suggester.suggesters.FeatureSuggester.Companion.createMessageWithShortcut
 import org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport
 import java.util.concurrent.TimeUnit
 
@@ -40,27 +41,25 @@ class SurroundWithSuggester : FeatureSuggester {
     private var surroundingStatementData: SurroundingStatementData? = null
 
     override fun getSuggestion(actions: UserActionsHistory): Suggestion {
-        val lastAction = actions.lastOrNull() ?: return NoSuggestion
+        val action = actions.lastOrNull() ?: return NoSuggestion
         if (surroundingStatementData != null
-            && lastAction is PsiAction
+            && action is PsiAction
             && !surroundingStatementData!!.isValid()
         ) {
-            updateStatementReference(lastAction)
+            updateStatementReference(action)
         }
-        when (lastAction) {
+        when (action) {
             is ChildReplacedAction -> {
-                val (parent, newChild, oldChild) = lastAction
-                if (parent == null || newChild == null || oldChild == null) return NoSuggestion
-                if (langSupport.isIfStatement(newChild) && oldChild.text == "i"
-                    || langSupport.isForStatement(newChild) && oldChild.text == "fo"
-                    || langSupport.isWhileStatement(newChild) && oldChild.text == "whil"
+                if (langSupport.isIfStatement(action.newChild) && action.oldChild.text == "i"
+                    || langSupport.isForStatement(action.newChild) && action.oldChild.text == "fo"
+                    || langSupport.isWhileStatement(action.newChild) && action.oldChild.text == "whil"
                 ) {
-                    surroundingStatementData = SurroundingStatementData(newChild)
+                    surroundingStatementData = SurroundingStatementData(action.newChild)
                 }
             }
             is BeforeChildReplacedAction -> {
                 if (surroundingStatementData == null) return NoSuggestion
-                with(lastAction) {
+                with(action) {
                     if (newChild is PsiErrorElement
                         && newChild.isMissedCloseBrace()
                     ) {
@@ -87,10 +86,8 @@ class SurroundWithSuggester : FeatureSuggester {
                 }
             }
             is ChildAddedAction -> {
-                val (parent, newChild) = lastAction
-                if (parent == null || newChild == null) return NoSuggestion
-                if (newChild.isSurroundingStatement()) {
-                    surroundingStatementData = SurroundingStatementData(newChild)
+                if (action.newChild.isSurroundingStatement()) {
+                    surroundingStatementData = SurroundingStatementData(action.newChild)
                 }
             }
             else -> NoSuggestion
@@ -107,7 +104,7 @@ class SurroundWithSuggester : FeatureSuggester {
     }
 
     private fun updateStatementReference(action: PsiAction) {
-        val psiFile = action.parent?.containingFile ?: return
+        val psiFile = action.parent.containingFile ?: return
         val element = psiFile.findElementAt(surroundingStatementData!!.startOffset) ?: return
         val parent = element.parent ?: return
         if (parent.isSurroundingStatement()) {

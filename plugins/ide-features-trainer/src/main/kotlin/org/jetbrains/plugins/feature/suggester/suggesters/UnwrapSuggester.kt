@@ -1,12 +1,13 @@
 package org.jetbrains.plugins.feature.suggester.suggesters
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.plugins.feature.suggester.FeatureSuggester
-import org.jetbrains.plugins.feature.suggester.FeatureSuggester.Companion.createMessageWithShortcut
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
 import org.jetbrains.plugins.feature.suggester.actions.BeforeEditorBackspaceAction
+import org.jetbrains.plugins.feature.suggester.actionsLocalSummary
+import org.jetbrains.plugins.feature.suggester.createDocumentationSuggestion
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
+import org.jetbrains.plugins.feature.suggester.suggesters.FeatureSuggester.Companion.createMessageWithShortcut
 import org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport
 import java.util.concurrent.TimeUnit
 
@@ -14,7 +15,8 @@ class UnwrapSuggester : FeatureSuggester {
     companion object {
         const val POPUP_MESSAGE = "Why not to use Unwrap action?"
         const val SUGGESTING_ACTION_ID = "Unwrap"
-        const val SUGGESTING_DOC_URL = "https://www.jetbrains.com/help/idea/working-with-source-code.html#unwrap_remove_statement"
+        const val SUGGESTING_DOC_URL =
+            "https://www.jetbrains.com/help/idea/working-with-source-code.html#unwrap_remove_statement"
     }
 
     override lateinit var langSupport: LanguageSupport
@@ -24,11 +26,11 @@ class UnwrapSuggester : FeatureSuggester {
     private val firstSelectionRegex = Regex("""[ \n]*(if|for|while)[ \n]*\(.*\)[ \n]*\{[ \n]*""")
 
     override fun getSuggestion(actions: UserActionsHistory): Suggestion {
-        val lastAction = actions.lastOrNull() ?: return NoSuggestion
-        when (lastAction) {
+        val action = actions.lastOrNull() ?: return NoSuggestion
+        when (action) {
             is BeforeEditorBackspaceAction -> {
-                with(lastAction) {
-                    val psiFile = psiFileRef.get() ?: return NoSuggestion
+                with(action) {
+                    val psiFile = this.psiFile ?: return NoSuggestion
                     if (selection != null) {
                         if (!selection.text.matches(firstSelectionRegex)) return NoSuggestion
                         val countStartDelimiters = selection.text.indexOfFirst { it != ' ' && it != '\n' }

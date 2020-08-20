@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.feature.suggester.actions.listeners
+package org.jetbrains.plugins.feature.suggester.listeners
 
 import com.intellij.codeInsight.completion.actions.CodeCompletionAction
 import com.intellij.codeInsight.lookup.impl.actions.ChooseItemAction
@@ -11,9 +11,9 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.actions.*
 import com.intellij.openapi.ide.CopyPasteManager
 import org.jetbrains.plugins.feature.suggester.actions.*
-import org.jetbrains.plugins.feature.suggester.suggesters.asString
-import org.jetbrains.plugins.feature.suggester.suggesters.getSelection
-import org.jetbrains.plugins.feature.suggester.suggesters.handleAction
+import org.jetbrains.plugins.feature.suggester.asString
+import org.jetbrains.plugins.feature.suggester.getSelection
+import org.jetbrains.plugins.feature.suggester.handleAction
 import java.lang.ref.WeakReference
 
 object EditorActionsListener : AnActionListener {
@@ -22,7 +22,6 @@ object EditorActionsListener : AnActionListener {
     override fun afterActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
         if (!action.isSupportedAction()) return
         val editor = dataContext.getData(CommonDataKeys.EDITOR) ?: return
-        val psiFile = dataContext.getData(CommonDataKeys.PSI_FILE) ?: return
         val project = dataContext.getData(CommonDataKeys.PROJECT) ?: return
         when (action) {
             is CopyAction -> {
@@ -30,9 +29,8 @@ object EditorActionsListener : AnActionListener {
                 handleAction(
                     project,
                     EditorCopyAction(
-                        copiedText = copiedText,
-                        psiFileRef = WeakReference(psiFile),
-                        documentRef = WeakReference(editor.document),
+                        text = copiedText,
+                        editorRef = WeakReference(editor),
                         timeMillis = System.currentTimeMillis()
                     )
                 )
@@ -43,8 +41,7 @@ object EditorActionsListener : AnActionListener {
                     project,
                     EditorCutAction(
                         text = text,
-                        psiFileRef = WeakReference(psiFile),
-                        documentRef = WeakReference(editor.document),
+                        editorRef = WeakReference(editor),
                         timeMillis = System.currentTimeMillis()
                     )
                 )
@@ -55,10 +52,9 @@ object EditorActionsListener : AnActionListener {
                 handleAction(
                     project,
                     EditorPasteAction(
-                        pastedText = pastedText,
+                        text = pastedText,
                         caretOffset = caretOffset,
-                        psiFileRef = WeakReference(psiFile),
-                        documentRef = WeakReference(editor.document),
+                        editorRef = WeakReference(editor),
                         timeMillis = System.currentTimeMillis()
                     )
                 )
@@ -69,8 +65,7 @@ object EditorActionsListener : AnActionListener {
                     EditorBackspaceAction(
                         selection = editor.getSelection(),
                         caretOffset = editor.getCaretOffset(),
-                        psiFileRef = WeakReference(psiFile),
-                        documentRef = WeakReference(editor.document),
+                        editorRef = WeakReference(editor),
                         timeMillis = System.currentTimeMillis()
                     )
                 )
@@ -79,8 +74,7 @@ object EditorActionsListener : AnActionListener {
                 handleAction(
                     project,
                     EditorFindAction(
-                        psiFileRef = WeakReference(psiFile),
-                        documentRef = WeakReference(editor.document),
+                        editorRef = WeakReference(editor),
                         timeMillis = System.currentTimeMillis()
                     )
                 )
@@ -89,9 +83,8 @@ object EditorActionsListener : AnActionListener {
                 handleAction(
                     project,
                     EditorCodeCompletionAction(
-                        offset = editor.caretModel.offset,
-                        psiFileRef = WeakReference(psiFile),
-                        documentRef = WeakReference(editor.document),
+                        caretOffset = editor.caretModel.offset,
+                        editorRef = WeakReference(editor),
                         timeMillis = System.currentTimeMillis()
                     )
                 )
@@ -100,9 +93,8 @@ object EditorActionsListener : AnActionListener {
                 handleAction(
                     project,
                     CompletionChooseItemAction(
-                        offset = editor.caretModel.offset,
-                        psiFileRef = WeakReference(psiFile),
-                        documentRef = WeakReference(editor.document),
+                        caretOffset = editor.caretModel.offset,
+                        editorRef = WeakReference(editor),
                         timeMillis = System.currentTimeMillis()
                     )
                 )
@@ -112,8 +104,7 @@ object EditorActionsListener : AnActionListener {
                     project,
                     EditorEscapeAction(
                         caretOffset = editor.caretModel.offset,
-                        psiFileRef = WeakReference(psiFile),
-                        documentRef = WeakReference(editor.document),
+                        editorRef = WeakReference(editor),
                         timeMillis = System.currentTimeMillis()
                     )
                 )
@@ -124,7 +115,6 @@ object EditorActionsListener : AnActionListener {
     override fun beforeActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
         if (!action.isSupportedAction()) return
         val editor = dataContext.getData(CommonDataKeys.EDITOR) ?: return
-        val psiFile = dataContext.getData(CommonDataKeys.PSI_FILE) ?: return
         val project = dataContext.getData(CommonDataKeys.PROJECT) ?: return
         when (action) {
             is CopyAction -> {
@@ -132,9 +122,8 @@ object EditorActionsListener : AnActionListener {
                 handleAction(
                     project,
                     BeforeEditorCopyAction(
-                        copiedText = selectedText,
-                        psiFileRef = WeakReference(psiFile),
-                        documentRef = WeakReference(editor.document),
+                        text = selectedText,
+                        editorRef = WeakReference(editor),
                         timeMillis = System.currentTimeMillis()
                     )
                 )
@@ -144,8 +133,7 @@ object EditorActionsListener : AnActionListener {
                     project,
                     BeforeEditorCutAction(
                         selection = editor.getSelection(),
-                        psiFileRef = WeakReference(psiFile),
-                        documentRef = WeakReference(editor.document),
+                        editorRef = WeakReference(editor),
                         timeMillis = System.currentTimeMillis()
                     )
                 )
@@ -156,10 +144,9 @@ object EditorActionsListener : AnActionListener {
                 handleAction(
                     project,
                     BeforeEditorPasteAction(
-                        pastedText = pastedText,
+                        text = pastedText,
                         caretOffset = caretOffset,
-                        psiFileRef = WeakReference(psiFile),
-                        documentRef = WeakReference(editor.document),
+                        editorRef = WeakReference(editor),
                         timeMillis = System.currentTimeMillis()
                     )
                 )
@@ -170,8 +157,7 @@ object EditorActionsListener : AnActionListener {
                     BeforeEditorBackspaceAction(
                         selection = editor.getSelection(),
                         caretOffset = editor.getCaretOffset(),
-                        psiFileRef = WeakReference(psiFile),
-                        documentRef = WeakReference(editor.document),
+                        editorRef = WeakReference(editor),
                         timeMillis = System.currentTimeMillis()
                     )
                 )
@@ -180,8 +166,7 @@ object EditorActionsListener : AnActionListener {
                 handleAction(
                     project,
                     BeforeEditorFindAction(
-                        psiFileRef = WeakReference(psiFile),
-                        documentRef = WeakReference(editor.document),
+                        editorRef = WeakReference(editor),
                         timeMillis = System.currentTimeMillis()
                     )
                 )
@@ -190,9 +175,8 @@ object EditorActionsListener : AnActionListener {
                 handleAction(
                     project,
                     BeforeEditorCodeCompletionAction(
-                        offset = editor.caretModel.offset,
-                        psiFileRef = WeakReference(psiFile),
-                        documentRef = WeakReference(editor.document),
+                        caretOffset = editor.caretModel.offset,
+                        editorRef = WeakReference(editor),
                         timeMillis = System.currentTimeMillis()
                     )
                 )
@@ -201,9 +185,8 @@ object EditorActionsListener : AnActionListener {
                 handleAction(
                     project,
                     BeforeCompletionChooseItemAction(
-                        offset = editor.caretModel.offset,
-                        psiFileRef = WeakReference(psiFile),
-                        documentRef = WeakReference(editor.document),
+                        caretOffset = editor.caretModel.offset,
+                        editorRef = WeakReference(editor),
                         timeMillis = System.currentTimeMillis()
                     )
                 )
@@ -213,8 +196,7 @@ object EditorActionsListener : AnActionListener {
                     project,
                     BeforeEditorEscapeAction(
                         caretOffset = editor.caretModel.offset,
-                        psiFileRef = WeakReference(psiFile),
-                        documentRef = WeakReference(editor.document),
+                        editorRef = WeakReference(editor),
                         timeMillis = System.currentTimeMillis()
                     )
                 )

@@ -1,16 +1,16 @@
-package org.jetbrains.plugins.feature.suggester.actions.listeners
+package org.jetbrains.plugins.feature.suggester.listeners
 
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.event.BulkAwareDocumentListener
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.guessProjectForFile
-import com.intellij.psi.PsiManager
 import org.jetbrains.plugins.feature.suggester.actions.BeforeEditorTextInsertedAction
 import org.jetbrains.plugins.feature.suggester.actions.BeforeEditorTextRemovedAction
 import org.jetbrains.plugins.feature.suggester.actions.EditorTextInsertedAction
 import org.jetbrains.plugins.feature.suggester.actions.EditorTextRemovedAction
-import org.jetbrains.plugins.feature.suggester.suggesters.handleAction
+import org.jetbrains.plugins.feature.suggester.handleAction
 import java.lang.ref.WeakReference
 
 object DocumentActionsListener : BulkAwareDocumentListener {
@@ -19,15 +19,14 @@ object DocumentActionsListener : BulkAwareDocumentListener {
         val document = event.source as? Document ?: return
         val virtualFile = FileDocumentManager.getInstance().getFile(document) ?: return
         val project = guessProjectForFile(virtualFile) ?: return
-        val psiFile = PsiManager.getInstance(project).findFile(virtualFile) ?: return
+        val editor = FileEditorManager.getInstance(project).selectedTextEditor ?: return
         if (event.newFragment != "" && event.oldFragment == "") {
             handleAction(
                 project,
                 BeforeEditorTextInsertedAction(
                     text = event.newFragment.toString(),
-                    offset = event.offset,
-                    psiFileRef = WeakReference(psiFile),
-                    documentRef = WeakReference(document),
+                    caretOffset = event.offset,
+                    editorRef = WeakReference(editor),
                     timeMillis = System.currentTimeMillis()
                 )
             )
@@ -36,9 +35,8 @@ object DocumentActionsListener : BulkAwareDocumentListener {
                 project,
                 BeforeEditorTextRemovedAction(
                     text = event.oldFragment.toString(),
-                    offset = event.offset,
-                    psiFileRef = WeakReference(psiFile),
-                    documentRef = WeakReference(document),
+                    caretOffset = event.offset,
+                    editorRef = WeakReference(editor),
                     timeMillis = System.currentTimeMillis()
                 )
             )
@@ -49,15 +47,14 @@ object DocumentActionsListener : BulkAwareDocumentListener {
         val document = event.source as? Document ?: return
         val virtualFile = FileDocumentManager.getInstance().getFile(document) ?: return
         val project = guessProjectForFile(virtualFile) ?: return
-        val psiFile = PsiManager.getInstance(project).findFile(virtualFile) ?: return
+        val editor = FileEditorManager.getInstance(project).selectedTextEditor ?: return
         if (event.newFragment != "" && event.oldFragment == "") {
             handleAction(
                 project,
                 EditorTextInsertedAction(
                     text = event.newFragment.toString(),
-                    offset = event.offset,
-                    psiFileRef = WeakReference(psiFile),
-                    documentRef = WeakReference(document),
+                    caretOffset = event.offset,
+                    editorRef = WeakReference(editor),
                     timeMillis = System.currentTimeMillis()
                 )
             )
@@ -66,9 +63,8 @@ object DocumentActionsListener : BulkAwareDocumentListener {
                 project,
                 EditorTextRemovedAction(
                     text = event.oldFragment.toString(),
-                    offset = event.offset,
-                    psiFileRef = WeakReference(psiFile),
-                    documentRef = WeakReference(document),
+                    caretOffset = event.offset,
+                    editorRef = WeakReference(editor),
                     timeMillis = System.currentTimeMillis()
                 )
             )

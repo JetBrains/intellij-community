@@ -5,15 +5,13 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.psiUtil.getTopmostParentOfType
-import org.jetbrains.plugins.feature.suggester.FeatureSuggester
-import org.jetbrains.plugins.feature.suggester.FeatureSuggester.Companion.createMessageWithShortcut
-import org.jetbrains.plugins.feature.suggester.NoSuggestion
-import org.jetbrains.plugins.feature.suggester.Suggestion
+import org.jetbrains.plugins.feature.suggester.*
 import org.jetbrains.plugins.feature.suggester.actions.BeforeEditorTextRemovedAction
 import org.jetbrains.plugins.feature.suggester.actions.ChildAddedAction
 import org.jetbrains.plugins.feature.suggester.actions.ChildReplacedAction
 import org.jetbrains.plugins.feature.suggester.actions.ChildrenChangedAction
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
+import org.jetbrains.plugins.feature.suggester.suggesters.FeatureSuggester.Companion.createMessageWithShortcut
 import org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport
 import java.awt.datatransfer.DataFlavor
 import java.util.concurrent.TimeUnit
@@ -48,27 +46,27 @@ class IntroduceVariableSuggester : FeatureSuggester {
     private var extractedExprData: ExtractedExpressionData? = null
 
     override fun getSuggestion(actions: UserActionsHistory): Suggestion {
-        val lastAction = actions.lastOrNull() ?: return NoSuggestion
-        when (lastAction) {
+        val action = actions.lastOrNull() ?: return NoSuggestion
+        when (action) {
             is BeforeEditorTextRemovedAction -> {
-                with(lastAction) {
+                with(action) {
                     val deletedText = getCopiedContent(text) ?: return NoSuggestion
-                    val psiFile = psiFileRef.get() ?: return NoSuggestion
-                    val contentOffset = offset + text.indexOfFirst { it != ' ' && it != '\n' }
-                    val curElement =
-                        psiFile.findElementAt(contentOffset) ?: return NoSuggestion
-                    val changedStatement = curElement.getTopmostStatementWithText(deletedText) ?: return NoSuggestion
+                    val psiFile = this.psiFile ?: return NoSuggestion
+                    val contentOffset = caretOffset + text.indexOfFirst { it != ' ' && it != '\n' }
+                    val curElement = psiFile.findElementAt(contentOffset) ?: return NoSuggestion
                     if (langSupport.isPartOfExpression(curElement)) {
+                        val changedStatement =
+                            curElement.getTopmostStatementWithText(deletedText) ?: return NoSuggestion
                         extractedExprData = ExtractedExpressionData(text, changedStatement)
                     }
                 }
             }
             is ChildReplacedAction -> {
                 if (extractedExprData == null) return NoSuggestion
-                with(lastAction) {
+                with(action) {
                     if (isVariableDeclarationAdded()) {
                         extractedExprData!!.declaration = newChild
-                    } else if (newChild != null && newChild.text.trim() == extractedExprData!!.changedStatementText) {
+                    } else if (newChild.text.trim() == extractedExprData!!.changedStatementText) {
                         extractedExprData!!.changedStatement = newChild
                     } else if (isVariableInserted()) {
                         extractedExprData = null
@@ -82,10 +80,10 @@ class IntroduceVariableSuggester : FeatureSuggester {
             }
             is ChildAddedAction -> {
                 if (extractedExprData == null) return NoSuggestion
-                with(lastAction) {
+                with(action) {
                     if (isVariableDeclarationAdded()) {
                         extractedExprData!!.declaration = newChild
-                    } else if (newChild != null && newChild.text.trim() == extractedExprData!!.changedStatementText) {
+                    } else if (newChild.text.trim() == extractedExprData!!.changedStatementText) {
                         extractedExprData!!.changedStatement = newChild
                     } else if (!extractedExprData!!.variableEditingFinished && isVariableEditingFinished()) {
                         extractedExprData!!.variableEditingFinished = true
@@ -94,8 +92,7 @@ class IntroduceVariableSuggester : FeatureSuggester {
             }
             is ChildrenChangedAction -> {
                 if (extractedExprData == null) return NoSuggestion
-                val parent = lastAction.parent ?: return NoSuggestion
-                if (parent === extractedExprData!!.declaration
+                if (action.parent === extractedExprData!!.declaration
                     && !extractedExprData!!.variableEditingFinished
                     && isVariableEditingFinished()
                 ) {
@@ -120,7 +117,7 @@ class IntroduceVariableSuggester : FeatureSuggester {
         val content = text.trim()
         val copyPasteManager = CopyPasteManager.getInstance()
         return if (copyPasteManager.areDataFlavorsAvailable(DataFlavor.stringFlavor)
-            && content == CopyPasteManager.getInstance().contents?.asString()?.trim()
+            && content == copyPasteManager.contents?.asString()?.trim()
         ) {
             content
         } else {
@@ -129,14 +126,12 @@ class IntroduceVariableSuggester : FeatureSuggester {
     }
 
     private fun ChildReplacedAction.isVariableDeclarationAdded(): Boolean {
-        return oldChild != null && newChild != null
-                && langSupport.isExpressionStatement(oldChild)
+        return langSupport.isExpressionStatement(oldChild)
                 && langSupport.isVariableDeclaration(newChild)
     }
 
     private fun ChildAddedAction.isVariableDeclarationAdded(): Boolean {
-        return parent != null && newChild != null
-                && langSupport.isCodeBlock(parent)
+        return langSupport.isCodeBlock(parent)
                 && langSupport.isVariableDeclaration(newChild)
     }
 
@@ -152,7 +147,6 @@ class IntroduceVariableSuggester : FeatureSuggester {
         if (extractedExprData == null) return false
         with(extractedExprData!!) {
             return variableEditingFinished && declaration != null
-                    && newChild != null && oldChild != null
                     && newChild.text == langSupport.getVariableName(declaration!!)
                     && changedStatement === newChild.getTopmostStatementWithText("")
         }

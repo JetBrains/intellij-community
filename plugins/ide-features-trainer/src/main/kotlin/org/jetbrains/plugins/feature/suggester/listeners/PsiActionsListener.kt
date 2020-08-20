@@ -1,13 +1,14 @@
-package org.jetbrains.plugins.feature.suggester.actions.listeners
+package org.jetbrains.plugins.feature.suggester.listeners
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiTreeChangeAdapter
 import com.intellij.psi.PsiTreeChangeEvent
 import org.jetbrains.plugins.feature.suggester.actions.*
-import org.jetbrains.plugins.feature.suggester.suggesters.handleAction
+import org.jetbrains.plugins.feature.suggester.handleAction
 
 class PsiActionsListener(private val project: Project) : PsiTreeChangeAdapter() {
     override fun beforePropertyChange(event: PsiTreeChangeEvent) {
+        if (event.parent == null) return
         handleAction(
             project,
             BeforePropertyChangedAction(
@@ -18,6 +19,7 @@ class PsiActionsListener(private val project: Project) : PsiTreeChangeAdapter() 
     }
 
     override fun beforeChildAddition(event: PsiTreeChangeEvent) {
+        if (event.parent == null || event.child == null) return
         handleAction(
             project,
             BeforeChildAddedAction(
@@ -29,6 +31,7 @@ class PsiActionsListener(private val project: Project) : PsiTreeChangeAdapter() 
     }
 
     override fun beforeChildReplacement(event: PsiTreeChangeEvent) {
+        if (event.parent == null || event.newChild == null || event.oldChild == null) return
         handleAction(
             project,
             BeforeChildReplacedAction(
@@ -41,6 +44,7 @@ class PsiActionsListener(private val project: Project) : PsiTreeChangeAdapter() 
     }
 
     override fun beforeChildrenChange(event: PsiTreeChangeEvent) {
+        if (event.parent == null) return
         handleAction(
             project,
             BeforeChildrenChangedAction(
@@ -51,6 +55,7 @@ class PsiActionsListener(private val project: Project) : PsiTreeChangeAdapter() 
     }
 
     override fun beforeChildMovement(event: PsiTreeChangeEvent) {
+        if (event.parent == null || event.child == null || event.oldParent == null) return
         handleAction(
             project,
             BeforeChildMovedAction(
@@ -63,6 +68,7 @@ class PsiActionsListener(private val project: Project) : PsiTreeChangeAdapter() 
     }
 
     override fun beforeChildRemoval(event: PsiTreeChangeEvent) {
+        if (event.parent == null || event.child == null) return
         handleAction(
             project,
             BeforeChildRemovedAction(
@@ -74,10 +80,12 @@ class PsiActionsListener(private val project: Project) : PsiTreeChangeAdapter() 
     }
 
     override fun propertyChanged(event: PsiTreeChangeEvent) {
+        if (event.parent == null) return
         handleAction(project, PropertyChangedAction(parent = event.parent, timeMillis = System.currentTimeMillis()))
     }
 
     override fun childRemoved(event: PsiTreeChangeEvent) {
+        if (event.parent == null || event.child == null) return
         handleAction(
             project,
             ChildRemovedAction(
@@ -89,6 +97,7 @@ class PsiActionsListener(private val project: Project) : PsiTreeChangeAdapter() 
     }
 
     override fun childReplaced(event: PsiTreeChangeEvent) {
+        if (event.parent == null || event.newChild == null || event.oldChild == null) return
         handleAction(
             project,
             ChildReplacedAction(
@@ -101,6 +110,7 @@ class PsiActionsListener(private val project: Project) : PsiTreeChangeAdapter() 
     }
 
     override fun childAdded(event: PsiTreeChangeEvent) {
+        if (event.parent == null || event.child == null) return
         handleAction(
             project,
             ChildAddedAction(
@@ -112,10 +122,12 @@ class PsiActionsListener(private val project: Project) : PsiTreeChangeAdapter() 
     }
 
     override fun childrenChanged(event: PsiTreeChangeEvent) {
+        if (event.parent == null) return
         handleAction(project, ChildrenChangedAction(parent = event.parent, timeMillis = System.currentTimeMillis()))
     }
 
     override fun childMoved(event: PsiTreeChangeEvent) {
+        if (event.parent == null || event.child == null || event.oldParent == null) return
         handleAction(
             project,
             ChildMovedAction(

@@ -6,13 +6,14 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNamedElement
-import org.jetbrains.plugins.feature.suggester.FeatureSuggester
-import org.jetbrains.plugins.feature.suggester.FeatureSuggester.Companion.createMessageWithShortcut
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
 import org.jetbrains.plugins.feature.suggester.actions.EditorFindAction
 import org.jetbrains.plugins.feature.suggester.actions.EditorFocusGainedAction
+import org.jetbrains.plugins.feature.suggester.actionsLocalSummary
+import org.jetbrains.plugins.feature.suggester.createTipSuggestion
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
+import org.jetbrains.plugins.feature.suggester.suggesters.FeatureSuggester.Companion.createMessageWithShortcut
 import org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport
 import java.util.concurrent.TimeUnit
 
@@ -28,12 +29,12 @@ class FileStructureSuggester : FeatureSuggester {
 
     override fun getSuggestion(actions: UserActionsHistory): Suggestion {
         if (actions.size < 2) return NoSuggestion
-        when (val lastAction = actions.lastOrNull()) {
+        when (val action = actions.lastOrNull()) {
             is EditorFocusGainedAction -> {
                 if (actions.get(1) !is EditorFindAction) return NoSuggestion // check that previous action is Find
-                val psiFile = lastAction.psiFile ?: return NoSuggestion
-                val project = lastAction.project ?: return NoSuggestion
-                val editor = lastAction.editor
+                val psiFile = action.psiFile ?: return NoSuggestion
+                val project = action.project ?: return NoSuggestion
+                val editor = action.editor ?: return NoSuggestion
 
                 val findModel = getFindModel(project)
                 val textToFind = findModel.stringToFind

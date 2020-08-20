@@ -7,7 +7,7 @@ import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogg
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.vcs.log.statistics.CustomStringsValidationRule
-import org.jetbrains.plugins.feature.suggester.FeatureSuggester
+import org.jetbrains.plugins.feature.suggester.suggesters.FeatureSuggester
 
 /**
  * feature_suggester group configuration

@@ -1,7 +1,5 @@
 package org.jetbrains.plugins.feature.suggester
 
-import com.intellij.codeInsight.lookup.LookupManager
-import com.intellij.codeInsight.lookup.impl.LookupManagerImpl
 import com.intellij.lang.Language
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.EditorFactory
@@ -12,9 +10,11 @@ import org.jetbrains.plugins.feature.suggester.actions.Action
 import org.jetbrains.plugins.feature.suggester.actions.EditorFocusGainedAction
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
 import org.jetbrains.plugins.feature.suggester.settings.FeatureSuggesterSettings
+import org.jetbrains.plugins.feature.suggester.suggesters.FeatureSuggester
 import org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport
 import org.jetbrains.plugins.feature.suggester.ui.NotificationSuggestionPresenter
 import org.jetbrains.plugins.feature.suggester.ui.SuggestionPresenter
+import java.lang.ref.WeakReference
 
 class FeatureSuggestersManager(val project: Project) : Disposable {
     private val MAX_ACTIONS_NUMBER: Int = 100
@@ -56,17 +56,13 @@ class FeatureSuggestersManager(val project: Project) : Disposable {
     private fun processSuggester(suggester: FeatureSuggester) {
         val suggestion = suggester.getSuggestion(actionsHistory)
         if (suggestion is PopupSuggestion) {
-            if (suggester.needToClearLookup) {
-                //todo: this is hack to avoid exception in spection completion case
-                val lookupManager = LookupManager.getInstance(project)
-                lookupManager as LookupManagerImpl
-                lookupManager.clearLookup()
-            }
             suggestionPresenter.showSuggestion(project, suggestion)
-
-            // send event for testing
-            project.messageBus.syncPublisher(FeatureSuggestersManagerListener.TOPIC).featureFound(suggestion)
+            fireSuggestionFound(suggestion)
         }
+    }
+
+    private fun fireSuggestionFound(suggestion: PopupSuggestion) {
+        project.messageBus.syncPublisher(FeatureSuggestersManagerListener.TOPIC).featureFound(suggestion) // send event for testing
     }
 
     private fun initFocusListener() {
@@ -75,7 +71,7 @@ class FeatureSuggestersManager(val project: Project) : Disposable {
             if (editor.project != project) return@FocusChangeListener
             actionPerformed(
                 EditorFocusGainedAction(
-                    editor = editor,
+                    editorRef = WeakReference(editor),
                     timeMillis = System.currentTimeMillis()
                 )
             )

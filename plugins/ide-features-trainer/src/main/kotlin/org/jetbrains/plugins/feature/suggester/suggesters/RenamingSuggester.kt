@@ -5,11 +5,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.searches.ReferencesSearch
-import org.jetbrains.plugins.feature.suggester.FeatureSuggester
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
 import org.jetbrains.plugins.feature.suggester.actions.BeforeChildReplacedAction
 import org.jetbrains.plugins.feature.suggester.actions.ChildReplacedAction
+import org.jetbrains.plugins.feature.suggester.actionsLocalSummary
+import org.jetbrains.plugins.feature.suggester.createTipSuggestion
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
 import org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport
 import java.util.concurrent.TimeUnit
@@ -57,13 +58,12 @@ class RenamingSuggester : FeatureSuggester {
         when (val lastAction = actions.lastOrNull()) {
             is BeforeChildReplacedAction -> {
                 val (parent, newChild, oldChild) = lastAction
-                if (parent == null || newChild == null || oldChild == null) return NoSuggestion
-                if (oldChild.isIdentifier()) {
+                if (langSupport.isIdentifier(oldChild)) {
                     if (!renamedIdentifiersData.references.contains(parent)) {
                         // TODO Find out why resolve reference causes:
                         //  "java.lang.Throwable: Somebody has requested stubbed spine during PSI operations; not only is this expensive, but will also cause stub PSI invalidation"
                         //  Can be reproduced placing '{' before another code block "{ ... }"
-                        val declaration = parent.resolveRef() ?: parent
+                        val declaration = parent.reference?.resolve() ?: parent
                         val references = arrayListOf(declaration, *declaration.getAllReferences().toTypedArray())
                         renamedIdentifiersData = RenamedIdentifiersData(oldChild.text, references)
                     }
@@ -71,8 +71,7 @@ class RenamingSuggester : FeatureSuggester {
             }
             is ChildReplacedAction -> {
                 val (parent, newChild, oldChild) = lastAction
-                if (parent == null || newChild == null || oldChild == null) return NoSuggestion
-                if (newChild.isIdentifier()) {
+                if (langSupport.isIdentifier(newChild)) {
                     if (renamedIdentifiersData.references.contains(parent)
                         && renamedIdentifiersData.isAllRenamed()
                     ) {
