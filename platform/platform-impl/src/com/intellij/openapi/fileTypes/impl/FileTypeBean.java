@@ -8,7 +8,7 @@ import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.openapi.fileTypes.FileNameMatcher;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.util.SmartList;
+import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jetbrains.annotations.ApiStatus;
@@ -17,10 +17,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public final class FileTypeBean implements PluginAware {
-  private final List<FileNameMatcher> myMatchers = new SmartList<>();
+  private final Collection<FileNameMatcher> myMatchers = new SmartHashSet<>();
 
   private PluginDescriptor myPluginDescriptor;
 
@@ -90,12 +91,12 @@ public final class FileTypeBean implements PluginAware {
   public String hashBangs;
 
   @ApiStatus.Internal
-  public void addMatchers(@NotNull List<? extends FileNameMatcher> matchers) {
+  void addMatchers(@NotNull List<? extends FileNameMatcher> matchers) {
     myMatchers.addAll(matchers);
   }
 
   @ApiStatus.Internal
-  public @NotNull List<FileNameMatcher> getMatchers() {
+  @NotNull List<FileNameMatcher> getMatchers() {
     return new ArrayList<>(myMatchers);
   }
 
