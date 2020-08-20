@@ -458,6 +458,10 @@ public abstract class NlsInfo {
         if (superInfo != Unspecified.UNKNOWN) return superInfo;
       }
     }
+    NlsInfo fromContainer = fromContainer(method);
+    if (fromContainer != Unspecified.UNKNOWN) {
+      return fromContainer;
+    }
     return new Unspecified(method);
   }
 
