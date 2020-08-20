@@ -14,6 +14,8 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.ValueKey;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -458,7 +460,10 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
         String clickMessage = isShowRootNames()
                               ? VcsLogBundle.message("vcs.log.click.to.collapse.paths.column.tooltip")
                               : VcsLogBundle.message("vcs.log.click.to.expand.paths.column.tooltip");
-        return "<html><b>" + myColorManager.getLongName((FilePath)path) + "</b><br/>" + clickMessage + "</html>";
+        return new HtmlBuilder().append(HtmlChunk.text(myColorManager.getLongName((FilePath)path)).bold())
+          .append(HtmlChunk.br())
+          .append(clickMessage)
+          .wrapWith(HtmlChunk.html()).toString();
       }
     }
     return null;
