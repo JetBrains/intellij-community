@@ -40,6 +40,16 @@ public final class TextWithMnemonic {
   }
 
   /**
+   * @param complete if true add the mnemonic suffix (but without mnemonic)
+   * @return plain text without mnemonic
+   */
+  @NotNull
+  public @Nls String getText(boolean complete) {
+    //noinspection HardCodedStringLiteral
+    return complete ? myText + myMnemonicSuffix : myText;
+  }
+
+  /**
    * @return a mnemonic character (upper-cased) if mnemonic is set; 0 otherwise
    */
   public int getMnemonic() {
