@@ -243,6 +243,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
+  @NlsSafe
   public static @NotNull String getPackageName(@NotNull String fqName) {
     return getPackageName(fqName, '.');
   }
@@ -260,6 +261,7 @@ public class StringUtil extends StringUtilRt {
    * @return the package name of the type or the declarator of the type. The empty string if the given fqName is unqualified
    */
   @Contract(pure = true)
+  @NlsSafe
   public static @NotNull String getPackageName(@NotNull String fqName, char separator) {
     int lastPointIdx = fqName.lastIndexOf(separator);
     if (lastPointIdx >= 0) {
