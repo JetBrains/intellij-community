@@ -16,7 +16,9 @@
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.navigation.GotoRelatedItem;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.XmlDomBundle;
 
 import javax.swing.*;
 
@@ -27,14 +29,14 @@ public class DomGotoRelatedItem extends GotoRelatedItem {
   private final DomElement myElement;
 
   public DomGotoRelatedItem(DomElement element) {
-    this(element, "XML");
+    this(element, XmlDomBundle.message("goto.related.item.group.name"));
   }
 
-  public DomGotoRelatedItem(DomElement element, String group) {
+  public DomGotoRelatedItem(DomElement element, @NlsContexts.Separator String group) {
     this(element, group, -1);
   }
 
-  public DomGotoRelatedItem(DomElement element, String group, int mnemonic) {
+  public DomGotoRelatedItem(DomElement element, @NlsContexts.Separator String group, int mnemonic) {
     super(element.getXmlElement(), group, mnemonic);
     myElement = element;
   }
