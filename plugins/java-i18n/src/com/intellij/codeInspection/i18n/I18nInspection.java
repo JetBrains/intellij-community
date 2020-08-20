@@ -646,7 +646,6 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
       PsiMethod target = ref.resolve();
       if (target == null) return;
       if (IGNORED_METHODS.methodMatches(target)) return;
-      if (NlsInfo.isStringProcessingMethod(target)) return;
       UExpression expr = ref;
       if (ref.getUastParent() instanceof UQualifiedReferenceExpression) {
         expr = (UQualifiedReferenceExpression)ref.getUastParent();
@@ -663,6 +662,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     private void processReferenceToNonLocalized(@NotNull PsiElement sourcePsi, @NotNull UExpression ref, PsiModifierListOwner target) {
       PsiType type = ref.getExpressionType();
       if (!TypeUtils.isJavaLangString(type)) return;
+      if (target instanceof PsiMethod && NlsInfo.isStringProcessingMethod((PsiMethod)target)) return;
       if (NlsInfo.forModifierListOwner(target).canBeUsedInLocalizedContext()) return;
       if (NlsInfo.forType(type).canBeUsedInLocalizedContext()) return;
       

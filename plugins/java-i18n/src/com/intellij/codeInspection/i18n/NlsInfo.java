@@ -367,7 +367,7 @@ public abstract class NlsInfo {
       if (next instanceof UCallExpression) {
         if (!UastExpressionUtils.isArrayInitializer(next) && !UastExpressionUtils.isNewArrayWithInitializer(next)) {
           PsiMethod method = ((UCallExpression)next).resolve();
-          if (!isStringProcessingMethod(method)) {
+          if (!(TypeUtils.isJavaLangString(next.getExpressionType()) && isStringProcessingMethod(method))) {
             return parent;
           }
         }
@@ -380,7 +380,6 @@ public abstract class NlsInfo {
   /**
    * Checks if the method is detected to be a string-processing method. A string processing method is a method that:
    * <ul>
-   *   <li>Returns string</li>
    *   <li>Pure (either explicitly marked or inferred)</li>
    *   <li>Accepts parameters</li>
    *   <li>No parameters are marked using Nls annotations</li>
@@ -392,7 +391,6 @@ public abstract class NlsInfo {
    */
   static boolean isStringProcessingMethod(PsiMethod method) {
     if (method == null) return false;
-    if (!TypeUtils.isJavaLangString(method.getReturnType())) return false;
     if (!(forModifierListOwner(method) instanceof Unspecified)) return false;
     if (!JavaMethodContractUtil.isPure(method)) return false;
     PsiParameter[] parameters = method.getParameterList().getParameters();

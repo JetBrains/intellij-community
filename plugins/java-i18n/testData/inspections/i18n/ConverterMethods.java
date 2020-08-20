@@ -14,10 +14,16 @@ class MyTest {
     return s == null ? def : s;
   }
   
+  static <T> T reqNonNull(T t) {
+    if (t == null) throw new NullPointerException();
+    return t;
+  }
+  
   void test(String s) {
     consume(internEmpty(<warning descr="Hardcoded string literal: \"foo\"">"foo"</warning>));
     consume(notNullize(<warning descr="Hardcoded string literal: \"foo\"">"foo"</warning>));
     consume(notNullize(<warning descr="Hardcoded string literal: \"foo\"">"foo"</warning>, <warning descr="Hardcoded string literal: \"bar\"">"bar"</warning>));
+    consume(reqNonNull(<warning descr="Hardcoded string literal: \"foo\"">"foo"</warning>));
     consume(MyTest.internEmpty(<warning descr="Hardcoded string literal: \"foo\"">"foo"</warning>));
     consume(MyTest.notNullize(<warning descr="Hardcoded string literal: \"foo\"">"foo"</warning>));
     consume(MyTest.notNullize(<warning descr="Hardcoded string literal: \"foo\"">"foo"</warning>, <warning descr="Hardcoded string literal: \"bar\"">"bar"</warning>));
