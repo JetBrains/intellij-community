@@ -335,8 +335,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     @Override
     public void process(Key key, Value value, int inputId) throws StorageException {
       myModificationStamp.incrementAndGet();
-      myStorage.removeAllValues(key, inputId);
-      myStorage.addValue(key, inputId, value);
+      myStorage.updateValue(key, inputId, value);
     }
   };
 

@@ -150,6 +150,16 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
            (myInvalidated != null && !myInvalidated.isEmpty()) ||
            needsCompacting();
   }
+
+  boolean containsOnlyInvalidatedChange() {
+    return myInvalidated != null &&
+           !myInvalidated.isEmpty() &&
+           (myAdded == null || myAdded.size() == 0);
+  }
+
+  boolean containsCachedMergedData() {
+    return myMerged != null;
+  }
   
   @Override
   public void saveTo(DataOutput out, DataExternalizer<? super Value> externalizer) throws IOException {
