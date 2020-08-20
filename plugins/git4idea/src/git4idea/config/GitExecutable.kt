@@ -11,6 +11,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import git4idea.commands.GitHandler
 import git4idea.i18n.GitBundle
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.io.File
 
@@ -119,7 +120,7 @@ sealed class GitExecutable {
 
   data class Unknown(override val id: String,
                      override val exePath: String,
-                     val errorMessage: String)
+                     val errorMessage: @Nls String)
     : GitExecutable() {
     override val isLocal: Boolean = false
     override fun toString(): String = "$id: $exePath"

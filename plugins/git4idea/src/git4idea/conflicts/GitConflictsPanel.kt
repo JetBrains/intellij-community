@@ -172,7 +172,7 @@ class GitConflictsPanel(
   }
 
   interface Listener : EventListener {
-    fun onDescriptionChange(description: String) {}
+    fun onDescriptionChange(description: @Nls String) {}
   }
 }
 

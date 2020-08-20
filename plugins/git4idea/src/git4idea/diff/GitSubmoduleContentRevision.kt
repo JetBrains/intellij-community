@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.diff
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.ContentRevision
@@ -30,14 +31,17 @@ abstract class GitSubmoduleContentRevision(val submodule: GitRepository,
       val filePath = getFilePath(submodule.root)
       val lsTree = GitIndexUtil.listTree(parentRepo, listOf(filePath), revisionNumber)
       if (lsTree.size != 1) {
-        throw VcsException("Unexpected output of ls-tree command for submodule [$filePath] at [$revisionNumber]: $lsTree")
+        LOG.warn("Unexpected output of ls-tree command for submodule [$filePath] at [$revisionNumber]: $lsTree")
+        return null
       }
       val tree = lsTree[0]
       if (tree !is GitIndexUtil.StagedSubrepo) {
-        throw VcsException("Unexpected type of ls-tree for submodule [$filePath] at [$revisionNumber]: $tree")
+        LOG.warn("Unexpected type of ls-tree for submodule [$filePath] at [$revisionNumber]: $tree")
+        return null
       }
       if (tree.path != filePath) {
-        throw VcsException("Submodule path [${submodule.root.path}] doesn't match the ls-tree output path [${tree.path.path}]")
+        LOG.warn("Submodule path [${submodule.root.path}] doesn't match the ls-tree output path [${tree.path.path}]")
+        return null
       }
       return tree.blobHash
     }
@@ -51,6 +55,8 @@ abstract class GitSubmoduleContentRevision(val submodule: GitRepository,
   }
 
   companion object {
+    private val LOG = logger<GitSubmoduleContentRevision>()
+
     @JvmStatic
     fun createRevision(submodule: GitSubmodule, revisionNumber: VcsRevisionNumber): ContentRevision {
       return GitSubmoduleContentRevision.Committed(submodule.parent, submodule.repository, revisionNumber)

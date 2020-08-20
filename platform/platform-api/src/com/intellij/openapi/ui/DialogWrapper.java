@@ -1815,7 +1815,7 @@ public abstract class DialogWrapper {
      *
      * @param name the action name (see {@link Action#NAME})
      */
-    protected DialogWrapperAction(@NotNull String name) {
+    protected DialogWrapperAction(@NotNull @NlsContexts.Button String name) {
       super(name);
     }
 
@@ -1913,7 +1913,7 @@ public abstract class DialogWrapper {
      * @param name     the action name
      * @param exitCode the exit code for dialog
      */
-    public DialogWrapperExitAction(String name, int exitCode) {
+    public DialogWrapperExitAction(@NlsContexts.Button String name, int exitCode) {
       super(name);
       myExitCode = exitCode;
     }
