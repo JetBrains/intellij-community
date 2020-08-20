@@ -2,8 +2,10 @@
 package org.jetbrains.debugger.frame
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.ColoredTextContainer
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.xdebugger.XDebuggerBundle
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator
 import com.intellij.xdebugger.frame.XCompositeNode
 import com.intellij.xdebugger.frame.XStackFrame
@@ -57,7 +59,7 @@ class CallFrameView @JvmOverloads constructor(val callFrame: CallFrame,
 
   override fun customizePresentation(component: ColoredTextContainer) {
     if (sourceInfo == null) {
-      val scriptName = if (script == null) "unknown" else script.url.trimParameters().toDecodedForm()
+      val scriptName = if (script == null) XDebuggerBundle.message("stack.frame.function.unknown") else script.url.trimParameters().toDecodedForm()
       val line = callFrame.line
       component.append(if (line == -1) scriptName else "$scriptName:$line", SimpleTextAttributes.ERROR_ATTRIBUTES)
       return
@@ -70,7 +72,7 @@ class CallFrameView @JvmOverloads constructor(val callFrame: CallFrame,
         if (isInLibraryContent || callFrame.isFromAsyncStack) SimpleTextAttributes.GRAYED_ATTRIBUTES
         else SimpleTextAttributes.REGULAR_ATTRIBUTES
 
-    val functionName = sourceInfo.functionName
+    @NlsSafe val functionName = sourceInfo.functionName
     if (functionName == null || (functionName.isEmpty() && callFrame.hasOnlyGlobalScope)) {
       if (fileName.startsWith("index.")) {
         sourceInfo.file.parent?.let {
@@ -81,7 +83,7 @@ class CallFrameView @JvmOverloads constructor(val callFrame: CallFrame,
     }
     else {
       if (functionName.isEmpty()) {
-        component.append("anonymous", if (isInLibraryContent) SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES else SimpleTextAttributes.REGULAR_ITALIC_ATTRIBUTES)
+        component.append(XDebuggerBundle.message("stack.frame.function.name.anonymous"), if (isInLibraryContent) SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES else SimpleTextAttributes.REGULAR_ITALIC_ATTRIBUTES)
       }
       else {
         component.append(functionName, textAttributes)
