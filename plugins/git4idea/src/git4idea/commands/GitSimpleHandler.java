@@ -215,8 +215,7 @@ public class GitSimpleHandler extends GitTextHandler {
 
       @Override
       public void startFailed(@NotNull final Throwable exception) {
-        exRef.set(
-          new VcsException("Process failed to start (" + myCommandLine.getCommandLineString() + "): " + exception.toString(), exception));
+        exRef.set(new VcsException(GitBundle.message("git.executable.unknown.error.message", exception.toString()), exception));
       }
     });
     try {
@@ -226,10 +225,10 @@ public class GitSimpleHandler extends GitTextHandler {
       exRef.set(new VcsException(e.getMessage(), e));
     }
     if (!exRef.isNull()) {
-      throw new VcsException(exRef.get().getMessage() + " " + "during executing" + " " + printableCommandLine(), exRef.get());
+      throw exRef.get();
     }
     if (resultRef.isNull()) {
-      throw new VcsException("The git command returned null: " + printableCommandLine());
+      throw new VcsException(GitBundle.message("git.error.cant.process.output", printableCommandLine()));
     }
     return resultRef.get();
   }

@@ -55,12 +55,12 @@ public class GitSSHGUIHandler {
 
   @NotNull
   private static CredentialAttributes passphraseCredentialAttributes(@NotNull @Nls String key) {
-    return new CredentialAttributes(generateServiceName("Git SSH Passphrase", key), key);
+    return new CredentialAttributes(generateServiceName(GitBundle.message("label.credential.store.key.ssh.passphrase"), key), key);
   }
 
   @NotNull
   private static CredentialAttributes passwordCredentialAttributes(@NotNull @Nls String key) {
-    return new CredentialAttributes(generateServiceName("Git SSH Password", key), key);
+    return new CredentialAttributes(generateServiceName(GitBundle.message("label.credential.store.key.ssh.password"), key), key);
   }
 
   @NonNls

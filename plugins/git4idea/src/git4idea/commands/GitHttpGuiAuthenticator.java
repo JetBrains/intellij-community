@@ -3,7 +3,6 @@ package git4idea.commands;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.credentialStore.CredentialAttributes;
-import com.intellij.credentialStore.CredentialAttributesKt;
 import com.intellij.credentialStore.Credentials;
 import com.intellij.dvcs.DvcsRememberedInputs;
 import com.intellij.ide.passwordSafe.PasswordSafe;
@@ -23,6 +22,7 @@ import com.intellij.util.io.URLUtil;
 import git4idea.DialogManager;
 import git4idea.config.GitConfigUtil;
 import git4idea.config.GitVcsApplicationSettings;
+import git4idea.i18n.GitBundle;
 import git4idea.remote.GitHttpAuthDataProvider;
 import git4idea.remote.GitRememberedInputs;
 import git4idea.remote.GitRepositoryHostingService;
@@ -34,6 +34,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.*;
 import java.util.function.Function;
+
+import static com.intellij.credentialStore.CredentialAttributesKt.generateServiceName;
 
 /**
  * <p>Handles "ask username" and "ask password" requests from Git:
@@ -262,6 +264,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
       myUrl = url;
     }
 
+    @NonNls
     @NotNull
     abstract String getName();
 
@@ -498,7 +501,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     @VisibleForTesting
     @NotNull
     static CredentialAttributes credentialAttributes(@NotNull String key) {
-      return new CredentialAttributes(CredentialAttributesKt.generateServiceName("Git HTTP", key), key);
+      return new CredentialAttributes(generateServiceName(GitBundle.message("label.credential.store.key.http.password"), key), key);
     }
 
     /**

@@ -94,7 +94,7 @@ public final class GitHandlerUtil {
 
     @Override
     public void startFailed(@NotNull Throwable exception) {
-      myHandler.addError(new VcsException("Git start failed: " + exception.getMessage(), exception));
+      myHandler.addError(new VcsException(GitBundle.message("git.executable.unknown.error.message", exception.getMessage()), exception));
       if (myShowErrors) {
         EventQueue.invokeLater(() -> GitUIUtil.showOperationError(myHandler.project(), myOperationName, exception.getMessage()));
       }

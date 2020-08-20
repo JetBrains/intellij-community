@@ -119,7 +119,7 @@ class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
         return knownAnswer;
       }
 
-      int answer = Messages.showYesNoDialog(myProject, message, "SSH Confirmation", null);
+      int answer = Messages.showYesNoDialog(myProject, message, GitBundle.message("title.ssh.confirmation"), null);
       String textAnswer;
       if (answer == Messages.YES) {
         textAnswer = "yes";

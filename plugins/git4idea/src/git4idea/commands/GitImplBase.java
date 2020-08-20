@@ -199,7 +199,7 @@ public abstract class GitImplBase implements Git {
       handler.runInCurrentThread();
     }
     catch (IOException e) {
-      return GitCommandResult.error("Error processing input stream: " + e.getLocalizedMessage());
+      return GitCommandResult.error(GitBundle.message("git.error.cant.process.output", e.getLocalizedMessage()));
     }
     return new GitCommandResult(resultListener.myStartFailed,
                                 resultListener.myExitCode,

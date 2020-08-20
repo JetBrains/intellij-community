@@ -31,6 +31,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import git4idea.GitDisposable;
 import git4idea.GitVcs;
+import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -192,7 +193,7 @@ public class GitTask {
 
       @Override
       public void startFailed(@NotNull Throwable exception) {
-        myHandler.addError(new VcsException("Git start failed: " + exception.getMessage(), exception));
+        myHandler.addError(new VcsException(GitBundle.message("git.executable.unknown.error.message", exception.getMessage()), exception));
       }
 
       @Override

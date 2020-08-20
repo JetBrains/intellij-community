@@ -212,7 +212,7 @@ public abstract class GitHandler {
   }
 
   private boolean isCmd() {
-    return StringUtil.toLowerCase(myCommandLine.getExePath()).endsWith("cmd");
+    return StringUtil.toLowerCase(myCommandLine.getExePath()).endsWith("cmd"); //NON-NLS
   }
 
   public void addRelativePaths(FilePath @NotNull ... parameters) {
@@ -258,7 +258,7 @@ public abstract class GitHandler {
    */
   @NlsSafe
   public String printableCommandLine() {
-    return unescapeCommandLine(myCommandLine.getCommandLineString("git"));
+    return unescapeCommandLine(myCommandLine.getCommandLineString("git")); //NON-NLS
   }
 
   @NotNull
