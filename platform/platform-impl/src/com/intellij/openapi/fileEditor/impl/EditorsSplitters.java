@@ -465,12 +465,7 @@ public class EditorsSplitters extends IdePanePanel implements UISettingsListener
         try {
           ioFile = file instanceof LightVirtualFileBase ? null : Paths.get(file.getPresentableUrl());
         }
-        catch (InvalidPathException error) {
-          // Sometimes presentable URLs, designed for showing texts in UI, aren't valid local filesystem paths.
-          // An error may happen not only for LightVirtualFile.
-          LOG.info(
-            String.format("Presentable URL %s of file %s can't be mapped on the local filesystem.", file.getPresentableUrl(), file),
-            error);
+        catch (InvalidPathException ignored) {
         }
         fileTitle = FrameTitleBuilder.getInstance().getFileTitle(project, file);
       }
