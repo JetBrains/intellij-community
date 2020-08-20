@@ -100,8 +100,13 @@ object GHHtmlErrorPanel {
   private fun getLoadingErrorText(error: Throwable, newLineSeparator: String = "\n"): String {
     if (error is GithubStatusCodeException && error.error != null && error.error!!.message != null) {
       val githubError = error.error!!
-      val message = githubError.message?.removePrefix("[")?.removeSuffix("]")
+      val message = githubError.message!!.removePrefix("[").removeSuffix("]")
       val builder = StringBuilder(message)
+      if (message.startsWith("Could not resolve to a Repository", true)) {
+        builder.append(
+          " Either repository doesn't exist or you don't have access. The most probable cause is that OAuth App access restrictions are enabled in organization.")
+      }
+
       val errors = githubError.errors
       if (!errors.isNullOrEmpty()) {
         builder.append(": ").append(newLineSeparator)
