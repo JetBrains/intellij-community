@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.lang.resolve.ast.builder.strategy;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethodBuilder;
@@ -149,6 +150,7 @@ public class InitializerBuilderStrategySupport extends BuilderAnnotationContribu
       return StringUtil.isEmpty(builderMethodName) ? "createInitializer" : builderMethodName;
     }
 
+    @NlsSafe
     @NotNull
     private static String getBuildMethodName(@NotNull PsiAnnotation annotation) {
       final String builderMethodName = AnnotationUtil.getDeclaredStringAttributeValue(annotation, "buildMethodName");

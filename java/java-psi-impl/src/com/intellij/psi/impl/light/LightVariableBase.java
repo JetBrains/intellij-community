@@ -12,6 +12,7 @@ import com.intellij.ui.IconManager;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -149,7 +150,7 @@ public abstract class LightVariableBase extends LightElement implements PsiVaria
     return myOriginInfo;
   }
 
-  public void setOriginInfo(String originInfo) {
+  public void setOriginInfo(@NonNls String originInfo) {
     myOriginInfo = originInfo;
   }
 }

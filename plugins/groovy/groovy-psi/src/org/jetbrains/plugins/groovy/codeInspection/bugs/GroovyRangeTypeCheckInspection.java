@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.codeInspection.bugs;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -108,6 +109,9 @@ public class GroovyRangeTypeCheckInspection extends BaseInspection {
   }
 
   private static class MyVisitor extends BaseInspectionVisitor {
+    @NlsSafe private static final String CALL_NEXT = "next()";
+    @NlsSafe private static final String CALL_PREVIOUS = "previous()";
+
     @Override
     public void visitRangeExpression(@NotNull GrRangeExpression range) {
       super.visitRangeExpression(range);
@@ -119,10 +123,10 @@ public class GroovyRangeTypeCheckInspection extends BaseInspection {
       final GroovyResolveResult[] nexts = ResolveUtil.getMethodCandidates(iterationType, "next", range, PsiType.EMPTY_ARRAY);
       final GroovyResolveResult[] previouses = ResolveUtil.getMethodCandidates(iterationType, "previous", range, PsiType.EMPTY_ARRAY);
       if (nexts.length == 0) {
-        registerError(range, iterationType.getPresentableText(), "next()");
+        registerError(range, iterationType.getPresentableText(), CALL_NEXT);
       }
       if (previouses.length == 0) {
-        registerError(range, iterationType.getPresentableText(), "previous()");
+        registerError(range, iterationType.getPresentableText(), CALL_PREVIOUS);
       }
 
       if (!InheritanceUtil.isInheritor(iterationType, CommonClassNames.JAVA_LANG_COMPARABLE)) {

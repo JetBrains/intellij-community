@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.threading;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +32,7 @@ import java.util.Set;
 
 public class GroovyThreadStopSuspendResumeInspection extends BaseInspection {
 
-  private static final Set<String> METHOD_NAMES = new HashSet<>();
+  private static final Set<@NlsSafe String> METHOD_NAMES = new HashSet<>();
 
   static {
     METHOD_NAMES.add("stop");

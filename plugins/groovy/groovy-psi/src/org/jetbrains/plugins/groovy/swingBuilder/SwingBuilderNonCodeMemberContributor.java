@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.swingBuilder;
 
 import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.ElementClassHint;
@@ -10,6 +11,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
@@ -32,7 +34,7 @@ public class SwingBuilderNonCodeMemberContributor extends NonCodeMembersContribu
 
   private static final Key<MultiMap<String, PsiMethod>> KEY = Key.create("SwingBuilderNonCodeMemberContributor.KEY");
 
-  private static final Object METHOD_KIND = "SwingBuilder_builder_method";
+  @NonNls private static final Object METHOD_KIND = "SwingBuilder_builder_method";
 
   private static final class MyBuilder {
     private final PsiManager myManager;
@@ -107,11 +109,11 @@ public class SwingBuilderNonCodeMemberContributor extends NonCodeMembersContribu
       return res;
     }
 
-    private void methodObject(String name, String returnType, @Nullable String navigationClass) {
+    private void methodObject(@NlsSafe String name, String returnType, @Nullable String navigationClass) {
       methodObject(name, returnType, navigationClass, null);
     }
 
-    private void methodObject(String name, String returnType, @Nullable String navigationClass,
+    private void methodObject(@NlsSafe String name, @NlsSafe String returnType, @Nullable String navigationClass,
                               @Nullable Map<String, NamedArgumentDescriptor> namedArg) {
       MyMethodBuilder method = method(name, returnType, navigationClass);
       method.addParameter("map", type(CommonClassNames.JAVA_UTIL_MAP), true);
@@ -180,7 +182,7 @@ public class SwingBuilderNonCodeMemberContributor extends NonCodeMembersContribu
 
       // registerBinding()
       methodObject("bind", "org.codehaus.groovy.binding.FullBinding", "groovy.swing.factory.BindFactory",
-                   ContainerUtil.<String, NamedArgumentDescriptor>immutableMapBuilder()
+                    ContainerUtil.<String, NamedArgumentDescriptor>immutableMapBuilder()
                      .put("source", NamedArgumentDescriptor.SIMPLE_ON_TOP)
                      .put("target", NamedArgumentDescriptor.SIMPLE_ON_TOP)
                      .put("update", NamedArgumentDescriptor.SIMPLE_ON_TOP)

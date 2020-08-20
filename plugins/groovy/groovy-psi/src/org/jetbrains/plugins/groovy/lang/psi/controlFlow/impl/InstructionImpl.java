@@ -67,6 +67,8 @@ public class InstructionImpl implements Instruction {
     return myPredecessors;
   }
 
+  @NonNls
+  @Override
   public String toString() {
     final StringBuilder builder = new StringBuilder();
     builder.append(myNumber);

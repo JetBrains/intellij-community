@@ -175,7 +175,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
         registerError(
           namedArgumentExpression,
           ProblemHighlightType.GENERIC_ERROR,
-          "Type of argument '" + labelName + "' can not be '" + expressionType.getPresentableText() + "'"
+          GroovyBundle.message("inspection.message.type.argument.0.can.not.be.1", labelName,expressionType.getPresentableText())
         );
       }
     }
@@ -646,7 +646,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
   @Override
   protected void registerError(@NotNull PsiElement location,
                                ProblemHighlightType highlightType,
-                               Object... args) {
+                               @InspectionMessage Object... args) {
     registerError(location, (String)args[0], LocalQuickFix.EMPTY_ARRAY, highlightType);
   }
 }

@@ -3,13 +3,16 @@
 
 package org.jetbrains.plugins.groovy.transformations.immutable
 
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.*
 import com.intellij.psi.util.InheritanceUtil
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightAnnotation
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
+import org.jetbrains.plugins.groovy.lang.resolve.ast.TupleConstructorAttributes
 
 //set from org.apache.groovy.ast.tools.ImmutablePropertyUtils
 internal val builtinImmutables = setOf(
@@ -61,9 +64,9 @@ internal val builtinImmutables = setOf(
   "java.time.temporal.WeekFields"
 )
 
-internal const val immutableCopyWithKind = "@Immutable#copyWith"
-internal const val immutableOrigin = "by @Immutable"
-internal const val immutableCopyWith = "copyWith"
+@NonNls internal const val immutableCopyWithKind = "@Immutable#copyWith"
+@NonNls internal const val immutableOrigin = "by @Immutable"
+@NlsSafe internal const val immutableCopyWith = "copyWith"
 
 const val KNOWN_IMMUTABLES_OPTION = "knownImmutables"
 const val KNOWN_IMMUTABLE_CLASSES_OPTION = "knownImmutableClasses"
@@ -83,7 +86,7 @@ fun collectImmutableAnnotations(alias: GrAnnotation, list: MutableList<in GrAnno
   list.add(GrLightAnnotation(owner, alias, GROOVY_TRANSFORM_IMMUTABLE_BASE, emptyMap()))
   list.add(GrLightAnnotation(owner, alias, GROOVY_TRANSFORM_IMMUTABLE_OPTIONS, emptyMap()))
   list.add(GrLightAnnotation(owner, alias, GROOVY_TRANSFORM_KNOWN_IMMUTABLE, emptyMap()))
-  list.add(GrLightAnnotation(owner, alias, GroovyCommonClassNames.GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR, mapOf("defaults" to "false")))
+  list.add(GrLightAnnotation(owner, alias, GroovyCommonClassNames.GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR, mapOf(TupleConstructorAttributes.DEFAULTS to "false")))
   list.add(GrLightAnnotation(owner, alias, GroovyCommonClassNames.GROOVY_TRANSFORM_PROPERTY_OPTIONS, emptyMap()))
 }
 

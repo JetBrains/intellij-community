@@ -1,11 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("NamedParamsUtil")
 
 package org.jetbrains.plugins.groovy.transformations.impl.namedVariant
 
 import com.intellij.codeInsight.AnnotationUtil
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.*
 import com.intellij.psi.util.PropertyUtilBase
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral
@@ -17,8 +19,8 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.getArrayValue
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
 
-const val NAMED_VARIANT_ORIGIN_INFO: String = "via @NamedVariant"
-const val NAMED_ARGS_PARAMETER_NAME = "__namedArgs"
+@NonNls const val NAMED_VARIANT_ORIGIN_INFO: String = "via @NamedVariant"
+@NlsSafe const val NAMED_ARGS_PARAMETER_NAME = "__namedArgs"
 const val GROOVY_TRANSFORM_NAMED_VARIANT = "groovy.transform.NamedVariant"
 const val GROOVY_TRANSFORM_NAMED_PARAM = "groovy.transform.NamedParam"
 const val GROOVY_TRANSFORM_NAMED_PARAMS = "groovy.transform.NamedParams"

@@ -5,6 +5,7 @@ import com.intellij.lang.jvm.types.JvmArrayType
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.groovy.lang.GroovyElementFilter
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.kIN
@@ -62,6 +63,7 @@ fun GrOperatorExpression.multiResolve(): Array<out GroovyResolveResult> {
 
 val PsiMethod.isEffectivelyVarArgs: Boolean get() = isVarArgs || parameters.lastOrNull()?.type is JvmArrayType
 
+@NonNls
 fun elementInfo(element: PsiElement): String = "Element: $element; class: ${element.javaClass}; text: ${element.text}"
 
 fun GrCodeReferenceElement.mayContainTypeArguments(): Boolean {

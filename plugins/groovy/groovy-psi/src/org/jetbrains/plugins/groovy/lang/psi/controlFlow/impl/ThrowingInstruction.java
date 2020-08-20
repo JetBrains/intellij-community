@@ -17,7 +17,7 @@ public class ThrowingInstruction extends InstructionImpl {
   @Override
   @NonNls
   public String toString() {
-    final StringBuilder builder = new StringBuilder();
+    @NonNls final StringBuilder builder = new StringBuilder();
     builder.append(num());
     builder.append("(");
     for (Instruction successor : allSuccessors()) {

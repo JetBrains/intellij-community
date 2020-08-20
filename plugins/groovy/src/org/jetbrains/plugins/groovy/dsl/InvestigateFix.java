@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.dsl;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts.DetailedDescription;
 import com.intellij.psi.PsiFile;
 import com.intellij.unscramble.UnscrambleDialog;
 import com.intellij.util.IncorrectOperationException;
@@ -11,9 +12,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 
 public class InvestigateFix implements IntentionAction {
-  private final String myReason;
+  @DetailedDescription private final String myReason;
 
-  public InvestigateFix(String reason) {
+  public InvestigateFix(@DetailedDescription String reason) {
     myReason = reason;
   }
 
