@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
+import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -55,6 +56,8 @@ public class AstLoadingFilterTest extends BasePlatformTestCase {
   }
 
   public void testDisallowedLoading() {
+    DefaultLogger.disableStderrDumping(getTestRootDisposable());
+
     PsiFileImpl file = addFile();
     assertFalse(file.isContentsLoaded());
     assertException(new AstLoadingExceptionCase(
@@ -65,6 +68,7 @@ public class AstLoadingFilterTest extends BasePlatformTestCase {
   }
 
   public void testForceAllowLoading() throws AstLoadingException {
+    DefaultLogger.disableStderrDumping(getTestRootDisposable());
     PsiFileImpl file = addFile();
     assertFalse(file.isContentsLoaded());
     PsiFileImpl anotherFile = addAnotherFile();
