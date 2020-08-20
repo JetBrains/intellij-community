@@ -21,7 +21,7 @@ class ConvertFormDialog(val project: Project, var className: String) : DialogWra
 
   init {
     init()
-    title = "Convert Form to UI DSL"
+    title = DevKitBundle.message("convert.form.dialog.title")
   }
 
   override fun createCenterPanel(): JComponent? {
