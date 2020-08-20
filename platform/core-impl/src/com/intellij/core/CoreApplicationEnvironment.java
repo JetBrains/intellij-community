@@ -46,6 +46,7 @@ import com.intellij.util.KeyedLazyInstanceEP;
 import com.intellij.util.Processor;
 import com.intellij.util.graph.GraphAlgorithms;
 import com.intellij.util.graph.impl.GraphAlgorithmsImpl;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.MutablePicoContainer;
@@ -203,7 +204,7 @@ public class CoreApplicationEnvironment {
     }
   }
 
-  public void registerFileType(@NotNull FileType fileType, @NotNull String extension) {
+  public void registerFileType(@NotNull FileType fileType, @NotNull @NonNls String extension) {
     myFileTypeRegistry.registerFileType(fileType, extension);
   }
 
