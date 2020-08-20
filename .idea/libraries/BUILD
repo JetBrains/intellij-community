@@ -58,8 +58,8 @@ java_library(
 java_library(
     name = "equalsverifier",
     visibility = ["//visibility:public"],
-    exports = ["//prebuilts/tools/common/m2/repository/nl/jqno/equalsverifier/equalsverifier/2.5.1:jar"],
-    runtime_deps = ["//prebuilts/tools/common/m2/repository/nl/jqno/equalsverifier/equalsverifier/2.5.1:jar"],
+    exports = ["//prebuilts/tools/common/m2/repository/nl/jqno/equalsverifier/equalsverifier/3.4.1:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/nl/jqno/equalsverifier/equalsverifier/3.4.1:jar"],
 )
 
 # managed by go/iml_to_build
