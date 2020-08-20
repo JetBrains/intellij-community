@@ -381,7 +381,7 @@
     </reference>
 
     <action id="Vcs.CopyRevisionNumberAction" class="com.intellij.openapi.vcs.history.actions.CopyRevisionNumberAction"
-            icon="AllIcons.Actions.Copy"/>
+            icon="AllIcons.Actions.Copy" use-shortcut-of="CopyReference"/>
 
     <group id="VcsSelectionHistoryDialog.Popup">
       <reference id="Diff.ShowDiff"/>
