@@ -10,6 +10,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -157,7 +158,7 @@ public class AddImportAction implements QuestionAction {
       @NotNull
       @Override
       public String getTextFor(String value) {
-        return "Exclude '" + value + "' from auto-import";
+        return JavaBundle.message("exclude.0.from.auto.import", value);
       }
 
       @Override

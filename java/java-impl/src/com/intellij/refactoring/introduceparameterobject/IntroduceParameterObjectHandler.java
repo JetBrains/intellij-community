@@ -111,7 +111,7 @@ public class IntroduceParameterObjectHandler implements RefactoringActionHandler
     new IntroduceParameterObjectDialog(newMethod).show();
   }
 
-  private static String getErrorMessage(PsiMethod newMethod) {
+  private static @NlsContexts.DialogMessage String getErrorMessage(PsiMethod newMethod) {
     final PsiParameter[] parameters = newMethod.getParameterList().getParameters();
     if (parameters.length == 0) {
      return RefactorJBundle.message("cannot.perform.the.refactoring") +

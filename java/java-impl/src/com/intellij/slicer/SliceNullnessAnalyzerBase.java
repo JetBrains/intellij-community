@@ -39,9 +39,8 @@ public abstract class SliceNullnessAnalyzerBase {
 
     SliceUsage rootUsage = oldRoot.getCachedChildren().get(0).getValue();
     SliceManager.getInstance(Objects.requireNonNull(root.getProject()))
-      .createToolWindow(true, root, true, 
-                        SliceManager.getElementDescription(null, Objects.requireNonNull(rootUsage).getElement(),
-                                                           JavaBundle.message("slice.grouped.by.nullness")) );
+      .createToolWindow(true, root, true, SliceManager.getElementDescription(null, Objects.requireNonNull(rootUsage).getElement(),
+                                                                             JavaBundle.message("tab.title.slices.grouped.by.nullness")) );
   }
 
   public @NotNull SliceRootNode createNewTree(NullAnalysisResult result, SliceRootNode oldRoot, final Map<SliceNode, NullAnalysisResult> map) {

@@ -21,6 +21,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.util.JavaElementKind;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -42,6 +43,7 @@ public enum CreateClassKind implements ClassKind {
   }
 
   @Override
+  @Nls
   public String getDescription() {
     return myKind.subject();
   }

@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -1148,7 +1149,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
            : null;
   }
 
-  public static String checkUnableToInsertCodeBlock(PsiCodeBlock methodBody, final PsiElement element) {
+  public static @NlsContexts.DialogMessage String checkUnableToInsertCodeBlock(PsiCodeBlock methodBody, final PsiElement element) {
     if (checkUnableToInsertCodeBlock(methodBody, element,
                                      expr -> JavaPsiConstructorUtil.isConstructorCall(expr) && expr.getMethodExpression() != element)) {
       return JavaRefactoringBundle.message("inline.method.multiline.method.in.ctor.call");

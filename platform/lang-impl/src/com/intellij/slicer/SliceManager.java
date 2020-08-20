@@ -1,14 +1,17 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.slicer;
 
+import com.intellij.BundleBase;
 import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.ide.impl.ContentManagerWatcher;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -18,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.util.RefactoringDescriptionLocation;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -30,8 +34,8 @@ public final class SliceManager implements PersistentStateComponent<SliceManager
   private ContentManager myBackContentManager;
   private ContentManager myForthContentManager;
   private final StoredSettingsBean myStoredSettings = new StoredSettingsBean();
-  private static final String BACK_TOOLWINDOW_ID = "Analyze Dataflow to";
-  private static final String FORTH_TOOLWINDOW_ID = "Analyze Dataflow from";
+  private static final @NonNls String BACK_TOOLWINDOW_ID = "Analyze Dataflow to";
+  private static final @NonNls String FORTH_TOOLWINDOW_ID = "Analyze Dataflow from";
 
   static class StoredSettingsBean {
     boolean showDereferences = true; // to show in dataflow/from dialog
@@ -65,7 +69,9 @@ public final class SliceManager implements PersistentStateComponent<SliceManager
   }
 
   public void slice(@NotNull PsiElement element, boolean dataFlowToThis, @NotNull SliceHandler handler) {
-    String dialogTitle = getElementDescription((dataFlowToThis ? BACK_TOOLWINDOW_ID : FORTH_TOOLWINDOW_ID) + " ", element, null);
+    @SuppressWarnings("UnresolvedPropertyKey") 
+    String dialogTitle = getElementDescription((dataFlowToThis ? LangBundle.message("tab.title.analyze.dataflow.to.here")
+                                                               : LangBundle.message("tab.title.analyze.dataflow.from")), element, null);
 
     dialogTitle = filterStyle(dialogTitle);
     SliceAnalysisParams params = handler.askForParams(element, myStoredSettings, StringUtil.unescapeXmlEntities(dialogTitle));
@@ -131,15 +137,17 @@ public final class SliceManager implements PersistentStateComponent<SliceManager
     toolWindow.activate(null);
   }
 
-  public static @Nls String getElementDescription(@Nls String prefix, PsiElement element, @Nls String suffix) {
+  public static @NlsContexts.TabTitle String getElementDescription(@NlsContexts.TabTitle String prefix, PsiElement element, @NlsContexts.TabTitle String suffix) {
     SliceLanguageSupportProvider provider = LanguageSlicing.getProvider(element);
     if(provider != null){
       element = provider.getElementForDescription(element);
     }
     String desc = ElementDescriptionUtil.getElementDescription(element, RefactoringDescriptionLocation.WITHOUT_PARENT);
-    return "<html><body>" +
-           (prefix == null ? "" : prefix) + StringUtil.first(desc, 100, true) + (suffix == null ? "" : " " + suffix) +
-           "</body></html>";
+    String firstPartOfDescription = StringUtil.first(desc, 100, true);
+    return new HtmlBuilder()
+      .append((prefix == null ? firstPartOfDescription : BundleBase.format(prefix, firstPartOfDescription)) + (suffix == null ? "" : suffix))
+      .wrapWithHtmlBody()
+      .toString();
   }
 
   @Override
