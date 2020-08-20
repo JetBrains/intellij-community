@@ -521,7 +521,8 @@ public final class NewMappings implements Disposable {
       else {
         AbstractVcs vcs = myVcsManager.findVcsByName(vcsName);
         if (vcs == null) {
-          VcsBalloonProblemNotifier.showOverChangesView(myProject, "VCS plugin not found for mapping to : '" + vcsName + "'",
+          VcsBalloonProblemNotifier.showOverChangesView(myProject,
+                                                        VcsBundle.message("impl.notification.content.vcs.plugin.not.found.for.mapping.to", vcsName),
                                                         MessageType.ERROR);
           filteredMappings.addAll(mappings);
         }

@@ -34,7 +34,7 @@ import java.io.File
 import javax.swing.Icon
 import javax.swing.JPanel
 
-const val TOOLWINDOW_ID = "Repositories"
+const val TOOLWINDOW_ID: String = "Repositories" // NON-NLS
 
 fun showRepositoryBrowser(project: Project, root: AbstractVcsVirtualFile, localRoot: VirtualFile, @NlsContexts.TabTitle title: String) {
   val toolWindowManager = ToolWindowManager.getInstance(project)

@@ -623,8 +623,8 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   @NotNull
-  private static String failedText(@NotNull FilePath filePath, @NotNull VcsRevisionNumber revision) {
-    return "Show all affected files for " + filePath.getPath() + " at " + revision.asString() + " failed";
+  private static @Nls String failedText(@NotNull FilePath filePath, @NotNull VcsRevisionNumber revision) {
+    return VcsBundle.message("impl.show.all.affected.files.for.path.at.revision.failed", filePath.getPath(), revision.asString());
   }
 
   private static final class AsynchronousListsLoader extends Task.Backgroundable {

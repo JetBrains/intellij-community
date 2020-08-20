@@ -843,14 +843,14 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
   private class RefreshRequest(val document: Document, val loader: LineStatusTrackerContentLoader) {
     override fun equals(other: Any?): Boolean = other is RefreshRequest && document == other.document
     override fun hashCode(): Int = document.hashCode()
-    override fun toString(): String = "RefreshRequest: " + (FileDocumentManager.getInstance().getFile(document)?.path ?: "unknown")
+    override fun toString(): String = "RefreshRequest: " + (FileDocumentManager.getInstance().getFile(document)?.path ?: "unknown") // NON-NLS
   }
 
   private class RefreshData(val content: TrackerContent,
                             val contentInfo: ContentInfo)
 
 
-  private fun log(message: String, file: VirtualFile?) {
+  private fun log(@NonNls message: String, file: VirtualFile?) {
     if (LOG.isDebugEnabled) {
       if (file != null) {
         LOG.debug(message + "; file: " + file.path)
@@ -861,12 +861,12 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
     }
   }
 
-  private fun warn(message: String, document: Document?) {
+  private fun warn(@NonNls message: String, document: Document?) {
     val file = document?.let { FileDocumentManager.getInstance().getFile(it) }
     warn(message, file)
   }
 
-  private fun warn(message: String, file: VirtualFile?) {
+  private fun warn(@NonNls message: String, file: VirtualFile?) {
     if (file != null) {
       LOG.warn(message + "; file: " + file.path)
     }
@@ -1036,7 +1036,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
       if (System.currentTimeMillis() - start > 10000) {
         loader.dumpInternalState()
         System.err.println(ThreadDumper.dumpThreadsToString())
-        throw IllegalStateException("Couldn't await base contents")
+        throw IllegalStateException("Couldn't await base contents") // NON-NLS
       }
     }
   }
