@@ -227,6 +227,7 @@ public final class TextWithMnemonic {
    * @return text in text-with-mnemonic format. Parsing back this text using {@link #parse(String)} method would create
    * a TextWithMnemonic object which is equal to this.
    */
+  @Nls
   @Override
   public String toString() {
     if (myMnemonicIndex > -1) {
