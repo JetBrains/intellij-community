@@ -20,6 +20,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.GenericAttributeValue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.inspections.RegistryPropertiesAnnotator;
 import org.jetbrains.uast.UExpression;
@@ -69,7 +70,7 @@ final class RegistryKeyIdReferenceContributor extends PsiReferenceContributor {
     @NotNull
     @Override
     public String getUnresolvedMessagePattern() {
-      return "Cannot resolve registry key '" + getValue() + "'";
+      return DevKitBundle.message("code.convert.registry.key.cannot.resolve", getValue());
     }
 
     @Override
