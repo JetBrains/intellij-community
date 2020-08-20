@@ -55,7 +55,6 @@ class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposa
   override fun <R> updateProjectModelSilent(updater: (WorkspaceEntityStorageBuilder) -> R): R {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
     val result = updater(projectEntities)
-    projectEntities.resetChanges()
     entityStorage.replaceSilently(projectEntities.toStorage())
     return result
   }
