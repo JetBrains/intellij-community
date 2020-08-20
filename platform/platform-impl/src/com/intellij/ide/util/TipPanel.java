@@ -79,21 +79,32 @@ public final class TipPanel extends JPanel implements DoNotAskOption {
     myTips = new ArrayList<>(recommendation.getTips());
     myAlgorithm = recommendation.getAlgorithm();
     myAlgorithmVersion = recommendation.getVersion();
-    for (String id : mySeenIds) {
-      TipAndTrickBean tip = findByFileName(id);
-      if (tip != null) {
-        if (myTips.remove(tip)) {
-          myTips.add(tip);   //move last seen to the end
+    if (!isExperiment(myAlgorithm)) {
+      for (String id : mySeenIds) {
+        TipAndTrickBean tip = findByFileName(id);
+        if (tip != null) {
+          if (myTips.remove(tip)) {
+            myTips.add(tip);   //move last seen to the end
+          }
+        }
+      }
+      if (TipDialog.wereTipsShownToday()) {
+        TipAndTrickBean lastSeenTip = findByFileName(PropertiesComponent.getInstance().getValue(LAST_SEEN_TIP_ID));
+        if (lastSeenTip != null && myTips.remove(lastSeenTip)) {
+          myTips.add(0, lastSeenTip);
         }
       }
     }
-    if (TipDialog.wereTipsShownToday()) {
-      TipAndTrickBean lastSeenTip = findByFileName(PropertiesComponent.getInstance().getValue(LAST_SEEN_TIP_ID));
-      if (lastSeenTip != null && myTips.remove(lastSeenTip)) {
-        myTips.add(0, lastSeenTip);
-      }
-    }
     showNext(true);
+  }
+
+  /**
+   * We are running the experiment for research purposes and we want the experiment to be pure.
+   * This requires disabling idea's filtering mechanism as this mechanism affects the experiment
+   * results by modifying tips order.
+   */
+  private static boolean isExperiment(String algorithm) {
+    return algorithm.endsWith("_SUMMER2020");
   }
 
   @Override
