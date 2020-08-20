@@ -7,6 +7,7 @@ import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
@@ -69,7 +70,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   private List<PluginId> myModules;
   private ClassLoader myLoader;
-  private String myDescriptionChildText;
+  private @NlsSafe String myDescriptionChildText;
   boolean myUseIdeaClassLoader;
   private boolean myUseCoreClassLoader;
   boolean myAllowBundledUpdate;
@@ -611,7 +612,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   @Override
   public String getDescription() {
-    String result = myDescription;
+    @NlsSafe String result = myDescription;
     if (result != null) {
       return result;
     }

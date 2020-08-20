@@ -115,7 +115,7 @@ public final class TextWithMnemonic {
    * @return TextWithMnemonic object. The resulting mnemonic position could be adjusted if the mnemonic was located after the replacement.
    *          If the mnemonic was inside the target text then it's dropped. Returns this object if the target text was not found.
    */
-  public TextWithMnemonic replaceFirst(@NotNull String target, @NotNull String replacement) {
+  public TextWithMnemonic replaceFirst(@NotNull String target, @Nls @NotNull String replacement) {
     int index = myText.indexOf(target);
     if (index == -1) {
       return this;
