@@ -74,7 +74,8 @@ public class RequiredAttributesInspectionBase extends HtmlLocalInspectionTool im
   }
 
   public static LocalQuickFix getIntentionAction(String name) {
-    return new AddHtmlTagOrAttributeToCustomsIntention(SHORT_NAME_KEY, name, XmlAnalysisBundle.message("add.optional.html.attribute", name));
+    return new AddHtmlTagOrAttributeToCustomsIntention(SHORT_NAME_KEY, name, XmlAnalysisBundle.message(
+      "html.quickfix.add.optional.html.attribute", name));
   }
 
   @Override
@@ -110,7 +111,7 @@ public class RequiredAttributesInspectionBase extends HtmlLocalInspectionTool im
             !XmlExtension.getExtension(tag.getContainingFile()).isRequiredAttributeImplicitlyPresent(tag, attrName)) {
 
           LocalQuickFix insertRequiredAttributeIntention = isOnTheFly ? XmlQuickFixFactory.getInstance().insertRequiredAttributeFix(tag, attrName) : null;
-          final String localizedMessage = XmlAnalysisBundle.message("element.doesnt.have.required.attribute", name, attrName);
+          final String localizedMessage = XmlAnalysisBundle.message("xml.inspections.element.doesnt.have.required.attribute", name, attrName);
           reportOneTagProblem(
             tag,
             attrName,

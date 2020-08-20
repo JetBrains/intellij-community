@@ -101,8 +101,8 @@ public class XmlUnboundNsPrefixInspection extends XmlSuppressableInspectionTool 
         for (PsiReference reference : references) {
           if (reference instanceof SchemaPrefixReference) {
             if (!XML.equals(((SchemaPrefixReference)reference).getNamespacePrefix()) && reference.resolve() == null) {
-              holder.registerProblem(reference, XmlAnalysisBundle.message("unbound.namespace",
-                                                                       ((SchemaPrefixReference)reference).getNamespacePrefix()), ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+              holder.registerProblem(reference, XmlAnalysisBundle.message("xml.inspections.unbound.namespace",
+                                                                          ((SchemaPrefixReference)reference).getNamespacePrefix()), ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
             }
           }
         }
@@ -132,8 +132,8 @@ public class XmlUnboundNsPrefixInspection extends XmlSuppressableInspectionTool 
       return;
     }
 
-    final String localizedMessage = isOnTheFly ? XmlAnalysisBundle.message("unbound.namespace", namespacePrefix) : XmlAnalysisBundle
-      .message("unbound.namespace.no.param");
+    final String localizedMessage = isOnTheFly ? XmlAnalysisBundle.message("xml.inspections.unbound.namespace", namespacePrefix) : XmlAnalysisBundle
+      .message("xml.inspections.unbound.namespace.no.param");
 
     if (namespacePrefix.isEmpty()) {
       final XmlTag tag = (XmlTag)element;

@@ -93,14 +93,15 @@ public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownElementInspec
           boolean maySwitchToHtml5 = HtmlUtil.isCustomHtml5Attribute(name) && !HtmlUtil.hasNonHtml5Doctype(tag);
           ArrayList<LocalQuickFix> quickfixes = new ArrayList<>(6);
           quickfixes
-            .add(new AddCustomHtmlElementIntentionAction(ATTRIBUTE_KEY, name, XmlAnalysisBundle.message("add.custom.html.attribute", name)));
+            .add(new AddCustomHtmlElementIntentionAction(ATTRIBUTE_KEY, name, XmlAnalysisBundle.message(
+              "html.quickfix.add.custom.html.attribute", name)));
           quickfixes.add(new RemoveAttributeIntentionFix(name));
           if (maySwitchToHtml5) {
             quickfixes.add(new SwitchToHtml5WithHighPriorityAction());
           }
           addSimilarAttributesQuickFixes(tag, name, quickfixes);
 
-          registerProblemOnAttributeName(attribute, XmlAnalysisBundle.message("attribute.is.not.allowed.here", attribute.getName()), holder,
+          registerProblemOnAttributeName(attribute, XmlAnalysisBundle.message("xml.annotator.attribute.is.not.allowed.here", attribute.getName()), holder,
                                          quickfixes.toArray(LocalQuickFix.EMPTY_ARRAY));
         }
       }
@@ -131,14 +132,14 @@ public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownElementInspec
     @NotNull
     @Override
     public String getFamilyName() {
-      return XmlAnalysisBundle.message("rename.attribute");
+      return XmlAnalysisBundle.message("html.quickfix.rename.attribute.family");
     }
 
     @Nls
     @NotNull
     @Override
     public String getName() {
-      return XmlAnalysisBundle.message("rename.attribute.to.0", name);
+      return XmlAnalysisBundle.message("html.quickfix.rename.attribute.text", name);
     }
 
     @Override

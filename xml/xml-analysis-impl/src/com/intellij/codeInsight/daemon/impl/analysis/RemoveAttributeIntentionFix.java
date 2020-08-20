@@ -45,7 +45,7 @@ public class RemoveAttributeIntentionFix implements LocalQuickFix, IntentionActi
   @Override
   @NotNull
   public String getName() {
-    return XmlAnalysisBundle.message("remove.attribute.quickfix.text", myLocalName);
+    return XmlAnalysisBundle.message("xml.quickfix.remove.attribute.text", myLocalName);
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
@@ -58,7 +58,7 @@ public class RemoveAttributeIntentionFix implements LocalQuickFix, IntentionActi
   @Override
   @NotNull
   public String getFamilyName() {
-    return XmlAnalysisBundle.message("remove.attribute.quickfix.family");
+    return XmlAnalysisBundle.message("xml.quickfix.remove.attribute.family");
   }
 
   @Override

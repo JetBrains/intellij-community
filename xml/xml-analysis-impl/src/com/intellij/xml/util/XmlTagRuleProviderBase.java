@@ -231,7 +231,7 @@ public abstract class XmlTagRuleProviderBase extends XmlTagRuleProvider {
       }
 
       holder.registerProblem(tagNameElement,
-                             XmlAnalysisBundle.message("tag.should.have.one.of.following.attributes.0", StringUtil.join(myAttributeNames, ", ")),
+                             XmlAnalysisBundle.message("xml.inspections.tag.should.have.one.of.following.attributes.0", StringUtil.join(myAttributeNames, ", ")),
                              myProblemHighlightType,
                              fixes);
     }

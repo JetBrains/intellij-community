@@ -107,7 +107,8 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
             TextRange textRange = token.getTextRange();
             int start = textRange.getStartOffset() + i;
             HighlightInfoType type = tag instanceof HtmlTag ? HighlightInfoType.WARNING : HighlightInfoType.ERROR;
-            String description = XmlAnalysisBundle.message("cdata.end.should.not.appear.in.content.unless.to.mark.end.of.cdata.section");
+            String description = XmlAnalysisBundle.message(
+              "xml.annotator.cdata.end.should.not.appear.in.content");
             HighlightInfo info = HighlightInfo.newHighlightInfo(type).range(start, start + marker.length()).descriptionAndTooltip(description).create();
             addToResults(info);
           }
@@ -168,7 +169,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
         if (eParent instanceof PsiComment) e = eParent;
         if (eParent instanceof XmlProcessingInstruction) break;
 
-        String description = XmlAnalysisBundle.message("xml.declaration.should.precede.all.document.content");
+        String description = XmlAnalysisBundle.message("xml.annotator.xml.declaration.should.precede.all.document.content");
         addToResults(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(e).descriptionAndTooltip(description).create());
       }
     }
@@ -222,7 +223,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
 
         addElementsForTag(
           tag,
-          XmlAnalysisBundle.message("element.is.not.allowed.here", name),
+          XmlAnalysisBundle.message("xml.annotator.element.is.not.allowed.here", name),
           getTagProblemInfoType(tag)
         );
         return;
@@ -241,7 +242,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
       elementDescriptor = tag.getDescriptor();
 
      if (elementDescriptor == null) {
-       addElementsForTag(tag, XmlAnalysisBundle.message("element.must.be.declared", name), HighlightInfoType.WRONG_REF);
+       addElementsForTag(tag, XmlAnalysisBundle.message("xml.annotator.element.must.be.declared", name), HighlightInfoType.WRONG_REF);
        return;
       }
     }
@@ -284,7 +285,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     if (!(prevLeaf instanceof PsiWhiteSpace)) {
       TextRange textRange = attribute.getTextRange();
       HighlightInfoType type = tag instanceof HtmlTag ? HighlightInfoType.WARNING : HighlightInfoType.ERROR;
-      String description = XmlAnalysisBundle.message("attribute.should.be.preceded.with.space");
+      String description = XmlAnalysisBundle.message("xml.annotator.attribute.should.be.preceded.with.space");
       HighlightInfo info = HighlightInfo.newHighlightInfo(type).range(textRange.getStartOffset(), textRange.getStartOffset()).descriptionAndTooltip(description).create();
       addToResults(info);
     }
@@ -305,7 +306,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
 
     if (attributeDescriptor == null) {
       if (!XmlUtil.attributeFromTemplateFramework(name, tag)) {
-        final String localizedMessage = XmlAnalysisBundle.message("attribute.is.not.allowed.here", name);
+        final String localizedMessage = XmlAnalysisBundle.message("xml.annotator.attribute.is.not.allowed.here", name);
         final HighlightInfo highlightInfo = reportAttributeProblem(tag, name, attribute, localizedMessage);
         if (highlightInfo != null) {
           PsiFile file = tag.getContainingFile();
@@ -382,7 +383,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
         assert attributeNameNode != null;
         HighlightInfo highlightInfo = HighlightInfo.newHighlightInfo(getTagProblemInfoType(tag))
           .range(attributeNameNode)
-          .descriptionAndTooltip(XmlAnalysisBundle.message("duplicate.attribute", localName)).create();
+          .descriptionAndTooltip(XmlAnalysisBundle.message("xml.annotator.duplicate.attribute", localName)).create();
         addToResults(highlightInfo);
 
         IntentionAction intentionAction = new RemoveAttributeIntentionFix(localName);

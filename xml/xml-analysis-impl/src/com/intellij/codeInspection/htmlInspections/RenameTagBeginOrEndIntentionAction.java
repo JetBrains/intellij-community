@@ -133,7 +133,7 @@ public class RenameTagBeginOrEndIntentionAction implements IntentionAction {
   @NotNull
   public String getName() {
     return myStart
-           ? XmlAnalysisBundle.message("rename.start.tag.name.intention", mySourceName, myTargetName)
-           : XmlAnalysisBundle.message("rename.end.tag.name.intention", mySourceName, myTargetName);
+           ? XmlAnalysisBundle.message("xml.intention.rename.start.tag", mySourceName, myTargetName)
+           : XmlAnalysisBundle.message("xml.intention.rename.end.tag", mySourceName, myTargetName);
   }
 }

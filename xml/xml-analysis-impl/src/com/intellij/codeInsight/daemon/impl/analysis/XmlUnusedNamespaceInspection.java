@@ -211,7 +211,7 @@ public final class XmlUnusedNamespaceInspection extends XmlSuppressableInspectio
     @Override
     @NotNull
     public String getFamilyName() {
-      return XmlAnalysisBundle.message("xml.inspections.unused.schema.remove");
+      return XmlAnalysisBundle.message("xml.quickfix.remove.unused.namespace.decl");
     }
 
     @Override

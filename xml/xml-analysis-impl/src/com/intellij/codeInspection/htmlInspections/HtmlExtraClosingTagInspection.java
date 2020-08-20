@@ -32,7 +32,7 @@ public class HtmlExtraClosingTagInspection extends HtmlLocalInspectionTool {
 
     if (range != null && tag instanceof HtmlTag && HtmlUtil.isSingleHtmlTag(tag, true)
         && tag.getLanguage().isKindOf(HTMLLanguage.INSTANCE)) {
-      holder.registerProblem(tag, XmlAnalysisBundle.message("extra.closing.tag.for.empty.element"),
+      holder.registerProblem(tag, XmlAnalysisBundle.message("html.inspections.extra.closing.tag.for.empty.element"),
                              ProblemHighlightType.LIKE_UNUSED_SYMBOL, range.shiftRight(-tag.getTextRange().getStartOffset()), new RemoveExtraClosingTagIntentionAction());
     }
   }

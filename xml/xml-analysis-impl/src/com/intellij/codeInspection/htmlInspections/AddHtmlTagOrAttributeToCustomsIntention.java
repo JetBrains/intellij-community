@@ -49,7 +49,7 @@ public class AddHtmlTagOrAttributeToCustomsIntention implements LocalQuickFix {
   @Override
   @NotNull
   public String getFamilyName() {
-    return XmlAnalysisBundle.message("fix.html.family");
+    return XmlAnalysisBundle.message("html.quickfix.family");
   }
 
   @Override
