@@ -25,7 +25,6 @@
   <xi:include href="/META-INF/JamSupport.xml" xpointer="xpointer(/idea-plugin/*)">
     <xi:fallback/>
   </xi:include>
-  <xi:include href="/META-INF/microservices-uast.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <depends optional="true" config-file="profiler-java.xml">com.intellij.modules.profiler</depends>
   <depends optional="true" config-file="structuralsearch-java.xml">com.intellij.modules.structuralsearch</depends>
