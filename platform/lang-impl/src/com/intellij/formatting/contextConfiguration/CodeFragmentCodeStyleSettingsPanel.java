@@ -19,6 +19,7 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
+import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions.getInstance;
 import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType.SPACING_SETTINGS;
 import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType.WRAPPING_AND_BRACES_SETTINGS;
 
@@ -218,7 +219,7 @@ class CodeFragmentCodeStyleSettingsPanel extends TabbedLanguageCodeStylePanel {
         if (settingsGroup == null) {
           commonFields.add(fieldName);
         }
-        else if (settingsGroup.title != WRAPPING_KEEP) {
+        else if (settingsGroup.title != getInstance().WRAPPING_KEEP) {
           commonFields.addAll(settingsGroup.commonCodeStyleSettingFieldNames);
         }
       }

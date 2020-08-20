@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.lang.LangBundle;
@@ -25,6 +25,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+
+import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions.getInstance;
 
 /**
  * Can be used for languages which do not use standard "Wrapping and Braces" panel.
@@ -59,7 +61,7 @@ public class RightMarginForm {
 
     //noinspection unchecked
     myWrapOnTypingCombo.setModel(new DefaultComboBoxModel(
-      CodeStyleSettingsCustomizable.WRAP_ON_TYPING_OPTIONS
+      getInstance().WRAP_ON_TYPING_OPTIONS
     ));
     MarginOptionsUtil.customizeWrapOnTypingCombo(myWrapOnTypingCombo, settings);
     myVisualGuidesHint.setForeground(JBColor.GRAY);

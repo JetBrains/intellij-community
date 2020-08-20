@@ -31,6 +31,8 @@ import java.lang.reflect.Field;
 import java.util.List;
 import java.util.*;
 
+import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions.getInstance;
+
 public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel {
 
   private static final Logger LOG = Logger.getInstance(CodeStyleBlankLinesPanel.class);
@@ -59,8 +61,12 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
     Map<CodeStyleSettingPresentation.SettingsGroup, List<CodeStyleSettingPresentation>> settings = CodeStyleSettingPresentation
       .getStandardSettings(getSettingsType());
 
-    OptionGroup keepBlankLinesOptionsGroup = createOptionsGroup(BLANK_LINES_KEEP, settings.get(new CodeStyleSettingPresentation.SettingsGroup(BLANK_LINES_KEEP)));
-    OptionGroup blankLinesOptionsGroup = createOptionsGroup(BLANK_LINES, settings.get(new CodeStyleSettingPresentation.SettingsGroup(BLANK_LINES)));
+    OptionGroup keepBlankLinesOptionsGroup =
+      createOptionsGroup(getInstance().BLANK_LINES_KEEP, settings.get(new CodeStyleSettingPresentation.SettingsGroup(
+        getInstance().BLANK_LINES_KEEP)));
+    OptionGroup blankLinesOptionsGroup =
+      createOptionsGroup(getInstance().BLANK_LINES, settings.get(new CodeStyleSettingPresentation.SettingsGroup(
+        getInstance().BLANK_LINES)));
     if (keepBlankLinesOptionsGroup != null) {
       keepBlankLinesOptionsGroup.setAnchor(keepBlankLinesOptionsGroup.findAnchor());
       optionsPanel.add(keepBlankLinesOptionsGroup.createPanel(),
