@@ -10,6 +10,7 @@ import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.FilePath;
@@ -33,6 +34,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+import static com.intellij.openapi.util.NlsContexts.NotificationContent;
+import static com.intellij.openapi.util.NlsContexts.NotificationTitle;
 import static com.intellij.openapi.vcs.VcsNotifier.IMPORTANT_ERROR_NOTIFICATION;
 
 /**
@@ -54,15 +57,16 @@ public class GitConflictResolver {
    */
   public static class Params {
     private boolean reverse;
-    private String myErrorNotificationTitle = "";
-    private String myErrorNotificationAdditionalDescription = "";
+    private @NotificationTitle String myErrorNotificationTitle = "";
+    private @NotificationContent String myErrorNotificationAdditionalDescription = "";
     private String myMergeDescription = "";
     private MergeDialogCustomizer myMergeDialogCustomizer;
 
     public Params() {
       myMergeDialogCustomizer = new MergeDialogCustomizer() {
         @NotNull
-        @Override public String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
+        @Override
+        public String getMultipleFileMergeDescription(@NotNull Collection<VirtualFile> files) {
           return myMergeDescription;
         }
       };
@@ -88,12 +92,12 @@ public class GitConflictResolver {
       return this;
     }
 
-    public Params setErrorNotificationTitle(@Nls String errorNotificationTitle) {
+    public Params setErrorNotificationTitle(@NotificationTitle String errorNotificationTitle) {
       myErrorNotificationTitle = errorNotificationTitle;
       return this;
     }
 
-    public Params setErrorNotificationAdditionalDescription(@Nls String errorNotificationAdditionalDescription) {
+    public Params setErrorNotificationAdditionalDescription(@NotificationContent String errorNotificationAdditionalDescription) {
       myErrorNotificationAdditionalDescription = errorNotificationAdditionalDescription;
       return this;
     }
@@ -188,7 +192,7 @@ public class GitConflictResolver {
                   myParams.myErrorNotificationAdditionalDescription);
   }
 
-  protected void notifyWarning(@NotNull String title, @NotNull String content) {
+  protected void notifyWarning(@NotificationTitle @NotNull String title, @NotificationContent @NotNull String content) {
     Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification(title, content, NotificationType.WARNING, null);
     notification.addAction(NotificationAction.createSimple(GitBundle.messagePointer("action.NotificationAction.text.resolve"), () -> {
       notification.expire();
@@ -237,10 +241,14 @@ public class GitConflictResolver {
 
   private void notifyException(@NotNull VcsException e) {
     LOG.info("mergeFiles ", e);
-    final String description = GitBundle.getString("conflict.resolver.unmerged.files.check.error.notification.description.text");
-    VcsNotifier.getInstance(myProject).notifyError(myParams.myErrorNotificationTitle,
-                                                   description + myParams.myErrorNotificationAdditionalDescription + "<br/>" +
-                                                   e.getLocalizedMessage());
+    final String description = GitBundle.message(
+      "conflict.resolver.unmerged.files.check.error.notification.description.text",
+      myParams.myErrorNotificationAdditionalDescription
+    );
+    VcsNotifier.getInstance(myProject).notifyError(
+      myParams.myErrorNotificationTitle,
+      new HtmlBuilder().appendRaw(description).br().appendRaw(e.getLocalizedMessage()).toString()
+    );
   }
 
   /**
