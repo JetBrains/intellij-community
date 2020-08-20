@@ -378,10 +378,11 @@ public abstract class UsefulTestCase extends TestCase {
    */
   @NotNull
   public Disposable getTestRootDisposable() {
-    if (myTestRootDisposable == null) {
-      myTestRootDisposable = new TestDisposable();
+    Disposable disposable = myTestRootDisposable;
+    if (disposable == null) {
+      myTestRootDisposable = disposable = new TestDisposable();
     }
-    return myTestRootDisposable;
+    return disposable;
   }
 
   /**
