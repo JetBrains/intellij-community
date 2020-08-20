@@ -48,12 +48,14 @@ class CompletionPopupSuggester : FeatureSuggester {
             }
             is BeforeCompletionChooseItemAction -> {
                 if (editedStatementData?.isAroundDot(lastAction.offset) == true) {
+                    editedStatementData = null
                     return createTipSuggestion(
                         createMessageWithShortcut(SUGGESTING_ACTION_ID, POPUP_MESSAGE),
                         suggestingActionDisplayName,
                         SUGGESTING_TIP_FILENAME
                     )
                 }
+                editedStatementData = null
             }
         }
 
