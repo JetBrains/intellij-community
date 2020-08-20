@@ -24,7 +24,6 @@ import java.util.Objects;
 
 import static com.intellij.openapi.util.TextRange.EMPTY_RANGE;
 import static com.intellij.util.DocumentUtil.getLineTextRange;
-import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 import static java.util.stream.IntStream.range;
 
@@ -51,9 +50,12 @@ public class BodyLimitInspection extends BaseCommitMessageInspection {
                                                      @NotNull InspectionManager manager,
                                                      boolean isOnTheFly) {
     return range(1, document.getLineCount())
-      .mapToObj(line -> checkRightMargin(file, document, manager, isOnTheFly, line, RIGHT_MARGIN,
-                                         format("Body lines should not exceed %d characters", RIGHT_MARGIN), new WrapLineQuickFix(),
-                                         new ReformatCommitMessageQuickFix()))
+      .mapToObj(line -> {
+        String problemText = VcsBundle.message("commit.message.inspection.message.body.lines.should.not.exceed.characters", RIGHT_MARGIN);
+        return checkRightMargin(file, document, manager, isOnTheFly, line, RIGHT_MARGIN,
+                                problemText, new WrapLineQuickFix(),
+                                new ReformatCommitMessageQuickFix());
+      })
       .filter(Objects::nonNull)
       .toArray(ProblemDescriptor[]::new);
   }
@@ -71,7 +73,7 @@ public class BodyLimitInspection extends BaseCommitMessageInspection {
   protected class WrapLineQuickFix extends BaseCommitMessageQuickFix {
     @Override
     public @IntentionFamilyName @NotNull String getFamilyName() {
-      return "Wrap line";
+      return VcsBundle.message("commit.message.intention.family.name.wrap.line");
     }
 
     @Override
