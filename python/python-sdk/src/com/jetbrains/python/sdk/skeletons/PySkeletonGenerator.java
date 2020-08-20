@@ -12,6 +12,7 @@ import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -297,11 +298,12 @@ public class PySkeletonGenerator {
           if (msgType.equals("progress") && indicator != null) {
             final JsonElement text = controlMessage.get("text");
             if (text != null) {
+              final @NlsSafe String progressText = text.getAsString();
               if (controlMessage.get("minor").getAsBoolean()) {
-                indicator.setText2(text.getAsString());
+                indicator.setText2(progressText);
               }
               else {
-                indicator.setText(text.getAsString());
+                indicator.setText(progressText);
               }
             }
             final JsonElement fraction = controlMessage.get("fraction");
