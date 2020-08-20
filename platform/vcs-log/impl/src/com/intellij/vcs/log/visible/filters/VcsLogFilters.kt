@@ -241,12 +241,12 @@ fun VcsLogFilterCollection.getPresentation(): String {
   if (get(HASH_FILTER) != null) {
     return get(HASH_FILTER)!!.displayText
   }
-  return filters.joinToString(" ") { filter ->
+  return StringUtil.join(filters, { filter: VcsLogFilter ->
     if (filters.size != 1) {
       filter.withPrefix()
     }
     else filter.displayText
-  }
+  }, " ")
 }
 
 @Nls
