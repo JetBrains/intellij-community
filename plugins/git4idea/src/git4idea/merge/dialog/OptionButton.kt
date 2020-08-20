@@ -3,6 +3,7 @@ package git4idea.merge.dialog
 
 import com.intellij.icons.AllIcons.Actions
 import com.intellij.openapi.ui.popup.IconButton
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.InplaceButton
 import com.intellij.ui.components.JBLayeredPane
 import com.intellij.util.ui.JBDimension
@@ -10,7 +11,6 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
 import git4idea.i18n.GitBundle
-import org.jetbrains.annotations.Nls
 import java.awt.AWTEvent
 import java.awt.Dimension
 import java.awt.Graphics
@@ -20,7 +20,7 @@ import javax.swing.JButton
 import javax.swing.JLayeredPane
 
 internal class OptionButton<T>(val option: T,
-                               @Nls val flag: String,
+                               @NlsSafe val flag: String,
                                val removeClickListener: () -> Unit) : JBLayeredPane() {
 
   private val flagBtn = createFlagButton()
