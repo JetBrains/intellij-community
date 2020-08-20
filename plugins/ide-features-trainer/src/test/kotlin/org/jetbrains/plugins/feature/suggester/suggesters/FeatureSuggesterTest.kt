@@ -5,13 +5,8 @@ import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.find.FindManager
 import com.intellij.find.FindModel
-import com.intellij.ide.DataManager
-import com.intellij.openapi.actionSystem.*
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx
-import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.command.CommandProcessor
-import com.intellij.openapi.editor.EditorCopyPasteHelper
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
@@ -20,7 +15,10 @@ import com.intellij.psi.PsiFile
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import junit.framework.Assert
 import junit.framework.TestCase
-import org.jetbrains.plugins.feature.suggester.*
+import org.jetbrains.plugins.feature.suggester.FeatureSuggestersManagerListener
+import org.jetbrains.plugins.feature.suggester.NoSuggestion
+import org.jetbrains.plugins.feature.suggester.PopupSuggestion
+import org.jetbrains.plugins.feature.suggester.Suggestion
 import java.awt.event.FocusEvent
 import java.awt.event.FocusListener
 
@@ -78,31 +76,13 @@ abstract class FeatureSuggesterTest : LightJavaCodeInsightFixtureTestCase() {
         moveCaretRelatively(columnEndIndex - columnStartIndex, lineEndIndex - lineStartIndex, true)
     }
 
-    private fun performAction(
-        actionId: String,
-        perform: (AnAction, DataContext, AnActionEvent) -> Unit = { _, _, _ -> }
-    ) {
-        val action = ActionManager.getInstance().getAction(actionId)
-        DataManager.getInstance().dataContextFromFocusAsync.onSuccess { dataContext ->
-            val event = AnActionEvent.createFromAnAction(action, null, "IDE Features Suggester", dataContext)
-            val manager = ActionManagerEx.getInstanceEx()
-
-            manager.fireBeforeActionPerformed(action, dataContext, event)
-            perform(action, dataContext, event)
-            ActionUtil.performActionDumbAware(action, event)
-            manager.fireAfterActionPerformed(action, dataContext, event)
-        }
-    }
-
     fun copyCurrentSelection() {
-        performAction("EditorCopy") { _, _, _ ->
-            editor.selectionModel.copySelectionToClipboard()
-        }
+        myFixture.performEditorAction("EditorCopy")
         editor.selectionModel.removeSelection()
     }
 
     fun cutCurrentSelection() {
-        performAction("EditorCut")
+        myFixture.performEditorAction("EditorCut")
         commitAllDocuments()
     }
 
@@ -110,41 +90,54 @@ abstract class FeatureSuggesterTest : LightJavaCodeInsightFixtureTestCase() {
         lineStartIndex: Int, columnStartIndex: Int,
         lineEndIndex: Int, columnEndIndex: Int
     ) {
-        val oldOffset = editor.caretModel.offset
-        selectBetweenLogicalPositions(lineStartIndex, columnStartIndex, lineEndIndex, columnEndIndex)
-        copyCurrentSelection()
-        editor.caretModel.moveToOffset(oldOffset)
+        doBetweenLogicalPositions(
+            lineStartIndex,
+            columnStartIndex,
+            lineEndIndex,
+            columnEndIndex,
+            this::copyCurrentSelection
+        )
     }
 
     fun cutBetweenLogicalPositions(
         lineStartIndex: Int, columnStartIndex: Int,
         lineEndIndex: Int, columnEndIndex: Int
     ) {
-        val oldOffset = editor.caretModel.offset
-        selectBetweenLogicalPositions(lineStartIndex, columnStartIndex, lineEndIndex, columnEndIndex)
-        cutCurrentSelection()
-        editor.caretModel.moveToOffset(oldOffset)
+        doBetweenLogicalPositions(
+            lineStartIndex,
+            columnStartIndex,
+            lineEndIndex,
+            columnEndIndex,
+            this::cutCurrentSelection
+        )
     }
 
     fun deleteTextBetweenLogicalPositions(
         lineStartIndex: Int, columnStartIndex: Int,
         lineEndIndex: Int, columnEndIndex: Int
     ) {
+        doBetweenLogicalPositions(
+            lineStartIndex,
+            columnStartIndex,
+            lineEndIndex,
+            columnEndIndex,
+            this::deleteSymbolAtCaret
+        )
+    }
+
+    private fun doBetweenLogicalPositions(
+        lineStartIndex: Int, columnStartIndex: Int,
+        lineEndIndex: Int, columnEndIndex: Int,
+        action: () -> Unit
+    ) {
         val oldOffset = editor.caretModel.offset
         selectBetweenLogicalPositions(lineStartIndex, columnStartIndex, lineEndIndex, columnEndIndex)
-        deleteSymbolAtCaret()
+        action()
         editor.caretModel.moveToOffset(oldOffset)
     }
 
     fun pasteFromClipboard() {
-        ApplicationManager.getApplication().runWriteAction {
-            CommandProcessor.getInstance().executeCommand(
-                project,
-                { EditorCopyPasteHelper.getInstance().pasteFromClipboard(editor) },
-                "Paste",
-                null
-            )
-        }
+        myFixture.performEditorAction("EditorPaste")
         commitAllDocuments()
     }
 
