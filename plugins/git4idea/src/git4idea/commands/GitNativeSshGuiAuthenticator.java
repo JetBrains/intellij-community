@@ -74,7 +74,7 @@ class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
       });
     }
     else {
-      return GitSSHGUIHandler.askPassphrase(myProject, keyPath, resetPassword, myAuthenticationMode, null);
+      return GitSSHGUIHandler.askPassphrase(myProject, keyPath, resetPassword, myAuthenticationMode);
     }
   }
 
@@ -98,7 +98,7 @@ class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
       });
     }
     else {
-      return GitSSHGUIHandler.askPassword(myProject, username, resetPassword, myAuthenticationMode, null);
+      return GitSSHGUIHandler.askPassword(myProject, username, resetPassword, myAuthenticationMode);
     }
   }
 
