@@ -2,8 +2,6 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 
@@ -21,7 +19,7 @@ public class KeyStrokeAdapter implements KeyListener {
 
   @Override
   public void keyTyped(KeyEvent event) {
-    keyTyped(event, getKeyStroke(event, false));
+    keyTyped(event, getDefaultKeyStroke(event));
   }
 
   protected boolean keyTyped(KeyStroke stroke) {
@@ -36,8 +34,7 @@ public class KeyStrokeAdapter implements KeyListener {
 
   @Override
   public void keyPressed(KeyEvent event) {
-    keyPressed(event, getKeyStroke(event, true));
-    keyPressed(event, getKeyStroke(event, false));
+    keyPressed(event, getDefaultKeyStroke(event));
   }
 
   protected boolean keyPressed(KeyStroke stroke) {
@@ -52,8 +49,7 @@ public class KeyStrokeAdapter implements KeyListener {
 
   @Override
   public void keyReleased(KeyEvent event) {
-    keyReleased(event, getKeyStroke(event, true));
-    keyReleased(event, getKeyStroke(event, false));
+    keyReleased(event, getDefaultKeyStroke(event));
   }
 
   protected boolean keyReleased(KeyStroke stroke) {
@@ -69,40 +65,17 @@ public class KeyStrokeAdapter implements KeyListener {
   /**
    * @param event the specified key event to process
    * @return a key stroke or {@code null} if it is not applicable
-   * @see KeyStroke#getKeyStrokeForEvent(KeyEvent)
-   */
-  public static KeyStroke getDefaultKeyStroke(KeyEvent event) {
-    if (event == null || event.isConsumed()) return null;
-    // On Windows and Mac it is preferable to use normal key code here
-    boolean extendedKeyCodeFirst = !SystemInfo.isWindows && !SystemInfo.isMac;
-    KeyStroke stroke = getKeyStroke(event, extendedKeyCodeFirst);
-    return stroke != null ? stroke : getKeyStroke(event, !extendedKeyCodeFirst);
-  }
-
-  /**
-   * @param event    the specified key event to process
-   * @param extended {@code true} if extended key code should be used
-   * @return a key stroke or {@code null} if it is not applicable
    * @see JComponent#processKeyBindings(KeyEvent, boolean)
    */
-  public static KeyStroke getKeyStroke(KeyEvent event, boolean extended) {
+  public static KeyStroke getDefaultKeyStroke(KeyEvent event) {
     if (event != null && !event.isConsumed()) {
       int id = event.getID();
       if (id == KeyEvent.KEY_TYPED) {
-        return extended ? null : getKeyStroke(event.getKeyChar(), 0);
+        return getKeyStroke(event.getKeyChar(), 0);
       }
       boolean released = id == KeyEvent.KEY_RELEASED;
       if (released || id == KeyEvent.KEY_PRESSED) {
         int code = event.getKeyCode();
-        if (extended) {
-          if (Registry.is("actionSystem.extendedKeyCode.disabled")) {
-            return null;
-          }
-          code = event.getExtendedKeyCode();
-          if (code == event.getKeyCode()) {
-            return null;
-          }
-        }
         return getKeyStroke(code, event.getModifiers(), released);
       }
     }
