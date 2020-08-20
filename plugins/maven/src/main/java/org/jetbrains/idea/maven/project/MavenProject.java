@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtil;
@@ -293,11 +294,13 @@ public class MavenProject {
   }
 
   @NotNull
+  @NlsSafe
   public String getPath() {
     return myFile.getPath();
   }
 
   @NotNull
+  @NlsSafe
   public String getDirectory() {
     return myFile.getParent().getPath();
   }
@@ -322,11 +325,13 @@ public class MavenProject {
   }
 
   @Nullable
+  @NlsSafe
   public String getName() {
     return myState.myName;
   }
 
   @NotNull
+  @NlsSafe
   public String getDisplayName() {
     State state = myState;
     if (StringUtil.isEmptyOrSpaces(state.myName)) {
@@ -351,31 +356,37 @@ public class MavenProject {
   }
 
   @NotNull
+  @NlsSafe
   public String getPackaging() {
     return myState.myPackaging;
   }
 
   @NotNull
+  @NlsSafe
   public String getFinalName() {
     return myState.myFinalName;
   }
 
   @Nullable
+  @NlsSafe
   public String getDefaultGoal() {
     return myState.myDefaultGoal;
   }
 
   @NotNull
+  @NlsSafe
   public String getBuildDirectory() {
     return myState.myBuildDirectory;
   }
 
   @NotNull
+  @NlsSafe
   public String getGeneratedSourcesDirectory(boolean testSources) {
     return getBuildDirectory() + (testSources ? "/generated-test-sources" : "/generated-sources");
   }
 
   @NotNull
+  @NlsSafe
   public String getAnnotationProcessorDirectory(boolean testSources) {
     if (getProcMode() == ProcMode.NONE) {
       MavenPlugin bscMavenPlugin = findPlugin("org.bsc.maven", "maven-processor-plugin");
@@ -535,7 +546,7 @@ public class MavenProject {
   }
 
   @Nullable
-  public List<String> getDeclaredAnnotationProcessors() {
+  public List<@NlsSafe String> getDeclaredAnnotationProcessors() {
     Element compilerConfig = getCompilerConfig();
     if (compilerConfig == null) {
       return null;
@@ -579,22 +590,24 @@ public class MavenProject {
   }
 
   @NotNull
+  @NlsSafe
   public String getOutputDirectory() {
     return myState.myOutputDirectory;
   }
 
   @NotNull
+  @NlsSafe
   public String getTestOutputDirectory() {
     return myState.myTestOutputDirectory;
   }
 
   @NotNull
-  public List<String> getSources() {
+  public List<@NlsSafe String> getSources() {
     return myState.mySources;
   }
 
   @NotNull
-  public List<String> getTestSources() {
+  public List<@NlsSafe String> getTestSources() {
     return myState.myTestSources;
   }
 
@@ -609,11 +622,11 @@ public class MavenProject {
   }
 
   @NotNull
-  public List<String> getFilters() {
+  public List<@NlsSafe String> getFilters() {
     return myState.myFilters;
   }
 
-  public List<String> getFilterPropertiesFiles() {
+  public List<@NlsSafe String> getFilterPropertiesFiles() {
     List<String> res = getCachedValue(FILTERS_CACHE_KEY);
     if (res == null) {
       Element propCfg = getPluginGoalConfiguration("org.codehaus.mojo", "properties-maven-plugin", "read-project-properties");

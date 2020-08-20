@@ -85,9 +85,8 @@ public abstract class MavenExecutor {
   void displayProgress() {
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     if (indicator != null) {
-      indicator.setText(MessageFormat.format("{0} {1}", myAction != null ? myAction : RunnerBundle.message("maven.running"),
-                                             myParameters.getWorkingDirPath()));
-      indicator.setText2(myParameters.getGoals().toString());
+      indicator.setText(RunnerBundle.message("maven.running", myAction != null ? myAction : myParameters.getWorkingDirPath()));
+      indicator.setText2(myParameters.getGoals().toString()); //NON-NLS
     }
   }
 

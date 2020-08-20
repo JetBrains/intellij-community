@@ -202,7 +202,7 @@ public final class MavenKeymapExtension implements ExternalSystemKeymapExtension
       myMavenProject = mavenProject;
       myGoal = goal;
       Presentation template = getTemplatePresentation();
-      template.setText(goal + " (" + mavenProject.getMavenId() + ")", false);
+      template.setText(goal + " (" + mavenProject.getMavenId() + ")", false); //NON-NLS
       template.setIcon(Task);
     }
 

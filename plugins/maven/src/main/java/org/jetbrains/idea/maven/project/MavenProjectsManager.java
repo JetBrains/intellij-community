@@ -55,6 +55,7 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
+import org.jetbrains.idea.maven.execution.SyncBundle;
 import org.jetbrains.idea.maven.importing.MavenFoldersImporter;
 import org.jetbrains.idea.maven.importing.MavenPomPathModuleService;
 import org.jetbrains.idea.maven.importing.MavenProjectImporter;
@@ -885,7 +886,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   private void completeMavenSyncOnImportCompletion(MavenSyncConsole console) {
-    MavenUtil.runInBackground(myProject, "waiting for maven import completion", false,
+    MavenUtil.runInBackground(myProject, SyncBundle.message("maven.sync.waiting.for.completion"), false,
                               indicator -> {
                                 if (myReadingProcessor != null) {
                                   myReadingProcessor.waitForCompletion();
@@ -960,7 +961,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
                           MavenProgressIndicator indicator)
         throws MavenProcessCanceledException {
 
-        indicator.setText("Evaluating effective POM");
+        indicator.setText(MavenProjectBundle.message("maven.project.importing.evaluating.effective.pom"));
 
         myMavenProjectResolver.executeWithEmbedder(mavenProject,
                                                    getEmbeddersManager(),

@@ -79,7 +79,7 @@ public final class GenerateDependencyUtil {
       append(sb, myDependency.getArtifactId().getStringValue());
       append(sb, myDependency.getVersion().getStringValue());
 
-      return sb.toString();
+      return sb.toString(); //NON-NLS
     }
 
     private static void append(StringBuffer sb, String str) {

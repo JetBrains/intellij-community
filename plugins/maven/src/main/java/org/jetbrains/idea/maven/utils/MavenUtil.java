@@ -106,7 +106,6 @@ import static icons.ExternalSystemIcons.Task;
 public class MavenUtil {
   @ApiStatus.Experimental
   @NonNls public static final String MAVEN_NAME = "Maven";
-  @NonNls public static final String MAVEN_NAME_PRESENTABLE = MAVEN_NAME;
   @NonNls public static final String MAVEN_NAME_UPCASE = MAVEN_NAME.toUpperCase();
   public static final ProjectSystemId SYSTEM_ID = new ProjectSystemId(MAVEN_NAME_UPCASE);
   public static final String MAVEN_NOTIFICATION_GROUP = MAVEN_NAME;
@@ -245,7 +244,7 @@ public class MavenUtil {
     return LaterInvocator.isInModalContext();
   }
 
-  public static void showError(Project project, String title, Throwable e) {
+  public static void showError(Project project, @NlsContexts.NotificationTitle String title, Throwable e) {
     MavenLog.LOG.warn(title, e);
     Notifications.Bus.notify(new Notification(MAVEN_NOTIFICATION_GROUP, title, e.getMessage(), NotificationType.ERROR), project);
   }
@@ -450,7 +449,7 @@ public class MavenUtil {
     return true;
   }
 
-  public static void run(Project project, String title, final MavenTask task)
+  public static void run(Project project, @NlsContexts.DialogTitle String title, final MavenTask task)
     throws MavenProcessCanceledException {
     final Exception[] canceledEx = new Exception[1];
     final RuntimeException[] runtimeEx = new RuntimeException[1];
@@ -483,7 +482,7 @@ public class MavenUtil {
 
   @NotNull
   public static MavenTaskHandler runInBackground(@NotNull final Project project,
-                                                 @NotNull final String title,
+                                                 @NotNull @NlsContexts.Command final String title,
                                                  final boolean cancellable,
                                                  @NotNull final MavenTask task) {
     return runInBackground(project, title, cancellable, task, null);
@@ -492,7 +491,7 @@ public class MavenUtil {
 
   @NotNull
   public static MavenTaskHandler runInBackground(@NotNull final Project project,
-                                                 @NotNull final String title,
+                                                 @NotNull @NlsContexts.Command final String title,
                                                  final boolean cancellable,
                                                  @NotNull final MavenTask task,
                                                  @Nullable("null means application pooled thread")

@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -453,18 +454,18 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       setNameAndTooltip(getName(), null);
     }
 
-    protected void setNameAndTooltip(String name, @Nullable String tooltip) {
+    protected void setNameAndTooltip(String name, @Nullable @NlsContexts.Tooltip String tooltip) {
       setNameAndTooltip(name, tooltip, (String)null);
     }
 
-    protected void setNameAndTooltip(String name, @Nullable String tooltip, @Nullable String hint) {
+    protected void setNameAndTooltip(String name, @Nullable @NlsContexts.Tooltip String tooltip, @Nullable String hint) {
       setNameAndTooltip(name, tooltip, getPlainAttributes());
       if (showDescriptions() && !StringUtil.isEmptyOrSpaces(hint)) {
         addColoredFragment(" (" + hint + ")", SimpleTextAttributes.GRAY_ATTRIBUTES);
       }
     }
 
-    protected void setNameAndTooltip(String name, @Nullable String tooltip, SimpleTextAttributes attributes) {
+    protected void setNameAndTooltip(String name, @Nullable @NlsContexts.Tooltip String tooltip, SimpleTextAttributes attributes) {
       clearColoredText();
       addColoredFragment(name, prepareAttributes(attributes));
       getTemplatePresentation().setTooltip(tooltip);
@@ -767,7 +768,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     private final ModulesNode myModulesNode;
     private final RunConfigurationsNode myRunConfigurationsNode;
 
-    private String myTooltipCache;
+    private @NlsContexts.Tooltip String myTooltipCache;
 
     public ProjectNode(@NotNull MavenProject mavenProject) {
       super(null);

@@ -26,6 +26,7 @@ import org.jetbrains.idea.maven.model.MavenArchetype;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenEnvironmentForm;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
@@ -72,7 +73,8 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
       }
 
       new MavenModuleBuilderHelper(myProjectId, myAggregatorProject, myParentProject, myInheritGroupId,
-                                   myInheritVersion, myArchetype, myPropertiesToCreateByArtifact, "Create new Maven module").configure(project, root, false);
+                                   myInheritVersion, myArchetype, myPropertiesToCreateByArtifact,
+                                   MavenProjectBundle.message("command.name.create.new.maven.module")).configure(project, root, false);
     });
   }
 
@@ -83,7 +85,7 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
 
   @Override
   public String getPresentableName() {
-    return MAVEN_NAME;
+    return MavenProjectBundle.message("configurable.MavenSettings.display.name");
   }
 
   @Override

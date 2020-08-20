@@ -43,6 +43,8 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.io.File;
 import java.util.*;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class MavenImportingTestCase extends MavenTestCase {
@@ -494,14 +496,18 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     myProjectsManager.waitForPostImportTasksCompletion();
   }
 
-  protected void executeGoal(String relativePath, String goal) {
+  protected void executeGoal(String relativePath, String goal) throws Exception {
     VirtualFile dir = myProjectRoot.findFileByRelativePath(relativePath);
 
     MavenRunnerParameters rp = new MavenRunnerParameters(true, dir.getPath(), (String)null, Collections.singletonList(goal), Collections.emptyList());
     MavenRunnerSettings rs = new MavenRunnerSettings();
-    MavenExecutor e = new MavenExternalExecutor(myProject, rp, getMavenGeneralSettings(), rs, new SoutMavenConsole());
-
-    e.execute(new EmptyProgressIndicator());
+    Semaphore wait = new Semaphore(1);
+    wait.acquire();
+    MavenRunner.getInstance(myProject).run(rp, rs, () -> {
+      wait.release();
+    });
+    boolean tryAcquire = wait.tryAcquire(10, TimeUnit.SECONDS);
+    assertTrue( "Maven execution failed", tryAcquire);
   }
 
   protected void removeFromLocalRepository(String relativePath) {
