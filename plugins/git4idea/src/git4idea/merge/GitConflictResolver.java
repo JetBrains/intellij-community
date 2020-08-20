@@ -206,7 +206,7 @@ public class GitConflictResolver {
       final Collection<VirtualFile> initiallyUnmergedFiles = getUnmergedFiles(myRoots);
       if (initiallyUnmergedFiles.isEmpty()) {
         LOG.info("merge: no unmerged files");
-        return mergeDialogInvokedFromNotification ? true : proceedIfNothingToMerge();
+        return mergeDialogInvokedFromNotification || proceedIfNothingToMerge();
       }
       else {
         showMergeDialog(initiallyUnmergedFiles);
@@ -214,7 +214,7 @@ public class GitConflictResolver {
         final Collection<VirtualFile> unmergedFilesAfterResolve = getUnmergedFiles(myRoots);
         if (unmergedFilesAfterResolve.isEmpty()) {
           LOG.info("merge no more unmerged files");
-          return mergeDialogInvokedFromNotification ? true : proceedAfterAllMerged();
+          return mergeDialogInvokedFromNotification || proceedAfterAllMerged();
         } else {
           LOG.info("mergeFiles unmerged files remain: " + unmergedFilesAfterResolve);
           if (mergeDialogInvokedFromNotification) {
