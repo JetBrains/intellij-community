@@ -1103,6 +1103,9 @@
   </item>
   <item name="java.lang.String java.lang.String replace(char, char)">
     <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
   </item>
   <item name='java.lang.String java.lang.String replace(java.lang.CharSequence, java.lang.CharSequence)'>
     <annotation name='org.jetbrains.annotations.Contract'>
