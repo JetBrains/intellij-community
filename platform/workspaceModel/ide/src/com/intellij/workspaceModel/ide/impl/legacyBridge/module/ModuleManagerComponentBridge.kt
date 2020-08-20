@@ -158,8 +158,8 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
               }
 
               for (change in facetChanges) when (change) {
-                is EntityChange.Removed -> FacetEntityChangeListener.getInstance(project).processChange(change)
-                is EntityChange.Replaced -> FacetEntityChangeListener.getInstance(project).processChange(change)
+                is EntityChange.Removed -> FacetEntityChangeListener.getInstance(project).processChange(change, event.storageBefore)
+                is EntityChange.Replaced -> FacetEntityChangeListener.getInstance(project).processChange(change, event.storageBefore)
                 is EntityChange.Added -> Unit
               }
 
@@ -174,7 +174,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
               for (change in facetChanges) when (change) {
                 is EntityChange.Removed -> Unit
                 is EntityChange.Replaced -> Unit
-                is EntityChange.Added -> FacetEntityChangeListener.getInstance(project).processChange(change)
+                is EntityChange.Added -> FacetEntityChangeListener.getInstance(project).processChange(change, event.storageBefore)
               }
 
               // After every change processed

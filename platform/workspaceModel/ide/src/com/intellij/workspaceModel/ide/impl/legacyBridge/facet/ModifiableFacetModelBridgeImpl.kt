@@ -16,29 +16,23 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.facetMapping
+import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.Companion.mutableFacetMapping
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableFacetModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
-import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableFacetEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.addFacetEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.subFacets
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 
 internal class ModifiableFacetModelBridgeImpl(private val initialStorage: WorkspaceEntityStorage,
                                               private val diff: WorkspaceEntityStorageDiffBuilder,
                                               val moduleBridge: ModuleBridge,
                                               private val facetManager: FacetManagerBridge)
   : FacetModelBase(), ModifiableFacetModelBridge {
-  private val entityToFacet: HashBiMap<FacetEntity, Facet<*>> = HashBiMap.create()
   private val listeners: MutableList<ModifiableFacetModel.Listener> = ContainerUtil.createLockFreeCopyOnWriteList()
-
-  init {
-    entityToFacet.putAll(facetManager.model.entityToFacet)
-    facetsChanged()
-  }
 
   private fun getModuleEntity() = initialStorage.findModuleEntity(moduleBridge)!!
 
@@ -59,15 +53,16 @@ internal class ModifiableFacetModelBridgeImpl(private val initialStorage: Worksp
       else -> moduleSource
     }
     val facetConfigurationXml = FacetUtil.saveFacetConfiguration(facet)?.let { JDOMUtil.write(it) }
-    val underlyingEntity = facet.underlyingFacet?.let { entityToFacet.inverse()[it]!! }
+    val underlyingEntity = facet.underlyingFacet?.let { diff.facetMapping().getEntities(it).single() as FacetEntity }
     val entity = diff.addFacetEntity(facet.name, facet.type.stringId, facetConfigurationXml, moduleEntity, underlyingEntity, source)
-    entityToFacet[entity] = facet
+    diff.mutableFacetMapping().addMapping(entity, facet)
     FacetManagerImpl.setExternalSource(facet, externalSource)
     facetsChanged()
   }
 
   override fun removeFacet(facet: Facet<*>?) {
-    val facetEntity = entityToFacet.inverse()[facet] ?: return
+    if (facet == null) return
+    val facetEntity = diff.facetMapping().getEntities(facet).singleOrNull() as? FacetEntity ?: return
     removeFacetEntityWithSubFacets(facetEntity)
     facetsChanged()
   }
@@ -78,74 +73,76 @@ internal class ModifiableFacetModelBridgeImpl(private val initialStorage: Worksp
   }
 
   private fun removeFacetEntityWithSubFacets(entity: FacetEntity) {
-    if (entity !in entityToFacet) return
+    if (diff.facetMapping().getDataByEntity(entity) == null) return
 
     entity.subFacets.forEach {
       removeFacetEntityWithSubFacets(it)
     }
-    entityToFacet.remove(entity)
+    diff.mutableFacetMapping().removeMapping(entity)
     diff.removeEntity(entity)
   }
 
   override fun rename(facet: Facet<*>, newName: String) {
-    val entity = entityToFacet.inverse()[facet]!!
+    val entity = diff.facetMapping().getEntities(facet).single() as FacetEntity
     val newEntity = diff.modifyEntity(ModifiableFacetEntity::class.java, entity) {
       this.name = newName
     }
-    entityToFacet.inverse()[facet] = newEntity
+    diff.mutableFacetMapping().removeMapping(entity)
+    diff.mutableFacetMapping().addMapping(newEntity, facet)
     facetsChanged()
   }
 
   override fun getNewName(facet: Facet<*>): String? {
-    val entity = entityToFacet.inverse()[facet]!!
+    val entity = diff.facetMapping().getEntities(facet).single() as FacetEntity
     return entity.name
   }
 
   override fun commit() {
     val moduleDiff = moduleBridge.diff
     prepareForCommit()
+    facetManager.model.facetsChanged()
     if (moduleDiff != null) {
       val res = moduleDiff.addDiff(diff)
-      populateFacetManager(res)
     }
     else {
       WorkspaceModel.getInstance(moduleBridge.project).updateProjectModel {
         val res = it.addDiff(diff)
-        populateFacetManager(res)
       }
     }
   }
 
   override fun prepareForCommit() {
     // In some cases configuration for newly added facets changes before the actual commit e.g. MavenProjectImportHandler#configureFacet.
-    entityToFacet.forEach { (facetEntity, facet) ->
+    val changes = ArrayList<Triple<FacetEntity, FacetEntity, Facet<*>>>()
+    diff.facetMapping().forEach { facetEntity, facet ->
+      facetEntity as FacetEntity
       val newFacetConfiguration = FacetUtil.saveFacetConfiguration(facet)?.let { JDOMUtil.write(it) }
       if (facetEntity.configurationXmlTag == newFacetConfiguration) return@forEach
       val newEntity = diff.modifyEntity(ModifiableFacetEntity::class.java, facetEntity) {
         this.configurationXmlTag = newFacetConfiguration
       }
-      entityToFacet.inverse()[facet] = newEntity
+      changes.add(Triple(facetEntity, newEntity, facet))
+    }
+    for ((facetEntity, newEntity, facet) in changes) {
+      diff.mutableFacetMapping().removeMapping(facetEntity)
+      diff.mutableFacetMapping().addMapping(newEntity, facet)
     }
   }
 
-  override fun populateFacetManager(replaceMap: Map<WorkspaceEntity, WorkspaceEntity>) {
-    val mapInNewStore: HashBiMap<FacetEntity, Facet<*>> = HashBiMap.create()
-    entityToFacet.forEach { (key, value) -> mapInNewStore[replaceMap.getOrDefault(key, key) as FacetEntity] = value }
-    facetManager.model.populateFrom(mapInNewStore)
-  }
-
   override fun getAllFacets(): Array<Facet<*>> {
-    return entityToFacet.values.toTypedArray()
+    val facetMapping = diff.facetMapping()
+    val facetEntities = (diff as WorkspaceEntityStorageBuilder).resolve(moduleBridge.moduleEntityId)!!.facets
+    return facetEntities.mapNotNull { facetMapping.getDataByEntity(it) }.toList().toTypedArray()
   }
 
-  internal fun getEntity(facet: Facet<*>): FacetEntity? = entityToFacet.inverse()[facet]
+  internal fun getEntity(facet: Facet<*>): FacetEntity? = diff.facetMapping().getEntities(facet).singleOrNull() as FacetEntity?
 
   override fun isModified(): Boolean {
     return !diff.isEmpty()
   }
 
   override fun isNewFacet(facet: Facet<*>): Boolean {
-    val entity = entityToFacet.inverse()[facet]
+    val entity = diff.facetMapping().getEntities(facet).singleOrNull() as FacetEntity?
     return entity != null && initialStorage.resolve(entity.persistentId()) == null
   }
 

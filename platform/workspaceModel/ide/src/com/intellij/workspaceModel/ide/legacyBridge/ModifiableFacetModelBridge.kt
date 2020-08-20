@@ -6,5 +6,4 @@ import com.intellij.workspaceModel.storage.WorkspaceEntity
 
 interface ModifiableFacetModelBridge: ModifiableFacetModel {
   fun prepareForCommit()
-  fun populateFacetManager(replaceMap: Map<WorkspaceEntity, WorkspaceEntity>)
 }
