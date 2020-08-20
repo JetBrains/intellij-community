@@ -6,15 +6,52 @@ import com.intellij.internal.statistic.eventLog.*;
 import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
+import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtil;
 import junit.framework.TestCase;
 import kotlin.Unit;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class StatisticsSchemeDescriptionTest extends BasePlatformTestCase {
+
+  public <T> void doTestListField(@NotNull EventField<T> field, @NotNull T value, @NotNull List<String> expected) {
+    doTestField(field, value, obj -> {
+      TestCase.assertNotNull(obj);
+      TestCase.assertTrue(obj instanceof List);
+
+      @SuppressWarnings("rawtypes") List<?> resultList = (List)obj;
+      for (int i = 0, size = resultList.size(); i < size; i++) {
+        Object item = resultList.get(i);
+        TestCase.assertEquals(item.toString(), expected.get(i));
+      }
+      TestCase.assertEquals(resultList.size(), expected.size());
+    });
+  }
+
+  public <T> void doTestField(@NotNull EventField<T> field, @NotNull T value, @NotNull String expected) {
+    doTestField(field, value, obj -> {
+      TestCase.assertNotNull(obj);
+      TestCase.assertEquals(obj.toString(), expected);
+    });
+  }
+
+  public <T> void doTestField(@NotNull EventField<T> field, @NotNull T value, @NotNull Consumer<Object> validator) {
+    EventLogGroup group = new EventLogGroup("group.id", 1);
+    EventId1<T> event = group.registerEvent("test.event", field);
+
+    List<LogEvent> events = FUCounterCollectorTestCase.INSTANCE.collectLogEvents(() -> {
+      event.log(value);
+      return Unit.INSTANCE;
+    });
+
+    UsefulTestCase.assertSize(1, events);
+    Map<String, Object> eventData = events.get(0).getEvent().getData();
+    Object fieldValue = eventData.get(field.getName());
+    validator.consume(fieldValue);
+  }
+
   public void testObjectEvent() {
  /* {
       "intField" : 43
@@ -81,4 +118,64 @@ public class StatisticsSchemeDescriptionTest extends BasePlatformTestCase {
     List<?> objects = (List<?>)eventData.get("objects");
     UsefulTestCase.assertSize(2, objects);
   }
+
+  public void testPrimitiveTrueBooleanField() {
+    doTestField(EventFields.Boolean("enabled"), true, "true");
+  }
+
+  public void testPrimitiveFalseBooleanField() {
+    doTestField(EventFields.Boolean("enabled"), false, "false");
+  }
+
+  public void testPrimitiveIntField() {
+    doTestField(EventFields.Int("count"), 123, "123");
+  }
+
+  public void testPrimitiveLongField() {
+    doTestField(EventFields.Long("duration_ms"), 123L, "123");
+  }
+
+  public void testPrimitiveDoubleField() {
+    doTestField(EventFields.Double("probability"), 0.2, "0.2");
+  }
+
+  public void testPrimitiveStringField() {
+    doTestField(EventFields.String("type"), "OPENED", "OPENED");
+  }
+
+  public void testClassNameField() {
+    doTestField(
+      EventFields.Class("class_name"),
+      TestEventScheme.class,
+      "com.intellij.internal.statistics.StatisticsSchemeDescriptionTest$TestEventScheme"
+    );
+  }
+
+  public void testEnumField() {
+    doTestField(
+      EventFields.Enum("type", TestEnumEvent.class),
+      TestEnumEvent.CLOSED,
+      "CLOSED"
+    );
+  }
+
+  public void testStringListField() {
+    doTestListField(
+      EventFields.StringList("errors"),
+      ContainerUtil.newArrayList("foo", "bar"),
+      ContainerUtil.newArrayList("foo", "bar")
+    );
+  }
+
+  public void testLongListField() {
+    doTestListField(
+      EventFields.LongList("performance"),
+      ContainerUtil.newArrayList(123L, 15L, 123456L),
+      ContainerUtil.newArrayList("123", "15", "123456")
+    );
+  }
+
+  private static class TestEventScheme {}
+
+  private enum TestEnumEvent { OPENED, CLOSED }
 }

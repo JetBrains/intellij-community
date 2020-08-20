@@ -19,6 +19,9 @@ object EventFields {
   fun Long(@NonNls name: String): LongEventField = LongEventField(name)
 
   @JvmStatic
+  fun Double(@NonNls name: String): DoubleEventField = DoubleEventField(name)
+
+  @JvmStatic
   fun Boolean(@NonNls name: String): BooleanEventField = BooleanEventField(name)
 
   @JvmStatic
@@ -34,6 +37,9 @@ object EventFields {
 
   @JvmStatic
   fun StringList(@NonNls name: String): StringListEventField = StringListEventField(name)
+
+  @JvmStatic
+  fun LongList(@NonNls name: String): LongListEventField = LongListEventField(name)
 
   @JvmField
   val InputEvent = object : PrimitiveEventField<FusInputEvent?>() {
