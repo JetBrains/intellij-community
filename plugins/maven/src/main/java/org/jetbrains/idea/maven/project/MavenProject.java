@@ -21,6 +21,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
@@ -985,7 +986,7 @@ public class MavenProject {
   }
 
   @NotNull
-  public List<MavenArtifact> findDependencies(@Nullable String groupId, @Nullable String artifactId) {
+  public List<MavenArtifact> findDependencies(@NonNls @Nullable String groupId, @NonNls @Nullable String artifactId) {
     return getDependencyArtifactIndex().findArtifacts(groupId, artifactId);
   }
 
