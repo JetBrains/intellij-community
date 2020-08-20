@@ -18,6 +18,7 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.structuralsearch.*;
+import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.impl.matcher.iterators.SsrFilteringNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.predicates.ScriptSupport;
@@ -27,16 +28,18 @@ import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.ConfigurationManager;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
-import com.intellij.structuralsearch.plugin.util.DuplicateFilteringResultSink;
+import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
+import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
 
 public class SSBasedInspection extends LocalInspectionTool implements DynamicGroupTool {
   private static final Object LOCK = ObjectUtils.sentinel("SSRLock"); // hack to avoid race conditions in SSR
@@ -99,23 +102,14 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
       SSBasedInspectionCompiledPatternsCache.getInstance(project).getCompiledOptions(myConfigurations);
     if (compiledOptions.isEmpty()) return PsiElementVisitor.EMPTY_VISITOR;
 
-    final PairProcessor<MatchResult, Configuration> processor = (matchResult, configuration) -> {
-      final PsiElement element = matchResult.getMatch();
-      final LocalQuickFix fix = createQuickFix(project, matchResult, configuration);
-      final Configuration mainConfiguration = getMainConfiguration(configuration);
-      final String name = ObjectUtils.notNull(mainConfiguration.getProblemDescriptor(), mainConfiguration.getName());
-      final ProblemDescriptor descriptor =
-        holder.getManager().createProblemDescriptor(element, name, fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
-      holder.registerProblem(new ProblemDescriptorWithReporterName((ProblemDescriptorBase)descriptor, configuration.getUuid().toString()));
-      return true;
-    };
-    for (Map.Entry<Configuration, Matcher> entry : compiledOptions.entrySet()) {
-      final Configuration configuration = entry.getKey();
-      final Matcher matcher = entry.getValue();
-      if (matcher == null) {
-        continue;
+    synchronized (LOCK) {
+      for (Map.Entry<Configuration, Matcher> entry : compiledOptions.entrySet()) {
+        final Matcher matcher = entry.getValue();
+        if (matcher == null) {
+          continue;
+        }
+        matcher.getMatchContext().setSink(new InspectionResultSink());
       }
-      matcher.getMatchContext().setSink(new DuplicateFilteringResultSink(new InspectionResultSink(processor, configuration)));
     }
 
     return new PsiElementVisitor() {
@@ -132,7 +126,10 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
 
             if (matcher.checkIfShouldAttemptToMatch(matchedNodes) &&
                 profile.isToolEnabled(HighlightDisplayKey.find(configuration.getUuid().toString()), element)) {
-              final int nodeCount = matcher.getMatchContext().getPattern().getNodeCount();
+              final MatchContext matchContext = matcher.getMatchContext();
+              final InspectionResultSink sink = (InspectionResultSink)matchContext.getSink();
+              sink.setConfigurationAndHolder(configuration, holder);
+              final int nodeCount = matchContext.getPattern().getNodeCount();
               try {
                 matcher.processMatchesInElement(new CountingNodeIterator(nodeCount, matchedNodes));
               }
@@ -265,23 +262,45 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     return myConfigurations.removeIf(c -> c.getUuid().equals(uuid));
   }
 
-  private static class InspectionResultSink extends DefaultMatchResultSink {
-    private final Configuration myConfiguration;
-    private PairProcessor<? super MatchResult, ? super Configuration> myProcessor;
+  private class InspectionResultSink extends DefaultMatchResultSink {
+    private Configuration myConfiguration;
+    private ProblemsHolder myHolder;
 
-    InspectionResultSink(@NotNull PairProcessor<? super MatchResult, ? super Configuration> processor, @NotNull Configuration configuration) {
-      myProcessor = processor;
+    private final Set<SmartPsiPointer> duplicates = new THashSet<>();
+
+    InspectionResultSink() {}
+
+    public void setConfigurationAndHolder(@NotNull Configuration configuration, @NotNull ProblemsHolder holder) {
       myConfiguration = configuration;
+      myHolder = holder;
     }
 
     @Override
     public void newMatch(@NotNull MatchResult result) {
-      myProcessor.process(result, myConfiguration);
+      if (!duplicates.add(result.getMatchRef())) {
+        return;
+      }
+      registerProblem(result, myConfiguration, myHolder);
+    }
+
+    private void registerProblem(MatchResult matchResult, Configuration configuration, ProblemsHolder holder) {
+      final PsiElement element = matchResult.getMatch();
+      if (!element.isPhysical() || holder.getFile() != element.getContainingFile()) {
+        return;
+      }
+      final LocalQuickFix fix = createQuickFix(element.getProject(), matchResult, configuration);
+      final Configuration mainConfiguration = getMainConfiguration(configuration);
+      final String name = ObjectUtils.notNull(mainConfiguration.getProblemDescriptor(), mainConfiguration.getName());
+      final InspectionManager manager = holder.getManager();
+      final ProblemDescriptor descriptor =
+        manager.createProblemDescriptor(element, name, fix, GENERIC_ERROR_OR_WARNING, holder.isOnTheFly());
+      final String toolName = configuration.getUuid().toString();
+      holder.registerProblem(new ProblemDescriptorWithReporterName((ProblemDescriptorBase)descriptor, toolName));
     }
 
     @Override
     public void matchingFinished() {
-      myProcessor = null;
+      duplicates.clear();
     }
   }
 }
