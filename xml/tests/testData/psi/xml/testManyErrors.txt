@@ -175,7 +175,7 @@ XmlFile:test.xml
                   <empty list>
             PsiElement(XML_ATTRIBUTE)
               XmlToken:XML_NAME('RIGHT')
-              PsiErrorElement:'=' expected
+              PsiErrorElement:= expected
                 <empty list>
             PsiWhiteSpace(' ')
             PsiElement(XML_ATTRIBUTE)
@@ -186,7 +186,7 @@ XmlFile:test.xml
                   <empty list>
             PsiElement(XML_ATTRIBUTE)
               XmlToken:XML_NAME('TOP')
-              PsiErrorElement:'=' expected
+              PsiErrorElement:= expected
                 <empty list>
             XmlToken:XML_TAG_END('>')
             XmlText
@@ -3453,7 +3453,7 @@ XmlFile:test.xml
                 <empty list>
           PsiElement(XML_ATTRIBUTE)
             XmlToken:XML_NAME('TOP')
-            PsiErrorElement:'=' expected
+            PsiErrorElement:= expected
               <empty list>
           XmlToken:XML_TAG_END('>')
           XmlText
@@ -3558,7 +3558,7 @@ XmlFile:test.xml
                   <empty list>
             PsiElement(XML_ATTRIBUTE)
               XmlToken:XML_NAME('RIGHT')
-              PsiErrorElement:'=' expected
+              PsiErrorElement:= expected
                 <empty list>
             XmlToken:XML_TAG_END('>')
             XmlText
