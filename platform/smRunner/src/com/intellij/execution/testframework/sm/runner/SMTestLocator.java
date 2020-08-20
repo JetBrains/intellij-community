@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiModificationTracker;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,7 +36,10 @@ public interface SMTestLocator {
    * Creates the <code>Location</code> list from <code>protocol</code> and <code>path</code> in <code>scope</code>.
    */
    @NotNull
-  List<Location> getLocation(@NotNull String protocol, @NotNull String path, @NotNull Project project, @NotNull GlobalSearchScope scope);
+  List<Location> getLocation(@NonNls @NotNull String protocol,
+                             @NonNls @NotNull String path,
+                             @NonNls @NotNull Project project,
+                             @NotNull GlobalSearchScope scope);
 
   /**
    * Creates the <code>Location</code> list from <code>protocol</code>, <code>path</code>, and <code>metainfo</code> in <code>scope</code>.
@@ -45,7 +49,10 @@ public interface SMTestLocator {
    * but it changes when editing.
    */
   @NotNull
-  default List<Location> getLocation(@NotNull String protocol, @NotNull String path, @Nullable String metainfo, @NotNull Project project,
+  default List<Location> getLocation(@NonNls @NotNull String protocol,
+                                     @NonNls @NotNull String path,
+                                     @NonNls @Nullable String metainfo,
+                                     @NotNull Project project,
                                      @NotNull GlobalSearchScope scope) {
     return getLocation(protocol, path, project, scope);
   }
