@@ -22,6 +22,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.config.GitExecutable;
 import git4idea.util.GitVcsConsoleWriter;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.ByteArrayOutputStream;
@@ -69,7 +70,7 @@ public class GitBinaryHandler extends GitHandler {
    * @param in  the standard input
    * @param out the standard output
    */
-  private void handleStream(final InputStream in, final ByteArrayOutputStream out, @NotNull String cmd) {
+  private void handleStream(final InputStream in, final ByteArrayOutputStream out, @NotNull @NonNls String cmd) {
     Thread t = new Thread(() -> {
       try {
         byte[] buffer = new byte[BUFFER_SIZE];

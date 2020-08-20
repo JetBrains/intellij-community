@@ -133,12 +133,13 @@ public abstract class GitHandler {
   }
 
   @NotNull
-  private static List<String> getConfigParameters(@Nullable Project project, @NotNull List<String> requestedConfigParameters) {
+  private static List<@NonNls String> getConfigParameters(@Nullable Project project,
+                                                          @NotNull List<@NonNls String> requestedConfigParameters) {
     if (project == null || !GitVersionSpecialty.CAN_OVERRIDE_GIT_CONFIG_FOR_COMMAND.existsIn(project)) {
       return Collections.emptyList();
     }
 
-    List<String> toPass = new ArrayList<>();
+    List<@NonNls String> toPass = new ArrayList<>();
     toPass.add("core.quotepath=false");
     toPass.add("log.showSignature=false");
     toPass.addAll(requestedConfigParameters);

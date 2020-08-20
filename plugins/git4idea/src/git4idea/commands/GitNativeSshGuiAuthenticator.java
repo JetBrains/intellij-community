@@ -6,11 +6,13 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ssh.SSHUtil;
 import com.intellij.util.PathUtil;
 import git4idea.i18n.GitBundle;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +42,7 @@ class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
 
   @Nullable
   @Override
-  public String handleInput(@NotNull String description) {
+  public String handleInput(@NotNull @NlsSafe String description) {
     if(myAuthenticationMode == GitAuthenticationMode.NONE) return null;
     return myAuthenticationGate.waitAndCompute(() -> {
       if (isKeyPassphrase(description)) return askKeyPassphraseInput(description);
@@ -100,16 +102,16 @@ class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
     }
   }
 
-  private static boolean isConfirmation(@NotNull String description) {
+  private static boolean isConfirmation(@NotNull @NlsSafe String description) {
     return description.contains(SSHUtil.CONFIRM_CONNECTION_PROMPT);
   }
 
   @Nullable
-  private String askConfirmationInput(@NotNull String description) {
+  private String askConfirmationInput(@NotNull @NlsSafe String description) {
     return askUser(() -> {
-      String message = StringUtil.replace(description,
-                                          SSHUtil.CONFIRM_CONNECTION_PROMPT + " (yes/no)?",
-                                          SSHUtil.CONFIRM_CONNECTION_PROMPT + "?");
+      @NlsSafe String message = StringUtil.replace(description,
+                                                   SSHUtil.CONFIRM_CONNECTION_PROMPT + " (yes/no)?",
+                                                   SSHUtil.CONFIRM_CONNECTION_PROMPT + "?");
 
       String knownAnswer = myAuthenticationGate.getSavedInput(message);
       if (knownAnswer != null && myLastAskedConfirmationInput == null) {
@@ -134,7 +136,7 @@ class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
   }
 
   @Nullable
-  private String askGenericInput(@NotNull String description) {
+  private String askGenericInput(@NotNull @Nls String description) {
     return askUser(() -> Messages.showPasswordDialog(myProject, description, GitBundle.message("ssh.keyboard.interactive.title"), null));
   }
 

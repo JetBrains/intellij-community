@@ -27,6 +27,7 @@ import git4idea.remote.GitHttpAuthDataProvider;
 import git4idea.remote.GitRememberedInputs;
 import git4idea.remote.GitRepositoryHostingService;
 import git4idea.remote.InteractiveGitHttpAuthDataProvider;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -580,6 +581,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
       return myPassword;
     }
 
+    @NonNls
     @Override
     public String toString() {
       return "provider='" + myProvider.getName() + "', login='" + myLogin + '\'';
