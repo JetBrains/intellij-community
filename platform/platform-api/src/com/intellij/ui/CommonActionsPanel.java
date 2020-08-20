@@ -104,7 +104,8 @@ public class CommonActionsPanel extends JPanel {
 
   CommonActionsPanel(@NotNull ListenerFactory factory, @Nullable JComponent contextComponent, ActionToolbarPosition position,
                      AnActionButton @Nullable [] additionalActions, @Nullable Comparator<? super AnActionButton> buttonComparator,
-                     String addName, String removeName, String moveUpName, String moveDownName, String editName,
+                     @NlsContexts.Button String addName, @NlsContexts.Button String removeName,
+                     @NlsContexts.Button String moveUpName, @NlsContexts.Button String moveDownName, @NlsContexts.Button String editName,
                      Icon addIcon, Buttons @NotNull ... buttons) {
     super(new BorderLayout());
     myPosition = position;

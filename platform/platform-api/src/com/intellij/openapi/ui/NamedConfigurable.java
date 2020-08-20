@@ -6,6 +6,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ErrorLabel;
 import com.intellij.ui.JBColor;
@@ -61,7 +62,7 @@ public abstract class NamedConfigurable<T> implements Configurable {
     myWholePanel.repaint();
   }
 
-  public abstract void setDisplayName(String name);
+  public abstract void setDisplayName(@NlsSafe String name);
   public abstract T getEditableObject();
   public abstract @Nls(capitalization = Nls.Capitalization.Title) String getBannerSlogan();
 
@@ -96,7 +97,7 @@ public abstract class NamedConfigurable<T> implements Configurable {
         myNameField.getDocument().addDocumentListener(new DocumentAdapter() {
           @Override
           protected void textChanged(@NotNull DocumentEvent e) {
-            String name = myNameField.getText().trim();
+            @NlsSafe String name = myNameField.getText().trim();
             try {
               checkName(name);
               myErrorLabel.setErrorText(null, null);

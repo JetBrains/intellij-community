@@ -26,7 +26,7 @@ public abstract class ReorderableListController <T> {
     return myList;
   }
 
-  public RemoveActionDescription addRemoveAction(final String actionName) {
+  public RemoveActionDescription addRemoveAction(final @NlsActions.ActionText String actionName) {
     final RemoveActionDescription description = new RemoveActionDescription(actionName);
     addActionDescription(description);
     return description;
@@ -183,11 +183,11 @@ public abstract class ReorderableListController <T> {
   }
 
   public class RemoveActionDescription extends CustomActionDescription<List<T>> {
-    private final String myActionName;
+    private final @NlsActions.ActionText String myActionName;
     private Condition<? super List<T>> myConfirmation;
     private Condition<? super T> myEnableCondition;
 
-    public RemoveActionDescription(final String actionName) {
+    public RemoveActionDescription(final @NlsActions.ActionText String actionName) {
       myActionName = actionName;
     }
 
@@ -236,7 +236,7 @@ public abstract class ReorderableListController <T> {
   }
 
   public abstract static class AddActionDescriptionBase<V> extends CustomActionDescription<V> {
-    private final String myActionDescription;
+    private final @NlsActions.ActionText String myActionDescription;
     private final Factory<? extends V> myAddHandler;
     private final boolean myCreateShortcut;
     private Icon myIcon = IconUtil.getAddIcon();

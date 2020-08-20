@@ -22,7 +22,7 @@ import java.util.ResourceBundle;
  */
 public abstract class BundleBase {
   public static final char MNEMONIC = 0x1B;
-  public static final String MNEMONIC_STRING = Character.toString(MNEMONIC);
+  public static final @NlsSafe String MNEMONIC_STRING = Character.toString(MNEMONIC);
   static final String L10N_MARKER = "🔅";
   public static final boolean SHOW_LOCALIZED_MESSAGES = Boolean.getBoolean("idea.l10n");
   public static final boolean SHOW_DEFAULT_MESSAGES = Boolean.getBoolean("idea.l10n.english");

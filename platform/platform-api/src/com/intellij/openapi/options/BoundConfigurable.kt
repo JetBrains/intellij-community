@@ -60,7 +60,7 @@ abstract class DslConfigurableBase : UnnamedConfigurable {
   }
 }
 
-abstract class BoundSearchableConfigurable(displayName: String, helpTopic: String, private val _id: String = helpTopic)
+abstract class BoundSearchableConfigurable(@NlsContexts.ConfigurableName displayName: String, helpTopic: String, private val _id: String = helpTopic)
   : BoundConfigurable(displayName, helpTopic), SearchableConfigurable {
   override fun getId(): String = _id
 }

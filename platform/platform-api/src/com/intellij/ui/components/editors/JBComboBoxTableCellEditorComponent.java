@@ -6,6 +6,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.TableUtil;
 import com.intellij.ui.awt.RelativePoint;
@@ -55,7 +56,7 @@ public class JBComboBoxTableCellEditorComponent extends JBLabel {
   private Object[] myOptions = {};
   private Object myValue;
   public boolean myWide = false;
-  private Function<Object, String> myToString = StringUtil.createToStringFunction(Object.class);
+  private Function<Object, @NlsContexts.ListItem String> myToString = StringUtil.createToStringFunction(Object.class);
   private final List<ActionListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private ListCellRenderer myRenderer = new DefaultListCellRenderer() {

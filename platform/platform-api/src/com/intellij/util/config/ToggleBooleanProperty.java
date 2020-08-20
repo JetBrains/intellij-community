@@ -52,7 +52,7 @@ public class ToggleBooleanProperty extends ToggleAction {
   }
 
   public static abstract class Disablable extends ToggleBooleanProperty {
-    public Disablable(String text, String description, Icon icon, AbstractProperty.AbstractPropertyContainer properties, BooleanProperty property) {
+    public Disablable(@NlsActions.ActionText String text, @NlsActions.ActionDescription String description, Icon icon, AbstractProperty.AbstractPropertyContainer properties, BooleanProperty property) {
       super(text, description, icon, properties, property);
     }
 

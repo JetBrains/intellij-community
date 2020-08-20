@@ -209,7 +209,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
     revalidateAndRepaint();
   }
 
-  private void _append(String fragment, SimpleTextAttributes attributes, Object tag) {
+  private void _append(@Nls String fragment, SimpleTextAttributes attributes, Object tag) {
     synchronized (myFragments) {
       append(fragment, attributes);
       if (tag != null) myCurrentFragment.tag = tag;
@@ -1174,7 +1174,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
     int split(int offset, @NotNull SimpleTextAttributes attributes);
 
-    void setFragment(@NotNull String text);
+    void setFragment(@Nls @NotNull String text);
 
     void setTag(@Nullable Object tag);
 
@@ -1287,7 +1287,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
   }
 
   private static class ColoredFragment {
-    @NotNull private volatile String text;
+    private volatile @Nls @NotNull String text;
     @NotNull volatile SimpleTextAttributes attributes;
     @Nullable volatile Object tag;
     @Nullable private volatile TextRenderer renderer;

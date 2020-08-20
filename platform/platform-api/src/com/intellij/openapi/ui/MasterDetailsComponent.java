@@ -365,8 +365,8 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     }
   }
 
-  private static String getNodePathString(final MyNode node) {
-    StringBuilder path = new StringBuilder();
+  private static @NonNls String getNodePathString(final MyNode node) {
+    @NonNls StringBuilder path = new StringBuilder();
     MyNode current = node;
     while (current != null) {
       final Object userObject = current.getUserObject();

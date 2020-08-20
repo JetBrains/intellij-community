@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij;
 
+import com.intellij.openapi.util.NlsContexts.Button;
+import com.intellij.openapi.util.NlsContexts.DialogTitle;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.*;
 
@@ -65,15 +67,15 @@ public final class CommonBundle extends DynamicBundle {
   }
 
   @NotNull
-  public static @Nls String getCancelButtonText() {
+  public static @Button String getCancelButtonText() {
     return message("button.cancel");
   }
 
-  public static @Nls String getHelpButtonText() {
+  public static @Button String getHelpButtonText() {
     return message("button.help");
   }
 
-  public static @Nls String getErrorTitle() {
+  public static @DialogTitle String getErrorTitle() {
     return message("title.error");
   }
 
@@ -81,7 +83,7 @@ public final class CommonBundle extends DynamicBundle {
    * @deprecated Use more informative title instead
    */
   @Deprecated
-  public static @Nls String getWarningTitle() {
+  public static @DialogTitle String getWarningTitle() {
     return message("title.warning");
   }
 
@@ -89,44 +91,44 @@ public final class CommonBundle extends DynamicBundle {
     return message("tree.node.loading");
   }
 
-  public static @Nls String getOkButtonText() {
+  public static @Button String getOkButtonText() {
     return message("button.ok");
   }
 
-  public static @Nls String getYesButtonText() {
+  public static @Button String getYesButtonText() {
     return message("button.yes");
   }
 
-  public static @Nls String getNoButtonText() {
+  public static @Button String getNoButtonText() {
     return message("button.no");
   }
 
-  public static @Nls String getContinueButtonText() {
+  public static @Button String getContinueButtonText() {
     return message("button.continue");
   }
 
-  public static @Nls String getYesForAllButtonText() {
+  public static @Button String getYesForAllButtonText() {
     return message("button.yes.for.all");
   }
 
-  public static @Nls String getCloseButtonText() {
+  public static @Button String getCloseButtonText() {
     return message("button.close");
   }
 
   @Deprecated
-  public static @Nls String getNoForAllButtonText() {
+  public static @Button String getNoForAllButtonText() {
     return message("button.no.for.all");
   }
 
-  public static @Nls String getApplyButtonText() {
+  public static @Button String getApplyButtonText() {
     return message("button.apply");
   }
 
-  public static @Nls String getAddButtonText() {
+  public static @Button String getAddButtonText() {
     return message("button.add.a");
   }
 
-  public static @Nls String settingsTitle() {
+  public static @DialogTitle String settingsTitle() {
     return SystemInfo.isMac ? message("title.settings.mac") : message("title.settings");
   }
 

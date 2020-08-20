@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.InputValidator
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.DetailedDescription
 import com.intellij.openapi.util.NlsContexts.DialogMessage
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.Function
@@ -63,6 +64,7 @@ interface MessagesService {
                                     icon: Icon?,
                                     exitFunc: PairFunction<in Int?, in JCheckBox?, Int?>?): Int
 
+  @NlsSafe
   fun showPasswordDialog(project: Project?,
                          message: @DialogMessage String?,
                          title: @NlsContexts.DialogTitle String?,
@@ -75,6 +77,7 @@ interface MessagesService {
                          icon: Icon?,
                          validator: InputValidator?): CharArray?
 
+  @NlsSafe 
   fun showInputDialog(project: Project?,
                       parentComponent: Component?,
                       message: @DialogMessage String?,
@@ -85,6 +88,7 @@ interface MessagesService {
                       selection: TextRange?,
                       comment: @DetailedDescription String?): String?
 
+  @NlsSafe
   fun showMultilineInputDialog(project: Project?,
                                message: @DialogMessage String?,
                                title: @NlsContexts.DialogTitle String?,
@@ -101,6 +105,7 @@ interface MessagesService {
                                   initialValue: String?,
                                   validator: InputValidator?): Pair<String?, Boolean?>
 
+  @NlsSafe
   fun showEditableChooseDialog(message: @DialogMessage String?,
                                title: @NlsContexts.DialogTitle String?,
                                icon: Icon?,

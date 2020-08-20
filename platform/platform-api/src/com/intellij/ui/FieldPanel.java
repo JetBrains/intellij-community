@@ -65,21 +65,21 @@ public class FieldPanel extends AbstractFieldPanel implements TextAccessor {
     return myTextField;
   }
 
-  public static FieldPanel create(String labelText, String viewerDialogTitle) {
+  public static FieldPanel create(@NlsContexts.Label String labelText, @NlsContexts.DialogTitle String viewerDialogTitle) {
     return create(labelText, viewerDialogTitle, null, null);
   }
 
-  public static FieldPanel withPaths(String labelText, String viewerDialogTitle) {
+  public static FieldPanel withPaths(@NlsContexts.Label String labelText, @NlsContexts.DialogTitle String viewerDialogTitle) {
     return withPaths(labelText, viewerDialogTitle, null, null);
   }
 
-  public static FieldPanel withPaths(String labelText, String viewerDialogTitle, ActionListener browseButtonActionListener, Runnable documentListener) {
+  public static FieldPanel withPaths(@NlsContexts.Label String labelText, @NlsContexts.DialogTitle String viewerDialogTitle, ActionListener browseButtonActionListener, Runnable documentListener) {
     FieldPanel fieldPanel = create(labelText, viewerDialogTitle, browseButtonActionListener, documentListener);
     InsertPathAction.addTo(fieldPanel.myTextField);
     return fieldPanel;
   }
 
-  private static FieldPanel create(String labelText, String viewerDialogTitle, ActionListener browseButtonActionListener, Runnable documentListener) {
+  private static FieldPanel create(@NlsContexts.Label String labelText, @NlsContexts.DialogTitle String viewerDialogTitle, ActionListener browseButtonActionListener, Runnable documentListener) {
     return new FieldPanel(labelText, viewerDialogTitle, browseButtonActionListener, documentListener);
   }
 

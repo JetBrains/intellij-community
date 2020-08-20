@@ -221,7 +221,7 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
   }
 
   @Nullable
-  private String isValid() {
+  private @NlsContexts.DialogMessage String isValid() {
     if (myUseHTTPProxyRb.isSelected()) {
       String host = getText(myProxyHostTextField);
       if (host == null) {

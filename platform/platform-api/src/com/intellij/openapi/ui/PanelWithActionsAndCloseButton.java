@@ -49,7 +49,7 @@ public abstract class PanelWithActionsAndCloseButton extends JPanel implements D
 
   }
 
-  public String getHelpId() {
+  public @NonNls String getHelpId() {
     return myHelpId;
   }
 

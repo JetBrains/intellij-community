@@ -8,10 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.messages.MessageDialog;
 import com.intellij.openapi.ui.messages.MessagesService;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.BrowserHyperlinkListener;
@@ -1355,7 +1352,7 @@ public class Messages {
     }
 
     @Nullable
-    public String getInputString() {
+    public @NlsSafe String getInputString() {
       if (getExitCode() == 0) {
         return myField.getText().trim();
       }

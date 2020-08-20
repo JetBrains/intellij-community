@@ -66,7 +66,7 @@ public final class TabInfo implements Queryable, PlaceProvider {
   private JComponent myActionsContextComponent;
 
   private final SimpleColoredText myText = new SimpleColoredText();
-  private String myTooltipText;
+  private @NlsContexts.Tooltip String myTooltipText;
 
   private int myDefaultStyle = -1;
   private Color myDefaultForeground;
@@ -372,7 +372,7 @@ public final class TabInfo implements Queryable, PlaceProvider {
     return this;
   }
 
-  public String getTooltipText() {
+  public @NlsContexts.Tooltip String getTooltipText() {
     return myTooltipText;
   }
 

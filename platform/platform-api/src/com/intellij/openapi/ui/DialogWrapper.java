@@ -1184,7 +1184,7 @@ public abstract class DialogWrapper {
   }
 
   @Nullable
-  public final String getDimensionKey() {
+  public final @NonNls String getDimensionKey() {
     return getDimensionServiceKey();
   }
 
