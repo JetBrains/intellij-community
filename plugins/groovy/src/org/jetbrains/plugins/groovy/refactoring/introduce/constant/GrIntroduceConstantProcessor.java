@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.refactoring.introduce.constant;
 
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.refactoring.HelpID;
@@ -137,7 +138,7 @@ public class GrIntroduceConstantProcessor {
   }
 
   @Nullable
-  private  String check(@NotNull PsiClass targetClass, @Nullable final String fieldName) {
+  private @DialogMessage String check(@NotNull PsiClass targetClass, @Nullable final String fieldName) {
     if (!GroovyLanguage.INSTANCE.equals(targetClass.getLanguage())) {
       return GroovyRefactoringBundle.message("class.language.is.not.groovy");
     }
