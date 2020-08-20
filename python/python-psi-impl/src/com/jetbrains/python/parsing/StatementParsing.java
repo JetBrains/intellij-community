@@ -54,6 +54,11 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
   @NonNls protected static final String TOK_EXEC = PyNames.EXEC;
   @NonNls public static final String TOK_ASYNC = PyNames.ASYNC;
   @NonNls protected static final String TOK_AWAIT = PyNames.AWAIT;
+  @NonNls protected static final  String TOK_OBJECT = PyNames.OBJECT;
+  @NonNls protected static final  String TOK_TYPE = PyNames.TYPE;
+  @NonNls protected static final  String TOK_IMPORT = PyNames.IMPORT;
+  @NonNls protected static final  String TOK_IN = PyNames.IN;
+  @NonNls protected static final  String TOK_FROM = PyNames.FROM;
 
   protected enum Phase {NONE, FROM, FUTURE, IMPORT} // 'from __future__ import' phase
 
