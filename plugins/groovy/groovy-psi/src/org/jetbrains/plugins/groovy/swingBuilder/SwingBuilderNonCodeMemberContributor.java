@@ -103,7 +103,7 @@ public class SwingBuilderNonCodeMemberContributor extends NonCodeMembersContribu
       res.setReturnType(type(returnType));
       res.setContainingClass(mySwingBuilderClass);
       if (navigationClass != null) {
-        assert navigationClass.startsWith("groovy.swing.");
+        assert navigationClass.startsWith("groovy.swing."); // NON-NLS
         res.setNavigationClass(navigationClass);
       }
       return res;
@@ -114,7 +114,7 @@ public class SwingBuilderNonCodeMemberContributor extends NonCodeMembersContribu
     }
 
     private void methodObject(@NlsSafe String name, @NlsSafe String returnType, @Nullable String navigationClass,
-                              @Nullable Map<String, NamedArgumentDescriptor> namedArg) {
+                              @Nullable Map<@NlsSafe String, NamedArgumentDescriptor> namedArg) {
       MyMethodBuilder method = method(name, returnType, navigationClass);
       method.addParameter("map", type(CommonClassNames.JAVA_UTIL_MAP), true);
       method.addParameter("params", MANY_OBJECTS);
@@ -182,7 +182,7 @@ public class SwingBuilderNonCodeMemberContributor extends NonCodeMembersContribu
 
       // registerBinding()
       methodObject("bind", "org.codehaus.groovy.binding.FullBinding", "groovy.swing.factory.BindFactory",
-                    ContainerUtil.<String, NamedArgumentDescriptor>immutableMapBuilder()
+                    ContainerUtil.<@NlsSafe String, NamedArgumentDescriptor>immutableMapBuilder()
                      .put("source", NamedArgumentDescriptor.SIMPLE_ON_TOP)
                      .put("target", NamedArgumentDescriptor.SIMPLE_ON_TOP)
                      .put("update", NamedArgumentDescriptor.SIMPLE_ON_TOP)
@@ -215,7 +215,7 @@ public class SwingBuilderNonCodeMemberContributor extends NonCodeMembersContribu
 
       // registerWindows()
       methodObject("dialog", "javax.swing.JDialog", "groovy.swing.factory.DialogFactory",
-                   ContainerUtil.<String, NamedArgumentDescriptor>immutableMapBuilder()
+                   ContainerUtil.<@NlsSafe String, NamedArgumentDescriptor>immutableMapBuilder()
                      .put("owner", NamedArgumentDescriptor.SIMPLE_ON_TOP)
                      .put("defaultButtonProperty", NamedArgumentDescriptor.SIMPLE_ON_TOP)
                      .put("pack", NamedArgumentDescriptor.SIMPLE_ON_TOP)
@@ -378,7 +378,7 @@ public class SwingBuilderNonCodeMemberContributor extends NonCodeMembersContribu
 
       NamedArgumentDescriptor namedArgColor = new TypeCondition(type("java.awt.Color"));
 
-      Map<String, NamedArgumentDescriptor> m = ContainerUtil.<String, NamedArgumentDescriptor>immutableMapBuilder()
+      Map<@NlsSafe String, NamedArgumentDescriptor> m = ContainerUtil.<@NlsSafe String, NamedArgumentDescriptor>immutableMapBuilder()
         .put("parent", NamedArgumentDescriptor.SIMPLE_ON_TOP)
         .put("highlight", namedArgColor)
         .put("shadow", namedArgColor)
@@ -402,7 +402,7 @@ public class SwingBuilderNonCodeMemberContributor extends NonCodeMembersContribu
       methodObject("raisedEtchedBorder", "javax.swing.border.Border", "groovy.swing.factory.EtchedBorderFactory", m);
 
       methodObject("titledBorder", "javax.swing.border.TitledBorder", "groovy.swing.factory.TitledBorderFactory",
-                   ContainerUtil.<String, NamedArgumentDescriptor>immutableMapBuilder()
+                   ContainerUtil.<@NlsSafe String, NamedArgumentDescriptor>immutableMapBuilder()
                      .put("parent", NamedArgumentDescriptor.SIMPLE_ON_TOP)
                      .put("title", NamedArgumentDescriptor.SIMPLE_ON_TOP)
                      .put("position", NamedArgumentDescriptor.SIMPLE_ON_TOP)
@@ -429,7 +429,7 @@ public class SwingBuilderNonCodeMemberContributor extends NonCodeMembersContribu
       ));
 
       methodObject("matteBorder", "javax.swing.border.Border", "groovy.swing.factory.MatteBorderFactory",
-                   ContainerUtil.<String, NamedArgumentDescriptor>immutableMapBuilder()
+                   ContainerUtil.<@NlsSafe String, NamedArgumentDescriptor>immutableMapBuilder()
                      .put("parent", NamedArgumentDescriptor.SIMPLE_ON_TOP)
                      .put("icon", NamedArgumentDescriptor.SIMPLE_ON_TOP)
                      .put("color", NamedArgumentDescriptor.SIMPLE_ON_TOP)
