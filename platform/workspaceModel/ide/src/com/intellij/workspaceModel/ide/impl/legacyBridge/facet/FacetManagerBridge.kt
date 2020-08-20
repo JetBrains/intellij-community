@@ -59,7 +59,7 @@ class FacetManagerBridge(module: Module) : FacetManagerBase() {
 }
 
 internal open class FacetModelBridge(protected val moduleBridge: ModuleBridge) : FacetModelBase() {
-  protected val entityToFacet: HashBiMap<FacetEntity, Facet<*>> = HashBiMap.create()
+  internal val entityToFacet: HashBiMap<FacetEntity, Facet<*>> = HashBiMap.create()
 
   override fun getAllFacets(): Array<Facet<*>> {
     return entityToFacet.values.toTypedArray()
@@ -97,11 +97,6 @@ internal open class FacetModelBridge(protected val moduleBridge: ModuleBridge) :
 
   fun populateFrom(mapping: HashBiMap<FacetEntity, Facet<*>>) {
     entityToFacet.putAll(mapping)
-    facetsChanged()
-  }
-
-  internal fun populateFrom(mapping: FacetModelBridge) {
-    entityToFacet.putAll(mapping.entityToFacet)
     facetsChanged()
   }
 

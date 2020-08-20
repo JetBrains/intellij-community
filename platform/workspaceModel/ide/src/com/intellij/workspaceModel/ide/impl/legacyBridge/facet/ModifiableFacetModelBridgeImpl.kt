@@ -5,6 +5,7 @@ import com.google.common.collect.HashBiMap
 import com.intellij.facet.Facet
 import com.intellij.facet.FacetManagerImpl
 import com.intellij.facet.ModifiableFacetModel
+import com.intellij.facet.impl.FacetModelBase
 import com.intellij.facet.impl.FacetUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.isExternalStorageEnabled
@@ -12,6 +13,12 @@ import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.workspaceModel.ide.JpsFileEntitySource
+import com.intellij.workspaceModel.ide.JpsImportedEntitySource
+import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.findModuleEntity
+import com.intellij.workspaceModel.ide.legacyBridge.ModifiableFacetModelBridge
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
@@ -19,22 +26,18 @@ import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableFacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addFacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.subFacets
-import com.intellij.workspaceModel.ide.JpsFileEntitySource
-import com.intellij.workspaceModel.ide.JpsImportedEntitySource
-import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.findModuleEntity
-import com.intellij.workspaceModel.ide.legacyBridge.ModifiableFacetModelBridge
-import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 
 internal class ModifiableFacetModelBridgeImpl(private val initialStorage: WorkspaceEntityStorage,
                                               private val diff: WorkspaceEntityStorageDiffBuilder,
-                                              moduleBridge: ModuleBridge,
+                                              val moduleBridge: ModuleBridge,
                                               private val facetManager: FacetManagerBridge)
-  : FacetModelBridge(moduleBridge), ModifiableFacetModelBridge {
+  : FacetModelBase(), ModifiableFacetModelBridge {
+  private val entityToFacet: HashBiMap<FacetEntity, Facet<*>> = HashBiMap.create()
   private val listeners: MutableList<ModifiableFacetModel.Listener> = ContainerUtil.createLockFreeCopyOnWriteList()
 
   init {
-    populateFrom(facetManager.model)
+    entityToFacet.putAll(facetManager.model.entityToFacet)
+    facetsChanged()
   }
 
   private fun getModuleEntity() = initialStorage.findModuleEntity(moduleBridge)!!
@@ -130,6 +133,12 @@ internal class ModifiableFacetModelBridgeImpl(private val initialStorage: Worksp
     entityToFacet.forEach { (key, value) -> mapInNewStore[replaceMap.getOrDefault(key, key) as FacetEntity] = value }
     facetManager.model.populateFrom(mapInNewStore)
   }
+
+  override fun getAllFacets(): Array<Facet<*>> {
+    return entityToFacet.values.toTypedArray()
+  }
+
+  internal fun getEntity(facet: Facet<*>): FacetEntity? = entityToFacet.inverse()[facet]
 
   override fun isModified(): Boolean {
     return !diff.isEmpty()
