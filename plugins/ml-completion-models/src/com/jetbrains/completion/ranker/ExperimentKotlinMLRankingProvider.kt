@@ -9,7 +9,8 @@ import com.intellij.internal.ml.completion.JarCompletionModelProvider
 import com.intellij.lang.Language
 import com.jetbrains.completion.ranker.model.kotlin.MLGlassBox
 
-class ExperimentKotlinMLRankingProvider : JarCompletionModelProvider("Kotlin", "kotlin_features"), ExperimentModelProvider {
+class ExperimentKotlinMLRankingProvider : JarCompletionModelProvider(
+  CompletionRankingModelsBundle.message("ml.completion.experiment.model.kotlin"), "kotlin_features"), ExperimentModelProvider {
   override fun createModel(metadata: ModelMetadata): DecisionFunction {
     return object : CompletionRankingModelBase(metadata) {
       override fun predict(features: DoubleArray?): Double = MLGlassBox.makePredict(features)
