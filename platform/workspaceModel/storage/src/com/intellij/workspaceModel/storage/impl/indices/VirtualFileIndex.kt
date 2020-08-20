@@ -16,7 +16,7 @@ import kotlin.reflect.KProperty
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
 
-open class VirtualFileIndex private constructor(
+open class VirtualFileIndex internal constructor(
   internal open val entityId2VirtualFileUrlInfo: HashMap<EntityId, MutableList<VirtualFileUrlInfo>>,
   internal open val vfu2VirtualFileUrlInfo: HashMap<VirtualFileUrl, MutableList<VirtualFileUrlInfo>>
 ): VirtualFileUrlIndex {

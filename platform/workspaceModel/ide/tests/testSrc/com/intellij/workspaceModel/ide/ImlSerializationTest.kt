@@ -6,6 +6,8 @@ import com.intellij.workspaceModel.ide.impl.jps.serialization.asConfigLocation
 import com.intellij.workspaceModel.ide.impl.jps.serialization.loadProject
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.*
+import junit.framework.Assert.assertEquals
+import junit.framework.Assert.assertTrue
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Test
@@ -27,9 +29,25 @@ class ImlSerializationTest {
   }
 
   @Test
+  fun sizeCheck() {
+    val projectDir = File(PathManagerEx.getCommunityHomePath(), "jps/model-serialization/testData/sampleProject")
+    val bytes = loadProjectAndCheck(projectDir)
+
+    checkSerializationSize(bytes, 42_620, 2_000)
+  }
+
+  @Test
   fun communityProject() {
     val projectDir = File(PathManagerEx.getCommunityHomePath())
     loadProjectAndCheck(projectDir)
+  }
+
+  @Test
+  fun communityProjectSizeCheck() {
+    val projectDir = File(PathManagerEx.getCommunityHomePath())
+    val bytes = loadProjectAndCheck(projectDir)
+
+    checkSerializationSize(bytes, 2_377_408, 20_000)
   }
 
   @Test
@@ -44,19 +62,31 @@ class ImlSerializationTest {
     serializationRoundTrip(builder)
   }
 
-  private fun loadProjectAndCheck(projectFile: File) {
-    val storageBuilder = WorkspaceEntityStorageBuilder.create()
-    loadProject(projectFile.asConfigLocation(virtualFileManager), storageBuilder, virtualFileManager)
-    serializationRoundTrip(storageBuilder)
+  private fun checkSerializationSize(bytes: ByteArray, expectedSize: Int, precision:Int) {
+
+    // At the moment serialization size varies from time to time. I don't know the reason for that, but you should check this test if
+    //   the serialization size changes a lot.
+    // Maybe you've added a new field to the entity store structure. Recheck if you really want this field to be included.
+    val leftBound = expectedSize - precision
+    val rightBound = expectedSize + precision
+    assertTrue("Expected size: $expectedSize, precision: $precision, real size: ${bytes.size}", bytes.size in leftBound..rightBound)
   }
 
-  private fun serializationRoundTrip(storageBuilder: WorkspaceEntityStorageBuilder) {
+  private fun loadProjectAndCheck(projectFile: File): ByteArray {
+    val storageBuilder = WorkspaceEntityStorageBuilder.create()
+    loadProject(projectFile.asConfigLocation(virtualFileManager), storageBuilder, virtualFileManager)
+    return serializationRoundTrip(storageBuilder)
+  }
+
+  private fun serializationRoundTrip(storageBuilder: WorkspaceEntityStorageBuilder): ByteArray {
     val storage = storageBuilder.toStorage()
+    val byteArray: ByteArray
     val timeMillis = measureTimeMillis {
-      val byteArray = SerializationRoundTripChecker.verifyPSerializationRoundTrip(storage, virtualFileManager)
+      byteArray = SerializationRoundTripChecker.verifyPSerializationRoundTrip(storage, virtualFileManager)
       println("Serialized size: ${byteArray.size}")
     }
     println("Time: $timeMillis ms")
+    return byteArray
   }
 
   companion object {

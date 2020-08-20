@@ -304,7 +304,10 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
 
       // Write indexes
       kryo.writeClassAndObject(output, storage.indexes.softLinks)
-      kryo.writeClassAndObject(output, storage.indexes.virtualFileIndex)
+
+      kryo.writeClassAndObject(output, storage.indexes.virtualFileIndex.entityId2VirtualFileUrlInfo)
+      kryo.writeClassAndObject(output, storage.indexes.virtualFileIndex.vfu2VirtualFileUrlInfo)
+
       kryo.writeClassAndObject(output, storage.indexes.entitySourceIndex)
       kryo.writeClassAndObject(output, storage.indexes.persistentIdIndex)
     }
@@ -351,7 +354,11 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
 
       // Read indexes
       val softLinks = kryo.readClassAndObject(input) as MultimapStorageIndex
-      val virtualFileIndex = kryo.readClassAndObject(input) as VirtualFileIndex
+
+      val entityId2VirtualFileUrlInfo = kryo.readClassAndObject(input) as HashMap<EntityId, MutableList<VirtualFileIndex.VirtualFileUrlInfo>>
+      val vfu2VirtualFileUrlInfo = kryo.readClassAndObject(input) as HashMap<VirtualFileUrl, MutableList<VirtualFileIndex.VirtualFileUrlInfo>>
+      val virtualFileIndex = VirtualFileIndex(entityId2VirtualFileUrlInfo, vfu2VirtualFileUrlInfo)
+
       val entitySourceIndex = kryo.readClassAndObject(input) as EntityStorageInternalIndex<EntitySource>
       val persistentIdIndex = kryo.readClassAndObject(input) as EntityStorageInternalIndex<PersistentEntityId<*>>
       val storageIndexes = StorageIndexes(softLinks, virtualFileIndex, entitySourceIndex, persistentIdIndex)
