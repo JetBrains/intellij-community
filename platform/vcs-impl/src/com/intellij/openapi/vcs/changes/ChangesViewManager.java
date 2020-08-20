@@ -281,20 +281,22 @@ public class ChangesViewManager implements ChangesViewEx,
     return myToolWindowPanel.isAllowExcludeFromCommit();
   }
 
-  public void closeEditorPreview() {
-    if (myToolWindowPanel == null) {
-      return;
-    }
-
-    DiffPreview diffPreview = myToolWindowPanel.myDiffPreview;
-    if (diffPreview instanceof EditorTabPreview) {
-      ((EditorTabPreview)diffPreview).closePreview();
-    }
+  public boolean isEditorPreview() {
+    return myToolWindowPanel != null && !myToolWindowPanel.isSplitterPreview();
   }
 
   public void openEditorPreview() {
     if (myToolWindowPanel == null) return;
     myToolWindowPanel.openEditorPreview();
+  }
+
+  public void closeEditorPreview() {
+    closeEditorPreview(false);
+  }
+
+  public void closeEditorPreview(boolean onlyIfEmpty) {
+    if (myToolWindowPanel == null) return;
+    myToolWindowPanel.closeEditorPreview(onlyIfEmpty);
   }
 
   public static final class ChangesViewToolWindowPanel extends SimpleToolWindowPanel implements ChangesViewContentManagerListener, Disposable {
@@ -551,6 +553,15 @@ public class ChangesViewManager implements ChangesViewEx,
       if (!isEditorPreviewAllowed()) return;
 
       ((EditorTabPreview)myDiffPreview).openPreview(false);
+    }
+
+    private void closeEditorPreview(boolean onlyIfEmpty) {
+      if (isSplitterPreview()) return;
+
+      EditorTabPreview editorPreview = (EditorTabPreview)myDiffPreview;
+
+      if (onlyIfEmpty && editorPreview.hasContent()) return;
+      editorPreview.closePreview();
     }
 
     @Nullable

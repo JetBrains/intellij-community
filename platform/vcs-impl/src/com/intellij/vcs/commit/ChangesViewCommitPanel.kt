@@ -396,6 +396,16 @@ open class ChangesViewCommitPanel(private val changesView: ChangesListView, priv
   override fun startBeforeCommitChecks() = Unit
   override fun endBeforeCommitChecks(result: CheckinHandler.ReturnResult) = Unit
 
+  override fun endExecution() = closeEditorPreviewIfEmpty()
+
+  private fun closeEditorPreviewIfEmpty() {
+    val changesViewManager = ChangesViewManager.getInstance(project) as? ChangesViewManager ?: return
+    if (!changesViewManager.isEditorPreview) return
+
+    refreshData()
+    changesViewManager.closeEditorPreview(true)
+  }
+
   override fun dispose() {
     with(changesView) {
       isShowCheckboxes = false
