@@ -8,14 +8,15 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.layout.*
 
-class MLRankingConfigurable(private val availableProviders: List<RankingModelProvider>) : BoundConfigurable("ML Ranking") {
+class MLRankingConfigurable(private val availableProviders: List<RankingModelProvider>) :
+  BoundConfigurable(StatsCollectorBundle.message("ml.completion.settings.group")) {
   private val settings = CompletionMLRankingSettings.getInstance()
 
   override fun createPanel(): DialogPanel {
     val providers = availableProviders.distinctBy { it.displayNameInSettings }.sortedBy { it.displayNameInSettings }
     return panel {
       var enableRankingCheckbox: CellBuilder<JBCheckBox>? = null
-      titledRow(StatsCollectorBundle.message("ml.completion.settings.group")) {
+      titledRow(displayName) {
         row {
           val enableRanking = checkBox(StatsCollectorBundle.message("ml.completion.enable"), settings::isRankingEnabled,
                                        { settings.isRankingEnabled = it })
