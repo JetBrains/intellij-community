@@ -15,6 +15,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigur
 import com.intellij.openapi.roots.ui.util.CompositeAppearance;
 import com.intellij.openapi.roots.ui.util.SimpleTextCellAppearance;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -128,7 +129,7 @@ public class OrderEntryAppearanceServiceImpl extends OrderEntryAppearanceService
   }
 
   @NotNull
-  private static CellAppearanceEx normalOrRedWaved(@NotNull final String text, @Nullable final Icon icon, final boolean waved) {
+  private static CellAppearanceEx normalOrRedWaved(@NotNull final @NlsContexts.Label String text, @Nullable final Icon icon, final boolean waved) {
     return waved ? new SimpleTextCellAppearance(text, icon, new SimpleTextAttributes(SimpleTextAttributes.STYLE_WAVED, null, JBColor.RED))
                  : SimpleTextCellAppearance.regular(text, icon);
   }

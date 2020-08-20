@@ -101,8 +101,9 @@ class AddFacetOfTypeAction extends DumbAwareAction {
       return;
     }
 
-    final ChooseModulesDialog dialog = new ChooseModulesDialog(project, suitableModules, "Choose Module",
-                                                               type.getPresentableName() + " facet will be added to selected module");
+    final ChooseModulesDialog dialog = new ChooseModulesDialog(project, suitableModules, JavaUiBundle.message("choose.module"),
+                                                               JavaUiBundle.message("facet.will.be.added.to.selected.module",
+                                                                                    type.getPresentableName()));
     dialog.setSingleSelectionMode();
     dialog.show();
     final List<Module> elements = dialog.getChosenElements();
@@ -135,7 +136,7 @@ class AddFacetOfTypeAction extends DumbAwareAction {
 
   private static final class ChooseParentFacetDialog extends ChooseElementsDialog<Facet> {
     private ChooseParentFacetDialog(Project project, List<? extends Facet> items) {
-      super(project, items, "Select Parent Facet", null, true);
+      super(project, items, JavaUiBundle.message("select.parent.facet"), null, true);
       myChooser.setSingleSelectionMode();
     }
 

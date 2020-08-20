@@ -25,6 +25,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.FacetProjectStructureElement;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStructureElement;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -34,7 +35,7 @@ import javax.swing.*;
 public class FacetConfigurable extends ProjectStructureElementConfigurable<Facet> {
   private final Facet myFacet;
   private final ModulesConfigurator myModulesConfigurator;
-  private String myFacetName;
+  private @NlsSafe String myFacetName;
   private final FacetProjectStructureElement myProjectStructureElement;
 
   public FacetConfigurable(final Facet facet, final StructureConfigurableContext context, final Runnable updateTree) {

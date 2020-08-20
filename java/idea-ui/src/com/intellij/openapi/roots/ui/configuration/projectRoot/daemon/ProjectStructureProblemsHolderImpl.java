@@ -29,7 +29,7 @@ public class ProjectStructureProblemsHolderImpl implements ProjectStructureProbl
     myProblemDescriptions.add(description);
   }
 
-  public String composeTooltipMessage() {
+  public @Nls String composeTooltipMessage() {
     final StringBuilder buf = new StringBuilder();
     buf.append("<html><body>");
     if (myProblemDescriptions != null) {

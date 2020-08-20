@@ -28,6 +28,7 @@ import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
 import com.intellij.openapi.roots.ui.configuration.SdkLookup
 import com.intellij.openapi.roots.ui.configuration.SdkLookupDecision
 import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.*
 import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.projectImport.ProjectOpenProcessor
@@ -146,6 +147,7 @@ internal class SetupJavaProjectFromSourcesActivity : StartupActivity {
     notification.notify(project)
   }
 
+  @NlsSafe
   private fun filesToLinks(files: MutableCollection<VirtualFile>, projectDirectory: VirtualFile) =
     files.joinToString { file ->
       "<a href='${file.path}'>${VfsUtil.getRelativePath(file, projectDirectory)}</a>"

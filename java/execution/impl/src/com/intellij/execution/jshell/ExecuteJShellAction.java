@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -80,7 +81,7 @@ final class ExecuteJShellAction extends AnAction{
           hasDataToEvaluate = scheduleEval(handler, document.getText(selectedRange));
         }
         if (!hasDataToEvaluate) {
-          JShellDiagnostic.notifyInfo("Nothing to execute", project);
+          JShellDiagnostic.notifyInfo(JavaCompilerBundle.message("jshell.nothing.to.execute"), project);
         }
       }
     }

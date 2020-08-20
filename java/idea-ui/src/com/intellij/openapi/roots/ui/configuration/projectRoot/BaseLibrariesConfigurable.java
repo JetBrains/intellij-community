@@ -86,7 +86,7 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
     for (LibraryConfigurable configurable : getLibraryConfigurables()) {
       if (configurable.getDisplayName().isEmpty()) {
         ((LibraryProjectStructureElement)configurable.getProjectStructureElement()).navigate();
-        throw new ConfigurationException("Library name is not specified");
+        throw new ConfigurationException(JavaUiBundle.message("library.name.is.not.specified"));
       }
     }
   }

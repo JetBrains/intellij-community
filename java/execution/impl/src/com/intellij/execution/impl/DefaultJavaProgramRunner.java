@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -426,7 +427,7 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
 
   private static void showThreadDump(String out, List<ThreadState> states, Project project) {
     AnalyzeStacktraceUtil.ConsoleFactory factory = states.size() > 1 ? new ThreadDumpConsoleFactory(project, states) : null;
-    String title = "Dump " + DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis());
+    String title = JavaCompilerBundle.message("tab.title.thread.dump", DateFormatUtil.formatTimeWithSeconds(System.currentTimeMillis()));
     ApplicationManager.getApplication().invokeLater(
       () -> AnalyzeStacktraceUtil.addConsole(project, factory, title, out), ModalityState.NON_MODAL);
   }

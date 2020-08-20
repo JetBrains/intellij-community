@@ -18,6 +18,8 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.ui.PanelWithText;
+import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,17 +29,17 @@ public class TextConfigurable<T> extends NamedConfigurable<T> {
   @NotNull
   private final T myObject;
   @NotNull
-  private final String myBannerSlogan;
+  private final @Nls String myBannerSlogan;
   @NotNull
-  private final String myDisplayName;
+  private final @NlsContexts.ConfigurableName String myDisplayName;
   private final Icon myIcon;
   @NotNull
-  private final String myDescriptionText;
+  private final @Nls String myDescriptionText;
 
   public TextConfigurable(@NotNull T object,
-                          @NotNull String displayName,
-                          @NotNull String bannerSlogan,
-                          @NotNull String descriptionText,
+                          @NotNull @NlsContexts.ConfigurableName String displayName,
+                          @NotNull @Nls String bannerSlogan,
+                          @NotNull @NlsContexts.DetailedDescription String descriptionText,
                           @Nullable Icon icon) {
     myDisplayName = displayName;
     myBannerSlogan = bannerSlogan;

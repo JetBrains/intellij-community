@@ -5,6 +5,7 @@ import com.intellij.ide.util.JavaAnonymousClassesHelper;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
@@ -134,7 +135,7 @@ final class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
         myPackageName = PsiUtil.getPackageName(psi);
       }
 
-      String getPackageName() {
+      @NlsSafe String getPackageName() {
         return myPackageName;
       }
     }
@@ -171,7 +172,7 @@ final class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
       return myPointer;
     }
 
-    String getName() {
+    @NlsSafe String getName() {
       return myName;
     }
 

@@ -5,6 +5,7 @@ import com.intellij.application.options.ModuleDescriptionsComboBox;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.execution.ui.ConfigurationModuleSelector;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
@@ -212,7 +213,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
                                withComment(ExecutionBundle.message("copy.and.paste.the.arguments.to.the.command.line.when.jvm.is.started")).createPanel(), gc);
 
     ModuleDescriptionsComboBox myModuleCombo = new ModuleDescriptionsComboBox();
-    myModuleCombo.allowEmptySelection("<whole project>");
+    myModuleCombo.allowEmptySelection(JavaCompilerBundle.message("whole.project"));
     myModuleSelector = new ConfigurationModuleSelector(project, myModuleCombo);
 
     gc.gridx = 0;
@@ -322,10 +323,10 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
   private JPanel createModePanel(GridBagConstraints gc) {
     JPanel panel = new JPanel(new GridBagLayout());
 
-    JLabel modeLabel = createLabelFor("&Debugger mode:", myModeCombo);
-    JLabel transportLabel = createLabelFor("&Transport:", myTransportCombo);
-    JLabel hostLabel = createLabelFor("&Host:", myHostName);
-    JLabel portLabel = createLabelFor("&Port:", myPort);
+    JLabel modeLabel = createLabelFor(JavaCompilerBundle.message("label.debugger.mode"), myModeCombo);
+    JLabel transportLabel = createLabelFor(JavaCompilerBundle.message("label.transport"), myTransportCombo);
+    JLabel hostLabel = createLabelFor(JavaCompilerBundle.message("label.host"), myHostName);
+    JLabel portLabel = createLabelFor(JavaCompilerBundle.message("label.port"), myPort);
 
     gc.gridwidth = 2;
     panel.add(modeLabel, gc);
@@ -349,7 +350,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
     panel.add(new JPanel(), gc);
 
     if (SystemInfo.isWindows) {
-      JLabel addressLabel = createLabelFor("&Address:", myAddress);
+      JLabel addressLabel = createLabelFor(JavaCompilerBundle.message("label.address"), myAddress);
 
       addressLabel.setVisible(false);
       myAddress.setVisible(false);
