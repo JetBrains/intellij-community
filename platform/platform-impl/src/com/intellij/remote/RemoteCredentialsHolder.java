@@ -57,7 +57,7 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     copyFrom(credentials);
   }
 
-  public static String getCredentialsString(@NotNull RemoteCredentials cred) {
+  public static @NlsSafe String getCredentialsString(@NotNull RemoteCredentials cred) {
     return SSH_PREFIX + cred.getUserName() + "@" + cred.getHost() + ":" + cred.getLiteralPort();
   }
 
