@@ -133,6 +133,44 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
 
+  fun testScopeFunctionsNls() {
+    val inspection = I18nInspection()
+    inspection.run {  }
+    inspection.setIgnoreForAllButNls(true)
+    inspection.setReportUnannotatedReferences(true)
+    myFixture.enableInspections(inspection)
+    myFixture.configureByText("Foo.kt", """
+        import org.jetbrains.annotations.Nls
+
+        fun showMessage(@Nls <warning descr="[UNUSED_PARAMETER] Parameter 'text' is never used">text</warning>: String) {}
+        
+        public inline fun <T, R> T.run(block: T.() -> R): R { return block() }
+        public inline fun <T, R> T.let(block: (T) -> R): R { return block(this) }
+        
+        class Window {
+          val name: String = "Name"
+        }
+        
+        @Nls
+        fun localize(name: String) = <warning descr="Hardcoded string literal: \"Hello ${'$'}name\"">"Hello ${'$'}name"</warning>
+        
+        fun mainFunction() {
+          val window = Window()
+        
+          val resultWithRun = window.run { localize("${'$'}name") }
+          val resultWithoutRun = localize(window.name)
+          val resultWithLet = window.let { localize("${'$'}{it.name}") }
+          val resultWithLetNonLocalized = window.let { <warning descr="Hardcoded string literal: \"foo\"">"foo"</warning> }
+        
+          showMessage(resultWithRun)
+          showMessage(resultWithoutRun)
+          showMessage(resultWithLet)
+          showMessage(resultWithLetNonLocalized)
+        }
+        """.trimIndent())
+    myFixture.testHighlighting()
+  }
+
   fun testConstructorParameter() {
     myFixture.enableInspections(I18nInspection())
     myFixture.configureByText("Foo.kt", """

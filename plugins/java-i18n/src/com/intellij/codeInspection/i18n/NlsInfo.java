@@ -354,11 +354,20 @@ public abstract class NlsInfo {
     while (true) {
       UExpression next = ObjectUtils.tryCast(parent.getUastParent(), UExpression.class);
       if (next == null ||
-          next instanceof ULambdaExpression ||
           next instanceof UReturnExpression ||
           next instanceof USwitchClauseExpression ||
           next instanceof UNamedExpression) {
         return parent;
+      }
+      if (next instanceof ULambdaExpression) {
+        next = ObjectUtils.tryCast(next.getUastParent(), UExpression.class);
+        if (!(next instanceof UCallExpression)) {
+          return parent;
+        }
+        PsiMethod method = ((UCallExpression)next).resolve();
+        if (method == null || !isKotlinPassthroughMethod(method)) {
+          return parent;
+        }
       }
       if (next instanceof UQualifiedReferenceExpression && !TypeUtils.isJavaLangString(next.getExpressionType())) {
         return parent;
@@ -392,13 +401,25 @@ public abstract class NlsInfo {
   static boolean isStringProcessingMethod(PsiMethod method) {
     if (method == null) return false;
     if (!(forModifierListOwner(method) instanceof Unspecified)) return false;
-    if (!JavaMethodContractUtil.isPure(method)) return false;
+    if (!JavaMethodContractUtil.isPure(method) && !isKotlinPassthroughMethod(method)) return false;
     PsiParameter[] parameters = method.getParameterList().getParameters();
     if (parameters.length == 0) return false;
     for (PsiParameter parameter : parameters) {
       if (!(forModifierListOwner(parameter) instanceof Unspecified)) return false;
     }
     return true;
+  }
+
+  private static boolean isKotlinPassthroughMethod(PsiMethod method) {
+    if ((method.getName().equals("let") || method.getName().equals("run")) &&
+        method.getModifierList().textMatches("public inline")) {
+      PsiParameter[] parameters = method.getParameterList().getParameters();
+      if (parameters.length == 2 && parameters[0].getName().equals("$this$" + method.getName()) &&
+          parameters[1].getName().equals("block")) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static @NotNull NlsInfo fromMethodReturn(@NotNull UExpression expression) {
