@@ -1134,7 +1134,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       mySchemeManager.addScheme(fileType);
     }
     for (FileNameMatcher matcher : matchers) {
-      myPatternsTable.addAssociation(matcher, fileType);
+      FileType oldType = myPatternsTable.addAssociation(matcher, fileType);
+      if (oldType != null && !oldType.equals(fileType) && !(oldType instanceof AbstractFileType)) {
+        new ConflictingMappingTracker().addConflict(null, matcher, oldType.getName(), fileType.getName());
+      }
+
       myInitialAssociations.addAssociation(matcher, fileType);
     }
     for (String hashBang : hasBangPatterns) {
