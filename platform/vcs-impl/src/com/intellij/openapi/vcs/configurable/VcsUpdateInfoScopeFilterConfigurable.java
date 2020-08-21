@@ -15,18 +15,15 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.util.ui.UIUtil;
-import java.awt.FlowLayout;
-import java.util.Objects;
-import javax.swing.Box;
-import javax.swing.JCheckBox;
-import javax.swing.JComboBox;
-import javax.swing.JComponent;
-import javax.swing.JPanel;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
+import java.awt.*;
+import java.util.Objects;
 
 /**
  * @author Kirill Likhodedov
@@ -74,7 +71,7 @@ class VcsUpdateInfoScopeFilterConfigurable implements Configurable, NamedScopesH
     panel.add(myCheckbox);
     panel.add(myComboBox);
     panel.add(Box.createHorizontalStrut(UIUtil.DEFAULT_HGAP));
-    panel.add(LinkLabel.create("Manage Scopes", () -> {
+    panel.add(LinkLabel.create(VcsBundle.message("configurable.vcs.manage.scopes"), () -> {
       Settings settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(panel));
       if (settings != null) {
         settings.select(settings.find(ScopeChooserConfigurable.PROJECT_SCOPES));
