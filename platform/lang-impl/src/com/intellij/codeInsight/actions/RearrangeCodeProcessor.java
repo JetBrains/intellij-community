@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -23,40 +23,38 @@ import java.util.concurrent.FutureTask;
 
 public class RearrangeCodeProcessor extends AbstractLayoutCodeProcessor {
 
-  public static final String COMMAND_NAME = "Rearrange code";
-
   private static final Logger LOG = Logger.getInstance(RearrangeCodeProcessor.class);
   private SelectionModel mySelectionModel;
 
   public RearrangeCodeProcessor(@NotNull AbstractLayoutCodeProcessor previousProcessor) {
-    super(previousProcessor, COMMAND_NAME, getProgressText());
+    super(previousProcessor, CodeInsightBundle.message("command.rearrange.code"), getProgressText());
   }
 
   public RearrangeCodeProcessor(@NotNull AbstractLayoutCodeProcessor previousProcessor, @NotNull SelectionModel selectionModel) {
-    super(previousProcessor, COMMAND_NAME, getProgressText());
+    super(previousProcessor, CodeInsightBundle.message("command.rearrange.code"), getProgressText());
     mySelectionModel = selectionModel;
   }
 
   public RearrangeCodeProcessor(@NotNull PsiFile file, @NotNull SelectionModel selectionModel) {
-    super(file.getProject(), file, getProgressText(), COMMAND_NAME, false);
+    super(file.getProject(), file, getProgressText(), CodeInsightBundle.message("command.rearrange.code"), false);
     mySelectionModel = selectionModel;
   }
 
   public RearrangeCodeProcessor(@NotNull PsiFile file) {
-    super(file.getProject(), file, getProgressText(), COMMAND_NAME, false);
+    super(file.getProject(), file, getProgressText(), CodeInsightBundle.message("command.rearrange.code"), false);
   }
 
   @SuppressWarnings("unused") // Required for compatibility with external plugins.
   public RearrangeCodeProcessor(@NotNull Project project,
                                 PsiFile @NotNull [] files,
-                                @NotNull String commandName,
+                                @NlsContexts.Command @NotNull String commandName,
                                 @Nullable Runnable postRunnable) {
     this(project, files, commandName, postRunnable, false);
   }
 
   public RearrangeCodeProcessor(@NotNull Project project,
                                 PsiFile @NotNull [] files,
-                                @NotNull String commandName,
+                                @NlsContexts.Command @NotNull String commandName,
                                 @Nullable Runnable postRunnable,
                                 boolean processChangedTextOnly) {
     super(project, files, getProgressText(), commandName, postRunnable, processChangedTextOnly);
@@ -75,7 +73,7 @@ public class RearrangeCodeProcessor extends AbstractLayoutCodeProcessor {
           PsiDocumentManager.getInstance(myProject).commitDocument(document);
           Runnable command = prepareRearrangeCommand(file, ranges);
           try {
-            CommandProcessor.getInstance().executeCommand(myProject, command, COMMAND_NAME, null);
+            CommandProcessor.getInstance().executeCommand(myProject, command, CodeInsightBundle.message("command.rearrange.code"), null);
           }
           finally {
             PsiDocumentManager.getInstance(myProject).commitDocument(document);
