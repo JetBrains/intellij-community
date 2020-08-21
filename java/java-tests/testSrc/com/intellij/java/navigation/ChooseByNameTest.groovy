@@ -462,15 +462,22 @@ class Intf {
     assert gotoFile('objc/features/i') == [index, i18n]
   }
 
-  void "test consider name and path weights"() {
-    def filesContent = addEmptyFile("web/help/filesContent.html")
-    def content = addEmptyFile("web/help/files/Content.html")
-    def textContent = addEmptyFile("web/help/files/textContent.html")
-    def subfolderFilesContent = addEmptyFile("web/help/files/filesContent.html")
+  void "test search for full name"() {
+    def file1 = addEmptyFile("Folder/Web/SubFolder/Flow.html")
+    def file2 = addEmptyFile("Folder/Web/SubFolder/Flow/Helper.html")
 
     def contributor = createFileContributor(project, testRootDisposable)
-    def files = calcWeightedContributorElements(contributor as WeightedSearchEverywhereContributor<?>, "web/help/filesContent")
-    assert files == [filesContent, subfolderFilesContent, content, textContent]
+    def files = calcWeightedContributorElements(contributor as WeightedSearchEverywhereContributor<?>, "Folder/Web/SubFolder/Flow.html")
+    assert files == [file1, file2]
+  }
+
+  void "test prefer name match over path match"() {
+    def nameMatchFile = addEmptyFile("JBCefBrowser.java")
+    def pathMatchFile = addEmptyFile("com/elements/folder/WebBrowser.java")
+
+    def contributor = createFileContributor(project, testRootDisposable)
+    def files = calcWeightedContributorElements(contributor as WeightedSearchEverywhereContributor<?>, "CefBrowser")
+    assert files == [nameMatchFile, pathMatchFile]
   }
 
   void "test matching file in a matching directory"() {
