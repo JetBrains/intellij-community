@@ -13,6 +13,7 @@ import com.intellij.notification.NotificationType.INFORMATION
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.guessProjectDir
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil.*
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.PsiManager
@@ -100,7 +101,7 @@ private fun createLinkToFile(project: Project, path: String): String {
   return "<a href='$path'>$presentablePath</a>"
 }
 
-private fun notifyInvalidGradleJvmInfo(project: Project, notificationHint: String, reason: JavaHomeValidationStatus) {
+private fun notifyInvalidGradleJvmInfo(project: Project, @NlsContexts.HintText notificationHint: String, reason: JavaHomeValidationStatus) {
   val notificationTitle = GradleBundle.message("gradle.notifications.java.home.invalid.title")
   var notificationContent = notificationHint
   if (reason is JavaHomeValidationStatus.Unsupported) {

@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.service.execution.cmd;
 
 import org.apache.commons.cli.OptionBuilder;
 import org.apache.commons.cli.Options;
+import org.jetbrains.plugins.gradle.util.GradleDocumentationBundle;
 
 /**
  * @author Vladislav.Soroka
@@ -16,102 +17,112 @@ public class GradleCommandLineOptionsProvider {
     Options options = new Options();
     // Debugging options, see https://docs.gradle.org/current/userguide/command_line_interface.html#sec:command_line_debugging
     options.addOption(
-      OptionBuilder.withLongOpt("full-stacktrace").withDescription("Print out the full (very verbose) stacktrace for any exceptions.")
+      OptionBuilder.withLongOpt("full-stacktrace").withDescription(GradleDocumentationBundle.message("gradle.cmd.option.full.stacktrace"))
         .create('S'));
     options.addOption(
-      OptionBuilder.withLongOpt("stacktrace").withDescription("Print out the stacktrace also for user exceptions (e.g. compile error).")
+      OptionBuilder.withLongOpt("stacktrace").withDescription(GradleDocumentationBundle.message("gradle.cmd.option.stacktrace"))
         .create('s'));
     options.addOption(
       OptionBuilder.withLongOpt("scan")
-        .withDescription("Create a build scan with fine-grained information about all aspects of your Gradle build.")
+        .withDescription(GradleDocumentationBundle.message("gradle.cmd.option.scan"))
         .create());
 
     // Performance options, see https://docs.gradle.org/current/userguide/command_line_interface.html#sec:command_line_performance
     options.addOption(
       OptionBuilder.withLongOpt("build-cache")
-        .withDescription("Toggles the Gradle build cache. Gradle will try to reuse outputs from previous builds. Default is off.")
+        .withDescription(GradleDocumentationBundle.message("gradle.cmd.option.build.cache"))
         .create());
     options.addOption(
       OptionBuilder.withLongOpt("no-build-cache")
-        .withDescription("Toggles the Gradle build cache. Gradle will try to reuse outputs from previous builds. Default is off.")
+        .withDescription(GradleDocumentationBundle.message("gradle.cmd.option.build.cache"))
         .create());
     options.addOption(OptionBuilder.withLongOpt("configure-on-demand").withDescription(
-      "Toggles Configure-on-demand. Only relevant projects are configured in this build run. Default is off.").create());
+      GradleDocumentationBundle.message("gradle.cmd.option.configure.on.demand")).create());
     options.addOption(OptionBuilder.withLongOpt("no-configure-on-demand").withDescription(
-      "Toggles Configure-on-demand. Only relevant projects are configured in this build run. Default is off.").create());
+      GradleDocumentationBundle.message("gradle.cmd.option.configure.on.demand")).create());
     options.addOption(OptionBuilder.withLongOpt("max-workers").withDescription(
-      "Sets maximum number of workers that Gradle may use. Default is number of processors.").create());
+      GradleDocumentationBundle.message("gradle.cmd.option.max.workers")).create());
     options.addOption(OptionBuilder.withLongOpt("parallel").withDescription(
-      "Build projects in parallel.").create());
-    options.addOption(OptionBuilder.withLongOpt("no-parallel").withDescription("Switch off parallel build.").create());
+      GradleDocumentationBundle.message("gradle.cmd.option.parallel")).create());
+    options.addOption(OptionBuilder.withLongOpt("no-parallel").withDescription(
+      GradleDocumentationBundle.message("gradle.cmd.option.no.parallel")).create());
     options.addOption(OptionBuilder.withLongOpt("priority").withDescription(
-      "Specifies the scheduling priority for the Gradle daemon and all processes launched by it. Values are normal or low. Default is normal.")
+      GradleDocumentationBundle.message("gradle.cmd.option.priority"))
                         .create());
     options.addOption(OptionBuilder.withLongOpt("profile")
-                        .withDescription("Profiles build execution time and generates a report in the buildDir/reports/profile directory.")
+                        .withDescription(GradleDocumentationBundle.message("gradle.cmd.option.profile"))
                         .create());
 
     // Logging options, https://docs.gradle.org/current/userguide/command_line_interface.html#sec:command_line_logging
-    options.addOption(OptionBuilder.withLongOpt("quiet").withDescription("Log errors only.").create('q'));
-    options.addOption(OptionBuilder.withLongOpt("warn").withDescription("Set log level to warn.").create('w'));
-    options.addOption(OptionBuilder.withLongOpt("info").withDescription("Set log level to info. ").create('i'));
-    options.addOption(OptionBuilder.withLongOpt("debug").withDescription("Log in debug mode (includes normal stacktrace).").create('d'));
+    options.addOption(OptionBuilder.withLongOpt("quiet").withDescription(
+      GradleDocumentationBundle.message("gradle.cmd.option.quiet")).create('q'));
+    options.addOption(OptionBuilder.withLongOpt("warn").withDescription(
+      GradleDocumentationBundle.message("gradle.cmd.option.warn")).create('w'));
+    options.addOption(OptionBuilder.withLongOpt("info").withDescription(
+      GradleDocumentationBundle.message("gradle.cmd.option.info")).create('i'));
+    options.addOption(OptionBuilder.withLongOpt("debug").withDescription(
+      GradleDocumentationBundle.message("gradle.cmd.option.debug")).create('d'));
     options.addOption(OptionBuilder.withLongOpt("warning-mode")
                         .hasArg()
-                        .withDescription("Specifies how to log warnings. Default is summary. Available modes (all,fail,none,summary)")
+                        .withDescription(GradleDocumentationBundle.message("gradle.cmd.option.warning.mode"))
                         .create());
 
     // Execution options, https://docs.gradle.org/current/userguide/command_line_interface.html#sec:command_line_execution_options
     options.addOption(
-      OptionBuilder.withLongOpt("include-build").withDescription("Run the build as a composite, including the specified build.").create());
+      OptionBuilder.withLongOpt("include-build").withDescription(GradleDocumentationBundle.message("gradle.cmd.option.include.build")).create());
     options.addOption(
-      OptionBuilder.withLongOpt("offline").withDescription("Specifies that the build should operate without accessing network resources.")
+      OptionBuilder.withLongOpt("offline").withDescription(GradleDocumentationBundle.message("gradle.cmd.option.offline"))
         .create());
-    options.addOption(OptionBuilder.withLongOpt("refresh-dependencies").withDescription("Refresh the state of dependencies.").create());
-    options.addOption(OptionBuilder.withLongOpt("dry-run").withDescription("Runs the build with all task actions disabled. ").create());
+    options.addOption(OptionBuilder.withLongOpt("refresh-dependencies").withDescription(
+      GradleDocumentationBundle.message("gradle.cmd.option.refresh.dependencies")).create());
+    options.addOption(OptionBuilder.withLongOpt("dry-run").withDescription(GradleDocumentationBundle.message("gradle.cmd.option.dry.run")).create());
     options.addOption(OptionBuilder.withLongOpt("write-locks").withDescription(
-      "Indicates that all resolved configurations that are lockable should have their lock state persisted.").create());
+      GradleDocumentationBundle.message("gradle.cmd.option.write.locks")).create());
     options.addOption(
       OptionBuilder.withLongOpt("update-locks")
         .withDescription(
-          "Indicates that versions for the specified modules have to be updated in the lock file. This flag also implies --write-locks. ")
+          GradleDocumentationBundle.message("gradle.cmd.option.update.locks"))
         .hasArg()
         .create());
-    options.addOption(OptionBuilder.withLongOpt("no-rebuild").withDescription("Do not rebuild project dependencies.").create());
+    options.addOption(OptionBuilder.withLongOpt("no-rebuild").withDescription(
+      GradleDocumentationBundle.message("gradle.cmd.option.no.rebuild")).create());
 
     // Environment options, https://docs.gradle.org/current/userguide/command_line_interface.html#environment_options
-    options.addOption(OptionBuilder.withLongOpt("build-file").withDescription("Specifies the build file.").hasArg().create('b'));
-    options.addOption(OptionBuilder.withLongOpt("settings-file").withDescription("Specifies the settings file.").hasArg().create('c'));
+    options.addOption(OptionBuilder.withLongOpt("build-file").withDescription(
+      GradleDocumentationBundle.message("gradle.cmd.option.build.file")).hasArg().create('b'));
+    options.addOption(OptionBuilder.withLongOpt("settings-file").withDescription(
+      GradleDocumentationBundle.message("gradle.cmd.option.settings.file")).hasArg().create('c'));
     options.addOption(OptionBuilder.withLongOpt("gradle-user-home").withDescription(
-      "Specifies the Gradle user home directory. The default is the .gradle directory in the user's home directory.").hasArg().create('g'));
+      GradleDocumentationBundle.message("gradle.cmd.option.gradle.user.home")).hasArg().create('g'));
     options.addOption(OptionBuilder
                         .withLongOpt("project-dir")
-                        .withDescription("Specifies the start directory for Gradle. Defaults to current directory.")
+                        .withDescription(GradleDocumentationBundle.message("gradle.cmd.option.project.dir"))
                         .hasArg().create('p'));
     options.addOption(OptionBuilder.withLongOpt("project-cache-dir").withDescription(
-      "Specifies the project-specific cache directory. Default value is .gradle in the root project directory.").hasArg().create());
+      GradleDocumentationBundle.message("gradle.cmd.option.project.cache.dir")).hasArg().create());
     options.addOption(
-      OptionBuilder.withLongOpt("system-prop").withDescription("Sets a system property of the JVM, for example -Dmyprop=myvalue.")
+      OptionBuilder.withLongOpt("system-prop").withDescription(GradleDocumentationBundle.message("gradle.cmd.option.system.prop"))
         .hasArg().create('D'));
     options
-      .addOption(OptionBuilder.withLongOpt("init-script").withDescription("Specifies an initialization script. ").hasArg().create('I'));
+      .addOption(OptionBuilder.withLongOpt("init-script").withDescription(
+        GradleDocumentationBundle.message("gradle.cmd.option.init.script")).hasArg().create('I'));
     options.addOption(OptionBuilder.withLongOpt("project-prop")
-                        .withDescription("Sets a project property of the root project, for example -Pmyprop=myvalue.").hasArgs()
+                        .withDescription(GradleDocumentationBundle.message("gradle.cmd.option.project.prop")).hasArgs()
                         .create('P'));
 
     // Executing tasks, https://docs.gradle.org/current/userguide/command_line_interface.html#sec:command_line_executing_tasks
     options.addOption(OptionBuilder
                         .withLongOpt("exclude-task")
-                        .withDescription("Specifies a task to be excluded from execution.")
+                        .withDescription(GradleDocumentationBundle.message("gradle.cmd.option.exclude.task"))
                         .hasArgs()
                         .create('x'));
     options.addOption(OptionBuilder
                         .withLongOpt("rerun-tasks")
-                        .withDescription("Specifies that any task optimization is ignored.")
+                        .withDescription(GradleDocumentationBundle.message("gradle.cmd.option.rerun.tasks"))
                         .create());
     options.addOption(OptionBuilder
                         .withLongOpt("continue")
-                        .withDescription("Continues task execution after a task failure.")
+                        .withDescription(GradleDocumentationBundle.message("gradle.cmd.option.continue"))
                         .create());
 
     // Do not uncomment the following options. These options does not supported via tooling API,

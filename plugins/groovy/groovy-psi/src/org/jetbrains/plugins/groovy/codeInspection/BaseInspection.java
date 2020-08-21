@@ -20,6 +20,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -59,6 +60,7 @@ public abstract class BaseInspection extends GroovySuppressableInspectionTool {
   @NotNull
   protected abstract BaseInspectionVisitor buildVisitor();
 
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   public static String getProbableBugs() {
     return GroovyBundle.message("inspection.bugs");
   }

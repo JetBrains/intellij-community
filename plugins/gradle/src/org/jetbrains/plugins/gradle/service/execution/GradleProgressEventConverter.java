@@ -20,6 +20,7 @@ import com.intellij.build.events.impl.*;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildEvent;
+import com.intellij.openapi.util.NlsSafe;
 import org.gradle.tooling.events.*;
 import org.gradle.tooling.events.internal.DefaultOperationDescriptor;
 import org.gradle.tooling.events.task.TaskProgressEvent;
@@ -28,6 +29,7 @@ import org.gradle.tooling.events.test.TestProgressEvent;
 import org.gradle.tooling.internal.protocol.events.InternalOperationDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.util.GradleBundle;
 
 /**
  * @author Vladislav.Soroka
@@ -58,7 +60,7 @@ public class GradleProgressEventConverter {
   public static ExternalSystemTaskNotificationEvent convert(@NotNull ExternalSystemTaskId id,
                                                             @NotNull ProgressEvent event,
                                                             @NotNull EventId eventId) {
-    final String description = event.getDescriptor().getName();
+    @NlsSafe final String description = event.getDescriptor().getName();
 
     if (event instanceof StartEvent) {
       return new ExternalSystemBuildEvent(
@@ -110,19 +112,19 @@ public class GradleProgressEventConverter {
     long total = -1;
     long progress = -1;
     String unit = "";
-    String operationName = event.getDescriptor().getName();
+    @NlsSafe String operationName = event.getDescriptor().getName();
     if (operationName.startsWith("Download ")) {
       String path = operationName.substring("Download ".length());
-      operationName = "Download " + getFileName(path);
+      operationName = GradleBundle.message("progress.title.download", getFileName(path));
     }
     else if (event instanceof TaskProgressEvent) {
-      operationName = "Run tasks";
+      operationName = GradleBundle.message("progress.title.run.tasks");
     }
     else if (event instanceof TestProgressEvent) {
-      operationName = "Run tests";
+      operationName = GradleBundle.message("progress.title.run.tests");
     }
     else if (event.getDisplayName().startsWith("Configure project ") || event.getDisplayName().startsWith("Cross-configure project ")) {
-      operationName = "Configure projects";
+      operationName = GradleBundle.message("progress.title.configure.projects");
     }
     else {
       return null;
@@ -143,22 +145,22 @@ public class GradleProgressEventConverter {
     long total = -1;
     long progress = -1;
     String unit = "";
-    String operationName = event;
+    @NlsSafe String operationName = event;
     if (operationName.startsWith("Download ")) {
       String path = operationName.substring("Download ".length());
-      operationName = "Download " + getFileName(path);
+      operationName = GradleBundle.message("progress.title.download", getFileName(path));
     }
     else if (operationName.startsWith("Task: ")) {
-      operationName = "Run tasks";
+      operationName = GradleBundle.message("progress.title.run.tasks");
     }
     else if (operationName.equals("Build")) {
-      operationName = "Build";
+      operationName = GradleBundle.message("progress.title.build");
     }
     else if (operationName.startsWith("Build model ") || operationName.startsWith("Build parameterized model")) {
-      operationName = "Build model";
+      operationName = GradleBundle.message("progress.title.build.model");
     }
     else if (operationName.startsWith("Configure project ") || operationName.startsWith("Cross-configure project ")) {
-      operationName = "Configure projects";
+      operationName = GradleBundle.message("progress.title.configure.projects");
     }
     else {
       return null;

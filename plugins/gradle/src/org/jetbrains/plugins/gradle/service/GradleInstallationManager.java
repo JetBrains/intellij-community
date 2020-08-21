@@ -11,10 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.Version;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -276,6 +273,7 @@ public class GradleInstallationManager {
    * @param homePath expected path to gradle home
    * @return proper in terms of {@link #isGradleSdkHome(File)} path or {@code null} if it is impossible to fix path
    */
+    @NlsSafe
     public String suggestBetterGradleHomePath(@NotNull String homePath) {
     Path path = Paths.get(homePath);
     if (path.startsWith(BREW_GRADLE_LOCATION)) {
