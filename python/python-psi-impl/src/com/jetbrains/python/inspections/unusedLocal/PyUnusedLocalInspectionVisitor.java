@@ -4,8 +4,8 @@ package com.jetbrains.python.inspections.unusedLocal;
 import com.google.common.collect.ImmutableMap;
 import com.intellij.codeInsight.controlflow.ControlFlowUtil;
 import com.intellij.codeInsight.controlflow.Instruction;
-import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -502,7 +502,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     return false;
   }
 
-  private void registerWarning(@NotNull final PsiElement element, final String msg, LocalQuickFix... quickfixes) {
+  private void registerWarning(@NotNull PsiElement element, @InspectionMessage String msg, LocalQuickFix @NotNull... quickfixes) {
     registerProblem(element, msg, ProblemHighlightType.LIKE_UNUSED_SYMBOL, null, quickfixes);
   }
 

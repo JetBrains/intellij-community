@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.Stack;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.inspections.quickfix.RemoveUnnecessaryBackslashQuickFix;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -110,7 +111,8 @@ public class PyUnnecessaryBackslashInspection extends PyInspection {
       if (children != null) {
         for (PsiWhiteSpace ws : children) {
           if (ws.getText().contains("\\")) {
-            registerProblem(ws, "Unnecessary backslash in expression.", new RemoveUnnecessaryBackslashQuickFix());
+            registerProblem(ws, PyPsiBundle.message("INSP.unnecessary.backslash.unnecessary.backslash.in.expression"),
+                            new RemoveUnnecessaryBackslashQuickFix());
           }
         }
       }

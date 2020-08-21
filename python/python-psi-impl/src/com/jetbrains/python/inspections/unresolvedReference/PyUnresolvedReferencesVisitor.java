@@ -87,7 +87,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
       if (type instanceof PyClassType && !((PyClassType)type).isAttributeWritable(attrName, myTypeEvalContext)) {
         final ASTNode nameNode = node.getNameElement();
         final PsiElement e = nameNode != null ? nameNode.getPsi() : node;
-        registerProblem(e, "'" + type.getName() + "' object has no attribute '" + attrName + "'");
+        registerProblem(e, PyPsiBundle.message("INSP.unresolved.refs.class.object.has.no.attribute", type.getName(), attrName));
       }
     }
   }
@@ -228,7 +228,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
     else if (reference instanceof PyImportReference &&
              target == reference.getElement().getContainingFile() &&
              !isContainingFileImportAllowed(node, (PsiFile)target)) {
-      registerProblem(node, "Import resolves to its containing file");
+      registerProblem(node, PyPsiBundle.message("INSP.unresolved.refs.import.resolves.to.its.containing.file"));
     }
   }
 
@@ -314,7 +314,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
         ) != null
       )) {
         severity = HighlightSeverity.WEAK_WARNING;
-        description = PyPsiBundle.message("INSP.module.$0.not.found", refText);
+        description = PyPsiBundle.message("INSP.unresolved.refs.module.not.found", refText);
         // TODO: mark the node so that future references pointing to it won't result in a error, but in a warning
       }
     }
@@ -352,22 +352,22 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
                   className = metaClassType.getName();
                 }
               }
-              description = PyPsiBundle.message("INSP.unresolved.operator.ref",
+              description = PyPsiBundle.message("INSP.unresolved.refs.class.does.not.define.operator",
                                                 className, refName,
                                                 ((PyOperatorReference)reference).getReadableOperatorName());
             }
             else {
-              description = PyPsiBundle.message("INSP.unresolved.ref.$0.for.class.$1", refText, type.getName());
+              description = PyPsiBundle.message("INSP.unresolved.refs.unresolved.attribute.for.class", refText, type.getName());
             }
           }
           else {
-            description = PyPsiBundle.message("INSP.cannot.find.$0.in.$1", refText, type.getName());
+            description = PyPsiBundle.message("INSP.unresolved.refs.cannot.find.reference.in.type", refText, type.getName());
           }
           markedQualified = true;
         }
       }
       if (!markedQualified) {
-        description = PyPsiBundle.message("INSP.unresolved.ref.$0", refText);
+        description = PyPsiBundle.message("INSP.unresolved.refs.unresolved.reference", refText);
 
         ContainerUtil.addAll(fixes, getAutoImportFixes(node, reference, element));
         ContainerUtil.addIfNotNull(fixes, getCreateClassFix(refText, element));
