@@ -1,12 +1,8 @@
 <root>
-
   <item name='org.jetbrains.idea.maven.model.MavenArchetype artifactId'>
     <annotation name='com.intellij.openapi.util.NlsSafe' />
   </item>
   <item name='org.jetbrains.idea.maven.model.MavenArchetype description'>
-    <annotation name='com.intellij.openapi.util.NlsSafe' />
-  </item>
-  <item name='org.jetbrains.idea.maven.model.MavenArchetype groupId'>
     <annotation name='com.intellij.openapi.util.NlsSafe' />
   </item>
   <item name='org.jetbrains.idea.maven.model.MavenArchetype groupId'>
@@ -18,11 +14,6 @@
   <item name='org.jetbrains.idea.maven.model.MavenArchetype version'>
     <annotation name='com.intellij.openapi.util.NlsSafe' />
   </item>
-
-  <item name='org.jetbrains.idea.maven.model.MavenArchetype version'>
-    <annotation name='com.intellij.openapi.util.NlsSafe' />
-  </item>
-
   <item name='org.jetbrains.idea.maven.model.MavenProjectProblem java.lang.String getDescription()'>
     <annotation name='com.intellij.openapi.util.NlsSafe' />
   </item>
