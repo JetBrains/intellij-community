@@ -2,8 +2,8 @@
 package com.jetbrains.python.buildout.config;
 
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.util.NlsSafe;
 import icons.PythonIcons;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,9 +11,9 @@ import javax.swing.*;
 
 public final class BuildoutCfgFileType extends LanguageFileType {
   public static final BuildoutCfgFileType INSTANCE = new BuildoutCfgFileType();
-  @NonNls public static final String DEFAULT_EXTENSION = "cfg";
-  @NonNls private static final String NAME = "BuildoutCfg";
-  @NonNls private static final String DESCRIPTION = "Buildout config";
+  public static final @NlsSafe String DEFAULT_EXTENSION = "cfg";
+  private static final @NlsSafe String NAME = "BuildoutCfg";
+  private static final @NlsSafe String DESCRIPTION = "Buildout config";
 
   private BuildoutCfgFileType() {
     super(BuildoutCfgLanguage.INSTANCE);
