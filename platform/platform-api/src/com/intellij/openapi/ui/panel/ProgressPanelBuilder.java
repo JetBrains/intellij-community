@@ -25,7 +25,7 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
   private static final Color SEPARATOR_COLOR = JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground();
 
   private final JProgressBar myProgressBar;
-  private String initialLabelText;
+  private @NlsContexts.Label String initialLabelText;
   private boolean labelAbove = true;
 
   private Runnable cancelAction;
@@ -50,7 +50,7 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
      * @param text label text
      * @return <code>this</code>
      */
-  public ProgressPanelBuilder withLabel(@NotNull String text) {
+  public ProgressPanelBuilder withLabel(@NlsContexts.Label @NotNull String text) {
     initialLabelText = text;
     return this;
   }

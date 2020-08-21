@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.table.JBTable;
@@ -272,7 +273,7 @@ public abstract class OrderPanel<T> extends JPanel {
 
   public abstract void setChecked(T entry, boolean checked);
 
-  public String getCheckboxColumnName() {
+  public @NlsContexts.ColumnName String getCheckboxColumnName() {
     if (CHECKBOX_COLUMN_NAME == null) {
       CHECKBOX_COLUMN_NAME = UIBundle.message("order.entries.panel.export.column.name");
     }

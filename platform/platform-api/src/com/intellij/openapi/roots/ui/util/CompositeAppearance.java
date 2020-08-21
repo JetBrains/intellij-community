@@ -105,20 +105,20 @@ public class CompositeAppearance implements ModifiableCellAppearanceEx {
     return new DequeSuffix();
   }
 
-  public static CompositeAppearance textComment(String text, String comment) {
+  public static CompositeAppearance textComment(@Nls String text, String comment) {
     DequeEnd ending = new CompositeAppearance().getEnding();
     ending.addText(text);
     ending.addComment(comment);
     return ending.getAppearance();
   }
 
-  public static CompositeAppearance single(String text, SimpleTextAttributes textAttributes) {
+  public static CompositeAppearance single(@Nls String text, SimpleTextAttributes textAttributes) {
     CompositeAppearance result = new CompositeAppearance();
     result.getEnding().addText(text, textAttributes);
     return result;
   }
 
-  public static CompositeAppearance single(String text) {
+  public static CompositeAppearance single(@Nls String text) {
     return single(text, SimpleTextAttributes.REGULAR_ATTRIBUTES);
   }
 

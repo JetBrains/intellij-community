@@ -190,7 +190,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
     return myTabs.getTabAt(index).getIcon();
   }
 
-  void setTitleAt(int index, @NotNull String text) {
+  void setTitleAt(int index, @NlsContexts.TabTitle @NotNull String text) {
     myTabs.getTabAt(index).setText(text);
   }
 

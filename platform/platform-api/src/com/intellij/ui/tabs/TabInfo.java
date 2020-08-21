@@ -98,7 +98,7 @@ public final class TabInfo implements Queryable, PlaceProvider {
   }
 
   @NotNull
-  public TabInfo setText(@NotNull String text) {
+  public TabInfo setText(@NlsContexts.TabTitle @NotNull String text) {
     List<SimpleTextAttributes> attributes = myText.getAttributes();
     TextAttributes textAttributes = attributes.size() == 1 ? attributes.get(0).toTextAttributes() : null;
     TextAttributes defaultAttributes = getDefaultAttributes().toTextAttributes();

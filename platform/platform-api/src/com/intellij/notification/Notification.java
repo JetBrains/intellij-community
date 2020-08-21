@@ -67,7 +67,7 @@ public class Notification {
   private String mySubtitle;
   private @NotificationContent String myContent;
   private NotificationListener myListener;
-  private String myDropDownText;
+  private @LinkLabel String myDropDownText;
   private List<AnAction> myActions;
   private CollapseActionsDirection myCollapseActionsDirection = CollapseActionsDirection.KEEP_RIGHTMOST;
   private AnAction myContextHelpAction;
@@ -140,7 +140,7 @@ public class Notification {
                @NotNull NotificationType type,
                @Nullable NotificationListener listener,
                @Nullable @NonNls String notificationId,
-               @Nullable String dropDownText,
+               @Nullable @LinkLabel String dropDownText,
                @Nullable List<AnAction> actions,
                @Nullable AnAction contextHelpAction,
                @Nullable Runnable whenExpired,

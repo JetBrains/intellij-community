@@ -34,13 +34,13 @@ public abstract class ReorderableListController <T> {
 
   protected abstract void addActionDescription(ActionDescription description);
 
-  public AddActionDescription addAddAction(final String actionName, final Factory<? extends T> creator, final boolean createShortcut) {
+  public AddActionDescription addAddAction(final @NlsActions.ActionText String actionName, final Factory<? extends T> creator, final boolean createShortcut) {
     final AddActionDescription description = new AddActionDescription(actionName, creator, createShortcut);
     addActionDescription(description);
     return description;
   }
 
-  public AddMultipleActionDescription addAddMultipleAction(final String actionName, final Factory<? extends Collection<T>> creator, final boolean createShortcut) {
+  public AddMultipleActionDescription addAddMultipleAction(final @NlsActions.ActionText String actionName, final Factory<? extends Collection<T>> creator, final boolean createShortcut) {
     final AddMultipleActionDescription description = new AddMultipleActionDescription(actionName, creator, createShortcut);
     addActionDescription(description);
     return description;
@@ -241,7 +241,7 @@ public abstract class ReorderableListController <T> {
     private final boolean myCreateShortcut;
     private Icon myIcon = IconUtil.getAddIcon();
 
-    public AddActionDescriptionBase(final String actionDescription, final Factory<? extends V> addHandler, final boolean createShortcut) {
+    public AddActionDescriptionBase(final @NlsActions.ActionText String actionDescription, final Factory<? extends V> addHandler, final boolean createShortcut) {
       myActionDescription = actionDescription;
       myAddHandler = addHandler;
       myCreateShortcut = createShortcut;
@@ -284,7 +284,7 @@ public abstract class ReorderableListController <T> {
   }
 
   public class AddActionDescription extends AddActionDescriptionBase<T> {
-    public AddActionDescription(final String actionDescription, final Factory<? extends T> addHandler, final boolean createShortcut) {
+    public AddActionDescription(final @NlsActions.ActionText String actionDescription, final Factory<? extends T> addHandler, final boolean createShortcut) {
       super(actionDescription, addHandler, createShortcut);
     }
 
@@ -298,7 +298,7 @@ public abstract class ReorderableListController <T> {
   }
 
   public class AddMultipleActionDescription extends AddActionDescriptionBase<Collection<T>> {
-    public AddMultipleActionDescription(final String actionDescription, final Factory<? extends Collection<T>> addHandler, final boolean createShortcut) {
+    public AddMultipleActionDescription(final @NlsActions.ActionText String actionDescription, final Factory<? extends Collection<T>> addHandler, final boolean createShortcut) {
       super(actionDescription, addHandler, createShortcut);
     }
 

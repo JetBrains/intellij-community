@@ -308,7 +308,7 @@ public final class EditorWindow {
     myTabbedPane.setWaveColor(index, color);
   }
 
-  private void setTitleAt(int index, @NotNull String text) {
+  private void setTitleAt(int index, @NlsContexts.TabTitle @NotNull String text) {
     myTabbedPane.setTitleAt(index, text);
   }
 

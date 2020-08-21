@@ -9,6 +9,7 @@ import java.util.function.Supplier
 import javax.swing.JComponent
 
 class TabDescriptor(val component: JComponent, private val displayNamePointer: Supplier<@TabTitle String>) : Disposable {
+  @get:TabTitle
   val displayName: @TabTitle String
     get() = displayNamePointer.get()
 

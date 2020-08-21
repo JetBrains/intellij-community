@@ -14,7 +14,7 @@ import javax.swing.Icon
 
 private val LOG = logger<NotificationGroup>()
 private val registeredGroups: MutableMap<String, NotificationGroup> = ConcurrentHashMap()
-private val registeredTitles: MutableMap<String, String> = ConcurrentHashMap()
+private val registeredTitles: MutableMap<@NonNls String, @NotificationTitle String> = ConcurrentHashMap()
 
 /**
  * Groups notifications and allows controlling display options in Settings.
