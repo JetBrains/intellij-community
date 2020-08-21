@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.BeforeAfter;
 import com.intellij.util.containers.ContainerUtil;
@@ -361,8 +362,8 @@ public final class TextPatchBuilder {
   private static String getContent(@NotNull AirContentRevision revision) throws VcsException {
     String beforeContent = revision.getContentAsString();
     if (beforeContent == null) {
-      throw new VcsException(String.format("Failed to fetch old content for file %s in revision %s",
-                                           revision.getPath().getPath(), revision.getRevisionNumber()));
+      throw new VcsException(
+        VcsBundle.message("patch.failed.to.fetch.old.content.for.file.name.in.revision", revision.getPath().getPath(),revision.getRevisionNumber()));
     }
     return beforeContent;
   }
