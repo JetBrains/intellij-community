@@ -32,7 +32,7 @@ public class VcsRootErrorImpl implements VcsRootError {
 
   @Override
   public String toString() {
-    return String.format("VcsRootError{%s - %s}", myType, myMapping);
+    return String.format("VcsRootError{%s - %s}", myType, myMapping); //NON-NLS
   }
 
   @Override
