@@ -107,6 +107,9 @@
   <item name='org.jdom.Element java.lang.String getChildTextNormalize(java.lang.String, org.jdom.Namespace) 0'>
     <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
+  <item name='org.jdom.Element java.lang.String getChildTextTrim(java.lang.String)'>
+    <annotation name='com.intellij.openapi.util.NlsSafe'/>
+  </item>
   <item name='org.jdom.Element java.lang.String getChildTextTrim(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>

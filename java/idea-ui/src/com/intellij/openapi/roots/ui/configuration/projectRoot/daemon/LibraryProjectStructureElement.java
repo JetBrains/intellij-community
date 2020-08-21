@@ -19,6 +19,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.LibraryConfigurab
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
@@ -75,7 +76,7 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
     }
   }
 
-  private static String createInvalidRootsDescription(List<String> invalidClasses, String rootName, String libraryName) {
+  private static @NlsContexts.DetailedDescription String createInvalidRootsDescription(List<String> invalidClasses, String rootName, String libraryName) {
     HtmlBuilder buffer = new HtmlBuilder();
     final String name = StringUtil.escapeXmlEntities(libraryName);
     final HtmlChunk.Element link = HtmlChunk.link("http://library/" + name, name);

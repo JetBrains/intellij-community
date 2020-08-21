@@ -57,7 +57,7 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
 
   protected abstract JComponent createResultsPanel();
 
-  protected abstract String getProgressText();
+  protected abstract @NlsContexts.ProgressText String getProgressText();
 
   protected abstract boolean shouldRunProgress();
 
@@ -129,7 +129,7 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
 
-      Result result = ProgressManager.getInstance().runProcess(() -> calculate(), progress);
+      Result result = ProgressManager.getInstance().runProcess(this::calculate, progress);
       onFinished(result, false);
       return;
     }

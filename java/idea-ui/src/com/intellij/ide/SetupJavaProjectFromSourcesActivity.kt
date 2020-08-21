@@ -2,6 +2,7 @@
 package com.intellij.ide
 
 import com.google.common.collect.ArrayListMultimap
+import com.google.common.collect.Multimap
 import com.intellij.ide.impl.NewProjectUtil
 import com.intellij.ide.impl.NewProjectUtil.setCompilerOutputPath
 import com.intellij.ide.impl.ProjectViewSelectInTarget
@@ -121,9 +122,7 @@ internal class SetupJavaProjectFromSourcesActivity : StartupActivity {
     }
     else {
       title = JavaUiBundle.message("build.scripts.from.multiple.providers.found.notification")
-      content = providersAndFiles.asMap().entries.joinToString("<br/>") { (provider, files) ->
-        provider.name + ": " + filesToLinks(files, projectDirectory)
-      }
+      content = formatContent(providersAndFiles, projectDirectory)
     }
 
     val notification = NOTIFICATION_GROUP.createNotification(title, content, NotificationType.INFORMATION, showFileInProjectViewListener)
@@ -145,6 +144,14 @@ internal class SetupJavaProjectFromSourcesActivity : StartupActivity {
     }
 
     notification.notify(project)
+  }
+
+  @NlsSafe
+  private fun formatContent(providersAndFiles: Multimap<ProjectOpenProcessor, VirtualFile>,
+                            projectDirectory: VirtualFile): String {
+    return providersAndFiles.asMap().entries.joinToString("<br/>") { (provider, files) ->
+      provider.name + ": " + filesToLinks(files, projectDirectory)
+    }
   }
 
   @NlsSafe

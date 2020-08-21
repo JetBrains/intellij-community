@@ -93,7 +93,7 @@ public abstract class ProjectImportProvider {
 
   @Nullable
   @Language("HTML")
-  public String getFileSample() {
+  public @Nls String getFileSample() {
     return null;
   }
 }

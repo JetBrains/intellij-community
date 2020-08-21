@@ -306,7 +306,8 @@ public abstract class BaseLibrariesConfigurable extends BaseStructureConfigurabl
         if (librariesWithUsages > 0) {
           String message;
           if (librariesWithUsages == 1) {
-            message = firstLibraryUsageDescription + ".\nAre you sure you want to delete this library?";
+            message = firstLibraryUsageDescription + ".\n" +
+                      JavaUiBundle.message("dialog.message.are.you.sure.you.want.to.delete.this.library");
           }
           else {
             message = JavaUiBundle.message("libraries.remove.confirmation.text", firstLibraryWithUsageName, librariesWithUsages-1);

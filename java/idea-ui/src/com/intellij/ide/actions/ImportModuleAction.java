@@ -22,6 +22,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ui.configuration.actions.NewModuleAction;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.DeprecatedProjectBuilderForImport;
@@ -168,25 +170,25 @@ public class ImportModuleAction extends AnAction implements NewProjectOrModuleAc
     return createImportWizard(project, dialogParent, file, providers);
   }
 
-  private static String getFileChooserDescription(List<ProjectImportProvider> providers) {
-    StringBuilder builder = new StringBuilder("<html>Select ");
+  private static @NlsContexts.Label String getFileChooserDescription(List<ProjectImportProvider> providers) {
+    HtmlBuilder builder = new HtmlBuilder().append(JavaUiBundle.message("select")).append(" ");
     boolean first = true;
     if (providers.size() > 0) {
       for (ProjectImportProvider provider : providers) {
         String sample = provider.getFileSample();
         if (sample != null) {
           if (!first) {
-            builder.append(", <br>");
+            builder.append(", ").br();
           }
           else {
             first = false;
           }
-          builder.append(sample);
+          builder.appendRaw(sample);
         }
       }
     }
-    builder.append(".</html>");
-    return builder.toString();
+    builder.append(".");
+    return builder.wrapWith("html").toString();
   }
 
   @NotNull

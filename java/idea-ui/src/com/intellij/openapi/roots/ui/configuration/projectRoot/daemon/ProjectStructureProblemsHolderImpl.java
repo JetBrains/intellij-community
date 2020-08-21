@@ -1,5 +1,9 @@
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
+import com.intellij.ide.JavaUiBundle;
+import com.intellij.lang.LangBundle;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.util.SmartList;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
@@ -13,7 +17,8 @@ public class ProjectStructureProblemsHolderImpl implements ProjectStructureProbl
   private List<ProjectStructureProblemDescription> myProblemDescriptions;
 
   @Override
-  public void registerProblem(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String message, @Nullable String description,
+  public void registerProblem(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String message,
+                              @Nullable @NlsContexts.DetailedDescription String description,
                               @NotNull ProjectStructureProblemType problemType,
                               @NotNull PlaceInProjectStructure place,
                               @Nullable ConfigurationErrorQuickFix fix) {
@@ -30,21 +35,19 @@ public class ProjectStructureProblemsHolderImpl implements ProjectStructureProbl
   }
 
   public @Nls String composeTooltipMessage() {
-    final StringBuilder buf = new StringBuilder();
-    buf.append("<html><body>");
+    final HtmlBuilder buf = new HtmlBuilder();
     if (myProblemDescriptions != null) {
       int problems = 0;
       for (ProjectStructureProblemDescription problemDescription : myProblemDescriptions) {
-        buf.append(XmlStringUtil.convertToHtmlContent(problemDescription.getMessage(false))).append("<br>");
+        buf.appendRaw(XmlStringUtil.convertToHtmlContent(problemDescription.getMessage(false))).br();
         problems++;
         if (problems >= 10 && myProblemDescriptions.size() > 12) {
-          buf.append(myProblemDescriptions.size() - problems).append(" more problems...<br>");
+          buf.append(JavaUiBundle.message("x.more.problems", myProblemDescriptions.size() - problems)).br();
           break;
         }
       }
     }
-    buf.append("</body></html>");
-    return buf.toString();
+    return buf.wrapWithHtmlBody().toString();
   }
 
   public boolean containsProblems() {
