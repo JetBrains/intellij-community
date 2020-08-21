@@ -435,9 +435,6 @@ public final class Foundation {
   }
 
   public static class NSArray {
-    private static final ID nsStringCls = getObjcClass("NSArray");
-    private static final Pointer arrayWithObjects = createSelector("arrayWithObjects");
-
     private final ID myDelegate;
 
     public NSArray(ID delegate) {
@@ -459,19 +456,6 @@ public final class Foundation {
         result.add(at(i));
       }
       return result;
-    }
-
-    public static ID createArray(ID @NotNull... ids) {
-      return invoke(nsStringCls, arrayWithObjects, ids, ID.NIL);
-    }
-
-    public static ID createArrayOfStrings(String @NotNull... values) {
-      ID[] ids = new ID[values.length];
-      for (int i = 0; i < values.length; i++) {
-        ids[i] = nsString(values[i]);
-      }
-
-      return createArray(ids);
     }
   }
 
@@ -626,7 +610,7 @@ public final class Foundation {
     return new ID(pointerType.getPointer().getLong(0));
   }
 
-  private static Object[] convertTypes(Object @NotNull [] v) {
+  public static Object[] convertTypes(Object @NotNull [] v) {
     final Object[] result = new Object[v.length + 1];
     for (int i = 0; i < v.length; i++) {
       result[i] = convertType(v[i]);

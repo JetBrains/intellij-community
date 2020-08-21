@@ -132,6 +132,8 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   private final SynchronizedClearableLazy<CollectionComboBoxModel<LafReference>> myPreferredDarkComboBoxModel =
     new SynchronizedClearableLazy<>(() -> new CollectionComboBoxModel<>(getDarkReferences()));
 
+  private final SystemDarkThemeDetector lafDetector = SystemDarkThemeDetector.createDetector(this::syncLaf);
+
   static {
     ourLafClassesAliases.put("idea.dark.laf.classname", DarculaLookAndFeelInfo.CLASS_NAME);
 
@@ -273,16 +275,12 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       }
     });
 
-    if (SystemInfo.isWin10OrNewer) {
-      Toolkit.getDefaultToolkit().addPropertyChangeListener("win.lightTheme.on", e -> syncLaf(e.getNewValue() == Boolean.FALSE));
-    }
     detectAndSyncLaf();
   }
 
   private void detectAndSyncLaf() {
-    SystemDarkThemeDetector detector = SystemDarkThemeDetector.getInstance();
-    if (detector.getDetectionSupported() && isAutoDetect()) {
-      detector.check(this::syncLaf);
+    if (lafDetector.getDetectionSupported() && isAutoDetect()) {
+      lafDetector.check();
     }
   }
 
