@@ -5,6 +5,7 @@ import com.google.common.collect.HashBiMap
 import com.intellij.facet.*
 import com.intellij.facet.impl.FacetModelBase
 import com.intellij.facet.impl.FacetUtil
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.ProjectBundle
@@ -151,18 +152,22 @@ internal open class FacetModelBridge(protected val moduleBridge: ModuleBridge) :
     return moduleBridge.diff?.facetMapping() ?: moduleBridge.entityStorage.current.facetMapping()
   }
 
-  private fun <R> updateDiffOrStorage(updater: MutableExternalEntityMapping<Facet<*>>.() -> R): R {
+  private inline fun <reified R> updateDiffOrStorage(crossinline updater: MutableExternalEntityMapping<Facet<*>>.() -> R): R {
     val diff = moduleBridge.diff
 
     return if (diff != null) {
       diff.mutableFacetMapping().updater()
     }
     else {
-      runWriteAction {
-        WorkspaceModel.getInstance(moduleBridge.project).updateProjectModelSilent {
-          it.mutableFacetMapping().updater()
+      var res: R? = null
+      ApplicationManager.getApplication().invokeAndWait {
+        runWriteAction {
+          WorkspaceModel.getInstance(moduleBridge.project).updateProjectModelSilent {
+            res = it.mutableFacetMapping().updater()
+          }
         }
       }
+      res!!
     }
   }
 
