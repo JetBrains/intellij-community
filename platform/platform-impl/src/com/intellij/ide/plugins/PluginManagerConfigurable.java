@@ -7,6 +7,8 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.auth.PluginAuthService;
+import com.intellij.ide.plugins.auth.PluginAuthSubscriber;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.ide.plugins.newui.*;
 import com.intellij.ide.util.PropertiesComponent;
@@ -75,7 +77,7 @@ import java.util.function.Supplier;
  * @author Alexander Lobas
  */
 public class PluginManagerConfigurable
-  implements SearchableConfigurable, Configurable.NoScroll, Configurable.NoMargin, Configurable.TopComponentProvider {
+  implements SearchableConfigurable, Configurable.NoScroll, Configurable.NoMargin, Configurable.TopComponentProvider, PluginAuthSubscriber {
 
   private static final Logger LOG = Logger.getInstance(PluginManagerConfigurable.class);
 
@@ -138,6 +140,7 @@ public class PluginManagerConfigurable
 
   public PluginManagerConfigurable() {
     this((Project)null);
+    PluginAuthService.INSTANCE.subscribe(this);
   }
 
   /**
@@ -261,8 +264,12 @@ public class PluginManagerConfigurable
     actions.addSeparator();
     actions.add(new ChangePluginStateAction(false));
     actions.add(new ChangePluginStateAction(true));
-
     return actions;
+  }
+
+  @Override
+  public void pluginAuthCallback() {
+    ApplicationManager.getApplication().invokeLater(this::resetPanelsWithoutClearCache, ModalityState.any());
   }
 
   private static void showRightBottomPopup(@NotNull Component component, @NotNull @Nls String title, @NotNull ActionGroup group) {
@@ -316,6 +323,10 @@ public class PluginManagerConfigurable
   private void resetPanels() {
     CustomPluginRepositoryService.getInstance().clearCache();
 
+    resetPanelsWithoutClearCache();
+  }
+
+  void resetPanelsWithoutClearCache(){
     myTagsSorted = null;
     myVendorsSorted = null;
 
@@ -1647,6 +1658,8 @@ public class PluginManagerConfigurable
     InstalledPluginsState.getInstance().runShutdownCallback();
 
     InstalledPluginsState.getInstance().resetChangesAppliedWithoutRestart();
+
+    PluginAuthService.INSTANCE.unsubscribe(this);
   }
 
   @Override

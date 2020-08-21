@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginNode
+import com.intellij.ide.plugins.auth.PluginAuthService.addAuthHeadersIfTheyExist
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
@@ -258,6 +259,7 @@ open class MarketplaceRequests {
     return HttpRequests
       .request(url)
       .tuner { connection -> connection.setUpETag(eTag) }
+      .tuner { connection ->  addAuthHeadersIfTheyExist(connection, url) }
       .productNameAsUserAgent()
       .connect { request ->
         try {
