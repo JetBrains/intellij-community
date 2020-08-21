@@ -21,7 +21,7 @@ public class GitTag extends GitRepositoryAction {
   @Override
   @NotNull
   protected String getActionName() {
-    return GitBundle.getString("tag.action.name");
+    return GitBundle.message("tag.action.name");
   }
 
   /**
@@ -33,7 +33,7 @@ public class GitTag extends GitRepositoryAction {
                          @NotNull final VirtualFile defaultRoot) {
     GitTagDialog d = new GitTagDialog(project, gitRoots, defaultRoot);
     if (d.showAndGet()) {
-      new Task.Modal(project, "Tagging...", true) {
+      new Task.Modal(project, GitBundle.message("tag.progress.title"), true) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           d.runAction();

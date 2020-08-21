@@ -30,7 +30,7 @@ public class GitStash extends GitRepositoryAction {
       return;
     }
 
-    new Task.Backgroundable(project, GitBundle.getString("stashing.title"), false) {
+    new Task.Backgroundable(project, GitBundle.message("stashing.progress.title"), false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try (AccessToken ignored = DvcsUtil.workingTreeChangeStarted(project, getActionName())) {
@@ -39,7 +39,7 @@ public class GitStash extends GitRepositoryAction {
             GitUtil.refreshVfsInRoot(d.getGitRoot());
           }
           else {
-            VcsNotifier.getInstance(project).notifyError("Stash Failed", result.getErrorOutputAsHtmlString(), true);
+            VcsNotifier.getInstance(project).notifyError(GitBundle.message("stash.error"), result.getErrorOutputAsHtmlString(), true);
           }
         }
       }
@@ -49,6 +49,6 @@ public class GitStash extends GitRepositoryAction {
   @Override
   @NotNull
   protected String getActionName() {
-    return GitBundle.getString("stash.action.name");
+    return GitBundle.message("stash.action.name");
   }
 }

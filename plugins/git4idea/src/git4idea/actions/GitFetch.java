@@ -9,6 +9,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import git4idea.GitVcs;
 import git4idea.fetch.GitFetchResult;
+import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,7 +34,7 @@ public class GitFetch extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getRequiredData(CommonDataKeys.PROJECT);
-    GitVcs.runInBackground(new Task.Backgroundable(project, "Fetching...", true) {
+    GitVcs.runInBackground(new Task.Backgroundable(project, GitBundle.message("fetching"), true) {
       GitFetchResult result;
 
       @Override

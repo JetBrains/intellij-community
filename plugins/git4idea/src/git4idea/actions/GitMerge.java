@@ -38,7 +38,7 @@ public class GitMerge extends GitMergeAction {
   @Override
   @NotNull
   protected String getActionName() {
-    return GitBundle.getString("merge.action.name");
+    return GitBundle.message("merge.action.name");
   }
 
   @Nullable
