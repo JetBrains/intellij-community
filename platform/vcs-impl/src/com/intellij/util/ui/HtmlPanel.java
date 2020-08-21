@@ -1,6 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.FontUtil;
 import com.intellij.ui.BrowserHyperlinkListener;
@@ -60,11 +63,11 @@ public abstract class HtmlPanel extends JEditorPane implements HyperlinkListener
       setText("");
     }
     else {
-      setText("<html><head>" + // NON-NLS
-              UIUtil.getCssFontDeclaration(getBodyFont()) +
-              "</head><body>" + // NON-NLS
-              text +
-              "</body></html>"); // NON-NLS
+      @NlsSafe String cssFontDeclaration = UIUtil.getCssFontDeclaration(getBodyFont());
+      setText(new HtmlBuilder()
+                .append(HtmlChunk.raw(cssFontDeclaration).wrapWith("head"))
+                .append(HtmlChunk.raw(text).wrapWith(HtmlChunk.body()))
+                .wrapWith(HtmlChunk.html()).toString());
     }
   }
 
@@ -74,6 +77,7 @@ public abstract class HtmlPanel extends JEditorPane implements HyperlinkListener
   }
 
   @NotNull
+  @Nls
   protected abstract String getBody();
 
   @Override
