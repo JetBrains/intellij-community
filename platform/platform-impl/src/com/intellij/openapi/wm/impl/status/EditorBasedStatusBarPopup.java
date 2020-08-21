@@ -36,10 +36,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IndexingBundle;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -339,7 +336,7 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
      * Use myConnection.subscribe(DumbService.DUMB_MODE, your_listener) inside registerCustomListeners,
      *   and call update() inside listener callbacks, to refresh your widget state when indexes are loaded
      */
-    public static WidgetState getDumbModeState(String name, String widgetPrefix) {
+    public static WidgetState getDumbModeState(@Nls String name, @StatusBarText String widgetPrefix) {
       // todo: update accordingly to UX-252
       return new WidgetState(ActionUtil.getUnavailableMessage(name, false),
                              widgetPrefix + IndexingBundle.message("progress.indexing.updating"),
