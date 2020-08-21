@@ -29,6 +29,7 @@ public abstract class VagrantSupport {
                                                                              @Nullable String machineName);
 
   public static void showMissingVagrantSupportMessage(final @Nullable Project project) {
+    //noinspection DialogTitleCapitalization
     UIUtil.invokeLaterIfNeeded(() -> Messages.showErrorDialog(project, IdeBundle.message("dialog.message.enable.vagrant.support.plugin"),
                                                               IdeBundle.message("dialog.title.vagrant.support.disabled")));
   }

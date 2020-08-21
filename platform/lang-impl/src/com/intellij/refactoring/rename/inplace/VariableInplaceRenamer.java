@@ -213,7 +213,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
         return;
       }
       JBPopupFactory.getInstance()
-        .createConfirmation(LangBundle.message("popup.title.inserted.identifier.valid"), IdeBundle.message("button.continue.editing"),
+        .createConfirmation(LangBundle.message("popup.title.inserted.identifier.valid"), IdeBundle.message("label.continue.editing"),
                             CommonBundle.getCancelButtonText(),
                             () -> createInplaceRenamerToRestart(variable, myEditor, newName).performInplaceRefactoring(nameSuggestions), 0).showInBestPositionFor(myEditor);
     }
