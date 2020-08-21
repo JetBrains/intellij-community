@@ -142,6 +142,7 @@ public class AssignTargetAnnotator extends PyAnnotator {
     public void visitPyReferenceExpression(final PyReferenceExpression node) {
       String referencedName = node.getReferencedName();
       if (PyNames.NONE.equals(referencedName)) {
+        //noinspection DialogTitleCapitalization
         getHolder().newAnnotation(HighlightSeverity.ERROR, (myOp == Operation.Delete) ? DELETING_NONE : ASSIGNMENT_TO_NONE).range(node).create();
       }
     }
@@ -152,6 +153,7 @@ public class AssignTargetAnnotator extends PyAnnotator {
       if (PyNames.NONE.equals(targetName)) {
         final VirtualFile vfile = node.getContainingFile().getVirtualFile();
         if (vfile != null && !vfile.getUrl().contains("/" + PythonSdkUtil.SKELETON_DIR_NAME + "/")){
+          //noinspection DialogTitleCapitalization
           getHolder().newAnnotation(HighlightSeverity.ERROR, (myOp == Operation.Delete) ? DELETING_NONE : ASSIGNMENT_TO_NONE).range(node).create();
         }
       }
