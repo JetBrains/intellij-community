@@ -80,6 +80,7 @@ public final class TextWithMnemonic {
 
     Matcher matcher = MNEMONIC.matcher(myText);
     if (matcher.find()) {
+      //noinspection HardCodedStringLiteral
       return fromPlainText(matcher.replaceAll(""));
     }
     return this;

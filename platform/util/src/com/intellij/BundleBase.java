@@ -6,10 +6,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.text.OrdinalFormat;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.lang.reflect.Field;
 import java.text.MessageFormat;
@@ -55,8 +52,8 @@ public abstract class BundleBase {
     if (unassignedParams <= 0) throw new IllegalArgumentException();
     Object[] newParams = new Object[params.length + unassignedParams];
     System.arraycopy(params, 0, newParams, 0, params.length);
-    final String prefix = "#$$$TemplateParameter$$$#";
-    final String suffix = "#$$$/TemplateParameter$$$#";
+    @NonNls String prefix = "#$$$TemplateParameter$$$#";
+    @NonNls String suffix = "#$$$/TemplateParameter$$$#";
     for (int i = 0; i < unassignedParams; i++) {
       newParams[i + params.length] = prefix + i + suffix;
     }
