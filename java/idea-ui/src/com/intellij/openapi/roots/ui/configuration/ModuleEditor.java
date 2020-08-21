@@ -565,6 +565,7 @@ public abstract class ModuleEditor implements Place.Navigator, Disposable {
 
   public void setModuleName(@NotNull String name) {
     myName = name;
+    updateImportedModelWarning();
   }
 
   private class ModuleEditorPanel extends JPanel implements DataProvider{
