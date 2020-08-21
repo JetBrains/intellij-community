@@ -12,6 +12,7 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -20,7 +21,6 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,9 +29,9 @@ import java.util.*;
 
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 import static com.intellij.openapi.util.text.StringUtil.escapeXmlEntities;
-import static com.intellij.openapi.util.text.StringUtil.pluralize;
 import static com.intellij.openapi.vcs.VcsRootError.Type.UNREGISTERED_ROOT;
 import static com.intellij.util.containers.ContainerUtil.*;
+import static com.intellij.util.ui.UIUtil.BR;
 
 /**
  * Searches for Vcs roots problems via {@link VcsRootErrorsFinder} and notifies about them.
@@ -195,10 +195,9 @@ public final class VcsRootProblemNotifier {
     return new VcsRootErrorsFinder(myProject).find();
   }
 
-  @SuppressWarnings("StringConcatenationInsideStringBufferAppend")
   @NotNull
-  private String makeDescription(@NotNull Collection<? extends VcsRootError> unregisteredRoots,
-                                 @NotNull Collection<? extends VcsRootError> invalidRoots) {
+  private @NlsContexts.NotificationContent String makeDescription(@NotNull Collection<? extends VcsRootError> unregisteredRoots,
+                                                                  @NotNull Collection<? extends VcsRootError> invalidRoots) {
     StringBuilder description = new StringBuilder();
     if (!invalidRoots.isEmpty()) {
       if (invalidRoots.size() == 1) {
@@ -207,10 +206,11 @@ public final class VcsRootProblemNotifier {
         description.append(getInvalidRootDescriptionItem(rootError, vcsName));
       }
       else {
-        description.append("The following directories are registered as VCS roots, but they are not: <br/>" +
-                           joinRootsForPresentation(invalidRoots));
+        description.append(VcsBundle.message("roots.the.following.directories.are.registered.as.vcs.roots.but.they.are.not"))
+          .append(BR)
+          .append(joinRootsForPresentation(invalidRoots));
       }
-      description.append("<br/>");
+      description.append(BR);
     }
 
     if (!unregisteredRoots.isEmpty()) {
@@ -226,10 +226,11 @@ public final class VcsRootProblemNotifier {
   }
 
   @VisibleForTesting
+  @NlsContexts.NotificationContent
   @NotNull
   String getInvalidRootDescriptionItem(@NotNull VcsRootError rootError, @NotNull String vcsName) {
-    return String.format("The directory %s is registered as a %s root, but no %s repositories were found there.",
-                         ROOT_TO_PRESENTABLE.fun(rootError), vcsName, vcsName);
+    return VcsBundle.message("roots.notification.content.directory.registered.as.root.but.no.repositories.were.found.there",
+                             ROOT_TO_PRESENTABLE.fun(rootError), vcsName);
   }
 
   @NotNull
@@ -239,24 +240,24 @@ public final class VcsRootProblemNotifier {
       if (root2.getMapping().isDefaultMapping()) return 1;
       return root1.getMapping().getDirectory().compareTo(root2.getMapping().getDirectory());
     });
-    return StringUtil.join(sortedRoots, ROOT_TO_PRESENTABLE, UIUtil.BR);
+    return StringUtil.join(sortedRoots, ROOT_TO_PRESENTABLE, BR);
   }
 
   @NotNull
-  private static String makeTitle(@NotNull Collection<? extends VcsRootError> unregisteredRoots,
-                                  @NotNull Collection<? extends VcsRootError> invalidRoots,
-                                  boolean rootsAlreadyAdded) {
+  private static @NlsContexts.NotificationTitle String makeTitle(@NotNull Collection<? extends VcsRootError> unregisteredRoots,
+                                                                 @NotNull Collection<? extends VcsRootError> invalidRoots,
+                                                                 boolean rootsAlreadyAdded) {
     String title;
     if (unregisteredRoots.isEmpty()) {
-      title = "Invalid VCS root " + pluralize("mapping", invalidRoots.size());
+      title = VcsBundle.message("roots.notification.title.invalid.vcs.root.choice.mapping.mappings", invalidRoots.size());
     }
     else if (invalidRoots.isEmpty()) {
       String vcs = getVcsName(unregisteredRoots);
-      String repository = pluralize("Repository", unregisteredRoots.size());
-      title = rootsAlreadyAdded ? String.format("%s Integration Enabled", vcs) : String.format("%s %s Found", vcs, repository);
+      title = rootsAlreadyAdded ? VcsBundle.message("roots.notification.title.vcs.name.integration.enabled", vcs)
+                                : VcsBundle.message("notification.title.vcs.name.repository.repositories.found", vcs, unregisteredRoots.size());
     }
     else {
-      title = "VCS root configuration problems";
+      title = VcsBundle.message("roots.notification.title.vcs.root.configuration.problems");
     }
     return title;
   }
