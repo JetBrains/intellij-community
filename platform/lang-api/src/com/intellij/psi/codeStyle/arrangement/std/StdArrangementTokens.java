@@ -4,6 +4,7 @@ package com.intellij.psi.codeStyle.arrangement.std;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -82,11 +83,11 @@ public final class StdArrangementTokens {
     return result;
   }
 
-  private static StdArrangementSettingsToken compositeToken(@NotNull String id,
+  private static StdArrangementSettingsToken compositeToken(@NonNls @NotNull String id,
+                                                            @PropertyKey(resourceBundle = ApplicationBundle.BUNDLE) @NotNull String key,
                                                             @NotNull StdArrangementTokenType type,
-                                                            ArrangementSettingsToken @NotNull ... alternativeTokens)
-  {
-    StdArrangementSettingsToken result = CompositeArrangementToken.create(id, type, alternativeTokens);
+                                                            ArrangementSettingsToken @NotNull ... alternativeTokens) {
+    StdArrangementSettingsToken result = CompositeArrangementToken.create(id, ApplicationBundle.message(key), type, alternativeTokens);
     TOKENS_BY_ID.put(id, result);
     return result;
   }
@@ -179,9 +180,9 @@ public final class StdArrangementTokens {
     @NotNull public static final ArrangementSettingsToken SYNCHRONIZED    = invertible("SYNCHRONIZED", StdArrangementTokenType.MODIFIER);
     @NotNull public static final ArrangementSettingsToken ABSTRACT        = invertible("ABSTRACT", StdArrangementTokenType.MODIFIER);
     @NotNull public static final ArrangementSettingsToken OVERRIDE        = invertible("OVERRIDE", StdArrangementTokenType.MODIFIER);
-    @NotNull public static final ArrangementSettingsToken GETTER          = compositeToken("GETTER", StdArrangementTokenType.MODIFIER, METHOD, PUBLIC);
-    @NotNull public static final ArrangementSettingsToken SETTER          = compositeToken("SETTER", StdArrangementTokenType.MODIFIER, METHOD, PUBLIC);
-    @NotNull public static final ArrangementSettingsToken OVERRIDDEN      = compositeToken("OVERRIDDEN", StdArrangementTokenType.MODIFIER, METHOD, PUBLIC, PROTECTED);
+    @NotNull public static final ArrangementSettingsToken GETTER          = compositeToken("GETTER", "arrangement.settings.text.modifier.getter", StdArrangementTokenType.MODIFIER, METHOD, PUBLIC);
+    @NotNull public static final ArrangementSettingsToken SETTER          = compositeToken("SETTER", "arrangement.settings.text.modifier.setter", StdArrangementTokenType.MODIFIER, METHOD, PUBLIC);
+    @NotNull public static final ArrangementSettingsToken OVERRIDDEN      = compositeToken("OVERRIDDEN", "arrangement.settings.text.modifier.overridden", StdArrangementTokenType.MODIFIER, METHOD, PUBLIC, PROTECTED);
     private static final NotNullLazyValue<Set<ArrangementSettingsToken>> TOKENS = collectFields(Modifier.class);
 
     public static final Set<ArrangementSettingsToken> MODIFIER_AS_TYPE = ContainerUtil.newHashSet(GETTER, SETTER, OVERRIDDEN);
