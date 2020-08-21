@@ -549,7 +549,7 @@ abstract class Cell : BaseBuilder {
   operator fun <T : JComponent> T.invoke(
     vararg constraints: CCFlags,
     growPolicy: GrowPolicy? = null,
-    comment: String? = null
+    @DetailedDescription comment: String? = null
   ): CellBuilder<T> = component(this).apply {
     constraints(*constraints)
     if (comment != null) comment(comment)

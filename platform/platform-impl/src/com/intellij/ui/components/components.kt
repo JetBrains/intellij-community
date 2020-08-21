@@ -157,7 +157,7 @@ fun dialog(@DialogTitle title: String,
            okActionEnabled: Boolean = true,
            project: Project? = null,
            parent: Component? = null,
-           errorText: String? = null,
+           @DialogMessage errorText: String? = null,
            modality: IdeModalityType = IdeModalityType.IDE,
            createActions: ((DialogManager) -> List<Action>)? = null,
            ok: (() -> List<ValidationInfo>?)? = null): DialogWrapper {

@@ -261,7 +261,7 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
     return if (CommonDataKeys.PROJECT.`is`(dataId)) project else null
   }
 
-  private fun getDataInner(dataId: String): Any? {
+  private fun getDataInner(@NonNls dataId: String): Any? {
     return when {
       CommonDataKeys.PROJECT.`is`(dataId) -> project
       else -> getData(dataId)

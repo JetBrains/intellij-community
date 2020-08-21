@@ -26,6 +26,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser
 import com.intellij.openapi.util.InvalidDataException
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.KeyStrokeAdapter
 import com.intellij.util.ArrayUtilRt
@@ -742,7 +743,7 @@ private val visualAssistKeymap = "com.intellij.plugins.visualassistkeymap"
 private val riderKeymap = "com.intellij.plugins.riderkeymap"
 private val vsCodeKeymap = "com.intellij.plugins.vscodekeymap"
 
-internal fun notifyAboutMissingKeymap(keymapName: String, message: String, isParent: Boolean) {
+internal fun notifyAboutMissingKeymap(keymapName: String, @NlsContexts.NotificationContent message: String, isParent: Boolean) {
   val connection = ApplicationManager.getApplication().messageBus.connect()
   connection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
     override fun projectOpened(project: Project) {

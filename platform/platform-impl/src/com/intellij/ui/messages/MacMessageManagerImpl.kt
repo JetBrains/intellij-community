@@ -10,7 +10,7 @@ import com.intellij.openapi.ui.DialogWrapper.DoNotAskOption
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.Messages.YesNoCancelResult
 import com.intellij.openapi.ui.Messages.YesNoResult
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.IdeFocusManager
@@ -23,6 +23,7 @@ import com.intellij.ui.mac.foundation.MacUtil
 import com.intellij.util.ui.UIUtil
 import com.sun.jna.Callback
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import java.awt.AWTEvent
@@ -283,11 +284,11 @@ private class NativeMacMessageManager : MacMessages() {
     }
 
     @YesNoCancelResult
-    fun showAlertDialog(title: String,
-                        message: String? = null,
-                        yesText: String,
-                        alternateText: String? = null,
-                        noText: String? = null,
+    fun showAlertDialog(@NlsContexts.DialogTitle title: String,
+                        @NlsContexts.DialogMessage message: String? = null,
+                        @NlsContexts.Button yesText: String,
+                        @NlsContexts.Button alternateText: String? = null,
+                        @NlsContexts.Button noText: String? = null,
                         window: Window? = null,
                         errorStyle: Boolean = false,
                         doNotAskOption: DoNotAskOption? = null): Int {
@@ -465,7 +466,7 @@ private class DialogParamsWrapper(private val dialogType: DialogType) {
     params.put(name, Foundation.nsString(value))
   }
 
-  fun removeMnemonicAndAdd(name: Enum<*>, value: String?) {
+  fun removeMnemonicAndAdd(name: Enum<*>, @Nls value: String?) {
     params.put(name, Foundation.nsString(if (value == null) "-1" else UIUtil.removeMnemonic(value)))
   }
 

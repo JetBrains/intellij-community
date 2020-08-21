@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.BalloonBuilder
+import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.annotations.NonNls
 import java.util.function.Consumer
 import java.util.function.Predicate
@@ -159,7 +160,7 @@ abstract class ToolWindowManager {
 
 data class ToolWindowBalloonShowOptions(val toolWindowId: String,
                                         val type: MessageType,
-                                        val htmlBody: String,
+                                        @NlsContexts.PopupContent val htmlBody: String,
                                         val icon: Icon? = null,
                                         val listener: HyperlinkListener? = null,
                                         val balloonCustomizer: Consumer<BalloonBuilder>? = null)

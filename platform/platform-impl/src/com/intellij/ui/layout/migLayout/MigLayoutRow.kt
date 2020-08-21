@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.HideableTitledSeparator
 import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.TitledSeparator
@@ -58,7 +59,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     }
 
     // as static method to ensure that members of current row are not used
-    private fun configureSeparatorRow(row: MigLayoutRow, title: String?) {
+    private fun configureSeparatorRow(row: MigLayoutRow, @NlsContexts.Separator title: String?) {
       val separatorComponent = if (title == null) SeparatorComponent(0, OnePixelDivider.BACKGROUND, null) else TitledSeparator(title)
       row.addTitleComponent(separatorComponent, isEmpty = title == null)
     }

@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowContextMenuActionBase
@@ -31,7 +32,7 @@ private const val OUTLINE_PROPERTY = "JComponent.outline"
 private const val ERROR_VALUE = "error"
 
 
-open class ToolWindowTabRenameActionBase(val toolWindowId: String, val labelText: String) : ToolWindowContextMenuActionBase() {
+open class ToolWindowTabRenameActionBase(val toolWindowId: String, @NlsContexts.Label val labelText: String) : ToolWindowContextMenuActionBase() {
   override fun update(e: AnActionEvent, toolWindow: ToolWindow, selectedContent: Content?) {
     val id = toolWindow.id
     e.presentation.isEnabledAndVisible = e.project != null && id == toolWindowId && selectedContent != null

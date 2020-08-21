@@ -10,6 +10,7 @@ import com.intellij.openapi.application.IdeUrlTrackingParametersProvider
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.ui.VerticalFlowLayout
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.text.StringUtil
@@ -44,7 +45,7 @@ object UpdateInfoPanelUI {
                   patches: UpdateChain?,
                   testPatch: File?,
                   writeProtected: Boolean,
-                  licenseInfo: Pair<String, Color>?,
+                  licenseInfo: Pair<@NlsContexts.Label String, Color>?,
                   enableLink: Boolean,
                   updatedChannel: UpdateChannel): JPanel {
     val panel = JPanel(BorderLayout())
@@ -137,7 +138,7 @@ object UpdateInfoPanelUI {
     }
   }
 
-  private fun getConfigLink(panel: JPanel, text: String?): LinkLabel<*> =
+  private fun getConfigLink(panel: JPanel, @NlsContexts.LinkLabel text: String?): LinkLabel<*> =
     LinkLabel.create(text) { ShowSettingsUtil.getInstance().editConfigurable(panel, UpdateSettingsConfigurable(false)) }
       .also { it.font = smallFont(it.font) }
 

@@ -8,6 +8,7 @@ import com.intellij.jna.JnaLoader
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.io.WindowsRegistryUtil
 import com.intellij.openapi.wm.impl.IdeMenuBar
 import com.intellij.openapi.wm.impl.IdeRootPane
@@ -232,7 +233,7 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
     override fun dispose() {
     }
 
-    protected class CustomFrameAction(name: String, icon: Icon, val action: () -> Unit) : AbstractAction(name, icon) {
+    protected class CustomFrameAction(@NlsActions.ActionText name: String, icon: Icon, val action: () -> Unit) : AbstractAction(name, icon) {
         override fun actionPerformed(e: ActionEvent) = action()
     }
 

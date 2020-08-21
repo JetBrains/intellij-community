@@ -50,6 +50,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.objectTree.ThrowableInterner
 import com.intellij.openapi.util.registry.Registry
@@ -624,7 +625,7 @@ object DynamicPlugins {
     }
   }
 
-  internal fun notify(text: String, notificationType: NotificationType, vararg actions: AnAction) {
+  internal fun notify(@NlsContexts.NotificationContent text: String, notificationType: NotificationType, vararg actions: AnAction) {
     val notification = GROUP.createNotification(text, notificationType)
     for (action in actions) {
       notification.addAction(action)

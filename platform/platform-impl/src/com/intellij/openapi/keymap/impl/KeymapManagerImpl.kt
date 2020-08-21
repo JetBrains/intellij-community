@@ -21,6 +21,7 @@ import com.intellij.openapi.keymap.ex.KeymapManagerEx
 import com.intellij.openapi.options.SchemeManager
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.ui.AppUIUtil
 import com.intellij.util.containers.ContainerUtil

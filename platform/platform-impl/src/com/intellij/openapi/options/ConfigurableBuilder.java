@@ -24,7 +24,7 @@ import java.util.function.Function;
  */
 public abstract class ConfigurableBuilder extends UiDslConfigurable.Simple
   implements UiDslConfigurable, ConfigurableWithOptionDescriptors {
-  private String myTitle;
+  private @NlsContexts.BorderTitle String myTitle;
 
   private interface PropertyAccessor<T> {
     T getValue();
@@ -151,7 +151,7 @@ public abstract class ConfigurableBuilder extends UiDslConfigurable.Simple
   protected ConfigurableBuilder() {
   }
 
-  protected ConfigurableBuilder(@Nullable String title) {
+  protected ConfigurableBuilder(@Nullable @NlsContexts.BorderTitle String title) {
     setTitle(title);
   }
 
@@ -160,7 +160,7 @@ public abstract class ConfigurableBuilder extends UiDslConfigurable.Simple
     return myTitle;
   }
 
-  protected void setTitle(@Nullable String title) {
+  protected void setTitle(@Nullable @NlsContexts.BorderTitle String title) {
     myTitle = title;
   }
 

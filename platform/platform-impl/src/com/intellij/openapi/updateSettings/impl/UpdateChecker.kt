@@ -24,10 +24,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.ActionCallback
-import com.intellij.openapi.util.BuildNumber
-import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.*
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
@@ -508,7 +505,7 @@ object UpdateChecker {
     }
   }
 
-  private fun showErrorMessage(showDialog: Boolean, message: String) {
+  private fun showErrorMessage(showDialog: Boolean, @NlsContexts.DialogMessage message: String) {
     LOG.info(message)
     if (showDialog) {
       UIUtil.invokeLaterIfNeeded { Messages.showErrorDialog(message, IdeBundle.message("updates.error.connection.title")) }
@@ -647,8 +644,8 @@ object UpdateChecker {
   }
 
   private fun showNotification(project: Project?,
-                               title: String,
-                               message: String,
+                               @NlsContexts.NotificationTitle title: String,
+                               @NlsContexts.NotificationContent message: String,
                                action: () -> Unit,
                                extraBuilder: ((Notification) -> Unit)?,
                                notificationType: NotificationUniqueType,
