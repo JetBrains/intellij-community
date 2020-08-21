@@ -37,19 +37,19 @@ import java.awt.*;
  * @author peter
  */
 public class DomFileEditor<T extends BasicDomElementComponent> extends PerspectiveFileEditor implements CommittablePanel, Highlightable {
-  private final String myName;
+  private final @Nls String myName;
   private final Factory<? extends T> myComponentFactory;
   private T myComponent;
 
-  public DomFileEditor(final DomElement element, final String name, final T component) {
+  public DomFileEditor(final DomElement element, final @Nls String name, final T component) {
     this(element.getManager().getProject(), DomUtil.getFile(element).getVirtualFile(), name, component);
   }
 
-  public DomFileEditor(final Project project, final VirtualFile file, final String name, final T component) {
+  public DomFileEditor(final Project project, final VirtualFile file, final @Nls String name, final T component) {
     this(project, file, name, () -> component);
   }
 
-  public DomFileEditor(final Project project, final VirtualFile file, final String name, final Factory<? extends T> component) {
+  public DomFileEditor(final Project project, final VirtualFile file, final @Nls String name, final Factory<? extends T> component) {
     super(project, file);
     myComponentFactory = component;
     myName = name;
@@ -168,7 +168,7 @@ public class DomFileEditor<T extends BasicDomElementComponent> extends Perspecti
       Disposer.register(component, captionComponent);
       return component;
     };
-    return new DomFileEditor<BasicDomElementComponent>(file.getProject(), file.getVirtualFile(), name, factory) {
+    return new DomFileEditor<>(file.getProject(), file.getVirtualFile(), name, factory) {
       @Override
       public JComponent getPreferredFocusedComponent() {
         return null;

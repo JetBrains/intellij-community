@@ -552,7 +552,7 @@ public class VfsUtilCore {
     }
   }
 
-  public static @NotNull String fixIDEAUrl(@NotNull String ideaUrl) {
+  public static @NotNull @NlsSafe String fixIDEAUrl(@NotNull String ideaUrl) {
     String ideaProtocolMarker = "://";
     int idx = ideaUrl.indexOf(ideaProtocolMarker);
     if (idx >= 0) {

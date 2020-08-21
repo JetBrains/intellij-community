@@ -28,6 +28,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomManager;
 import com.intellij.util.xml.StableElement;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -63,13 +64,14 @@ public class MockDomElementsEditor {
     return createMockElement(aClass, myModule);
   }
 
-  protected final DomFileEditor initFileEditor(final BasicDomElementComponent component, final VirtualFile virtualFile, final String name) {
+  protected final DomFileEditor initFileEditor(final BasicDomElementComponent component, final VirtualFile virtualFile, final @Nls String name) {
     initFileEditor(component.getProject(), virtualFile, name, () -> component);
     Disposer.register(myFileEditor, component);
     return myFileEditor;
   }
 
-  protected final DomFileEditor initFileEditor(final Project project, final VirtualFile virtualFile, final String name, final Factory<? extends BasicDomElementComponent> component) {
+  protected final DomFileEditor initFileEditor(final Project project, final VirtualFile virtualFile, final @Nls String name,
+                                               final Factory<? extends BasicDomElementComponent> component) {
     myFileEditor = new DomFileEditor<BasicDomElementComponent>(project, virtualFile, name, component) {
       @Override
       public JComponent getPreferredFocusedComponent() {

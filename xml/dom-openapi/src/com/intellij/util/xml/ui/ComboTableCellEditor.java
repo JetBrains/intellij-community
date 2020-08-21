@@ -17,6 +17,7 @@ package com.intellij.util.xml.ui;
 
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -50,7 +51,7 @@ public class ComboTableCellEditor extends DefaultCellEditor {
 
   @Override
   public Object getCellEditorValue() {
-    final Pair<String,Icon> cellEditorValue = (Pair<String,Icon>)super.getCellEditorValue();
+    final Pair<@Nls String,Icon> cellEditorValue = (Pair<String,Icon>)super.getCellEditorValue();
     return EMPTY == cellEditorValue || null == cellEditorValue ? null : cellEditorValue.first;
   }
 
