@@ -58,14 +58,14 @@ public class PyDebuggerEvaluator extends XDebuggerEvaluator {
         // todo: think on getting results from EXEC
         final PyDebugValue value = myDebugProcess.evaluate(expression, !isExpression, doTrunc);
         if (value.isErrorOnEval()) {
-          callback.errorOccurred("{" + value.getType() + "}" + value.getValue());
+          callback.errorOccurred("{" + value.getType() + "}" + value.getValue()); //NON-NLS
         }
         else {
           callback.evaluated(value);
         }
       }
       catch (PyDebuggerException e) {
-        callback.errorOccurred(e.getTracebackError());
+        callback.errorOccurred(e.getTracebackError()); //NON-NLS
       }
     });
   }

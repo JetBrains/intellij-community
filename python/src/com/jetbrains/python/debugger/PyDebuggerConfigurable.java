@@ -43,7 +43,7 @@ public class PyDebuggerConfigurable implements SearchableConfigurable, Configura
 
   public PyDebuggerConfigurable(Project project) {
     myProject = project;
-    myPyQtBackendsList.forEach(e -> myPyQtBackend.addItem(e));
+    myPyQtBackendsList.forEach(e -> myPyQtBackend.addItem(e)); //NON-NLS
 
     mySupportQt.addItemListener(new ItemListener() {
       @Override
@@ -108,7 +108,7 @@ public class PyDebuggerConfigurable implements SearchableConfigurable, Configura
     mySupportGevent.setSelected(settings.isSupportGeventDebugging());
     myDropIntoDebuggerOnFailedTests.setSelected(settings.isDropIntoDebuggerOnFailedTest());
     mySupportQt.setSelected(settings.isSupportQtDebugging());
-    myPyQtBackend.setSelectedItem(settings.getPyQtBackend());
+    myPyQtBackend.setSelectedItem(settings.getPyQtBackend()); //NON-NLS
     myAttachProcessFilter.setText(settings.getAttachProcessFilter());
   }
 

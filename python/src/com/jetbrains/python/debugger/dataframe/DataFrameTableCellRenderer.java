@@ -33,7 +33,7 @@ class DataFrameTableCellRenderer extends DefaultTableCellRenderer implements Col
                                                  boolean isSelected, boolean hasFocus, int row, int col) {
     super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
     if (value != null) {
-      setText(value.toString());
+      setText(value.toString()); //NON-NLS
     }
 
     if (!(value instanceof TableValueDescriptor)) {

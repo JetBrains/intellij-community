@@ -69,7 +69,7 @@ public class PyDataViewDialog extends DialogWrapper {
     myMainPanel.add(colored, checkBoxConstraints);
     checkBoxConstraints.gridy = 2;
     myMainPanel.add(resize, checkBoxConstraints);
-    setTitle(value.getFullName());
+    setTitle(value.getFullName()); //NON-NLS
     init();
   }
 

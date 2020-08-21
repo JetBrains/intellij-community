@@ -32,6 +32,9 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsContexts.ProgressTitle;
+import com.intellij.openapi.util.NlsContexts.ProgressText;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -311,7 +314,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     waitForConnection(getConnectionMessage(), getConnectionTitle());
   }
 
-  protected void waitForConnection(final String connectionMessage, String connectionTitle) {
+  protected void waitForConnection(final @ProgressText String connectionMessage, @ProgressTitle String connectionTitle) {
     ProgressManager.getInstance().run(new Task.Backgroundable(getSession().getProject(), connectionTitle, false) {
       @Override
       public void run(@NotNull final ProgressIndicator indicator) {
@@ -428,12 +431,12 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   protected void beforeConnect() {
   }
 
-  protected String getConnectionMessage() {
-    return "Waiting for connection...";
+  protected @ProgressText String getConnectionMessage() {
+    return PyBundle.message("python.debugger.settings.waiting.for.connection");
   }
 
-  protected String getConnectionTitle() {
-    return "Connecting To Debugger";
+  protected @ProgressTitle String getConnectionTitle() {
+    return PyBundle.message("python.debugger.settings.connecting.to.debugger");
   }
 
   private void handshake() throws PyDebuggerException {
@@ -490,7 +493,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   private static class WatchReturnValuesAction extends ToggleAction {
     private volatile boolean myWatchesReturnValues;
     private final PyDebugProcess myProcess;
-    private final String myText;
+    private final @NlsActions.ActionText String myText;
 
     WatchReturnValuesAction(@NotNull PyDebugProcess debugProcess) {
       super("", PyBundle.message("debugger.watch.return.values.description"), null);
@@ -1152,7 +1155,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   @Override
-  public String getCurrentStateMessage() {
+  public @ProgressText String getCurrentStateMessage() {
     if (getSession().isStopped()) {
       return XDebuggerBundle.message("debugger.state.message.disconnected");
     }

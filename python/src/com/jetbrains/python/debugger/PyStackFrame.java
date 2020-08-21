@@ -83,7 +83,7 @@ public class PyStackFrame extends XStackFrame {
     component.setIcon(AllIcons.Debugger.Frame);
 
     if (myPosition == null) {
-      component.append("<frame not available>", SimpleTextAttributes.GRAY_ATTRIBUTES);
+      component.append(PyBundle.message("python.stack.frame.frame.not.available"), SimpleTextAttributes.GRAY_ATTRIBUTES);
       return;
     }
 

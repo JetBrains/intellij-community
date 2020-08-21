@@ -17,6 +17,7 @@ package com.jetbrains.python.debugger;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
@@ -37,7 +38,7 @@ public class PyVariableViewSettings {
 
   public static class SimplifiedView extends ToggleAction {
     private final PyDebugProcess myProcess;
-    private final String myText;
+    private final @ActionText String myText;
     private volatile boolean mySimplifiedView;
 
     public SimplifiedView(@Nullable PyDebugProcess debugProcess) {
@@ -143,7 +144,7 @@ public class PyVariableViewSettings {
   }
 
   public static class PolicyAction extends ToggleAction {
-    @NotNull private final String myText;
+    @NotNull private final @ActionText String myText;
     @NotNull private final PyDebugValue.ValuesPolicy myPolicy;
     @NotNull private final VariablesPolicyGroup myActionGroup;
     private volatile boolean isEnabled;
