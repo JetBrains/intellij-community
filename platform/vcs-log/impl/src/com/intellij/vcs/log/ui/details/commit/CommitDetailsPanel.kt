@@ -5,6 +5,7 @@ import com.intellij.ide.IdeTooltipManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.ui.FontUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.BrowserHyperlinkListener
@@ -176,7 +177,7 @@ private class ContainingBranchesPanel : HtmlPanel() {
   override fun getBody(): String {
     val insets = insets
     val text = getBranchesText(branches, expanded, width - insets.left - insets.right, getFontMetrics(bodyFont))
-    return if (expanded) text else "<nobr>$text</nobr>"
+    return if (expanded) text else HtmlChunk.raw(text).wrapWith("nobr").toString()
   }
 
   override fun getBackground(): Color = getCommitDetailsBackground()
