@@ -2,13 +2,15 @@
 package com.intellij.core;
 
 import com.intellij.AbstractBundle;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.*;
 
 import java.util.function.Supplier;
 
+/**
+ * This bundle stores messages from core part of IntelliJ platform which aren't used from the platform code anymore but are still used from
+ * some external plugins. It isn't supposed to be used by plugins directly.
+ */
+@ApiStatus.Internal
 public class CoreDeprecatedMessagesBundle extends AbstractBundle {
   @NonNls private static final String BUNDLE = "messages.CoreDeprecatedMessagesBundle";
   private static final CoreDeprecatedMessagesBundle INSTANCE = new CoreDeprecatedMessagesBundle();
