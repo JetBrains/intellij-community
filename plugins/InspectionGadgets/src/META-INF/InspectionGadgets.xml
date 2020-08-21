@@ -2261,6 +2261,10 @@
                      bundle="messages.InspectionGadgetsBundle" key="serializable.with.unconstructable.ancestor.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.serialization.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.serialization.SerializableWithUnconstructableAncestorInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="SerializableRecordContainsIgnoredMembers" bundle="messages.InspectionGadgetsBundle"
+                     key="serializable.record.contains.ignored.members.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.serialization.issues" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.siyeh.ig.serialization.SerializableRecordContainsIgnoredMembersInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="TransientFieldInNonSerializableClass" bundle="messages.InspectionGadgetsBundle"
                      key="transient.field.in.non.serializable.class.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.serialization.issues" enabledByDefault="false" level="WARNING"
