@@ -15,7 +15,7 @@ import java.nio.file.StandardOpenOption
 internal const val asyncBufferCapacity = 1000
 private val LOG = Logger.getInstance(AsyncInspectionToolResultWriter::class.java)
 
-class AsyncInspectionToolResultWriter(val outputPath: Path): InspectionProblemConsumer {
+open class AsyncInspectionToolResultWriter(val outputPath: Path): InspectionProblemConsumer {
   val channel: Channel<Element> = Channel(asyncBufferCapacity)
 
   val writer = GlobalScope.runWriter()

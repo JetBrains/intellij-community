@@ -598,7 +598,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
     }, createProcessIndicator());
   }
 
-  public @NotNull ProgressIndicatorBase createProcessIndicator() {
+  private  @NotNull ProgressIndicatorBase createProcessIndicator() {
     return new ProgressIndicatorBase() {
       private String lastPrefix = "";
       private int myLastPercent = -1;
@@ -771,7 +771,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
     };
   }
 
-  private static @Nullable String getPrefix(final @NotNull String text) {
+  public static @Nullable String getPrefix(final @NotNull String text) {
     int idx = text.indexOf(" in ");
     if (idx == -1) {
       idx = text.indexOf(" of ");
