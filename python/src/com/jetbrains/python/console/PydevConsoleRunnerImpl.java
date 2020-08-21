@@ -90,10 +90,7 @@ import com.jetbrains.python.run.*;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import icons.PythonIcons;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -1013,7 +1010,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     return content.getDisplayName();
   }
 
-  private void stopAndRerunConsole(Boolean rerun, @NotNull String message, @Nullable String displayName) {
+  private void stopAndRerunConsole(Boolean rerun, @NotNull @Nls String message, @Nullable String displayName) {
     new Task.Backgroundable(myProject, message, true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
