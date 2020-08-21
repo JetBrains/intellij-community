@@ -64,6 +64,7 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
   public void setSelectedVariant(V variant) {
     mySelectedVariant = variant;
     setSelected(!variant.equals(getVariants()[0]));
+    component().updateButton(getName() + ": " + getVariantName(variant), null);
   }
 
   protected V[] getVariants() {
