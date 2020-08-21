@@ -368,7 +368,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     private final RepositoryBrowserComponent myBrowserComponent;
 
     public AddLocationAction(final RepositoryBrowserComponent browserComponent) {
-      super(SvnBundle.message("repository.browser.add.location.menu.item"));
+      super(SvnBundle.messagePointer("repository.browser.add.location.menu.item"));
       myBrowserComponent = browserComponent;
     }
 
@@ -407,7 +407,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     @NotNull private final RepositoryBrowserComponent myBrowserComponent;
 
     public EditLocationAction(@NotNull RepositoryBrowserComponent browserComponent) {
-      super(SvnBundle.message("repository.browser.edit.location.menu.item"));
+      super(SvnBundle.messagePointer("repository.browser.edit.location.menu.item"));
       myBrowserComponent = browserComponent;
     }
 
@@ -496,7 +496,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     private final RepositoryBrowserComponent myBrowserComponent;
 
     public MkDirAction(final RepositoryBrowserComponent browserComponent) {
-      super(SvnBundle.message("repository.browser.new.folder.action"));
+      super(SvnBundle.messagePointer("repository.browser.new.folder.action"));
       myBrowserComponent = browserComponent;
     }
 

@@ -91,7 +91,7 @@ public class HgCommonBranchActions extends BranchActionGroup {
     MergeAction(@NotNull Project project,
                        @NotNull List<HgRepository> repositories,
                        @NotNull String branchName) {
-      super(project, HgBundle.message("action.hg4idea.Merge"), repositories, branchName);
+      super(project, HgBundle.messagePointer("action.hg4idea.Merge"), repositories, branchName);
     }
 
     @Override
@@ -109,7 +109,7 @@ public class HgCommonBranchActions extends BranchActionGroup {
     UpdateAction(@NotNull Project project,
                         @NotNull List<HgRepository> repositories,
                         @NotNull String branchName) {
-      super(project, HgBundle.message("action.hg4idea.Update"), repositories, branchName);
+      super(project, HgBundle.messagePointer("action.hg4idea.Update"), repositories, branchName);
     }
 
     @Override
@@ -122,7 +122,7 @@ public class HgCommonBranchActions extends BranchActionGroup {
     CompareAction(@NotNull Project project,
                          @NotNull List<HgRepository> repositories,
                          @NotNull String branchName) {
-      super(project, HgBundle.message("action.hg4idea.Compare"), repositories, branchName);
+      super(project, HgBundle.messagePointer("action.hg4idea.Compare"), repositories, branchName);
     }
 
     @Override

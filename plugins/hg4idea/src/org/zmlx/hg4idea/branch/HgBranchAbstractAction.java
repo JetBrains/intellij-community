@@ -17,21 +17,22 @@ package org.zmlx.hg4idea.branch;
 
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsActions;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.repo.HgRepository;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 public abstract class HgBranchAbstractAction extends DumbAwareAction {
   @NotNull protected final Project myProject;
   @NotNull protected final List<HgRepository> myRepositories;
   @NotNull protected final String myBranchName;
 
-  public HgBranchAbstractAction(@NotNull Project project, @NotNull @NlsActions.ActionText String title,
+  public HgBranchAbstractAction(@NotNull Project project,
+                                @NotNull Supplier<String> dynamicText,
                                 @NotNull List<HgRepository> repositories,
                                 @NotNull String branchName) {
-    super(title);
+    super(dynamicText);
     myProject = project;
     myRepositories = repositories;
     myBranchName = branchName;

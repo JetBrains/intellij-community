@@ -179,7 +179,7 @@ public class GitBranchPopupActions {
     private final List<GitRepository> myRepositories;
 
     CheckoutRevisionActions(Project project, List<GitRepository> repositories) {
-      super(GitBundle.message("branches.checkout.tag.or.revision"));
+      super(GitBundle.messagePointer("branches.checkout.tag.or.revision"));
       myProject = project;
       myRepositories = repositories;
     }
@@ -850,7 +850,7 @@ public class GitBranchPopupActions {
       private final String myTagName;
 
       DeleteTagAction(Project project, List<? extends GitRepository> repositories, String tagName) {
-        super(IdeBundle.message("button.delete"));
+        super(IdeBundle.messagePointer("button.delete"));
         myProject = project;
         myRepositories = repositories;
         myTagName = tagName;
