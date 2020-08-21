@@ -66,8 +66,9 @@ private fun findCondaExecutable(sdk: Sdk?): String {
 @Throws(PyExecutionException::class)
 private fun ProcessOutput.checkExitCode(executable: String, arguments: List<String>) {
   if (exitCode != 0) {
-    val message = if (StringUtil.isEmptyOrSpaces(stdout) && StringUtil.isEmptyOrSpaces(stderr)) "Permission denied"
-    else "Non-zero exit code"
+    val message = if (StringUtil.isEmptyOrSpaces(stdout) && StringUtil.isEmptyOrSpaces(stderr))
+      PySdkBundle.message("python.conda.permission.denied")
+    else PySdkBundle.message("python.conda.non.zero.exit.code")
     throw PyExecutionException(message, executable, arguments, this)
   }
 }

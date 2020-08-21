@@ -405,7 +405,7 @@ public class PySkeletonGenerator {
   }
 
   @NotNull
-  private String formatGeneratorFailureMessage(@NotNull ProcessOutput process) {
+  private @NlsSafe String formatGeneratorFailureMessage(@NotNull ProcessOutput process) {
     final StringBuilder sb = new StringBuilder("failed to run ").append(GENERATOR3).append(" for ").append(mySdk.getHomePath());
     if (process.isTimeout()) {
       sb.append(": timed out.");
