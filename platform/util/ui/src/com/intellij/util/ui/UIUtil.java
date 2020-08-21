@@ -583,7 +583,7 @@ public final class UIUtil {
     return text.substring(bodyIndex, Math.min(bodyCloseIndex, htmlCloseIndex));
   }
 
-  public static @NotNull String getHtmlBody(@NotNull Html html) {
+  public static @NotNull @Nls String getHtmlBody(@NotNull Html html) {
     String result = getHtmlBody(html.getText());
     return html.isKeepFont() ? result : result.replaceAll("<font(.*?)>", "").replaceAll("</font>", "");
   }

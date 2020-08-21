@@ -15,6 +15,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.JdkConstants;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -210,12 +211,11 @@ public final class HintUtil {
     return label;
   }
 
-  @NotNull
-  public static String prepareHintText(@NotNull @HintText String text, @NotNull HintHint hintHint) {
+  public static @NotNull @Nls String prepareHintText(@NotNull @HintText String text, @NotNull HintHint hintHint) {
     return prepareHintText(new Html(text), hintHint);
   }
 
-  public static String prepareHintText(@NotNull Html text, @NotNull HintHint hintHint) {
+  public static @NotNull @Nls String prepareHintText(@NotNull Html text, @NotNull HintHint hintHint) {
     String htmlBody = UIUtil.getHtmlBody(text);
     return String.format(
       "<html><head>%s</head><body>%s</body></html>",
