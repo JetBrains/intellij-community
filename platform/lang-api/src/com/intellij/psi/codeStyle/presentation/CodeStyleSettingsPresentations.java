@@ -2,6 +2,7 @@
 package com.intellij.psi.codeStyle.presentation;
 
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions;
 import com.intellij.util.LocaleSensitiveApplicationCacheService;
 import com.intellij.util.containers.ContainerUtil;
@@ -447,7 +448,7 @@ final class CodeStyleSettingsPresentations {
 
   private static void putGroupTop(@NotNull Map<CodeStyleSettingPresentation.SettingsGroup, List<CodeStyleSettingPresentation>> result,
                                   @NotNull String fieldName,
-                                  @NotNull String uiName, int[] values, String[] valueUiNames) {
+                                  @NlsContexts.Label @NotNull String uiName, int[] values, String[] valueUiNames) {
     result.put(new CodeStyleSettingPresentation.SettingsGroup(null), ContainerUtil.immutableList(
       new CodeStyleSelectSettingPresentation(fieldName, uiName, values, valueUiNames)
     ));
