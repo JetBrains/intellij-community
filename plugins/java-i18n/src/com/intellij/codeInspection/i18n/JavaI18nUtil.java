@@ -452,7 +452,6 @@ public final class JavaI18nUtil extends I18nUtil {
                                                    @NotNull Project project,
                                                    boolean nested) {
     StringBuilder result = new StringBuilder();
-    int elIndex = 0;
     boolean noEscapingRequired = !nested && SequencesKt.all(cf.getUastOperands(), expression -> expression instanceof ULiteralExpression);
     for (UExpression expression : SequencesKt.asIterable(cf.getUastOperands())) {
       while (expression instanceof UParenthesizedExpression) {
@@ -470,11 +469,8 @@ public final class JavaI18nUtil extends I18nUtil {
           }
         }
       }
-      else if (addChoicePattern(expression, formatParameters, project, result)) {
-        elIndex = formatParameters.size();
-      }
-      else {
-        result.append("{").append(elIndex++).append("}");
+      else if (!addChoicePattern(expression, formatParameters, project, result)) {
+        result.append("{").append(formatParameters.size()).append("}");
         formatParameters.add(expression);
       }
     }
