@@ -2,6 +2,7 @@
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
@@ -545,7 +546,7 @@ public class AnnotationUtil {
   }
 
   @Nullable
-  public static String getStringAttributeValue(@NotNull PsiAnnotation anno, @Nullable final String attributeName) {
+  public static @NlsSafe String getStringAttributeValue(@NotNull PsiAnnotation anno, @Nullable final String attributeName) {
     PsiAnnotationMemberValue attrValue = anno.findAttributeValue(attributeName);
     return attrValue == null ? null : getStringAttributeValue(attrValue);
   }

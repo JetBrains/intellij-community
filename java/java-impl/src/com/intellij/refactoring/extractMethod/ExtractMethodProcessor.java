@@ -2144,6 +2144,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   protected @NlsContexts.DialogMessage String buildMultipleOutputMessageError(PsiType expressionType) {
+    @Nls
     StringBuilder buffer = new StringBuilder();
     buffer.append(RefactoringBundle.getCannotRefactorMessage(
       JavaRefactoringBundle.message("there.are.multiple.output.values.for.the.selected.code.fragment")));

@@ -73,7 +73,7 @@ public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHa
   }
 
   @NotNull
-  private static List<PsiElement> getElements(Editor editor, PsiFile file, Ref<? super String> errorMessage, boolean stopAtCodeBlock) {
+  private static List<PsiElement> getElements(Editor editor, PsiFile file, Ref<@NlsContexts.DialogMessage String> errorMessage, boolean stopAtCodeBlock) {
     List<PsiElement> elements = new ArrayList<>();
     for (Caret caret : editor.getCaretModel().getAllCarets()) {
       int offset = caret.getOffset();

@@ -43,8 +43,7 @@ public enum CreateClassKind implements ClassKind {
   }
 
   @Override
-  @Nls
-  public String getDescription() {
+  public @Nls String getDescription() {
     return myKind.subject();
   }
 

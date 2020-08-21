@@ -64,7 +64,7 @@ public class JavaDocLocalInspection extends LocalInspectionTool {
   @Deprecated
   public boolean IGNORE_DUPLICATED_THROWS;
   public boolean IGNORE_POINT_TO_ITSELF;
-  public String myAdditionalJavadocTags = "";
+  public @NlsSafe String myAdditionalJavadocTags = "";
   private boolean myIgnoreDuplicatedThrows = true;
   private boolean myIgnoreEmptyDescriptions;
   private boolean myIgnoreSimpleAccessors;
