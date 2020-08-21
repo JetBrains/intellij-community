@@ -36,6 +36,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleTextAttributes;
@@ -301,7 +302,7 @@ public abstract class DebuggerTree extends DebuggerTreeBase implements DataProvi
     expandPath(new TreePath(message.getPath()));
   }
 
-  public void showMessage(String messageText) {
+  public void showMessage(@NlsContexts.Label String messageText) {
     showMessage(new MessageDescriptor(messageText));
   }
 

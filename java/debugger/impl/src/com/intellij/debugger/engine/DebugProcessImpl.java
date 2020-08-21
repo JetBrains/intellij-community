@@ -77,6 +77,7 @@ import com.sun.jdi.request.EventRequestManager;
 import com.sun.jdi.request.StepRequest;
 import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -937,6 +938,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
   }
 
+  @Contract(pure = true)
   private static String formatMessage(String message) {
     final int lineLength = 90;
     StringBuilder buf = new StringBuilder(message.length());
@@ -948,7 +950,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     return buf.toString();
   }
 
-  public static String processError(Exception e) {
+  public static @NlsContexts.DialogMessage String processError(Exception e) {
     String message;
 
     if (e instanceof VMStartException) {
@@ -982,9 +984,12 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   }
 
   @NotNull
-  public static String processIOException(@NotNull IOException e, @Nullable String address) {
+  public static @NlsContexts.DialogMessage String processIOException(@NotNull IOException e, @Nullable String address) {
     if (e instanceof UnknownHostException) {
-      return JavaDebuggerBundle.message("error.unknown.host") + (address != null ? " (" + address + ")" : "") + ":\n" + e.getLocalizedMessage();
+      if (address != null) {
+        return JavaDebuggerBundle.message("error.unknown.host.with.address", address) + ":\n" + e.getLocalizedMessage();
+      }
+      return JavaDebuggerBundle.message("error.unknown.host") + ":\n" + e.getLocalizedMessage();
     }
 
     // Failed SA attach
@@ -995,7 +1000,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       }
     }
 
-    StringBuilder buf = new StringBuilder();
+    @Nls StringBuilder buf = new StringBuilder();
     if (address != null) {
       buf.append(JavaDebuggerBundle.message("error.cannot.open.debugger.port"));
       buf.append(" (").append(address).append("): ");
@@ -1406,12 +1411,10 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                                      final int invocationOptions,
                                      boolean internalEvaluate) throws EvaluateException {
     final ThreadReference thread = getEvaluationThread(evaluationContext);
-    InvokeCommand<ObjectReference> invokeCommand = new InvokeCommand<ObjectReference>(method, args) {
+    InvokeCommand<ObjectReference> invokeCommand = new InvokeCommand<>(method, args) {
       @Override
-      protected ObjectReference invokeMethod(int invokePolicy, Method method, List<? extends Value> args) throws InvocationException,
-                                                                                                                 ClassNotLoadedException,
-                                                                                                                 IncompatibleThreadStateException,
-                                                                                                                 InvalidTypeException {
+      protected ObjectReference invokeMethod(int invokePolicy, Method method, List<? extends Value> args) 
+        throws InvocationException, ClassNotLoadedException, IncompatibleThreadStateException, InvalidTypeException {
         if (LOG.isDebugEnabled()) {
           LOG.debug("New instance " + classType.name() + "." + method.name());
         }
@@ -1468,7 +1471,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
                                  ClassLoaderReference classLoader) throws EvaluateException {
     try {
       DebuggerManagerThreadImpl.assertIsManagerThread();
-      ReferenceType result = null;
+      ReferenceType result;
       List<ReferenceType> types = ContainerUtil.filter(getVirtualMachineProxy().classesByName(className), ReferenceType::isPrepared);
       // first try to quickly find the equal classloader only
       result = ContainerUtil.find(types, refType -> Objects.equals(classLoader, refType.classLoader()));

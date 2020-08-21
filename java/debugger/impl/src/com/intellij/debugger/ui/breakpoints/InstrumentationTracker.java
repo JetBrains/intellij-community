@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.breakpoints;
 
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
@@ -145,7 +146,7 @@ public final class InstrumentationTracker {
 
     @Override
     public String getDisplayName() {
-      return "Instrumentation tracker: " + myMethodName;
+      return JavaDebuggerBundle.message("label.instrumentation.tracker", myMethodName);
     }
   }
 }

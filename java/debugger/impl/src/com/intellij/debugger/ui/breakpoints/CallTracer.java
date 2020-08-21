@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.breakpoints;
 
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.impl.DebuggerContextImpl;
@@ -171,7 +172,7 @@ public class CallTracer implements OverheadProducer {
 
   @Override
   public void customizeRenderer(SimpleColoredComponent renderer) {
-    renderer.append("Call Tracer");
+    renderer.append(JavaDebuggerBundle.message("call.tracer"));
   }
 
   @NotNull

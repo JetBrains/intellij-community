@@ -29,6 +29,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.text.StringTokenizer;
@@ -97,7 +98,7 @@ public class DebuggerTreeBase extends DnDAwareTree implements Disposable {
       rootSize.width -= (borderInsets.left + borderInsets.right) * 2;
       rootSize.height -= (borderInsets.top + borderInsets.bottom) * 2;
 
-      @NonNls StringBuilder tipBuilder = new StringBuilder();
+      @NlsSafe StringBuilder tipBuilder = new StringBuilder();
       final String markupText = node.getMarkupTooltipText();
       if (markupText != null) {
         tipBuilder.append(markupText);

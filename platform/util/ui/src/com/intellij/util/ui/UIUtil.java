@@ -2202,7 +2202,6 @@ public final class UIUtil {
     return toHtml(html, 0);
   }
 
-  @NonNls
   public static @NotNull @NlsSafe String toHtml(@NotNull @Nls String html, final int hPadding) {
     @NlsSafe final String withClosedTag = CLOSE_TAG_PATTERN.matcher(html).replaceAll("<$1$2></$1>");
     Font font = StartupUiUtil.getLabelFont();

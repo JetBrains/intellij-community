@@ -69,7 +69,7 @@ public class ForceEarlyReturnAction extends DebuggerAction {
         else {
           ApplicationManager.getApplication().invokeLater(
             () -> new XExpressionDialog(project, debugProcess.getXdebugProcess().getEditorsProvider(), "forceReturnValue",
-                                        "Return Value", stackFrame.getSourcePosition(), null) {
+                                        JavaDebuggerBundle.message("dialog.title.return.value"), stackFrame.getSourcePosition(), null) {
               @Override
               protected void doOKAction() {
                 evaluateAndReturn(project, stackFrame, debugProcess, getExpression(), this);
