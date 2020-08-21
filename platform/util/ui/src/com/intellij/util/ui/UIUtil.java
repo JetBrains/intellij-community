@@ -1950,7 +1950,7 @@ public final class UIUtil {
   }
 
   @Language("HTML")
-  public static @NotNull String getCssFontDeclaration(@NotNull Font font, @Nullable Color fgColor, @Nullable Color linkColor, @Nullable String liImg) {
+  public static @NlsSafe @NotNull String getCssFontDeclaration(@NotNull Font font, @Nullable Color fgColor, @Nullable Color linkColor, @Nullable String liImg) {
     @Language("HTML")
     String familyAndSize = "font-family:'" + font.getFamily() + "'; font-size:" + font.getSize() + "pt;";
     return "<style>\n"
