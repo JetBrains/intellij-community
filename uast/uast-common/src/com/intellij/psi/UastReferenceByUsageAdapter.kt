@@ -95,8 +95,14 @@ private fun getDirectVariableUsages(uVar: UVariable): Sequence<PsiElement> {
   if (DumbService.isDumb(project)) return emptySequence() // do not try to search in dumb mode
 
   val cachedValue = CachedValuesManager.getManager(project).getCachedValue(variablePsi, CachedValueProvider {
-    val anchors = findDirectVariableUsages(variablePsi).map(PsiAnchor::create)
-    Result.createSingleDependency(anchors, PsiModificationTracker.MODIFICATION_COUNT)
+    val dumbService = DumbService.getInstance(variablePsi.project)
+    if (dumbService.isDumb) {
+      Result.createSingleDependency(emptyList(), dumbService.modificationTracker)
+    }
+    else {
+      val anchors = findDirectVariableUsages(variablePsi).map(PsiAnchor::create)
+      Result.createSingleDependency(anchors, PsiModificationTracker.MODIFICATION_COUNT)
+    }
   })
   return cachedValue.asSequence().mapNotNull(PsiAnchor::retrieve)
 }
