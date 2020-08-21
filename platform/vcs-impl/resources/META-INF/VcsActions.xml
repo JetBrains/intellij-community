@@ -86,8 +86,9 @@
 
         <separator/>
         <reference id="Vcs.VcsClone"/>
-        <group id="Vcs.Import" class="com.intellij.ide.actions.NonEmptyActionGroup" popup="true"/>
         <group id="Vcs.Browse" class="com.intellij.ide.actions.NonEmptyActionGroup" popup="true"/>
+        <separator/>
+        <group id="Vcs.Import" class="com.intellij.ide.actions.NonEmptyActionGroup"/>
       </group>
 
       <add-to-group group-id="MainMenu" anchor="after" relative-to-action="ToolsMenu"/>
