@@ -127,12 +127,9 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
     return optionGroup;
   }
 
-
   private void addToOptionGroup(OptionGroup optionGroup, IntOption option) {
-    String title = option.myIntField.getName();
-    String renamed = myRenamedFields.get(option.getOptionName());
-    if (renamed != null) title = renamed;
-    optionGroup.add(new JBLabel(title), option.myIntField);
+    String label = myRenamedFields.getOrDefault(option.getOptionName(), option.myLabel);
+    optionGroup.add(new JBLabel(label), option.myIntField);
   }
 
   @Override
@@ -229,28 +226,30 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
     }
   }
 
-  private final class IntOption extends OrderedOption{
+  private final class IntOption extends OrderedOption {
+    private final @NlsContexts.Label String myLabel;
     private final IntegerField myIntField;
     private final Field myTarget;
     private Class<? extends CustomCodeStyleSettings> myTargetClass;
     private int myCurrValue = Integer.MAX_VALUE;
 
-    private IntOption(@NotNull String title, String fieldName) {
-      this(title, CommonCodeStyleSettings.class, fieldName, false);
+    private IntOption(@NlsContexts.Label @NotNull String label, String fieldName) {
+      this(label, CommonCodeStyleSettings.class, fieldName, false);
     }
 
-    private IntOption(@NotNull String title, Class<? extends CustomCodeStyleSettings> targetClass, String fieldName, @Nullable OptionAnchor anchor, @Nullable String anchorOptionName) {
-      this(title, targetClass, fieldName, false, anchor, anchorOptionName);
+    private IntOption(@NlsContexts.Label @NotNull String label, Class<? extends CustomCodeStyleSettings> targetClass, String fieldName, @Nullable OptionAnchor anchor, @Nullable String anchorOptionName) {
+      this(label, targetClass, fieldName, false, anchor, anchorOptionName);
       myTargetClass = targetClass;
     }
 
     // dummy is used to distinguish constructors
-    private IntOption(@NotNull String title, Class<?> fieldClass, String fieldName, boolean dummy) {
-      this(title, fieldClass, fieldName, dummy, null, null);
+    private IntOption(@NlsContexts.Label @NotNull String label, Class<?> fieldClass, String fieldName, boolean dummy) {
+      this(label, fieldClass, fieldName, dummy, null, null);
     }
 
-    private IntOption(@NotNull String title, Class<?> fieldClass, String fieldName, boolean dummy, @Nullable OptionAnchor anchor, @Nullable String anchorOptionName) {
+    private IntOption(@NlsContexts.Label @NotNull String label, Class<?> fieldClass, String fieldName, boolean dummy, @Nullable OptionAnchor anchor, @Nullable String anchorOptionName) {
       super(fieldName, anchor, anchorOptionName);
+      myLabel = label;
       try {
         myTarget = fieldClass.getField(fieldName);
       }
@@ -259,7 +258,6 @@ public class CodeStyleBlankLinesPanel extends CustomizableLanguageCodeStylePanel
       }
       myIntField = new IntegerField(null, 0, 10);
       myIntField.setColumns(6);
-      myIntField.setName(title);
       myIntField.setMinimumSize(new Dimension(30, myIntField.getMinimumSize().height));
     }
 
