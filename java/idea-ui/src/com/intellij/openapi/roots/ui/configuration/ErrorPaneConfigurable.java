@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration;
 
-import com.intellij.CommonBundle;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.options.Configurable;
@@ -189,7 +188,7 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
       }
       description = XmlStringUtil.convertToHtmlContent(description);
       if (error.canBeFixed()) {
-        final String text = "[" + CommonBundle.message("fix.title") + "]";
+        final String text = "[" + JavaUiBundle.message("fix.link.text") + "]";
         description += " " + HtmlChunk.link("http://fix/" + i, text);
       }
       final HtmlChunk li = HtmlChunk.raw("<li>" + description + "</li>");

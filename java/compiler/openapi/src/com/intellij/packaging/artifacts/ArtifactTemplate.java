@@ -15,15 +15,15 @@
  */
 package com.intellij.packaging.artifacts;
 
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.packaging.elements.CompositePackagingElement;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class ArtifactTemplate {
 
-  public abstract @Nls(capitalization = Nls.Capitalization.Title) String getPresentableName();
+  public abstract @NlsActions.ActionText String getPresentableName();
 
   @Nullable
   public NewArtifactConfiguration createArtifact() {

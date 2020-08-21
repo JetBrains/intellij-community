@@ -279,7 +279,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
 
   protected abstract @NlsContexts.TabTitle String getEntriesChooserTitle();
 
-  protected abstract @Nls(capitalization = Nls.Capitalization.Title) String getDependenciesTitle();
+  protected abstract @NlsContexts.BorderTitle String getDependenciesTitle();
 
   protected abstract @Nls String getElementTypeName();
 

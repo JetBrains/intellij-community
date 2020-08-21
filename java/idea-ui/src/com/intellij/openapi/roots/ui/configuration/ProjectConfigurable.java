@@ -29,6 +29,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStr
 import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -40,7 +41,6 @@ import com.intellij.ui.FieldPanel;
 import com.intellij.ui.InsertPathAction;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -261,7 +261,7 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
   }
 
   @Override
-  public @Nls String getBannerSlogan() {
+  public @NlsContexts.DetailedDescription String getBannerSlogan() {
     return JavaUiBundle.message("project.roots.project.banner.text", myProject.getName());
   }
 
@@ -300,7 +300,7 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
   }
 
   @NotNull
-  public @Nls(capitalization = Nls.Capitalization.Sentence) String getProjectName() {
+  public @NlsSafe String getProjectName() {
     if (myProjectName != null) {
       @NlsSafe final String text = myProjectName.getText();
       return text.trim();

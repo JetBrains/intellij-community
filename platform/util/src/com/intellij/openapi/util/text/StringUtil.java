@@ -1973,7 +1973,7 @@ public class StringUtil extends StringUtilRt {
    */
   @Contract(value = "null -> null; !null -> !null",pure = true)
   @Deprecated
-  public static String escapeXml(final @Nullable String text) {
+  public static String escapeXml(final @Nullable @Nls String text) {
     return text == null ? null : escapeXmlEntities(text);
   }
 
@@ -1989,7 +1989,7 @@ public class StringUtil extends StringUtilRt {
    * @return {@code text} with some characters replaced with standard XML entities, e.g. '<' replaced with '{@code &lt;}'
    */
   @Contract(pure = true)
-  public static @NotNull @NlsSafe String escapeXmlEntities(@NotNull String text) {
+  public static @NotNull @Nls String escapeXmlEntities(@NotNull @Nls String text) {
     return replace(text, REPLACES_DISP, REPLACES_REFS);
   }
 
@@ -2034,8 +2034,9 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
-  public static @NotNull String htmlEmphasize(@NotNull String text) {
-    return "<b><code>" + escapeXmlEntities(text) + "</code></b>";
+  public static @NotNull String htmlEmphasize(@NotNull @Nls String text) {
+    return HtmlChunk.tag("code").addText(text)
+      .wrapWith("b").toString();
   }
 
 
@@ -2335,7 +2336,7 @@ public class StringUtil extends StringUtilRt {
 
       int cmp;
       if (p1.matches("\\d+") && p2.matches("\\d+")) {
-        cmp = new Integer(p1).compareTo(new Integer(p2));
+        cmp = Integer.valueOf(p1).compareTo(Integer.valueOf(p2));
       }
       else {
         cmp = part1[idx].compareTo(part2[idx]);
@@ -2351,7 +2352,7 @@ public class StringUtil extends StringUtilRt {
         String p = parts[idx];
         int cmp;
         if (p.matches("\\d+")) {
-          cmp = new Integer(p).compareTo(0);
+          cmp = Integer.valueOf(p).compareTo(0);
         }
         else {
           cmp = 1;
@@ -3113,7 +3114,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(value = "null -> null; !null->!null", pure = true)
-  public static @NlsSafe String internEmptyString(String s) {
+  public static String internEmptyString(String s) {
     return s == null ? null : s.isEmpty() ? "" : s;
   }
 

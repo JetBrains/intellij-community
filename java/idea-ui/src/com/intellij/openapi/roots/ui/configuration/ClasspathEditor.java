@@ -32,6 +32,7 @@ import com.intellij.openapi.roots.ui.configuration.classpath.ClasspathPanelImpl;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ui.JBUI;
@@ -189,7 +190,8 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
     }
 
     private @NlsContexts.Label String getModuleClasspathFormat() {
-      return ClassPathStorageUtil.getStorageType(myState.getRootModel().getModule());
+      @NlsSafe final String type = ClassPathStorageUtil.getStorageType(myState.getRootModel().getModule());
+      return type;
     }
 
     private boolean isModified() {

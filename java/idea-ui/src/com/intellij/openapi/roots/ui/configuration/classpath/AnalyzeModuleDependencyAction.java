@@ -98,15 +98,21 @@ class AnalyzeModuleDependencyAction extends AnAction {
           secondEntry = null;
         }
 
-        final String usedExportedEntriesText = JavaUiBundle.message("analyze.module.dependency.exported.entries", firstEntry, secondEntry, tailEntries.size());
-        final String replacementText = JavaUiBundle.message("analyze.module.dependency.replacement.text", firstEntry, usedEntries.size());
+        final String howeverExportedBy = JavaUiBundle.message("analyze.module.dependency.however.exported.by",
+                                                    firstEntry,
+                                                    secondEntry,
+                                                    StringUtil.decapitalize(selectedEntry.getPresentableName()),
+                                                    tailEntries.size(),
+                                                    usedEntries.size());
+        final String confirmReplace = JavaUiBundle.message("analyze.module.dependency.replace.dialog.confirm.replace",
+                                                    selectedEntry.getPresentableName(),
+                                                    usedEntries.size(),
+                                                    firstEntry);
         final String message = JavaUiBundle.message("analyze.module.dependency.replace.dialog.message",
                                                     generateSkipImportsWarning(),
-                                                    usedExportedEntriesText,
-                                                    StringUtil.decapitalize(selectedEntry.getPresentableName()),
-                                                    usedEntries.size(),
-                                                    selectedEntry.getPresentableName(),
-                                                    replacementText);
+                                                    howeverExportedBy, confirmReplace
+                                                    );
+
         String[] options = {JavaUiBundle.message("button.text.replace"), JavaUiBundle.message("show.dependencies"), Messages.getCancelButton()};
         switch (Messages.showDialog(myProject, message, getTemplateText(), options, 0, Messages.getWarningIcon())) {
           case 0:

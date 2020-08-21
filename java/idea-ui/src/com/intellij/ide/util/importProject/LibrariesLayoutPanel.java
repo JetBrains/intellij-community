@@ -2,6 +2,7 @@
 package com.intellij.ide.util.importProject;
 
 import com.intellij.ide.JavaUiBundle;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.Nls;
 
 import java.io.File;
@@ -71,7 +72,7 @@ public class LibrariesLayoutPanel extends ProjectLayoutPanel<LibraryDescriptor>{
   }
 
   @Override
-  protected @Nls(capitalization = Nls.Capitalization.Title) String getDependenciesTitle() {
+  protected @NlsContexts.BorderTitle String getDependenciesTitle() {
     return JavaUiBundle.message("title.library.contents");
   }
 

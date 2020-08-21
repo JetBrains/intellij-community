@@ -18,6 +18,7 @@ package com.intellij.packaging.elements;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.openapi.util.NlsActions;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +29,7 @@ public abstract class ComplexPackagingElementType<E extends ComplexPackagingElem
     super(id, presentableName);
   }
 
-  public abstract @Nls(capitalization = Nls.Capitalization.Title) String getShowContentActionText();
+  public abstract @NlsActions.ActionText String getShowContentActionText();
 
   @Nullable
   public ModificationTracker getAllSubstitutionsModificationTracker(@NotNull Project project) {
