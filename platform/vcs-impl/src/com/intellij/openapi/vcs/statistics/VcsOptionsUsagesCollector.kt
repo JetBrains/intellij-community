@@ -7,8 +7,10 @@ import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesColle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.ignore.IgnoredToExcludedSynchronizerConstants.ASKED_MARK_IGNORED_FILES_AS_EXCLUDED_PROPERTY
+import org.jetbrains.annotations.NonNls
 import java.util.*
 
+@NonNls
 class VcsOptionsUsagesCollector : ProjectUsagesCollector() {
   override fun getGroupId(): String = "vcs.settings"
   override fun getVersion(): Int = 2
