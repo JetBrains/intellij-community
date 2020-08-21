@@ -81,6 +81,13 @@ internal open class StorageIndexes(
       }
     }
     assert(softLinksCopy.isEmpty) { "Soft links have garbage: $softLinksCopy" }
+
+    // Assert external mappings
+    for ((_, mappings) in externalMappings) {
+      for ((id, obj) in mappings.index) {
+        assert(storage.entityDataById(id) != null) { "Missing entity by id: $id" }
+      }
+    }
   }
 }
 
