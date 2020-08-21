@@ -10,7 +10,7 @@ import com.intellij.openapi.editor.impl.view.FontLayoutService
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.JBUI
-import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.annotations.RequiresEdt
 import java.awt.Dimension
 import java.awt.Font
 import java.awt.event.ComponentAdapter
@@ -35,7 +35,7 @@ class EditorComponentInlaysManager(val editor: EditorImpl) : Disposable {
     EditorUtil.disposeWithEditor(editor, this)
   }
 
-  @CalledInAwt
+  @RequiresEdt
   fun insertAfter(lineIndex: Int, component: JComponent): Disposable? {
     if (Disposer.isDisposed(this)) return null
 

@@ -4,11 +4,11 @@ package git4idea.fetch
 import com.intellij.openapi.progress.ProcessCanceledException
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
-import org.jetbrains.annotations.CalledInBackground
+import org.jetbrains.annotations.RequiresBackgroundThread
 
 interface GitRemoteOperationQueue {
 
-  @CalledInBackground
+  @RequiresBackgroundThread
   @Throws(ProcessCanceledException::class)
   fun <T> executeForRemote(repository: GitRepository, remote: GitRemote, operation: () -> T): T
 }

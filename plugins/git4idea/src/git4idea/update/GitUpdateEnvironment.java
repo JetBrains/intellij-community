@@ -20,9 +20,9 @@ import git4idea.config.UpdateMethod;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresEdt;
 
 import java.util.Collection;
 import java.util.Map;
@@ -71,7 +71,7 @@ public class GitUpdateEnvironment implements UpdateEnvironment {
   }
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   public boolean hasCustomNotification() {
     // If the log won't be refreshed after update, we won't be able to build a visible pack for the updated range.
     // Unless we force refresh it by hands, but if we do it, calculating update project info would take enormous amount of time & memory.

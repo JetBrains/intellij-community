@@ -34,8 +34,8 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.RequiresEdt
 import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.util.*
@@ -176,7 +176,7 @@ abstract class ComponentStoreImpl : IComponentStore {
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   internal open fun commitComponents(isForce: Boolean, session: SaveSessionProducerManager, errors: MutableList<Throwable>) {
     if (components.isEmpty()) {
       return
@@ -248,7 +248,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   }
 
   @TestOnly
-  @CalledInAwt
+  @RequiresEdt
   override fun saveComponent(component: PersistentStateComponent<*>) {
     val stateSpec = getStateSpec(component)
     LOG.debug { "saveComponent is called for ${stateSpec.name}" }

@@ -401,7 +401,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     }
 
     @Override
-    @CalledInAwt
+    @RequiresEdt
     public void rediff(boolean trySync) {
       if (myInitialRediffStarted) return;
       myInitialRediffStarted = true;
@@ -415,7 +415,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       throw new UnsupportedOperationException();
     }
 
-    @CalledInAwt
+    @RequiresEdt
     private void doRediff() {
       myStatusPanel.setBusy(true);
       myInnerDiffWorker.disable();
@@ -479,7 +479,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       }
     }
 
-    @CalledInAwt
+    @RequiresEdt
     private void apply(@NotNull List<? extends MergeLineFragment> fragments,
                        @NotNull List<? extends MergeConflictType> conflictTypes,
                        @Nullable FoldingModelSupport.Data foldingState,
@@ -533,7 +533,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     }
 
     @Override
-    @CalledInAwt
+    @RequiresEdt
     protected void destroyChangedBlocks() {
       super.destroyChangedBlocks();
       myInnerDiffWorker.stop();
@@ -558,12 +558,12 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
       private boolean myEnabled = false;
 
-      @CalledInAwt
+      @RequiresEdt
       public void scheduleRediff(@NotNull TextMergeChange change) {
         scheduleRediff(Collections.singletonList(change));
       }
 
-      @CalledInAwt
+      @RequiresEdt
       public void scheduleRediff(@NotNull Collection<? extends TextMergeChange> changes) {
         if (!myEnabled) return;
 
@@ -571,7 +571,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         schedule();
       }
 
-      @CalledInAwt
+      @RequiresEdt
       public void onSettingsChanged() {
         boolean enabled = myTextDiffProvider.getHighlightPolicy() == HighlightPolicy.BY_WORD;
         if (myEnabled == enabled) return;
@@ -580,14 +580,14 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         rebuildEverything();
       }
 
-      @CalledInAwt
+      @RequiresEdt
       public void onEverythingChanged() {
         myEnabled = myTextDiffProvider.getHighlightPolicy() == HighlightPolicy.BY_WORD;
 
         rebuildEverything();
       }
 
-      @CalledInAwt
+      @RequiresEdt
       public void disable() {
         myEnabled = false;
         stop();
@@ -610,7 +610,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         }
       }
 
-      @CalledInAwt
+      @RequiresEdt
       public void stop() {
         if (myProgress != null) myProgress.cancel();
         myProgress = null;
@@ -618,7 +618,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         myAlarm.cancelAllRequests();
       }
 
-      @CalledInAwt
+      @RequiresEdt
       private void putChanges(@NotNull Collection<? extends TextMergeChange> changes) {
         for (TextMergeChange change : changes) {
           if (change.isResolved()) continue;
@@ -626,7 +626,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         }
       }
 
-      @CalledInAwt
+      @RequiresEdt
       private void schedule() {
         if (myProgress != null) return;
         if (myScheduled.isEmpty()) return;
@@ -635,7 +635,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         myAlarm.addRequest(() -> launchRediff(false), ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS);
       }
 
-      @CalledInAwt
+      @RequiresEdt
       private void launchRediff(boolean trySync) {
         myStatusPanel.setBusy(true);
 
@@ -654,7 +654,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       }
 
       @NotNull
-      @CalledInBackground
+      @RequiresBackgroundThread
       private Runnable performRediff(@NotNull final List<? extends TextMergeChange> scheduled,
                                      @NotNull final List<? extends InnerChunkData> data,
                                      @NotNull final ProgressIndicator indicator) {
@@ -687,7 +687,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     //
 
     @Override
-    @CalledInAwt
+    @RequiresEdt
     protected void onBeforeDocumentChange(@NotNull DocumentEvent e) {
       super.onBeforeDocumentChange(e);
       if (myInitialRediffFinished) myContentModified = true;
@@ -789,7 +789,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       return executeMergeCommand(commandName, false, affected, task);
     }
 
-    @CalledInAwt
+    @RequiresEdt
     public void markChangeResolved(@NotNull TextMergeChange change) {
       if (change.isResolved()) return;
       change.setResolved(Side.LEFT, true);
@@ -799,7 +799,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       myModel.invalidateHighlighters(change.getIndex());
     }
 
-    @CalledInAwt
+    @RequiresEdt
     public void markChangeResolved(@NotNull TextMergeChange change, @NotNull Side side) {
       if (change.isResolved(side)) return;
       change.setResolved(side, true);
@@ -817,7 +817,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       }
     }
 
-    @CalledWithWriteLock
+    @RequiresWriteLock
     public void replaceChange(@NotNull TextMergeChange change, @NotNull Side side, boolean resolveChange) {
       if (change.isResolved(side)) return;
       if (!change.isChange(side)) {
@@ -1042,7 +1042,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       }
 
       @NotNull
-      @CalledInAwt
+      @RequiresEdt
       private List<TextMergeChange> getSelectedChanges(@NotNull ThreeSide side) {
         EditorEx editor = getEditor(side);
         BitSet lines = DiffUtil.getSelectedLines(editor);
@@ -1063,7 +1063,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
       protected abstract boolean isEnabled(@NotNull TextMergeChange change);
 
-      @CalledWithWriteLock
+      @RequiresWriteLock
       protected abstract void apply(@NotNull ThreeSide side, @NotNull List<? extends TextMergeChange> changes);
     }
 

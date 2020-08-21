@@ -20,9 +20,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresEdt;
 
 public abstract class MergeContext implements UserDataHolder, FocusableContext {
   protected final UserDataHolderBase myUserDataHolder = new UserDataHolderBase();
@@ -33,7 +33,7 @@ public abstract class MergeContext implements UserDataHolder, FocusableContext {
   /**
    * Called by MergeTool on conflict resolve end. Should delegate to the {@link MergeRequest#applyResult(MergeResult)}
    */
-  @CalledInAwt
+  @RequiresEdt
   public abstract void finishMerge(@NotNull MergeResult result);
 
   /**

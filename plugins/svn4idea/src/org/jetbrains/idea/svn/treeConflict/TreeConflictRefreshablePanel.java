@@ -23,10 +23,10 @@ import com.intellij.util.BeforeAfter;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.VcsBackgroundTask;
 import gnu.trove.TLongArrayList;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.CalledInBackground;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresBackgroundThread;
+import org.jetbrains.annotations.RequiresEdt;
 import org.jetbrains.idea.svn.ConflictedSvnChange;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -101,7 +101,7 @@ public class TreeConflictRefreshablePanel implements Disposable {
     return myDetailsPanel;
   }
 
-  @CalledInBackground
+  @RequiresBackgroundThread
   private BeforeAfter<ConflictSidePresentation> processDescription(@NotNull ProgressIndicator indicator,
                                                                    TreeConflictDescription description) throws VcsException {
     if (description == null) return null;
@@ -174,7 +174,7 @@ public class TreeConflictRefreshablePanel implements Disposable {
     return result;
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void refresh() {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
@@ -184,7 +184,7 @@ public class TreeConflictRefreshablePanel implements Disposable {
     myQueue.run(task, defaultModalityState(), myIndicator);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected JPanel dataToPresentation(BeforeAfter<BeforeAfter<ConflictSidePresentation>> data) {
     final JPanel wrapper = new JPanel(new BorderLayout());
     final JPanel main = new JPanel(new GridBagLayout());

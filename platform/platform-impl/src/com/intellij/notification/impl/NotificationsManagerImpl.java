@@ -46,9 +46,9 @@ import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.*;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresEdt;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -143,14 +143,14 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void dispatchEarlyNotifications() {
     List<Notification> copy = new ArrayList<>(myEarlyNotifications);
     myEarlyNotifications.clear();
     copy.forEach(early -> showNotification(early, null));
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void showNotification(Notification notification, @Nullable Project project) {
     if (!LoadingState.APP_STARTED.isOccurred()) {
       myEarlyNotifications.add(notification);

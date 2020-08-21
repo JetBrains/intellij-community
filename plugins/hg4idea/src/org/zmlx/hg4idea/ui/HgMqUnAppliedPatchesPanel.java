@@ -118,7 +118,7 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
     return toolbar.getComponent();
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void updatePatchSeriesInBackground(@Nullable final Runnable runAfterUpdate) {
     final String newContent = myNeedToUpdateFileContent ? getContentFromModel() : null;
     myNeedToUpdateFileContent = false;
@@ -147,7 +147,7 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
   }
 
   @NotNull
-  @CalledInAwt
+  @RequiresEdt
   private String getContentFromModel() {
     StringBuilder content = new StringBuilder();
     String separator = "\n";
@@ -160,7 +160,7 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
     return content.toString();
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private String getPatchName(int i) {
     return myPatchTable.getModel().getPatchName(i);
   }
@@ -190,7 +190,7 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
   }
 
   @NotNull
-  @CalledInAwt
+  @RequiresEdt
   public List<String> getSelectedPatchNames() {
     return getPatchNames(myPatchTable.getSelectedRows());
   }

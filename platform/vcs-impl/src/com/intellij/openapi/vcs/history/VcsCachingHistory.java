@@ -17,10 +17,10 @@ import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.util.Consumer;
 import com.intellij.vcs.history.VcsHistoryProviderEx;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.CalledInBackground;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresBackgroundThread;
+import org.jetbrains.annotations.RequiresEdt;
 
 import java.io.Serializable;
 import java.util.List;
@@ -165,14 +165,14 @@ public final class VcsCachingHistory {
     return null;
   }
 
-  @CalledInBackground
+  @RequiresBackgroundThread
   public static List<VcsFileRevision> collect(@NotNull AbstractVcs vcs,
                                               @NotNull FilePath filePath,
                                               @Nullable VcsRevisionNumber revision) throws VcsException {
     return collectSession(vcs, filePath, revision).getRevisionList();
   }
 
-  @CalledInBackground
+  @RequiresBackgroundThread
   public static VcsHistorySession collectSession(@NotNull AbstractVcs vcs,
                                                  @NotNull FilePath filePath,
                                                  @Nullable VcsRevisionNumber revision) throws VcsException {
@@ -183,7 +183,7 @@ public final class VcsCachingHistory {
     return partner.getSession();
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public static void collectInBackground(@NotNull AbstractVcs vcs,
                                          @NotNull FilePath filePath,
                                          @NotNull VcsBackgroundableActions actionKey,
@@ -194,7 +194,7 @@ public final class VcsCachingHistory {
     history.reportHistoryInBackground(filePath, null, vcs.getKeyInstanceMethod(), lock, partner, true);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public static void collectInBackground(@NotNull AbstractVcs vcs,
                                          @NotNull FilePath filePath,
                                          @NotNull VcsHistorySessionConsumer partner,
@@ -204,7 +204,7 @@ public final class VcsCachingHistory {
     history.reportHistoryInBackground(filePath, null, vcs.getKeyInstanceMethod(), lock, partner, canUseCache);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public static void collectInBackground(@NotNull AbstractVcs vcs,
                                          @NotNull FilePath filePath, @NotNull VcsRevisionNumber startRevisionNumber,
                                          @NotNull VcsHistorySessionConsumer partner) {
@@ -216,7 +216,7 @@ public final class VcsCachingHistory {
     history.reportHistoryInBackground(filePath, startRevisionNumber, vcs.getKeyInstanceMethod(), lock, partner, false);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public static boolean collectFromCache(@NotNull AbstractVcs vcs,
                                          @NotNull FilePath filePath,
                                          @NotNull VcsHistorySessionConsumer partner) {

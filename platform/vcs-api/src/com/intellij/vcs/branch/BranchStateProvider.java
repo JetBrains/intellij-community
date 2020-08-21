@@ -3,9 +3,9 @@ package com.intellij.vcs.branch;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.vcs.FilePath;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresEdt;
 
 public interface BranchStateProvider {
   ExtensionPointName<BranchStateProvider> EP_NAME = ExtensionPointName.create("com.intellij.vcs.branchStateProvider");
@@ -13,7 +13,7 @@ public interface BranchStateProvider {
   /**
    * Returns information about current branch of the given path.
    */
-  @CalledInAwt
+  @RequiresEdt
   @Nullable
   BranchData getCurrentBranch(@NotNull FilePath path);
 }

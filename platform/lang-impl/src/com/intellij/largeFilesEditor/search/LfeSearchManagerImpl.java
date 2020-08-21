@@ -9,7 +9,6 @@ import com.intellij.find.impl.RegExHelpPopup;
 import com.intellij.largeFilesEditor.Utils;
 import com.intellij.largeFilesEditor.editor.LargeFileEditor;
 import com.intellij.largeFilesEditor.editor.Page;
-import com.intellij.largeFilesEditor.search.actions.LargeFileToggleAction;
 import com.intellij.largeFilesEditor.search.actions.*;
 import com.intellij.largeFilesEditor.search.searchResultsPanel.RangeSearch;
 import com.intellij.largeFilesEditor.search.searchResultsPanel.RangeSearchCallback;
@@ -33,8 +32,8 @@ import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.components.JBList;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.RequiresEdt;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -171,7 +170,7 @@ public class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.C
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void launchCloseSearch(SearchTaskOptions options) {
     if (StringUtil.isEmpty(options.stringToFind)) {
       return;
@@ -418,7 +417,7 @@ public class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.C
   }
 
 
-  @CalledInAwt
+  @RequiresEdt
   @Override
   public void onSearchParametersChanged() {
     if (lastExecutedCloseSearchTask != null) {

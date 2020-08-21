@@ -254,7 +254,7 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
     return columns.toArray(new DualViewColumnInfo[0]);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void setHistorySession(@NotNull VcsHistorySession session) {
     if (myTargetSelection == null) {
       myTargetSelection = myDualView.getFlatView().getSelectedObjects();
@@ -284,7 +284,7 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
     myDualView.repaint();
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void finishRefresh() {
     if (myHistorySession.getHistoryAsTreeProvider() != null) {
       // scroll tree view to most recent change

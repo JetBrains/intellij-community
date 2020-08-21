@@ -35,9 +35,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresEdt;
 
 import java.io.File;
 import java.io.IOException;
@@ -101,7 +101,7 @@ public final class ApplyPatchAction extends DumbAwareAction {
     dialog.show();
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public static Boolean showAndGetApplyPatch(@NotNull Project project, @NotNull File file) {
     VirtualFile vFile = VfsUtil.findFileByIoFile(file, true);
     String patchPath = file.getPath();

@@ -145,7 +145,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   }
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   protected void onInit() {
     super.onInit();
     installEditorListeners();
@@ -162,7 +162,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   }
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   protected void onDispose() {
     myModel.clear();
     myFoldingModel.destroy();
@@ -171,7 +171,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   }
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   protected void processContextHints() {
     super.processContextHints();
     Side side = DiffUtil.getUserData(myRequest, myContext, DiffUserDataKeys.MASTER_SIDE);
@@ -181,7 +181,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   }
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   protected void updateContextHints() {
     super.updateContextHints();
     myInitialScrollHelper.updateContext(myRequest);
@@ -199,7 +199,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     return DiffUtil.createStackedComponents(titles, DiffUtil.TITLE_GAP);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected void updateEditorCanBeTyped() {
     myEditor.setViewer(mySuppressEditorTyping || !isEditable(myMasterSide, true));
   }
@@ -217,7 +217,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
   @NotNull
   @Override
-  @CalledInAwt
+  @RequiresEdt
   public List<AnAction> createToolbarActions() {
     List<AnAction> group = new ArrayList<>(myTextDiffProvider.getToolbarActions());
     group.add(new MyToggleExpandByDefaultAction());
@@ -232,7 +232,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
   @NotNull
   @Override
-  @CalledInAwt
+  @RequiresEdt
   public List<AnAction> createPopupActions() {
     List<AnAction> group = new ArrayList<>(myTextDiffProvider.getPopupActions());
     group.add(new MyToggleExpandByDefaultAction());
@@ -258,7 +258,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     return group;
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected void installEditorListeners() {
     new TextDiffViewerUtil.EditorActionsPopup(createEditorPopupActions()).install(getEditors(), myPanel);
   }
@@ -285,7 +285,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   }
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   protected void onSlowRediff() {
     super.onSlowRediff();
     myStatusPanel.setBusy(true);
@@ -348,13 +348,13 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     updateEditorCanBeTyped();
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected void markSuppressEditorTyping() {
     mySuppressEditorTyping = true;
     updateEditorCanBeTyped();
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected void markStateIsOutOfDate() {
     myStateIsOutOfDate = true;
     myFoldingModel.disposeLineConvertor();
@@ -497,7 +497,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   /*
    * This convertor returns -1 if exact matching is impossible
    */
-  @CalledInAwt
+  @RequiresEdt
   public int transferLineToOnesideStrict(@NotNull Side side, int line) {
     LineNumberConvertor convertor = myModel.getLineNumberConvertor(side);
     return convertor != null ? convertor.convertInv(line) : -1;
@@ -506,7 +506,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   /*
    * This convertor returns -1 if exact matching is impossible
    */
-  @CalledInAwt
+  @RequiresEdt
   public int transferLineFromOnesideStrict(@NotNull Side side, int line) {
     LineNumberConvertor convertor = myModel.getLineNumberConvertor(side);
     return convertor != null ? convertor.convert(line) : -1;
@@ -515,7 +515,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   /*
    * This convertor returns 'good enough' position, even if exact matching is impossible
    */
-  @CalledInAwt
+  @RequiresEdt
   public int transferLineToOneside(@NotNull Side side, int line) {
     LineNumberConvertor convertor = myModel.getLineNumberConvertor(side);
     return convertor != null ? convertor.convertApproximateInv(line) : line;
@@ -528,7 +528,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   /*
    * This convertor returns 'good enough' position, even if exact matching is impossible
    */
-  @CalledInAwt
+  @RequiresEdt
   @NotNull
   public Pair<int[], Side> transferLineFromOneside(int line) {
     int[] lines = new int[2];
@@ -563,7 +563,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     return Pair.create(lines, side);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void destroyChangedBlockData() {
     myModel.clear();
 
@@ -731,7 +731,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       return DiffUtil.isSomeRangeSelected(getEditor(), lines -> ContainerUtil.exists(changes, change -> isChangeSelected(change, lines)));
     }
 
-    @CalledWithWriteLock
+    @RequiresWriteLock
     protected abstract void apply(@NotNull List<? extends UnifiedDiffChange> changes);
   }
 
@@ -770,7 +770,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     }
   }
 
-  @CalledWithWriteLock
+  @RequiresWriteLock
   public void replaceChange(@NotNull UnifiedDiffChange change, @NotNull Side sourceSide) {
     Side outputSide = sourceSide.other();
 
@@ -788,7 +788,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     // TODO: we can apply change manually, without marking state out-of-date. But we'll have to schedule rediff anyway.
   }
 
-  @CalledWithWriteLock
+  @RequiresWriteLock
   public void appendChange(@NotNull UnifiedDiffChange change, @NotNull final Side sourceSide) {
     Side outputSide = sourceSide.other();
 
@@ -805,7 +805,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
   }
 
   @NotNull
-  @CalledInAwt
+  @RequiresEdt
   protected List<UnifiedDiffChange> getSelectedChanges() {
     final BitSet lines = DiffUtil.getSelectedLines(myEditor);
     List<UnifiedDiffChange> changes = ContainerUtil.notNullize(myModel.getDiffChanges());
@@ -872,7 +872,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     return getContent(Side.RIGHT);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   @Nullable
   public List<UnifiedDiffChange> getDiffChanges() {
     return myModel.getDiffChanges();
@@ -897,7 +897,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     return myStatusPanel;
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public boolean isEditable(@NotNull Side side, boolean respectReadOnlyLock) {
     if (myReadOnlyLockSet && respectReadOnlyLock) return false;
     if (side.select(myForceReadOnlyFlags)) return false;
@@ -923,7 +923,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     return getNavigatable(LineCol.fromCaret(myEditor));
   }
 
-  @CalledInAwt
+  @RequiresEdt
   @Nullable
   protected UnifiedDiffChange getCurrentChange() {
     List<UnifiedDiffChange> changes = myModel.getDiffChanges();
@@ -937,7 +937,7 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
     return null;
   }
 
-  @CalledInAwt
+  @RequiresEdt
   @Nullable
   protected Navigatable getNavigatable(@NotNull LineCol position) {
     Pair<int[], Side> pair = transferLineFromOneside(position.line);
@@ -1317,20 +1317,20 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
       myUpdateIndicator.cancel();
     }
 
-    @CalledInAwt
+    @RequiresEdt
     public void suspendUpdate() {
       myUpdateIndicator.cancel();
       myUpdateQueue.cancelAllUpdates();
       mySuspended = true;
     }
 
-    @CalledInAwt
+    @RequiresEdt
     public void resumeUpdate() {
       mySuspended = false;
       scheduleUpdate();
     }
 
-    @CalledInAwt
+    @RequiresEdt
     public void scheduleUpdate() {
       if (myProject == null) return;
       if (mySuspended) return;

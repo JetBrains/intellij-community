@@ -240,7 +240,7 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
     return VcsBundle.message("selection.history.can.not.load.message") + (e != null ? ": " + e.getLocalizedMessage() : "");
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void updateRevisionsList() {
     if (myIsDuringUpdate) return;
     try {
@@ -583,10 +583,10 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
       });
     }
 
-    @CalledInBackground
+    @RequiresBackgroundThread
     protected abstract void notifyError(@NotNull VcsException e);
 
-    @CalledInBackground
+    @RequiresBackgroundThread
     protected abstract void notifyUpdate(boolean shouldFlush);
 
     @NotNull

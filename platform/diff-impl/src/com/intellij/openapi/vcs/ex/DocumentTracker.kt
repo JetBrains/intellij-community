@@ -21,7 +21,7 @@ import com.intellij.openapi.vcs.ex.DocumentTracker.Block
 import com.intellij.openapi.vcs.ex.DocumentTracker.Handler
 import com.intellij.util.containers.PeekableIteratorWrapper
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.annotations.RequiresEdt
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import kotlin.math.max
@@ -71,7 +71,7 @@ class DocumentTracker(
     application.addApplicationListener(MyApplicationListener(), this)
   }
 
-  @CalledInAwt
+  @RequiresEdt
   override fun dispose() {
     ApplicationManager.getApplication().assertIsDispatchThread()
 
@@ -83,7 +83,7 @@ class DocumentTracker(
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   fun addHandler(newHandler: Handler) {
     handlers.add(newHandler)
   }
@@ -109,14 +109,14 @@ class DocumentTracker(
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   fun unfreeze(side: Side) {
     LOCK.write {
       freezeHelper.unfreeze(side)
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   inline fun doFrozen(task: () -> Unit) {
     doFrozen(Side.LEFT) {
       doFrozen(Side.RIGHT) {
@@ -125,7 +125,7 @@ class DocumentTracker(
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   inline fun doFrozen(side: Side, task: () -> Unit) {
     freeze(side)
     try {
@@ -144,7 +144,7 @@ class DocumentTracker(
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   fun replaceDocument(side: Side, newDocument: Document) {
     assert(!LOCK.isHeldByCurrentThread)
 
@@ -161,7 +161,7 @@ class DocumentTracker(
   }
 
 
-  @CalledInAwt
+  @RequiresEdt
   fun refreshDirty(fastRefresh: Boolean, forceInFrozen: Boolean = false) {
     if (isDisposed) return
     if (!forceInFrozen && freezeHelper.isFrozen()) return
@@ -194,7 +194,7 @@ class DocumentTracker(
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   fun updateFrozenContentIfNeeded() {
     // ensure blocks are up to date
     updateFrozenContentIfNeeded(Side.LEFT)
@@ -212,12 +212,12 @@ class DocumentTracker(
   }
 
 
-  @CalledInAwt
+  @RequiresEdt
   fun partiallyApplyBlocks(side: Side, condition: (Block) -> Boolean) {
     partiallyApplyBlocks(side, condition, { _, _ -> })
   }
 
-  @CalledInAwt
+  @RequiresEdt
   fun partiallyApplyBlocks(side: Side, condition: (Block) -> Boolean, consumer: (Block, shift: Int) -> Unit) {
     if (isDisposed) return
 
@@ -249,7 +249,7 @@ class DocumentTracker(
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   fun getContentWithPartiallyAppliedBlocks(side: Side, condition: (Block) -> Boolean): String {
     val otherSide = side.other()
     val affectedBlocks = LOCK.write {
@@ -286,7 +286,7 @@ class DocumentTracker(
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   fun setFrozenState(lineRanges: List<Range>): Boolean {
     if (isDisposed) return false
     assert(freezeHelper.isFrozen(Side.LEFT) && freezeHelper.isFrozen(Side.RIGHT))

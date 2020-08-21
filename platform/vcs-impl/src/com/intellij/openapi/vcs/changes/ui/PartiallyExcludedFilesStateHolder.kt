@@ -13,7 +13,7 @@ import com.intellij.util.ui.update.Update
 import gnu.trove.THashMap
 import gnu.trove.THashSet
 import gnu.trove.TObjectHashingStrategy
-import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.annotations.RequiresEdt
 
 abstract class PartiallyExcludedFilesStateHolder<T>(
   project: Project,
@@ -46,7 +46,7 @@ abstract class PartiallyExcludedFilesStateHolder<T>(
   private val trackers
     get() = trackableElements.mapNotNull { element -> findTrackerFor(element)?.let { tracker -> element to tracker } }
 
-  @CalledInAwt
+  @RequiresEdt
   open fun updateExclusionStates() {
     myTrackerExclusionStates.clear()
 
@@ -72,7 +72,7 @@ abstract class PartiallyExcludedFilesStateHolder<T>(
     private val trackerListener = MyTrackerListener()
     private val disposable get() = this@PartiallyExcludedFilesStateHolder
 
-    @CalledInAwt
+    @RequiresEdt
     fun install(project: Project) {
       with(LineStatusTrackerManager.getInstanceImpl(project)) {
         addTrackerListener(this@MyTrackerManagerListener, disposable)

@@ -13,9 +13,9 @@ import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.impl.FoldingModelImpl;
 import com.intellij.util.ArrayUtil;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresEdt;
 
 import javax.swing.*;
 import java.awt.*;
@@ -24,14 +24,14 @@ import java.util.List;
 
 public final class SyncScrollSupport {
   public interface SyncScrollable {
-    @CalledInAwt
+    @RequiresEdt
     boolean isSyncScrollEnabled();
 
-    @CalledInAwt
+    @RequiresEdt
     int transfer(@NotNull Side baseSide, int line);
 
     @NotNull
-    @CalledInAwt
+    @RequiresEdt
     Range getRange(@NotNull Side baseSide, int line);
   }
 

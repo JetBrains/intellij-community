@@ -17,9 +17,9 @@ import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresEdt;
 
 import java.util.*;
 
@@ -36,7 +36,7 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor<AbstractFil
     return null;
   }
 
-  @CalledInAwt
+  @RequiresEdt
   @Override
   public void apply(@NotNull List<? extends FilePatch> remaining,
                     @NotNull MultiMap<VirtualFile, AbstractFilePatchInProgress<?>> patchGroupsToApply,

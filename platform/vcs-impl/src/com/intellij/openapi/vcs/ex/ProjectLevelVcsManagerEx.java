@@ -7,10 +7,10 @@ import com.intellij.openapi.vcs.update.ActionInfo;
 import com.intellij.openapi.vcs.update.UpdateInfoTree;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.ui.content.ContentManager;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresEdt;
 
 import java.util.List;
 
@@ -34,7 +34,7 @@ public abstract class ProjectLevelVcsManagerEx extends ProjectLevelVcsManager {
 
   public abstract void notifyDirectoryMappingChanged();
 
-  @CalledInAwt
+  @RequiresEdt
   @Nullable
   public abstract UpdateInfoTree showUpdateProjectInfo(UpdatedFiles updatedFiles,
                                                        @Nls String displayActionName,

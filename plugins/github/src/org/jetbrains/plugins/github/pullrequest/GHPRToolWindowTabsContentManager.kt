@@ -10,7 +10,7 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.IJSwingUtilities
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcsUtil.VcsImplUtil
-import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.annotations.RequiresEdt
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabComponentController
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabComponentFactory
@@ -45,20 +45,20 @@ class GHPRToolWindowTabsContentManager(private val project: Project, private val
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   internal fun addTab(repository: GHRepositoryCoordinates, remote: GitRemoteUrlCoordinates) {
     val content = createContent(repository, remote)
     contentManager.addContent(content)
     updateTabNames()
   }
 
-  @CalledInAwt
+  @RequiresEdt
   internal fun removeTab(repository: GHRepositoryCoordinates) {
     val content = contentManager.contents.firstOrNull { it.repository == repository } ?: return
     contentManager.removeContent(content, true)
   }
 
-  @CalledInAwt
+  @RequiresEdt
   internal fun focusTab(repository: GHRepositoryCoordinates, onFocused: ((GHPRToolWindowTabComponentController?) -> Unit)? = null) {
     val content = contentManager.contents.firstOrNull { it.repository == repository } ?: return
     contentManager.setSelectedContent(content, true)

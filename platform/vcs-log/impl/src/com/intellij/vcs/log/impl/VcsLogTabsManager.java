@@ -21,10 +21,10 @@ import com.intellij.vcs.log.ui.MainVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogPanel;
 import com.intellij.vcs.log.ui.editor.DefaultVcsLogFile;
 import com.intellij.vcs.log.visible.filters.VcsLogFiltersKt;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresEdt;
 
 import java.util.Collection;
 import java.util.Set;
@@ -60,7 +60,7 @@ public class VcsLogTabsManager {
     });
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void createLogTabs(@NotNull VcsLogManager manager) {
     myUiProperties.getTabs().forEach((id, kind) -> openLogTab(manager, id, kind, false, null));
   }

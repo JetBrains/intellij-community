@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.data.provider
 
 import com.intellij.openapi.Disposable
-import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.annotations.RequiresEdt
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
 import org.jetbrains.plugins.github.pullrequest.GHPRDiffController
 import org.jetbrains.plugins.github.pullrequest.data.GHListLoader
@@ -18,6 +18,6 @@ interface GHPRDataProvider {
   val timelineLoader: GHListLoader<GHPRTimelineItem>?
   val diffController: GHPRDiffController
 
-  @CalledInAwt
+  @RequiresEdt
   fun acquireTimelineLoader(disposable: Disposable): GHListLoader<GHPRTimelineItem>
 }

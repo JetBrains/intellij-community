@@ -6,8 +6,8 @@ import com.intellij.largeFilesEditor.editor.LargeFileEditor;
 import com.intellij.largeFilesEditor.editor.Page;
 import com.intellij.largeFilesEditor.search.searchTask.CloseSearchTask;
 import com.intellij.openapi.editor.event.CaretEvent;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.RequiresEdt;
 
 import java.util.List;
 
@@ -34,7 +34,7 @@ public interface LfeSearchManager {
 
   void updateStatusText();
 
-  @CalledInAwt
+  @RequiresEdt
   void onSearchParametersChanged();
 
   void onCaretPositionChanged(CaretEvent e);

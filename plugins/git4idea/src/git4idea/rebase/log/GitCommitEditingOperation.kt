@@ -9,7 +9,7 @@ import git4idea.rebase.GitRebaseEditorHandler
 import git4idea.rebase.GitRebaseProcess
 import git4idea.rebase.GitRebaseSpec
 import git4idea.repo.GitRepository
-import org.jetbrains.annotations.CalledInBackground
+import org.jetbrains.annotations.RequiresBackgroundThread
 
 internal abstract class GitCommitEditingOperation(protected val repository: GitRepository) {
   protected val project = repository.project
@@ -46,7 +46,7 @@ internal abstract class GitCommitEditingOperation(protected val repository: GitR
     private val initialHead = repository.currentRevision!!
     var result: GitCommitEditingOperationResult = GitCommitEditingOperationResult.Incomplete
 
-    @CalledInBackground
+    @RequiresBackgroundThread
     override fun notifySuccess() {
       repository.update()
       val newHead = repository.currentRevision!!

@@ -37,7 +37,7 @@ import com.jetbrains.python.sdk.PySdkToInstallCollector.Companion.LookupResult
 import com.jetbrains.python.sdk.PySdkToInstallCollector.Companion.logSdkDownload
 import com.jetbrains.python.sdk.PySdkToInstallCollector.Companion.logSdkInstallation
 import org.jetbrains.annotations.CalledInAny
-import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.annotations.RequiresEdt
 import java.io.File
 import java.io.IOException
 import kotlin.math.absoluteValue
@@ -118,7 +118,7 @@ internal abstract class PySdkToInstall internal constructor(name: String, versio
   @NlsContexts.DialogMessage
   abstract fun getInstallationWarning(@NlsContexts.Button defaultButtonName: String): String
 
-  @CalledInAwt
+  @RequiresEdt
   abstract fun install(module: Module?, systemWideSdksDetector: () -> List<PyDetectedSdk>): PyDetectedSdk?
 }
 

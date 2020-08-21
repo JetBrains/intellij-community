@@ -20,9 +20,9 @@ import git4idea.branch.GitBranchUtil;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresEdt;
 
 import java.util.Collection;
 import java.util.List;
@@ -47,7 +47,7 @@ public abstract class GitRepositoryAction extends DumbAwareAction {
   }
 
   @NotNull
-  @CalledInAwt
+  @RequiresEdt
   private static VirtualFile getDefaultRoot(@NotNull Project project, @NotNull List<? extends VirtualFile> roots, VirtualFile @Nullable [] vFiles) {
     if (vFiles != null) {
       for (VirtualFile file : vFiles) {

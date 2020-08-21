@@ -20,10 +20,10 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresEdt;
 
 import javax.swing.event.ChangeEvent;
 import java.io.File;
@@ -62,7 +62,7 @@ public final class VcsShelveUtils {
     ApplicationManager.getApplication().invokeAndWait(() -> markUnshelvedFilesNonUndoable(project, changes));
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private static void markUnshelvedFilesNonUndoable(@NotNull final Project project,
                                                     @NotNull List<? extends ShelvedChange> changes) {
     final UndoManagerImpl undoManager = (UndoManagerImpl)UndoManager.getInstance(project);

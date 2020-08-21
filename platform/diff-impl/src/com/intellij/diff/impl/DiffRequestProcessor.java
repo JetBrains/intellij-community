@@ -56,10 +56,10 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresEdt;
 
 import javax.swing.*;
 import java.awt.*;
@@ -169,22 +169,22 @@ public abstract class DiffRequestProcessor implements Disposable {
   // Update
   //
 
-  @CalledInAwt
+  @RequiresEdt
   protected void reloadRequest() {
     updateRequest(true);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void updateRequest() {
     updateRequest(false);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void updateRequest(boolean force) {
     updateRequest(force, null);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public abstract void updateRequest(boolean force, @Nullable ScrollToPolicy scrollToChangePolicy);
 
   @NotNull
@@ -296,12 +296,12 @@ public abstract class DiffRequestProcessor implements Disposable {
 
   @Nullable private ApplyData myQueuedApplyRequest;
 
-  @CalledInAwt
+  @RequiresEdt
   protected void applyRequest(@NotNull DiffRequest request, boolean force, @Nullable ScrollToPolicy scrollToChangePolicy) {
     applyRequest(request, force, scrollToChangePolicy, false);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected void applyRequest(@NotNull DiffRequest request, boolean force, @Nullable ScrollToPolicy scrollToChangePolicy, boolean sync) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myIterationState = IterationState.NONE;
@@ -323,7 +323,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void doApplyRequest(@NotNull DiffRequest request, boolean force, @Nullable ScrollToPolicy scrollToChangePolicy) {
     if (!force && request == myActiveRequest) return;
 
@@ -369,7 +369,7 @@ public abstract class DiffRequestProcessor implements Disposable {
   protected void onAfterNavigate() {
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected void onDispose() {
   }
 
@@ -679,25 +679,25 @@ public abstract class DiffRequestProcessor implements Disposable {
 
   @NotNull private IterationState myIterationState = IterationState.NONE;
 
-  @CalledInAwt
+  @RequiresEdt
   protected boolean hasNextChange(boolean fromUpdate) {
     return false;
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected boolean hasPrevChange(boolean fromUpdate) {
     return false;
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected void goToNextChange(boolean fromDifferences) {
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected void goToPrevChange(boolean fromDifferences) {
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected boolean isNavigationEnabled() {
     return false;
   }
@@ -1141,10 +1141,10 @@ public abstract class DiffRequestProcessor implements Disposable {
   //
 
   private interface ViewerState {
-    @CalledInAwt
+    @RequiresEdt
     void init();
 
-    @CalledInAwt
+    @RequiresEdt
     void destroy();
 
     @Nullable
@@ -1205,7 +1205,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
 
     @Override
-    @CalledInAwt
+    @RequiresEdt
     public void init() {
       myContentPanel.setContent(myViewer.getComponent());
 
@@ -1214,7 +1214,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
 
     @Override
-    @CalledInAwt
+    @RequiresEdt
     public void destroy() {
       Disposer.dispose(myViewer);
     }
@@ -1248,7 +1248,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
 
     @Override
-    @CalledInAwt
+    @RequiresEdt
     public void init() {
       myContentPanel.setContent(myViewer.getComponent());
       setTitle(myActiveRequest.getTitle());
@@ -1265,7 +1265,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
 
     @Override
-    @CalledInAwt
+    @RequiresEdt
     public void destroy() {
       Disposer.dispose(myViewer);
     }
@@ -1305,7 +1305,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
 
     @Override
-    @CalledInAwt
+    @RequiresEdt
     public void init() {
       myContentPanel.setContent(myWrapperViewer.getComponent());
       setTitle(myActiveRequest.getTitle());
@@ -1343,7 +1343,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
 
     @Override
-    @CalledInAwt
+    @RequiresEdt
     public void destroy() {
       Disposer.dispose(myViewer);
       Disposer.dispose(myWrapperViewer);

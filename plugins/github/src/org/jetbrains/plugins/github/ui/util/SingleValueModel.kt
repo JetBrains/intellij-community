@@ -3,7 +3,7 @@ package org.jetbrains.plugins.github.ui.util
 
 import com.intellij.openapi.Disposable
 import com.intellij.util.EventDispatcher
-import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.annotations.RequiresEdt
 import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
 import org.jetbrains.plugins.github.util.GithubUtil
 
@@ -12,15 +12,15 @@ class SingleValueModel<T>(initialValue: T) {
 
   var value by GithubUtil.Delegates.observableField(initialValue, changeEventDispatcher)
 
-  @CalledInAwt
+  @RequiresEdt
   fun addAndInvokeValueChangedListener(listener: () -> Unit) =
     SimpleEventListener.addAndInvokeListener(changeEventDispatcher, listener)
 
-  @CalledInAwt
+  @RequiresEdt
   fun addValueChangedListener(disposable: Disposable, listener: () -> Unit) =
     SimpleEventListener.addDisposableListener(changeEventDispatcher, disposable, listener)
 
-  @CalledInAwt
+  @RequiresEdt
   fun addValueChangedListener(listener: () -> Unit) =
     SimpleEventListener.addListener(changeEventDispatcher, listener)
 

@@ -68,7 +68,7 @@ public abstract class CacheDiffRequestProcessor<T> extends DiffRequestProcessor 
   protected abstract T getCurrentRequestProvider();
 
   @NotNull
-  @CalledInBackground
+  @RequiresBackgroundThread
   protected abstract DiffRequest loadRequest(@NotNull T provider, @NotNull ProgressIndicator indicator)
     throws ProcessCanceledException, DiffRequestProducerException;
 
@@ -82,12 +82,12 @@ public abstract class CacheDiffRequestProcessor<T> extends DiffRequestProcessor 
   }
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   public void updateRequest(final boolean force, @Nullable final ScrollToPolicy scrollToChangePolicy) {
     updateRequest(force, true, scrollToChangePolicy);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void updateRequest(final boolean force, boolean useCache, @Nullable final ScrollToPolicy scrollToChangePolicy) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (isDisposed()) return;
@@ -148,7 +148,7 @@ public abstract class CacheDiffRequestProcessor<T> extends DiffRequestProcessor 
   }
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   protected void onDispose() {
     super.onDispose();
     myQueue.abort();

@@ -320,7 +320,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     return actions.toArray(new Action[0]);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void runExecutor(ApplyPatchExecutor<AbstractFilePatchInProgress<?>> executor) {
     Collection<AbstractFilePatchInProgress<?>> included = getIncluded();
     if (included.isEmpty()) {
@@ -469,7 +469,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     myErrorNotificationPanel.setVisible(false);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void syncUpdatePatchFileAndScheduleReloadIfNeeded(@Nullable VirtualFile eventFile) {
     // if dialog is modal and refresh called not from dispatch thread then
     // fireEvents in RefreshQueueImpl will not be triggered because of wrong modality state inside those thread -> defaultMS == NON_MODAL

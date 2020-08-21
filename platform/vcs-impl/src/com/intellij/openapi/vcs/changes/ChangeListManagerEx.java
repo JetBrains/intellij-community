@@ -43,9 +43,9 @@ public abstract class ChangeListManagerEx extends ChangeListManager {
    * Blocks modal dialogs that we don't want to popup during some process, for example, above the commit dialog.
    * They will be shown when notifications are unblocked.
    */
-  @CalledInAwt
+  @RequiresEdt
   public abstract void blockModalNotifications();
-  @CalledInAwt
+  @RequiresEdt
   public abstract void unblockModalNotifications();
 
   /**
@@ -60,14 +60,14 @@ public abstract class ChangeListManagerEx extends ChangeListManager {
    * Do not execute such methods from EDT - cause CLM update can trigger synchronous VFS refresh,
    * that is waiting for EDT.
    */
-  @CalledInBackground
+  @RequiresBackgroundThread
   public abstract void waitForUpdate();
 
   /**
    * @deprecated Parameter ignored, use {@link #waitForUpdate()}.
    */
   @Deprecated
-  @CalledInBackground
+  @RequiresBackgroundThread
   public void waitForUpdate(@Nullable String operationName) {
     waitForUpdate();
   }

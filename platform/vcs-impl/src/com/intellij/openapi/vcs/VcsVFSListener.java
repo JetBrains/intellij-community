@@ -26,9 +26,9 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
 import com.intellij.vcsUtil.VcsUtil;
 import kotlin.Unit;
-import org.jetbrains.annotations.CalledInBackground;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresBackgroundThread;
 
 import java.util.*;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -202,7 +202,7 @@ public abstract class VcsVFSListener implements Disposable {
                                                                 !myMovedFiles.isEmpty());
     }
 
-    @CalledInBackground
+    @RequiresBackgroundThread
     private void process(@NotNull List<VFileEvent> events) {
       processEvents(events);
       withLock(PROCESSING_LOCK.writeLock(), () -> {
@@ -413,7 +413,7 @@ public abstract class VcsVFSListener implements Disposable {
     return filePath != null && ReadAction.compute(() -> !myProject.isDisposed() && myVcsManager.getVcsFor(filePath) == myVcs);
   }
 
-  @CalledInBackground
+  @RequiresBackgroundThread
   protected void executeAdd() {
     List<VirtualFile> addedFiles = myProcessor.acquireAddedFiles();
     LOG.debug("executeAdd. addedFiles: ", addedFiles);
@@ -459,7 +459,7 @@ public abstract class VcsVFSListener implements Disposable {
     executeAddCallback.executeAdd(addedFiles, copyFromMap);
   }
 
-  @CalledInBackground
+  @RequiresBackgroundThread
   private void executeMoveRename() {
     List<MovedFileInfo> movedFiles = myProcessor.acquireMovedFiles();
     LOG.debug("executeMoveRename ", movedFiles);
@@ -468,7 +468,7 @@ public abstract class VcsVFSListener implements Disposable {
     }
   }
 
-  @CalledInBackground
+  @RequiresBackgroundThread
   protected void executeDelete() {
     AllDeletedFiles allFiles = myProcessor.acquireAllDeletedFiles();
     List<FilePath> filesToDelete = allFiles.deletedWithoutConfirmFiles;

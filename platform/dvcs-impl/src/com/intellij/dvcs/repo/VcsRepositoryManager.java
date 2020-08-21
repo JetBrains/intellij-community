@@ -114,7 +114,7 @@ public final class VcsRepositoryManager implements Disposable {
     myUpdateAlarm.addRequest(() -> checkAndUpdateRepositoriesCollection(null), 0);
   }
 
-  @CalledInBackground
+  @RequiresBackgroundThread
   public @Nullable Repository getRepositoryForFile(@NotNull VirtualFile file) {
     return getRepositoryForFile(file, false);
   }

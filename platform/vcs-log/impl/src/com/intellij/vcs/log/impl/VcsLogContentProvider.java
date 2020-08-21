@@ -17,10 +17,10 @@ import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.ui.MainVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogPanel;
 import com.intellij.vcs.log.ui.VcsLogUiEx;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresEdt;
 
 import javax.swing.*;
 import java.awt.*;
@@ -86,7 +86,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
     });
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void addMainUi(@NotNull VcsLogManager logManager) {
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
     if (myUi == null) {
@@ -114,7 +114,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
     return new VcsLogPanel(logManager, ui);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void disposeMainUi() {
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
 
@@ -134,7 +134,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
    *
    * @param consumer consumer to execute.
    */
-  @CalledInAwt
+  @RequiresEdt
   public void executeOnMainUiCreated(@NotNull Consumer<? super MainVcsLogUi> consumer) {
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
 

@@ -190,7 +190,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void deleteEmptyChangeLists() {
     VcsConfiguration config = VcsConfiguration.getInstance(myProject);
 
@@ -286,13 +286,13 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
   }
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   public void blockModalNotifications() {
     myModalNotificationsBlocked = true;
   }
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   public void unblockModalNotifications() {
     myModalNotificationsBlocked = false;
     deleteEmptyChangeLists();

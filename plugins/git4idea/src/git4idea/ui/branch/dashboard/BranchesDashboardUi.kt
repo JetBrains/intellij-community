@@ -53,7 +53,7 @@ import git4idea.ui.branch.dashboard.BranchesDashboardActions.ShowBranchDiffActio
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.ShowMyBranchesAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.ToggleFavoriteAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.UpdateSelectedBranchAction
-import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.annotations.RequiresEdt
 import java.awt.Component
 import javax.swing.JComponent
 import javax.swing.event.TreeSelectionListener
@@ -112,7 +112,7 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
     toggleBranchesPanelVisibility()
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private fun installLogUi() {
     uiController.registerDataPackListener(logUi.logData)
     uiController.registerLogUiPropertiesListener(logUi.properties)
@@ -129,7 +129,7 @@ internal class BranchesDashboardUi(project: Project, private val logUi: Branches
     tree.component.addTreeSelectionListener(treeSelectionListener)
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private fun disposeBranchesUi() {
     branchViewSplitter.secondComponent.removeAll()
     uiController.removeDataPackListener(logUi.logData)

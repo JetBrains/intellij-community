@@ -22,9 +22,9 @@ import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.data.DataGetter;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresEdt;
 
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -93,21 +93,21 @@ public abstract class CommitSelectionListener<T extends VcsCommitMetadata> imple
     return Ints.asList(myGraphTable.getSelectedRows());
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected abstract void startLoading();
 
-  @CalledInAwt
+  @RequiresEdt
   protected abstract void stopLoading();
 
-  @CalledInAwt
+  @RequiresEdt
   protected abstract void onError(@NotNull Throwable error);
 
-  @CalledInAwt
+  @RequiresEdt
   protected abstract void onDetailsLoaded(@NotNull List<? extends T> detailsList);
 
-  @CalledInAwt
+  @RequiresEdt
   protected abstract void onSelection(int @NotNull [] selection);
 
-  @CalledInAwt
+  @RequiresEdt
   protected abstract void onEmptySelection();
 }

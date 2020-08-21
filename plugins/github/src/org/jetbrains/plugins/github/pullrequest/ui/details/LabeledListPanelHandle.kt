@@ -10,10 +10,10 @@ import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.annotations.CalledInAwt
+import com.intellij.util.ui.WrapLayout
+import org.jetbrains.annotations.RequiresEdt
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.InlineIconButton
-import com.intellij.util.ui.WrapLayout
 import org.jetbrains.plugins.github.util.CollectionDelta
 import org.jetbrains.plugins.github.util.GithubUtil.Delegates.equalVetoingObservable
 import org.jetbrains.plugins.github.util.getEDTExecutor
@@ -131,9 +131,9 @@ internal abstract class LabeledListPanelHandle<T>(protected val model: GHPRDetai
       }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   abstract fun showEditPopup(parentComponent: JComponent): CompletableFuture<CollectionDelta<T>>?
 
-  @CalledInAwt
+  @RequiresEdt
   abstract fun adjust(indicator: ProgressIndicator, delta: CollectionDelta<T>): CompletableFuture<Unit>
 }

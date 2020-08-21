@@ -21,9 +21,9 @@ import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListe
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresEdt;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
@@ -177,7 +177,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   @NotNull
   public static WorkingCopyFormat promptForWCopyFormat(@NotNull File target, @NotNull Project project) {
     return new CheckoutFormatFromUserProvider(project, target).prompt();
@@ -287,7 +287,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
       error = new AtomicReference<>();
     }
 
-    @CalledInAwt
+    @RequiresEdt
     public WorkingCopyFormat prompt() {
       assert !getApplication().isUnitTestMode();
 

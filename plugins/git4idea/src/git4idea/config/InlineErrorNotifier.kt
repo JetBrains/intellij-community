@@ -18,10 +18,10 @@ import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.Alarm.ThreadToUse.SWING_THREAD
 import com.intellij.util.SingleAlarm
 import com.intellij.util.ui.components.BorderLayoutPanel
-import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.Nls.Capitalization.Sentence
 import org.jetbrains.annotations.Nls.Capitalization.Title
+import org.jetbrains.annotations.RequiresEdt
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.SwingConstants
@@ -60,7 +60,7 @@ internal open class InlineErrorNotifier(private val inlineComponent: InlineCompo
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   override fun executeTask(@Nls(capitalization = Title) title: String, cancellable: Boolean, action: () -> Unit) {
     val pi = inlineComponent.showProgress(title)
     isTaskInProgress = true

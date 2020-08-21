@@ -15,9 +15,9 @@ import com.intellij.openapi.diff.DiffViewer;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresEdt;
 
 import javax.swing.*;
 
@@ -63,7 +63,7 @@ public class DiffPanelImpl implements DiffViewer {
     }
 
     @Override
-    @CalledInAwt
+    @RequiresEdt
     public void updateRequest(boolean force, @Nullable DiffUserDataKeysEx.ScrollToPolicy scrollToChangePolicy) {
       applyRequest(myRequest, force, scrollToChangePolicy, true);
     }

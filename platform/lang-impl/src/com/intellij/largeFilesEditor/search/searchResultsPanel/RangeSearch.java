@@ -34,9 +34,9 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AsyncProcessIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresEdt;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
@@ -290,7 +290,7 @@ public class RangeSearch implements RangeSearchTask.Callback {
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void updateInEdt() {
     try {
       FileDataProviderForSearch fileDataProviderForSearch
@@ -767,10 +767,10 @@ public class RangeSearch implements RangeSearchTask.Callback {
 
   interface EdtRangeSearchEventsListener {
 
-    @CalledInAwt
+    @RequiresEdt
     void onSearchStopped();
 
-    @CalledInAwt
+    @RequiresEdt
     void onSearchFinished();
   }
 }

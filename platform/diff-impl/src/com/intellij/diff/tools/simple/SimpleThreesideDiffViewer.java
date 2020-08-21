@@ -199,7 +199,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
   }
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   protected void destroyChangedBlocks() {
     super.destroyChangedBlocks();
     for (SimpleThreesideDiffChange change : myDiffChanges) {
@@ -218,7 +218,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
   //
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   protected void onBeforeDocumentChange(@NotNull DocumentEvent e) {
     super.onBeforeDocumentChange(e);
     if (myDiffChanges.isEmpty()) return;
@@ -288,7 +288,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
   }
 
   @NotNull
-  @CalledInAwt
+  @RequiresEdt
   private List<SimpleThreesideDiffChange> getSelectedChanges(@NotNull ThreeSide side) {
     EditorEx editor = getEditor(side);
     BitSet lines = DiffUtil.getSelectedLines(editor);
@@ -299,7 +299,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
   // Modification operations
   //
 
-  @CalledWithWriteLock
+  @RequiresWriteLock
   public void replaceChange(@NotNull SimpleThreesideDiffChange change, @NotNull ThreeSide sourceSide, @NotNull ThreeSide outputSide) {
     if (!change.isValid()) return;
 
@@ -420,7 +420,7 @@ public class SimpleThreesideDiffViewer extends ThreesideTextDiffViewerEx {
     @Nullable
     protected abstract Icon getIcon(@NotNull ThreeSide side);
 
-    @CalledWithWriteLock
+    @RequiresWriteLock
     protected abstract void doPerform(@NotNull AnActionEvent e, @NotNull ThreeSide side, @NotNull List<SimpleThreesideDiffChange> changes);
   }
 

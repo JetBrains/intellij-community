@@ -44,8 +44,8 @@ import git4idea.GitUtil
 import git4idea.i18n.GitBundle
 import git4idea.index.actions.GitAddOperation
 import git4idea.index.actions.GitResetOperation
-import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.RequiresEdt
 import java.awt.*
 import java.util.*
 import javax.swing.BorderFactory
@@ -92,7 +92,7 @@ class GitStageLineStatusTracker(
   }
 
 
-  @CalledInAwt
+  @RequiresEdt
   fun setBaseRevision(vcsContent: CharSequence, newStagedDocument: Document) {
     ApplicationManager.getApplication().assertIsDispatchThread()
     if (isReleased) return
@@ -115,7 +115,7 @@ class GitStageLineStatusTracker(
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   fun dropBaseRevision() {
     ApplicationManager.getApplication().assertIsDispatchThread()
     if (isReleased) return
@@ -140,7 +140,7 @@ class GitStageLineStatusTracker(
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private fun updateDocument(side: ThreeSide, commandName: String?, task: (Document) -> Unit): Boolean {
     val affectedDocument = side.selectNotNull(vcsDocument, stagedDocument, document)
     return LineStatusTrackerBase.updateDocument(project, affectedDocument, commandName, task)
@@ -229,7 +229,7 @@ class GitStageLineStatusTracker(
     runBulkRollback(toRevert)
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private fun runBulkRollback(toRevert: List<StagedRange>) {
     if (!isValid()) return
 
@@ -244,7 +244,7 @@ class GitStageLineStatusTracker(
     runBulkStage(listOf(newRange))
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private fun runBulkStage(toRevert: List<StagedRange>) {
     if (!isValid()) return
 
@@ -259,7 +259,7 @@ class GitStageLineStatusTracker(
     runBulkUnstage(listOf(newRange))
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private fun runBulkUnstage(toRevert: List<StagedRange>) {
     if (!isValid()) return
 
@@ -324,7 +324,7 @@ class GitStageLineStatusTracker(
       updateHighlighters()
     }
 
-    @CalledInAwt
+    @RequiresEdt
     private fun fireFileUnchanged(documentToSave: Document) {
       if (GeneralSettings.getInstance().isSaveOnFrameDeactivation) {
         // later to avoid saving inside document change event processing and deadlock with CLM.

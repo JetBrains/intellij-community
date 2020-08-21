@@ -15,9 +15,9 @@
  */
 package com.intellij.cvsSupport2.connections.login;
 
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.CalledInBackground;
 import com.intellij.util.ThreeState;
+import org.jetbrains.annotations.RequiresBackgroundThread;
+import org.jetbrains.annotations.RequiresEdt;
 import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 
 // todo rename?
@@ -25,10 +25,10 @@ public interface CvsLoginWorker {
   /**
    * @return {@code true} if login attempt should be repeated after prompting user
    */
-  @CalledInAwt
+  @RequiresEdt
   boolean promptForPassword();
 
-  @CalledInBackground
+  @RequiresBackgroundThread
   ThreeState silentLogin(boolean forceCheck) throws AuthenticationException;
 
   void goOffline();

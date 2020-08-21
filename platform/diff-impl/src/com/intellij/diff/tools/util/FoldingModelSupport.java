@@ -662,7 +662,7 @@ public class FoldingModelSupport {
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void updateContext(@NotNull UserDataHolder context, @NotNull final Settings settings) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myFoldings.isEmpty()) return; // do not rewrite cache by initial state
@@ -670,7 +670,7 @@ public class FoldingModelSupport {
   }
 
   @NotNull
-  @CalledInAwt
+  @RequiresEdt
   private FoldingCache getFoldingCache(@NotNull Settings settings) {
     //noinspection unchecked
     List<FoldedGroupState>[] result = new List[myCount];
@@ -947,7 +947,7 @@ public class FoldingModelSupport {
       }
 
       @Override
-      @CalledInAwt
+      @RequiresEdt
       public String compute() {
         if (!myLoadingStarted) {
           myLoadingStarted = true;
@@ -972,7 +972,7 @@ public class FoldingModelSupport {
       }
 
       @Nullable
-      @CalledInBackground
+      @RequiresBackgroundThread
       private String computeDescription() {
         try {
           ProgressManager.checkCanceled();
@@ -1000,7 +1000,7 @@ public class FoldingModelSupport {
       }
 
       @Nullable
-      @CalledInAwt
+      @RequiresEdt
       public String get() {
         return myDescription.description;
       }

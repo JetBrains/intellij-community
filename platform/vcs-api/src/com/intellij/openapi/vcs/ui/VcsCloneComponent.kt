@@ -7,8 +7,8 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.vcs.CheckoutProvider
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListener
-import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.RequiresEdt
 import javax.swing.JComponent
 
 /**
@@ -31,7 +31,7 @@ interface VcsCloneComponent : Disposable {
 
   fun getPreferredFocusedComponent(): JComponent?
 
-  @CalledInAwt
+  @RequiresEdt
   fun onComponentSelected(dialogStateListener: VcsCloneDialogComponentStateListener) {
   }
 }

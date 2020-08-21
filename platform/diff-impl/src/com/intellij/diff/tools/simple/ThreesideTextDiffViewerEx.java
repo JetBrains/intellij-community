@@ -20,10 +20,10 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresEdt;
 
 import javax.swing.*;
 import java.awt.*;
@@ -66,7 +66,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
   }
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   protected void onInit() {
     super.onInit();
     myContentPanel.setPainter(new MyDividerPainter(Side.LEFT), Side.LEFT);
@@ -74,7 +74,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
   }
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   protected void onDispose() {
     destroyChangedBlocks();
     myFoldingModel.destroy();
@@ -82,14 +82,14 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
   }
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   protected void processContextHints() {
     super.processContextHints();
     myInitialScrollHelper.processContext(myRequest);
   }
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   protected void updateContextHints() {
     super.updateContextHints();
     myFoldingModel.updateContext(myRequest, getFoldingModelSettings());
@@ -114,7 +114,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
     };
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected void clearDiffPresentation() {
     myStatusPanel.setBusy(false);
     myPanel.resetNotifications();
@@ -124,7 +124,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
     myStatusPanel.update();
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected void destroyChangedBlocks() {
   }
 
@@ -132,7 +132,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
   // Impl
   //
 
-  @CalledInAwt
+  @RequiresEdt
   protected boolean doScrollToChange(@NotNull ScrollToPolicy scrollToPolicy) {
     ThreesideDiffChangeBase targetChange = scrollToPolicy.select(getChanges());
     if (targetChange == null) return false;
@@ -233,7 +233,7 @@ public abstract class ThreesideTextDiffViewerEx extends ThreesideTextDiffViewer 
   //
 
   @Nullable
-  @CalledInAwt
+  @RequiresEdt
   protected ThreesideDiffChangeBase getSelectedChange(@NotNull ThreeSide side) {
     int caretLine = getEditor(side).getCaretModel().getLogicalPosition().line;
 

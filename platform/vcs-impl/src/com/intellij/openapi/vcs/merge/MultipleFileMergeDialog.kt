@@ -50,8 +50,8 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcsUtil.VcsUtil
-import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.RequiresEdt
 import java.awt.event.ActionEvent
 import java.awt.event.MouseEvent
 import java.io.IOException
@@ -318,7 +318,7 @@ open class MultipleFileMergeDialog(
     updateModelFromFiles()
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private fun resolveFileViaContent(file: VirtualFile, resolution: MergeSession.Resolution, data: MergeData) {
     if (!DiffUtil.makeWritable(project, file)) {
       throw IOException(UIBundle.message("file.is.read.only.message.text", file.presentableUrl))

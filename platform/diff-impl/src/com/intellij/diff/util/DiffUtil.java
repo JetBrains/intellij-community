@@ -1452,7 +1452,7 @@ public final class DiffUtil {
   // Writable
   //
 
-  @CalledInAwt
+  @RequiresEdt
   public static boolean executeWriteCommand(@Nullable Project project,
                                             @NotNull Document document,
                                             @Nullable @NlsContexts.Command String commandName,
@@ -1477,7 +1477,7 @@ public final class DiffUtil {
     return true;
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public static boolean executeWriteCommand(@NotNull final Document document,
                                             @Nullable final Project project,
                                             @Nullable @Nls final String commandName,
@@ -1502,7 +1502,7 @@ public final class DiffUtil {
     return false;
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public static boolean makeWritable(@Nullable Project project, @NotNull Document document) {
     VirtualFile file = FileDocumentManager.getInstance().getFile(document);
     if (file == null) return document.isWritable();
@@ -1510,7 +1510,7 @@ public final class DiffUtil {
     return makeWritable(project, file) && document.isWritable();
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public static boolean makeWritable(@Nullable Project project, @NotNull VirtualFile file) {
     if (project == null) project = ProjectManager.getInstance().getDefaultProject();
     return !ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(Collections.singletonList(file)).hasReadonlyFiles();

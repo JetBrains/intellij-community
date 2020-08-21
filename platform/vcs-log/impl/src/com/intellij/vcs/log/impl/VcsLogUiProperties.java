@@ -16,9 +16,9 @@
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.util.ValueKey;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.RequiresEdt;
 
 import java.util.Objects;
 
@@ -29,10 +29,10 @@ public interface VcsLogUiProperties {
 
   <T> boolean exists(@NotNull VcsLogUiProperty<T> property);
 
-  @CalledInAwt
+  @RequiresEdt
   void addChangeListener(@NotNull PropertiesChangeListener listener);
 
-  @CalledInAwt
+  @RequiresEdt
   void removeChangeListener(@NotNull PropertiesChangeListener listener);
 
   class VcsLogUiProperty<T> implements ValueKey<T> {

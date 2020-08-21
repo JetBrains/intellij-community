@@ -6,7 +6,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.FontInfo
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.annotations.RequiresEdt
 import java.awt.Font
 import java.awt.FontMetrics
 import java.awt.RenderingHints
@@ -19,15 +19,15 @@ internal class InlayTextMetricsStorage(val editor: EditorImpl) {
   private var normalTextMetrics : InlayTextMetrics? = null
 
   val smallTextSize: Int
-    @CalledInAwt
+    @RequiresEdt
     get() = max(1, editor.colorsScheme.editorFontSize - 1)
 
 
   val normalTextSize: Int
-    @CalledInAwt
+    @RequiresEdt
     get() = editor.colorsScheme.editorFontSize
 
-  @CalledInAwt
+  @RequiresEdt
   fun getFontMetrics(small: Boolean): InlayTextMetrics {
     var metrics: InlayTextMetrics?
     if (small) {

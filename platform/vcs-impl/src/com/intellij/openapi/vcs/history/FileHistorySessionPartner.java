@@ -25,9 +25,9 @@ import com.intellij.util.BufferedListConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.CalledInBackground;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresBackgroundThread;
 
 import javax.swing.*;
 import java.awt.*;
@@ -90,7 +90,7 @@ public final class FileHistorySessionPartner implements VcsHistorySessionConsume
     return VcsInternalDataKeys.FILE_HISTORY_REFRESHER.getData(dataProvider);
   }
 
-  @CalledInBackground
+  @RequiresBackgroundThread
   public boolean shouldBeRefreshed() {
     return mySession.shouldBeRefreshed();
   }

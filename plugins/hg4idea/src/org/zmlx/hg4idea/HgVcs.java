@@ -325,7 +325,7 @@ public class HgVcs extends AbstractVcs {
   }
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   public void enableIntegration() {
     new Task.Backgroundable(myProject, HgBundle.message("progress.title.enabling.hg"), true) {
       @Override

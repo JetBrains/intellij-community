@@ -61,10 +61,10 @@ import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import com.intellij.vcsUtil.VcsUtil;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresEdt;
 
 import javax.swing.*;
 import javax.swing.event.CellEditorListener;
@@ -137,7 +137,7 @@ public class ShelvedChangesViewManager implements Disposable {
     treeConsumer.consume(myPanel.myTree);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   void updateViewContent() {
     if (myShelveChangesManager.getAllLists().isEmpty()) {
       if (myContent != null) {
@@ -224,7 +224,7 @@ public class ShelvedChangesViewManager implements Disposable {
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void updateTreeModel() {
     updateTreeIfShown(tree -> tree.setPaintBusy(true));
     BackgroundTaskUtil.executeOnPooledThread(myProject, () -> {
@@ -244,7 +244,7 @@ public class ShelvedChangesViewManager implements Disposable {
     });
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void startEditing(@NotNull ShelvedChangeList shelvedChangeList) {
     runAfterUpdate(() -> {
       selectShelvedList(shelvedChangeList);
@@ -888,7 +888,7 @@ public class ShelvedChangesViewManager implements Disposable {
       return myCurrentShelvedElement;
     }
 
-    @CalledInAwt
+    @RequiresEdt
     @Override
     public void clear() {
       if (myCurrentShelvedElement != null) {
@@ -899,7 +899,7 @@ public class ShelvedChangesViewManager implements Disposable {
     }
 
     @Override
-    @CalledInAwt
+    @RequiresEdt
     public void refresh(boolean fromModelRefresh) {
       DataContext dc = DataManager.getInstance().getDataContext(myTree);
       List<ShelvedChange> selectedChanges = getShelveChanges(dc);

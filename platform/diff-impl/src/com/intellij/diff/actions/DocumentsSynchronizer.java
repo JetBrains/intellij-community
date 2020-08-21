@@ -8,9 +8,9 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresEdt;
 
 import java.beans.PropertyChangeListener;
 
@@ -61,7 +61,7 @@ abstract class DocumentsSynchronizer {
 
   protected abstract void onDocumentChanged2(@NotNull DocumentEvent event);
 
-  @CalledInAwt
+  @RequiresEdt
   protected void replaceString(@NotNull final Document document,
                                final int startOffset,
                                final int endOffset,

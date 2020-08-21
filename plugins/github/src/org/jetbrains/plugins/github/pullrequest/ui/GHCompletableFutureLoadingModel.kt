@@ -3,7 +3,7 @@ package org.jetbrains.plugins.github.pullrequest.ui
 
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
-import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.annotations.RequiresEdt
 import org.jetbrains.plugins.github.util.GithubAsyncUtil
 import org.jetbrains.plugins.github.util.handleOnEdt
 import java.util.concurrent.CompletableFuture
@@ -28,8 +28,8 @@ open class GHCompletableFutureLoadingModel<T>(parentDisposable: Disposable)
     Disposer.register(parentDisposable, this)
   }
 
-  @set:CalledInAwt
-  @get:CalledInAwt
+  @set:RequiresEdt
+  @get:RequiresEdt
   var future by observable<CompletableFuture<T>?>(null) { _, _, newValue ->
     if (Disposer.isDisposed(this)) return@observable
     if (newValue != null) load(newValue) else reset()

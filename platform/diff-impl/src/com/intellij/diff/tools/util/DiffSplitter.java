@@ -11,9 +11,9 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.GridBag;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresEdt;
 
 import javax.swing.*;
 import java.awt.*;
@@ -90,7 +90,7 @@ public class DiffSplitter extends Splitter {
     setOrientation(false);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void setPainter(@Nullable Painter painter) {
     myPainter = painter;
   }

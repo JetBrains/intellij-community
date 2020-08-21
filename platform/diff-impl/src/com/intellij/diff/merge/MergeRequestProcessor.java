@@ -39,10 +39,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresEdt;
 
 import javax.swing.*;
 import java.awt.*;
@@ -112,7 +112,7 @@ public abstract class MergeRequestProcessor implements Disposable {
   // Update
   //
 
-  @CalledInAwt
+  @RequiresEdt
   public void init(@NotNull MergeRequest request) {
     setTitle(request.getTitle());
 
@@ -122,7 +122,7 @@ public abstract class MergeRequestProcessor implements Disposable {
     installCallbackListener(myRequest);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void init(@NotNull MergeRequestProducer request) {
     setTitle(request.getName());
     initViewer();
@@ -163,7 +163,7 @@ public abstract class MergeRequestProcessor implements Disposable {
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void initViewer() {
     myContentPanel.setContent(myViewer.getComponent());
 
@@ -176,7 +176,7 @@ public abstract class MergeRequestProcessor implements Disposable {
     updateBottomActions();
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void destroyViewer() {
     Disposer.dispose(myViewer);
 
@@ -326,7 +326,7 @@ public abstract class MergeRequestProcessor implements Disposable {
     });
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void applyRequestResult(@NotNull MergeResult result) {
     if (myConflictResolved || myRequest == null) return;
     myConflictResolved = true;
@@ -339,7 +339,7 @@ public abstract class MergeRequestProcessor implements Disposable {
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void reopenWithTool(@NotNull MergeTool tool) {
     if (myRequest == null) return;
     if (myConflictResolved) {
@@ -376,7 +376,7 @@ public abstract class MergeRequestProcessor implements Disposable {
   // Abstract
   //
 
-  @CalledInAwt
+  @RequiresEdt
   protected void onDispose() {
   }
 
@@ -422,7 +422,7 @@ public abstract class MergeRequestProcessor implements Disposable {
     return myContext;
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public boolean checkCloseAction() {
     return myConflictResolved || myCloseHandler == null || myCloseHandler.get();
   }
@@ -584,7 +584,7 @@ public abstract class MergeRequestProcessor implements Disposable {
     }
 
     @Override
-    @CalledInAwt
+    @RequiresEdt
     public void reopenWithTool(@NotNull MergeTool tool) {
       MergeRequestProcessor.this.reopenWithTool(tool);
     }

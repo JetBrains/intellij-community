@@ -35,9 +35,9 @@ import git4idea.push.GitPushSupport;
 import git4idea.push.GitPushTarget;
 import git4idea.repo.*;
 import org.jetbrains.annotations.CalledInAny;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresEdt;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -151,7 +151,7 @@ public class GitBranchIncomingOutgoingManager implements GitRepositoryChangeList
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void stopScheduling() {
     if (myPeriodicalUpdater != null) {
       myPeriodicalUpdater.cancel(true);

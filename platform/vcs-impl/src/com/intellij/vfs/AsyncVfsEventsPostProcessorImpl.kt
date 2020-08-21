@@ -26,7 +26,7 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.concurrency.QueueProcessor
 import com.intellij.util.containers.ContainerUtil
-import org.jetbrains.annotations.CalledInBackground
+import org.jetbrains.annotations.RequiresBackgroundThread
 import org.jetbrains.annotations.TestOnly
 
 class AsyncVfsEventsPostProcessorImpl : AsyncVfsEventsPostProcessor, Disposable {
@@ -56,7 +56,7 @@ class AsyncVfsEventsPostProcessorImpl : AsyncVfsEventsPostProcessor, Disposable 
     listeners.clear()
   }
 
-  @CalledInBackground
+  @RequiresBackgroundThread
   private fun processEvents(events: List<VFileEvent>) {
     for ((listener, parentDisposable) in listeners) {
       try {

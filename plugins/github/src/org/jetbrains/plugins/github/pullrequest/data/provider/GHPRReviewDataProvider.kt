@@ -4,7 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.data.provider
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.progress.ProgressIndicator
-import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.annotations.RequiresEdt
 import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestPendingReview
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewComment
@@ -16,68 +16,68 @@ interface GHPRReviewDataProvider {
 
   val submitReviewCommentDocument: Document
 
-  @CalledInAwt
+  @RequiresEdt
   fun loadPendingReview(): CompletableFuture<GHPullRequestPendingReview?>
 
-  @CalledInAwt
+  @RequiresEdt
   fun resetPendingReview()
 
-  @CalledInAwt
+  @RequiresEdt
   fun loadReviewThreads(): CompletableFuture<List<GHPullRequestReviewThread>>
 
-  @CalledInAwt
+  @RequiresEdt
   fun resetReviewThreads()
 
-  @CalledInAwt
+  @RequiresEdt
   fun submitReview(progressIndicator: ProgressIndicator, reviewId: String, event: GHPullRequestReviewEvent, body: String? = null)
     : CompletableFuture<out Any?>
 
-  @CalledInAwt
+  @RequiresEdt
   fun createReview(progressIndicator: ProgressIndicator,
                    event: GHPullRequestReviewEvent? = null, body: String? = null,
                    commitSha: String? = null, comments: List<GHPullRequestDraftReviewComment>? = null)
     : CompletableFuture<GHPullRequestPendingReview>
 
-  @CalledInAwt
+  @RequiresEdt
   fun getReviewMarkdownBody(progressIndicator: ProgressIndicator, reviewId: String): CompletableFuture<String>
 
-  @CalledInAwt
+  @RequiresEdt
   fun updateReviewBody(progressIndicator: ProgressIndicator, reviewId: String, newText: String): CompletableFuture<String>
 
-  @CalledInAwt
+  @RequiresEdt
   fun deleteReview(progressIndicator: ProgressIndicator, reviewId: String): CompletableFuture<out Any?>
 
-  @CalledInAwt
+  @RequiresEdt
   fun canComment(): Boolean
 
-  @CalledInAwt
+  @RequiresEdt
   fun getCommentMarkdownBody(progressIndicator: ProgressIndicator, commentId: String): CompletableFuture<String>
 
-  @CalledInAwt
+  @RequiresEdt
   fun addComment(progressIndicator: ProgressIndicator, reviewId: String, body: String, commitSha: String, fileName: String, diffLine: Int)
     : CompletableFuture<out GHPullRequestReviewComment>
 
-  @CalledInAwt
+  @RequiresEdt
   fun addComment(progressIndicator: ProgressIndicator, replyToCommentId: String, body: String)
     : CompletableFuture<out GHPullRequestReviewComment>
 
-  @CalledInAwt
+  @RequiresEdt
   fun deleteComment(progressIndicator: ProgressIndicator, commentId: String)
     : CompletableFuture<out Any>
 
-  @CalledInAwt
+  @RequiresEdt
   fun updateComment(progressIndicator: ProgressIndicator, commentId: String, newText: String)
     : CompletableFuture<GHPullRequestReviewComment>
 
-  @CalledInAwt
+  @RequiresEdt
   fun resolveThread(progressIndicator: ProgressIndicator, id: String): CompletableFuture<GHPullRequestReviewThread>
 
-  @CalledInAwt
+  @RequiresEdt
   fun unresolveThread(progressIndicator: ProgressIndicator, id: String): CompletableFuture<GHPullRequestReviewThread>
 
-  @CalledInAwt
+  @RequiresEdt
   fun addReviewThreadsListener(disposable: Disposable, listener: () -> Unit)
 
-  @CalledInAwt
+  @RequiresEdt
   fun addPendingReviewListener(disposable: Disposable, listener: () -> Unit)
 }

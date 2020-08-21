@@ -22,7 +22,7 @@ import git4idea.commands.Git
 import git4idea.config.*
 import git4idea.i18n.GitBundle
 import git4idea.remote.GitRememberedInputs
-import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.annotations.RequiresEdt
 import java.nio.file.Paths
 
 class GitCloneDialogComponent(project: Project,
@@ -73,7 +73,7 @@ class GitCloneDialogComponent(project: Project,
     rememberedInputs.cloneParentDir = parentDirectory
   }
 
-  @CalledInAwt
+  @RequiresEdt
   override fun onComponentSelected(dialogStateListener: VcsCloneDialogComponentStateListener) {
     updateOkActionState(dialogStateListener)
 
@@ -132,7 +132,7 @@ class GitCloneDialogComponent(project: Project,
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   override fun isOkActionEnabled(): Boolean = super.isOkActionEnabled() && versionCheckState == VersionCheckState.SUCCESS
 
   private enum class VersionCheckState {

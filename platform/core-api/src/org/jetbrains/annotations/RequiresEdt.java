@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.jetbrains.annotations;
 
 import java.lang.annotation.ElementType;
@@ -21,10 +22,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Used to indicate that a method should be called in background thread
+ * Used to indicate that a method should be called in AWT thread
  */
 @Retention(RetentionPolicy.CLASS)
 @Target({ElementType.METHOD, ElementType.CONSTRUCTOR, ElementType.PARAMETER})
-public @interface CalledInBackground {
+public @interface RequiresEdt {
   boolean instrument() default true;
 }

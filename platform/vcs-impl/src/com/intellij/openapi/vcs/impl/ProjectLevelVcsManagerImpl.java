@@ -285,7 +285,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     return ContainerUtil.findInstance(contentManager.getContents(), VcsConsoleContent.class);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private @NotNull VcsConsoleContent getOrCreateConsoleContent(@NotNull ContentManager contentManager) {
     LOG.assertTrue(Registry.is("vcs.showConsole"));
     VcsConsoleContent console = getConsoleContent(contentManager);
@@ -323,14 +323,14 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     return myOptionsAndConfirmations.getOrCreateCustomOption(vcsActionName, vcs);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   @Override
   public void showProjectOperationInfo(final UpdatedFiles updatedFiles, String displayActionName) {
     UpdateInfoTree tree = showUpdateProjectInfo(updatedFiles, displayActionName, ActionInfo.STATUS, false);
     if (tree != null) ViewUpdateInfoNotification.focusUpdateInfoTree(myProject, tree);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   @Override
   public @Nullable UpdateInfoTree showUpdateProjectInfo(UpdatedFiles updatedFiles, String displayActionName, ActionInfo actionInfo, boolean canceled) {
     if (!myProject.isOpen() || myProject.isDisposed()) return null;
@@ -694,19 +694,19 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
     return new BackgroundableActionEnabledHandler(myProject, action);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   boolean isBackgroundTaskRunning(Object @NotNull ... keys) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     return myBackgroundRunningTasks.contains(new ActionKey(keys));
   }
 
-  @CalledInAwt
+  @RequiresEdt
   void startBackgroundTask(Object @NotNull ... keys) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     LOG.assertTrue(myBackgroundRunningTasks.add(new ActionKey(keys)));
   }
 
-  @CalledInAwt
+  @RequiresEdt
   void stopBackgroundTask(Object @NotNull ... keys) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     LOG.assertTrue(myBackgroundRunningTasks.remove(new ActionKey(keys)));

@@ -18,10 +18,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.JBDateFormat;
 import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.xml.util.XmlStringUtil;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresEdt;
 
 import java.util.*;
 
@@ -199,7 +199,7 @@ public abstract class FileAnnotation {
    *
    * @param newFileAnnotation annotations to be shown or `null` to load annotations again
    */
-  @CalledInAwt
+  @RequiresEdt
   public synchronized final void reload(@Nullable FileAnnotation newFileAnnotation) {
     if (myReloader != null) myReloader.consume(newFileAnnotation);
   }

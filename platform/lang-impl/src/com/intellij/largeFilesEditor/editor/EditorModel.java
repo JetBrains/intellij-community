@@ -23,8 +23,8 @@ import com.intellij.openapi.wm.impl.status.PositionPanel;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.RequiresEdt;
 
 import javax.swing.*;
 import java.awt.*;
@@ -271,7 +271,7 @@ public class EditorModel {
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void update() {
     if (isBrokenMode) {
       documentOfPagesModel.removeAllPages(dataProvider.getProject());
@@ -1028,7 +1028,7 @@ public class EditorModel {
              + " bottomOfPage=" + bottomOfPage + " pagesInDocument.size()=" + documentOfPagesModel.getPagesAmount());
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void showSearchResult(SearchResult searchResult) {
     targetSelectionState.set(searchResult.startPosition.pageNumber, searchResult.startPosition.symbolOffsetInPage,
                              searchResult.endPostion.pageNumber, searchResult.endPostion.symbolOffsetInPage);
@@ -1041,7 +1041,7 @@ public class EditorModel {
     requestUpdate();
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void setHighlightingCloseSearchResultsEnabled(boolean enabled) {
     if (isNeedToHighlightCloseSearchResults != enabled) {
       isNeedToHighlightCloseSearchResults = enabled;
@@ -1050,7 +1050,7 @@ public class EditorModel {
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void onFileChanged(Page lastPage, boolean isLengthIncreased) {
     isLocalScrollBarStabilized = false;
     pagesCash.clear();
@@ -1073,7 +1073,7 @@ public class EditorModel {
     update();
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void onEncodingChanged() {
     isLocalScrollBarStabilized = false;
     pagesCash.clear();

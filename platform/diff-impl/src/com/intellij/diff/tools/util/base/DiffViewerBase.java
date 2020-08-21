@@ -96,7 +96,7 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   }
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   public final void dispose() {
     if (myDisposed) return;
     if (!ApplicationManager.getApplication().isDispatchThread()) LOG.warn(new Throwable("dispose() not from EDT"));
@@ -114,15 +114,15 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
     });
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected void processContextHints() {
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected void updateContextHints() {
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public final void scheduleRediff() {
     if (isDisposed()) return;
 
@@ -133,19 +133,19 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public final void abortRediff() {
     myTaskExecutor.abort();
     myTaskAlarm.cancelAllRequests();
     fireEvent(EventType.REDIFF_ABORTED);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public final void rediff() {
     rediff(false);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void rediff(boolean trySync) {
     if (isDisposed()) return;
     abortRediff();
@@ -196,12 +196,12 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   // Abstract
   //
 
-  @CalledInAwt
+  @RequiresEdt
   protected boolean tryRediffSynchronously() {
     return myContext.isWindowFocused();
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected boolean forceRediffSynchronously() {
     // most of performRediff implementations take ReadLock inside. If EDT is holding write lock - this will never happen,
     // and diff will not be calculated. This could happen for diff from FileDocumentManager.
@@ -225,27 +225,27 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
     return null;
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected void onInit() {
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected void onSlowRediff() {
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected void onBeforeRediff() {
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected void onAfterRediff() {
   }
 
-  @CalledInBackground
+  @RequiresBackgroundThread
   @NotNull
   protected abstract Runnable performRediff(@NotNull ProgressIndicator indicator);
 
-  @CalledInAwt
+  @RequiresEdt
   protected void onDispose() {
     Disposer.dispose(myTaskAlarm);
   }
@@ -259,23 +259,23 @@ public abstract class DiffViewerBase implements DiffViewer, DataProvider {
   // Listeners
   //
 
-  @CalledInAwt
+  @RequiresEdt
   public void addListener(@NotNull DiffViewerListener listener) {
     myListeners.add(listener);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void removeListener(@NotNull DiffViewerListener listener) {
     myListeners.remove(listener);
   }
 
   @NotNull
-  @CalledInAwt
+  @RequiresEdt
   protected List<DiffViewerListener> getListeners() {
     return myListeners;
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void fireEvent(@NotNull EventType type) {
     for (DiffViewerListener listener : myListeners) {
       switch (type) {

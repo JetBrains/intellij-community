@@ -48,7 +48,7 @@ import git4idea.merge.GitMergeUtil
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.status.GitChangeProvider
-import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.annotations.RequiresEdt
 import java.awt.BorderLayout
 import javax.swing.JPanel
 
@@ -129,13 +129,13 @@ internal class GitStagePanel(private val tracker: GitStageTracker, disposablePar
     git4idea.index.performCommit(project, rootsToCommit, commitMessage, amend, MyCommitListener(commitMessage))
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private fun commitStarted() {
     isCommitInProgress = true
     commitPanel.commitButton.isEnabled = false
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private fun commitFinished(success: Boolean) {
     isCommitInProgress = false
     // commit button is going to be enabled after state update
@@ -146,7 +146,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker, disposablePar
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   fun update() {
     if (isCommitInProgress) {
       hasPendingUpdates = true

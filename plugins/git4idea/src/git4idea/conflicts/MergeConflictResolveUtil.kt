@@ -27,13 +27,13 @@ import com.intellij.ui.LightColors
 import com.intellij.util.Consumer
 import com.intellij.util.ui.UIUtil
 import git4idea.i18n.GitBundle
-import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.annotations.RequiresEdt
 import javax.swing.JFrame
 
 object MergeConflictResolveUtil {
   private val ACTIVE_MERGE_WINDOW = Key.create<WindowWrapper>("ResolveConflictsWindow")
 
-  @CalledInAwt
+  @RequiresEdt
   fun showMergeWindow(project: Project,
                       file: VirtualFile?,
                       lock: BackgroundableActionLock,

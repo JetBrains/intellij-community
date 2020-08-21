@@ -164,7 +164,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
     return getLineStatusTracker(document)
   }
 
-  @CalledInAwt
+  @RequiresEdt
   override fun requestTrackerFor(document: Document, requester: Any) {
     ApplicationManager.getApplication().assertIsWriteThread()
     synchronized(LOCK) {
@@ -183,7 +183,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   override fun releaseTrackerFor(document: Document, requester: Any) {
     ApplicationManager.getApplication().assertIsWriteThread()
     synchronized(LOCK) {
@@ -227,7 +227,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
   }
 
 
-  @CalledInAwt
+  @RequiresEdt
   private fun checkIfTrackerCanBeReleased(document: Document) {
     synchronized(LOCK) {
       val data = trackers[document] ?: return
@@ -253,7 +253,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
   }
 
 
-  @CalledInAwt
+  @RequiresEdt
   private fun onEverythingChanged() {
     ApplicationManager.getApplication().assertIsWriteThread()
     synchronized(LOCK) {
@@ -276,7 +276,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private fun onFileChanged(virtualFile: VirtualFile) {
     val document = FileDocumentManager.getInstance().getCachedDocument(virtualFile) ?: return
 
@@ -407,7 +407,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
     return listOf(ChangelistsLocalStatusTrackerProvider, DefaultLocalStatusTrackerProvider).find { it.isTrackedFile(project, virtualFile) }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private fun releaseTracker(document: Document) {
     val data = trackers.remove(document) ?: return
 
@@ -437,7 +437,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
                                        settings.SHOW_WHITESPACES_IN_LST)
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private fun refreshTracker(tracker: LocalLineStatusTracker<*>,
                              provider: LocalLineStatusTrackerProvider) {
     if (isDisposed) return
@@ -499,7 +499,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
       return Result.Success(RefreshData(content, newContentInfo))
     }
 
-    @CalledInAwt
+    @RequiresEdt
     override fun handleResult(request: RefreshRequest, result: Result<RefreshData>) {
       val document = request.document
       when (result) {
@@ -578,7 +578,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
    * We can speedup initial content loading if it was already loaded by someone.
    * We do not set 'contentInfo' here to ensure, that following refresh will fix potential inconsistency.
    */
-  @CalledInAwt
+  @RequiresEdt
   @ApiStatus.Internal
   fun offerTrackerContent(document: Document, text: CharSequence) {
     val tracker: LocalLineStatusTracker<*>
@@ -876,7 +876,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
   }
 
 
-  @CalledInAwt
+  @RequiresEdt
   fun resetExcludedFromCommitMarkers() {
     ApplicationManager.getApplication().assertIsWriteThread()
     synchronized(LOCK) {
@@ -897,7 +897,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
   }
 
 
-  @CalledInAwt
+  @RequiresEdt
   internal fun collectPartiallyChangedFilesStates(): List<ChangelistsLocalLineStatusTracker.FullState> {
     ApplicationManager.getApplication().assertIsWriteThread()
     val result = mutableListOf<ChangelistsLocalLineStatusTracker.FullState>()
@@ -915,7 +915,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
     return result
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private fun restoreTrackersForPartiallyChangedFiles(trackerStates: List<ChangelistsLocalLineStatusTracker.State>) {
     runWriteAction {
       synchronized(LOCK) {
@@ -954,7 +954,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
   }
 
 
-  @CalledInAwt
+  @RequiresEdt
   internal fun notifyInactiveRangesDamaged(virtualFile: VirtualFile) {
     ApplicationManager.getApplication().assertIsWriteThread()
     if (filesWithDamagedInactiveRanges.contains(virtualFile) || virtualFile == FileEditorManagerEx.getInstanceEx(project).currentFile) {
@@ -978,7 +978,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
     InactiveRangesDamagedNotification(project, files).notify(project)
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private fun expireInactiveRangesDamagedNotifications() {
     filesWithDamagedInactiveRanges.clear()
 
@@ -1075,14 +1075,14 @@ private abstract class SingleThreadLoader<Request, T> : Disposable {
   private var isDisposed: Boolean = false
   private var lastFuture: Future<*>? = null
 
-  @CalledInBackground
+  @RequiresBackgroundThread
   protected abstract fun loadRequest(request: Request): Result<T>
 
-  @CalledInAwt
+  @RequiresEdt
   protected abstract fun handleResult(request: Request, result: Result<T>)
 
 
-  @CalledInAwt
+  @RequiresEdt
   fun scheduleRefresh(request: Request) {
     if (isDisposed) return
 
@@ -1094,7 +1094,7 @@ private abstract class SingleThreadLoader<Request, T> : Disposable {
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   override fun dispose() {
     val callbacks = mutableListOf<Runnable>()
     synchronized(LOCK) {
@@ -1110,7 +1110,7 @@ private abstract class SingleThreadLoader<Request, T> : Disposable {
     executeCallbacks(callbacksWaitingUpdateCompletion)
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected fun hasRequest(condition: (Request) -> Boolean): Boolean {
     synchronized(LOCK) {
       return taskQueue.any(condition) ||
@@ -1199,7 +1199,7 @@ private abstract class SingleThreadLoader<Request, T> : Disposable {
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private fun notifyTrackerRefreshed() {
     if (isDisposed) return
 
@@ -1214,7 +1214,7 @@ private abstract class SingleThreadLoader<Request, T> : Disposable {
     executeCallbacks(callbacks)
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private fun executeCallbacks(callbacks: List<Runnable>) {
     for (callback in callbacks) {
       try {

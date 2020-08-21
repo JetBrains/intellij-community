@@ -105,7 +105,7 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
     update();
   }
 
-  @CalledInAwt
+  @RequiresEdt
   @Nullable
   @Override
   public String getSelectedValue() {
@@ -151,7 +151,7 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
     }, project.getDisposed());
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void update() {
     myText = null;
     myTooltip = null;
@@ -175,7 +175,7 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
 
   @NlsContexts.Tooltip
   @Nullable
-  @CalledInAwt
+  @RequiresEdt
   private String getToolTip(@Nullable T repository) {
     if (repository == null) return null;
     String message = DvcsBundle.message("tooltip.branch.widget.vcs.branch.name.text", myVcsName, getFullBranchName(repository));

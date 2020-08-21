@@ -43,8 +43,8 @@ import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.FileBasedIndexProjectHandler;
 import com.intellij.util.indexing.UnindexedFilesUpdater;
 import com.intellij.util.messages.MessageBusConnection;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.RequiresEdt;
 
 import java.nio.file.Path;
 import java.util.Collection;
@@ -143,7 +143,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     LocalFileSystem.getInstance().removeWatchedRoots(myRootsToWatch);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void addRootsToWatch() {
     if (myProject.isDefault()) return;
     ApplicationManager.getApplication().assertIsWriteThread();

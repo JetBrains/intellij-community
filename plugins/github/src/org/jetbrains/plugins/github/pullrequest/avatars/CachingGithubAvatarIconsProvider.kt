@@ -7,7 +7,7 @@ import com.intellij.ui.scale.ScaleContext
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBValue
 import icons.GithubIcons
-import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.annotations.RequiresEdt
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.util.CachingGithubUserAvatarLoader
 import org.jetbrains.plugins.github.util.GithubImageResizer
@@ -36,7 +36,7 @@ class CachingGithubAvatarIconsProvider(private val avatarsLoader: CachingGithubU
     return IconUtil.scale(standardDefaultAvatar, null, scale)
   }
 
-  @CalledInAwt
+  @RequiresEdt
   override fun getIcon(avatarUrl: String?): Icon {
     val iconSize = iconSize.get()
 

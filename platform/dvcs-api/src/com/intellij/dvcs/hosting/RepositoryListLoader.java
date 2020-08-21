@@ -4,9 +4,9 @@
 package com.intellij.dvcs.hosting;
 
 import com.intellij.openapi.progress.ProgressIndicator;
-import org.jetbrains.annotations.CalledInBackground;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresBackgroundThread;
 
 import java.awt.*;
 import java.util.Collections;
@@ -41,7 +41,7 @@ public interface RepositoryListLoader {
   /**
    * Load repository urls in a single requests
    */
-  @CalledInBackground
+  @RequiresBackgroundThread
   @NotNull
   default List<String> getAvailableRepositories(@NotNull ProgressIndicator progressIndicator) throws RepositoryListLoadingException {
     return Collections.emptyList();
@@ -50,7 +50,7 @@ public interface RepositoryListLoader {
   /**
    * Load repository urls in multiple requests with ability to show partial result
    */
-  @CalledInBackground
+  @RequiresBackgroundThread
   @NotNull
   default Result getAvailableRepositoriesFromMultipleSources(@NotNull ProgressIndicator progressIndicator) {
     try {

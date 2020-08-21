@@ -28,9 +28,9 @@ import git4idea.commands.Git;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
-import org.jetbrains.annotations.CalledInBackground;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.RequiresBackgroundThread;
 
 import java.util.*;
 
@@ -161,7 +161,7 @@ public class GitConflictResolver {
    * In the basic implementation no action is performed, {@code true} is returned.
    * @return Return value is returned from {@link #merge()}
    */
-  @CalledInBackground
+  @RequiresBackgroundThread
   protected boolean proceedAfterAllMerged() throws VcsException {
     return true;
   }

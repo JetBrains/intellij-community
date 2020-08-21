@@ -21,13 +21,13 @@ import com.intellij.openapi.vcs.history.VcsAppendableHistorySessionPartner;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import org.jetbrains.annotations.CalledInBackground;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresBackgroundThread;
 
 public interface VcsHistoryProviderEx extends VcsHistoryProvider {
   @Nullable
-  @CalledInBackground
+  @RequiresBackgroundThread
   VcsFileRevision getLastRevision(FilePath filePath) throws VcsException;
   
   void reportAppendableHistory(@NotNull FilePath path, 

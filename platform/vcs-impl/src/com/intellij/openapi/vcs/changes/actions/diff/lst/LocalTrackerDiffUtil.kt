@@ -28,7 +28,7 @@ import com.intellij.ui.DirtyUI
 import com.intellij.ui.InplaceButton
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
-import org.jetbrains.annotations.CalledWithWriteLock
+import org.jetbrains.annotations.RequiresWriteLock
 import java.awt.BorderLayout
 import java.awt.Cursor
 import java.awt.Dimension
@@ -349,7 +349,7 @@ object LocalTrackerDiffUtil {
     protected val LocalTrackerChange.isFromActiveChangelist get() = changelistId == activeChangelistId
     protected val activeChangelistId get() = provider.localRequest.changelistId
 
-    @CalledWithWriteLock
+    @RequiresWriteLock
     protected abstract fun doPerform(e: AnActionEvent,
                                      tracker: PartialLocalLineStatusTracker,
                                      changes: List<LocalTrackerChange>)

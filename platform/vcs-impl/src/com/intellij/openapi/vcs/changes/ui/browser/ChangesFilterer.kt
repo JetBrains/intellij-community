@@ -24,9 +24,9 @@ import com.intellij.ui.GuiUtils
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
-import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.RequiresEdt
 
 class ChangesFilterer(val project: Project?, val listener: Listener) : Disposable {
   companion object {
@@ -52,7 +52,7 @@ class ChangesFilterer(val project: Project?, val listener: Listener) : Disposabl
     resetFilter()
   }
 
-  @CalledInAwt
+  @RequiresEdt
   fun setChanges(changes: List<Change>?) {
     val oldChanges = rawChanges
     if (oldChanges == null && changes == null) return
@@ -61,7 +61,7 @@ class ChangesFilterer(val project: Project?, val listener: Listener) : Disposabl
     restartLoading()
   }
 
-  @CalledInAwt
+  @RequiresEdt
   fun getFilteredChanges(): FilteredState {
     synchronized(LOCK) {
       val processed = processedChanges
@@ -74,7 +74,7 @@ class ChangesFilterer(val project: Project?, val listener: Listener) : Disposabl
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   fun getProgress(): Float {
     val pendingCount = synchronized(LOCK) { pendingChanges?.size }
     val totalCount = rawChanges?.size

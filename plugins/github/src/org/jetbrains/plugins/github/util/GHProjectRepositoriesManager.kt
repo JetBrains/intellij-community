@@ -17,7 +17,7 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import git4idea.repo.GitRepositoryManager
 import org.jetbrains.annotations.CalledInAny
-import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.annotations.RequiresEdt
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.accounts.AccountRemovedListener
 import org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedListener
@@ -53,7 +53,7 @@ class GHProjectRepositoriesManager(private val project: Project) : Disposable {
   }
 
   //TODO: execute on pooled thread - need to make GithubAccountManager ready
-  @CalledInAwt
+  @RequiresEdt
   private fun doUpdateRepositories() {
     LOG.debug("Repository list update started")
     val gitRepositories = project.service<GitRepositoryManager>().repositories
@@ -99,7 +99,7 @@ class GHProjectRepositoriesManager(private val project: Project) : Disposable {
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private fun scheduleEnterpriseServerDiscovery(remote: GitRemoteUrlCoordinates) {
     val uri = GithubUrlUtil.getUriFromRemoteUrl(remote.url)
     LOG.debug("Extracted URI $uri from remote ${remote.url}")

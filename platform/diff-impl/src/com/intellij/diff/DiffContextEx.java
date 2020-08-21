@@ -16,8 +16,8 @@
 package com.intellij.diff;
 
 import com.intellij.openapi.util.NlsContexts;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.RequiresEdt;
 
 public abstract class DiffContextEx extends DiffContext {
   /*
@@ -26,7 +26,7 @@ public abstract class DiffContextEx extends DiffContext {
    * perform the same procedure as on switching between DiffRequests or between DiffViewers.
    * this can be used, if some change in request or settings was made, and we need to reopen DiffViewer to apply them.
    */
-  @CalledInAwt
+  @RequiresEdt
   public abstract void reopenDiffRequest();
 
   /*
@@ -35,15 +35,15 @@ public abstract class DiffContextEx extends DiffContext {
    * perform the same procedure as on opening DiffRequests for the first time.
    * this can be used, if some change in request or settings was made, and we need to reload DiffRequest to apply them.
    */
-  @CalledInAwt
+  @RequiresEdt
   public abstract void reloadDiffRequest();
 
   /*
    * Show indeterminate progress near status panel.
    */
-  @CalledInAwt
+  @RequiresEdt
   public abstract void showProgressBar(boolean enabled);
 
-  @CalledInAwt
+  @RequiresEdt
   public abstract void setWindowTitle(@NotNull @NlsContexts.DialogTitle String title);
 }

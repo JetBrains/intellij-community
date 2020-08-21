@@ -26,8 +26,8 @@ import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.data.SingleTaskController
 import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.CalledInBackground
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.RequiresBackgroundThread
 import java.awt.BorderLayout
 import javax.swing.JPanel
 import javax.swing.border.Border
@@ -66,7 +66,7 @@ abstract class FullCommitDetailsListPanel(
     changesLoadingController.request(selectedCommits)
   }
 
-  @CalledInBackground
+  @RequiresBackgroundThread
   @Throws(VcsException::class)
   protected abstract fun loadChanges(commits: List<VcsCommitMetadata>): List<Change>
 }

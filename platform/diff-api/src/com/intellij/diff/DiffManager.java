@@ -21,9 +21,9 @@ import com.intellij.diff.requests.DiffRequest;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresEdt;
 
 import java.awt.*;
 
@@ -61,16 +61,16 @@ public abstract class DiffManager {
   /**
    * @see com.intellij.diff.requests.SimpleDiffRequest
    */
-  @CalledInAwt
+  @RequiresEdt
   public abstract void showDiff(@Nullable Project project, @NotNull DiffRequest request);
 
-  @CalledInAwt
+  @RequiresEdt
   public abstract void showDiff(@Nullable Project project, @NotNull DiffRequest request, @NotNull DiffDialogHints hints);
 
   /**
    * @see com.intellij.diff.chains.SimpleDiffRequestChain
    */
-  @CalledInAwt
+  @RequiresEdt
   public abstract void showDiff(@Nullable Project project, @NotNull DiffRequestChain requests, @NotNull DiffDialogHints hints);
 
   /**
@@ -79,6 +79,6 @@ public abstract class DiffManager {
   @NotNull
   public abstract DiffRequestPanel createRequestPanel(@Nullable Project project, @NotNull Disposable parent, @Nullable Window window);
 
-  @CalledInAwt
+  @RequiresEdt
   public abstract void showMerge(@Nullable Project project, @NotNull MergeRequest request);
 }

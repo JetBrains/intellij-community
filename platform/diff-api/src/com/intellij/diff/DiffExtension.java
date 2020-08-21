@@ -17,8 +17,8 @@ package com.intellij.diff;
 
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.RequiresEdt;
 
 /**
  * @see com.intellij.openapi.actionSystem.IdeActions#DIFF_VIEWER_TOOLBAR
@@ -36,7 +36,7 @@ public abstract class DiffExtension {
    * @see com.intellij.diff.tools.simple.SimpleOnesideDiffViewer
    * @see com.intellij.diff.tools.fragmented.UnifiedDiffViewer
    */
-  @CalledInAwt
+  @RequiresEdt
   public abstract void onViewerCreated(@NotNull FrameDiffTool.DiffViewer viewer,
                                        @NotNull DiffContext context,
                                        @NotNull DiffRequest request);

@@ -226,7 +226,7 @@ public final class GitBranchUtil {
    *         or if the current Git root couldn't be determined.
    */
   @Nullable
-  @CalledInAwt
+  @RequiresEdt
   public static GitRepository getCurrentRepository(@NotNull Project project) {
     return getRepositoryOrGuess(project, DvcsUtil.getSelectedFile(project));
   }
@@ -302,7 +302,7 @@ public final class GitBranchUtil {
    * List branches containing a commit. Specify null if no commit filtering is needed.
    */
   @NotNull
-  @CalledInBackground
+  @RequiresBackgroundThread
   public static Collection<String> getBranches(@NotNull Project project, @NotNull VirtualFile root, boolean localWanted,
                                                boolean remoteWanted, @Nullable String containingCommit) throws VcsException {
     // preparing native command executor

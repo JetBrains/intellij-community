@@ -5,10 +5,10 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.CalledInBackground;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresBackgroundThread;
 
 import javax.swing.*;
 
@@ -37,7 +37,7 @@ public interface VcsHistoryProvider {
    * @throws VcsException if an error occurred when loading the revisions
    */
   @Nullable
-  @CalledInBackground
+  @RequiresBackgroundThread
   VcsHistorySession createSessionFor(FilePath filePath) throws VcsException;
 
   void reportAppendableHistory(final FilePath path, final VcsAppendableHistorySessionPartner partner) throws VcsException;

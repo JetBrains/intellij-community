@@ -28,7 +28,7 @@ import git4idea.history.GitLogUtil
 import git4idea.i18n.GitBundle
 import git4idea.rebase.GitRebaseEntryWithDetails
 import git4idea.rebase.interactive.GitRebaseTodoModel
-import org.jetbrains.annotations.CalledInBackground
+import org.jetbrains.annotations.RequiresBackgroundThread
 import java.awt.BorderLayout
 import java.awt.Dimension
 import javax.swing.JComponent
@@ -72,7 +72,7 @@ internal class GitInteractiveRebaseDialog<T : GitRebaseEntryWithDetails>(
   }
   private val modalityState = window?.let { ModalityState.stateForComponent(it) } ?: ModalityState.current()
   private val fullCommitDetailsListPanel = object : FullCommitDetailsListPanel(project, disposable, modalityState) {
-    @CalledInBackground
+    @RequiresBackgroundThread
     @Throws(VcsException::class)
     override fun loadChanges(commits: List<VcsCommitMetadata>): List<Change> {
       val changes = mutableListOf<Change>()

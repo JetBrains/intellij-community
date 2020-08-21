@@ -84,7 +84,7 @@ public class VcsLogManager implements Disposable {
     myLogData.initialize();
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public boolean isLogVisible() {
     return myPostponableRefresher.isLogVisible();
   }
@@ -197,7 +197,7 @@ public class VcsLogManager implements Disposable {
     return logProviders;
   }
 
-  @CalledInAwt
+  @RequiresEdt
   void disposeUi() {
     myDisposed = true;
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
@@ -210,7 +210,7 @@ public class VcsLogManager implements Disposable {
    *
    * @param callback activity to run after log is disposed. Is executed in background thread. null means execution of additional activity after dispose is not required.
    */
-  @CalledInAwt
+  @RequiresEdt
   public void dispose(@Nullable Runnable callback) {
     disposeUi();
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
@@ -230,7 +230,7 @@ public class VcsLogManager implements Disposable {
     LOG.debug("Disposed Vcs Log for " + VcsLogUtil.getProvidersMapText(myLogData.getLogProviders()));
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public boolean isDisposed() {
     return myDisposed;
   }

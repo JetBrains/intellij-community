@@ -123,7 +123,7 @@ public final class DvcsUtil {
    * Returns the currently selected file, based on which VcsBranch or StatusBar components will identify the current repository root.
    */
   @Nullable
-  @CalledInAwt
+  @RequiresEdt
   public static VirtualFile getSelectedFile(@NotNull Project project) {
     StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
     final FileEditor fileEditor = StatusBarUtil.getCurrentFileEditor(statusBar);
@@ -274,7 +274,7 @@ public final class DvcsUtil {
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public static void addMappingIfSubRoot(@NotNull Project project,
                                          @NotNull @NonNls String newRepositoryPath,
                                          @NotNull @NonNls String vcsName) {
@@ -296,7 +296,7 @@ public final class DvcsUtil {
   }
 
   @Nullable
-  @CalledInAwt
+  @RequiresEdt
   public static <T extends Repository> T guessCurrentRepositoryQuick(@NotNull Project project,
                                                                      @NotNull AbstractRepositoryManager<T> manager,
                                                                      @Nullable @NonNls String defaultRootPathValue) {
@@ -417,7 +417,7 @@ public final class DvcsUtil {
   }
 
   @NotNull
-  @CalledInBackground
+  @RequiresBackgroundThread
   public static <R extends Repository> Map<R, List<VcsFullCommitDetails>> groupCommitsByRoots(@NotNull RepositoryManager<R> repoManager,
                                                                                               @NotNull List<? extends VcsFullCommitDetails> commits) {
     Map<R, List<VcsFullCommitDetails>> groupedCommits = new HashMap<>();

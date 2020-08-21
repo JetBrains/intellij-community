@@ -51,7 +51,7 @@ public class HgStatusWidget extends DvcsStatusWidget<HgRepository> {
 
   @Nullable
   @Override
-  @CalledInAwt
+  @RequiresEdt
   protected HgRepository guessCurrentRepository(@NotNull Project project) {
     return DvcsUtil.guessCurrentRepositoryQuick(project, HgUtil.getRepositoryManager(project),
                                                 HgProjectSettings.getInstance(project).getRecentRootPath());

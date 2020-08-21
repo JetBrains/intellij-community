@@ -13,9 +13,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.ui.CommitMessage;
-import org.jetbrains.annotations.CalledWithWriteLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresWriteLock;
 
 import java.util.List;
 import java.util.Objects;
@@ -50,7 +50,7 @@ public class ReformatCommitMessageAction extends DumbAwareAction {
       WriteAction.run(() -> reformat(project, document)), VcsBundle.message("commit.message.intention.family.name.reformat.commit.message"), null);
   }
 
-  @CalledWithWriteLock
+  @RequiresWriteLock
   public static void reformat(@NotNull Project project, @NotNull Document document) {
     List<BaseCommitMessageInspection> inspections = getEnabledInspections(project).collect(toList());
 

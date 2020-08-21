@@ -22,10 +22,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Used to indicate that a method should be called holding read lock
+ * Used to indicate that a method should be called holding write lock
  */
 @Retention(RetentionPolicy.CLASS)
 @Target({ElementType.METHOD, ElementType.CONSTRUCTOR, ElementType.PARAMETER})
-public @interface CalledWithReadLock {
+public @interface RequiresWriteLock {
   boolean instrument() default true;
 }

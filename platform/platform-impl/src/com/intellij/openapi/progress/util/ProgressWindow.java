@@ -30,9 +30,9 @@ import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.TimerUtil;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresEdt;
 
 import javax.swing.*;
 import java.awt.*;
@@ -108,13 +108,13 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).progressWindowCreated(this);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected void initializeOnEdtIfNeeded() {
     EDT.assertIsEdt();
     initializeDialog();
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void initializeDialog() {
     Runnable initialization = myDialogInitialization;
     if (initialization == null) return;
@@ -199,7 +199,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   }
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   public void startBlocking(@NotNull Runnable init) {
     EDT.assertIsEdt();
     synchronized (getLock()) {

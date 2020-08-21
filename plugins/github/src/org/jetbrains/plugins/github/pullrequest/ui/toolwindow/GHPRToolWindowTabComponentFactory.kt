@@ -12,7 +12,7 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.SingleComponentCenteringLayout
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.annotations.RequiresEdt
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
@@ -43,7 +43,7 @@ internal class GHPRToolWindowTabComponentFactory(private val project: Project,
                                                  private val parentDisposable: Disposable) {
   private val dataContextRepository = GHPRDataContextRepository.getInstance(project)
 
-  @CalledInAwt
+  @RequiresEdt
   fun createComponent(): JComponent {
     val panel = JPanel().apply {
       background = UIUtil.getListBackground()

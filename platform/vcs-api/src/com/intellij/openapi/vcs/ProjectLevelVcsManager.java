@@ -132,7 +132,7 @@ public abstract class ProjectLevelVcsManager {
   public abstract @NotNull VcsShowSettingOption getOrCreateCustomOption(@NotNull String vcsActionName,
                                                                         @NotNull AbstractVcs vcs);
 
-  @CalledInAwt
+  @RequiresEdt
   public abstract void showProjectOperationInfo(final UpdatedFiles updatedFiles, @Nls String displayActionName);
 
   /**
@@ -225,7 +225,7 @@ public abstract class ProjectLevelVcsManager {
    * <p>
    * Does nothing if {@code vcs.showConsole} turned off.
    */
-  @CalledInAwt
+  @RequiresEdt
   public abstract void showConsole();
 
   /**
@@ -233,13 +233,13 @@ public abstract class ProjectLevelVcsManager {
    * <p>
    * Does nothing if {@code vcs.showConsole} turned off.
    */
-  @CalledInAwt
+  @RequiresEdt
   public abstract void showConsole(@Nullable Runnable then);
 
   /**
    * Navigates to the end in VCS console.
    */
-  @CalledInAwt
+  @RequiresEdt
   public abstract void scrollConsoleToTheEnd();
 
   /**

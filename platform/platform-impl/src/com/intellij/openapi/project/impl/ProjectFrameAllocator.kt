@@ -33,7 +33,7 @@ import com.intellij.ui.ScreenUtil
 import com.intellij.ui.scale.ScaleContext
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.annotations.RequiresEdt
 import java.awt.Dimension
 import java.awt.Frame
 import java.awt.Image
@@ -124,7 +124,7 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
     return IdeUICustomization.getInstance().projectMessage("progress.title.project.loading.name", projectName)
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private fun initNewFrame(frame: IdeFrameImpl) {
     if (frame.isVisible) {
       val frameHelper = ProjectFrameHelper(frame, null)

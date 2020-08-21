@@ -35,7 +35,7 @@ import com.intellij.project.stateStore
 import com.intellij.util.SingleAlarm
 import com.intellij.util.concurrency.EdtScheduledExecutorService
 import kotlinx.coroutines.*
-import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.annotations.RequiresEdt
 import java.beans.PropertyChangeListener
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -109,7 +109,7 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private fun addListeners() {
     val settings = GeneralSettings.getInstance()
     val idleListener = Runnable {
@@ -190,7 +190,7 @@ internal class SaveAndSyncHandlerImpl : SaveAndSyncHandler(), Disposable {
    * On app or project closing save is performed. In EDT. It means that if there is already running save in a pooled thread,
    * deadlock may be occurred because some save activities requires EDT with modality state "not modal" (by intention).
    */
-  @CalledInAwt
+  @RequiresEdt
   override fun saveSettingsUnderModalProgress(componentManager: ComponentManager): Boolean {
     if (!ApplicationManager.getApplication().isDispatchThread) {
       throw IllegalStateException(

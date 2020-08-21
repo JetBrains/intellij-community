@@ -324,7 +324,7 @@ public final class GitVcs extends AbstractVcs {
   }
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   public void enableIntegration() {
     new Task.Backgroundable(myProject, GitBundle.message("progress.title.enabling.git"), true) {
       @Override

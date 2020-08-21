@@ -56,10 +56,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresEdt;
 
 import java.io.File;
 import java.util.*;
@@ -735,7 +735,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager implements Disp
       }
     }
 
-    @CalledInAwt
+    @RequiresEdt
     private static Alarm getRequestsAlarm(@NotNull CoverageDataManagerImpl manager) {
       Alarm alarm = manager.myRequestsAlarm;
       if (alarm == null) {

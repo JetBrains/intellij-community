@@ -241,7 +241,7 @@ public abstract class AbstractVcs extends StartedActivated {
    * This method is called when user invokes "Enable VCS Integration" and selects a particular VCS.
    * By default it sets up a single mapping {@code <Project> -> selected VCS}.
    */
-  @CalledInAwt
+  @RequiresEdt
   public void enableIntegration() {
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
     if (vcsManager != null) {
@@ -258,7 +258,7 @@ public abstract class AbstractVcs extends StartedActivated {
    * YES or NO if the changelist has to be removed or not, and no further confirmations are needed about this changelist
    * (in particular, the VCS can show a confirmation to the user by itself)
    */
-  @CalledInAwt
+  @RequiresEdt
   @NotNull
   public ThreeState mayRemoveChangeList(@NotNull LocalChangeList list, boolean explicitly) {
     return ThreeState.UNSURE;

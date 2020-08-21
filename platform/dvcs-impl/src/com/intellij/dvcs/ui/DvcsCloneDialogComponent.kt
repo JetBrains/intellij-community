@@ -19,7 +19,7 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
-import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.annotations.RequiresEdt
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.event.DocumentEvent
@@ -92,10 +92,10 @@ abstract class DvcsCloneDialogComponent(var project: Project,
 
   override fun dispose() {}
 
-  @CalledInAwt
+  @RequiresEdt
   protected open fun isOkActionEnabled(): Boolean = getUrl().isNotBlank()
 
-  @CalledInAwt
+  @RequiresEdt
   protected fun updateOkActionState(dialogStateListener: VcsCloneDialogComponentStateListener) {
     dialogStateListener.onOkActionEnabled(isOkActionEnabled())
   }

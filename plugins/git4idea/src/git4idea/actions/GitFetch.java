@@ -10,8 +10,8 @@ import com.intellij.openapi.project.Project;
 import git4idea.GitVcs;
 import git4idea.fetch.GitFetchResult;
 import git4idea.i18n.GitBundle;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.RequiresEdt;
 
 import static git4idea.GitUtil.getRepositories;
 import static git4idea.fetch.GitFetchSupport.fetchSupport;
@@ -51,7 +51,7 @@ public class GitFetch extends DumbAwareAction {
     });
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected void onFetchFinished(@NotNull GitFetchResult result) {
     result.showNotification();
   }

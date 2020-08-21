@@ -16,10 +16,10 @@ import com.intellij.ui.*;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresEdt;
 
 import javax.swing.*;
 import java.awt.*;
@@ -72,7 +72,7 @@ public class ChangeListChooserPanel extends JPanel {
       }
 
       @Override
-      @CalledInAwt
+      @RequiresEdt
       protected void nameChanged(String errorMessage) {
         //invoke later because of undo manager problem: when you try to undo changelist after description was already changed manually
         ApplicationManager.getApplication().invokeLater(() -> updateDescription(), ModalityState.current());

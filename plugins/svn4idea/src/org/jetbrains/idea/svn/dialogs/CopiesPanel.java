@@ -24,10 +24,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.util.Consumer;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresEdt;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.WorkingCopiesContent;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
@@ -100,12 +100,12 @@ public class CopiesPanel extends SimpleToolWindowPanel {
     refresh();
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public boolean isRefreshing() {
     return isRefreshing;
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void refresh() {
     if (isRefreshing) return;
 
@@ -146,7 +146,7 @@ public class CopiesPanel extends SimpleToolWindowPanel {
     getApplication().invokeLater(() -> setWorkingCopies(infoList, hasErrors, supportedFormats), ModalityState.NON_MODAL);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void setWorkingCopies(@NotNull List<WCInfo> infoList, boolean hasErrors, List<WorkingCopyFormat> supportedFormats) {
     infoList.sort(comparing(WCInfo::getPath));
     updateList(infoList, supportedFormats);

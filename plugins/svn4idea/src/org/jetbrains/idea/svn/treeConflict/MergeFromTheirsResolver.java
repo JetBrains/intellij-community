@@ -30,9 +30,9 @@ import com.intellij.ui.UIBundle;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresEdt;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.api.Depth;
@@ -98,7 +98,7 @@ public final class MergeFromTheirsResolver extends BackgroundTaskGroup {
     myTextPatches = emptyList();
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void execute() {
     String messageKey =
       myChange.isMoved() ? "confirmation.resolve.tree.conflict.merge.moved" : "confirmation.resolve.tree.conflict.merge.renamed";
@@ -137,7 +137,7 @@ public final class MergeFromTheirsResolver extends BackgroundTaskGroup {
     new SvnTreeConflictResolver(myVcs, myOldFilePath, null).resolveSelectMineFull();
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void convertTextPaths() throws VcsException {
     // revision contents is preloaded, so ok to call in awt
     List<Change> convertedChanges = convertPaths(myTheirsChanges);
@@ -145,7 +145,7 @@ public final class MergeFromTheirsResolver extends BackgroundTaskGroup {
     myTheirsChanges.addAll(convertedChanges);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void selectPatchesInApplyPatchDialog(@NotNull Consumer<VcsException> callback) {
     LocalChangeList changeList = ChangeListManager.getInstance(myVcs.getProject()).getChangeList(myChange);
     TreeConflictApplyTheirsPatchExecutor patchExecutor = new TreeConflictApplyTheirsPatchExecutor(myVcs, myBaseForPatch);
@@ -216,7 +216,7 @@ public final class MergeFromTheirsResolver extends BackgroundTaskGroup {
     myTextPatches = map(patches, TextFilePatch.class::cast);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void selectBinaryFiles() throws VcsException {
     List<Change> converted = convertPaths(myTheirsBinaryChanges);
     if (!converted.isEmpty()) {
@@ -315,7 +315,7 @@ public final class MergeFromTheirsResolver extends BackgroundTaskGroup {
     return message(singleMessageKey, TreeConflictRefreshablePanel.filePath(getFilePath(change)));
   }
 
-  @CalledInAwt
+  @RequiresEdt
   @NotNull
   private List<Change> convertPaths(@NotNull List<Change> changes) throws VcsException {
     initAddOption();
@@ -417,7 +417,7 @@ public final class MergeFromTheirsResolver extends BackgroundTaskGroup {
     return filter(committedChanges, changeList -> changeList.getNumber() != min);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void initAddOption() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myAdd == null) {

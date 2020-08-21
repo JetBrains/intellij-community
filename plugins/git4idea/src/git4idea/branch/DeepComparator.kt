@@ -38,8 +38,8 @@ import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import gnu.trove.TIntHashSet
-import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.RequiresEdt
 
 class DeepComparator(private val project: Project,
                      private val repositoryManager: GitRepositoryManager,
@@ -93,7 +93,7 @@ class DeepComparator(private val project: Project,
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   fun startTask(dataPack: VcsLogDataPack, branchToCompare: String) {
     ApplicationManager.getApplication().assertIsDispatchThread()
     if (comparedBranch != null) {
@@ -112,14 +112,14 @@ class DeepComparator(private val project: Project,
     startTask(dataPack)
   }
 
-  @CalledInAwt
+  @RequiresEdt
   fun stopTaskAndUnhighlight() {
     ApplicationManager.getApplication().assertIsDispatchThread()
     stopTask()
     unhighlight()
   }
 
-  @CalledInAwt
+  @RequiresEdt
   fun hasHighlightingOrInProgress(): Boolean {
     ApplicationManager.getApplication().assertIsDispatchThread()
     return comparedBranch != null

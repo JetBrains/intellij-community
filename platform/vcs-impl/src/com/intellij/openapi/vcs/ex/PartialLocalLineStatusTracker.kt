@@ -43,7 +43,7 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.WeakList
 import com.intellij.util.ui.JBUI
 import com.intellij.vcsUtil.VcsUtil
-import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.annotations.RequiresEdt
 import java.awt.BorderLayout
 import java.awt.Graphics
 import java.awt.Point
@@ -88,7 +88,7 @@ interface PartialLocalLineStatusTracker : LineStatusTracker<LocalRange> {
 }
 
 abstract class PartialCommitHelper(val content: String) {
-  @CalledInAwt
+  @RequiresEdt
   abstract fun applyChanges()
 }
 
@@ -189,7 +189,7 @@ class ChangelistsLocalLineStatusTracker(project: Project,
     eventDispatcher.multicaster.onChangeListMarkerChange(this)
   }
 
-  @CalledInAwt
+  @RequiresEdt
   override fun setBaseRevision(vcsContent: CharSequence) {
     val changelistId = if (!isInitialized) initialChangeListId else null
     initialChangeListId = null
@@ -216,7 +216,7 @@ class ChangelistsLocalLineStatusTracker(project: Project,
     if (isValid()) eventDispatcher.multicaster.onBecomingValid(this)
   }
 
-  @CalledInAwt
+  @RequiresEdt
   fun replayChangesFromDocumentEvents(events: List<DocumentEvent>) {
     if (events.isEmpty() || !blocks.isEmpty()) return
     updateDocument(Side.LEFT) { vcsDocument ->
@@ -366,7 +366,7 @@ class ChangelistsLocalLineStatusTracker(project: Project,
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private fun registerUndoAction(undo: Boolean) {
     val undoState = collectRangeStates()
     val action = MyUndoableAction(project, document, undoState, undo)
@@ -479,7 +479,7 @@ class ChangelistsLocalLineStatusTracker(project: Project,
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   override fun handlePartialCommit(side: Side, changelistIds: List<String>, honorExcludedFromCommit: Boolean): PartialCommitHelper {
     val toCommitCondition = createToCommitCondition(changelistIds, honorExcludedFromCommit)
 
@@ -504,7 +504,7 @@ class ChangelistsLocalLineStatusTracker(project: Project,
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   override fun rollbackChanges(changelistsIds: List<String>, honorExcludedFromCommit: Boolean) {
     val toCommitCondition = createToCommitCondition(changelistsIds, honorExcludedFromCommit)
     runBulkRollback(toCommitCondition)
@@ -621,7 +621,7 @@ class ChangelistsLocalLineStatusTracker(project: Project,
   }
 
 
-  @CalledInAwt
+  @RequiresEdt
   override fun moveToChangelist(range: Range, changelist: LocalChangeList) {
     val newRange = blockOperations.findBlock(range)
     if (newRange != null) {
@@ -629,12 +629,12 @@ class ChangelistsLocalLineStatusTracker(project: Project,
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   override fun moveToChangelist(lines: BitSet, changelist: LocalChangeList) {
     moveToChangelist({ it.isSelectedByLine(lines) }, changelist)
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private fun moveToChangelist(condition: (Block) -> Boolean, changelist: LocalChangeList) {
     changeListManager.executeUnderDataLock {
       if (changeListManager.getChangeList(changelist.id) == null) return@executeUnderDataLock
@@ -671,7 +671,7 @@ class ChangelistsLocalLineStatusTracker(project: Project,
     return ExclusionState.ALL_INCLUDED // no changes - all included
   }
 
-  @CalledInAwt
+  @RequiresEdt
   override fun setExcludedFromCommit(isExcluded: Boolean) {
     affectedChangeLists.forEach { setExcludedFromCommit(it, isExcluded) }
   }
@@ -712,7 +712,7 @@ class ChangelistsLocalLineStatusTracker(project: Project,
     dropExistingUndoActions()
   }
 
-  @CalledInAwt
+  @RequiresEdt
   internal fun storeTrackerState(): FullState {
     return documentTracker.readLock {
       val vcsContent = documentTracker.getContent(Side.LEFT)
@@ -724,7 +724,7 @@ class ChangelistsLocalLineStatusTracker(project: Project,
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   internal fun restoreState(state: State): Boolean {
     if (state is FullState) {
       return restoreFullState(state)
@@ -734,7 +734,7 @@ class ChangelistsLocalLineStatusTracker(project: Project,
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private fun collectRangeStates(): List<RangeState> {
     return documentTracker.readLock {
       blocks.map { RangeState(it.range, it.marker.changelistId, it.excludedFromCommit) }
@@ -763,7 +763,7 @@ class ChangelistsLocalLineStatusTracker(project: Project,
     return success
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private fun restoreState(states: List<RangeState>): Boolean {
     var success = false
     documentTracker.doFrozen {

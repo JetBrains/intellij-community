@@ -32,9 +32,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresEdt;
 
 import java.io.File;
 import java.io.IOException;
@@ -231,7 +231,7 @@ public final class PatchApplier {
     });
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private static boolean askToRollback(@NotNull Project project, @NotNull Collection<PatchApplier> group) {
     Collection<FilePatch> allFailed = ContainerUtil.concat(group, PatchApplier::getFailedPatches);
     boolean shouldInformAboutBinaries = ContainerUtil.exists(group, applier -> !applier.getBinaryPatches().isEmpty());

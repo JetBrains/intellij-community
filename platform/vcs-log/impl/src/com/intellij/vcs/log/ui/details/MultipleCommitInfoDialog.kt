@@ -19,8 +19,8 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.log.VcsCommitMetadata
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.CalledInBackground
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.annotations.RequiresBackgroundThread
 import javax.swing.JList
 import javax.swing.ScrollPaneConstants
 
@@ -39,7 +39,7 @@ abstract class MultipleCommitInfoDialog(private val project: Project, commits: L
   private val commitsList = JBList<VcsCommitMetadata>()
   private val modalityState = ModalityState.stateForComponent(window)
   private val fullCommitDetailsListPanel = object : FullCommitDetailsListPanel(project, disposable, modalityState) {
-    @CalledInBackground
+    @RequiresBackgroundThread
     @Throws(VcsException::class)
     override fun loadChanges(commits: List<VcsCommitMetadata>): List<Change> = this@MultipleCommitInfoDialog.loadChanges(commits)
   }
@@ -84,7 +84,7 @@ abstract class MultipleCommitInfoDialog(private val project: Project, commits: L
 
   override fun getPreferredFocusedComponent() = commitsList
 
-  @CalledInBackground
+  @RequiresBackgroundThread
   @Throws(VcsException::class)
   protected abstract fun loadChanges(commits: List<VcsCommitMetadata>): List<Change>
 

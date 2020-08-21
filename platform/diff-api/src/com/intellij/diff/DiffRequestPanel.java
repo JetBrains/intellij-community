@@ -18,9 +18,9 @@ package com.intellij.diff;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Key;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresEdt;
 
 import javax.swing.*;
 
@@ -39,6 +39,6 @@ public interface DiffRequestPanel extends Disposable {
   @Nullable
   JComponent getPreferredFocusedComponent();
 
-  @CalledInAwt
+  @RequiresEdt
   <T> void putContextHints(@NotNull Key<T> key, @Nullable T value);
 }

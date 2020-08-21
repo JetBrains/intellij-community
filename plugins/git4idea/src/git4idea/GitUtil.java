@@ -180,7 +180,7 @@ public final class GitUtil {
    * @throws VcsException if non git files are passed
    */
   @NotNull
-  @CalledInBackground
+  @RequiresBackgroundThread
   public static Map<VirtualFile, List<VirtualFile>> sortFilesByGitRoot(@NotNull Project project,
                                                                        @NotNull Collection<? extends VirtualFile> virtualFiles)
     throws VcsException {
@@ -188,7 +188,7 @@ public final class GitUtil {
   }
 
   @NotNull
-  @CalledInBackground
+  @RequiresBackgroundThread
   public static Map<VirtualFile, List<VirtualFile>> sortFilesByGitRootIgnoringMissing(@NotNull Project project,
                                                                                       @NotNull Collection<? extends VirtualFile> filePaths) {
     try {
@@ -204,7 +204,7 @@ public final class GitUtil {
    * @throws VcsException if non git files are passed
    */
   @NotNull
-  @CalledInBackground
+  @RequiresBackgroundThread
   public static Map<VirtualFile, List<FilePath>> sortFilePathsByGitRoot(@NotNull Project project,
                                                                         @NotNull Collection<? extends FilePath> filePaths)
     throws VcsException {
@@ -212,7 +212,7 @@ public final class GitUtil {
   }
 
   @NotNull
-  @CalledInBackground
+  @RequiresBackgroundThread
   public static Map<VirtualFile, List<FilePath>> sortFilePathsByGitRootIgnoringMissing(@NotNull Project project,
                                                                                        @NotNull Collection<? extends FilePath> filePaths) {
     try {
@@ -225,7 +225,7 @@ public final class GitUtil {
   }
 
   @NotNull
-  @CalledInBackground
+  @RequiresBackgroundThread
   private static Map<VirtualFile, List<VirtualFile>> sortFilesByGitRoot(@NotNull Project project,
                                                                         @NotNull Collection<? extends VirtualFile> virtualFiles,
                                                                         boolean ignoreNonGit)
@@ -241,7 +241,7 @@ public final class GitUtil {
    * @throws VcsException if non git files are passed
    */
   @NotNull
-  @CalledInBackground
+  @RequiresBackgroundThread
   public static Map<GitRepository, List<VirtualFile>> sortFilesByRepository(@NotNull Project project,
                                                                             @NotNull Collection<? extends VirtualFile> filePaths)
     throws VcsException {
@@ -249,7 +249,7 @@ public final class GitUtil {
   }
 
   @NotNull
-  @CalledInBackground
+  @RequiresBackgroundThread
   public static Map<GitRepository, List<VirtualFile>> sortFilesByRepositoryIgnoringMissing(@NotNull Project project,
                                                                                            @NotNull Collection<? extends VirtualFile> virtualFiles) {
     try {
@@ -262,7 +262,7 @@ public final class GitUtil {
   }
 
   @NotNull
-  @CalledInBackground
+  @RequiresBackgroundThread
   private static Map<GitRepository, List<VirtualFile>> sortFilesByRepository(@NotNull Project project,
                                                                              @NotNull Collection<? extends VirtualFile> virtualFiles,
                                                                              boolean ignoreNonGit)
@@ -461,7 +461,7 @@ public final class GitUtil {
   }
 
   @NotNull
-  @CalledInBackground
+  @RequiresBackgroundThread
   public static Set<GitRepository> getRepositoriesForFiles(@NotNull Project project, @NotNull Collection<? extends VirtualFile> files)
     throws VcsException {
     Set<GitRepository> result = new HashSet<>();
@@ -597,7 +597,7 @@ public final class GitUtil {
   }
 
   @NotNull
-  @CalledInBackground
+  @RequiresBackgroundThread
   public static Collection<GitRepository> getRepositoriesFromRoots(@NotNull GitRepositoryManager repositoryManager,
                                                                    @NotNull Collection<? extends VirtualFile> roots) {
     Collection<GitRepository> repositories = new ArrayList<>(roots.size());
@@ -649,7 +649,7 @@ public final class GitUtil {
   }
 
   @NotNull
-  @CalledInBackground
+  @RequiresBackgroundThread
   public static GitRepository getRepositoryForFile(@NotNull Project project, @NotNull VirtualFile file) throws VcsException {
     GitRepository repository = GitRepositoryManager.getInstance(project).getRepositoryForFile(file);
     if (repository == null) throw new GitRepositoryNotFoundException(file);
@@ -657,7 +657,7 @@ public final class GitUtil {
   }
 
   @NotNull
-  @CalledInBackground
+  @RequiresBackgroundThread
   public static GitRepository getRepositoryForFile(@NotNull Project project, @NotNull FilePath file) throws VcsException {
     GitRepository repository = GitRepositoryManager.getInstance(project).getRepositoryForFile(file);
     if (repository == null) throw new GitRepositoryNotFoundException(file);
@@ -665,7 +665,7 @@ public final class GitUtil {
   }
 
   @NotNull
-  @CalledInBackground
+  @RequiresBackgroundThread
   public static GitRepository getRepositoryForRoot(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
     GitRepository repository = GitRepositoryManager.getInstance(project).getRepositoryForRoot(root);
     if (repository == null) throw new GitRepositoryNotFoundException(root);

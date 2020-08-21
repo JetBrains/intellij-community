@@ -22,10 +22,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Used to indicate that a method should be called in AWT thread
+ * Used to indicate that a method should be called holding read lock
  */
 @Retention(RetentionPolicy.CLASS)
 @Target({ElementType.METHOD, ElementType.CONSTRUCTOR, ElementType.PARAMETER})
-public @interface CalledInAwt {
+public @interface RequiresReadLock {
   boolean instrument() default true;
 }

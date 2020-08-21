@@ -56,9 +56,9 @@ import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.XCollection;
 import com.intellij.vcs.commit.*;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresEdt;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -163,7 +163,7 @@ public class ChangesViewManager implements ChangesViewEx,
   }
 
   @NotNull
-  @CalledInAwt
+  @RequiresEdt
   private ChangesViewToolWindowPanel initToolWindowPanel() {
     if (myToolWindowPanel == null) {
       ChangesViewToolWindowPanel panel = new ChangesViewToolWindowPanel(myProject, this);

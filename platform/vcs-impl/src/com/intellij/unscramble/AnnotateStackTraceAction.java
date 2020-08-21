@@ -49,10 +49,10 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntListIterator;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.CalledWithReadLock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresEdt;
+import org.jetbrains.annotations.RequiresReadLock;
 
 import java.awt.*;
 import java.util.List;
@@ -137,7 +137,7 @@ public final class AnnotateStackTraceAction extends DumbAwareAction {
         ApplicationManager.getApplication().invokeLater(() -> updateGutter(indicator, revisions));
       }
 
-      @CalledInAwt
+      @RequiresEdt
       private void updateGutter(@NotNull ProgressIndicator indicator, @NotNull Map<Integer, LastRevision> revisions) {
         if (indicator.isCanceled()) return;
 
@@ -190,7 +190,7 @@ public final class AnnotateStackTraceAction extends DumbAwareAction {
   }
 
   @Nullable
-  @CalledWithReadLock
+  @RequiresReadLock
   private static VirtualFile getHyperlinkVirtualFile(@NotNull List<RangeHighlighter> links) {
     RangeHighlighter key = ContainerUtil.getLastItem(links);
     if (key == null) return null;
@@ -328,7 +328,7 @@ public final class AnnotateStackTraceAction extends DumbAwareAction {
       myIndicator.cancel();
     }
 
-    @CalledInAwt
+    @RequiresEdt
     public void updateData(@NotNull Map<Integer, LastRevision> revisions) {
       myRevisions = revisions;
 

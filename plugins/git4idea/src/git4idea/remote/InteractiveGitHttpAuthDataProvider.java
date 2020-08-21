@@ -3,8 +3,8 @@ package git4idea.remote;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.util.AuthData;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresEdt;
 
 import java.awt.*;
 
@@ -19,7 +19,7 @@ import java.awt.*;
  * @see GitRepositoryHostingService#getInteractiveAuthDataProvider(Project, String, String)
  */
 public interface InteractiveGitHttpAuthDataProvider {
-  @CalledInAwt
+  @RequiresEdt
   @Nullable
   AuthData getAuthData(@Nullable Component parentComponent);
 }

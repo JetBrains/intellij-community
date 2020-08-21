@@ -617,7 +617,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
     return result;
   }
 
-  @CalledInBackground
+  @RequiresBackgroundThread
   public List<ShelvedChangeList> importChangeLists(@NotNull Collection<? extends VirtualFile> files,
                                                    @NotNull Consumer<? super VcsException> exceptionConsumer) {
     final List<ShelvedChangeList> result = new ArrayList<>(files.size());
@@ -780,7 +780,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
   }
 
   @NotNull
-  @CalledInAwt
+  @RequiresEdt
   Map<ShelvedChangeList, Date> deleteShelves(@NotNull List<ShelvedChangeList> shelvedListsToDelete,
                                              @NotNull List<ShelvedChangeList> shelvedListsFromChanges,
                                              @NotNull List<ShelvedChange> changesToDelete,
@@ -825,7 +825,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
   }
 
   @Nullable
-  @CalledInAwt
+  @RequiresEdt
   private ShelvedChangeList removeChangesFromChangeList(@NotNull ShelvedChangeList list,
                                                         @NotNull List<ShelvedChange> changes,
                                                         @NotNull List<? extends ShelvedBinaryFile> binaryFiles) {
@@ -901,7 +901,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
     clearShelvedLists(toDelete, true);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void shelveSilentlyUnderProgress(@NotNull List<? extends Change> changes) {
     final List<ShelvedChangeList> result = new ArrayList<>();
     new Task.Backgroundable(myProject, VcsBundle.getString("shelve.changes.progress.title"), true) {
@@ -991,7 +991,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
     return result;
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public static void unshelveSilentlyWithDnd(@NotNull Project project,
                                              @NotNull ShelvedChangeListDragBean shelvedChangeListDragBean,
                                              @Nullable ChangesBrowserNode dropRootNode,
@@ -1085,7 +1085,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void updateListAfterUnshelve(@NotNull ShelvedChangeList listToUpdate,
                                       @NotNull List<? extends FilePatch> patches,
                                       @NotNull List<? extends ShelvedBinaryFile> binaries,
@@ -1100,7 +1100,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
    * changes and delete these changes from the original list - > in this case new list with applied (deleted) changes will be a return value
    */
   @Nullable
-  @CalledInAwt
+  @RequiresEdt
   private ShelvedChangeList saveRemainingPatchesIfNeeded(final ShelvedChangeList changeList,
                                                          final List<? extends FilePatch> remainingPatches,
                                                          final List<? extends ShelvedBinaryFile> remainingBinaries,
@@ -1139,7 +1139,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
    * @return newly created recycled/deleted list or null if no new list was created
    */
   @Nullable
-  @CalledInAwt
+  @RequiresEdt
   private ShelvedChangeList saveRemainingAndRecycleOthers(@NotNull final ShelvedChangeList changeList,
                                                           final List<? extends FilePatch> remainingPatches,
                                                           final List<? extends ShelvedBinaryFile> remainingBinaries,

@@ -29,6 +29,8 @@ import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
@@ -129,13 +131,13 @@ public class VcsProjectLog implements Disposable {
     return myTabsManager;
   }
 
-  @CalledInAwt
+  @RequiresEdt
   @Nullable
   public MainVcsLogUi openLogTab(@Nullable VcsLogFilterCollection filters) {
     return openLogTab(filters, VcsLogManager.LogWindowKind.TOOL_WINDOW);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   @Nullable
   public MainVcsLogUi openLogTab(@Nullable VcsLogFilterCollection filters,
                                  @NotNull VcsLogManager.LogWindowKind kind) {
@@ -163,7 +165,7 @@ public class VcsProjectLog implements Disposable {
     });
   }
 
-  @CalledInAwt
+  @RequiresEdt
   private void recreateOnError(@NotNull Throwable t) {
     if (myDisposeStarted) return;
 
@@ -195,7 +197,7 @@ public class VcsProjectLog implements Disposable {
   }
 
   @Nullable
-  @CalledInBackground
+  @RequiresBackgroundThread
   private VcsLogManager createLog(boolean forceInit) {
     if (myDisposeStarted) return null;
     Map<VirtualFile, VcsLogProvider> logProviders = getLogProviders(myProject);
@@ -207,7 +209,7 @@ public class VcsProjectLog implements Disposable {
     return null;
   }
 
-  @CalledInBackground
+  @RequiresBackgroundThread
   private static void initialize(@NotNull VcsLogManager logManager, boolean force) {
     if (force) {
       logManager.scheduleInitialization();
@@ -257,7 +259,7 @@ public class VcsProjectLog implements Disposable {
    * Executes the given action if the VcsProjectLog has been initialized. If not, then schedules the log initialization,
    * waits for it in a background task, and executes the action after the log is ready.
    */
-  @CalledInAwt
+  @RequiresEdt
   public static void runWhenLogIsReady(@NotNull Project project, @NotNull Consumer<? super VcsLogManager> action) {
     VcsProjectLog log = getInstance(project);
     VcsLogManager manager = log.getLogManager();
@@ -294,7 +296,7 @@ public class VcsProjectLog implements Disposable {
   }
 
   @ApiStatus.Internal
-  @CalledInBackground
+  @RequiresBackgroundThread
   public static boolean ensureLogCreated(@NotNull Project project) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
 
@@ -316,7 +318,7 @@ public class VcsProjectLog implements Disposable {
     @Nullable private volatile VcsLogManager myValue;
 
     @NotNull
-    @CalledInBackground
+    @RequiresBackgroundThread
     public VcsLogManager getValue(@NotNull Map<VirtualFile, VcsLogProvider> logProviders) {
       if (myValue == null) {
         LOG.debug("Creating Vcs Log for " + VcsLogUtil.getProvidersMapText(logProviders));
@@ -331,7 +333,7 @@ public class VcsProjectLog implements Disposable {
     }
 
     @Nullable
-    @CalledInAwt
+    @RequiresEdt
     public VcsLogManager dropValue() {
       LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
       if (myValue != null) {
@@ -409,10 +411,10 @@ public class VcsProjectLog implements Disposable {
   }
 
   public interface ProjectLogListener {
-    @CalledInAwt
+    @RequiresEdt
     void logCreated(@NotNull VcsLogManager manager);
 
-    @CalledInAwt
+    @RequiresEdt
     void logDisposed(@NotNull VcsLogManager manager);
   }
 }

@@ -25,9 +25,9 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresEdt;
 
 import javax.swing.*;
 
@@ -56,7 +56,7 @@ public class SimpleThreesideDiffChange extends ThreesideDiffChangeBase {
     reinstallHighlighters();
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void reinstallHighlighters() {
     destroyHighlighters();
     installHighlighters();

@@ -365,7 +365,7 @@ public class GitRebaseProcess {
     return filter(repositories, repository -> myChangeListManager.haveChangesUnder(repository.getRoot()) != ThreeState.NO);
   }
 
-  @CalledInBackground
+  @RequiresBackgroundThread
   protected void notifySuccess() {
     String rebasedBranch = getCommonCurrentBranchNameIfAllTheSame(myRebaseSpec.getAllRepositories());
     GitRebaseParams params = myRebaseSpec.getParams();
@@ -568,7 +568,7 @@ public class GitRebaseProcess {
       // will be handled in the common notification
     }
 
-    @CalledInBackground
+    @RequiresBackgroundThread
     @Override
     protected boolean proceedAfterAllMerged() {
       if (myCalledFromNotification) {

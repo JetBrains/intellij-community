@@ -18,9 +18,9 @@ package com.intellij.openapi.vcs.impl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.vcs.ex.LineStatusTracker;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresEdt;
 
 public interface LineStatusTrackerManagerI {
   @Nullable
@@ -29,10 +29,10 @@ public interface LineStatusTrackerManagerI {
   @Nullable
   LineStatusTracker<?> getLineStatusTracker(@NotNull VirtualFile file);
 
-  @CalledInAwt
+  @RequiresEdt
   void requestTrackerFor(@NotNull Document document, @NotNull Object requester);
 
-  @CalledInAwt
+  @RequiresEdt
   void releaseTrackerFor(@NotNull Document document, @NotNull Object requester);
 
 

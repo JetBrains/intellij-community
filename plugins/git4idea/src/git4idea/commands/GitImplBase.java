@@ -30,10 +30,10 @@ import git4idea.rebase.GitSimpleEditorHandler;
 import git4idea.rebase.GitUnstructuredEditor;
 import git4idea.util.GitVcsConsoleWriter;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.CalledInBackground;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresBackgroundThread;
 
 import java.io.File;
 import java.io.IOException;
@@ -232,7 +232,7 @@ public abstract class GitImplBase implements Git {
     return environment;
   }
 
-  @CalledInBackground
+  @RequiresBackgroundThread
   public static boolean loadFileAndShowInSimpleEditor(@NotNull Project project,
                                                       @Nullable VirtualFile root,
                                                       @NotNull File file,

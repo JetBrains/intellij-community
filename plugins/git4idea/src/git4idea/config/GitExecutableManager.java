@@ -217,7 +217,7 @@ public class GitExecutableManager {
    * Version identification is done under progress because it can hang in rare cases
    * Usually this takes milliseconds because version is cached
    */
-  @CalledInAwt
+  @RequiresEdt
   @NotNull
   public GitVersion getVersionUnderModalProgressOrCancel(@NotNull Project project) throws ProcessCanceledException {
     return ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
@@ -261,7 +261,7 @@ public class GitExecutableManager {
     }
   }
 
-  @CalledInBackground
+  @RequiresBackgroundThread
   @NotNull
   public GitVersion identifyVersion(@NotNull String pathToGit) throws GitVersionIdentificationException {
     return identifyVersion(getExecutable(pathToGit));
@@ -272,7 +272,7 @@ public class GitExecutableManager {
    *
    * @throws GitVersionIdentificationException if there is a problem running executable or parsing version output
    */
-  @CalledInBackground
+  @RequiresBackgroundThread
   @NotNull
   public GitVersion identifyVersion(@NotNull GitExecutable executable) throws GitVersionIdentificationException {
     CachingFileTester<GitVersion>.TestResult result = myVersionCache.getResultFor(executable);
@@ -297,7 +297,7 @@ public class GitExecutableManager {
    *
    * @return {@code true} is executable is valid, {@code false} otherwise
    */
-  @CalledInBackground
+  @RequiresBackgroundThread
   public boolean testGitExecutableVersionValid(@NotNull Project project) {
     GitExecutable executable = getExecutable(project);
     GitVersion version = identifyVersionOrDisplayError(project, executable);
@@ -314,7 +314,7 @@ public class GitExecutableManager {
     }
   }
 
-  @CalledInBackground
+  @RequiresBackgroundThread
   @Nullable
   private GitVersion identifyVersionOrDisplayError(@NotNull Project project, @NotNull GitExecutable executable) {
     try {

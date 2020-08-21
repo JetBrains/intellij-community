@@ -9,11 +9,11 @@ import com.intellij.openapi.util.SystemInfo
 import git4idea.config.GitExecutableProblemsNotifier.getPrettyErrorMessage
 import git4idea.i18n.GitBundle
 import org.jetbrains.annotations.CalledInAny
-import org.jetbrains.annotations.CalledInAwt
-import org.jetbrains.annotations.CalledInBackground
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.Nls.Capitalization.Sentence
 import org.jetbrains.annotations.Nls.Capitalization.Title
+import org.jetbrains.annotations.RequiresBackgroundThread
+import org.jetbrains.annotations.RequiresEdt
 
 fun findGitExecutableProblemHandler(project: Project): GitExecutableProblemHandler {
   return when {
@@ -25,10 +25,10 @@ fun findGitExecutableProblemHandler(project: Project): GitExecutableProblemHandl
 
 interface GitExecutableProblemHandler {
 
-  @CalledInAwt
+  @RequiresEdt
   fun showError(exception: Throwable, errorNotifier: ErrorNotifier, onErrorResolved: () -> Unit)
 
-  @CalledInAwt
+  @RequiresEdt
   fun showError(exception: Throwable, errorNotifier: ErrorNotifier) {
     showError(exception, errorNotifier, {})
   }
@@ -49,7 +49,7 @@ interface ErrorNotifier {
   @CalledInAny
   fun showError(@Nls(capitalization = Sentence) text: String)
 
-  @CalledInAwt
+  @RequiresEdt
   fun executeTask(@Nls(capitalization = Title) title: String, cancellable: Boolean, action: () -> Unit)
 
   @CalledInAny
@@ -61,14 +61,14 @@ interface ErrorNotifier {
   @CalledInAny
   fun hideProgress()
 
-  @CalledInBackground
+  @RequiresBackgroundThread
   fun resetGitExecutable() {
     GitVcsApplicationSettings.getInstance().setPathToGit(null)
     GitExecutableManager.getInstance().dropExecutableCache()
   }
 
-  sealed class FixOption(@Nls(capitalization = Title) val text: String, @CalledInAwt val fix: () -> Unit) {
-    class Standard(@Nls(capitalization = Title) text: String, @CalledInAwt fix: () -> Unit) : FixOption(text, fix)
+  sealed class FixOption(@Nls(capitalization = Title) val text: String, @RequiresEdt val fix: () -> Unit) {
+    class Standard(@Nls(capitalization = Title) text: String, @RequiresEdt fix: () -> Unit) : FixOption(text, fix)
 
     // todo probably change to "Select on disk" instead of opening Preferences
     internal class Configure(val project: Project) : FixOption(CommonBundle.message("action.text.configure.ellipsis"), {
@@ -77,7 +77,7 @@ interface ErrorNotifier {
   }
 }
 
-@CalledInAwt
+@RequiresEdt
 internal fun showUnsupportedVersionError(project: Project, version: GitVersion, errorNotifier: ErrorNotifier) {
   val description = if (version.type == GitVersion.Type.WSL1) unsupportedWslVersionDescription() else unsupportedVersionDescription()
   errorNotifier.showError(unsupportedVersionMessage(version), description, getLinkToConfigure(project))

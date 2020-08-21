@@ -7,7 +7,7 @@ import com.intellij.util.EventDispatcher
 import com.intellij.util.messages.ListenerDescriptor
 import com.intellij.util.messages.MessageBusFactory
 import com.intellij.util.messages.MessageBusOwner
-import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.annotations.RequiresEdt
 import org.jetbrains.plugins.github.api.data.GHIssueComment
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReview
@@ -31,7 +31,7 @@ internal class GHPRDataProviderRepositoryImpl(private val detailsService: GHPRDe
   private val cache = mutableMapOf<GHPRIdentifier, DisposalCountingHolder<GHPRDataProvider>>()
   private val providerDetailsLoadedEventDispatcher = EventDispatcher.create(DetailsLoadedListener::class.java)
 
-  @CalledInAwt
+  @RequiresEdt
   override fun getDataProvider(id: GHPRIdentifier, disposable: Disposable): GHPRDataProvider {
     if (isDisposed) throw IllegalStateException("Already disposed")
 
@@ -44,7 +44,7 @@ internal class GHPRDataProviderRepositoryImpl(private val detailsService: GHPRDe
     }.acquireValue(disposable)
   }
 
-  @CalledInAwt
+  @RequiresEdt
   override fun findDataProvider(id: GHPRIdentifier): GHPRDataProvider? = cache[id]?.value
 
   override fun dispose() {

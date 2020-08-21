@@ -27,10 +27,10 @@ import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresEdt;
 
 import java.util.*;
 
@@ -39,7 +39,7 @@ import static com.intellij.diff.util.DiffUserDataKeysEx.VCS_DIFF_RIGHT_CONTENT_T
 import static com.intellij.vcsUtil.VcsUtil.getShortRevisionString;
 
 public final class VcsDiffUtil {
-  @CalledInAwt
+  @RequiresEdt
   public static void showDiffFor(@NotNull Project project,
                                  @NotNull Collection<? extends Change> changes,
                                  @NotNull @Nls String revNumTitle1,
@@ -122,7 +122,7 @@ public final class VcsDiffUtil {
     return VcsFileUtil.relativePath(aParentPath.getIOFile(), file.getIOFile());
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public static void showChangesDialog(@NotNull Project project, @NotNull @NlsContexts.DialogTitle String title, @NotNull List<? extends Change> changes) {
     DialogBuilder dialogBuilder = new DialogBuilder(project);
 

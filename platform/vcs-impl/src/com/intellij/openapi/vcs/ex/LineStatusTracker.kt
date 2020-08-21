@@ -13,13 +13,11 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.MarkupEditorFilter
 import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ex.DocumentTracker.Block
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.CalledInAny
-import org.jetbrains.annotations.CalledInAwt
-import java.awt.Graphics
+import org.jetbrains.annotations.RequiresEdt
 import java.awt.Point
 import java.util.*
 
@@ -27,15 +25,15 @@ interface LineStatusTracker<out R : Range> : LineStatusTrackerI<R> {
   override val project: Project
   override val virtualFile: VirtualFile
 
-  @CalledInAwt
+  @RequiresEdt
   fun isAvailableAt(editor: Editor): Boolean {
     return editor.settings.isLineMarkerAreaShown && !DiffUtil.isDiffEditor(editor)
   }
 
-  @CalledInAwt
+  @RequiresEdt
   fun scrollAndShowHint(range: Range, editor: Editor)
 
-  @CalledInAwt
+  @RequiresEdt
   fun showHint(range: Range, editor: Editor)
 }
 
@@ -54,7 +52,7 @@ interface LocalLineStatusTracker<R : Range> : LineStatusTracker<R> {
              val showErrorStripeMarkers: Boolean,
              val detectWhitespaceChangedLines: Boolean)
 
-  @CalledInAwt
+  @RequiresEdt
   override fun isAvailableAt(editor: Editor): Boolean {
     return mode.isVisible && super.isAvailableAt(editor)
   }
@@ -82,14 +80,14 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
     documentTracker.addHandler(innerRangesHandler)
   }
 
-  @CalledInAwt
+  @RequiresEdt
   override fun isDetectWhitespaceChangedLines(): Boolean = mode.isVisible && mode.detectWhitespaceChangedLines
 
   override fun isClearLineModificationFlagOnRollback(): Boolean = true
 
   protected abstract var Block.innerRanges: List<Range.InnerRange>?
 
-  @CalledInAwt
+  @RequiresEdt
   abstract fun setBaseRevision(vcsContent: CharSequence)
 
 
@@ -141,7 +139,7 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
       }
     }
 
-    @CalledInAwt
+    @RequiresEdt
     private fun fireFileUnchanged() {
       if (GeneralSettings.getInstance().isSaveOnFrameDeactivation) {
         // later to avoid saving inside document change event processing and deadlock with CLM.
@@ -177,7 +175,7 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
     documentTracker.freeze(Side.RIGHT)
   }
 
-  @CalledInAwt
+  @RequiresEdt
   override fun unfreeze() {
     documentTracker.unfreeze(Side.LEFT)
     documentTracker.unfreeze(Side.RIGHT)

@@ -15,6 +15,8 @@ import com.intellij.ui.content.TabGroupId;
 import com.intellij.ui.content.TabbedContent;
 import com.intellij.util.Consumer;
 import com.intellij.util.ContentUtilEx;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogBundle;
 import com.intellij.vcs.log.VcsLogUi;
@@ -184,7 +186,7 @@ public final class VcsLogContentUtil {
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public static void showLogIsNotAvailableMessage(@NotNull Project project) {
     VcsBalloonProblemNotifier.showOverChangesView(project, VcsLogBundle.message("vcs.log.is.not.available"), MessageType.WARNING);
   }
@@ -217,7 +219,7 @@ public final class VcsLogContentUtil {
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  @CalledInBackground
+  @RequiresBackgroundThread
   @Nullable
   public static VcsLogManager getOrCreateLog(@NotNull Project project) {
     VcsProjectLog.ensureLogCreated(project);

@@ -32,9 +32,9 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlChunk;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
@@ -44,9 +44,9 @@ import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresEdt;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -105,7 +105,7 @@ public class CompareBranchesDiffPanel extends JPanel {
     add(myChangesBrowser, BorderLayout.CENTER);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void setCompareInfo(@NotNull CommitCompareInfo compareInfo) {
     myCompareInfo = compareInfo;
     refreshView();

@@ -64,7 +64,7 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
 
   @Nullable
   @Override
-  @CalledInAwt
+  @RequiresEdt
   protected GitRepository guessCurrentRepository(@NotNull Project project) {
     return DvcsUtil.guessCurrentRepositoryQuick(project, GitUtil.getRepositoryManager(project), mySettings.getRecentRootPath());
   }

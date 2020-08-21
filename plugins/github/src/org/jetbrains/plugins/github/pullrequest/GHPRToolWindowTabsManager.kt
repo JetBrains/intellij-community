@@ -10,7 +10,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.wm.ToolWindowManager
-import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.annotations.RequiresEdt
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabComponentController
@@ -48,10 +48,10 @@ internal class GHPRToolWindowTabsManager(private val project: Project) : Disposa
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   fun isAvailable(): Boolean = getRepositories().isNotEmpty()
 
-  @CalledInAwt
+  @RequiresEdt
   fun showTab(repository: GHRepositoryCoordinates, onShown: ((GHPRToolWindowTabComponentController?) -> Unit)? = null) {
     settings.removeHiddenUrl(repository.toUrl())
     updateTabs {

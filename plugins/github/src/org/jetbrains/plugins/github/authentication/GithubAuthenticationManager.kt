@@ -5,7 +5,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.AuthData
 import org.jetbrains.annotations.CalledInAny
-import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.annotations.RequiresEdt
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
@@ -34,7 +34,7 @@ class GithubAuthenticationManager internal constructor() {
   @CalledInAny
   internal fun getTokenForAccount(account: GithubAccount): String? = accountManager.getTokenForAccount(account)
 
-  @CalledInAwt
+  @RequiresEdt
   @JvmOverloads
   internal fun requestNewToken(account: GithubAccount, project: Project?, parentComponent: Component? = null): String? =
     login(
@@ -45,7 +45,7 @@ class GithubAuthenticationManager internal constructor() {
       )
     )?.updateAccount(account)
 
-  @CalledInAwt
+  @RequiresEdt
   @JvmOverloads
   fun requestNewAccount(project: Project?, parentComponent: Component? = null): GithubAccount? =
     login(
@@ -53,7 +53,7 @@ class GithubAuthenticationManager internal constructor() {
       GHLoginRequest(isCheckLoginUnique = true)
     )?.registerAccount()
 
-  @CalledInAwt
+  @RequiresEdt
   @JvmOverloads
   fun requestNewAccountForServer(server: GithubServerPath, project: Project?, parentComponent: Component? = null): GithubAccount? =
     login(
@@ -61,7 +61,7 @@ class GithubAuthenticationManager internal constructor() {
       GHLoginRequest(server = server, isCheckLoginUnique = true)
     )?.registerAccount()
 
-  @CalledInAwt
+  @RequiresEdt
   @JvmOverloads
   fun requestNewAccountForServer(
     server: GithubServerPath,
@@ -77,7 +77,7 @@ class GithubAuthenticationManager internal constructor() {
   internal fun isAccountUnique(name: String, server: GithubServerPath) =
     accountManager.accounts.none { it.name == name && it.server.equals(server, true) }
 
-  @CalledInAwt
+  @RequiresEdt
   @JvmOverloads
   fun requestReLogin(account: GithubAccount, project: Project?, parentComponent: Component? = null): Boolean =
     login(
@@ -85,7 +85,7 @@ class GithubAuthenticationManager internal constructor() {
       GHLoginRequest(server = account.server, login = account.name)
     )?.updateAccount(account) != null
 
-  @CalledInAwt
+  @RequiresEdt
   internal fun login(project: Project?, parentComponent: Component?, request: GHLoginRequest): GHAccountAuthData? {
     val isGH = request.server?.isGithubDotCom
 
@@ -96,20 +96,20 @@ class GithubAuthenticationManager internal constructor() {
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   internal fun removeAccount(account: GithubAccount) {
     accountManager.accounts -= account
   }
 
-  @CalledInAwt
+  @RequiresEdt
   internal fun updateAccountToken(account: GithubAccount, newToken: String) =
     accountManager.updateAccountToken(account, newToken)
 
-  @CalledInAwt
+  @RequiresEdt
   internal fun registerAccount(name: String, server: GithubServerPath, token: String): GithubAccount =
     registerAccount(GithubAccountManager.createAccount(name, server), token)
 
-  @CalledInAwt
+  @RequiresEdt
   internal fun registerAccount(account: GithubAccount, token: String): GithubAccount {
     accountManager.accounts += account
     accountManager.updateAccountToken(account, token)
@@ -129,7 +129,7 @@ class GithubAuthenticationManager internal constructor() {
     project.service<GithubProjectDefaultAccountHolder>().account = account
   }
 
-  @CalledInAwt
+  @RequiresEdt
   @JvmOverloads
   fun ensureHasAccounts(project: Project?, parentComponent: Component? = null): Boolean =
     hasAccounts() || requestNewAccount(project, parentComponent) != null

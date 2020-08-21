@@ -42,9 +42,9 @@ import com.intellij.openapi.vcs.changes.patch.tool.PatchDiffRequest;
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.CalledInBackground;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresBackgroundThread;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -182,7 +182,7 @@ public final class DiffShelvedChangesActionProvider implements AnActionExtension
       myProject = project;
     }
 
-    @CalledInBackground
+    @RequiresBackgroundThread
     public @NotNull TextFilePatch getPatch(@NotNull ShelvedChange shelvedChange, @Nullable CommitContext commitContext) throws VcsException {
       Path patchPath = shelvedChange.getPatchPath();
       if (getInfoFromCache(patchPath) == null || isPatchFileChanged(patchPath)) {

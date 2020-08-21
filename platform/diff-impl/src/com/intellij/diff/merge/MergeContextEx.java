@@ -15,13 +15,13 @@
  */
 package com.intellij.diff.merge;
 
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.RequiresEdt;
 
 public abstract class MergeContextEx extends MergeContext {
   /*
    * Destroy active MergeViewer and reopen current MergeRequest in the new one
    */
-  @CalledInAwt
+  @RequiresEdt
   public abstract void reopenWithTool(@NotNull MergeTool tool);
 }

@@ -33,8 +33,10 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
@@ -234,7 +236,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
   }
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   public void push(boolean forcePush) {
     executeAfterRunningPrePushHandlers(new Task.Backgroundable(myProject, DvcsBundle.getString("push.process.pushing"), true) {
       @Override
@@ -245,7 +247,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
   }
 
   @Override
-  @CalledInAwt
+  @RequiresEdt
   public void executeAfterRunningPrePushHandlers(@NotNull Task.Backgroundable activity) {
     PrePushHandler.Result result = runPrePushHandlersInModalTask();
     if (result == PrePushHandler.Result.OK) {
@@ -260,7 +262,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public PrePushHandler.Result runPrePushHandlersInModalTask() {
     FileDocumentManager.getInstance().saveAllDocuments();
     AtomicReference<PrePushHandler.Result> result = new AtomicReference<>(PrePushHandler.Result.OK);

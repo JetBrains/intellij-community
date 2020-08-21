@@ -80,7 +80,7 @@ public class QuickMerge extends BackgroundTaskGroup {
     return myMergeContext.getWcInfo().getFormat().isOrGreater(ONE_DOT_EIGHT);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void execute() {
     FileDocumentManager.getInstance().saveAllDocuments();
 

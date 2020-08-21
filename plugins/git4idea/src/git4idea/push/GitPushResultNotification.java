@@ -33,10 +33,10 @@ import git4idea.repo.GitRepository;
 import git4idea.update.GitUpdateInfoAsLog;
 import git4idea.update.GitUpdateResult;
 import one.util.streamex.EntryStream;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresEdt;
 
 import java.util.List;
 import java.util.Map;
@@ -60,7 +60,7 @@ final class GitPushResultNotification extends Notification {
   }
 
   @NotNull
-  @CalledInAwt
+  @RequiresEdt
   static GitPushResultNotification create(@NotNull Project project,
                                           @NotNull GitPushResult pushResult,
                                           @Nullable GitPushOperation pushOperation,

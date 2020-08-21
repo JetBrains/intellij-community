@@ -248,19 +248,19 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
     myEditorField.getDocument().putUserData(DATA_KEY, null);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public synchronized void setChangeList(@NotNull ChangeList value) {
     setChangeLists(singletonList(value));
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public synchronized void setChangeLists(@NotNull List<ChangeList> value) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myChangeLists = newUnmodifiableList(value);
   }
 
   @NotNull
-  @CalledWithReadLock
+  @RequiresReadLock
   public synchronized List<ChangeList> getChangeLists() {
     return myChangeLists;
   }

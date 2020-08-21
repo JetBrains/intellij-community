@@ -46,7 +46,7 @@ import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
-import org.jetbrains.annotations.CalledInBackground
+import org.jetbrains.annotations.RequiresBackgroundThread
 import java.awt.BorderLayout
 import java.awt.Insets
 import java.awt.event.InputEvent
@@ -194,7 +194,7 @@ class GitMergeDialog(private val project: Project,
       })
   }
 
-  @CalledInBackground
+  @RequiresBackgroundThread
   private fun loadUnmergedBranches(root: VirtualFile): List<@NlsSafe String>? {
     var result: List<String>? = null
 

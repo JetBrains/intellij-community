@@ -18,9 +18,9 @@ import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresEdt;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -92,16 +92,16 @@ public abstract class ListenerDiffViewerBase extends DiffViewerBase {
   // Abstract
   //
 
-  @CalledInAwt
+  @RequiresEdt
   protected void onDocumentChange(@NotNull DocumentEvent event) {
     scheduleRediff();
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected void onBeforeDocumentChange(@NotNull DocumentEvent event) {
   }
 
-  @CalledInAwt
+  @RequiresEdt
   protected void onFileChange(@NotNull VirtualFile file) {
     scheduleRediff();
   }

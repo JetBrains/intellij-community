@@ -331,7 +331,7 @@ public abstract class HgUtil {
   }
 
   @NotNull
-  @CalledInBackground
+  @RequiresBackgroundThread
   public static Map<VirtualFile, Collection<FilePath>> groupFilePathsByHgRoots(@NotNull Project project,
                                                                                @NotNull Collection<? extends FilePath> files) {
     Map<VirtualFile, Collection<FilePath>> sorted = new HashMap<>();
@@ -480,7 +480,7 @@ public abstract class HgUtil {
   }
 
   @Nullable
-  @CalledInAwt
+  @RequiresEdt
   public static HgRepository getCurrentRepository(@NotNull Project project) {
     if (project.isDisposed()) return null;
     return DvcsUtil.guessRepositoryForFile(project, getRepositoryManager(project),

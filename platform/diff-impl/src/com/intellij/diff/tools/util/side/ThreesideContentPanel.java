@@ -25,9 +25,9 @@ import com.intellij.diff.util.Side;
 import com.intellij.diff.util.ThreeSide;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresEdt;
 
 import javax.swing.*;
 import java.awt.*;
@@ -71,7 +71,7 @@ public class ThreesideContentPanel extends JPanel {
     }
   }
 
-  @CalledInAwt
+  @RequiresEdt
   public void setPainter(@Nullable DiffSplitter.Painter painter, @NotNull Side side) {
     mySplitter.setPainter(painter, side);
   }

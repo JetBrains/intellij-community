@@ -534,7 +534,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
     }
 
     @NotNull
-    @CalledInAwt
+    @RequiresEdt
     private List<ApplyPatchChange> getSelectedChanges(@NotNull Side side) {
       EditorEx editor = side.select(myResultEditor, myPatchEditor);
       BitSet lines = DiffUtil.getSelectedLines(editor);
@@ -551,7 +551,7 @@ class ApplyPatchViewer implements DataProvider, Disposable {
 
     protected abstract boolean isEnabled(@NotNull ApplyPatchChange change);
 
-    @CalledWithWriteLock
+    @RequiresWriteLock
     protected abstract void apply(@NotNull List<? extends ApplyPatchChange> changes);
   }
 

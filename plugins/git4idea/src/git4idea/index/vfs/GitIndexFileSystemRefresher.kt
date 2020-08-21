@@ -21,7 +21,7 @@ import com.intellij.vcsUtil.VcsUtil
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepositoryManager
 import git4idea.repo.GitUntrackedFilesHolder
-import org.jetbrains.annotations.CalledWithWriteLock
+import org.jetbrains.annotations.RequiresWriteLock
 
 class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
   private val cache get() = project.serviceIfCreated<GitIndexVirtualFileCache>()
@@ -71,7 +71,7 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
     }
   }
 
-  @CalledWithWriteLock
+  @RequiresWriteLock
   internal fun changeContent(file: GitIndexVirtualFile, requestor: Any?, modificationStamp: Long, writeCommand: () -> Unit) {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
 

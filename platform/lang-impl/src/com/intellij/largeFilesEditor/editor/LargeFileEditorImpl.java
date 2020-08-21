@@ -31,9 +31,9 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.RequiresEdt;
 
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
@@ -187,7 +187,7 @@ public class LargeFileEditorImpl extends UserDataHolderBase implements LargeFile
     vFile.putUserData(FileDocumentManagerImpl.HARD_REF_TO_DOCUMENT_KEY, null);
   }
 
-  @CalledInAwt
+  @RequiresEdt
   @Override
   public void showSearchResult(SearchResult searchResult) {
     editorModel.showSearchResult(searchResult);
