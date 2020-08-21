@@ -51,7 +51,7 @@ internal abstract class GitAbortOperationAction(repositoryState: Repository.Stat
 
   private fun doAbort(repository: GitRepository, indicator: ProgressIndicator) {
     val project = repository.project
-    GitFreezingProcess(project, "abort") {
+    GitFreezingProcess(project, "Git abort") {
       DvcsUtil.workingTreeChangeStarted(project, "Abort").use {
         indicator.text2 = "git ${gitCommand.name()} --abort" + GitUtil.mention(repository)
 

@@ -123,7 +123,7 @@ public class GitRebaseProcess {
 
   public void rebase() {
     if (checkForRebasingPublishedCommits()) {
-      new GitFreezingProcess(myProject, GitBundle.message("rebase.git.operation.name"), this::doRebase).execute();
+      new GitFreezingProcess(myProject, "Git " + GitBundle.message("rebase.git.operation.name"), this::doRebase).execute();
     }
   }
 
