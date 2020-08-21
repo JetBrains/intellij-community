@@ -300,7 +300,7 @@ public class ProjectSettingsPanel {
               final NamedScope scope = NamedScopesHolder.getScope(myProject, scopeName);
               if (scope == null) setForeground(JBColor.RED);
             }
-            setText(scopeName);
+            setText(((NamedScope)value).getPresentableName());
           }
           return this;
         }

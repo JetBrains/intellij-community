@@ -89,7 +89,7 @@ public final class GlobalSearchScopesCore {
     @NotNull
     @Override
     public String getDisplayName() {
-      return mySet.getName();
+      return mySet.getPresentableName();
     }
 
     @NotNull

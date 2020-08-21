@@ -16,7 +16,7 @@ public class ScratchesNamedScope extends NamedScope {
   public static @NotNull @Nls String scratchesAndConsoles() { return IdeBundle.message("scratches.and.consoles"); }
 
   public ScratchesNamedScope() {
-    super(scratchesAndConsoles(), AllIcons.Scope.Scratches, new AbstractPackageSet(scratchesAndConsoles()) {
+    super("Scratches and Consoles", scratchesAndConsoles(), AllIcons.Scope.Scratches, new AbstractPackageSet(scratchesAndConsoles()) {
       @Override
       public boolean contains(@NotNull VirtualFile file, NamedScopesHolder holder) {
         return ScratchesNamedScope.contains(holder.getProject(), file);

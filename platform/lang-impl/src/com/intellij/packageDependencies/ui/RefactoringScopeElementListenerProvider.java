@@ -88,7 +88,7 @@ public class RefactoringScopeElementListenerProvider implements RefactoringEleme
           if (newName != null) {
             PackageSet newSet = oldSet.map(set -> updateNameInPattern(set, oldQualifiedName, newName));
             if (newSet != oldSet) {
-              descriptor.replaceScope(new NamedScope(oldScope.getName(), oldScope.getIcon(), newSet));
+              descriptor.replaceScope(new NamedScope(oldScope.getName(), oldScope.getPresentableName(), oldScope.getIcon(), newSet));
             }
           }
         }

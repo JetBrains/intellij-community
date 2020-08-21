@@ -166,7 +166,7 @@ public class DependencyConfigurable implements Configurable {
                                                      int row,
                                                      int column) {
         super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
-        setText(value == null ? "" : ((NamedScope)value).getName());
+        setText(value == null ? "" : ((NamedScope)value).getPresentableName());
         return this;
       }
     };

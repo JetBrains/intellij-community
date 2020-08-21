@@ -9,6 +9,7 @@ import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
@@ -96,8 +97,9 @@ class VcsUpdateInfoScopeFilterConfigurable implements Configurable, NamedScopesH
     boolean selection = false;
     for (NamedScopesHolder holder : myNamedScopeHolders) {
       for (NamedScope scope : holder.getEditableScopes()) {
-        myComboBox.addItem(scope.getName());
-        if (!selection && scope.getName().equals(myVcsConfiguration.UPDATE_FILTER_SCOPE_NAME)) {
+        @NlsSafe String name = scope.getName();
+        myComboBox.addItem(name);
+        if (!selection && name.equals(myVcsConfiguration.UPDATE_FILTER_SCOPE_NAME)) {
           selection = true;
         }
       }

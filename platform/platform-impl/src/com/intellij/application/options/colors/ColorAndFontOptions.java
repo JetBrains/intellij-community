@@ -610,7 +610,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
     List<Pair<NamedScope, NamedScopesHolder>> list = new ArrayList<>(namedScopes);
 
-    list.sort((o1, o2) -> o1.getFirst().getName().compareToIgnoreCase(o2.getFirst().getName()));
+    list.sort((o1, o2) -> o1.getFirst().getPresentableName().compareToIgnoreCase(o2.getFirst().getPresentableName()));
     for (Pair<NamedScope,NamedScopesHolder> pair : list) {
       NamedScope namedScope = pair.getFirst();
       String name = namedScope.getName();

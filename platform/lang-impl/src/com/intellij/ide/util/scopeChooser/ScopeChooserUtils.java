@@ -60,7 +60,7 @@ public final class ScopeChooserUtils {
 
     for (FindInProjectExtension extension : FindInProjectExtension.EP_NAME.getExtensionList()) {
       for (NamedScope scope : extension.getFilteredNamedScopes(project)) {
-        if (scope.getName().equals(scopePresentableName)) {
+        if (scope.getPresentableName().equals(scopePresentableName)) {
           return intersectWithContentScope(project, GlobalSearchScopesCore.filterScope(project, scope));
         }
       }

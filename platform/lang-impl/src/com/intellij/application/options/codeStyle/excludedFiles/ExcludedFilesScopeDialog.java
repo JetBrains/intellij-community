@@ -22,6 +22,9 @@ public class ExcludedFilesScopeDialog extends ExcludedFilesDialogBase {
   private final Action myEditAction;
   private final List<? extends NamedScope> myAvailableScopes;
 
+  /**
+   * @param availableScopes editable scopes, means that names are @NlsSafe
+   */
   protected ExcludedFilesScopeDialog(@NotNull Project project,
                                      @NotNull List<? extends NamedScope> availableScopes) {
     super(project);

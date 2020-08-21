@@ -15,11 +15,11 @@ public final class ChangeListScope extends FilteredNamedScope implements Weighed
   static final String ALL_CHANGED_FILES_SCOPE_NAME = "All Changed Files";
 
   public ChangeListScope(@NotNull ChangeListManager manager) {
-    super(ALL_CHANGED_FILES_SCOPE_NAME, AllIcons.Scope.ChangedFilesAll, 0, manager::isFileAffected);
+    super(ALL_CHANGED_FILES_SCOPE_NAME, "All Changed Files", AllIcons.Scope.ChangedFilesAll, 0, manager::isFileAffected);
   }
 
   public ChangeListScope(@NotNull ChangeListManager manager, @NotNull String name) {
-    super(name, ICON, 0, file -> manager.getChangeLists(file).stream().anyMatch(list -> list.getName().equals(name)));
+    super(name, name, ICON, 0, file -> manager.getChangeLists(file).stream().anyMatch(list -> list.getName().equals(name)));
   }
 
   @Override

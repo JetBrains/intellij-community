@@ -467,7 +467,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
       NamedScope scopeFilter = tree.getFilterScope();
       if (scopeFilter != null) {
         int filteredFiles = tree.getFilteredFilesCount();
-        String filterName = scopeFilter.getName();
+        String filterName = scopeFilter.getPresentableName();
         if (filteredFiles == 0) {
           scopeText = VcsBundle.message("update.file.name.wasn.t.modified", filterName);
         }

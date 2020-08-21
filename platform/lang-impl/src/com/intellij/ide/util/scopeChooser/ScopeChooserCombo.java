@@ -236,6 +236,11 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     return item == null ? null : item.getDisplayName();
   }
 
+  public @Nullable @Nls String getSelectedScopeId() {
+    ScopeDescriptor item = (ScopeDescriptor)getComboBox().getSelectedItem();
+    return item == null ? null : ScopePresentableNameToSerializationIdMapper.getScopeSerializationId(item.getDisplayName());
+  }
+
   private static class ScopeSeparator extends ScopeDescriptor {
     final @Nls String text;
 

@@ -59,10 +59,10 @@ public class PyCallHierarchyTest extends PyTestCase {
 
   private void checkHierarchyTreeStructure(PyFunction function) {
     final PyCallerFunctionTreeStructure callerStructure = new PyCallerFunctionTreeStructure(myFixture.getProject(), function,
-                                                                                            HierarchyBrowserBaseEx.getScopeProject());
+                                                                                            HierarchyBrowserBaseEx.SCOPE_PROJECT);
     assertSameLinesWithFile(getVerificationCallerFilePath(), HierarchyViewTestFixture.dump(callerStructure, null, 0));
     final PyCalleeFunctionTreeStructure calleeStructure = new PyCalleeFunctionTreeStructure(myFixture.getProject(), function,
-                                                                                            HierarchyBrowserBaseEx.getScopeProject());
+                                                                                            HierarchyBrowserBaseEx.SCOPE_PROJECT);
     assertSameLinesWithFile(getVerificationCalleeFilePath(), HierarchyViewTestFixture.dump(calleeStructure, null, 0));
   }
 

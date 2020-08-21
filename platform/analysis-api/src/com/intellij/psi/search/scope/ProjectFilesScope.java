@@ -19,7 +19,7 @@ public final class ProjectFilesScope extends NamedScope {
   public static final ProjectFilesScope INSTANCE = new ProjectFilesScope();
 
   public ProjectFilesScope() {
-    super(ProjectScope.getProjectFilesScopeName(), AllIcons.Nodes.Folder, new FilteredPackageSet(ProjectScope.getProjectFilesScopeName()) {
+    super("Project Files", ProjectScope.getProjectFilesScopeName(), AllIcons.Nodes.Folder, new FilteredPackageSet(ProjectScope.getProjectFilesScopeName()) {
       @Override
       public boolean contains(@NotNull VirtualFile file, @NotNull Project project) {
         ProjectFileIndex fileIndex = getFileIndex(project);

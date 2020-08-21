@@ -3,14 +3,14 @@ package com.intellij.ui.tabs
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
-import com.intellij.openapi.options.SearchableConfigurable
-import com.intellij.openapi.options.Configurable.NoScroll
 import com.intellij.ide.IdeBundle.message
 import com.intellij.ide.util.scopeChooser.EditScopesDialog
 import com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable.PROJECT_SCOPES
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.keymap.KeymapUtil.getShortcutsText
 import com.intellij.openapi.options.CheckBoxConfigurable
+import com.intellij.openapi.options.Configurable.NoScroll
+import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
@@ -38,7 +38,6 @@ import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI.Borders
 import com.intellij.util.ui.PaintIcon
 import java.awt.*
-import java.lang.IllegalStateException
 import javax.swing.*
 import javax.swing.table.AbstractTableModel
 import javax.swing.table.DefaultTableCellRenderer
@@ -186,9 +185,10 @@ private class FileColorsTableModel(val manager: FileColorManagerImpl) : Abstract
     val index = list.indexOfFirst { it.scopeName == scopeName }
     if (index < 0) return false
     val parent = table ?: return false
+    val presentableName = findScope(scopeName, manager.project)!!.presentableName
     val title = when (toSharedList) {
-      true -> message("settings.file.colors.dialog.warning.shared", scopeName)
-      else -> message("settings.file.colors.dialog.warning.local", scopeName)
+      true -> message("settings.file.colors.dialog.warning.shared", presentableName)
+      else -> message("settings.file.colors.dialog.warning.local", presentableName)
     }
     val configuration = list[index]
     val update = when (configuration.colorName == colorName) {
@@ -447,7 +447,7 @@ private fun findScope(scopeName: String, project: Project) =
 
 private class ScopeListPopupStep(val model: FileColorsTableModel)
   : BaseListPopupStep<NamedScope>(null, getScopes(model.manager.project)) {
-  override fun getTextFor(scope: NamedScope?) = scope?.name ?: ""
+  override fun getTextFor(scope: NamedScope?) = scope?.presentableName ?: ""
   override fun getIconFor(scope: NamedScope?) = scope?.icon
   override fun hasSubstep(selectedValue: NamedScope?) = true
   override fun onChosen(scope: NamedScope?, finalChoice: Boolean): PopupStep<*>? {
