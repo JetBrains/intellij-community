@@ -80,7 +80,7 @@ public abstract class GitXmlRpcHandlerService<T> implements Disposable {
   @NotNull
   public File getScriptPath(@NotNull GitExecutable executable, boolean useBatchFile) throws IOException {
     synchronized (SCRIPT_FILE_LOCK) {
-      String id = executable.getId() + (useBatchFile ? "-bat" : "");
+      String id = executable.getId() + (useBatchFile ? "-bat" : ""); //NON-NLS
       File scriptPath = myScriptPaths.get(id);
       if (scriptPath == null || !scriptPath.exists()) {
         ScriptGenerator generator = new ScriptGenerator(myScriptTempFilePrefix + "-" + executable.getId(), myScriptMainClass);

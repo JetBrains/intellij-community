@@ -25,7 +25,7 @@ import git4idea.config.GitVersionIdentificationException
 import git4idea.index.LightFileStatus
 import git4idea.index.getFileStatus
 import git4idea.util.lastInstance
-import git4idea.util.toShortenedString
+import git4idea.util.toShortenedLogString
 import git4idea.util.without
 import org.jetbrains.annotations.NonNls
 import java.util.*
@@ -216,8 +216,9 @@ class LightGitTracker : Disposable {
       val Blank = State()
     }
 
+    @NonNls
     override fun toString(): @NonNls String {
-      return "State(location=$location, statuses=${statuses.toShortenedString()})"
+      return "State(location=$location, statuses=${statuses.toShortenedLogString()})"
     }
   }
 
@@ -240,9 +241,10 @@ class LightGitTracker : Disposable {
       }
     }
 
+    @NonNls
     class Status(val files: Collection<VirtualFile>) : Request() {
       override fun toString(): @NonNls String {
-        return "Status(files=${files.toShortenedString()}"
+        return "Status(files=${files.toShortenedLogString()}"
       }
     }
 

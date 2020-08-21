@@ -10,6 +10,7 @@ import com.intellij.util.containers.ContainerUtil;
 import git4idea.config.GitExecutable;
 import org.apache.commons.codec.DecoderException;
 import org.apache.xmlrpc.XmlRpcClientLite;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.git4idea.editor.GitRebaseEditorXmlRpcHandler;
 import org.jetbrains.git4idea.http.GitAskPassXmlRpcHandler;
@@ -48,7 +49,7 @@ public class ScriptGenerator {
    * @param prefix    the script prefix
    * @param mainClass the script main class
    */
-  public ScriptGenerator(@NotNull String prefix, @NotNull Class mainClass) {
+  public ScriptGenerator(@NotNull @NonNls String prefix, @NotNull Class mainClass) {
     myPrefix = prefix;
     myMainClass = mainClass;
     addClasses(myMainClass);
@@ -76,29 +77,29 @@ public class ScriptGenerator {
    * @param parameters internal parameters
    * @return this script generator
    */
-  public ScriptGenerator addInternal(String... parameters) {
+  public ScriptGenerator addInternal(@NonNls String... parameters) {
     ContainerUtil.addAll(myInternalParameters, parameters);
     return this;
   }
 
   @NotNull
-  private static File generateBatch(@NotNull String fileName, @NotNull String commandLine) throws IOException {
-    StringBuilder sb = new StringBuilder();
+  private static File generateBatch(@NotNull @NonNls String fileName, @NotNull @NonNls String commandLine) throws IOException {
+    @NonNls StringBuilder sb = new StringBuilder();
     sb.append("@echo off").append("\n");
     sb.append(commandLine).append(" %*").append("\n");
     return createTempExecutable(fileName + ".bat", sb.toString());
   }
 
   @NotNull
-  private static File generateShell(@NotNull String fileName, @NotNull String commandLine) throws IOException {
-    StringBuilder sb = new StringBuilder();
+  private static File generateShell(@NotNull @NonNls String fileName, @NotNull @NonNls String commandLine) throws IOException {
+    @NonNls StringBuilder sb = new StringBuilder();
     sb.append("#!/bin/sh").append("\n");
     sb.append(commandLine).append(" \"$@\"").append("\n");
     return createTempExecutable(fileName + ".sh", sb.toString());
   }
 
   @NotNull
-  private static File createTempExecutable(@NotNull String fileName, @NotNull String content) throws IOException {
+  private static File createTempExecutable(@NotNull @NonNls String fileName, @NotNull @NonNls String content) throws IOException {
     File file = new File(PathManager.getTempPath(), fileName);
     FileUtil.writeToFile(file, content);
     FileUtil.setExecutable(file);
@@ -115,8 +116,9 @@ public class ScriptGenerator {
   /**
    * @return a command line for the the executable program
    */
+  @NonNls
   public String commandLine(@NotNull GitExecutable executable) {
-    StringBuilder cmd = new StringBuilder();
+    @NonNls StringBuilder cmd = new StringBuilder();
 
     if (executable instanceof GitExecutable.Wsl) {
       List<String> envs = ContainerUtil.newArrayList(
