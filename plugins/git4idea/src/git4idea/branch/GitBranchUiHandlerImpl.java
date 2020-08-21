@@ -9,6 +9,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContext;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
@@ -94,7 +97,7 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
   }
 
   @Override
-  public boolean showUnmergedFilesMessageWithRollback(@NotNull final String operationName, @NotNull final String rollbackProposal) {
+  public boolean showUnmergedFilesMessageWithRollback(@NotNull @Nls String operationName, @NotNull final String rollbackProposal) {
     final AtomicBoolean ok = new AtomicBoolean();
     ApplicationManager.getApplication().invokeAndWait(() -> {
       String description = XmlStringUtil.wrapInHtml(
@@ -128,7 +131,7 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
   public GitSmartOperationDialog.Choice showSmartOperationDialog(@NotNull Project project,
                                                                  @NotNull List<? extends Change> changes,
                                                                  @NotNull Collection<String> paths,
-                                                                 @NotNull String operation,
+                                                                 @NotNull @Nls String operation,
                                                                  @Nullable @Nls(capitalization = Nls.Capitalization.Title) String forceButtonTitle) {
     Ref<GitSmartOperationDialog.Choice> exitCode = Ref.create();
     ApplicationManager.getApplication().invokeAndWait(
@@ -150,7 +153,7 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
   @NotNull
   @Override
   public DeleteRemoteBranchDecision confirmRemoteBranchDeletion(@NotNull List<String> branchNames,
-                                                                @NotNull Collection<String> trackingBranches,
+                                                                @NotNull Collection<@NlsSafe String> trackingBranches,
                                                                 @NotNull Collection<GitRepository> repositories) {
     boolean deleteMultipleBranches = branchNames.size() > 1;
     String title = GitBundle.message("branch.ui.handler.delete.remote.branches", branchNames.size());
@@ -192,11 +195,13 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
   }
 
   @NotNull
+  @NlsContexts.DialogTitle
   private static String unmergedFilesErrorTitle(@NotNull String operationName) {
     return GitBundle.message("branch.ui.handler.can.not.operation.name.because.of.unmerged.files", operationName);
   }
 
   @NotNull
+  @NlsContexts.NotificationContent
   private static String unmergedFilesErrorNotificationDescription(String operationName) {
     return GitBundle.message("branch.ui.handler.unmerged.files.error.notification", RESOLVE_HREF_ATTRIBUTE, operationName);
   }

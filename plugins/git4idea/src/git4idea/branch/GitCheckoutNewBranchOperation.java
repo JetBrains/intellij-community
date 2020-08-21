@@ -16,6 +16,7 @@
 package git4idea.branch;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.util.ui.UIUtil;
 import git4idea.commands.Git;
@@ -130,7 +131,7 @@ class GitCheckoutNewBranchOperation extends GitBranchOperation {
       VcsNotifier.getInstance(myProject).notifySuccess(GitBundle.message("checkout.new.branch.operation.rollback.successful"), message);
     }
     else {
-      StringBuilder message = new StringBuilder();
+      @NlsContexts.NotificationContent StringBuilder message = new StringBuilder();
       if (!checkoutResult.totalSuccess()) {
         message.append(GitBundle.message("checkout.new.branch.operation.errors.during.checkout"));
         message.append(checkoutResult.getErrorOutputWithReposIndication());

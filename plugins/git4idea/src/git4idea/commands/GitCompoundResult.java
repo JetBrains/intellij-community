@@ -18,6 +18,7 @@ package git4idea.commands;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -79,6 +80,7 @@ public final class GitCompoundResult {
    * Otherwise adds repository URL to the error that repository produced.
    */
   @NotNull
+  @NlsContexts.NotificationContent
   public String getErrorOutputWithReposIndication() {
     HtmlBuilder sb = new HtmlBuilder();
     for (Map.Entry<GitRepository, Collection<GitCommandResult>> entry : resultsByRepos.entrySet()) {

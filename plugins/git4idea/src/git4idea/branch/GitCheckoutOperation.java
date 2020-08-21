@@ -7,6 +7,7 @@ import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.StringUtil;
@@ -244,7 +245,7 @@ class GitCheckoutOperation extends GitBranchOperation {
       updateAndRefreshChangedVfs(repository, startHash);
     }
     if (!checkoutResult.totalSuccess() || !deleteResult.totalSuccess()) {
-      StringBuilder message = new StringBuilder();
+      @NlsContexts.NotificationContent StringBuilder message = new StringBuilder();
       if (!checkoutResult.totalSuccess()) {
         message.append(GitBundle.message("checkout.operation.errors.during.checkout"));
         message.append(checkoutResult.getErrorOutputWithReposIndication());
@@ -260,6 +261,7 @@ class GitCheckoutOperation extends GitBranchOperation {
   }
 
   @NotNull
+  @NlsContexts.NotificationTitle
   private String getCommonErrorTitle() {
     return GitBundle.message("checkout.operation.could.not.checkout.error.title", getRefPresentation(myStartPointReference));
   }

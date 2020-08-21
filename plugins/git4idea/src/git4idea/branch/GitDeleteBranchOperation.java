@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
@@ -209,6 +210,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
   }
 
   @NotNull
+  @NlsContexts.NotificationTitle
   private String getErrorTitle() {
     return GitBundle.message("delete.branch.operation.branch.was.not.deleted.error", myBranchName);
   }
