@@ -17,8 +17,9 @@ package git4idea.branch;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vcs.VcsNotifier;
-import com.intellij.util.ui.UIUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitCompoundResult;
@@ -93,12 +94,13 @@ class GitCheckoutNewBranchOperation extends GitBranchOperation {
   @NotNull
   @Override
   protected String getRollbackProposal() {
-    return GitBundle.message("checkout.new.branch.operation.however.checkout.has.succeeded.for.the.following",
-                             getSuccessfulRepositories().size()) +
-           UIUtil.BR +
-           successfulRepositoriesJoined() +
-           UIUtil.BR +
-           GitBundle.message("checkout.new.branch.operation.you.may.rollback.not.to.let.branches.diverge", myNewBranchName);
+    return new HtmlBuilder().append(GitBundle.message("checkout.new.branch.operation.however.checkout.has.succeeded.for.the.following",
+                                                      getSuccessfulRepositories().size()))
+      .append(HtmlChunk.br())
+      .append(successfulRepositoriesJoined())
+      .append(HtmlChunk.br())
+      .append(GitBundle.message("checkout.new.branch.operation.you.may.rollback.not.to.let.branches.diverge", myNewBranchName))
+      .toString();
   }
 
   @NotNull

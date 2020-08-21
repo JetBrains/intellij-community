@@ -17,9 +17,9 @@ package git4idea.branch;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vcs.VcsNotifier;
-import com.intellij.util.ui.UIUtil;
-import com.intellij.xml.util.XmlStringUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitCompoundResult;
@@ -87,19 +87,19 @@ class GitRenameBranchOperation extends GitBranchOperation {
   @Override
   public String getSuccessMessage() {
     return GitBundle.message("git.rename.branch.was.renamed.to",
-                             XmlStringUtil.wrapInHtmlTag(XmlStringUtil.wrapInHtmlTag(myCurrentName, "code"), "b"),
-                             XmlStringUtil.wrapInHtmlTag(XmlStringUtil.wrapInHtmlTag(myNewName, "code"), "b"));
+                             HtmlChunk.text(myCurrentName).code().bold(), HtmlChunk.text(myCurrentName).code().bold());
   }
 
   @NotNull
   @Override
   @Nls(capitalization = Nls.Capitalization.Sentence)
   protected String getRollbackProposal() {
-    return GitBundle.message("git.rename.branch.has.succeeded.for.the.following.repositories", getSuccessfulRepositories().size()) +
-           UIUtil.BR +
-           successfulRepositoriesJoined() +
-           UIUtil.BR +
-           GitBundle.message("git.rename.branch.you.may.rename.branch.back", myCurrentName);
+    return new HtmlBuilder().append(GitBundle.message("git.rename.branch.has.succeeded.for.the.following.repositories",
+                                                      getSuccessfulRepositories().size()))
+      .append(HtmlChunk.br())
+      .append(successfulRepositoriesJoined())
+      .append(HtmlChunk.br())
+      .append(GitBundle.message("git.rename.branch.you.may.rename.branch.back", myCurrentName)).toString();
   }
 
   @NotNull

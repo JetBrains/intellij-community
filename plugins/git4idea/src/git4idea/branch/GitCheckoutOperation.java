@@ -10,11 +10,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.Hash;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.*;
@@ -214,9 +214,13 @@ class GitCheckoutOperation extends GitBranchOperation {
     String previousBranch = getIfSingle(repositories.stream().map(myCurrentHeads::get).distinct());
     if (previousBranch == null) previousBranch = GitBundle.message("checkout.operation.previous.branch");
     String rollBackProposal = GitBundle.message("checkout.operation.you.may.rollback.not.to.let.branches.diverge", previousBranch);
-    return GitBundle.message("checkout.operation.however.checkout.has.succeeded.for.the.following", repositories.size()) + UIUtil.BR +
-           successfulRepositoriesJoined() + UIUtil.BR +
-           rollBackProposal;
+    return new HtmlBuilder()
+      .append(GitBundle.message("checkout.operation.however.checkout.has.succeeded.for.the.following", repositories.size()))
+      .append(HtmlChunk.br())
+      .append(successfulRepositoriesJoined())
+      .append(HtmlChunk.br())
+      .append(rollBackProposal)
+      .toString();
   }
 
   @NotNull

@@ -13,10 +13,13 @@ import com.intellij.openapi.util.NlsContext;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import git4idea.DialogManager;
@@ -167,9 +170,10 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
                .showOkCancelDialog(myProject, message, title, deleteButtonText, getCancelButtonText(), getQuestionIcon()) ? DELETE : CANCEL;
     }
     String forBranch = GitBundle.message("branch.ui.handler.delete.tracking.local.branch.as.well", trackingBranches.iterator().next());
-    String forBranches = XmlStringUtil.wrapInHtml(GitBundle.message("branch.ui.handler.delete.tracking.local.branches") +
-                                                  UIUtil.BR +
-                                                  StringUtil.join(trackingBranches, ", " + UIUtil.BR));
+    String forBranches = new HtmlBuilder().append(GitBundle.message("branch.ui.handler.delete.tracking.local.branches"))
+      .append(HtmlChunk.br())
+      .appendWithSeparators(HtmlChunk.raw(", " + HtmlChunk.br()), ContainerUtil.map(trackingBranches, it -> HtmlChunk.text(it)))
+      .wrapWith(HtmlChunk.html()).toString();
     String checkboxMessage = trackingBranches.size() == 1 ? forBranch : forBranches;
 
     Ref<Boolean> deleteChoice = Ref.create(false);
