@@ -3,6 +3,7 @@ package com.intellij.openapi.ui.popup;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.StatusText;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,4 +16,6 @@ public interface ListPopupStepEx<T> extends ListPopupStep<T> {
   String getTooltipTextFor(T value);
   
   void setEmptyText(@NotNull StatusText emptyText);
+
+  default @Nls @Nullable String getValueFor(T t) { return null; }
 }

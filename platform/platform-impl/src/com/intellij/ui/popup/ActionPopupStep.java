@@ -164,6 +164,11 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
   }
 
   @Override
+  public @Nullable String getValueFor(PopupFactoryImpl.ActionItem item) {
+    return item.getValue();
+  }
+
+  @Override
   public ListSeparator getSeparatorAbove(final PopupFactoryImpl.ActionItem value) {
     return value.isPrependWithSeparator() ? new ListSeparator(value.getSeparatorText()) : null;
   }

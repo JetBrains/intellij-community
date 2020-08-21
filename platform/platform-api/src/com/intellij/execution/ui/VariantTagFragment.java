@@ -1,10 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.ui;
 
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
@@ -115,7 +112,13 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
         setSelectedVariant(s);
         fireEditorStateChanged();
       }
-    }));
+    })) {
+      @Override
+      public void update(@NotNull AnActionEvent e) {
+        super.update(e);
+        e.getPresentation().putClientProperty(Presentation.PROP_VALUE, getVariantName(mySelectedVariant));
+      }
+    };
     group.setPopup(true);
     return group;
   }

@@ -92,6 +92,7 @@ public final class Presentation implements Cloneable {
    * The actual value is a Boolean.
    */
   @NonNls public static final String PROP_ENABLED = "enabled";
+  @NonNls public static final Key<String> PROP_VALUE = Key.create("value");
 
   public static final double DEFAULT_WEIGHT = 0;
   public static final double HIGHER_WEIGHT = 42;
