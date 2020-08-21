@@ -13,6 +13,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.AppIconScheme;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -115,7 +116,7 @@ public final class TestsUIUtil {
                                      boolean started,
                                      final AbstractTestProxy root,
                                      final TestConsoleProperties properties,
-                                     @Nullable final String comment) {
+                                     @Nullable final @NlsContexts.SystemNotificationText String comment) {
     notifyByBalloon(project, root, properties, new TestResultPresentation(root, started, comment).getPresentation());
   }
 
@@ -189,11 +190,11 @@ public final class TestsUIUtil {
   public static class TestResultPresentation {
     private final AbstractTestProxy myRoot;
     private final boolean myStarted;
-    private final String myComment;
+    private final @NlsContexts.SystemNotificationText String myComment;
 
-    private String myTitle;
-    private String myText;
-    private String myBalloonText;
+    private @NlsContexts.SystemNotificationTitle String myTitle;
+    private @NlsContexts.SystemNotificationText String myText;
+    private @NlsContexts.NotificationContent String myBalloonText;
     private MessageType myType;
 
     private int myFailedCount;
@@ -201,7 +202,7 @@ public final class TestsUIUtil {
     private int myNotStartedCount;
     private int myIgnoredCount;
 
-    public TestResultPresentation(AbstractTestProxy root, boolean started, String comment) {
+    public TestResultPresentation(AbstractTestProxy root, boolean started, @NlsContexts.SystemNotificationText String comment) {
       myRoot = root;
       myStarted = started;
       myComment = comment;
@@ -211,15 +212,15 @@ public final class TestsUIUtil {
       this(root, true, null);
     }
 
-    public String getTitle() {
+    public @NlsContexts.SystemNotificationTitle String getTitle() {
       return myTitle;
     }
 
-    public String getText() {
+    public @NlsContexts.SystemNotificationText String getText() {
       return myText;
     }
 
-    public String getBalloonText() {
+    public @NlsContexts.NotificationContent String getBalloonText() {
       return myBalloonText;
     }
 
