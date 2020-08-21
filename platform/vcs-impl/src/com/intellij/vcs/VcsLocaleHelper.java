@@ -33,8 +33,8 @@ public final class VcsLocaleHelper {
     if (defaultLocale.isEmpty()) { // let skip locale definition if needed
       return envMap;
     }
-    envMap.put("LANGUAGE", "");
-    envMap.put("LC_ALL", defaultLocale);
+    envMap.put("LANGUAGE", ""); //NON-NLS
+    envMap.put("LC_ALL", defaultLocale); //NON-NLS
     return envMap;
   }
 }

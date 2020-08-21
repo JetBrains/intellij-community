@@ -216,7 +216,7 @@ public final class AnnotateStackTraceAction extends DumbAwareAction {
     @NotNull
     public static LastRevision create(@NotNull VcsFileRevision revision) {
       VcsRevisionNumber number = revision.getRevisionNumber();
-      String author = StringUtil.notNullize(revision.getAuthor(), "Unknown");
+      String author = StringUtil.notNullize(revision.getAuthor(), VcsBundle.message("vfs.revision.author.unknown"));
       Date date = revision.getRevisionDate();
       String message = StringUtil.notNullize(revision.getCommitMessage());
       return new LastRevision(number, author, date, message);

@@ -37,13 +37,13 @@ public final class FontUtil {
 
       boolean insideFallbackBlock = !font.getFamily().equals(baseFont.getFamily());
       if (insideFallbackBlock) {
-        result.append("<font face=\"").append(font.getFamily()).append("\">");
+        result.append("<font face=\"").append(font.getFamily()).append("\">"); //NON-NLS
       }
 
       result.append(input, it.getStart(), it.getEnd());
 
       if (insideFallbackBlock) {
-        result.append("</font>");
+        result.append("</font>"); //NON-NLS
       }
 
       it.advance();

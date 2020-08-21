@@ -40,7 +40,7 @@ public final class ChangeListScope extends FilteredNamedScope implements Weighed
   @Override
   public String toString() {
     String string = super.toString();
-    if (AllIcons.Scope.ChangedFilesAll == getIcon()) string += "; ALL";
+    if (AllIcons.Scope.ChangedFilesAll == getIcon()) string += "; ALL"; // NON-NLS
     return string;
   }
 

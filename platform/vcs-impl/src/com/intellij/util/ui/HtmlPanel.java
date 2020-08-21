@@ -5,6 +5,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.FontUtil;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.ColorUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -54,16 +55,16 @@ public abstract class HtmlPanel extends JEditorPane implements HyperlinkListener
     return super.getSelectedText();
   }
 
-  public void setBody(@NotNull String text) {
+  public void setBody(@NotNull @Nls String text) {
     if (text.isEmpty()) {
       setText("");
     }
     else {
-      setText("<html><head>" +
+      setText("<html><head>" + // NON-NLS
               UIUtil.getCssFontDeclaration(getBodyFont()) +
-              "</head><body>" +
+              "</head><body>" + // NON-NLS
               text +
-              "</body></html>");
+              "</body></html>"); // NON-NLS
     }
   }
 
@@ -96,8 +97,8 @@ public abstract class HtmlPanel extends JEditorPane implements HyperlinkListener
     Document document = getDocument();
     if (document instanceof HTMLDocument) {
       StyleSheet styleSheet = ((HTMLDocument)document).getStyleSheet();
-      String linkColor = "#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkColor());
-      styleSheet.addRule("a { color: " + linkColor + "; text-decoration: none;}");
+      String linkColor = "#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkColor()); // NON-NLS
+      styleSheet.addRule("a { color: " + linkColor + "; text-decoration: none;}"); // NON-NLS
     }
   }
 }
