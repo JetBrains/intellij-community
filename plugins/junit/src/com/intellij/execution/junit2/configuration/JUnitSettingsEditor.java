@@ -5,9 +5,12 @@ import com.intellij.execution.JUnitBundle;
 import com.intellij.execution.application.JavaSettingsEditorBase;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.ui.*;
+import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.rt.execution.junit.RepeatCount;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+import java.awt.*;
 import java.util.List;
 import java.util.function.Supplier;
 
@@ -45,6 +48,23 @@ public class JUnitSettingsEditor extends JavaSettingsEditorBase<JUnitConfigurati
                                         (configuration, mode) -> configuration.setRepeatMode(mode),
                                         configuration -> !RepeatCount.ONCE.equals(configuration.getRepeatMode()));
     fragments.add(repeat);
+
+    LabeledComponent<JTextField> component =
+      LabeledComponent.create(new JTextField(), JUnitBundle.message("repeat.count.label"), BorderLayout.WEST);
+    SettingsEditorFragment<JUnitConfiguration, LabeledComponent<JTextField>> countFragment =
+      new SettingsEditorFragment<>("count", null, null, component,
+                                   (configuration, field) -> field.getComponent().setText(String.valueOf(configuration.getRepeatCount())),
+                                   (configuration, field) -> {
+                                     try {
+                                       configuration.setRepeatCount(Integer.parseInt(field.getComponent().getText()));
+                                     }
+                                     catch (NumberFormatException e) {
+                                       configuration.setRepeatCount(1);
+                                     }
+                                   },
+                                   configuration -> RepeatCount.N.equals(configuration.getRepeatMode()));
+    fragments.add(countFragment);
+    repeat.addSettingsEditorListener(editor -> countFragment.setSelected(RepeatCount.N.equals(repeat.getSelectedVariant())));
 
     Supplier<String[]> variantsProvider = () -> JUnitConfigurable.getForkModel(testKind.getTestKind(), repeat.getSelectedVariant());
     VariantTagFragment<JUnitConfiguration, String> forkMode =

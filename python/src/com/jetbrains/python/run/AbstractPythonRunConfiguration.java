@@ -162,7 +162,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     if (PlatformUtils.isPyCharm()) {
       final String path = getInterpreterPath();
       if (StringUtil.isEmptyOrSpaces(path)) {
-        throw new RuntimeConfigurationError("Please select a valid Python interpreter");
+        throw new RuntimeConfigurationError(PyBundle.message("runcfg.unittest.no_valid_sdk"));
       }
     }
     else {

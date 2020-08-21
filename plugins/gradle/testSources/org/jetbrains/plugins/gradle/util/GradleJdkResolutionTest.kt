@@ -200,9 +200,9 @@ class GradleJdkResolutionTest : GradleJdkResolutionTestCase() {
 
     assertSuggestedGradleVersionFor(null, "1.1")
     assertSuggestedGradleVersionFor(null, "1.5")
+    assertSuggestedGradleVersionFor(null, "1.6")
+    assertSuggestedGradleVersionFor(null, "1.7")
 
-    assertSuggestedGradleVersionFor("3.0", "1.6")
-    assertSuggestedGradleVersionFor("4.1", "1.7")
     assertSuggestedGradleVersionFor(gradleVersion, "1.8")
     assertSuggestedGradleVersionFor(gradleVersion, "9")
     assertSuggestedGradleVersionFor(gradleVersion, "11")

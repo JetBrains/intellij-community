@@ -9,6 +9,7 @@ import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.openapi.actionSystem.ShortcutProvider;
 import com.intellij.openapi.actionSystem.ShortcutSet;
@@ -17,6 +18,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -32,13 +34,11 @@ import static com.intellij.util.ArrayUtil.isEmpty;
 
 public abstract class BaseCommitMessageInspection extends LocalInspectionTool {
 
-  public static final String GROUP_NAME = "Commit message";
-
   @Nls
   @NotNull
   @Override
   public String getGroupDisplayName() {
-    return GROUP_NAME;
+    return VcsBundle.message("commit.message");
   }
 
   @Nullable
@@ -78,7 +78,7 @@ public abstract class BaseCommitMessageInspection extends LocalInspectionTool {
                                                boolean isOnTheFly,
                                                int line,
                                                int rightMargin,
-                                               @NotNull String problemText,
+                                               @NotNull @InspectionMessage String problemText,
                                                LocalQuickFix @NotNull ... fixes) {
     int start = document.getLineStartOffset(line);
     int end = document.getLineEndOffset(line);
@@ -133,7 +133,7 @@ public abstract class BaseCommitMessageInspection extends LocalInspectionTool {
 
     @Override
     public @IntentionFamilyName @NotNull String getFamilyName() {
-      return ReformatCommitMessageAction.NAME;
+      return VcsBundle.message("commit.message.intention.family.name.reformat.commit.message");
     }
 
     @Override

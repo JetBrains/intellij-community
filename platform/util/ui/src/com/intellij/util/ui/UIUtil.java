@@ -2144,7 +2144,7 @@ public final class UIUtil {
   }
 
   public static @NotNull Font getFontWithFallbackIfNeeded(@NotNull Font font, @NotNull String text) {
-    if (font.canDisplayUpTo(text) != -1) {
+    if (!SystemInfo.isMac /* 'getFontWithFallback' does nothing on macOS */ && font.canDisplayUpTo(text) != -1) {
       return getFontWithFallback(font);
     }
     else {
