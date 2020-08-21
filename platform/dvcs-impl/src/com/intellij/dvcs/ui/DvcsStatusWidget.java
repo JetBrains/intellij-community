@@ -29,7 +29,7 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
 
   @NotNull private final String myVcsName;
 
-  @Nullable private String myText;
+  @Nullable private @Nls String myText;
   @Nullable private @NlsContexts.Tooltip String myTooltip;
   @Nullable private Icon myIcon;
 
@@ -50,6 +50,7 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
   @Nullable
   protected abstract T guessCurrentRepository(@NotNull Project project);
 
+  @Nls
   @NotNull
   protected abstract String getFullBranchName(@NotNull T repository);
 
