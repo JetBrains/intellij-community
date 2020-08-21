@@ -9,7 +9,6 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +43,7 @@ import static org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.unwrapClassT
  */
 public final class GdkMethodUtil {
 
-  public static final @NlsSafe Set<String> COLLECTION_METHOD_NAMES = ContainerUtil.newHashSet(
+  public static final @NonNls Set<String> COLLECTION_METHOD_NAMES = Set.of(
     "each", "eachWithIndex", "any", "every", "reverseEach", "collect", "collectAll", "find", "findAll", "retainAll", "removeAll", "split",
     "groupBy", "groupEntriesBy", "findLastIndexOf", "findIndexValues", "findIndexOf"
   );

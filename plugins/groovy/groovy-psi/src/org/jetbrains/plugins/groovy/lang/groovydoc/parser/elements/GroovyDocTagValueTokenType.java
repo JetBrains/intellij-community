@@ -18,8 +18,6 @@ import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyLexer;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
 
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -27,17 +25,17 @@ import java.util.Set;
  */
 public class GroovyDocTagValueTokenType extends GroovyDocChameleonElementType implements IGroovyDocElementType {
 
-  private static final Set<String> TAGS_WITH_REFERENCES = new HashSet<>();
-  private static final Set<String> INLINED_TAGS_WITH_REFERENCES = new HashSet<>();
-  private static final Set<@NlsSafe String> BUILT_IN_TYPES = new HashSet<>();
+  private static final Set<@NlsSafe String> TAGS_WITH_REFERENCES;
+  private static final Set<@NlsSafe String> INLINED_TAGS_WITH_REFERENCES;
+  private static final Set<@NlsSafe String> BUILT_IN_TYPES;
 
   static {
-    BUILT_IN_TYPES.addAll(Arrays.asList("double", "long", "float", "short", "any", "char", "int", "byte", "boolean"));
+    BUILT_IN_TYPES = Set.of("double", "long", "float", "short", "any", "char", "int", "byte", "boolean");
   }
 
   static {
-    TAGS_WITH_REFERENCES.addAll(Arrays.asList("see", "throws", "exception"));
-    INLINED_TAGS_WITH_REFERENCES.addAll(Arrays.asList("link", "linkplain", "value"));
+    TAGS_WITH_REFERENCES = Set.of("see", "throws", "exception");
+    INLINED_TAGS_WITH_REFERENCES = Set.of("link", "linkplain", "value");
   }
 
   public GroovyDocTagValueTokenType() {

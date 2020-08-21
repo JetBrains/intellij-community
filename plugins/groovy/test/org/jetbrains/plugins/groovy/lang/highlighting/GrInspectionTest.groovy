@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.highlighting
 
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
@@ -54,15 +54,15 @@ class GrInspectionTest extends GrHighlightingTestBase {
     testHighlighting('''\
 class Foo {
 
-  boolean <warning descr="getter 'getX' clashes with getter 'isX'">getX</warning>() { true }
-  boolean <warning descr="getter 'isX' clashes with getter 'getX'">isX</warning>() { false }
+  boolean <warning descr="Clash occurred: 'Getter getX' with 'Getter isX'">getX</warning>() { true }
+  boolean <warning descr="Clash occurred: 'Getter isX' with 'Getter getX'">isX</warning>() { false }
 
   boolean getY() {true}
 
   boolean isZ() {false}
 
-  boolean <warning descr="method getFoo(int x) clashes with getter 'isFoo'">getFoo</warning>(int x = 5){}
-  boolean <warning descr="getter 'isFoo' clashes with method getFoo(int x)">isFoo</warning>(){}
+  boolean <warning descr="Clash occurred: 'Method getFoo(int x)' with 'Getter isFoo'">getFoo</warning>(int x = 5){}
+  boolean <warning descr="Clash occurred: 'Getter isFoo' with 'Method getFoo(int x)'">isFoo</warning>(){}
 }
 
 def result = new Foo().x''', true, false, false, ClashingGettersInspection)

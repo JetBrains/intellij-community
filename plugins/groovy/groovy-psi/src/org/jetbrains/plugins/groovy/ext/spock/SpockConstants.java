@@ -20,7 +20,7 @@ public interface SpockConstants {
     CLEANUP_SPEC_METHOD_NAME
   );
 
-  Set<String> FEATURE_METHOD_LABELS = ContainerUtil.immutableSet(
+  Set<@NlsSafe String> FEATURE_METHOD_LABELS = Set.of(
     "and", "setup", "given", "expect", "when", "then", "cleanup", "where"
   );
 }

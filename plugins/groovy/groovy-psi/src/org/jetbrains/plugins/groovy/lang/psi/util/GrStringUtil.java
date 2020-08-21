@@ -255,7 +255,7 @@ public final class GrStringUtil {
     }
   }
 
-  private static void appendUnicode(StringBuilder buffer, char ch) {
+  private static void appendUnicode(@NlsSafe StringBuilder buffer, char ch) {
     String hexCode = StringUtil.toUpperCase(Integer.toHexString(ch));
     buffer.append("\\u");
     int paddingCount = 4 - hexCode.length();
