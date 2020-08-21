@@ -5,7 +5,6 @@ import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.NlsSafe;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -38,7 +37,7 @@ public final class BuildoutCfgFileType extends LanguageFileType {
   }
 
   @Override
-  @Nullable
+  @NotNull
   public Icon getIcon() {
     return PythonIcons.Python.Buildout.Buildout;
   }
