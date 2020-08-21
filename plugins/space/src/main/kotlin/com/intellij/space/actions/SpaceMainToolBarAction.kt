@@ -98,7 +98,7 @@ class SpaceMainToolBarAction : DumbAwareAction() {
       serverUrl,
       resizeIcon(icon, VcsCloneDialogUiSpec.Components.popupMenuAvatarSize),
       listOf(browseAction(SpaceBundle.message("main.toolbar.open.server", serverUrl), host, true)))
-    menuItems += AccountMenuItem.Action(SpaceBundle.message("main.toolbar.clone.repository.action"),
+    menuItems += AccountMenuItem.Action(SpaceBundle.message("action.com.intellij.space.vcs.clone.SpaceCloneAction.text"),
                                         { SpaceCloneAction.runClone(project) },
                                         showSeparatorAbove = true)
     val projectContext = SpaceProjectContext.getInstance(project)
