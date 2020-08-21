@@ -51,7 +51,7 @@ public final class IssueLinkHtmlRenderer {
     commentBuilder.append(convertor.convert(comment.substring(pos)));
     comment = commentBuilder.toString();
 
-    return comment.replace("\n", "<br>");
+    return comment.replace("\n", UIUtil.BR);
   }
 
   @NotNull

@@ -94,7 +94,7 @@ public class ChangeListDetailsAction extends AnAction implements DumbAware {
       getCommitterAndDate(changeList),
       getCustomDetails(changeList),
       formatTextWithLinks(project, changeList.getComment())
-    ), "<br>");
+    ), BR);
   }
 
   @Nullable
@@ -123,7 +123,7 @@ public class ChangeListDetailsAction extends AnAction implements DumbAware {
         stream(vcs.getCachingCommittedChangesProvider().getColumns())
           .filter(ChangeListColumn::isCustom)
           .map(column -> column.getTitle() + ": " + escapeString(toString(column.getValue(originalChangeList))))
-          .collect(joining("<br>"))
+          .collect(joining(BR))
       );
     }
 

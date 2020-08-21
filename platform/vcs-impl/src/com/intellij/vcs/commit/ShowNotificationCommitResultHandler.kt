@@ -6,13 +6,12 @@ import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.changes.CommitResultHandler
+import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.commit.AbstractCommitter.Companion.collectErrors
 import org.jetbrains.annotations.Nls
 
 private val FROM = listOf("<", ">") // NON-NLS // NON-NLS
 private val TO = listOf("&lt;", "&gt;") // NON-NLS // NON-NLS
-
-private const val BR = "<br/>" // NON-NLS
 
 /*
   Commit message is passed to NotificationManagerImpl#doNotify and displayed as HTML.
@@ -59,13 +58,13 @@ class ShowNotificationCommitResultHandler(private val committer: AbstractCommitt
     }
     val feedback = committer.feedback
     if (feedback.isNotEmpty()) {
-      append(BR)
-      append(join(feedback, BR))
+      append(UIUtil.BR)
+      append(join(feedback, UIUtil.BR))
     }
     val exceptions = committer.exceptions
     if (!hasOnlyWarnings(exceptions)) {
-      append(BR)
-      append(join(exceptions, { it.message }, BR))
+      append(UIUtil.BR)
+      append(join(exceptions, { it.message }, UIUtil.BR))
     }
   }.toString()
 
