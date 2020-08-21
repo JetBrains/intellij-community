@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -15,16 +15,15 @@ import java.util.Collection;
 import java.util.concurrent.FutureTask;
 
 public class CodeCleanupCodeProcessor extends AbstractLayoutCodeProcessor {
-  public static final String COMMAND_NAME = "Cleanup code";
 
   private SelectionModel mySelectionModel = null;
 
   public CodeCleanupCodeProcessor(@NotNull AbstractLayoutCodeProcessor previousProcessor) {
-    super(previousProcessor, COMMAND_NAME, getProgressText());
+    super(previousProcessor, CodeInsightBundle.message("command.cleanup.code"), getProgressText());
   }
 
   public CodeCleanupCodeProcessor(@NotNull AbstractLayoutCodeProcessor previousProcessor, @NotNull SelectionModel selectionModel) {
-    super(previousProcessor, COMMAND_NAME, getProgressText());
+    super(previousProcessor, CodeInsightBundle.message("command.cleanup.code"), getProgressText());
     mySelectionModel = selectionModel;
   }
 
