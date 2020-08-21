@@ -77,8 +77,13 @@ public final class StdArrangementTokens {
     };
   }
 
-  private static StdArrangementSettingsToken invertible(@NotNull String id, @NotNull StdArrangementTokenType type) {
-    StdArrangementSettingsToken result = StdInvertibleArrangementSettingsToken.invertibleTokenById(id, type);
+  private static StdArrangementSettingsToken invertible(@NotNull String id,
+                                                        @PropertyKey(resourceBundle = ApplicationBundle.BUNDLE) @NotNull String displayNameKey,
+                                                        @PropertyKey(resourceBundle = ApplicationBundle.BUNDLE) @NotNull String invertedNameKey,
+                                                        @NotNull StdArrangementTokenType type) {
+    StdArrangementSettingsToken result = StdInvertibleArrangementSettingsToken.invertibleToken(
+      id, ApplicationBundle.message(displayNameKey), ApplicationBundle.message(invertedNameKey), type
+    );
     TOKENS_BY_ID.put(id, result);
     return result;
   }
@@ -134,22 +139,21 @@ public final class StdArrangementTokens {
     }
   }
   public static final class EntryType {
-    @NotNull public static final ArrangementSettingsToken CLASS           = invertible("CLASS", StdArrangementTokenType.ENTRY_TYPE);
-    @NotNull public static final ArrangementSettingsToken ANONYMOUS_CLASS = invertible("ANONYMOUS_CLASS",
-                                                                                       StdArrangementTokenType.ENTRY_TYPE);
-    @NotNull public static final ArrangementSettingsToken FIELD           = invertible("FIELD", StdArrangementTokenType.ENTRY_TYPE);
-    @NotNull public static final ArrangementSettingsToken CONSTRUCTOR     = invertible("CONSTRUCTOR", StdArrangementTokenType.ENTRY_TYPE);
-    @NotNull public static final ArrangementSettingsToken METHOD          = invertible("METHOD", StdArrangementTokenType.ENTRY_TYPE);
-    @NotNull public static final ArrangementSettingsToken ENUM            = invertible("ENUM", StdArrangementTokenType.ENTRY_TYPE);
-    @NotNull public static final ArrangementSettingsToken INTERFACE       = invertible("INTERFACE", StdArrangementTokenType.ENTRY_TYPE);
-    @NotNull public static final ArrangementSettingsToken CONST           = invertible("CONST", StdArrangementTokenType.ENTRY_TYPE);
-    @NotNull public static final ArrangementSettingsToken VAR             = invertible("VAR", StdArrangementTokenType.ENTRY_TYPE);
-    @NotNull public static final ArrangementSettingsToken PROPERTY        = invertible("PROPERTY", StdArrangementTokenType.ENTRY_TYPE);
-    @NotNull public static final ArrangementSettingsToken EVENT_HANDLER   = invertible("EVENT_HANDLER", StdArrangementTokenType.ENTRY_TYPE);
-    @NotNull public static final ArrangementSettingsToken STATIC_INIT     = invertible("STATIC_INIT", StdArrangementTokenType.ENTRY_TYPE);
-    @NotNull public static final ArrangementSettingsToken INIT_BLOCK      = invertible("INITIALIZER_BLOCK", StdArrangementTokenType.ENTRY_TYPE);
-    @NotNull public static final ArrangementSettingsToken NAMESPACE       = invertible("NAMESPACE", StdArrangementTokenType.ENTRY_TYPE);
-    @NotNull public static final ArrangementSettingsToken TRAIT           = invertible("TRAIT", StdArrangementTokenType.ENTRY_TYPE);
+    @NotNull public static final ArrangementSettingsToken CLASS           = invertible("CLASS", "arrangement.settings.text.entry.type.class", "arrangement.settings.text.entry.type.class.inverted", StdArrangementTokenType.ENTRY_TYPE);
+    @NotNull public static final ArrangementSettingsToken ANONYMOUS_CLASS = invertible("ANONYMOUS_CLASS", "arrangement.settings.text.entry.type.anonymous.class", "arrangement.settings.text.entry.type.anonymous.class.inverted", StdArrangementTokenType.ENTRY_TYPE);
+    @NotNull public static final ArrangementSettingsToken FIELD           = invertible("FIELD", "arrangement.settings.text.entry.type.field", "arrangement.settings.text.entry.type.field.inverted", StdArrangementTokenType.ENTRY_TYPE);
+    @NotNull public static final ArrangementSettingsToken CONSTRUCTOR     = invertible("CONSTRUCTOR", "arrangement.settings.text.entry.type.constructor", "arrangement.settings.text.entry.type.constructor.inverted", StdArrangementTokenType.ENTRY_TYPE);
+    @NotNull public static final ArrangementSettingsToken METHOD          = invertible("METHOD", "arrangement.settings.text.entry.type.method", "arrangement.settings.text.entry.type.method.inverted", StdArrangementTokenType.ENTRY_TYPE);
+    @NotNull public static final ArrangementSettingsToken ENUM            = invertible("ENUM", "arrangement.settings.text.entry.type.enum", "arrangement.settings.text.entry.type.enum.inverted", StdArrangementTokenType.ENTRY_TYPE);
+    @NotNull public static final ArrangementSettingsToken INTERFACE       = invertible("INTERFACE", "arrangement.settings.text.entry.type.interface", "arrangement.settings.text.entry.type.interface.inverted", StdArrangementTokenType.ENTRY_TYPE);
+    @NotNull public static final ArrangementSettingsToken CONST           = invertible("CONST", "arrangement.settings.text.entry.type.const", "arrangement.settings.text.entry.type.const.inverted", StdArrangementTokenType.ENTRY_TYPE);
+    @NotNull public static final ArrangementSettingsToken VAR             = invertible("VAR", "arrangement.settings.text.entry.type.var", "arrangement.settings.text.entry.type.var.inverted", StdArrangementTokenType.ENTRY_TYPE);
+    @NotNull public static final ArrangementSettingsToken PROPERTY        = invertible("PROPERTY", "arrangement.settings.text.entry.type.property", "arrangement.settings.text.entry.type.property.inverted", StdArrangementTokenType.ENTRY_TYPE);
+    @NotNull public static final ArrangementSettingsToken EVENT_HANDLER   = invertible("EVENT_HANDLER", "arrangement.settings.text.entry.type.event.handler", "arrangement.settings.text.entry.type.event.handler.inverted", StdArrangementTokenType.ENTRY_TYPE);
+    @NotNull public static final ArrangementSettingsToken STATIC_INIT     = invertible("STATIC_INIT", "arrangement.settings.text.entry.type.static.init", "arrangement.settings.text.entry.type.static.init.inverted", StdArrangementTokenType.ENTRY_TYPE);
+    @NotNull public static final ArrangementSettingsToken INIT_BLOCK      = invertible("INITIALIZER_BLOCK", "arrangement.settings.text.entry.type.initializer.block", "arrangement.settings.text.entry.type.initializer.block.inverted", StdArrangementTokenType.ENTRY_TYPE);
+    @NotNull public static final ArrangementSettingsToken NAMESPACE       = invertible("NAMESPACE", "arrangement.settings.text.entry.type.namespace", "arrangement.settings.text.entry.type.namespace.inverted", StdArrangementTokenType.ENTRY_TYPE);
+    @NotNull public static final ArrangementSettingsToken TRAIT           = invertible("TRAIT", "arrangement.settings.text.entry.type.trait", "arrangement.settings.text.entry.type.trait.inverted", StdArrangementTokenType.ENTRY_TYPE);
 
     // xml use only two entry types -> invertible tokens make no sense
     @NotNull public static final ArrangementSettingsToken XML_TAG         =
@@ -168,18 +172,18 @@ public final class StdArrangementTokens {
     }
   }
   public static final class Modifier {
-    @NotNull public static final ArrangementSettingsToken PUBLIC          = invertible("PUBLIC", StdArrangementTokenType.MODIFIER);
-    @NotNull public static final ArrangementSettingsToken PROTECTED       = invertible("PROTECTED", StdArrangementTokenType.MODIFIER);
-    @NotNull public static final ArrangementSettingsToken PRIVATE         = invertible("PRIVATE", StdArrangementTokenType.MODIFIER);
-    @NotNull public static final ArrangementSettingsToken PACKAGE_PRIVATE = invertible("PACKAGE_PRIVATE", StdArrangementTokenType.MODIFIER);
-    @NotNull public static final ArrangementSettingsToken STATIC          = invertible("STATIC", StdArrangementTokenType.MODIFIER);
-    @NotNull public static final ArrangementSettingsToken FINAL           = invertible("FINAL", StdArrangementTokenType.MODIFIER);
-    @NotNull public static final ArrangementSettingsToken READONLY        = invertible("READONLY", StdArrangementTokenType.MODIFIER);
-    @NotNull public static final ArrangementSettingsToken TRANSIENT       = invertible("TRANSIENT", StdArrangementTokenType.MODIFIER);
-    @NotNull public static final ArrangementSettingsToken VOLATILE        = invertible("VOLATILE", StdArrangementTokenType.MODIFIER);
-    @NotNull public static final ArrangementSettingsToken SYNCHRONIZED    = invertible("SYNCHRONIZED", StdArrangementTokenType.MODIFIER);
-    @NotNull public static final ArrangementSettingsToken ABSTRACT        = invertible("ABSTRACT", StdArrangementTokenType.MODIFIER);
-    @NotNull public static final ArrangementSettingsToken OVERRIDE        = invertible("OVERRIDE", StdArrangementTokenType.MODIFIER);
+    @NotNull public static final ArrangementSettingsToken PUBLIC          = invertible("PUBLIC", "arrangement.settings.text.modifier.public", "arrangement.settings.text.modifier.public.inverted", StdArrangementTokenType.MODIFIER);
+    @NotNull public static final ArrangementSettingsToken PROTECTED       = invertible("PROTECTED", "arrangement.settings.text.modifier.protected", "arrangement.settings.text.modifier.protected.inverted", StdArrangementTokenType.MODIFIER);
+    @NotNull public static final ArrangementSettingsToken PRIVATE         = invertible("PRIVATE", "arrangement.settings.text.modifier.private", "arrangement.settings.text.modifier.private.inverted", StdArrangementTokenType.MODIFIER);
+    @NotNull public static final ArrangementSettingsToken PACKAGE_PRIVATE = invertible("PACKAGE_PRIVATE", "arrangement.settings.text.modifier.package.private", "arrangement.settings.text.modifier.package.private.inverted", StdArrangementTokenType.MODIFIER);
+    @NotNull public static final ArrangementSettingsToken STATIC          = invertible("STATIC", "arrangement.settings.text.modifier.static", "arrangement.settings.text.modifier.static.inverted", StdArrangementTokenType.MODIFIER);
+    @NotNull public static final ArrangementSettingsToken FINAL           = invertible("FINAL", "arrangement.settings.text.modifier.final", "arrangement.settings.text.modifier.final.inverted", StdArrangementTokenType.MODIFIER);
+    @NotNull public static final ArrangementSettingsToken READONLY        = invertible("READONLY", "arrangement.settings.text.modifier.readonly", "arrangement.settings.text.modifier.readonly.inverted", StdArrangementTokenType.MODIFIER);
+    @NotNull public static final ArrangementSettingsToken TRANSIENT       = invertible("TRANSIENT", "arrangement.settings.text.modifier.transient", "arrangement.settings.text.modifier.transient.inverted", StdArrangementTokenType.MODIFIER);
+    @NotNull public static final ArrangementSettingsToken VOLATILE        = invertible("VOLATILE", "arrangement.settings.text.modifier.volatile", "arrangement.settings.text.modifier.volatile.inverted", StdArrangementTokenType.MODIFIER);
+    @NotNull public static final ArrangementSettingsToken SYNCHRONIZED    = invertible("SYNCHRONIZED", "arrangement.settings.text.modifier.synchronized", "arrangement.settings.text.modifier.synchronized.inverted", StdArrangementTokenType.MODIFIER);
+    @NotNull public static final ArrangementSettingsToken ABSTRACT        = invertible("ABSTRACT", "arrangement.settings.text.modifier.abstract", "arrangement.settings.text.modifier.abstract.inverted", StdArrangementTokenType.MODIFIER);
+    @NotNull public static final ArrangementSettingsToken OVERRIDE        = invertible("OVERRIDE", "arrangement.settings.text.modifier.override", "arrangement.settings.text.modifier.override.inverted", StdArrangementTokenType.MODIFIER);
     @NotNull public static final ArrangementSettingsToken GETTER          = compositeToken("GETTER", "arrangement.settings.text.modifier.getter", StdArrangementTokenType.MODIFIER, METHOD, PUBLIC);
     @NotNull public static final ArrangementSettingsToken SETTER          = compositeToken("SETTER", "arrangement.settings.text.modifier.setter", StdArrangementTokenType.MODIFIER, METHOD, PUBLIC);
     @NotNull public static final ArrangementSettingsToken OVERRIDDEN      = compositeToken("OVERRIDDEN", "arrangement.settings.text.modifier.overridden", StdArrangementTokenType.MODIFIER, METHOD, PUBLIC, PROTECTED);
