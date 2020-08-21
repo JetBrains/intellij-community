@@ -635,6 +635,9 @@ class CommunityLibraryLicenses {
                        url: "http://tukaani.org/xz/java.html"),
     new LibraryLicense(name: "Zstd-JNI", libraryName: "com.github.luben:zstd", license: "BSD",
                        url: "https://raw.githubusercontent.com/luben/zstd-jni/master/LICENSE"),
+    new LibraryLicense(name: "jps-javac-extension", libraryName: "org.jetbrains.jps:jps-javac-extension:1", license: "Apache 2.0",
+                       url: "https://github.com/JetBrains/jps-javac-extension/",
+                       licenseUrl: "https://github.com/JetBrains/jps-javac-extension/blob/master/LICENSE.txt"),
 
     jetbrainsLibrary("change-reminder-prediction-model"),
     jetbrainsLibrary("completion-log-events"),
