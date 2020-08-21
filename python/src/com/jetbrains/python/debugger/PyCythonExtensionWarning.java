@@ -135,7 +135,7 @@ public class PyCythonExtensionWarning {
       final boolean useSudo = !canCreate && !SystemInfo.isWindows;
       Process process;
       if (useSudo) {
-        process = ExecUtil.sudo(commandLine, "Please enter your password to compile cython extensions: ");
+        process = ExecUtil.sudo(commandLine, PyBundle.message("debugger.cython.please.enter.your.password.to.compile.cython.extensions"));
       }
       else {
         process = commandLine.createProcess();

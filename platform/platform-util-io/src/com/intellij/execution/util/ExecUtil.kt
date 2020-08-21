@@ -15,6 +15,7 @@ import com.intellij.openapi.util.io.PathExecLazyValue
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import java.io.*
 import java.nio.charset.Charset
 
@@ -116,12 +117,12 @@ object ExecUtil {
    */
   @JvmStatic
   @Throws(ExecutionException::class, IOException::class)
-  fun sudo(commandLine: GeneralCommandLine, prompt: String): Process =
+  fun sudo(commandLine: GeneralCommandLine, prompt: @Nls String): Process =
     sudoCommand(commandLine, prompt).createProcess()
 
   @JvmStatic
   @Throws(ExecutionException::class, IOException::class)
-  fun sudoCommand(commandLine: GeneralCommandLine, prompt: String): GeneralCommandLine {
+  fun sudoCommand(commandLine: GeneralCommandLine, prompt: @Nls String): GeneralCommandLine {
     if (SystemInfo.isUnix && "root" == System.getenv("USER")) {
       return commandLine
     }

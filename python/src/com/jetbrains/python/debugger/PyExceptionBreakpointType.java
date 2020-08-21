@@ -120,7 +120,7 @@ public class PyExceptionBreakpointType
     if (properties != null) {
       String exception = properties.getException();
       if (BASE_EXCEPTION.equals(exception)) {
-        return "Any exception";
+        return PyBundle.message("debugger.exception.breakpoint.any.exception");
       }
       return exception;
     }
