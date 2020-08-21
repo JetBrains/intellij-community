@@ -51,7 +51,7 @@ public class RemoteSdkException extends ExecutionException {
       return myCause.getMessage();
     }
     else if (myAuthFailed) {
-      return "Authentication failed";
+      return IdeBundle.message("authentication.failed");
     }
     else {
       return super.getMessage();

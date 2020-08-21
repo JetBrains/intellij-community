@@ -448,6 +448,7 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
     return myStatusPanel.getError();
   }
 
+  @NlsContexts.DialogMessage
   @Nullable
   public String validateFinal() {
     return myCredentialsType2Handler.get(myConnectionType).validateFinal();
@@ -483,7 +484,7 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
 
     @Nullable ValidationInfo validate();
 
-    @Nullable String validateFinal();
+    @NlsContexts.DialogMessage @Nullable String validateFinal();
 
     boolean isBrowsingAvailable();
   }
@@ -530,6 +531,7 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
       return null;
     }
 
+    @NlsContexts.DialogMessage
     @Nullable
     @Override
     public String validateFinal() {
@@ -604,6 +606,7 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
       return myEditor.validate();
     }
 
+    @NlsContexts.DialogMessage
     @Nullable
     @Override
     public String validateFinal() {

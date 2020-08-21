@@ -27,7 +27,7 @@ import java.awt.*;
 import java.util.Collection;
 
 public abstract class CreateRemoteSdkDialog<T extends RemoteSdkAdditionalData> extends DialogWrapper implements RemoteSdkEditorContainer {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.remote.ui.CreateRemoteSdkDialog");
+  private static final Logger LOG = Logger.getInstance(CreateRemoteSdkDialog.class);
   @Nullable
   protected final Project myProject;
   private CreateRemoteSdkForm<T> myInterpreterForm;
@@ -179,14 +179,14 @@ public abstract class CreateRemoteSdkDialog<T extends RemoteSdkAdditionalData> e
   protected boolean validateRemoteSdkData(T data) {
     for (Sdk sdk : myExistingSdks) {
       if (StringUtil.equals(sdk.getHomePath(), getSdkFactory().generateSdkHomePath(data))) {
-        validationFailed("There is already the same interpreter:\n" + sdk.getName(), false);
+        validationFailed(IdeBundle.message("dialog.message.there.already.same.interpreter", sdk.getName()), false);
         return false;
       }
     }
     return true;
   }
 
-  private void onCreateFail(String validation) {
+  private void onCreateFail(@NlsContexts.DialogMessage String validation) {
     ApplicationManager.getApplication().invokeAndWait(() -> {
       final boolean saveAnyway = validationFailed(validation, getSdkFactory().canSaveUnfinished());
       if (saveAnyway) {
@@ -206,11 +206,12 @@ public abstract class CreateRemoteSdkDialog<T extends RemoteSdkAdditionalData> e
 
   protected boolean validationFailed(@NlsContexts.DialogMessage String validation, boolean askSaveUnfinished) {
     if (StringUtil.isEmpty(validation)) {
-      validation = "Communication error";
+      validation = IdeBundle.message("dialog.message.communication.error");
     }
     if (askSaveUnfinished) {
       if (Messages
-            .showOkCancelDialog(validation, IdeBundle.message("dialog.title.can.t.create.0.sdk", getSdkFactory().sdkName()), IdeBundle.message("button.save.anyway"),
+            .showOkCancelDialog(validation, IdeBundle.message("dialog.title.can.t.create.0.sdk", getSdkFactory().sdkName()),
+                                IdeBundle.message("button.save.anyway"),
                                 IdeBundle.message("button.continue.editing"),
                                 Messages.getWarningIcon()) ==
           Messages.OK) {
@@ -223,6 +224,7 @@ public abstract class CreateRemoteSdkDialog<T extends RemoteSdkAdditionalData> e
     return false;
   }
 
+  @NlsContexts.DialogMessage
   @Nullable
   private String validateInterpreterForm() {
     return getInterpreterForm().validateFinal();

@@ -42,6 +42,7 @@ public interface CredentialsEditor<T> {
 
   ValidationInfo validate();
 
+  @NlsContexts.DialogMessage
   String validateFinal(@NotNull Supplier<? extends RemoteSdkAdditionalData<?>> supplier,
                        @NotNull Consumer<String> helpersPathUpdateCallback);
 

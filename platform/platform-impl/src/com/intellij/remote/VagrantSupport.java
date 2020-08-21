@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathMappingSettings;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,7 +57,7 @@ public abstract class VagrantSupport {
     return isNotReadyForSsh(t.getMessage());
   }
 
-  public static boolean isNotReadyForSsh(@NotNull String errorMessage) {
+  public static boolean isNotReadyForSsh(@NonNls @NotNull String errorMessage) {
     return errorMessage.contains("not yet ready for SSH");
   }
 

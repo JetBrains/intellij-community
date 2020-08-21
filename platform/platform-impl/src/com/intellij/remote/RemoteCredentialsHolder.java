@@ -22,7 +22,7 @@ import java.util.Objects;
  * @author michael.golubev
  */
 public class RemoteCredentialsHolder implements MutableRemoteCredentials {
-  private static final String SERVICE_NAME_PREFIX = CredentialAttributesKt.SERVICE_NAME_PREFIX + " Remote Credentials ";
+  private static final @NonNls String SERVICE_NAME_PREFIX = CredentialAttributesKt.SERVICE_NAME_PREFIX + " Remote Credentials ";
 
   @NonNls public static final String HOST = "HOST";
   @NonNls public static final String PORT = "PORT";
@@ -36,9 +36,9 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
 
   @NonNls public static final String SSH_PREFIX = "ssh://";
 
-  private static final Map<AuthType, String> CREDENTIAL_ATTRIBUTES_QUALIFIERS = ImmutableMap.of(AuthType.PASSWORD, "password",
-                                                                                                AuthType.KEY_PAIR, "passphrase",
-                                                                                                AuthType.OPEN_SSH, "empty");
+  private static final Map<AuthType, @NonNls String> CREDENTIAL_ATTRIBUTES_QUALIFIERS = ImmutableMap.of(AuthType.PASSWORD, "password",
+                                                                                                        AuthType.KEY_PAIR, "passphrase",
+                                                                                                        AuthType.OPEN_SSH, "empty");
 
   private @NotNull String myHost = "";
   private int myPort;//will always be equal to myLiteralPort, if it's valid, or equal to 0 otherwise
