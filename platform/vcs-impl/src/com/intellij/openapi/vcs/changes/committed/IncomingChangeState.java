@@ -20,6 +20,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
+import org.jetbrains.annotations.NonNls;
 
 public class IncomingChangeState {
   private static final Logger INCOMING_LOG = Logger.getInstance("#incoming");
@@ -76,7 +77,7 @@ public class IncomingChangeState {
     private final String myName;
     private final int myCode;
 
-    State(final String name, final boolean accounted, final int code) {
+    State(@NonNls final String name, final boolean accounted, final int code) {
       myName = name;
       myAccounted = accounted;
       myCode = code;

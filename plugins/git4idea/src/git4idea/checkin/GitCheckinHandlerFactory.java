@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.HtmlBuilder;
@@ -23,7 +24,6 @@ import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xml.util.XmlStringUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.Git;
@@ -35,6 +35,7 @@ import git4idea.i18n.GitBundle;
 import git4idea.rebase.GitRebaseUtils;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -105,7 +106,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
       final Collection<VirtualFile> files = myPanel.getVirtualFiles(); // deleted files aren't included, but for them we don't care about CRLFs.
       final AtomicReference<GitCrlfProblemsDetector> crlfHelper = new AtomicReference<>();
       ProgressManager.getInstance().run(
-        new Task.Modal(myProject, "Checking for Line Separator Issues...", true) {
+        new Task.Modal(myProject, GitBundle.message("progress.checking.line.separator.issues"), true) {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
             crlfHelper.set(GitCrlfProblemsDetector.detect(GitCheckinHandlerFactory.MyCheckinHandler.this.myProject,
@@ -146,7 +147,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
     }
 
     private void setCoreAutoCrlfAttribute(@NotNull VirtualFile aRoot) {
-      ProgressManager.getInstance().run(new Task.Modal(myProject, "Updating Git Config...", true) {
+      ProgressManager.getInstance().run(new Task.Modal(myProject, GitBundle.message("progress.setting.config.value"), true) {
         @Override
         public void run(@NotNull ProgressIndicator pi) {
           try {
@@ -164,13 +165,8 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
       GitVersion version = GitExecutableManager.getInstance().getVersionUnderModalProgressOrCancel(myProject);
       if (System.getenv("HOME") == null && GitVersionSpecialty.DOESNT_DEFINE_HOME_ENV_VAR.existsIn(version)) {
         Messages.showErrorDialog(myProject,
-                                 "You are using Git " +
-                                 version.getPresentation() +
-                                 " which doesn't define %HOME% environment variable properly.\n" +
-                                 "Consider updating Git to a newer version " +
-                                 "or define %HOME% to point to the place where the global .gitconfig is stored \n" +
-                                 "(it is usually %USERPROFILE% or %HOMEDRIVE%%HOMEPATH%).",
-                                 "HOME Variable Is Not Defined");
+                                 GitBundle.message("error.message.git.version.does.not.define.home.env", version.getPresentation()),
+                                 GitBundle.message("error.title.git.version.does.not.define.home.env"));
         return ReturnResult.CANCEL;
       }
       return ReturnResult.COMMIT;
@@ -210,7 +206,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
                                                                         @NotNull final Collection<? extends VirtualFile> roots,
                                                                         final boolean stopWhenFoundFirst) {
       final Map<VirtualFile, Couple<String>> defined = new HashMap<>();
-      ProgressManager.getInstance().run(new Task.Modal(project, "Checking Git User Name...", true) {
+      ProgressManager.getInstance().run(new Task.Modal(project, GitBundle.message("progress.checking.user.name.email"), true) {
         @Override
         public void run(@NotNull ProgressIndicator pi) {
           for (VirtualFile root : roots) {
@@ -238,8 +234,8 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
     private boolean setUserNameUnderProgress(@NotNull final Project project,
                                              @NotNull final Collection<? extends VirtualFile> notDefined,
                                              @NotNull final GitUserNameNotDefinedDialog dialog) {
-      final Ref<String> error = Ref.create();
-      ProgressManager.getInstance().run(new Task.Modal(project, "Setting Git User Name...", true) {
+      final Ref<@Nls String> error = Ref.create();
+      ProgressManager.getInstance().run(new Task.Modal(project, GitBundle.message("progress.setting.user.name.email"), true) {
         @Override
         public void run(@NotNull ProgressIndicator pi) {
           try {
@@ -255,9 +251,8 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
             }
           }
           catch (VcsException e) {
-            String message = "Couldn't set user.name and user.email";
-            LOG.error(message, e);
-            error.set(message);
+            LOG.error("Couldn't set user.name and user.email", e);
+            error.set(GitBundle.message("error.cant.set.user.name.email"));
           }
         }
       });
@@ -294,26 +289,24 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
         return ReturnResult.COMMIT;
       }
 
-      final String title;
-      final String message;
-      final String rootPath = detachedRoot.myRoot.getPresentableUrl();
-      final String messageCommonStart = "The Git repository at the following path";
+      HtmlChunk rootPath = HtmlChunk.text(detachedRoot.myRoot.getPresentableUrl()).bold();
+      final @NlsContexts.DialogTitle String title;
+      final @NlsContexts.DialogMessage HtmlBuilder message = new HtmlBuilder();
       if (detachedRoot.myRebase) {
-        title = "Unfinished Rebase Process";
-        message = new HtmlBuilder()
-          .appendRaw(messageCommonStart + " has an <b>unfinished rebase</b> process:").br()
-          .append(HtmlChunk.text(rootPath).bold()).br()
-          .appendRaw("You probably want to <b>continue rebase</b> instead of committing.").br()
-          .append("Committing during rebase may lead to the commit loss.").br()
-          .appendLink("https://www.kernel.org/pub/software/scm/git/docs/git-rebase.html", "Read more about Git rebase").toString();
-      } else {
-        title = "Commit in Detached HEAD";
-        message = new HtmlBuilder()
-          .appendRaw(messageCommonStart + " is in the <b>detached HEAD</b> state:").br()
-          .append(HtmlChunk.text(rootPath).bold()).br() 
-          .append("You can look around, make experimental changes and commit them, but be sure to checkout a branch not to lose your work.").br()
-          .append("Otherwise you risk losing your changes.").br()
-          .appendLink("http://gitolite.com/detached-head.html", "Read more about detached HEAD").toString();
+        title = GitBundle.message("warning.title.commit.with.unfinished.rebase");
+        message
+          .appendRaw(GitBundle.message("warning.message.commit.with.unfinished.rebase", rootPath.toString()))
+          .br()
+          .appendLink("https://www.kernel.org/pub/software/scm/git/docs/git-rebase.html",
+                      GitBundle.message("link.label.commit.with.unfinished.rebase.read.more"));
+      }
+      else {
+        title = GitBundle.message("warning.title.commit.with.detached.head");
+        message
+          .appendRaw(GitBundle.message("warning.message.commit.with.detached.head", rootPath.toString()))
+          .br()
+          .appendLink("http://gitolite.com/detached-head.html",
+                      GitBundle.message("link.label.commit.with.detached.head.read.more"));
       }
 
       DialogWrapper.DoNotAskOption dontAskAgain = new DialogWrapper.DoNotAskOption.Adapter() {
@@ -325,14 +318,16 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
         @NotNull
         @Override
         public String getDoNotShowMessage() {
-          return "Don't warn again";
+          return GitBundle.message("checkbox.dont.warn.again");
         }
       };
-      int choice = Messages.showOkCancelDialog(myProject, XmlStringUtil.wrapInHtml(message), title, "Commit",
-                                               CommonBundle.getCancelButtonText(), Messages.getWarningIcon(), dontAskAgain);
+      int choice = Messages.showOkCancelDialog(myProject, message.wrapWithHtmlBody().toString(), title,
+                                               GitBundle.message("commit.action.name"), CommonBundle.getCancelButtonText(),
+                                               Messages.getWarningIcon(), dontAskAgain);
       if (choice == Messages.OK) {
         return ReturnResult.COMMIT;
-      } else {
+      }
+      else {
         return ReturnResult.CLOSE_WINDOW;
       }
     }

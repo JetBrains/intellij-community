@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.JBCardLayout;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LightColors;
@@ -108,7 +109,7 @@ public class CardActionsPanel extends JPanel {
   }
 
   private final class HeaderPanel extends JPanel {
-    private HeaderPanel(String text, final String parentId) {
+    private HeaderPanel(@NlsContexts.BorderTitle String text, final String parentId) {
       super(new BorderLayout(5, 5));
 
       setBackground(WelcomeScreenColors.CAPTION_BACKGROUND);

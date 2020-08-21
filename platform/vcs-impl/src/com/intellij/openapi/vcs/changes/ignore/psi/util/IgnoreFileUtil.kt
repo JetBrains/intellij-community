@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsKey
 import com.intellij.openapi.vcs.changes.IgnoredFileContentProvider
 import com.intellij.openapi.vcs.changes.IgnoredFileDescriptor
@@ -164,11 +165,11 @@ private fun IgnoredFileDescriptor.toText(ignoredFileContentProvider: IgnoredFile
   val ignoreMask = mask
   return if (ignorePath != null) {
     val ignoreFileContainingDir = ignoreEntryRoot ?: ignoreFile.parent ?: throw IllegalStateException(
-      "Cannot determine ignore file path for $ignoreFile")
+      VcsBundle.message("changes.cannot.determine.ignore.file.path.for.0", ignoreFile))
     ignoredFileContentProvider.buildIgnoreEntryContent(ignoreFileContainingDir, this)
   }
   else {
-    ignoreMask ?: throw IllegalStateException("IgnoredFileBean: path and mask cannot be null at the same time")
+    ignoreMask ?: throw IllegalStateException(VcsBundle.message("changes.ignoredfilebean.path.and.mask.cannot.be.null.at.the.same.time"))
   }
 }
 

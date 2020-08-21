@@ -15,6 +15,8 @@
  */
 package com.intellij.ui.wizard;
 
+import com.intellij.openapi.util.NlsContexts;
+
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -31,9 +33,9 @@ public class WizardModel {
 
   private boolean myDropped = false;
   private boolean myAchieved = false;
-  private final String myTitle;
+  private final @NlsContexts.DialogTitle String myTitle;
 
-  public WizardModel(String title) {
+  public WizardModel(@NlsContexts.DialogTitle String title) {
     myTitle = title;
   }
 
@@ -198,7 +200,7 @@ public class WizardModel {
     return myAchieved || myDropped;
   }
 
-  public String getTitle() {
+  public @NlsContexts.DialogTitle String getTitle() {
     return myTitle;
   }
 

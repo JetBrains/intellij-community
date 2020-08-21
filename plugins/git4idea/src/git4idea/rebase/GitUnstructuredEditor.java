@@ -4,6 +4,7 @@ package git4idea.rebase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.ui.CommitMessage;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBLabel;
@@ -11,6 +12,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import git4idea.i18n.GitBundle;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,9 +28,9 @@ public class GitUnstructuredEditor extends DialogWrapper {
 
   public GitUnstructuredEditor(@NotNull Project project,
                                @Nullable VirtualFile root,
-                               @NotNull String initialText,
-                               @NotNull String dialogTitle,
-                               @NotNull String okButtonText) {
+                               @NotNull @NonNls String initialText,
+                               @NotNull @NlsContexts.DialogTitle String dialogTitle,
+                               @NotNull @NlsContexts.Button String okButtonText) {
     super(project, true);
     setTitle(dialogTitle);
     setOKButtonText(okButtonText);

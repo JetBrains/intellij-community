@@ -939,7 +939,7 @@ public class Messages {
    * @return trimmed input string or {@code null} if user cancelled dialog.
    */
   @Nullable
-  public static String showInputDialog(@Nullable Project project,
+  public static @NlsSafe String showInputDialog(@Nullable Project project,
                                        @DialogMessage String message,
                                        @DialogTitle String title,
                                        @Nullable Icon icon) {
@@ -950,7 +950,7 @@ public class Messages {
    * @return trimmed input string or {@code null} if user cancelled dialog.
    */
   @Nullable
-  public static String showInputDialog(@NotNull Component parent,
+  public static @NlsSafe String showInputDialog(@NotNull Component parent,
                                        @DialogMessage String message,
                                        @DialogTitle String title,
                                        @Nullable Icon icon) {
@@ -964,14 +964,14 @@ public class Messages {
    * @see #showInputDialog(Component, String, String, Icon)
    */
   @Nullable
-  public static String showInputDialog(@DialogMessage String message,
+  public static @NlsSafe String showInputDialog(@DialogMessage String message,
                                        @DialogTitle String title,
                                        @Nullable Icon icon) {
     return showInputDialog(message, title, icon, null, null);
   }
 
   @Nullable
-  public static String showInputDialog(@Nullable Project project,
+  public static @NlsSafe String showInputDialog(@Nullable Project project,
                                        @DialogMessage String message,
                                        @DialogTitle String title,
                                        @Nullable Icon icon,
@@ -981,7 +981,7 @@ public class Messages {
   }
 
   @Nullable
-  public static String showInputDialog(Project project,
+  public static @NlsSafe String showInputDialog(Project project,
                                        @DialogMessage String message,
                                        @DialogTitle String title,
                                        @Nullable Icon icon,
@@ -993,7 +993,7 @@ public class Messages {
   }
 
   @Nullable
-  public static String showInputDialog(Project project,
+  public static @NlsSafe String showInputDialog(Project project,
                                        @DialogMessage String message,
                                        @DialogTitle String title,
                                        @Nullable Icon icon,
@@ -1005,7 +1005,7 @@ public class Messages {
   }
 
   @Nullable
-  public static String showInputDialog(@NotNull Component parent,
+  public static @NlsSafe String showInputDialog(@NotNull Component parent,
                                        @DialogMessage String message,
                                        @DialogTitle String title,
                                        @Nullable Icon icon,
@@ -1021,16 +1021,16 @@ public class Messages {
    * @see #showInputDialog(Component, String, String, Icon, String, InputValidator)
    */
   @Nullable
-  public static String showInputDialog(@DialogMessage String message,
-                                       @DialogTitle String title,
-                                       @Nullable Icon icon,
-                                       @Nullable @NonNls String initialValue,
-                                       @Nullable InputValidator validator) {
+  public static @NlsSafe String showInputDialog(@DialogMessage String message,
+                                                @DialogTitle String title,
+                                                @Nullable Icon icon,
+                                                @Nullable @NonNls String initialValue,
+                                                @Nullable InputValidator validator) {
     return MessagesService.getInstance().showInputDialog(null, null, message, title, icon, initialValue, validator, null, null);
   }
 
   @Nullable
-  public static String showMultilineInputDialog(Project project,
+  public static @NlsSafe String showMultilineInputDialog(Project project,
                                                 @DialogMessage String message,
                                                 @DialogTitle String title,
                                                 @Nullable @NonNls String initialValue,

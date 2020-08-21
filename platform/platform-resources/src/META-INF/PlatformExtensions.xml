@@ -739,7 +739,7 @@
 
     <getDataRule key="context.ProjectFileDirectory" implementationClass="com.intellij.ide.impl.dataRules.ProjectFileDirectoryRule"/>
 
-    <localInspection shortName="InconsistentLineSeparators" bundle="messages.InspectionsBundle" key="inconsistent.line.separators"
+    <localInspection shortName="InconsistentLineSeparators" bundle="messages.LangBundle" key="inconsistent.line.separators"
                      groupBundle="messages.InspectionsBundle" groupKey="inspection.general.tools.group.name" enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.openapi.fileEditor.impl.InconsistentLineSeparatorsInspection"/>
     <search.topHitProvider implementation="com.intellij.platform.DefaultPlatformTopHitProvider"/>

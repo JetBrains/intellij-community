@@ -7,6 +7,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.NlsContexts.DialogTitle;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -57,7 +58,7 @@ public class LocalPathCellEditor extends AbstractTableCellEditor {
 
   @Override
   public Object getCellEditorValue() {
-    String value = myComponent.getChildComponent().getText();
+    @NlsSafe String value = myComponent.getChildComponent().getText();
     return myNormalizePath ? PathUtil.toSystemDependentName(StringUtil.nullize(value)) : value;
   }
 

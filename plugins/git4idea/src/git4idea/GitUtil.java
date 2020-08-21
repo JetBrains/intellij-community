@@ -54,10 +54,7 @@ import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitSimplePathsBrowser;
 import git4idea.util.GitUIUtil;
 import git4idea.util.StringScanner;
-import org.jetbrains.annotations.CalledInBackground;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -83,7 +80,7 @@ public final class GitUtil {
 
   public static final @NonNls String ORIGIN_HEAD = "origin/HEAD";
 
-  public static final @NonNls String HEAD = "HEAD";
+  public static final @NlsSafe String HEAD = "HEAD";
   public static final @NonNls String CHERRY_PICK_HEAD = "CHERRY_PICK_HEAD";
   public static final @NonNls String MERGE_HEAD = "MERGE_HEAD";
   public static final @NonNls String REBASE_HEAD = "REBASE_HEAD";
@@ -840,9 +837,10 @@ public final class GitUtil {
     builder.show();
   }
 
+  @NlsSafe
   @NotNull
-  public static String cleanupErrorPrefixes(@NotNull String msg) {
-    final String[] PREFIXES = { "fatal:", "error:" };
+  public static String cleanupErrorPrefixes(@NotNull @NlsSafe String msg) {
+    final @NonNls String[] PREFIXES = { "fatal:", "error:" };
     msg = msg.trim();
     for (String prefix : PREFIXES) {
       if (msg.startsWith(prefix)) {
@@ -867,11 +865,13 @@ public final class GitUtil {
     return StringUtil.join(repositories, repository -> repository.getPresentableUrl(), UIUtil.BR);
   }
 
+  @Nls
   @NotNull
   public static String mention(@NotNull GitRepository repository) {
     return getRepositoryManager(repository.getProject()).moreThanOneRoot() ? " in " + getShortRepositoryName(repository) : "";
   }
 
+  @Nls
   @NotNull
   public static String mention(@NotNull Collection<? extends GitRepository> repositories) {
     if (repositories.isEmpty()) return "";

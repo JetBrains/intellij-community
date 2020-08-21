@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -76,7 +77,7 @@ public class AbstractFolderNode extends AbstractMvcPsiNodeDescriptor {
   private AbstractFolderNode createFolderNode(PsiDirectory directory) {
     PsiDirectory realDirectory = directory;
 
-    StringBuilder textBuilder = null;
+    @NlsSafe StringBuilder textBuilder = null;
 
     if (getSettings().isHideEmptyMiddlePackages()) {
       do {

@@ -30,6 +30,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStr
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.ListCellRendererWithRightAlignedComponent;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.list.ListPopupImpl;
@@ -111,7 +112,7 @@ public abstract class FindUsagesInProjectStructureActionBase extends AnAction im
             setLeftText(value.getPresentableName());
             setIcon(value.getIcon());
             setLeftForeground(value.getPlace().canNavigate() ? UIUtil.getLabelTextForeground() : UIUtil.getLabelDisabledForeground());
-            setRightForeground(Color.GRAY);
+            setRightForeground(JBColor.GRAY);
             setRightText(value.getPresentableLocationInElement());
           }
         };

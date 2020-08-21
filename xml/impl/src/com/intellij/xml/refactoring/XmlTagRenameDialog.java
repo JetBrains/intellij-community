@@ -48,7 +48,7 @@ public class XmlTagRenameDialog extends RefactoringDialog {
     myElement = element;
     myTag = tag;
 
-    setTitle(getRefactoringName());
+    setTitle(RefactoringBundle.message("rename.title"));
     createNewNameComponent();
 
     init();
@@ -160,9 +160,5 @@ public class XmlTagRenameDialog extends RefactoringDialog {
   protected boolean areButtonsValid() {
     final String newName = getNewName();
     return !StringUtil.containsAnyChar(newName, "\t ;*'\"\\/,()^&<>={}"); // RenameUtil.isValidName(myProject, myTag, newName); // IDEADEV-34531
-  }
-
-  private static String getRefactoringName() {
-    return RefactoringBundle.message("rename.title");
   }
 }

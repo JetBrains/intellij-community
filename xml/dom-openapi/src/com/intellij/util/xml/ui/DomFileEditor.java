@@ -24,8 +24,9 @@ import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.xml.*;
-import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
 import com.intellij.util.xml.events.DomEvent;
+import com.intellij.util.xml.highlighting.DomElementAnnotationsManager;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -153,7 +154,7 @@ public class DomFileEditor<T extends BasicDomElementComponent> extends Perspecti
     }
   }
 
-  public static DomFileEditor createDomFileEditor(final String name,
+  public static DomFileEditor createDomFileEditor(final @Nls String name,
                                                   @Nullable final Icon icon,
                                                   final DomElement element,
                                                   final Factory<? extends CommittablePanel> committablePanel) {

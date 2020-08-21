@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.confusing;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiSuperMethodUtil;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +20,7 @@ import static com.intellij.psi.CommonClassNames.JAVA_UTIL_MAP;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_GSTRING;
 
 public class GroovyGStringKeyInspection extends BaseInspection {
-  private static final String PUT_METHOD = "put";
+  @NlsSafe private static final String PUT_METHOD = "put";
 
   @Override
   @Nullable

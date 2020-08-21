@@ -7,12 +7,13 @@ import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.SimpleTextAttributes
+import org.jetbrains.annotations.Nls
 import kotlin.math.max
 import kotlin.properties.Delegates.observable
 
 private val FileStatus.attributes get() = SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, JBColor { color })
 
-private fun Int.formatInt(): String = "%,d".format(this)
+private fun Int.formatInt(): String = "%,d".format(this) // NON-NLS
 
 open class CommitLegendPanel(private val myInfoCalculator: InfoCalculator) {
   private val myRootPanel = SimpleColoredComponent()
@@ -60,6 +61,7 @@ open class CommitLegendPanel(private val myInfoCalculator: InfoCalculator) {
     myRootPanel.append("   ")
   }
 
+  @Nls
   private fun format(value: Any, label: String, compactLabel: String?): String =
     if (isCompact && compactLabel != null) "$compactLabel$value" else "$value $label"
 

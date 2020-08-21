@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
@@ -572,30 +571,14 @@ public class DynamicToolWindowWrapper {
 
       if (value instanceof DItemElement) {
         final DItemElement itemElement = ((DItemElement)value);
-        final String substringToHighlight = itemElement.getHighlightedText();
         final String name = itemElement.getName();
 
-        if (substringToHighlight != null) {
-          appendHighlightName(substringToHighlight, name);
-        } else {
-          appendName(name);
-        }
+        appendName(name);
 
         if (value instanceof DMethodElement) {
           appendMethodParameters((DMethodElement)value);
         }
       }
-    }
-
-    private void appendHighlightName(@NlsContexts.Label String substringToHighlight, @NlsContexts.Label String name) {
-      final int begin = name.indexOf(substringToHighlight);
-//          if (name.length() <= begin) return;
-      final String first = name.substring(0, begin);
-      append(first, SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
-      final TextAttributes textAttributes = new TextAttributes();
-      textAttributes.setBackgroundColor(UIUtil.getListSelectionBackground(true));
-      append(substringToHighlight, SimpleTextAttributes.fromTextAttributes(textAttributes));
-      append(name.substring(first.length() + substringToHighlight.length()), SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
     }
 
     private void appendName(@NlsContexts.Label String name) {

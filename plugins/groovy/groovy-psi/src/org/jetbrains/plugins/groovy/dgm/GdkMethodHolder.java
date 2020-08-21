@@ -14,6 +14,7 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.*;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
@@ -113,6 +114,7 @@ public final class GdkMethodHolder {
   }
 
   @Override
+  @NonNls
   public String toString() {
     return "GDK Method Holder for " + myClassName;
   }

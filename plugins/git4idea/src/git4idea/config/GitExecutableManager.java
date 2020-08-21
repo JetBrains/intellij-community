@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -250,7 +251,7 @@ public class GitExecutableManager {
   }
 
   static <T> T runUnderProgressIfNeeded(@Nullable Project project,
-                                        @NotNull String title,
+                                        @NotNull @NlsContexts.ProgressTitle String title,
                                         @NotNull ThrowableComputable<T, RuntimeException> task) {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       return ProgressManager.getInstance().runProcessWithProgressSynchronously(task, title, true, project);

@@ -29,22 +29,22 @@ internal class CacheSettingsPanel(project: Project) : BoundConfigurable(message(
     panel {
       if (cache.isMaxCountSupportedForProject) countRow() else daysRow()
       row {
-        val refreshCheckBox = checkBox("Refresh changes every", cacheState::isRefreshEnabled).actsAsLabel()
+        val refreshCheckBox = checkBox(message("changes.refresh.changes.every"), cacheState::isRefreshEnabled).actsAsLabel()
         cell {
           intTextField(cacheState::refreshInterval, COLUMNS_COUNT, 1..60 * 24)
             .enableIf(refreshCheckBox.selected)
-          label("minutes")
+          label(message("changes.minutes"))
         }
       }
     }
 
   private fun LayoutBuilder.countRow() =
-    row("Changelists to cache initially:") {
+    row(message("changes.changelists.to.cache.initially")) {
       intTextField(cacheState::initialCount, COLUMNS_COUNT, 1..100000)
     }
 
   private fun LayoutBuilder.daysRow() =
-    row("Days of history to cache initially:") {
+    row(message("changes.days.of.history.to.cache.initially")) {
       intTextField(cacheState::initialDays, COLUMNS_COUNT, 1..720)
     }
 }

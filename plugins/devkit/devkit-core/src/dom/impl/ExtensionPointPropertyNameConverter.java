@@ -31,7 +31,7 @@ public class ExtensionPointPropertyNameConverter extends ResolvingConverter<PsiF
 
   @Override
   public String getErrorMessage(@Nullable String s, ConvertContext context) {
-    return DevKitBundle.message("plugin.xml.convert.extension.property", s);
+    return DevKitBundle.message("plugin.xml.convert.extension.property.cannot.resolve", s);
   }
 
   @NotNull

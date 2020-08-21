@@ -266,6 +266,7 @@ public class TypePresentationServiceImpl extends TypePresentationService {
         String typeName = provider.getTypeName(o);
         if (typeName != null) return typeName;
       }
+      //noinspection HardCodedStringLiteral
       return getTypeName();
     }
 

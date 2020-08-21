@@ -8,7 +8,7 @@ import git4idea.rebase.interactive.startInteractiveRebase
 
 internal class GitInteractiveRebaseAction : GitSingleCommitEditingAction() {
   override val prohibitRebaseDuringRebasePolicy = ProhibitRebaseDuringRebasePolicy.Prohibit(
-    GitBundle.getString("rebase.log.action.operation.rebase.name")
+    GitBundle.message("rebase.log.action.operation.rebase.name")
   )
 
   override fun actionPerformedAfterChecks(commitEditingData: SingleCommitEditingData) {
@@ -23,5 +23,5 @@ internal class GitInteractiveRebaseAction : GitSingleCommitEditingAction() {
     }
   }
 
-  override fun getFailureTitle(): String = GitBundle.getString("rebase.log.interactive.action.failure.title")
+  override fun getFailureTitle(): String = GitBundle.message("rebase.log.interactive.action.failure.title")
 }

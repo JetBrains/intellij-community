@@ -24,7 +24,6 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.JavaChangeSignatureDialog;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.util.ArrayUtil;
@@ -138,7 +137,7 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
       int index = method.getParameterList().getParameterIndex(candidate.methodParameter);
       if (index == -1) return;
 
-      PsiMethod superMethod = SuperMethodWarningUtil.checkSuperMethod(method, RefactoringBundle.message("to.refactor"));
+      PsiMethod superMethod = SuperMethodWarningUtil.checkSuperMethod(method);
       if (superMethod == null) return;
       if (superMethod != method) {
         method = superMethod;

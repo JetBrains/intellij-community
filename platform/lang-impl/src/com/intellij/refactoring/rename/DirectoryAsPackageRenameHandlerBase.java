@@ -159,9 +159,7 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
   public static void buildMultipleDirectoriesInPackageMessage(StringBuffer message,
                                                               String packageQname,
                                                               PsiDirectory[] directories) {
-    message.append(RefactoringBundle.message("multiple.directories.correspond.to.package"));
-    message.append(packageQname);
-    message.append(":\n\n");
+    message.append(RefactoringBundle.message("multiple.directories.correspond.to.package", packageQname));
     final List<PsiDirectory> generated = new ArrayList<>();
     final List<PsiDirectory> source = new ArrayList<>();
     for (PsiDirectory directory : directories) {
@@ -175,7 +173,7 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
     final Function<PsiDirectory, String> directoryPresentation = directory -> directory.getVirtualFile().getPresentableUrl();
     message.append(StringUtil.join(source, directoryPresentation, "\n"));
     if (!generated.isEmpty()) {
-      message.append("\n\nalso generated:\n");
+      message.append("\n\n").append(RefactoringBundle.message("also.generated")).append("\n");
       message.append(StringUtil.join(generated, directoryPresentation, "\n"));
       
     }

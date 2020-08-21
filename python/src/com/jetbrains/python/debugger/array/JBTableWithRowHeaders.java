@@ -40,8 +40,7 @@ public class JBTableWithRowHeaders extends JBTable {
     myRowHeaderTable = new JBTableWithRowHeaders.RowHeaderTable(this);
     myRowHeaderTable.getEmptyText().setText("");
     myScrollPane.setRowHeaderView(myRowHeaderTable);
-    myScrollPane.setCorner(ScrollPaneConstants.UPPER_LEFT_CORNER,
-                         myRowHeaderTable.getTableHeader());
+    myScrollPane.setCorner(ScrollPaneConstants.UPPER_LEFT_CORNER, myRowHeaderTable.getTableHeader()); //NON-NLS
   }
 
   @NotNull
@@ -183,7 +182,7 @@ public class JBTableWithRowHeaders extends JBTable {
           setFont(getFont().deriveFont(Font.BOLD));
         }
 
-        setText((value == null) ? "" : value.toString());
+        setText((value == null) ? "" : value.toString()); //NON-NLS
         setBorder(UIManager.getBorder("TableHeader.cellBorder"));
 
         return this;

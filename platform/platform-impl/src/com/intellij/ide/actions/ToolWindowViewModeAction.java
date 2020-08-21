@@ -2,7 +2,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.idea.ActionsBundle;
-import com.intellij.internal.statistic.eventLog.EventPair;
+import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.FusAwareAction;
 import com.intellij.openapi.project.DumbAwareToggleAction;

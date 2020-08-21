@@ -129,6 +129,8 @@ internal class ChangesViewCommitWorkflowHandler(
     // Local Changes tree is not yet updated here. So calling `updateDefaultCommitActionEnabled()` leads to button blinking.
     // Next `inclusionChanged()` (likely because of `synchronizeInclusion()` after committed changes refresh) will set correct button
     // state without blinking.
+
+    ui.endExecution()
   }
 
   internal fun updateDefaultCommitActionEnabled() {

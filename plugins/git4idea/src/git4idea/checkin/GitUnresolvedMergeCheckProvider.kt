@@ -29,6 +29,7 @@ import com.intellij.openapi.vcs.checkin.UnresolvedMergeCheckProvider
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.ui.JBUI
 import git4idea.GitVcs
+import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import javax.swing.JComponent
@@ -57,8 +58,8 @@ class GitUnresolvedMergeCheckProvider : UnresolvedMergeCheckProvider() {
     val hasConflicts = groupedChanges.values().any { it.fileStatus === FileStatus.MERGED_WITH_CONFLICTS }
     if (hasConflicts) {
       Messages.showMessageDialog(panel.component,
-                                 "Can't commit changes due to unresolved conflicts.",
-                                 "Unresolved Conflicts",
+                                 GitBundle.message("message.unresolved.conflicts.prevent.commit"),
+                                 GitBundle.message("title.unresolved.conflicts.pre.commit.check"),
                                  Messages.getWarningIcon())
       return CheckinHandler.ReturnResult.CANCEL
     }
@@ -80,14 +81,14 @@ class GitUnresolvedMergeCheckProvider : UnresolvedMergeCheckProvider() {
     val browser = SimpleChangesBrowser(project, changes)
 
     init {
-      title = "Changes Excluded from Merge Commit"
-      setOKButtonText("Commit Anyway")
+      title = GitBundle.message("title.changes.excluded.from.commit")
+      setOKButtonText(GitBundle.message("button.changes.excluded.from.commit.commit.anyway"))
 
       init()
     }
 
     override fun createNorthPanel(): JComponent? {
-      val label = JLabel("Are you sure you want to exclude these changed files from merge commit?")
+      val label = JLabel(GitBundle.message("label.changes.excluded.from.commit.are.you.sure.want.to.continue"))
       label.border = JBUI.Borders.empty(5, 1)
       return label
     }

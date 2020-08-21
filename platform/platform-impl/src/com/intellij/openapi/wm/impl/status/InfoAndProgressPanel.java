@@ -20,11 +20,8 @@ import com.intellij.openapi.ui.panel.ProgressPanelBuilder;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonHandler;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.NlsContexts.PopupContent;
-import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
@@ -354,7 +351,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     UIUtil.invokeLaterIfNeeded(() -> myRefreshIcon.setVisible(visible));
   }
 
-  void setRefreshToolTipText(String tooltip) {
+  void setRefreshToolTipText(@NlsContexts.Tooltip String tooltip) {
     myRefreshIcon.setToolTipText(tooltip);
   }
 

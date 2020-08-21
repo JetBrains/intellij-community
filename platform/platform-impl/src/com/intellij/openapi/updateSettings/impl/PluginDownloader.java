@@ -15,6 +15,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.BuildNumber;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.Urls;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -97,7 +98,7 @@ public final class PluginDownloader {
     return myPluginVersion;
   }
 
-  public @NotNull String getPluginName() {
+  public @NlsSafe @NotNull String getPluginName() {
     return myPluginName != null ? myPluginName : myPluginId.getIdString();
   }
 

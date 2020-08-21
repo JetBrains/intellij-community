@@ -35,7 +35,7 @@ public class ChangesBrowserLockedFoldersNode extends ChangesBrowserNode<Object> 
     renderer.append(userObject.toString(), REGULAR_ATTRIBUTES);
     renderer.append(getCountText(), GRAY_ITALIC_ATTRIBUTES);
     renderer.append(spaceAndThinSpace(), REGULAR_ATTRIBUTES);
-    renderer.append("do cleanup...", CLEANUP_LINK_ATTRIBUTES, new CleanupWorker(myProject, this));
+    renderer.append(VcsBundle.message("changes.do.cleanup"), CLEANUP_LINK_ATTRIBUTES, new CleanupWorker(myProject, this));
   }
 
   private static final class CleanupWorker implements Runnable {

@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.transformations.impl
 
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiMethod
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.groovy.GroovyLanguage
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierFlags
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
@@ -15,7 +16,7 @@ import org.jetbrains.plugins.groovy.transformations.TransformationContext
 class GroovyObjectTransformationSupport : AstTransformationSupport {
 
   companion object {
-    private const val ORIGIN_INFO = "via GroovyObject"
+    @NonNls private const val ORIGIN_INFO = "via GroovyObject"
     private val KEY: Key<Boolean> = Key.create("groovy.object.method")
 
     private fun TransformationContext.findClass(fqn: String) = psiFacade.findClass(fqn, resolveScope)

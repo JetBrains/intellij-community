@@ -38,7 +38,7 @@ public class SwitchToHtml5Action implements LocalQuickFix, IntentionAction {
   @NotNull
   @Override
   public String getFamilyName() {
-    return XmlAnalysisBundle.message("switch.to.html5.quickfix.text");
+    return XmlAnalysisBundle.message("html.quickfix.switch.to.html5");
   }
 
   @NotNull

@@ -954,7 +954,7 @@ public class ShelvedChangesViewManager implements Disposable {
         DiffContentFactoryEx factory = DiffContentFactoryEx.getInstanceEx();
         ShelvedBinaryFile binaryFile = requireNonNull(provider.getBinaryFile());
         if (binaryFile.AFTER_PATH == null) {
-          throw new DiffRequestProducerException("Content for '" + getRequestName(provider) + "' was removed");
+          throw new DiffRequestProducerException(VcsBundle.message("changes.error.content.for.0.was.removed", getRequestName(provider)));
         }
         //
         byte[] binaryContent = binaryFile.createBinaryContentRevision(myProject).getBinaryContent();
@@ -963,7 +963,7 @@ public class ShelvedChangesViewManager implements Disposable {
                                      factory.createBinary(myProject, binaryContent, fileType, getRequestName(provider)), null, null);
       }
       catch (VcsException | IOException e) {
-        throw new DiffRequestProducerException("Can't show diff for '" + getRequestName(provider) + "'", e);
+        throw new DiffRequestProducerException(VcsBundle.message("changes.error.can.t.show.diff.for", getRequestName(provider)), e);
       }
     }
   }

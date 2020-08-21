@@ -27,7 +27,7 @@ public abstract class TypePresentationService {
   public abstract Icon getTypeIcon(Class type);
 
   @Nullable
-  public abstract String getTypePresentableName(Class type);
+  public abstract @NlsSafe String getTypePresentableName(Class type);
 
   @Nullable
   public abstract @NlsSafe String getTypeName(@NotNull Object o);

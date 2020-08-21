@@ -247,7 +247,7 @@ public final class GitVcs extends AbstractVcs {
    */
   public void showErrors(@NotNull List<? extends VcsException> list, @NotNull @Nls String action) {
     if (list.size() > 0) {
-      StringBuilder buffer = new StringBuilder();
+      @Nls StringBuilder buffer = new StringBuilder();
       buffer.append("\n");
       buffer.append(GitBundle.message("error.list.title", action));
       for (final VcsException exception : list) {

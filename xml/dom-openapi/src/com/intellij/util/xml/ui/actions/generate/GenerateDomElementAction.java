@@ -35,7 +35,7 @@ public class GenerateDomElementAction extends CodeInsightAction {
 
   public GenerateDomElementAction(@NotNull final GenerateDomElementProvider generateProvider, @Nullable Icon icon) {
     getTemplatePresentation().setDescription(generateProvider.getDescription());
-    getTemplatePresentation().setText(generateProvider.getDescription());
+    getTemplatePresentation().setText(generateProvider.getText());
     getTemplatePresentation().setIcon(icon);
 
     myProvider = generateProvider;

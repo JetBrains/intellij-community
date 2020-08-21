@@ -53,7 +53,7 @@ public final class RefactoringMessageUtil {
     return null;
   }
 
-  public static String getGetterSetterMessage(String newName, String action, PsiMethod getter, PsiMethod setter) {
+  public static @NlsContexts.DialogMessage String getGetterSetterMessage(String newName, String action, PsiMethod getter, PsiMethod setter) {
     String text;
     if (getter != null && setter != null) {
       text = JavaRefactoringBundle.message("getter.and.setter.methods.found.for.the.field.0", newName, action);

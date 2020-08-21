@@ -20,7 +20,7 @@ import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.ide.util.treeView.smartTree.*;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup;
-import com.intellij.internal.statistic.eventLog.EventFields;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
 import com.intellij.navigation.LocationPresentation;

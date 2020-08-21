@@ -190,7 +190,7 @@ public class EditRangeIntention extends BaseIntentionAction implements LowPriori
     if (maxValue == null) {
       maxError = JavaBundle.message("edit.range.error.invalid.value");
     } else if (maxValue > fromType.max()) {
-      maxError = JavaBundle.message("edit.range.value.should.be.less.than", fromType.max());
+      maxError = JavaBundle.message("edit.range.value.should.be.bigger.than", fromType.max());
     } else if (minValue != null && maxValue < minValue) {
       maxError = JavaBundle.message("edit.range.should.not.be.less.than.from");
     }

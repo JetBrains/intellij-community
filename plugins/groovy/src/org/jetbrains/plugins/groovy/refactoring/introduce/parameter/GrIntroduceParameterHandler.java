@@ -98,7 +98,7 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
       final GrParameterListOwner owner = scopes.get(0);
       final PsiElement toSearchFor;
       if (owner instanceof GrMethod) {
-        toSearchFor = SuperMethodWarningUtil.checkSuperMethod((PsiMethod)owner, RefactoringBundle.message("to.refactor"));
+        toSearchFor = SuperMethodWarningUtil.checkSuperMethod((PsiMethod)owner);
         if (toSearchFor == null) return; //if it is null, refactoring was canceled
       }
       else {

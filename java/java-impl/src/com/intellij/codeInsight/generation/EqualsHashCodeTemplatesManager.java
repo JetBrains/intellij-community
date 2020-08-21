@@ -8,7 +8,6 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.generate.exception.TemplateResourceException;
@@ -99,7 +98,7 @@ public final class EqualsHashCodeTemplatesManager extends TemplatesManager {
     return getDefaultTemplate(HASH_CODE_SUFFIX, EQUALS_SUFFIX, template);
   }
 
-  public static @NotNull String getTemplateBaseName(TemplateResource resource) {
+  public static @NotNull @NlsSafe String getTemplateBaseName(TemplateResource resource) {
     return StringUtil.trimEnd(StringUtil.trimEnd(resource.getFileName(), EQUALS_SUFFIX), HASH_CODE_SUFFIX).trim();
   }
 

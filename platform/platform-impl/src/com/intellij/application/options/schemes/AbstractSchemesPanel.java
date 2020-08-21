@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.JBDimension;
@@ -194,7 +195,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     showMessage(message, messageType);
   }
 
-  protected abstract void showMessage(@Nullable String message, @NotNull MessageType messageType);
+  protected abstract void showMessage(@NlsContexts.Label @Nullable String message, @NotNull MessageType messageType);
 
   final void clearInfo() {
     myToolbar.setVisible(true);
@@ -215,7 +216,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
    * @return a string label to place before the combobox or {@code null} if it is not needed
    */
   @Nullable
-  protected String getComboBoxLabel() {
+  protected @NlsContexts.Label String getComboBoxLabel() {
     return getSchemeTypeName() + ":";
   }
 
@@ -264,7 +265,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
 
   public abstract boolean useBoldForNonRemovableSchemes();
 
-  public void showStatus(@NotNull String message, @NotNull MessageType messageType) {
+  public void showStatus(@NotNull @NlsContexts.PopupContent String message, @NotNull MessageType messageType) {
     BalloonBuilder balloonBuilder = JBPopupFactory.getInstance()
       .createHtmlTextBalloonBuilder(message, messageType.getDefaultIcon(),
                                     messageType.getPopupBackground(), null);
@@ -314,7 +315,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     }
   }
 
-  protected static void showMessage(@Nullable String message,
+  protected static void showMessage(@NlsContexts.Label @Nullable String message,
                                     @NotNull MessageType messageType,
                                     @NotNull JLabel infoComponent) {
     infoComponent.setText(message);

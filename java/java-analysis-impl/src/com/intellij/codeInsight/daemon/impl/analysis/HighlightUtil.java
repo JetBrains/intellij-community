@@ -2900,7 +2900,7 @@ public final class HighlightUtil {
   }
 
   interface IncompatibleTypesTooltipComposer {
-    @NotNull
+    @NotNull @NlsContexts.Tooltip
     String consume(@NotNull String lRawType, @NotNull String lTypeArguments, @NotNull String rRawType, @NotNull String rTypeArguments);
 
     /**

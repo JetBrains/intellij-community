@@ -11,7 +11,7 @@ import org.jetbrains.annotations.PropertyKey;
 import java.util.function.Supplier;
 
 public final class XmlDomBundle extends DynamicBundle {
-  @NonNls private static final String BUNDLE = "messages.XmlDomBundle";
+  @NonNls public static final String BUNDLE = "messages.XmlDomBundle";
   private static final XmlDomBundle INSTANCE = new XmlDomBundle();
 
   private XmlDomBundle() { super(BUNDLE); }

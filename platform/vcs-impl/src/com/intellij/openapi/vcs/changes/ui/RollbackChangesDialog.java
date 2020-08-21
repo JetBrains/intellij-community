@@ -103,7 +103,7 @@ public class RollbackChangesDialog extends DialogWrapper {
     setOKButtonText(operationName);
 
     myOperationName = UIUtil.removeMnemonic(operationName);
-    myBrowser.setToggleActionTitle("&Include in " + StringUtil.toLowerCase(myOperationName));
+    myBrowser.setToggleActionTitle(VcsBundle.message("changes.action.include.in.operation.name", StringUtil.toLowerCase(myOperationName)));
     setTitle(VcsBundle.message("changes.action.rollback.custom.title", myOperationName));
     setCancelButtonText(CommonBundle.getCloseButtonText());
 

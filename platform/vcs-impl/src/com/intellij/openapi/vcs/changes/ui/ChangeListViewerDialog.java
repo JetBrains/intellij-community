@@ -106,7 +106,7 @@ public class ChangeListViewerDialog extends DialogWrapper {
         return () -> {
           myLoadingPanel.stopLoading();
           myChangesPanel.setChangeList(CommittedChangeListPanel.createChangeList(Collections.emptySet()));
-          emptyText.setText(notNullize(e.getMessage(), "Can't load changes"), SimpleTextAttributes.ERROR_ATTRIBUTES);
+          emptyText.setText(notNullize(e.getMessage(), VcsBundle.message("changes.cant.load.changes")), SimpleTextAttributes.ERROR_ATTRIBUTES);
         };
       }
     };

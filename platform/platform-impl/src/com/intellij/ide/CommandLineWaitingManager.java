@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
@@ -75,7 +76,7 @@ public final class CommandLineWaitingManager {
   }
 
   private @NotNull Future<CliResult> addHookAndNotify(@NotNull Object fileOrProject,
-                                                      @NotNull String notificationText) {
+                                                      @NotNull @NlsContexts.NotificationContent String notificationText) {
     LOG.info(notificationText);
 
     final CompletableFuture<CliResult> result = new CompletableFuture<>();

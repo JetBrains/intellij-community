@@ -11,10 +11,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.util.NlsActions;
-import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.VolatileNotNullLazyValue;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.IconDeferrer;
@@ -154,7 +151,7 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
   }
 
   private abstract static class CharsetAction extends DumbAwareAction implements LightEditCompatible {
-    CharsetAction(@NlsActions.ActionText String name, @NlsActions.ActionDescription String description, Icon icon) {
+    CharsetAction(@NlsSafe String name, @NlsActions.ActionDescription String description, Icon icon) {
       super(name, description, icon);
     }
   }

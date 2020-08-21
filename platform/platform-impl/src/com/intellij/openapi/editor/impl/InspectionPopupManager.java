@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AncestorListenerAdapter;
@@ -350,7 +351,7 @@ class InspectionPopupManager {
   private static final class TrackableLinkLabel extends LinkLabel<Object> {
     private InputEvent myEvent;
 
-    private TrackableLinkLabel(@NotNull String text, @NotNull Runnable action) {
+    private TrackableLinkLabel(@NotNull @NlsContexts.LinkLabel String text, @NotNull Runnable action) {
       super(text, null);
       setListener((__, ___) -> {
         action.run();

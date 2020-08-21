@@ -23,10 +23,11 @@ public final class IssueLinkHtmlRenderer {
   }
 
   @NotNull
-  public static String formatTextIntoHtml(@NotNull Project project, @NotNull String c) {
-    return "<html><head>" + UIUtil.getCssFontDeclaration(UIUtil.getLabelFont(), UIUtil.getLabelForeground(),
-                                                         JBUI.CurrentTheme.Link.linkColor(), null) + "</head><body>" +
-           formatTextWithLinks(project, c) + "</body></html>";
+  public static String formatTextIntoHtml(@NotNull Project project, @NotNull @Nls String c) {
+    // todo: use com.intellij.openapi.util.text.HtmlBuilder
+    return "<html><head>" + UIUtil.getCssFontDeclaration(UIUtil.getLabelFont(), UIUtil.getLabelForeground(), // NON-NLS
+                                                         JBUI.CurrentTheme.Link.linkColor(), null) + "</head><body>" + // NON-NLS
+           formatTextWithLinks(project, c) + "</body></html>"; // NON-NLS
   }
 
   @NotNull
@@ -43,8 +44,8 @@ public final class IssueLinkHtmlRenderer {
     int pos = 0;
     for(IssueNavigationConfiguration.LinkMatch match: list) {
       TextRange range = match.getRange();
-      commentBuilder.append(convertor.convert(comment.substring(pos, range.getStartOffset()))).append("<a href=\"").append(match.getTargetUrl()).append("\">");
-      commentBuilder.append(range.substring(comment)).append("</a>");
+      commentBuilder.append(convertor.convert(comment.substring(pos, range.getStartOffset()))).append("<a href=\"").append(match.getTargetUrl()).append("\">"); // NON-NLS
+      commentBuilder.append(range.substring(comment)).append("</a>"); // NON-NLS
       pos = range.getEndOffset();
     }
     commentBuilder.append(convertor.convert(comment.substring(pos)));

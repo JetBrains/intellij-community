@@ -29,6 +29,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.indexing.impl.IndexStorage;
+import com.intellij.util.indexing.impl.InputDataDiffBuilder;
 import com.intellij.util.indexing.impl.forward.EmptyForwardIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
@@ -43,7 +44,10 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<SerializedStubTree>
@@ -439,43 +443,34 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
     }
 
     @Override
-    protected void removeTransientDataForInMemoryKeys(int inputId, @NotNull Map<? extends Integer, ? extends SerializedStubTree> map) {
+    protected void removeTransientDataForInMemoryKeys(int inputId, @NotNull Map<Integer, SerializedStubTree> map) throws IOException {
       super.removeTransientDataForInMemoryKeys(inputId, map);
-      removeStubIndexKeys(inputId, getStubIndexMaps(map));
     }
 
     @Override
-    public void removeTransientDataForKeys(int inputId, @NotNull Collection<? extends Integer> keys) {
-      Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> maps;
-      try {
-        Map<Integer, SerializedStubTree> data = getIndexedFileData(inputId);
-        maps = getStubIndexMaps(data);
-      }
-      catch (StorageException e) {
-        throw new RuntimeException(e);
-      }
+    public void removeTransientDataForKeys(int inputId, @NotNull InputDataDiffBuilder<Integer, SerializedStubTree> diffBuilder) {
+      Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> maps = getStubIndexMaps((StubCumulativeInputDiffBuilder)diffBuilder);
 
       if (FileBasedIndexImpl.DO_TRACE_STUB_INDEX_UPDATE) {
-        LOG.info("removing transient data for inputId = " + inputId + ", keys = " + keys + ", data = " + maps);
+        LOG.info("removing transient data for inputId = " + inputId +
+                 ", keys = " + ((StubCumulativeInputDiffBuilder)diffBuilder).getKeys() +
+                 ", data = " + maps);
       }
 
-      super.removeTransientDataForKeys(inputId, keys);
-      removeStubIndexKeys(inputId, maps);
+      super.removeTransientDataForKeys(inputId, diffBuilder);
+      removeTransientStubIndexKeys(inputId, maps);
     }
 
-    private static void removeStubIndexKeys(int inputId, @NotNull Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> indexedStubs) {
+    private static void removeTransientStubIndexKeys(int inputId, @NotNull Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> indexedStubs) {
       StubIndexImpl stubIndex = (StubIndexImpl)StubIndex.getInstance();
       for (StubIndexKey key : indexedStubs.keySet()) {
-        stubIndex.removeTransientDataForFile(key, inputId, indexedStubs.get(key).keySet());
+        stubIndex.removeTransientDataForFile(key, inputId, indexedStubs.get(key));
       }
     }
 
     @NotNull
-    private static Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> getStubIndexMaps(@NotNull Map<? extends Integer, ? extends SerializedStubTree> data) {
-      if (data.isEmpty()) {
-        return Collections.emptyMap();
-      }
-      SerializedStubTree tree = data.values().iterator().next();
+    private static Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> getStubIndexMaps(@NotNull StubCumulativeInputDiffBuilder diffBuilder) {
+      SerializedStubTree tree = diffBuilder.getSerializedStubTree();
       return tree == null ? Collections.emptyMap() : tree.getStubIndicesValueMap();
     }
 

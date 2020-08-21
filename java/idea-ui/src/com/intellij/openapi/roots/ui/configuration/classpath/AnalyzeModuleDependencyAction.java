@@ -107,7 +107,7 @@ class AnalyzeModuleDependencyAction extends AnAction {
                                                     usedEntries.size(),
                                                     selectedEntry.getPresentableName(),
                                                     replacementText);
-        String[] options = {"Replace", "Show Dependencies", Messages.getCancelButton()};
+        String[] options = {JavaUiBundle.message("button.text.replace"), JavaUiBundle.message("show.dependencies"), Messages.getCancelButton()};
         switch (Messages.showDialog(myProject, message, getTemplateText(), options, 0, Messages.getWarningIcon())) {
           case 0:
             InlineModuleDependencyAction.inlineEntry(myPanel, selectedEntry, usedEntries::contains);

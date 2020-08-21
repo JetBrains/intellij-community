@@ -84,7 +84,7 @@ class GitAbortRebaseProcess {
 
   @NotNull
   private AbortChoice confirmAbort() {
-    String title = GitBundle.getString("rebase.abort.dialog.title");
+    String title = GitBundle.message("rebase.abort.dialog.title");
     if (myRepositoryToAbort != null) {
       if (myRepositoriesToRollback.isEmpty()) {
         String message = GitBundle.message("rebase.abort.dialog.message", getShortRepositoryName(myRepositoryToAbort));
@@ -96,7 +96,7 @@ class GitAbortRebaseProcess {
           myProject,
           message,
           title,
-          GitBundle.getString("rebase.abort.dialog.ok.button.text"),
+          GitBundle.message("rebase.abort.dialog.ok.button.text"),
           getCancelButtonText(),
           getQuestionIcon()
         );
@@ -118,8 +118,8 @@ class GitAbortRebaseProcess {
           myProject,
           message,
           title,
-          GitBundle.getString("rebase.abort.and.rollback.dialog.yes.button.text"),
-          GitBundle.getString("rebase.abort.and.rollback.dialog.no.button.text"),
+          GitBundle.message("rebase.abort.and.rollback.dialog.yes.button.text"),
+          GitBundle.message("rebase.abort.and.rollback.dialog.no.button.text"),
           getCancelButtonText(),
           getQuestionIcon()
         );
@@ -144,7 +144,7 @@ class GitAbortRebaseProcess {
           myProject,
           description,
           title,
-          GitBundle.getString("rebase.abort.rollback.successful.rebase.dialog.ok.button.text"),
+          GitBundle.message("rebase.abort.rollback.successful.rebase.dialog.ok.button.text"),
           getCancelButtonText(),
           getQuestionIcon()
         );
@@ -166,7 +166,7 @@ class GitAbortRebaseProcess {
     boolean[] success = new boolean[1];
 
     new GitFreezingProcess(myProject, "rebase", () -> {
-      try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, "Rebase")) {
+      try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, GitBundle.message("activity.name.rebase"))) {
         if (myRepositoryToAbort != null) {
           myIndicator.setText2(GitBundle.message(
             "rebase.abort.progress.indicator.command.in.repo.title",
@@ -180,7 +180,7 @@ class GitAbortRebaseProcess {
           }
           else {
             myNotifier.notifyError(
-              GitBundle.getString("rebase.abort.notification.failed.title"),
+              GitBundle.message("rebase.abort.notification.failed.title"),
               result.getErrorOutputAsHtmlString() + mentionLocalChangesRemainingInStash(mySaver),
               true);
             return;
@@ -229,7 +229,7 @@ class GitAbortRebaseProcess {
                 );
               }
               myNotifier.notifyImportantWarning(
-                GitBundle.getString("rebase.abort.notification.warning.rollback.failed.title"),
+                GitBundle.message("rebase.abort.notification.warning.rollback.failed.title"),
                 description
               );
               return;
@@ -250,7 +250,7 @@ class GitAbortRebaseProcess {
         mySaver.load();
       }
       if (myNotifySuccess) {
-        myNotifier.notifySuccess(GitBundle.getString("rebase.abort.notification.successful.message"));
+        myNotifier.notifySuccess(GitBundle.message("rebase.abort.notification.successful.message"));
       }
     }
   }

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.ui.popup;
 
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,7 +65,7 @@ public interface ListPopupStep<T> extends PopupStep<T> {
    * @param value the value for which the text is requested.
    * @return the text to display.
    */
-  @NotNull
+  @NotNull @NlsContexts.ListItem
   String getTextFor(T value);
 
   /**

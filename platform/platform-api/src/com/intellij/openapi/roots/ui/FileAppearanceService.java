@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots.ui;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,5 +37,5 @@ public abstract class FileAppearanceService {
   public abstract CellAppearanceEx forIoFile(@NotNull File file);
 
   @NotNull
-  public abstract CellAppearanceEx forInvalidUrl(@NotNull String url);
+  public abstract CellAppearanceEx forInvalidUrl(@NlsSafe @NotNull String url);
 }

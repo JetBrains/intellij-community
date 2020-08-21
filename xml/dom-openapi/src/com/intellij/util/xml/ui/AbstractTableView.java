@@ -15,6 +15,7 @@
  */
 package com.intellij.util.xml.ui;
 
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.ide.actions.ContextHelpAction;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
@@ -30,8 +31,10 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.MatteBorder;
@@ -54,8 +57,8 @@ import java.util.List;
  */
 public abstract class AbstractTableView<T> extends JPanel implements TypeSafeDataProvider {
   private final MyTableView myTable = new MyTableView();
-  private final String myHelpID;
-  private final String myEmptyPaneText;
+  @NonNls private final String myHelpID;
+  @Nls(capitalization = Nls.Capitalization.Sentence) private final String myEmptyPaneText;
   private final JPanel myInnerPanel;
   private final Project myProject;
   private TableCellRenderer[][] myCachedRenderers;
@@ -69,7 +72,9 @@ public abstract class AbstractTableView<T> extends JPanel implements TypeSafeDat
     this(project, null, null);
   }
 
-  public AbstractTableView(final Project project, final String emptyPaneText, final String helpID) {
+  public AbstractTableView(final Project project,
+                           @Nls(capitalization = Nls.Capitalization.Sentence) @Nullable final String emptyPaneText,
+                           @NonNls @Nullable final String helpID) {
     super(new BorderLayout());
     myProject = project;
     myTableModel.setSortable(false);
@@ -146,7 +151,7 @@ public abstract class AbstractTableView<T> extends JPanel implements TypeSafeDat
     add(toolbarComponent, position.getPosition());
   }
 
-  protected final void setErrorMessages(String[] messages) {
+  protected final void setErrorMessages(@InspectionMessage String[] messages) {
     final boolean empty = messages.length == 0;
     final String tooltipText = TooltipUtils.getTooltipText(messages);
     if (myEmptyPane != null) {
@@ -198,6 +203,7 @@ public abstract class AbstractTableView<T> extends JPanel implements TypeSafeDat
     return width;
   }
 
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   protected String getEmptyPaneText() {
     return myEmptyPaneText;
   }

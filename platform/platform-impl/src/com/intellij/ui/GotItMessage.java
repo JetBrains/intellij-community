@@ -6,6 +6,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.scale.JBUIScale;
@@ -23,15 +24,15 @@ import java.awt.event.MouseEvent;
  * @author Konstantin Bulenkov
  */
 public final class GotItMessage {
-  @NotNull private final String myTitle;
-  @NotNull private final String myMessage;
+  @NotNull private final @NlsContexts.PopupContent String myTitle;
+  @NotNull private final @NlsContexts.PopupContent String myMessage;
 
   private Disposable myDisposable;
   private Runnable myCallback;
   private HyperlinkListener myHyperlinkListener = BrowserHyperlinkListener.INSTANCE;
   private boolean myShowCallout = true;
 
-  private GotItMessage(@NotNull String title, @NotNull String message) {
+  private GotItMessage(@NlsContexts.PopupContent @NotNull String title, @NlsContexts.PopupContent @NotNull String message) {
     myTitle = title;
     myMessage =
       "<html><body><div align='center' style='font-family: " + UIUtil.getLabelFont().getFontName() + "; font-size: " +
@@ -40,7 +41,7 @@ public final class GotItMessage {
       "</div></body></html>";
   }
 
-  public static GotItMessage createMessage(@NotNull String title, @NotNull String message) {
+  public static GotItMessage createMessage(@NotNull @NlsContexts.PopupTitle String title, @NotNull @NlsContexts.PopupContent String message) {
     return new GotItMessage(title, message);
   }
 

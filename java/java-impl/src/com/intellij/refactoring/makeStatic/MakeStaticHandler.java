@@ -121,7 +121,7 @@ public class MakeStaticHandler implements RefactoringActionHandler {
   }
 
   @Nullable
-  public static String validateTarget(final PsiTypeParameterListOwner member) {
+  public static @NlsContexts.DialogMessage String validateTarget(final PsiTypeParameterListOwner member) {
     final PsiClass containingClass = member.getContainingClass();
 
     // Checking various preconditions

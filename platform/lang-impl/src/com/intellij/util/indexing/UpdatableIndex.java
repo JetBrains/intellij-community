@@ -5,11 +5,11 @@ package com.intellij.util.indexing;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.impl.AbstractUpdateData;
+import com.intellij.util.indexing.impl.InputDataDiffBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.Collection;
 import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
 
@@ -37,7 +37,7 @@ public interface UpdatableIndex<Key, Value, Input> extends InvertedIndex<Key,Val
 
   void removeTransientDataForFile(int inputId);
 
-  void removeTransientDataForKeys(int inputId, @NotNull Collection<? extends Key> keys);
+  void removeTransientDataForKeys(int inputId, @NotNull InputDataDiffBuilder<Key, Value> diffBuilder);
 
   @NotNull
   IndexExtension<Key, Value, Input> getExtension();

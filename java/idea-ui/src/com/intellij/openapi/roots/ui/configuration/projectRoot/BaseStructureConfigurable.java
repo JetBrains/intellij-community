@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.navigation.Place;
@@ -380,7 +381,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
   }
 
   protected abstract static class AbstractAddGroup extends ActionGroup implements ActionGroupWithPreselection {
-    protected AbstractAddGroup(String text, Icon icon) {
+    protected AbstractAddGroup(@NlsActions.ActionText String text, Icon icon) {
       super(text, true);
 
       final Presentation presentation = getTemplatePresentation();
@@ -394,7 +395,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
       }
     }
 
-    public AbstractAddGroup(@Nls String text) {
+    public AbstractAddGroup(@NlsActions.ActionText String text) {
       this(text, IconUtil.getAddIcon());
     }
 

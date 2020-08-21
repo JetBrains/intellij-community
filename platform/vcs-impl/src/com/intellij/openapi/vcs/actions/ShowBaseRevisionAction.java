@@ -83,7 +83,7 @@ public class ShowBaseRevisionAction extends AbstractVcsAction {
                                        commitMessage,
                                        description.getRevisionNumber().asString(),
                                        vf.getName());
-    return "<html><head>" + UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()) + "</head><body>" + message + "</body></html>";
+    return "<html><head>" + UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()) + "</head><body>" + message + "</body></html>"; //NON-NLS //NON-NLS
   }
 
   @Override

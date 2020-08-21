@@ -105,17 +105,20 @@ public class GitCommandResult {
   }
 
   @NotNull
+  @NlsSafe
   public String getErrorOutputAsJoinedString() {
     return StringUtil.join(cleanup(getErrorOrStdOutput()), "\n");
   }
 
   // in some cases operation fails but no explicit error messages are given, in this case return the output to display something to user
   @NotNull
+  @NlsSafe
   private List<String> getErrorOrStdOutput() {
     return myErrorOutput.isEmpty() && !success() ? myOutput : myErrorOutput;
   }
 
   @NotNull
+  @NlsSafe
   public String getOutputAsJoinedString() {
     return StringUtil.join(myOutput, "\n");
   }
@@ -128,6 +131,7 @@ public class GitCommandResult {
    * @throws VcsException with message from {@link #getErrorOutputAsJoinedString()}
    */
   @NotNull
+  @NlsSafe
   public String getOutputOrThrow(int... ignoredErrorCodes) throws VcsException {
     throwOnError(ignoredErrorCodes);
     return getOutputAsJoinedString();

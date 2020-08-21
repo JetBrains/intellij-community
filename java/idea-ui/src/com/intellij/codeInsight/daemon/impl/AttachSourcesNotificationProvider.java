@@ -308,7 +308,8 @@ public class AttachSourcesNotificationProvider extends EditorNotifications.Provi
           @NotNull
           @Override
           public String getTextFor(LibraryOrderEntry value) {
-            return value == null ? "All" : value.getPresentableName() + " (" + value.getOwnerModule().getName() + ")";
+            return value == null ? CommonBundle.message("action.text.all")
+                                 : value.getPresentableName() + " (" + value.getOwnerModule().getName() + ")";
           }
 
           @Override

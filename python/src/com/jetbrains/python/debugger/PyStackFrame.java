@@ -83,7 +83,7 @@ public class PyStackFrame extends XStackFrame {
     component.setIcon(AllIcons.Debugger.Frame);
 
     if (myPosition == null) {
-      component.append("<frame not available>", SimpleTextAttributes.GRAY_ATTRIBUTES);
+      component.append(PyBundle.message("debugger.stack.frame.frame.not.available"), SimpleTextAttributes.GRAY_ATTRIBUTES);
       return;
     }
 
@@ -128,7 +128,7 @@ public class PyStackFrame extends XStackFrame {
       }
       catch (PyDebuggerException e) {
         if (!node.isObsolete()) {
-          node.setErrorMessage("Unable to display frame variables");
+          node.setErrorMessage(PyBundle.message("debugger.stack.frame.unable.to.display.frame.variables"));
         }
         LOG.warn(e);
       }

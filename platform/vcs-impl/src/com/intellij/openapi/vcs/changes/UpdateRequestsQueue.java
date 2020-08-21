@@ -248,7 +248,7 @@ public final class UpdateRequestsQueue {
 
     @Override
     public String toString() {
-      return "UpdateRequestQueue delegate: " + myDelegate;
+      return "UpdateRequestQueue delegate: " + myDelegate; //NON-NLS
     }
   }
 

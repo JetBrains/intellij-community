@@ -533,6 +533,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     return getSelectedExpression(project, injectionHost.getContainingFile(), injectedLanguageManager.injectedToHost(file, startOffset), injectedLanguageManager.injectedToHost(file, endOffset));
   }
 
+  @NlsContexts.DialogMessage
   @Nullable
   public static String getErrorMessage(PsiExpression expr) {
     final Boolean needParenthesis = expr.getCopyableUserData(NEED_PARENTHESIS);

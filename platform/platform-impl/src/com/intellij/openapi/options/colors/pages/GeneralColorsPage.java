@@ -21,6 +21,7 @@ import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.DisplayPriority;
@@ -308,7 +309,7 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
     return highlightInfoType.getSeverity(null).myName;
   }
 
-  public static String getDisplayNameText() {
+  public static @NlsContexts.ConfigurableName String getDisplayNameText() {
     return OptionsBundle.message("options.general.display.name");
   }
 }

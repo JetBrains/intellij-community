@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.confusing;
 
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -67,7 +68,7 @@ public class ClashingGettersInspection extends BaseInspection {
     };
   }
 
-  private static Pair<PsiElement, String> getGetterDescription(PsiMethod getter) {
+  private static Pair<PsiElement, @InspectionMessage String> getGetterDescription(PsiMethod getter) {
     final String name = getter.getName();
     if (getter instanceof GrGdkMethod) {
       return new Pair<>(null, "GDK method '" + name + "'");

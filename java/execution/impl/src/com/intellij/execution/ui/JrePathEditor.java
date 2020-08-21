@@ -288,7 +288,7 @@ public class JrePathEditor extends LabeledComponent<ComboBox> implements PanelWi
 
   static class CustomJreItem implements JreComboBoxItem {
     private final String myPath;
-    private final String myName;
+    private final @NlsContexts.Label String myName;
     private final String myVersion;
 
     CustomJreItem(String path) {
@@ -298,7 +298,7 @@ public class JrePathEditor extends LabeledComponent<ComboBox> implements PanelWi
       myVersion = info == null ? null : info.toString();
     }
 
-    CustomJreItem(String path, String name, String version) {
+    CustomJreItem(String path, @NlsContexts.Label String name, String version) {
       myPath = path;
       myName = name;
       myVersion = version;

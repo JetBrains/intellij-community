@@ -67,7 +67,7 @@ public abstract class CheckboxAction extends ToggleAction implements CustomCompo
   }
 
   static void updateCheckboxPresentation(JCheckBox checkBox, Presentation presentation) {
-    checkBox.setText(presentation.getText());
+    checkBox.setText(presentation.getText(true));
     checkBox.setToolTipText(presentation.getDescription());
     checkBox.setMnemonic(presentation.getMnemonic());
     checkBox.setDisplayedMnemonicIndex(presentation.getDisplayedMnemonicIndex());

@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -315,7 +316,7 @@ public final class EditorWindow {
     myTabbedPane.setBackgroundColorAt(index, color);
   }
 
-  private void setToolTipTextAt(int index, @Nullable String text) {
+  private void setToolTipTextAt(int index, @Nullable @NlsContexts.Tooltip String text) {
     myTabbedPane.setToolTipTextAt(index, text);
   }
 

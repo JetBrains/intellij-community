@@ -33,6 +33,12 @@
       <val name="valuesFromClass" val="javax.swing.BoxLayout.class" />
     </annotation>
   </item>
+  <item name='javax.swing.ImageIcon ImageIcon(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='javax.swing.ImageIcon ImageIcon(java.lang.String, java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
   <item name="javax.swing.InputMap void put(javax.swing.KeyStroke, java.lang.Object) 1">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>

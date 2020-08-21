@@ -16,6 +16,7 @@
 package com.intellij.notification;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.util.NlsContexts;
 
 /**
  * @author spleaner
@@ -29,13 +30,13 @@ public enum NotificationDisplayType {
   STICKY_BALLOON(IdeBundle.message("notification.type.sticky.balloon")),
   TOOL_WINDOW(IdeBundle.message("notification.type.tool.window.balloon"));
 
-  private final String myTitle;
+  private final @NlsContexts.ListItem String myTitle;
 
-  NotificationDisplayType(final String humanTitle) {
+  NotificationDisplayType(final @NlsContexts.ListItem String humanTitle) {
     myTitle = humanTitle;
   }
 
-  public String getTitle() {
+  public @NlsContexts.ListItem String getTitle() {
     return myTitle;
   }
 }

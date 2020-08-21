@@ -24,6 +24,7 @@ import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm
 import com.intellij.execution.testframework.ui.BaseTestsOutputConsoleView;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersConfigurator;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
@@ -320,15 +321,14 @@ public abstract class JavaTestFrameworkRunnableState<T extends
       if (forkPerModule()) {
         if (isExecutorDisabledInForkedMode()) {
           final String actionName = executor.getActionName();
-          throw new CantRunException("'" + actionName + "' is disabled when per-module working directory is configured.<br/>" +
-                                     "Please specify single working directory, or change test scope to single module.");
+          throw new CantRunException(JavaCompilerBundle.message("action.disabled.when.per.module.working.directory.configured", actionName));
         }
       } else {
         return;
       }
     } else if (isExecutorDisabledInForkedMode()) {
       final String actionName = executor.getActionName();
-      throw new CantRunException(actionName + " is disabled in fork mode.<br/>Please change fork mode to &lt;none&gt; to " + StringUtil.toLowerCase(actionName) + ".");
+      throw new CantRunException(JavaCompilerBundle.message("action.disabled.in.fork.mode", actionName, StringUtil.toLowerCase(actionName)));
     }
 
     final JavaParameters javaParameters = getJavaParameters();

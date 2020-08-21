@@ -19,6 +19,8 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.util.NlsContexts;
+
 import javax.swing.*;
 
 /**
@@ -44,7 +46,7 @@ public class StateRestoringCheckBox extends JCheckBox {
     myIsSelectedWhenSelectable = isSelected();
   }
 
-  public StateRestoringCheckBox(String text) {
+  public StateRestoringCheckBox(@NlsContexts.Checkbox String text) {
     super(text);
     myIsSelectedWhenSelectable = isSelected();
   }
@@ -54,17 +56,17 @@ public class StateRestoringCheckBox extends JCheckBox {
     myIsSelectedWhenSelectable = isSelected();
   }
 
-  public StateRestoringCheckBox(String text, boolean selected) {
+  public StateRestoringCheckBox(@NlsContexts.Checkbox String text, boolean selected) {
     super(text, selected);
     myIsSelectedWhenSelectable = isSelected();
   }
 
-  public StateRestoringCheckBox(String text, Icon icon) {
+  public StateRestoringCheckBox(@NlsContexts.Checkbox String text, Icon icon) {
     super(text, icon);
     myIsSelectedWhenSelectable = isSelected();
   }
 
-  public StateRestoringCheckBox(String text, Icon icon, boolean selected) {
+  public StateRestoringCheckBox(@NlsContexts.Checkbox String text, Icon icon, boolean selected) {
     super(text, icon, selected);
     myIsSelectedWhenSelectable = isSelected();
   }

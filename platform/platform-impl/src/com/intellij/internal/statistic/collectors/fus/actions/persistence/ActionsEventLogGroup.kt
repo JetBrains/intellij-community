@@ -3,6 +3,9 @@ package com.intellij.internal.statistic.collectors.fus.actions.persistence
 
 import com.intellij.internal.statistic.eventLog.*
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger.configVersion
+import com.intellij.internal.statistic.eventLog.events.EventField
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
 class ActionsEventLogGroup : CounterUsagesCollector() {

@@ -21,7 +21,6 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.ClassUtil;
@@ -82,8 +81,9 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_THROWABLE, "getMessage", "getLocalizedMessage").parameterCount(0),
     CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_THROWABLE, "toString").parameterCount(0)
   );
-  private static final CallMatcher STRING_BUILDER_TO_STRING = CallMatcher.instanceCall(
-    CommonClassNames.JAVA_LANG_STRING_BUILDER, "toString").parameterCount(0);
+  private static final CallMatcher STRING_BUILDER_TO_STRING = CallMatcher.anyOf(
+    CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_STRING_BUFFER, "toString").parameterCount(0),
+    CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_STRING_BUILDER, "toString").parameterCount(0));
   @RegExp private static final String DEFAULT_NON_NLS_LITERAL_PATTERN = "((?i)https?://.+)|\\w*(\\.\\w+)+|\\w*[$]\\w*|((?i)</?(html|b|i|body|br|li|ol|ul)>)*|&\\w+;|[A-Za-z][a-z0-9]*([A-Z]+[a-z0-9]*)+";
   private static final CallMatcher STRING_LENGTH =
     CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_STRING, "length").parameterCount(0);
@@ -781,7 +781,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     }
   }
 
-  private static List<UExpression> findIndirectUsages(UExpression expression) {
+  protected static List<UExpression> findIndirectUsages(UExpression expression) {
     UExpression passThrough = NlsInfo.goUp(expression);
     UElement uastParent = passThrough.getUastParent();
     ULocalVariable uVar = null;
@@ -936,7 +936,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     if (ignoreForJUnitAsserts && isArgOfJUnitAssertion(usage)) {
       return true;
     }
-    if (ignoreForClassReferences && value != null && isClassRef(project, usage, value)) {
+    if (ignoreForClassReferences && value != null && isClassRef(project, value)) {
       return true;
     }
     if (ignoreForPropertyKeyReferences && value != null && !PropertiesImplUtil.findPropertiesByKey(project, value).isEmpty()) {
@@ -975,7 +975,6 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
   }
 
   private static boolean isClassRef(@NotNull Project project,
-                                    final UExpression expression,
                                     String value) {
     if (StringUtil.startsWithChar(value, '#')) {
       value = value.substring(1); // A favor for JetBrains team to catch common Logger usage practice.

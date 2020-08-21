@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Conditions
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.util.io.connectRetrying
 import com.intellij.util.io.socketConnection.ConnectionStatus
+import com.intellij.xdebugger.XDebuggerBundle
 import io.netty.bootstrap.Bootstrap
 import org.jetbrains.concurrency.*
 import org.jetbrains.debugger.Vm
@@ -138,7 +139,7 @@ fun <T> chooseDebuggee(targets: Collection<T>, selectedIndex: Int, renderer: (T,
             renderer(value, this)
           }
         })
-      .setTitle("Choose Page to Debug")
+      .setTitle(XDebuggerBundle.message("script.debugger.popup.title.choose.page"))
       .setCancelOnWindowDeactivation(false)
       .setItemChosenCallback { value ->
         result.setResult(value)
@@ -163,7 +164,7 @@ fun initRemoteVmConnectionSync(connection: RemoteVmConnection<*>, debugPort: Int
     vm = vmPromise.blockingGet(30, TimeUnit.SECONDS)!!
   }
   catch (e: Exception) {
-    throw ExecutionException("Cannot connect to VM ($address)", e)
+    throw ExecutionException(XDebuggerBundle.message("script.debugger.error.cannot.connect", address), e)
   }
 
   return vm

@@ -86,7 +86,7 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   private PsiElement myCodeFragmentMember; // parent of myCodeFragment
 
-  protected @NonNls String myMethodName; // name for extracted method
+  protected @NlsSafe String myMethodName; // name for extracted method
   protected PsiType myReturnType; // return type for extracted method
   protected PsiTypeParameterList myTypeParameterList; //type parameter list of extracted method
   protected VariableData[] myVariableDatum; // parameter data for extracted method
@@ -2144,6 +2144,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   protected @NlsContexts.DialogMessage String buildMultipleOutputMessageError(PsiType expressionType) {
+    @Nls
     StringBuilder buffer = new StringBuilder();
     buffer.append(RefactoringBundle.getCannotRefactorMessage(
       JavaRefactoringBundle.message("there.are.multiple.output.values.for.the.selected.code.fragment")));
@@ -2350,6 +2351,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     return myProject;
   }
 
+  @NlsSafe
   public String getMethodName() {
     return myMethodName;
   }

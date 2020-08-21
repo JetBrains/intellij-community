@@ -36,8 +36,8 @@ interface MessagesService {
 
   fun showMessageDialog(project: Project?,
                         parentComponent: Component? = null,
-                        message: @DialogMessage String?,
-                        title: @NlsContexts.DialogTitle String?,
+                        @DialogMessage message: String?,
+                        @NlsContexts.DialogTitle title: String?,
                         options: Array<String>,
                         defaultOptionIndex: Int = 0,
                         focusedOptionIndex: Int = -1,
@@ -46,18 +46,18 @@ interface MessagesService {
                         alwaysUseIdeaUI: Boolean = false): Int
 
   fun showMoreInfoMessageDialog(project: Project?,
-                                message: @DialogMessage String?,
-                                title: @NlsContexts.DialogTitle String?,
+                                @DialogMessage message: String?,
+                                @NlsContexts.DialogTitle title: String?,
                                 moreInfo: @DetailedDescription String?,
                                 options: Array<String?>?,
                                 defaultOptionIndex: Int,
                                 focusedOptionIndex: Int,
                                 icon: Icon?): Int
 
-  fun showTwoStepConfirmationDialog(message: @DialogMessage String?,
-                                    title: @NlsContexts.DialogTitle String?,
+  fun showTwoStepConfirmationDialog(@DialogMessage message: String?,
+                                    @NlsContexts.DialogTitle title: String?,
                                     options: Array<String?>?,
-                                    checkboxText: @NlsContexts.Checkbox String?,
+                                    @NlsContexts.Checkbox checkboxText: String?,
                                     checked: Boolean,
                                     defaultOptionIndex: Int,
                                     focusedOptionIndex: Int,
@@ -66,22 +66,22 @@ interface MessagesService {
 
   @NlsSafe
   fun showPasswordDialog(project: Project?,
-                         message: @DialogMessage String?,
-                         title: @NlsContexts.DialogTitle String?,
+                         @DialogMessage message: String?,
+                         @NlsContexts.DialogTitle title: String?,
                          icon: Icon?,
                          validator: InputValidator?): String?
 
   fun showPasswordDialog(parentComponent: Component,
-                         message: @DialogMessage String?,
-                         title: @NlsContexts.DialogTitle String?,
+                         @DialogMessage message: String?,
+                         @NlsContexts.DialogTitle title: String?,
                          icon: Icon?,
                          validator: InputValidator?): CharArray?
 
   @NlsSafe 
   fun showInputDialog(project: Project?,
                       parentComponent: Component?,
-                      message: @DialogMessage String?,
-                      title: @NlsContexts.DialogTitle String?,
+                      @DialogMessage message: String?,
+                      @NlsContexts.DialogTitle title: String?,
                       icon: Icon?,
                       initialValue: String?,
                       validator: InputValidator?,
@@ -90,15 +90,15 @@ interface MessagesService {
 
   @NlsSafe
   fun showMultilineInputDialog(project: Project?,
-                               message: @DialogMessage String?,
-                               title: @NlsContexts.DialogTitle String?,
+                               @DialogMessage message: String?,
+                               @NlsContexts.DialogTitle title: String?,
                                initialValue: String?,
                                icon: Icon?,
                                validator: InputValidator?): String?
 
-  fun showInputDialogWithCheckBox(message: @DialogMessage String?,
-                                  title: @NlsContexts.DialogTitle String?,
-                                  checkboxText: @NlsContexts.Checkbox String?,
+  fun showInputDialogWithCheckBox(@DialogMessage message: String?,
+                                  @NlsContexts.DialogTitle title: String?,
+                                  @NlsContexts.Checkbox checkboxText: String?,
                                   checked: Boolean,
                                   checkboxEnabled: Boolean,
                                   icon: Icon?,
@@ -106,8 +106,8 @@ interface MessagesService {
                                   validator: InputValidator?): Pair<String?, Boolean?>
 
   @NlsSafe
-  fun showEditableChooseDialog(message: @DialogMessage String?,
-                               title: @NlsContexts.DialogTitle String?,
+  fun showEditableChooseDialog(@DialogMessage message: String?,
+                               @NlsContexts.DialogTitle title: String?,
                                icon: Icon?,
                                values: Array<String?>?,
                                initialValue: String?,
@@ -115,14 +115,14 @@ interface MessagesService {
 
   fun showChooseDialog(project: Project?,
                        parentComponent: Component?,
-                       message: @DialogMessage String?,
-                       title: @NlsContexts.DialogTitle String?,
+                       @DialogMessage message: String?,
+                       @NlsContexts.DialogTitle title: String?,
                        values: Array<String?>?,
                        initialValue: String?,
                        icon: Icon?): Int
 
   fun showTextAreaDialog(textField: JTextField?,
-                         title: @NlsContexts.DialogTitle String?,
+                         @NlsContexts.DialogTitle title: String?,
                          dimensionServiceKey: String?,
                          parser: Function<in String?, out MutableList<String?>?>?,
                          lineJoiner: Function<in MutableList<String?>?, String?>?)

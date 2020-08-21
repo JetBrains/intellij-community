@@ -11,6 +11,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -274,7 +275,7 @@ public final class CustomizeFeaturedPluginsStepPanel extends AbstractCustomizeWi
   }
 
   @NotNull
-  private static JLabel createHTMLLabel(final String text) {
+  private static JLabel createHTMLLabel(final @NlsContexts.Label String text) {
     return new JLabel("<html><body>" + text + "</body></html>") {
       @Override
       public Dimension getPreferredSize() {

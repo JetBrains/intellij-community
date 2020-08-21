@@ -95,7 +95,8 @@ private fun localDiffContent(project: Project, statusNode: GitFileStatusNode): D
   if (!statusNode.has(ContentVersion.LOCAL)) return DiffContentFactory.getInstance().createEmpty()
 
   val localFile: VirtualFile = statusNode.path(ContentVersion.LOCAL).virtualFile
-                               ?: throw VcsException("Can't get local file: " + statusNode.filePath)
+                               ?: throw VcsException(GitBundle.message("stage.diff.local.content.exception.message",
+                                                                       statusNode.filePath))
   return DiffContentFactory.getInstance().create(project, localFile)
 }
 

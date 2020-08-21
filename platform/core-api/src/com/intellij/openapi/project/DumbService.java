@@ -392,7 +392,7 @@ public abstract class DumbService {
    *
    * @param activityName the text (a noun phrase) to display as a reason for the indexing being paused
    */
-  public abstract void suspendIndexingAndRun(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String activityName,
+  public abstract void suspendIndexingAndRun(@NotNull @NlsContexts.ProgressText String activityName,
                                              @NotNull Runnable activity);
 
   /**

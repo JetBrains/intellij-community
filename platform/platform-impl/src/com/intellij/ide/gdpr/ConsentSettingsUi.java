@@ -5,6 +5,7 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
@@ -84,7 +85,7 @@ public class ConsentSettingsUi extends JPanel implements ConfigurableUi<List<Con
     add(scrollPane);
   }
 
-  private static void addHintLabel(JPanel body, String text) {
+  private static void addHintLabel(JPanel body, @NlsContexts.HintText String text) {
     JLabel hintLabel = new JBLabel(text);
     hintLabel.setForeground(UIUtil.getContextHelpForeground());
     hintLabel.setVerticalAlignment(SwingConstants.TOP);

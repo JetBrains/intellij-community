@@ -21,13 +21,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.FixedSizeButton;
+import com.intellij.openapi.util.NlsContexts.DialogTitle;
 import com.intellij.xml.XmlBundle;
-
-import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
+import javax.swing.*;
+import org.jetbrains.annotations.Nls;
 
 public class EditLocationDialog extends DialogWrapper {
 
@@ -37,9 +38,9 @@ public class EditLocationDialog extends DialogWrapper {
   private final Project myProject;
   private final boolean myShowPath;
 
-  private final String myTitle;
-  private final String myName;
-  private final String myLocation;
+  private final @DialogTitle String myTitle;
+  private final @Nls String myName;
+  private final @Nls String myLocation;
   private boolean myTfShared = true;
 
   public EditLocationDialog(Project project, boolean showPath) {
@@ -52,7 +53,7 @@ public class EditLocationDialog extends DialogWrapper {
     init();
   }
 
-  public EditLocationDialog(Project project, boolean showPath, String title, String name, String location) {
+  public EditLocationDialog(Project project, boolean showPath, @DialogTitle String title, @Nls String name, @Nls String location) {
     super(project, true);
     myProject = project;
     myShowPath = showPath;

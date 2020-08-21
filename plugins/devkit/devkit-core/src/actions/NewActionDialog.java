@@ -10,6 +10,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
@@ -281,7 +282,7 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
   }
 
   @Nullable
-  private String checkCanCreateActionClass() {
+  private @NlsSafe String checkCanCreateActionClass() {
     if (myDirectory != null) {
       try {
         DevkitActionsUtil.checkCanCreateClass(myDirectory, myActionClassNameEdit.getText());

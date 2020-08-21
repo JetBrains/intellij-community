@@ -21,7 +21,7 @@ class ConvertFormDialog(val project: Project, var className: String) : DialogWra
 
   init {
     init()
-    title = "Convert Form to UI DSL"
+    title = DevKitBundle.message("convert.form.dialog.title")
   }
 
   override fun createCenterPanel(): JComponent? {
@@ -37,11 +37,11 @@ class ConvertFormDialog(val project: Project, var className: String) : DialogWra
       row(DevKitBundle.message("convert.form.dialog.label.bound.instance.expression")) {
         textField(::boundInstanceExpression)
       }
-      titledRow(DevKitBundle.message("convert.form.dialog.separator.base.class")) {
+      titledRow(DevKitBundle.message("convert.form.dialog.base.class.separator")) {
         buttonGroup(::baseClass) {
-          row { radioButton("None", FormBaseClass.None) }
+          row { radioButton(DevKitBundle.message("convert.form.dialog.base.class.none"), FormBaseClass.None) }
           row {
-            radioButton("Configurable", FormBaseClass.Configurable)
+            radioButton(DevKitBundle.message("convert.form.dialog.base.class.configurable"), FormBaseClass.Configurable)
             row {
               checkBox(DevKitBundle.message("convert.form.dialog.label.checkbox.generate.descriptors.for.search.everywhere"), ::generateDescriptors)
             }

@@ -25,6 +25,7 @@ import com.intellij.ui.tabs.TabsUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,7 +69,7 @@ public final class LightToolWindow extends JPanel {
   };
 
   public LightToolWindow(@NotNull LightToolWindowContent content,
-                         @NotNull String title,
+                         @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title,
                          @NotNull Icon icon,
                          @NotNull JComponent component,
                          @NotNull JComponent focusedComponent,

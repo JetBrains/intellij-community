@@ -2,6 +2,7 @@
 package com.intellij.refactoring.copy;
 
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -434,7 +435,8 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
     if (relativePath != null && !relativePath.isEmpty()) {
       return WriteAction.compute(() -> buildRelativeDir(directory, relativePath).findOrCreateTargetDirectory().copyFileFrom(fileName, file));
     }
-    if (CopyFilesOrDirectoriesHandler.checkFileExist(directory, choice, file, fileName, "Copy")) return null;
+    if (CopyFilesOrDirectoriesHandler.checkFileExist(directory, choice, file, fileName,
+                                                     ExecutionBundle.message("copy.classes.command.name"))) return null;
     return WriteAction.compute(() -> directory.copyFileFrom(fileName, file));
   }
 

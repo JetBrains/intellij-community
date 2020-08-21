@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.keymap.impl.ui;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,7 +28,7 @@ public abstract class Hyperlink {
   @Nullable
   private final Icon myIcon;
   @NotNull
-  private final String linkText;
+  private final @NlsContexts.LinkLabel String linkText;
   @NotNull
   private final SimpleTextAttributes textAttributes;
 
@@ -35,11 +36,11 @@ public abstract class Hyperlink {
     this(null, linkText, SimpleTextAttributes.LINK_ATTRIBUTES);
   }
 
-  protected Hyperlink(@Nullable Icon icon, @NotNull String linkText) {
+  protected Hyperlink(@Nullable Icon icon, @NotNull @NlsContexts.LinkLabel String linkText) {
     this(icon, linkText, SimpleTextAttributes.LINK_ATTRIBUTES);
   }
 
-  protected Hyperlink(@Nullable Icon icon, @NotNull String linkText, @NotNull SimpleTextAttributes textAttributes) {
+  protected Hyperlink(@Nullable Icon icon, @NotNull @NlsContexts.LinkLabel String linkText, @NotNull SimpleTextAttributes textAttributes) {
     myIcon = icon;
     this.linkText = linkText;
     this.textAttributes = textAttributes;
@@ -51,7 +52,7 @@ public abstract class Hyperlink {
   }
 
   @NotNull
-  public String getLinkText() {
+  public @NlsContexts.LinkLabel String getLinkText() {
     return linkText;
   }
 

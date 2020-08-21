@@ -4,6 +4,8 @@ package org.jetbrains.plugins.github.pullrequest
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.beans.newMetric
 import com.intellij.internal.statistic.eventLog.*
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.PrimitiveEventField
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
 import com.intellij.openapi.components.service

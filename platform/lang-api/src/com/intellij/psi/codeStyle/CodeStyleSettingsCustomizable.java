@@ -360,14 +360,14 @@ public interface CodeStyleSettingsCustomizable {
   default void showCustomOption(@NotNull Class<? extends CustomCodeStyleSettings> settingsClass,
                                 @NonNls @NotNull String fieldName,
                                 @NlsContexts.Label @NotNull String title,
-                                @Nls @Nullable String groupName,
+                                @NlsContexts.Label @Nullable String groupName,
                                 Object... options) {
   }
 
   default void showCustomOption(@NotNull Class<? extends CustomCodeStyleSettings> settingsClass,
                                 @NonNls @NotNull String fieldName,
                                 @NlsContexts.Label @NotNull String title,
-                                @Nls @Nullable String groupName,
+                                @NlsContexts.Label @Nullable String groupName,
                                 @Nullable OptionAnchor anchor,
                                 @NonNls @Nullable String anchorFieldName,
                                 Object... options) {
@@ -382,6 +382,6 @@ public interface CodeStyleSettingsCustomizable {
    * @param fieldName The field name of the option to move (as defined in {@code CommonCodeStyleSettings} class).
    * @param newGroup  The new group name (the group may be one of existing ones). A custom group name can be used if supported by consumer.
    */
-  default void moveStandardOption(@NonNls @NotNull String fieldName, @Nls @NotNull String newGroup) {
+  default void moveStandardOption(@NonNls @NotNull String fieldName, @NlsContexts.Label @NotNull String newGroup) {
   }
 }

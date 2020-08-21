@@ -74,8 +74,7 @@ class ClassPatternsPanel extends JPanel {
       .setRemoveActionUpdater(e -> myTable.getSelectedRow() >= 0);
     add(SeparatorFactory.createSeparator(JavaBundle.message("class.patterns.separator.mark.code.as.entry.point.if.qualified.name.matches"), null), BorderLayout.NORTH);
     add(toolbarDecorator.createPanel(), BorderLayout.CENTER);
-    add(new MultiLineLabel("Leave method blank to represent constructors\n" +
-                           "Any * will match against one or more characters in the qualified name (including dots)"), BorderLayout.SOUTH);
+    add(new MultiLineLabel(JavaBundle.message("label.class.pattern.syntax.explanation")), BorderLayout.SOUTH);
     setPreferredSize(new JBDimension(-1, 250));
   }
 

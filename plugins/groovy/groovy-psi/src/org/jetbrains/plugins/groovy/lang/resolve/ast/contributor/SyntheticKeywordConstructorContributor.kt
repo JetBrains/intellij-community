@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.lang.resolve.ast.contributor
 import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiKeyword.SUPER
 import com.intellij.psi.ResolveState
 import com.intellij.psi.scope.ElementClassHint
 import com.intellij.psi.scope.PsiScopeProcessor
@@ -17,17 +18,18 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR
 import org.jetbrains.plugins.groovy.lang.resolve.ClosureMemberContributor
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
+import org.jetbrains.plugins.groovy.lang.resolve.ast.TupleConstructorAttributes
 
 class SyntheticKeywordConstructorContributor : ClosureMemberContributor() {
 
   override fun processMembers(closure: GrClosableBlock, processor: PsiScopeProcessor, place: PsiElement, state: ResolveState) {
     if (!ResolveUtil.shouldProcessMethods(processor.getHint(ElementClassHint.KEY))) return
     val nameHint = ResolveUtil.getNameHint(processor)
-    if (nameHint != null && nameHint != "super") return
+    if (nameHint != null && nameHint != SUPER) return
 
     if (closure != place.parentOfType<GrClosableBlock>()) return
     val anno = closure.parentOfType<PsiAnnotation>()?.takeIf { it.qualifiedName == GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR } ?: return
-    if (GrAnnotationUtil.inferClosureAttribute(anno, "pre") != closure) return
+    if (GrAnnotationUtil.inferClosureAttribute(anno, TupleConstructorAttributes.PRE) != closure) return
 
 
     val syntheticMethods = createSyntheticConstructors(closure)
@@ -46,12 +48,12 @@ class SyntheticKeywordConstructorContributor : ClosureMemberContributor() {
     if (superClass != null) {
       val constructors = superClass.constructors
       if (constructors.isEmpty()) {
-        val method = SyntheticKeywordConstructor(outerClass, superClass, "super")
+        val method = SyntheticKeywordConstructor(outerClass, superClass, SUPER)
         methods.add(method)
       }
       else {
         for (constructor in constructors) {
-          val method = SyntheticKeywordConstructor(outerClass, superClass, "super")
+          val method = SyntheticKeywordConstructor(outerClass, superClass, SUPER)
           for (param in constructor.parameterList.parameters) {
             method.addParameter(param.name, param.type)
           }
@@ -73,7 +75,7 @@ class SyntheticKeywordConstructorContributor : ClosureMemberContributor() {
   }
 
   companion object {
-    private fun String?.isReserved(): Boolean = this == "super"
+    private fun String?.isReserved(): Boolean = this == SUPER
 
     @JvmStatic
     fun isSyntheticConstructorCall(call: GrMethodCall?): Boolean =

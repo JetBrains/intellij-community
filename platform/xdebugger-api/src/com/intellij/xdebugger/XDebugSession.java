@@ -10,6 +10,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.frame.XExecutionStack;
@@ -155,6 +156,7 @@ public interface XDebugSession extends AbstractDebuggerSession {
   void reportMessage(@NotNull String message, @NotNull MessageType type, @Nullable HyperlinkListener listener);
 
   @NotNull
+  @NlsContexts.TabTitle
   String getSessionName();
 
   @NotNull

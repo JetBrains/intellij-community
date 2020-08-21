@@ -423,7 +423,7 @@
                      groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
                      implementationClass="com.intellij.xml.util.CheckValidXmlInScriptBodyInspection"/>
     <localInspection language="XML" shortName="RequiredAttributes" enabledByDefault="true" level="WARNING"
-                     bundle="messages.InspectionsBundle" key="inspection.required.attributes.display.name"
+                     bundle="messages.XmlBundle" key="inspection.required.attributes.display.name"
                      groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
                      implementationClass="com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection"/>
     <localInspection language="HTML" shortName="HtmlExtraClosingTag" enabledByDefault="true" level="WARNING"

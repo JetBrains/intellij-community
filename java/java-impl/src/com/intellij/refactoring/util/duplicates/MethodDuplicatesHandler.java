@@ -299,7 +299,7 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
                                 new ArrayList<>());
   }
 
-  private static @Nls @NotNull String getStatusMessage(final int duplicatesNo) {
+  private static @NlsContexts.StatusBarText @NotNull String getStatusMessage(final int duplicatesNo) {
     return JavaRefactoringBundle.message("method.duplicates.found.message", duplicatesNo);
   }
 

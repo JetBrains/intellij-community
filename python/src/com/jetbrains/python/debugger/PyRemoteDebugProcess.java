@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xdebugger.XDebugSession;
+import com.jetbrains.python.PyBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,12 +47,12 @@ public class PyRemoteDebugProcess extends PyDebugProcess {
 
   @Override
   protected String getConnectionMessage() {
-    return "Waiting for process connection...";
+    return PyBundle.message("debugger.remote.waiting.for.process.connection");
   }
 
   @Override
   protected String getConnectionTitle() {
-    return "Waiting for connection";
+    return PyBundle.message("debugger.remote.waiting.for.connection");
   }
 
   @Override

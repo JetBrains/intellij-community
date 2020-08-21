@@ -232,7 +232,7 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
         }
       }
 
-      private void register(PsiMethodCallExpression call, String explanation, LocalQuickFix... additionalFixes) {
+      private void register(PsiMethodCallExpression call, @Nls String explanation, LocalQuickFix... additionalFixes) {
         String methodName = Objects.requireNonNull(call.getMethodExpression().getReferenceName());
         String message = JavaBundle.message("inspection.redundant.stream.optional.call.message", methodName);
         if (explanation != null) {

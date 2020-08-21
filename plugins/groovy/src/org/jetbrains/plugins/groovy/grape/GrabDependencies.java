@@ -29,7 +29,10 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -164,8 +167,8 @@ public class GrabDependencies implements IntentionAction {
 
     Map<String, String> queries = prepareQueries(file);
 
-    final Map<String, GeneralCommandLine> lines = new HashMap<>();
-    for (String grabText : queries.keySet()) {
+    final Map<@NlsSafe String, GeneralCommandLine> lines = new HashMap<>();
+    for (@NlsSafe String grabText : queries.keySet()) {
       final JavaParameters javaParameters = GroovyScriptRunConfiguration.createJavaParametersWithSdk(module);
       //debug
       //javaParameters.getVMParametersList().add("-Xdebug");
@@ -189,31 +192,35 @@ public class GrabDependencies implements IntentionAction {
     ProgressManager.getInstance().run(new Task.Backgroundable(project, GroovyBundle.message("grab.progress.title")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        int jarCount = 0;
-        String messages = "";
+        int totalJarCount = 0;
+        HtmlBuilder messages = new HtmlBuilder();
 
-        for (Map.Entry<String, GeneralCommandLine> entry : lines.entrySet()) {
+        for (Map.Entry<@NlsSafe String, GeneralCommandLine> entry : lines.entrySet()) {
           String grabText = entry.getKey();
           indicator.setText2(grabText);
           try {
             final GrapeProcessHandler handler = new GrapeProcessHandler(entry.getValue(), module);
             handler.startNotify();
             handler.waitFor();
-            jarCount += handler.jarCount;
-            messages += "<b>" + grabText + "</b>: " + handler.messages + "<p>";
+            int jarCount = handler.jarCount;
+            totalJarCount += jarCount;
+            messages.append(HtmlChunk.tag("p").children(
+              HtmlChunk.raw(GroovyBundle.message("grab.jar.count", grabText, jarCount)),
+              handler.messages
+            ));
           }
           catch (ExecutionException e) {
             LOG.error(e);
           }
         }
 
-        final String title = GroovyBundle.message("grab.result.title", jarCount);
-        NOTIFICATION_GROUP.createNotification(title, messages, NotificationType.INFORMATION, null).notify(project);
+        final String title = GroovyBundle.message("grab.result.title", totalJarCount);
+        NOTIFICATION_GROUP.createNotification(title, messages.toString(), NotificationType.INFORMATION, null).notify(project);
       }
     });
   }
 
-  static Map<String, String> prepareQueries(PsiFile file) {
+  static Map<@NlsSafe String, String> prepareQueries(PsiFile file) {
     final Set<GrAnnotation> grabs = new LinkedHashSet<>();
     final Set<GrAnnotation> excludes = new THashSet<>();
     final Set<GrAnnotation> resolvers = new THashSet<>();
@@ -233,7 +240,7 @@ public class GrabDependencies implements IntentionAction {
 
     Function<GrAnnotation, String> mapper = grAnnotation -> grAnnotation.getText();
     String common = StringUtil.join(excludes, mapper, " ") + " " + StringUtil.join(resolvers, mapper, " ");
-    LinkedHashMap<String, String> result = new LinkedHashMap<>();
+    LinkedHashMap<@NlsSafe String, String> result = new LinkedHashMap<>();
     for (GrAnnotation grab : grabs) {
       String grabText = grab.getText();
       result.put(grabText, (grabText + " " + common).trim());
@@ -247,8 +254,8 @@ public class GrabDependencies implements IntentionAction {
   }
 
   private static class GrapeProcessHandler extends OSProcessHandler {
-    private final StringBuilder myStdOut = new StringBuilder();
-    private final StringBuilder myStdErr = new StringBuilder();
+    private final @NlsSafe StringBuilder myStdOut = new StringBuilder();
+    private final @NlsSafe StringBuilder myStdErr = new StringBuilder();
     private final Module myModule;
 
     GrapeProcessHandler(GeneralCommandLine commandLine, Module module) throws ExecutionException {
@@ -303,7 +310,7 @@ public class GrabDependencies implements IntentionAction {
     }
 
     int jarCount;
-    String messages = "";
+    HtmlChunk messages = HtmlChunk.empty();
 
     @Override
     protected void notifyProcessTerminated(int exitCode) {
@@ -325,12 +332,11 @@ public class GrabDependencies implements IntentionAction {
         }
         WriteAction.runAndWait(() -> {
           jarCount = jars.size();
-          messages = jarCount + " jar";
-          if (jarCount != 1) {
-            messages += "s";
-          }
           if (jarCount == 0) {
-            messages += "<br>" + myStdOut.toString().replaceAll("\n", "<br>") + "<p>" + myStdErr.toString().replaceAll("\n", "<br>");
+            messages = new HtmlBuilder()
+              .append(processOutputChunk(myStdOut.toString()))
+              .append(processOutputChunk(myStdErr.toString()))
+              .toFragment();
           }
           if (!jars.isEmpty()) {
             addGrapeDependencies(jars);
@@ -341,5 +347,16 @@ public class GrabDependencies implements IntentionAction {
         super.notifyProcessTerminated(exitCode);
       }
     }
+  }
+
+  private static @NotNull HtmlChunk processOutputChunk(@NlsSafe @NotNull String string) {
+    if (string.isEmpty()) {
+      return HtmlChunk.empty();
+    }
+    @NlsSafe String[] lines = string.split("\n");
+    return new HtmlBuilder().appendWithSeparators(
+      HtmlChunk.br(),
+      ContainerUtil.map(lines, line -> HtmlChunk.text(line))
+    ).wrapWith("p");
   }
 }

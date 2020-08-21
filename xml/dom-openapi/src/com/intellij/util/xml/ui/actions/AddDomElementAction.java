@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.ui.CommonActionsPanel;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ReflectionUtil;
@@ -22,7 +23,7 @@ import java.util.List;
 
 public abstract class AddDomElementAction extends AnAction {
  public AddDomElementAction() {
-    super(XmlDomBundle.messagePointer("action.add"), IconUtil.getAddIcon());
+    super(XmlDomBundle.messagePointer("dom.action.add"), IconUtil.getAddIcon());
   }
 
   @Override
@@ -73,6 +74,7 @@ public abstract class AddDomElementAction extends AnAction {
     }
   }
 
+  @NlsActions.ActionText
   protected String getActionText(final AnActionEvent e) {
     return e.getPresentation().getText();
   }
@@ -111,7 +113,7 @@ public abstract class AddDomElementAction extends AnAction {
           icon = ElementPresentationManager.getIconForClass(rawType);
           //          }
         }
-        actions.add(createAddingAction(e, XmlDomBundle.message("action.add") + " " + name, icon, type, description));
+        actions.add(createAddingAction(e, XmlDomBundle.message("dom.action.add") + " " + name, icon, type, description));
       }
     }
     if (actions.size() > 1 && showAsPopup()) {
@@ -153,7 +155,7 @@ public abstract class AddDomElementAction extends AnAction {
     protected final ActionGroup myGroup;
 
     protected ShowPopupAction(ActionGroup group) {
-      super(XmlDomBundle.message("action.add"), null, IconUtil.getAddIcon());
+      super(XmlDomBundle.message("dom.action.add"), null, IconUtil.getAddIcon());
       myGroup = group;
       setShortcutSet(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.ADD));
     }

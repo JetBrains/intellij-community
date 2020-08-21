@@ -8,6 +8,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.ui.OnePixelDivider;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.TabTitle;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
@@ -166,22 +167,22 @@ public class JavaDocFormattingPanel extends OptionTreeWithPreviewPanel {
     return JavaLanguage.INSTANCE;
   }
 
-  @Nls
+  @NlsContexts.Label
   public static String getOtherGroup() {
     return JavaBundle.message("group.javadoc.other");
   }
 
-  @Nls
+  @NlsContexts.Label
   public static String getInvalidTagsGroup() {
     return JavaBundle.message("group.javadoc.invalid.tags");
   }
 
-  @Nls
+  @NlsContexts.Label
   public static String getBlankLinesGroup() {
     return JavaBundle.message("group.javadoc.blank.lines");
   }
 
-  @Nls
+  @NlsContexts.Label
   public static String getAlignmentGroup() {
     return JavaBundle.message("group.javadoc.alignment");
   }

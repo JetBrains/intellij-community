@@ -165,7 +165,7 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
     @NotNull
     @Override
     public String getUnresolvedMessagePattern() {
-      return DevKitBundle.message("plugin.xml.convert.property.bundle");
+      return DevKitBundle.message("plugin.xml.convert.property.bundle.cannot.resolve");
     }
   }
 }

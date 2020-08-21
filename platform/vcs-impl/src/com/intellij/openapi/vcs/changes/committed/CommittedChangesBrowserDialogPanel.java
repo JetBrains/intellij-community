@@ -112,8 +112,8 @@ public class CommittedChangesBrowserDialogPanel extends JPanel {
     if (tableModel instanceof CommittedChangesNavigation) {
       final CommittedChangesNavigation navigation = (CommittedChangesNavigation) tableModel;
 
-      final JButton backButton = new JButton("< Older");
-      final JButton forwardButton = new JButton("Newer >");
+      final JButton backButton = new JButton(VcsBundle.message("changes.button.older"));
+      final JButton forwardButton = new JButton(VcsBundle.message("changes.button.newer"));
 
       backButton.addActionListener(new ActionListener() {
         @Override

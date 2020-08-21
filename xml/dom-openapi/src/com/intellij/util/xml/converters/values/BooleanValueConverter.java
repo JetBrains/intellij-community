@@ -90,6 +90,6 @@ public class BooleanValueConverter extends ResolvingConverter<String> {
 
   @Override
   public String getErrorMessage(@Nullable final String s, final ConvertContext context) {
-    return XmlDomBundle.message("value.converter.format.exception", s, BOOLEAN);
+    return XmlDomBundle.message("dom.converter.format.exception", s, BOOLEAN);
   }
 }

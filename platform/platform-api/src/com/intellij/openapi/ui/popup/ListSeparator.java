@@ -21,7 +21,7 @@ import javax.swing.*;
 
 public class ListSeparator {
 
-  private final String myText;
+  private final @Separator String myText;
   private final Icon myIcon;
 
   public ListSeparator() {
@@ -37,7 +37,7 @@ public class ListSeparator {
     myIcon = icon;
   }
 
-  public String getText() {
+  public @Separator String getText() {
     return myText;
   }
 

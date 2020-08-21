@@ -20,6 +20,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.ex.*
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
@@ -227,7 +228,7 @@ object LocalTrackerDiffUtil {
     override fun getText(changes: List<LocalTrackerChange>): String {
       if (changes.isNotEmpty() && changes.all { !it.isFromActiveChangelist }) {
         val shortChangeListName = StringUtil.trimMiddle(provider.localRequest.changelistName, 40)
-        return String.format("Move to '%s' Changelist", StringUtil.escapeMnemonics(shortChangeListName))
+        return VcsBundle.message("changes.move.to.changelist", StringUtil.escapeMnemonics(shortChangeListName))
       }
       else {
         return ActionsBundle.message("action.ChangesView.Move.text")
@@ -260,7 +261,8 @@ object LocalTrackerDiffUtil {
 
     override fun getText(changes: List<LocalTrackerChange>): String {
       val hasExcluded = changes.any { it.isExcludedFromCommit }
-      return if (changes.isNotEmpty() && !hasExcluded) "Exclude Lines from Commit" else "Include Lines into Commit"
+      return if (changes.isNotEmpty() && !hasExcluded) VcsBundle.message("changes.exclude.lines.from.commit")
+      else VcsBundle.message("changes.include.lines.into.commit")
     }
 
     override fun doPerform(e: AnActionEvent,

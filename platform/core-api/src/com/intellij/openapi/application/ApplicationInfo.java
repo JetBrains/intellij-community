@@ -2,6 +2,7 @@
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.BuildNumber;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -49,7 +50,7 @@ public abstract class ApplicationInfo {
    * @return full name of the product vendor, e.g. 'JetBrains s.r.o.' for JetBrains products
    * @see #getShortCompanyName()
    */
-  public abstract String getCompanyName();
+  public abstract @NlsSafe String getCompanyName();
 
   /**
    * Use this method to refer to the company in a less formal way, e.g. in UI messages or directory names.
@@ -57,7 +58,7 @@ public abstract class ApplicationInfo {
    * @return shortened name of the product vendor without 'Inc.' or similar suffixes, e.g. 'JetBrains' for JetBrains products
    * @see #getCompanyName()
    */
-  public abstract String getShortCompanyName();
+  public abstract @NlsSafe String getShortCompanyName();
 
   public abstract String getCompanyURL();
 
@@ -71,9 +72,9 @@ public abstract class ApplicationInfo {
 
   public abstract boolean hasContextHelp();
 
-  public abstract @NotNull String getFullVersion();
+  public abstract @NlsSafe @NotNull String getFullVersion();
 
-  public abstract @NotNull String getStrictVersion();
+  public abstract @NlsSafe @NotNull String getStrictVersion();
 
   public static boolean helpAvailable() {
     return ApplicationManager.getApplication() != null && getInstance() != null && getInstance().hasHelp();

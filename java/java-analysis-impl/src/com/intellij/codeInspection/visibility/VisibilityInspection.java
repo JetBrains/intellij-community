@@ -241,21 +241,21 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     final PsiElement nameIdentifier = element != null ? IdentifierUtil.getNameIdentifier(element) : null;
     if (nameIdentifier != null) {
       final String message;
-      String quickFixName = "Make " + ElementDescriptionUtil.getElementDescription(element, UsageViewTypeLocation.INSTANCE) + " ";
+      String targetVisibility;
       if (access.equals(PsiModifier.PRIVATE)) {
         message = getCanBePrivate();
-        quickFixName += VisibilityUtil.toPresentableText(PsiModifier.PRIVATE);
+        targetVisibility = VisibilityUtil.toPresentableText(PsiModifier.PRIVATE);
+      }
+      else if (access.equals(PsiModifier.PACKAGE_LOCAL)) {
+        message = getCanBePackageLocal();
+        targetVisibility = VisibilityUtil.toPresentableText(PsiModifier.PACKAGE_LOCAL);
       }
       else {
-        if (access.equals(PsiModifier.PACKAGE_LOCAL)) {
-          message = getCanBePackageLocal();
-          quickFixName += VisibilityUtil.toPresentableText(PsiModifier.PACKAGE_LOCAL);
-        }
-        else {
-          message = getCanBeProtected();
-          quickFixName += VisibilityUtil.toPresentableText(PsiModifier.PROTECTED);
-        }
+        message = getCanBeProtected();
+        targetVisibility = VisibilityUtil.toPresentableText(PsiModifier.PROTECTED);
       }
+      String quickFixName = JavaAnalysisBundle.message(
+        "change.visibility.level", ElementDescriptionUtil.getElementDescription(element, UsageViewTypeLocation.INSTANCE), targetVisibility);
       return new ProblemDescriptor[]{manager.createProblemDescriptor(nameIdentifier,
                                                                      message,
                                                                      new AcceptSuggestedAccess(globalContext.getRefManager(), access, quickFixName),

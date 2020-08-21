@@ -449,7 +449,7 @@ public final class DvcsUtil {
     boolean isLimited = limit >= 2 && limit < size;
     int listCount = (isLimited ? limit : size) - 1;
 
-    StringBuilder sb = new StringBuilder();
+    @Nls StringBuilder sb = new StringBuilder();
     for (int i = 0; i < listCount; i++) {
       if (i != 0) sb.append(DvcsBundle.message("sequence.concatenation.separator"));
       sb.append(strings.get(i));
@@ -461,6 +461,6 @@ public final class DvcsUtil {
     else {
       sb.append(DvcsBundle.message("sequence.concatenation.tail", strings.get(size - 1)));
     }
-    return sb.toString(); //NON-NLS
+    return sb.toString();
   }
 }

@@ -49,7 +49,7 @@ class PySetNextStatementAction : XDebuggerActionBase(true) {
                 ApplicationManager.getApplication().invokeLater(Runnable {
                   if (!editor.isDisposed) {
                     editor.caretModel.moveToOffset(position.offset)
-                    HintManager.getInstance().showErrorHint(editor, response.second)
+                    HintManager.getInstance().showErrorHint(editor, response.second) // NON-NLS
                   }
                 }, ModalityState.defaultModalityState())
               }

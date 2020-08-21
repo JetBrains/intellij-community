@@ -16,6 +16,7 @@
 package com.intellij.packaging.ui;
 
 import com.intellij.openapi.options.UnnamedConfigurable;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class ArtifactPropertiesEditor implements UnnamedConfigurable {
@@ -23,7 +24,7 @@ public abstract class ArtifactPropertiesEditor implements UnnamedConfigurable {
   public static final String POST_PROCESSING_TAB = "Post-processing";
   public static final String PRE_PROCESSING_TAB = "Pre-processing";
 
-  public abstract String getTabName();
+  public abstract @Nls String getTabName();
 
   @Override
   public abstract void apply();

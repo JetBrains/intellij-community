@@ -11,6 +11,7 @@ import com.intellij.openapi.fileChooser.PathChooserDialog;
 import com.intellij.openapi.fileChooser.impl.FileChooserFactoryImpl;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
@@ -191,7 +192,7 @@ class ImportOldConfigsPanel extends JDialog {
     dispose();
   }
 
-  private void showError(String message) {
+  private void showError(@NlsContexts.DialogMessage String message) {
     String title = ApplicationBundle.message("title.installation.home.required");
     JOptionPane.showMessageDialog(this, message, title, JOptionPane.ERROR_MESSAGE);
   }

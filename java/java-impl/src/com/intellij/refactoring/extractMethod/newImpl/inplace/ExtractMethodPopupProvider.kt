@@ -2,6 +2,7 @@
 package com.intellij.refactoring.extractMethod.newImpl.inplace
 
 import com.intellij.java.refactoring.JavaRefactoringBundle
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.layout.*
 
@@ -26,11 +27,11 @@ class ExtractMethodPopupProvider(showStatic: Boolean, isStatic: Boolean, isAnnot
     if (showStatic) row { makeStaticCheckBox() }
     row {
       link(JavaRefactoringBundle.message("extract.method.link.label.go.to.method"), null) {}
-      comment("Ctrl+B")
+      comment(KeymapUtil.getFirstKeyboardShortcutText("GotoDeclaration"))
     }
     row {
       link(JavaRefactoringBundle.message("extract.method.link.label.show.dialog"), null) {}
-      comment("Ctrl+Alt+M")
+      comment(KeymapUtil.getFirstKeyboardShortcutText("ExtractMethod"))
     }
   }
 }

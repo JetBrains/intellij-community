@@ -40,6 +40,7 @@ class TabDescriptor(val component: JComponent, private val displayNamePointer: S
 }
 
 class TabGroupId(@NonNls val id: String, private val displayNamePointer: Supplier<@TabTitle String>) {
+  @get:TabTitle
   val displayName: @TabTitle String
     get() = displayNamePointer.get()
 

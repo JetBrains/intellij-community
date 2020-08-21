@@ -6,6 +6,7 @@ import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,8 +51,7 @@ public interface FileEditor extends UserDataHolder, Disposable {
    * and "Text". So "GUI Designer" can be a name of one editor and "Text"
    * can be a name of other editor. The method should never return {@code null}.
    */
-  @NonNls @NotNull
-  String getName();
+  @Nls(capitalization = Nls.Capitalization.Title) @NotNull String getName();
 
   /**
    * @return editor's internal state. Method should never return {@code null}.

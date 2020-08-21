@@ -5,6 +5,7 @@ import com.intellij.ide.TypePresentationService;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.Function;
@@ -130,6 +131,7 @@ public abstract class ElementPresentationManager {
     return ourNameValueMethods.get(element.getClass()).map(method -> DomReflectionUtil.invokeMethod(method, element)).orElse(null);
   }
 
+  @NlsSafe
   public static String getTypeNameForObject(Object o) {
     final Object firstImpl = ModelMergerUtil.getFirstImplementation(o);
     o = firstImpl != null ? firstImpl : o;

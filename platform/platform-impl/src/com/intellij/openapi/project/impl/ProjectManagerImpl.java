@@ -29,10 +29,7 @@ import com.intellij.openapi.project.*;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.ShutDownTracker;
-import com.intellij.openapi.util.UserDataHolderEx;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.ZipHandler;
 import com.intellij.serviceContainer.ComponentManagerImpl;
@@ -536,7 +533,7 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
       return true;
     }
 
-    StringBuilder message = new StringBuilder();
+    @NlsContexts.DialogMessage StringBuilder message = new StringBuilder();
     message.append(String.format("%s was unable to save some project files,\nare you sure you want to close this project anyway?",
                                  ApplicationNamesInfo.getInstance().getProductName()));
 

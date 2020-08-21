@@ -7,13 +7,17 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import git4idea.config.GitExecutableProblemsNotifier.getPrettyErrorMessage
 import git4idea.i18n.GitBundle
+import org.jetbrains.annotations.NonNls
 import java.io.File
 
 class MacExecutableProblemHandler(val project: Project) : GitExecutableProblemHandler {
   companion object {
     val LOG = logger<MacExecutableProblemHandler>()
+
+    private const val XCODE_LICENSE_ERROR: @NonNls String = "Agreeing to the Xcode/iOS license"
+    private const val XCODE_DEVELOPER_PART_ERROR: @NonNls String = "invalid active developer path"
+    private const val XCODE_XCRUN: @NonNls String = "xcrun"
   }
 
   private val tempPath = FileUtil.createTempDirectory("git-install", null)
@@ -88,7 +92,7 @@ class MacExecutableProblemHandler(val project: Project) : GitExecutableProblemHa
 
   private fun runCommand(commandLine: GeneralCommandLine, sudo: Boolean, onError: () -> Unit): Boolean {
     try {
-      val cmd = if (sudo) ExecUtil.sudoCommand(commandLine, "Install Git") else commandLine
+      val cmd = if (sudo) ExecUtil.sudoCommand(commandLine, GitBundle.message("title.sudo.command.install.git")) else commandLine
       val output = ExecUtil.execAndGetOutput(cmd)
       if (output.checkSuccess(LOG)) {
         return true
@@ -131,13 +135,13 @@ class MacExecutableProblemHandler(val project: Project) : GitExecutableProblemHa
    * Check if validation failed because the XCode license was not accepted yet
    */
   private fun isXcodeLicenseError(exception: Throwable): Boolean =
-    isXcodeError(exception) { it.contains("Agreeing to the Xcode/iOS license") }
+    isXcodeError(exception) { it.contains(XCODE_LICENSE_ERROR) }
 
   /**
    * Check if validation failed because the XCode command line tools were not found
    */
   private fun isInvalidActiveDeveloperPath(exception: Throwable): Boolean =
-    isXcodeError(exception) { it.contains("invalid active developer path") && it.contains("xcrun") }
+    isXcodeError(exception) { it.contains(XCODE_DEVELOPER_PART_ERROR) && it.contains(XCODE_XCRUN) }
 
   private fun isXcodeError(exception: Throwable, messageIndicator: (String) -> Boolean): Boolean {
     val message = if (exception is GitVersionIdentificationException) {

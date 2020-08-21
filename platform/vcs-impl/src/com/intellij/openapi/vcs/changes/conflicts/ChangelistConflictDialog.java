@@ -4,12 +4,10 @@ package com.intellij.openapi.vcs.changes.conflicts;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.readOnlyHandler.FileListRenderer;
-import com.intellij.openapi.vcs.readOnlyHandler.ReadOnlyStatusDialog;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionListModel;
 import org.jetbrains.annotations.NotNull;
@@ -40,9 +38,14 @@ public class ChangelistConflictDialog extends DialogWrapper {
 
     setTitle(VcsBundle.message("dialog.title.resolve.changelist.conflict"));
 
-    myListTitle.setText(StringUtil.capitalize(ReadOnlyStatusDialog.getTheseFilesMessage(conflicts))
-                        + " " + (conflicts.size() > 1 ? "do" : "does")
-                        + " not belong to the active changelist:");
+    boolean dirsOnly = conflicts.stream().allMatch(VirtualFile::isDirectory);
+    int size = conflicts.size();
+
+    String text = (dirsOnly
+                   ? VcsBundle.message("changes.directory.does.not.belong.to.the.active.changelist", size)
+                   : VcsBundle.message("changes.file.does.not.belong.to.the.active.changelist", size));
+
+    myListTitle.setText(text);
 
     myFileList.setCellRenderer(new FileListRenderer());
     myFileList.setModel(new CollectionListModel<>(conflicts));
@@ -94,7 +97,7 @@ public class ChangelistConflictDialog extends DialogWrapper {
 
   @Override
   protected Action @NotNull [] createLeftSideActions() {
-    return new Action[] { new AbstractAction("&Configure...") {
+    return new Action[] { new AbstractAction(VcsBundle.message("changes.configure")) {
       @Override
       public void actionPerformed(ActionEvent e) {
         ChangeListManagerImpl manager = ChangeListManagerImpl.getInstanceImpl(myProject);

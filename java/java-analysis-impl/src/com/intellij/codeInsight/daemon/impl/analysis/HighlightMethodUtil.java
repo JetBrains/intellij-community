@@ -65,7 +65,7 @@ public final class HighlightMethodUtil {
   private HighlightMethodUtil() { }
 
   @NotNull
-  static String createClashMethodMessage(@NotNull PsiMethod method1, @NotNull PsiMethod method2, boolean showContainingClasses) {
+  static @NlsContexts.DetailedDescription String createClashMethodMessage(@NotNull PsiMethod method1, @NotNull PsiMethod method2, boolean showContainingClasses) {
     if (showContainingClasses) {
       PsiClass class1 = method1.getContainingClass();
       PsiClass class2 = method2.getContainingClass();
@@ -184,7 +184,7 @@ public final class HighlightMethodUtil {
                                                          @NotNull PsiMethod method,
                                                          @NotNull MethodSignatureBackedByPsiMethod methodSignature,
                                                          @NotNull PsiType returnType,
-                                                         @NotNull String detailMessage,
+                                                         @NotNull @Nls String detailMessage,
                                                          @NotNull TextRange range,
                                                          @NotNull LanguageLevel languageLevel) {
     final PsiClass superContainingClass = superMethod.getContainingClass();
@@ -226,7 +226,7 @@ public final class HighlightMethodUtil {
                                                                    @NotNull PsiMethod superMethod,
                                                                    @NotNull PsiType substitutedSuperReturnType,
                                                                    @NotNull PsiType returnType,
-                                                                   @NotNull String detailMessage,
+                                                                   @NotNull @Nls String detailMessage,
                                                                    @NotNull TextRange textRange) {
     String description = MessageFormat.format("{0}; {1}", createClashMethodMessage(method, superMethod, true), detailMessage);
     HighlightInfo errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(

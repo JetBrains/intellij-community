@@ -28,6 +28,7 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.FontUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -90,6 +91,7 @@ public class RainbowDescriptionPanel extends JPanel implements OptionsPanelImpl.
   }
 
   @NotNull
+  @Contract(pure = true)
   private static String checkRightArrow(@NotNull String str) {
     return str.replaceAll("->", FontUtil.rightArrow(UIUtil.getLabelFont()));
   }

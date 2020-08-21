@@ -20,7 +20,7 @@ public interface IconWithToolTip extends Icon {
    */
   @NlsContexts.Tooltip @Nullable String getToolTip(boolean composite);
 
-  static IconWithToolTip create(Icon icon, Supplier<String> tooltip) {
+  static IconWithToolTip create(Icon icon, Supplier<@NlsContexts.Tooltip String> tooltip) {
     if (icon instanceof ScalableIcon) {
       return new ScalableIconWrapperWithToolTip((ScalableIcon)icon, tooltip);
     }

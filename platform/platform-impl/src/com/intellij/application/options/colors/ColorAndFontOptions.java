@@ -458,7 +458,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     return new ArrayList<>(extensions);
   }
 
-  public static String getFontConfigurableName() {
+  public static @NlsContexts.ConfigurableName String getFontConfigurableName() {
     return ApplicationBundle.message("title.colors.scheme.font");
   }
 

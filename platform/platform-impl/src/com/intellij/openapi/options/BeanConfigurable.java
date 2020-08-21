@@ -32,7 +32,7 @@ import java.util.function.Function;
  */
 public abstract class BeanConfigurable<T> implements UnnamedConfigurable, ConfigurableWithOptionDescriptors {
   private final T myInstance;
-  private String myTitle;
+  private @NlsContexts.BorderTitle String myTitle;
 
   private abstract static class BeanPropertyAccessor {
     abstract Object getBeanValue(Object instance);
@@ -174,14 +174,14 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
   }
 
   private static final class CheckboxField extends BeanField<JCheckBox> {
-    private final String myTitle;
+    private final @NlsContexts.Checkbox String myTitle;
 
-    private CheckboxField(final String fieldName, final String title) {
+    private CheckboxField(final String fieldName, final @NlsContexts.Checkbox String title) {
       super(new BeanFieldAccessor(fieldName, boolean.class));
       myTitle = title;
     }
 
-    private CheckboxField(BeanPropertyAccessor accessor, String title) {
+    private CheckboxField(BeanPropertyAccessor accessor, @NlsContexts.Checkbox String title) {
       super(accessor);
       myTitle = title;
     }
@@ -221,7 +221,7 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
     myInstance = beanInstance;
   }
 
-  protected BeanConfigurable(@NotNull T beanInstance, String title) {
+  protected BeanConfigurable(@NotNull T beanInstance, @NlsContexts.BorderTitle String title) {
     this(beanInstance);
     setTitle(title);
   }
@@ -231,7 +231,7 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
     return myTitle;
   }
 
-  protected void setTitle(String title) {
+  protected void setTitle(@NlsContexts.BorderTitle String title) {
     myTitle = title;
   }
 

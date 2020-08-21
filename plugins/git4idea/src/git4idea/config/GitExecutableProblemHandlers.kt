@@ -84,25 +84,25 @@ internal fun showUnsupportedVersionError(project: Project, version: GitVersion, 
   errorNotifier.showError(unsupportedVersionMessage(version), description, getLinkToConfigure(project))
 }
 
-internal fun unsupportedVersionMessage(version: GitVersion): String =
+internal fun unsupportedVersionMessage(version: GitVersion): @Nls String =
   GitBundle.message("git.executable.validation.error.version.title", version.presentation)
 
-internal fun unsupportedVersionDescription(): String =
+internal fun unsupportedVersionDescription(): @Nls String =
   GitBundle.message("git.executable.validation.error.version.message", GitVersion.MIN.presentation)
 
-internal fun unsupportedWslVersionDescription(): String =
+internal fun unsupportedWslVersionDescription(): @Nls String =
   GitBundle.message("git.executable.validation.error.wsl1.unsupported.message")
 
 internal fun getLinkToConfigure(project: Project): ErrorNotifier.FixOption = ErrorNotifier.FixOption.Configure(project)
 
 internal fun ProcessOutput.dumpToString() = "output: ${stdout}, error output: ${stderr}"
 
-internal fun getErrorTitle(text: String, description: String?) =
+internal fun getErrorTitle(text: @Nls String, description: @Nls String?): @Nls String =
   if (description == null) GitBundle.getString("git.executable.validation.error.start.title") else text
 
-internal fun getErrorMessage(text: String, description: String?) = description ?: text
+internal fun getErrorMessage(text: @Nls String, description: @Nls String?): @Nls String = description ?: text
 
-internal fun getHumanReadableErrorFor(exception: Throwable): String? {
+internal fun getHumanReadableErrorFor(exception: Throwable): @Nls String? {
   if (exception is GitNotInstalledException) {
     return null
   }

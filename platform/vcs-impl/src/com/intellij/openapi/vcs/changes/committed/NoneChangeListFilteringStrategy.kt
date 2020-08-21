@@ -6,7 +6,9 @@ import com.intellij.util.containers.ContainerUtil.newUnmodifiableList
 import javax.swing.JComponent
 import javax.swing.event.ChangeListener
 
-private val NONE_FILTER_KEY = CommittedChangesFilterKey("None", CommittedChangesFilterPriority.NONE)
+private const val id = "None" // NON-NLS
+
+private val NONE_FILTER_KEY = CommittedChangesFilterKey(id, CommittedChangesFilterPriority.NONE)
 
 object NoneChangeListFilteringStrategy : ChangeListFilteringStrategy {
   override fun getKey(): CommittedChangesFilterKey = NONE_FILTER_KEY
@@ -22,5 +24,5 @@ object NoneChangeListFilteringStrategy : ChangeListFilteringStrategy {
   override fun filterChangeLists(changeLists: List<CommittedChangeList>): List<CommittedChangeList> =
     newUnmodifiableList(changeLists)
 
-  override fun toString(): String = "None"
+  override fun toString(): String = id
 }

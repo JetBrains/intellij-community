@@ -35,7 +35,6 @@ import com.intellij.refactoring.listeners.RefactoringEventData
 import com.intellij.refactoring.listeners.RefactoringEventListener
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.util.IncorrectOperationException
-import org.jetbrains.annotations.Nls
 
 class MethodExtractor {
 

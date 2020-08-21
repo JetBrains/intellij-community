@@ -13,9 +13,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.uast.UExpression;
-import org.jetbrains.uast.UPolyadicExpression;
-import org.jetbrains.uast.UastContextKt;
+import org.jetbrains.uast.*;
 import org.jetbrains.uast.expressions.UInjectionHost;
 import org.jetbrains.uast.expressions.UStringConcatenationsFacade;
 import org.jetbrains.uast.generate.UastCodeGenerationPlugin;
@@ -105,10 +103,19 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix {
 
   @Nullable
   public static UPolyadicExpression getEnclosingLiteralConcatenation(final PsiElement psiElement) {
-    UPolyadicExpression uPolyadicExpression = UastContextKt.getUastParentOfType(psiElement, UPolyadicExpression.class);
-    UStringConcatenationsFacade concatenation = UStringConcatenationsFacade.createFromTopConcatenation(
-      uPolyadicExpression
-    );
+    UExpression topExpression = UastContextKt.getUastParentOfType(psiElement, UPolyadicExpression.class);
+    while (topExpression != null) {
+      UElement parent = topExpression.getUastParent();
+      if (parent instanceof UParenthesizedExpression || 
+          parent instanceof UIfExpression || 
+          parent instanceof UPolyadicExpression) {
+        topExpression = (UExpression)parent;
+      }
+      else {
+        break;
+      }
+    }
+    UStringConcatenationsFacade concatenation = UStringConcatenationsFacade.createFromTopConcatenation(topExpression);
     if (concatenation != null) {
       PartiallyKnownString pks = concatenation.asPartiallyKnownString();
       if (pks.getSegments().size() == 1) {

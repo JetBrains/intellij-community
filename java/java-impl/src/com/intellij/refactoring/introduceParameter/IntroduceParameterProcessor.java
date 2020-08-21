@@ -238,7 +238,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
 
     AnySameNameVariables anySameNameVariables = new AnySameNameVariables();
     myMethodToReplaceIn.accept(anySameNameVariables);
-    final Pair<PsiElement, String> conflictPair = anySameNameVariables.getConflict();
+    final Pair<PsiElement, @Nls String> conflictPair = anySameNameVariables.getConflict();
     if (conflictPair != null) {
       conflicts.putValue(conflictPair.first, conflictPair.second);
     }

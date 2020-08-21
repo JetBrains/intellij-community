@@ -5,6 +5,7 @@ import com.intellij.codeInspection.LocalInspectionToolSession
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.psi.PsiElementVisitor
 import com.jetbrains.python.PyNames
+import com.jetbrains.python.PyPsiBundle
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.types.PyClassType
@@ -57,7 +58,7 @@ class PyDunderSlotsInspection : PyInspection() {
 
       val classAttribute = pyClass.findClassAttribute(name, false, myTypeEvalContext)
       if (classAttribute != null && classAttribute.hasAssignedValue()) {
-        registerProblem(slot, "'$name' in __slots__ conflicts with class variable")
+        registerProblem(slot, PyPsiBundle.message("INSP.dunder.slots.name.in.slots.conflicts.with.class.variable", name))
       }
     }
 
@@ -71,7 +72,7 @@ class PyDunderSlotsInspection : PyInspection() {
 
       val qualifierType = myTypeEvalContext.getType(qualifier)
       if (qualifierType is PyClassType && !qualifierType.isAttributeWritable(targetName, myTypeEvalContext)) {
-        registerProblem(target, "'${qualifierType.name}' object attribute '$targetName' is read-only")
+        registerProblem(target, PyPsiBundle.message("INSP.dunder.slots.class.object.attribute.read.only", qualifierType.name, targetName))
       }
     }
   }

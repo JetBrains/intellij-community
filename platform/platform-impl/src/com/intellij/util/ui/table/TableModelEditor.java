@@ -4,6 +4,7 @@ package com.intellij.util.ui.table;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -209,7 +210,7 @@ public class TableModelEditor<T> extends CollectionModelEditor<T, CollectionItem
   }
 
   public abstract static class EditableColumnInfo<Item, Aspect> extends ColumnInfo<Item, Aspect> {
-    public EditableColumnInfo(@NotNull String name) {
+    public EditableColumnInfo(@NotNull @NlsContexts.ColumnName String name) {
       super(name);
     }
 

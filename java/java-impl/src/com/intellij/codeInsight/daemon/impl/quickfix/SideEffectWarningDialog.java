@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.PsiVariable;
 import com.intellij.ui.components.JBLabel;
@@ -26,8 +27,8 @@ import java.util.List;
  */
 public class SideEffectWarningDialog extends DialogWrapper {
   private final PsiVariable myVariable;
-  private final String myBeforeText;
-  private final String myAfterText;
+  private final @NlsSafe String myBeforeText;
+  private final @NlsSafe String myAfterText;
   private final boolean myCanCopeWithSideEffects;
   private AbstractAction myRemoveAllAction;
   private AbstractAction myCancelAllAction;

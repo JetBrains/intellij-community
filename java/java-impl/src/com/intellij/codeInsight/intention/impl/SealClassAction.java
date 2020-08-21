@@ -130,23 +130,24 @@ public class SealClassAction extends BaseElementAtCaretIntentionAction {
   }
 
   public static @Nullable String checkInheritor(@NotNull PsiJavaFile parentFile, @Nullable PsiJavaModule module, @NotNull PsiClass inheritor) {
+    @PropertyKey(resourceBundle = JavaBundle.BUNDLE)
+    String result = null;
     if (PsiUtil.isLocalOrAnonymousClass(inheritor)) {
-      return "intention.error.make.sealed.class.has.anonymous.or.local.inheritors";
+      result = "intention.error.make.sealed.class.has.anonymous.or.local.inheritors";
     }
-
-    if (module == null) {
+    else if (module == null) {
       PsiJavaFile file = tryCast(inheritor.getContainingFile(), PsiJavaFile.class);
-      if (file == null) return "intention.error.make.sealed.class.inheritors.not.in.java.file";
-      if (!parentFile.getPackageName().equals(file.getPackageName())) {
-        return "intention.error.make.sealed.class.different.packages";
+      if (file == null) {
+        result = "intention.error.make.sealed.class.inheritors.not.in.java.file";
+      }
+      else if (!parentFile.getPackageName().equals(file.getPackageName())) {
+        result = "intention.error.make.sealed.class.different.packages";
       }
     }
-    else {
-      if (JavaModuleGraphUtil.findDescriptorByElement(inheritor) != module) {
-        return "intention.error.make.sealed.class.different.modules";
-      }
+    else if (JavaModuleGraphUtil.findDescriptorByElement(inheritor) != module) {
+      result = "intention.error.make.sealed.class.different.modules";
     }
-    return null;
+    return result;
   }
 
   private static void showError(@NotNull Project project, Editor editor, @PropertyKey(resourceBundle = JavaBundle.BUNDLE) String message) {

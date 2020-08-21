@@ -8,6 +8,7 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBRadioButton;
@@ -68,7 +69,7 @@ public class PluginConflictDialog extends DialogWrapper {
     myContentPane.setPreferredSize(JBUI.size(WIDTH, (int)myContentPane.getMinimumSize().getHeight()));
   }
 
-  private static String getTopMessageText(@NotNull List<PluginId> conflictingPlugins, boolean isConflictWithPlatform) {
+  private static @NlsContexts.Label String getTopMessageText(@NotNull List<PluginId> conflictingPlugins, boolean isConflictWithPlatform) {
     final int pluginsNumber = conflictingPlugins.size();
     if (isConflictWithPlatform) {
       return DiagnosticBundle.message("error.dialog.conflict.plugin.header.platform", pluginsNumber);
@@ -229,7 +230,7 @@ public class PluginConflictDialog extends DialogWrapper {
     }
 
     @NotNull
-    private String getButtonText() {
+    private @NlsContexts.Button String getButtonText() {
       if (myIsConflictWithPlatform) {
         return DiagnosticBundle.message("error.dialog.disable.plugin.action.disableAndRestart");
       }

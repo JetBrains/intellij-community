@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.HintText;
 import com.intellij.openapi.util.Ref;
 import com.intellij.ui.*;
@@ -195,7 +196,7 @@ public final class HintUtil {
   }
 
   @NotNull
-  public static JLabel createAdComponent(final String bottomText, final Border border, @JdkConstants.HorizontalAlignment int alignment) {
+  public static JLabel createAdComponent(@NlsContexts.PopupAdvertisement String bottomText, final Border border, @JdkConstants.HorizontalAlignment int alignment) {
     JLabel label = new JLabel();
     label.setText(bottomText);
     label.setHorizontalAlignment(alignment);

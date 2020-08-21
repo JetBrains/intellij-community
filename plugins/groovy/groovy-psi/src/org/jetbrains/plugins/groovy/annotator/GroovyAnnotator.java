@@ -93,6 +93,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorReference;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.GrTupleConstructorUtils;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.InheritConstructorContributor;
+import org.jetbrains.plugins.groovy.lang.resolve.ast.TupleConstructorAttributes;
 import org.jetbrains.plugins.groovy.transformations.immutable.GrImmutableUtils;
 
 import java.util.*;
@@ -606,7 +607,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     if (containingClass == null) return;
     PsiAnnotation tupleConstructor = containingClass.getAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR);
     if (tupleConstructor == null) return;
-    if (!Boolean.FALSE.equals(GrAnnotationUtil.inferBooleanAttribute(tupleConstructor, "defaults"))) return;
+    if (!Boolean.FALSE.equals(GrAnnotationUtil.inferBooleanAttribute(tupleConstructor, TupleConstructorAttributes.DEFAULTS))) return;
     if (GrTupleConstructorUtils.isFieldAccepted(tupleConstructor, field)) {
       myHolder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("initializers.are.forbidden.with.defaults"))
         .range(initializer)
