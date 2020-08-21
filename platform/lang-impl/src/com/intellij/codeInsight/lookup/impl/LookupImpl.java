@@ -76,8 +76,6 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
-import static com.intellij.codeWithMe.ClientIdKt.isForeignClientOnServer;
-
 public class LookupImpl extends LightweightHint implements LookupEx, Disposable, LookupElementListPresenter {
   private static final Logger LOG = Logger.getInstance(LookupImpl.class);
 
@@ -747,8 +745,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     myEditor.getDocument().addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(@NotNull DocumentEvent e) {
-        // TODO[v.petrenko] remove this code-with-me code from here
-        if (myGuardedChanges == 0 && !myFinishing && !isForeignClientOnServer()) {  // temporary hack-fix of CWM-708
+        if (myGuardedChanges == 0 && !myFinishing) {
           hideLookup(false);
         }
       }
