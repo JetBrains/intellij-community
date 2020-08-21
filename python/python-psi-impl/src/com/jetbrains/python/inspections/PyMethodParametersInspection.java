@@ -154,7 +154,7 @@ public class PyMethodParametersInspection extends PyInspection {
               if (!expectedName.equals(pname) && (alternativeName == null || !alternativeName.equals(pname))) {
                 registerProblem(
                   PyUtil.sure(params[0].getNode()).getPsi(),
-                  PyPsiBundle.message("INSP.usually.named.$0", expectedName),
+                  PyPsiBundle.message("INSP.usually.named", expectedName),
                   new RenameParameterQuickFix(expectedName)
                 );
               }
@@ -163,7 +163,7 @@ public class PyMethodParametersInspection extends PyInspection {
               if (!CLS.equals(pname)) {
                 registerProblem(
                   PyUtil.sure(params[0].getNode()).getPsi(),
-                  PyPsiBundle.message("INSP.usually.named.$0", CLS),
+                  PyPsiBundle.message("INSP.usually.named", CLS),
                   new RenameParameterQuickFix(CLS)
                 );
               }

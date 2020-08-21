@@ -49,13 +49,13 @@ public class AddFunctionQuickFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getName() {
-    return PyPsiBundle.message("QFIX.NAME.add.function.$0.to.module.$1", myIdentifier, myModuleName);
+    return PyPsiBundle.message("QFIX.create.function.in.module", myIdentifier, myModuleName);
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return PyPsiBundle.message("QFIX.create.function.in.module");
+    return PyPsiBundle.message("QFIX.NAME.create.function.in.module");
   }
 
   @Override

@@ -61,7 +61,7 @@ public class PyGlobalUndefinedInspection extends PyInspection {
         final boolean noTopLevelDeclaration = elements.stream().noneMatch(PyUtil::isTopLevel);
 
         if (noTopLevelDeclaration) {
-          registerProblem(global, PyPsiBundle.message("INSP.NAME.global.$0.undefined", global.getName()));
+          registerProblem(global, PyPsiBundle.message("INSP.global.variable.undefined", global.getName()));
         }
       }
     }

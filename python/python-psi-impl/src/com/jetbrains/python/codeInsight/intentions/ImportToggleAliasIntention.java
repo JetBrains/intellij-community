@@ -84,10 +84,10 @@ public class ImportToggleAliasIntention extends PyBaseIntentionAction {
       if (myImportElement != null) {
         PyReferenceExpression refex = myImportElement.getImportReferenceExpression();
         if (refex != null) {
-          add_name = PyPsiBundle.message("INTN.add.alias.for.import.$0", refex.getText());
+          add_name = PyPsiBundle.message("INTN.add.import.alias", refex.getText());
         }
       }
-      return myAlias == null? add_name : PyPsiBundle.message("INTN.remove.alias.for.import.$0", myAlias);
+      return myAlias == null? add_name : PyPsiBundle.message("INTN.remove.import.alias", myAlias);
     }
   }
 
@@ -137,8 +137,9 @@ public class ImportToggleAliasIntention extends PyBaseIntentionAction {
       }
       else {
         // ask for and add alias
-        String alias = PythonUiService.getInstance().showInputDialog(project, PyPsiBundle.message("INTN.alias.for.$0.dialog.title", imported_name),
-                                                                     PyPsiBundle.message("INTN.add.alias.title"), "", new InputValidator() {
+        String alias = PythonUiService.getInstance().showInputDialog(project,
+                                                                     PyPsiBundle.message("INTN.add.import.alias.dialog.message", imported_name),
+                                                                     PyPsiBundle.message("INTN.add.import.alias.title"), "", new InputValidator() {
             @Override
             public boolean checkInput(String inputString) {
               return PyNames.isIdentifier(inputString);

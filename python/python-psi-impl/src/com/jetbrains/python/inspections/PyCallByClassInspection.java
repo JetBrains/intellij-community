@@ -87,7 +87,7 @@ public class PyCallByClassInspection extends PyInspection {
                         if (first_arg_class_type.isDefinition() && callableType.getModifier() != CLASSMETHOD) {
                           registerProblem(
                             first_arg,
-                            PyPsiBundle.message("INSP.instance.of.$0.excpected", qual_class.getQualifiedName())
+                            PyPsiBundle.message("INSP.different.class.call.instance.of.class.expected.not.class.itself", qual_class.getQualifiedName())
                           );
                         }
                         PyClass first_arg_class = first_arg_class_type.getPyClass();
@@ -112,7 +112,7 @@ public class PyCallByClassInspection extends PyInspection {
                           registerProblem(
                             first_arg,
                             PyPsiBundle.message(
-                              "INSP.passing.$0.instead.of.$1",
+                              "INSP.different.class.call.passing.class.instead.class",
                               first_arg_class.getQualifiedName(), qual_class.getQualifiedName()
                             )
                           );

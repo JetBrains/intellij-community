@@ -48,10 +48,10 @@ public class ImportFromToImportIntention extends PyBaseIntentionAction {
       String name = myModuleName != null ? myModuleName : "...";
       if (myRelativeLevel > 0) {
         String[] relative_names = getRelativeNames(false, this);
-        return PyPsiBundle.message("INTN.convert.to.from.$0.import.$1", relative_names[0], relative_names[1]);
+        return PyPsiBundle.message("INTN.convert.to.from.import", relative_names[0], relative_names[1]);
       }
       else {
-        return PyPsiBundle.message("INTN.convert.to.import.$0", name);
+        return PyPsiBundle.message("INTN.convert.to.plain.import", name);
       }
     }
 

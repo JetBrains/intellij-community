@@ -31,13 +31,13 @@ public class UnresolvedRefTrueFalseQuickFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getName() {
-    return PyPsiBundle.message("QFIX.unresolved.reference.replace.$0", newName);
+    return PyPsiBundle.message("QFIX.replace.with.true.or.false", newName);
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return PyPsiBundle.message("QFIX.replace.with.true.or.false");
+    return PyPsiBundle.message("QFIX.NAME.replace.with.true.or.false");
   }
 
   @Override

@@ -101,7 +101,7 @@ public class PyIntentionTest extends PyTestCase {
   }
 
   public void testRemoveLeadingF() {
-    doTest(PyPsiBundle.message("INTN.remove.leading.$0", "F"), LanguageLevel.PYTHON35);
+    doTest(PyPsiBundle.message("QFIX.remove.string.prefix", "F"), LanguageLevel.PYTHON35);
   }
 
   // PY-18972
@@ -136,15 +136,15 @@ public class PyIntentionTest extends PyTestCase {
   }
 
   public void testNegateComparison() {
-    doTest(PyPsiBundle.message("INTN.negate.$0.to.$1", "<=", ">"));
+    doTest(PyPsiBundle.message("INTN.negate.comparison", "<=", ">"));
   }
 
   public void testNegateComparison2() {
-    doTest(PyPsiBundle.message("INTN.negate.$0.to.$1", ">", "<="));
+    doTest(PyPsiBundle.message("INTN.negate.comparison", ">", "<="));
   }
 
   public void testFlipComparison() {
-    doTest(PyPsiBundle.message("INTN.flip.$0.to.$1", ">", "<"));
+    doTest(PyPsiBundle.message("INTN.flip.comparison.to.operator", ">", "<"));
   }
 
   public void testReplaceListComprehensionWithFor() {
@@ -815,7 +815,7 @@ public class PyIntentionTest extends PyTestCase {
         return "mc";
       }
     });
-    doMultiFileTest(PyPsiBundle.message("INTN.add.alias.for.import.$0", "MyClass"));
+    doMultiFileTest(PyPsiBundle.message("INTN.add.import.alias", "MyClass"));
   }
 
   private void doDocStubTest(@NotNull DocStringFormat format) {

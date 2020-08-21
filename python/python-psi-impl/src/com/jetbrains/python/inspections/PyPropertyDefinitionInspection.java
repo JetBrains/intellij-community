@@ -269,7 +269,7 @@ public class PyPropertyDefinitionInspection extends PyInspection {
       if (cls != null && cls.isSubclass("type", myTypeEvalContext)) return;
       if (parameters.length > 0 && !PyNames.CANONICAL_SELF.equals(parameters[0].getName())) {
         registerProblem(
-          parameters[0], PyPsiBundle.message("INSP.accessor.first.param.is.$0", PyNames.CANONICAL_SELF), ProblemHighlightType.WEAK_WARNING,
+          parameters[0], PyPsiBundle.message("INSP.property.cannot.be.deleted", PyNames.CANONICAL_SELF), ProblemHighlightType.WEAK_WARNING,
           null,
           new RenameParameterQuickFix(PyNames.CANONICAL_SELF));
       }

@@ -16,7 +16,6 @@
 package com.jetbrains.python.quickFixes;
 
 import com.intellij.testFramework.TestDataPath;
-import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
 import com.jetbrains.python.inspections.PyDictDuplicateKeysInspection;

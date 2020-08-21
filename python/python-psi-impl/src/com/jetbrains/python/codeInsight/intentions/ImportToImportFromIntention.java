@@ -193,7 +193,7 @@ public class ImportToImportFromIntention extends PyBaseIntentionAction {
           moduleName = PyPsiUtils.toPath(reference);
         }
       }
-      return PyPsiBundle.message("INTN.convert.to.from.$0.import.$1", getDots() + moduleName, "...");
+      return PyPsiBundle.message("INTN.convert.to.from.import", getDots() + moduleName, "...");
     }
 
     @NotNull
