@@ -58,6 +58,10 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
     return GROOVY_ALL_JAR_PATTERN.matcher(name).matches() && !name.contains("src") && !name.contains("doc");
   }
 
+  public static boolean isAtLeastGroovy25(@NotNull PsiElement element) {
+    return getInstance().isVersionAtLeast(element, GROOVY2_5);
+  }
+
   @Override
   @NlsSafe
   public @Nullable String getSDKVersionOrNull(@NlsSafe @NotNull String path) {
