@@ -82,8 +82,9 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_THROWABLE, "getMessage", "getLocalizedMessage").parameterCount(0),
     CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_THROWABLE, "toString").parameterCount(0)
   );
-  private static final CallMatcher STRING_BUILDER_TO_STRING = CallMatcher.instanceCall(
-    CommonClassNames.JAVA_LANG_STRING_BUILDER, "toString").parameterCount(0);
+  private static final CallMatcher STRING_BUILDER_TO_STRING = CallMatcher.anyOf(
+    CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_STRING_BUFFER, "toString").parameterCount(0),
+    CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_STRING_BUILDER, "toString").parameterCount(0));
   @RegExp private static final String DEFAULT_NON_NLS_LITERAL_PATTERN = "((?i)https?://.+)|\\w*(\\.\\w+)+|\\w*[$]\\w*|((?i)</?(html|b|i|body|br|li|ol|ul)>)*|&\\w+;|[A-Za-z][a-z0-9]*([A-Z]+[a-z0-9]*)+";
   private static final CallMatcher STRING_LENGTH =
     CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_STRING, "length").parameterCount(0);
