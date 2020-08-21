@@ -18,6 +18,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.util.RefactoringDescriptionLocation;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Pattern;
@@ -65,11 +67,16 @@ public final class SliceManager implements PersistentStateComponent<SliceManager
   public void slice(@NotNull PsiElement element, boolean dataFlowToThis, @NotNull SliceHandler handler) {
     String dialogTitle = getElementDescription((dataFlowToThis ? BACK_TOOLWINDOW_ID : FORTH_TOOLWINDOW_ID) + " ", element, null);
 
-    dialogTitle = Pattern.compile("(<style>.*</style>)|<[^<>]*>", Pattern.DOTALL).matcher(dialogTitle).replaceAll("");
+    dialogTitle = filterStyle(dialogTitle);
     SliceAnalysisParams params = handler.askForParams(element, myStoredSettings, StringUtil.unescapeXmlEntities(dialogTitle));
     if (params == null) return;
 
     createToolWindow(element, params);
+  }
+
+  @Contract(pure = true)
+  private String filterStyle(String dialogTitle) {
+    return Pattern.compile("(<style>.*</style>)|<[^<>]*>", Pattern.DOTALL).matcher(dialogTitle).replaceAll("");
   }
 
   /**
@@ -124,14 +131,14 @@ public final class SliceManager implements PersistentStateComponent<SliceManager
     toolWindow.activate(null);
   }
 
-  public static String getElementDescription(String prefix, PsiElement element, String suffix) {
+  public static @Nls String getElementDescription(@Nls String prefix, PsiElement element, @Nls String suffix) {
     SliceLanguageSupportProvider provider = LanguageSlicing.getProvider(element);
     if(provider != null){
       element = provider.getElementForDescription(element);
     }
     String desc = ElementDescriptionUtil.getElementDescription(element, RefactoringDescriptionLocation.WITHOUT_PARENT);
     return "<html><body>" +
-           (prefix == null ? "" : prefix) + StringUtil.first(desc, 100, true) + (suffix == null ? "" : suffix) +
+           (prefix == null ? "" : prefix) + StringUtil.first(desc, 100, true) + (suffix == null ? "" : " " + suffix) +
            "</body></html>";
   }
 
