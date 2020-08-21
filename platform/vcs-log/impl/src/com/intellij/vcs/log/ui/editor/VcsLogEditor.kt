@@ -54,7 +54,7 @@ class VcsLogEditor(private val project: Project, private val vcsLogFile: VcsLogF
 
   override fun getComponent(): JComponent = rootComponent
   override fun getPreferredFocusedComponent(): JComponent? = VcsLogContentUtil.getLogUis(component).firstOrNull()?.mainComponent
-  override fun getName(): String = "Vcs Log Editor"
+  override fun getName(): String = VcsLogBundle.message("vcs.log.editor.name")
   override fun getFile() = vcsLogFile
 }
 
