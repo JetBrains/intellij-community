@@ -11,6 +11,8 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.PsiFile;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
@@ -67,23 +69,20 @@ public class MavenAttachSourcesProvider implements AttachSourcesProvider {
         final ActionCallback resultWrapper = new ActionCallback();
         result.onSuccess(downloadResult -> {
           if (!downloadResult.unresolvedSources.isEmpty()) {
-            final StringBuilder message = new StringBuilder();
-
-            message.append("<html>Sources not found for:");
-
+            HtmlBuilder builder = new HtmlBuilder();
+            builder.append(MavenProjectBundle.message("sources.not.found.for"));
             int count = 0;
             for (MavenId each : downloadResult.unresolvedSources) {
               if (count++ > 5) {
-                message.append("<br>and more...");
+                builder.append(HtmlChunk.br()).append(MavenProjectBundle.message("and.more"));
                 break;
               }
-              message.append("<br>").append(each.getDisplayString());
+              builder.append(HtmlChunk.br()).append(each.getDisplayString());
             }
-            message.append("</html>");
 
             Notifications.Bus.notify(new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP,
                                                       MavenProjectBundle.message("maven.sources.cannot.download"),
-                                                      message.toString(),
+                                                      builder.wrapWithHtmlBody().toString(),
                                                       NotificationType.WARNING),
                                      psiFile.getProject());
           }
