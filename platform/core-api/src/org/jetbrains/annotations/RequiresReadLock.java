@@ -16,16 +16,33 @@
 
 package org.jetbrains.annotations;
 
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.util.ThrowableRunnable;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Used to indicate that a method should be called holding read lock
+ * Methods and constructors annotated with {@code RequiresReadLock} must be called only with read lock held.
+ * Parameters annotated with {@code RequiresReadLock} must be callables and are guaranteed to be called with read lock held.
+ *
+ * <p/>Aside from a documentation purpose, the annotation is processed by the <a href="">Threading Model Helper</a> plugin.
+ * The plugin instruments annotated elements with {@link Application#assertReadAccessAllowed()} calls
+ * to ensure annotation's contract is not violated at runtime. The instrumentation can be disabled
+ * by setting {@link RequiresReadLock#instrument()} to {@code false}.
+ *
+ * @see <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/general_threading_rules.html">General Threading Rules</a>
+ * @see Application#assertReadAccessAllowed()
+ * @see ReadAction#run(ThrowableRunnable)
  */
 @Retention(RetentionPolicy.CLASS)
 @Target({ElementType.METHOD, ElementType.CONSTRUCTOR, ElementType.PARAMETER})
 public @interface RequiresReadLock {
+  /**
+   * @return {@code false} if code annotated with {@code RequiresReadLock} must not be instrumented.
+   */
   boolean instrument() default true;
 }

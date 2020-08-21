@@ -16,16 +16,33 @@
 
 package org.jetbrains.annotations;
 
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.util.ThrowableRunnable;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Used to indicate that a method should be called holding write lock
+ * Methods and constructors annotated with {@code RequiresWriteLock} must be called only with write lock held.
+ * Parameters annotated with {@code RequiresWriteLock} must be callables and are guaranteed to be called with write lock held.
+ *
+ * <p/>Aside from a documentation purpose, the annotation is processed by the <a href="">Threading Model Helper</a> plugin.
+ * The plugin instruments annotated elements with {@link Application#assertWriteAccessAllowed()} calls
+ * to ensure annotation's contract is not violated at runtime. The instrumentation can be disabled
+ * by setting {@link RequiresWriteLock#instrument()} to {@code false}.
+ *
+ * @see <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/general_threading_rules.html">General Threading Rules</a>
+ * @see Application#assertWriteAccessAllowed()
+ * @see WriteAction#run(ThrowableRunnable)
  */
 @Retention(RetentionPolicy.CLASS)
 @Target({ElementType.METHOD, ElementType.CONSTRUCTOR, ElementType.PARAMETER})
 public @interface RequiresWriteLock {
+  /**
+   * @return {@code false} if code annotated with {@code RequiresWriteLock} must not be instrumented.
+   */
   boolean instrument() default true;
 }

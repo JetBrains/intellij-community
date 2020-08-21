@@ -15,16 +15,35 @@
  */
 package org.jetbrains.annotations;
 
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.progress.Task;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Used to indicate that a method should be called in background thread
+ * Methods and constructors annotated with {@code RequiresBackgroundThread} must be called from some thread
+ * that is not the Event Dispatch Thread.
+ * Parameters annotated with {@code RequiresBackgroundThread} must be callables and are guaranteed to be called from some thread
+ * that is not the Event Dispatch Thread.
+ *
+ * <p/>Aside from a documentation purpose, the annotation is processed by the <a href="">Threading Model Helper</a> plugin.
+ * The plugin instruments annotated elements with {@link Application#assertIsNonDispatchThread()} calls
+ * to ensure annotation's contract is not violated at runtime. The instrumentation can be disabled
+ * by setting {@link RequiresBackgroundThread#instrument()} to {@code false}.
+ *
+ * @see <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/general_threading_rules.html">General Threading Rules</a>
+ * @see Application#assertIsNonDispatchThread()
+ * @see Application#executeOnPooledThread(Runnable)
+ * @see Task.Backgroundable
  */
 @Retention(RetentionPolicy.CLASS)
 @Target({ElementType.METHOD, ElementType.CONSTRUCTOR, ElementType.PARAMETER})
 public @interface RequiresBackgroundThread {
+  /**
+   * @return {@code false} if code annotated with {@code RequiresBackgroundThread} must not be instrumented.
+   */
   boolean instrument() default true;
 }

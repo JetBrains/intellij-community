@@ -16,16 +16,33 @@
 
 package org.jetbrains.annotations;
 
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ModalityState;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Used to indicate that a method should be called in AWT thread
+ * Methods and constructors annotated with {@code RequiresEdt} must be called from the Event Dispatch Thread only.
+ * Parameters annotated with {@code RequiresEdt} must be callables and are guaranteed to be called from the Event Dispatch Thread.
+ *
+ * <p/>Aside from a documentation purpose, the annotation is processed by the <a href="">Threading Model Helper</a> plugin.
+ * The plugin instruments annotated elements with {@link Application#assertIsDispatchThread()} calls
+ * to ensure annotation's contract is not violated at runtime. The instrumentation can be disabled
+ * by setting {@link RequiresEdt#instrument()} to {@code false}.
+ *
+ * @see <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/general_threading_rules.html">General Threading Rules</a>
+ * @see Application#assertIsDispatchThread()
+ * @see Application#invokeLater(Runnable, ModalityState)
+ * @see Application#invokeAndWait(Runnable, ModalityState)
  */
 @Retention(RetentionPolicy.CLASS)
 @Target({ElementType.METHOD, ElementType.CONSTRUCTOR, ElementType.PARAMETER})
 public @interface RequiresEdt {
+  /**
+   * @return {@code false} if code annotated with {@code RequiresEdt} must not be instrumented.
+   */
   boolean instrument() default true;
 }
