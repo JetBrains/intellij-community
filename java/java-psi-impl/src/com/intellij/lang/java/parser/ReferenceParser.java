@@ -308,7 +308,7 @@ public class ReferenceParser {
 
   @NotNull
   public PsiBuilder.Marker parseTypeParameters(PsiBuilder builder) {
-    PsiBuilder.Marker list = builder.mark();
+     PsiBuilder.Marker list = builder.mark();
     if (!expect(builder, JavaTokenType.LT)) {
       list.done(JavaElementType.TYPE_PARAMETER_LIST);
       return list;
