@@ -250,7 +250,7 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo, TableItem
 
     @Override
     public TableCellEditor doCreateEditor(TableItem item) {
-      return new BooleanTableCellEditor(false);
+      return new BooleanTableCellEditor();
     }
 
     @Override
