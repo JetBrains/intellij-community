@@ -129,7 +129,7 @@ internal class SpaceCreateProjectDialog(parent: JComponent) : DialogWrapper(pare
     val list = mutableListOf<ValidationInfo>()
     projectNameField.text.let {
       if (it.length < 2 || it.length > 100) {
-        list.add(ValidationInfo(SpaceBundle.message("create.project.dialog.validation.info.name"), projectKeyField))
+        list.add(ValidationInfo(SpaceBundle.message("create.project.dialog.validation.info.name"), projectNameField))
       }
     }
 
