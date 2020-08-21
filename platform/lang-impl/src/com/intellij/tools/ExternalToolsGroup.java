@@ -2,6 +2,7 @@
 
 package com.intellij.tools;
 
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -15,7 +16,7 @@ public class ExternalToolsGroup extends BaseExternalToolsGroup<Tool> {
   }
 
   @Override
-  protected @NotNull String getGroupIdPrefix() {
+  protected @NonNls @NotNull String getGroupIdPrefix() {
     return GROUP_ID_PREFIX;
   }
 

@@ -77,6 +77,7 @@ public class Tool implements SchemeElement {
     return myDescription;
   }
 
+  @NlsSafe
   @NotNull
   public String getGroup() {
     return myGroup;
@@ -130,7 +131,7 @@ public class Tool implements SchemeElement {
     myDescription = description;
   }
 
-  public void setGroup(@NotNull String group) {
+  public void setGroup(@NonNls @NotNull String group) {
     myGroup = StringUtil.isEmpty(group) ? DEFAULT_GROUP_NAME : group;
   }
 

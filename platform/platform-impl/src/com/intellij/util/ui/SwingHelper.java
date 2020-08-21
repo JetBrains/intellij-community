@@ -694,7 +694,7 @@ public class SwingHelper {
 
   public final static String ELLIPSIS = "...";
   public static final String ERROR_STR = "www";
-  public static String truncateStringWithEllipsis(final String text, final int maxWidth, final FontMetrics fm) {
+  public static @Nls String truncateStringWithEllipsis(final @Nls String text, final int maxWidth, final FontMetrics fm) {
     return truncateStringWithEllipsis(text, maxWidth, new WidthCalculator() {
       @Override
       public int stringWidth(String s) {
@@ -713,7 +713,7 @@ public class SwingHelper {
     int charWidth(final char c);
   }
 
-  public static String truncateStringWithEllipsis(@NotNull final String text, final int maxWidth, final WidthCalculator fm) {
+  public static @Nls String truncateStringWithEllipsis(@Nls @NotNull final String text, final int maxWidth, final WidthCalculator fm) {
     final int error = fm.stringWidth(ERROR_STR);
     final int wholeWidth = fm.stringWidth(text) + error;
     if (wholeWidth <= maxWidth || text.isEmpty()) return text;
