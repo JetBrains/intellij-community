@@ -17,6 +17,7 @@
 package com.intellij.util.descriptors;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -77,6 +78,7 @@ public class ConfigFileMetaData {
     return myId;
   }
 
+  @NlsSafe
   public String getFileName() {
     return myFileName;
   }
