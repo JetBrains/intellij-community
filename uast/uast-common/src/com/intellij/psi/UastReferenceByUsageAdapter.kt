@@ -128,7 +128,7 @@ private fun findDirectVariableUsages(variablePsi: PsiElement): Iterable<PsiEleme
   val module = ModuleUtilCore.findModuleForPsiElement(variablePsi) ?: return localUsages
   val uastScope = getUastScope(module.moduleScope)
 
-  val searchHelper = PsiSearchHelper.getInstance(variablePsi.project)
+  val searchHelper = PsiSearchHelper.getInstance(module.project)
   if (searchHelper.isCheapEnoughToSearch(variableName, uastScope, currentFile, null) != SearchCostResult.FEW_OCCURRENCES) {
     return localUsages
   }
