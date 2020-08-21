@@ -65,7 +65,7 @@ public class PyDebuggerEvaluator extends XDebuggerEvaluator {
         }
       }
       catch (PyDebuggerException e) {
-        callback.errorOccurred(e.getTracebackError()); //NON-NLS
+        callback.errorOccurred(e.getTracebackError());
       }
     });
   }

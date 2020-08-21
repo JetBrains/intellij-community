@@ -6,6 +6,7 @@ import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.jetbrains.python.PyBundle;
@@ -16,7 +17,7 @@ import java.net.ServerSocket;
 
 public class PyRemoteDebugProcess extends PyDebugProcess {
   private final int myLocalPort;
-  private final String mySettraceCall;
+  private final @NlsSafe String mySettraceCall;
   private boolean isStopCalled = false;
 
   public PyRemoteDebugProcess(@NotNull XDebugSession session,
@@ -38,8 +39,8 @@ public class PyRemoteDebugProcess extends PyDebugProcess {
   }
 
   protected void printConsoleInfo() {
-    printToConsole("Starting debug server at port " + myLocalPort + "\n", ConsoleViewContentType.SYSTEM_OUTPUT);
-    printToConsole("Use the following code to connect to the debugger:\n", ConsoleViewContentType.SYSTEM_OUTPUT);
+    printToConsole(PyBundle.message("debugger.remote.starting.debug.server.at.port", myLocalPort), ConsoleViewContentType.SYSTEM_OUTPUT);
+    printToConsole(PyBundle.message("debugger.use.the.following.code.to.connect.to.the.debugger"), ConsoleViewContentType.SYSTEM_OUTPUT);
     if (!StringUtil.isEmpty(mySettraceCall)) {
       printToConsole(mySettraceCall + "\n", ConsoleViewContentType.SYSTEM_OUTPUT);
     }
