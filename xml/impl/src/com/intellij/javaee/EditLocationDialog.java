@@ -23,12 +23,13 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.util.NlsContexts.DialogTitle;
 import com.intellij.xml.XmlBundle;
+import org.jetbrains.annotations.Nls;
+
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import javax.swing.*;
-import org.jetbrains.annotations.Nls;
 
 public class EditLocationDialog extends DialogWrapper {
 
@@ -47,9 +48,9 @@ public class EditLocationDialog extends DialogWrapper {
     super(project, true);
     myProject = project;
     myShowPath = showPath;
-    myTitle = XmlBundle.message("dialog.title.external.resource");
-    myName = XmlBundle.message("label.edit.external.resource.uri");
-    myLocation = XmlBundle.message("label.edit.external.resource.path");
+    myTitle = XmlBundle.message("xml.external.resource.dialog.title");
+    myName = XmlBundle.message("xml.external.resource.label.uri");
+    myLocation = XmlBundle.message("xml.external.resource.label.path");
     init();
   }
 

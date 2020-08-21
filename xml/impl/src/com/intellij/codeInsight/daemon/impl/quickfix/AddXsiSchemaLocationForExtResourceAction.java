@@ -34,7 +34,7 @@ import java.util.List;
 public class AddXsiSchemaLocationForExtResourceAction extends BaseExtResourceAction {
   @NonNls private static final String XMLNS_XSI_ATTR_NAME = "xmlns:xsi";
   @NonNls private static final String XSI_SCHEMA_LOCATION_ATTR_NAME = "xsi:schemaLocation";
-  public static final String KEY = "add.xsi.schema.location.for.external.resource";
+  private static final String KEY = "xml.intention.add.xsi.schema.location.for.external.resource";
 
   @Override
   protected String getQuickFixKeyId() {

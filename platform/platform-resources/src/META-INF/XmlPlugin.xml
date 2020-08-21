@@ -389,7 +389,7 @@
                      enabledByDefault="true" level="ERROR" runForWholeFile="true" unfair="true"
                      implementationClass="com.intellij.xml.util.XmlInvalidIdInspection"/>
     <localInspection language="XML" shortName="XmlWrongRootElement"
-                     bundle="messages.XmlBundle" key="xml.inspection.wrong.root.element"
+                     bundle="messages.XmlBundle" key="xml.inspections.wrong.root.element"
                      groupBundle="messages.XmlBundle" groupKey="xml.inspections.group.name"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="com.intellij.codeInspection.htmlInspections.XmlWrongRootElementInspection"/>
@@ -423,11 +423,11 @@
                      groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
                      implementationClass="com.intellij.xml.util.CheckValidXmlInScriptBodyInspection"/>
     <localInspection language="XML" shortName="RequiredAttributes" enabledByDefault="true" level="WARNING"
-                     bundle="messages.XmlBundle" key="inspection.required.attributes.display.name"
+                     bundle="messages.XmlBundle" key="xml.inspections.required.attributes.display.name"
                      groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
                      implementationClass="com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection"/>
     <localInspection language="HTML" shortName="HtmlExtraClosingTag" enabledByDefault="true" level="WARNING"
-                     bundle="messages.XmlBundle" key="html.inspection.extra.closing.tag"
+                     bundle="messages.XmlBundle" key="html.inspections.extra.closing.tag"
                      groupBundle="messages.XmlBundle" groupKey="html.inspections.group.name"
                      implementationClass="com.intellij.codeInspection.htmlInspections.HtmlExtraClosingTagInspection"/>
     <localInspection language="HTML" shortName="HtmlUnknownTag" enabledByDefault="true" level="WARNING"

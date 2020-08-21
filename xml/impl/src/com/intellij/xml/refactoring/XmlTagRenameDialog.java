@@ -53,7 +53,7 @@ public class XmlTagRenameDialog extends RefactoringDialog {
 
     init();
 
-    myTitleLabel.setText(XmlBundle.message("rename.current.tag", getFullName(tag)));
+    myTitleLabel.setText(XmlBundle.message("xml.refactor.rename.current.tag", getFullName(tag)));
 
     validateButtons();
   }

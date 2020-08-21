@@ -62,7 +62,7 @@ public final class StdErrorReporter extends ErrorReporter {
         ContentManagerUtil.cleanupContents(content, myProject, myContentName);
         messageView.getContentManager().addContentManagerListener(new MyContentDisposer(content, messageView));
       },
-      XmlBundle.message("validate.xml.open.message.view.command.name"),
+      XmlBundle.message("xml.validate.open.message.view.command.name"),
       null
     );
   }
