@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.find;
 
@@ -673,7 +673,7 @@ public class EditorSearchSession implements SearchSession,
 
   private class ReplaceAction extends ButtonAction implements LightEditCompatible {
     ReplaceAction() {
-      super("Replace", 'p');
+      super(ApplicationBundle.message("editorsearch.replace.action.text"), 'p');
     }
 
     @Override
@@ -689,7 +689,7 @@ public class EditorSearchSession implements SearchSession,
 
   private class ReplaceAllAction extends ButtonAction implements LightEditCompatible {
     ReplaceAllAction() {
-      super("Replace all", 'a');
+      super(ApplicationBundle.message("editorsearch.replace.all.action.text"), 'a');
     }
 
     @Override
