@@ -2,7 +2,6 @@
 package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
 import java.awt.BorderLayout
-import java.awt.Color
 import java.awt.Container
 import java.awt.Window
 import javax.swing.*

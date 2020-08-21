@@ -16,8 +16,8 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
-import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader;
-import com.intellij.openapi.wm.impl.customFrameDecorations.header.MainFrameHeader;
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.MenuFrameHeader;
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.CustomDecorationPath;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBBox;
@@ -58,7 +58,8 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
 
   private boolean myFullScreen;
 
-  private MainFrameHeader myCustomFrameTitlePane;
+  private MenuFrameHeader myCustomFrameTitlePane;
+  private CustomDecorationPath mySelectedEditorFilePath;
   private final boolean myDecoratedMenu;
 
   protected IdeRootPane(@NotNull JFrame frame, @NotNull IdeFrame frameHelper, @NotNull Disposable parentDisposable) {
@@ -87,7 +88,8 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
       if (isDecoratedMenu()) {
         JdkEx.setHasCustomDecoration(frame);
 
-        myCustomFrameTitlePane = CustomHeader.createMainFrameHeader(frame, createMenuBar());
+        mySelectedEditorFilePath = CustomDecorationPath.Companion.createInstance(frame);
+        myCustomFrameTitlePane = new MenuFrameHeader(frame, mySelectedEditorFilePath, createMenuBar());
         getLayeredPane().add(myCustomFrameTitlePane, JLayeredPane.DEFAULT_LAYER - 2);
       }
 
@@ -294,8 +296,8 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   }
 
   void setProject(Project project) {
-    if (myCustomFrameTitlePane != null) {
-      myCustomFrameTitlePane.setProject(project);
+    if (mySelectedEditorFilePath != null) {
+      mySelectedEditorFilePath.setProject(project);
     }
   }
 

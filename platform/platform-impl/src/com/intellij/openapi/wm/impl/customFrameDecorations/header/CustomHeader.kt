@@ -65,26 +65,10 @@ abstract class CustomHeader(private val window: Window) : JPanel(), Disposable {
 
         fun create(window: Window): CustomHeader {
             return if (window is JFrame) {
-                if(window.rootPane is IdeRootPane) {
-                    createMainFrameHeader(window, IdeMenuBar.createMenuBar())
-                } else {
-                    createFrameHeader(window)
-                }
+                DefaultFrameHeader(window)
             } else {
                 DialogHeader(window)
             }
-        }
-
-        @JvmStatic
-        fun createFrameHeader(frame: JFrame, ideMenuBar: IdeMenuBar? = null): FrameHeader {
-            return ideMenuBar?.let {
-                FrameWithMenuHeader(frame, ideMenuBar)
-            } ?: DefaultFrameHeader(frame)
-        }
-
-        @JvmStatic
-        fun createMainFrameHeader(frame: JFrame, menuBar: IdeMenuBar): MainFrameHeader {
-          return MainFrameHeader(frame, menuBar)
         }
 
         private val windowBorderThicknessInPhysicalPx: Int = run {

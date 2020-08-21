@@ -32,8 +32,10 @@ import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.openapi.wm.impl.IdeMenuBar;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent;
-import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomHeader;
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.DefaultFrameHeader;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.FrameHeader;
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.MenuFrameHeader;
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.CustomDecorationTitle;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBTextField;
@@ -110,7 +112,8 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     if (IdeFrameDecorator.isCustomDecorationActive()) {
       Color backgroundColor = UIManager.getColor("WelcomeScreen.background");
 
-      FrameHeader header = CustomHeader.createFrameHeader(this, useTabWelcomeScreen ? new WelcomeFrameMenuBar() : null);
+      FrameHeader header = useTabWelcomeScreen ?
+                           new MenuFrameHeader(this, new CustomDecorationTitle(this), new WelcomeFrameMenuBar()) : new DefaultFrameHeader(this);
 
       if (backgroundColor != null) {
         header.setBackground(backgroundColor);

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
 import com.intellij.ide.ui.UISettings
@@ -7,6 +7,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.impl.IdeMenuBar
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.title.CustomHeaderTitle
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.util.ui.JBUI
 import net.miginfocom.swing.MigLayout
@@ -19,15 +20,16 @@ import javax.swing.JPanel
 import javax.swing.SwingUtilities
 import javax.swing.event.ChangeListener
 
-class FrameWithMenuHeader(frame: JFrame, val myIdeMenu: IdeMenuBar) : FrameHeader(frame) {
+class MenuFrameHeader(frame: JFrame, val headerTitle: CustomHeaderTitle, val myIdeMenu: IdeMenuBar) : FrameHeader(frame){
   private val menuHolder: JComponent
   private var changeListener: ChangeListener
-  private var disposable: Disposable? = null
 
   private val mainMenuUpdater: UISettingsListener
 
+  private var disposable: Disposable? = null
+
   init {
-    layout = MigLayout("novisualpadding, fillx, ins 0, gap 0, top, hidemode 2", "[pref!][]push[pref!]")
+    layout = MigLayout("novisualpadding, fillx, ins 0, gap 0, top, hidemode 2", "[pref!][][grow][pref!]")
     val empty = JBUI.Borders.empty(V, H, V, 0)
 
     productIcon.border = empty
@@ -37,13 +39,19 @@ class FrameWithMenuHeader(frame: JFrame, val myIdeMenu: IdeMenuBar) : FrameHeade
       updateCustomDecorationHitTestSpots()
     }
 
+    headerTitle.onBoundsChanged = { windowStateChanged() }
+
     menuHolder = JPanel(MigLayout("filly, ins 0, novisualpadding, hidemode 3", "[pref!]${JBUI.scale(10)}"))
     menuHolder.border = JBUI.Borders.empty(0, H - 1, 0, 0)
     menuHolder.isOpaque = false
     menuHolder.add(myIdeMenu, "wmin 0, wmax pref, top, growy")
 
     add(menuHolder, "wmin 0, top, growy, pushx")
+    val view = headerTitle.view.apply {
+      border = empty
+    }
 
+    add(view, "left, growx, gapbottom 1")
     add(buttonPanes.getView(), "top, wmin pref")
 
     setCustomFrameTopBorder({ myState != Frame.MAXIMIZED_VERT && myState != Frame.MAXIMIZED_BOTH }, {true})
@@ -56,6 +64,14 @@ class FrameWithMenuHeader(frame: JFrame, val myIdeMenu: IdeMenuBar) : FrameHeade
     menuHolder.isVisible = UISettings.instance.showMainMenu
   }
 
+  fun updateMenuActions(forceRebuild: Boolean) {
+    myIdeMenu.updateMenuActions(forceRebuild)
+  }
+
+  override fun updateActive() {
+    super.updateActive()
+    headerTitle.setActive(myActive)
+  }
 
   override fun installListeners() {
     myIdeMenu.selectionModel.addChangeListener(changeListener)
@@ -94,6 +110,8 @@ class FrameWithMenuHeader(frame: JFrame, val myIdeMenu: IdeMenuBar) : FrameHeade
       }
       hitTestSpots.add(RelativeRectangle(menuHolder, menuRect))
     }
+
+    hitTestSpots.addAll(headerTitle.getBoundList())
 
     return hitTestSpots
   }

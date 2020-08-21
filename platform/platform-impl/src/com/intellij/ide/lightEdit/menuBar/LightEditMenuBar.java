@@ -5,6 +5,7 @@ import com.intellij.ide.lightEdit.actions.*;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.wm.impl.IdeMenuBar;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

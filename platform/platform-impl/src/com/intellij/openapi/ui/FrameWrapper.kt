@@ -22,7 +22,7 @@ import com.intellij.openapi.wm.ex.IdeFrameEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.*
 import com.intellij.openapi.wm.impl.LinuxIdeMenuBar.Companion.doBindAppMenuOfParent
-import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent.Companion.getCustomContentHolder
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.BalloonLayout
 import com.intellij.ui.ComponentUtil
@@ -130,8 +130,21 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
     }
 
     if (IdeFrameDecorator.isCustomDecorationActive()) {
-      component = getCustomContentHolder(frame, component!!)
+      component?.let {
+
+
+        component = /*UIUtil.findComponentOfType(it, EditorsSplitters::class.java)?.let {
+          if(frame !is JFrame) null else {
+            val header = CustomHeader.createMainFrameHeader(frame, IdeMenuBar.createMenuBar())
+            getCustomContentHolder(frame, it, header)
+          }
+
+        } ?:*/
+
+          CustomFrameDialogContent.getCustomContentHolder(frame, it)
+      }
     }
+
     frame.contentPane.add(component!!, BorderLayout.CENTER)
     if (frame is JFrame) {
       frame.title = title
