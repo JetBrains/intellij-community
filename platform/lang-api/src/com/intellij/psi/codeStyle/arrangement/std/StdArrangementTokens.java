@@ -82,12 +82,6 @@ public final class StdArrangementTokens {
     return result;
   }
 
-  private static StdArrangementSettingsToken token(@NotNull String id, @NotNull StdArrangementTokenType type) {
-    StdArrangementSettingsToken result = StdArrangementSettingsToken.tokenById(id, type);
-    TOKENS_BY_ID.put(id, result);
-    return result;
-  }
-
   private static StdArrangementSettingsToken compositeToken(@NotNull String id,
                                                             @NotNull StdArrangementTokenType type,
                                                             ArrangementSettingsToken @NotNull ... alternativeTokens)
@@ -115,8 +109,10 @@ public final class StdArrangementTokens {
   }
 
   public static final class Section {
-    @NotNull public static final ArrangementSettingsToken START_SECTION = token("SECTION_START", StdArrangementTokenType.ENTRY_TYPE);
-    @NotNull public static final ArrangementSettingsToken END_SECTION = token("SECTION_END", StdArrangementTokenType.ENTRY_TYPE);
+    @NotNull public static final ArrangementSettingsToken START_SECTION =
+      token("SECTION_START", "arrangement.settings.text.section.start", StdArrangementTokenType.ENTRY_TYPE);
+    @NotNull public static final ArrangementSettingsToken END_SECTION =
+      token("SECTION_END", "arrangement.settings.text.section.end", StdArrangementTokenType.ENTRY_TYPE);
 
     private Section() {
 
