@@ -319,7 +319,7 @@ public abstract class NlsInfo {
     if (fromParameter != Unspecified.UNKNOWN) {
       return fromParameter;
     }
-    PsiParameter parameter = method.getParameterList().getParameter(idx.getAsInt());
+    PsiParameter parameter = getParameter(method, idx.getAsInt());
     if (parameter != null) {
       PsiType parameterType = parameter.getType();
       PsiElement psi = callExpression.getSourcePsi();
@@ -330,6 +330,12 @@ public abstract class NlsInfo {
       NlsInfo info = fromType(parameterType);
       if (info != Unspecified.UNKNOWN) {
         return info;
+      }
+      if (parameter.isVarArgs() && parameterType instanceof PsiEllipsisType) {
+        info = fromType(((PsiEllipsisType)parameterType).getComponentType());
+        if (info != Unspecified.UNKNOWN) {
+          return info;
+        }
       }
     }
     return new Unspecified(parameter);
@@ -582,6 +588,22 @@ public abstract class NlsInfo {
     }
     return Unspecified.UNKNOWN;
   }
+  
+  private static PsiParameter getParameter(PsiMethod method, int idx) {
+    final PsiParameter[] params = method.getParameterList().getParameters();
+    if (idx >= params.length) {
+      PsiParameter lastParam = ArrayUtil.getLastElement(params);
+      if (lastParam == null || !lastParam.isVarArgs()) return null;
+      return lastParam;
+    }
+    else if (params[0].getName().equals("$this$" + method.getName())) {
+      if (idx + 1 == params.length) return null;
+      return params[idx + 1];
+    }
+    else {
+      return params[idx];
+    }
+  }
 
   private static @NotNull NlsInfo fromMethodParameter(@NotNull PsiMethod method,
                                                       int idx,
@@ -590,20 +612,8 @@ public abstract class NlsInfo {
       return Unspecified.UNKNOWN;
     }
 
-    final PsiParameter[] params = method.getParameterList().getParameters();
-    PsiParameter param;
-    if (idx >= params.length) {
-      PsiParameter lastParam = ArrayUtil.getLastElement(params);
-      if (lastParam == null || !lastParam.isVarArgs()) return Unspecified.UNKNOWN;
-      param = lastParam;
-    }
-    else if (params[0].getName().equals("$this$" + method.getName())) {
-      if (idx + 1 == params.length) return Unspecified.UNKNOWN;
-      param = params[idx + 1];
-    }
-    else {
-      param = params[idx];
-    }
+    PsiParameter param = getParameter(method, idx);
+    if (param == null) return Unspecified.UNKNOWN;
     NlsInfo explicit = fromAnnotationOwner(param.getModifierList());
     if (explicit != Unspecified.UNKNOWN) {
       return explicit;
