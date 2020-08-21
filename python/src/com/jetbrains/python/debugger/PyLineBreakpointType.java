@@ -58,7 +58,7 @@ public class PyLineBreakpointType extends XLineBreakpointTypeBase {
   private final static Class<? extends PsiElement>[] UNSTOPPABLE_ELEMENTS = new Class[]{PsiWhiteSpace.class, PsiComment.class};
 
   public PyLineBreakpointType() {
-    super(ID, PyBundle.message("python.line.breakpoint"), new PyDebuggerEditorsProvider());
+    super(ID, PyBundle.message("debugger.line.breakpoint.type"), new PyDebuggerEditorsProvider());
   }
 
   public PyLineBreakpointType(@NotNull final String id, @NotNull @Nls final String title, @Nullable XDebuggerEditorsProvider editorsProvider) {

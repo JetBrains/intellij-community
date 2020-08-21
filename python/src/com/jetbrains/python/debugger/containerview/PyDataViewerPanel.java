@@ -158,7 +158,7 @@ public class PyDataViewerPanel extends JPanel {
     String type = debugValue.getType();
     DataViewStrategy strategy = DataViewStrategy.getStrategy(type);
     if (strategy == null) {
-      setError(PyBundle.message("python.data.view.type.is.not.supported", type));
+      setError(PyBundle.message("debugger.data.view.type.is.not.supported", type));
       return;
     }
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
@@ -213,7 +213,7 @@ public class PyDataViewerPanel extends JPanel {
     try {
       PyDebugValue value = myFrameAccessor.evaluate(expression, false, true);
       if (value == null || value.isErrorOnEval()) {
-        setError(value != null ? value.getValue() : PyBundle.message("python.data.view.failed.to.evaluate.expression", expression)); //NON-NLS
+        setError(value != null ? value.getValue() : PyBundle.message("debugger.data.view.failed.to.evaluate.expression", expression)); //NON-NLS
         return null;
       }
       return value;

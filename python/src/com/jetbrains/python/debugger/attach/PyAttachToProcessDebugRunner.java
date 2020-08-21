@@ -44,7 +44,7 @@ public class PyAttachToProcessDebugRunner extends PyDebugRunner {
       serverSocket = new ServerSocket(0);
     }
     catch (IOException e) {
-      throw new ExecutionException(PyBundle.message("python.attach.to.process.debug.failed.to.find.free.socket.port"), e);
+      throw new ExecutionException(PyBundle.message("debugger.attach.to.process.failed.to.find.free.socket.port"), e);
     }
 
 

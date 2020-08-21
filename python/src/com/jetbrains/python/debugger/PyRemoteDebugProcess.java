@@ -47,12 +47,12 @@ public class PyRemoteDebugProcess extends PyDebugProcess {
 
   @Override
   protected String getConnectionMessage() {
-    return PyBundle.message("python.remote.debug.waiting.for.process.connection");
+    return PyBundle.message("debugger.remote.waiting.for.process.connection");
   }
 
   @Override
   protected String getConnectionTitle() {
-    return PyBundle.message("python.remote.debug.waiting.for.connection");
+    return PyBundle.message("debugger.remote.waiting.for.connection");
   }
 
   @Override

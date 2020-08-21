@@ -51,7 +51,7 @@ public class PyCythonExtensionWarning {
     }
     Notification notification =
       new Notification(CYTHON_WARNING_GROUP_ID, PyBundle.message("compile.cython.extensions.notification"),
-                       PyBundle.message("cython.extension.speeds.up.python.debugging"),
+                       PyBundle.message("debugger.cython.extension.speeds.up.python.debugging"),
                        NotificationType.INFORMATION);
     notification.addAction(createInstallAction(notification, project));
     notification.addAction(createDocsAction());
@@ -103,11 +103,11 @@ public class PyCythonExtensionWarning {
       final RunManager runManager = RunManager.getInstance(project);
       final RunnerAndConfigurationSettings selectedConfiguration = runManager.getSelectedConfiguration();
       if (selectedConfiguration == null) {
-        throw new ExecutionException(PyBundle.message("cython.python.run.configuration.should.be.selected"));
+        throw new ExecutionException(PyBundle.message("debugger.cython.python.run.configuration.should.be.selected"));
       }
       final RunConfiguration configuration = selectedConfiguration.getConfiguration();
       if (!(configuration instanceof AbstractPythonRunConfiguration)) {
-        throw new ExecutionException(PyBundle.message("cython.python.run.configuration.should.be.selected"));
+        throw new ExecutionException(PyBundle.message("debugger.cython.python.run.configuration.should.be.selected"));
       }
       AbstractPythonRunConfiguration runConfiguration = (AbstractPythonRunConfiguration)configuration;
       final String interpreterPath = runConfiguration.getInterpreterPath();
@@ -167,8 +167,8 @@ public class PyCythonExtensionWarning {
           final int exitCode = result.getExitCode();
           if (exitCode != 0) {
             final String message = StringUtil.isEmptyOrSpaces(result.getStdout()) && StringUtil.isEmptyOrSpaces(result.getStderr())
-                                   ? PyBundle.message("cython.extension.permission.denied")
-                                   : PyBundle.message("cython.extension.non.zero.exit.code", exitCode, result.getStderr());
+                                   ? PyBundle.message("debugger.cython.extension.permission.denied")
+                                   : PyBundle.message("debugger.cython.extension.non.zero.exit.code", exitCode, result.getStderr());
             UIUtil.invokeLaterIfNeeded(() -> showErrorDialog(project, message));
           }
         }
