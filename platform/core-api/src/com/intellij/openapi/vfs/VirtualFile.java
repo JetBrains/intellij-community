@@ -114,7 +114,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    */
   public abstract @NotNull @NlsSafe String getName();
 
-  public @NotNull CharSequence getNameSequence() {
+  public @NotNull @NlsSafe CharSequence getNameSequence() {
     return getName();
   }
 
@@ -167,7 +167,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @see VirtualFile#getPath
    * @see VirtualFileSystem#getProtocol
    */
-  public @NotNull String getUrl() {
+  public @NotNull @NlsSafe String getUrl() {
     return VirtualFileManager.constructUrl(getFileSystem().getProtocol(), getPath());
   }
 
@@ -188,7 +188,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    *
    * @return the extension or null if file name doesn't contain '.'
    */
-  public @Nullable String getExtension() {
+  public @Nullable @NlsSafe String getExtension() {
     CharSequence extension = FileUtilRt.getExtension(getNameSequence(), null);
     return extension == null ? null : extension.toString();
   }
@@ -259,10 +259,10 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * work with those provided by a user.</p>
    *
    * @return {@code getPath()} if there are no symbolic links in a file's path;
-   *         {@code getCanonicalFile().getPath()} if the link was successfully resolved;
-   *         {@code null} otherwise
+   * {@code getCanonicalFile().getPath()} if the link was successfully resolved;
+   * {@code null} otherwise
    */
-  public @Nullable String getCanonicalPath() {
+  public @Nullable @NlsSafe String getCanonicalPath() {
     return getPath();
   }
 
@@ -725,7 +725,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * It is always null for directories and binaries, and possibly null if a separator isn't yet known.
    * @see LineSeparator
    */
-  public @Nullable String getDetectedLineSeparator() {
+  public @Nullable @NlsSafe String getDetectedLineSeparator() {
     return getUserData(DETECTED_LINE_SEPARATOR_KEY);
   }
 
