@@ -35,6 +35,7 @@ import org.jetbrains.annotations.*;
 import javax.swing.*;
 import java.lang.reflect.Field;
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -1187,17 +1188,17 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
 
   public enum WrapStyle implements PresentableEnum {
 
-    DO_NOT_WRAP(CommonCodeStyleSettings.DO_NOT_WRAP, "wrapping.do.not.wrap"),
-    WRAP_AS_NEEDED(CommonCodeStyleSettings.WRAP_AS_NEEDED, "wrapping.wrap.if.long"),
-    WRAP_ON_EVERY_ITEM(CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM,"wrapping.chop.down.if.long"),
-    WRAP_ALWAYS(CommonCodeStyleSettings.WRAP_ALWAYS,"wrapping.wrap.always");
+    DO_NOT_WRAP(CommonCodeStyleSettings.DO_NOT_WRAP, ApplicationBundle.messagePointer("wrapping.do.not.wrap")),
+    WRAP_AS_NEEDED(CommonCodeStyleSettings.WRAP_AS_NEEDED, ApplicationBundle.messagePointer("wrapping.wrap.if.long")),
+    WRAP_ON_EVERY_ITEM(CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM,ApplicationBundle.messagePointer("wrapping.chop.down.if.long")),
+    WRAP_ALWAYS(CommonCodeStyleSettings.WRAP_ALWAYS, ApplicationBundle.messagePointer("wrapping.wrap.always"));
 
     private final int myId;
-    private final String myDescriptionKey;
+    private final Supplier<@Label String> myDescription;
 
-    WrapStyle(int id, @NotNull @PropertyKey(resourceBundle = "messages.ApplicationBundle") String descriptionKey) {
+    WrapStyle(int id, @NotNull Supplier<@Label String> description) {
       myId = id;
-      myDescriptionKey = descriptionKey;
+      myDescription = description;
     }
 
     public int getId() {
@@ -1205,7 +1206,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     }
 
     @Override public @Label String getPresentableText() {
-      return ApplicationBundle.message(myDescriptionKey);
+      return myDescription.get();
     }
 
     public static @NotNull WrapStyle forWrapping(int wrappingStyleID) {
@@ -1218,7 +1219,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
       return DO_NOT_WRAP;
     }
 
-    public static @NotNull int getSelectedId(JComboBox<WrapStyle> comboBox) {
+    public static int getSelectedId(@NotNull JComboBox<WrapStyle> comboBox) {
       WrapStyle wrapStyle = (WrapStyle)comboBox.getSelectedItem();
       if (wrapStyle != null) {
         return wrapStyle.myId;
@@ -1228,16 +1229,15 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   }
 
   public enum HtmlTagNewLineStyle implements PresentableEnum{
-    Never("Never", "html.tag.new.line.never"),
-    WhenMultiline("When multiline", "html.tag.new.line.when.multiline");
+    Never("Never", LangBundle.messagePointer("html.tag.new.line.never")),
+    WhenMultiline("When multiline", LangBundle.messagePointer("html.tag.new.line.when.multiline"));
 
     private final String myValue;
-    private final @PropertyKey(resourceBundle = "messages.LangBundle") String myDescriptionKey;
+    private final Supplier<@Label String> myDescription;
 
-    HtmlTagNewLineStyle(@NotNull String value,
-                        @NotNull @PropertyKey(resourceBundle = "messages.LangBundle") String descriptionKey) {
+    HtmlTagNewLineStyle(@NotNull String value, @NotNull Supplier<@Label String> description) {
       myValue = value;
-      this.myDescriptionKey = descriptionKey;
+      myDescription = description;
     }
 
     @Override
@@ -1246,25 +1246,25 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     }
 
     @Override public @Label String getPresentableText() {
-      return LangBundle.message(myDescriptionKey);
+      return myDescription.get();
     }
   }
 
   public enum QuoteStyle implements PresentableEnum {
-    Single("'", "quote.style.single"),
-    Double("\"", "quote.style.double"),
-    None("", "quote.style.none");
+    Single("'", LangBundle.messagePointer("quote.style.single")),
+    Double("\"", LangBundle.messagePointer("quote.style.double")),
+    None("", LangBundle.messagePointer("quote.style.none"));
 
     public final String quote;
-    private final @PropertyKey(resourceBundle = "messages.LangBundle") String myDescriptionKey;
+    private final Supplier<@Label String> myDescription;
 
-    QuoteStyle(@NotNull String quote, @NotNull @PropertyKey(resourceBundle = "messages.LangBundle") String descriptionKey) {
+    QuoteStyle(@NotNull String quote, @NotNull Supplier<@Label String> description) {
       this.quote = quote;
-      myDescriptionKey = descriptionKey;
+      myDescription = description;
     }
 
     @Override public @Label String getPresentableText() {
-     return LangBundle.message(myDescriptionKey);
+     return myDescription.get();
     }
   }
 
