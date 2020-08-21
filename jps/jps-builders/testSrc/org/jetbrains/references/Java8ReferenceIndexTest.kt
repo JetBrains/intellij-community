@@ -28,7 +28,7 @@ class Java8ReferenceIndexTest : ReferenceIndexTestBase() {
   }
 
   override fun getTestDataRootPath(): String {
-    return FileUtil.toCanonicalPath(PathManagerEx.findFileUnderCommunityHome("jps/javac-ref-scanner-8/testData/referenceIndex").absolutePath, '/')
+    return FileUtil.toCanonicalPath(PathManagerEx.findFileUnderCommunityHome("jps/jps-builders/testData/referencesIndex").absolutePath, '/')
   }
 }
 
