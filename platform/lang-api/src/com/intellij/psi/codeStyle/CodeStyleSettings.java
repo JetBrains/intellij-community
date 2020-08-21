@@ -4,8 +4,10 @@ package com.intellij.psi.codeStyle;
 import com.intellij.configurationStore.Property;
 import com.intellij.configurationStore.UnknownElementCollector;
 import com.intellij.configurationStore.UnknownElementWriter;
+import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionException;
@@ -16,6 +18,7 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.NlsContexts.Label;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -25,6 +28,7 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ClassMap;
 import com.intellij.util.containers.JBIterable;
+import com.intellij.util.ui.PresentableEnum;
 import org.jdom.Element;
 import org.jetbrains.annotations.*;
 
@@ -1181,31 +1185,86 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
     return WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN;
   }
 
-  public enum HtmlTagNewLineStyle {
-    Never("Never"),
-    WhenMultiline("When multiline");
+  public enum WrapStyle implements PresentableEnum {
 
-    public final String description;
+    DO_NOT_WRAP(CommonCodeStyleSettings.DO_NOT_WRAP, "wrapping.do.not.wrap"),
+    WRAP_AS_NEEDED(CommonCodeStyleSettings.WRAP_AS_NEEDED, "wrapping.wrap.if.long"),
+    WRAP_ON_EVERY_ITEM(CommonCodeStyleSettings.WRAP_ON_EVERY_ITEM,"wrapping.chop.down.if.long"),
+    WRAP_ALWAYS(CommonCodeStyleSettings.WRAP_ALWAYS,"wrapping.wrap.always");
 
-    HtmlTagNewLineStyle(String description) {
-      this.description = description;
+    private final int myId;
+    private final String myDescriptionKey;
+
+    WrapStyle(int id, @NotNull @PropertyKey(resourceBundle = "messages.ApplicationBundle") String descriptionKey) {
+      myId = id;
+      myDescriptionKey = descriptionKey;
+    }
+
+    public int getId() {
+      return myId;
+    }
+
+    @Override public @Label String getPresentableText() {
+      return ApplicationBundle.message(myDescriptionKey);
+    }
+
+    public static @NotNull WrapStyle forWrapping(int wrappingStyleID) {
+      for (WrapStyle style: values()) {
+        if (style.myId == wrappingStyleID) {
+          return style;
+        }
+      }
+      LOG.error("Invalid wrapping option index: " + wrappingStyleID);
+      return DO_NOT_WRAP;
+    }
+
+    public static @NotNull int getSelectedId(JComboBox<WrapStyle> comboBox) {
+      WrapStyle wrapStyle = (WrapStyle)comboBox.getSelectedItem();
+      if (wrapStyle != null) {
+        return wrapStyle.myId;
+      }
+      return DO_NOT_WRAP.myId;
+    }
+  }
+
+  public enum HtmlTagNewLineStyle implements PresentableEnum{
+    Never("Never", "html.tag.new.line.never"),
+    WhenMultiline("When multiline", "html.tag.new.line.when.multiline");
+
+    private final String myValue;
+    private final @PropertyKey(resourceBundle = "messages.LangBundle") String myDescriptionKey;
+
+    HtmlTagNewLineStyle(@NotNull String value,
+                        @NotNull @PropertyKey(resourceBundle = "messages.LangBundle") String descriptionKey) {
+      myValue = value;
+      this.myDescriptionKey = descriptionKey;
     }
 
     @Override
     public String toString() {
-      return description;
+      return myValue;
+    }
+
+    @Override public @Label String getPresentableText() {
+      return LangBundle.message(myDescriptionKey);
     }
   }
 
-  public enum QuoteStyle {
-    Single("'"),
-    Double("\""),
-    None("");
+  public enum QuoteStyle implements PresentableEnum {
+    Single("'", "quote.style.single"),
+    Double("\"", "quote.style.double"),
+    None("", "quote.style.none");
 
     public final String quote;
+    private final @PropertyKey(resourceBundle = "messages.LangBundle") String myDescriptionKey;
 
-    QuoteStyle(String quote) {
+    QuoteStyle(@NotNull String quote, @NotNull @PropertyKey(resourceBundle = "messages.LangBundle") String descriptionKey) {
       this.quote = quote;
+      myDescriptionKey = descriptionKey;
+    }
+
+    @Override public @Label String getPresentableText() {
+     return LangBundle.message(myDescriptionKey);
     }
   }
 
@@ -1249,7 +1308,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
 
   public void resetDeprecatedFields() {
     CodeStyleSettings defaults = getDefaults();
-    ReflectionUtil.copyFields(getClass().getFields(), defaults, this, new DifferenceFilter<CodeStyleSettings>(this, defaults){
+    ReflectionUtil.copyFields(getClass().getFields(), defaults, this, new DifferenceFilter<>(this, defaults){
       @Override
       public boolean isAccept(@NotNull Field field) {
         return field.getAnnotation(Deprecated.class) != null;
