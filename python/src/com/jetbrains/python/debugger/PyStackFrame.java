@@ -128,7 +128,7 @@ public class PyStackFrame extends XStackFrame {
       }
       catch (PyDebuggerException e) {
         if (!node.isObsolete()) {
-          node.setErrorMessage("Unable to display frame variables");
+          node.setErrorMessage(PyBundle.message("debugger.stack.frame.unable.to.display.frame.variables"));
         }
         LOG.warn(e);
       }

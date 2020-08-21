@@ -23,8 +23,6 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.util.List;
 
-import static com.jetbrains.python.debugger.PyDebugSupportUtils.DEBUGGER_WARNING_MESSAGE;
-
 public class PyDebuggerConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private JPanel myMainPanel;
   private JCheckBox myAttachToSubprocess;
@@ -121,7 +119,7 @@ public class PyDebuggerConfigurable implements SearchableConfigurable, Configura
     IdeTooltipManager.getInstance().setCustomTooltip(
       warningIcon,
       new TooltipWithClickableLinks.ForBrowser(warningIcon,
-                                               DEBUGGER_WARNING_MESSAGE));
+                                               PyBundle.message("debugger.warning.message")));
 
     myActionLink = new ActionLink(PyBundle.message("form.debugger.clear.caches.action"), new AnAction() {
       @Override

@@ -41,7 +41,6 @@ public class PyCythonExtensionWarning {
   private static final Logger LOG = Logger.getInstance(PyCythonExtensionWarning.class);
 
   private static final String CYTHON_WARNING_GROUP_ID = "CythonWarning";
-  private static final String WARNING_MESSAGE = "Cython extension speeds up Python debugging";
   public static final String SETUP_CYTHON_PATH = "pydev/setup_cython.py";
 
 
