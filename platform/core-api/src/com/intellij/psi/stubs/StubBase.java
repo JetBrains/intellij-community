@@ -191,6 +191,9 @@ public abstract class StubBase<T extends PsiElement> extends ObjectStubBase<Stub
     return getPsi().getProject();
   }
 
+  /**
+   * consider to use {@link DebugUtil.stubTreeToString()}
+   */
   public String printTree() {
     StringBuilder builder = new StringBuilder();
     printTree(builder, 0);

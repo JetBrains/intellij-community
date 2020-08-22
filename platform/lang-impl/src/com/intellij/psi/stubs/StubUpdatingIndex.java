@@ -21,6 +21,7 @@ import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.BitUtil;
@@ -216,17 +217,31 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
     catch (SerializerNotFoundException e) {
       throw new RuntimeException("Failed to deserialize stub tree", e);
     }
-    assertStubsAreSimilar(originalStub, deserializedStub);
+    if (!areStubsSimilar(originalStub, deserializedStub)) {
+      LOG.error("original and deserialized trees are not the same",
+                new Attachment("originalStub.txt", DebugUtil.stubTreeToString(originalStub)),
+                new Attachment("deserializedStub.txt", DebugUtil.stubTreeToString(deserializedStub)));
+    }
   }
 
-  private static void assertStubsAreSimilar(@NotNull Stub stub, @NotNull Stub stub2) {
-    assert stub.getStubType() == stub2.getStubType() : stub.getStubType() + "!=" + stub2.getStubType();
+  private static boolean areStubsSimilar(@NotNull Stub stub, @NotNull Stub stub2) {
+    if (stub.getStubType() != stub2.getStubType()) {
+      return false;
+    }
     List<? extends Stub> stubs = stub.getChildrenStubs();
     List<? extends Stub> stubs2 = stub2.getChildrenStubs();
-    assert stubs.size() == stubs2.size() : stub.getStubType() + ": " + stubs.size() + "!=" + stubs2.size();
-    for (int i = 0, len = stubs.size(); i < len; ++i) {
-      assertStubsAreSimilar(stubs.get(i), stubs2.get(i));
+
+    if (stubs.size() != stubs2.size()) {
+      return false;
     }
+
+    for (int i = 0, len = stubs.size(); i < len; ++i) {
+      if (!areStubsSimilar(stubs.get(i), stubs2.get(i))) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   private void assertPrebuiltStubTreeMatchesActualTree(@NotNull SerializedStubTree prebuiltStubTree,
