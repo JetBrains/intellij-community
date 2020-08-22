@@ -159,13 +159,16 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     if (!(virtualFile instanceof VirtualFileWithId)) return Collections.emptyMap();
     int fileId = getFileId(virtualFile);
 
-    if ((IndexDebugProperties.DEBUG && !ApplicationManager.getApplication().isUnitTestMode()) &&
-        !((FileBasedIndexExtension<K, V>)getIndex(id).getExtension()).needsForwardIndexWhenSharing()) {
-      LOG.error("Index extension " + id + " doesn't require forward index but accesses it");
-    }
-
     if (getAccessibleFileIdFilter(project).test(fileId)) {
-      Map<K, V> map = processExceptions(id, virtualFile, GlobalSearchScope.fileScope(project, virtualFile), index -> index.getIndexedFileData(fileId));
+      Map<K, V> map = processExceptions(id, virtualFile, GlobalSearchScope.fileScope(project, virtualFile), index -> {
+
+        if ((IndexDebugProperties.DEBUG && !ApplicationManager.getApplication().isUnitTestMode()) &&
+            !((FileBasedIndexExtension<K, V>)index.getExtension()).needsForwardIndexWhenSharing()) {
+          LOG.error("Index extension " + id + " doesn't require forward index but accesses it");
+        }
+
+        return index.getIndexedFileData(fileId);
+      });
       return ContainerUtil.notNullize(map);
     }
     return Collections.emptyMap();
