@@ -21,12 +21,19 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.refactoring.LightMultiFileTestCase;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author yole
  */
 public class CreateSubclassTest extends LightMultiFileTestCase {
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_15;
+  }
+
   public void testGenerics() {
     doTest();
   }
@@ -41,6 +48,14 @@ public class CreateSubclassTest extends LightMultiFileTestCase {
 
   public void testInnerClass() {
     doTestInner();
+  }
+
+  public void testSealed() {
+    doTest();
+  }
+
+  public void testSealedWithSameFileInheritors() {
+    doTest();
   }
 
   private void doTestInner() {

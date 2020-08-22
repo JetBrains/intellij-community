@@ -2,6 +2,7 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.core.CoreBundle;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -26,6 +27,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
+import java.util.function.Supplier;
 
 /**
  * <p>Represents a file in {@link VirtualFileSystem}. A particular file is represented by equal
@@ -54,7 +56,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @see VirtualFileListener#propertyChanged
    * @see VirtualFilePropertyEvent#getPropertyName
    */
-  public static final String PROP_NAME = "name";
+  public static final @NonNls String PROP_NAME = "name";
 
   /**
    * Used as a property name in the {@link VirtualFilePropertyEvent} fired when the encoding of a {@link VirtualFile} changes.
@@ -62,7 +64,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @see VirtualFileListener#propertyChanged
    * @see VirtualFilePropertyEvent#getPropertyName
    */
-  public static final String PROP_ENCODING = "encoding";
+  public static final @NonNls String PROP_ENCODING = "encoding";
 
   /**
    * Used as a property name in the {@link VirtualFilePropertyEvent} fired when write permission of a {@link VirtualFile} changes.
@@ -70,7 +72,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @see VirtualFileListener#propertyChanged
    * @see VirtualFilePropertyEvent#getPropertyName
    */
-  public static final String PROP_WRITABLE = "writable";
+  public static final @NonNls String PROP_WRITABLE = "writable";
 
   /**
    * Used as a property name in the {@link VirtualFilePropertyEvent} fired when a visibility of a {@link VirtualFile} changes.
@@ -78,7 +80,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @see VirtualFileListener#propertyChanged
    * @see VirtualFilePropertyEvent#getPropertyName
    */
-  public static final String PROP_HIDDEN = "HIDDEN";
+  public static final @NonNls String PROP_HIDDEN = "HIDDEN";
 
   /**
    * Used as a property name in the {@link VirtualFilePropertyEvent} fired when a symlink target of a {@link VirtualFile} changes.
@@ -86,7 +88,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @see VirtualFileListener#propertyChanged
    * @see VirtualFilePropertyEvent#getPropertyName
    */
-  public static final String PROP_SYMLINK_TARGET = "symlink";
+  public static final @NonNls String PROP_SYMLINK_TARGET = "symlink";
 
   /**
    * Acceptable values for "propertyName" argument of {@link VFilePropertyChangeEvent#VFilePropertyChangeEvent VFilePropertyChangeEvent()}.
@@ -98,16 +100,21 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   private static final Key<byte[]> BOM_KEY = Key.create("BOM");
   private static final Key<Charset> CHARSET_KEY = Key.create("CHARSET");
 
-  protected VirtualFile() { }
+  protected VirtualFile() {
+    if (this instanceof Disposable) {
+      throw new IllegalStateException("VirtualFile must not implement Disposable because of life-cycle requirements. " +
+                                      "E.g. VirtualFile should exist throughout the application and may not be disposed half-way.");
+    }
+  }
 
   /**
    * Gets the name of this file.
    *
    * @see #getNameSequence()
    */
-  public abstract @NotNull String getName();
+  public abstract @NotNull @NlsSafe String getName();
 
-  public @NotNull CharSequence getNameSequence() {
+  public @NotNull @NlsSafe CharSequence getNameSequence() {
     return getName();
   }
 
@@ -127,7 +134,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @return the path
    * @see #toNioPath()
    */
-  public abstract @NotNull String getPath();
+  public abstract @NotNull @NlsSafe String getPath();
 
   /**
    * @return a related {@link Path} for a given virtual file where possible otherwise an
@@ -160,7 +167,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @see VirtualFile#getPath
    * @see VirtualFileSystem#getProtocol
    */
-  public @NotNull String getUrl() {
+  public @NotNull @NlsSafe String getUrl() {
     return VirtualFileManager.constructUrl(getFileSystem().getProtocol(), getPath());
   }
 
@@ -171,7 +178,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @return the presentable URL.
    * @see VirtualFileSystem#extractPresentableUrl
    */
-  public final @NotNull String getPresentableUrl() {
+  public final @NotNull @NlsSafe String getPresentableUrl() {
     return getFileSystem().extractPresentableUrl(getPath());
   }
 
@@ -181,7 +188,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    *
    * @return the extension or null if file name doesn't contain '.'
    */
-  public @Nullable String getExtension() {
+  public @Nullable @NlsSafe String getExtension() {
     CharSequence extension = FileUtilRt.getExtension(getNameSequence(), null);
     return extension == null ? null : extension.toString();
   }
@@ -192,7 +199,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    *
    * @return the name without extension
    */
-  public @NotNull String getNameWithoutExtension() {
+  public @NlsSafe @NotNull String getNameWithoutExtension() {
     return FileUtilRt.getNameWithoutExtension(getNameSequence()).toString();
   }
 
@@ -252,10 +259,10 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * work with those provided by a user.</p>
    *
    * @return {@code getPath()} if there are no symbolic links in a file's path;
-   *         {@code getCanonicalFile().getPath()} if the link was successfully resolved;
-   *         {@code null} otherwise
+   * {@code getCanonicalFile().getPath()} if the link was successfully resolved;
+   * {@code null} otherwise
    */
-  public @Nullable String getCanonicalPath() {
+  public @Nullable @NlsSafe String getCanonicalPath() {
     return getPath();
   }
 
@@ -293,17 +300,19 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   public abstract VirtualFile getParent();
 
   /**
-   * Gets the child files.
+   * Gets the child files. The returned files are guaranteed to be valid, if the method is called in a read action.
    *
    * @return array of the child files or {@code null} if this file is not a directory
+   * @throws InvalidVirtualFileAccessException if this method is called inside read actin on an invalid file
    */
   public abstract VirtualFile[] getChildren();
 
   /**
-   * Finds child of this file with the given name.
+   * Finds child of this file with the given name. The returned file is guaranteed to be valid, if the method is called in a read action.
    *
    * @param name the file name to search by
    * @return the file if found any, {@code null} otherwise
+   * @throws InvalidVirtualFileAccessException if this method is called inside read actin on an invalid file
    */
   public @Nullable VirtualFile findChild(@NotNull @NonNls String name) {
     VirtualFile[] children = getChildren();
@@ -540,10 +549,8 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   }
 
   public void setBinaryContent(byte @NotNull [] content, long newModificationStamp, long newTimeStamp, Object requestor) throws IOException {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
     try (OutputStream outputStream = getOutputStream(requestor, newModificationStamp, newTimeStamp)) {
       outputStream.write(content);
-      outputStream.flush();
     }
   }
 
@@ -656,7 +663,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    */
   public abstract void refresh(boolean asynchronous, boolean recursive, @Nullable Runnable postRunnable);
 
-  public String getPresentableName() {
+  public @NlsSafe String getPresentableName() {
     return getName();
   }
 
@@ -718,7 +725,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * It is always null for directories and binaries, and possibly null if a separator isn't yet known.
    * @see LineSeparator
    */
-  public @Nullable String getDetectedLineSeparator() {
+  public @Nullable @NlsSafe String getDetectedLineSeparator() {
     return getUserData(DETECTED_LINE_SEPARATOR_KEY);
   }
 
@@ -726,7 +733,9 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     putUserData(DETECTED_LINE_SEPARATOR_KEY, separator);
   }
 
-  public void setPreloadedContentHint(byte[] preloadedContentHint) { }
+  public <T> T computeWithPreloadedContentHint(byte @NotNull [] preloadedContentHint, @NotNull Supplier<? extends T> computable) {
+    return computable.get();
+  }
 
   /**
    * Returns {@code true} if this file is a symlink that is either <i>recursive</i> (i.e. points to this file' parent) or
@@ -748,5 +757,16 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
       }
     }
     return false;
+  }
+
+  /**
+   * @return if this directory (or, if this is a file, its parent directory) supports case-sensitive file names
+   * (i.e. treats README.txt and readme.txt as different files).
+   * Examples of these directories include regular directories on Linux, directories in case-sensitive volumes on Mac and
+   * NTFS directories configured with "fsutil.exe file setCaseSensitiveInfo" on Windows 10+.
+   */
+  @ApiStatus.Experimental
+  public boolean isCaseSensitive() {
+    return getFileSystem().isCaseSensitive();
   }
 }

@@ -12,7 +12,7 @@ from typing import overload as overload
 from typing import Text as Text
 from typing import Type as Type
 from typing import TYPE_CHECKING as TYPE_CHECKING
-from typing import TypeVar, Any, Mapping, ItemsView, KeysView, Optional, ValuesView, Dict, Type
+from typing import TypeVar, Any, Mapping, ItemsView, KeysView, Optional, ValuesView, Dict
 
 _T = TypeVar('_T')
 _F = TypeVar('_F', bound=Callable[..., Any])

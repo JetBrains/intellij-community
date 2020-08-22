@@ -7,6 +7,7 @@ import com.intellij.codeInspection.dataFlow.DfaNullability;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.*;
+import com.intellij.java.JavaBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -53,9 +54,11 @@ final class DfaBasedFilter {
 
   private boolean allowed(@NotNull PsiElement element, boolean assertionsDisabled) {
     if (myDfType instanceof DfConstantType && element instanceof PsiLiteralValue) {
-      Object constValue = ((DfConstantType<?>)myDfType).getValue();
+      DfConstantType<?> dfConstantType = (DfConstantType<?>)myDfType;
+      Object constValue = dfConstantType.getValue();
       if (!(constValue instanceof PsiElement)) {
-        Object value = ((PsiLiteralValue)element).getValue();
+        Object literalValue = ((PsiLiteralValue)element).getValue();
+        Object value = constValue == null ? literalValue : TypeConversionUtil.computeCastTo(literalValue, dfConstantType.getPsiType());
         return Objects.equals(value, constValue);
       }
     }
@@ -87,7 +90,12 @@ final class DfaBasedFilter {
     CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(expression);
     if (result == null) return DfTypes.TOP;
     expression = PsiUtil.skipParenthesizedExprDown(expression);
-    return assertionsDisabled ? result.getDfTypeNoAssertions(expression) : result.getDfType(expression);
+    DfType type = assertionsDisabled ? result.getDfTypeNoAssertions(expression) : result.getDfType(expression);
+    if (myDfType instanceof DfLongType && type instanceof DfIntType) {
+      // Implicit widening conversion
+      return DfTypes.longRange(((DfIntType)type).getRange());
+    }
+    return type;
   }
 
   @Override
@@ -116,7 +124,7 @@ final class DfaBasedFilter {
     return null;
   }
 
-  static String getPresentationText(@NotNull DfType type, @Nullable PsiType psiType) {
+  static @Nls String getPresentationText(@NotNull DfType type, @Nullable PsiType psiType) {
     if (type == DfTypes.TOP) {
       return "";
     }
@@ -137,18 +145,18 @@ final class DfaBasedFilter {
       if (constraint.getPresentationText(psiType).isEmpty()) {
         stripped = stripped.dropTypeConstraint();
       }
-      String constraintText = stripped.toString();
+      @Nls String constraintText = stripped.toString();
       if (nullability == DfaNullability.NOT_NULL) {
         if (constraintText.isEmpty()) {
-          return "not-null";
+          return JavaBundle.message("dfa.constraint.not.null");
         }
-        return constraintText + " (not-null)";
+        return JavaBundle.message("dfa.constraint.0.not.null", constraintText);
       }
       else if (nullability != DfaNullability.NULL) {
         if (constraintText.isEmpty()) {
           return "";
         }
-        return "null or " + constraintText;
+        return JavaBundle.message("dfa.constraint.null.or.0", constraintText);
       }
     }
     return type.toString();

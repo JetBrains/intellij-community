@@ -42,8 +42,14 @@ public @interface State {
   boolean defaultStateAsResource() default false;
 
   /**
-   * Additional export path (relative to application-level configuration root directory).
+   * Additional export directory path (relative to application-level configuration root directory).
    */
+  @NotNull String additionalExportDirectory() default "";
+
+  /**
+   * @deprecated Use {@link #additionalExportDirectory()}.
+   */
+  @Deprecated
   String additionalExportFile() default "";
 
   Class<? extends NameGetter> presentableName() default NameGetter.class;
@@ -66,7 +72,7 @@ public @interface State {
    * <li>Won't record fields if state is persisted manually, i.e. the state is {@link org.jdom.Element} </li>
    * </ul>
    */
-  boolean reportStatistic() default false;
+  boolean reportStatistic() default true;
 
   boolean allowLoadInTests() default false;
 

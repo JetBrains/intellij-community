@@ -7,7 +7,6 @@
 #       F401 imported but unused
 #       F403 import *' used; unable to detect undefined names
 #       F405 defined from star imports
-#       F811 redefinition (should be fixed in pyflakes 2.1.2)
 #       F822 undefined name in __all__
 
 # Nice-to-haves ignored for now
@@ -15,7 +14,10 @@
 
 [flake8]
 per-file-ignores =
-  *.pyi: E301, E302, E305, E501, E701, E741, F401, F403, F405, F811, F822
+  *.pyi: E301, E302, E305, E501, E701, E741, F401, F403, F405, F822
+  # Since typing.pyi defines "overload" this is not recognized by flake8 as typing.overload.
+  # Unfortunately, flake8 does not allow to "noqa" just a specific error inside the file itself.
+  typing.pyi: E301, E302, E305, E501, E701, E741, F401, F403, F405, F811, F822
 
 # We are checking with Python 3 but many of the stubs are Python 2 stubs.
 builtins = StandardError,apply,basestring,buffer,cmp,coerce,execfile,file,intern,long,raw_input,reduce,reload,unichr,unicode,xrange

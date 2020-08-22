@@ -7,7 +7,6 @@ import com.intellij.ui.HyperlinkLabel
 import com.intellij.util.ui.EmptyIcon
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState
-import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import java.awt.FlowLayout
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -15,63 +14,40 @@ import javax.swing.JPanel
 
 object GHPRStatusChecksComponent {
 
-  fun create(model: SingleValueModel<GHPRMergeabilityState>): JComponent {
-
+  fun create(mergeability: GHPRMergeabilityState): JComponent {
     val panel = JPanel(FlowLayout(FlowLayout.LEADING, 0, 0))
-    Controller(model, panel)
+    val checksState = mergeability.checksState
+    if (checksState == GHPRMergeabilityState.ChecksState.NONE) {
+      panel.isVisible = false
+    }
+    else {
+      val label = JLabel().apply {
+        icon = when (checksState) {
+          GHPRMergeabilityState.ChecksState.BLOCKING_BEHIND,
+          GHPRMergeabilityState.ChecksState.BLOCKING_FAILING -> AllIcons.RunConfigurations.TestError
+          GHPRMergeabilityState.ChecksState.FAILING -> AllIcons.RunConfigurations.TestFailed
+          GHPRMergeabilityState.ChecksState.PENDING -> AllIcons.RunConfigurations.TestNotRan
+          GHPRMergeabilityState.ChecksState.SUCCESSFUL -> AllIcons.RunConfigurations.TestPassed
+          else -> EmptyIcon.ICON_16
+        }
+        text = when (checksState) {
+          GHPRMergeabilityState.ChecksState.BLOCKING_BEHIND -> GithubBundle.message("pull.request.branch.out.of.sync")
+          GHPRMergeabilityState.ChecksState.BLOCKING_FAILING,
+          GHPRMergeabilityState.ChecksState.FAILING,
+          GHPRMergeabilityState.ChecksState.PENDING,
+          GHPRMergeabilityState.ChecksState.SUCCESSFUL -> getChecksResultsText(mergeability.failedChecks,
+                                                                               mergeability.pendingChecks,
+                                                                               mergeability.successfulChecks)
+          else -> ""
+        }
+      }
+
+      with(panel) {
+        add(label)
+        add(createLink(mergeability.htmlUrl))
+      }
+    }
     return panel
-  }
-
-  private class Controller(private val model: SingleValueModel<GHPRMergeabilityState>,
-                           private val panel: JPanel) {
-
-    init {
-      update()
-
-      model.addValueChangedListener {
-        update()
-      }
-    }
-
-    private fun update() {
-      panel.removeAll()
-      val mergeability = model.value
-      val checksState = mergeability.checksState
-      if (checksState == GHPRMergeabilityState.ChecksState.NONE) {
-        panel.isVisible = false
-        return
-      }
-      else {
-        val label = JLabel().apply {
-          icon = when (checksState) {
-            GHPRMergeabilityState.ChecksState.BLOCKING_BEHIND,
-            GHPRMergeabilityState.ChecksState.BLOCKING_FAILING -> AllIcons.RunConfigurations.TestError
-            GHPRMergeabilityState.ChecksState.FAILING -> AllIcons.RunConfigurations.TestFailed
-            GHPRMergeabilityState.ChecksState.PENDING -> AllIcons.RunConfigurations.TestNotRan
-            GHPRMergeabilityState.ChecksState.SUCCESSFUL -> AllIcons.RunConfigurations.TestPassed
-            else -> EmptyIcon.ICON_16
-          }
-          text = when (checksState) {
-            GHPRMergeabilityState.ChecksState.BLOCKING_BEHIND -> GithubBundle.message("pull.request.branch.out.of.sync")
-            GHPRMergeabilityState.ChecksState.BLOCKING_FAILING,
-            GHPRMergeabilityState.ChecksState.FAILING,
-            GHPRMergeabilityState.ChecksState.PENDING,
-            GHPRMergeabilityState.ChecksState.SUCCESSFUL -> getChecksResultsText(mergeability.failedChecks,
-                                                                                 mergeability.pendingChecks,
-                                                                                 mergeability.successfulChecks)
-            else -> ""
-          }
-        }
-
-        with(panel) {
-          add(label)
-          add(createLink(mergeability.htmlUrl))
-          validate()
-          repaint()
-          isVisible = true
-        }
-      }
-    }
   }
 
   private fun getChecksResultsText(failedChecks: Int, pendingChecks: Int, successfulChecks: Int): String {

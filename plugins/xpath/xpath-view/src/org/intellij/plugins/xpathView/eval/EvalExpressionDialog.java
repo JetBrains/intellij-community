@@ -22,6 +22,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import org.intellij.plugins.xpathView.Config;
 import org.intellij.plugins.xpathView.HistoryElement;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.intellij.plugins.xpathView.ui.InputExpressionDialog;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,8 +33,8 @@ public class EvalExpressionDialog extends InputExpressionDialog<EvalFormPanel> {
 
     public EvalExpressionDialog(Project project, Config settings, HistoryElement[] history) {
         super(project, settings, history, new EvalFormPanel());
-        setTitle("Evaluate XPath Expression");
-        setOKButtonText("Evaluate");
+        setTitle(XPathBundle.message("dialog.title.evaluate.xpath.expression"));
+        setOKButtonText(XPathBundle.message("button.evaluate"));
     }
 
     @Override

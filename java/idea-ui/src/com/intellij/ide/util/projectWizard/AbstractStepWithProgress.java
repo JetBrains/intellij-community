@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.SwingWorker;
@@ -36,9 +37,9 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
   private JLabel myProgressLabel;
   private JLabel myProgressLabel2;
   private ProgressIndicator myProgressIndicator;
-  private final String myPromptStopSearch;
+  private final @NlsContexts.DialogMessage String myPromptStopSearch;
 
-  public AbstractStepWithProgress(final String promptStopSearching) {
+  public AbstractStepWithProgress(final @NlsContexts.DialogMessage String promptStopSearching) {
     myPromptStopSearch = promptStopSearching;
   }
 
@@ -56,7 +57,7 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
 
   protected abstract JComponent createResultsPanel();
 
-  protected abstract String getProgressText();
+  protected abstract @NlsContexts.ProgressText String getProgressText();
 
   protected abstract boolean shouldRunProgress();
 
@@ -128,7 +129,7 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
 
-      Result result = ProgressManager.getInstance().runProcess(() -> calculate(), progress);
+      Result result = ProgressManager.getInstance().runProcess(this::calculate, progress);
       onFinished(result, false);
       return;
     }
@@ -200,7 +201,7 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
       super.setText2(text);
     }
 
-    private void updateLabel(final JLabel label, final String text) {
+    private void updateLabel(final JLabel label, @NlsContexts.Label final String text) {
       UIUtil.invokeLaterIfNeeded(() -> label.setText(text));
     }
   }

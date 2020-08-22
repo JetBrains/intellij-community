@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io.socketConnection.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -8,8 +8,9 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
 import com.intellij.util.io.socketConnection.*;
-import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TIntObjectProcedure;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -17,11 +18,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class ResponseProcessor<R extends AbstractResponse> {
+public final class ResponseProcessor<R extends AbstractResponse> {
   private static final Logger LOG = Logger.getInstance(ResponseProcessor.class);
-  private final TIntObjectHashMap<AbstractResponseToRequestHandler<?>> myHandlers = new TIntObjectHashMap<>();
+  private final Int2ObjectOpenHashMap<AbstractResponseToRequestHandler<?>> myHandlers = new Int2ObjectOpenHashMap<>();
   private final MultiValuesMap<Class<? extends R>, AbstractResponseHandler<? extends R>> myClassHandlers = new MultiValuesMap<>();
-  private final TIntObjectHashMap<TimeoutHandler> myTimeoutHandlers = new TIntObjectHashMap<>();
+  private final Int2ObjectOpenHashMap<TimeoutHandler> myTimeoutHandlers = new Int2ObjectOpenHashMap<>();
   private boolean myStopped;
   private final Object myLock = new Object();
   private Thread myThread;
@@ -80,7 +81,7 @@ public class ResponseProcessor<R extends AbstractResponse> {
   }
 
 
-  private void processResponse(R response) throws IOException {
+  private void processResponse(R response) {
     //noinspection unchecked
     final Class<R> responseClass = (Class<R>)response.getClass();
 
@@ -124,17 +125,16 @@ public class ResponseProcessor<R extends AbstractResponse> {
     LOG.debug("Checking timeout");
     final List<TimeoutHandler> timedOut = new ArrayList<>();
     synchronized (myLock) {
-      final long time = System.currentTimeMillis();
-      myTimeoutHandlers.retainEntries(new TIntObjectProcedure<TimeoutHandler>() {
-        @Override
-        public boolean execute(int a, TimeoutHandler b) {
-          if (time > b.myLastTime) {
-            timedOut.add(b);
-            return false;
-          }
-          return true;
+      long time = System.currentTimeMillis();
+      ObjectIterator<Int2ObjectMap.Entry<TimeoutHandler>> iterator = myTimeoutHandlers.int2ObjectEntrySet().fastIterator();
+      while (iterator.hasNext()) {
+        Int2ObjectMap.Entry<TimeoutHandler> entry = iterator.next();
+        TimeoutHandler b = entry.getValue();
+        if (time > b.myLastTime) {
+          timedOut.add(b);
+          iterator.remove();
         }
-      });
+      }
     }
     for (TimeoutHandler handler : timedOut) {
       LOG.debug("performing timeout action: " + handler.myAction);
@@ -146,11 +146,13 @@ public class ResponseProcessor<R extends AbstractResponse> {
   private void scheduleTimeoutCheck() {
     final Ref<Long> nextTime = Ref.create(Long.MAX_VALUE);
     synchronized (myLock) {
-      if (myTimeoutHandlers.isEmpty()) return;
-      myTimeoutHandlers.forEachValue(handler -> {
-        nextTime.set(Math.min(nextTime.get(), handler.myLastTime));
-        return true;
-      });
+      if (myTimeoutHandlers.isEmpty()) {
+        return;
+      }
+
+      for (TimeoutHandler value : myTimeoutHandlers.values()) {
+        nextTime.set(Math.min(nextTime.get(), value.myLastTime));
+      }
     }
     final int delay = (int)(nextTime.get() - System.currentTimeMillis() + 100);
     LOG.debug("schedule timeout check in " + delay + "ms");
@@ -170,7 +172,7 @@ public class ResponseProcessor<R extends AbstractResponse> {
     scheduleTimeoutCheck();
   }
 
-  private static class TimeoutHandler {
+  private static final class TimeoutHandler {
     private final Runnable myAction;
     private final long myLastTime;
 

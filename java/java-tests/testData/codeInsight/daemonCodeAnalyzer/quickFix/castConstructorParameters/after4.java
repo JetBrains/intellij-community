@@ -7,7 +7,7 @@ class a extends x {
     a(double d, int i) {}
 
     void f(Runnable r) {
-        new a(<caret>1, (double) 1);
+        new a(<caret>1, 1.0);
     }
 }
 

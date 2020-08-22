@@ -5,28 +5,28 @@ import junit.framework.TestCase;
 
 public class ShShebangParserUtilTest extends TestCase {
   public void testInvalidShebang() {
-    assertNull(ShShebangParserUtil.getInterpreter(null));
-    assertNull(ShShebangParserUtil.getInterpreter("/usr/bin"));
+    assertNull(ShShebangParserUtil.detectInterpreter(null));
+    assertNull(ShShebangParserUtil.detectInterpreter("/usr/bin"));
   }
 
   public void testShShebangTest() {
-    assertEquals("sh", ShShebangParserUtil.getInterpreter("#!/bin/sh"));
-    assertEquals("sh", ShShebangParserUtil.getInterpreter("#! /bin/sh   "));
-    assertEquals("sh", ShShebangParserUtil.getInterpreter("#!/bin/sh -x"));
-    assertEquals("sh", ShShebangParserUtil.getInterpreter("#!/bin/sh -x\n#"));
-    assertEquals("sh", ShShebangParserUtil.getInterpreter("#!C:/AppData/Git/usr/bin/sh.exe"));
+    assertEquals("sh", ShShebangParserUtil.detectInterpreter("#!/bin/sh"));
+    assertEquals("sh", ShShebangParserUtil.detectInterpreter("#! /bin/sh   "));
+    assertEquals("sh", ShShebangParserUtil.detectInterpreter("#!/bin/sh -x"));
+    assertEquals("sh", ShShebangParserUtil.detectInterpreter("#!/bin/sh -x\n#"));
+    assertEquals("sh", ShShebangParserUtil.detectInterpreter("#!C:/AppData/Git/usr/bin/sh.exe"));
   }
 
   public void testEnvShebangTest() {
-    assertEquals("sh", ShShebangParserUtil.getInterpreter("#!/usr/bin/env sh\n"));
-    assertEquals("sh", ShShebangParserUtil.getInterpreter("#!  /usr/bin/env sh \n"));
+    assertEquals("sh", ShShebangParserUtil.detectInterpreter("#!/usr/bin/env sh\n"));
+    assertEquals("sh", ShShebangParserUtil.detectInterpreter("#!  /usr/bin/env sh \n"));
   }
 
   public void testBashShebangTest() {
-    assertEquals("sh", ShShebangParserUtil.getInterpreter("#!/bin/sh -eu  \n"));
+    assertEquals("sh", ShShebangParserUtil.detectInterpreter("#!/bin/sh -eu  \n"));
   }
 
   public void testAwkShebangTest() {
-    assertEquals("awk", ShShebangParserUtil.getInterpreter("#!/usr/bin/awk -f\n# "));
+    assertEquals("awk", ShShebangParserUtil.detectInterpreter("#!/usr/bin/awk -f\n# "));
   }
 }

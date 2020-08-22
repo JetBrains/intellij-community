@@ -6,6 +6,7 @@ import com.intellij.ide.passwordSafe.PasswordSafe
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.AppIcon
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.CheckBox
@@ -27,8 +28,8 @@ import javax.swing.text.Segment
  */
 @JvmOverloads
 fun askPassword(project: Project?,
-                dialogTitle: String,
-                passwordFieldLabel: String,
+                @NlsContexts.DialogTitle dialogTitle: String,
+                @NlsContexts.Label passwordFieldLabel: String,
                 attributes: CredentialAttributes,
                 resetPassword: Boolean = false,
                 error: String? = null): String? {
@@ -40,8 +41,8 @@ fun askPassword(project: Project?,
 
 @JvmOverloads
 fun askCredentials(project: Project?,
-                   dialogTitle: String,
-                   passwordFieldLabel: String,
+                   @NlsContexts.DialogTitle dialogTitle: String,
+                   @NlsContexts.Label passwordFieldLabel: String,
                    attributes: CredentialAttributes,
                    isSaveOnOk: Boolean = true,
                    isCheckExistingBeforeDialog: Boolean = false,

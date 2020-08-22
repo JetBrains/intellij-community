@@ -601,7 +601,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     }
   }
 
-  private class MyListSelectionModel extends DefaultListSelectionModel {
+  private final class MyListSelectionModel extends DefaultListSelectionModel {
     private MyListSelectionModel() {
       setSelectionMode(isMultiSelectionEnabled() ? MULTIPLE_INTERVAL_SELECTION : SINGLE_SELECTION);
     }

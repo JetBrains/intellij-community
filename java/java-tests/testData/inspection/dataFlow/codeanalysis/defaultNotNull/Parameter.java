@@ -1,6 +1,6 @@
-import codeanalysis.experimental.annotations.DefaultNotNull;
+import jspecify.annotations.DefaultNonNull;
 
-@DefaultNotNull
+@DefaultNonNull
 class X {
   void m(X x) {}
   

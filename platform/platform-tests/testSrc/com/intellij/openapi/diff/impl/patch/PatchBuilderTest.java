@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.diff.impl.patch;
 
@@ -23,6 +23,9 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.io.StringWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 
 @TestDataPath("$CONTENT_ROOT/testData/diff/patch/")
@@ -132,21 +135,21 @@ public class PatchBuilderTest extends LightPlatformTestCase {
   }
 
   private void doTest(@Nullable Project project, boolean relativePaths, @Nullable String forceLSeparator) throws IOException, VcsException {
-    String testDataPath = getTestDir(getTestName(true));
-    assertTrue(new File(testDataPath).isDirectory());
-    String beforePath = testDataPath + "/before";
-    String afterPath = testDataPath + "/after";
+    Path testDataPath = Paths.get(getTestDir(getTestName(true)));
+    assertTrue(Files.isDirectory(testDataPath));
+    Path beforePath = testDataPath.resolve("before");
+    Path afterPath = testDataPath.resolve("after");
 
     List<Change> changes = new ArrayList<>();
 
     Map<String, File> beforeFileMap = new HashMap<>();
     Map<String, File> afterFileMap = new HashMap<>();
 
-    File[] beforeFiles = FileUtil.notNullize(new File(beforePath).listFiles());
+    File[] beforeFiles = FileUtil.notNullize(beforePath.toFile().listFiles());
     for (File file : beforeFiles) {
       beforeFileMap.put(file.getName(), file);
     }
-    File[] afterFiles = FileUtil.notNullize(new File(afterPath).listFiles());
+    File[] afterFiles = FileUtil.notNullize(afterPath.toFile().listFiles());
     for (File file : afterFiles) {
       afterFileMap.put(file.getName(), file);
     }
@@ -162,7 +165,7 @@ public class PatchBuilderTest extends LightPlatformTestCase {
       changes.add(new Change(beforeRevision, afterRevision));
     }
 
-    String expected = FileUtil.loadFile(new File(testDataPath, "expected.patch"));
+    String expected = FileUtil.loadFile(testDataPath.resolve("expected.patch").toFile());
 
     StringWriter writer = new StringWriter();
     List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(project, changes, testDataPath, false);

@@ -11,9 +11,9 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.LimitedPool;
 import com.sun.jna.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,25 +33,28 @@ import java.util.Set;
 public final class FileSystemUtil {
   static final String FORCE_USE_NIO2_KEY = "idea.io.use.nio2";
   private static final String COARSE_TIMESTAMP_KEY = "idea.io.coarse.ts";
+  @ApiStatus.Internal
+  public static final boolean DO_NOT_RESOLVE_SYMLINKS = SystemProperties.is("idea.symlinks.no.resolve");
 
   private static final Logger LOG = Logger.getInstance(FileSystemUtil.class);
 
-  private interface Mediator {
+  interface Mediator {
     @Nullable FileAttributes getAttributes(@NotNull String path) throws IOException;
     @Nullable String resolveSymLink(@NotNull String path) throws IOException;
     boolean clonePermissions(@NotNull String source, @NotNull String target, boolean execOnly) throws IOException;
   }
 
   @NotNull
-  private static Mediator ourMediator = getMediator();
+  private static final Mediator ourMediator = computeMediator();
 
-  private static Mediator getMediator() {
+  @NotNull
+  static Mediator computeMediator() {
     if (!Boolean.getBoolean(FORCE_USE_NIO2_KEY)) {
       try {
         if (SystemInfo.isWindows && IdeaWin32.isAvailable()) {
           return check(new IdeaWin32MediatorImpl());
         }
-        else if ((SystemInfo.isLinux || SystemInfo.isMac || SystemInfo.isSolaris || SystemInfo.isFreeBSD) && JnaLoader.isLoaded()) {
+        else if ((SystemInfo.isLinux || SystemInfo.isMac && !SystemInfo.isArm64 || SystemInfo.isSolaris || SystemInfo.isFreeBSD) && JnaLoader.isLoaded()) {
           return check(new JnaUnixMediatorImpl());
         }
       }
@@ -63,7 +66,8 @@ public final class FileSystemUtil {
     return new Nio2MediatorImpl();
   }
 
-  private static Mediator check(final Mediator mediator) throws Exception {
+  @NotNull
+  private static Mediator check(@NotNull Mediator mediator) throws Exception {
     String quickTestPath = SystemInfo.isWindows ? "C:\\" : "/";
     mediator.getAttributes(quickTestPath);
     return mediator;
@@ -276,6 +280,7 @@ public final class FileSystemUtil {
     private final boolean myCoarseTs = SystemProperties.getBooleanProperty(COARSE_TIMESTAMP_KEY, false);
     private final LimitedPool<Memory> myMemoryPool = new LimitedPool.Sync<>(10, () -> new Memory(256));
 
+    @SuppressWarnings("HardCodedStringLiteral")
     JnaUnixMediatorImpl() {
       if ("linux-x86".equals(Platform.RESOURCE_PREFIX)) myOffsets = LINUX_32;
       else if ("linux-x86-64".equals(Platform.RESOURCE_PREFIX)) myOffsets = LINUX_64;
@@ -313,6 +318,9 @@ public final class FileSystemUtil {
           }
           mode = getModeFlags(buffer) & LibC.S_MASK;
         }
+        if (DO_NOT_RESOLVE_SYMLINKS) {
+          isSymlink = false;
+        }
 
         boolean isDirectory = (mode & LibC.S_IFMT) == LibC.S_IFDIR;
         boolean isSpecial = !isDirectory && (mode & LibC.S_IFMT) != LibC.S_IFREG;
@@ -323,7 +331,9 @@ public final class FileSystemUtil {
 
         boolean writable = ownFile(buffer) ? (mode & LibC.WRITE_MASK) != 0 : LibC.access(path, LibC.W_OK) == 0;
 
-        return new FileAttributes(isDirectory, isSpecial, isSymlink, false, size, mTime, writable);
+        //todo CaseSensitiveDir teach me to obtain dir case sensitivity
+        FileAttributes.CaseSensitivity sensitivity = stubCaseSensitivity(isDirectory);
+        return new FileAttributes(isDirectory, isSpecial, isSymlink, false, size, mTime, writable, sensitivity);
       }
       finally {
         myMemoryPool.recycle(buffer);
@@ -333,7 +343,7 @@ public final class FileSystemUtil {
     @Override
     public String resolveSymLink(@NotNull final String path) throws IOException {
       try {
-        return new File(path).getCanonicalPath();
+        return DO_NOT_RESOLVE_SYMLINKS ? path : new File(path).getCanonicalPath();
       }
       catch (IOException e) {
         String message = e.getMessage();
@@ -363,15 +373,15 @@ public final class FileSystemUtil {
       return LibC.chmod(target, permissions) == 0;
     }
 
-    private static boolean loadFileStatus(String path, Memory buffer) {
+    private static boolean loadFileStatus(@NotNull String path, @NotNull Memory buffer) {
       return (SystemInfo.isLinux ? LinuxLibC.__xstat64(STAT_VER, path, buffer) : UnixLibC.stat(path, buffer)) == 0;
     }
 
-    private int getModeFlags(Memory buffer) {
+    private int getModeFlags(@NotNull Memory buffer) {
       return SystemInfo.isLinux ? buffer.getInt(myOffsets[OFF_MODE]) : buffer.getShort(myOffsets[OFF_MODE]);
     }
 
-    private boolean ownFile(Memory buffer) {
+    private boolean ownFile(@NotNull Memory buffer) {
       return buffer.getInt(myOffsets[OFF_UID]) == myUid && buffer.getInt(myOffsets[OFF_GID]) == myGid;
     }
   }
@@ -403,15 +413,18 @@ public final class FileSystemUtil {
         boolean isOther = attributes.isOther();
         long size = attributes.size();
         long lastModified = attributes.lastModifiedTime().toMillis();
+        boolean isHidden;
+        boolean isWritable;
         if (SystemInfo.isWindows) {
-          boolean isHidden = path.getParent() != null && ((DosFileAttributes)attributes).isHidden();
-          boolean isWritable = isDirectory || !((DosFileAttributes)attributes).isReadOnly();
-          return new FileAttributes(isDirectory, isOther, isSymbolicLink, isHidden, size, lastModified, isWritable);
+          isHidden = path.getParent() != null && ((DosFileAttributes)attributes).isHidden();
+          isWritable = isDirectory || !((DosFileAttributes)attributes).isReadOnly();
         }
         else {
-          boolean isWritable = Files.isWritable(path);
-          return new FileAttributes(isDirectory, isOther, isSymbolicLink, false, size, lastModified, isWritable);
+          isHidden = false;
+          isWritable = Files.isWritable(path);
         }
+        FileAttributes.CaseSensitivity sensitivity = stubCaseSensitivity(isDirectory);
+        return new FileAttributes(isDirectory, isOther, isSymbolicLink, isHidden, size, lastModified, isWritable, sensitivity);
       }
       catch (IOException | InvalidPathException e) {
         LOG.debug(pathStr, e);
@@ -433,7 +446,8 @@ public final class FileSystemUtil {
     public boolean clonePermissions(@NotNull String source, @NotNull String target, boolean execOnly) throws IOException {
       if (!SystemInfo.isUnix) return false;
 
-      Path sourcePath = Paths.get(source), targetPath = Paths.get(target);
+      Path sourcePath = Paths.get(source);
+      Path targetPath = Paths.get(target);
       Set<PosixFilePermission> sourcePermissions = Files.readAttributes(sourcePath, PosixFileAttributes.class).permissions();
       Set<PosixFilePermission> targetPermissions = Files.readAttributes(targetPath, PosixFileAttributes.class).permissions();
       Set<PosixFilePermission> newPermissions;
@@ -456,13 +470,14 @@ public final class FileSystemUtil {
     }
   }
 
-  @TestOnly
-  static void resetMediator() {
-    ourMediator = getMediator();
-  }
-
-  @TestOnly
-  static String getMediatorName() {
-    return ourMediator.getClass().getSimpleName().replace("MediatorImpl", "");
+  @NotNull
+  public static FileAttributes.CaseSensitivity stubCaseSensitivity(boolean isDirectory) {
+    //todo CaseSensitiveDir should actually load dir case sensitivity with some clever native call
+    // in the meantime, just use the current file system case
+    return !isDirectory
+           ? FileAttributes.CaseSensitivity.UNSPECIFIED
+           : SystemInfo.isFileSystemCaseSensitive
+             ? FileAttributes.CaseSensitivity.SENSITIVE
+             : FileAttributes.CaseSensitivity.INSENSITIVE;
   }
 }

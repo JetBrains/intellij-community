@@ -213,6 +213,14 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     doTest();
   }
 
+  public void testFieldGroupAnchor() throws Exception {
+    doTest();
+  }
+
+  public void testFieldGroupAnchor2() throws Exception {
+    doTest();
+  }
+
   public void testSCR27887() throws Exception {
     doTest();
   }
@@ -227,6 +235,38 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
 
   public void testExtractFromTryFinally() throws Exception {
     doTest();
+  }
+
+  public void testInferredReturnType1() throws Exception {
+    doTest();
+  }
+
+  public void testInferredReturnType2() throws Exception {
+    doTest();
+  }
+
+  public void testInferredReturnType3() throws Exception {
+    doTest();
+  }
+
+  public void testInferredReturnType4() throws Exception {
+    doTest();
+  }
+
+  public void testInferredReturnType5() throws Exception {
+    doTest();
+  }
+
+  public void testInferredReturnType6() throws Exception {
+    doTest();
+  }
+
+  public void testNotPassedStaticField() throws Exception {
+    doTestPassFieldsAsParams();
+  }
+
+  public void testNotPassedStaticField2() throws Exception {
+    doTestPassFieldsAsParams();
   }
 
   public void testExtractAssignmentExpression() throws Exception {
@@ -1156,6 +1196,10 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     doTestWithJava17();
   }
 
+  public void testNonPhysicalSubexpression() throws Exception {
+    doTest();
+  }
+
   public void testCopyParamAnnotations() throws Exception {
     doTest();
   }
@@ -1211,7 +1255,16 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
   public void testCantPassFieldAsParameter() {
     try {
       doTestPassFieldsAsParams();
-      fail("Field was modified inside. Make static should be disabled");
+      fail("Field was modified inside. Make static should be disabled.");
+    }
+    catch (PrepareFailedException ignore) {
+    }
+  }
+
+  public void testCantMakeStatic() {
+    try {
+      doTestPassFieldsAsParams();
+      fail("Local method is used. Make static should be disabled.");
     }
     catch (PrepareFailedException ignore) {
     }
@@ -1379,6 +1432,29 @@ public class ExtractMethodNewTest extends LightJavaCodeInsightTestCase {
     boolean success =
       performExtractMethod(true, true, getEditor(), getFile(), getProject(), false, null, false, null, psiClass.getContainingClass(), null);
     assertTrue(success);
+    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
+  }
+
+  public void testNoStaticForInnerClass() {
+    try {
+      configureByFile(BASE_PATH + getTestName(false) + ".java");
+      performExtractMethod(true, true, getEditor(), getFile(), getProject(), false, null, true, null, null, null);
+      fail("Static modifier is forbidden inside inner classes");
+    } catch (PrepareFailedException e){
+    }
+  }
+
+  public void testStaticForNestedClass() throws Exception {
+    configureByFile(BASE_PATH + getTestName(false) + ".java");
+    performExtractMethod(true, true, getEditor(), getFile(), getProject(), false, null, true, null, null, null);
+    checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
+  }
+
+  public void testStaticForOuterClass() throws Exception {
+    configureByFile(BASE_PATH + getTestName(false) + ".java");
+    final int caret = getEditor().getSelectionModel().getLeadSelectionOffset();
+    final PsiClass outerClass = PsiTreeUtil.getParentOfType(getFile().findElementAt(caret), PsiClass.class).getContainingClass();
+    performExtractMethod(true, true, getEditor(), getFile(), getProject(), false, null, true, null, outerClass, null);
     checkResultByFile(BASE_PATH + getTestName(false) + "_after.java");
   }
 

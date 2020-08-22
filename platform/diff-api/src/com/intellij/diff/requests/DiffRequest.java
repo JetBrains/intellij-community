@@ -16,6 +16,7 @@
 package com.intellij.diff.requests;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.UserDataHolderBase;
 import org.jetbrains.annotations.CalledInAwt;
@@ -29,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 public abstract class DiffRequest implements UserDataHolder {
   protected final UserDataHolderBase myUserDataHolder = new UserDataHolderBase();
 
+  @NlsContexts.DialogTitle
   @Nullable
   public abstract String getTitle();
 

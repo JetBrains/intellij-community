@@ -134,7 +134,9 @@ class ExcludeTable extends ListTableWithButtons<ExcludeTable.Item> {
     myProject = project;
 
     JBTable table = getTableView();
-    table.getEmptyText().setText(JavaBundle.message("exclude.from.imports.no.exclusions"));
+    table.getEmptyText().clear();
+    table.getEmptyText().appendLine(JavaBundle.message("exclude.from.imports.no.exclusions"));
+    table.getEmptyText().appendLine(JavaBundle.message("exclude.from.imports.no.exclusions.2"));
     table.setStriped(false);
     new CellTooltipManager(myProject).withCellComponentProvider(CellComponentProvider.forTable(table)).installOn(table);
 

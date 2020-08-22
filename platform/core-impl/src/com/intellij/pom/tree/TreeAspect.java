@@ -12,5 +12,5 @@ public final class TreeAspect implements PomModelAspect {
   }
 
   @Override
-  public void update(PomModelEvent event) {}
+  public void update(@NotNull PomModelEvent event) {}
 }

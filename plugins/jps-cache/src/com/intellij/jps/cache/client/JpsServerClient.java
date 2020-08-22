@@ -9,11 +9,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public interface JpsServerClient {
   @NotNull
-  Set<String> getAllCacheKeys(@NotNull Project project);
+  Map<String, Set<String>> getCacheKeysPerRemote(@NotNull Project project);
   @Nullable
   File downloadMetadataById(@NotNull String metadataId, @NotNull File targetDir);
   File downloadCacheById(@NotNull SegmentedProgressIndicatorManager downloadIndicatorManager, @NotNull String cacheId,

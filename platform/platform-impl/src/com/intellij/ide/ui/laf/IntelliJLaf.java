@@ -16,9 +16,11 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class IntelliJLaf extends DarculaLaf {
+  public static final String NAME = "IntelliJ";
+
   @Override
   public String getName() {
-    return "IntelliJ";
+    return NAME;
   }
 
   @Override

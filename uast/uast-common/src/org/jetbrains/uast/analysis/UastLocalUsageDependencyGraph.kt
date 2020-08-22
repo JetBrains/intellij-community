@@ -342,6 +342,12 @@ private class VisitorWithVariablesTracking(
     return@checkedDepthCall true
   }
 
+  // Ignore class nodes
+  override fun visitClass(node: UClass): Boolean = true
+
+  // Ignore field nodes
+  override fun visitField(node: UField): Boolean = true
+
   private fun registerDependency(dependent: Dependent,
                                  dependency: Dependency) {
     for (el in dependency.elements) {
@@ -374,21 +380,17 @@ private fun UExpression.accumulateBranchesResult(results: MutableSet<UExpression
     is USwitchExpression -> body.expressions.filterIsInstance<USwitchClauseExpression>()
       .mapNotNull { it.lastExpression }
       .forEach { it.accumulateBranchesResult(results) }
+    is UTryExpression -> {
+      tryClause.lastExpression?.accumulateBranchesResult(results)
+      catchClauses.mapNotNull { it.body.lastExpression }.forEach { it.accumulateBranchesResult(results) }
+    }
     else -> results += this
   }
 }
 
 private val UExpression.lastExpression: UExpression?
   get() = when (this) {
-    is USwitchClauseExpressionWithBody -> {
-      //FIXME: workaround for KT-35574
-      if (lang.id == "kotlin" && getParentOfType<USwitchExpression>()?.getExpressionType() != null) {
-        // skip last break statement, which doesn't make sense
-        body.expressions.getOrNull(body.expressions.lastIndex - 1)
-      } else {
-        body.expressions.lastOrNull()
-      }
-    }
+    is USwitchClauseExpressionWithBody -> body.expressions.lastOrNull()
     is UBlockExpression -> this.expressions.lastOrNull()
     is UExpressionList -> this.expressions.lastOrNull()
     else -> this

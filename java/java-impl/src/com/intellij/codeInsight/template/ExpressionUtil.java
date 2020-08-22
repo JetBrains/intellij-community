@@ -12,7 +12,7 @@ import com.intellij.psi.text.BlockSupport;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nullable;
 
- public class ExpressionUtil {
+ public final class ExpressionUtil {
    private static final Logger LOG = Logger.getInstance(ExpressionUtil.class);
 
    private ExpressionUtil() {

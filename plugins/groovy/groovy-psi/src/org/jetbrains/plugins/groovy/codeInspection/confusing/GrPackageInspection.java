@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.confusing;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -36,7 +36,7 @@ public class GrPackageInspection extends BaseInspection {
   @Override
   @Nullable
   protected String buildErrorString(Object... args) {
-    return "Package name mismatch";
+    return GroovyBundle.message("inspection.message.package.name.mismatch");
   }
 
   @Nullable
@@ -65,8 +65,10 @@ public class GrPackageInspection extends BaseInspection {
           PsiElement toHighlight = getElementToHighlight((GroovyFile)file);
           if (toHighlight == null) return;
 
-          registerError(toHighlight, "Package name mismatch. Actual: '" + actual + "', expected: '" + expectedPackage+"'",
-                        new LocalQuickFix[]{new ChangePackageQuickFix(expectedPackage), GroovyQuickFixFactory.getInstance().createGrMoveToDirFix(actual)},
+          registerError(toHighlight,
+                        GroovyBundle.message("inspection.message.package.name.mismatch.actual.0.expected.1", actual, expectedPackage),
+                        new LocalQuickFix[]{new ChangePackageQuickFix(expectedPackage),
+                          GroovyQuickFixFactory.getInstance().createGrMoveToDirFix(actual)},
                         ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
         }
       }

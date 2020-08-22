@@ -84,10 +84,10 @@ public class PackageSetChooserCombo extends ComponentWithBrowseButton<JComponent
     }
 
     if (component instanceof JComboBox) {
-      ((JComboBox<NamedScope>)component).setRenderer(SimpleListCellRenderer.create("", NamedScope::getName));
+      ((JComboBox<NamedScope>)component).setRenderer(SimpleListCellRenderer.create("", NamedScope::getPresentableName));
     }
     else {
-      ((JBComboBoxTableCellEditorComponent)component).setToString(o -> o == null ? "" : ((NamedScope)o).getName());
+      ((JBComboBoxTableCellEditorComponent)component).setToString(o -> o == null ? "" : ((NamedScope)o).getPresentableName());
     }
 
     rebuild();

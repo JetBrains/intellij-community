@@ -5,9 +5,9 @@ import com.intellij.internal.statistic.eventLog.EventLogBuild;
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration;
 import com.intellij.internal.statistic.eventLog.EventLogSystemLogger;
 import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWhitelistPersistence;
-import com.intellij.internal.statistic.eventLog.validator.rules.beans.WhiteListGroupRules;
-import com.intellij.internal.statistic.service.fus.EventLogWhitelistLoadException;
-import com.intellij.internal.statistic.service.fus.EventLogWhitelistParseException;
+import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules;
+import com.intellij.internal.statistic.service.fus.EventLogMetadataLoadException;
+import com.intellij.internal.statistic.service.fus.EventLogMetadataParseException;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
@@ -23,12 +23,12 @@ import java.util.concurrent.ConcurrentMap;
 public class WhitelistStorage extends BaseWhitelistStorage {
   private static final Logger LOG = Logger.getInstance(WhitelistStorage.class);
 
-  protected final ConcurrentMap<String, WhiteListGroupRules> eventsValidators = new ConcurrentHashMap<>();
+  protected final ConcurrentMap<String, EventGroupRules> eventsValidators = new ConcurrentHashMap<>();
   private final @NotNull Semaphore mySemaphore;
   private final @NotNull String myRecorderId;
   private @Nullable String myVersion;
   private final @NotNull EventLogWhitelistPersistence myWhitelistPersistence;
-  private final @NotNull EventLogWhitelistLoader myWhitelistLoader;
+  private final @NotNull EventLogMetadataLoader myWhitelistLoader;
 
   WhitelistStorage(@NotNull String recorderId) {
     myRecorderId = recorderId;
@@ -41,7 +41,7 @@ public class WhitelistStorage extends BaseWhitelistStorage {
   @TestOnly
   protected WhitelistStorage(@NotNull String recorderId,
                              @NotNull EventLogWhitelistPersistence persistence,
-                             @NotNull EventLogWhitelistLoader loader) {
+                             @NotNull EventLogMetadataLoader loader) {
     myRecorderId = recorderId;
     mySemaphore = new Semaphore();
     myWhitelistPersistence = persistence;
@@ -50,31 +50,31 @@ public class WhitelistStorage extends BaseWhitelistStorage {
   }
 
   @Override
-  public @Nullable WhiteListGroupRules getGroupRules(@NotNull String groupId) {
+  public @Nullable EventGroupRules getGroupRules(@NotNull String groupId) {
     return eventsValidators.get(groupId);
   }
 
   private @Nullable String loadValidatorsFromLocalCache(@NotNull String recorderId) {
-    String whiteListContent = myWhitelistPersistence.getCachedWhitelist();
+    String whiteListContent = myWhitelistPersistence.getCachedMetadata();
     if (whiteListContent != null) {
       try {
         String newVersion = updateValidators(whiteListContent);
-        EventLogSystemLogger.logWhitelistLoad(recorderId, newVersion);
+        EventLogSystemLogger.logMetadataLoad(recorderId, newVersion);
         return newVersion;
       }
-      catch (EventLogWhitelistParseException e) {
-        EventLogSystemLogger.logWhitelistErrorOnLoad(myRecorderId, e);
+      catch (EventLogMetadataParseException e) {
+        EventLogSystemLogger.logMetadataErrorOnLoad(myRecorderId, e);
       }
     }
     return null;
   }
 
-  private @Nullable String updateValidators(@NotNull String whiteListContent) throws EventLogWhitelistParseException {
+  private @Nullable String updateValidators(@NotNull String whiteListContent) throws EventLogMetadataParseException {
     mySemaphore.down();
     try {
       FUStatisticsWhiteListGroupsService.WLGroups groups = FUStatisticsWhiteListGroupsService.parseWhiteListContent(whiteListContent);
       EventLogBuild build = EventLogBuild.fromString(EventLogConfiguration.INSTANCE.getBuild());
-      Map<String, WhiteListGroupRules> result = createValidators(build, groups);
+      Map<String, EventGroupRules> result = createValidators(build, groups);
       isWhiteListInitialized.set(false);
       eventsValidators.clear();
       eventsValidators.putAll(result);
@@ -100,7 +100,7 @@ public class WhitelistStorage extends BaseWhitelistStorage {
 
     try {
       if (lastModifiedOnServer <= 0 || lastModifiedOnServer > lastModifiedLocally || isUnreachableWhitelist()) {
-        String whitelistFromServer = myWhitelistLoader.loadWhiteListFromServer();
+        String whitelistFromServer = myWhitelistLoader.loadMetadataFromServer();
         String version = updateValidators(whitelistFromServer);
         myWhitelistPersistence.cacheWhiteList(whitelistFromServer, lastModifiedOnServer);
         if (LOG.isTraceEnabled()) {
@@ -109,12 +109,12 @@ public class WhitelistStorage extends BaseWhitelistStorage {
 
         if (version != null && !StringUtil.equals(version, myVersion)) {
           myVersion = version;
-          EventLogSystemLogger.logWhitelistUpdated(myRecorderId, myVersion);
+          EventLogSystemLogger.logMetadataUpdated(myRecorderId, myVersion);
         }
       }
     }
-    catch (EventLogWhitelistLoadException | EventLogWhitelistParseException e) {
-      EventLogSystemLogger.logWhitelistErrorOnUpdate(myRecorderId, e);
+    catch (EventLogMetadataLoadException | EventLogMetadataParseException e) {
+      EventLogSystemLogger.logMetadataErrorOnUpdate(myRecorderId, e);
     }
   }
 

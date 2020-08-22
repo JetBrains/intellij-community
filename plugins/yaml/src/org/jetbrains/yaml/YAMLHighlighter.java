@@ -6,7 +6,7 @@ import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import org.jetbrains.annotations.NonNls;
 
-public class YAMLHighlighter {
+public final class YAMLHighlighter {
   @NonNls
   static final String SCALAR_KEY_ID = "YAML_SCALAR_KEY";
   @NonNls

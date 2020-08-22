@@ -5,10 +5,10 @@ for a, *b in [(1, 2, 3), (4, 5, 6, 7)]:
 a, b, c = seq[0], seq[1:-1], seq[-1]
 a, *b, c = seq
 [a, *b, c] = seq
-<error descr="assignment to keyword">True</error> = 2
-<error descr="assignment to keyword">False</error> = 1
-<error descr="assignment to keyword">None</error> = 0
-<error descr="assignment to keyword">__debug__</error> = -1
+<error descr="Assignment to keyword">True</error> = 2
+<error descr="Assignment to keyword">False</error> = 1
+<error descr="Assignment to keyword">None</error> = 0
+<error descr="Assignment to keyword">__debug__</error> = -1
 
 () = []
 [] = []

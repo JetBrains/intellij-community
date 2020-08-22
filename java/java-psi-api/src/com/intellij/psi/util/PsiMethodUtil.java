@@ -6,7 +6,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.Nullable;
 
-public class PsiMethodUtil {
+public final class PsiMethodUtil {
 
   public static final Condition<PsiClass> MAIN_CLASS = psiClass -> {
     if (psiClass instanceof PsiAnonymousClass) return false;

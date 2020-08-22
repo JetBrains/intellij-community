@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
@@ -35,7 +36,7 @@ public class GroovyGoodCodeRedVisitor implements GoodCodeRedVisitor {
     GroovyStaticTypeCheckVisitor typeCheckVisitor = new GroovyStaticTypeCheckVisitor() {
       @Override
       protected void registerError(@NotNull PsiElement location,
-                                   @NotNull String description,
+                                   @NotNull @InspectionMessage String description,
                                    LocalQuickFix @Nullable [] fixes,
                                    ProblemHighlightType highlightType) {
         if (highlightType == ProblemHighlightType.GENERIC_ERROR) {

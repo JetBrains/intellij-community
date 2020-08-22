@@ -2,6 +2,7 @@
 package com.intellij.refactoring.copy;
 
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
+import com.intellij.execution.ExecutionBundle;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.util.EditorHelper;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -14,6 +15,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavaProjectRootsUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -280,7 +282,7 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
                                       final HashMap<PsiFile, String> map,
                                       final Object targetDirectory,
                                       final PsiDirectory defaultTargetDirectory,
-                                      final String commandName,
+                                      final @NlsContexts.Command String commandName,
                                       final boolean selectInActivePanel,
                                       final boolean openInEditor) {
     Runnable command = () -> {
@@ -433,7 +435,8 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
     if (relativePath != null && !relativePath.isEmpty()) {
       return WriteAction.compute(() -> buildRelativeDir(directory, relativePath).findOrCreateTargetDirectory().copyFileFrom(fileName, file));
     }
-    if (CopyFilesOrDirectoriesHandler.checkFileExist(directory, choice, file, fileName, "Copy")) return null;
+    if (CopyFilesOrDirectoriesHandler.checkFileExist(directory, choice, file, fileName,
+                                                     ExecutionBundle.message("copy.classes.command.name"))) return null;
     return WriteAction.compute(() -> directory.copyFileFrom(fileName, file));
   }
 

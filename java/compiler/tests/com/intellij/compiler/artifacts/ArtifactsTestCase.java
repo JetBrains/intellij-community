@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.artifacts;
 
 import com.intellij.facet.Facet;
@@ -49,7 +35,7 @@ import java.util.*;
 public abstract class ArtifactsTestCase extends JavaProjectTestCase {
   protected boolean mySetupModule;
 
-  protected ArtifactManager getArtifactManager() {
+  protected final ArtifactManager getArtifactManager() {
     return ArtifactManager.getInstance(myProject);
   }
 
@@ -60,36 +46,36 @@ public abstract class ArtifactsTestCase extends JavaProjectTestCase {
     }
   }
 
-  protected void deleteArtifact(final Artifact artifact) {
-    final ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
+  protected void deleteArtifact(@NotNull Artifact artifact) {
+    ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
     model.removeArtifact(artifact);
     commitModel(model);
   }
 
-  protected static void commitModel(final ModifiableArtifactModel model) {
+  protected static void commitModel(@NotNull ModifiableArtifactModel model) {
     WriteAction.runAndWait(() -> model.commit());
   }
 
-  protected Artifact rename(Artifact artifact, String newName) {
+  protected final Artifact rename(Artifact artifact, String newName) {
     final ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
     model.getOrCreateModifiableArtifact(artifact).setName(newName);
     commitModel(model);
     return artifact;
   }
 
-  protected Artifact addArtifact(String name) {
+  protected final @NotNull Artifact addArtifact(String name) {
     return addArtifact(name, null);
   }
 
-  protected Artifact addArtifact(String name, final CompositePackagingElement<?> root) {
-    return addArtifact(name, PlainArtifactType.getInstance(), root);
+  protected final @NotNull Artifact addArtifact(String name, CompositePackagingElement<?> root) {
+    return getArtifactManager().addArtifact(name, PlainArtifactType.getInstance(), root);
   }
 
-  protected Artifact addArtifact(final String name, final ArtifactType type, final CompositePackagingElement<?> root) {
+  protected final @NotNull Artifact addArtifact(String name, ArtifactType type, CompositePackagingElement<?> root) {
     return getArtifactManager().addArtifact(name, type, root);
   }
 
-  protected PackagingElementResolvingContext getContext() {
+  protected final PackagingElementResolvingContext getContext() {
     return ArtifactManager.getInstance(myProject).getResolvingContext();
   }
 
@@ -102,7 +88,7 @@ public abstract class ArtifactsTestCase extends JavaProjectTestCase {
     }
   }
 
-  protected Module addModule(final String moduleName, final @Nullable VirtualFile sourceRoot) {
+  protected Module addModule(@NotNull String moduleName, @Nullable VirtualFile sourceRoot) {
     return WriteAction.computeAndWait(() -> {
       final Module module = createModule(moduleName);
       if (sourceRoot != null) {
@@ -154,12 +140,12 @@ public abstract class ArtifactsTestCase extends JavaProjectTestCase {
     }
   }
 
-  public class MockArtifactsStructureConfigurableContext implements ArtifactsStructureConfigurableContext {
+  public final class MockArtifactsStructureConfigurableContext implements ArtifactsStructureConfigurableContext {
     private ModifiableArtifactModel myModifiableModel;
     private final Map<Module, ModifiableRootModel> myModifiableRootModels = new HashMap<>();
     private final Map<CompositePackagingElement<?>, ManifestFileConfiguration> myManifestFiles =
       new HashMap<>();
-    private final ArtifactEditorManifestFileProvider myManifestFileProvider = new ArtifactEditorManifestFileProvider(this);
+    private final ManifestFileProvider myManifestFileProvider = new ArtifactEditorManifestFileProvider(this);
 
     @Override
     @NotNull

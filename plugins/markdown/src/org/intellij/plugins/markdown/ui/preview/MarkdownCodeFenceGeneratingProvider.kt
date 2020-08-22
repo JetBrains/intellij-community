@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.preview
 
 import org.intellij.markdown.MarkdownTokenTypes
@@ -44,8 +45,8 @@ internal class MarkdownCodeFenceGeneratingProvider(private val pluginCacheProvid
         lastChildWasContent = child.type == MarkdownTokenTypes.CODE_FENCE_CONTENT
       }
       if (state == 0 && child.type == MarkdownTokenTypes.FENCE_LANG) {
-        language = HtmlGenerator.leafText(text, child).toString().trim().split(' ')[0]
-        attributes.add("class=\"language-$language\"")
+        language = HtmlGenerator.leafText(text, child).toString().trim()
+        attributes.add("class=\"language-${language.split(" ").joinToString(separator = "-")}\"")
       }
       if (state == 0 && child.type == MarkdownTokenTypes.EOL) {
         visitor.consumeTagOpen(node, "code", *attributes.toTypedArray())
@@ -54,7 +55,8 @@ internal class MarkdownCodeFenceGeneratingProvider(private val pluginCacheProvid
     }
 
     if (state == 1) {
-      visitor.consumeHtml(if (language != null) pluginGeneratedHtml(language, codeFenceContent.toString(), codeFenceRawContent.toString()) else codeFenceContent)
+      visitor.consumeHtml(if (language != null) pluginGeneratedHtml(language, codeFenceContent.toString(), codeFenceRawContent.toString())
+                          else codeFenceContent)
     }
 
     if (state == 0) {

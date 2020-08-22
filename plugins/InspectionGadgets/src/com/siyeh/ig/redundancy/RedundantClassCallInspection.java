@@ -10,7 +10,7 @@ import com.intellij.util.ArrayUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.CommentTracker;
-import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -53,11 +53,10 @@ public class RedundantClassCallInspection extends AbstractBaseJavaLocalInspectio
   private static abstract class ReplaceRedundantClassCallFix implements LocalQuickFix {
     final String myReplacement;
 
-    ReplaceRedundantClassCallFix(String replacement) {
+    ReplaceRedundantClassCallFix(@NonNls String replacement) {
       myReplacement = replacement;
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
     @Override
     public String getName() {
@@ -87,16 +86,14 @@ public class RedundantClassCallInspection extends AbstractBaseJavaLocalInspectio
       super("instanceof "+typeElement.getType().getPresentableText());
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
     @Override
     public String getFamilyName() {
       return CommonQuickFixBundle.message("fix.replace.with.x", PsiKeyword.INSTANCEOF);
     }
 
-    @NotNull
     @Override
-    String createReplacement(String argText, String classText) {
+    @NotNull @NonNls String createReplacement(String argText, String classText) {
       return argText + " instanceof " + classText;
     }
   }
@@ -106,7 +103,6 @@ public class RedundantClassCallInspection extends AbstractBaseJavaLocalInspectio
       super("("+typeElement.getType().getPresentableText()+")");
     }
 
-    @Nls(capitalization = Nls.Capitalization.Sentence)
     @NotNull
     @Override
     public String getFamilyName() {

@@ -14,17 +14,13 @@ import java.util.*
 
 @State(name = "SvnDiffSettings", storages = [(Storage(value = DiffUtil.DIFF_CONFIG))])
 class SvnDiffSettingsHolder : PersistentStateComponent<SvnDiffSettingsHolder.State> {
-  class SharedSettings(
-  )
-
   data class PlaceSettings(
     var SPLITTER_PROPORTION: Float = 0.9f,
     var HIDE_PROPERTIES: Boolean = false
   )
 
-  class SvnDiffSettings internal constructor(private val SHARED_SETTINGS: SharedSettings,
-                                             private val PLACE_SETTINGS: PlaceSettings) {
-    constructor() : this(SharedSettings(), PlaceSettings())
+  class SvnDiffSettings internal constructor(private val PLACE_SETTINGS: PlaceSettings) {
+    constructor() : this(PlaceSettings())
 
     var isHideProperties: Boolean
       get()      = PLACE_SETTINGS.HIDE_PROPERTIES
@@ -45,12 +41,11 @@ class SvnDiffSettingsHolder : PersistentStateComponent<SvnDiffSettingsHolder.Sta
   fun getSettings(place: String?): SvnDiffSettings {
     val placeKey = place ?: DiffPlaces.DEFAULT
     val placeSettings = myState.PLACES_MAP.getOrPut(placeKey, { defaultPlaceSettings(placeKey) })
-    return SvnDiffSettings(myState.SHARED_SETTINGS, placeSettings)
+    return SvnDiffSettings(placeSettings)
   }
 
   private fun copyStateWithoutDefaults(): State {
     val result = State()
-    result.SHARED_SETTINGS = myState.SHARED_SETTINGS
     result.PLACES_MAP = DiffUtil.trimDefaultValues(myState.PLACES_MAP, { defaultPlaceSettings(it) })
     return result
   }
@@ -65,9 +60,6 @@ class SvnDiffSettingsHolder : PersistentStateComponent<SvnDiffSettingsHolder.Sta
     @OptionTag
     @JvmField
     var PLACES_MAP: TreeMap<String, PlaceSettings> = TreeMap()
-
-    @JvmField
-    var SHARED_SETTINGS: SharedSettings = SharedSettings()
   }
 
   private var myState: State = State()

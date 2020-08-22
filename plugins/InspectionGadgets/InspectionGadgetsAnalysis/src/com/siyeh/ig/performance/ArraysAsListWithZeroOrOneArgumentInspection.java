@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.CommonQuickFixBundle;
@@ -15,6 +13,7 @@ import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ConstructionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +46,7 @@ public class ArraysAsListWithZeroOrOneArgumentInspection extends BaseInspection 
     return new ArraysAsListWithOneArgumentFix(isEmpty.booleanValue());
   }
 
-  private static class ArraysAsListWithOneArgumentFix extends InspectionGadgetsFix {
+  private static final class ArraysAsListWithOneArgumentFix extends InspectionGadgetsFix {
 
     private final boolean myEmpty;
 
@@ -58,7 +57,8 @@ public class ArraysAsListWithZeroOrOneArgumentInspection extends BaseInspection 
     @NotNull
     @Override
     public String getName() {
-      return CommonQuickFixBundle.message("fix.replace.with.x", myEmpty ? "Collections.emptyList()" : "Collections.singletonList()");
+      final @NonNls String s = myEmpty ? "Collections.emptyList()" : "Collections.singletonList()";
+      return CommonQuickFixBundle.message("fix.replace.with.x", s);
     }
 
     @NotNull
@@ -101,7 +101,7 @@ public class ArraysAsListWithZeroOrOneArgumentInspection extends BaseInspection 
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-      final String methodName = methodExpression.getReferenceName();
+      final @NonNls String methodName = methodExpression.getReferenceName();
       if (!"asList".equals(methodName)) {
         return;
       }

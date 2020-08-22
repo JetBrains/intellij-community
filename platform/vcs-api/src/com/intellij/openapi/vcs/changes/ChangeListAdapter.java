@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes;
 
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -25,7 +26,7 @@ public class ChangeListAdapter implements ChangeListListener {
   }
 
   @Override
-  public void changeListRenamed(ChangeList list, String oldName) {
+  public void changeListRenamed(ChangeList list, @NlsSafe String oldName) {
     changeListsChanged();
   }
 
@@ -35,7 +36,7 @@ public class ChangeListAdapter implements ChangeListListener {
   }
 
   @Override
-  public void changeListCommentChanged(ChangeList list, String oldComment) {
+  public void changeListCommentChanged(ChangeList list, @NlsSafe String oldComment) {
     changeListsChanged();
   }
 

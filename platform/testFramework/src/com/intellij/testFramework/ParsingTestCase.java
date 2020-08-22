@@ -1,6 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
+import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
+import com.intellij.ide.plugins.PluginUtil;
+import com.intellij.ide.plugins.PluginUtilImpl;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderFactoryImpl;
@@ -35,6 +38,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistryImpl;
+import com.intellij.psi.impl.source.tree.ForeignLeafPsiElement;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.CachedValuesManagerImpl;
@@ -95,6 +99,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     if (component == null) {
       appContainer.registerComponentInstance(ProgressManager.class.getName(), new ProgressManagerImpl());
     }
+    IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
 
     myProject = new MockProjectEx(getTestRootDisposable());
     myPsiManager = new MockPsiManager(myProject);
@@ -104,6 +109,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     MockEditorFactory editorFactory = new MockEditorFactory();
     appContainer.registerComponentInstance(EditorFactory.class, editorFactory);
     app.registerService(FileDocumentManager.class, new MockFileDocumentManagerImpl(editorFactory::createDocument, FileDocumentManagerImpl.HARD_REF_TO_DOCUMENT_KEY));
+    app.registerService(PluginUtil.class, new PluginUtilImpl());
 
     app.registerService(PsiBuilderFactory.class, new PsiBuilderFactoryImpl());
     app.registerService(DefaultASTFactory.class, new DefaultASTFactoryImpl());
@@ -289,14 +295,7 @@ public abstract class ParsingTestCase extends UsefulTestCase {
   protected void doTest(boolean checkResult, boolean ensureNoErrorElements) {
     String name = getTestName();
     try {
-      String text = loadFile(name + "." + myFileExt);
-      myFile = createPsiFile(name, text);
-      ensureParsed(myFile);
-      assertEquals("light virtual file text mismatch", text, ((LightVirtualFile)myFile.getVirtualFile()).getContent().toString());
-      assertEquals("virtual file text mismatch", text, LoadTextUtil.loadText(myFile.getVirtualFile()));
-      assertEquals("doc text mismatch", text, Objects.requireNonNull(myFile.getViewProvider().getDocument()).getText());
-      assertEquals("psi text mismatch", text, myFile.getText());
-      ensureCorrectReparse(myFile);
+      parseFile(name, loadFile(name + "." + myFileExt));
       if (checkResult) {
         checkResult(name, myFile);
         if (ensureNoErrorElements) {
@@ -310,6 +309,70 @@ public abstract class ParsingTestCase extends UsefulTestCase {
     catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  protected PsiFile parseFile(String name, String text) {
+    myFile = createPsiFile(name, text);
+    assertEquals("light virtual file text mismatch", text, ((LightVirtualFile)myFile.getVirtualFile()).getContent().toString());
+    assertEquals("virtual file text mismatch", text, LoadTextUtil.loadText(myFile.getVirtualFile()));
+    assertEquals("doc text mismatch", text, Objects.requireNonNull(myFile.getViewProvider().getDocument()).getText());
+    if (checkAllPsiRoots()) {
+      for (PsiFile root : myFile.getViewProvider().getAllFiles()) {
+        doSanityChecks(root);
+      }
+    } else {
+      doSanityChecks(myFile);
+    }
+    return myFile;
+  }
+
+  private static void doSanityChecks(PsiFile root) {
+    assertEquals("psi text mismatch", root.getViewProvider().getContents().toString(), root.getText());
+    ensureParsed(root);
+    ensureCorrectReparse(root);
+    checkRangeConsistency(root);
+  }
+
+  private static void checkRangeConsistency(PsiFile file) {
+    file.accept(new PsiRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitElement(@NotNull PsiElement element) {
+        if (element instanceof ForeignLeafPsiElement) return;
+
+        try {
+          ensureNodeRangeConsistency(element, file);
+        }
+        catch (Throwable e) {
+          throw new AssertionError("In " + element + " of " + element.getClass(), e);
+        }
+        super.visitElement(element);
+      }
+
+      private void ensureNodeRangeConsistency(PsiElement parent, PsiFile file) {
+        int parentOffset = parent.getTextRange().getStartOffset();
+        int childOffset = 0;
+        ASTNode child = parent.getNode().getFirstChildNode();
+        if (child != null) {
+          while (child != null) {
+            int childLength = checkChildRangeConsistency(file, parentOffset, childOffset, child);
+            childOffset += childLength;
+            child = child.getTreeNext();
+          }
+          assertEquals(childOffset, parent.getTextLength());
+        }
+      }
+
+      private int checkChildRangeConsistency(PsiFile file, int parentOffset, int childOffset, ASTNode child) {
+        assertEquals(child.getStartOffsetInParent(), childOffset);
+        assertEquals(child.getStartOffset(), childOffset + parentOffset);
+        int childLength = child.getTextLength();
+        assertEquals(TextRange.from(childOffset + parentOffset, childLength), child.getTextRange());
+        if (!(child.getPsi() instanceof ForeignLeafPsiElement)) {
+          assertEquals(child.getTextRange().substring(file.getText()), child.getText());
+        }
+        return childLength;
+      }
+    });
   }
 
   protected void doTest(String suffix) throws IOException {

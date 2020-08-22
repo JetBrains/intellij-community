@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.console;
 
 import com.intellij.execution.Executor;
@@ -15,6 +15,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 
 public class BuildAndRestartConsoleAction extends AnAction {
 
@@ -29,7 +30,11 @@ public class BuildAndRestartConsoleAction extends AnAction {
                                       @NotNull Executor executor,
                                       @NotNull RunContentDescriptor contentDescriptor,
                                       @NotNull Consumer<? super Module> restarter) {
-    super("Build and Restart", "Build module '" + module.getName() + "' and restart", AllIcons.Actions.Restart);
+    super(
+      GroovyBundle.message("action.build.restart.text"),
+      GroovyBundle.message("action.build.module.restart.description", module.getName()),
+      AllIcons.Actions.Restart
+    );
     myModule = module;
     myProject = project;
     myExecutor = executor;

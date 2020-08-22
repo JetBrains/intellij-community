@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.util.ui.UIUtil;
@@ -38,7 +39,7 @@ public abstract class GroupedElementsRenderer {
     return new SeparatorWithText();
   }
 
-  protected final JComponent configureComponent(String text, String tooltip, Icon icon, Icon disabledIcon, boolean isSelected, boolean hasSeparatorAbove, String separatorTextAbove, int preferredForcedWidth) {
+  protected final JComponent configureComponent(@NlsContexts.ListItem String text, @NlsContexts.Tooltip String tooltip, Icon icon, Icon disabledIcon, boolean isSelected, boolean hasSeparatorAbove, @NlsContexts.Separator String separatorTextAbove, int preferredForcedWidth) {
     mySeparatorComponent.setVisible(hasSeparatorAbove);
     mySeparatorComponent.setCaption(separatorTextAbove);
     mySeparatorComponent.setMinimumWidth(preferredForcedWidth);

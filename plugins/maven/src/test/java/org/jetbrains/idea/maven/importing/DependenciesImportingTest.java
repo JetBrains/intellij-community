@@ -360,40 +360,6 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertModuleModuleDeps("m1", "m2");
   }
 
-
-  public void testInterSnapshotModuleDependenciesWithVersionRanges() {
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<packaging>pom</packaging>" +
-                     "<version>1</version>" +
-
-                     "<modules>" +
-                     "  <module>m1</module>" +
-                     "  <module>m2</module>" +
-                     "</modules>");
-
-    createModulePom("m1", "<groupId>test</groupId>" +
-                          "<artifactId>m1</artifactId>" +
-                          "<version>1</version>" +
-
-                          "<dependencies>" +
-                          "  <dependency>" +
-                          "    <groupId>test</groupId>" +
-                          "    <artifactId>m2</artifactId>" +
-                          "    <version>[, 2]</version>" +
-                          "  </dependency>" +
-                          "</dependencies>");
-
-    createModulePom("m2", "<groupId>test</groupId>" +
-                          "<artifactId>m2</artifactId>" +
-                          "<version>1-SNAPSHOT</version>");
-
-    importProjectWithErrors();
-    assertModules("project", "m1", "m2");
-
-    assertModuleModuleDeps("m1", "m2");
-  }
-
   public void testInterModuleDependenciesWithoutModuleGroup() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -1650,8 +1616,7 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                      "  </dependency>" +
                      "</dependencies>");
 
-    scheduleResolveAll();
-    resolveDependenciesAndImport();
+    importProjectWithErrors();
 
     assertModuleLibDep("project", "Maven: xxx:yyy:1",
                        Arrays.asList("jar://" + getRoot() + "/foo/xxx.jar!/"),
@@ -1969,13 +1934,14 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
-    ApplicationManager.getApplication().runWriteAction(() -> {
-      LibraryTable appTable = LibraryTablesRegistrar.getInstance().getLibraryTable();
-      Library lib = appTable.createLibrary("foo");
-      ModuleRootModificationUtil.addDependency(getModule("project"), lib);
-      appTable.removeLibrary(lib);
-    });
-
+    ApplicationManager.getApplication().invokeAndWait( () ->
+      ApplicationManager.getApplication().runWriteAction(() -> {
+        LibraryTable appTable = LibraryTablesRegistrar.getInstance().getLibraryTable();
+        Library lib = appTable.createLibrary("foo");
+        ModuleRootModificationUtil.addDependency(getModule("project"), lib);
+        appTable.removeLibrary(lib);
+      })
+    );
 
     importProject(); // should not fail;
   }

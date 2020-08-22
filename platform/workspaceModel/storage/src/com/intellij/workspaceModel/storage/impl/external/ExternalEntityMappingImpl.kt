@@ -10,6 +10,7 @@ import com.intellij.workspaceModel.storage.impl.AbstractEntityStorage
 import com.intellij.workspaceModel.storage.impl.EntityId
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
+import org.jetbrains.annotations.TestOnly
 import java.util.*
 
 internal open class ExternalEntityMappingImpl<T> internal constructor(internal val index: BidirectionalMap<EntityId, T>)
@@ -24,6 +25,9 @@ internal open class ExternalEntityMappingImpl<T> internal constructor(internal v
     entity as WorkspaceEntityBase
     return index[entity.id]
   }
+
+  @TestOnly
+  fun size(): Int = index.size
 
   internal fun setTypedEntityStorage(storage: AbstractEntityStorage) {
     entityStorage = storage
@@ -52,10 +56,31 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
     indexLog.add(IndexLogRecord.Add(id, data))
   }
 
+  override fun addIfAbsent(entity: WorkspaceEntity, data: T): Boolean {
+    entity as WorkspaceEntityBase
+    return if (entity.id !in index) {
+      add(entity.id, data)
+      true
+    } else false
+  }
+
+  override fun getOrPutDataByEntity(entity: WorkspaceEntity, defaultValue: () -> T): T {
+    return getDataByEntity(entity) ?: run {
+      val defaultVal = defaultValue()
+      add((entity as WorkspaceEntityBase).id, defaultVal)
+      defaultVal
+    }
+  }
+
   override fun removeMapping(entity: WorkspaceEntity) {
     entity as WorkspaceEntityBase
     remove(entity.id)
     (entityStorage as WorkspaceEntityStorageBuilderImpl).incModificationCount()
+  }
+
+  internal fun clearMapping() {
+    index.clear()
+    indexLog.add(IndexLogRecord.Clear)
   }
 
   internal fun remove(id: EntityId) {
@@ -68,6 +93,7 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
       when (it) {
         is IndexLogRecord.Add<*> -> add(replaceMap.getOrDefault(it.id, it.id), it.data as T)
         is IndexLogRecord.Remove -> remove(replaceMap.getOrDefault(it.id, it.id))
+        IndexLogRecord.Clear -> clearMapping()
       }
     }
   }
@@ -77,6 +103,7 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
   private sealed class IndexLogRecord {
     data class Add<T>(val id: EntityId, val data: T) : IndexLogRecord()
     data class Remove(val id: EntityId) : IndexLogRecord()
+    object Clear : IndexLogRecord()
   }
 
   companion object {

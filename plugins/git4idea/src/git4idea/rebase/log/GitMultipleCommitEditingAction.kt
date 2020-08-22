@@ -12,5 +12,5 @@ internal abstract class GitMultipleCommitEditingAction : GitCommitEditingActionB
     log: VcsLog,
     logData: VcsLogData,
     logUi: VcsLogUi
-  ) = MultipleCommitEditingData(repository, log, logData, logUi)
+  ) = CommitEditingDataCreationResult.Created(MultipleCommitEditingData(repository, log, logData, logUi))
 }

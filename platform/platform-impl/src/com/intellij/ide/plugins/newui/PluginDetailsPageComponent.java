@@ -43,12 +43,16 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.io.IOException;
+import java.util.List;
 import java.util.function.Consumer;
 
 /**
  * @author Alexander Lobas
  */
 public class PluginDetailsPageComponent extends MultiPanel {
+  private static final String MARKETPLACE_LINK = "https://plugins.jetbrains.com/plugin/index?xmlId=";
+
   private final MyPluginModel myPluginModel;
   private final LinkListener<Object> mySearchListener;
   private final boolean myMarketplace;
@@ -57,6 +61,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
   private final AsyncProcessIcon myLoadingIcon = new AsyncProcessIcon.BigCentered(IdeBundle.message("progress.text.loading"));
 
   private JBPanelWithEmptyText myEmptyPanel;
+
 
   private OpaquePanel myPanel;
   private JLabel myIconLabel;
@@ -182,6 +187,15 @@ public class PluginDetailsPageComponent extends MultiPanel {
         Dimension size = myBaselineComponent.getPreferredSize();
         return myBaselineComponent.getBaseline(size.width, size.height);
       }
+
+      @Override
+      public Dimension getPreferredSize() {
+        Dimension size = super.getPreferredSize();
+        if (size.height == 0) {
+          size.height = getMinimumSize().height;
+        }
+        return size;
+      }
     };
 
     ErrorComponent.convertToLabel(editorPane);
@@ -191,6 +205,10 @@ public class PluginDetailsPageComponent extends MultiPanel {
     if (font != null) {
       editorPane.setFont(font.deriveFont(Font.BOLD, 25));
     }
+
+    editorPane.setText("<html><span>Foo</span></html>");
+    editorPane.setMinimumSize(editorPane.getPreferredSize());
+    editorPane.setText(null);
 
     return editorPane;
   }
@@ -396,15 +414,11 @@ public class PluginDetailsPageComponent extends MultiPanel {
       IdeaPluginDescriptor descriptor = component.getPluginDescriptor();
       if (descriptor instanceof PluginNode) {
         PluginNode node = (PluginNode)descriptor;
-        if (node.getDescription() == null && node.getExternalPluginId() != null && node.getExternalUpdateId() != null) {
+        if (!node.detailsLoaded()) {
           syncLoading = false;
           startLoading();
           ProcessIOExecutorService.INSTANCE.execute(() -> {
-            PluginNode meta = MarketplaceRequests.getInstance()
-              .loadPluginDescriptor(node.getPluginId().getIdString(), node.getExternalPluginId(), node.getExternalUpdateId());
-            meta.setRating(node.getRating());
-            meta.setDownloads(node.getDownloads());
-            component.myPlugin = meta;
+            component.myPlugin = MarketplaceRequests.getInstance().loadPluginDetails(node);
 
             ApplicationManager.getApplication().invokeLater(() -> {
               if (myShowComponent == component) {
@@ -504,13 +518,14 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
     showLicensePanel();
 
-    if (bundled) {
+    if (bundled || !isPluginFromMarketplace()) {
       myHomePage.hide();
     }
     else {
-      myHomePage.show(IdeBundle.message("plugins.configurable.plugin.homepage.link"),
-                      () -> BrowserUtil.browse("https://plugins.jetbrains.com/plugin/index?xmlId=" +
-                                               URLUtil.encodeURIComponent(myPlugin.getPluginId().getIdString())));
+      myHomePage.show(IdeBundle.message(
+        "plugins.configurable.plugin.homepage.link"),
+                      () -> BrowserUtil.browse(MARKETPLACE_LINK + URLUtil.encodeURIComponent(myPlugin.getPluginId().getIdString()))
+      );
     }
 
     String date = PluginManagerConfigurable.getLastUpdatedDate(myUpdateDescriptor == null ? myPlugin : myUpdateDescriptor);
@@ -542,6 +557,27 @@ public class PluginDetailsPageComponent extends MultiPanel {
     else {
       fullRepaint();
     }
+  }
+
+  private boolean isPluginFromMarketplace() {
+    try {
+      List<String> marketplacePlugins = MarketplaceRequests.getInstance().getMarketplaceCachedPlugins();
+      if (marketplacePlugins != null) {
+        return marketplacePlugins.contains(myPlugin.getPluginId().getIdString());
+      }
+      // will get the marketplace plugins ids next time
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        try {
+          MarketplaceRequests.getInstance().getMarketplacePlugins(null);
+        }
+        catch (IOException ignore) {
+        }
+      });
+    }
+    catch (IOException ignored) {
+    }
+    // There are no marketplace plugins in the cache, but we should show the title anyway.
+    return true;
   }
 
   private void showLicensePanel() {

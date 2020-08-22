@@ -1,14 +1,20 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.analysis.problemsView.toolWindow
 
-import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.colors.EditorColorsUtil.getGlobalOrDefaultColorScheme
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiFile
+import com.intellij.util.ArrayUtil.getFirstElement
 import javax.swing.BorderFactory.createEmptyBorder
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -50,7 +56,13 @@ internal class ProblemsViewPreview(private val panel: ProblemsViewPanel)
     return update(editor, editor.component) // show editor preview
   }
 
-  fun findEditor(document: Document): Editor? {
-    return preview ?: EditorFactory.getInstance().editors(document, panel.project).findFirst().orElse(null)
+  fun findEditor(psi: PsiFile): Editor? {
+    return preview ?: PsiDocumentManager.getInstance(psi.project).getDocument(psi)?.let {
+      EditorFactory.getInstance().editors(it, psi.project).findFirst().orElse(null)
+    }
   }
+
+  fun findFileEditor(file: VirtualFile, project: Project) =
+    preview?.let { TextEditorProvider.getInstance().getTextEditor(it) }
+    ?: getFirstElement(FileEditorManager.getInstance(project).getEditors(file))
 }

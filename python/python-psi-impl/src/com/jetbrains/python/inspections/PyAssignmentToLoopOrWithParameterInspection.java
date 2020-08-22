@@ -38,7 +38,7 @@ public class PyAssignmentToLoopOrWithParameterInspection extends PyInspection {
     return new Visitor(holder, session);
   }
 
-  private static class Visitor extends PyInspectionVisitor {
+  private static final class Visitor extends PyInspectionVisitor {
     private Visitor(@Nullable final ProblemsHolder holder, @NotNull final LocalInspectionToolSession session) {
       super(holder, session);
     }
@@ -95,7 +95,7 @@ public class PyAssignmentToLoopOrWithParameterInspection extends PyInspection {
    * Returns {@link ScopeOwner} if nothing found.
    * Returns parent otherwise.
    */
-  private static class Filter implements Condition<PsiElement> {
+  private static final class Filter implements Condition<PsiElement> {
     private final PsiElement myNode;
 
     private Filter(final PsiElement node) {

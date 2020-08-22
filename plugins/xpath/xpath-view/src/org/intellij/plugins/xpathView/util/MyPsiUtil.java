@@ -29,7 +29,7 @@ import com.intellij.psi.xml.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class MyPsiUtil {
+public final class MyPsiUtil {
     private static final Logger LOG = Logger.getInstance(MyPsiUtil.class);
 
     private MyPsiUtil() {

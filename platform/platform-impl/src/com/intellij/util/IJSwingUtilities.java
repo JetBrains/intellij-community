@@ -57,14 +57,6 @@ public final class IJSwingUtilities {
     return SwingUtilities.isDescendingFrom(focusedComponent, component);
   }
 
-  /**
-   * @deprecated no functionality
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
-  public static void adjustComponentsOnMac(@Nullable JLabel label, @Nullable JComponent component) {
-  }
-
   public static HyperlinkEvent createHyperlinkEvent(@Nullable String href, @NotNull Object source) {
     URL url = null;
     try {
@@ -101,7 +93,7 @@ public final class IJSwingUtilities {
 
   public static void moveMousePointerOn(Component component) {
     if (component != null && component.isShowing()) {
-      if (Registry.is("ide.settings.move.mouse.on.default.button")) {
+      if (Registry.is("ide.settings.move.mouse.on.default.button", false)) {
         Point point = component.getLocationOnScreen();
         int dx = component.getWidth() / 2;
         int dy = component.getHeight() / 2;

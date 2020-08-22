@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl.projectlevelman;
 
 import com.intellij.openapi.util.InvalidDataException;
@@ -26,13 +12,13 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-public class ProjectLevelVcsManagerSerialization {
+public final class ProjectLevelVcsManagerSerialization {
   @NonNls private static final String OPTIONS_SETTING = "OptionsSetting";
   @NonNls private static final String CONFIRMATIONS_SETTING = "ConfirmationsSetting";
   @NonNls private static final String VALUE_ATTTIBUTE = "value";
   @NonNls private static final String ID_ATTRIBUTE = "id";
 
-  public void readExternalUtil(final Element element, final OptionsAndConfirmations optionsAndConfirmations) throws InvalidDataException {
+  public void readExternalUtil(@NotNull Element element, @NotNull OptionsAndConfirmations optionsAndConfirmations) throws InvalidDataException {
     for (Element subElement : element.getChildren(OPTIONS_SETTING)) {
       final String id = subElement.getAttributeValue(ID_ATTRIBUTE);
       final String value = subElement.getAttributeValue(VALUE_ATTTIBUTE);
@@ -57,7 +43,7 @@ public class ProjectLevelVcsManagerSerialization {
   public void writeExternalUtil(@NotNull Element element, @NotNull OptionsAndConfirmations optionsAndConfirmations) throws WriteExternalException {
     final Map<String, VcsShowOptionsSettingImpl> options = optionsAndConfirmations.getOptions();
     final Map<String, VcsShowConfirmationOptionImpl> confirmations = optionsAndConfirmations.getConfirmations();
-    
+
     for (VcsShowOptionsSettingImpl setting : options.values()) {
       if (!setting.getValue()) {
         Element settingElement = new Element(OPTIONS_SETTING);

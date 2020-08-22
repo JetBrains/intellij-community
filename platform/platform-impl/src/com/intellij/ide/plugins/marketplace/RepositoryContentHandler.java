@@ -5,6 +5,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginNode;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.Stack;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -19,30 +20,30 @@ import java.util.List;
  * Supports both updates.xml and plugins.jetbrains.com formats.
  */
 class RepositoryContentHandler extends DefaultHandler {
-  private static final String CATEGORY = "category";
-  private static final String PLUGIN = "plugin";
-  private static final String IDEA_PLUGIN = "idea-plugin";
-  private static final String NAME = "name";
-  private static final String ID = "id";
-  private static final String DESCRIPTION = "description";
-  private static final String VERSION = "version";
-  private static final String VENDOR = "vendor";
-  private static final String EMAIL = "email";
-  private static final String URL = "url";
-  private static final String IDEA_VERSION = "idea-version";
-  private static final String SINCE_BUILD = "since-build";
-  private static final String UNTIL_BUILD = "until-build";
-  private static final String CHANGE_NOTES = "change-notes";
-  private static final String DEPENDS = "depends";
-  private static final String DOWNLOADS = "downloads";
-  private static final String DOWNLOAD_URL = "downloadUrl";
-  private static final String DOWNLOAD_URL_NEW_STYLE = "download-url";
-  private static final String SIZE = "size";
-  private static final String RATING = "rating";
-  private static final String DATE = "date";
-  private static final String PLUGIN_UPDATED_DATE = "updatedDate";
-  private static final String TAGS = "tags";
-  private static final String PRODUCT_CODE = "productCode";
+  @NonNls private static final String CATEGORY = "category";
+  @NonNls private static final String PLUGIN = "plugin";
+  @NonNls private static final String IDEA_PLUGIN = "idea-plugin";
+  @NonNls private static final String NAME = "name";
+  @NonNls private static final String ID = "id";
+  @NonNls private static final String DESCRIPTION = "description";
+  @NonNls private static final String VERSION = "version";
+  @NonNls private static final String VENDOR = "vendor";
+  @NonNls private static final String EMAIL = "email";
+  @NonNls private static final String URL = "url";
+  @NonNls private static final String IDEA_VERSION = "idea-version";
+  @NonNls private static final String SINCE_BUILD = "since-build";
+  @NonNls private static final String UNTIL_BUILD = "until-build";
+  @NonNls private static final String CHANGE_NOTES = "change-notes";
+  @NonNls private static final String DEPENDS = "depends";
+  @NonNls private static final String DOWNLOADS = "downloads";
+  @NonNls private static final String DOWNLOAD_URL = "downloadUrl";
+  @NonNls private static final String DOWNLOAD_URL_NEW_STYLE = "download-url";
+  @NonNls private static final String SIZE = "size";
+  @NonNls private static final String RATING = "rating";
+  @NonNls private static final String DATE = "date";
+  @NonNls private static final String PLUGIN_UPDATED_DATE = "updatedDate";
+  @NonNls private static final String TAGS = "tags";
+  @NonNls private static final String PRODUCT_CODE = "productCode";
 
   private final StringBuilder currentValue = new StringBuilder();
   private PluginNode currentPlugin;
@@ -124,7 +125,7 @@ class RepositoryContentHandler extends DefaultHandler {
       currentPlugin.setVendor(currentValueString);
     }
     else if (qName.equals(DEPENDS)) {
-      currentPlugin.addDepends(currentValueString);
+      currentPlugin.addDepends(currentValueString, false);
     }
     else if (qName.equals(CHANGE_NOTES)) {
       currentPlugin.setChangeNotes(currentValueString);

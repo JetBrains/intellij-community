@@ -4,6 +4,7 @@ package com.intellij.vcs.log.ui.table;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.text.DateFormatUtil;
@@ -21,7 +22,6 @@ import com.intellij.vcs.log.paint.GraphCellPainter;
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector;
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
-import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -158,9 +158,8 @@ public abstract class GraphCommitCellController implements VcsLogCellController 
     }
     else {
       long time = details.getAuthorTime();
-      String commitMessage = XmlStringUtil.wrapInHtmlTag("\"" +
-                                                         StringUtil.shortenTextWithEllipsis(details.getSubject(), 50, 0, "...")
-                                                         + "\"", "b");
+      String shortenedSubject = StringUtil.shortenTextWithEllipsis(details.getSubject(), 50, 0, "...");
+      String commitMessage = HtmlChunk.text("\"" + shortenedSubject + "\"").bold().toString();
       return VcsLogBundle.message("vcs.log.graph.arrow.tooltip.jump.to.subject.author.date.time",
                                   commitMessage,
                                   CommitPresentationUtil.getAuthorPresentation(details),

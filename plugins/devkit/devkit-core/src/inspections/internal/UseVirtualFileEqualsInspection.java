@@ -1,55 +1,54 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections.internal;
 
-import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.util.InheritanceUtil;
-import com.siyeh.ig.psiutils.ComparisonUtils;
+import com.intellij.uast.UastHintedVisitorAdapter;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.devkit.inspections.DevKitInspectionBase;
+import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase;
+import org.jetbrains.uast.*;
+import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor;
 
 /**
  * @author peter
  */
-public class UseVirtualFileEqualsInspection extends DevKitInspectionBase {
+public class UseVirtualFileEqualsInspection extends DevKitUastInspectionBase {
+
   @Override
   public PsiElementVisitor buildInternalVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-    return new JavaElementVisitor() {
-      @Override
-      public void visitBinaryExpression(@NotNull PsiBinaryExpression expression) {
-        super.visitBinaryExpression(expression);
-        if (!ComparisonUtils.isEqualityComparison(expression)) {
-          return;
-        }
-        final PsiExpression lhs = expression.getLOperand();
-        final PsiExpression rhs = expression.getROperand();
-        if (rhs == null ||
-            lhs.textMatches(PsiKeyword.NULL) || rhs.textMatches(PsiKeyword.NULL) ||
-            lhs.textMatches(PsiKeyword.THIS) || rhs.textMatches(PsiKeyword.THIS)) {
-          return;
-        }
-        
-        if (InheritanceUtil.isInheritor(lhs.getType(), VirtualFile.class.getName()) || InheritanceUtil.isInheritor(rhs.getType(), VirtualFile.class.getName())) {
-          holder.registerProblem(expression, "VirtualFile objects should be compared by equals(), not ==", ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+    return UastHintedVisitorAdapter.create(holder.getFile().getLanguage(), new AbstractUastNonRecursiveVisitor() {
 
-        }
+      @Override
+      public boolean visitBinaryExpression(@NotNull UBinaryExpression node) {
+        inspectBinaryExpression(node, holder);
+
+        return true;
       }
-    };
+    }, new Class[]{UBinaryExpression.class});
+  }
+
+  private static void inspectBinaryExpression(@NotNull UBinaryExpression uBinaryExpression, ProblemsHolder holder) {
+    final UastBinaryOperator operator = uBinaryExpression.getOperator();
+    if (operator != UastBinaryOperator.IDENTITY_EQUALS &&
+        operator != UastBinaryOperator.IDENTITY_NOT_EQUALS) {
+      return;
+    }
+
+    final UExpression lhs = uBinaryExpression.getLeftOperand();
+    final UExpression rhs = uBinaryExpression.getRightOperand();
+    if (lhs instanceof ULiteralExpression || rhs instanceof ULiteralExpression ||
+        lhs instanceof UThisExpression || rhs instanceof UThisExpression) {
+      return;
+    }
+
+    if (InheritanceUtil.isInheritor(lhs.getExpressionType(), VirtualFile.class.getName()) ||
+        InheritanceUtil.isInheritor(rhs.getExpressionType(), VirtualFile.class.getName())) {
+      final PsiElement sourcePsi = uBinaryExpression.getSourcePsi();
+      if (sourcePsi == null) return;
+      holder.registerProblem(sourcePsi, "VirtualFile objects should be compared by equals(), not ==");
+    }
   }
 }

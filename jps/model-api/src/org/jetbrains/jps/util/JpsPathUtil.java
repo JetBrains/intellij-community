@@ -96,7 +96,7 @@ public final class JpsPathUtil {
     }
   }
 
-  public static final String UNNAMED_PROJECT = "<unnamed>";
+  private static final String UNNAMED_PROJECT = "<unnamed>";
 
   public static @NotNull String getDefaultProjectName(@NotNull Path projectDir) {
     Path parent = projectDir.getParent();

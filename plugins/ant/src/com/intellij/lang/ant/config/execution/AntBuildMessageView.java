@@ -412,7 +412,10 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     final AntMessage message = createErrorMessage(priority, error);
     addCommand(new AddMessageCommand(message));
     WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(myProject);
-    wolf.queue(message.getFile());
+    VirtualFile file = message.getFile();
+    if (file != null) {
+      wolf.queue(file);
+    }
   }
 
   void outputException(String exception) {
@@ -420,7 +423,10 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     AntMessage message = createErrorMessage(PRIORITY_ERR, exception);
     addCommand(new AddExceptionCommand(message));
     WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(myProject);
-    wolf.queue(message.getFile());
+    VirtualFile file = message.getFile();
+    if (file != null) {
+      wolf.queue(file);
+    }
   }
 
 
@@ -494,7 +500,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     updateErrorAndWarningCounters(priority);
     final AntMessage message = new AntMessage(type, priority, text, file, line, column);
     addCommand(new AddJavacMessageCommand(message, url));
-    if (type == MessageType.ERROR) {
+    if (type == MessageType.ERROR && file != null) {
       WolfTheProblemSolver wolf = WolfTheProblemSolver.getInstance(myProject);
       wolf.queue(file);
     }

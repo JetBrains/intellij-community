@@ -5,7 +5,6 @@ import com.intellij.ide.plugins.PluginBuilder
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.ide.startup.StartupActionScriptManager
 import com.intellij.ide.util.PropertiesComponent
-import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
@@ -13,30 +12,22 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.testFramework.PlatformTestUtil.useAppConfigDir
-import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
-import com.intellij.testFramework.rules.InMemoryFsRule
-import com.intellij.testFramework.rules.TempDirectory
-import com.intellij.util.SystemProperties
 import com.intellij.util.io.isDirectory
 import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Condition
 import org.junit.Assume.assumeTrue
-import org.junit.Rule
 import org.junit.Test
 import java.io.File
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.attribute.FileTime
 import java.util.function.Predicate
 
 private val LOG = logger<ConfigImportHelperTest>()
 
-class ConfigImportHelperTest : BareTestFixtureTestCase() {
-  @JvmField @Rule val memoryFs = InMemoryFsRule(SystemInfo.isWindows)
-  @JvmField @Rule val localTempDir = TempDirectory()
+class ConfigImportHelperTest : ConfigImportHelperBaseTest() {
 
   @Test fun `config directory is valid for import`() {
     PropertiesComponent.getInstance().setValue("property.ConfigImportHelperTest", true)
@@ -119,8 +110,6 @@ class ConfigImportHelperTest : BareTestFixtureTestCase() {
     doKeyMapTest("2019.3", isMigrationExpected = false)
   }
 
-  private fun findConfigDirectories(newConfigPath: Path) = ConfigImportHelper.findConfigDirectories(newConfigPath).map { it.path }
-
   private fun doKeyMapTest(version: String, isMigrationExpected: Boolean) {
     assumeTrue("macOS-only", SystemInfo.isMac)
 
@@ -172,7 +161,7 @@ class ConfigImportHelperTest : BareTestFixtureTestCase() {
     options.headless = true
     options.compatibleBuildNumber = BuildNumber.fromString("201.1")
     options.marketplaceRequests = object : MarketplaceRequests() {
-      override fun download(pluginUrl: String, indicator: ProgressIndicator): File {
+      override fun downloadPlugin(pluginUrl: String, indicator: ProgressIndicator): File {
         val path = localTempDir.newDirectory("pluginTemp").toPath().resolve("my-plugin-new.jar")
         PluginBuilder()
           .id(oldBuilder.id)
@@ -198,7 +187,7 @@ class ConfigImportHelperTest : BareTestFixtureTestCase() {
     options.headless = true
     options.compatibleBuildNumber = BuildNumber.fromString("201.1")
     options.marketplaceRequests = object : MarketplaceRequests() {
-      override fun download(pluginUrl: String, indicator: ProgressIndicator): File {
+      override fun downloadPlugin(pluginUrl: String, indicator: ProgressIndicator): File {
         throw IOException("404")
       }
     }
@@ -221,7 +210,7 @@ class ConfigImportHelperTest : BareTestFixtureTestCase() {
 
     val options = ConfigImportHelper.ConfigImportOptions(LOG)
     options.headless = true
-    options.bundledPluginPath = oldBundledPluginsDir.toFile().path
+    options.bundledPluginPath = oldBundledPluginsDir
     ConfigImportHelper.doImport(oldConfigDir, newConfigDir, null, oldPluginsDir, newPluginsDir, options)
     assertThat(newPluginsDir).doesNotExist()
   }
@@ -255,7 +244,7 @@ class ConfigImportHelperTest : BareTestFixtureTestCase() {
       .buildJar(tempPath)
 
     val commands = mutableListOf<StartupActionScriptManager.ActionCommand>()
-    commands.add(StartupActionScriptManager.CopyCommand(tempPath.toFile(), oldPluginsDir.resolve("my-plugin-1.1.jar").toFile()))
+    commands.add(StartupActionScriptManager.CopyCommand(tempPath, oldPluginsDir.resolve("my-plugin-1.1.jar")))
     StartupActionScriptManager.saveActionScript(commands, oldPluginsTempDir.resolve(StartupActionScriptManager.ACTION_SCRIPT_FILE))
 
     PluginBuilder()
@@ -285,7 +274,7 @@ class ConfigImportHelperTest : BareTestFixtureTestCase() {
       .buildJar(tempPath)
 
     val commands = mutableListOf<StartupActionScriptManager.ActionCommand>()
-    commands.add(StartupActionScriptManager.CopyCommand(tempPath.toFile(), oldPluginsDir.resolve("my-plugin-1.1.jar").toFile()))
+    commands.add(StartupActionScriptManager.CopyCommand(tempPath, oldPluginsDir.resolve("my-plugin-1.1.jar")))
     StartupActionScriptManager.saveActionScript(commands, oldPluginsTempDir.resolve(StartupActionScriptManager.ACTION_SCRIPT_FILE))
 
     PluginBuilder()
@@ -301,7 +290,7 @@ class ConfigImportHelperTest : BareTestFixtureTestCase() {
     options.headless = true
     options.compatibleBuildNumber = BuildNumber.fromString("201.1")
     options.marketplaceRequests = object : MarketplaceRequests() {
-      override fun download(pluginUrl: String, indicator: ProgressIndicator): File {
+      override fun downloadPlugin(pluginUrl: String, indicator: ProgressIndicator): File {
         throw AssertionError("No file download should be requested")
       }
     }
@@ -322,7 +311,7 @@ class ConfigImportHelperTest : BareTestFixtureTestCase() {
       .buildZip(tempPath)
 
     val commands = mutableListOf<StartupActionScriptManager.ActionCommand>()
-    commands.add(StartupActionScriptManager.UnzipCommand(tempPath.toFile(), oldPluginsDir.toFile()))
+    commands.add(StartupActionScriptManager.UnzipCommand(tempPath, oldPluginsDir))
     StartupActionScriptManager.saveActionScript(commands, oldPluginsTempDir.resolve(StartupActionScriptManager.ACTION_SCRIPT_FILE))
 
     PluginBuilder()
@@ -358,23 +347,5 @@ class ConfigImportHelperTest : BareTestFixtureTestCase() {
     assertThat(newPluginsDir)
       .isDirectoryContaining { it.fileName == newPluginZip.fileName }
       .isDirectoryNotContaining { it.fileName == oldPluginZip.fileName }
-  }
-
-  private fun createConfigDir(version: String, modern: Boolean = version >= "2020.1", product: String = "IntelliJIdea", storageTS: Long = 0): Path {
-    val path = when {
-      modern -> PathManager.getDefaultConfigPathFor("${product}${version}")
-      SystemInfo.isMac -> "${SystemProperties.getUserHome()}/Library/Preferences/${product}${version}"
-      else -> "${SystemProperties.getUserHome()}/.${product}${version}/config"
-    }
-    val dir = Files.createDirectories(memoryFs.fs.getPath(path).normalize())
-    if (storageTS > 0) writeStorageFile(dir, storageTS)
-    return dir
-  }
-
-  private fun writeStorageFile(config: Path, lastModified: Long) {
-    val file = config.resolve("${PathManager.OPTIONS_DIRECTORY}/${StoragePathMacros.NON_ROAMABLE_FILE}")
-    Files.createDirectories(file.parent)
-    Files.write(file, "<application/>".toByteArray())
-    Files.setLastModifiedTime(file, FileTime.fromMillis(lastModified))
   }
 }

@@ -1,17 +1,12 @@
 import io
-import sys
-from os.path import _PathType
 from typing import IO, Any, Mapping, Optional, Sequence, TextIO, TypeVar, Union, overload
-
-if sys.version_info >= (3, 8):
-    from typing import Literal
-else:
-    from typing_extensions import Literal
+from _typeshed import AnyPath
+from typing_extensions import Literal
 
 _OpenBinaryWritingMode = Literal["w", "wb", "x", "xb", "a", "ab"]
 _OpenTextWritingMode = Literal["wt", "xt", "at"]
 
-_PathOrFile = Union[_PathType, IO[bytes]]
+_PathOrFile = Union[AnyPath, IO[bytes]]
 
 _FilterChain = Sequence[Mapping[str, Any]]
 _T = TypeVar("_T")
@@ -125,7 +120,7 @@ def open(
 ) -> LZMAFile: ...
 @overload
 def open(
-    filename: _PathType,
+    filename: AnyPath,
     mode: Literal["rt"],
     *,
     format: Optional[int] = ...,
@@ -138,7 +133,7 @@ def open(
 ) -> TextIO: ...
 @overload
 def open(
-    filename: _PathType,
+    filename: AnyPath,
     mode: _OpenTextWritingMode,
     *,
     format: Optional[int] = ...,

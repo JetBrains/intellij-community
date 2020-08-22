@@ -10,8 +10,7 @@ import org.jetbrains.annotations.NotNull;
 
 @State(
   name = "DiffApplicationSettings",
-  storages = @Storage("vcs.xml"),
-  reportStatistic = true
+  storages = @Storage("vcs.xml")
 )
 public class DiffApplicationSettings implements PersistentStateComponent<DiffApplicationSettings> {
 

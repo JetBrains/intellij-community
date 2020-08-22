@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class JCiPUtil {
+public final class JCiPUtil {
 
   private JCiPUtil() {}
 

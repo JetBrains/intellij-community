@@ -20,7 +20,7 @@ import java.util.Iterator;
  */
 abstract public class MinusculeMatcher implements Matcher {
 
-  MinusculeMatcher() {}
+  protected MinusculeMatcher() {}
 
   @NotNull
   abstract public String getPattern();

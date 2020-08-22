@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs;
 
 import com.intellij.util.containers.Stack;
@@ -13,7 +13,7 @@ public abstract class VirtualFileVisitor<T> {
   public static class Option {
     private Option() { }
 
-    private static class LimitOption extends Option {
+    private static final class LimitOption extends Option {
       private final int limit;
 
       private LimitOption(int limit) {
@@ -32,7 +32,7 @@ public abstract class VirtualFileVisitor<T> {
   }
 
 
-  public static class Result {
+  public static final class Result {
     public final boolean skipChildren;
     public final VirtualFile skipToParent;
 

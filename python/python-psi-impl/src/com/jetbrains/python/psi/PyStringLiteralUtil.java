@@ -31,7 +31,7 @@ import java.util.List;
 /**
  * @author Mikhail Golubev
  */
-public class PyStringLiteralUtil {
+public final class PyStringLiteralUtil {
   /**
    * Valid string prefix characters (lowercased) as defined in Python lexer.
    */
@@ -74,7 +74,7 @@ public class PyStringLiteralUtil {
   public static boolean isStringLiteralToken(@NotNull String text) {
     final PythonLexer lexer = new PythonLexer();
     lexer.start(text);
-    return PyTokenTypes.STRING_NODES.contains(lexer.getTokenType()) && lexer.getTokenEnd() == lexer.getBufferEnd() || 
+    return PyTokenTypes.STRING_NODES.contains(lexer.getTokenType()) && lexer.getTokenEnd() == lexer.getBufferEnd() ||
            PyTokenTypes.FSTRING_START == lexer.getTokenType();
   }
 
@@ -125,7 +125,7 @@ public class PyStringLiteralUtil {
    */
   @NotNull
   public static TextRange getContentRange(@NotNull String text) {
-    LOG.assertTrue(isStringLiteralToken(text), "Text of a single string literal node expected: " + text);
+    LOG.assertTrue(isStringLiteralToken(text), "Text of a single string literal node expected");
     int startOffset = getPrefixLength(text);
     int delimiterLength = 1;
     final String afterPrefix = text.substring(startOffset);
@@ -142,10 +142,10 @@ public class PyStringLiteralUtil {
   }
 
   /**
-   * Finds the end offset of the string prefix starting from {@code startOffset} in the given char sequence. 
+   * Finds the end offset of the string prefix starting from {@code startOffset} in the given char sequence.
    * String prefix may contain only up to {@link #MAX_PREFIX_LENGTH} characters from {@link #PREFIX_CHARACTERS}
-   * (case insensitively).  
-   * 
+   * (case insensitively).
+   *
    * @return end offset of found string prefix
    */
   public static int getPrefixEndOffset(@NotNull CharSequence text, int startOffset) {

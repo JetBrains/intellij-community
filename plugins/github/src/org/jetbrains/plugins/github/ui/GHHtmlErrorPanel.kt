@@ -87,7 +87,7 @@ object GHHtmlErrorPanel {
         pane.setBody("")
       }
       // JDK bug - need to force height recalculation (see JBR-2256)
-      pane.setSize(pane.width, Int.MAX_VALUE / 2)
+      pane.setSize(Int.MAX_VALUE / 2, Int.MAX_VALUE / 2)
     }
 
     //language=HTML
@@ -98,12 +98,13 @@ object GHHtmlErrorPanel {
   }
 
   private fun getLoadingErrorText(error: Throwable, newLineSeparator: String = "\n"): String {
-    if (error is GithubStatusCodeException && error.error != null) {
+    if (error is GithubStatusCodeException && error.error != null && error.error!!.message != null) {
       val githubError = error.error!!
       val builder = StringBuilder(githubError.message)
-      if (githubError.errors.isNotEmpty()) {
+      val errors = githubError.errors
+      if (!errors.isNullOrEmpty()) {
         builder.append(": ").append(newLineSeparator)
-        for (e in githubError.errors) {
+        for (e in errors) {
 
           builder.append(e.message ?: GithubBundle.message("gql.error.in.field", e.code, e.resource, e.field.orEmpty()))
             .append(newLineSeparator)

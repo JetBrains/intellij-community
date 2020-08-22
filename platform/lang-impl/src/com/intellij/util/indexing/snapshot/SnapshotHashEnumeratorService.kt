@@ -9,7 +9,6 @@ import com.intellij.util.hash.ContentHashEnumerator
 import com.intellij.util.indexing.ID
 import com.intellij.util.indexing.IndexInfrastructure
 import com.intellij.util.io.IOUtil
-import gnu.trove.THashSet
 import java.io.Closeable
 import java.io.File
 import java.io.IOException
@@ -18,15 +17,12 @@ import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
 @Service
-class SnapshotHashEnumeratorService : Closeable {
-  val log = logger<SnapshotHashEnumeratorService>()
-
+internal class SnapshotHashEnumeratorService : Closeable {
   companion object {
-    @JvmStatic
-    fun getInstance(): SnapshotHashEnumeratorService {
-      return service()
-    }
+    private val LOG = logger<SnapshotHashEnumeratorService>()
 
+    @JvmStatic
+    fun getInstance(): SnapshotHashEnumeratorService = service()
   }
 
   private enum class State { OPEN, OPEN_AND_CLEAN, CLOSED }
@@ -43,7 +39,7 @@ class SnapshotHashEnumeratorService : Closeable {
   @Volatile
   private var contentHashEnumerator: ContentHashEnumerator? = null
 
-  private val handles: MutableSet<HashEnumeratorHandle> = THashSet()
+  private val handles: MutableSet<HashEnumeratorHandle> = HashSet()
 
   private val lock: Lock = ReentrantLock()
 
@@ -65,7 +61,7 @@ class SnapshotHashEnumeratorService : Closeable {
                                         })!!
 
       }
-      log.assertTrue(state != State.CLOSED)
+      LOG.assertTrue(state != State.CLOSED)
       return state == State.OPEN
     }
   }
@@ -77,7 +73,7 @@ class SnapshotHashEnumeratorService : Closeable {
         contentHashEnumerator!!.close()
         state = State.CLOSED
 
-        log.assertTrue(handles.isEmpty(), "enumerator handles are still held: $handles")
+        LOG.assertTrue(handles.isEmpty(), "enumerator handles are still held: $handles")
         handles.clear()
       }
     }
@@ -98,7 +94,7 @@ class SnapshotHashEnumeratorService : Closeable {
       override fun release() {
         lock.withLock {
           handles.remove(this)
-          log.assertTrue(state != State.CLOSED, "handle is released for closed enumerator")
+          LOG.assertTrue(state != State.CLOSED, "handle is released for closed enumerator")
         }
       }
 

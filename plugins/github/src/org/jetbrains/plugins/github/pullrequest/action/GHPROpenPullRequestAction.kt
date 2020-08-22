@@ -10,7 +10,7 @@ class GHPROpenPullRequestAction : DumbAwareAction(GithubBundle.messagePointer("p
                                                   null) {
 
   override fun update(e: AnActionEvent) {
-    val controller = e.getData(GHPRActionKeys.PULL_REQUESTS_CONTROLLER)
+    val controller = e.getData(GHPRActionKeys.PULL_REQUESTS_TAB_CONTROLLER)
     val selection = e.getData(GHPRActionKeys.SELECTED_PULL_REQUEST)
     val dataProvider = e.getData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER)
 
@@ -18,7 +18,7 @@ class GHPROpenPullRequestAction : DumbAwareAction(GithubBundle.messagePointer("p
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    val controller = e.getRequiredData(GHPRActionKeys.PULL_REQUESTS_CONTROLLER)
+    val controller = e.getRequiredData(GHPRActionKeys.PULL_REQUESTS_TAB_CONTROLLER)
     val selection = e.getData(GHPRActionKeys.SELECTED_PULL_REQUEST)
     val dataProvider = e.getData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER)
 

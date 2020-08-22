@@ -20,10 +20,7 @@ import com.jetbrains.python.psi.stubs.PyClassAttributesIndex;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.jetbrains.python.psi.PyUtil.as;
@@ -103,7 +100,7 @@ public class PyStructuralTypeAttributesCompletionContributor extends CompletionC
     private Set<PyClass> suggestClassesFromUsedAttributes(@NotNull PsiElement anchor,
                                                           @NotNull Set<String> seenAttrs,
                                                           @NotNull TypeEvalContext context) {
-      final Set<PyClass> candidates = Sets.newHashSet();
+      final Set<PyClass> candidates = new HashSet<PyClass>();
       final Map<PyClass, Set<PyClass>> ancestorsCache = Maps.newHashMap();
       for (String attribute : seenAttrs) {
         // Search for some of these attributes like __init__ may produce thousands of candidates in average SDK
@@ -120,7 +117,7 @@ public class PyStructuralTypeAttributesCompletionContributor extends CompletionC
         }
       }
 
-      final Set<PyClass> suitableClasses = Sets.newHashSet();
+      final Set<PyClass> suitableClasses = new HashSet<PyClass>();
       for (PyClass candidate : candidates) {
         if (PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(candidate.getContainingFile())) {
           continue;
@@ -162,7 +159,7 @@ public class PyStructuralTypeAttributesCompletionContributor extends CompletionC
       }
       // Sentinel value to prevent infinite recursion
       ancestorsCache.put(pyClass, Collections.emptySet());
-      final Set<PyClass> result = Sets.newHashSet();
+      final Set<PyClass> result = new HashSet<PyClass>();
       try {
         for (final PyClassLikeType baseType : pyClass.getSuperClassTypes(context)) {
           if (!(baseType instanceof PyClassType)) {
@@ -180,7 +177,7 @@ public class PyStructuralTypeAttributesCompletionContributor extends CompletionC
       }
       return result;
     }
-    
+
     @NotNull
     private static String debugClassCoordinates(PyClass cls) {
       return cls.getQualifiedName() + " (" + cls.getContainingFile().getVirtualFile().getPath() + ")";

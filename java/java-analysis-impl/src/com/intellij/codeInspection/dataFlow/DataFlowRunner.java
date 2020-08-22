@@ -403,6 +403,9 @@ public class DataFlowRunner {
         }
       }
     }
+    if (e instanceof RuntimeExceptionWithAttachments) {
+      attachments = ArrayUtil.mergeArrays(attachments, ((RuntimeExceptionWithAttachments)e).getAttachments());
+    }
     LOG.error(new RuntimeExceptionWithAttachments(e, attachments));
   }
 

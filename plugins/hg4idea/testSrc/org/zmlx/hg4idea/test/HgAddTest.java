@@ -30,8 +30,8 @@ public class HgAddTest extends HgSingleUserTest {
 
   @Before
   @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  public void before() throws Exception {
+    super.before();
     doNothingSilently(VcsConfiguration.StandardConfirmation.ADD);
   }
 

@@ -68,6 +68,7 @@ public class UpdateSettingsConfigurable implements SearchableConfigurable {
   public void apply() throws ConfigurationException {
     boolean wasEnabled = mySettings.isCheckNeeded();
     mySettings.setCheckNeeded(myPanel.myCheckForUpdates.isSelected());
+    mySettings.setKeepPluginsArchive(myPanel.myCheckForKeepPluginsArchive.isSelected());
     if (wasEnabled != mySettings.isCheckNeeded()) {
       UpdateCheckerComponent checker = UpdateCheckerComponent.getInstance();
       if (checker != null) {
@@ -86,6 +87,7 @@ public class UpdateSettingsConfigurable implements SearchableConfigurable {
   @Override
   public void reset() {
     myPanel.myCheckForUpdates.setSelected(mySettings.isCheckNeeded());
+    myPanel.myCheckForKeepPluginsArchive.setSelected(mySettings.isKeepPluginsArchive());
     myPanel.updateLastCheckedLabel();
     myPanel.setSelectedChannelType(mySettings.getSelectedActiveChannel());
   }
@@ -94,6 +96,7 @@ public class UpdateSettingsConfigurable implements SearchableConfigurable {
   public boolean isModified() {
     return myPanel != null &&
            (myPanel.myCheckForUpdates.isSelected() != mySettings.isCheckNeeded() ||
+            myPanel.myCheckForKeepPluginsArchive.isSelected() != mySettings.isKeepPluginsArchive() ||
             myPanel.myUpdateChannels.getSelectedItem() != mySettings.getSelectedActiveChannel());
   }
 
@@ -106,6 +109,7 @@ public class UpdateSettingsConfigurable implements SearchableConfigurable {
     private final UpdateSettings mySettings;
     private JPanel myPanel;
     private JCheckBox myCheckForUpdates;
+    private JCheckBox myCheckForKeepPluginsArchive;
     private JComboBox<ChannelStatus> myUpdateChannels;
     private JButton myCheckNow;
     private JBLabel myChannelWarning;
@@ -123,6 +127,7 @@ public class UpdateSettingsConfigurable implements SearchableConfigurable {
       ExternalUpdateManager manager = ExternalUpdateManager.ACTUAL;
       if (manager != null) {
         myCheckForUpdates.setText(IdeBundle.message("updates.settings.checkbox.external"));
+        myCheckForKeepPluginsArchive.setText(IdeBundle.message("updates.settings.keep.plugins.archive"));
         myUpdateChannels.setVisible(false);
         myChannelWarning.setText(IdeBundle.message("updates.settings.external", manager.toolName));
         myChannelWarning.setForeground(JBColor.GRAY);

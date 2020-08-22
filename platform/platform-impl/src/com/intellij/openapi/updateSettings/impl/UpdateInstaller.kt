@@ -8,13 +8,13 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.ArrayUtil
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.copy
 import java.io.File
@@ -22,6 +22,7 @@ import java.io.IOException
 import java.net.URL
 import java.nio.file.Files
 import java.nio.file.Paths
+import java.util.zip.ZipException
 import java.util.zip.ZipFile
 import javax.swing.JComponent
 import javax.swing.UIManager
@@ -30,6 +31,8 @@ internal data class PluginUpdateResult(val pluginsInstalled: List<IdeaPluginDesc
 
 internal object UpdateInstaller {
   const val UPDATER_MAIN_CLASS = "com.intellij.updater.Runner"
+
+  private val LOG = logger<UpdateInstaller>()
 
   private const val PATCH_FILE_NAME = "patch-file.zip"
   private const val UPDATER_ENTRY = "com/intellij/updater/Runner.class"
@@ -58,11 +61,17 @@ internal object UpdateInstaller {
           super.setFraction((i - 1) * share + fraction / share)
         }
       }
+      LOG.info("downloading ${url}")
       HttpRequests.request(url).gzip(false).saveToFile(patchFile, partIndicator)
-      ZipFile(patchFile).use {
-        if (it.getEntry(PATCH_FILE_NAME) == null || it.getEntry(UPDATER_ENTRY) == null) {
-          throw IOException("Corrupted patch file: ${patchFile.name}")
+      try {
+        ZipFile(patchFile).use {
+          if (it.getEntry(PATCH_FILE_NAME) == null || it.getEntry(UPDATER_ENTRY) == null) {
+            throw IOException("Corrupted patch file: ${patchFile.name}")
+          }
         }
+      }
+      catch (e: ZipException) {
+        throw IOException("Corrupted patch file: ${patchFile.name}", e)
       }
       files += patchFile
     }
@@ -176,8 +185,10 @@ internal object UpdateInstaller {
       }
     }
 
+    val mx = System.getProperty("idea.updater.heap")?.toInt() ?: if (SystemInfo.is32Bit) Runtime.getRuntime().maxMemory() shr 20 else 2000
+
     args += File(java, if (SystemInfo.isWindows) "bin\\java.exe" else "bin/java").path
-    args += if (SystemInfo.is32Bit) "-Xmx1700m" else "-Xmx2000m"
+    args += "-Xmx${mx}m"
     args += "-cp"
     args += arrayOf(patchFiles.last().path, log4jCopy.path, jnaCopy.path, jnaUtilsCopy.path).joinToString(File.pathSeparator)
 
@@ -196,7 +207,7 @@ internal object UpdateInstaller {
       args += patchFiles.joinToString(File.pathSeparator)
     }
 
-    return ArrayUtil.toStringArray(args)
+    return args.toTypedArray()
   }
 
   private fun findLib(libName: String): File {

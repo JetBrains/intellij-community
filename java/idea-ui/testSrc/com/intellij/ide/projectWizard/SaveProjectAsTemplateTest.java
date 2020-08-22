@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectWizard;
 
 import com.intellij.application.UtilKt;
@@ -12,11 +12,11 @@ import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.module.BasePackageParameterFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -27,13 +27,14 @@ import com.intellij.platform.templates.LocalArchivedTemplate;
 import com.intellij.platform.templates.SaveProjectAsTemplateAction;
 import com.intellij.project.ProjectKt;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.testFramework.OpenProjectTaskBuilder;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.io.PathKt;
 import com.intellij.util.text.DateFormatUtil;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -43,10 +44,6 @@ import java.util.Date;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * @author Dmitry Avdeev
- */
-@SuppressWarnings("ResultOfMethodCallIgnored")
 public class SaveProjectAsTemplateTest extends NewProjectWizardTestCase {
   private static final String FOO_BAR_JAVA = "foo/Bar.java";
 
@@ -93,10 +90,9 @@ public class SaveProjectAsTemplateTest extends NewProjectWizardTestCase {
   private void doTest(boolean shouldEscape, boolean replaceParameters, String initialText, String expected) throws IOException {
     assertThat(ProjectKt.getStateStore(getProject()).getStorageScheme()).isEqualTo(StorageScheme.DIRECTORY_BASED);
     VirtualFile root = ProjectRootManager.getInstance(getProject()).getContentRoots()[0];
-    File rootFile = new File(VfsUtilCore.virtualToIoFile(root), FOO_BAR_JAVA);
-    rootFile.getParentFile().mkdirs();
-    rootFile.createNewFile();
-    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(rootFile);
+    Path rootFile = root.toNioPath().resolve(FOO_BAR_JAVA);
+    PathKt.createFile(rootFile);
+    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(rootFile);
     assertNotNull(file);
     setFileText(file, initialText);
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
@@ -150,9 +146,15 @@ public class SaveProjectAsTemplateTest extends NewProjectWizardTestCase {
 
   @NotNull
   @Override
-  protected Project doCreateProject(@NotNull Path projectFile) throws Exception {
-    FileUtil.ensureExists(projectFile.getParent().resolve(Project.DIRECTORY_STORE_FOLDER).toFile());
-    return createProject(projectFile.getParent());
+  protected Project doCreateAndOpenProject() {
+    Path projectFile = getProjectDirOrFile(true);
+    try {
+      Files.createDirectories(projectFile.getParent().resolve(Project.DIRECTORY_STORE_FOLDER));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    return ProjectManagerEx.getInstanceEx().openProject(projectFile.getParent(), new OpenProjectTaskBuilder().build());
   }
 
   @NotNull
@@ -161,7 +163,7 @@ public class SaveProjectAsTemplateTest extends NewProjectWizardTestCase {
     final Module module = super.createMainModule();
     ApplicationManager.getApplication().runWriteAction(() -> {
       ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
-      VirtualFile baseDir = PlatformTestUtil.getOrCreateProjectTestBaseDir(module.getProject());
+      VirtualFile baseDir = PlatformTestUtil.getOrCreateProjectBaseDir(module.getProject());
       ContentEntry entry = model.addContentEntry(baseDir);
       entry.addSourceFolder(baseDir, false);
       model.commit();

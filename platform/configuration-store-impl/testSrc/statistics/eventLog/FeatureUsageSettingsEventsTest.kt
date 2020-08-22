@@ -3,10 +3,12 @@ package com.intellij.configurationStore.statistics.eventLog
 
 import com.intellij.configurationStore.getStateSpec
 import com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEventPrinter
+import com.intellij.configurationStore.statistic.eventLog.isComponentOptionNameWhitelisted
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.ReportValue
+import com.intellij.openapi.components.SkipReportingStatistics
 import com.intellij.openapi.components.State
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.testFramework.ProjectRule
@@ -439,6 +441,78 @@ class FeatureUsageSettingsEventsTest {
     validateChangedComponent(state, printer.result[1])
   }
 
+  @Test
+  fun `not report disabled fields`() {
+    val component = TestComponent()
+    component.loadState(ComponentStateWithDisabledField(true))
+    val recordDefault = false
+    val printer = TestFeatureUsageSettingsEventsPrinter(recordDefault)
+    printer.logConfigurationState(getStateSpec(component).name, component.state, null)
+
+    val withProject = false
+    val defaultProject = false
+    assertInvokedRecorded(printer.getInvokedEvent(), withProject, defaultProject)
+    Assert.assertEquals(1, printer.result.size)
+  }
+
+  @Test
+  fun `not report collections`() {
+    val component = TestComponent()
+    component.loadState(ComponentStateWithCollections(listOf("foo"), hashMapOf("foo" to "bar"), setOf("bar")))
+    val recordDefault = false
+    val printer = TestFeatureUsageSettingsEventsPrinter(recordDefault)
+    printer.logConfigurationState(getStateSpec(component).name, component.state, null)
+
+    val withProject = false
+    val defaultProject = false
+    assertInvokedRecorded(printer.getInvokedEvent(), withProject, defaultProject)
+    Assert.assertEquals(1, printer.result.size)
+    assertThat(isComponentOptionNameWhitelisted("setOption")).isFalse()
+    assertThat(isComponentOptionNameWhitelisted("mapOption")).isFalse()
+    assertThat(isComponentOptionNameWhitelisted("listOption")).isFalse()
+  }
+
+  @Test
+  fun `not report transient field`() {
+    val component = TestComponent()
+    component.loadState(ComponentStateWithTransientField("bar"))
+    val recordDefault = false
+    val printer = TestFeatureUsageSettingsEventsPrinter(recordDefault)
+    printer.logConfigurationState(getStateSpec(component).name, component.state, null)
+
+    val withProject = false
+    val defaultProject = false
+    assertInvokedRecorded(printer.getInvokedEvent(), withProject, defaultProject)
+    Assert.assertEquals(1, printer.result.size)
+    assertThat(isComponentOptionNameWhitelisted("stringOption")).isFalse()
+  }
+
+  @Test
+  fun `ignore state presentableName`() {
+    val component = TestComponentWithPresentableName()
+    component.loadState(ComponentState())
+    val recordDefault = false
+    val printer = TestFeatureUsageSettingsEventsPrinter(recordDefault)
+    printer.logConfigurationState(getStateSpec(component).name, component.state, null)
+
+    val withProject = false
+    val defaultProject = false
+    assertInvokedRecorded(printer.getInvokedEvent(), withProject, defaultProject)
+    Assert.assertEquals(1, printer.result.size)
+  }
+
+  @Test
+  fun `report invoked and options events with the same id`() {
+    val component = TestComponent()
+    component.loadState(ComponentState(bool = true))
+    val printer = TestFeatureUsageSettingsEventsPrinter(recordDefault = false)
+    printer.logConfigurationState(getStateSpec(component).name, component.state, null)
+
+    val invokedEvent = printer.getInvokedEvent()
+    val optionEvent = printer.getOptionByName("boolOption")
+    Assert.assertEquals(invokedEvent.id, optionEvent.id)
+  }
+
   private fun assertDefaultWithoutDefaultRecording(printer: TestFeatureUsageSettingsEventsPrinter,
                                                    withProject: Boolean,
                                                    defaultProject: Boolean) {
@@ -447,7 +521,10 @@ class FeatureUsageSettingsEventsTest {
   }
 
   @Suppress("SameParameterValue")
-  private fun assertNotDefaultState(printer: TestFeatureUsageSettingsEventsPrinter,withRecordDefault: Boolean, withProject: Boolean, defaultProject: Boolean) {
+  private fun assertNotDefaultState(printer: TestFeatureUsageSettingsEventsPrinter,
+                                    withRecordDefault: Boolean,
+                                    withProject: Boolean,
+                                    defaultProject: Boolean) {
     assertThat(printer.result).hasSize(1)
     assertNotDefaultState(printer.result[0], "boolOption", true, "bool", withRecordDefault, withProject, defaultProject)
   }
@@ -461,7 +538,8 @@ class FeatureUsageSettingsEventsTest {
                                     defaultProject: Boolean) {
     assertThat(event.group.id).isEqualTo("settings")
     assertThat(event.group.version > 0).isTrue()
-    assertThat(event.id).isEqualTo(if (withDefaultRecorded) "option" else "not.default")
+    assertThat(event.eventId).isEqualTo(if (withDefaultRecorded) "option" else "not.default")
+    assertThat(event.id).isNotNull()
 
     var size = 3
     if (value != null) size++
@@ -504,7 +582,8 @@ class FeatureUsageSettingsEventsTest {
                                  defaultProject: Boolean) {
     assertThat(event.group.id).isEqualTo("settings")
     assertThat(event.group.version).isGreaterThan(0)
-    assertThat(event.id).isEqualTo("option")
+    assertThat(event.eventId).isEqualTo("option")
+    assertThat(event.id).isNotNull()
 
     var size = 5
     if (withProject) size++
@@ -531,7 +610,8 @@ class FeatureUsageSettingsEventsTest {
   private fun assertInvokedRecorded(event: LoggedComponentStateEvents, withProject: Boolean, defaultProject: Boolean) {
     assertThat(event.group.id).isEqualTo("settings")
     assertThat(event.group.version).isGreaterThan(0)
-    assertThat(event.id).isEqualTo("invoked")
+    assertThat(event.eventId).isEqualTo("invoked")
+    assertThat(event.id).isNotNull()
 
     var size = 1
     if (withProject) size++
@@ -554,8 +634,8 @@ class FeatureUsageSettingsEventsTest {
   private class TestFeatureUsageSettingsEventsPrinter(recordDefault: Boolean) : FeatureUsageSettingsEventPrinter(recordDefault) {
     val result: MutableList<LoggedComponentStateEvents> = ArrayList()
 
-    override fun logConfig(group: EventLogGroup, eventId: String, data: FeatureUsageData) {
-      result.add(LoggedComponentStateEvents(group, eventId, data.build()))
+    override fun logConfig(group: EventLogGroup, eventId: String, data: FeatureUsageData, id: Int) {
+      result.add(LoggedComponentStateEvents(group, eventId, data.build(), id))
     }
 
     fun getOptionByName(name: String): LoggedComponentStateEvents {
@@ -569,7 +649,7 @@ class FeatureUsageSettingsEventsTest {
 
     fun getInvokedEvent(): LoggedComponentStateEvents {
       for (event in result) {
-        if (event.id == "invoked") {
+        if (event.eventId == "invoked") {
           return event
         }
       }
@@ -585,7 +665,7 @@ class FeatureUsageSettingsEventsTest {
     }
   }
 
-  private class LoggedComponentStateEvents(val group: EventLogGroup, val id: String, val data: Map<String, Any>)
+  private class LoggedComponentStateEvents(val group: EventLogGroup, val eventId: String, val data: Map<String, Any>, val id: Int)
 
   @State(name = "MyTestComponent", reportStatistic = true)
   private class TestComponent : PersistentStateComponent<ComponentState> {
@@ -686,5 +766,51 @@ class FeatureUsageSettingsEventsTest {
     @Attribute("abs-string-option-without-possible-values")
     @field:ReportValue
     val absStringOptionWithoutPossibleValues: String = absStringOptWithoutPossibleValues
+  }
+
+  @Suppress("unused")
+  private class ComponentStateWithDisabledField(bool: Boolean = false) : ComponentState() {
+    @SkipReportingStatistics
+    @Attribute("disabled-option")
+    val disabledField: Boolean = bool
+  }
+
+  @Suppress("unused")
+  private class ComponentStateWithCollections(list: List<String> = listOf(),
+                                              map: Map<String, String> = hashMapOf(),
+                                              set: Set<String> = hashSetOf()) : ComponentState() {
+    @Attribute("list-option")
+    val listOption: List<String> = list
+
+    @Attribute("map-option")
+    val mapOption: Map<String, String> = map
+
+    @Attribute("set-option")
+    val setOption: Set<String> = set
+  }
+
+  @Suppress("unused")
+  private class ComponentStateWithTransientField(stringOpt: String = "foo") : ComponentState() {
+    @Transient
+    val stringOption: String = stringOpt
+  }
+
+  @State(name = "MyTestComponent", presentableName = TestComponentWithPresentableName.PresentableNameGetter::class)
+  private class TestComponentWithPresentableName : PersistentStateComponent<ComponentState> {
+    private var state = ComponentState()
+
+    override fun loadState(s: ComponentState) {
+      state = s
+    }
+
+    override fun getState(): ComponentState? {
+      return state
+    }
+
+    class PresentableNameGetter : State.NameGetter() {
+      override fun get(): String {
+        return "PresentableName"
+      }
+    }
   }
 }

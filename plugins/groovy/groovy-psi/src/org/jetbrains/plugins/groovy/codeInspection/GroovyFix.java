@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
@@ -67,13 +68,13 @@ public abstract class GroovyFix implements LocalQuickFix {
       throws IncorrectOperationException;
 
 
-  protected static void replaceExpression(GrExpression expression, String newExpression) {
+  protected static void replaceExpression(GrExpression expression, @NonNls String newExpression) {
     GrInspectionUtil.replaceExpression(expression, newExpression);
   }
 
-  protected static void replaceStatement(GrStatement statement, String newStatement) {
+  protected static void replaceStatement(GrStatement statement, @NonNls String newStatement) {
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(statement.getProject());
-    final GrStatement newCall = (GrStatement) factory.createTopElementFromText(newStatement);
+    final GrStatement newCall = (GrStatement)factory.createTopElementFromText(newStatement);
     statement.replaceWithStatement(newCall);
   }
 

@@ -15,6 +15,7 @@ import com.intellij.psi.PsiElement;
  * so this mechanism is effectively opt-in.
  *
  * @see PsiElement#getOwnReferences
+ * @see UrlReferenceHost
  */
 public interface PsiExternalReferenceHost extends PsiElement {
 }

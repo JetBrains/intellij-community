@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.util.TimeoutUtil
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Consumer
 
@@ -39,7 +40,7 @@ class IdeActivity @JvmOverloads constructor(private val projectOrNullForApplicat
     consumer.accept(data)
 
     startedTimestamp = System.nanoTime()
-    FUCounterUsageLogger.getInstance().logEvent(group, appendActivityName("started"), data)
+    FUCounterUsageLogger.getInstance().logEvent(group, appendActivityName(STARTED_EVENT_ID), data)
     return this
   }
 
@@ -75,10 +76,11 @@ class IdeActivity @JvmOverloads constructor(private val projectOrNullForApplicat
 
   companion object {
     private val counter = AtomicInteger(0)
+    const val STARTED_EVENT_ID = "started"
 
     @JvmStatic
     @JvmOverloads
-    fun started(projectOrNullForApplication: Project?, group: String, activityName: String? = null): IdeActivity =
+    fun started(projectOrNullForApplication: Project?, group: @NonNls String, activityName: @NonNls String? = null): IdeActivity =
       IdeActivity(projectOrNullForApplication, group, activityName).started()
   }
 }

@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.OutputStream;
 
-public class PyAttachToProcessCommandLineState extends PythonScriptCommandLineState {
+public final class PyAttachToProcessCommandLineState extends PythonScriptCommandLineState {
 
 
   private PyAttachToProcessCommandLineState(PythonRunConfiguration runConfiguration,

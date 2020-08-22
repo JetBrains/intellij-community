@@ -37,6 +37,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.messages.MessageBusConnection;
@@ -44,7 +45,6 @@ import it.unimi.dsi.fastutil.ints.IntCollection;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -545,7 +545,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     if (ids == null) {
       return null;
     }
-    Set<VirtualFile> fileSet = new ObjectOpenHashSet<>(ids.size());
+    Set<VirtualFile> fileSet = CollectionFactory.createSmallMemoryFootprintSet(ids.size());
     for (IntIterator iterator = ids.iterator(); iterator.hasNext(); ) {
       VirtualFile vFile = managingFS.findFileById(iterator.nextInt());
       assert vFile != null;

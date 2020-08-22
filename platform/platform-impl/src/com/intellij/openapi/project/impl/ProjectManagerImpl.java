@@ -8,17 +8,16 @@ import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SaveAndSyncHandler;
-import com.intellij.ide.impl.OpenProjectTask;
-import com.intellij.ide.impl.ProjectUtil;
-import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.NotificationsManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
-import com.intellij.openapi.command.impl.DummyProject;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -27,36 +26,30 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.*;
+import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.ShutDownTracker;
-import com.intellij.openapi.util.UserDataHolderEx;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.ZipHandler;
+import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.ui.AppUIUtil;
-import com.intellij.ui.GuiUtils;
 import com.intellij.ui.IdeUICustomization;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.UnsafeWeakList;
+import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.util.ref.GCUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
-import java.io.IOException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
-import java.util.*;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 public abstract class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
   protected static final Logger LOG = Logger.getInstance(ProjectManagerImpl.class);
@@ -155,195 +148,43 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
     Disposer.dispose(myDefaultProject);
   }
 
-  @SuppressWarnings("StaticNonFinalField") public static int TEST_PROJECTS_CREATED;
-  private static final boolean LOG_PROJECT_LEAKAGE_IN_TESTS = Boolean.parseBoolean(System.getProperty("idea.log.leaked.projects.in.tests", "true"));
-  private static final int MAX_LEAKY_PROJECTS = 5;
-  private static final long LEAK_CHECK_INTERVAL = TimeUnit.MINUTES.toMillis(30);
-  private static long CHECK_START = System.currentTimeMillis();
-  private final Map<Project, String> myProjects = new WeakHashMap<>();
-
-
-  @Override
-  public @Nullable Project newProject(@NotNull Path projectFile, @NotNull OpenProjectTask options) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      //noinspection AssignmentToStaticFieldFromInstanceMethod
-      TEST_PROJECTS_CREATED++;
-      //noinspection TestOnlyProblems
-      checkProjectLeaksInTests();
-    }
-
-    if (Files.isRegularFile(projectFile)) {
-      try {
-        Files.deleteIfExists(projectFile);
-      }
-      catch (IOException ignored) {
-      }
-    }
-    else {
-      try (DirectoryStream<Path> directoryStream = Files.newDirectoryStream(projectFile.resolve(Project.DIRECTORY_STORE_FOLDER))) {
-        for (Path file : directoryStream) {
-          FileUtil.delete(file);
-        }
-      }
-      catch (IOException ignore) {
-      }
-    }
-
-    ProjectImpl project = instantiateProject(projectFile, options.getProjectName());
-    try {
-      Project template = options.getUseDefaultProjectAsTemplate() ? getDefaultProject() : null;
-      initProject(projectFile, project, options.isRefreshVfsNeeded(), template, ProgressManager.getInstance().getProgressIndicator());
-      if (LOG_PROJECT_LEAKAGE_IN_TESTS) {
-        myProjects.put(project, null);
-      }
-      return project;
-    }
-    catch (Throwable t) {
-      LOG.warn(t);
-      try {
-        ApplicationManager.getApplication().invokeAndWait(() -> {
-          Messages.showErrorDialog(message(t), ProjectBundle.message("project.load.default.error"));
-        });
-      }
-      catch (NoClassDefFoundError e) {
-        // error icon not loaded
-        LOG.info(e);
-      }
-      return null;
-    }
-  }
-
-  @NonNls
-  private static @NotNull String message(@NotNull Throwable e) {
-    String message = e.getMessage();
-    if (message != null) {
-      return message;
-    }
-
-    message = e.getLocalizedMessage();
-    if (message != null) {
-      return message;
-
-    }
-    message = e.toString();
-    Throwable cause = e.getCause();
-    if (cause != null) {
-      String causeMessage = message(cause);
-      return message + " (cause: " + causeMessage + ")";
-    }
-
-    return message;
-  }
-
-  @TestOnly
-  private void checkProjectLeaksInTests() {
-    if (!LOG_PROJECT_LEAKAGE_IN_TESTS || getLeakedProjectsCount() < MAX_LEAKY_PROJECTS) {
-      return;
-    }
-
-    long currentTime = System.currentTimeMillis();
-    if (currentTime - CHECK_START < LEAK_CHECK_INTERVAL) {
-      return; // check every N minutes
-    }
-
-    for (int i = 0; i < 3 && getLeakedProjectsCount() >= MAX_LEAKY_PROJECTS; i++) {
-      GCUtil.tryGcSoftlyReachableObjects();
-    }
-
-    //noinspection AssignmentToStaticFieldFromInstanceMethod
-    CHECK_START = currentTime;
-
-    if (getLeakedProjectsCount() >= MAX_LEAKY_PROJECTS) {
-      //noinspection CallToSystemGC
-      System.gc();
-      Collection<Project> copy = getLeakedProjects();
-      myProjects.clear();
-      if (ContainerUtil.collect(copy.iterator()).size() >= MAX_LEAKY_PROJECTS) {
-        throw new TooManyProjectLeakedException(copy);
-      }
-    }
-  }
-
-  @TestOnly
-  private Collection<Project> getLeakedProjects() {
-    myProjects.remove(DummyProject.getInstance()); // process queue
-    return myProjects.keySet().stream()
-      .filter(p -> p.isDisposed() && !((ProjectImpl)p).isTemporarilyDisposed())
-      .collect(Collectors.toCollection(UnsafeWeakList::new));
-  }
-
-  @TestOnly
-  private int getLeakedProjectsCount() {
-    myProjects.remove(DummyProject.getInstance()); // process queue
-    return (int)myProjects.keySet().stream().filter(project -> project.isDisposed() && !((ProjectImpl)project).isTemporarilyDisposed()).count();
-  }
-
-  @ApiStatus.Internal
-  public static void initProject(@NotNull Path file,
-                                 @NotNull ProjectImpl project,
-                                 boolean isRefreshVfsNeeded,
-                                 @Nullable Project template,
-                                 @Nullable ProgressIndicator indicator) {
+  protected static void initProject(@NotNull Path file,
+                                    @NotNull ProjectImpl project,
+                                    boolean isRefreshVfsNeeded,
+                                    boolean preloadServices,
+                                    @Nullable Project template,
+                                    @Nullable ProgressIndicator indicator) {
     LOG.assertTrue(!project.isDefault());
-    if (indicator != null) {
-      indicator.setIndeterminate(false);
-      // getting project name is not cheap and not possible at this moment
-      indicator.setText(ProjectBundle.message("project.loading.components"));
-    }
-
-    Activity activity = StartUpMeasurer.startMainActivity("project before loaded callbacks");
-    //noinspection deprecation
-    ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).beforeProjectLoaded(project);
-    activity.end();
-
     boolean succeed = false;
     try {
+      if (indicator != null) {
+        indicator.setIndeterminate(false);
+        // getting project name is not cheap and not possible at this moment
+        indicator.setText(ProjectBundle.message("project.loading.components"));
+      }
+
+      Activity activity = StartUpMeasurer.startMainActivity("project before loaded callbacks");
+      //noinspection deprecation
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(ProjectLifecycleListener.TOPIC).beforeProjectLoaded(project);
+      activity.end();
+
       ProjectLoadHelper.registerComponents(project);
       project.getStateStore().setPath(file, isRefreshVfsNeeded, template);
-      project.init(indicator);
+      project.init(preloadServices, indicator);
       succeed = true;
     }
     finally {
       if (!succeed) {
-        WriteThread.submit(() -> {
-          WriteAction.run(() -> Disposer.dispose(project));
-        });
+        WriteAction.runAndWait(() -> Disposer.dispose(project));
       }
     }
   }
 
-  @ApiStatus.Internal
-  protected static @NotNull ProjectImpl instantiateProject(@NotNull Path filePath, @Nullable String projectName) {
-    Activity activity = StartUpMeasurer.startMainActivity("project instantiation");
-    ProjectImpl project = new ProjectImpl(filePath, projectName);
-    activity.end();
-    return project;
-  }
-
   @Override
   public @NotNull Project loadProject(@NotNull Path file) {
-    //noinspection TestOnlyProblems
-    return loadProject(file, null);
-  }
-
-  @TestOnly
-  public static Project loadProject(@NotNull Path file, @Nullable Consumer<Project> beforeInit) {
-    ProjectImpl project = instantiateProject(file, null);
-    if (beforeInit != null) {
-      beforeInit.accept(project);
-    }
-    initProject(file, project, /* isRefreshVfsNeeded = */ true, null, ProgressManager.getInstance().getProgressIndicator());
+    ProjectImpl project = new ProjectExImpl(file, null);
+    initProject(file, project, /* isRefreshVfsNeeded = */ true, true, null, ProgressManager.getInstance().getProgressIndicator());
     return project;
-  }
-
-  static @NotNull String toCanonicalName(@NotNull String filePath) {
-    try {
-      return FileUtil.resolveShortWindowsName(filePath);
-    }
-    catch (IOException e) {
-      // OK. File does not yet exist, so its canonical path will be equal to its original path.
-      return filePath;
-    }
   }
 
   @Override
@@ -355,7 +196,8 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
   public @NotNull Project getDefaultProject() {
     LOG.assertTrue(!ApplicationManager.getApplication().isDisposed(), "Default project has been already disposed!");
     // call instance method to reset timeout
-    LOG.assertTrue(!myDefaultProject.getMessageBus().isDisposed());
+    MessageBus bus = myDefaultProject.getMessageBus(); // re-instantiate if needed
+    LOG.assertTrue(!bus.isDisposed());
     LOG.assertTrue(myDefaultProject.isCached());
     return myDefaultProject;
   }
@@ -373,32 +215,6 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
       return ArrayUtil.contains(project, myOpenProjects);
     }
   }
-
-  @Override
-  public final boolean openProject(@NotNull Project project) {
-    //noinspection TestOnlyProblems
-    if (isLight(project)) {
-      //noinspection TestOnlyProblems
-      ((ProjectImpl)project).setTemporarilyDisposed(false);
-      boolean isInitialized = StartupManagerEx.getInstanceEx(project).startupActivityPassed();
-      if (isInitialized) {
-        addToOpened(project);
-        // events already fired
-        return true;
-      }
-    }
-
-    for (Project p : getOpenProjects()) {
-      if (ProjectUtil.isSameProject(project.getProjectFilePath(), p)) {
-        GuiUtils.invokeLaterIfNeeded(() -> ProjectUtil.focusProjectWindow(p, false), ModalityState.NON_MODAL);
-        return false;
-      }
-    }
-
-    return doOpenProject(project);
-  }
-
-  abstract boolean doOpenProject(@NotNull Project project);
 
   protected final boolean addToOpened(@NotNull Project project) {
     assert !project.isDisposed() : "Must not open already disposed project";
@@ -450,11 +266,6 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
     return closeProject(project, /* isSaveProject = */ true, /* dispose = */ false, /* checkCanClose = */ true);
   }
 
-  @TestOnly
-  public final boolean forceCloseProject(@NotNull Project project, boolean dispose) {
-    return closeProject(project, /* isSaveProject = */ false, dispose, /* checkCanClose = */ false);
-  }
-
   @Override
   public boolean forceCloseProject(@NotNull Project project) {
     return closeProject(project, /* isSaveProject = */ false, /* dispose = */ true, /* checkCanClose = */ false);
@@ -472,7 +283,7 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
   }
 
   @SuppressWarnings("TestOnlyProblems")
-  protected final boolean closeProject(@NotNull Project project, boolean saveProject, boolean dispose, boolean checkCanClose) {
+  protected boolean closeProject(@NotNull Project project, boolean saveProject, boolean dispose, boolean checkCanClose) {
     Application app = ApplicationManager.getApplication();
     if (app.isWriteAccessAllowed()) {
       throw new IllegalStateException(
@@ -483,11 +294,13 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
     if (isLight(project)) {
       // if we close project at the end of the test, just mark it closed;
       // if we are shutting down the entire test framework, proceed to full dispose
-      ProjectImpl projectImpl = (ProjectImpl)project;
+      ProjectExImpl projectImpl = (ProjectExImpl)project;
       if (!projectImpl.isTemporarilyDisposed()) {
-        projectImpl.disposeEarlyDisposable();
-        projectImpl.setTemporarilyDisposed(true);
-        removeFromOpened(project);
+        ApplicationManager.getApplication().runWriteAction(() -> {
+          projectImpl.disposeEarlyDisposable();
+          projectImpl.setTemporarilyDisposed(true);
+          removeFromOpened(project);
+        });
         updateTheOnlyProjectField();
         return true;
       }
@@ -495,14 +308,14 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
     }
     else if (!isProjectOpened(project)) {
       if (dispose) {
-        if (project instanceof ProjectImpl) {
-          ProjectImpl projectImpl = (ProjectImpl)project;
-          projectImpl.stopServicePreloading();
-          projectImpl.disposeEarlyDisposable();
+        if (project instanceof ComponentManagerImpl) {
+          ((ComponentManagerImpl)project).stopServicePreloading();
         }
         ApplicationManager.getApplication().runWriteAction(() -> {
-          if (project instanceof ProjectImpl) {
-            ((ProjectImpl)project).startDispose();
+          if (project instanceof ProjectExImpl) {
+            ProjectExImpl projectImpl = (ProjectExImpl)project;
+            projectImpl.disposeEarlyDisposable();
+            projectImpl.startDispose();
           }
           Disposer.dispose(project);
         });
@@ -517,8 +330,8 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
     final ShutDownTracker shutDownTracker = ShutDownTracker.getInstance();
     shutDownTracker.registerStopperThread(Thread.currentThread());
     try {
-      if (project instanceof ProjectImpl) {
-        ((ProjectImpl)project).stopServicePreloading();
+      if (project instanceof ComponentManagerImpl) {
+        ((ComponentManagerImpl)project).stopServicePreloading();
       }
 
       getPublisher().projectClosingBeforeSave(project);
@@ -535,14 +348,13 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
       // somebody can start progress here, do not wrap in write action
       fireProjectClosing(project);
 
-      // ignore dispose flag
-      if (project instanceof ProjectImpl) {
-        ((ProjectImpl)project).disposeEarlyDisposable();
-      }
-
       app.runWriteAction(() -> {
-        if (dispose && project instanceof ProjectImpl) {
-          ((ProjectImpl)project).startDispose();
+        if (project instanceof ProjectExImpl) {
+          // ignore dispose flag (dispose is passed only via deprecated API that used only by some 3d-party plugins)
+          ((ProjectExImpl)project).disposeEarlyDisposable();
+          if (dispose) {
+            ((ProjectExImpl)project).startDispose();
+          }
         }
 
         removeFromOpened(project);
@@ -566,7 +378,7 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
 
   @TestOnly
   public static boolean isLight(@NotNull Project project) {
-    return project instanceof ProjectImpl && ((ProjectImpl)project).isLight();
+    return project instanceof ProjectEx && ((ProjectEx)project).isLight();
   }
 
   @Override
@@ -721,7 +533,7 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
       return true;
     }
 
-    StringBuilder message = new StringBuilder();
+    @NlsContexts.DialogMessage StringBuilder message = new StringBuilder();
     message.append(String.format("%s was unable to save some project files,\nare you sure you want to close this project anyway?",
                                  ApplicationNamesInfo.getInstance().getProductName()));
 

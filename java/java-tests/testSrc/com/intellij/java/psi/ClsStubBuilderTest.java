@@ -4,7 +4,6 @@ package com.intellij.java.psi;
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
@@ -32,6 +31,7 @@ public class ClsStubBuilderTest extends LightIdeaTestCase {
 
   public void testTestSuite() { doTest(); }
   public void testDoubleTest() { doTest(); /* IDEA-53195 */ }
+  public void testTypeAnno() { doTest(); }
 
   public void testModifiers() { doTest("../repo/pack/" + getTestName(false)); }
   public void testModuleInfo() { doTest("module-info"); }
@@ -71,9 +71,9 @@ public class ClsStubBuilderTest extends LightIdeaTestCase {
 
   private static void doTest(VirtualFile clsFile, String resultFileName) {
     try {
-      PsiFileStub stub = ClsFileImpl.buildFileStub(clsFile, clsFile.contentsToByteArray());
+      PsiFileStub<?> stub = ClsFileImpl.buildFileStub(clsFile, clsFile.contentsToByteArray());
       assertNotNull(stub);
-      String actual = ((StubBase)stub).printTree().trim();
+      String actual = ((StubBase<?>)stub).printTree().trim();
 
       File resultFile = new File(JavaTestUtil.getJavaTestDataPath() + "/psi/cls/stubBuilder/" + resultFileName);
       if (!resultFile.exists()) {
@@ -81,9 +81,7 @@ public class ClsStubBuilderTest extends LightIdeaTestCase {
         fail("No test data found at: " + resultFile + ", creating one");
       }
 
-      String expected = StringUtil.convertLineSeparators(FileUtil.loadFile(resultFile)).trim();
-
-      assertEquals(expected, actual);
+      assertSameLinesWithFile(resultFile.getPath(), actual, true);
     }
     catch (Exception e) {
       throw new RuntimeException(e);

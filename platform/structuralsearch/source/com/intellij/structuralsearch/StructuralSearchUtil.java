@@ -26,12 +26,12 @@ import java.util.stream.Collectors;
 public final class StructuralSearchUtil {
   private static final String REG_EXP_META_CHARS = ".$|()[]{}^?*+\\";
   private static final Pattern ACCENTS = Pattern.compile("\\p{InCombiningDiacriticalMarks}+");
-  private static LanguageFileType ourDefaultFileType = null;
+  private static LanguageFileType ourDefaultFileType;
 
-  private static boolean ourUseUniversalMatchingAlgorithm = false;
+  private static boolean ourUseUniversalMatchingAlgorithm;
   private static final Map<String, StructuralSearchProfile> cache = new HashMap<>();
 
-  private static List<Configuration> ourPredefinedConfigurations = null;
+  private static List<Configuration> ourPredefinedConfigurations;
   static {
     StructuralSearchProfile.EP_NAME.addChangeListener(() -> {
       ourPredefinedConfigurations = null;
@@ -53,7 +53,7 @@ public final class StructuralSearchUtil {
   }
 
   @Nullable
-  public static StructuralSearchProfile getProfileByFileType(LanguageFileType fileType) {
+  public static StructuralSearchProfile getProfileByFileType(@NotNull LanguageFileType fileType) {
     return getProfileByLanguage(fileType.getLanguage());
   }
 
@@ -81,7 +81,7 @@ public final class StructuralSearchUtil {
   }
 
   public static PsiElement getParentIfIdentifier(PsiElement element) {
-    return !isIdentifier(element) ? element : element.getParent();
+    return isIdentifier(element) ? element.getParent() : element;
   }
 
   @Contract("!null -> !null")
@@ -146,8 +146,18 @@ public final class StructuralSearchUtil {
     return REG_EXP_META_CHARS.indexOf(ch) >= 0;
   }
 
-  public static String shieldRegExpMetaChars(String word) {
+  @NotNull
+  public static String shieldRegExpMetaChars(@NotNull String word) {
     return shieldRegExpMetaChars(word, new StringBuilder(word.length())).toString();
+  }
+
+  public static String makeExtremeSpacesOptional(String word) {
+    if (word.trim().isEmpty()) return word;
+
+    String result = word;
+    if (word.startsWith(" ")) result = "(?:\\s|\\b)" + result.substring(1);
+    if (word.endsWith(" ")) result = result.substring(0, result.length() - 1) + "(?:\\s|\\b)";
+    return result;
   }
 
   @NotNull
@@ -184,7 +194,7 @@ public final class StructuralSearchUtil {
     return ourPredefinedConfigurations;
   }
 
-  public static boolean isDocCommentOwner(PsiElement match) {
+  public static boolean isDocCommentOwner(@NotNull PsiElement match) {
     final StructuralSearchProfile profile = getProfileByPsiElement(match);
     return profile != null && profile.isDocCommentOwner(match);
   }
@@ -194,11 +204,12 @@ public final class StructuralSearchUtil {
     return profile != null ? profile.getMeaningfulText(matchedNode) : matchedNode.getText();
   }
 
-  public static String getAlternativeText(PsiElement matchedNode, String previousText) {
+  public static String getAlternativeText(@NotNull PsiElement matchedNode, @NotNull String previousText) {
     final StructuralSearchProfile profile = getProfileByPsiElement(matchedNode);
     return profile != null ? profile.getAlternativeText(matchedNode, previousText) : null;
   }
 
+  @NotNull
   public static String normalizeWhiteSpace(@NotNull String text) {
     text = text.trim();
     final StringBuilder result = new StringBuilder();
@@ -219,10 +230,12 @@ public final class StructuralSearchUtil {
     return result.toString();
   }
 
+  @NotNull
   public static String stripAccents(@NotNull String input) {
     return ACCENTS.matcher(Normalizer.normalize(input, Normalizer.Form.NFD)).replaceAll("");
   }
 
+  @NotNull
   public static String normalize(@NotNull String text) {
     return stripAccents(normalizeWhiteSpace(text));
   }

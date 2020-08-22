@@ -1,10 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree;
 
+import com.intellij.testFramework.TestApplicationManager;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import javax.swing.event.TreeExpansionEvent;
@@ -26,6 +28,12 @@ import static com.intellij.ui.tree.TreeTestUtil.node;
 import static com.intellij.util.containers.ContainerUtil.set;
 
 public final class TreeUtilVisitTest {
+  @Before
+  public void setUp() {
+    TestApplicationManager.getInstance();
+  }
+
+
   @Test
   public void testAcceptDepth1() {
     testFind(() -> new DepthVisitor(1), 1);

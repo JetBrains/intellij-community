@@ -185,11 +185,11 @@ public final class DisabledPluginsState {
   }
 
   public static void saveDisabledPlugins(@NotNull Collection<PluginId> ids, boolean append) throws IOException {
-    saveDisabledPlugins(PathManager.getConfigPath(), ids, append);
+    saveDisabledPlugins(PathManager.getConfigDir(), ids, append);
   }
 
-  public static void saveDisabledPlugins(@NotNull String configPath, @NotNull Collection<PluginId> ids, boolean append) throws IOException {
-    Path plugins = Paths.get(configPath, DISABLED_PLUGINS_FILENAME);
+  public static void saveDisabledPlugins(@NotNull Path configPath, @NotNull Collection<PluginId> ids, boolean append) throws IOException {
+    Path plugins = configPath.resolve(DISABLED_PLUGINS_FILENAME);
     PluginManagerCore.savePluginsList(ids, plugins, append);
     ourDisabledPlugins = null;
     fireEditDisablePlugins();

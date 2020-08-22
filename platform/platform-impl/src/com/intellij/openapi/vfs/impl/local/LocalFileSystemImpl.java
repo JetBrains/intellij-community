@@ -3,10 +3,10 @@ package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFilePointerCapableFileSystem;
@@ -15,19 +15,13 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 public final class LocalFileSystemImpl extends LocalFileSystemBase implements Disposable, VirtualFilePointerCapableFileSystem {
@@ -40,12 +34,11 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
 
   public LocalFileSystemImpl() {
     myManagingFS = ManagingFS.getInstance();
-    myWatcher = new FileWatcher(myManagingFS);
-    if (myWatcher.isOperational()) {
+    myWatcher = new FileWatcher(myManagingFS, () -> {
       AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay(
         () -> { if (!ApplicationManager.getApplication().isDisposed()) storeRefreshStatusToFiles(); },
         STATUS_UPDATE_PERIOD, STATUS_UPDATE_PERIOD, TimeUnit.MILLISECONDS);
-    }
+    });
     myWatchRootsManager = new WatchRootsManager(myWatcher, this);
     Disposer.register(ApplicationManager.getApplication(), this);
     new SymbolicLinkRefresher(this);
@@ -127,6 +120,22 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
     }
   }
 
+  @Override
+  public @NotNull Iterable<@NotNull VirtualFile> findCachedFilesForPath(@NotNull String path) {
+    return ContainerUtil.mapNotNull(getAliasedPaths(path), this::findFileByPathIfCached);
+  }
+
+  // Finds paths that denote the same physical file (canonical path + symlinks)
+  // Returns [canonical_path + symlinks], if path is canonical
+  //         [path], otherwise
+  private @NotNull List<@NotNull @SystemDependent String> getAliasedPaths(@NotNull String path) {
+    path = FileUtil.toSystemDependentName(path);
+    List<@NotNull String> aliases = new ArrayList<>(getFileWatcher().mapToAllSymlinks(path));
+    assert !aliases.contains(path);
+    aliases.add(0, path);
+    return aliases;
+  }
+
   @NotNull
   @Override
   public Set<WatchRequest> replaceWatchedRoots(@NotNull Collection<WatchRequest> watchRequestsToRemove,
@@ -158,8 +167,12 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
   }
 
   @ApiStatus.Internal
-  public final void symlinkUpdated(int fileId, @Nullable VirtualFile parent, @NotNull String linkPath, @Nullable String linkTarget) {
-    if (linkTarget == null || !isRecursiveOrCircularSymlink(linkPath, linkTarget, parent)) {
+  public final void symlinkUpdated(int fileId,
+                                   @Nullable VirtualFile parent,
+                                   @NotNull CharSequence name,
+                                   @NotNull String linkPath,
+                                   @Nullable String linkTarget) {
+    if (linkTarget == null || !isRecursiveOrCircularSymlink(parent, name, linkTarget)) {
       myWatchRootsManager.updateSymlink(fileId, linkPath, linkTarget);
     }
   }
@@ -170,21 +183,22 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
   }
 
   @Override
+  @NonNls
   public String toString() {
     return "LocalFileSystem";
   }
 
+  @Override
   @TestOnly
   public void cleanupForNextTest() {
-    FileDocumentManager.getInstance().saveAllDocuments();
-    PersistentFS.getInstance().clearIdCache();
+    super.cleanupForNextTest();
     myWatchRootsManager.clear();
   }
 
-  private static boolean isRecursiveOrCircularSymlink(@NotNull String linkPath,
-                                                      @NotNull String symlinkTarget,
-                                                      @Nullable VirtualFile parent) {
-    if (FileUtil.startsWith(linkPath, symlinkTarget)) return true;
+  private static boolean isRecursiveOrCircularSymlink(@Nullable VirtualFile parent,
+                                                      @NotNull CharSequence name,
+                                                      @NotNull String symlinkTarget) {
+    if (startsWith(parent, name, symlinkTarget)) return true;
 
     if (!(parent instanceof VirtualFileSystemEntry)) {
       return false;
@@ -195,11 +209,22 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Di
       if (!p.hasSymlink()) return false;
       if (p.is(VFileProperty.SYMLINK)) {
         String parentResolved = p.getCanonicalPath();
-        if (parentResolved != null && symlinkTarget.equals(parentResolved)) {
+        if (symlinkTarget.equals(parentResolved)) {
           return true;
         }
       }
     }
     return false;
+  }
+
+  private static boolean startsWith(@Nullable VirtualFile parent,
+                                    @NotNull CharSequence name,
+                                    @NotNull String symlinkTarget) {
+    if (parent != null) {
+      String symlinkTargetParent = StringUtil.trimEnd(symlinkTarget, "/" + name);
+      return PathUtil.isAncestorOrSelf(symlinkTargetParent, parent);
+    }
+    // parent == null means name is root
+    return FileUtil.PATH_CHAR_SEQUENCE_HASHING_STRATEGY.equals(name, symlinkTarget);
   }
 }

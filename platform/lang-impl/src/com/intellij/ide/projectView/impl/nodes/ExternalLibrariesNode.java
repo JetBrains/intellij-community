@@ -23,7 +23,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.PlatformIcons;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -39,8 +38,7 @@ public class ExternalLibrariesNode extends ProjectViewNode<String> {
   public boolean contains(@NotNull VirtualFile file) {
     Project project = Objects.requireNonNull(getProject());
     ProjectFileIndex index = ProjectFileIndex.getInstance(project);
-    if (!index.isInLibrary(file)) return false;
-    return someChildContainsFile(file, false);
+    return index.isInLibrary(file) && someChildContainsFile(file, false);
   }
 
   @NotNull
@@ -50,8 +48,8 @@ public class ExternalLibrariesNode extends ProjectViewNode<String> {
     List<AbstractTreeNode<?>> children = new ArrayList<>();
     ProjectFileIndex fileIndex = ProjectFileIndex.getInstance(project);
     Module[] modules = ModuleManager.getInstance(project).getModules();
-    Set<Library> processedLibraries = new THashSet<>();
-    Set<Sdk> processedSdk = new THashSet<>();
+    Map<String, List<Library>> processedLibraries = new HashMap<>();
+    Set<Sdk> processedSdk = new HashSet<>();
 
     for (Module module : modules) {
       final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
@@ -61,8 +59,11 @@ public class ExternalLibrariesNode extends ProjectViewNode<String> {
           final LibraryOrderEntry libraryOrderEntry = (LibraryOrderEntry)orderEntry;
           final Library library = libraryOrderEntry.getLibrary();
           if (library == null) continue;
-          if (processedLibraries.contains(library)) continue;
-          processedLibraries.add(library);
+          String libraryPresentableName = libraryOrderEntry.getPresentableName();
+          List<Library> librariesWithSameName = processedLibraries.getOrDefault(libraryPresentableName, new ArrayList<>());
+          if (librariesWithSameName.stream().anyMatch(processedLibrary -> processedLibrary.hasSameContent(library))) continue;
+          librariesWithSameName.add(library);
+          processedLibraries.put(libraryPresentableName, librariesWithSameName);
 
           if (!hasExternalEntries(fileIndex, libraryOrderEntry)) continue;
 

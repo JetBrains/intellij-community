@@ -18,18 +18,16 @@ import com.jetbrains.python.psi.stubs.PyDataclassFieldStub
 import java.io.IOException
 
 class PyDataclassFieldStubImpl private constructor(private val calleeName: QualifiedName,
-                                                   private val hasDefault: Boolean,
-                                                   private val hasDefaultFactory: Boolean,
-                                                   private val initValue: Boolean) : PyDataclassFieldStub {
+                                                   private val parameters: FieldParameters) : PyDataclassFieldStub {
   companion object {
     fun create(expression: PyTargetExpression): PyDataclassFieldStub? {
       val value = expression.findAssignedValue() as? PyCallExpression ?: return null
       val callee = value.callee as? PyReferenceExpression ?: return null
 
       val calleeNameAndType = calculateCalleeNameAndType(callee) ?: return null
-      val arguments = analyzeArguments(value, calleeNameAndType.second) ?: return null
+      val parameters = analyzeArguments(value, calleeNameAndType.second) ?: return null
 
-      return PyDataclassFieldStubImpl(calleeNameAndType.first, arguments.first, arguments.second, arguments.third)
+      return PyDataclassFieldStubImpl(calleeNameAndType.first, parameters)
     }
 
     @Throws(IOException::class)
@@ -38,8 +36,12 @@ class PyDataclassFieldStubImpl private constructor(private val calleeName: Quali
       val hasDefault = stream.readBoolean()
       val hasDefaultFactory = stream.readBoolean()
       val initValue = stream.readBoolean()
+      val kwOnly = stream.readBoolean()
 
-      return PyDataclassFieldStubImpl(QualifiedName.fromDottedString(calleeName), hasDefault, hasDefaultFactory, initValue)
+      return PyDataclassFieldStubImpl(
+        QualifiedName.fromDottedString(calleeName),
+        FieldParameters(hasDefault, hasDefaultFactory, initValue, kwOnly)
+      )
     }
 
     private fun calculateCalleeNameAndType(callee: PyReferenceExpression): Pair<QualifiedName, PyDataclassParameters.PredefinedType>? {
@@ -60,20 +62,22 @@ class PyDataclassFieldStubImpl private constructor(private val calleeName: Quali
       return null
     }
 
-    private fun analyzeArguments(call: PyCallExpression, type: PyDataclassParameters.PredefinedType): Triple<Boolean, Boolean, Boolean>? {
+    private fun analyzeArguments(call: PyCallExpression, type: PyDataclassParameters.PredefinedType): FieldParameters? {
       val initValue = PyEvaluator.evaluateAsBooleanNoResolve(call.getKeywordArgument("init"), true)
 
       if (type == PyDataclassParameters.PredefinedType.STD) {
         val default = call.getKeywordArgument("default")
         val defaultFactory = call.getKeywordArgument("default_factory")
 
-        return Triple(default != null && !resolvesToOmittedDefault(default, type),
-                      defaultFactory != null && !resolvesToOmittedDefault(defaultFactory, type),
-                      initValue)
+        return FieldParameters(default != null && !resolvesToOmittedDefault(default, type),
+                               defaultFactory != null && !resolvesToOmittedDefault(defaultFactory, type),
+                               initValue,
+                               false)
       }
       else if (type == PyDataclassParameters.PredefinedType.ATTRS) {
         val default = call.getKeywordArgument("default")
         val hasFactory = call.getKeywordArgument("factory").let { it != null && it.text != PyNames.NONE }
+        val kwOnly = PyEvaluator.evaluateAsBooleanNoResolve(call.getKeywordArgument("kw_only"), false)
 
         if (default != null && !resolvesToOmittedDefault(default, type)) {
           val callee = (default as? PyCallExpression)?.callee as? PyReferenceExpression
@@ -81,10 +85,10 @@ class PyDataclassFieldStubImpl private constructor(private val calleeName: Quali
             callee != null &&
             QualifiedName.fromComponents("attr", "Factory") in PyResolveUtil.resolveImportedElementQNameLocally(callee)
 
-          return Triple(!hasFactoryInDefault, hasFactory || hasFactoryInDefault, initValue)
+          return FieldParameters(!hasFactoryInDefault, hasFactory || hasFactoryInDefault, initValue, kwOnly)
         }
 
-        return Triple(false, hasFactory, initValue)
+        return FieldParameters(false, hasFactory, initValue, kwOnly)
       }
 
       return null
@@ -97,13 +101,20 @@ class PyDataclassFieldStubImpl private constructor(private val calleeName: Quali
 
   override fun serialize(stream: StubOutputStream) {
     stream.writeName(calleeName.toString())
-    stream.writeBoolean(hasDefault)
-    stream.writeBoolean(hasDefaultFactory)
-    stream.writeBoolean(initValue)
+    stream.writeBoolean(parameters.hasDefault)
+    stream.writeBoolean(parameters.hasDefaultFactory)
+    stream.writeBoolean(parameters.initValue)
+    stream.writeBoolean(parameters.kwOnly)
   }
 
   override fun getCalleeName(): QualifiedName = calleeName
-  override fun hasDefault(): Boolean = hasDefault
-  override fun hasDefaultFactory(): Boolean = hasDefaultFactory
-  override fun initValue(): Boolean = initValue
+  override fun hasDefault(): Boolean = parameters.hasDefault
+  override fun hasDefaultFactory(): Boolean = parameters.hasDefaultFactory
+  override fun initValue(): Boolean = parameters.initValue
+  override fun kwOnly(): Boolean = parameters.kwOnly
+
+  private data class FieldParameters(val hasDefault: Boolean,
+                                     val hasDefaultFactory: Boolean,
+                                     val initValue: Boolean,
+                                     val kwOnly: Boolean)
 }

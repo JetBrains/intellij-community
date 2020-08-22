@@ -4,22 +4,24 @@ package com.intellij.openapi.wm.ex;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
 import java.util.List;
 
 public interface ToolWindowManagerListener extends EventListener {
-  Topic<ToolWindowManagerListener> TOPIC = new Topic<>("tool window events", ToolWindowManagerListener.class);
+  @Topic.ProjectLevel
+  Topic<ToolWindowManagerListener> TOPIC = new Topic<>("tool window events", ToolWindowManagerListener.class, Topic.BroadcastDirection.NONE);
 
   /**
-   * @deprecated Use {@link #toolWindowsRegistered(List)}
+   * @deprecated Use {@link #toolWindowsRegistered}
    */
   @Deprecated
   default void toolWindowRegistered(@NotNull String id) {
   }
 
-  default void toolWindowsRegistered(@NotNull List<String> ids) {
+  default void toolWindowsRegistered(@NotNull List<String> ids, @NotNull ToolWindowManager toolWindowManager) {
     for (String id : ids) {
       toolWindowRegistered(id);
     }
@@ -39,11 +41,20 @@ public interface ToolWindowManagerListener extends EventListener {
   }
 
   /**
-   * Invoked when tool window with specified {@code id} is shown.
+   * Invoked when tool window is shown.
    *
-   * @param id {@code id} of shown tool window.
    * @param toolWindow shown tool window
    */
+  default void toolWindowShown(@NotNull ToolWindow toolWindow) {
+    toolWindowShown(toolWindow.getId(), toolWindow);
+  }
+
+  /**
+   * @deprecated use {@link #toolWindowShown(ToolWindow)} instead
+   */
+  @SuppressWarnings("unused")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
+  @Deprecated
   default void toolWindowShown(@NotNull String id, @NotNull ToolWindow toolWindow) {
   }
 

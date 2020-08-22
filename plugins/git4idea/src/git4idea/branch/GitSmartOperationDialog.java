@@ -33,7 +33,7 @@ import static com.intellij.openapi.util.text.StringUtil.capitalize;
  * happens.
  * Displays the list of these files and proposes to make a "smart" merge or checkout.
  */
-public class GitSmartOperationDialog extends DialogWrapper {
+public final class GitSmartOperationDialog extends DialogWrapper {
 
   public enum Choice {
     SMART,
@@ -54,9 +54,9 @@ public class GitSmartOperationDialog extends DialogWrapper {
   private static final int FORCE_EXIT_CODE = NEXT_USER_EXIT_CODE;
 
   @NotNull private final JComponent myFileBrowser;
-  @NotNull private final String myOperationTitle;
+  @NotNull @Nls private final String myOperationTitle;
   @NotNull private final GitSaveChangesPolicy mySaveMethod;
-  @Nullable private final String myForceButton;
+  @Nullable @Nls private final String myForceButton;
 
   /**
    * Shows the dialog with the list of local changes preventing merge/checkout and returns the user's choice.

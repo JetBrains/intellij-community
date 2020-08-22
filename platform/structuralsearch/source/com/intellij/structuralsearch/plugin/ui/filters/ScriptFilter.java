@@ -23,16 +23,16 @@ import java.util.List;
 /**
  * @author Bas Leijdekkers
  */
-@SuppressWarnings("ComponentNotRegistered")
-public class ScriptFilter extends FilterAction {
+class ScriptFilter extends FilterAction {
 
-  public ScriptFilter(FilterTable filterTable) {
-    super(SSRBundle.messagePointer("script.filter.name"), filterTable);
+  ScriptFilter() {
+    super(SSRBundle.messagePointer("script.filter.name"));
   }
 
   @Override
   public boolean hasFilter() {
-    return !StringUtil.isEmpty(myTable.getVariable().getScriptCodeConstraint());
+    final NamedScriptableDefinition variable = myTable.getVariable();
+    return variable != null && !StringUtil.isEmpty(variable.getScriptCodeConstraint());
   }
 
   @Override
@@ -51,7 +51,7 @@ public class ScriptFilter extends FilterAction {
   }
 
   @Override
-  public FilterEditor getEditor() {
+  public FilterEditor<NamedScriptableDefinition> getEditor() {
     return new FilterEditor<NamedScriptableDefinition>(myTable.getVariable(), myTable.getConstraintChangedCallback()) {
 
       private final JLabel myLabel = new JLabel(SSRBundle.message("script.label"));
@@ -115,7 +115,7 @@ public class ScriptFilter extends FilterAction {
 
       @Override
       public JComponent[] getFocusableComponents() {
-        return new JComponent[]{myTextField};
+        return new JComponent[] {myTextField};
       }
     };
   }

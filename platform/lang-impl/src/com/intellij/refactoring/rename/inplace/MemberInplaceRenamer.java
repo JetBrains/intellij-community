@@ -24,7 +24,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.ProjectScope;
@@ -120,6 +120,16 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
       return null;
     }
     return null;
+  }
+
+  @Override
+  protected void showDialogAdvertisement(String actionId) {
+    if (Registry.is("enable.rename.options.inplace", false)) {
+      setAdvertisementText(RefactoringBundle.message("inplace.refactoring.tab.advertisement.text"));
+    }
+    else {
+      super.showDialogAdvertisement(actionId);
+    }
   }
 
   @Override
@@ -238,7 +248,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
     }
     finally {
       try {
-        ((EditorImpl)InjectedLanguageUtil.getTopLevelEditor(myEditor)).stopDumbLater();
+        ((EditorImpl)InjectedLanguageEditorUtil.getTopLevelEditor(myEditor)).stopDumbLater();
       }
       finally {
         FinishMarkAction.finish(myProject, myEditor, markAction);
@@ -289,7 +299,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
 
   @Override
   protected void revertStateOnFinish() {
-    final Editor editor = InjectedLanguageUtil.getTopLevelEditor(myEditor);
+    final Editor editor = InjectedLanguageEditorUtil.getTopLevelEditor(myEditor);
     if (editor == FileEditorManager.getInstance(myProject).getSelectedTextEditor()) {
       ((EditorImpl)editor).startDumb();
     }
@@ -299,7 +309,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
   @Override
   protected void navigateToAlreadyStarted(Document oldDocument, int exitCode) {
     super.navigateToAlreadyStarted(oldDocument, exitCode);
-    ((EditorImpl)InjectedLanguageUtil.getTopLevelEditor(myEditor)).stopDumbLater();
+    ((EditorImpl)InjectedLanguageEditorUtil.getTopLevelEditor(myEditor)).stopDumbLater();
   }
 
   @Nullable

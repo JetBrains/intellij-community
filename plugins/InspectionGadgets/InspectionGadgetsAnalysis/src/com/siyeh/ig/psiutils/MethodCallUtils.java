@@ -37,7 +37,7 @@ import java.util.regex.Pattern;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-public class MethodCallUtils {
+public final class MethodCallUtils {
 
   @NonNls private static final Set<String> regexMethodNames = new HashSet<>(5);
 
@@ -51,8 +51,7 @@ public class MethodCallUtils {
 
   private MethodCallUtils() {}
 
-  @Nullable
-  public static String getMethodName(@NotNull PsiMethodCallExpression expression) {
+  public static @Nullable @NonNls String getMethodName(@NotNull PsiMethodCallExpression expression) {
     return expression.getMethodExpression().getReferenceName();
   }
 
@@ -222,7 +221,7 @@ public class MethodCallUtils {
 
   public static boolean isMethodCallOnVariable(@NotNull PsiMethodCallExpression expression,
                                                @NotNull PsiVariable variable,
-                                               @NotNull String methodName) {
+                                               @NotNull @NonNls String methodName) {
     final PsiReferenceExpression methodExpression = expression.getMethodExpression();
     @NonNls final String name = methodExpression.getReferenceName();
     if (!methodName.equals(name)) {
@@ -330,7 +329,7 @@ public class MethodCallUtils {
   }
 
   public static boolean callWithNonConstantString(@NotNull PsiMethodCallExpression expression, boolean considerStaticFinalConstant,
-                                                  String className, String... methodNames) {
+                                                  @NonNls String className, @NonNls String... methodNames) {
     final String methodName = getMethodName(expression);
     boolean found = false;
     for (String name : methodNames) {

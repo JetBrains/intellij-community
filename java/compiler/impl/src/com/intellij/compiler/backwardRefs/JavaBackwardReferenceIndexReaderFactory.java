@@ -11,10 +11,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.Queue;
 import com.intellij.util.indexing.InvertedIndexUtil;
 import com.intellij.util.indexing.StorageException;
-import gnu.trove.THashSet;
 import it.unimi.dsi.fastutil.ints.IntCollection;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -230,11 +228,11 @@ public final class JavaBackwardReferenceIndexReaderFactory implements CompilerRe
                                                                                                                                                            boolean includeAnonymous,
                                                                                                                                                            int interruptNumber) {
       try {
-        Set<CompilerRef.CompilerClassHierarchyElementDef> result = new THashSet<>();
-        Queue<CompilerRef.CompilerClassHierarchyElementDef> q = new Queue<>(10);
+        Set<CompilerRef.CompilerClassHierarchyElementDef> result = new HashSet<>();
+        Deque<CompilerRef.CompilerClassHierarchyElementDef> q = new ArrayDeque<>(10);
         q.addLast(hierarchyElement);
         while (!q.isEmpty()) {
-          CompilerRef.CompilerClassHierarchyElementDef curClass = q.pullFirst();
+          CompilerRef.CompilerClassHierarchyElementDef curClass = q.removeFirst();
           if (interruptNumber != -1 && result.size() > interruptNumber) {
             break;
           }
@@ -268,7 +266,7 @@ public final class JavaBackwardReferenceIndexReaderFactory implements CompilerRe
 
     CompilerRef.CompilerClassHierarchyElementDef @NotNull [] getDirectInheritors(CompilerRef hierarchyElement)
       throws StorageException {
-      Set<CompilerRef.CompilerClassHierarchyElementDef> result = new THashSet<>();
+      Set<CompilerRef.CompilerClassHierarchyElementDef> result = new HashSet<>();
       myIndex.get(JavaCompilerIndices.BACK_HIERARCHY).getData(hierarchyElement).forEach((id, children) -> {
         for (CompilerRef child : children) {
           if (child instanceof CompilerRef.CompilerClassHierarchyElementDef && !(child instanceof CompilerRef.CompilerAnonymousClassDef)) {

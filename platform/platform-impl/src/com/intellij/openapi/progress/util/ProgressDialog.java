@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.DialogWrapperPeer;
 import com.intellij.openapi.ui.impl.DialogWrapperPeerImpl;
 import com.intellij.openapi.ui.impl.GlassPaneDialogWrapperPeer;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
@@ -24,7 +25,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -88,7 +89,7 @@ final class ProgressDialog implements Disposable {
 
   ProgressDialog(@NotNull ProgressWindow progressWindow,
                  boolean shouldShowBackground,
-                 @Nullable @Nls(capitalization = Nls.Capitalization.Title) String cancelText,
+                 @NlsContexts.Button @Nullable String cancelText,
                  @Nullable Window parentWindow) {
     myProgressWindow = progressWindow;
     myParentWindow = parentWindow;
@@ -96,6 +97,7 @@ final class ProgressDialog implements Disposable {
     initDialog(cancelText);
   }
 
+  @Contract(pure = true)
   @NotNull
   private static String fitTextToLabel(@Nullable String fullText, @NotNull JLabel label) {
     if (fullText == null || fullText.isEmpty()) return " ";
@@ -108,7 +110,7 @@ final class ProgressDialog implements Disposable {
     return fullText;
   }
 
-  private void initDialog(@Nullable String cancelText) {
+  private void initDialog(@Nullable @NlsContexts.Button String cancelText) {
     if (SystemInfo.isMac) {
       UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, myText2Label);
     }
@@ -156,7 +158,7 @@ final class ProgressDialog implements Disposable {
     return myPanel;
   }
 
-  void changeCancelButtonText(@NotNull String text) {
+  void changeCancelButtonText(@NlsContexts.Button @NotNull String text) {
     myCancelButton.setText(text);
   }
 

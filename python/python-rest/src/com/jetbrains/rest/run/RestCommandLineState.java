@@ -9,13 +9,13 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.target.TargetEnvironmentRequest;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.HelperPackage;
-import com.jetbrains.python.run.PythonCommandLineState;
-import com.jetbrains.python.run.PythonProcessRunner;
+import com.jetbrains.python.run.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,21 +42,45 @@ public abstract class RestCommandLineState extends PythonCommandLineState {
     assert scriptParameters != null;
     getRunner().addToGroup(scriptParameters, commandLine);
     final String key = getKey();
-    if (key != null)
+    if (key != null) {
       scriptParameters.addParameter(key);
+    }
     scriptParameters.addParameter(getTask());
 
     final String params = myConfiguration.getParams();
     if (params != null) scriptParameters.addParametersString(params);
 
-    if (!StringUtil.isEmptyOrSpaces(myConfiguration.getInputFile()))
+    if (!StringUtil.isEmptyOrSpaces(myConfiguration.getInputFile())) {
       scriptParameters.addParameter(myConfiguration.getInputFile());
+    }
 
-    if (!StringUtil.isEmptyOrSpaces(myConfiguration.getOutputFile()))
+    if (!StringUtil.isEmptyOrSpaces(myConfiguration.getOutputFile())) {
       scriptParameters.addParameter(myConfiguration.getOutputFile());
+    }
 
-    if (!StringUtil.isEmptyOrSpaces(myConfiguration.getWorkingDirectory()))
+    if (!StringUtil.isEmptyOrSpaces(myConfiguration.getWorkingDirectory())) {
       commandLine.setWorkDirectory(myConfiguration.getWorkingDirectory());
+    }
+  }
+
+  @Override
+  protected @NotNull PythonExecution buildPythonExecution(@NotNull TargetEnvironmentRequest targetEnvironmentRequest) {
+    PythonScriptExecution pythonScriptExecution = PythonScripts.prepareHelperScriptExecution(getRunner(), targetEnvironmentRequest);
+    final String key = getKey();
+    if (key != null) pythonScriptExecution.addParameter(key);
+    pythonScriptExecution.addParameter(getTask());
+
+    final String params = myConfiguration.getParams();
+    if (params != null) PythonScripts.addParametersString(pythonScriptExecution, params);
+
+    if (!StringUtil.isEmptyOrSpaces(myConfiguration.getInputFile())) {
+      pythonScriptExecution.addParameter(myConfiguration.getInputFile());
+    }
+
+    if (!StringUtil.isEmptyOrSpaces(myConfiguration.getOutputFile())) {
+      pythonScriptExecution.addParameter(myConfiguration.getOutputFile());
+    }
+    return pythonScriptExecution;
   }
 
   @Override
@@ -65,10 +89,26 @@ public abstract class RestCommandLineState extends PythonCommandLineState {
     ProcessHandler processHandler = PythonProcessRunner.createProcess(commandLine, false);
     if (afterTask != null) {
       processHandler.addProcessListener(new ProcessAdapter() {
-                                            @Override
-                                            public void processTerminated(@NotNull ProcessEvent event) {
-                                              ApplicationManager.getApplication().invokeLater(afterTask);
-                                            }});
+        @Override
+        public void processTerminated(@NotNull ProcessEvent event) {
+          ApplicationManager.getApplication().invokeLater(afterTask);
+        }
+      });
+    }
+    return processHandler;
+  }
+
+  @Override
+  protected @NotNull ProcessHandler startProcess(@NotNull PythonScriptTargetedCommandLineBuilder builder) throws ExecutionException {
+    Runnable afterTask = getAfterTask();
+    ProcessHandler processHandler = super.startProcess(builder);
+    if (afterTask != null) {
+      processHandler.addProcessListener(new ProcessAdapter() {
+        @Override
+        public void processTerminated(@NotNull ProcessEvent event) {
+          ApplicationManager.getApplication().invokeLater(afterTask);
+        }
+      });
     }
     return processHandler;
   }

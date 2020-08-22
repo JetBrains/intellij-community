@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.editor;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -90,7 +90,7 @@ public class ResourceBundleEditorShowQuickFixesAction extends AnAction {
     return editor instanceof ResourceBundleEditor ? (ResourceBundleEditor)editor : null;
   }
 
-  private static class RBEQuickFixWrapper implements IntentionAction {
+  private static final class RBEQuickFixWrapper implements IntentionAction {
     private final ResourceBundleEditorProblemDescriptor myDescriptor;
     private final int myIndex;
 

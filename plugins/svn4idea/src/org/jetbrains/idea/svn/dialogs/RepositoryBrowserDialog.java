@@ -368,7 +368,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     private final RepositoryBrowserComponent myBrowserComponent;
 
     public AddLocationAction(final RepositoryBrowserComponent browserComponent) {
-      super(SvnBundle.message("repository.browser.add.location.menu.item"));
+      super(SvnBundle.messagePointer("repository.browser.add.location.menu.item"));
       myBrowserComponent = browserComponent;
     }
 
@@ -407,7 +407,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     @NotNull private final RepositoryBrowserComponent myBrowserComponent;
 
     public EditLocationAction(@NotNull RepositoryBrowserComponent browserComponent) {
-      super(SvnBundle.message("repository.browser.edit.location.menu.item"));
+      super(SvnBundle.messagePointer("repository.browser.edit.location.menu.item"));
       myBrowserComponent = browserComponent;
     }
 
@@ -496,7 +496,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     private final RepositoryBrowserComponent myBrowserComponent;
 
     public MkDirAction(final RepositoryBrowserComponent browserComponent) {
-      super(SvnBundle.message("repository.browser.new.folder.action"));
+      super(SvnBundle.messagePointer("repository.browser.new.folder.action"));
       myBrowserComponent = browserComponent;
     }
 
@@ -659,7 +659,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
   }
 
-  private static class TargetReloader implements CopyMoveReloadHelper {
+  private static final class TargetReloader implements CopyMoveReloadHelper {
     private final RepositoryTreeNode myDialogParent;
     private final Url myDst;
     private final RepositoryTreeNode mySourceNode;
@@ -697,7 +697,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
   }
 
-  private static class MoveSourceReloader implements CopyMoveReloadHelper {
+  private static final class MoveSourceReloader implements CopyMoveReloadHelper {
     private final RepositoryTreeNode mySource;
     private final RepositoryTreeNode myParent;
 
@@ -820,7 +820,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
   }
 
-  private static class AfterDeletionSelectionInstaller implements Expander {
+  private static final class AfterDeletionSelectionInstaller implements Expander {
     private final RepositoryTreeNode myParentNode;
     private final String myDeletedNodeName;
     private final boolean myIsFolder;

@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -36,7 +37,7 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
   private volatile long myProgressLimit;
   private final AtomicLong myProgressCount = new AtomicLong();
   private volatile long myNextChunkThreshold; // the value myProgressCount should exceed to generate next fireProgressAdvanced event
-  private final String myPresentableName;
+  private final @Nls String myPresentableName;
   protected final PsiFile myFile;
   @Nullable private final Editor myEditor;
   @NotNull final TextRange myRestrictRange;
@@ -44,8 +45,8 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
   HighlightingSession myHighlightingSession;
 
   protected ProgressableTextEditorHighlightingPass(@NotNull Project project,
-                                                   @NotNull final Document document,
-                                                   @NotNull String presentableName,
+                                                   @NotNull Document document,
+                                                   @NotNull @Nls String presentableName,
                                                    @Nullable PsiFile file,
                                                    @Nullable Editor editor,
                                                    @NotNull TextRange restrictRange,
@@ -57,6 +58,9 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
     myEditor = editor;
     myRestrictRange = restrictRange;
     myHighlightInfoProcessor = highlightInfoProcessor;
+    if (file != null && InjectedLanguageManager.getInstance(project).isInjectedFragment(file)) {
+      throw new IllegalArgumentException("File must be top-level but " + file + " is an injected fragment");
+    }
   }
 
   @Override
@@ -69,7 +73,7 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
   }
 
   @Override
-  public final void doCollectInformation(@NotNull final ProgressIndicator progress) {
+  public final void doCollectInformation(@NotNull ProgressIndicator progress) {
     GlobalInspectionContextBase.assertUnderDaemonProgress();
     myFinished = false;
     if (myFile != null) {
@@ -154,7 +158,7 @@ public abstract class ProgressableTextEditorHighlightingPass extends TextEditorH
     }
 
     @Override
-    public void doCollectInformation(@NotNull final ProgressIndicator progress) {
+    public void doCollectInformation(@NotNull ProgressIndicator progress) {
     }
 
     @Override

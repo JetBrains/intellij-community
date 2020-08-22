@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remoteServer.impl.runtime.deployment;
 
 import com.intellij.openapi.project.Project;
@@ -109,7 +109,7 @@ public class DeploymentImpl<D extends DeploymentConfiguration> implements Deploy
     myPresentableName = presentableName;
   }
 
-  protected static class DeploymentState {
+  protected static final class DeploymentState {
     private final DeploymentStatus myStatus;
     private final String myStatusText;
     private final DeploymentRuntime myRuntime;

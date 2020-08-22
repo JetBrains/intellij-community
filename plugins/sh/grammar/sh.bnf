@@ -123,6 +123,7 @@
   extends(".*expression")=expression
   extends(".*condition")=condition
   generateTokenAccessors(".*block")=false
+  generateTokenAccessors("redirection")=false
   extraRoot(".*block")=true
 }
 
@@ -155,7 +156,8 @@ command ::= shell_command [heredoc | redirection+]
 
 redirection ::= redirection_inner | '&>' w | number redirection_inner | process_substitution
 private redirection_inner ::= ('<&' | '>&') (number | '-')
-                            | ('>' | '<' | '>>' | '<<<' | '<<' | '<&' | '>&' | '&>>' | '<>' | '>|') (process_substitution | w+ )
+                            | ('>' | '<' | '>>' | '<<<' | '<<' | '<&' | '>&' | '&>>' | '<>' | '>|') redirection_target
+private redirection_target ::= process_substitution | <<parseUntilSpace w>> {name="redirection target"}
 process_substitution ::= ('<(' | '>(') list ')' {pin=1}
 
 include_command ::= include_directive (simple_command_element | <<keywordsRemapped>>)+ {pin=0}
@@ -182,7 +184,7 @@ private in_for_clause ::= w (';' newlines | newlines in_clause?)
 select_command ::= select w select_expression newlines any_block
 private select_expression ::=  in_clause | list_terminator?
 
-private in_clause ::= "in" w+ list_terminator newlines
+private in_clause ::= in w+ list_terminator newlines
 list_terminator ::= '\n' | ';' {recoverWhile = list_terminator_recover}
 private list_terminator_recover ::= !(do | '{' | '\n')
 
@@ -264,7 +266,7 @@ private simple_command_element_inner ::=  literal assignment_command?
                                         | old_arithmetic_expansion {pin(".*")=1}
 
 heredoc ::= HEREDOC_MARKER_TAG HEREDOC_MARKER_START [commands_list heredoc_pipeline_separator? | heredoc_pipeline_separator commands_list?] newlines
-            HEREDOC_CONTENT*
+            HEREDOC_CONTENT?
             (HEREDOC_MARKER_END | <<eof>>)
 private heredoc_pipeline_separator ::= ('&&' | '||' | '&' | '|' | '|&' | ';')
 
@@ -301,6 +303,7 @@ array_assignment ::= newlines '='? expression newlines
 
 literal ::= word | string | number | variable {
   extends=simple_command_element
+  implements="com.intellij.model.psi.UrlReferenceHost"
   mixin="com.intellij.sh.psi.impl.ShLiteralMixin"
   methods=[getReferences]
 }

@@ -59,7 +59,7 @@ public class VcsRootIterator {
     return ReadAction.compute(() -> project.isDisposed() || vcsManager.isIgnored(file));
   }
 
-  private static class MyRootFilter {
+  private static final class MyRootFilter {
     private final VirtualFile myRoot;
     private final String myVcsName;
 
@@ -120,7 +120,7 @@ public class VcsRootIterator {
     rootIterator.iterate();
   }
 
-  private static class MyRootIterator {
+  private static final class MyRootIterator {
     private final Project myProject;
     private final Processor<? super FilePath> myPathProcessor;
     private final Processor<? super VirtualFile> myFileProcessor;

@@ -1,5 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.util
+
+import java.util.*
 
 /**
  * [PrefixTreeMap] uses keys, that is specified by the paths.
@@ -14,8 +16,16 @@ class PathPrefixTreeMap<V>(
 
   override val size get() = delegate.size
   override val keys get() = delegate.keys.toPathKeys().toSet()
-  override val values get() = delegate.values
-  override val entries get() = delegate.entries.toPathEntries().toSet()
+
+  override val values: List<V>
+    get() = delegate.values
+
+  val valueSequence: Sequence<V>
+    get() = delegate.valueSequence
+
+  override val entries: Set<Map.Entry<String, V>>
+    get() = delegate.entries.toPathEntries().toSet()
+
   override fun get(key: String) = delegate[key.toPrefixList()]
   override fun containsKey(key: String) = delegate.containsKey(key.toPrefixList())
   override fun containsValue(value: V) = delegate.containsValue(value)
@@ -31,8 +41,9 @@ class PathPrefixTreeMap<V>(
   fun getAllAncestorKeys(path: String) = delegate.getAllAncestorKeys(path.toPrefixList()).toPathKeys()
   fun getAllAncestorValues(path: String) = delegate.getAllAncestorValues(path.toPrefixList())
 
-  private fun Iterable<Map.Entry<List<String>, V>>.toPathEntries() =
-    map { PrefixTreeMap.Entry(it.key.joinToString(pathSeparator), it.value) }
+  private fun Iterable<Map.Entry<List<String>, V>>.toPathEntries(): List<Map.Entry<String, V>> {
+    return map { AbstractMap.SimpleImmutableEntry(it.key.joinToString(pathSeparator), it.value) }
+  }
 
   private fun Iterable<List<String>>.toPathKeys() = map { it.joinToString(pathSeparator) }
 

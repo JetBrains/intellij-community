@@ -1,24 +1,25 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remote;
 
-import com.google.common.collect.Sets;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathMappingSettings;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
+import java.util.TreeSet;
 
 public class RemoteSdkPropertiesHolder implements RemoteSdkProperties {
-  private static final String INTERPRETER_PATH = "INTERPRETER_PATH";
-  private static final String HELPERS_PATH = "HELPERS_PATH";
-  private static final String REMOTE_ROOTS = "REMOTE_ROOTS";
-  private static final String REMOTE_PATH = "REMOTE_PATH";
-  private static final String INITIALIZED = "INITIALIZED";
-  private static final String VALID = "VALID";
-  private static final String PATH_MAPPINGS = "PATH_MAPPINGS";
-  private static final String RUN_AS_ROOT_VIA_SUDO = "RUN_AS_ROOT_VIA_SUDO";
+  @NonNls private static final String INTERPRETER_PATH = "INTERPRETER_PATH";
+  @NonNls private static final String HELPERS_PATH = "HELPERS_PATH";
+  @NonNls private static final String REMOTE_ROOTS = "REMOTE_ROOTS";
+  @NonNls private static final String REMOTE_PATH = "REMOTE_PATH";
+  @NonNls private static final String INITIALIZED = "INITIALIZED";
+  @NonNls private static final String VALID = "VALID";
+  @NonNls private static final String PATH_MAPPINGS = "PATH_MAPPINGS";
+  @NonNls private static final String RUN_AS_ROOT_VIA_SUDO = "RUN_AS_ROOT_VIA_SUDO";
 
   private String mySdkId;
 
@@ -29,7 +30,7 @@ public class RemoteSdkPropertiesHolder implements RemoteSdkProperties {
 
   private boolean myHelpersVersionChecked = false;
 
-  private Set<String> myRemoteRoots = Sets.newTreeSet();
+  private Set<String> myRemoteRoots = new TreeSet<String>();
 
   private boolean myInitialized = false;
 

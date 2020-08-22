@@ -5,6 +5,8 @@ import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.actions.BigPopupUI;
 import com.intellij.ide.actions.searcheverywhere.mixed.SearchEverywhereUIMixedResults;
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector;
+import com.intellij.ide.lightEdit.LightEdit;
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
@@ -25,6 +27,7 @@ import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -121,11 +124,6 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
     JBInsets.addTo(size, myBalloon.getContent().getInsets());
     myBalloon.setMinimumSize(size);
 
-    if (searchText != null && !searchText.isEmpty()) {
-      mySearchEverywhereUI.getSearchField().setText(searchText);
-      mySearchEverywhereUI.getSearchField().selectAll();
-    }
-
     UserDataHolder dataHolder = myProject != null ? project : ApplicationManager.getApplication();
     ConcurrentHashMap<ClientId, JBPopup> map = dataHolder.getUserData(SEARCH_EVERYWHERE_POPUP);
     if (map == null) {
@@ -133,6 +131,11 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
       dataHolder.putUserData(SEARCH_EVERYWHERE_POPUP, map);
     }
     map.put(ClientId.getCurrent(), myBalloon);
+
+    if (searchText != null && !searchText.isEmpty()) {
+      mySearchEverywhereUI.getSearchField().setText(searchText);
+      mySearchEverywhereUI.getSearchField().selectAll();
+    }
 
     Disposer.register(myBalloon, () -> {
       saveSize();
@@ -252,7 +255,10 @@ public class SearchEverywhereManagerImpl implements SearchEverywhereManager {
   }
 
   private SearchEverywhereUIBase createView(Project project,
-                                        List<? extends SearchEverywhereContributor<?>> contributors) {
+                                        List<SearchEverywhereContributor<?>> contributors) {
+    if (LightEdit.owns(project)) {
+      contributors = ContainerUtil.filter(contributors, (contributor) -> contributor instanceof LightEditCompatible);
+    }
     SearchEverywhereUIBase view = Experiments.getInstance().isFeatureEnabled("search.everywhere.mixed.results")
                                   ? new SearchEverywhereUIMixedResults(project, contributors, myTabsShortcutsMap::get)
                                   : new SearchEverywhereUI(project, contributors, myTabsShortcutsMap::get);

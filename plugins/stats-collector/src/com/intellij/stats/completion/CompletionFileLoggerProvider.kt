@@ -2,6 +2,7 @@
 package com.intellij.stats.completion
 
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration
+import com.intellij.lang.Language
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.stats.logger.ClientSessionValidator
@@ -16,11 +17,11 @@ class CompletionFileLoggerProvider : Disposable, CompletionLoggerProvider() {
     eventLogger.dispose()
   }
 
-  override fun newCompletionLogger(): CompletionLogger {
+  override fun newCompletionLogger(language: Language): CompletionLogger {
     val installationUID = service<InstallationIdProvider>().installationId()
     val completionUID = UUID.randomUUID().toString()
     val bucket = EventLogConfiguration.bucket.toString()
-    return CompletionFileLogger(installationUID.shortedUUID(), completionUID.shortedUUID(), bucket, eventLogger)
+    return CompletionFileLogger(installationUID.shortedUUID(), completionUID.shortedUUID(), bucket, language, eventLogger)
   }
 }
 

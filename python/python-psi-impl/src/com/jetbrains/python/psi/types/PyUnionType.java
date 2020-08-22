@@ -137,12 +137,7 @@ public class PyUnionType implements PyType {
   }
 
   public boolean isWeak() {
-    for (PyType member : myMembers) {
-      if (member == null) {
-        return true;
-      }
-    }
-    return false;
+    return myMembers.contains(null);
   }
 
   public Collection<PyType> getMembers() {
@@ -175,9 +170,14 @@ public class PyUnionType implements PyType {
     return union(members);
   }
 
+  /**
+   * Returns {@code this} if the current type {@code isWeak()}, excludes {@code null} otherwise.
+   *
+   * @see PyTypeUtil#toNonWeakType(PyType, TypeEvalContext)
+   */
   @Nullable
   public PyType excludeNull(@NotNull TypeEvalContext context) {
-    return exclude(null, context);
+    return isWeak() ? exclude(null, context) : this;
   }
 
   private static PyType unit(@Nullable PyType type) {

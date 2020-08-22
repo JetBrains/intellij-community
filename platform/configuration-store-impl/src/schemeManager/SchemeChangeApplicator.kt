@@ -5,7 +5,7 @@ import com.intellij.configurationStore.LazySchemeProcessor
 import com.intellij.configurationStore.SchemeContentChangedHandler
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.vfs.VirtualFile
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
+import com.intellij.util.containers.CollectionFactory
 import java.util.function.Function
 
 internal interface SchemeChangeEvent {
@@ -113,8 +113,8 @@ internal fun sortSchemeChangeEvents(inputEvents: Collection<SchemeChangeEvent>):
   var isThereSomeRemoveEvent = false
 
 
-  val existingAddOrUpdate = ObjectOpenHashSet<String>()
-  val removedFileNames = ObjectOpenHashSet<String>()
+  val existingAddOrUpdate = CollectionFactory.createSmallMemoryFootprintSet<String>()
+  val removedFileNames = CollectionFactory.createSmallMemoryFootprintSet<String>()
   val result = ArrayList(inputEvents)
   // first, remove any event before RemoveAllSchemes and remove RemoveScheme event if there is any subsequent add/update
   for (i in (result.size - 1) downTo 0) {

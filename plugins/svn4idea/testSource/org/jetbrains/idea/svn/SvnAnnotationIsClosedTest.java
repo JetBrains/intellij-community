@@ -15,7 +15,6 @@ import org.junit.Test;
 import java.io.IOException;
 import java.util.Objects;
 
-import static com.intellij.util.ObjectUtils.notNull;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.*;
 
@@ -25,8 +24,8 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
 
   @Override
   @Before
-  public void setUp() throws Exception {
-    super.setUp();
+  public void before() throws Exception {
+    super.before();
 
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);

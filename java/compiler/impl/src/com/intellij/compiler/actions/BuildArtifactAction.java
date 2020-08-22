@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.actions;
 
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.lang.IdeLanguageCustomization;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
@@ -144,7 +131,7 @@ public class BuildArtifactAction extends DumbAwareAction {
     return artifacts.toArray(new Artifact[0]);
   }
 
-  private static class BuildArtifactItem extends ArtifactActionItem {
+  private static final class BuildArtifactItem extends ArtifactActionItem {
     private BuildArtifactItem(List<ArtifactPopupItem> item, Project project) {
       super(item, project, "Build");
     }
@@ -155,7 +142,7 @@ public class BuildArtifactAction extends DumbAwareAction {
     }
   }
 
-  private static class CleanArtifactItem extends ArtifactActionItem {
+  private static final class CleanArtifactItem extends ArtifactActionItem {
     private CleanArtifactItem(@NotNull List<ArtifactPopupItem> item, @NotNull Project project) {
       super(item, project, "Clean");
     }
@@ -191,15 +178,15 @@ public class BuildArtifactAction extends DumbAwareAction {
         if (outputPathContainingSourceRoots.size() == 1 && outputPathContainingSourceRoots.values().size() == 1) {
           final String name = ContainerUtil.getFirstItem(outputPathContainingSourceRoots.keySet());
           final String output = outputPathContainingSourceRoots.get(name);
-          message = "The output directory '" + output + "' of '" + name + "' artifact contains source roots of the project. Do you want to continue and clear it?";
+          message = JavaCompilerBundle.message("dialog.message.output.dir.contains.source.roots", output, name);
         }
         else {
           StringBuilder info = new StringBuilder();
           for (String name : outputPathContainingSourceRoots.keySet()) {
-            info.append(" '").append(name).append("' artifact ('").append(outputPathContainingSourceRoots.get(name)).append("')\n");
+            info.append(JavaCompilerBundle.message("dialog.message.output.dir.artifact", name, outputPathContainingSourceRoots.get(name)))
+              .append("\n");
           }
-          message = "The output directories of the following artifacts contains source roots:\n" +
-                    info + "Do you want to continue and clear these directories?";
+          message = JavaCompilerBundle.message("dialog.message.output.dirs.contain.source.roots", info);
         }
         final int answer = Messages.showYesNoDialog(myProject, message, JavaCompilerBundle.message("clean.artifacts"), null);
         if (answer != Messages.YES) {
@@ -228,7 +215,7 @@ public class BuildArtifactAction extends DumbAwareAction {
     }
   }
 
-  private static class RebuildArtifactItem extends ArtifactActionItem {
+  private static final class RebuildArtifactItem extends ArtifactActionItem {
     private RebuildArtifactItem(List<ArtifactPopupItem> item, Project project) {
       super(item, project, "Rebuild");
     }
@@ -239,7 +226,7 @@ public class BuildArtifactAction extends DumbAwareAction {
     }
   }
 
-  private static class EditArtifactItem extends ArtifactActionItem {
+  private static final class EditArtifactItem extends ArtifactActionItem {
     private final ArtifactAwareProjectSettingsService mySettingsService;
 
     private EditArtifactItem(List<ArtifactPopupItem> item, Project project, final ArtifactAwareProjectSettingsService projectSettingsService) {
@@ -269,7 +256,7 @@ public class BuildArtifactAction extends DumbAwareAction {
     }
   }
 
-  private static class ArtifactPopupItem {
+  private static final class ArtifactPopupItem {
     @Nullable private final Artifact myArtifact;
     private final String myText;
     private final Icon myIcon;
@@ -298,7 +285,7 @@ public class BuildArtifactAction extends DumbAwareAction {
       return artifact != null ? Collections.singletonList(artifact) : ArtifactUtil.getArtifactWithOutputPaths(project);
     }
   }
-  
+
   private static class ChooseArtifactStep extends MultiSelectionListPopupStep<ArtifactPopupItem> {
     private final Artifact myFirst;
     private final Project myProject;
@@ -307,7 +294,7 @@ public class BuildArtifactAction extends DumbAwareAction {
     ChooseArtifactStep(List<ArtifactPopupItem> artifacts,
                               Artifact first,
                               Project project, final ArtifactAwareProjectSettingsService settingsService) {
-      super("Build Artifact", artifacts);
+      super(ActionsBundle.message("group.BuildArtifactsGroup.text"), artifacts);
       myFirst = first;
       myProject = project;
       mySettingsService = settingsService;
@@ -351,7 +338,8 @@ public class BuildArtifactAction extends DumbAwareAction {
       if (mySettingsService != null) {
         actions.add(new EditArtifactItem(selectedValues, myProject, mySettingsService));
       }
-      return new BaseListPopupStep<ArtifactActionItem>(selectedValues.size() == 1 ? "Action" : "Action for " + selectedValues.size() + " artifacts", actions) {
+      String title = JavaCompilerBundle.message("popup.title.chosen.artifact.action", selectedValues.size());
+      return new BaseListPopupStep<ArtifactActionItem>(title, actions) {
         @NotNull
         @Override
         public String getTextFor(ArtifactActionItem value) {

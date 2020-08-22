@@ -2,6 +2,7 @@
 
 package com.intellij.refactoring.rename;
 
+import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.ide.TitledHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -13,12 +14,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler;
 import com.intellij.refactoring.util.RadioUpDownListener;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -26,11 +30,9 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * @author dsl
@@ -38,7 +40,7 @@ import java.util.function.Function;
 public class RenameHandlerRegistry {
   public static final Key<Boolean> SELECT_ALL = Key.create("rename.selectAll");
   private final PsiElementRenameHandler myDefaultElementRenameHandler;
-  private Function<? super Collection<RenameHandler>, ? extends RenameHandler> myRenameHandlerSelectorInTests = ContainerUtil::getFirstItem;
+  private Function<? super Collection<? extends RenameHandler>, ? extends RenameHandler> myRenameHandlerSelectorInTests = ContainerUtil::getFirstItem;
 
   public static RenameHandlerRegistry getInstance() {
     return ServiceManager.getService(RenameHandlerRegistry.class);
@@ -58,11 +60,46 @@ public class RenameHandlerRegistry {
 
   @Nullable
   public RenameHandler getRenameHandler(@NotNull DataContext dataContext) {
+    List<? extends RenameHandler> availableHandlers = getRenameHandlers(dataContext);
+    if (availableHandlers.isEmpty()) {
+      return null;
+    }
+    else if (availableHandlers.size() == 1) {
+      return availableHandlers.get(0);
+    }
+    else if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return myRenameHandlerSelectorInTests.apply(availableHandlers);
+    }
+    else {
+      Map<String, ? extends List<? extends RenameHandler>> title2Handlers = availableHandlers.stream().collect(
+        Collectors.groupingBy(it -> getHandlerTitle(it))
+      );
+      final String[] strings = ArrayUtilRt.toStringArray(title2Handlers.keySet());
+      final HandlersChooser chooser = new HandlersChooser(CommonDataKeys.PROJECT.getData(dataContext), strings);
+      if (chooser.showAndGet()) {
+        return ContainerUtil.getLastItem(title2Handlers.get(chooser.getSelection()));
+      }
+      throw new ProcessCanceledException();
+    }
+  }
+
+  /**
+   * Must not show dialogs.
+   */
+  public @NotNull List<? extends @NotNull RenameHandler> getRenameHandlers(@NotNull DataContext dataContext) {
+    return ProhibitAWTEvents.prohibitEventsInside("getRenameHandlers", () -> doGetRenameHandlers(dataContext));
+  }
+
+  private @NotNull List<? extends @NotNull RenameHandler> doGetRenameHandlers(@NotNull DataContext dataContext) {
     final Map<String, RenameHandler> availableHandlers = new TreeMap<>();
     for (RenameHandler renameHandler : RenameHandler.EP_NAME.getExtensionList()) {
-      checkHandler(renameHandler, dataContext, availableHandlers);
+      if (renameHandler.isRenaming(dataContext)) {
+        availableHandlers.put(getHandlerTitle(renameHandler), renameHandler);
+      }
     }
-    if (availableHandlers.size() == 1) return availableHandlers.values().iterator().next();
+    if (availableHandlers.size() == 1) {
+      return new SmartList<>(availableHandlers.values());
+    }
     for (Iterator<Map.Entry<String, RenameHandler>> iterator = availableHandlers.entrySet().iterator(); iterator.hasNext(); ) {
       Map.Entry<String, RenameHandler> entry = iterator.next();
       if (entry.getValue() instanceof MemberInplaceRenameHandler) {
@@ -70,29 +107,14 @@ public class RenameHandlerRegistry {
         break;
       }
     }
-    if (availableHandlers.size() == 1) return availableHandlers.values().iterator().next();
-    if (availableHandlers.size() > 1) {
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
-        return myRenameHandlerSelectorInTests.apply(availableHandlers.values());
-      }
-      final String[] strings = ArrayUtilRt.toStringArray(availableHandlers.keySet());
-      final HandlersChooser chooser = new HandlersChooser(CommonDataKeys.PROJECT.getData(dataContext), strings);
-      if (chooser.showAndGet()) {
-        return availableHandlers.get(chooser.getSelection());
-      }
-      throw new ProcessCanceledException();
+    if (availableHandlers.isEmpty() && myDefaultElementRenameHandler.isRenaming(dataContext)) {
+      return Collections.singletonList(myDefaultElementRenameHandler);
     }
-    return myDefaultElementRenameHandler.isRenaming(dataContext) ? myDefaultElementRenameHandler : null;
-  }
-
-  private static void checkHandler(RenameHandler renameHandler, DataContext dataContext, Map<String, RenameHandler> availableHandlers) {
-    if (renameHandler.isRenaming(dataContext)) {
-      availableHandlers.put(getHandlerTitle(renameHandler), renameHandler);
-    }
+    return new SmartList<>(availableHandlers.values());
   }
 
   @TestOnly
-  public void setRenameHandlerSelectorInTests(Function<? super Collection<RenameHandler>, ? extends RenameHandler> selector, Disposable parentDisposable) {
+  public void setRenameHandlerSelectorInTests(Function<? super Collection<? extends RenameHandler>, ? extends RenameHandler> selector, Disposable parentDisposable) {
     myRenameHandlerSelectorInTests = selector;
     Disposer.register(parentDisposable, new Disposable() {
       @Override
@@ -102,16 +124,16 @@ public class RenameHandlerRegistry {
     });
   }
 
-  private static String getHandlerTitle(RenameHandler renameHandler) {
+  public static @Nls(capitalization = Nls.Capitalization.Sentence) String getHandlerTitle(RenameHandler renameHandler) {
     return renameHandler instanceof TitledHandler ? StringUtil.capitalize(StringUtil.toLowerCase(((TitledHandler)renameHandler).getActionTitle())) : renameHandler.toString();
   }
 
   private static class HandlersChooser extends DialogWrapper {
-    private final String[] myRenamers;
+    private final @NlsContexts.RadioButton String[] myRenamers;
     private String mySelection;
     private final JRadioButton[] myRButtons;
 
-    protected HandlersChooser(Project project, String [] renamers) {
+    protected HandlersChooser(Project project, @NlsContexts.RadioButton String [] renamers) {
       super(project);
       myRenamers = renamers;
       myRButtons = new JRadioButton[myRenamers.length];
@@ -130,7 +152,7 @@ public class RenameHandlerRegistry {
       final ButtonGroup bg = new ButtonGroup();
       boolean selected = true;
       int rIdx = 0;
-      for (final String renamer : myRenamers) {
+      for (final @NlsContexts.RadioButton String renamer : myRenamers) {
         final JRadioButton rb = new JRadioButton(renamer, selected);
         myRButtons[rIdx++] = rb;
         final ItemListener listener = new ItemListener() {

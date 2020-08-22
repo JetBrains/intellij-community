@@ -3,7 +3,9 @@ package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.NamedScriptableDefinition;
+import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Configuration of the search
@@ -16,28 +18,33 @@ public class SearchConfiguration extends Configuration {
     matchOptions = new MatchOptions();
   }
 
-  SearchConfiguration(Configuration configuration) {
+  SearchConfiguration(@NotNull Configuration configuration) {
     super(configuration);
     matchOptions = configuration.getMatchOptions().copy();
   }
 
-  public SearchConfiguration(String name, String category) {
+  public SearchConfiguration(@NotNull String name, @NotNull String category) {
     super(name, category);
     matchOptions = new MatchOptions();
   }
 
   @Override
-  public SearchConfiguration copy() {
+  public @NotNull ReplaceOptions getReplaceOptions() {
+    throw new IllegalStateException();
+  }
+
+  @Override
+  public @NotNull SearchConfiguration copy() {
     return new SearchConfiguration(this);
   }
 
   @Override
-  public MatchOptions getMatchOptions() {
+  public @NotNull MatchOptions getMatchOptions() {
     return matchOptions;
   }
 
   @Override
-  public NamedScriptableDefinition findVariable(String name) {
+  public NamedScriptableDefinition findVariable(@NotNull String name) {
     return matchOptions.getVariableConstraint(name);
   }
 

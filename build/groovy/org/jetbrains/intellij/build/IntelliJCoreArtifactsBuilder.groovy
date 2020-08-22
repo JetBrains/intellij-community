@@ -85,7 +85,7 @@ class IntelliJCoreArtifactsBuilder {
       ant.move(file: "$coreArtifactDir/annotations-java5.jar", tofile: "$coreArtifactDir/annotations.jar")
       buildContext.notifyArtifactBuilt(coreArtifactDir)
 
-      new ClassVersionChecker(["": "1.8"]).checkVersions(buildContext, new File(coreArtifactDir))
+      new ClassVersionChecker(["": "1.8", "intellij-core-analysis-deprecated.jar": "11"]).checkVersions(buildContext, new File(coreArtifactDir))
 
       def intellijCoreZip = "${buildContext.paths.artifacts}/intellij-core-${buildContext.buildNumber}.zip"
       ant.zip(destfile: intellijCoreZip) {

@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX;
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
@@ -66,7 +67,7 @@ public class JavaFxFieldToPropertyTest extends DaemonAnalyzerTestCase {
     final String secondFileName = testName + "SecondFile.java";
     doTest(testName + ".java", secondFileName);
 
-    final String expected = StringUtil.convertLineSeparators(VfsUtilCore.loadText(getVirtualFile(testName + "SecondFile_after.java")));
+    final String expected = StringUtil.convertLineSeparators(VfsUtilCore.loadText(findVirtualFile(testName + "SecondFile_after.java")));
     final PsiClass secondFileClass = JavaPsiFacade.getInstance(myProject).findClass("DoubleDemo2", GlobalSearchScope.allScope(myProject));
     final String actual = secondFileClass.getContainingFile().getText();
     assertEquals("Text mismatch[" + secondFileName + "]", expected, actual);

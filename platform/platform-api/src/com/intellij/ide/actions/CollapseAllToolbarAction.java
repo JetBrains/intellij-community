@@ -19,6 +19,7 @@ import com.intellij.ide.TreeExpander;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.util.NlsActions;
 
 public class CollapseAllToolbarAction extends TreeCollapseAllActionBase {
   private TreeExpander myTreeExpander;
@@ -28,7 +29,7 @@ public class CollapseAllToolbarAction extends TreeCollapseAllActionBase {
     ActionUtil.copyFrom(this, IdeActions.ACTION_COLLAPSE_ALL);
   }
 
-  public CollapseAllToolbarAction(TreeExpander treeExpander, String description) {
+  public CollapseAllToolbarAction(TreeExpander treeExpander, @NlsActions.ActionDescription String description) {
     this(treeExpander);
     getTemplatePresentation().setDescription(description);
   }

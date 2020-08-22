@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.CheckoutProvider
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.util.ui.cloneDialog.VcsCloneDialog
@@ -20,8 +21,15 @@ open class GetFromVersionControlAction : DumbAwareAction() {
     if (!isEnabled)
       return
     if (e.place == ActionPlaces.WELCOME_SCREEN) {
-      presentation.icon = AllIcons.Vcs.Clone
-      presentation.text = ActionsBundle.message("Vcs.VcsClone.Welcome.text")
+      if (Registry.`is`("use.tabbed.welcome.screen")) {
+        presentation.icon = AllIcons.Welcome.FromVCSTab
+        presentation.selectedIcon = AllIcons.Welcome.FromVCSTabSelected
+        presentation.text = ActionsBundle.message("Vcs.VcsClone.Tabbed.Welcome.text")
+      }
+      else {
+        presentation.icon = AllIcons.Vcs.Branch
+        presentation.text = ActionsBundle.message("Vcs.VcsClone.Welcome.text");
+      }
     }
     else {
       presentation.icon = null

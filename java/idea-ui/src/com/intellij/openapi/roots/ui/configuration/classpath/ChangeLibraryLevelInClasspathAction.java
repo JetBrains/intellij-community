@@ -16,6 +16,7 @@
 package com.intellij.openapi.roots.ui.configuration.classpath;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.impl.OrderEntryUtil;
@@ -89,10 +90,7 @@ class ChangeLibraryLevelInClasspathAction extends ChangeLibraryLevelActionBase {
       if (roots.length > 0) {
         return roots[0];
       }
-      final VirtualFile moduleFile = myPanel.getRootModel().getModule().getModuleFile();
-      if (moduleFile != null) {
-        return moduleFile.getParent();
-      }
+      return ModuleUtil.suggestBaseDirectory(myPanel.getRootModel().getModule());
     }
     return super.getBaseDir();
   }

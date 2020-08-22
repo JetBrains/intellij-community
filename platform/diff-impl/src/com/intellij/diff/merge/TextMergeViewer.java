@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.merge;
 
 import com.intellij.diff.DiffContext;
@@ -31,12 +31,15 @@ import com.intellij.diff.tools.util.text.MergeInnerDifferences;
 import com.intellij.diff.tools.util.text.TextDiffProviderBase;
 import com.intellij.diff.util.*;
 import com.intellij.icons.AllIcons;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
+import com.intellij.openapi.diff.DefaultFlagsProvider;
 import com.intellij.openapi.diff.DiffBundle;
+import com.intellij.openapi.diff.LineStatusMarkerDrawUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -51,6 +54,7 @@ import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -260,9 +264,9 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     protected List<AnAction> createToolbarActions() {
       List<AnAction> group = new ArrayList<>();
 
-      DefaultActionGroup diffGroup = DefaultActionGroup.createPopupGroup(() -> DiffBundle.message("group.compare.contents.text"));
+      DefaultActionGroup diffGroup = DefaultActionGroup.createPopupGroup(() -> ActionsBundle.message("group.compare.contents.text"));
       diffGroup.getTemplatePresentation().setIcon(AllIcons.Actions.Diff);
-      diffGroup.add(Separator.create(DiffBundle.message("group.compare.contents.text")));
+      diffGroup.add(Separator.create(ActionsBundle.message("group.compare.contents.text")));
       diffGroup.add(new TextShowPartialDiffAction(PartialDiffMode.LEFT_MIDDLE, true));
       diffGroup.add(new TextShowPartialDiffAction(PartialDiffMode.RIGHT_MIDDLE, true));
       diffGroup.add(new TextShowPartialDiffAction(PartialDiffMode.LEFT_RIGHT, true));
@@ -332,11 +336,11 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
           }
           if (result == MergeResult.RESOLVED &&
               (getChangesCount() > 0 || getConflictsCount() > 0) &&
-              Messages.showConfirmationDialog(myPanel.getRootPane(),
-                                              DiffBundle.message("merge.dialog.apply.partially.resolved.changes.confirmation.message", getChangesCount(), getConflictsCount()),
-                                              DiffBundle.message("apply.partially.resolved.merge.dialog.title"),
-                                              DiffBundle.message("apply.changes.and.mark.resolved"),
-                                              DiffBundle.message("continue.merge")) != Messages.YES) {
+              !MessageDialogBuilder.yesNo(DiffBundle.message("apply.partially.resolved.merge.dialog.title"), DiffBundle
+                .message("merge.dialog.apply.partially.resolved.changes.confirmation.message", getChangesCount(), getConflictsCount()))
+                .yesText(DiffBundle.message("apply.changes.and.mark.resolved"))
+                .noText(DiffBundle.message("continue.merge"))
+                .ask(myPanel.getRootPane())) {
             return;
           }
           if (result == MergeResult.CANCEL &&
@@ -1340,15 +1344,10 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       }
 
       @Override
-      protected int getFramingBorderSize() {
-        return JBUIScale.scale(2);
-      }
-
-      @Override
       public void scrollAndShow(@NotNull Editor editor, @NotNull Range range) {
         if (!myTracker.isValid()) return;
         final Document document = myTracker.getDocument();
-        int line = Math.min(range.getType() == Range.DELETED ? range.getLine2() : range.getLine2() - 1, getLineCount(document) - 1);
+        int line = Math.min(!range.hasLines() ? range.getLine2() : range.getLine2() - 1, getLineCount(document) - 1);
 
         int[] startLines = new int[]{
           transferPosition(ThreeSide.BASE, ThreeSide.LEFT, new LogicalPosition(line, 0)).line,
@@ -1377,7 +1376,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
         return actions;
       }
 
-      private class MyRollbackLineStatusRangeAction extends RangeMarkerAction {
+      private final class MyRollbackLineStatusRangeAction extends RangeMarkerAction {
         private MyRollbackLineStatusRangeAction(@NotNull Editor editor, @NotNull Range range) {
           super(editor, range, IdeActions.SELECTED_CHANGES_ROLLBACK);
         }
@@ -1392,6 +1391,11 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
           DiffUtil.moveCaretToLineRangeIfNeeded(editor, range.getLine1(), range.getLine2());
           myTracker.rollbackChanges(range);
         }
+      }
+
+      @Override
+      protected void paint(@NotNull Editor editor, @NotNull Graphics g) {
+        LineStatusMarkerDrawUtil.paintDefault(editor, g, myTracker, DefaultFlagsProvider.DEFAULT, JBUIScale.scale(2));
       }
     }
 

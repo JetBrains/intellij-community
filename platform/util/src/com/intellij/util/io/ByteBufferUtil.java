@@ -6,9 +6,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import org.jetbrains.annotations.NotNull;
-import sun.misc.Cleaner;
-import sun.misc.Unsafe;
-import sun.nio.ch.DirectBuffer;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
@@ -19,17 +16,17 @@ public final class ByteBufferUtil {
   /**
    * Please use with care. In most cases leaving the job to the GC is enough.
    */
-  @ReviseWhenPortedToJDK("9")
+  @ReviseWhenPortedToJDK("11")
   public static boolean cleanBuffer(@NotNull ByteBuffer buffer) {
     if (!buffer.isDirect()) return true;
 
     if (SystemInfoRt.IS_AT_LEAST_JAVA9) {
       // in Java 9+, the "official" dispose method is sun.misc.Unsafe#invokeCleaner
-      Unsafe unsafe = AtomicFieldUpdater.getUnsafe();
+      Object unsafe = AtomicFieldUpdater.getUnsafe();
       try {
         MethodType type = MethodType.methodType(void.class, ByteBuffer.class);
-        @SuppressWarnings("JavaLangInvokeHandleSignature") MethodHandle handle = MethodHandles.lookup().findVirtual(Unsafe.class, "invokeCleaner", type);
-        handle.invokeExact(unsafe, buffer);
+        @SuppressWarnings("JavaLangInvokeHandleSignature") MethodHandle handle = MethodHandles.lookup().findVirtual(unsafe.getClass(), "invokeCleaner", type);
+        handle.invoke(unsafe, buffer);
         return true;
       }
       catch (Throwable t) {
@@ -37,16 +34,6 @@ public final class ByteBufferUtil {
         return false;
       }
     }
-    else {
-      try {
-        Cleaner cleaner = ((DirectBuffer)buffer).cleaner();
-        if (cleaner != null) cleaner.clean();  // already cleaned otherwise
-        return true;
-      }
-      catch (Exception e) {
-        Logger.getInstance(ByteBufferUtil.class).warn(e);
-        return false;
-      }
-    }
+    return false;
   }
 }

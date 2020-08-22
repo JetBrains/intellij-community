@@ -53,7 +53,7 @@ public class FieldNotUsedInToStringInspection extends AbstractToStringInspection
     return new FieldNotUsedInToStringVisitor(holder);
   }
 
-  private static class FieldNotUsedInToStringVisitor extends JavaElementVisitor{
+  private static final class FieldNotUsedInToStringVisitor extends JavaElementVisitor{
 
     private final ProblemsHolder myHolder;
 

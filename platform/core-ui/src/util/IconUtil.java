@@ -18,10 +18,7 @@ import com.intellij.ui.icons.CompositeIcon;
 import com.intellij.ui.icons.CopyableIcon;
 import com.intellij.ui.scale.*;
 import com.intellij.util.ui.*;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -135,15 +132,22 @@ public class IconUtil {
     };
   }
 
-  private static final NullableFunction<FileIconKey, Icon> ICON_NULLABLE_FUNCTION = key -> {
-    VirtualFile file = key.getFile();
-    int flags = filterFileIconFlags(file, key.getFlags());
-    Project project = key.getProject();
+  private static final NullableFunction<FileIconKey, Icon> ICON_NULLABLE_FUNCTION = key ->
+    computeFileIcon(key.getFile(), key.getFlags(), key.getProject());
 
-    if (!file.isValid() || project != null && (project.isDisposed() || !wasEverInitialized(project))) return null;
+  /**
+   * @return a deferred icon for the file, taking into account {@link FileIconProvider} and {@link FileIconPatcher} extensions.
+   */
+  @NotNull
+  public static Icon computeFileIcon(@NotNull VirtualFile file, @Iconable.IconFlags int flags, @Nullable Project project) {
+    if (!file.isValid() || project != null && (project.isDisposed() || !wasEverInitialized(project))) {
+      return AllIcons.FileTypes.Unknown;
+    }
+
+    flags = filterFileIconFlags(file, flags);
 
     Icon providersIcon = getProvidersIcon(file, flags, project);
-    Icon icon = providersIcon != null ? providersIcon : getBaseIcon(file);
+    Icon icon = providersIcon != null ? providersIcon : computeBaseFileIcon(file);
 
     boolean dumb = project != null && DumbService.getInstance(project).isDumb();
     for (FileIconPatcher patcher : FileIconPatcher.EP_NAME.getExtensionList()) {
@@ -166,7 +170,7 @@ public class IconUtil {
     Iconable.LastComputedIcon.put(file, icon, flags);
 
     return icon;
-  };
+  }
 
   @Iconable.IconFlags
   private static int filterFileIconFlags(@NotNull VirtualFile file, @Iconable.IconFlags int flags) {
@@ -177,13 +181,23 @@ public class IconUtil {
     return flags & ~flagIgnoreMask;
   }
 
+  /**
+   * @return a deferred icon for the file, taking into account {@link FileIconProvider} and {@link FileIconPatcher} extensions.
+   * Use {@link #computeFileIcon} where possible (e.g. in background threads) to get a non-deferred icon.
+   */
   public static Icon getIcon(@NotNull VirtualFile file, @Iconable.IconFlags int flags, @Nullable Project project) {
     Icon lastIcon = Iconable.LastComputedIcon.get(file, flags);
-    Icon base = lastIcon != null ? lastIcon : getBaseIcon(file);
+    Icon base = lastIcon != null ? lastIcon : computeBaseFileIcon(file);
     return IconDeferrer.getInstance().defer(base, new FileIconKey(file, project, flags), ICON_NULLABLE_FUNCTION);
   }
 
-  private static Icon getBaseIcon(@NotNull VirtualFile vFile) {
+  /**
+   * @return an icon for a file that's quick to calculate, most likely based on the file type
+   * @see #computeFileIcon(VirtualFile, int, Project)
+   * @see FileType#getIcon()
+   */
+  @NotNull
+  public static Icon computeBaseFileIcon(@NotNull VirtualFile vFile) {
     Icon icon = TypePresentationService.getService().getIcon(vFile);
     if (icon != null) {
       return icon;
@@ -192,7 +206,8 @@ public class IconUtil {
     if (vFile.isDirectory() && !(fileType instanceof DirectoryFileType)) {
       return IconWithToolTip.tooltipOnlyIfComposite(PlatformIcons.FOLDER_ICON);
     }
-    return fileType.getIcon();
+    icon = fileType.getIcon();
+    return icon != null ? icon : getEmptyIcon(false);
   }
 
   @Nullable
@@ -294,7 +309,7 @@ public class IconUtil {
   }
 
   @NotNull
-  private static String getToolbarDecoratorIconsFolder() {
+  private static @NonNls String getToolbarDecoratorIconsFolder() {
     return "/toolbarDecorator/" + (SystemInfo.isMac ? "mac/" : "");
   }
 

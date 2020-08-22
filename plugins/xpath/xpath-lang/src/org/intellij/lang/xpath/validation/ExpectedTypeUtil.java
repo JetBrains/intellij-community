@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.xml.namespace.QName;
 
-public class ExpectedTypeUtil {
+public final class ExpectedTypeUtil {
   private ExpectedTypeUtil() {
   }
 

@@ -45,8 +45,9 @@ import {Component, Prop, Watch} from "vue-property-decorator"
 import {LineChartManager} from "@/aggregatedStats/LineChartManager"
 import {ChartSettings} from "@/aggregatedStats/ChartSettings"
 import {SortedByCategory, SortedByDate} from "@/aggregatedStats/ChartConfigurator"
-import {DataQuery, DataQueryDimension, DataRequest, encodeQuery, MetricDescriptor, Metrics} from "@/aggregatedStats/model"
+import {DataQuery, DataQueryDimension, DataRequest, encodeQuery, getFilters, MetricDescriptor, Metrics} from "@/aggregatedStats/model"
 import {BaseStatChartComponent} from "@/aggregatedStats/BaseStatChartComponent"
+import {parseTimeRange, toClickhouseSql} from "@/aggregatedStats/parseDuration"
 
 const rison = require("rison-node")
 
@@ -57,6 +58,9 @@ export default class LineChartComponent extends BaseStatChartComponent<LineChart
 
   @Prop(String)
   order!: "date" | "buildNumber"
+
+  @Prop({type: String})
+  timeRange!: string
 
   @Watch("chartSettings.showScrollbarXPreview")
   showScrollbarXPreviewChanged(): void {
@@ -77,14 +81,21 @@ export default class LineChartComponent extends BaseStatChartComponent<LineChart
     this.loadDataAfterDelay()
   }
 
+  @Watch("timeRange")
+  timeRangeChanged(value: string, oldValue: string) {
+    console.info(`timeRange changed (${oldValue} => ${value})`)
+    this.loadDataAfterDelay()
+  }
+
   protected reloadData(request: DataRequest) {
+    const timeRange = parseTimeRange(this.timeRange)
+
     const dataQuery: DataQuery = {
+      db: request.db,
       fields: this.metrics,
-      filters: [
-        {field: "product", value: request.product},
-        {field: "project", value: request.project},
-        {field: "machine", value: request.machine},
-      ],
+      filters: getFilters(request).concat([
+        {field: "generated_time", sql: `> ${toClickhouseSql(timeRange)}`}
+      ]),
     }
 
     const chartSettings = this.chartSettings
@@ -104,6 +115,7 @@ export default class LineChartComponent extends BaseStatChartComponent<LineChart
       fields.push(...this.metrics)
       dataQuery.fields = fields
       dataQuery.order = dataQuery.dimensions.map(it => it.name)
+      dataQuery.aggregator = "medianTDigest"
     }
     else {
       if (granularity !== "as is") {
@@ -142,11 +154,12 @@ export default class LineChartComponent extends BaseStatChartComponent<LineChart
         dataQuery.fields = fields
       }
       dataQuery.order = ["t"]
+      if (granularity !== "as is") {
+        dataQuery.aggregator = "medianTDigest"
+      }
     }
 
-    if (granularity !== "as is") {
-      dataQuery.aggregator = "medianTDigest"
-    }
+    console.log(JSON.stringify(dataQuery, null, 2))
 
     this.loadData(`${chartSettings.serverUrl}/api/v1/metrics/${encodeQuery(dataQuery)}`, (data: Array<Metrics>, chartManager: LineChartManager) => {
       chartManager.render(data)
@@ -155,9 +168,23 @@ export default class LineChartComponent extends BaseStatChartComponent<LineChart
 
   protected createChartManager() {
     const metricDescriptors: Array<MetricDescriptor> = this.metrics.map(key => {
+      const metricPathEndDotIndex = key.indexOf(".")
+      let name: string
+      let effectiveKey = key
+      if (metricPathEndDotIndex == -1) {
+        name = keyToName(key)
+      }
+      else {
+        name = key.substring(metricPathEndDotIndex + 1)
+        if (name.length > 2 && name[name.length - 2] == ".") {
+          name = name.substring(0, name.length - 2)
+        }
+        effectiveKey = name.replace(/ /g, "_")
+      }
+
       return {
-        key,
-        name: keyToName(key),
+        key: effectiveKey,
+        name,
         hiddenByDefault: false,
       }
     })
@@ -178,11 +205,8 @@ export default class LineChartComponent extends BaseStatChartComponent<LineChart
 
       const request = this.dataRequest!!
       const reportQuery: DataQuery = {
-        filters: [
-          {field: "product", value: request.product},
-          {field: "machine", value: request.machine},
-          {field: "generated_time", value: data.t / 1000},
-        ],
+        db: request.db,
+        filters: getFilters(request).concat([{field: "generated_time", value: data.t / 1000}]),
       }
 
       if (this.chartSettings.granularity === "as is") {
@@ -228,6 +252,8 @@ function keyToName(key: string) {
   else if (key == "appStarter_d") {
     return "licenseCheck"
   }
-  return (key.endsWith("_d") || key.endsWith("_i")) ? key.substring(0, key.length - 2) : key
+  else {
+    return (key.endsWith("_d") || key.endsWith("_i")) ? key.substring(0, key.length - 2) : key
+  }
 }
 </script>

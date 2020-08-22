@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework
 
 import com.intellij.analysis.AnalysisScope
@@ -82,7 +82,9 @@ fun ProjectInspectionProfileManager.createProfile(localInspectionTool: LocalInsp
   return configureInspections(arrayOf(localInspectionTool), project, disposable)
 }
 
-fun enableInspectionTool(project: Project, tool: InspectionProfileEntry, disposable: Disposable): Unit = enableInspectionTool(project, InspectionToolRegistrar.wrapTool(tool), disposable)
+fun enableInspectionTool(project: Project, tool: InspectionProfileEntry, disposable: Disposable) {
+  enableInspectionTool(project, InspectionToolRegistrar.wrapTool(tool), disposable)
+}
 
 fun enableInspectionTools(project: Project, disposable: Disposable, vararg tools: InspectionProfileEntry) {
   for (tool in tools) {
@@ -104,7 +106,7 @@ fun enableInspectionTool(project: Project, toolWrapper: InspectionToolWrapper<*,
     }
     else {
       profile.enableTool(shortName, project)
-      Disposer.register(disposable, Disposable { 
+      Disposer.register(disposable, Disposable {
         if (profile.getToolsOrNull(shortName, project) != null) {
           profile.setToolEnabled(shortName, false)
         }

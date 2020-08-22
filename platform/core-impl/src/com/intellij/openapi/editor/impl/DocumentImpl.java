@@ -25,7 +25,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.ImmutableCharSequence;
-import gnu.trove.TIntIntHashMap;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.*;
 
@@ -178,7 +178,9 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
       this.virtualFile = virtualFile;
     }
   }
-  static void processQueue() {
+
+  @ApiStatus.Internal
+  public static void processQueue() {
     RMTreeReference ref;
     while ((ref = (RMTreeReference)rmTreeQueue.poll()) != null) {
       ref.virtualFile.replace(RANGE_MARKERS_KEY, ref, null);
@@ -294,9 +296,9 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
       return specialFilter == StripTrailingSpacesFilter.NOT_ALLOWED;
     }
 
-    TIntIntHashMap caretPositions = null;
+    Int2IntOpenHashMap caretPositions = null;
     if (caretOffsets != null) {
-      caretPositions = new TIntIntHashMap(caretOffsets.length);
+      caretPositions = new Int2IntOpenHashMap(caretOffsets.length);
       for (int caretOffset : caretOffsets) {
         int line = getLineNumber(caretOffset);
         // need to remember only maximum caret offset on a line
@@ -1057,7 +1059,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   @Override
   public void setText(@NotNull final CharSequence text) {
     Runnable runnable = () -> replaceString(0, getTextLength(), 0, text, LocalTimeCounter.currentTime(), true);
-    if (CommandProcessor.getInstance().isUndoTransparentActionInProgress()) {
+    if (CommandProcessor.getInstance().isUndoTransparentActionInProgress() || !myAssertThreading) {
       runnable.run();
     }
     else {

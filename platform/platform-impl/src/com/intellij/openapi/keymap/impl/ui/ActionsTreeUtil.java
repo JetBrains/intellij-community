@@ -24,9 +24,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,7 +51,7 @@ public final class ActionsTreeUtil {
 
   public static @NotNull Map<String, String> createPluginActionsMap() {
     Set<PluginId> visited = new HashSet<>();
-    Map<String, String> result = new Object2ObjectOpenHashMap<>();
+    Map<String, String> result = CollectionFactory.createSmallMemoryFootprintMap();
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
       PluginId id = descriptor.getPluginId();
@@ -82,7 +81,7 @@ public final class ActionsTreeUtil {
     List<IdeaPluginDescriptor> plugins = new ArrayList<>(Arrays.asList(PluginManagerCore.getPlugins()));
     plugins.sort(Comparator.comparing(IdeaPluginDescriptor::getName));
 
-    Set<PluginId> collected = new ObjectOpenHashSet<>(plugins.size());
+    Set<PluginId> collected = CollectionFactory.createSmallMemoryFootprintSet(plugins.size());
     for (IdeaPluginDescriptor plugin : plugins) {
       collected.add(plugin.getPluginId());
       Group pluginGroup;
@@ -369,8 +368,8 @@ public final class ActionsTreeUtil {
 
   private static Group createMacrosGroup(Condition<? super AnAction> filtered) {
     final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-    String[] ids = actionManager.getActionIds(ActionMacro.MACRO_ACTION_PREFIX);
-    Arrays.sort(ids);
+    List<String> ids = actionManager.getActionIdList(ActionMacro.MACRO_ACTION_PREFIX);
+    ids.sort(null);
     Group group = new Group(KeyMapBundle.message("macros.group.title"), null, null);
     for (String id : ids) {
       if (filtered == null || filtered.value(actionManager.getActionOrStub(id))) {
@@ -397,7 +396,7 @@ public final class ActionsTreeUtil {
   @NotNull
   private static Group createOtherGroup(@Nullable Condition<? super AnAction> filtered, Group addedActions, @Nullable Keymap keymap) {
     addedActions.initIds();
-    Set<String> result = new ObjectOpenHashSet<>();
+    Set<String> result = CollectionFactory.createSmallMemoryFootprintSet();
 
     ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     if (keymap != null) {
@@ -413,10 +412,9 @@ public final class ActionsTreeUtil {
     }
 
     // add all registered actions
-    final KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();
-    String[] registeredActionIds = actionManager.getActionIds("");
-    for (String id : registeredActionIds) {
-      final AnAction actionOrStub = actionManager.getActionOrStub(id);
+    KeymapManagerEx keymapManager = KeymapManagerEx.getInstanceEx();
+    for (String id : actionManager.getActionIdList("")) {
+      AnAction actionOrStub = actionManager.getActionOrStub(id);
       if (actionOrStub instanceof ActionGroup && !((ActionGroup)actionOrStub).canBePerformed(DataManager.getInstance().getDataContext())) {
         continue;
       }

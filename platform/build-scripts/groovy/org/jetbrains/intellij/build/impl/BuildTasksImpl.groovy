@@ -484,17 +484,27 @@ idea.fatal.error.notification=disabled
     }
   }
 
+  //dbus-java is used only on linux for KWallet integration.
+  //It relies on native libraries, causing notarization issues on mac.
+  //So it is excluded from all distributions and manually re-included on linux.
+  static def addDbusJava(BuildContext buildContext, String distDir) {
+    def library = buildContext.findModule("intellij.platform.credentialStore").libraryCollection.findLibrary("dbus-java")
+    library.getFiles(JpsOrderRootType.COMPILED).each { f ->
+      buildContext.ant.copy(todir: "$distDir/lib") {
+        fileset(file: f.absolutePath)
+      }
+    }
+  }
+
   private void logFreeDiskSpace(String phase) {
     CompilationContextImpl.logFreeDiskSpace(buildContext.messages, buildContext.paths.buildOutputRoot, phase)
   }
 
 
   private def copyDependenciesFile() {
-    if (buildContext.gradle.forceRun('Preparing dependencies file', 'dependenciesFile')) {
-      def outputFile = "$buildContext.paths.artifacts/dependencies.txt"
-      buildContext.ant.copy(file: "$buildContext.paths.communityHome/build/dependencies/build/dependencies.properties", tofile: outputFile)
-      buildContext.notifyArtifactBuilt(outputFile)
-    }
+    def outputFile = "$buildContext.paths.artifacts/dependencies.txt"
+    buildContext.ant.copy(file: buildContext.dependenciesProperties.file.absolutePath, tofile: outputFile)
+    buildContext.notifyArtifactBuilt(outputFile)
   }
 
   private void scramble() {
@@ -740,6 +750,10 @@ idea.fatal.error.notification=disabled
       scramble()
     }
     layoutShared()
+    Map<String, String> checkerConfig = buildContext.productProperties.versionCheckerConfig
+    if (checkerConfig != null) {
+      new ClassVersionChecker(checkerConfig).checkVersions(buildContext, new File(buildContext.paths.distAll))
+    }
   }
 
   @Override

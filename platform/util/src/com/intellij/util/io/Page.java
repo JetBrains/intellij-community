@@ -35,7 +35,7 @@ public class Page {
     dirty = false;
     myWriteMask = null;
 
-    assert offset >= 0;
+    assert offset >= 0 : "offset = " + offset;
   }
 
   private void ensureRead() {

@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionType;
@@ -42,8 +43,13 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -130,6 +136,18 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
       }
     }
 
+    if (c == '?') {
+      if (handleQuestionMark(project, editor, file, offsetBefore)) {
+        return Result.STOP;
+      }
+    }
+    
+    if (c == '=') {
+      if (handleEquality(project, editor, file, offsetBefore)) {
+        return Result.STOP;
+      }
+    }
+
     if (c == ';') {
       if (handleSemicolon(project, editor, file, fileType)) return Result.STOP;
     }
@@ -161,13 +179,7 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
         return Result.STOP;
       }
 
-      PsiElement prevLeaf = leaf == null ? null : PsiTreeUtil.prevVisibleLeaf(leaf);
-      if (PsiUtil.isJavaToken(prevLeaf, JavaTokenType.ARROW) || 
-          PsiTreeUtil.getParentOfType(prevLeaf, PsiNewExpression.class, true, PsiCodeBlock.class, PsiMember.class) != null) {
-        return Result.CONTINUE;
-      }
-
-      if (PsiTreeUtil.getParentOfType(leaf, PsiCodeBlock.class, false, PsiMember.class) != null) {
+      if (PsiTreeUtil.getParentOfType(leaf, PsiCodeBlock.class, false, PsiMember.class) != null && !shouldInsertPairedBrace(leaf)) {
         EditorModificationUtil.insertStringAtCaret(editor, "{");
         TypedHandler.indentOpenedBrace(project, editor);
         return Result.STOP; // use case: manually wrapping part of method's code in 'if', 'while', etc
@@ -175,6 +187,150 @@ public class JavaTypedHandler extends TypedHandlerDelegate {
     }
 
     return Result.CONTINUE;
+  }
+
+  private static boolean handleEquality(Project project, Editor editor, PsiFile file, int offsetBefore) {
+    if (offsetBefore == 0) return false;
+    Document doc = editor.getDocument();
+    char prevChar = doc.getCharsSequence().charAt(offsetBefore - 1);
+    if (prevChar != '=' && prevChar != '!') return false;
+
+    HighlighterIterator it = ((EditorEx)editor).getHighlighter().createIterator(offsetBefore - 1);
+    IElementType curToken = it.getTokenType();
+    if (curToken != JavaTokenType.EQ && curToken != JavaTokenType.EXCL) return false;
+    int lineStart = doc.getLineStartOffset(doc.getLineNumber(offsetBefore));
+    do {
+      it.retreat();
+      curToken = it.getTokenType();
+    }
+    while (curToken == TokenType.WHITE_SPACE || curToken == JavaTokenType.C_STYLE_COMMENT || curToken == JavaTokenType.END_OF_LINE_COMMENT);
+    // ) == or ) != : definitely no need to add parentheses
+    if (curToken == JavaTokenType.RPARENTH) return false;
+    while (true) {
+      if (it.getStart() < lineStart) return false;
+      it.retreat();
+      if (it.atEnd()) return false;
+      curToken = it.getTokenType();
+      if (curToken == JavaTokenType.AND || curToken == JavaTokenType.OR || curToken == JavaTokenType.XOR) break;
+    }
+
+    doc.insertString(offsetBefore, "=");
+    editor.getCaretModel().moveToOffset(offsetBefore + 1);
+    // a&b== => (a&b)==
+    PsiDocumentManager.getInstance(project).commitDocument(doc);
+    PsiJavaToken token = ObjectUtils.tryCast(file.findElementAt(offsetBefore), PsiJavaToken.class);
+    if (token == null) return true;
+    IElementType type = token.getTokenType();
+    if (type != JavaTokenType.EQEQ && type != JavaTokenType.NE) return true;
+    PsiBinaryExpression comparison = ObjectUtils.tryCast(token.getParent(), PsiBinaryExpression.class);
+    if (comparison == null || comparison.getROperand() != null) return true;
+    PsiBinaryExpression bitwiseOp = ObjectUtils.tryCast(comparison.getParent(), PsiBinaryExpression.class);
+    if (bitwiseOp == null || bitwiseOp.getROperand() != comparison) return true;
+    IElementType bitwiseOpType = bitwiseOp.getOperationTokenType();
+    if (bitwiseOpType != JavaTokenType.AND && bitwiseOpType != JavaTokenType.OR && bitwiseOpType != JavaTokenType.XOR) return true;
+    PsiExpression left = bitwiseOp.getLOperand();
+    PsiExpression right = comparison.getLOperand();
+    if (!TypeConversionUtil.isIntegralNumberType(left.getType()) || !TypeConversionUtil.isIntegralNumberType(right.getType())) {
+      return true;
+    }
+    int openingOffset = left.getTextRange().getStartOffset();
+    int closingOffset = right.getTextRange().getEndOffset();
+    wrapWithParentheses(file, doc, openingOffset, closingOffset);
+    return true;
+  }
+
+  private static final TokenSet UNWANTED_TOKEN_AT_QUESTION =
+    TokenSet.create(JavaTokenType.C_STYLE_COMMENT, JavaTokenType.END_OF_LINE_COMMENT, JavaTokenType.CHARACTER_LITERAL,
+                    JavaTokenType.STRING_LITERAL, JavaTokenType.TEXT_BLOCK_LITERAL);
+
+  private static final TokenSet UNWANTED_TOKEN_BEFORE_QUESTION =
+    TokenSet.create(
+      // inside assignment
+      JavaTokenType.EQ, JavaTokenType.ASTERISKEQ, JavaTokenType.DIVEQ, JavaTokenType.PERCEQ, JavaTokenType.PLUSEQ, JavaTokenType.MINUSEQ,
+      JavaTokenType.LTLTEQ, JavaTokenType.GTGTEQ, JavaTokenType.GTGTGTEQ, JavaTokenType.ANDEQ, JavaTokenType.OREQ, JavaTokenType.XOREQ,
+      // inside another ?:
+      JavaTokenType.QUEST, JavaTokenType.COLON);
+
+  private static final TokenSet WANTED_TOKEN_BEFORE_QUESTION =
+    TokenSet.create(
+      // Tokens that may appear before ?: in void context
+      JavaTokenType.ARROW, JavaTokenType.SEMICOLON, JavaTokenType.LBRACE, JavaTokenType.RBRACE,
+      // Tokens that may appear before ?: in polyadic expression that may have non-boolean result
+      JavaTokenType.OR, JavaTokenType.XOR, JavaTokenType.AND, JavaTokenType.LTLT, JavaTokenType.GTGT,
+      JavaTokenType.GTGTGT, JavaTokenType.PLUS, JavaTokenType.MINUS, JavaTokenType.ASTERISK, JavaTokenType.DIV,
+      JavaTokenType.PERC);
+
+  private static boolean handleQuestionMark(Project project, Editor editor, PsiFile file, int offsetBefore) {
+    if (offsetBefore == 0) return false;
+    HighlighterIterator it = ((EditorEx)editor).getHighlighter().createIterator(offsetBefore);
+    if (it.atEnd()) return false;
+    IElementType curToken = it.getTokenType();
+    if (UNWANTED_TOKEN_AT_QUESTION.contains(curToken)) return false;
+    int nesting = 0;
+    while (true) {
+      it.retreat();
+      if (it.atEnd()) return false;
+      curToken = it.getTokenType();
+      if (curToken == JavaTokenType.LPARENTH || curToken == JavaTokenType.LBRACKET) {
+        nesting--;
+        if (nesting < 0) return false;
+      }
+      else if (curToken == JavaTokenType.RPARENTH || curToken == JavaTokenType.RBRACKET) {
+        nesting++;
+      }
+      else if (nesting == 0) {
+        if (UNWANTED_TOKEN_BEFORE_QUESTION.contains(curToken)) return false;
+        if (WANTED_TOKEN_BEFORE_QUESTION.contains(curToken)) break;
+      }
+    }
+
+    Document doc = editor.getDocument();
+    doc.insertString(offsetBefore, "?");
+    editor.getCaretModel().moveToOffset(offsetBefore + 1);
+    PsiDocumentManager.getInstance(project).commitDocument(doc);
+    PsiElement element = file.findElementAt(offsetBefore);
+    if (!(element instanceof PsiJavaToken) || !((PsiJavaToken)element).getTokenType().equals(JavaTokenType.QUEST)) return true;
+    PsiConditionalExpression cond = ObjectUtils.tryCast(element.getParent(), PsiConditionalExpression.class);
+    if (cond == null || cond.getThenExpression() != null || cond.getElseExpression() != null) return true;
+    PsiExpression condition = cond.getCondition();
+    if (PsiUtilCore.hasErrorElementChild(condition)) return true;
+    PsiExpression parenthesisStart = null;
+    // intVal+bool? => intVal+(bool?)
+    if (condition instanceof PsiPolyadicExpression && !PsiType.BOOLEAN.equals(condition.getType())) {
+      PsiExpression lastOperand = ArrayUtil.getLastElement(((PsiPolyadicExpression)condition).getOperands());
+      if (lastOperand != null && PsiType.BOOLEAN.equals(lastOperand.getType())) {
+        parenthesisStart = lastOperand;
+      }
+    }
+    // bool? in void context => (bool?)
+    if (ExpressionUtils.isVoidContext(cond) && PsiType.BOOLEAN.equals(condition.getType())) {
+      parenthesisStart = cond;
+    }
+    if (parenthesisStart != null) {
+      int openingOffset = parenthesisStart.getTextRange().getStartOffset();
+      int closingOffset = cond.getTextRange().getEndOffset();
+      wrapWithParentheses(file, doc, openingOffset, closingOffset);
+    }
+    return true;
+  }
+
+  private static void wrapWithParentheses(PsiFile file, Document doc, int openingOffset, int closingOffset) {
+    String space = CodeStyle.getLanguageSettings(file).SPACE_WITHIN_PARENTHESES ? " " : "";
+    doc.insertString(closingOffset, space + ")");
+    doc.insertString(openingOffset, "(" + space);
+  }
+
+  private static boolean shouldInsertPairedBrace(@NotNull PsiElement leaf) {
+    PsiElement prevLeaf = PsiTreeUtil.prevVisibleLeaf(leaf);
+    // lambda
+    if (PsiUtil.isJavaToken(prevLeaf, JavaTokenType.ARROW)) return true;
+    // anonymous class
+    if (PsiTreeUtil.getParentOfType(prevLeaf, PsiNewExpression.class, true, PsiCodeBlock.class, PsiMember.class) != null) return true;
+    // local class
+    if (prevLeaf instanceof PsiIdentifier && prevLeaf.getParent() instanceof PsiClass) return true;
+    // local record
+    if (PsiUtil.isJavaToken(prevLeaf, JavaTokenType.RPARENTH) && prevLeaf.getParent() instanceof PsiRecordHeader) return true;
+    return false;
   }
 
   private static boolean shouldInsertStatementBody(@NotNull PsiElement statement, @NotNull Document doc, @Nullable PsiElement prev) {

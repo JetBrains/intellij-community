@@ -39,6 +39,9 @@ public class NameUtilMatchingTest extends TestCase {
     assertMatches("replmap", "ReplacePathToMacroMap");
     assertMatches("CertificateEx", "CertificateEncodingException");
     assertDoesntMatch("ABCD", "AbstractButton.DISABLED_ICON_CHANGED_PROPERTY");
+
+    assertMatches("templipa", "template_impl_template_list_panel");
+    assertMatches("templistpa", "template_impl_template_list_panel");
   }
   
   public void testSimpleCasesWithFirstLowercased() {

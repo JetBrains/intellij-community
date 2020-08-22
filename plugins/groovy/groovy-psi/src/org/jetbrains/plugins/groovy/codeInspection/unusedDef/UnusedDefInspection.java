@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.codeInspection.unusedDef;
 
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -121,7 +122,10 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
     });
   }
 
-  private static void process(@Nullable PsiElement element, Set<PsiElement> checked, ProblemsHolder problemsHolder, final String message) {
+  private static void process(@Nullable PsiElement element,
+                              Set<PsiElement> checked,
+                              ProblemsHolder problemsHolder,
+                              final @InspectionMessage String message) {
     if (element == null) return;
     if (!checked.add(element)) return;
     if (isLocalAssignment(element) && isUsedInTopLevelFlowOnly(element) && !isIncOrDec(element)) {

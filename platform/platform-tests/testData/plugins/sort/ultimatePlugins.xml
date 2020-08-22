@@ -553,7 +553,7 @@
   </idea-plugin>
   <idea-plugin url="file://out/intellij.python.gherkin/META-INF/plugin.xml">
     <id>-org-jetbrains-plugins-python-gherkin-</id>
-    <name>Python BDD support for engines, based on Gherkin (cucumber, lettuce, behave)</name>
+    <name>Python BDD support for engines, based on Gherkin (cucumber, behave)</name>
     <depends>com.intellij.modules.pycharm.professional</depends>
     <depends>-gherkin-</depends>
   </idea-plugin>
@@ -697,7 +697,7 @@
     <depends>-com-intellij-javaee-</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.javaee.appServers.resin/META-INF/plugin.xml">
-    <id>-Resin-</id>
+    <id>-com.intellij.resin-</id>
     <name>Resin Integration</name>
     <depends>-com-intellij-javaee-</depends>
   </idea-plugin>
@@ -1208,12 +1208,6 @@
     <id>-org-jetbrains-debugger-streams-</id>
     <name>Java Stream Debugger</name>
     <depends>com.intellij.modules.java</depends>
-  </idea-plugin>
-  <idea-plugin url="file://out/intellij.akka/META-INF/plugin.xml">
-    <id>-com-intellij-frameworks-akka-</id>
-    <name>Akka</name>
-    <depends>com.intellij.modules.java</depends>
-    <depends>com.intellij.modules.ultimate</depends>
   </idea-plugin>
   <idea-plugin url="file://out/intellij.php.docker/META-INF/plugin.xml">
     <id>-org-jetbrains-plugins-phpstorm-docker-</id>

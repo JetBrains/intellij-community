@@ -26,7 +26,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.MathUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -216,7 +215,7 @@ public class TextWithMarkupProcessor extends CopyPastePostProcessor<RawTextWithM
         break;
       }
     }
-    int startOffsetToUse = MathUtil.clamp(startOffset, firstLineStart + maximumCommonIndent, firstLineEnd);
+    int startOffsetToUse = Math.min(firstLineEnd, Math.max(startOffset, firstLineStart + maximumCommonIndent));
     return Pair.create(startOffsetToUse, maximumCommonIndent);
   }
 

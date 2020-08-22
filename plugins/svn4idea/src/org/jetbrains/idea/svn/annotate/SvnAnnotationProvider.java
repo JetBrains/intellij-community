@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.annotate;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -353,7 +353,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
     return annotation;
   }
 
-  private static class MySteppedLogGetter {
+  private static final class MySteppedLogGetter {
     private final LinkedList<Revision> myRevisionPoints;
     private final SvnVcs myVcs;
     private final File myIoFile;

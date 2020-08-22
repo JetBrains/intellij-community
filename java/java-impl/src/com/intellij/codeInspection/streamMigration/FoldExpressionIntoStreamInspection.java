@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.streamMigration;
 
 import com.intellij.codeInspection.*;
@@ -82,8 +82,10 @@ public class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLocalIns
         PsiBinaryExpression binOp = tryCast(PsiUtil.skipParenthesizedExprDown(operands[0]), PsiBinaryExpression.class);
         if (binOp != null) {
           if (ComparisonUtils.isComparison(binOp) &&
-              (left == binOp.getLOperand() && ExpressionUtils.isSafelyRecomputableExpression(binOp.getROperand())) ||
-              (left == binOp.getROperand() && ExpressionUtils.isSafelyRecomputableExpression(binOp.getLOperand()))) {
+              (left == PsiUtil.skipParenthesizedExprDown(binOp.getLOperand()) &&
+               ExpressionUtils.isSafelyRecomputableExpression(binOp.getROperand())) ||
+              (left == PsiUtil.skipParenthesizedExprDown(binOp.getROperand()) &&
+               ExpressionUtils.isSafelyRecomputableExpression(binOp.getLOperand()))) {
             // Disable for simple comparison chains like "a == null && b == null && c == null":
             // using Stream API here looks an overkill
             return Collections.emptyList();
@@ -170,7 +172,7 @@ public class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLocalIns
     return "." + getMapOperationName(elementType, resultType) + "(" + lambda + ")";
   }
 
-  private static class FoldExpressionIntoStreamFix implements LocalQuickFix {
+  private static final class FoldExpressionIntoStreamFix implements LocalQuickFix {
     private final boolean myStringJoin;
 
     private FoldExpressionIntoStreamFix(boolean stringJoin) {myStringJoin = stringJoin;}

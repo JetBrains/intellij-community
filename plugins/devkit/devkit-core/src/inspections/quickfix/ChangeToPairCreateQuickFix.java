@@ -8,14 +8,16 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.DevKitBundle;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class ChangeToPairCreateQuickFix implements LocalQuickFix {
+  
   @Override
   public @IntentionFamilyName @NotNull String getFamilyName() {
-    return "Replace with 'Pair.create()'";
+    return DevKitBundle.message("inspections.dont.use.new.pair.change.to.pair.fix");
   }
 
   @Override

@@ -209,7 +209,7 @@ public class CompoundReferenceRenderer extends NodeRendererImpl implements FullV
            renderer == myRendererSettings.getArrayRenderer();
   }
 
-  private static class AutoToStringRenderer extends ToStringRenderer {
+  private static final class AutoToStringRenderer extends ToStringRenderer {
     private AutoToStringRenderer() {
       setIsApplicableChecker(type -> CompletableFuture.completedFuture(type instanceof ReferenceType));
     }

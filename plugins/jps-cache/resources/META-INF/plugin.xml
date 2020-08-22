@@ -5,16 +5,30 @@
   <idea-version since-build="201.3803.71"/>
 
   <description><![CDATA[
-  Adds support for working with JPS portable caches
-]]></description>
+    <p>
+       This plugin provides an opportunity to download already precompiled data for the Intellij project to reduce time,
+       consumed by the compilation.<br/>For the correct work, the <b>JetBrains Internal Authentication</b> plugin should be enabled.
+       It will let you download data faster and without VPN.
+    </p>
+    <br/>
+    <br/>
+    <b>This plugin is for JetBrains internal use only.</b>
+  ]]></description>
 
   <depends>Git4Idea</depends>
   <depends>com.intellij.modules.java</depends>
 
+  <extensionPoints>
+    <extensionPoint qualifiedName="com.intellij.jpsServerAuthExtension"
+                    interface="com.intellij.jps.cache.client.JpsServerAuthExtension"
+                    dynamic="true"/>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceImplementation="com.intellij.jps.cache.loader.JpsOutputLoaderManager"/>
-    <notificationWhitelist groupIds="Compile Output Loader;Compile Output Loader Status"/>
     <postStartupActivity implementation="com.intellij.jps.cache.JpsCacheStartupActivity"/>
+    <notificationGroup id="Compile Output Loader Status" displayType="NONE"/>
+    <notificationGroup id="Compile Output Loader" displayType="STICKY_BALLOON"/>
   </extensions>
 
   <projectListeners>
@@ -25,7 +39,7 @@
     <action id="JpsUpdateCachesAction" class="com.intellij.jps.cache.action.JpsUpdateCachesAction" text="Update JPS Caches">
       <add-to-group group-id="BuildMenu" anchor="last"/>
     </action>
-    <action id="JpsForceUpdateCachesAction" class="com.intellij.jps.cache.action.JpsForceUpdateCachesAction" text="Force Update JPS Caches" internal="true">
+    <action id="JpsForceUpdateCachesAction" class="com.intellij.jps.cache.action.JpsForceUpdateCachesAction" text="Force Update JPS Caches">
       <add-to-group group-id="BuildMenu" anchor="last"/>
     </action>
   </actions>

@@ -33,7 +33,7 @@ public class DarculaButtonPainter implements Border, UIResource {
       g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
                           MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
 
-      boolean isSmallComboButton = isSmallComboButton(c);
+      boolean isSmallComboButton = isSmallVariant(c);
       int diam = HELP_BUTTON_DIAMETER.get();
       float arc = BUTTON_ARC.getFloat();
       float lw = LW.getFloat();
@@ -124,7 +124,7 @@ public class DarculaButtonPainter implements Border, UIResource {
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return JBUI.insets(3).asUIResource();
+    return isSmallVariant(c) ? JBUI.insets(1, 2).asUIResource() : JBUI.insets(3).asUIResource();
   }
 
   protected int getOffset() {

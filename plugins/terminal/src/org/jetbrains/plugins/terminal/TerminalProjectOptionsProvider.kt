@@ -2,50 +2,49 @@
 package org.jetbrains.plugins.terminal
 
 import com.intellij.execution.configuration.EnvironmentVariablesData
-import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.ServiceManager
-import com.intellij.openapi.components.State
-import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.Strings
 import com.intellij.util.xmlb.annotations.Property
 import java.io.File
 import kotlin.reflect.KMutableProperty0
 import kotlin.reflect.KProperty
 
-@State(name = "TerminalProjectOptionsProvider", storages = [(Storage("terminal.xml"))])
+@State(name = "TerminalProjectNonSharedOptionsProvider", storages = [(Storage(StoragePathMacros.WORKSPACE_FILE))])
 class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComponent<TerminalProjectOptionsProvider.State> {
 
-  private val myState = State()
+  private val state = State()
 
   override fun getState(): State? {
-    return myState
+    return state
   }
 
-  override fun loadState(state: State) {
-    myState.myStartingDirectory = state.myStartingDirectory
-    myState.envDataOptions = state.envDataOptions
+  override fun loadState(newState: State) {
+    state.startingDirectory = newState.startingDirectory
+    state.shellPath = newState.shellPath
+    state.envDataOptions = newState.envDataOptions
   }
 
   fun getEnvData(): EnvironmentVariablesData {
-    return myState.envDataOptions.get()
+    return state.envDataOptions.get()
   }
 
   fun setEnvData(envData: EnvironmentVariablesData) {
-    myState.envDataOptions.set(envData)
+    state.envDataOptions.set(envData)
   }
 
   class State {
-    var myStartingDirectory: String? = null
-    var myShellPath: String? = null
+    var startingDirectory: String? = null
+    var shellPath: String? = null
     @get:Property(surroundWithTag = false, flat = true)
     var envDataOptions = EnvironmentVariablesDataOptions()
   }
 
-  var startingDirectory: String? by ValueWithDefault(myState::myStartingDirectory) { defaultStartingDirectory }
+  var startingDirectory: String? by ValueWithDefault(state::startingDirectory) { defaultStartingDirectory }
 
   val defaultStartingDirectory: String?
     get() {
@@ -74,11 +73,40 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
     return dir?.canonicalPath
   }
 
-  var shellPath: String by ValueWithDefault(myState::myShellPath) { defaultShellPath() }
+  var shellPath: String
+    get() {
+      val workingDirectoryLazy : Lazy<String?> = lazy { startingDirectory }
+      val shellPath = if (isProjectLevelShellPath(workingDirectoryLazy::value)) {
+        state.shellPath
+      }
+      else {
+        TerminalOptionsProvider.instance.shellPath
+      }
+      if (shellPath.isNullOrBlank()) {
+        return findDefaultShellPath(workingDirectoryLazy::value)
+      }
+      return shellPath
+    }
+    set(value) {
+      val workingDirectoryLazy : Lazy<String?> = lazy { startingDirectory }
+      val valueToStore = Strings.nullize(value, findDefaultShellPath(workingDirectoryLazy::value))
+      if (isProjectLevelShellPath((workingDirectoryLazy::value))) {
+        state.shellPath = valueToStore
+      }
+      else {
+        TerminalOptionsProvider.instance.shellPath = valueToStore
+      }
+    }
 
-  fun defaultShellPath(): String {
+  private fun isProjectLevelShellPath(workingDirectory: () -> String?): Boolean {
+    return SystemInfo.isWindows && findWslDistribution(workingDirectory()) != null
+  }
+
+  fun defaultShellPath(): String = findDefaultShellPath { startingDirectory }
+
+  private fun findDefaultShellPath(workingDirectory: () -> String?): String {
     if (SystemInfo.isWindows) {
-      val wslDistribution = findWslDistribution(startingDirectory)
+      val wslDistribution = findWslDistribution(workingDirectory())
       if (wslDistribution != null) {
         return "wsl.exe --distribution $wslDistribution"
       }
@@ -110,11 +138,13 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
 
     @JvmStatic
     fun getInstance(project: Project): TerminalProjectOptionsProvider {
-      val provider = ServiceManager.getService(project, TerminalProjectOptionsProvider::class.java)
-      val appEnvData = TerminalOptionsProvider.instance.getEnvData()
-      if (provider.getEnvData() == EnvironmentVariablesData.DEFAULT && appEnvData != EnvironmentVariablesData.DEFAULT) {
-        provider.setEnvData(appEnvData)
-        TerminalOptionsProvider.instance.setEnvData(EnvironmentVariablesData.DEFAULT)
+      val provider = project.getService(TerminalProjectOptionsProvider::class.java)
+      val oldState = project.getService(TerminalProjectOptionsProviderOld::class.java).getAndClear()
+      if (oldState != null &&
+          provider.state.startingDirectory == null &&
+          provider.state.envDataOptions.get() == EnvironmentVariablesData.DEFAULT) {
+        provider.state.startingDirectory = oldState.myStartingDirectory
+        provider.state.envDataOptions.set(oldState.envDataOptions.get())
       }
       return provider
     }

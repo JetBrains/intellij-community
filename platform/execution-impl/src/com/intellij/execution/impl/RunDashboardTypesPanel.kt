@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl
 
 import com.intellij.execution.ExecutionBundle
@@ -12,7 +12,6 @@ import com.intellij.ui.*
 import com.intellij.ui.components.JBList
 import com.intellij.ui.speedSearch.SpeedSearchUtil
 import com.intellij.util.containers.ContainerUtil
-import gnu.trove.THashSet
 import org.jetbrains.annotations.NonNls
 import java.awt.BorderLayout
 import java.util.function.Consumer
@@ -34,7 +33,7 @@ private val IGNORE_CASE_DISPLAY_NAME_COMPARATOR = Comparator<ConfigurationType> 
  */
 internal class RunDashboardTypesPanel(private val myProject: Project) : JPanel(BorderLayout()) {
   private val listModel = CollectionListModel<ConfigurationType>()
-  private val list = JBList<ConfigurationType>(listModel)
+  private val list = JBList(listModel)
 
   init {
     val search = ListSpeedSearch(list) { it.displayName }
@@ -116,7 +115,7 @@ internal class RunDashboardTypesPanel(private val myProject: Project) : JPanel(B
     })
   }
 
-  fun isModified() = listModel.items.mapTo(THashSet()) { it.id } != RunDashboardManager.getInstance(myProject).types
+  fun isModified() = listModel.items.mapTo(HashSet()) { it.id } != RunDashboardManager.getInstance(myProject).types
 
   fun reset() {
     listModel.removeAll()
@@ -127,7 +126,7 @@ internal class RunDashboardTypesPanel(private val myProject: Project) : JPanel(B
 
   fun apply() {
     val dashboardManager = RunDashboardManager.getInstance(myProject)
-    val types = listModel.items.mapTo(THashSet()) { it.id }
+    val types = listModel.items.mapTo(HashSet()) { it.id }
     if (types != dashboardManager.types) {
       dashboardManager.types = types
     }

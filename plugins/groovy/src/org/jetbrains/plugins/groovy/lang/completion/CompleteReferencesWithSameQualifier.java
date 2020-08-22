@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
@@ -18,7 +18,7 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-public class CompleteReferencesWithSameQualifier {
+public final class CompleteReferencesWithSameQualifier {
   private final GrReferenceExpression myRefExpr;
   private final PrefixMatcher myMatcher;
   private final GrExpression myQualifier;

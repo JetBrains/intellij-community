@@ -19,16 +19,23 @@ public abstract class LafManager {
   public abstract UIManager.LookAndFeelInfo @NotNull [] getInstalledLookAndFeels();
 
   @ApiStatus.Internal
-  public abstract CollectionComboBoxModel<LafReference> getLafComboBoxModel();
+  public abstract CollectionComboBoxModel<LafReference> getLafComboBoxModel(@NotNull LafType type);
 
   @ApiStatus.Internal
   public abstract UIManager.LookAndFeelInfo findLaf(LafReference reference);
 
+  public final UIManager.LookAndFeelInfo getCurrentLookAndFeel() {
+    return getCurrentLookAndFeel(LafType.ALL);
+  }
+
   @Nullable
-  public abstract UIManager.LookAndFeelInfo getCurrentLookAndFeel();
+  public abstract UIManager.LookAndFeelInfo getCurrentLookAndFeel(@NotNull LafType type);
 
   @ApiStatus.Internal
-  public abstract LafReference getCurrentLookAndFeelReference();
+  public abstract LafReference getLookAndFeelReference(@NotNull LafType type);
+
+  @ApiStatus.Internal
+  public abstract void setLookAndFeelReference(@NotNull LafType type, LafReference lafReference);
 
   public void setCurrentLookAndFeel(@NotNull UIManager.LookAndFeelInfo lookAndFeelInfo) {
     setCurrentLookAndFeel(lookAndFeelInfo, false);
@@ -39,6 +46,8 @@ public abstract class LafManager {
   public abstract void updateUI();
 
   public abstract void repaintUI();
+
+  public abstract boolean isAutoDetect();
 
   /**
    * @deprecated Use {@link LafManagerListener#TOPIC}
@@ -96,5 +105,12 @@ public abstract class LafManager {
     public int hashCode() {
       return Objects.hash(name, className, themeId);
     }
+  }
+
+  @ApiStatus.Internal
+  public enum LafType {
+    ALL,
+    LIGHT,
+    DARK
   }
 }

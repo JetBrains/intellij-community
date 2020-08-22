@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers, Mark Scott
+ * Copyright 2003-2020 Dave Griffith, Bas Leijdekkers, Mark Scott
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.portability;
 
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -199,6 +200,12 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
           string.indexOf(BACKSLASH) == -1) {
         return false;
       }
+      for (int i = 0, length = string.length(); i < length; i++) {
+        char c = string.charAt(i);
+        if (c == '\b' || c == '\n' || c == '\t' || c == '\r' || c == '\f') {
+          return false;
+        }
+      }
       final char startChar = string.charAt(0);
       if (Character.isLetter(startChar) && string.charAt(1) == ':') {
         return true;
@@ -219,43 +226,21 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
     }
 
     /**
-     * Highlights the groups of backward and forward slashes in a string literal except backward slashes inside escape sequences.<br><br>
-     * <b>Examples:</b><br>
-     * <code> String str1 = "<b>/</b>without<b>/</b>escape<b>/</b>sequences";</code><br>
-     * <code> String str2 = "<b>//</b> with \n escape <b>\\</b>n sequences <b>//\\</b>";</code>
+     * Highlights the backward or forward slashes in a string literal.
      */
     private void registerErrorInString(@NotNull PsiLiteralExpression expression) {
-      String text = expression.getText();
-      int allSlashes = 0, backslashes = 0;
-      int slashInd = 0, prevSlashInd;
-      while (slashInd != -1) {
-        prevSlashInd = slashInd;
-        int nextSlashInd;
-        char symbol = '\0';
-        for (nextSlashInd = slashInd; nextSlashInd < text.length(); nextSlashInd++) {
-          symbol = text.charAt(nextSlashInd);
-          if (SLASH == symbol || BACKSLASH == symbol) {
-            slashInd = nextSlashInd;
-            break;
-          }
+      final String text = expression.getText();
+      final int[] offsets = new int[text.length() + 1];
+      final StringBuilder result = new StringBuilder();
+      final boolean success = CodeInsightUtilCore.parseStringCharacters(text, result, offsets);
+      if (!success) {
+        return;
+      }
+      for (int i = 0, length = result.length(); i < length; i++) {
+        final char c = result.charAt(i);
+        if (c == SLASH || c == BACKSLASH) {
+          registerErrorAtOffset(expression, offsets[i], offsets[i + 1] - offsets[i]);
         }
-        slashInd = nextSlashInd == text.length() ? -1 : slashInd + 1;
-
-        if (prevSlashInd == 0 || slashInd - prevSlashInd == 1) {
-          allSlashes++;
-          backslashes = BACKSLASH == symbol ? backslashes + 1 : 0;
-          continue;
-        }
-        if (backslashes == 1 && allSlashes == 1) continue;
-
-        if (backslashes == 1) {
-          registerErrorAtOffset(expression, prevSlashInd - allSlashes, allSlashes - 1);
-        }
-        else {
-          registerErrorAtOffset(expression, prevSlashInd - allSlashes, isEscapeSequence(backslashes) ? allSlashes - 1 : allSlashes);
-        }
-        allSlashes = 1;
-        backslashes = BACKSLASH == symbol ? 1 : 0;
       }
     }
 
@@ -358,10 +343,6 @@ public class HardcodedFileSeparatorsInspection extends BaseInspection {
      */
     private boolean isTimeZoneIdString(String string) {
       return Holder.timeZoneIds.contains(string);
-    }
-
-    private boolean isEscapeSequence(int backslashCounter) {
-      return backslashCounter % 2 != 0;
     }
   }
 }

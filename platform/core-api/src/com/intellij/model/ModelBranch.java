@@ -3,7 +3,9 @@ package com.intellij.model;
 
 import com.intellij.model.psi.PsiSymbolReference;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -16,7 +18,12 @@ import java.util.function.Consumer;
  * performing changes on them in background and then inspecting and/or applying the changes back to the real model.
  */
 @ApiStatus.Experimental
-public interface ModelBranch {
+public interface ModelBranch extends UserDataHolder {
+
+  /**
+   * @return the project which this model branch was created for
+   */
+  @NotNull Project getProject();
 
   /**
    * Perform the given action in a context of a new model branch. The action may populate branch with model non-physical copies
@@ -34,32 +41,27 @@ public interface ModelBranch {
   // ----------------- find copy in the branch
 
   /**
-   * @return the non-physical copy of the given file in this branch, if it has been copied at all.
+   * @return the non-physical copy of the given file in this branch.
    */
-  @Nullable VirtualFile findFileCopy(@NotNull VirtualFile file);
-
-  /**
-   * @return the non-physical copy of the given PSI element in this branch,
-   * if it has been copied at all and the copy file hasn't been modified yet.
-   */
-  <T extends PsiElement> @Nullable T findPsiCopy(@NotNull T original);
-
-  /**
-   * @return the non-physical copy of the given PSI reference in this branch,
-   * if it has been copied at all and the copy file hasn't been modified yet.
-   */
-  <T extends PsiSymbolReference> @Nullable T findReferenceCopy(@NotNull T original);
-
-
-
-  // ----------------- find or create copy
+  @NotNull VirtualFile findFileCopy(@NotNull VirtualFile file);
 
   /**
    * Finds or creates a non-physical copy of the given PSI element in this branch.
-   * This may only be called for PSI inside a file (not packages or directories), and its document should be committed.
+   * This may only be called for {@link PsiDirectory} or a PSI inside a file, and its document should be committed.
    */
   <T extends PsiElement> @NotNull T obtainPsiCopy(@NotNull T original);
 
+  /**
+   * Finds or creates a non-physical copy of the given PSI reference in this branch.
+   * This may only be called for references which occur in {@link PsiElement#getReferences()},
+   * and the corresponding document should be committed.
+   */
+  <T extends PsiSymbolReference> @NotNull T obtainReferenceCopy(@NotNull T original);
+
+  /**
+   * @return a file in the branch copy corresponding to the given VFS URL
+   */
+  @Nullable VirtualFile findFileByUrl(@NotNull String url);
 
 
   // ----------------- find originals by branched model
@@ -84,14 +86,15 @@ public interface ModelBranch {
    * @return a branch that's the given PSI element was copied by, or null if there's no such branch.
    */
   static @Nullable ModelBranch getPsiBranch(@NotNull PsiElement element) {
-    return getFileBranch(element.getContainingFile().getViewProvider().getVirtualFile());
+    return getFileBranch(element instanceof PsiDirectory ? ((PsiDirectory)element).getVirtualFile()
+                                                         : element.getContainingFile().getViewProvider().getVirtualFile());
   }
 
   /**
    * @return a branch that's the given file was copied by, or null if there's no such branch.
    */
   static @Nullable ModelBranch getFileBranch(@NotNull VirtualFile file) {
-    return file instanceof BranchedVirtualFile ? ((BranchedVirtualFile)file).branch : null;
+    return file instanceof BranchedVirtualFile ? ((BranchedVirtualFile)file).getBranch() : null;
   }
 
 
@@ -102,6 +105,11 @@ public interface ModelBranch {
    * @return a number changed each time any non-physical PSI created by this branch is changed.
    */
   long getBranchedPsiModificationCount();
+
+  /**
+   * @return a number changed each time any non-physical file in this branch is created/moved/renamed/deleted.
+   */
+  long getBranchedVfsStructureModificationCount();
 
 
   /**

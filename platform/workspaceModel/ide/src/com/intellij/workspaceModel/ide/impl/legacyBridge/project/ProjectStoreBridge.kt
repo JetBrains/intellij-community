@@ -1,14 +1,14 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.project
 
 import com.intellij.configurationStore.*
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
-import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.IProjectStore
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.impl.ProjectStoreFactory
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.PathUtil
+import com.intellij.util.io.systemIndependentPath
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsFileContentWriter
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer
 import com.intellij.workspaceModel.ide.impl.jps.serialization.getProjectStateStorage
@@ -16,32 +16,20 @@ import org.jdom.Element
 import org.jetbrains.jps.util.JpsPathUtil
 import java.util.concurrent.ConcurrentHashMap
 
-internal class ProjectStoreBridge(project: Project) : ProjectWithModulesStoreImpl(project) {
+internal class ProjectStoreBridge(private val project: Project) : ModuleSavingCustomizer {
   override fun createSaveSessionProducerManager(): ProjectSaveSessionProducerManager {
     return ProjectWithModulesSaveSessionProducerManager(project)
   }
 
-  override suspend fun saveModules(errors: MutableList<Throwable>,
-                                   isForceSavingAllSettings: Boolean,
-                                   projectSaveSessionManager: SaveSessionProducerManager): List<SaveSession> {
-    val writer = JpsStorageContentWriter(projectSaveSessionManager as ProjectWithModulesSaveSessionProducerManager, this, project)
+  override fun saveModules(projectSaveSessionManager: SaveSessionProducerManager, store: IProjectStore) {
+    val writer = JpsStorageContentWriter(projectSaveSessionManager as ProjectWithModulesSaveSessionProducerManager, store, project)
     project.getComponent(JpsProjectModelSynchronizer::class.java).saveChangedProjectEntities(writer)
-    return super.saveModules(errors, isForceSavingAllSettings, projectSaveSessionManager)
   }
 
-  override fun commitModuleComponents(moduleStore: ComponentStoreImpl,
-                                      moduleSaveSessionManager: SaveSessionProducerManager,
-                                      projectSaveSessionManager: SaveSessionProducerManager,
-                                      isForceSavingAllSettings: Boolean,
-                                      errors: MutableList<Throwable>) {
-    super.commitModuleComponents(moduleStore, moduleSaveSessionManager, projectSaveSessionManager, isForceSavingAllSettings, errors)
+  override fun commitModuleComponents(projectSaveSessionManager: SaveSessionProducerManager,
+                                      moduleStore: ComponentStoreImpl,
+                                      moduleSaveSessionManager: SaveSessionProducerManager) {
     (projectSaveSessionManager as ProjectWithModulesSaveSessionProducerManager).commitComponents(moduleStore, moduleSaveSessionManager)
-  }
-}
-
-internal class ProjectStoreBridgeFactory : ProjectStoreFactory {
-  override fun createStore(project: Project): IComponentStore {
-    return if (project.isDefault) DefaultProjectStoreImpl(project) else ProjectStoreBridge(project)
   }
 }
 
@@ -106,16 +94,16 @@ private class ProjectWithModulesSaveSessionProducerManager(project: Project) : P
       }
     }
 
-    val moduleFilePath = moduleStore.storageManager.expandMacros(StoragePathMacros.MODULE_FILE)
-    val internalComponents = internalModuleComponents[moduleFilePath]
+    val moduleFilePath = moduleStore.storageManager.expandMacro(StoragePathMacros.MODULE_FILE)
+    val internalComponents = internalModuleComponents.get(moduleFilePath.systemIndependentPath)
     if (internalComponents != null) {
       commitToStorage(MODULE_FILE_STORAGE_ANNOTATION, internalComponents)
     }
-    
-    val moduleFileName = FileUtil.getNameWithoutExtension(PathUtil.getFileName(moduleFilePath))
+
+    val moduleFileName = FileUtil.getNameWithoutExtension(moduleFilePath.fileName.toString())
     val externalComponents = externalModuleComponents[moduleFileName]
     if (externalComponents != null) {
-      val providerFactory = StreamProviderFactory.EP_NAME.getExtensionList(project).firstOrNull()
+      val providerFactory = StreamProviderFactory.EP_NAME.getExtensions(project).firstOrNull()
       if (providerFactory != null) {
         val storageSpec = providerFactory.getOrCreateStorageSpec(StoragePathMacros.MODULE_FILE)
         commitToStorage(storageSpec, externalComponents)

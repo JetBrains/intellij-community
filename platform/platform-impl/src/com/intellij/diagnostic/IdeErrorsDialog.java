@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
@@ -38,6 +39,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -121,8 +123,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
   private void loadDevelopersList() {
     ErrorReportConfigurable configurable = ErrorReportConfigurable.getInstance();
-    Developers developers = configurable.getDeveloper();
-    if (developers != null && developers.isUpToDateAt(System.currentTimeMillis())) {
+    DeveloperList developers = configurable.getDeveloperList();
+    if (developers.isUpToDateAt()) {
       setDevelopers(developers);
     }
     else {
@@ -130,9 +132,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {
-            Developers updatedDevelopers = new Developers(ITNProxy.fetchDevelopers(indicator), System.currentTimeMillis());
+            DeveloperList updatedDevelopers = new DeveloperList(ITNProxy.fetchDevelopers(indicator));
             UIUtil.invokeLaterIfNeeded(() -> {
-              configurable.setDeveloper(updatedDevelopers);
+              configurable.setDeveloperList(updatedDevelopers);
               if (isShowing()) {
                 setDevelopers(updatedDevelopers);
               }
@@ -152,7 +154,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
   }
 
-  private void setDevelopers(@Nullable Developers developers) {
+  private void setDevelopers(@Nullable DeveloperList developers) {
     if (developers != null) {
       myAssigneeCombo.setModel(new CollectionComboBoxModel<>(developers.getDevelopers()));
       myDevelopersTimestamp = developers.getTimestamp();
@@ -200,12 +202,16 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     JPanel controls = new JPanel(new BorderLayout());
     controls.add(actionToolbar("IdeErrorsBack", new BackAction()), BorderLayout.WEST);
     controls.add(actionToolbar("IdeErrorsForward", new ForwardAction()), BorderLayout.EAST);
+    Dimension controlsDimension = new JBDimension(56, 24);
+    controls.setMaximumSize(controlsDimension);
+    controls.setPreferredSize(controlsDimension);
+    controls.setMinimumSize(controlsDimension);
 
     JPanel panel = new JPanel(new GridBagLayout());
     panel.add(controls, new GridBagConstraints(0, 0, 1, 1, 0.0, 0.0, NORTH, NONE, JBUI.emptyInsets(), 0, 0));
-    panel.add(myCountLabel, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, NORTH, HORIZONTAL, JBUI.insets(0, 10), 0, 2));
-    panel.add(myInfoLabel, new GridBagConstraints(2, 0, 1, 1, 1.0, 0.0, NORTHWEST, HORIZONTAL, JBUI.emptyInsets(), 0, 0));
-    panel.add(myDetailsLabel, new GridBagConstraints(3, 0, 1, 1, 0.0, 0.0, NORTHEAST, NONE, JBUI.emptyInsets(), 0, 0));
+    panel.add(myCountLabel, new GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, NORTH, HORIZONTAL, JBUI.insets(3, 10), 0, 2));
+    panel.add(myInfoLabel, new GridBagConstraints(2, 0, 1, 1, 1.0, 0.0, NORTHWEST, HORIZONTAL, JBUI.insets(3, 0), 0, 0));
+    panel.add(myDetailsLabel, new GridBagConstraints(3, 0, 1, 1, 0.0, 0.0, NORTHEAST, NONE, JBUI.insets(3, 0), 0, 0));
     panel.add(myForeignPluginWarningLabel, new GridBagConstraints(1, 1, 4, 1, 1.0, 0.0, WEST, HORIZONTAL, JBUI.emptyInsets(), 0, 0));
     return panel;
   }
@@ -749,7 +755,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
   }
 
-  private class ClearErrorsAction extends AbstractAction {
+  private final class ClearErrorsAction extends AbstractAction {
     private ClearErrorsAction() {
       super(DiagnosticBundle.message("error.dialog.clear.all.action"));
     }
@@ -761,7 +767,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     }
   }
 
-  private class AnalyzeAction extends AbstractAction {
+  private final class AnalyzeAction extends AbstractAction {
     private final AnAction myAnalyze;
 
     private AnalyzeAction(AnAction analyze) {
@@ -782,7 +788,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
   private static class AttachmentsList extends CheckBoxList<String> {
     private boolean myEditable = true;
 
-    private void addItem(String item, boolean selected) {
+    private void addItem(@NlsContexts.Checkbox String item, boolean selected) {
       addItem(item, item + "  ", selected);
     }
 

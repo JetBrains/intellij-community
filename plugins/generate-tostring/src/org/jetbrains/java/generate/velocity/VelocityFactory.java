@@ -27,7 +27,7 @@ import org.apache.velocity.runtime.log.SimpleLog4JLogSystem;
  * <p/>
  * Creating instances of the VelocityEngine.
  */
-public class VelocityFactory {
+public final class VelocityFactory {
   private static class Holder {
     private static final VelocityEngine engine = newVelocityEngine();
   }

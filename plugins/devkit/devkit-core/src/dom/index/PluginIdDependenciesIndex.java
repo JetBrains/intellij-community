@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom.index;
 
 import com.intellij.openapi.project.Project;
@@ -8,7 +8,6 @@ import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.ID;
 import com.intellij.util.io.DataExternalizer;
@@ -23,8 +22,7 @@ import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
 import java.util.*;
 
-public class PluginIdDependenciesIndex extends PluginXmlIndexBase<String, Void> {
-
+public final class PluginIdDependenciesIndex extends PluginXmlIndexBase<String, Void> {
   private static final ID<String, Void> NAME = ID.create("PluginIdDependenciesIndex");
 
   @NonNls
@@ -59,7 +57,9 @@ public class PluginIdDependenciesIndex extends PluginXmlIndexBase<String, Void> 
       ids.add(PLUGIN_ID_KEY_PREFIX + pluginId);
     }
 
-    for (Dependency dependency : plugin.getDependencies()) {
+    //noinspection unchecked
+    final List<Dependency> dependencies = (List<Dependency>)getChildrenWithoutIncludes(plugin, "depends");
+    for (Dependency dependency : dependencies) {
       ContainerUtil.addIfNotNull(ids, dependency.getStringValue());
 
       final String configFile = dependency.getConfigFile().getStringValue();
@@ -74,11 +74,11 @@ public class PluginIdDependenciesIndex extends PluginXmlIndexBase<String, Void> 
 
   @Override
   public int getVersion() {
-    return 1;
+    return 2;
   }
 
   public static Set<String> getPluginAndDependsIds(Project project, Set<VirtualFile> files) {
-    Set<String> ids = new SmartHashSet<>();
+    Set<String> ids = new HashSet<>();
     for (VirtualFile file : files) {
       final Set<String> keys = FileBasedIndex.getInstance().getFileData(NAME, file, project).keySet();
       final String pluginId = findPluginId(keys);

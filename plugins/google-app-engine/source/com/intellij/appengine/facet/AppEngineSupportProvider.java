@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.appengine.facet;
 
 import com.intellij.appengine.sdk.AppEngineSdk;
@@ -16,6 +16,7 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModel;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModelListener;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider;
+import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.JavaModuleType;
@@ -70,6 +71,11 @@ public class AppEngineSupportProvider extends FrameworkSupportInModuleProvider {
   @Override
   public List<FrameworkDependency> getDependenciesFrameworkIds() {
     return AppEngineWebIntegration.getInstance().getAppEngineFrameworkDependencies();
+  }
+
+  @Override
+  public boolean isEnabledForModuleBuilder(@NotNull ModuleBuilder builder) {
+    return "LegacyJavaEE".equals(builder.getBuilderId());
   }
 
   @Override
@@ -221,7 +227,7 @@ public class AppEngineSupportProvider extends FrameworkSupportInModuleProvider {
     ((AppEngineSupportConfigurable)configurable).mySdkEditor.setPath(path);
   }
 
-  private class AppEngineSupportConfigurable extends FrameworkSupportInModuleConfigurable implements FrameworkSupportModelListener {
+  private final class AppEngineSupportConfigurable extends FrameworkSupportInModuleConfigurable implements FrameworkSupportModelListener {
     private final FrameworkSupportModel myFrameworkSupportModel;
     private JPanel myMainPanel;
     private final AppEngineSdkEditor mySdkEditor;

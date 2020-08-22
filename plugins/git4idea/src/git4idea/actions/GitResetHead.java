@@ -28,7 +28,7 @@ public class GitResetHead extends GitRepositoryAction {
   @Override
   @NotNull
   protected String getActionName() {
-    return GitBundle.getString("reset.action.name");
+    return GitBundle.message("reset.action.name");
   }
 
   /**
@@ -43,13 +43,13 @@ public class GitResetHead extends GitRepositoryAction {
       return;
     }
 
-    new Task.Backgroundable(project, GitBundle.getString("resetting.title"), true) {
+    new Task.Backgroundable(project, GitBundle.message("resetting.title"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try (AccessToken ignored = DvcsUtil.workingTreeChangeStarted(project, getActionName())) {
           GitCommandResult result = Git.getInstance().runCommand(d.handler());
           if (!result.success()) {
-            VcsNotifier.getInstance(project).notifyError(GitBundle.getString("resetting.title"),
+            VcsNotifier.getInstance(project).notifyError(GitBundle.message("resetting.title"),
                                                          result.getErrorOutputAsHtmlString(),
                                                          true);
           }

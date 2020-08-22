@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.openapi.util.NlsContexts;
+
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicGraphicsUtils;
 import javax.swing.plaf.basic.BasicLabelUI;
@@ -11,7 +13,7 @@ public class RightAlignedLabelUI extends BasicLabelUI {
   protected String layoutCL(
     JLabel label,
     FontMetrics fontMetrics,
-    String text,
+    @NlsContexts.Label String text,
     Icon icon,
     Rectangle viewR,
     Rectangle iconR,
@@ -52,7 +54,7 @@ public class RightAlignedLabelUI extends BasicLabelUI {
    */
   public static String layoutCompoundLabel(JComponent c,
     FontMetrics fm,
-    String text,
+    @NlsContexts.Label String text,
     Icon icon,
     int verticalAlignment,
     int horizontalAlignment,
@@ -121,7 +123,7 @@ public class RightAlignedLabelUI extends BasicLabelUI {
    */
   public static String layoutCompoundLabel(
     FontMetrics fm,
-    String text,
+    @NlsContexts.Label String text,
     Icon icon,
     int verticalAlignment,
     int horizontalAlignment,

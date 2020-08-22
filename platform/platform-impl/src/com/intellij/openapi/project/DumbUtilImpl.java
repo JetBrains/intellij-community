@@ -2,12 +2,7 @@
 package com.intellij.openapi.project;
 
 import com.intellij.util.indexing.FileBasedIndex;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 
 public class DumbUtilImpl implements DumbUtil {
   private final Project myProject;
@@ -17,17 +12,7 @@ public class DumbUtilImpl implements DumbUtil {
   }
 
   @Override
-  @Contract(pure = true)
-  public @NotNull <T> List<T> filterByDumbAwarenessHonoringIgnoring(@NotNull Collection<? extends T> collection) {
-    DumbService service = DumbService.getInstance(myProject);
-    if (!service.isDumb() || FileBasedIndex.getInstance().getCurrentDumbModeAccessType() == null) {
-      return service.filterByDumbAwareness(collection);
-    }
-
-    if (collection instanceof List) {
-      return (List<T>)collection;
-    }
-
-    return new ArrayList<>(collection);
+  public boolean mayUseIndices() {
+    return !DumbService.getInstance(myProject).isDumb() || FileBasedIndex.getInstance().getCurrentDumbModeAccessType() != null;
   }
 }

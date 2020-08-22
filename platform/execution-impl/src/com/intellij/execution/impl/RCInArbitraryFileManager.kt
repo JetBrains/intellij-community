@@ -16,7 +16,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.GuiUtils
 import com.intellij.util.PathUtil
 import com.intellij.util.SmartList
-import com.intellij.util.lang.CompoundRuntimeException
+import com.intellij.util.throwIfNotEmpty
 import com.intellij.util.toBufferExposingByteArray
 import org.jdom.Element
 import java.io.ByteArrayInputStream
@@ -227,7 +227,7 @@ internal class RCInArbitraryFileManager(private val project: Project) {
       }
     }
 
-    CompoundRuntimeException.throwIfNotEmpty(errors)
+    throwIfNotEmpty(errors)
   }
 
   private fun sameDigests(digests1: List<ByteArray>, digests2: List<ByteArray>): Boolean {

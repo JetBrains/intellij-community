@@ -43,7 +43,7 @@ public enum LanguageLevel {
   public static final LanguageLevel HIGHEST = JDK_14;
   public static final Key<LanguageLevel> KEY = Key.create("LANGUAGE_LEVEL");
 
-  private final String myPresentableText;
+  private final @Nls String myPresentableText;
   private final JavaVersion myVersion;
   private final boolean myPreview;
 
@@ -55,6 +55,19 @@ public enum LanguageLevel {
 
   public boolean isPreview() {
     return myPreview;
+  }
+
+  /**
+   * @return corresponding preview level, or {@code null} if level has no paired preview level
+   */
+  public @Nullable LanguageLevel getPreviewLevel() {
+    if (myPreview) return this;
+    try {
+      return valueOf(name() + "_PREVIEW");
+    }
+    catch (IllegalArgumentException e) {
+      return null;
+    }
   }
 
   @NotNull

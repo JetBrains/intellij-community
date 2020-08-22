@@ -253,7 +253,7 @@ abstract class RefHashMap<K, V> extends AbstractMap<K, V> implements Map<K, V> {
     myMap.clear();
   }
 
-  private static class MyEntry<K, V> implements Entry<K, V> {
+  private static final class MyEntry<K, V> implements Entry<K, V> {
     private final Entry<?, V> ent;
     private final K key; // Strong reference to key, so that the GC will leave it alone as long as this Entry exists
     private final int myKeyHashCode;

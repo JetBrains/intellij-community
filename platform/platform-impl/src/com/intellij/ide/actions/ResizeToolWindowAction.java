@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
-import com.intellij.internal.statistic.eventLog.EventPair;
+import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -12,9 +12,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.ShadowAction;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,15 +38,15 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
   protected ResizeToolWindowAction() {
   }
 
-  protected ResizeToolWindowAction(String text) {
+  protected ResizeToolWindowAction(@NlsActions.ActionText String text) {
     super(text);
   }
 
-  protected ResizeToolWindowAction(String text, String description, Icon icon) {
+  protected ResizeToolWindowAction(@NlsActions.ActionText String text, @NlsActions.ActionDescription String description, Icon icon) {
     super(text, description, icon);
   }
 
-  protected ResizeToolWindowAction(@NotNull ToolWindow toolWindow, String originalAction, JComponent component) {
+  protected ResizeToolWindowAction(@NotNull ToolWindow toolWindow, @NonNls String originalAction, JComponent component) {
     myToolWindow = toolWindow;
     new ShadowAction(this, ActionManager.getInstance().getAction(originalAction), component, toolWindow.getDisposable());
   }
@@ -212,11 +214,11 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
     public Left() {
     }
 
-    public Left(String text) {
+    public Left(@NlsActions.ActionText String text) {
       super(text);
     }
 
-    public Left(String text, String description, Icon icon) {
+    public Left(@NlsActions.ActionText String text, @NlsActions.ActionDescription String description, Icon icon) {
       super(text, description, icon);
     }
 
@@ -239,11 +241,11 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
     public Right() {
     }
 
-    public Right(String text) {
+    public Right(@NlsActions.ActionText String text) {
       super(text);
     }
 
-    public Right(String text, String description, Icon icon) {
+    public Right(@NlsActions.ActionText String text, @NlsActions.ActionDescription String description, Icon icon) {
       super(text, description, icon);
     }
 
@@ -267,11 +269,11 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
     public Up() {
     }
 
-    public Up(String text) {
+    public Up(@NlsActions.ActionText String text) {
       super(text);
     }
 
-    public Up(String text, String description, Icon icon) {
+    public Up(@NlsActions.ActionText String text, @NlsActions.ActionDescription String description, Icon icon) {
       super(text, description, icon);
     }
 
@@ -295,11 +297,11 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
     public Down() {
     }
 
-    public Down(String text) {
+    public Down(@NlsActions.ActionText String text) {
       super(text);
     }
 
-    public Down(String text, String description, Icon icon) {
+    public Down(@NlsActions.ActionText String text, @NlsActions.ActionDescription String description, Icon icon) {
       super(text, description, icon);
     }
 

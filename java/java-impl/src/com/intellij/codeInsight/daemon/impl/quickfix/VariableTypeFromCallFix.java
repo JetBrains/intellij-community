@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
@@ -24,7 +24,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class VariableTypeFromCallFix implements IntentionAction {
+public final class VariableTypeFromCallFix implements IntentionAction {
   private final PsiType myExpressionType;
   private final PsiVariable myVar;
 
@@ -104,7 +104,7 @@ public class VariableTypeFromCallFix implements IntentionAction {
                                                                                    parameters,
                                                                                    expressions, PsiSubstitutor.EMPTY, resolved,
                                                                                    DefaultParameterTypeInferencePolicy.INSTANCE);
-            if (ContainerUtil.exists(psiSubstitutor.getSubstitutionMap().values(), 
+            if (ContainerUtil.exists(psiSubstitutor.getSubstitutionMap().values(),
                                      t -> t != null && t.equalsToText(CommonClassNames.JAVA_LANG_VOID))) {
               continue;
             }

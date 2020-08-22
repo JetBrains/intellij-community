@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.util.projectWizard.importSources;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +31,7 @@ public abstract class DetectedSourceRoot extends DetectedProjectRoot {
   }
 
   @NotNull
-  public String getPackagePrefix() {
+  public @NlsSafe String getPackagePrefix() {
     return StringUtil.notNullize(myPackagePrefix);
   }
 }

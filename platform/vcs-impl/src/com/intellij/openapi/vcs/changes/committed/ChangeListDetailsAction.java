@@ -68,8 +68,9 @@ public class ChangeListDetailsAction extends AnAction implements DumbAware {
   }
 
   public static void showDetailsPopup(@NotNull Project project, @NotNull CommittedChangeList changeList) {
+    String htmlFormat = "<html><head>%s</head><body>%s</body></html>"; // NON-NLS
     String details =
-      format("<html><head>%s</head><body>%s</body></html>", getCssFontDeclaration(getLabelFont()), getDetails(project, changeList));
+      format(htmlFormat, getCssFontDeclaration(getLabelFont()), getDetails(project, changeList));
     JEditorPane editorPane = new JEditorPane(HTML_MIME, details);
     editorPane.setEditable(false);
     editorPane.setBackground(HintUtil.getInformationColor());
@@ -93,7 +94,7 @@ public class ChangeListDetailsAction extends AnAction implements DumbAware {
       getCommitterAndDate(changeList),
       getCustomDetails(changeList),
       formatTextWithLinks(project, changeList.getComment())
-    ), "<br>");
+    ), BR);
   }
 
   @Nullable
@@ -122,7 +123,7 @@ public class ChangeListDetailsAction extends AnAction implements DumbAware {
         stream(vcs.getCachingCommittedChangesProvider().getColumns())
           .filter(ChangeListColumn::isCustom)
           .map(column -> column.getTitle() + ": " + escapeString(toString(column.getValue(originalChangeList))))
-          .collect(joining("<br>"))
+          .collect(joining(BR))
       );
     }
 
@@ -132,6 +133,6 @@ public class ChangeListDetailsAction extends AnAction implements DumbAware {
   @NotNull
   private static String toString(@Nullable Object value) {
     String result = value != null ? value.toString() : "";
-    return result.isEmpty() ? "<none>" : result;
+    return result.isEmpty() ? message("changes.none") : result;
   }
 }

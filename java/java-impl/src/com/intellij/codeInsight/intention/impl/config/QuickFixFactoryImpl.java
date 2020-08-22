@@ -17,8 +17,10 @@ import com.intellij.codeInsight.intention.impl.*;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.diagnostic.AttachmentFactory;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.java.request.CreateConstructorFromUsage;
 import com.intellij.lang.java.request.CreateMethodFromUsage;
@@ -604,7 +606,40 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createOptimizeImportsFix(final boolean onTheFly) {
-    return new OptimizeImportsAction(onTheFly);
+    return new OptimizeImportsFix(onTheFly);
+  }
+
+  private static final class OptimizeImportsFix implements IntentionAction {
+    private final boolean myOnTheFly;
+
+    private OptimizeImportsFix(boolean onTheFly) {myOnTheFly = onTheFly;}
+
+    @NotNull
+    @Override
+    public String getText() {
+      return QuickFixBundle.message("optimize.imports.fix");
+    }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return QuickFixBundle.message("optimize.imports.fix");
+    }
+
+    @Override
+    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
+      return (!myOnTheFly || timeToOptimizeImports(file)) && file instanceof PsiJavaFile && BaseIntentionAction.canModify(file);
+    }
+
+    @Override
+    public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
+      invokeOnTheFlyImportOptimizer(file);
+    }
+
+    @Override
+    public boolean startInWriteAction() {
+      return true;
+    }
   }
 
   @Override
@@ -665,6 +700,11 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public LocalQuickFixAndIntentionActionOnPsiElement createDeleteFix(@NotNull PsiElement element) {
     return new DeleteElementFix(element);
+  }
+
+  @Override
+  public @NotNull IntentionAction createDeleteFix(@NotNull PsiElement @NotNull ... elements) {
+    return new DeleteElementFix.DeleteMultiFix(elements);
   }
 
   @NotNull
@@ -825,7 +865,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createPushDownMethodFix() {
-    return new RunRefactoringAction(new JavaPushDownHandler(), "Push method down...") {
+    return new RunRefactoringAction(new JavaPushDownHandler(), JavaBundle.message("push.method.down.command.name")) {
       @NotNull
       @Override
       public Priority getPriority() {
@@ -848,7 +888,7 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAction createAddSwitchDefaultFix(@NotNull PsiSwitchBlock switchBlock, String message) {
+  public IntentionAction createAddSwitchDefaultFix(@NotNull PsiSwitchBlock switchBlock, @IntentionName String message) {
     return new CreateDefaultBranchFix(switchBlock, message);
   }
 
@@ -866,52 +906,45 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAction createWrapSwitchRuleStatementsIntoBlockFix(PsiSwitchLabeledRuleStatement rule) {
+  public IntentionAction createWrapSwitchRuleStatementsIntoBlockFix(@NotNull PsiSwitchLabeledRuleStatement rule) {
     return new WrapSwitchRuleStatementsIntoBlockFix(rule);
   }
 
   @NotNull
   @Override
-  public IntentionAction createAddParameterListFix(PsiMethod method) {
+  public IntentionAction createAddParameterListFix(@NotNull PsiMethod method) {
     return new AddParameterListFix(method);
   }
 
   @NotNull
   @Override
-  public IntentionAction createAddEmptyRecordHeaderFix(PsiClass psiClass) {
+  public IntentionAction createAddEmptyRecordHeaderFix(@NotNull PsiClass psiClass) {
     return new AddEmptyRecordHeaderFix(psiClass);
   }
 
-  private static final class OptimizeImportsAction implements IntentionAction {
-    private final boolean myOnTheFly;
+  @Override
+  public @NotNull IntentionAction createCreateFieldFromParameterFix() {
+    return new CreateFieldFromParameterAction(true);
+  }
 
-    private OptimizeImportsAction(boolean onTheFly) {myOnTheFly = onTheFly;}
+  @Override
+  public @NotNull IntentionAction createAssignFieldFromParameterFix() {
+    return new AssignFieldFromParameterAction(true);
+  }
 
-    @NotNull
-    @Override
-    public String getText() {
-      return QuickFixBundle.message("optimize.imports.fix");
-    }
+  @Override
+  public @NotNull IntentionAction createFillPermitsListFix(@NotNull PsiIdentifier classIdentifier) {
+    return new FillPermitsListFix(classIdentifier);
+  }
 
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return QuickFixBundle.message("optimize.imports.fix");
-    }
+  @Override
+  public @NotNull IntentionAction createAddToPermitsListFix(@NotNull PsiClass subClass,
+                                                            @NotNull PsiClass superClass) {
+    return new AddToPermitsListFix(subClass, superClass);
+  }
 
-    @Override
-    public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-      return (!myOnTheFly || timeToOptimizeImports(file)) && file instanceof PsiJavaFile && BaseIntentionAction.canModify(file);
-    }
-
-    @Override
-    public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-      invokeOnTheFlyImportOptimizer(file);
-    }
-
-    @Override
-    public boolean startInWriteAction() {
-      return true;
-    }
+  @Override
+  public IntentionAction createMoveClassToPackageFix(@NotNull PsiClass classToMove, @NotNull String packageName) {
+    return new MoveToPackageFix(classToMove.getContainingFile(), packageName);
   }
 }

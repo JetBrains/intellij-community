@@ -92,11 +92,9 @@ fun suggestGradleVersion(project: Project): GradleVersion? {
  * @see org.jetbrains.plugins.gradle.util.isSupported
  */
 private fun suggestGradleVersion(javaVersion: JavaVersion): GradleVersion? {
-  val version = javaVersion.feature
   return when {
-    version >= 8 /* ..14 */ -> GradleVersion.version("6.3")
-    version == 7 -> GradleVersion.version("4.1")
-    version == 6 -> GradleVersion.version("3.0")
+    isSupported(GradleVersion.current(), javaVersion) -> GradleVersion.current()
+    javaVersion.feature >= 8 /* ..14 */ -> GradleVersion.version("6.5")
     else -> null
   }
 }

@@ -1,7 +1,4 @@
 <idea-plugin>
-  <projectListeners>
-    <listener class="com.intellij.vcs.log.impl.VcsToolWindowEditorSynchronizer$MyFileEditorListener" topic="com.intellij.openapi.fileEditor.FileEditorManagerListener" />
-  </projectListeners>
 
   <extensionPoints>
     <extensionPoint name="logProvider" interface="com.intellij.vcs.log.VcsLogProvider" area="IDEA_PROJECT" dynamic="true"/>
@@ -37,11 +34,11 @@
     <statistics.applicationUsagesCollector implementation="com.intellij.vcs.log.statistics.VcsLogIndexApplicationStatisticsCollector"/>
 
     <statistics.counterUsagesCollector groupId="vcs.log.trigger" version="2"/>
-    <statistics.validation.customWhiteListRule implementation="com.intellij.vcs.log.statistics.VcsLogTriggerEventIdValidator"/>
-    <statistics.validation.customWhiteListRule implementation="com.intellij.vcs.log.statistics.VcsLogFilterNameValidator"/>
-    <statistics.validation.customWhiteListRule implementation="com.intellij.vcs.log.statistics.VcsLogHighlighterIdValidator"/>
-    <statistics.validation.customWhiteListRule implementation="com.intellij.vcs.log.statistics.VcsLogColumnNameValidator"/>
-    <statistics.validation.customWhiteListRule implementation="com.intellij.vcs.log.statistics.VcsLogSortKindValidator"/>
+    <statistics.validation.customValidationRule implementation="com.intellij.vcs.log.statistics.VcsLogTriggerEventIdValidator"/>
+    <statistics.validation.customValidationRule implementation="com.intellij.vcs.log.statistics.VcsLogFilterNameValidator"/>
+    <statistics.validation.customValidationRule implementation="com.intellij.vcs.log.statistics.VcsLogHighlighterIdValidator"/>
+    <statistics.validation.customValidationRule implementation="com.intellij.vcs.log.statistics.VcsLogColumnNameValidator"/>
+    <statistics.validation.customValidationRule implementation="com.intellij.vcs.log.statistics.VcsLogSortKindValidator"/>
 
     <logHighlighterFactory implementation="com.intellij.vcs.log.ui.highlighters.MyCommitsHighlighter$Factory"/>
     <logHighlighterFactory implementation="com.intellij.vcs.log.ui.highlighters.MergeCommitsHighlighter$Factory"/>
@@ -79,7 +76,7 @@
 
     <fileIconProvider implementation="com.intellij.vcs.log.ui.editor.VcsLogIconProvider"/>
     <fileEditorProvider implementation="com.intellij.vcs.log.ui.editor.VcsLogEditorProvider"/>
-    <editorTabTitleProvider implementation="com.intellij.vcs.log.ui.editor.VcsLogEditorTabTitleProvider"/>
+    <editorTabTitleProvider implementation="com.intellij.vcs.log.ui.editor.DefaultVcsLogFileTabTitleProvider"/>
   </extensions>
 
   <actions resource-bundle="messages.VcsLogBundle">
@@ -92,7 +89,7 @@
       <keyboard-shortcut first-keystroke="LEFT" keymap="$default"/>
     </action>
     <action class="com.intellij.vcs.log.ui.actions.IntelliSortChooserToggleAction" id="Vcs.Log.IntelliSortChooser"/>
-    <action class="com.intellij.vcs.log.ui.actions.VcsShowLogAction" id="Vcs.Show.Log">
+    <action class="com.intellij.vcs.log.ui.actions.VcsShowLogAction" id="Vcs.Show.Log" icon="AllIcons.Toolwindows.ToolWindowChanges">
       <add-to-group group-id="Vcs.Show.Toolwindow.Tab"/>
     </action>
     <action class="com.intellij.vcs.log.ui.actions.CompactReferencesViewAction" id="Vcs.Log.CompactReferencesView"/>
@@ -179,7 +176,7 @@
       <reference id="Vcs.Log.ResumeIndexing"/>
       <reference id="Vcs.Log.GoToRef"/>
     </group>
-    <group id="Vcs.Log.Diff.Preview.Location" popup="true">
+    <group id="Vcs.Log.Diff.Preview.Location" popup="true" class="com.intellij.vcs.log.ui.actions.DiffPreviewLocationActionGroup">
       <reference id="Vcs.Log.MoveDiffPreviewToBottom"/>
       <reference id="Vcs.Log.MoveDiffPreviewToRight"/>
     </group>
@@ -252,8 +249,7 @@
       <reference ref="Vcs.Log.ShowChangesFromParents"/>
       <reference ref="Vcs.Log.ShowOnlyAffectedChanges"/>
       <reference ref="Vcs.Log.ShowDiffPreview"/>
-      <reference ref="Vcs.Log.MoveDiffPreviewToBottom"/>
-      <reference ref="Vcs.Log.MoveDiffPreviewToRight"/>
+      <reference ref="Vcs.Log.Diff.Preview.Location"/>
       <separator/>
       <reference ref="Vcs.Log.Refresh"/>
       <reference ref="Vcs.Log.OpenAnotherTab"/>
@@ -276,8 +272,6 @@
       <reference id="Vcs.Log.Refresh"/>
       <reference id="Vcs.Log.ShowDetailsAction"/>
       <reference id="Vcs.Log.ShowDiffPreview"/>
-      <reference ref="Vcs.Log.MoveDiffPreviewToBottom"/>
-      <reference ref="Vcs.Log.MoveDiffPreviewToRight"/>
       <reference id="Vcs.FileHistory.ContextMenu"/>
       <reference id="Vcs.FileHistory.Toolbar"/>
       <reference id="VcsHistoryActionsGroup"/>

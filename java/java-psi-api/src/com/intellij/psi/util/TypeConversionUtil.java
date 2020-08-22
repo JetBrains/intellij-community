@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
 import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind;
@@ -24,7 +24,7 @@ import java.util.*;
 
 import static com.intellij.psi.CommonClassNames.*;
 
-public class TypeConversionUtil {
+public final class TypeConversionUtil {
   private static final Logger LOG = Logger.getInstance(TypeConversionUtil.class);
 
   private static final boolean[][] IS_ASSIGNABLE_BIT_SET = {
@@ -842,8 +842,14 @@ public class TypeConversionUtil {
     }
     final PsiClassType.ClassResolveResult leftResult = PsiUtil.resolveGenericsClassInType(left);
     final PsiClassType.ClassResolveResult rightResult = PsiUtil.resolveGenericsClassInType(right);
-    if (leftResult.getElement() == null || rightResult.getElement() == null) {
-      if (leftResult.getElement() != rightResult.getElement()) return false;
+    PsiClass leftResultElement = leftResult.getElement();
+    PsiClass rightResultElement = rightResult.getElement();
+    if (leftResultElement == null || rightResultElement == null) {
+      if (leftResultElement == null && rightResultElement != null &&
+              left instanceof PsiClassType && left.equalsToText(JAVA_LANG_OBJECT)) {
+        return true;
+      }
+      if (leftResultElement != rightResultElement) return false;
       // let's suppose 2 unknown classes, which could be the same to be the same
       String lText = left.getPresentableText();
       String rText = right.getPresentableText();
@@ -1517,7 +1523,7 @@ public class TypeConversionUtil {
   }
 
   private static Object cast(@NotNull Object operand, @TypeRank int rankTo) {
-    Number number = operand instanceof Character ? Integer.valueOf((Character)operand) 
+    Number number = operand instanceof Character ? Integer.valueOf((Character)operand)
                                                  : operand instanceof Number ? (Number)operand : null;
     if (number == null) return null;
     switch (rankTo) {

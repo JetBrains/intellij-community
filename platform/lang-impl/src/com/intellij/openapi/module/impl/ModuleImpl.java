@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.module.impl;
 
+import com.intellij.configurationStore.RenameableStateStorageManager;
 import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.plugins.ContainerDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
@@ -19,7 +20,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.scopes.ModuleScopeProviderImpl;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.impl.ProjectImpl;
+import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry;
 import com.intellij.openapi.roots.ProjectModelElement;
 import com.intellij.openapi.roots.ProjectModelExternalSource;
@@ -33,11 +34,13 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.serviceContainer.ComponentManagerImpl;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Property;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -74,7 +77,7 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
           public void validityChanged(@NotNull VirtualFilePointer @NotNull [] pointers) {
             VirtualFile virtualFile = myImlFilePointer.getFile();
             if (virtualFile != null) {
-              ((ModuleStore)getStore()).setPath(virtualFile.getPath(), virtualFile, false);
+              ((ModuleStore)getStore()).setPath(virtualFile.toNioPath(), virtualFile, false);
               ModuleManager.getInstance(myProject).incModificationCount();
             }
           }
@@ -115,7 +118,7 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
   public final boolean isDisposed() {
     // in case of light project in tests when it's temporarily disposed, the module should be treated as disposed too.
     //noinspection TestOnlyProblems
-    return super.isDisposed() || ((ProjectImpl)myProject).isLight() && myProject.isDisposed();
+    return super.isDisposed() || ((ProjectEx)myProject).isLight() && myProject.isDisposed();
   }
 
   @Override
@@ -160,7 +163,7 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
   public void rename(@NotNull String newName, boolean notifyStorage) {
     myName = newName;
     if (notifyStorage) {
-      getStore().getStorageManager().rename(StoragePathMacros.MODULE_FILE, newName + ModuleFileType.DOT_DEFAULT_EXTENSION);
+      ((RenameableStateStorageManager)getStore().getStorageManager()).rename(newName + ModuleFileType.DOT_DEFAULT_EXTENSION);
     }
   }
 
@@ -170,11 +173,11 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
 
   @Override
   @NotNull
-  public String getModuleFilePath() {
+  public Path getModuleNioFile() {
     if (!isPersistent()) {
-      return "";
+      return Paths.get("");
     }
-    return getStore().getStorageManager().expandMacros(StoragePathMacros.MODULE_FILE);
+    return getStore().getStorageManager().expandMacro(StoragePathMacros.MODULE_FILE);
   }
 
   @Override
@@ -339,7 +342,7 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
   @Override
   public String toString() {
     if (myName == null) return "Module (not initialized)";
-    return "Module: '" + getName() + "'";
+    return "Module: '" + getName() + "'" + (isDisposed() ? " (disposed)" : "");
   }
 
   @Override
@@ -369,7 +372,7 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
     static final class State {
       @Property(surroundWithTag = false)
       @MapAnnotation(surroundKeyWithTag = false, surroundValueWithTag = false, surroundWithTag = false, entryTagName = "option")
-      public final Map<String, String> options = new THashMap<>();
+      public final Map<String, String> options = new HashMap<>();
     }
 
     private State state = new State();

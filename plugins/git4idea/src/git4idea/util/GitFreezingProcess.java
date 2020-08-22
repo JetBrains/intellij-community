@@ -3,13 +3,14 @@ package git4idea.util;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.VcsFreezingProcess;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @see VcsFreezingProcess
  */
 public class GitFreezingProcess extends VcsFreezingProcess {
-  public GitFreezingProcess(@NotNull Project project, @NotNull String operationTitle, @NotNull Runnable runnable) {
-    super(project, "Git " + operationTitle, runnable);
+  public GitFreezingProcess(@NotNull Project project, @NotNull @Nls String operationTitle, @NotNull Runnable runnable) {
+    super(project, operationTitle, runnable);
   }
 }

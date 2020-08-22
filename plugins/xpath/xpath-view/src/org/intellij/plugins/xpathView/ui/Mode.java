@@ -15,18 +15,14 @@
  */
 package org.intellij.plugins.xpathView.ui;
 
+import com.intellij.openapi.util.NlsContexts;
+import org.intellij.plugins.xpathView.XPathBundle;
+
 public enum Mode {
-    SIMPLE("Simple"),
-    ADVANCED("Advanced");
+    SIMPLE, ADVANCED;
 
-    private final String mode;
-
-    Mode(String s) {
-        this.mode = s;
-    }
-
-    public String getName() {
-        return mode;
+    public @NlsContexts.Button String getName() {
+        return this == SIMPLE ? XPathBundle.message("button.simple") : XPathBundle.message("button.advanced");
     }
 
     public Mode other() {

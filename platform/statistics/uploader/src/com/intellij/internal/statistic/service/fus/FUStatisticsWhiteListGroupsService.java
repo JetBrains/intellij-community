@@ -36,9 +36,9 @@ import static com.intellij.internal.statistic.StatisticsStringUtil.isEmptyOrSpac
 public final class FUStatisticsWhiteListGroupsService {
 
   @NotNull
-  public static WLGroups parseWhiteListContent(@Nullable String content) throws EventLogWhitelistParseException {
+  public static WLGroups parseWhiteListContent(@Nullable String content) throws EventLogMetadataParseException {
     if (isEmptyOrSpaces(content)) {
-      throw new EventLogWhitelistParseException(EventLogWhitelistParseException.EventLogWhitelistParseErrorType.EMPTY_CONTENT);
+      throw new EventLogMetadataParseException(EventLogMetadataParseException.EventLogMetadataParseErrorType.EMPTY_CONTENT);
     }
 
     try {
@@ -46,13 +46,13 @@ public final class FUStatisticsWhiteListGroupsService {
       if (groups != null) {
         return groups;
       }
-      throw new EventLogWhitelistParseException(EventLogWhitelistParseException.EventLogWhitelistParseErrorType.INVALID_JSON);
+      throw new EventLogMetadataParseException(EventLogMetadataParseException.EventLogMetadataParseErrorType.INVALID_JSON);
     }
     catch (JsonSyntaxException e) {
-      throw new EventLogWhitelistParseException(EventLogWhitelistParseException.EventLogWhitelistParseErrorType.INVALID_JSON, e);
+      throw new EventLogMetadataParseException(EventLogMetadataParseException.EventLogMetadataParseErrorType.INVALID_JSON, e);
     }
     catch (Exception e) {
-      throw new EventLogWhitelistParseException(EventLogWhitelistParseException.EventLogWhitelistParseErrorType.UNKNOWN, e);
+      throw new EventLogMetadataParseException(EventLogMetadataParseException.EventLogMetadataParseErrorType.UNKNOWN, e);
     }
   }
 

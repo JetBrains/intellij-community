@@ -8,7 +8,6 @@ import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.memory.agent.MemoryAgentUtil;
 import com.intellij.debugger.settings.CaptureSettingsProvider;
 import com.intellij.debugger.settings.DebuggerSettings;
-import com.intellij.debugger.ui.GetJPDADialog;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.JavaParameters;
@@ -17,6 +16,7 @@ import com.intellij.execution.configurations.RemoteConnection;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JdkUtil;
@@ -25,11 +25,11 @@ import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -48,6 +48,7 @@ public class RemoteConnectionBuilder {
   private boolean myMemoryAgent;
   private boolean myQuiet;
   private boolean mySuspend = true;
+  private Project myProject;
 
   public RemoteConnectionBuilder(boolean server, int transport, String address) {
     myTransport = transport;
@@ -62,6 +63,11 @@ public class RemoteConnectionBuilder {
 
   public RemoteConnectionBuilder asyncAgent(boolean useAgent) {
     myAsyncAgent = useAgent;
+    return this;
+  }
+
+  public RemoteConnectionBuilder project(Project project) {
+    myProject = project;
     return this;
   }
 
@@ -123,7 +129,7 @@ public class RemoteConnectionBuilder {
       addRtJar(parameters.getClassPath());
 
       if (myAsyncAgent) {
-        addDebuggerAgent(parameters);
+        addDebuggerAgent(parameters, myProject);
       }
 
       if (myMemoryAgent) {
@@ -186,27 +192,12 @@ public class RemoteConnectionBuilder {
       String versionString = jdk.getVersionString();
       throw new ExecutionException(JavaDebuggerBundle.message("error.unsupported.jdk.version", versionString));
     }
-    if (SystemInfo.isWindows && version == JavaSdkVersion.JDK_1_2) {
-      final VirtualFile homeDirectory = jdk.getHomeDirectory();
-      if (homeDirectory == null || !homeDirectory.isValid()) {
-        String versionString = jdk.getVersionString();
-        throw new ExecutionException(JavaDebuggerBundle.message("error.invalid.jdk.home", versionString));
-      }
-      File dllFile = new File(
-        homeDirectory.getPath().replace('/', File.separatorChar) + File.separator + "bin" + File.separator + "jdwp.dll"
-      );
-      if (!dllFile.exists()) {
-        GetJPDADialog dialog = new GetJPDADialog();
-        dialog.show();
-        throw new ExecutionException(JavaDebuggerBundle.message("error.debug.libraries.missing"));
-      }
-    }
   }
 
   private static final String AGENT_FILE_NAME = "debugger-agent.jar";
   @NonNls private static final String DEBUG_KEY_NAME = "idea.xdebug.key";
 
-  private static void addDebuggerAgent(JavaParameters parameters) {
+  private static void addDebuggerAgent(JavaParameters parameters, @Nullable Project project) {
     if (AsyncStacksUtils.isAgentEnabled()) {
       String prefix = "-javaagent:";
       ParametersList parametersList = parameters.getVMParametersList();
@@ -236,7 +227,7 @@ public class RemoteConnectionBuilder {
               String agentPath = JavaExecutionUtil.handleSpacesInAgentPath(
                 agentFile.getAbsolutePath(), "captureAgent", null, f -> f.getName().startsWith("debugger-agent"));
               if (agentPath != null) {
-                parametersList.add(prefix + agentPath + generateAgentSettings());
+                parametersList.add(prefix + agentPath + generateAgentSettings(project));
               }
             }
             else {
@@ -251,8 +242,8 @@ public class RemoteConnectionBuilder {
     }
   }
 
-  private static String generateAgentSettings() {
-    Properties properties = CaptureSettingsProvider.getPointsProperties();
+  private static String generateAgentSettings(@Nullable Project project) {
+    Properties properties = CaptureSettingsProvider.getPointsProperties(project);
     if (!properties.isEmpty()) {
       try {
         File file = FileUtil.createTempFile("capture", ".props");

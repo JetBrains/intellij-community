@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.markup.SeparatorPlacement;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -37,7 +38,7 @@ public class LineMarkerInfo<T extends PsiElement> {
   public RangeHighlighter highlighter;
 
   public final int updatePass;
-  private final Function<? super T, String> myTooltipProvider;
+  private final Function<? super T, @NlsContexts.Tooltip String> myTooltipProvider;
   private AnAction myNavigateAction = new NavigateAction<>(this);
   @NotNull
   private final GutterIconRenderer.Alignment myIconAlignment;
@@ -57,7 +58,7 @@ public class LineMarkerInfo<T extends PsiElement> {
   public LineMarkerInfo(@NotNull T element,
                         @NotNull TextRange range,
                         @Nullable Icon icon,
-                        @Nullable Function<? super T, String> tooltipProvider,
+                        @Nullable Function<? super T, @NlsContexts.Tooltip String> tooltipProvider,
                         @Nullable GutterIconNavigationHandler<T> navHandler,
                         @NotNull GutterIconRenderer.Alignment alignment) {
     this(createElementRef(element, range), range, icon, tooltipProvider, navHandler, alignment);
@@ -90,7 +91,7 @@ public class LineMarkerInfo<T extends PsiElement> {
   protected LineMarkerInfo(@NotNull SmartPsiElementPointer<T> elementRef,
                            @NotNull TextRange range,
                            @Nullable Icon icon,
-                           @Nullable Function<? super T, String> tooltipProvider,
+                           @Nullable Function<? super T, @NlsContexts.Tooltip String> tooltipProvider,
                            @Nullable GutterIconNavigationHandler<T> navHandler,
                            @NotNull GutterIconRenderer.Alignment alignment) {
     myIcon = icon;
@@ -153,7 +154,7 @@ public class LineMarkerInfo<T extends PsiElement> {
     return new LineMarkerGutterIconRenderer<>(this);
   }
 
-  public String getLineMarkerTooltip() {
+  public @NlsContexts.Tooltip String getLineMarkerTooltip() {
     if (myTooltipProvider == null) return null;
     T element = getElement();
     return element == null || !element.isValid() ? null : myTooltipProvider.fun(element);

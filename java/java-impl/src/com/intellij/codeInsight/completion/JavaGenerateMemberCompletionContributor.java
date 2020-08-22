@@ -7,8 +7,10 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.icons.AllIcons;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.command.CommandProcessor;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -38,15 +40,18 @@ import static com.intellij.patterns.PlatformPatterns.psiElement;
 /**
  * @author peter
  */
-public class JavaGenerateMemberCompletionContributor {
+public final class JavaGenerateMemberCompletionContributor {
   static final Key<Boolean> GENERATE_ELEMENT = Key.create("GENERATE_ELEMENT");
 
   public static void fillCompletionVariants(CompletionParameters parameters, CompletionResultSet result) {
     if (parameters.getCompletionType() != CompletionType.BASIC && parameters.getCompletionType() != CompletionType.SMART) {
       return;
     }
-
     PsiElement position = parameters.getPosition();
+    if (DumbService.getInstance(position.getProject()).isDumb()) {
+      return;
+    }
+
     if (psiElement(PsiIdentifier.class).withParents(PsiJavaCodeReferenceElement.class, PsiTypeElement.class, PsiClass.class).
       andNot(JavaKeywordCompletion.AFTER_DOT).accepts(position)) {
       PsiElement prevLeaf = PsiTreeUtil.prevVisibleLeaf(position);
@@ -215,7 +220,7 @@ public class JavaGenerateMemberCompletionContributor {
   private static AccessToken forceDefaultMethodsInside() {
     CommandProcessor instance = CommandProcessor.getInstance();
     String commandName = instance.getCurrentCommandName();
-    instance.setCurrentCommandName(OverrideImplementUtil.IMPLEMENT_COMMAND_MARKER);
+    instance.setCurrentCommandName(JavaBundle.message("generate.members.implement.command"));
     return new AccessToken() {
       @Override
       public void finish() {

@@ -13,6 +13,7 @@ import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.NonEmptyActionGroup
 import com.intellij.openapi.ListSelection
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.diff.impl.GenericDataProvider
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -25,7 +26,6 @@ import com.intellij.openapi.vcs.history.VcsDiffUtil
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
-import org.jetbrains.plugins.github.pullrequest.action.GHPRReviewSubmitAction
 import org.jetbrains.plugins.github.pullrequest.avatars.CachingGithubAvatarIconsProvider
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewSupport
 import org.jetbrains.plugins.github.pullrequest.comment.GHPRDiffReviewSupportImpl
@@ -96,7 +96,7 @@ class GHPRChangesDiffHelperImpl(private val project: Project,
         GHToolbarLabelAction(GithubBundle.message("pull.request.diff.review.label")),
         viewOptionsGroup,
         GHPRDiffReviewThreadsReloadAction(),
-        GHPRReviewSubmitAction())
+        ActionManager.getInstance().getAction("Github.PullRequest.Review.Submit"))
     }
     return requestDataKeys
   }

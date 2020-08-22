@@ -9,6 +9,7 @@ import com.intellij.formatting.*;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.*;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.model.ModelBranch;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -877,7 +878,8 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
 
     private int getCaretOffset() {
       int caretOffset = myCaretModel.getOffset();
-      caretOffset = MathUtil.clamp(caretOffset, 0, myDocument.getTextLength() - 1);
+      int upperBound = Math.max(myDocument.getTextLength() - 1, 0);
+      caretOffset = MathUtil.clamp(caretOffset, 0, upperBound);
       return caretOffset;
     }
 
@@ -915,22 +917,22 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
 
   @Override
   public int getSpacing(@NotNull PsiFile file, int offset) {
-    FormattingModel model = createFormattingModel(file);
+    FormattingModel model = createFormattingModel(file, offset);
     return model == null ? -1 : FormatterEx.getInstance().getSpacingForBlockAtOffset(model, offset);
   }
 
   @Override
   public int getMinLineFeeds(@NotNull PsiFile file, int offset) {
-    FormattingModel model = createFormattingModel(file);
+    FormattingModel model = createFormattingModel(file, offset);
     return model == null ? -1 : FormatterEx.getInstance().getMinLineFeedsBeforeBlockAtOffset(model, offset);
   }
 
   @Nullable
-  private static FormattingModel createFormattingModel(@NotNull PsiFile file) {
+  private static FormattingModel createFormattingModel(@NotNull PsiFile file, int offset) {
     FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
     if (builder == null) return null;
     CodeStyleSettings settings = CodeStyle.getSettings(file);
-    return builder.createModel(file, settings);
+    return builder.createModel(FormattingContext.create(file, TextRange.create(offset, offset), settings, FormattingMode.REFORMAT));
   }
 
   @Override
@@ -964,7 +966,13 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
 
   @Override
   public void scheduleReformatWhenSettingsComputed(@NotNull PsiFile file) {
-    final Project project = file.getProject();
+    Project project = file.getProject();
+    if (ModelBranch.getPsiBranch(file) != null) {
+      PostprocessReformattingAspect.getInstance(project).disablePostprocessFormattingInside(
+        () -> CodeStyleManager.getInstance(project).reformat(file));
+      return;
+    }
+
     CodeStyleCachingService.getInstance(project).scheduleWhenSettingsComputed(
       file,
       () -> CommandProcessor.getInstance().executeCommand(

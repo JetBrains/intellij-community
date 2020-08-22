@@ -286,3 +286,11 @@ def prepare_class(name: str, bases: Tuple[type, ...] = ..., kwds: Dict[str, Any]
 DynamicClassAttribute = property
 
 def coroutine(f: Callable[..., Any]) -> CoroutineType: ...
+
+if sys.version_info >= (3, 9):
+    class GenericAlias:
+        __origin__: type
+        __args__: Tuple[Any, ...]
+        __parameters__: Tuple[Any, ...]
+        def __init__(self, origin: type, args: Any): ...
+        def __getattr__(self, name: str) -> Any: ...  # incomplete

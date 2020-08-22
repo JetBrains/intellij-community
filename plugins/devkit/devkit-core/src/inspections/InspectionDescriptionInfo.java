@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2019 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.InspectionEP;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -42,13 +29,16 @@ import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 import org.jetbrains.idea.devkit.inspections.quickfix.PluginDescriptorChooser;
 import org.jetbrains.idea.devkit.util.PsiUtil;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UReferenceExpression;
+import org.jetbrains.uast.UastUtils;
 
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-public class InspectionDescriptionInfo {
+public final class InspectionDescriptionInfo {
   private static final Logger LOG = Logger.getInstance(InspectionDescriptionInfo.class);
 
   private final String myFilename;
@@ -77,7 +67,7 @@ public class InspectionDescriptionInfo {
       shortNameInXml = true;
       String className = psiClass.getQualifiedName();
       if (className != null) {
-        Extension extension = findExtension(module, psiClass);
+        Extension extension = findExtension(psiClass);
         if (extension != null) {
           filename = extension.getXmlTag().getAttributeValue("shortName");
         }
@@ -85,7 +75,7 @@ public class InspectionDescriptionInfo {
     }
     else {
       shortNameInXml = false;
-      filename = PsiUtil.getReturnedLiteral(getShortNameMethod, psiClass);
+      filename = getReturnedLiteral(getShortNameMethod, psiClass);
     }
 
     if (filename == null) {
@@ -99,11 +89,11 @@ public class InspectionDescriptionInfo {
   }
 
   @Nullable
-  public static Extension findExtension(Module module, PsiClass psiClass) {
+  public static Extension findExtension(PsiClass psiClass) {
     return CachedValuesManager.getCachedValue(psiClass, () -> {
-      Extension extension = doFindExtension(module, psiClass);
-      return CachedValueProvider.Result
-        .create(extension, extension == null ? PsiModificationTracker.MODIFICATION_COUNT : extension.getXmlTag());
+      Module module = ModuleUtilCore.findModuleForPsiElement(psiClass);
+      Extension extension = module == null ? null : doFindExtension(module, psiClass);
+      return CachedValueProvider.Result.create(extension, PsiModificationTracker.MODIFICATION_COUNT);
     });
   }
 
@@ -182,5 +172,20 @@ public class InspectionDescriptionInfo {
 
   public boolean isShortNameInXml() {
     return myShortNameInXml;
+  }
+
+  @Nullable
+  private static String getReturnedLiteral(PsiMethod method, PsiClass cls) {
+    final UExpression expression = PsiUtil.getReturnedExpression(method);
+    if (expression == null) return null;
+
+    if (expression instanceof UReferenceExpression) {
+      final String methodName = ((UReferenceExpression)expression).getResolvedName();
+      if ("getSimpleName".equals(methodName)) {
+        return cls.getName();
+      }
+    }
+
+    return UastUtils.evaluateString(expression);
   }
 }

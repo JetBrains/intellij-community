@@ -69,10 +69,10 @@ internal class PythonSdkConfigurator : DirectoryProjectConfigurator {
     }
   }
 
-  override fun configureProject(project: Project, baseDir: VirtualFile, moduleRef: Ref<Module>, isNewProject: Boolean) {
+  override fun configureProject(project: Project, baseDir: VirtualFile, moduleRef: Ref<Module>, isProjectCreatedWithWizard: Boolean) {
     val sdk = project.pythonSdk
-    LOGGER.debug { "Input: $sdk, $isNewProject" }
-    if (sdk != null || isNewProject) {
+    LOGGER.debug { "Input: $sdk, $isProjectCreatedWithWizard" }
+    if (sdk != null || isProjectCreatedWithWizard) {
       return
     }
 

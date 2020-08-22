@@ -7,7 +7,9 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.impl.stores.BatchUpdateListener;
+import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
 import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -34,20 +36,19 @@ import com.intellij.project.ProjectKt;
 import com.intellij.ui.GuiUtils;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.FileBasedIndexProjectHandler;
 import com.intellij.util.indexing.UnindexedFilesUpdater;
 import com.intellij.util.messages.MessageBusConnection;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
@@ -61,6 +62,8 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
   private static final boolean LOG_CACHES_UPDATE =
     ApplicationManager.getApplication().isInternal() && !ApplicationManager.getApplication().isUnitTestMode();
 
+  private final static ExtensionPointName<WatchedRootsProvider> WATCHED_ROOTS_PROVIDER_EP_NAME = new ExtensionPointName<>("com.intellij.roots.watchedRootsProvider");
+
   private final ExecutorService myExecutor = ApplicationManager.getApplication().isUnitTestMode()
                                              ? ConcurrencyUtil.newSameThreadExecutorService()
                                              : AppExecutorUtil.createBoundedApplicationPoolExecutor("Project Root Manager", 1);
@@ -70,7 +73,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
 
   private boolean myPointerChangesDetected;
   private int myInsideRefresh;
-  private @NotNull Set<LocalFileSystem.WatchRequest> myRootsToWatch = new THashSet<>();
+  private @NotNull Set<LocalFileSystem.WatchRequest> myRootsToWatch = CollectionFactory.createSmallMemoryFootprintSet();
   private Disposable myRootPointersDisposable = Disposer.newDisposable(); // accessed in EDT
 
   public ProjectRootManagerComponent(@NotNull Project project) {
@@ -213,59 +216,58 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
   private @NotNull Pair<Set<String>, Set<String>> collectWatchRoots(@NotNull Disposable disposable) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
-    Set<String> recursivePaths = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
-    Set<String> flatPaths = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
+    Set<String> recursivePathsToWatch = CollectionFactory.createFilePathSet();
+    Set<String> flatPaths = CollectionFactory.createFilePathSet();
 
-    String projectFilePath = myProject.getProjectFilePath();
-    if (projectFilePath != null && !Project.DIRECTORY_STORE_FOLDER.equals(new File(projectFilePath).getParentFile().getName())) {
-      flatPaths.add(FileUtil.toSystemIndependentName(projectFilePath));
-      String wsFilePath = ProjectKt.getStateStore(myProject).getWorkspaceFilePath();  // may not exist yet
-      if (wsFilePath != null) {
-        flatPaths.add(FileUtil.toSystemIndependentName(wsFilePath));
-      }
+    IProjectStore store = ProjectKt.getStateStore(myProject);
+    Path projectFilePath = store.getProjectFilePath();
+    if (!Project.DIRECTORY_STORE_FOLDER.equals(projectFilePath.getParent().getFileName().toString())) {
+      flatPaths.add(FileUtil.toSystemIndependentName(projectFilePath.toString()));
+      flatPaths.add(FileUtil.toSystemIndependentName(store.getWorkspacePath().toString()));
     }
 
-    for (AdditionalLibraryRootsProvider extension : AdditionalLibraryRootsProvider.EP_NAME.getExtensions()) {
+    for (AdditionalLibraryRootsProvider extension : AdditionalLibraryRootsProvider.EP_NAME.getExtensionList()) {
       Collection<VirtualFile> toWatch = extension.getRootsToWatch(myProject);
       if (!toWatch.isEmpty()) {
-        recursivePaths.addAll(ContainerUtil.map(toWatch, VirtualFile::getPath));
+        for (VirtualFile file : toWatch) {
+          recursivePathsToWatch.add(file.getPath());
+        }
       }
     }
 
-    for (WatchedRootsProvider extension : WatchedRootsProvider.EP_NAME.getExtensions(myProject)) {
-      Set<String> toWatch = extension.getRootsToWatch();
+    for (WatchedRootsProvider extension : WATCHED_ROOTS_PROVIDER_EP_NAME.getExtensionList()) {
+      Set<String> toWatch = extension.getRootsToWatch(myProject);
       if (!toWatch.isEmpty()) {
-        recursivePaths.addAll(ContainerUtil.map(toWatch, FileUtil::toSystemIndependentName));
+        for (String path : toWatch) {
+          recursivePathsToWatch.add(FileUtil.toSystemIndependentName(path));
+        }
       }
     }
 
-    List<String> recursiveUrls = ContainerUtil.map(recursivePaths, VfsUtilCore::pathToUrl);
-    Set<String> excludedUrls = new THashSet<>();
+    Set<String> excludedUrls = CollectionFactory.createSmallMemoryFootprintSet();
     // changes in files provided by this method should be watched manually because no-one's bothered to set up correct pointers for them
-    for (DirectoryIndexExcludePolicy excludePolicy : DirectoryIndexExcludePolicy.EP_NAME.getExtensions(myProject)) {
+    for (DirectoryIndexExcludePolicy excludePolicy : DirectoryIndexExcludePolicy.EP_NAME.getExtensionList(myProject)) {
       Collections.addAll(excludedUrls, excludePolicy.getExcludeUrlsForProject());
     }
 
     // avoid creating empty unnecessary container
-    if (!recursiveUrls.isEmpty() || !flatPaths.isEmpty() || !excludedUrls.isEmpty()) {
+    if (!flatPaths.isEmpty() || !excludedUrls.isEmpty()) {
       Disposer.register(this, disposable);
       // creating a container with these URLs with the sole purpose to get events to getRootsValidityChangedListener() when these roots change
       VirtualFilePointerContainer container =
         VirtualFilePointerManager.getInstance().createContainer(disposable, getRootsValidityChangedListener());
 
-      ((VirtualFilePointerContainerImpl)container).addAllJarDirectories(recursiveUrls, true);
       flatPaths.forEach(path -> container.add(VfsUtilCore.pathToUrl(path)));
       ((VirtualFilePointerContainerImpl)container).addAll(excludedUrls);
     }
 
     // module roots already fire validity change events, see usages of ProjectRootManagerComponent.getRootsValidityChangedListener
-    collectModuleWatchRoots(recursivePaths, flatPaths);
-
-    return Pair.create(recursivePaths, flatPaths);
+    collectModuleWatchRoots(recursivePathsToWatch, flatPaths);
+    return new Pair<>(recursivePathsToWatch, flatPaths);
   }
 
   private void collectModuleWatchRoots(@NotNull Set<? super String> recursivePaths, @NotNull Set<? super String> flatPaths) {
-    Set<String> urls = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
+    Set<String> urls = CollectionFactory.createFilePathSet();
 
     for (Module module : ModuleManager.getInstance(myProject).getModules()) {
       ModuleRootManager rootManager = ModuleRootManager.getInstance(module);
@@ -332,7 +334,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
 
   @Override
   public void markRootsForRefresh() {
-    Set<String> paths = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
+    Set<String> paths = CollectionFactory.createFilePathSet();
     collectModuleWatchRoots(paths, paths);
 
     LocalFileSystem fs = LocalFileSystem.getInstance();

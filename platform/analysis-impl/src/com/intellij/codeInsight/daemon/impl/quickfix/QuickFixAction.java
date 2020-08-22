@@ -39,7 +39,7 @@ public final class QuickFixAction {
   public static void registerQuickFixAction(@Nullable HighlightInfo info,
                                             @Nullable TextRange fixRange,
                                             @Nullable IntentionAction action,
-                                            @Nullable final HighlightDisplayKey key) {
+                                            @Nullable HighlightDisplayKey key) {
     if (info == null) return;
     info.registerFix(action, null, HighlightDisplayKey.getDisplayNameByKey(key), fixRange, key);
   }

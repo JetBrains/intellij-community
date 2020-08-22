@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -17,7 +18,7 @@ import java.io.File;
  * @author Vladimir Kondratyev
  */
 public class RefCardAction extends AnAction implements DumbAware {
-  private static final String REF_CARD_PATH = PathManager.getHomePath() + "/help/" + (SystemInfo.isMac
+  @NonNls private static final String REF_CARD_PATH = PathManager.getHomePath() + "/help/" + (SystemInfo.isMac
                                                                                       ? "ReferenceCardForMac.pdf" : "ReferenceCard.pdf");
 
   @Override

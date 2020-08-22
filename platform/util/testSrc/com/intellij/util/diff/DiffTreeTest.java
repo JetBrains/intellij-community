@@ -49,7 +49,7 @@ public class DiffTreeTest extends TestCase {
     }
   }
 
-  private static class TreeStructure implements FlyweightCapableTreeStructure<Node> {
+  private static final class TreeStructure implements FlyweightCapableTreeStructure<Node> {
     private final Node myRoot;
 
     private TreeStructure(final Node root) {

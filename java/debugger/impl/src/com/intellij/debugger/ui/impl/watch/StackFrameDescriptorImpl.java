@@ -12,6 +12,7 @@ import com.intellij.debugger.ui.breakpoints.BreakpointIntentionAction;
 import com.intellij.debugger.ui.tree.StackFrameDescriptor;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
@@ -134,7 +135,7 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
       return "";
     }
     ThreadsViewSettings settings = ThreadsViewSettings.getInstance();
-    StringBuilder label = new StringBuilder();
+    @NlsSafe StringBuilder label = new StringBuilder();
     Method method = myMethodOccurrence.getMethod();
     if (method != null) {
       myName = method.name();

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
@@ -34,7 +34,7 @@ import java.util.Set;
  *
  * All remaining violated parameters is required to be not-null for successful method execution.
  */
-class NullParameterConstraintChecker extends DataFlowRunner {
+final class NullParameterConstraintChecker extends DataFlowRunner {
   private final Set<PsiParameter> myPossiblyViolatedParameters;
   private final Set<PsiParameter> myUsedParameters;
   private final Set<PsiParameter> myParametersWithSuccessfulExecutionInNotNullState;

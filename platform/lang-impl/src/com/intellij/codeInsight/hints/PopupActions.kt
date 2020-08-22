@@ -14,6 +14,7 @@ import com.intellij.codeInsight.hints.settings.language.ParameterInlayProviderSe
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.LowPriorityAction
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.injected.editor.EditorWindow
 import com.intellij.lang.Language
 import com.intellij.notification.Notification
@@ -24,6 +25,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.impl.EditorImpl
+import com.intellij.openapi.editor.impl.ImaginaryEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
@@ -89,13 +91,8 @@ fun showParameterHintsDialog(e: AnActionEvent, getPattern: (HintInfo) -> String?
 }
 
 class BlacklistCurrentMethodIntention : IntentionAction, LowPriorityAction {
-  companion object {
-    private val presentableText = CodeInsightBundle.message("inlay.hints.blacklist.method")
-    private val presentableFamilyName = CodeInsightBundle.message("inlay.hints.intention.family.name")
-  }
-  
-  override fun getText(): String = presentableText
-  override fun getFamilyName(): String = presentableFamilyName
+  override fun getText(): String = CodeInsightBundle.message("inlay.hints.blacklist.method")
+  override fun getFamilyName(): String = CodeInsightBundle.message("inlay.hints.intention.family.name")
 
   override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean {
     val language = file.language
@@ -163,14 +160,11 @@ class BlacklistCurrentMethodIntention : IntentionAction, LowPriorityAction {
 
 
 class DisableCustomHintsOption: IntentionAction, LowPriorityAction {
-  companion object {
-    private val presentableFamilyName = CodeInsightBundle.message("inlay.hints.intention.family.name")
-  }
-  
   private var lastOptionName = ""
   
   override fun getText(): String = getIntentionText()
 
+  @IntentionName
   private fun getIntentionText(): String {
     if (lastOptionName.startsWith("show", ignoreCase = true)) {
       return "Do not ${lastOptionName.toLowerCase()}"
@@ -178,7 +172,7 @@ class DisableCustomHintsOption: IntentionAction, LowPriorityAction {
     return CodeInsightBundle.message("inlay.hints.disable.custom.option", lastOptionName)
   }
   
-  override fun getFamilyName(): String = presentableFamilyName
+  override fun getFamilyName(): String = CodeInsightBundle.message("inlay.hints.intention.family.name")
 
   override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean {
     InlayParameterHintsExtension.forLanguage(file.language) ?: return false
@@ -205,11 +199,6 @@ class DisableCustomHintsOption: IntentionAction, LowPriorityAction {
 }
 
 class EnableCustomHintsOption: IntentionAction, HighPriorityAction {
-
-  companion object {
-    private val presentableFamilyName = CodeInsightBundle.message("inlay.hints.intention.family.name")
-  }
-  
   private var lastOptionName = ""
   
   override fun getText(): String {
@@ -219,7 +208,7 @@ class EnableCustomHintsOption: IntentionAction, HighPriorityAction {
     return CodeInsightBundle.message("inlay.hints.enable.custom.option", lastOptionName)
   }
   
-  override fun getFamilyName(): String = presentableFamilyName
+  override fun getFamilyName(): String = CodeInsightBundle.message("inlay.hints.intention.family.name")
 
   override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean {
     val language = file.language
@@ -294,7 +283,7 @@ class ToggleInlineHintsAction : AnAction() {
 
 
 private fun hasEditorParameterHintAtOffset(editor: Editor, file: PsiFile): Boolean {
-  if (editor is EditorWindow) return false
+  if (editor is EditorWindow || editor is ImaginaryEditor) return false
   
   val offset = editor.caretModel.offset
   val element = file.findElementAt(offset)

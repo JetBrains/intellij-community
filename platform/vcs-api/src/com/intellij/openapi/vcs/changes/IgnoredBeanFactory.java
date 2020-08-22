@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -14,13 +15,13 @@ public final class IgnoredBeanFactory {
   }
 
   @NotNull
-  public static IgnoredFileBean ignoreUnderDirectory(@NotNull @NonNls String path, @Nullable Project p) {
+  public static IgnoredFileBean ignoreUnderDirectory(@NotNull @NlsSafe String path, @Nullable Project p) {
     String correctedPath = (path.endsWith("/") || path.endsWith(File.separator)) ? path : path + "/";
     return new IgnoredFileBean(correctedPath, IgnoreSettingsType.UNDER_DIR, p);
   }
 
   @NotNull
-  public static IgnoredFileBean ignoreFile(@NotNull @NonNls String path, @Nullable Project p) {
+  public static IgnoredFileBean ignoreFile(@NotNull @NlsSafe String path, @Nullable Project p) {
     return new IgnoredFileBean(path, IgnoreSettingsType.FILE, p);
   }
 
@@ -34,7 +35,7 @@ public final class IgnoredBeanFactory {
   }
 
   @NotNull
-  public static IgnoredFileBean withMask(@NotNull String mask) {
+  public static IgnoredFileBean withMask(@NotNull @NonNls String mask) {
     return new IgnoredFileBean(mask);
   }
 }

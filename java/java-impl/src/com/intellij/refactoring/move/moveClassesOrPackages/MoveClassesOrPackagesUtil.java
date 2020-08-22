@@ -1,13 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.lang.java.JavaFindUsagesProvider;
+import com.intellij.model.ModelBranch;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JavaProjectRootsUtil;
+import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Comparing;
@@ -15,6 +17,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.file.PsiPackageImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -34,7 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.util.*;
 
-public class MoveClassesOrPackagesUtil {
+public final class MoveClassesOrPackagesUtil {
   private static final Logger LOG = Logger.getInstance(MoveClassesOrPackagesUtil.class);
 
   private MoveClassesOrPackagesUtil() {
@@ -119,8 +122,10 @@ public class MoveClassesOrPackagesUtil {
   }
 
   // Does not process non-code usages!
-  public static PsiPackage doMovePackage(@NotNull PsiPackage aPackage,
-                                         @NotNull MoveDestination moveDestination) throws IncorrectOperationException {
+  @NotNull
+  static PsiPackage doMovePackage(@NotNull PsiPackage aPackage,
+                                  @NotNull GlobalSearchScope scope,
+                                  @NotNull MoveDestination moveDestination) throws IncorrectOperationException {
     final PackageWrapper targetPackage = moveDestination.getTargetPackage();
 
     final String newPrefix;
@@ -134,8 +139,7 @@ public class MoveClassesOrPackagesUtil {
     final String newPackageQualifiedName = newPrefix + aPackage.getName();
 
     // do actual move
-    final GlobalSearchScope projectScope = GlobalSearchScope.projectScope(aPackage.getProject());
-    PsiDirectory[] dirs = aPackage.getDirectories(projectScope);
+    PsiDirectory[] dirs = aPackage.getDirectories(scope);
     for (PsiDirectory dir : dirs) {
       final PsiDirectory targetDirectory = moveDestination.getTargetDirectory(dir);
       if (targetDirectory != null) {
@@ -143,9 +147,14 @@ public class MoveClassesOrPackagesUtil {
       }
     }
 
-    aPackage.handleQualifiedNameChange(newPackageQualifiedName);
+    return new PsiPackageImpl(aPackage.getManager(), newPackageQualifiedName) {
+      @Override
+      public boolean isValid() {
+        return !getProject().isDisposed() &&
+               PackageIndex.getInstance(getProject()).getDirsByPackageName(newPackageQualifiedName, scope).findFirst() != null;
+      }
 
-    return JavaPsiFacade.getInstance(targetPackage.getManager().getProject()).findPackage(newPackageQualifiedName);
+    };
   }
 
   public static void moveDirectoryRecursively(PsiDirectory dir, PsiDirectory destination)
@@ -244,12 +253,11 @@ public class MoveClassesOrPackagesUtil {
     newClass = aClass;
     final PsiDirectory containingDirectory = file.getContainingDirectory();
     if (!Comparing.equal(moveDestination.getVirtualFile(), containingDirectory != null ? containingDirectory.getVirtualFile() : null)) {
-      LOG.assertTrue(file.getVirtualFile() != null, aClass);
-
-      Project project = file.getProject();
       MoveFilesOrDirectoriesUtil.doMoveFile(file, moveDestination);
 
-      DumbService.getInstance(project).completeJustSubmittedTasks();
+      if (ModelBranch.getPsiBranch(moveDestination) == null) {
+        DumbService.getInstance(moveDestination.getProject()).completeJustSubmittedTasks();
+      }
 
       file = moveDestination.findFile(file.getName());
 

@@ -236,6 +236,14 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
           final PyClass containingClass = func.getContainingClass();
           if (containingClass != null) {
             final PyFunction.Modifier modifier = func.getModifier();
+
+            final PyType genericType = new PyTypingTypeProvider().getGenericType(containingClass, context);
+            if (genericType != null) {
+              return modifier == PyFunction.Modifier.CLASSMETHOD && genericType instanceof PyInstantiableType
+                     ? ((PyInstantiableType<?>)genericType).toClass()
+                     : genericType;
+            }
+
             return new PyClassTypeImpl(containingClass, modifier == PyFunction.Modifier.CLASSMETHOD);
           }
         }

@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.components.JBLabel;
@@ -12,7 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
-import java.io.File;
+import java.nio.file.Path;
 
 public class EditXmxVMOptionDialog extends DialogWrapper {
 
@@ -58,9 +59,9 @@ public class EditXmxVMOptionDialog extends DialogWrapper {
       currentMemory == -1 ? DiagnosticBundle.message("diagnostic.out.of.memory.currentValue.unknown") : String.valueOf(currentMemory);
     myHeapCurrentValueLabel.setText(DiagnosticBundle.message("diagnostic.out.of.memory.currentValue", formatted));
 
-    File file = VMOptions.getWriteFile();
+    Path file = VMOptions.getWriteFile();
     if (file != null) {
-      mySettingsFileHintLabel.setText(DiagnosticBundle.message("diagnostic.out.of.memory.willBeSavedTo", file.getPath()));
+      mySettingsFileHintLabel.setText(DiagnosticBundle.message("diagnostic.out.of.memory.willBeSavedTo", file.toString()));
       myMessageLabel.setText(DiagnosticBundle.message("change.memory.restart"));
 
       int newMemory;
@@ -99,7 +100,7 @@ public class EditXmxVMOptionDialog extends DialogWrapper {
   }
 
   private class SaveAction extends AbstractAction {
-    SaveAction(String actionName) {
+    SaveAction(@NlsActions.ActionText String actionName) {
       super(actionName);
     }
 

@@ -293,7 +293,7 @@ class InjectionRegistrarImpl extends MultiHostRegistrarImpl implements MultiHost
     boolean mergeHappened = newFile != psiFile;
     Place mergedPlace = place;
     if (mergeHappened) {
-      InjectedLanguageUtil.clearCaches(psiFile, documentWindow);
+      InjectedLanguageUtil.clearCaches(psiFile.getProject(), documentWindow);
       psiFile = newFile;
       viewProvider = (InjectedFileViewProvider)psiFile.getViewProvider();
       documentWindow = viewProvider.getDocument();

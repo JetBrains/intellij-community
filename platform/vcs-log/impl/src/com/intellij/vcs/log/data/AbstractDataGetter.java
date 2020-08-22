@@ -324,7 +324,7 @@ abstract class AbstractDataGetter<T extends VcsShortCommitDetails> implements Di
     myLoadingFinishedListeners.remove(runnable);
   }
 
-  private static class TaskDescriptor {
+  private static final class TaskDescriptor {
     @NotNull private final TIntHashSet myCommits;
 
     private TaskDescriptor(@NotNull TIntHashSet commits) {

@@ -29,6 +29,8 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStr
 import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -44,7 +46,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -124,6 +125,7 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
       namePanel.add(label, BorderLayout.NORTH);
 
       myProjectName = new JTextField();
+      label.setLabelFor(myProjectName);
       myProjectName.setColumns(40);
 
       final JPanel nameFieldPanel = new JPanel();
@@ -148,7 +150,7 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
     myPanel.add(myWholePanel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTHWEST,
                                                      GridBagConstraints.NONE, JBUI.insetsTop(4), 0, 0));
 
-    myPanel.setBorder(new EmptyBorder(0, 10, 0, 10));
+    myPanel.setBorder(JBUI.Borders.empty(0, 10));
     myProjectCompilerOutput.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
@@ -169,6 +171,10 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
         LanguageLevelProjectExtensionImpl.getInstanceImpl(myProject).setCurrentLevel(myLanguageLevelCombo.getSelectedLevel());
       }
     });
+    String accessibleName = StringUtil.removeHtmlTags(JavaUiBundle.message("project.language.level.name"));
+    String accessibleDescription = StringUtil.removeHtmlTags(JavaUiBundle.message("project.language.level.description"));
+    myLanguageLevelCombo.getAccessibleContext().setAccessibleName(accessibleName);
+    myLanguageLevelCombo.getAccessibleContext().setAccessibleDescription(accessibleDescription);
   }
 
   @Override
@@ -207,7 +213,7 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
     assert compilerProjectExtension != null : myProject;
 
     if (myProjectName != null && StringUtil.isEmptyOrSpaces(myProjectName.getText())) {
-      throw new ConfigurationException("Please, specify project name!");
+      throw new ConfigurationException(JavaUiBundle.message("project.configurable.dialog.message"));
     }
 
     ApplicationManager.getApplication().runWriteAction(() -> {
@@ -255,7 +261,7 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
   }
 
   @Override
-  public String getBannerSlogan() {
+  public @NlsContexts.DetailedDescription String getBannerSlogan() {
     return JavaUiBundle.message("project.roots.project.banner.text", myProject.getName());
   }
 
@@ -294,8 +300,12 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
   }
 
   @NotNull
-  public String getProjectName() {
-    return myProjectName != null ? myProjectName.getText().trim() : myProject.getName();
+  public @NlsSafe String getProjectName() {
+    if (myProjectName != null) {
+      @NlsSafe final String text = myProjectName.getText();
+      return text.trim();
+    }
+    return myProject.getName();
   }
 
   @Nullable
@@ -315,10 +325,16 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
       }
     };
     final JTextField textField = new ExtendableTextField();
+    String accessibleName = StringUtil.removeHtmlTags(JavaUiBundle.message("project.compiler.output.name"));
+    String accessibleDescription = StringUtil.removeHtmlTags(JavaUiBundle.message("project.compiler.output.description"));
+    textField.getAccessibleContext().setAccessibleName(accessibleName);
+    textField.getAccessibleContext().setAccessibleDescription(accessibleDescription);
     final FileChooserDescriptor outputPathsChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     InsertPathAction.addTo(textField, outputPathsChooserDescriptor);
     outputPathsChooserDescriptor.setHideIgnored(false);
-    BrowseFilesListener listener = new BrowseFilesListener(textField, "", JavaUiBundle.message("project.compiler.output"), outputPathsChooserDescriptor);
+    BrowseFilesListener listener = new BrowseFilesListener(textField, accessibleName,
+                                                           JavaUiBundle.message("project.compiler.output.description"),
+                                                           outputPathsChooserDescriptor);
     myProjectCompilerOutput = new FieldPanel(textField, null, null, listener, EmptyRunnable.getInstance());
     FileChooserFactory.getInstance().installFileCompletion(myProjectCompilerOutput.getTextField(), outputPathsChooserDescriptor, true, null);
   }

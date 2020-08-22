@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.conflicts;
 
 import com.intellij.diff.merge.MergeCallback;
@@ -22,6 +22,7 @@ import git4idea.repo.GitConflict.Status;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.status.GitStagingAreaHolder;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,6 +44,7 @@ public class GitMergeHandler {
     myDialogCustomizer = mergeDialogCustomizer;
   }
 
+  @Nls
   @NotNull
   public String loadMergeDescription() {
     return myDialogCustomizer.getMultipleFileMergeDescription(emptyList());
@@ -103,7 +105,7 @@ public class GitMergeHandler {
     return byRoot;
   }
 
-  public static class Resolver {
+  public static final class Resolver {
     @NotNull private final Project myProject;
     @NotNull private final GitConflict myConflict;
     private final boolean myIsReversed;

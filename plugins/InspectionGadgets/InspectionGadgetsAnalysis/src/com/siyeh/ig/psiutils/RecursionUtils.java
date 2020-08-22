@@ -19,7 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 
-public class RecursionUtils {
+public final class RecursionUtils {
 
   private RecursionUtils() {
     super();

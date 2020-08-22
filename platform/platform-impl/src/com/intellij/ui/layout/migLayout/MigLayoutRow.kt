@@ -7,6 +7,7 @@ import com.intellij.openapi.ui.OnePixelDivider
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.HideableTitledSeparator
 import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.TitledSeparator
@@ -18,6 +19,7 @@ import com.intellij.util.SmartList
 import net.miginfocom.layout.BoundSize
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LayoutUtil
+import org.jetbrains.annotations.Nls
 import javax.swing.*
 import javax.swing.border.LineBorder
 import kotlin.math.max
@@ -34,8 +36,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
 
     // as static method to ensure that members of current row are not used
     private fun createCommentRow(parent: MigLayoutRow,
-                                 comment: String,
-                                 maxLineLength: Int,
+                                 component: JComponent,
                                  indent: Int,
                                  isParentRowLabeled: Boolean,
                                  forComponent: Boolean,
@@ -43,7 +44,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       val cc = CC()
       val commentRow = parent.createChildRow()
       commentRow.isComment = true
-      commentRow.addComponent(ComponentPanelBuilder.createCommentComponent(comment, true, maxLineLength, true), cc)
+      commentRow.addComponent(component, cc)
       if (forComponent) {
         cc.horizontal.gapBefore = BoundSize.NULL_SIZE
         cc.skip = columnIndex
@@ -58,7 +59,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     }
 
     // as static method to ensure that members of current row are not used
-    private fun configureSeparatorRow(row: MigLayoutRow, title: String?) {
+    private fun configureSeparatorRow(row: MigLayoutRow, @NlsContexts.Separator title: String?) {
       val separatorComponent = if (title == null) SeparatorComponent(0, OnePixelDivider.BACKGROUND, null) else TitledSeparator(title)
       row.addTitleComponent(separatorComponent, isEmpty = title == null)
     }
@@ -381,11 +382,16 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
   private val JComponent.constraints: CC
     get() = builder.componentConstraints.getOrPut(this) { CC() }
 
-  fun addCommentRow(comment: String, maxLineLength: Int, forComponent: Boolean) {
+  fun addCommentRow(@Nls comment: String, maxLineLength: Int, forComponent: Boolean) {
+    val commentComponent = ComponentPanelBuilder.createCommentComponent(comment, true, maxLineLength, true)
+    addCommentRow(commentComponent, forComponent)
+  }
+
+  fun addCommentRow(component: JComponent, forComponent: Boolean) {
     gapAfter = "${spacing.commentVerticalTopGap}px!"
 
     val isParentRowLabeled = labeled
-    createCommentRow(this, comment, maxLineLength, indent, isParentRowLabeled, forComponent, columnIndex)
+    createCommentRow(this, component, indent, isParentRowLabeled, forComponent, columnIndex)
   }
 
   private fun shareCellWithPreviousComponentIfNeeded(component: JComponent, componentCC: CC): Boolean {
@@ -473,13 +479,13 @@ private class CellBuilderImpl<T : JComponent> internal constructor(
     return this
   }
 
-  override fun comment(text: String, maxLineLength: Int): CellBuilder<T> {
-    row.addCommentRow(text, maxLineLength, forComponent = false)
+  override fun comment(text: String, maxLineLength: Int, forComponent: Boolean): CellBuilder<T> {
+    row.addCommentRow(text, maxLineLength, forComponent)
     return this
   }
 
-  override fun commentComponent(text: String, maxLineLength: Int): CellBuilder<T> {
-    row.addCommentRow(text, maxLineLength, forComponent = true)
+  override fun commentComponent(component: JComponent, forComponent: Boolean): CellBuilder<T> {
+    row.addCommentRow(component, forComponent)
     return this
   }
 

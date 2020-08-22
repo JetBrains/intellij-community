@@ -47,7 +47,7 @@ public class UnnecessaryConstantArrayCreationExpressionInspection extends BaseIn
     return null;
   }
 
-  private static class UnnecessaryConstantArrayCreationExpressionFix extends InspectionGadgetsFix {
+  private static final class UnnecessaryConstantArrayCreationExpressionFix extends InspectionGadgetsFix {
     private final String myType;
 
     private UnnecessaryConstantArrayCreationExpressionFix(String type) {

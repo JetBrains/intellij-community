@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.TitledHandler;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
+import com.intellij.model.ModelBranch;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -83,7 +84,7 @@ public class RenameModuleAndDirectoryHandler implements RenameHandler, TitledHan
     );
   }
 
-  private static class RenameModuleAndDirectoryProcessor extends RenamePsiDirectoryProcessor {
+  private static final class RenameModuleAndDirectoryProcessor extends RenamePsiDirectoryProcessor {
 
     private final Module myModule;
 
@@ -121,6 +122,11 @@ public class RenameModuleAndDirectoryHandler implements RenameHandler, TitledHan
             getProject(), getPsiElement(), newName, getRefactoringScope(),
             isSearchInComments(), isSearchInNonJavaFiles()
           ) {
+            @Override
+            protected void performRefactoringInBranch(UsageInfo @NotNull [] usages, @NotNull ModelBranch branch) {
+              branch.runAfterMerge(() -> renameModule(myModule, newName));
+              super.performRefactoringInBranch(usages, branch);
+            }
 
             @Override
             public void performRefactoring(UsageInfo @NotNull [] usages) {

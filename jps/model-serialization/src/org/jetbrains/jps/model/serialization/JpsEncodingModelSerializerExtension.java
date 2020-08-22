@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.serialization;
 
 import com.intellij.openapi.util.JDOMUtil;
@@ -28,7 +28,7 @@ public class JpsEncodingModelSerializerExtension extends JpsModelSerializerExten
     return Collections.singletonList(new JpsGlobalEncodingSerializer());
   }
 
-  private static class JpsEncodingConfigurationSerializer extends JpsProjectExtensionSerializer {
+  private static final class JpsEncodingConfigurationSerializer extends JpsProjectExtensionSerializer {
     private JpsEncodingConfigurationSerializer() {
       super("encodings.xml", "Encoding");
     }
@@ -55,7 +55,7 @@ public class JpsEncodingModelSerializerExtension extends JpsModelSerializerExten
     }
   }
 
-  private static class JpsGlobalEncodingSerializer extends JpsGlobalExtensionSerializer {
+  private static final class JpsGlobalEncodingSerializer extends JpsGlobalExtensionSerializer {
     public static final String ENCODING_ATTRIBUTE = "default_encoding";
 
     private JpsGlobalEncodingSerializer() {

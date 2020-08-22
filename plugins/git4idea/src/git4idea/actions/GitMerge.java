@@ -15,13 +15,17 @@
  */
 package git4idea.actions;
 
+import com.intellij.dvcs.repo.Repository;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.GitUtil;
+import com.intellij.util.containers.ContainerUtil;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitMergeDialog;
-import git4idea.merge.MergeOption;
+import git4idea.merge.GitMergeOption;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +38,7 @@ public class GitMerge extends GitMergeAction {
   @Override
   @NotNull
   protected String getActionName() {
-    return GitBundle.getString("merge.action.name");
+    return GitBundle.message("merge.action.name");
   }
 
   @Nullable
@@ -44,22 +48,26 @@ public class GitMerge extends GitMergeAction {
     if (!dialog.showAndGet()) {
       return null;
     }
-    return new DialogState(dialog.getSelectedRoot(), GitBundle.message("merging.title", dialog.getSelectedRoot().getPath()),
-                           getHandlerProvider(project, dialog), dialog.getSelectedBranches(), dialog.shouldCommitAfterMerge());
+    return new DialogState(dialog.getSelectedRoot(),
+                           GitBundle.message("merging.title", dialog.getSelectedRoot().getPath()),
+                           getHandlerProvider(project, dialog),
+                           dialog.getSelectedBranches(),
+                           dialog.shouldCommitAfterMerge(),
+                           ContainerUtil.map(dialog.getSelectedOptions(), option -> option.getOption()));
   }
 
   @NotNull
   protected Supplier<GitLineHandler> getHandlerProvider(Project project, GitMergeDialog dialog) {
     VirtualFile root = dialog.getSelectedRoot();
-    Set<MergeOption> selectedOptions = dialog.getSelectedOptions();
+    Set<GitMergeOption> selectedOptions = dialog.getSelectedOptions();
     String commitMsg = dialog.getCommitMessage().trim();
     List<String> selectedBranches = dialog.getSelectedBranches();
 
     return () -> {
       GitLineHandler h = new GitLineHandler(project, root, GitCommand.MERGE);
 
-      for (MergeOption option : selectedOptions) {
-        if (option == MergeOption.COMMIT_MESSAGE) {
+      for (GitMergeOption option : selectedOptions) {
+        if (option == GitMergeOption.COMMIT_MESSAGE) {
           if (commitMsg.length() > 0) {
             h.addParameters(option.getOption(), commitMsg);
           }
@@ -75,5 +83,14 @@ public class GitMerge extends GitMergeAction {
 
       return h;
     };
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+    Project project = e.getProject();
+    if (project != null && !GitUtil.getRepositoriesInState(project, Repository.State.MERGING).isEmpty()) {
+      e.getPresentation().setEnabledAndVisible(false);
+    }
   }
 }

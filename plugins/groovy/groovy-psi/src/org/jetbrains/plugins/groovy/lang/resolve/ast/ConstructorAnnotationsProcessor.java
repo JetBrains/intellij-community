@@ -1,26 +1,24 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.ast;
 
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
-import com.intellij.psi.util.PropertyUtilBase;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiModifierList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.CollectClassMembersUtil;
 import org.jetbrains.plugins.groovy.transformations.AstTransformationSupport;
 import org.jetbrains.plugins.groovy.transformations.TransformationContext;
 import org.jetbrains.plugins.groovy.transformations.immutable.GrImmutableUtils;
 
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
+import static org.jetbrains.plugins.groovy.lang.resolve.ast.GrVisibilityUtils.getVisibility;
 /**
  * @author peter
  */
@@ -42,15 +40,17 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
 
     if (tupleConstructor != null &&
         typeDefinition.getCodeConstructors().length > 0 &&
-        !PsiUtil.getAnnoAttributeValue(tupleConstructor, "force", false)) {
+        !PsiUtil.getAnnoAttributeValue(tupleConstructor, TupleConstructorAttributes.FORCE, false)) {
       return;
     }
 
     final GrLightMethodBuilder fieldsConstructor = generateFieldConstructor(context, tupleConstructor, immutable, canonical);
-    final GrLightMethodBuilder mapConstructor = generateMapConstructor(typeDefinition);
-
     context.addMethod(fieldsConstructor);
-    context.addMethod(mapConstructor);
+
+    if (tupleConstructor == null || PsiUtil.getAnnoAttributeValue(tupleConstructor, TupleConstructorAttributes.DEFAULTS, true)) {
+      GrLightMethodBuilder mapConstructor = generateMapConstructor(typeDefinition);
+      context.addMethod(mapConstructor);
+    }
   }
 
   @NotNull
@@ -61,6 +61,8 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
     mapConstructor.setContainingClass(typeDefinition);
     return mapConstructor;
   }
+
+
 
   @NotNull
   private static GrLightMethodBuilder generateFieldConstructor(@NotNull TransformationContext context,
@@ -73,31 +75,25 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
     fieldsConstructor.setNavigationElement(typeDefinition);
     fieldsConstructor.setContainingClass(typeDefinition);
 
-    Set<String> excludes = new HashSet<>();
-    if (tupleConstructor != null) {
-      for (String s : PsiUtil.getAnnoAttributeValue(tupleConstructor, "excludes", "").split(",")) {
-        final String name = s.trim();
-        if (StringUtil.isNotEmpty(name)) {
-          excludes.add(name);
-        }
-      }
-    }
-
+    GeneratedConstructorCollector collector = new GeneratedConstructorCollector(tupleConstructor, immutable, fieldsConstructor);
 
     if (tupleConstructor != null) {
+      Visibility visibility = getVisibility(tupleConstructor, fieldsConstructor, Visibility.PUBLIC);
+      fieldsConstructor.addModifier(visibility.toString());
+
       final boolean superFields = PsiUtil.getAnnoAttributeValue(tupleConstructor, "includeSuperFields", false);
       final boolean superProperties = PsiUtil.getAnnoAttributeValue(tupleConstructor, "includeSuperProperties", false);
       if (superFields || superProperties) {
         PsiClass superClass = context.getHierarchyView().getSuperClass();
-        addParametersForSuper(superClass, fieldsConstructor, superFields, superProperties, new HashSet<>(), excludes);
+        addParametersForSuper(superClass, collector, new HashSet<>(), superProperties, superFields);
       }
     }
+    boolean includeProperties = tupleConstructor == null || PsiUtil.getAnnoAttributeValue(tupleConstructor, "includeProperties", true);
+    boolean includeFields = tupleConstructor != null ? PsiUtil.getAnnoAttributeValue(tupleConstructor, "includeFields", false) : !canonical;
+    boolean includeBeans = tupleConstructor != null && PsiUtil.getAnnoAttributeValue(tupleConstructor, "allProperties", false);
+    collector.accept(typeDefinition, includeProperties, includeBeans, includeFields);
 
-    addParameters(typeDefinition, fieldsConstructor,
-                  tupleConstructor == null || PsiUtil.getAnnoAttributeValue(tupleConstructor, "includeProperties", true),
-                  tupleConstructor != null ? PsiUtil.getAnnoAttributeValue(tupleConstructor, "includeFields", false) : !canonical,
-                  !immutable, excludes);
-
+    collector.build(fieldsConstructor);
     if (immutable) {
       fieldsConstructor.setOriginInfo("created by @Immutable");
     }
@@ -111,49 +107,17 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
   }
 
   private static void addParametersForSuper(@Nullable PsiClass typeDefinition,
-                                            GrLightMethodBuilder fieldsConstructor,
-                                            boolean superFields,
-                                            boolean superProperties, Set<? super PsiClass> visited, Set<String> excludes) {
+                                            @NotNull GeneratedConstructorCollector collector,
+                                            Set<? super PsiClass> visited,
+                                            boolean includeProperties,
+                                            boolean includeFields) {
     if (typeDefinition == null) {
       return;
     }
     if (!visited.add(typeDefinition) || GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT.equals(typeDefinition.getQualifiedName())) {
       return;
     }
-    addParametersForSuper(typeDefinition.getSuperClass(), fieldsConstructor, superFields, superProperties, visited, excludes);
-    addParameters(typeDefinition, fieldsConstructor, superProperties, superFields, true, excludes);
-  }
-
-  private static void addParameters(@NotNull PsiClass psiClass,
-                                    @NotNull GrLightMethodBuilder fieldsConstructor,
-                                    boolean includeProperties,
-                                    boolean includeFields,
-                                    boolean optional,
-                                    @NotNull Set<String> excludes) {
-
-    PsiMethod[] methods = CollectClassMembersUtil.getMethods(psiClass, false);
-    if (includeProperties) {
-      for (PsiMethod method : methods) {
-        if (!method.hasModifierProperty(PsiModifier.STATIC) && PropertyUtilBase.isSimplePropertySetter(method)) {
-          final String name = PropertyUtilBase.getPropertyNameBySetter(method);
-          if (!excludes.contains(name)) {
-            final PsiType type = PropertyUtilBase.getPropertyType(method);
-            assert type != null : method;
-            fieldsConstructor.addParameter(new GrLightParameter(name, type, fieldsConstructor).setOptional(optional));
-          }
-        }
-      }
-    }
-
-    final Map<String,PsiMethod> properties = PropertyUtilBase.getAllProperties(true, false, methods);
-    for (PsiField field : CollectClassMembersUtil.getFields(psiClass, false)) {
-      final String name = field.getName();
-      if (includeFields ||
-          includeProperties && field instanceof GrField && ((GrField)field).isProperty()) {
-        if (!excludes.contains(name) && !field.hasModifierProperty(PsiModifier.STATIC) && !properties.containsKey(name)) {
-          fieldsConstructor.addParameter(new GrLightParameter(name, field.getType(), fieldsConstructor).setOptional(optional));
-        }
-      }
-    }
+    addParametersForSuper(typeDefinition.getSuperClass(), collector, visited, includeProperties, includeFields);
+    collector.accept(typeDefinition, includeProperties, false, includeFields);
   }
 }

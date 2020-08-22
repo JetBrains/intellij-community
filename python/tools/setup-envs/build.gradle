@@ -30,10 +30,10 @@ envs {
     shouldUseZipsFromRepository = Os.isFamily(Os.FAMILY_WINDOWS)
   }
 
-  python "python27", "2.7.16"
+  python "python27", "2.7.18"
   python "python36", "3.6.8"
-  python "python37", "3.7.6"
-  python "python38", "3.8.1"
+  python "python37", "3.7.8"
+  python "python38", "3.8.5"
 
   if (System.getenv("PYCHARM_BOOTSTRAP_ANACONDA") == "true") {
     conda "Anaconda2", "Anaconda2-2018.12", "64", []

@@ -19,7 +19,7 @@ public final class TopLevelMatchingHandler extends MatchingHandler implements De
   }
 
   @Override
-  public boolean match(final PsiElement patternNode, final PsiElement matchedNode, final MatchContext matchContext) {
+  public boolean match(final PsiElement patternNode, final PsiElement matchedNode, final @NotNull MatchContext matchContext) {
     final boolean matched = delegate.match(patternNode, matchedNode, matchContext);
 
     if (matched) {
@@ -48,17 +48,17 @@ public final class TopLevelMatchingHandler extends MatchingHandler implements De
   }
 
   @Override
-  public boolean canMatch(PsiElement patternNode, PsiElement matchedNode, MatchContext context) {
+  public boolean canMatch(@NotNull PsiElement patternNode, PsiElement matchedNode, @NotNull MatchContext context) {
     return delegate.canMatch(patternNode, matchedNode, context);
   }
 
   @Override
-  public boolean matchSequentially(final NodeIterator patternNodes, final NodeIterator matchNodes, final MatchContext context) {
+  public boolean matchSequentially(final @NotNull NodeIterator patternNodes, final @NotNull NodeIterator matchNodes, final @NotNull MatchContext context) {
     return delegate.matchSequentially(patternNodes, matchNodes, context);
   }
 
   @Override
-  public boolean isMatchSequentiallySucceeded(final NodeIterator matchNodes) {
+  public boolean isMatchSequentiallySucceeded(final @NotNull NodeIterator matchNodes) {
     return true;
   }
 

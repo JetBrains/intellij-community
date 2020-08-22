@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.codeInsight.intention.*;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
@@ -209,7 +210,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
   }
 
   @Nullable
-  protected String getIntentionActionText() {
+  protected @IntentionName String getIntentionActionText() {
     return null;
   }
 
@@ -266,7 +267,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     };
   }
 
-  private static class ActionHyperlinkLabel extends HyperlinkLabel {
+  private static final class ActionHyperlinkLabel extends HyperlinkLabel {
     private final boolean myShowInIntentionMenu;
     private final ActionHandler myHandler;
 
@@ -294,7 +295,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     }
   }
 
-  private class MyIntentionAction implements IntentionActionWithOptions, Iconable, PriorityAction {
+  private final class MyIntentionAction implements IntentionActionWithOptions, Iconable, PriorityAction {
     private final List<IntentionAction> myOptions = new ArrayList<>();
 
     private MyIntentionAction() {
@@ -327,7 +328,6 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
       return myOptions.isEmpty() ? Collections.emptyList() : myOptions.subList(1, myOptions.size());
     }
 
-    @Nls
     @NotNull
     @Override
     public String getText() {
@@ -368,7 +368,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     }
   }
 
-  private static class MyLinkOption implements IntentionAction {
+  private static final class MyLinkOption implements IntentionAction {
     private final HyperlinkLabel myLabel;
 
     private MyLinkOption(HyperlinkLabel label) {
@@ -409,7 +409,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     }
   }
 
-  private static class MySettingsOption implements IntentionAction, Iconable, LowPriorityAction {
+  private static final class MySettingsOption implements IntentionAction, Iconable, LowPriorityAction {
     private final JLabel myLabel;
 
     private MySettingsOption(JLabel label) {

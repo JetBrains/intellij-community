@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.checkin;
 
 import com.intellij.diff.comparison.ComparisonManager;
@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -78,7 +79,7 @@ public class TodoCheckinHandlerWorker {
 
         PsiFile afterPsiFile = afterFile.isValid() ? PsiManager.getInstance(myProject).findFile(afterFile) : null;
         if (afterPsiFile == null) {
-          mySkipped.add(Pair.create(afterFilePath, ourInvalidFile));
+          mySkipped.add(Pair.create(afterFilePath, VcsBundle.message("checkin.invalid.file.s")));
           return null;
         }
 
@@ -94,13 +95,13 @@ public class TodoCheckinHandlerWorker {
 
         String rawBeforeContent = getRevisionContent(change.getBeforeRevision());
         if (rawBeforeContent == null) {
-          mySkipped.add(Pair.create(afterFilePath, ourCannotLoadPreviousRevision));
+          mySkipped.add(Pair.create(afterFilePath, VcsBundle.message("checkin.can.not.load.previous.revision")));
           return null;
         }
 
         Document afterDocument = FileDocumentManager.getInstance().getDocument(afterFile);
         if (afterDocument == null) {
-          mySkipped.add(Pair.create(afterFilePath, ourCannotLoadCurrentRevision));
+          mySkipped.add(Pair.create(afterFilePath, VcsBundle.message("checkin.can.not.load.current.revision")));
           return null;
         }
 
@@ -115,7 +116,7 @@ public class TodoCheckinHandlerWorker {
       }
       catch (DiffTooBigException e) {
         LOG.info("File " + afterFilePath.getPath() + " is too big and there are too many changes to build a diff");
-        mySkipped.add(Pair.create(afterFilePath, ourCannotLoadPreviousRevision));
+        mySkipped.add(Pair.create(afterFilePath, VcsBundle.message("checkin.can.not.load.previous.revision")));
       }
     }
   }
@@ -137,7 +138,7 @@ public class TodoCheckinHandlerWorker {
     }
   }
 
-  private class MyEditedFileProcessor {
+  private final class MyEditedFileProcessor {
     @NotNull private final Project myProject;
     @NotNull private final String myBeforeContent;
     @NotNull private final String myAfterContent;
@@ -242,7 +243,7 @@ public class TodoCheckinHandlerWorker {
 
   private static String getTodoPartText(String content, TextRange textRange) {
     final String fragment = textRange.substring(content);
-    return StringUtil.join(fragment.split("\\s"), " ");
+    return StringUtil.join(fragment.split("\\s"), " "); //NON-NLS
   }
 
   private static List<LineFragment> getLineFragments(@NotNull String beforeContent, @NotNull String afterContent)
@@ -262,10 +263,6 @@ public class TodoCheckinHandlerWorker {
     }
   }
 
-  private final static String ourInvalidFile = "Invalid file (s)";
-  private final static String ourCannotLoadPreviousRevision = "Can not load previous revision";
-  private final static String ourCannotLoadCurrentRevision = "Can not load current revision";
-
   private static final Convertor<TodoItem, TextRange> TODO_ITEM_CONVERTOR = o -> {
     TextRange textRange = o.getTextRange();
     List<TextRange> additionalRanges = o.getAdditionalTextRanges();
@@ -273,7 +270,7 @@ public class TodoCheckinHandlerWorker {
                          (additionalRanges.isEmpty() ? textRange : additionalRanges.get(additionalRanges.size() - 1)).getEndOffset() - 1);
   };
 
-  private static class LeftLineFragmentConvertor implements Convertor<LineFragment, TextRange> {
+  private static final class LeftLineFragmentConvertor implements Convertor<LineFragment, TextRange> {
     private final String myContent;
 
     private LeftLineFragmentConvertor(String content) {myContent = content;}
@@ -287,7 +284,7 @@ public class TodoCheckinHandlerWorker {
     }
   }
 
-  private static class RightLineFragmentConvertor implements Convertor<LineFragment, TextRange> {
+  private static final class RightLineFragmentConvertor implements Convertor<LineFragment, TextRange> {
     private final String myContent;
 
     private RightLineFragmentConvertor(String content) {myContent = content;}

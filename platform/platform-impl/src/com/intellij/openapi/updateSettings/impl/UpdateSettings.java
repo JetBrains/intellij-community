@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-@State(name = "UpdatesConfigurable", storages = @Storage(value = "updates.xml", roamingType = RoamingType.DISABLED, exportable = true), reportStatistic = true)
+@State(name = "UpdatesConfigurable", storages = @Storage(value = "updates.xml", roamingType = RoamingType.DISABLED, exportable = true))
 public class UpdateSettings implements PersistentStateComponent<UpdateOptions> {
   public static UpdateSettings getInstance() {
     return ServiceManager.getService(UpdateSettings.class);
@@ -53,6 +53,14 @@ public class UpdateSettings implements PersistentStateComponent<UpdateOptions> {
 
   public void setCheckNeeded(boolean value) {
     myState.setCheckNeeded(value);
+  }
+
+  public boolean isKeepPluginsArchive() {
+    return myState.isKeepPluginsArchive();
+  }
+
+  public void setKeepPluginsArchive(boolean value) {
+    myState.setKeepPluginsArchive(value);
   }
 
   public List<String> getEnabledExternalUpdateSources() {

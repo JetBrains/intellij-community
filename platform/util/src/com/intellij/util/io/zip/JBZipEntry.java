@@ -438,9 +438,14 @@ public class JBZipEntry implements Cloneable {
     }
   }
 
+  public void setDataFromStream(@NotNull InputStream stream) throws IOException {
+    myFile.getOutputStream().putNextEntryContent(this, stream);
+  }
+
   void doSetDataFromFile(File file) throws IOException {
     try (InputStream input = new BufferedInputStream(new FileInputStream(file))) {
-      myFile.getOutputStream().putNextEntryContent(this, file.length(), input);
+      myFile.getOutputStream().putNextEntryContent(this, input);
+      assert getSize() == file.length();
     }
   }
 
@@ -452,7 +457,7 @@ public class JBZipEntry implements Cloneable {
     }
     else {
       try(InputStream input = new BufferedInputStream(Files.newInputStream(file))) {
-        myFile.getOutputStream().putNextEntryContent(this, size, input);
+        myFile.getOutputStream().putNextEntryContent(this, input);
       }
     }
   }

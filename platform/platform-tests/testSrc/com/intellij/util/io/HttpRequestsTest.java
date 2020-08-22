@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import com.intellij.ide.IdeBundle;
@@ -11,6 +11,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
@@ -66,6 +67,7 @@ public class HttpRequestsTest {
   }
 
   @Test(timeout = 5000)
+  @SuppressWarnings("NonAsciiCharacters")
   public void readContent() throws IOException {
     myServer.createContext("/", ex -> {
       ex.getResponseHeaders().add("Content-Type", "text/plain; charset=koi8-r");
@@ -78,6 +80,7 @@ public class HttpRequestsTest {
   }
 
   @Test(timeout = 5000)
+  @SuppressWarnings("NonAsciiCharacters")
   public void gzippedContent() throws IOException {
     myServer.createContext("/", ex -> {
       ex.getResponseHeaders().add("Content-Type", "text/plain; charset=koi8-r");
@@ -119,7 +122,7 @@ public class HttpRequestsTest {
   public void post() throws IOException {
     Ref<String> receivedData = Ref.create();
     myServer.createContext("/", ex -> {
-      receivedData.set(StreamUtil.readText(ex.getRequestBody(), StandardCharsets.UTF_8));
+      receivedData.set(StreamUtil.readText(new InputStreamReader(ex.getRequestBody(), StandardCharsets.UTF_8)));
       ex.sendResponseHeaders(HTTP_OK, -1);
       ex.close();
     });

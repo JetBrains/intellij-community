@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -27,11 +13,13 @@ import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.JBCardLayout;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LightColors;
 import com.intellij.util.ui.CenteredIcon;
 import com.intellij.util.ui.GraphicsUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -52,7 +40,7 @@ public class CardActionsPanel extends JPanel {
     createCardForGroup(rootGroup, "root", null);
   }
 
-  private void createCardForGroup(ActionGroup group, String cardId, final String parentId) {
+  private void createCardForGroup(ActionGroup group, @NonNls String cardId, final String parentId) {
     JPanel card = new JPanel(new BorderLayout());
     if (!USE_ICONS) {
       card.setOpaque(false);
@@ -120,8 +108,8 @@ public class CardActionsPanel extends JPanel {
     return components;
   }
 
-  private class HeaderPanel extends JPanel {
-    private HeaderPanel(String text, final String parentId) {
+  private final class HeaderPanel extends JPanel {
+    private HeaderPanel(@NlsContexts.BorderTitle String text, final String parentId) {
       super(new BorderLayout(5, 5));
 
       setBackground(WelcomeScreenColors.CAPTION_BACKGROUND);

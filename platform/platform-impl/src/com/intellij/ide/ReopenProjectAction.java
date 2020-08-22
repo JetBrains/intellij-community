@@ -12,6 +12,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.BitUtil;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +30,7 @@ public class ReopenProjectAction extends AnAction implements DumbAware, LightEdi
   private final String myProjectName;
   private boolean myIsRemoved = false;
 
-  public ReopenProjectAction(@NotNull @SystemIndependent String projectPath, String projectName, String displayName) {
+  public ReopenProjectAction(@NotNull @SystemIndependent String projectPath, @NlsSafe String projectName, @NlsSafe String displayName) {
     myProjectPath = projectPath;
     myProjectName = projectName;
 
@@ -62,7 +63,7 @@ public class ReopenProjectAction extends AnAction implements DumbAware, LightEdi
                                   || BitUtil.isSet(modifiers, InputEvent.SHIFT_MASK)
                                   || e.getPlace() == ActionPlaces.WELCOME_SCREEN
                                   || LightEdit.owns(project);
-    RecentProjectsManagerBase.getInstanceEx().openProject(file, OpenProjectTask.withProjectToClose(project, forceOpenInNewFrame));
+    RecentProjectsManagerBase.getInstanceEx().openProject(file, OpenProjectTask.withProjectToClose(project, forceOpenInNewFrame).withRunConfigurators());
   }
 
   @SystemIndependent

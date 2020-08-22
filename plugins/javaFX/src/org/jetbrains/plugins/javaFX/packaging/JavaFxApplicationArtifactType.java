@@ -26,6 +26,7 @@ import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.javaFX.JavaFXBundle;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -38,7 +39,7 @@ public class JavaFxApplicationArtifactType extends ArtifactType {
   }
   
   protected JavaFxApplicationArtifactType() {
-    super("javafx", "JavaFx Application");
+    super("javafx", JavaFXBundle.message("javafx.application.title"));
   }
 
   @NotNull

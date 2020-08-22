@@ -45,15 +45,11 @@ import com.intellij.util.FileContentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ref.GCWatcher;
-import gnu.trove.THashSet;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @HeavyPlatformTestCase.WrapInCommand
 @SkipSlowTestLocally
@@ -439,7 +435,7 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
     ctrlD();
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-    Set<PsiReferenceExpression> refs = new THashSet<>();
+    Set<PsiReferenceExpression> refs = new HashSet<>();
     int offset=0;
     while (true) {
       offset = getEditor().getDocument().getText().indexOf("foo();", offset+1);
@@ -1172,5 +1168,35 @@ public class SmartPsiElementPointersTest extends JavaCodeInsightTestCase {
 
     GCWatcher.tracking(getPsiManager().findFile(vFile)).ensureCollected();
     assertInstanceOf(pointer.getElement(), PsiBinaryFile.class);
+  }
+
+  public void testRangePointersSurviveNonPhysicalTextAddition() {
+    checkRangePointersSurviveNonPhysicalTextAddition(true);
+    checkRangePointersSurviveNonPhysicalTextAddition(false);
+  }
+
+  private void checkRangePointersSurviveNonPhysicalTextAddition(boolean eventSystemEnabled) {
+    String text1 = "import a.Foo1Bar;";
+    String text2 = "import a.Foo2Bar;";
+    PsiFileFactory factory = PsiFileFactory.getInstance(myProject);
+
+    PsiJavaFile file = (PsiJavaFile)factory
+      .createFileFromText("a.java", JavaLanguage.INSTANCE, text2, eventSystemEnabled, false);
+    Document document = file.getViewProvider().getDocument();
+
+    PsiImportStatement statement = file.getImportList().getImportStatements()[0];
+    SmartPsiFileRange pointer = getPointerManager().createSmartPsiFileRangePointer(file, statement.getImportReference().getTextRange());
+    WriteCommandAction.runWriteCommandAction(myProject, () -> {
+      file.getImportList().add(createImportFromText(text1));
+    });
+
+    assertEquals(text2, statement.getText());
+    assertEquals(statement.getImportReference().getTextRange(), pointer.getRange());
+    assertTrue(document.getText(), document.getText().startsWith(text1));
+  }
+
+  private PsiImportStatement createImportFromText(String text) {
+    return ((PsiJavaFile)PsiFileFactory.getInstance(myProject).createFileFromText("a.java", JavaLanguage.INSTANCE, text))
+      .getImportList().getImportStatements()[0];
   }
 }

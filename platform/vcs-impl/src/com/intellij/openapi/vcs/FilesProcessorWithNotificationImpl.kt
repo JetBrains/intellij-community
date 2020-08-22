@@ -25,12 +25,16 @@ abstract class FilesProcessorWithNotificationImpl(
   abstract val forAllProjectsActionText: String?
   abstract val muteActionText: String
 
+  @NlsContexts.NotificationTitle
   abstract fun notificationTitle(): String
+  @NlsContexts.NotificationContent
   abstract fun notificationMessage(): String
-
-  protected open val viewFilesDialogTitle: @NlsContexts.DialogTitle String? = null
-  protected open val viewFilesDialogOkActionName: @NlsContexts.Button String = CommonBundle.getAddButtonText()
-  protected open val viewFilesDialogCancelActionName: @NlsContexts.Button String = CommonBundle.getCancelButtonText()
+  @NlsContexts.DialogTitle
+  protected open val viewFilesDialogTitle: String? = null
+  @NlsContexts.Button
+  protected open val viewFilesDialogOkActionName: String = CommonBundle.getAddButtonText()
+  @NlsContexts.Button
+  protected open val  viewFilesDialogCancelActionName: String = CommonBundle.getCancelButtonText()
 
   override fun doProcess(): Boolean {
     val processed = super.doProcess()
@@ -49,7 +53,13 @@ abstract class FilesProcessorWithNotificationImpl(
           }
           add(muteAction())
         }
-        notification = VcsNotifier.getInstance(project).notifyMinorInfo(true, notificationDisplayId, notificationTitle(), notificationMessage(), *notificationActions.toTypedArray())
+        notification = VcsNotifier.getInstance(project).notifyMinorInfo(
+          true,
+          notificationDisplayId,
+          notificationTitle(),
+          notificationMessage(),
+          *notificationActions.toTypedArray()
+        )
       }
     }
   }

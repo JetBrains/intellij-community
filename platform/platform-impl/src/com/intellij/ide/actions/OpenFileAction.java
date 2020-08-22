@@ -12,8 +12,11 @@ import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil;
 import com.intellij.ide.lightEdit.LightEditUtil;
 import com.intellij.ide.util.PsiNavigationSupport;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -26,6 +29,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -35,6 +39,7 @@ import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.projectImport.ProjectAttachProcessor;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.util.PlatformUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,9 +54,9 @@ import static com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace.We
 public class OpenFileAction extends AnAction implements DumbAware, LightEditCompatible {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final Project project = e.getProject();
-    final boolean showFiles = project != null || PlatformProjectOpenProcessor.getInstanceIfItExists() != null;
-    final FileChooserDescriptor descriptor = showFiles ? new ProjectOrFileChooserDescriptor() : new ProjectOnlyFileChooserDescriptor();
+    Project project = e.getProject();
+    boolean showFiles = project != null || PlatformProjectOpenProcessor.getInstanceIfItExists() != null;
+    FileChooserDescriptor descriptor = showFiles ? new ProjectOrFileChooserDescriptor() : new ProjectOnlyFileChooserDescriptor();
 
     VirtualFile toSelect = null;
     if (StringUtil.isNotEmpty(GeneralSettings.getInstance().getDefaultProjectDirectory())) {
@@ -77,8 +82,18 @@ public class OpenFileAction extends AnAction implements DumbAware, LightEditComp
   public static class OnWelcomeScreen extends OpenFileAction {
     @Override
     public void update(@NotNull AnActionEvent e) {
+      Presentation presentation = e.getPresentation();
       if (!NewWelcomeScreen.isNewWelcomeScreen(e)) {
-        e.getPresentation().setEnabledAndVisible(false);
+        presentation.setEnabledAndVisible(false);
+        return;
+      }
+      if (Registry.is("use.tabbed.welcome.screen")) {
+        presentation.setIcon(AllIcons.Welcome.Open);
+        presentation.setSelectedIcon(AllIcons.Welcome.OpenSelected);
+        presentation.setText(ActionsBundle.message("action.Tabbed.WelcomeScreen.OpenProject.text"));
+      }
+      else {
+        presentation.setIcon(AllIcons.Actions.Menu_open);
       }
     }
   }
@@ -98,19 +113,7 @@ public class OpenFileAction extends AnAction implements DumbAware, LightEditComp
   private static void doOpenFile(@Nullable Project project, @NotNull VirtualFile file) {
     Path filePath = file.toNioPath();
     if (Files.isDirectory(filePath)) {
-      boolean canAttach = ProjectAttachProcessor.canAttachToProject();
-      boolean preferAttach = PlatformUtils.isDataGrip() && project != null && canAttach && !ProjectUtil.isValidProjectPath(filePath);
-      Project openedProject;
-      if (preferAttach && PlatformProjectOpenProcessor.attachToProject(project, filePath, null)) {
-        return;
-      }
-      else if (canAttach) {
-        openedProject = ProjectManagerEx.getInstanceEx().openProject(filePath, PlatformProjectOpenProcessor.createOptionsToOpenDotIdeaOrCreateNewIfNotExists(filePath, project));
-      }
-      else {
-        openedProject = ProjectUtil.openOrImport(filePath, OpenProjectTask.withProjectToClose(project));
-      }
-      FileChooserUtil.setLastOpenedFile(openedProject, file);
+      openExistingDir(filePath, project);
       return;
     }
 
@@ -123,7 +126,7 @@ public class OpenFileAction extends AnAction implements DumbAware, LightEditComp
       else if (answer == Messages.YES) {
         Project openedProject = ProjectUtil.openOrImport(filePath, OpenProjectTask.withProjectToClose(project));
         if (openedProject != null) {
-          FileChooserUtil.setLastOpenedFile(openedProject, file);
+          FileChooserUtil.setLastOpenedFile(openedProject, filePath);
         }
         return;
       }
@@ -144,6 +147,28 @@ public class OpenFileAction extends AnAction implements DumbAware, LightEditComp
     else {
       PlatformProjectOpenProcessor.createTempProjectAndOpenFile(filePath, OpenProjectTask.withProjectToClose(project));
     }
+  }
+
+  // public for testing
+  @ApiStatus.Internal
+  public static @Nullable Project openExistingDir(@NotNull Path file, @Nullable Project currentProject) {
+    Project openedProject;
+    boolean canAttach = ProjectAttachProcessor.canAttachToProject();
+    boolean preferAttach = currentProject != null && canAttach && PlatformUtils.isDataGrip() && !ProjectUtil.isValidProjectPath(file);
+    if (preferAttach && PlatformProjectOpenProcessor.attachToProject(currentProject, file, null)) {
+      return null;
+    }
+    else if (canAttach) {
+      OpenProjectTask options = PlatformProjectOpenProcessor.createOptionsToOpenDotIdeaOrCreateNewIfNotExists(file, currentProject);
+      openedProject = ProjectManagerEx.getInstanceEx().openProject(file, options);
+    }
+    else {
+      openedProject = ProjectUtil.openOrImport(file, OpenProjectTask.withProjectToClose(currentProject));
+    }
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      FileChooserUtil.setLastOpenedFile(openedProject, file);
+    }
+    return openedProject;
   }
 
   @Messages.YesNoCancelResult

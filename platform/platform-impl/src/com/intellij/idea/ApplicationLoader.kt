@@ -20,7 +20,6 @@ import com.intellij.openapi.ui.DialogEarthquakeShaker
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.SystemPropertyBean
-import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.registry.RegistryKeyBean
 import com.intellij.openapi.wm.WeakFocusStackManager
 import com.intellij.openapi.wm.WindowManager
@@ -41,6 +40,7 @@ import java.awt.Font
 import java.awt.GraphicsEnvironment
 import java.awt.dnd.DragSource
 import java.io.IOException
+import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.CompletionStage
@@ -202,12 +202,6 @@ private fun startApp(app: ApplicationImpl,
       // should be after scheduling all app initialized listeners (because this activity is not important)
       if (!Main.isLightEdit()) {
         NonUrgentExecutor.getInstance().execute {
-          if (starter.commandName == null) {
-            runActivity("project converter provider preloading") {
-              app.extensionArea.getExtensionPoint<Any>("com.intellij.project.converterProvider").extensionList
-            }
-          }
-
           // execute in parallel to component loading - this functionality should be used only by plugin functionality that is used after start-up
           runActivity("system properties setting") {
             SystemPropertyBean.initSystemProperties()
@@ -412,9 +406,9 @@ private fun loadSystemFonts() {
 fun findStarter(key: String) = ApplicationStarter.EP_NAME.iterable.find { it == null || it.commandName == key }
 
 @ApiStatus.Internal
-fun initConfigurationStore(app: ApplicationImpl, configPath: String?) {
+fun initConfigurationStore(app: ApplicationImpl, configPath: Path?) {
   var activity = StartUpMeasurer.startMainActivity("beforeApplicationLoaded")
-  val effectiveConfigPath = FileUtilRt.toSystemIndependentName(configPath ?: PathManager.getConfigPath())
+  val effectiveConfigPath = configPath ?: PathManager.getConfigDir()
   for (listener in ApplicationLoadListener.EP_NAME.iterable) {
     try {
       (listener ?: break).beforeApplicationLoaded(app, effectiveConfigPath)
@@ -443,7 +437,9 @@ fun initConfigurationStore(app: ApplicationImpl, configPath: String?) {
  */
 @Suppress("SpellCheckingInspection")
 private fun processProgramArguments(args: List<String>): List<String> {
-  if (args.isEmpty()) return emptyList()
+  if (args.isEmpty()) {
+    return emptyList()
+  }
 
   val arguments = mutableListOf<String>()
   for (arg in args) {

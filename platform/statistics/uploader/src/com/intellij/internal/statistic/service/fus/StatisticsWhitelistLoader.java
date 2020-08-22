@@ -1,7 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.service.fus;
 
-import com.intellij.internal.statistic.service.fus.EventLogWhitelistLoadException.EventLogWhitelistLoadErrorType;
+import com.intellij.internal.statistic.eventLog.EventLogConnectionSettings;
+import com.intellij.internal.statistic.service.fus.EventLogMetadataLoadException.EventLogMetadataLoadErrorType;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService.WLGroup;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService.WLGroups;
 import com.intellij.internal.statistic.service.request.StatsHttpRequests;
@@ -43,40 +44,40 @@ public final class StatisticsWhitelistLoader {
    * @return empty whitelist if error happened during groups fetching or parsing
    */
   @NotNull
-  public static StatisticsWhitelistConditions getApprovedGroups(@NotNull String serviceUrl, @NotNull String userAgent) {
+  public static StatisticsWhitelistConditions getApprovedGroups(@NotNull String serviceUrl, @NotNull EventLogConnectionSettings settings) {
     try {
-      String content = loadWhiteListFromServer(serviceUrl, userAgent);
+      String content = loadWhiteListFromServer(serviceUrl, settings);
       return parseApprovedGroups(content);
     }
-    catch (EventLogWhitelistParseException | EventLogWhitelistLoadException e) {
+    catch (EventLogMetadataParseException | EventLogMetadataLoadException e) {
       return StatisticsWhitelistConditions.empty();
     }
   }
 
   @NotNull
-  public static String loadWhiteListFromServer(@Nullable String serviceUrl, @NotNull String userAgent)
-    throws EventLogWhitelistLoadException {
+  public static String loadWhiteListFromServer(@Nullable String serviceUrl, @NotNull EventLogConnectionSettings settings)
+    throws EventLogMetadataLoadException {
     if (isEmptyOrSpaces(serviceUrl)) {
-      throw new EventLogWhitelistLoadException(EventLogWhitelistLoadErrorType.EMPTY_SERVICE_URL);
+      throw new EventLogMetadataLoadException(EventLogMetadataLoadErrorType.EMPTY_SERVICE_URL);
     }
 
     try {
-      StatsRequestResult<String> result = StatsHttpRequests.request(serviceUrl, userAgent).send(r -> r.readAsString());
+      StatsRequestResult<String> result = StatsHttpRequests.request(serviceUrl, settings).send(r -> r.readAsString());
       if (result.isSucceed()) {
         return result.getResult();
       }
-      throw new EventLogWhitelistLoadException(EventLogWhitelistLoadErrorType.UNREACHABLE_SERVICE, result.getError());
+      throw new EventLogMetadataLoadException(EventLogMetadataLoadErrorType.UNREACHABLE_SERVICE, result.getError());
     }
     catch (StatsResponseException | IOException e) {
-      throw new EventLogWhitelistLoadException(EventLogWhitelistLoadErrorType.ERROR_ON_LOAD, e);
+      throw new EventLogMetadataLoadException(EventLogMetadataLoadErrorType.ERROR_ON_LOAD, e);
     }
   }
 
-  public static long lastModifiedWhitelist(@Nullable String serviceUrl, @NotNull String userAgent) {
+  public static long lastModifiedWhitelist(@Nullable String serviceUrl, @NotNull EventLogConnectionSettings settings) {
     if (isEmptyOrSpaces(serviceUrl)) return 0;
 
     try {
-      StatsRequestResult<Long> result = StatsHttpRequests.head(serviceUrl, userAgent).send(r -> r.lastModified());
+      StatsRequestResult<Long> result = StatsHttpRequests.head(serviceUrl, settings).send(r -> r.lastModified());
       return result.getResult() != null ? result.getResult() : 0L;
     }
     catch (StatsResponseException | IOException e) {
@@ -85,7 +86,7 @@ public final class StatisticsWhitelistLoader {
   }
 
   @NotNull
-  public static StatisticsWhitelistConditions parseApprovedGroups(@Nullable String content) throws EventLogWhitelistParseException {
+  public static StatisticsWhitelistConditions parseApprovedGroups(@Nullable String content) throws EventLogMetadataParseException {
     WLGroups groups = FUStatisticsWhiteListGroupsService.parseWhiteListContent(content);
     Map<String, StatisticsWhitelistGroupConditions> groupToCondition = new HashMap<>();
     for (WLGroup group : groups.groups) {

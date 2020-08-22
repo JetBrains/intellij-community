@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
@@ -6,12 +6,14 @@ import com.intellij.analysis.AnalysisBundle;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixProvider;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
@@ -19,7 +21,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.resolve.reference.impl.CachingReference;
@@ -30,7 +31,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.IndexingBundle;
-import gnu.trove.THashSet;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,6 +39,7 @@ import java.net.URI;
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 public class FileReference implements PsiFileReference, FileReferenceOwner, PsiPolyVariantReference,
@@ -93,7 +95,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
       Collection<PsiFileSystemItem> defaultContexts = myFileReferenceSet.getDefaultContexts();
       for (PsiFileSystemItem context : defaultContexts) {
         if (context == null) {
-          LOG.error(myFileReferenceSet.getClass() + " provided a null context");
+          LOG.error(PluginException.createByClass("Null context", null, myFileReferenceSet.getClass()));
         }
       }
       result.addAll(defaultContexts);
@@ -129,7 +131,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
       LOG.error("Recursion occurred for " + getClass() + " on " + getElement().getText());
       return ResolveResult.EMPTY_ARRAY;
     }
-    final Collection<ResolveResult> result = new THashSet<>();
+    Collection<ResolveResult> result = new LinkedHashSet<>();
     for (final PsiFileSystemItem context : contexts) {
       innerResolveInContext(referenceText, context, result, caseSensitive);
     }
@@ -246,8 +248,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
   }
 
   private static boolean caseSensitivityApplies(PsiDirectory context, boolean caseSensitive) {
-    VirtualFileSystem fs = context.getVirtualFile().getFileSystem();
-    return fs.isCaseSensitive() == caseSensitive;
+    return context.getVirtualFile().isCaseSensitive() == caseSensitive;
   }
 
   private boolean isAllowedEmptyPath(String text) {
@@ -257,6 +258,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
   }
 
   @NotNull
+  @Contract(pure = true)
   public String decode(@NotNull String text) {
     if (SystemInfo.isMac) {
       text = Normalizer.normalize(text, Normalizer.Form.NFC);
@@ -371,7 +373,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
 
   @Override
   @NotNull
-  public String getCanonicalText() {
+  public @NlsSafe String getCanonicalText() {
     return myText;
   }
 
@@ -542,9 +544,9 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
   @NotNull
   @Override
   public String getUnresolvedMessagePattern() {
-    return AnalysisBundle.message("error.cannot.resolve")
-           + " " + IndexingBundle.message(isLast() ? "terms.file" : "terms.directory")
-           + " '" + StringUtil.escapePattern(decode(getCanonicalText())) + "'";
+    return AnalysisBundle.message("error.cannot.resolve.file.or.dir",
+                                  IndexingBundle.message(isLast() ? "terms.file" : "terms.directory"),
+                                  StringUtil.escapePattern(decode(getCanonicalText())));
   }
 
   public final boolean isLast() {

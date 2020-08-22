@@ -12,7 +12,9 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Contract;
@@ -66,7 +68,7 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
             PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
             for (int i = 0; i < Math.min(parameters.length, args.length); i++) {
               PsiParameter parameter = parameters[i];
-              Nls.Capitalization capitalization = NlsInfo.getCapitalization(parameter);
+              Nls.Capitalization capitalization = getCapitalization(parameter);
               if (capitalization == Nls.Capitalization.NotSpecified) continue;
               ExpressionUtils.nonStructuralChildren(args[i])
                 .forEach(e -> checkCapitalization(e, getTitleValue(e, new HashSet<>()), holder, capitalization));
@@ -74,7 +76,38 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
           }
         }
       }
+
+      @NotNull
+      private Nls.Capitalization getCapitalization(PsiParameter parameter) {
+        Nls.Capitalization capitalization = NlsInfo.getCapitalization(parameter);
+        if (capitalization != Nls.Capitalization.NotSpecified) {
+          return capitalization;
+        }
+        PsiClassType classType = ObjectUtils.tryCast(parameter.getType(), PsiClassType.class);
+        if (classType != null && 
+            classType.equalsToText(CommonClassNames.JAVA_UTIL_FUNCTION_SUPPLIER+"<"+ CommonClassNames.JAVA_LANG_STRING+">")) {
+          PsiType typeParameter = ArrayUtil.getFirstElement(classType.getParameters());
+          if (typeParameter != null) {
+            NlsInfo info = NlsInfo.forType(typeParameter);
+            if (info instanceof NlsInfo.Localized) {
+              return ((NlsInfo.Localized)info).getCapitalization();
+            }
+          }
+        }
+        return Nls.Capitalization.NotSpecified;
+      }
     };
+  }
+
+  private static @Nls String getCapitalizationName(Nls.Capitalization capitalization) {
+    switch (capitalization) {
+      case Title:
+        return JavaI18nBundle.message("capitalization.kind.title");
+      case Sentence:
+        return JavaI18nBundle.message("capitalization.kind.sentence");
+      default:
+        throw new IllegalArgumentException();
+    }
   }
 
   private static void checkCapitalization(PsiExpression e,
@@ -83,7 +116,7 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
                                           Nls.Capitalization capitalization) {
     if (titleValue != null && !titleValue.isSatisfied(capitalization)) {
       holder.registerProblem(e, JavaI18nBundle
-                               .message("inspection.title.capitalization.description", titleValue, StringUtil.toLowerCase(capitalization.toString())),
+                               .message("inspection.title.capitalization.description", titleValue, getCapitalizationName(capitalization)),
                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                              titleValue.canFix() ? new TitleCapitalizationFix(titleValue, capitalization) : null);
     }
@@ -245,7 +278,7 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
 
     @Override
     public boolean isSatisfied(@NotNull Nls.Capitalization capitalization) {
-      return NlsCapitalizationUtil.isCapitalizationSatisfied(myText, capitalization);
+      return NlsCapitalizationUtil.isCapitalizationSatisfied(StringUtil.stripHtml(myText, true), capitalization);
     }
   }
 
@@ -269,12 +302,14 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
       Format[] formats = myFormat.getFormats();
       MessageFormat clone = (MessageFormat)myFormat.clone();
       clone.setFormats(new Format[formats.length]);
-      if (!NlsCapitalizationUtil.isCapitalizationSatisfied(clone.toPattern(), capitalization)) return false;
-      for (Format format : formats) {
+      if (!NlsCapitalizationUtil.isCapitalizationSatisfied(StringUtil.stripHtml(clone.toPattern(), true), capitalization)) return false;
+      boolean startsWithFormat = myFormat.toPattern().startsWith("{");
+      for (int i = 0; i < formats.length; i++) {
+        Format format = formats[i];
         if (format instanceof ChoiceFormat) {
           for (Object subValue : ((ChoiceFormat)format).getFormats()) {
             String str = subValue.toString();
-            if (capitalization == Nls.Capitalization.Sentence) {
+            if (capitalization == Nls.Capitalization.Sentence && (i > 0 || !startsWithFormat)) {
               str = "The " + str;
             }
             if (!NlsCapitalizationUtil.isCapitalizationSatisfied(str, capitalization)) return false;

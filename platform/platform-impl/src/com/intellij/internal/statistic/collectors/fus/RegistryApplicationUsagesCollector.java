@@ -6,7 +6,7 @@ import com.intellij.internal.statistic.beans.MetricEventFactoryKt;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.openapi.application.ExperimentalFeature;
@@ -59,7 +59,7 @@ public class RegistryApplicationUsagesCollector extends ApplicationUsagesCollect
     return result;
   }
 
-  public static class RegistryUtilValidator extends CustomWhiteListRule {
+  public static class RegistryUtilValidator extends CustomValidationRule {
     @Override
     public boolean acceptRuleId(@Nullable String ruleId) {
       return "registry_key".equals(ruleId);

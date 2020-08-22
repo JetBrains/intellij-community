@@ -28,6 +28,7 @@ import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -106,7 +107,7 @@ public class TestDiffRequestProcessor extends DiffRequestProcessor {
   }
 
   @NotNull
-  private static String getContentTitle(@PropertyKey(resourceBundle = ExecutionBundle.PATH_TO_BUNDLE) @NotNull String titleKey, @Nullable VirtualFile file) {
+  private static @NlsContexts.Label String getContentTitle(@PropertyKey(resourceBundle = ExecutionBundle.PATH_TO_BUNDLE) @NotNull String titleKey, @Nullable VirtualFile file) {
     String title = ExecutionBundle.message(titleKey);
     if (file != null) {
       title += " (" + file.getPresentableUrl() + ")";

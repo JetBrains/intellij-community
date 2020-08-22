@@ -6,6 +6,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiModifier;
+import com.intellij.refactoring.RefactorJBundle;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.UserActivityProviderComponent;
 import com.intellij.ui.awt.RelativePoint;
@@ -14,6 +15,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -81,7 +83,7 @@ public class VisibilityModifierChooser extends JLabel implements UserActivityPro
         slider.setValue(ArrayUtil.find(modifiers, myCurrentModifier) + 1);
         final JBPopup popup = JBPopupFactory.getInstance()
           .createComponentPopupBuilder(slider, null)
-          .setTitle("Effective Visibility")
+          .setTitle(RefactorJBundle.message("popup.title.effective.visibility"))
           .setCancelOnClickOutside(true)
           .setMovable(true)
           .createPopup();
@@ -97,7 +99,7 @@ public class VisibilityModifierChooser extends JLabel implements UserActivityPro
     }
   }
 
-  private static String getPresentableText(String modifier) {
+  private static @Nls String getPresentableText(String modifier) {
     return StringUtil.capitalize(VisibilityUtil.toPresentableText(modifier));
   }
 

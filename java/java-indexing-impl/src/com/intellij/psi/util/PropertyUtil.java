@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-public class PropertyUtil extends PropertyUtilBase {
+public final class PropertyUtil extends PropertyUtilBase {
   private PropertyUtil() {
   }
 

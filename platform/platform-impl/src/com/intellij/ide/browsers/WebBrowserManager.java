@@ -15,12 +15,13 @@ import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-@State(name = "WebBrowsersConfiguration", storages = @Storage("web-browsers.xml"), reportStatistic = true)
+@State(name = "WebBrowsersConfiguration", storages = @Storage("web-browsers.xml"))
 public class WebBrowserManager extends SimpleModificationTracker implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(WebBrowserManager.class);
 
@@ -44,7 +45,7 @@ public class WebBrowserManager extends SimpleModificationTracker implements Pers
     PREDEFINED_EDGE_ID
   };
 
-  private static final String EDGE_COMMAND = "microsoft-edge";
+  @NonNls private static final String EDGE_COMMAND = "microsoft-edge";
 
   private static List<ConfigurableWebBrowser> getPredefinedBrowsers() {
     return Arrays.asList(

@@ -1,10 +1,10 @@
 from typing import List, Optional, Union
 
 def a(x: List[int]) -> List[str]:
-    return <warning descr="Expected type 'List[str]', got 'List[List[int]]' instead">[x]</warning>
+    return <warning descr="Expected type 'list[str]', got 'list[list[int]]' instead">[x]</warning>
 
 def b(x: int) -> List[str]:
-    return <warning descr="Expected type 'List[str]', got 'List[int]' instead">[1,2]</warning>
+    return <warning descr="Expected type 'list[str]', got 'list[int]' instead">[1,2]</warning>
 
 def c() -> int:
     return <warning descr="Expected type 'int', got 'str' instead">'abc'</warning>

@@ -74,6 +74,8 @@ class UISettingsState : BaseState() {
   var showMemoryIndicator by property(false)
   @get:OptionTag("SHOW_WRITE_THREAD_INDICATOR")
   var showWriteThreadIndicator by property(false)
+  @get:OptionTag("ALLOW_MERGE_BUTTONS")
+  var allowMergeButtons by property(true)
   @get:OptionTag("SHOW_MAIN_TOOLBAR")
   var showMainToolbar by property(false)
   @get:OptionTag("SHOW_STATUS_BAR")
@@ -139,6 +141,8 @@ class UISettingsState : BaseState() {
   var alphaModeRatio by property(0.5f)
   @get:OptionTag("OVERRIDE_NONIDEA_LAF_FONTS")
   var overrideLafFonts by property(false)
+  @get:OptionTag("SHOW_ICONS_IN_MENUS")
+  var showIconsInMenus by property(true)
   // IDEADEV-33409, should be disabled by default on MacOS
   @get:OptionTag("DISABLE_MNEMONICS")
   var disableMnemonics by property(SystemInfo.isMac)
@@ -169,6 +173,8 @@ class UISettingsState : BaseState() {
   var navigateToPreview by property(false)
   @get:OptionTag("FULL_PATHS_IN_TITLE_BAR")
   var fullPathsInWindowHeader by property(false)
+  @get:OptionTag("BORDERLESS_MODE")
+  var mergeMainMenuWithWindowTitle by property(SystemInfo.isWin10OrNewer && SystemInfo.isJetBrainsJvm)
 
   var animatedScrolling by property(!SystemInfo.isMac || !SystemInfo.isJetBrainsJvm)
   var animatedScrollingDuration by property(

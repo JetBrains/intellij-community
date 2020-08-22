@@ -6,7 +6,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-public class JpsLoaderContext {
+public final class JpsLoaderContext {
   private final String commitId;
   private final SegmentedProgressIndicatorManager downloadIndicatorManager;
   private final Map<String, Map<String, BuildTargetState>> commitSourcesState;

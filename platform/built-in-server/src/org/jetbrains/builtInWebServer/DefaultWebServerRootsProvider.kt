@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.builtInWebServer
 
 import com.intellij.openapi.application.runReadAction
@@ -207,7 +207,7 @@ private fun findInModuleLibraries(path: String, module: Module, resolver: FileRe
     findInModuleLevelLibraries(module, it) { root, _ ->
       if (StringUtil.equalsIgnoreCase(root.nameSequence, libraryFileName)) resolver.resolve(relativePath, root, isLibrary = true, pathQuery = pathQuery) else null
     }
-  }.find { it != null }
+  }.firstOrNull { it != null }
 }
 
 private fun findInLibraries(project: Project, path: String, resolver: FileResolver, pathQuery: PathQuery): PathInfo? {
@@ -230,42 +230,47 @@ private fun getInfoForDocJar(file: VirtualFile, project: Project): PathInfo? {
   }
 }
 
-internal fun getModuleNameQualifier(project: Project, module: Module?): String? =
-  if (module != null && PlatformUtils.isIntelliJ() &&
-      !(module.name.equals(project.name, ignoreCase = true) || compareNameAndProjectBasePath(module.name, project))) module.name
+internal fun getModuleNameQualifier(project: Project, module: Module?): String? {
+  return if (module != null && PlatformUtils.isIntelliJ() &&
+             !(module.name.equals(project.name, ignoreCase = true) || compareNameAndProjectBasePath(module.name, project))) module.name
   else null
+}
 
-private fun findByRelativePath(path: String, roots: Array<VirtualFile>, resolver: FileResolver, moduleName: String?, pathQuery: PathQuery) =
-  roots.asSequence().map { resolver.resolve(path, it, moduleName, pathQuery = pathQuery) }.find { it != null }
+private fun findByRelativePath(path: String, roots: Array<VirtualFile>, resolver: FileResolver, moduleName: String?, pathQuery: PathQuery): PathInfo? {
+  return roots.asSequence()
+    .map { resolver.resolve(path, it, moduleName, pathQuery = pathQuery) }
+    .firstOrNull { it != null }
+}
 
 private fun findInLibrariesAndSdk(project: Project, rootTypes: Array<OrderRootType>, fileProcessor: (root: VirtualFile, module: Module?) -> PathInfo?): PathInfo? {
   fun findInLibraryTable(table: LibraryTable, rootType: OrderRootType) =
     table.libraryIterator.asSequence()
       .flatMap { it.getFiles(rootType).asSequence() }
       .map { fileProcessor(it, null) }
-      .find { it != null }
+      .firstOrNull { it != null }
 
   fun findInProjectSdkOrInAll(rootType: OrderRootType): PathInfo? {
-    val inSdkFinder = { sdk: Sdk -> sdk.rootProvider.getFiles(rootType).asSequence().map { fileProcessor(it, null) }.find { it != null } }
+    val inSdkFinder = { sdk: Sdk -> sdk.rootProvider.getFiles(rootType).asSequence().map { fileProcessor(it, null) }.firstOrNull { it != null } }
 
     val projectSdk = ProjectRootManager.getInstance(project).projectSdk
     return projectSdk?.let(inSdkFinder)
-           ?: ProjectJdkTable.getInstance().allJdks.asSequence().filter { it === projectSdk }.map { inSdkFinder(it) }.find { it != null }
+           ?: ProjectJdkTable.getInstance().allJdks.asSequence().filter { it === projectSdk }.map { inSdkFinder(it) }.firstOrNull { it != null }
   }
 
   return rootTypes.asSequence().map { rootType ->
     runReadAction {
       findInLibraryTable(LibraryTablesRegistrar.getInstance().getLibraryTable(project), rootType)
       ?: findInProjectSdkOrInAll(rootType)
-      ?: ModuleManager.getInstance(project).modules.asSequence().filter { !it.isDisposed }.map { findInModuleLevelLibraries(it, rootType, fileProcessor) }.find { it != null }
+      ?: ModuleManager.getInstance(project).modules.asSequence().filter { !it.isDisposed }.map { findInModuleLevelLibraries(it, rootType, fileProcessor) }.firstOrNull { it != null }
       ?: findInLibraryTable(LibraryTablesRegistrar.getInstance().libraryTable, rootType)
     }
   }.find { it != null }
 }
 
-private fun findInModuleLevelLibraries(module: Module, rootType: OrderRootType, fileProcessor: (root: VirtualFile, module: Module?) -> PathInfo?): PathInfo? =
-  module.rootManager.orderEntries.asSequence()
+private fun findInModuleLevelLibraries(module: Module, rootType: OrderRootType, fileProcessor: (root: VirtualFile, module: Module?) -> PathInfo?): PathInfo? {
+  return module.rootManager.orderEntries.asSequence()
     .filter { it is LibraryOrderEntry && it.isModuleLevel }
     .flatMap { it.getFiles(rootType).asSequence() }
     .map { fileProcessor(it, module) }
-    .find { it != null }
+    .firstOrNull { it != null }
+}

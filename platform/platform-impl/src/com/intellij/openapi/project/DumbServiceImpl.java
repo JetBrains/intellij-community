@@ -25,6 +25,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.ProgressManagerImpl;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase;
+import com.intellij.openapi.progress.util.RelayUiToDelegateIndicator;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.MessageType;
@@ -37,7 +38,6 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.openapi.wm.ex.StatusBarEx;
-import com.intellij.util.containers.Queue;
 import com.intellij.util.exception.FrequentErrorLogger;
 import com.intellij.util.indexing.IndexingBundle;
 import com.intellij.util.ui.DeprecationStripePanel;
@@ -48,9 +48,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
 
@@ -67,7 +65,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   private long myModificationCount;
 
 
-  private final Queue<Runnable> myRunWhenSmartQueue = new Queue<>(5);
+  private final Deque<Runnable> myRunWhenSmartQueue = new ArrayDeque<>(5);
   private final Project myProject;
 
   private final TrackedEdtActivityService myTrackedEdtActivityService;
@@ -332,10 +330,10 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       while (!isDumb()) {
         final Runnable runnable;
         synchronized (myRunWhenSmartQueue) {
-          if (myRunWhenSmartQueue.isEmpty()) {
+          runnable = myRunWhenSmartQueue.pollFirst();
+          if (runnable == null) {
             break;
           }
-          runnable = myRunWhenSmartQueue.pullFirst();
         }
         doRun(runnable);
       }
@@ -378,7 +376,9 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
       throw new AssertionError("Must be called on write thread without write action");
     }
 
-    while (myState.get() != State.SMART && !myProject.isDisposed()) {
+    while (!(myState.get() == State.SMART ||
+             myState.get() == State.WAITING_PROJECT_SMART_MODE_STARTUP_TASKS)
+           && !myProject.isDisposed()) {
       LockSupport.parkNanos(50_000_000);
       // polls next dumb mode task
       myTrackedEdtActivityService.executeAllQueuedActivities();
@@ -542,17 +542,16 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         shutdownTracker.registerStopperThread(self);
 
         DumbServiceAppIconProgress.registerForProgress(myProject, (ProgressIndicatorEx)visibleIndicator);
+        ProgressIndicatorEx relayToVisibleIndicator = new RelayUiToDelegateIndicator(visibleIndicator);
 
-        myGuiDumbTaskRunner.processTasksWithProgress(taskIndicator -> {
+        myGuiDumbTaskRunner.processTasksWithProgress(activity, taskIndicator -> {
           suspender.attachToProgress(taskIndicator);
-          taskIndicator.addStateDelegate(new AbstractProgressIndicatorExBase() {
-            @Override
-            protected void delegateProgressChange(@NotNull IndicatorAction action) {
-              super.delegateProgressChange(action);
-              action.execute((ProgressIndicatorEx)visibleIndicator);
-            }
-          });
-        }, activity);
+          taskIndicator.addStateDelegate(relayToVisibleIndicator);
+        },
+        taskIndicator -> {
+          ((AbstractProgressIndicatorExBase)taskIndicator).removeStateDelegate(relayToVisibleIndicator);
+        }
+        );
       }
       catch (Throwable unexpected) {
         LOG.error(unexpected);

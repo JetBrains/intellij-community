@@ -157,6 +157,16 @@ public class GitUntrackedFilesHolder implements Disposable, AsyncVfsEventsListen
   }
 
   /**
+   * Marks files as possibly untracked to be checked on the next {@link #retrieveUntrackedFilePaths} call.
+   * @param files files that are possibly untracked.
+   */
+  public void markPossiblyUntracked(@NotNull Collection<? extends FilePath> files) {
+    synchronized (LOCK) {
+      myPossiblyUntrackedFiles.addAll(files);
+    }
+  }
+
+  /**
    * Returns the list of unversioned files.
    * This method may be slow, if the full-refresh of untracked files is needed.
    * @return untracked files.

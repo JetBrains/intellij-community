@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -8,7 +8,6 @@ import com.intellij.ui.icons.ImageDescriptor;
 import com.intellij.ui.icons.ImageType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +33,7 @@ public final class IconsLoadTime extends DumbAwareAction {
     }
   }
 
-  public static class StatData {
+  public static final class StatData {
     public final ImageType type;
     public final boolean startup;
     public final int count;

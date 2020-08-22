@@ -30,13 +30,15 @@ import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getVcsForFile;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.util.containers.UtilKt.getIfSingle;
-import static org.jetbrains.idea.svn.SvnBundle.message;
+import static org.jetbrains.idea.svn.SvnBundle.messagePointer;
 import static org.jetbrains.idea.svn.commandLine.CommandUtil.escape;
 import static org.jetbrains.idea.svn.properties.ExternalsDefinitionParser.parseExternalsProperty;
 
 public class CreateExternalAction extends DumbAwareAction {
   public CreateExternalAction() {
-    super(message("svn.create.external.below.action"), message("svn.create.external.below.description"), null);
+    super(messagePointer("svn.create.external.below.action"),
+          messagePointer("svn.create.external.below.description"),
+          null);
   }
 
   @Override

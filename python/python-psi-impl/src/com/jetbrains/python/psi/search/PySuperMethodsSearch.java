@@ -29,7 +29,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class PySuperMethodsSearch extends ExtensibleQueryFactory<PsiElement, PySuperMethodsSearch.SearchParameters> {
+public final class PySuperMethodsSearch extends ExtensibleQueryFactory<PsiElement, PySuperMethodsSearch.SearchParameters> {
   public static final PySuperMethodsSearch INSTANCE = new PySuperMethodsSearch();
 
   private static PyFunction getBaseMethod(List<PsiElement> superMethods,

@@ -33,8 +33,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.THashSet;
+import com.intellij.util.execution.ParametersListUtil;
 import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.GradleModuleVersion;
 import org.gradle.tooling.model.GradleTask;
@@ -77,7 +78,7 @@ import static org.jetbrains.plugins.gradle.service.project.GradleProjectResolver
  * @author Vladislav.Soroka
  */
 @Order(Integer.MAX_VALUE - 1)
-public class CommonGradleProjectResolverExtension extends AbstractProjectResolverExtension {
+public final class CommonGradleProjectResolverExtension extends AbstractProjectResolverExtension {
   private static final Logger LOG = Logger.getInstance(CommonGradleProjectResolverExtension.class);
 
   @NotNull @NonNls private static final String UNRESOLVED_DEPENDENCY_PREFIX = "unresolved dependency - ";
@@ -139,7 +140,7 @@ public class CommonGradleProjectResolverExtension extends AbstractProjectResolve
         sourceSetData.internalSetTargetCompatibility(sourceSet.getTargetCompatibility());
         sourceSetData.internalSetSdkName(jdkName);
 
-        final Set<File> artifacts = new THashSet<>(FileUtil.FILE_HASHING_STRATEGY);
+        final Set<File> artifacts = FileCollectionFactory.createCanonicalFileSet();
         if ("main".equals(sourceSet.getName())) {
           final Set<File> defaultArtifacts = externalProject.getArtifactsByConfiguration().get("default");
           if (defaultArtifacts != null) {
@@ -400,7 +401,7 @@ public class CommonGradleProjectResolverExtension extends AbstractProjectResolve
       .flatMap(ss -> ss.getSources().entrySet().stream()
         .filter(e -> !e.getKey().isResource())
         .flatMap(e -> e.getValue().getSrcDirs().stream()))
-      .collect(Collectors.toCollection(() -> new THashSet<>(FileUtil.FILE_HASHING_STRATEGY)));
+      .collect(Collectors.toCollection(() -> FileCollectionFactory.createCanonicalFileSet()));
   }
 
   private static void removeAll(List<? extends IdeaSourceDirectory> list, List<? extends IdeaSourceDirectory> toRemove) {
@@ -682,7 +683,8 @@ public class CommonGradleProjectResolverExtension extends AbstractProjectResolve
           continue;
         }
         final String taskPath = isFlatProject ? rootProjectPath : moduleConfigPath;
-        TaskData taskData = new TaskData(GradleConstants.SYSTEM_ID, taskName, taskPath, task.getDescription());
+        String escapedTaskName = ParametersListUtil.escape(taskName);
+        TaskData taskData = new TaskData(GradleConstants.SYSTEM_ID, escapedTaskName, taskPath, task.getDescription());
         taskData.setGroup(taskGroup);
         taskData.setType(task.getType());
         taskData.setTest(task.isTest());

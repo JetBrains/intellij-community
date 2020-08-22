@@ -10,6 +10,7 @@ import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.data.GHPullRequestReviewEvent
 import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestPendingReview
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReview
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewCommentWithPendingReview
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.api.data.request.GHPullRequestDraftReviewComment
@@ -61,6 +62,14 @@ class GHPRReviewServiceImpl(private val progressManager: ProgressManager,
                               GHGQLRequests.PullRequest.Review.submit(repository.serverPath, reviewId, event, body))
     }.logError(LOG, "Error occurred while submitting review")
 
+  override fun updateReviewBody(progressIndicator: ProgressIndicator,
+                                reviewId: String,
+                                newText: String): CompletableFuture<GHPullRequestReview> =
+    progressManager.submitIOTask(progressIndicator) {
+      requestExecutor.execute(progressIndicator,
+                              GHGQLRequests.PullRequest.Review.updateBody(repository.serverPath, reviewId, newText))
+    }.logError(LOG, "Error occurred while updating review")
+
   override fun deleteReview(progressIndicator: ProgressIndicator,
                             pullRequestId: GHPRIdentifier,
                             reviewId: String): CompletableFuture<out Any?> =
@@ -68,11 +77,6 @@ class GHPRReviewServiceImpl(private val progressManager: ProgressManager,
       requestExecutor.execute(progressIndicator,
                               GHGQLRequests.PullRequest.Review.delete(repository.serverPath, reviewId))
     }.logError(LOG, "Error occurred while deleting review")
-
-  override fun getCommentMarkdownBody(progressIndicator: ProgressIndicator, commentId: String): CompletableFuture<String> =
-    progressManager.submitIOTask(progressIndicator) {
-      requestExecutor.execute(GHGQLRequests.PullRequest.Review.getCommentBody(repository.serverPath, commentId))
-    }.logError(LOG, "Error occurred while loading comment source")
 
   override fun addComment(progressIndicator: ProgressIndicator,
                           pullRequestId: GHPRIdentifier,

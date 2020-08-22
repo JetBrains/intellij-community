@@ -7,6 +7,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
+import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook;
 import com.intellij.openapi.editor.EditorCopyPasteHelper;
@@ -17,6 +18,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTextArea;
@@ -51,6 +53,7 @@ import static java.awt.event.InputEvent.*;
 import static javax.swing.ScrollPaneConstants.*;
 
 public class SearchTextArea extends JPanel implements PropertyChangeListener {
+  private static final JBColor BUTTON_SELECTED_BACKGROUND = JBColor.namedColor("SearchOption.selectedBackground", 0xDAE4ED, 0x5C6164);
   public static final String JUST_CLEARED_KEY = "JUST_CLEARED";
   public static final KeyStroke NEW_LINE_KEYSTROKE
     = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, (SystemInfo.isMac ? META_DOWN_MASK : CTRL_DOWN_MASK) | SHIFT_DOWN_MASK);
@@ -72,6 +75,12 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
     public void paintBackground(Graphics g, JComponent component, int state) {
       if (((MyActionButton)component).isRolloverState()) {
         super.paintBackground(g, component, state);
+        return;
+      }
+      if (state == ActionButtonComponent.SELECTED && component.isEnabled()) {
+        Rectangle rect = new Rectangle(component.getSize());
+        JBInsets.removeFrom(rect, component.getInsets());
+        paintLookBackground(g, rect, BUTTON_SELECTED_BACKGROUND);
       }
     }
   };
@@ -260,6 +269,9 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
     if (actions != null && actions.length > 0) {
       JPanel buttonsGrid = new NonOpaquePanel(new GridLayout(1, actions.length, 0, 0));
       for (AnAction action : actions) {
+        if (action instanceof TooltipDescriptionProvider) {
+          action.getTemplatePresentation().setDescription(FindBundle.message("find.embedded.buttons.description"));
+        }
         ActionButton button = new MyActionButton(action, true);
         addedButtons.add(button);
         buttonsGrid.add(button);
@@ -375,7 +387,7 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
     }
   }
 
-  private static class MyActionButton extends ActionButton {
+  private static final class MyActionButton extends ActionButton {
 
     private MyActionButton(@NotNull AnAction action, boolean focusable) {
       super(action, action.getTemplatePresentation().clone(), ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE);

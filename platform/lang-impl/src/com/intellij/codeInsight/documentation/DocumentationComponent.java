@@ -44,6 +44,7 @@ import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -74,6 +75,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.BuiltInServerManager;
 
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.HyperlinkEvent;
@@ -91,14 +93,15 @@ import java.awt.image.RenderedImage;
 import java.awt.image.renderable.RenderContext;
 import java.awt.image.renderable.RenderableImage;
 import java.awt.image.renderable.RenderableImageProducer;
+import java.io.IOException;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.net.MalformedURLException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.List;
-import java.util.*;
 import java.util.Vector;
+import java.util.*;
 import java.util.regex.Pattern;
 
 public class DocumentationComponent extends JPanel implements Disposable, DataProvider, WidthBasedLayout {
@@ -466,7 +469,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       public void hyperlinkUpdate(HyperlinkEvent e) {
         HyperlinkEvent.EventType type = e.getEventType();
         if (type == HyperlinkEvent.EventType.ACTIVATED) {
-          manager.navigateByLink(DocumentationComponent.this, e.getDescription());
+          manager.navigateByLink(DocumentationComponent.this, null, e.getDescription());
         }
       }
     };
@@ -966,9 +969,6 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
 
     String title = manager.getTitle(element);
-    if (title != null) {
-      title = StringUtil.escapeXmlEntities(title);
-    }
     if (externalUrl == null) {
       List<String> urls = provider.getUrlFor(element, originalElement);
       if (urls != null) {
@@ -995,27 +995,25 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       if (link != null) return link;
     }
 
-    return "<a href='external_doc'>External documentation" +
-           (title == null ? "" : (" for `" + title + "`")) +
-           "<icon src='AllIcons.Ide.External_link_arrow'></a></div>";
+    String linkText = "External documentation" + (title == null ? "" : " for `" + title + "`");
+    return HtmlChunk.link("external_doc", linkText)
+      .child(HtmlChunk.tag("icon").attr("src", "AllIcons.Ide.External_link_arrow")).toString();
   }
 
   private static String getLink(String title, String url) {
-    StringBuilder result = new StringBuilder();
     String hostname = getHostname(url);
     if (hostname == null) {
       return null;
     }
 
-    result.append("<a href='").append(url).append("'>");
+    String linkText;
     if (title == null) {
-      result.append("Documentation");
+      linkText = "Documentation on " + hostname;
     }
     else {
-      result.append("`").append(title).append("`");
+      linkText = "`" + title + "` on " + hostname;
     }
-    result.append(" on ").append(hostname).append("</a>");
-    return result.toString();
+    return HtmlChunk.link(url, linkText).toString();
   }
 
   static boolean shouldShowExternalDocumentationLink(DocumentationProvider provider,
@@ -1170,7 +1168,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
       private Image getImage() {
         if (!myImageLoaded) {
-          Image image = ImageLoader.loadFromUrl(imageUrl);
+          Image image = loadImageFromUrl();
           myImage = ImageUtil.toBufferedImage(image != null ?
                                               image :
                                               ((ImageIcon)UIManager.getLookAndFeelDefaults().get("html.missingImage")).getImage());
@@ -1178,6 +1176,26 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
         }
         return myImage;
       }
+
+      @Nullable
+      private Image loadImageFromUrl() {
+        Image image = ImageLoader.loadFromUrl(imageUrl);
+        if (image != null &&
+            image.getWidth(null) > 0 &&
+            image.getHeight(null) > 0) {
+          return image;
+        }
+        try {
+          BufferedImage direct = ImageIO.read(imageUrl);
+          if (direct != null) return ImageUtil.ensureHiDPI(direct, ScaleContext.create(myEditorPane));
+        }
+        catch (IOException e) {
+          //ignore
+        }
+
+        return image;
+      }
+
     }, null));
   }
 
@@ -1279,7 +1297,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   }
 
-  private class EditDocumentationSourceAction extends BaseNavigateToSourceAction {
+  private final class EditDocumentationSourceAction extends BaseNavigateToSourceAction {
 
     private EditDocumentationSourceAction() {
       super(true);
@@ -1312,7 +1330,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
 
-  private class ExternalDocAction extends AnAction implements HintManagerImpl.ActionToIgnore {
+  private final class ExternalDocAction extends AnAction implements HintManagerImpl.ActionToIgnore {
     private ExternalDocAction() {
       super(CodeInsightBundle.message("javadoc.action.view.external"), null, AllIcons.Actions.PreviousOccurence);
       registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EXTERNAL_JAVADOC).getShortcutSet(), null);
@@ -1519,7 +1537,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     HTMLDocument.Iterator link = getLink(n);
     if (link != null) {
       String href = (String)link.getAttributes().getAttribute(HTML.Attribute.HREF);
-      myManager.navigateByLink(this, href);
+      myManager.navigateByLink(this, null, href);
     }
   }
 
@@ -1792,7 +1810,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     }
   }
 
-  private class MyScalingImageView extends ImageView {
+  private final class MyScalingImageView extends ImageView {
     private MyScalingImageView(Element elem) {super(elem);}
 
     @Override

@@ -15,6 +15,7 @@
  */
 package com.siyeh.ipp.concatenation;
 
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -22,7 +23,6 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.*;
 import com.siyeh.ipp.base.Intention;
@@ -119,7 +119,6 @@ public class MakeCallChainIntoCallSequenceIntention extends Intention {
       toReplace = Objects.requireNonNull(((PsiMethodCallExpression)toReplace).getMethodExpression().getQualifierExpression());
     }
     String replacementBlock = generateReplacementBlock(callTexts, targetText, firstStatement);
-    final PsiElement appendStatementParent = appendStatement.getParent();
     PsiVariable variable = appendStatements(appendStatement, tracker, introduceVariable, replacementBlock);
     if (keepLastStatement) {
       tracker.replaceAndRestoreComments(toReplace, targetText);
@@ -127,8 +126,9 @@ public class MakeCallChainIntoCallSequenceIntention extends Intention {
       tracker.deleteAndRestoreComments(appendStatement);
     }
     if (variable != null) {
+      variable = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(variable);
       final PsiReference[] references = ReferencesSearch.search(variable, variable.getUseScope()).toArray(PsiReference.EMPTY_ARRAY);
-      HighlightUtils.showRenameTemplate(appendStatementParent, variable, references);
+      HighlightUtils.showRenameTemplate(PsiUtil.getVariableCodeBlock(variable, null), variable, references);
     }
   }
 

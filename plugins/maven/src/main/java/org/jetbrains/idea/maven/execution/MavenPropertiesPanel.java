@@ -15,10 +15,12 @@
  */
 package org.jetbrains.idea.maven.execution;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.AddEditRemovePanel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.project.MavenConfigurableBundle;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -85,8 +87,9 @@ public class MavenPropertiesPanel extends AddEditRemovePanel<Pair<String, String
     }
 
     @Override
+    @NlsContexts.ColumnName
     public String getColumnName(int c) {
-      return c == 0 ? "Name" : "Value";
+      return c == 0 ? MavenConfigurableBundle.message("column.name.name") : MavenConfigurableBundle.message("column.name.value");
     }
 
     @Override

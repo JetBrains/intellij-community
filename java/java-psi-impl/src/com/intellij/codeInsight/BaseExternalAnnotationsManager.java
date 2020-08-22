@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.intellij.lang.java.parser.JavaParser;
@@ -422,7 +422,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     });
   }
 
-  public static class AnnotationData {
+  public static final class AnnotationData {
     private final String annotationClassFqName;
     private final String annotationParameters;
 
@@ -487,7 +487,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
 
   private static final JavaParserUtil.ParserWrapper ANNOTATION = JavaParser.INSTANCE.getDeclarationParser()::parseAnnotation;
 
-  private class DataParsingSaxHandler extends DefaultHandler {
+  private final class DataParsingSaxHandler extends DefaultHandler {
     private final MostlySingularMultiMap<String, AnnotationData> myData = new MostlySingularMultiMap<>();
     private final PsiFile myFile;
 

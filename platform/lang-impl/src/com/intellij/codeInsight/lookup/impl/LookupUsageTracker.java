@@ -1,16 +1,21 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.lookup.impl;
 
+import com.intellij.codeInsight.completion.BaseCompletionService;
+import com.intellij.codeInsight.completion.CompletionContributor;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupEvent;
 import com.intellij.codeInsight.lookup.LookupListener;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsageCounterCollector;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
+import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.lang.Language;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
@@ -111,6 +116,16 @@ final class LookupUsageTracker {
                                     char completionChar) {
       // Basic info
       data.addLanguage(myLanguage);
+      PsiFile file = myLookup.getPsiFile();
+      if (file != null) {
+        VirtualFile vFile = file.getVirtualFile();
+        if (vFile != null) {
+          String schema = FileTypeUsageCounterCollector.findSchema(myLookup.getProject(), vFile);
+          if (schema != null) {
+            data.addData("schema", schema);
+          }
+        }
+      }
       data.addData("alphabetically", UISettings.getInstance().getSortLookupElementsLexicographically());
 
       // Quality
@@ -120,16 +135,17 @@ final class LookupUsageTracker {
       data.addData("selection_changed", mySelectionChangedCount);
       data.addData("typing", myTypingTracker.typing);
       data.addData("backspaces", myTypingTracker.backspaces);
-      CompletionChar completionCharExplained = CompletionChar.of(completionChar);
-      data.addData("completion_char", completionCharExplained.toString());
-      if (completionCharExplained == CompletionChar.OTHER) {
-        data.addData("completion_char_value", Character.getNumericValue(completionChar));
-      }
+      data.addData("completion_char", CompletionChar.of(completionChar).toString());
 
       // Details
       if (currentItem != null) {
         data.addData("token_length", currentItem.getLookupString().length());
         data.addData("query_length", myLookup.itemPattern(currentItem).length());
+        CompletionContributor contributor = currentItem.getUserData(BaseCompletionService.LOOKUP_ELEMENT_CONTRIBUTOR);
+        if (contributor != null) {
+          PluginInfo info = PluginInfoDetectorKt.getPluginInfo(contributor.getClass());
+          data.addData("contributor", info.isSafeToReport() ? contributor.getClass().getName() : "third.party");
+        }
       }
 
       // Performance

@@ -15,8 +15,11 @@
  */
 package com.siyeh.ig.junit;
 
-import com.intellij.codeInspection.AnnotateMethodFix;
+import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.TestFrameworks;
+import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.psi.*;
+import com.intellij.testIntegration.TestFramework;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -41,7 +44,7 @@ public class JUnit3StyleTestMethodInJUnit4ClassInspection extends BaseInspection
   @Nullable
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    return new DelegatingFix(new AnnotateMethodFix("org.junit.Test"));
+    return new DelegatingFix(new AddAnnotationPsiFix("org.junit.Test", (PsiMethod)infos[0]));
   }
 
   @Override
@@ -55,23 +58,25 @@ public class JUnit3StyleTestMethodInJUnit4ClassInspection extends BaseInspection
     public void visitMethod(PsiMethod method) {
       super.visitMethod(method);
       final String name = method.getName();
-      if (!name.startsWith("test")) {
-        return;
-      }
-      if (!TestUtils.isRunnable(method)) {
-        return;
-      }
-      if (TestUtils.isAnnotatedTestMethod(method)) {
-        return;
-      }
+      if (!name.startsWith("test")) return;
+      if (!TestUtils.isRunnable(method)) return;
       final PsiClass containingClass = method.getContainingClass();
-      if (TestUtils.isJUnitTestClass(containingClass)) {
-        return;
+      if (containingClass == null) return;
+      final TestFramework testFramework = TestFrameworks.detectFramework(containingClass);
+      if (testFramework != null) {
+        if (testFramework.isTestMethod(method, false)) {
+          @NonNls final String testFrameworkName = testFramework.getName();
+          if (testFrameworkName.equals("JUnit4") || testFrameworkName.equals("JUnit5")) return;
+        }
+        if (AnnotationUtil.isAnnotated(method, "org.junit.Ignore", 0) ||
+            testFramework.findSetUpMethod(containingClass) == method ||
+            testFramework.findTearDownMethod(containingClass) == method) {
+          return;
+        }
       }
-      if (!containsJUnit4Annotation(containingClass)) {
-        return;
-      }
-      registerMethodError(method);
+      if (TestUtils.isJUnitTestClass(containingClass)) return;
+      if (!containsJUnit4Annotation(containingClass)) return;
+      registerMethodError(method, method);
     }
   }
 

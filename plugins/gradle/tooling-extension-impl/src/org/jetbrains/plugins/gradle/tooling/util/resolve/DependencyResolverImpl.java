@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling.util.resolve;
 
 import com.intellij.openapi.util.Getter;
 import org.gradle.api.Action;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
+import org.gradle.api.Task;
 import org.gradle.api.artifacts.*;
 import org.gradle.api.artifacts.component.*;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
@@ -17,6 +18,7 @@ import org.gradle.api.plugins.WarPlugin;
 import org.gradle.api.specs.Spec;
 import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetOutput;
+import org.gradle.api.tasks.compile.AbstractCompile;
 import org.gradle.internal.impldep.com.google.common.collect.ArrayListMultimap;
 import org.gradle.internal.impldep.com.google.common.collect.HashMultimap;
 import org.gradle.internal.impldep.com.google.common.collect.Multimap;
@@ -36,6 +38,8 @@ import org.jetbrains.plugins.gradle.tooling.util.DependencyResolver;
 import org.jetbrains.plugins.gradle.tooling.util.ModuleComponentIdentifierImpl;
 import org.jetbrains.plugins.gradle.tooling.util.SourceSetCachedFinder;
 import org.jetbrains.plugins.gradle.tooling.util.resolve.deprecated.DeprecatedDependencyResolver;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.util.*;
@@ -46,6 +50,9 @@ import static java.util.Collections.*;
  * @author Vladislav.Soroka
  */
 public class DependencyResolverImpl implements DependencyResolver {
+
+  private static final Logger LOG = LoggerFactory.getLogger(DependencyResolverImpl.class);
+
   private static final boolean IS_NEW_DEPENDENCY_RESOLUTION_APPLICABLE =
     GradleVersion.current().getBaseVersion().compareTo(GradleVersion.version("4.5")) >= 0;
 
@@ -128,7 +135,7 @@ public class DependencyResolverImpl implements DependencyResolver {
     Collection<ExternalDependency> result = new ArrayList<ExternalDependency>();
 
     // resolve compile dependencies
-    FileCollection compileClasspath = sourceSet.getCompileClasspath();
+    FileCollection compileClasspath = getCompileClasspath(sourceSet);
     Collection<? extends ExternalDependency> compileDependencies = resolveDependenciesWithDefault(
       compileClasspath, COMPILE_SCOPE,
       new Getter<Collection<? extends ExternalDependency>>() {
@@ -165,6 +172,23 @@ public class DependencyResolverImpl implements DependencyResolver {
       ((AbstractExternalDependency)dependency).setClasspathOrder(++order);
     }
     return result;
+  }
+
+  private FileCollection getCompileClasspath(SourceSet sourceSet) {
+    final String compileTaskName = sourceSet.getCompileJavaTaskName();
+    Task compileTask = myProject.getTasks().findByName(compileTaskName);
+    if (compileTask instanceof AbstractCompile) {
+      try {
+        return ((AbstractCompile)compileTask).getClasspath();
+      } catch (Exception e) {
+        LOG.warn("Error obtaining compile classpath for java compilation task for [" +
+                 sourceSet.getName() +
+                 "] in project [" +
+                 myProject.getPath() +
+                 "]", e);
+      }
+    }
+    return sourceSet.getCompileClasspath();
   }
 
   private Collection<ExternalDependency> resolveDependencies(@Nullable Configuration configuration, @Nullable String scope) {
@@ -623,7 +647,7 @@ public class DependencyResolverImpl implements DependencyResolver {
     return new ModuleComponentIdentifierImpl(group, module, version);
   }
 
-  private static class MyModuleVersionSelector {
+  private static final class MyModuleVersionSelector {
     private final String name;
     private final String group;
     private final String version;

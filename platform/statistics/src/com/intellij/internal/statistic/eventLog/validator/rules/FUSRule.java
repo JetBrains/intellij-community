@@ -3,7 +3,7 @@ package com.intellij.internal.statistic.eventLog.validator.rules;
 
 import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
  * Used to validate events before recording it locally.
  *
  * @see SensitiveDataValidator
- * @see CustomWhiteListRule
+ * @see CustomValidationRule
  */
 public interface FUSRule {
     FUSRule[] EMPTY_ARRAY = new FUSRule[0];

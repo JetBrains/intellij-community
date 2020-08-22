@@ -187,6 +187,8 @@ public final class Strings {
 
   @Contract(pure = true)
   public static int indexOfAny(final @NotNull CharSequence s, final @NotNull String chars, final int start, int end) {
+    if (chars.length() == 0) return -1;
+
     end = Math.min(end, s.length());
     for (int i = Math.max(start, 0); i < end; i++) {
       if (containsChar(chars, s.charAt(i))) return i;
@@ -442,20 +444,16 @@ public final class Strings {
 
   @Contract(pure = true)
   public static int stringHashCodeInsensitive(@NotNull CharSequence chars, int from, int to) {
-    return stringHashCodeInsensitive(chars, from, to, 0);
+    return StringUtilRt.stringHashCodeInsensitive(chars, from, to);
   }
 
   @Contract(pure = true)
   public static int stringHashCodeInsensitive(@NotNull CharSequence chars, int from, int to, int prefixHash) {
-    int h = prefixHash;
-    for (int off = from; off < to; off++) {
-      h = 31 * h + toLowerCase(chars.charAt(off));
-    }
-    return h;
+    return StringUtilRt.stringHashCodeInsensitive(chars, from, to, prefixHash);
   }
 
   @Contract(pure = true)
   public static int stringHashCodeInsensitive(@NotNull CharSequence chars) {
-    return stringHashCodeInsensitive(chars, 0, chars.length());
+    return StringUtilRt.stringHashCodeInsensitive(chars);
   }
 }

@@ -18,7 +18,6 @@ package com.intellij.java.refactoring.convertToInstanceMethod;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.java.refactoring.LightRefactoringTestCase;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -92,16 +91,6 @@ public class ConvertToInstanceMethodTest extends LightRefactoringTestCase {
   @Override
   protected LanguageLevel getLanguageLevel() {
     return LanguageLevel.JDK_1_6;
-  }
-
-  public static class SyncTest extends ConvertToInstanceMethodTest { }
-
-  public static class BranchTest extends ConvertToInstanceMethodTest {
-    @Override
-    protected void setUp() throws Exception {
-      super.setUp();
-      Registry.get("run.refactorings.in.model.branch").setValue(true, getTestRootDisposable());
-    }
   }
 
 }

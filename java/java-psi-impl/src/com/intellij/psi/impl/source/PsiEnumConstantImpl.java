@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
@@ -219,8 +219,7 @@ public class PsiEnumConstantImpl extends JavaStubPsiElement<PsiFieldStub> implem
     @Override
     public TextRange getRangeInElement() {
       PsiIdentifier nameIdentifier = getNameIdentifier();
-      int startOffsetInParent = nameIdentifier.getStartOffsetInParent();
-      return new TextRange(startOffsetInParent, startOffsetInParent + nameIdentifier.getTextLength());
+      return TextRange.from(nameIdentifier.getStartOffsetInParent() + nameIdentifier.getTextLength(), 0);
     }
 
     @Override

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.confusing;
 
+import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.plugins.groovy.codeInspection.utils.SingleIntegerFieldOptionsPanel;
 
 import javax.swing.*;
@@ -23,7 +24,7 @@ public class GroovyOverlyComplexBooleanExpressionInspection extends GroovyOverly
 
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleIntegerFieldOptionsPanel("Maximum number of terms:",
-        this, "m_limit");
+    return new SingleIntegerFieldOptionsPanel(InspectionGadgetsBundle.message("overly.complex.boolean.expression.max.terms.option"),
+                                              this, "m_limit");
   }
 }

@@ -62,9 +62,9 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
   @SuppressWarnings("PublicField")
   public String loggerClassName = DEFAULT_FACTORY_CLASS_NAMES;
   @SuppressWarnings("PublicField")
-  public String loggerFactoryMethodName = DEFAULT_FACTORY_METHOD_NAMES;
+  public @NonNls String loggerFactoryMethodName = DEFAULT_FACTORY_METHOD_NAMES;
 
-  
+
   {
     parseString(loggerClassName, loggerFactoryClassNames);
     parseString(loggerFactoryMethodName, loggerFactoryMethodNames);
@@ -75,7 +75,8 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
       new ListWrappingTableModel(Arrays.asList(loggerFactoryClassNames, loggerFactoryMethodNames),
                                  InspectionGadgetsBundle.message("logger.factory.class.name"),
                                  InspectionGadgetsBundle.message("logger.factory.method.name")));
-    return UiUtils.createAddRemoveTreeClassChooserPanel(table, "Choose logger factory class");
+    final String title = InspectionGadgetsBundle.message("logger.initialized.with.foreign.options.title");
+    return UiUtils.createAddRemoveTreeClassChooserPanel(table, title);
   }
 
   @Override
@@ -121,10 +122,11 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
     XmlSerializer.serializeInto(this, element, new SerializationFilterBase() {
       @Override
       protected boolean accepts(@NotNull Accessor accessor, @NotNull Object bean, @Nullable Object beanValue) {
-        if ("loggerClassName".equals(accessor.getName()) && DEFAULT_FACTORY_CLASS_NAMES.equals(beanValue)) {
+        final @NonNls String factoryName = accessor.getName();
+        if ("loggerClassName".equals(factoryName) && DEFAULT_FACTORY_CLASS_NAMES.equals(beanValue)) {
           return false;
         }
-        if ("loggerFactoryMethodNames".equals(accessor.getName()) && DEFAULT_FACTORY_METHOD_NAMES.equals(beanValue)) {
+        if ("loggerFactoryMethodNames".equals(factoryName) && DEFAULT_FACTORY_METHOD_NAMES.equals(beanValue)) {
           return false;
         }
         return true;
@@ -132,7 +134,7 @@ public class LoggerInitializedWithForeignClassInspection extends BaseInspection 
     });
   }
 
-  private static class LoggerInitializedWithForeignClassFix extends InspectionGadgetsFix {
+  private static final class LoggerInitializedWithForeignClassFix extends InspectionGadgetsFix {
 
     private final String newClassName;
 

@@ -54,9 +54,11 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
   @NonNls protected static final String TOK_EXEC = PyNames.EXEC;
   @NonNls public static final String TOK_ASYNC = PyNames.ASYNC;
   @NonNls protected static final String TOK_AWAIT = PyNames.AWAIT;
-
-  private static final String EXPRESSION_EXPECTED = "Expression expected";
-  public static final String IDENTIFIER_EXPECTED = "Identifier expected";
+  @NonNls protected static final  String TOK_OBJECT = PyNames.OBJECT;
+  @NonNls protected static final  String TOK_TYPE = PyNames.TYPE;
+  @NonNls protected static final  String TOK_IMPORT = PyNames.IMPORT;
+  @NonNls protected static final  String TOK_IN = PyNames.IN;
+  @NonNls protected static final  String TOK_FROM = PyNames.FROM;
 
   protected enum Phase {NONE, FROM, FUTURE, IMPORT} // 'from __future__ import' phase
 
@@ -223,7 +225,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
         statementType = PyElementTypes.AUG_ASSIGNMENT_STATEMENT;
         builder.advanceLexer();
         if (!getExpressionParser().parseYieldOrTupleExpression(false)) {
-          builder.error(EXPRESSION_EXPECTED);
+          builder.error(PyPsiBundle.message("PARSE.expected.expression"));
         }
       }
       else if (atToken(PyTokenTypes.EQ) || (atToken(PyTokenTypes.COLON) && checkLanguageLevel && myContext.getLanguageLevel().isPy3K())) {
@@ -246,7 +248,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
             final boolean isYieldExpr = builder.getTokenType() == PyTokenTypes.YIELD_KEYWORD;
             if (!getExpressionParser().parseYieldOrTupleExpression(false)) {
               maybeExprMarker.drop();
-              builder.error(EXPRESSION_EXPECTED);
+              builder.error(PyPsiBundle.message("PARSE.expected.expression"));
               break;
             }
             if (builder.getTokenType() == PyTokenTypes.EQ) {
@@ -418,13 +420,13 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       if (myBuilder.getTokenType() == PyTokenTypes.COMMA) {
         myBuilder.advanceLexer();
         if (!getExpressionParser().parseSingleExpression(false)) {
-          myContext.getBuilder().error(EXPRESSION_EXPECTED);
+          myContext.getBuilder().error(PyPsiBundle.message("PARSE.expected.expression"));
         }
       }
       checkEndOfStatement();
     }
     else {
-      myContext.getBuilder().error(EXPRESSION_EXPECTED);
+      myContext.getBuilder().error(PyPsiBundle.message("PARSE.expected.expression"));
     }
     assertStatement.done(PyElementTypes.ASSERT_STATEMENT);
   }
@@ -559,7 +561,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
       return id_text;
     }
     else {
-      myBuilder.error(IDENTIFIER_EXPECTED);
+      myBuilder.error(PyPsiBundle.message("PARSE.expected.identifier"));
       idMarker.drop();
     }
     return null;
@@ -577,7 +579,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
   protected boolean parseDottedNameAsAware(boolean expect_as, boolean optional) {
     if (myBuilder.getTokenType() != PyTokenTypes.IDENTIFIER) {
       if (optional) return true;
-      myBuilder.error(IDENTIFIER_EXPECTED);
+      myBuilder.error(PyPsiBundle.message("PARSE.expected.identifier"));
       return false;
     }
     SyntaxTreeBuilder.Marker marker = myBuilder.mark();
@@ -588,7 +590,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     while (myBuilder.getTokenType() == PyTokenTypes.DOT) {
       marker = marker.precede();
       myBuilder.advanceLexer();
-      checkMatches(PyTokenTypes.IDENTIFIER, IDENTIFIER_EXPECTED);
+      checkMatches(PyTokenTypes.IDENTIFIER, PyPsiBundle.message("PARSE.expected.identifier"));
       marker.done(getReferenceType());
     }
     setExpectAsKeyword(old_expect_AS_kwd);
@@ -710,7 +712,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     final SyntaxTreeBuilder.Marker whilePart = myBuilder.mark();
     myBuilder.advanceLexer();
     if (!getExpressionParser().parseSingleExpression(false)) {
-      myBuilder.error(EXPRESSION_EXPECTED);
+      myBuilder.error(PyPsiBundle.message("PARSE.expected.expression"));
     }
     parseColonAndSuite();
     whilePart.done(PyElementTypes.WHILE_PART);
@@ -741,13 +743,13 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
         myBuilder.advanceLexer();
         if (myBuilder.getTokenType() != PyTokenTypes.COLON) {
           if (!getExpressionParser().parseSingleExpression(false)) {
-            myBuilder.error(EXPRESSION_EXPECTED);
+            myBuilder.error(PyPsiBundle.message("PARSE.expected.expression"));
           }
           setExpectAsKeyword(true);
           if (myBuilder.getTokenType() == PyTokenTypes.COMMA || myBuilder.getTokenType() == PyTokenTypes.AS_KEYWORD) {
             myBuilder.advanceLexer();
             if (!getExpressionParser().parseSingleExpression(true)) {
-              myBuilder.error(EXPRESSION_EXPECTED);
+              myBuilder.error(PyPsiBundle.message("PARSE.expected.expression"));
             }
           }
         }

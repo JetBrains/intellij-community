@@ -1010,7 +1010,7 @@ public final class PropertyInspectorTable extends JBTable implements DataProvide
       myPropertyNameRenderer = new ColoredTableCellRenderer() {
         @Override
         protected void customizeCellRenderer(
-          final JTable table,
+          final @NotNull JTable table,
           final Object value,
           final boolean selected,
           final boolean hasFocus,
@@ -1025,7 +1025,7 @@ public final class PropertyInspectorTable extends JBTable implements DataProvide
 
       myErrorRenderer = new ColoredTableCellRenderer() {
         @Override
-        protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+        protected void customizeCellRenderer(@NotNull JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
           setPaintFocusBorder(false);
         }
       };

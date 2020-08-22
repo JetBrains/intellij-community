@@ -69,7 +69,7 @@ abstract class ProductProperties {
    * An identifier which will be used to form names for directories where configuration and caches will be stored, usually a product name
    * without spaces with added version ('IntelliJIdea2016.1' for IntelliJ IDEA 2016.1)
    */
-  String getSystemSelector(ApplicationInfoProperties applicationInfo) {
+  String getSystemSelector(ApplicationInfoProperties applicationInfo, String buildNumber) {
     "${applicationInfo.productName}${applicationInfo.majorVersion}.${applicationInfo.minorVersionMainPart}"
   }
 
@@ -186,7 +186,7 @@ abstract class ProductProperties {
    */
   List<String> additionalModulesRequiredForScrambling = []
 
-  JetBrainsRuntimeDistribution jbrDistribution = JetBrainsRuntimeDistribution.VANILLA
+  JetBrainsRuntimeDistribution jbrDistribution = JetBrainsRuntimeDistribution.JCEF
 
   /**
    * Prefix for names of environment variables used by Windows and Linux distributions to allow users customize location of the product JDK

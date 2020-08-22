@@ -5,6 +5,7 @@ import com.google.common.collect.ImmutableList;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel.NewSdkAction;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -152,9 +153,9 @@ public abstract class SdkListItem {
   public static final class SuggestedItem extends SdkListItem {
     private final SdkType mySdkType;
     private final String myHomePath;
-    private final String myVersion;
+    private final @NlsSafe String myVersion;
 
-    SuggestedItem(@NotNull SdkType sdkType, @NotNull String version, @NotNull String homePath) {
+    SuggestedItem(@NotNull SdkType sdkType, @NlsSafe @NotNull String version, @NotNull String homePath) {
       mySdkType = sdkType;
       myHomePath = homePath;
       myVersion = version;
@@ -171,7 +172,7 @@ public abstract class SdkListItem {
     }
 
     @NotNull
-    public String getVersion() {
+    public @NlsSafe String getVersion() {
       return myVersion;
     }
   }

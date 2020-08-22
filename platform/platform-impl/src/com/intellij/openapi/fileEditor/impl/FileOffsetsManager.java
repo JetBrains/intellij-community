@@ -5,7 +5,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.text.CharArrayUtil;
-import gnu.trove.THashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.NotNull;
 
@@ -14,6 +13,7 @@ import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.Map;
 
 public final class FileOffsetsManager {
@@ -22,7 +22,7 @@ public final class FileOffsetsManager {
     return ServiceManager.getService(FileOffsetsManager.class);
   }
 
-  private final Map<VirtualFile, LineOffsets> myLineOffsetsMap = new THashMap<>();
+  private final Map<VirtualFile, LineOffsets> myLineOffsetsMap = new HashMap<>();
 
   private static class LineOffsets {
     private final long myFileModificationStamp;

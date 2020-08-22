@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -14,6 +14,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.WelcomeScreen;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.components.labels.LinkLabel;
@@ -136,7 +137,18 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
     return e.getPlace() == ActionPlaces.WELCOME_SCREEN;
   }
 
-  private static class WelcomeScreenGroup extends DefaultActionGroup {
+  public static void updateNewProjectIconIfWelcomeScreen(@NotNull AnActionEvent e) {
+    if (isNewWelcomeScreen(e)) {
+      Presentation presentation = e.getPresentation();
+      presentation.setIcon(AllIcons.General.Add);
+      if (Registry.is("use.tabbed.welcome.screen")) {
+        presentation.setIcon(AllIcons.Welcome.CreateNewProjectTab);
+        presentation.setSelectedIcon(AllIcons.Welcome.CreateNewProjectTabSelected);
+      }
+    }
+  }
+
+  private static final class WelcomeScreenGroup extends DefaultActionGroup {
     private WelcomeScreenGroup(Icon icon, String text, AnAction... actions) {
       super(text, true);
       for (AnAction action : actions) {

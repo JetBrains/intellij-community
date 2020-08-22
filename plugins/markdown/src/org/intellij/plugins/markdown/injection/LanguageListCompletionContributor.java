@@ -6,12 +6,14 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.DeferredIconImpl;
+import org.intellij.plugins.markdown.injection.alias.LanguageInfoString;
+import org.intellij.plugins.markdown.injection.alias.LanguageGuesser;
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes;
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes;
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile;
@@ -44,7 +46,7 @@ public class LanguageListCompletionContributor extends CompletionContributor {
   }
 
   private static void doFillVariants(@NotNull CompletionParameters parameters, @NotNull CompletionResultSet result) {
-    for (CodeFenceLanguageProvider provider : LanguageGuesser.INSTANCE.getCodeFenceLanguageProviders()) {
+    for (CodeFenceLanguageProvider provider : LanguageGuesser.INSTANCE.getCustomProviders()) {
       final List<LookupElement> lookups = provider.getCompletionVariantsForInfoString(parameters);
       for (LookupElement lookupElement : lookups) {
         result.addElement(LookupElementDecorator.withInsertHandler(lookupElement, (context, item) -> {
@@ -54,9 +56,11 @@ public class LanguageListCompletionContributor extends CompletionContributor {
       }
     }
 
-    for (Language language : Language.getRegisteredLanguages()) {
+    for (Language language : LanguageUtil.getInjectableLanguages()) {
+      String alias = LanguageInfoString.INSTANCE.findMainAlias(language.getID());
+
       final LookupElementBuilder lookupElementBuilder =
-        LookupElementBuilder.create(StringUtil.toLowerCase(language.getID()))
+        LookupElementBuilder.create(alias)
           .withIcon(createLanguageIcon(language))
           .withTypeText(language.getDisplayName(), true)
           .withInsertHandler(new MyInsertHandler(parameters));
@@ -73,7 +77,7 @@ public class LanguageListCompletionContributor extends CompletionContributor {
     });
   }
 
-  public static boolean isInMiddleOfUncollapsedFence(@Nullable PsiElement element, int offset) {
+  public static boolean isInMiddleOfUnCollapsedFence(@Nullable PsiElement element, int offset) {
     if (element == null) {
       return false;
     }
@@ -101,7 +105,7 @@ public class LanguageListCompletionContributor extends CompletionContributor {
 
     @Override
     public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
-      if (isInMiddleOfUncollapsedFence(myParameters.getOriginalPosition(), context.getStartOffset())) {
+      if (isInMiddleOfUnCollapsedFence(myParameters.getOriginalPosition(), context.getStartOffset())) {
         context.getDocument().insertString(context.getTailOffset(), "\n\n");
         context.getEditor().getCaretModel().moveCaretRelatively(1, 0, false, false, false);
       }

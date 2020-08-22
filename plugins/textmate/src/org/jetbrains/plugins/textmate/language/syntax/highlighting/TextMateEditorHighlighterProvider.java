@@ -23,7 +23,7 @@ public class TextMateEditorHighlighterProvider implements EditorHighlighterProvi
     return new TextMateLexerEditorHighlighter(SyntaxHighlighterFactory.getSyntaxHighlighter(fileType, project, virtualFile), colors);
   }
 
-  private static class TextMateLexerEditorHighlighter extends LexerEditorHighlighter {
+  private static final class TextMateLexerEditorHighlighter extends LexerEditorHighlighter {
     private TextMateLexerEditorHighlighter(@Nullable SyntaxHighlighter highlighter, @NotNull EditorColorsScheme colors) {
       super(highlighter != null ? highlighter : new TextMateHighlighter(null), colors);
     }

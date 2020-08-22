@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,9 +7,9 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.SmartList;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -17,7 +17,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-class RegisteredIndexes {
+final class RegisteredIndexes {
   private static final Logger LOG = Logger.getInstance(RegisteredIndexes.class);
 
   @NotNull
@@ -29,10 +29,9 @@ class RegisteredIndexes {
 
   private final List<ID<?, ?>> myIndicesForDirectories = new SmartList<>();
 
-  private final Set<ID<?, ?>> myNotRequiringContentIndices = new THashSet<>();
-  private final Set<ID<?, ?>> myRequiringContentIndices = new THashSet<>();
-  private final Set<ID<?, ?>> myPsiDependentIndices = new THashSet<>();
-  private final Set<FileType> myNoLimitCheckTypes = new THashSet<>();
+  private final Set<ID<?, ?>> myNotRequiringContentIndices = new HashSet<>();
+  private final Set<ID<?, ?>> myRequiringContentIndices = new HashSet<>();
+  private final Set<FileType> myNoLimitCheckTypes = new HashSet<>();
 
   private volatile boolean myExtensionsRelatedDataWasLoaded;
 
@@ -116,7 +115,9 @@ class RegisteredIndexes {
 
   void registerIndexExtension(@NotNull FileBasedIndexExtension<?, ?> extension) {
     ID<?, ?> name = extension.getName();
-    myUnsavedDataUpdateTasks.put(name, new DocumentUpdateTask(name));
+    if (extension.dependsOnFileContent()) {
+      myUnsavedDataUpdateTasks.put(name, new DocumentUpdateTask(name));
+    }
 
     if (!extension.dependsOnFileContent()) {
       if (extension.indexDirectories()) myIndicesForDirectories.add(name);
@@ -126,7 +127,6 @@ class RegisteredIndexes {
       myRequiringContentIndices.add(name);
     }
 
-    if (FileBasedIndexImpl.isPsiDependentIndex(extension)) myPsiDependentIndices.add(name);
     myNoLimitCheckTypes.addAll(extension.getFileTypesWithSizeLimitNotApplicable());
   }
 
@@ -156,21 +156,13 @@ class RegisteredIndexes {
     return myNotRequiringContentIndices;
   }
 
-  boolean isNotRequiringContentIndex(@NotNull ID<?, ?> indexId) {
-    return myNotRequiringContentIndices.contains(indexId);
-  }
-
   @NotNull
   List<ID<?, ?>> getIndicesForDirectories() {
     return myIndicesForDirectories;
   }
 
-  Set<ID<?, ?>> getPsiDependentIndices() {
-    return myPsiDependentIndices;
-  }
-
-  boolean isPsiDependentIndex(@NotNull ID<?, ?> indexId) {
-    return myPsiDependentIndices.contains(indexId);
+  boolean isContentDependentIndex(@NotNull ID<?, ?> indexId) {
+    return myRequiringContentIndices.contains(indexId);
   }
 
   UpdateTask<Document> getUnsavedDataUpdateTask(@NotNull ID<?, ?> indexId) {

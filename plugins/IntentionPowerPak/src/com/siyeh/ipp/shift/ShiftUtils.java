@@ -19,7 +19,7 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiType;
 
-class ShiftUtils {
+final class ShiftUtils {
 
   private ShiftUtils() {
     super();

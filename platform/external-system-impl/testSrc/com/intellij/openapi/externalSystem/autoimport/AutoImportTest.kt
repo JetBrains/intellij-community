@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings.AutoReloadType.*
@@ -9,7 +9,7 @@ import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.Modification
 import com.intellij.openapi.externalSystem.autoimport.ProjectStatus.ModificationType.INTERNAL
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.util.Parallel.Companion.parallel
-import junit.framework.TestCase
+import com.intellij.openapi.util.Ref
 import org.junit.Test
 import java.io.File
 
@@ -49,6 +49,26 @@ class AutoImportTest : AutoImportTestCase() {
 
       refreshProject()
       assertState(refresh = 3, notified = false, event = "empty project refresh")
+    }
+  }
+
+  @Test
+  fun `test modification tracking disabled by ES plugin`() {
+    val autoImportAwareCondition = Ref.create(true)
+    testWithDummyExternalSystem("settings.groovy", autoImportAwareCondition = autoImportAwareCondition) { settingsFile ->
+      assertState(refresh = 1, beforeRefresh = 1, afterRefresh = 1, event = "register project without cache")
+      settingsFile.appendString("println 'hello'")
+      assertState(refresh = 1, beforeRefresh = 1, afterRefresh = 1, event = "modification")
+      refreshProject()
+      assertState(refresh = 2, beforeRefresh = 2, afterRefresh = 2, event = "project refresh")
+      settingsFile.replaceString("hello", "hi")
+      assertState(refresh = 2, beforeRefresh = 2, afterRefresh = 2, event = "modification")
+      autoImportAwareCondition.set(false)
+      refreshProject()
+      assertState(refresh = 3, beforeRefresh = 2, afterRefresh = 2, event = "import with inapplicable autoImportAware")
+      autoImportAwareCondition.set(true)
+      refreshProject()
+      assertState(refresh = 4, beforeRefresh = 3, afterRefresh = 3, event = "empty project refresh")
     }
   }
 
@@ -732,6 +752,55 @@ class AutoImportTest : AutoImportTestCase() {
       }
       refreshProject()
       assertState(refresh = 2, notified = false, event = "project reload")
+    }
+  }
+
+  @Test
+  fun `test settings files modification partition`() {
+    simpleTest {
+      assertState(refresh = 1, notified = false, event = "register project without cache")
+
+      val settingsFile1 = createSettingsVirtualFile("settings1.groovy")
+      val settingsFile2 = createSettingsVirtualFile("settings2.groovy")
+      val settingsFile3 = createSettingsVirtualFile("settings3.groovy")
+      assertState(refresh = 1, notified = true, event = "settings files creation")
+
+      onceDuringRefresh {
+        assertFalse(it.hasUndefinedModifications)
+        assertEquals(pathsOf(), it.settingsFilesContext.updated)
+        assertEquals(pathsOf(settingsFile1, settingsFile2, settingsFile3), it.settingsFilesContext.created)
+        assertEquals(pathsOf(), it.settingsFilesContext.deleted)
+      }
+      refreshProject()
+      assertState(refresh = 2, notified = false, event = "project reload")
+
+      settingsFile1.delete()
+      settingsFile2.appendLine("println 'hello'")
+      settingsFile3.appendLine("")
+      assertState(refresh = 2, notified = true, event = "settings files modification")
+
+      onceDuringRefresh {
+        assertFalse(it.hasUndefinedModifications)
+        assertEquals(pathsOf(settingsFile2), it.settingsFilesContext.updated)
+        assertEquals(pathsOf(), it.settingsFilesContext.created)
+        assertEquals(pathsOf(settingsFile1), it.settingsFilesContext.deleted)
+      }
+      refreshProject()
+      assertState(refresh = 3, notified = false, event = "project reload")
+
+      settingsFile2.delete()
+      settingsFile3.delete()
+      markDirty()
+      assertState(refresh = 3, notified = true, event = "settings files deletion")
+
+      onceDuringRefresh {
+        assertTrue(it.hasUndefinedModifications)
+        assertEquals(pathsOf(), it.settingsFilesContext.updated)
+        assertEquals(pathsOf(), it.settingsFilesContext.created)
+        assertEquals(pathsOf(settingsFile2, settingsFile3), it.settingsFilesContext.deleted)
+      }
+      refreshProject()
+      assertState(refresh = 4, notified = false, event = "project reload")
     }
   }
 }

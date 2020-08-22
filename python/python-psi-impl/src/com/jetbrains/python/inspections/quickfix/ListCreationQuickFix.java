@@ -4,8 +4,10 @@ package com.jetbrains.python.inspections.quickfix;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -37,21 +39,28 @@ public class ListCreationQuickFix implements LocalQuickFix {
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-    StringBuilder stringBuilder = new StringBuilder();
     final PyAssignmentStatement assignmentStatement = myStatement.getElement();
     if (assignmentStatement == null) return;
     final PyExpression assignedValue = assignmentStatement.getAssignedValue();
     if (assignedValue == null) return;
 
-    for (PyExpression expression : ((PyListLiteralExpression)assignedValue).getElements()) {
-      stringBuilder.append(expression.getText()).append(", ");
-    }
-    for (PyExpressionStatement statement: myStatements) {
-      for (PyExpression expr : ((PyCallExpression)statement.getExpression()).getArguments())
-        stringBuilder.append(expr.getText()).append(", ");
-      statement.delete();
-    }
-    final String text = "[" + stringBuilder.substring(0, stringBuilder.length() - 2) + "]";
+    final List<PyExpression> items = buildLiteralItems(assignedValue, myStatements);
+    myStatements.forEach(PyExpressionStatement::delete);
+
+    final String text = "[" + StringUtil.join(items, PyExpression::getText, ", ") + "]";
     assignedValue.replace(elementGenerator.createExpressionFromText(LanguageLevel.forElement(assignedValue), text));
+  }
+
+  @NotNull
+  private static List<PyExpression> buildLiteralItems(@NotNull PyExpression assignedValue, List<PyExpressionStatement> statements) {
+    final List<PyExpression> values = new ArrayList<>();
+
+    ContainerUtil.addAll(values, ((PyListLiteralExpression)assignedValue).getElements());
+
+    for (PyExpressionStatement statement : statements) {
+      ContainerUtil.addAll(values, ((PyCallExpression)statement.getExpression()).getArguments());
+    }
+
+    return values;
   }
 }

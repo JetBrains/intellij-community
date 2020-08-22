@@ -14,19 +14,10 @@ import com.intellij.psi.search.scope.packageSet.NamedScope
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestSourceBasedTestCase
 import com.intellij.ui.tree.TreeTestUtil
-import com.intellij.ui.tree.ui.DefaultTreeUI
 import javax.swing.JTree
-import javax.swing.UIManager
 
 abstract class AbstractProjectViewTest : TestSourceBasedTestCase() {
   override fun getTestPath(): String? = null
-
-  override fun setUp() {
-    // TODO: move the following line to HeadlessLafManagerImpl
-    // TODO: when FilteringTreeBuilderTest#testFilter is fixed
-    UIManager.put("TreeUI", DefaultTreeUI::class.java.name)
-    super.setUp()
-  }
 
   protected val projectView: ProjectViewImpl
     get() = ProjectView.getInstance(project) as ProjectViewImpl

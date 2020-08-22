@@ -91,11 +91,11 @@ public class ToolWindowEP implements PluginAware {
    * @deprecated Do not use ToolWindowEP.
    */
   @Deprecated
-  public ToolWindowFactory getToolWindowFactory() {
+  public @Nullable ToolWindowFactory getToolWindowFactory() {
     return getToolWindowFactory(getPluginDescriptor());
   }
 
-  public ToolWindowFactory getToolWindowFactory(@NotNull PluginDescriptor pluginDescriptor) {
+  public @Nullable ToolWindowFactory getToolWindowFactory(@NotNull PluginDescriptor pluginDescriptor) {
     ToolWindowFactory factory = myFactory;
     if (factory != null) {
       return factory;

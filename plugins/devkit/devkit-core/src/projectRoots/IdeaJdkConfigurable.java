@@ -35,7 +35,7 @@ public class IdeaJdkConfigurable implements AdditionalDataConfigurable {
   private final JLabel mySandboxHomeLabel = new JLabel(DevKitBundle.message("sandbox.home.label"));
   private final TextFieldWithStoredHistory mySandboxHome = new TextFieldWithStoredHistory(SANDBOX_HISTORY);
 
-  private final JLabel myInternalJreLabel = new JLabel("Internal Java Platform:");
+  private final JLabel myInternalJreLabel = new JLabel(DevKitBundle.message("sdk.select.java.sdk.label"));
   private final DefaultComboBoxModel<Sdk> myJdksModel = new DefaultComboBoxModel<>();
   private final JComboBox<Sdk> myInternalJres = new ComboBox<>(myJdksModel);
 

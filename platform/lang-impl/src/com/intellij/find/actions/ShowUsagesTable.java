@@ -20,6 +20,7 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.usages.UsageToPsiElementProvider;
+import com.intellij.usages.UsageView;
 import com.intellij.usages.impl.GroupNode;
 import com.intellij.usages.impl.UsageAdapter;
 import com.intellij.usages.impl.UsageNode;
@@ -41,16 +42,18 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-class ShowUsagesTable extends JBTable implements DataProvider {
+public class ShowUsagesTable extends JBTable implements DataProvider {
   final Usage MORE_USAGES_SEPARATOR = new UsageAdapter();
   final Usage USAGES_OUTSIDE_SCOPE_SEPARATOR = new UsageAdapter();
   final Usage USAGES_FILTERED_OUT_SEPARATOR = new UsageAdapter();
   private static final int MARGIN = 2;
 
   private final ShowUsagesTableCellRenderer myRenderer;
+  private final UsageView myUsageView;
 
-  ShowUsagesTable(@NotNull ShowUsagesTableCellRenderer renderer) {
+  ShowUsagesTable(@NotNull ShowUsagesTableCellRenderer renderer, @NotNull UsageView usageView) {
     myRenderer = renderer;
+    myUsageView = usageView;
     ScrollingUtil.installActions(this);
     HintUpdateSupply.installDataContextHintUpdateSupply(this);
   }
@@ -70,6 +73,9 @@ class ShowUsagesTable extends JBTable implements DataProvider {
     }
     else if (LangDataKeys.POSITION_ADJUSTER_POPUP.is(dataId)) {
       return PopupUtil.getPopupContainerFor(this);
+    }
+    else if (UsageView.USAGE_VIEW_KEY.is(dataId)) {
+      return myUsageView;
     }
     return null;
   }
@@ -168,6 +174,12 @@ class ShowUsagesTable extends JBTable implements DataProvider {
     };
   }
 
+  public boolean isSeparatorNode(@Nullable Usage node) {
+    return node == USAGES_OUTSIDE_SCOPE_SEPARATOR
+           ||node == MORE_USAGES_SEPARATOR
+           ||node == USAGES_FILTERED_OUT_SEPARATOR;
+  }
+
   @Nullable
   private static PsiElement getPsiElementForHint(Object selectedValue) {
     if (selectedValue instanceof UsageNode) {
@@ -252,7 +264,7 @@ class ShowUsagesTable extends JBTable implements DataProvider {
     }
   }
 
-  static class MyModel extends ListTableModel<UsageNode> implements ModelDiff.Model<Object> {
+  static final class MyModel extends ListTableModel<UsageNode> implements ModelDiff.Model<Object> {
     private MyModel(@NotNull List<UsageNode> data, int cols) {
       super(cols(cols), data, 0);
     }

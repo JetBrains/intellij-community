@@ -27,7 +27,7 @@ import java.awt.*;
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
 
-public class ProcessPopup {
+class ProcessPopup {
   public static final Key<ProgressPanel> KEY = new Key<>("ProgressPanel");
 
   private final InfoAndProgressPanel myProgressPanel;
@@ -35,12 +35,12 @@ public class ProcessPopup {
   private final JScrollPane myContentPanel;
   private JBPopup myPopup;
 
-  public ProcessPopup(@NotNull InfoAndProgressPanel progressPanel) {
+  ProcessPopup(@NotNull InfoAndProgressPanel progressPanel) {
     myProgressPanel = progressPanel;
 
     myIndicatorPanel = new JBPanelWithEmptyText().withEmptyText(IdeBundle.message("progress.window.empty.text")).andTransparent();
     myIndicatorPanel.setLayout(new VerticalLayout(0));
-    myIndicatorPanel.setBorder(JBUI.Borders.empty(2, 0, 6, 0));
+    myIndicatorPanel.setBorder(JBUI.Borders.empty(10, 0, 18, 0));
     myIndicatorPanel.setFocusable(true);
 
     myContentPanel = new JBScrollPane(myIndicatorPanel, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER) {

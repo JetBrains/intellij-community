@@ -1,0 +1,55 @@
+import java.util.concurrent.TimeUnit
+
+task setupRkernel {
+  group = 'rplugin'
+  inputs.property('version', rkernelVersion)
+  def artifact = file("$buildDir/rplugin/rkernelVersion.txt")
+  outputs.file(artifact)
+  doLast {
+    artifact.write("$rkernelVersion")
+  }
+}
+
+['osx', 'windows.exe', 'linux'].each { osSuffix ->
+  task("setupRkernel${osSuffix.capitalize() - '.exe'}") {
+    setupRkernel.dependsOn(it)
+    group = setupRkernel.group
+    inputs.property('version', rkernelVersion)
+    def artifact = file("$buildDir/rplugin/rwrapper-x64-$osSuffix")
+    outputs.file(artifact)
+    doLast {
+      download {
+        src "https://cache-redirector.jetbrains.com/jetbrains.bintray.com/rplugin/$rkernelVersion-$artifact.name"
+        tempAndMove true
+        dest artifact
+        timeout TimeUnit.MINUTES.toMillis(30).toInteger()
+      }
+    }
+  }
+}
+
+task copyFsNotifierForRPlugin {
+  setupRkernel.dependsOn(it)
+  group = setupRkernel.group
+  outputs.file("$buildDir/rplugin/fsnotifier-linux")
+  copy {
+    from "$projectDir/../../bin/linux/"
+    into "$buildDir/rplugin/"
+    include "fsnotifier64"
+    rename "fsnotifier64", "fsnotifier-linux"
+  }
+  outputs.file("$buildDir/rplugin/fsnotifier-osx")
+  copy {
+    from "$projectDir/../../bin/mac/"
+    into "$buildDir/rplugin/"
+    include "fsnotifier"
+    rename "fsnotifier", "fsnotifier-osx"
+  }
+  outputs.file("$buildDir/rplugin/fsnotifier-win.exe")
+  copy {
+    from "$projectDir/../../bin/win/"
+    into "$buildDir/rplugin/"
+    include "fsnotifier.exe"
+    rename "fsnotifier.exe", "fsnotifier-win.exe"
+  }
+}

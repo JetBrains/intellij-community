@@ -3,8 +3,8 @@ package com.jetbrains.python.debugger.pydev;
 
 import com.intellij.openapi.diagnostic.Logger;
 
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 
 /**
@@ -64,12 +64,7 @@ public class RunCustomOperationCommand<T> extends AbstractCommand<T> {
   }
 
   private static String encode(String in) {
-    try {
-      return URLEncoder.encode(in, "UTF-8");
-    } catch (UnsupportedEncodingException e) {
-      LOG.error("Unreachable? UTF-8 is always supported.", e);
-      return "";
-    }
+    return URLEncoder.encode(in, StandardCharsets.UTF_8);
   }
 }
 

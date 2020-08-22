@@ -4,6 +4,7 @@ package com.intellij.psi.impl.source;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyKey;
@@ -14,6 +15,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.JavaPsiImplementationHelper;
+import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiFileEx;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
@@ -26,16 +28,21 @@ import com.intellij.psi.scope.*;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
+import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MostlySingularMultiMap;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.indexing.IndexingDataKeys;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 import static com.intellij.psi.scope.ElementClassHint.DeclarationKind.*;
@@ -272,7 +279,6 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     if (iterable != null && !ContainerUtil.process(iterable, new MyResolveCacheProcessor(processor, state))) return false;
 
     if (processor instanceof ClassResolverProcessor &&
-        isPhysical() &&
         (getUserData(PsiFileEx.BATCH_REFERENCE_PROCESSING) == Boolean.TRUE || myResolveCache.hasUpToDateValue()) &&
         !PsiUtil.isInsideJavadocComment(place)) {
       MostlySingularMultiMap<String, ResultWithContext> cache = myResolveCache.getValue();
@@ -349,7 +355,8 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
   }
 
   private boolean processOnDemandPackages(PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement place) {
-    boolean shouldProcessClasses = shouldProcess(processor, CLASS);
+    ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
+    boolean shouldProcessClasses = classHint == null || classHint.shouldProcess(CLASS);
     if (shouldProcessClasses) {
       if (!processCurrentPackage(processor, state, place)) return false;
       if (!processOnDemandTypeImports(processor, state, place)) return false;
@@ -368,11 +375,6 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
 
   private PsiImportStatement[] getImportStatements() {
     return getImportList() != null ? getImportList().getImportStatements() : PsiImportStatement.EMPTY_ARRAY;
-  }
-
-  private static boolean shouldProcess(PsiScopeProcessor processor, ElementClassHint.DeclarationKind kind) {
-    ElementClassHint classHint = processor.getHint(ElementClassHint.KEY);
-    return classHint == null || classHint.shouldProcess(kind);
   }
 
   private boolean processCurrentPackage(PsiScopeProcessor processor, ResolveState state, PsiElement place) {
@@ -400,18 +402,7 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
       final PsiClass targetElement = importStaticStatement.resolveTargetClass();
       if (targetElement != null) {
         processor.handleEvent(JavaScopeProcessorEvent.SET_CURRENT_FILE_CONTEXT, importStaticStatement);
-        if (shouldProcess(processor, METHOD) && !processMembers(state, processor, targetElement.getAllMethods())) return false;
-        if (shouldProcess(processor, FIELD) && !processMembers(state, processor, targetElement.getAllFields())) return false;
-        if (shouldProcess(processor, CLASS) && !processMembers(state, processor, targetElement.getAllInnerClasses())) return false;
-      }
-    }
-    return true;
-  }
-
-  private static boolean processMembers(ResolveState state, PsiScopeProcessor processor, PsiMember[] members) {
-    for (PsiMember member : members) {
-      if (!processor.execute(member, state)) {
-        return false;
+        if (!PsiClassImplUtil.processAllMembersWithoutSubstitutors(targetElement, processor, state)) return false;
       }
     }
     return true;
@@ -523,6 +514,8 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
     clearCaches();
   }
 
+  private static final Key<String> SHEBANG_SOURCE_LEVEL = Key.create("SHEBANG_SOURCE_LEVEL");
+  
   private LanguageLevel getLanguageLevelInner() {
     if (myOriginalFile instanceof PsiJavaFile) {
       return ((PsiJavaFile)myOriginalFile).getLanguageLevel();
@@ -533,6 +526,31 @@ public abstract class PsiJavaFileBaseImpl extends PsiFileImpl implements PsiJava
 
     VirtualFile virtualFile = getUserData(IndexingDataKeys.VIRTUAL_FILE);
     if (virtualFile == null) virtualFile = getViewProvider().getVirtualFile();
+
+    String sourceLevel = null;
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(virtualFile.getInputStream(), StandardCharsets.UTF_8))) {
+      String line = reader.readLine();
+      if (line != null && line.startsWith("#!")) {
+        List<String> params = ParametersListUtil.parse(line);
+        int srcIdx = params.indexOf("--source");
+        if (srcIdx > 0 && srcIdx + 1 < params.size()) {
+          sourceLevel = params.get(srcIdx + 1);
+          LanguageLevel sheBangLevel = LanguageLevel.parse(sourceLevel);
+          if (sheBangLevel != null) {
+            return sheBangLevel;
+          }
+        }
+      }
+    }
+    catch (Throwable ignored) { }
+    finally {
+      if (!Objects.equals(sourceLevel, virtualFile.getUserData(SHEBANG_SOURCE_LEVEL))) {
+        virtualFile.putUserData(SHEBANG_SOURCE_LEVEL, sourceLevel);
+        VirtualFile file = virtualFile;
+        ApplicationManager.getApplication().invokeLater(() -> FileContentUtilCore.reparseFiles(file), 
+                                                        ApplicationManager.getApplication().getDisposed());
+      }
+    }
 
     return JavaPsiImplementationHelper.getInstance(getProject()).getEffectiveLanguageLevel(virtualFile);
   }

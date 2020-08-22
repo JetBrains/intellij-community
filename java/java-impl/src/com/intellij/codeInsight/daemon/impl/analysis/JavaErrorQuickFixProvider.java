@@ -30,9 +30,22 @@ public class JavaErrorQuickFixProvider implements ErrorQuickFixProvider {
     if (parent instanceof PsiJavaFile && errorElement.getErrorDescription().equals(
       JavaPsiBundle.message("expected.class.or.interface"))) {
       PsiElement child = errorElement.getFirstChild();
-      if (child instanceof PsiIdentifier && child.getText().equals(PsiKeyword.RECORD)) {
-        HighlightUtil.registerIncreaseLanguageLevelFixes(
-          new QuickFixActionRegistrarImpl(highlightInfo), errorElement, HighlightingFeature.RECORDS);
+      if (child instanceof PsiIdentifier) {
+        HighlightingFeature feature;
+        switch (child.getText()) {
+          case PsiKeyword.RECORD:
+            feature = HighlightingFeature.RECORDS;
+            break;
+          case PsiKeyword.SEALED:
+            feature = HighlightingFeature.SEALED_CLASSES;
+            break;
+          default:
+            feature = null;
+            break;
+        }
+        if (feature != null) {
+          HighlightUtil.registerIncreaseLanguageLevelFixes(new QuickFixActionRegistrarImpl(highlightInfo), errorElement, feature);
+        }
       }
     }
   }

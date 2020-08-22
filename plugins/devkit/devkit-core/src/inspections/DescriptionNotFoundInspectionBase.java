@@ -2,9 +2,9 @@
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.codeInspection.InspectionManager;
-import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -29,7 +29,7 @@ abstract class DescriptionNotFoundInspectionBase extends DevKitUastInspectionBas
   }
 
   @Override
-  public ProblemDescriptor @Nullable [] checkClass(@NotNull UClass uClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
+  public final ProblemDescriptor @Nullable [] checkClass(@NotNull UClass uClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (uClass instanceof UAnonymousClass) return null;
 
     PsiClass psiClass = uClass.getJavaPsi();
@@ -37,57 +37,71 @@ abstract class DescriptionNotFoundInspectionBase extends DevKitUastInspectionBas
     final Module module = ModuleUtilCore.findModuleForPsiElement(psiClass);
     if (nameIdentifier == null || module == null || !PsiUtil.isInstantiable(psiClass)) return null;
 
-    final PsiClass base = JavaPsiFacade.getInstance(manager.getProject()).findClass(getClassName(), psiClass.getResolveScope());
+    final PsiClass base = JavaPsiFacade.getInstance(manager.getProject()).findClass(myDescriptionType.getClassName(),
+                                                                                    psiClass.getResolveScope());
     if (base == null || !psiClass.isInheritor(base, true)) return null;
 
-    String descriptionDir = DescriptionCheckerUtil.getDescriptionDirName(psiClass);
-    if (StringUtil.isEmptyOrSpaces(descriptionDir)) {
+    if (skipIfNotRegistered(psiClass)) {
       return null;
+    }
+
+    ProblemsHolder holder = new ProblemsHolder(manager, psiClass.getContainingFile(), isOnTheFly);
+    boolean registered;
+    if (myDescriptionType.isFixedDescriptionFilename()) {
+      registered = checkFixedDescription(holder, module, psiClass, uClass);
+    }
+    else {
+      registered = checkDynamicDescription(holder, module, psiClass);
+    }
+
+    if (registered) return holder.getResultsArray();
+
+
+    final PsiElement highlightElement = getInspectionHighlightElement(uClass);
+    if (highlightElement == null) return null;
+
+    holder.registerProblem(highlightElement, getHasNotDescriptionError(module, psiClass),
+                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                           new CreateHtmlDescriptionFix(getDescriptionDir(module, psiClass), module, myDescriptionType));
+    return holder.getResultsArray();
+  }
+
+  @Nullable
+  private static PsiElement getInspectionHighlightElement(UClass uClass) {
+    return UElementKt.getSourcePsiElement(uClass.getUastAnchor());
+  }
+
+  protected abstract boolean skipIfNotRegistered(PsiClass epClass);
+
+  protected boolean checkDynamicDescription(ProblemsHolder holder, Module module, PsiClass psiClass) {
+    throw new IllegalStateException("must be implemented for " + getClass());
+  }
+
+  protected boolean checkFixedDescription(ProblemsHolder holder,
+                                          Module module,
+                                          PsiClass psiClass,
+                                          UClass uClass) {
+    String descriptionDir = getDescriptionDir(module, psiClass);
+    if (StringUtil.isEmptyOrSpaces(descriptionDir)) {
+      return false;
     }
 
     for (PsiDirectory description : getDescriptionsDirs(module)) {
       PsiDirectory dir = description.findSubdirectory(descriptionDir);
       if (dir == null) continue;
       final PsiFile descr = dir.findFile("description.html");
-      if (descr != null) {
-        if (!skipIfNotRegistered(psiClass) &&
-            !hasBeforeAndAfterTemplate(dir.getVirtualFile())) {
-          final PsiElement highlightElement = getInspectionHighlightElement(uClass);
-          if (highlightElement == null) return null;
-          ProblemDescriptor problemDescriptor = manager.createProblemDescriptor(highlightElement,
-                                                                                getHasNotBeforeAfterError(),
-                                                                                isOnTheFly,
-                                                                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
-          return new ProblemDescriptor[]{problemDescriptor};
+      if (descr == null) continue;
+
+      if (!hasBeforeAndAfterTemplate(dir.getVirtualFile())) {
+        final PsiElement highlightElement = getInspectionHighlightElement(uClass);
+        if (highlightElement != null) {
+          holder.registerProblem(highlightElement, getHasNotBeforeAfterError(), ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
         }
-        return null;
       }
+      return true;
     }
-
-    if (skipIfNotRegistered(psiClass)) {
-      return null;
-    }
-
-    final PsiElement highlightElement = getInspectionHighlightElement(uClass);
-    if (highlightElement == null) return null;
-
-    final ProblemDescriptor problemDescriptor = manager
-      .createProblemDescriptor(highlightElement,
-                               getHasNotDescriptionError(), isOnTheFly, new LocalQuickFix[]{getFix(module, descriptionDir)},
-                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
-    return new ProblemDescriptor[]{problemDescriptor};
+    return false;
   }
-
-  @Nullable
-  private static PsiElement getInspectionHighlightElement(@NotNull UClass uClass) {
-    return UElementKt.getSourcePsiElement(uClass.getUastAnchor());
-  }
-
-  protected CreateHtmlDescriptionFix getFix(Module module, String descriptionDir) {
-    return new CreateHtmlDescriptionFix(descriptionDir, module, myDescriptionType);
-  }
-
-  protected abstract boolean skipIfNotRegistered(PsiClass epClass);
 
   private static boolean hasBeforeAndAfterTemplate(@NotNull VirtualFile dir) {
     boolean hasBefore = false;
@@ -108,18 +122,18 @@ abstract class DescriptionNotFoundInspectionBase extends DevKitUastInspectionBas
     return hasBefore && hasAfter;
   }
 
-  @NotNull
-  protected String getClassName() {
-    return myDescriptionType.getClassName();
+  @Nullable
+  protected String getDescriptionDir(Module module, PsiClass psiClass) {
+    return DescriptionCheckerUtil.getDescriptionDirName(psiClass);
   }
 
-  protected PsiDirectory @NotNull [] getDescriptionsDirs(@NotNull Module module) {
+  protected PsiDirectory @NotNull [] getDescriptionsDirs(Module module) {
     return DescriptionCheckerUtil.getDescriptionsDirs(module, myDescriptionType);
   }
 
   @InspectionMessage
   @NotNull
-  protected abstract String getHasNotDescriptionError();
+  protected abstract String getHasNotDescriptionError(Module module, PsiClass psiClass);
 
   @InspectionMessage
   @NotNull

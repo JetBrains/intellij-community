@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
+import com.intellij.ide.plugins.DynamicPluginsTestUtilKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -11,11 +12,13 @@ import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
+import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
@@ -31,24 +34,32 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataInputOutputUtil;
+import com.intellij.util.io.PathKt;
 import com.intellij.util.io.storage.HeavyProcessLatch;
+import com.intellij.util.io.zip.JBZipFile;
 import com.intellij.util.messages.MessageBusConnection;
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.jar.JarFile;
 
 import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertNotEquals;
 
 public class PersistentFsTest extends HeavyPlatformTestCase {
   public void testAccessingFileByID() throws Exception {
@@ -543,8 +554,11 @@ public class PersistentFsTest extends HeavyPlatformTestCase {
                 new VFileDeleteEvent(this, testTxt, false));
   }
 
-  @NotNull
-  private static VirtualFile find(File file) {
+  private static @NotNull VirtualFile find(@NotNull Path file) {
+    return Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(file));
+  }
+
+  private static @NotNull VirtualFile find(@NotNull File file) {
     return Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file));
   }
 
@@ -674,16 +688,15 @@ public class PersistentFsTest extends HeavyPlatformTestCase {
 
   public void testRenameInBackgroundDoesntLeadToDuplicateFilesError() throws IOException {
     IoTestUtil.assumeWindows();
-    File temp = createTempDir("", false);
-    File file = new File(temp, "rename.txt");
-    FileUtil.createParentDirs(file);
-    FileUtil.writeToFile(file, "x");
+    Path temp = getTempDir().newPath();
+    Path file = temp.resolve("rename.txt");
+    PathKt.write(file, "x");
     VirtualFile vfile = find(file);
-    VirtualDirectoryImpl vtemp = (VirtualDirectoryImpl)vfile.getParent();
-    assertFalse(vtemp.allChildrenLoaded());
-    VfsUtil.markDirty(true, false, vtemp);
-    assertTrue(file.renameTo(new File(temp, file.getName().toUpperCase())));
-    VirtualFile[] newChildren = vtemp.getChildren();
+    VirtualDirectoryImpl vTemp = (VirtualDirectoryImpl)vfile.getParent();
+    assertFalse(vTemp.allChildrenLoaded());
+    VfsUtil.markDirty(true, false, vTemp);
+    Files.move(file, temp.resolveSibling(file.getFileName().toString().toUpperCase()));
+    VirtualFile[] newChildren = vTemp.getChildren();
     assertOneElement(newChildren);
   }
 
@@ -726,7 +739,7 @@ public class PersistentFsTest extends HeavyPlatformTestCase {
     PersistentFSImpl fs = (PersistentFSImpl)PersistentFS.getInstance();
 
     for (int i=0; i<10; i++) {
-      File temp = createTempDir("", false);
+      File temp = getTempDir().createDir().toFile();
       File file = new File(temp, "file.txt");
       FileUtil.createParentDirs(file);
       FileUtil.writeToFile(file, "x");
@@ -740,7 +753,7 @@ public class PersistentFsTest extends HeavyPlatformTestCase {
       List<? extends ChildInfo> children2 = f2.get();
       int[] nameIds1 = children1.stream().mapToInt(n -> n.getNameId()).toArray();
       int[] nameIds2 = children2.stream().mapToInt(n -> n.getNameId()).toArray();
-      
+
       // there can be one or two children, depending on whether the VFS refreshed in time or not.
       // but in any case, there must not be duplicate ids (i.e. files with the same name but different getId())
       for (int i1 = 0; i1 < nameIds1.length; i1++) {
@@ -758,7 +771,7 @@ public class PersistentFsTest extends HeavyPlatformTestCase {
   public void testMustNotDuplicateIdsOnRenameWithCaseChanged() throws IOException {
     PersistentFSImpl fs = (PersistentFSImpl)PersistentFS.getInstance();
 
-    File temp = createTempDir("", false);
+    File temp = getTempDir().createDir().toFile();
     File file = new File(temp, "file.txt");
     FileUtil.createParentDirs(file);
     FileUtil.writeToFile(file, "x");
@@ -793,5 +806,142 @@ public class PersistentFsTest extends HeavyPlatformTestCase {
     for (Future<?> future : futures) {
       PlatformTestUtil.waitForFuture(future, 10_000);
     }
+  }
+
+  public void testReadOnlyFsCachesLength() throws IOException {
+    String text = "<virtualFileSystem implementationClass=\"" + TracingJarFileSystemTestWrapper.class.getName() + "\" key=\"jarwrapper\" physical=\"true\"/>";
+    Disposable disposable = DynamicPluginsTestUtilKt.loadExtensionWithText(text, TracingJarFileSystemTestWrapper.class.getClassLoader());
+
+    try {
+      File testDir = getTempDir().createDir().toFile();
+      File generationDir = getTempDir().createDir().toFile();
+
+      String jarName = "test.jar";
+      String entryName = "Some.java";
+
+      String content0 = "class Some {}";
+      String content1 = "class Some { void m() {} }";
+      String content2 = "class Some { void mmm() {} }";
+
+      File zipFile = createZipWithEntry(jarName, entryName, content0, testDir, generationDir);
+
+      String url = "jarwrapper://" + FileUtil.toSystemIndependentName(zipFile.getPath()) + "!/" + entryName;
+
+      VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
+      file.refresh(false, false);
+      TracingJarFileSystemTestWrapper fs = (TracingJarFileSystemTestWrapper)file.getFileSystem();
+
+      assertTrue(file.isValid());
+      assertEquals(content0, new String(file.contentsToByteArray(), StandardCharsets.UTF_8));
+
+      zipFile = createZipWithEntry(jarName, entryName, content1, testDir, generationDir);
+      VfsUtil.markDirtyAndRefresh(false, true, true, zipFile);
+      int attrCallCount = fs.getAttributeCallCount();
+
+      file.refresh(false, false);
+      assertTrue(file.isValid());
+      assertEquals(content1, new String(file.contentsToByteArray(), StandardCharsets.UTF_8));
+
+      zipFile = createZipWithEntry(jarName, entryName, content2, testDir, generationDir);
+      VfsUtil.markDirtyAndRefresh(false, true, true, zipFile);
+
+      // we should read length from physical FS
+      assertNotEquals(attrCallCount, fs.getAttributeCallCount());
+      file.refresh(false, false);
+      assertTrue(file.isValid());
+      assertEquals(content2, new String(file.contentsToByteArray(), StandardCharsets.UTF_8));
+
+      attrCallCount = fs.getAttributeCallCount();
+      file.getLength();
+      assertEquals(attrCallCount, fs.getAttributeCallCount());
+
+      // ensure it's cached
+      file.getLength();
+      assertEquals(attrCallCount, fs.getAttributeCallCount());
+
+      // ensure it's cached
+      file.getLength();
+      assertEquals(attrCallCount, fs.getAttributeCallCount());
+    } finally {
+      Disposer.dispose(disposable);
+    }
+  }
+
+  public void testDoNotRecalculateLengthIfEndOfInputStreamIsNotReached() throws IOException {
+    String text = "<virtualFileSystem implementationClass=\"" + TracingJarFileSystemTestWrapper.class.getName() + "\" key=\"jarwrapper\" physical=\"true\"/>";
+    Disposable disposable = DynamicPluginsTestUtilKt.loadExtensionWithText(text, TracingJarFileSystemTestWrapper.class.getClassLoader());
+
+    try {
+      File testDir = getTempDir().createDir().toFile();
+      File generationDir = getTempDir().createDir().toFile();
+
+      String jarName = "test.jar";
+      String entryName = "Some.java";
+      String entryContent = "class Some {}";
+
+      File zipFile = createZipWithEntry(jarName, entryName, entryContent, testDir, generationDir);
+
+      String url = "jarwrapper://" + FileUtil.toSystemIndependentName(zipFile.getPath()) + "!/" + entryName;
+      VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
+      file.refresh(false, false);
+
+      TracingJarFileSystemTestWrapper fs = (TracingJarFileSystemTestWrapper)file.getFileSystem();
+      int attributeCallCount = fs.getAttributeCallCount();
+
+      try (InputStream stream = file.getInputStream()) {
+        // just read single byte
+        @SuppressWarnings("unused") int read = stream.read();
+      }
+      assertEquals(attributeCallCount, fs.getAttributeCallCount());
+
+      //noinspection EmptyTryBlock,unused
+      try (InputStream stream = file.getInputStream()) {
+        // just close
+      }
+      assertEquals(attributeCallCount, fs.getAttributeCallCount());
+
+    }
+    finally {
+      Disposer.dispose(disposable);
+    }
+  }
+
+  public static class TracingJarFileSystemTestWrapper extends JarFileSystemImpl {
+    private final AtomicInteger myAttributeCallCount = new AtomicInteger();
+    @Override
+    public @Nullable FileAttributes getAttributes(@NotNull VirtualFile file) {
+      myAttributeCallCount.incrementAndGet();
+      return super.getAttributes(file);
+    }
+
+    private int getAttributeCallCount() {
+      return myAttributeCallCount.get();
+    }
+
+    @Override
+    public @NotNull String getProtocol() {
+      return "jarwrapper";
+    }
+  }
+
+  @NotNull
+  private static File createZipWithEntry(@NotNull String fileName,
+                                 @NotNull String entryName,
+                                 @NotNull String entryContent,
+                                 @NotNull File outputPath,
+                                 @NotNull File generationDir) throws IOException {
+    File zipFile = new File(generationDir, fileName);
+    try (JBZipFile zip = new JBZipFile(zipFile)) {
+      zip.getOrCreateEntry(entryName).setData(entryContent.getBytes(StandardCharsets.UTF_8));
+    }
+
+    File outputFile = new File(outputPath, fileName);
+    FileUtil.copy(zipFile, outputFile);
+
+    assertTrue(outputFile.exists());
+
+    VfsUtil.markDirtyAndRefresh(false, true, true, outputFile);
+
+    return outputFile;
   }
 }

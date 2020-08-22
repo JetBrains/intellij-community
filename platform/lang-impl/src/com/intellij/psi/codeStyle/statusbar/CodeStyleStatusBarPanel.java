@@ -10,8 +10,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
 
 public class CodeStyleStatusBarPanel extends JPanel {
   private final TextPanel myLabel;
@@ -19,6 +17,7 @@ public class CodeStyleStatusBarPanel extends JPanel {
 
   public CodeStyleStatusBarPanel() {
     super();
+    setOpaque(false);
     setLayout(new BoxLayout(this, BoxLayout.LINE_AXIS));
     setAlignmentY(Component.CENTER_ALIGNMENT);
     myLabel = new TextPanel() {};
@@ -28,12 +27,6 @@ public class CodeStyleStatusBarPanel extends JPanel {
     myIconLabel.setBorder(JBUI.Borders.empty(2,2,2,0));
     add(myIconLabel);
     setBorder(JBUI.Borders.empty(0));
-    addMouseListener(new MouseAdapter() {
-      @Override
-      public void mouseExited(MouseEvent e) {
-        setBackground(null);
-      }
-    });
   }
 
   public void setText(@NotNull String text) {

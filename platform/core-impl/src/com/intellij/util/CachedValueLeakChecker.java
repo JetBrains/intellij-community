@@ -8,7 +8,6 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.PsiElement;
@@ -16,11 +15,13 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ref.DebugReflectionUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 
 /**
  * @author peter
@@ -38,7 +39,7 @@ final class CachedValueLeakChecker {
   }
 
   private static synchronized void findReferencedPsi(@NotNull Object root, @NotNull Key<?> key, @NotNull UserDataHolder toIgnore) {
-    Condition<Object> shouldExamineValue = value -> {
+    Predicate<Object> shouldExamineValue = value -> {
       if (value == toIgnore) return false;
       if (value instanceof ASTNode) {
         value = ((ASTNode)value).getPsi();
@@ -54,7 +55,7 @@ final class CachedValueLeakChecker {
       }
       return true;
     };
-    Map<Object, String> roots = Collections.singletonMap(root, "CachedValueProvider "+key);
+    Map<Object, @NonNls String> roots = Collections.singletonMap(root, "CachedValueProvider " + key);
     DebugReflectionUtil.walkObjects(5, roots, PsiElement.class, shouldExamineValue, (value, backLink) -> {
       if (value instanceof PsiElement) {
         LOG.error(

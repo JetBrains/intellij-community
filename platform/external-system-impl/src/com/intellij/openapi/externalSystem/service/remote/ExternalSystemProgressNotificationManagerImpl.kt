@@ -183,5 +183,12 @@ class ExternalSystemProgressNotificationManagerImpl : RemoteObject(), ExternalSy
         throw AssertionError("Leaked listeners for task '$taskId': ${listeners[taskId]}")
       }
     }
+
+    @JvmStatic
+    @TestOnly
+    @ApiStatus.Internal
+    fun cleanupListeners() {
+      getInstanceImpl().dispatcher.listeners.clear()
+    }
   }
 }

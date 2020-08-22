@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.openapi.roots.OrderRootType;
@@ -10,6 +10,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
 import javax.swing.*;
@@ -34,12 +36,18 @@ public class GroovyLibraryPresentationProvider extends GroovyLibraryPresentation
   @Nls
   public String getLibraryVersion(final VirtualFile[] libraryFiles) {
     String jarVersion = JarVersionDetectionUtil.detectJarVersion(SOME_GROOVY_CLASS, Arrays.asList(libraryFiles));
-    if (jarVersion != null) return jarVersion;
-
-    final String home = LibrariesUtil.getGroovyLibraryHome(libraryFiles);
-    if (home == null) return AbstractConfigUtils.UNDEFINED_VERSION;
-
-    return GroovyConfigUtils.getInstance().getSDKVersion(home);
+    if (jarVersion != null) {
+      return jarVersion;
+    }
+    String home = LibrariesUtil.getGroovyLibraryHome(libraryFiles);
+    if (home == null) {
+      return GroovyBundle.message("undefined.library.version");
+    }
+    String version = GroovyConfigUtils.getInstance().getSDKVersionOrNull(home);
+    if (version == null) {
+      return GroovyBundle.message("undefined.library.version");
+    }
+    return version;
   }
 
   @Override
@@ -76,17 +84,15 @@ public class GroovyLibraryPresentationProvider extends GroovyLibraryPresentation
       }
   }
 
-  @NotNull
   @Override
-  public String getSDKVersion(String path) {
-    return GroovyConfigUtils.getInstance().getSDKVersion(path);
+  public @Nullable String getSDKVersion(String path) {
+    return GroovyConfigUtils.getInstance().getSDKVersionOrNull(path);
   }
 
   @Nls
   @NotNull
   @Override
   public String getLibraryCategoryName() {
-    return "Groovy";
+    return GroovyBundle.message("language.groovy");
   }
-
 }

@@ -4,6 +4,7 @@ package com.intellij.structuralsearch.impl.matcher.handlers;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.filters.AnnotationFilter;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas
@@ -15,7 +16,7 @@ public class AnnotationHandler extends MatchingHandler {
   }
 
   @Override
-  public boolean match(PsiElement patternNode, PsiElement matchedNode, MatchContext context) {
+  public boolean match(PsiElement patternNode, PsiElement matchedNode, @NotNull MatchContext context) {
     if (!super.match(patternNode,matchedNode,context)) {
       return false;
     }

@@ -1,31 +1,27 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.i18n;
 
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.BatchQuickFix;
+import com.intellij.codeInspection.CommonProblemDescriptor;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.i18n.batch.I18nizeMultipleStringsDialog;
 import com.intellij.codeInspection.i18n.batch.I18nizedPropertyData;
 import com.intellij.lang.Language;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.lang.properties.references.I18nizeQuickFixDialog;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.Couple;
 import com.intellij.psi.*;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiShortNamesCache;
-import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PartiallyKnownString;
-import com.intellij.psi.util.PsiConcatenationUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.NameUtilCore;
 import com.intellij.util.text.UniqueNameGenerator;
-import kotlin.sequences.SequencesKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
@@ -36,10 +32,6 @@ import org.jetbrains.uast.generate.UastElementFactory;
 
 import java.util.*;
 
-/**
- * WARNING
- * Templates are ignored BundleName.message(key, args) is always used instead
- */
 public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickFix<CommonProblemDescriptor> {
   private static final Logger LOG = Logger.getInstance(I18nizeBatchQuickFix.class);
 
@@ -55,8 +47,9 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
     Set<PsiFile> contextFiles = new LinkedHashSet<>();
     for (CommonProblemDescriptor descriptor : descriptors) {
       PsiElement psiElement = ((ProblemDescriptor)descriptor).getPsiElement();
+      UPolyadicExpression polyadicExpression = I18nizeConcatenationQuickFix.getEnclosingLiteralConcatenation(psiElement);
       UStringConcatenationsFacade concatenation = UStringConcatenationsFacade.createFromTopConcatenation(
-        UastContextKt.toUElement(psiElement, UInjectionHost.class)
+        polyadicExpression != null ? polyadicExpression : UastContextKt.toUElement(psiElement, UInjectionHost.class)
       );
       if (concatenation != null) {
         PartiallyKnownString pks = concatenation.asPartiallyKnownString();
@@ -69,7 +62,7 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
               data.getContextData().getExpressions().add(concatenation.getRootUExpression());
             }
             else {
-              String key = ObjectUtils.notNull(suggestKeyByPlace(concatenation.getRootUExpression()),
+              String key = ObjectUtils.notNull(suggestKeyByPlace(value, concatenation.getRootUExpression()),
                                                I18nizeQuickFixDialog.suggestUniquePropertyKey(value, null, null));
               ArrayList<PsiElement> elements = new ArrayList<>();
               elements.add(psiElement);
@@ -83,8 +76,8 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
         }
         else if (distinct.add(concatenation.getRootUExpression().getSourcePsi())) {
           ArrayList<UExpression> args = new ArrayList<>();
-          String value = buildUnescapedFormatString(concatenation, args);
-          String key = ObjectUtils.notNull(suggestKeyByPlace(concatenation.getRootUExpression()),
+          String value = JavaI18nUtil.buildUnescapedFormatString(concatenation, args, project);
+          String key = ObjectUtils.notNull(suggestKeyByPlace(value, concatenation.getRootUExpression()),
                                            I18nizeQuickFixDialog.suggestUniquePropertyKey(value, null, null));
           HardcodedStringContextData contextData = new HardcodedStringContextData(
             Collections.singletonList(concatenation.getRootUExpression()),
@@ -100,10 +93,10 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
     if (keyValuePairs.isEmpty()) return;
 
     ArrayList<I18nizedPropertyData<HardcodedStringContextData>> replacements = new ArrayList<>(keyValuePairs.values());
-    I18nizeMultipleStringsDialog dialog = new I18nizeMultipleStringsDialog<>(project, replacements, contextFiles, data -> {
+    I18nizeMultipleStringsDialog<HardcodedStringContextData> dialog = new I18nizeMultipleStringsDialog<>(project, replacements, contextFiles, data -> {
       List<PsiElement> elements = data.getPsiElements();
       return ContainerUtil.map(elements, element -> new UsageInfo(element.getParent()));
-    }, null);
+    }, null, true);
     if (dialog.showAndGet()) {
       PropertiesFile propertiesFile = dialog.getPropertiesFile();
       Set<PsiFile> files = new HashSet<>();
@@ -118,25 +111,42 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
       files.add(propertiesFile.getContainingFile());
 
       WriteCommandAction.runWriteCommandAction(project, getFamilyName(), null, () -> {
-        String bundleName = propertiesFile.getVirtualFile().getNameWithoutExtension();
-        PsiClass[] classesByName = PsiShortNamesCache.getInstance(project).getClassesByName(bundleName, 
-                                                                                            GlobalSearchScope.projectScope(project));
-        if (classesByName.length == 1) {
-          bundleName = classesByName[0].getQualifiedName();
-          LOG.assertTrue(bundleName != null, propertiesFile.getName());
-        }
         for (I18nizedPropertyData<HardcodedStringContextData> data : replacements) {
           JavaI18nUtil.DEFAULT_PROPERTY_CREATION_HANDLER.createProperty(project,
                                                                         Collections.singletonList(propertiesFile),
                                                                         data.getKey(),
                                                                         data.getValue(),
-                                                                        PsiExpression.EMPTY_ARRAY);
+                                                                        new UExpression[0]);
           List<UExpression> uExpressions = data.getContextData().getExpressions();
           List<PsiElement> psiElements = data.getContextData().getPsiElements();
           for (int i = 0; i < psiElements.size(); i++) {
             PsiElement psiElement = psiElements.get(i);
             UExpression uExpression = uExpressions.get(i);
             Language language = psiElement.getLanguage();
+            String i18NText =
+              dialog.getI18NText(data.getKey(), data.getValue(), JavaI18nUtil.composeParametersText(data.getContextData().getArgs()));
+
+            PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
+            PsiExpression expression;
+            try {
+              expression = elementFactory.createExpressionFromText(i18NText, psiElement);
+              if (language == JavaLanguage.INSTANCE) {
+                JavaCodeStyleManager.getInstance(project).shortenClassReferences(psiElement.replace(expression));
+                continue;
+              }
+            }
+            catch (IncorrectOperationException e) {
+              LOG.debug(e);
+              expression = elementFactory.createExpressionFromText(dialog.getI18NText(data.getKey(), data.getValue(), ""), psiElement);
+            }
+            
+            @Nullable Couple<String> callDescriptor = getCallDescriptor(expression);
+            if (callDescriptor == null) {
+              LOG.debug("Templates are not supported for " + language.getDisplayName());
+              continue;
+            }
+
+
             UastCodeGenerationPlugin generationPlugin = UastCodeGenerationPlugin.byLanguage(language);
             if (generationPlugin == null) {
               LOG.debug("No UAST generation plugin exist for " + language.getDisplayName());
@@ -146,9 +156,13 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
             List<UExpression> arguments = new ArrayList<>();
             arguments.add(pluginElementFactory.createStringLiteralExpression(data.getKey(), psiElement));
             arguments.addAll(data.getContextData().getArgs());
+
+            UExpression receiver = callDescriptor.first != null 
+                                   ? pluginElementFactory.createQualifiedReference(callDescriptor.first, null)
+                                   : null;
             UCallExpression callExpression = pluginElementFactory
-              .createCallExpression(pluginElementFactory.createQualifiedReference(bundleName, uExpression),
-                                    "message",
+              .createCallExpression(receiver,
+                                    callDescriptor.second,
                                     arguments,
                                     null,
                                     UastCallKind.METHOD_CALL,
@@ -165,84 +179,45 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
     }
   }
 
-  private static String buildUnescapedFormatString(UStringConcatenationsFacade cf, List<? super UExpression> formatParameters) {
-    StringBuilder result = new StringBuilder();
-    int elIndex = 0;
-    for (UExpression expression : SequencesKt.asIterable(cf.getUastOperands())) {
-      if (expression instanceof ULiteralExpression) {
-        Object value = ((ULiteralExpression)expression).getValue();
-        if (value != null) {
-          result.append(PsiConcatenationUtil.formatString(value.toString(), false));
-        }
+  /**
+   * @return qualifier.methodName couple
+   */
+  private static @Nullable Couple<String> getCallDescriptor(PsiExpression expression) {
+    if (expression instanceof PsiMethodCallExpression) {
+      PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)expression).getMethodExpression();
+      PsiExpression qualifierExpression = methodExpression.getQualifierExpression();
+      String qualifiedName = qualifierExpression != null ? qualifierExpression.getText() : null;
+      String methodName = methodExpression.getReferenceName();
+      if (methodName == null) return null;
+      
+      PsiExpression[] expressions = ((PsiMethodCallExpression)expression).getArgumentList().getExpressions();
+      if (expressions.length == 0) {
+        return null;
       }
-      else {
-        result.append("{").append(elIndex++).append("}");
-        formatParameters.add(expression);
+      if (!(expressions[0] instanceof PsiLiteralExpression)) {
+        return null;
       }
+      return Couple.of(qualifiedName, methodName);
     }
-    return result.toString();
+    return null;
   }
 
-  /**
-   * If expression is passed to ProblemsHolder#registerProblem, suggest inspection.class.name.description key
-   * If expression is returned from getName/getFamilyName of the LocalQuickFix, suggest quick.fix.text/family.name
-   */
   @Nullable
-  private static String suggestKeyByPlace(@NotNull UExpression expression) {
-    UElement parent = UastUtils.skipParenthesizedExprUp(expression.getUastParent());
-    if (parent instanceof UPolyadicExpression) {
-      parent = UastUtils.skipParenthesizedExprUp(parent.getUastParent());
+  private static String suggestKeyByPlace(String value, @NotNull UExpression expression) {
+    List<UExpression> usages = I18nInspection.findIndirectUsages(expression);
+    if (usages.isEmpty()) {
+      usages = Collections.singletonList(expression);
     }
-    if (parent == null) return null;
-    UCallExpression callExpression = UastUtils.getUCallExpression(parent);
-    if (callExpression != null) {
-      PsiMethod method = callExpression.resolve();
-      if (method != null) {
-        if ("registerProblem".equals(method.getName()) &&
-            InheritanceUtil.isInheritor(method.getContainingClass(), ProblemsHolder.class.getName())) {
-          PsiClass containingClass = PsiTreeUtil.getParentOfType(callExpression.getSourcePsi(), PsiClass.class);
-          while (containingClass != null) {
-            if (InheritanceUtil.isInheritor(containingClass, InspectionProfileEntry.class.getName())) {
-              String containingClassName = containingClass.getName();
-              return containingClassName == null
-                     ? null
-                     : "inspection." + toPropertyName(InspectionProfileEntry.getShortName(containingClassName)) + ".description";
-            }
-            containingClass = PsiTreeUtil.getParentOfType(containingClass, PsiClass.class, true);
-          }
-        }
-      }
-      return null;
-    }
-
-    final UElement returnStmt =
-      UastUtils.getParentOfType(parent, UReturnExpression.class, false, UCallExpression.class, ULambdaExpression.class);
-    if (returnStmt instanceof UReturnExpression) {
-      UMethod uMethod = UastUtils.getParentOfType(expression, UMethod.class);
-      if (uMethod != null) {
-        UElement uClass = uMethod.getUastParent();
-        if (uClass instanceof UClass && InheritanceUtil.isInheritor(((UClass)uClass), LocalQuickFix.class.getName())) {
-          String name = ((UClass)uClass).getName();
-          if (name != null) {
-            if ("getName".equals(uMethod.getName())) {
-              return toPropertyName(name) + ".text";
-            }
-            if ("getFamilyName".equals(uMethod.getName())) {
-              return toPropertyName(name) + ".family.name";
-            }
-          }
-        }
+    for (UExpression usage : usages) {
+      NlsInfo nlsInfo = NlsInfo.forExpression(usage);
+      if (nlsInfo instanceof NlsInfo.Localized) {
+        return I18nizeQuickFix.getSuggestedName(value, ((NlsInfo.Localized)nlsInfo));
       }
     }
     return null;
   }
 
-  @NotNull
-  private static String toPropertyName(String name) {
-    return StringUtil.join(NameUtilCore.splitNameIntoWords(name), s -> StringUtil.decapitalize(s), ".");
-  }
-
-  private static class HardcodedStringContextData {
+  private static final class HardcodedStringContextData {
     private final List<UExpression> myExpressions;
     private final List<PsiElement> myPsiElements;
     private final List<UExpression> myArgs;

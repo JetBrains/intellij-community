@@ -35,7 +35,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.project.impl.ProjectImpl;
-import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.ProjectJdkTableImpl;
@@ -48,12 +47,14 @@ import com.intellij.openapi.roots.impl.ProjectRootManagerImpl;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.openapi.vfs.encoding.EncodingManagerImpl;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
+import com.intellij.project.TestProjectManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -72,10 +73,11 @@ import com.intellij.util.io.PathKt;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeProjectLifecycleListener;
-import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.Rule;
+import org.junit.rules.TestRule;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -85,6 +87,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Objects;
 
 import static com.intellij.testFramework.RunAll.runAll;
 
@@ -97,7 +100,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   private static PsiManager ourPsiManager;
   private static boolean ourAssertionsInTestDetected;
   private static VirtualFile ourSourceRoot;
-  private static TestCase ourTestCase;
   private static LightProjectDescriptor ourProjectDescriptor;
   private static SdkLeakTracker myOldSdks;
 
@@ -148,7 +150,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     System.out.printf("##teamcity[buildStatisticValue key='ideaTests.appInstancesCreated' value='%d']%n",
                       MockApplication.INSTANCES_CREATED);
     System.out.printf("##teamcity[buildStatisticValue key='ideaTests.projectInstancesCreated' value='%d']%n",
-                      ProjectManagerImpl.TEST_PROJECTS_CREATED);
+                      TestProjectManager.Companion.getTotalCreatedProjectCount());
     long totalGcTime = 0;
     for (GarbageCollectorMXBean mxBean : ManagementFactory.getGarbageCollectorMXBeans()) {
       totalGcTime += mxBean.getCollectionTime();
@@ -178,7 +180,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     ((PersistentFSImpl)PersistentFS.getInstance()).cleanPersistedContents();
   }
 
-  private static void initProject(@NotNull final LightProjectDescriptor descriptor) {
+  private static void initProject(@NotNull LightProjectDescriptor descriptor) {
     ourProjectDescriptor = descriptor;
 
     if (ourProject != null) {
@@ -187,9 +189,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     ApplicationManager.getApplication().runWriteAction(LightPlatformTestCase::cleanPersistedVFSContent);
 
     Path tempDirectory = TemporaryDirectory.generateTemporaryPath(ProjectImpl.LIGHT_PROJECT_NAME + ProjectFileType.DOT_DEFAULT_EXTENSION);
+    ourProject = Objects.requireNonNull(ProjectManagerEx.getInstanceEx().newProject(tempDirectory, new OpenProjectTaskBuilder().build()));
     HeavyPlatformTestCase.synchronizeTempDirVfs(tempDirectory);
-    setProject(HeavyPlatformTestCase.createProject(tempDirectory));
-    ourPathToKeep = tempDirectory;
     ourPsiManager = null;
 
     try {
@@ -263,7 +264,6 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     Application app = ApplicationManager.getApplication();
     Ref<Boolean> reusedProject = new Ref<>(true);
     app.invokeAndWait(() -> {
-      assertNull("Previous test " + ourTestCase + " hasn't called tearDown(). Probably overridden without super call.", ourTestCase);
       IdeaLogger.ourErrorsOccurred = null;
       app.assertIsDispatchThread();
 
@@ -377,7 +377,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       },
       () -> {
         if (project != null) {
-          doTearDown(project, null);
+          TestApplicationManagerKt.tearDownProjectAndApp(project);
         }
       },
       () -> {
@@ -411,17 +411,16 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
         if (myVirtualFilePointerTracker != null) {
           myVirtualFilePointerTracker.assertPointersAreDisposed();
         }
+      },
+      () -> {
+        if (ApplicationManager.getApplication() instanceof ApplicationEx) {
+          HeavyPlatformTestCase.cleanupApplicationCaches(getProject());
+        }
+      },
+      () -> {
+        resetAllFields();
       }
     );
-  }
-
-  public static void doTearDown(@NotNull Project project, @Nullable TestApplicationManager testAppManager) {
-    try {
-      TestApplicationManagerKt.tearDownProjectAndApp(project, testAppManager);
-    }
-    finally {
-      ourTestCase = null;
-    }
   }
 
   static void checkAssertions() throws Exception {
@@ -492,42 +491,8 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   }
 
   @Override
-  public final void runBare() throws Throwable {
-    runBareImpl(this::startRunAndTear);
-  }
-
-  protected void runBareImpl(ThrowableRunnable<?> start) throws Throwable {
-    if (!shouldRunTest()) {
-      return;
-    }
-
-    TestRunnerUtil.replaceIdeEventQueueSafely();
-    ThrowableRunnable<Throwable> testRunnable = () -> {
-      try {
-        start.run();
-      }
-      finally {
-        EdtTestUtil.runInEdtAndWait(() -> {
-          try {
-            Application application = ApplicationManager.getApplication();
-            if (application instanceof ApplicationEx) {
-              HeavyPlatformTestCase.cleanupApplicationCaches(getProject());
-            }
-            resetAllFields();
-          }
-          catch (Throwable e) {
-            //noinspection CallToPrintStackTrace
-            e.printStackTrace();
-          }
-        });
-      }
-    };
-    if (runInDispatchThread()) {
-      EdtTestUtil.runInEdtAndWait(testRunnable);
-    }
-    else {
-      testRunnable.run();
-    }
+  protected void runBare(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+    super.runBare(testRunnable);
 
     // just to make sure all deferred Runnables to finish
     SwingUtilities.invokeAndWait(EmptyRunnable.getInstance());
@@ -538,21 +503,16 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   }
 
   @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
-  private void startRunAndTear() throws Throwable {
-    setUp();
-    try {
-      ourAssertionsInTestDetected = true;
-      runTest();
-      ourAssertionsInTestDetected = false;
-    }
-    finally {
-      //try{
-      EdtTestUtil.runInEdtAndWait(() -> tearDown());
-      //}
-      //catch(Throwable th){
-      //th.printStackTrace();
-      //}
-    }
+  @Override
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+    ourAssertionsInTestDetected = true;
+    super.runTestRunnable(testRunnable);
+    ourAssertionsInTestDetected = false;
+  }
+
+  @Override
+  protected void invokeTearDown() throws Exception {
+    EdtTestUtil.runInEdtAndWait(super::invokeTearDown);
   }
 
   @Override
@@ -602,8 +562,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   @Override
   protected String getTestName(boolean lowercaseFirstLetter) {
     String name = getName();
-    assertTrue("Test name should start with 'test': " + name, name.startsWith("test"));
-    name = name.substring("test".length());
+    name = StringUtil.trimStart(name, "test");
     if (!name.isEmpty() && lowercaseFirstLetter && !PlatformTestUtil.isAllUppercaseName(name)) {
       name = Character.toLowerCase(name.charAt(0)) + name.substring(1);
     }
@@ -663,30 +622,19 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       }
     }
 
-    assertTrue(ProjectManagerEx.getInstanceEx().forceCloseProject(project));
-    assertTrue(project.isDisposed());
+    try {
+      assertTrue(ProjectManagerEx.getInstanceEx().forceCloseProject(project));
+      assertTrue(project.isDisposed());
 
-    // project may be disposed but empty folder may still be there
-    if (ourPathToKeep != null) {
-      Path parent = ourPathToKeep.getParent();
-      if (parent.getFileName().toString().startsWith(UsefulTestCase.TEMP_DIR_MARKER)) {
-        // delete only empty folders
-        try {
-          Files.deleteIfExists(parent);
-        }
-        catch (IOException ignore) {
-        }
+      assertTrue(ourModule.isDisposed());
+      if (ourPsiManager != null) {
+        assertTrue(ourPsiManager.isDisposed());
       }
-    }
-
-    setProject(null);
-    assertTrue(ourModule.isDisposed());
-    ourModule = null;
-    if (ourPsiManager != null) {
-      assertTrue(ourPsiManager.isDisposed());
+    } finally {
+      setProject(null);
+      ourModule = null;
       ourPsiManager = null;
     }
-    ourPathToKeep = null;
   }
 
   protected static void setProject(Project project) {

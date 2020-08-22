@@ -111,8 +111,17 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   private Rectangle myAutoPopupRec;
 
-  private final DefaultActionGroup mySecondaryActions = new DefaultActionGroup();
-  private PopupStateModifier mySecondaryButtonPopupStateModifier;
+  private final DefaultActionGroup mySecondaryActions = new DefaultActionGroup() {
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      super.update(e);
+      if (mySecondaryGroupUpdater != null) {
+        e.getPresentation().setIcon(getTemplatePresentation().getIcon());
+        mySecondaryGroupUpdater.update(e);
+      }
+    }
+  };
+  private SecondaryGroupUpdater mySecondaryGroupUpdater;
   private boolean myForceMinimumSize;
   private boolean myForceShowFirstComponent;
   private boolean mySkipWindowAdjustments;
@@ -271,8 +280,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     }
   }
 
-  public void setSecondaryButtonPopupStateModifier(@NotNull PopupStateModifier popupStateModifier) {
-    mySecondaryButtonPopupStateModifier = popupStateModifier;
+  public void setSecondaryButtonPopupStateModifier(@NotNull ActionToolbarImpl.SecondaryGroupUpdater secondaryGroupUpdater) {
+    mySecondaryGroupUpdater = secondaryGroupUpdater;
   }
 
   private void fillToolBar(@NotNull List<? extends AnAction> actions, boolean layoutSecondaries) {
@@ -313,14 +322,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       mySecondaryActionsButton =
         new ActionButton(mySecondaryActions, myPresentationFactory.getPresentation(mySecondaryActions), myPlace, getMinimumButtonSize()) {
           @Override
-          @ButtonState
-          public int getPopState() {
-            return mySecondaryButtonPopupStateModifier != null && mySecondaryButtonPopupStateModifier.willModify()
-                   ? mySecondaryButtonPopupStateModifier.getModifiedPopupState()
-                   : super.getPopState();
-          }
-
-          @Override
           protected String getShortcutText() {
             Object shortcut = myPresentation.getClientProperty(SECONDARY_SHORTCUT);
             return shortcut != null ? shortcut.toString() : super.getShortcutText();
@@ -343,7 +344,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     Presentation presentation = myPresentationFactory.getPresentation(action);
     JComponent customComponent = presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY);
     if (customComponent == null) {
-      customComponent = ((CustomComponentAction)action).createCustomComponent(presentation, myPlace);
+      customComponent = createCustomComponent((CustomComponentAction)action, presentation);
       presentation.putClientProperty(CustomComponentAction.COMPONENT_KEY, customComponent);
       ComponentUtil.putClientProperty(customComponent, CustomComponentAction.ACTION_KEY, action);
     }
@@ -360,6 +361,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       }
     }
     return customComponent;
+  }
+
+  protected JComponent createCustomComponent(@NotNull CustomComponentAction action, @NotNull Presentation presentation) {
+    return action.createCustomComponent(presentation, myPlace);
   }
 
   private void tweakActionComponentUI(@NotNull Component actionComponent) {
@@ -951,6 +956,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     return JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground();
   }
 
+  protected int getSeparatorHeight() {
+    return JBUIScale.scale(24);
+  }
+
   private final class MySeparator extends JComponent {
     private final String myText;
 
@@ -964,7 +973,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       int gap = JBUIScale.scale(2);
       int center = JBUIScale.scale(3);
       int width = gap * 2 + center;
-      int height = JBUIScale.scale(24);
+      int height = getSeparatorHeight();
 
       if (myOrientation == SwingConstants.HORIZONTAL) {
         if (myText != null) {
@@ -1091,6 +1100,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     else {
       actionsUpdated(forced, updater.expandActionGroupWithTimeout(myActionGroup, false));
       myAlreadyUpdated = true;
+    }
+    if (mySecondaryActionsButton != null) {
+      mySecondaryActionsButton.update();
+      mySecondaryActionsButton.repaint();
     }
   }
 
@@ -1434,9 +1447,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     myPresentationFactory.reset();
   }
 
-  public interface PopupStateModifier {
-    @ActionButtonComponent.ButtonState
-    int getModifiedPopupState();
-    boolean willModify();
+  public interface SecondaryGroupUpdater {
+    void update(@NotNull AnActionEvent e);
   }
 }

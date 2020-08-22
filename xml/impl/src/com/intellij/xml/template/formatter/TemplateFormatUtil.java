@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.template.formatter;
 
 import com.intellij.formatting.Block;
@@ -39,10 +25,10 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-public class TemplateFormatUtil {
+public final class TemplateFormatUtil {
 
   private final static List<PsiElement> EMPTY_PSI_ELEMENT_LIST = new ArrayList<>();
-  
+
   private final static String[] IGNORABLE_ERROR_MESSAGES = {
     XmlPsiBundle.message("xml.parsing.closing.tag.matches.nothing"),
     XmlPsiBundle.message("xml.parsing.closing.tag.name.missing")
@@ -71,14 +57,14 @@ public class TemplateFormatUtil {
   static List<PsiElement> findAllElementsInside(@NotNull TextRange range,
                                                 @NotNull TemplateLanguageFileViewProvider viewProvider,
                                                 boolean fromTemplate) {
-    return findAllElementsInside(range, viewProvider, viewProvider.getBaseLanguage(),
+    return findAllElementsInside(range, viewProvider,
                                  fromTemplate ? viewProvider.getBaseLanguage() : viewProvider.getTemplateDataLanguage());
   }
 
   @NotNull
   public static List<PsiElement> findAllElementsInside(TextRange range,
                                                        TemplateLanguageFileViewProvider viewProvider,
-                                                       Language templateLanguage, Language language) {
+                                                       Language language) {
     List<PsiElement> matchingElements = new ArrayList<>();
     PsiElement currElement = viewProvider.findElementAt(range.getStartOffset(), language);
     while (currElement instanceof OuterLanguageElement) {
@@ -86,25 +72,21 @@ public class TemplateFormatUtil {
     }
     if (currElement != null) {
       currElement = findTopmostElementInRange(currElement, range);
-      Pair<Integer, PsiElement> result =
-        addElementSequence(currElement, templateLanguage, range, matchingElements, templateLanguage == language);
+      Pair<Integer, PsiElement> result = addElementSequence(currElement, range, matchingElements);
       int lastOffset = result.first;
       assert lastOffset >= 0 : "Failed to process elements in range: " + range;
       if (lastOffset < range.getEndOffset()) {
-        List<PsiElement> moreElements =
-          findAllElementsInside(new TextRange(lastOffset, range.getEndOffset()), viewProvider, templateLanguage, language);
-        matchingElements.addAll(moreElements);
+        matchingElements.addAll(findAllElementsInside(new TextRange(lastOffset, range.getEndOffset()), viewProvider, language));
       }
     }
     return matchingElements;
   }
 
-  private static Pair<Integer,PsiElement> addElementSequence(PsiElement startElement, Language templateLanguage, TextRange range, List<? super PsiElement> targetList, boolean fromTemplate) {
+  private static Pair<Integer,PsiElement> addElementSequence(PsiElement startElement, TextRange range, List<? super PsiElement> targetList) {
     PsiElement currElement = startElement;
     int lastOffset = -1;
     while (currElement != null && (lastOffset = currElement.getTextRange().getEndOffset()) <= range.getEndOffset()) {
-      boolean isTemplateLanguage = templateLanguage.isKindOf(currElement.getLanguage());
-      if (fromTemplate == isTemplateLanguage) {
+      if (!(currElement instanceof OuterLanguageElement)) {
         targetList.add(currElement);
       }
       currElement = currElement.getNextSibling();
@@ -112,7 +94,7 @@ public class TemplateFormatUtil {
     if (currElement != null && currElement.getTextRange().intersects(range)) {
       PsiElement child = currElement.getFirstChild();
       if (child != null) {
-        addElementSequence(child, templateLanguage, range, targetList, fromTemplate);
+        addElementSequence(child, range, targetList);
       }
     }
     return new Pair<>(lastOffset, currElement);
@@ -244,7 +226,7 @@ public class TemplateFormatUtil {
   /**
    * Creates a template language block for the given outer element if possible. Finds all the elements matching the current outerElement in
    * a template language PSI tree and builds a submodel for them with a composite root block.
-   * 
+   *
    * @param outerElement  The outer element for which the submodel (template language root block) is to be built.
    * @param settings      Code style settings to be used to build the submodel.
    * @param indent        The indent for the root block.

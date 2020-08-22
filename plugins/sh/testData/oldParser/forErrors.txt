@@ -6,7 +6,7 @@ SHELL_SCRIPT
       FOR_CLAUSE
         PsiElement(word)('a')
         PsiWhiteSpace(' ')
-        PsiElement(word)('in')
+        PsiElement(in)('in')
         PsiErrorElement:'!', $, <number>, <string>, ARITH_SQUARE_LEFT, OPEN_BACKQUOTE, file descriptor, var, word or '{' expected, got ';'
           <empty list>
         LIST_TERMINATOR
@@ -21,7 +21,7 @@ SHELL_SCRIPT
               LITERAL
                 PsiElement(word)('echo')
             PsiWhiteSpace(' ')
-            SIMPLE_COMMAND_ELEMENT
+            LITERAL
               PsiElement(word)('done')
           PsiErrorElement:'&', '&&', ';', '\n', '|' or '||' expected
             <empty list>

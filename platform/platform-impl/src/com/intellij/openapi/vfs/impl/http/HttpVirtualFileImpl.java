@@ -107,6 +107,7 @@ class HttpVirtualFileImpl extends HttpVirtualFile {
   }
 
   @Override
+  @NonNls
   public String toString() {
     return "HttpVirtualFile:" + myPath + ", info=" + myFileInfo;
   }

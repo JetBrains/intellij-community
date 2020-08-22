@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi.impl.cache.impl;
 
 import com.intellij.JavaTestUtil;
@@ -6,7 +6,6 @@ import com.intellij.codeInsight.JavaCodeInsightTestCase;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.ide.todo.TodoIndexPatternProvider;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -20,13 +19,10 @@ import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.ArrayUtilRt;
 
-import java.io.File;
 import java.util.Arrays;
 
 public class IdCacheTest extends JavaCodeInsightTestCase {
-
   private VirtualFile myRootDir;
-  private File myCacheFile;
 
   @Override
   protected void setUp() throws Exception {
@@ -36,10 +32,6 @@ public class IdCacheTest extends JavaCodeInsightTestCase {
 
     PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17());
     myRootDir = createTestProjectStructure(root);
-
-    myCacheFile = FileUtil.createTempFile("cache", "");
-    myCacheFile.delete();
-    myFilesToDelete.add(myCacheFile);
   }
 
   public void testBuildCache() {

@@ -117,7 +117,7 @@ class ModuleDependencyInRootModelTest {
       model.addModuleOrderEntry(depModule)
       commitModifiableRootModel(model)
     }
-    runWriteActionAndWait { projectModel.moduleManager.disposeModule(depModule) }
+    projectModel.removeModule(depModule)
 
     run {
       val entry = dropModuleSourceEntry(ModuleRootManager.getInstance(mainModule), 1).single() as ModuleOrderEntry

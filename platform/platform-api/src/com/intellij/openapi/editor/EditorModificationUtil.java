@@ -9,11 +9,11 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.util.MathUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Producer;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,14 +29,6 @@ import java.util.function.Supplier;
 
 public final class EditorModificationUtil {
   private static final Key<ReadOnlyHint> READ_ONLY_VIEW_HINT_KEY = Key.create("READ_ONLY_VIEW_HINT_KEY");
-
-  /**
-   * @deprecated Use {@link #setReadOnlyHint(Editor, String)}
-   */
-  @Deprecated
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.3")
-  public static final Key<String> READ_ONLY_VIEW_MESSAGE_KEY = Key.create("READ_ONLY_VIEW_MESSAGE_KEY");
 
   private EditorModificationUtil() { }
 
@@ -351,8 +343,8 @@ public final class EditorModificationUtil {
   @NotNull
   public static List<CaretState> calcBlockSelectionState(@NotNull Editor editor,
                                                          @NotNull LogicalPosition blockStart, @NotNull LogicalPosition blockEnd) {
-    int startLine = MathUtil.clamp(blockStart.line, 0, editor.getDocument().getLineCount() - 1);
-    int endLine = MathUtil.clamp(blockEnd.line, 0, editor.getDocument().getLineCount() - 1);
+    int startLine = Math.max(Math.min(blockStart.line, editor.getDocument().getLineCount() - 1), 0);
+    int endLine = Math.max(Math.min(blockEnd.line, editor.getDocument().getLineCount() - 1), 0);
     int step = endLine < startLine ? -1 : 1;
     int count = 1 + Math.abs(endLine - startLine);
     List<CaretState> caretStates = new LinkedList<>();
@@ -409,7 +401,7 @@ public final class EditorModificationUtil {
     if (!editor.isViewer()) return true;
     if (ApplicationManager.getApplication().isHeadlessEnvironment() || editor instanceof TextComponentEditor) return false;
 
-    ReadOnlyHint hint = getReadOnlyHint(editor);
+    ReadOnlyHint hint = ObjectUtils.chooseNotNull(READ_ONLY_VIEW_HINT_KEY.get(editor), new ReadOnlyHint(EditorBundle.message("editing.viewer.hint"), null));
     HintManager.getInstance().showInformationHint(editor, hint.message, hint.linkListener);
     return false;
   }
@@ -417,7 +409,7 @@ public final class EditorModificationUtil {
   /**
    * @see #setReadOnlyHint(Editor, String, HyperlinkListener)
    */
-  public static void setReadOnlyHint(@NotNull Editor editor, @Nullable String message) {
+  public static void setReadOnlyHint(@NotNull Editor editor, @Nullable @NlsContexts.HintText String message) {
     setReadOnlyHint(editor, message, null);
   }
 
@@ -427,27 +419,16 @@ public final class EditorModificationUtil {
    * @param message      New hint message or {@code null} if default message should be used instead.
    * @param linkListener Callback for html hyperlinks that can be used in hint message.
    */
-  public static void setReadOnlyHint(@NotNull Editor editor, @Nullable String message, @Nullable HyperlinkListener linkListener) {
+  public static void setReadOnlyHint(@NotNull Editor editor, @Nullable @NlsContexts.HintText String message, @Nullable HyperlinkListener linkListener) {
     editor.putUserData(READ_ONLY_VIEW_HINT_KEY, message != null ? new ReadOnlyHint(message, linkListener) : null);
   }
 
-  @NotNull
-  private static ReadOnlyHint getReadOnlyHint(@NotNull Editor editor) {
-    ReadOnlyHint hint = READ_ONLY_VIEW_HINT_KEY.get(editor);
-    if (hint != null) return hint;
+  private static final class ReadOnlyHint {
 
-    String message = READ_ONLY_VIEW_MESSAGE_KEY.get(editor);
-    if (message != null) return new ReadOnlyHint(message, null);
-
-    return new ReadOnlyHint(EditorBundle.message("editing.viewer.hint"), null);
-  }
-
-  private static class ReadOnlyHint {
-
-    @NotNull public final String message;
+    @NotNull public final @NlsContexts.HintText String message;
     @Nullable public final HyperlinkListener linkListener;
 
-    private ReadOnlyHint(@NotNull String message, @Nullable HyperlinkListener linkListener) {
+    private ReadOnlyHint(@NotNull @NlsContexts.HintText String message, @Nullable HyperlinkListener linkListener) {
       this.message = message;
       this.linkListener = linkListener;
     }

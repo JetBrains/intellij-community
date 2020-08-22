@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigurationBase & CommonJavaRunConfigurationParameters>
@@ -33,6 +34,8 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
   @NotNull protected final T myConfiguration;
 
   @Nullable private volatile RemoteConnection myRemoteConnection;
+
+  @Nullable private TargetEnvironment.TargetPortBinding myDebuggerPortRequest;
 
   public BaseJavaApplicationCommandLineState(ExecutionEnvironment environment, @NotNull final T configuration) {
     super(environment);
@@ -48,24 +51,58 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
   }
 
   @Override
-  public synchronized void prepareTargetEnvironmentRequest(@NotNull TargetEnvironmentRequest request,
-                                                           @Nullable TargetEnvironmentConfiguration configuration,
-                                                           @NotNull ProgressIndicator progressIndicator) throws ExecutionException {
+  public void prepareTargetEnvironmentRequest(@NotNull TargetEnvironmentRequest request,
+                                              @Nullable TargetEnvironmentConfiguration configuration,
+                                              @NotNull ProgressIndicator progressIndicator) throws ExecutionException {
     prepareRemoteConnection(request, configuration);
     super.prepareTargetEnvironmentRequest(request, configuration, progressIndicator);
+    TargetEnvironment.TargetPortBinding portRequest = myDebuggerPortRequest;
+    if (portRequest != null) {
+      Objects.requireNonNull(request).getTargetPortBindings().add(portRequest);
+    }
   }
 
-  private void prepareRemoteConnection(@NotNull TargetEnvironmentRequest request,
-                                       @Nullable TargetEnvironmentConfiguration configuration) {
+  @Override
+  public void handleCreatedTargetEnvironment(@NotNull TargetEnvironment environment, @NotNull ProgressIndicator progressIndicator) {
+    // TODO Should the debugger initialization be moved into the super class?
+    super.handleCreatedTargetEnvironment(environment, progressIndicator);
+    TargetEnvironment.TargetPortBinding portRequest = myDebuggerPortRequest;
+    if (portRequest != null) {
+      setRemoteConnectionPort(environment.getTargetPortBindings().get(portRequest));
+    }
+  }
+
+  public @Nullable Integer requiredDebuggerTargetPort(@NotNull TargetEnvironmentRequest request) {
+    // TODO Checking for a specific target is a gap in the idea of API. This check was introduced because the Java debugger
+    //  runs in the server mode for local targets and in the client mode for other targets. But why?
+    //  Anyway, the server mode requires a remote TCP forwarding that can't always be acquired for the Docker target.
+    //  Maybe replace this method with something like `if (!request.isLocalPortForwardingSupported())`?
+    if (DefaultDebugExecutor.EXECUTOR_ID.equalsIgnoreCase(getEnvironment().getExecutor().getId()) &&
+        !(request instanceof LocalTargetEnvironmentRequest)) {
+      return 12345;
+    }
+    else {
+      return null;
+    }
+  }
+
+  private synchronized void prepareRemoteConnection(
+    @NotNull TargetEnvironmentRequest request,
+    @Nullable TargetEnvironmentConfiguration configuration
+  ) {
     //todo[remoteServers]: pull up and support all implementations of JavaCommandLineState
-    if (!DefaultDebugExecutor.EXECUTOR_ID.equalsIgnoreCase(getEnvironment().getExecutor().getId())) {
-      myRemoteConnection = null;
-      return;
+    myDebuggerPortRequest = null;
+    final int remotePort;
+    {
+      Integer remotePort2 = requiredDebuggerTargetPort(request);
+      if (remotePort2 == null) {
+        myRemoteConnection = null;
+        return;
+      }
+      remotePort = remotePort2;
     }
 
     try {
-      if (!(request instanceof LocalTargetEnvironmentRequest)) {
-        final int remotePort = 12345;
         final String remoteAddressForVmParams;
 
         final boolean java9plus = Optional.ofNullable(configuration)
@@ -94,15 +131,20 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
           remoteConnection.setApplicationHostName("*");
         }
 
-        request.bindTargetPort(remotePort).getLocalValue().onSuccess(it -> {
-          remoteConnection.setDebuggerHostName("localhost");
-          remoteConnection.setDebuggerAddress(String.valueOf(it));
-        });
+        myDebuggerPortRequest = new TargetEnvironment.TargetPortBinding(null, remotePort);
+
         myRemoteConnection = remoteConnection;
-      }
     }
     catch (ExecutionException e) {
       myRemoteConnection = null;
+    }
+  }
+
+  public void setRemoteConnectionPort(int port) {
+    RemoteConnection c = myRemoteConnection;
+    if (c != null) {
+      c.setDebuggerHostName("localhost");
+      c.setDebuggerAddress(String.valueOf(port));
     }
   }
 
@@ -134,7 +176,9 @@ public abstract class BaseJavaApplicationCommandLineState<T extends RunConfigura
   @Override
   protected OSProcessHandler startProcess() throws ExecutionException {
     //todo[remoteServers]: pull up and support all implementations of JavaCommandLineState
-    TargetEnvironment remoteEnvironment = getEnvironment().getPreparedTargetEnvironment(this, new EmptyProgressIndicator());
+
+    EmptyProgressIndicator environmentIndicator = new EmptyProgressIndicator();
+    TargetEnvironment remoteEnvironment = getEnvironment().getPreparedTargetEnvironment(this, environmentIndicator);
     TargetedCommandLineBuilder targetedCommandLineBuilder = getTargetedCommandLine();
     TargetedCommandLine targetedCommandLine = targetedCommandLineBuilder.build();
     Process process = remoteEnvironment.createProcess(targetedCommandLine, new EmptyProgressIndicator());

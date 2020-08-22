@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.duplicateExpressions;
 
 import com.intellij.codeInspection.*;
@@ -274,7 +274,7 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
       JavaBundle.message("inspection.duplicate.expressions.complexity.threshold"), this, "complexityThreshold", 3);
   }
 
-  private static class IntroduceVariableFix implements LocalQuickFix {
+  private static final class IntroduceVariableFix implements LocalQuickFix {
     private final String myExpressionText;
 
     private IntroduceVariableFix(@NotNull PsiExpression expression) {myExpressionText = expression.getText();}
@@ -325,7 +325,7 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
     }
   }
 
-  private static class ReuseVariableFix implements LocalQuickFix {
+  private static final class ReuseVariableFix implements LocalQuickFix {
     private final String myExpressionText;
     private final String myVariableName;
 
@@ -357,7 +357,7 @@ public class DuplicateExpressionsInspection extends LocalInspectionTool {
     }
   }
 
-  private static class ReplaceOtherOccurrencesFix implements LocalQuickFix {
+  private static final class ReplaceOtherOccurrencesFix implements LocalQuickFix {
     private final String myExpressionText;
     private final String myVariableName;
 

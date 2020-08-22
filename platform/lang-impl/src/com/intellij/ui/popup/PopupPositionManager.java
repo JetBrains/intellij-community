@@ -116,7 +116,7 @@ public final class PopupPositionManager {
     return null;
   }
 
-  private static class PositionAdjuster2 extends PositionAdjuster {
+  private static final class PositionAdjuster2 extends PositionAdjuster {
 
     private final Component myTopComponent;
 

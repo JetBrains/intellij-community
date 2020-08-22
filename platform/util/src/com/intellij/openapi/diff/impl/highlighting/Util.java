@@ -7,7 +7,7 @@ import com.intellij.openapi.diff.impl.string.DiffString;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.diff.Diff;
-import gnu.trove.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,10 +19,11 @@ import java.util.StringTokenizer;
 public final class Util {
   private static final Logger LOG = Logger.getInstance(Util.class);
   private static final String DELIMITERS = " \n\r\t(){}[],./?`~!@#$%^&*-=+|\\;:'\"<>";
-  public static final TIntHashSet DELIMITERS_SET = new TIntHashSet();
+  public static final IntOpenHashSet DELIMITERS_SET;
 
   static {
     char[] delimiters = DELIMITERS.toCharArray();
+    DELIMITERS_SET = new IntOpenHashSet(delimiters.length);
     for (char delimiter : delimiters) {
       DELIMITERS_SET.add(delimiter);
     }

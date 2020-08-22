@@ -166,6 +166,15 @@ public class SoftWrapApplianceManager implements Dumpable {
     onRecalculationEnd();
   }
 
+  public void recalculateAll() {
+    reset();
+    myStorage.removeAll();
+    myVisibleAreaWidth = myAvailableWidth;
+    myCustomIndentUsedLastTime = myEditor.getSettings().isUseCustomSoftWrapIndent();
+    myCustomIndentValueUsedLastTime = myEditor.getSettings().getCustomSoftWrapIndent();
+    recalculateSoftWraps();
+  }
+
   /**
    * @return    {@code true} if soft wraps were really re-calculated;
    *            {@code false} if it's not possible to do at the moment (e.g. current editor is not shown and we don't

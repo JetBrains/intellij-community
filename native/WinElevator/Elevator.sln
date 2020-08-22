@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.28307.1169
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "launcher", "launcher\launcher.vcxproj", "{6631215A-50A4-49BE-A0B5-BDAC4C75B955}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -14,8 +14,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "elevShared", "elevShared\el
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{0AFC8DF7-8237-4909-8993-9CF44995AA42}"
 	ProjectSection(SolutionItems) = preProject
+		jb.ico = jb.ico
 		README.txt = README.txt
 	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AppxReparseTool", "AppxReparseTool\AppxReparseTool.vcxproj", "{FFD92D09-1024-48E0-B3AB-DA83171B8F42}"
 EndProject
 Global
 	GlobalSection(SharedMSBuildProjectFiles) = preSolution
@@ -46,8 +49,19 @@ Global
 		{9D71A73C-2570-488A-958B-A126F4EEECB7}.Release|x64.Build.0 = Release|x64
 		{9D71A73C-2570-488A-958B-A126F4EEECB7}.Release|x86.ActiveCfg = Release|Win32
 		{9D71A73C-2570-488A-958B-A126F4EEECB7}.Release|x86.Build.0 = Release|Win32
+		{FFD92D09-1024-48E0-B3AB-DA83171B8F42}.Debug|x64.ActiveCfg = Debug|x64
+		{FFD92D09-1024-48E0-B3AB-DA83171B8F42}.Debug|x64.Build.0 = Debug|x64
+		{FFD92D09-1024-48E0-B3AB-DA83171B8F42}.Debug|x86.ActiveCfg = Debug|Win32
+		{FFD92D09-1024-48E0-B3AB-DA83171B8F42}.Debug|x86.Build.0 = Debug|Win32
+		{FFD92D09-1024-48E0-B3AB-DA83171B8F42}.Release|x64.ActiveCfg = Release|x64
+		{FFD92D09-1024-48E0-B3AB-DA83171B8F42}.Release|x64.Build.0 = Release|x64
+		{FFD92D09-1024-48E0-B3AB-DA83171B8F42}.Release|x86.ActiveCfg = Release|Win32
+		{FFD92D09-1024-48E0-B3AB-DA83171B8F42}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {85FF99CC-5338-4566-82A4-C1D7BE51DED1}
 	EndGlobalSection
 EndGlobal

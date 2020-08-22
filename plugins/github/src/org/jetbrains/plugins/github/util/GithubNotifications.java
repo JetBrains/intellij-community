@@ -11,7 +11,9 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vcs.VcsNotifier;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +26,7 @@ import static com.intellij.openapi.util.NlsContexts.NotificationContent;
 import static com.intellij.openapi.util.NlsContexts.NotificationTitle;
 import static org.jetbrains.plugins.github.util.GithubUtil.getErrorTextFromException;
 
-public class GithubNotifications {
+public final class GithubNotifications {
   private static final Logger LOG = GithubUtil.LOG;
 
   private static boolean isOperationCanceled(@NotNull Throwable e) {
@@ -97,9 +99,8 @@ public class GithubNotifications {
                                  @NotificationContent @NotNull String message,
                                  @NotNull String url) {
     LOG.info(title + "; " + message + "; " + url);
-    //noinspection HardCodedStringLiteral
     VcsNotifier.getInstance(project)
-      .notifyImportantInfo(title, "<a href='" + url + "'>" + message + "</a>", NotificationListener.URL_OPENING_LISTENER);
+      .notifyImportantInfo(title, HtmlChunk.link(url, message).toString(), NotificationListener.URL_OPENING_LISTENER);
   }
 
   public static void showWarningURL(@NotNull Project project,
@@ -190,7 +191,7 @@ public class GithubNotifications {
   public static boolean showYesNoDialog(@Nullable Project project,
                                         @NotificationTitle @NotNull String title,
                                         @NotificationContent @NotNull String message) {
-    return Messages.YES == Messages.showYesNoDialog(project, message, title, Messages.getQuestionIcon());
+    return MessageDialogBuilder.yesNo(title, message).ask(project);
   }
 
   @Messages.YesNoResult
@@ -198,7 +199,10 @@ public class GithubNotifications {
                                         @NotificationTitle @NotNull String title,
                                         @NotificationContent @NotNull String message,
                                         @NotNull DialogWrapper.DoNotAskOption doNotAskOption) {
-    return Messages.YES == Messages.showYesNoDialog(project, message, title, Messages.getQuestionIcon(), doNotAskOption);
+    return MessageDialogBuilder.yesNo(title, message)
+      .icon(Messages.getQuestionIcon())
+      .doNotAsk(doNotAskOption)
+      .ask(project);
   }
 
   @NotNull

@@ -273,7 +273,7 @@ SHELL_SCRIPT
       FOR_CLAUSE
         PsiElement(word)('FILE')
         PsiWhiteSpace(' ')
-        PsiElement(word)('in')
+        PsiElement(in)('in')
         PsiWhiteSpace(' ')
         PsiElement($)('$')
         SHELL_PARAMETER_EXPANSION

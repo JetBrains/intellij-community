@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packaging.impl.elements;
 
 import com.intellij.CommonBundle;
@@ -22,7 +22,6 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -56,7 +55,7 @@ import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
-public class ManifestFileUtil {
+public final class ManifestFileUtil {
   private static final Logger LOG = Logger.getInstance(ManifestFileUtil.class);
   public static final String MANIFEST_PATH = JarFile.MANIFEST_NAME;
   public static final String MANIFEST_FILE_NAME = PathUtil.getFileName(MANIFEST_PATH);
@@ -277,7 +276,7 @@ public class ManifestFileUtil {
                                              final @NotNull CompositePackagingElement<?> element) {
     context.editLayout(context.getArtifact(), () -> {
       final VirtualFile file = findManifestFile(element, context, context.getArtifactType());
-      if (file == null || !FileUtil.pathsEqual(file.getPath(), path)) {
+      if (file == null || !PathUtil.pathEqualsTo(file, path)) {
         PackagingElementFactory.getInstance().addFileCopy(element, MANIFEST_DIR_NAME, path, MANIFEST_FILE_NAME);
       }
     });
@@ -289,7 +288,8 @@ public class ManifestFileUtil {
     final GlobalSearchScope searchScope = GlobalSearchScope.allScope(project);
     final PsiClass aClass = initialClassName != null ? JavaPsiFacade.getInstance(project).findClass(initialClassName, searchScope) : null;
     final TreeClassChooser chooser =
-        chooserFactory.createWithInnerClassesScopeChooser("Select Main Class", searchScope, new MainClassFilter(), aClass);
+        chooserFactory.createWithInnerClassesScopeChooser(JavaCompilerBundle.message("dialog.title.manifest.select.main.class"),
+                                                          searchScope, new MainClassFilter(), aClass);
     chooser.showDialog();
     return chooser.getSelected();
   }

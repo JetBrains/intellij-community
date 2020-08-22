@@ -497,7 +497,7 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     assert instance != null : mainClass;
   }
 
-  private static class MyClassFinder extends InstrumentationClassFinder {
+  private static final class MyClassFinder extends InstrumentationClassFinder {
     private final Map<String, byte[]> myClassData = new HashMap<>();
 
     private MyClassFinder(URL[] platformUrls, URL[] classpathUrls) {

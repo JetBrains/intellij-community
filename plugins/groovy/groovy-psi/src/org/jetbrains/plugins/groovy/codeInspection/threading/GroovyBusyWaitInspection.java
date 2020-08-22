@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.codeInspection.threading;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
@@ -30,7 +31,7 @@ public class GroovyBusyWaitInspection extends BaseInspection {
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return "Call to <code>Thread.#ref()</code> in a loop, probably busy-waiting #loc";
+    return GroovyBundle.message("inspection.message.call.to.thread.ref.in.a.loop");
   }
 
   @NotNull

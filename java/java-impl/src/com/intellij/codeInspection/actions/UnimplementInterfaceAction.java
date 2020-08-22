@@ -24,6 +24,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.ClassUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -118,6 +119,14 @@ public class UnimplementInterfaceAction implements IntentionAction {
     element.delete();
 
     if (target == psiClass) return;
+
+    if (targetClass.hasModifierProperty(PsiModifier.SEALED)) {
+      ClassUtils.removeFromPermitsList(targetClass, psiClass);
+      final PsiModifierList modifiers = psiClass.getModifierList();
+      if (modifiers != null && modifiers.hasExplicitModifier(PsiModifier.NON_SEALED) && !ClassUtils.hasSealedParent(psiClass)) {
+        modifiers.setModifierProperty(PsiModifier.NON_SEALED, false);
+      }
+    }
 
     final Set<PsiMethod> superMethods = new HashSet<>();
     for (PsiClass aClass : psiClass.getSupers()) {

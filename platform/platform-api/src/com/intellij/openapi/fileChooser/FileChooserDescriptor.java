@@ -15,7 +15,6 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,8 +34,8 @@ public class FileChooserDescriptor implements Cloneable {
   private final boolean myChooseJarContents;
   private final boolean myChooseMultiple;
 
-  private String myTitle = UIBundle.message("file.chooser.default.title");
-  private String myDescription;
+  private @NlsContexts.DialogTitle String myTitle = UIBundle.message("file.chooser.default.title");
+  private @NlsContexts.Label String myDescription;
 
   private boolean myHideIgnored = true;
   private final List<VirtualFile> myRoots = new ArrayList<>();
@@ -46,7 +45,7 @@ public class FileChooserDescriptor implements Cloneable {
   private Condition<? super VirtualFile> myFileFilter = null;
   private boolean myForcedToUseIdeaFileChooser = false;
 
-  private final Map<String, Object> myUserData = new THashMap<>();
+  private final Map<String, Object> myUserData = new HashMap<>();
 
   /**
    * Use {@link FileChooserDescriptorFactory} for most used descriptors.
@@ -107,7 +106,7 @@ public class FileChooserDescriptor implements Cloneable {
     return myChooseMultiple;
   }
 
-  public String getTitle() {
+  public @NlsContexts.DialogTitle String getTitle() {
     return myTitle;
   }
 
@@ -120,7 +119,7 @@ public class FileChooserDescriptor implements Cloneable {
     return this;
   }
 
-  public String getDescription() {
+  public @NlsContexts.Label String getDescription() {
     return myDescription;
   }
 

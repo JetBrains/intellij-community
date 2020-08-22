@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.markup.HighlighterLayer
 import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.layout.*
@@ -155,6 +156,7 @@ private fun highlightErrorLines(lines: List<Int>, editor: Editor) {
     .forEach { line -> model.addLineHighlighter(ERRORS_ATTRIBUTES, line!!, HighlighterLayer.ERROR) }
 }
 
+@NlsContexts.DetailedDescription
 private fun getBlacklistExplanationHTML(language: Language): String {
   val hintsProvider = InlayParameterHintsExtension.forLanguage(language) ?: return CodeInsightBundle.message(
     "inlay.hints.blacklist.pattern.explanation")

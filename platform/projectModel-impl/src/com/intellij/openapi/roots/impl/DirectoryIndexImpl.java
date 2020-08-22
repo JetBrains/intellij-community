@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.ProjectTopics;
+import com.intellij.model.ModelBranch;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -12,7 +13,9 @@ import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.SourceFolder;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.LowMemoryWatcher;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileWithId;
@@ -21,7 +24,10 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.util.CollectionQuery;
 import com.intellij.util.Query;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -29,9 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * This is an internal class, {@link DirectoryIndex} must be used instead.
@@ -127,8 +131,42 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
     return getRootIndex().getDirectoriesByPackageName(packageName, includeLibrarySources);
   }
 
+  @Override
+  public Query<VirtualFile> getDirectoriesByPackageName(@NotNull String packageName,
+                                                        @NotNull GlobalSearchScope scope) {
+    Collection<ModelBranch> branches = scope.getModelBranchesAffectingScope();
+    if (branches.isEmpty()) {
+      return super.getDirectoriesByPackageName(packageName, scope);
+    }
+
+    List<RootIndex> indices = ContainerUtil.map(branches, DirectoryIndexImpl::obtainBranchRootIndex);
+    indices.add(getRootIndex());
+    return new CollectionQuery<>(indices)
+      .flatMapping(i -> i.getDirectoriesByPackageName(packageName, true))
+      .filtering(scope::contains);
+  }
+
   @NotNull
-  private RootIndex getRootIndex() {
+  RootIndex getRootIndex(VirtualFile file) {
+    ModelBranch branch = ModelBranch.getFileBranch(file);
+    if (branch != null) {
+      return obtainBranchRootIndex(branch);
+    }
+    return getRootIndex();
+  }
+
+  private static final Key<Pair<Long, RootIndex>> BRANCH_ROOT_INDEX = Key.create("BRANCH_ROOT_INDEX");
+
+  private static RootIndex obtainBranchRootIndex(ModelBranch branch) {
+    Pair<Long, RootIndex> pair = branch.getUserData(BRANCH_ROOT_INDEX);
+    long modCount = branch.getBranchedVfsStructureModificationCount();
+    if (pair == null || pair.first != modCount) {
+      pair = Pair.create(modCount, new RootIndex(branch.getProject(), RootFileSupplier.forBranch(branch)));
+    }
+    return pair.second;
+  }
+
+  RootIndex getRootIndex() {
     RootIndex rootIndex = myRootIndex;
     if (rootIndex == null) {
       myRootIndex = rootIndex = new RootIndex(myProject);
@@ -141,10 +179,7 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
   public DirectoryInfo getInfoForFile(@NotNull VirtualFile file) {
     checkAvailability();
     dispatchPendingEvents();
-
-    if (!(file instanceof VirtualFileWithId)) return NonProjectDirectoryInfo.NOT_SUPPORTED_VIRTUAL_FILE_IMPLEMENTATION;
-
-    return getRootIndex().getInfoForFile(file);
+    return getRootIndex(file).getInfoForFile(file);
   }
 
   @Nullable
@@ -167,9 +202,8 @@ public final class DirectoryIndexImpl extends DirectoryIndex implements Disposab
   @Override
   public String getPackageName(@NotNull VirtualFile dir) {
     checkAvailability();
-    if (!(dir instanceof VirtualFileWithId)) return null;
 
-    return getRootIndex().getPackageName(dir);
+    return getRootIndex(dir).getPackageName(dir);
   }
 
   @NotNull

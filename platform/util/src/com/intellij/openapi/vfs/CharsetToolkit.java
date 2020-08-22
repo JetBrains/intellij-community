@@ -2,8 +2,6 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,6 +11,7 @@ import java.nio.CharBuffer;
 import java.nio.charset.*;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -76,7 +75,7 @@ public final class CharsetToolkit {
   public static final byte[] UTF32LE_BOM = {-1, -2, 0, 0 };
   public static final String FILE_ENCODING_PROPERTY = "file.encoding";
 
-  private static final Map<Charset, byte[]> CHARSET_TO_MANDATORY_BOM = new THashMap<>(4);
+  private static final Map<Charset, byte[]> CHARSET_TO_MANDATORY_BOM = new HashMap<>(4);
   static {
     CHARSET_TO_MANDATORY_BOM.put(UTF_16LE_CHARSET, UTF16LE_BOM);
     CHARSET_TO_MANDATORY_BOM.put(UTF_16BE_CHARSET, UTF16BE_BOM);
@@ -487,7 +486,8 @@ public final class CharsetToolkit {
    */
   public static @NotNull Charset getPlatformCharset() {
     String name = System.getProperty("sun.jnu.encoding");
-    return ObjectUtils.notNull(forName(name), getDefaultSystemCharset());
+    Charset value = forName(name);
+    return value == null ? getDefaultSystemCharset() : value;
   }
 
   /**

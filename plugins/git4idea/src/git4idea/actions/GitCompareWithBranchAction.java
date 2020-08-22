@@ -14,6 +14,7 @@ import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.changes.GitChangeUtils;
 import git4idea.history.GitHistoryUtils;
+import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
@@ -71,7 +72,7 @@ public class GitCompareWithBranchAction extends DvcsCompareWithBranchAction<GitR
     FilePath filePath = VcsUtil.getFilePath(file);
     final GitRepository gitRepository = GitUtil.getRepositoryManager(project).getRepositoryForFile(file);
     if (gitRepository == null) {
-      throw new VcsException("Couldn't find Git Repository for " + file.getName());
+      throw new VcsException(GitBundle.message("action.Git.CompareWithBranch.could.not.find.repo.error", file.getName()));
     }
     final VirtualFile gitRepositoryRoot = gitRepository.getRoot();
     GitRevisionNumber compareRevisionNumber = new GitRevisionNumber(branchToCompare);

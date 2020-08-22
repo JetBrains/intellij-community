@@ -61,9 +61,10 @@ public class CoverageFragment<T extends RunConfigurationBase<?>> extends NestedG
     JavaCoverageEnabledConfiguration configuration = getConfiguration();
     CoverageClassFilterEditor filterEditor = new CoverageClassFilterEditor(myConfiguration.getProject());
     filterEditor.setBorder(IdeBorderFactory.createTitledBorder(message, false, JBUI.emptyInsets()));
+    filterEditor.setupEasyFocusTraversing();
     return new SettingsEditorFragment<>(id, optionName, null, filterEditor,
                                         (p, editor) -> editor.setFilters(CoverageConfigurable.getCoveragePatterns(configuration, included)),
-                                        (p, editor) -> setCoveragePatterns(configuration, editor.getFilters(), included),
+                                        (p, editor) -> setCoveragePatterns(configuration, isSelected() && filterEditor.isVisible() ? editor.getFilters() : ClassFilter.EMPTY_ARRAY, included),
                                         p -> false);
   }
 
@@ -94,7 +95,7 @@ public class CoverageFragment<T extends RunConfigurationBase<?>> extends NestedG
     LabeledComponent<?> component = LabeledComponent.create(panel, JavaCoverageBundle.message("run.configuration.choose.coverage.runner"), BorderLayout.WEST);
     return new SettingsEditorFragment<>("coverage.runner", JavaCoverageBundle.message("coverage.settings.runner"), null, component,
                                         (t, c) -> comboBox.setItem(configuration.getCoverageRunner()),
-                                        (t, c) -> configuration.setCoverageRunner(comboBox.getItem()),
+                                        (t, c) -> configuration.setCoverageRunner(isSelected() && component.isVisible() ? comboBox.getItem() : model.getElementAt(0)),
                                         t -> false);
   }
 }

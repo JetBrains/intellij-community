@@ -18,9 +18,11 @@ import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.DomTarget;
 import com.intellij.util.xml.ElementPresentationManager;
 import com.intellij.util.xml.ResolvingConverter;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Action;
 import org.jetbrains.idea.devkit.dom.ActionOrGroup;
 import org.jetbrains.idea.devkit.dom.Group;
@@ -83,7 +85,7 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
 
   @Override
   public String getErrorMessage(@Nullable String s, ConvertContext context) {
-    return "Cannot resolve " + getResultTypes() + " '" + s + "'";
+    return DevKitBundle.message("plugin.xml.convert.action.or.group.cannot.resolve", getResultTypes(), s);
   }
 
   @Nullable
@@ -115,8 +117,9 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
     return true;
   }
 
+  @Nls
   protected String getResultTypes() {
-    return "action or group";
+    return DevKitBundle.message("plugin.xml.convert.action.or.group.type.action.or.group");
   }
 
 
@@ -128,7 +131,7 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
 
     @Override
     protected String getResultTypes() {
-      return "action";
+      return DevKitBundle.message("plugin.xml.convert.action.or.group.type.action");
     }
   }
 
@@ -140,7 +143,7 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
 
     @Override
     protected String getResultTypes() {
-      return "group";
+      return DevKitBundle.message("plugin.xml.convert.action.or.group.type.group");
     }
   }
 

@@ -3,11 +3,10 @@ package org.jetbrains.plugins.github.pullrequest
 
 import com.intellij.ide.actions.SplitAction
 import com.intellij.openapi.project.Project
-import icons.GithubIcons
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
+import org.jetbrains.plugins.github.util.GithubUIUtil
 import javax.swing.Icon
 import kotlin.properties.Delegates.observable
 
@@ -27,17 +26,12 @@ internal class GHPRTimelineVirtualFile(fileManagerId: String,
   }
 
   override fun getName() = "#${pullRequest.number}"
-  override fun getPresentableName() = details?.let { "$name ${it.title}" } ?: name
+  override fun getPresentableName() = details?.let { "${it.title} $name" } ?: name
 
-  override fun getPath(): String = GHPRVirtualFileSystem.getPath(fileManagerId, project, repository, pullRequest)
+  override fun getPath(): String = (fileSystem as GHPRVirtualFileSystem).getPath(fileManagerId, project, repository, pullRequest)
   override fun getPresentablePath() = details?.url ?: "${repository.toUrl()}/pulls/${pullRequest.number}"
 
-  fun getIcon(): Icon? = when (details?.state) {
-    GHPullRequestState.CLOSED -> GithubIcons.PullRequestClosed
-    GHPullRequestState.MERGED -> GithubIcons.PullRequestMerged
-    GHPullRequestState.OPEN -> GithubIcons.PullRequestOpen
-    null -> null
-  }
+  fun getIcon(): Icon? = details?.let { GithubUIUtil.getPullRequestStateIcon(it.state, it.isDraft) }
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

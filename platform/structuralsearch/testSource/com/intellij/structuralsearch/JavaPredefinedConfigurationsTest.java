@@ -260,6 +260,23 @@ public class JavaPredefinedConfigurationsTest extends PredefinedConfigurationsTe
            "      break;" +
            "    default:" +
            "  }");
+    doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.comments.containing.word")),
+           "// bug\n" +
+           "/* bugs are here */\n" +
+           "/**\n" +
+           "* may\n" +
+           "* contain\n" +
+           "* one bug\n" +
+           "*/\n" +
+           "/* buggy */\n" +
+           "// bug?",
+           "// bug",
+           "/**\n"+
+           "* may\n" +
+           "* contain\n" +
+           "* one bug\n" +
+           "*/",
+           "// bug?");
     //assertTrue((templates.length - configurationMap.size()) + " of " + templates.length +
     //           " existing templates tested. Untested templates: " + configurationMap.keySet(), configurationMap.isEmpty());
   }

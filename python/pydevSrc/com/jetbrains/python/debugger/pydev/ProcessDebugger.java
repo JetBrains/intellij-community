@@ -31,7 +31,8 @@ public interface ProcessDebugger {
 
   XValueChildrenList loadFrame(String threadId, String frameId) throws PyDebuggerException;
 
-  List<Pair<String, Boolean>> getSmartStepIntoVariants(String threadId, String frameId, int startContextLine, int endContextLine) throws PyDebuggerException;
+  List<Pair<String, Boolean>> getSmartStepIntoVariants(String threadId, String frameId, int startContextLine, int endContextLine)
+    throws PyDebuggerException;
 
   // todo: don't generate temp variables for qualified expressions - just split 'em
   XValueChildrenList loadVariable(String threadId, String frameId, PyDebugValue var) throws PyDebuggerException;
@@ -60,6 +61,16 @@ public interface ProcessDebugger {
 
   Collection<PyThreadInfo> getThreads();
 
+  /**
+   * Executes the provided command <i>asynchronously</i> and then waits for the
+   * response <i>synchronously</i> if it is expected for the specific command.
+   * <p>
+   * When the Python script that is being debugged spawns several processes
+   * then the command is executed for each process.
+   *
+   * @param command the debugger command to execute
+   * @see AbstractCommand#isResponseExpected()
+   */
   void execute(@NotNull AbstractCommand command);
 
   void suspendAllThreads();
@@ -101,6 +112,8 @@ public interface ProcessDebugger {
   void removeBreakpoint(@NotNull String typeId, @NotNull String file, int line);
 
   void setShowReturnValues(boolean isShowReturnValues);
+
+  void setUnitTestDebuggingMode();
 
   void addCloseListener(RemoteDebuggerCloseListener remoteDebuggerCloseListener);
 

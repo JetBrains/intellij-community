@@ -151,6 +151,22 @@ class CompilationPartsUploader implements Closeable {
   }
 
   @NotNull
+  protected void doDelete(String path) throws UploadException {
+    CloseableHttpResponse response = null
+    try {
+      String url = myServerUrl + StringUtil.trimStart(path, '/')
+      debug("DELETE " + url)
+      executeWithRetry(new HttpDelete(url))
+    }
+    catch (Exception e) {
+      throw new UploadException("Failed to DELETE $path: " + e.getMessage(), e)
+    }
+    finally {
+      StreamUtil.closeStream(response)
+    }
+  }
+
+  @NotNull
   private String doPut(String path, File file) throws UploadException {
     CloseableHttpResponse response = null
     try {
@@ -181,7 +197,12 @@ class CompilationPartsUploader implements Closeable {
 
   CloseableHttpResponse executeWithRetry(HttpUriRequest request) {
     return new Retry(myMessages).call {
-      myHttpClient.execute(request)
+      def response = myHttpClient.execute(request)
+      if (response.statusLine.statusCode >= HttpStatus.SC_INTERNAL_SERVER_ERROR) {
+        // server error, will retry
+        throw new RuntimeException("$request: response is $response.statusLine.statusCode, $response.entity.content.text")
+      }
+      response
     }
   }
 

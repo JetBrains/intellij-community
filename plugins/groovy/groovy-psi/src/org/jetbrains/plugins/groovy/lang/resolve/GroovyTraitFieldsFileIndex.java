@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve;
 
 import com.intellij.ide.highlighter.JavaClassFileType;
@@ -12,6 +12,7 @@ import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.FileBasedIndex.InputFilter;
 import com.intellij.util.io.DataExternalizer;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.*;
 
@@ -36,7 +37,7 @@ public class GroovyTraitFieldsFileIndex
   implements DataExternalizer<Collection<TraitFieldDescriptor>> {
 
   public static final ID<Integer, Collection<TraitFieldDescriptor>> INDEX_ID = ID.create("groovy.trait.fields");
-  public static final String HELPER_SUFFIX = "$Trait$FieldHelper.class";
+  @NonNls public static final String HELPER_SUFFIX = "$Trait$FieldHelper.class";
 
   private static final InputFilter FILTER = new DefaultFileTypeSpecificInputFilter(JavaClassFileType.INSTANCE) {
     @Override
@@ -184,7 +185,7 @@ public class GroovyTraitFieldsFileIndex
     return readSeq(in, () -> new TraitFieldDescriptor(in.readByte(), readUTF(in), readUTF(in), readSeq(in, () -> readUTF(in))));
   }
 
-  public static class TraitFieldDescriptor {
+  public static final class TraitFieldDescriptor {
     public static final byte PUBLIC = 0x01;
     public static final byte STATIC = 0x02;
 

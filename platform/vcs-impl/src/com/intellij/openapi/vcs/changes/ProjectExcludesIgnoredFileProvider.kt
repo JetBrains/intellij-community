@@ -10,6 +10,7 @@ import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsApplicationSettings
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ui.ChangesComparator
 import com.intellij.openapi.vfs.VirtualFileManager
 
@@ -26,7 +27,7 @@ class ProjectExcludesIgnoredFileProvider : IgnoredFileProvider {
 
   override fun getIgnoredFiles(project: Project) = getProjectExcludePaths(project)
 
-  override fun getIgnoredGroupDescription() = "Project exclude paths"
+  override fun getIgnoredGroupDescription() = VcsBundle.message("changes.project.exclude.paths")
 
   private fun getProjectExcludePaths(project: Project): Set<IgnoredFileDescriptor> {
     if (!VcsApplicationSettings.getInstance().MARK_EXCLUDED_AS_IGNORED) return emptySet()

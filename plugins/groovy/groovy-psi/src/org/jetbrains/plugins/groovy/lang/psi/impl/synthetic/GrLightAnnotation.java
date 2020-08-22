@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 
 import com.intellij.lang.Language;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
@@ -161,13 +162,13 @@ public class GrLightAnnotation extends LightElement implements GrAnnotation {
     }
   }
 
-  public void addAttribute(@Nullable String name, @NotNull String value) {
+  public void addAttribute(@NlsSafe @Nullable String name, @NlsSafe @NotNull String value) {
     GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(getProject());
     String text = name != null ? name + "=" + value : value;
     myAnnotationArgList.addAttribute(factory.createAnnotationAttribute(text, this));
   }
 
-  private class GrLightAnnotationArgumentList extends LightElement implements GrAnnotationArgumentList {
+  private final class GrLightAnnotationArgumentList extends LightElement implements GrAnnotationArgumentList {
     private List<GrAnnotationNameValuePair> myAttributes = null;
     private GrAnnotationNameValuePair[] myCachedAttributes = GrAnnotationNameValuePair.EMPTY_ARRAY;
 

@@ -15,13 +15,14 @@
  */
 package com.intellij.util.xml.ui;
 
+import com.intellij.openapi.util.NlsContexts.ColumnName;
 import com.intellij.util.xml.DomElement;
 
 /**
  * @author peter
  */
 public class StringColumnInfo<T extends DomElement> extends DomColumnInfo<T, String> {
-  public StringColumnInfo(final String name) {
+  public StringColumnInfo(final @ColumnName String name) {
     super(name);
   }
 

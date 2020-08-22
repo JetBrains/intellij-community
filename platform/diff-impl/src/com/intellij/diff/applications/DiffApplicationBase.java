@@ -17,10 +17,12 @@ package com.intellij.diff.applications;
 
 import com.intellij.openapi.application.ApplicationStarterBase;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -41,7 +43,7 @@ import java.util.List;
 import java.util.Set;
 
 public abstract class DiffApplicationBase extends ApplicationStarterBase {
-  protected static final String NULL_PATH = "/dev/null";
+  @NlsSafe protected static final String NULL_PATH = "/dev/null";
 
   protected static final Logger LOG = Logger.getInstance(DiffApplicationBase.class);
 
@@ -63,7 +65,7 @@ public abstract class DiffApplicationBase extends ApplicationStarterBase {
       }
       else {
         VirtualFile virtualFile = findFile(path, currentDirectory);
-        if (virtualFile == null) throw new Exception("Can't find file: " + path);
+        if (virtualFile == null) throw new Exception(DiffBundle.message("cannot.find.file.error", path));
         files.add(virtualFile);
       }
     }
@@ -77,7 +79,7 @@ public abstract class DiffApplicationBase extends ApplicationStarterBase {
     VfsUtil.markDirtyAndRefresh(false, false, false, VfsUtilCore.toVirtualFileArray(files));
 
     for (VirtualFile file : files) {
-      if (!file.isValid()) throw new Exception("Can't find file: " + file.getPresentableUrl());
+      if (!file.isValid()) throw new Exception(DiffBundle.message("cannot.find.file.error", file.getPresentableUrl()));
     }
   }
 

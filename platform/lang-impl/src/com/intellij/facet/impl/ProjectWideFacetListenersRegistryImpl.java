@@ -57,7 +57,7 @@ final class ProjectWideFacetListenersRegistryImpl extends ProjectWideFacetListen
     });
   }
 
-  private static class ProjectWideFacetListenerWrapper<F extends Facet<?>> implements ProjectFacetListener<F> {
+  private static final class ProjectWideFacetListenerWrapper<F extends Facet<?>> implements ProjectFacetListener<F> {
     private final @NotNull ProjectWideFacetListener<F> myListener;
 
     private ProjectWideFacetListenerWrapper(@NotNull ProjectWideFacetListener<F> listener) {

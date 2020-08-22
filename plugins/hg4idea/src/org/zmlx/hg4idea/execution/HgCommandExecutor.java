@@ -24,9 +24,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SystemProperties;
 import com.intellij.vcsUtil.VcsImplUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgBundle;
+import org.zmlx.hg4idea.HgDisposable;
 import org.zmlx.hg4idea.HgExecutableManager;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.util.HgEncodingUtil;
@@ -107,10 +109,10 @@ public class HgCommandExecutor {
    */
   @Deprecated
   public void execute(@Nullable final VirtualFile repo,
-                      @NotNull final String operation,
+                      @NotNull final @NonNls String operation,
                       @Nullable final List<String> arguments,
                       @Nullable final HgCommandResultHandler handler) {
-    BackgroundTaskUtil.executeOnPooledThread(myProject, () -> {
+    BackgroundTaskUtil.executeOnPooledThread(HgDisposable.getInstance(myProject), () -> {
       HgCommandResult result = executeInCurrentThread(repo, operation, arguments);
       if (handler != null) {
         handler.process(result);
@@ -120,15 +122,15 @@ public class HgCommandExecutor {
 
   @Nullable
   public HgCommandResult executeInCurrentThread(@Nullable final VirtualFile repo,
-                                                @NotNull final String operation,
-                                                @Nullable final List<String> arguments) {
+                                                @NotNull final @NonNls String operation,
+                                                @Nullable final List<@NonNls String> arguments) {
     return executeInCurrentThread(repo, operation, arguments, false);
   }
 
   @Nullable
   public HgCommandResult executeInCurrentThread(@Nullable VirtualFile repo,
-                                                @NotNull String operation,
-                                                @Nullable List<String> arguments,
+                                                @NotNull @NonNls String operation,
+                                                @Nullable List<@NonNls String> arguments,
                                                 boolean ignoreDefaultOptions) {
     ShellCommand.CommandResultCollector collector = new ShellCommand.CommandResultCollector(myIsBinary);
     boolean success = executeInCurrentThread(repo, operation, arguments, ignoreDefaultOptions, collector);
@@ -136,8 +138,8 @@ public class HgCommandExecutor {
   }
 
   public boolean executeInCurrentThread(@Nullable VirtualFile repo,
-                                        @NotNull String operation,
-                                        @Nullable List<String> arguments,
+                                        @NotNull @NonNls String operation,
+                                        @Nullable List<@NonNls String> arguments,
                                         boolean ignoreDefaultOptions,
                                         @NotNull HgLineProcessListener listener) {
     boolean success = executeInCurrentThreadAndLog(repo, operation, arguments, ignoreDefaultOptions, listener);
@@ -150,8 +152,8 @@ public class HgCommandExecutor {
   }
 
   private boolean executeInCurrentThreadAndLog(@Nullable VirtualFile repo,
-                                               @NotNull String operation,
-                                               @Nullable List<String> arguments,
+                                               @NotNull @NonNls String operation,
+                                               @Nullable List<@NonNls String> arguments,
                                                boolean ignoreDefaultOptions,
                                                @NotNull HgLineProcessListener listener) {
     if (myProject == null || myProject.isDisposed() || myVcs == null) return false;
@@ -180,8 +182,8 @@ public class HgCommandExecutor {
 
   @NotNull
   private ShellCommand createShellCommandWithArgs(@Nullable VirtualFile repo,
-                                                  @NotNull String operation,
-                                                  @Nullable List<String> arguments,
+                                                  @NotNull @NonNls String operation,
+                                                  @Nullable List<@NonNls String> arguments,
                                                   boolean ignoreDefaultOptions) {
 
     logCommand(operation, arguments);
@@ -218,8 +220,8 @@ public class HgCommandExecutor {
     final int lastSlashIndex = exeName.lastIndexOf(File.separator);
     exeName = exeName.substring(lastSlashIndex + 1);
 
-    String str = String
-      .format("%s %s %s", exeName, operation, arguments == null ? "" : StringUtil.escapeStringCharacters(StringUtil.join(arguments, " ")));
+    @NonNls String str = String.format("%s %s %s", exeName, operation,
+                                       arguments == null ? "" : StringUtil.escapeStringCharacters(StringUtil.join(arguments, " ")));
     //remove password from path before log
     final String cmdString = myDestination != null ? HgUtil.removePasswordIfNeeded(str) : str;
     // log command

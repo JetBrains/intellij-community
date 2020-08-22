@@ -108,7 +108,10 @@ class FindInProjectTask {
     try {
       myProgress.setIndeterminate(true);
       myProgress.setText(FindBundle.message("progress.text.scanning.indexed.files"));
-      Set<VirtualFile> filesForFastWordSearch = ReadAction.nonBlocking(this::getFilesForFastWordSearch).executeSynchronously();
+      Set<VirtualFile> filesForFastWordSearch = ReadAction
+        .nonBlocking(this::getFilesForFastWordSearch)
+        .withDocumentsCommitted(myProject)
+        .executeSynchronously();
       myProgress.setIndeterminate(false);
       if (LOG.isDebugEnabled()) {
         LOG.debug("Searching for " + myFindModel.getStringToFind() + " in " + filesForFastWordSearch.size() + " indexed files");
@@ -240,7 +243,7 @@ class FindInProjectTask {
             String message = FindBundle.message("find.excessive.total.size.prompt",
                                                 UsageViewManagerImpl.presentableSize(myTotalFilesSize.longValue()),
                                                 ApplicationNamesInfo.getInstance().getProductName());
-            UsageLimitUtil.Result ret = UsageLimitUtil.showTooManyUsagesWarning(myProject, message, processPresentation.getUsageViewPresentation());
+            UsageLimitUtil.Result ret = UsageLimitUtil.showTooManyUsagesWarning(myProject, message);
             if (ret == UsageLimitUtil.Result.ABORT) {
               myProgress.cancel();
             }

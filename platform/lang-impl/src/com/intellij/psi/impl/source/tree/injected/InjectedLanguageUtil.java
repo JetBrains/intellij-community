@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -45,6 +46,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @deprecated Use {@link InjectedLanguageManager} instead
@@ -341,7 +343,7 @@ public final class InjectedLanguageUtil {
       ProgressManager.checkCanceled();
       if ("EL".equals(current.getLanguage().getID())) break;
       result = SoftReference.deref(current.getUserData(INJECTED_PSI));
-      if (result == null || !result.isModCountUpToDate(hostPsiFile) || !result.isValid()) {
+      if (result == null || !result.isModCountUpToDate() || !result.isValid()) {
         result = injectedManager.processInPlaceInjectorsFor(hostPsiFile, current);
         preventResultFromGCWhileInjectedPsiIsReachable(result);
       }
@@ -414,6 +416,13 @@ public final class InjectedLanguageUtil {
     return CachedValuesManager.getCachedValue(host, () ->
       CachedValueProvider.Result.createSingleDependency(new InjectionResult(host, null, null),
                                                         PsiModificationTracker.MODIFICATION_COUNT));
+  }
+
+  /**
+   * Quick check if we should bother injecting something inside this PSI at all
+   */
+  public static boolean isInjectable(@NotNull PsiElement element, boolean probeUp) {
+    return stopLookingForInjection(element) || element.getFirstChild() != null || probeUp;
   }
 
   /**
@@ -541,10 +550,11 @@ public final class InjectedLanguageUtil {
     file.putUserData(INJECTED_DOCS_KEY, null);
   }
 
-  static void clearCaches(@NotNull PsiFile injected, @NotNull DocumentWindowImpl documentWindow) {
-    VirtualFileWindowImpl virtualFile = (VirtualFileWindowImpl)injected.getVirtualFile();
-    PsiManagerEx psiManagerEx = (PsiManagerEx)injected.getManager();
-    if (psiManagerEx.getProject().isDisposed()) return;
+  static void clearCaches(@NotNull Project project, @NotNull DocumentWindow documentWindow) {
+    if (project.isDisposed()) return;
+    VirtualFileWindowImpl virtualFile =
+      (VirtualFileWindowImpl)Objects.requireNonNull(FileDocumentManager.getInstance().getFile(documentWindow));
+    PsiManagerEx psiManagerEx = PsiManagerEx.getInstanceEx(project);
 
     DebugUtil.performPsiModification("injected clearCaches", () ->
       psiManagerEx.getFileManager().setViewProvider(virtualFile, null));
@@ -604,7 +614,7 @@ public final class InjectedLanguageUtil {
 
   @NotNull
   public static Editor getTopLevelEditor(@NotNull Editor editor) {
-    return editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
+    return InjectedLanguageEditorUtil.getTopLevelEditor(editor);
   }
 
   public static boolean isInInjectedLanguagePrefixSuffix(@NotNull final PsiElement element) {

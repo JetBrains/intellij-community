@@ -55,7 +55,7 @@ import org.intellij.lang.xpath.psi.XPathType;
 import org.intellij.lang.xpath.psi.XPathVariable;
 import org.jetbrains.annotations.NotNull;
 
-public class CompletionLists {
+public final class CompletionLists {
   public static final String INTELLIJ_IDEA_RULEZ = CompletionInitializationContext.DUMMY_IDENTIFIER_TRIMMED;
 
   private CompletionLists() {

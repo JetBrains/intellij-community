@@ -7,6 +7,7 @@ import com.intellij.debugger.engine.SuspendContextImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.CommonClassNames;
 import com.jetbrains.jdi.*;
@@ -19,13 +20,14 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static java.util.concurrent.CompletableFuture.allOf;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 
-public class DebuggerUtilsAsync {
+public final class DebuggerUtilsAsync {
   private static final Logger LOG = Logger.getInstance(DebuggerUtilsAsync.class);
 
   // Debugger manager thread
@@ -245,7 +247,7 @@ public class DebuggerUtilsAsync {
 
   public static CompletableFuture<Stream<? extends ReferenceType>> supertypes(ReferenceType type) {
     if (!Registry.is("debugger.async.jdi")) {
-      return completedFuture(DebuggerUtilsImpl.supertypes(type));
+      return async(() -> DebuggerUtilsImpl.supertypes(type));
     }
     if (type instanceof InterfaceType) {
       return superinterfaces(((InterfaceType)type)).thenApply(Collection::stream);
@@ -265,7 +267,7 @@ public class DebuggerUtilsAsync {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     DebuggerManagerThreadImpl thread = (DebuggerManagerThreadImpl)InvokeThread.currentThread();
     LOG.assertTrue(thread != null);
-    DebuggerCommandImpl event = thread.myEvents.getCurrentEvent();
+    DebuggerCommandImpl event = DebuggerManagerThreadImpl.getCurrentCommand();
     LOG.assertTrue(event != null);
     PrioritizedTask.Priority priority = event.getPriority();
     SuspendContextImpl suspendContext =
@@ -290,8 +292,7 @@ public class DebuggerUtilsAsync {
 
           @Override
           protected void commandCancelled() {
-            // TODO: better exception
-            res.completeExceptionally(new Exception("Cancelled"));
+            res.cancel(false);
           }
         });
       }
@@ -304,13 +305,20 @@ public class DebuggerUtilsAsync {
 
           @Override
           protected void commandCancelled() {
-            // TODO: better exception
-            res.completeExceptionally(new Exception("Cancelled"));
+            res.cancel(false);
           }
         });
       }
     });
     return res;
+  }
+
+  public static Throwable unwrap(Throwable throwable) {
+    return throwable instanceof CompletionException ? throwable.getCause() : throwable;
+  }
+
+  private static <T> CompletableFuture<T> async(Computable<? extends T> provider) {
+    return completedFuture(null).thenApply(__ -> provider.compute());
   }
 
   private static <T> void completeFuture(T res, Throwable ex, CompletableFuture<T> future) {

@@ -158,7 +158,7 @@ SHELL_SCRIPT
             LITERAL
               PsiElement(word)('b')
             PsiWhiteSpace(' ')
-            SIMPLE_COMMAND_ELEMENT
+            LITERAL
               PsiElement(word)('else')
             PsiWhiteSpace(' ')
             LITERAL

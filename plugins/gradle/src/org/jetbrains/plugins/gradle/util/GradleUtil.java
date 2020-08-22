@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.util;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -14,7 +14,6 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileTypeDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.BooleanFunction;
@@ -48,7 +47,7 @@ import static org.jetbrains.plugins.gradle.util.GradleConstants.KOTLIN_DSL_SCRIP
  *
  * @author Denis Zhdanov
  */
-public class GradleUtil {
+public final class GradleUtil {
   private static final String LAST_USED_GRADLE_HOME_KEY = "last.used.gradle.home";
 
   private GradleUtil() { }
@@ -64,7 +63,7 @@ public class GradleUtil {
   @NotNull
   public static FileChooserDescriptor getGradleProjectFileChooserDescriptor() {
     return new FileChooserDescriptor(true, false, false, false, false, false)
-      .withFileFilter(file -> SystemInfo.isFileSystemCaseSensitive
+      .withFileFilter(file -> file.isCaseSensitive()
                               ? endsWith(file.getName(), "." + EXTENSION) || endsWith(file.getName(), "." + KOTLIN_DSL_SCRIPT_EXTENSION)
                               : endsWithIgnoreCase(file.getName(), "." + EXTENSION) || endsWithIgnoreCase(file.getName(), "." + KOTLIN_DSL_SCRIPT_EXTENSION));
   }

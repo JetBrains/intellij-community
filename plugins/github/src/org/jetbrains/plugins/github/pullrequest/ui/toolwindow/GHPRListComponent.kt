@@ -56,6 +56,10 @@ internal object GHPRListComponent {
       }
 
       override fun onDataUpdated(idx: Int) = listModel.setElementAt(listLoader.loadedData[idx], idx)
+      override fun onDataRemoved(data: Any) {
+        (data as? GHPullRequestShort)?.let { listModel.remove(it) }
+      }
+
       override fun onAllDataRemoved() = listModel.removeAll()
     })
 

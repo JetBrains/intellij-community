@@ -2,7 +2,7 @@
 package git4idea.rebase.log
 
 import com.intellij.notification.NotificationType
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.VcsException
@@ -14,7 +14,7 @@ import com.intellij.vcs.log.impl.VcsCommitMetadataImpl
 import com.intellij.vcs.log.util.VcsLogUtil
 import git4idea.i18n.GitBundle
 
-private val LOG = logger("Git.Rebase.Log.Action.CommitDetailsLoader")
+private val LOG = Logger.getInstance("Git.Rebase.Log.Action.CommitDetailsLoader")
 
 internal fun getOrLoadDetails(project: Project, data: VcsLogData, commitList: List<VcsShortCommitDetails>): List<VcsCommitMetadata> {
   val commitsToLoad = HashSet<VcsShortCommitDetails>(commitList)

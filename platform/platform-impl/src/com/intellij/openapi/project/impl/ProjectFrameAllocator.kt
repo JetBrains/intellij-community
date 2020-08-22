@@ -1,12 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.impl
 
+import com.intellij.configurationStore.saveSettings
 import com.intellij.conversion.CannotConvertException
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.runActivity
 import com.intellij.diagnostic.runMainActivity
 import com.intellij.ide.RecentProjectsManager
 import com.intellij.ide.RecentProjectsManagerBase
+import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.plugins.StartupAbortedException
 import com.intellij.idea.SplashManager
@@ -17,7 +19,9 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
@@ -27,6 +31,7 @@ import com.intellij.ui.ComponentUtil
 import com.intellij.ui.IdeUICustomization
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.scale.ScaleContext
+import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.CalledInAwt
 import java.awt.Dimension
@@ -36,14 +41,13 @@ import java.io.EOFException
 import java.nio.file.Path
 import kotlin.math.min
 
-internal open class ProjectFrameAllocator {
-  companion object {
-    internal fun getPresentableName(options: OpenProjectTask, projectStoreBaseDir: Path): String {
-      return options.projectName ?: projectStoreBaseDir.fileName.toString()
-    }
-  }
-
+internal open class ProjectFrameAllocator(private val options: OpenProjectTask) {
   open fun <T : Any> run(task: () -> T?): T? {
+    if (options.isNewProject && options.useDefaultProjectAsTemplate && options.project == null) {
+      runBlocking {
+        saveSettings(ProjectManager.getInstance().defaultProject, forceSavingAllSettings = true)
+      }
+    }
     return task()
   }
 
@@ -59,7 +63,7 @@ internal open class ProjectFrameAllocator {
   open fun projectOpened(project: Project) {}
 }
 
-internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, private val projectStoreBaseDir: Path) : ProjectFrameAllocator() {
+internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, private val projectStoreBaseDir: Path) : ProjectFrameAllocator(options) {
   // volatile not required because created in run (before executing run task)
   private var frameHelper: ProjectFrameHelper? = null
 
@@ -70,9 +74,12 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
 
   override fun <T : Any> run(task: () -> T?): T? {
     var result: T? = null
-    val progressTitle = IdeUICustomization.getInstance().projectMessage("progress.title.project.loading.name",
-                                                                        getPresentableName(options, projectStoreBaseDir))
+    val progressTitle = getProgressTitle()
     ApplicationManager.getApplication().invokeAndWait {
+      if (options.isNewProject && options.useDefaultProjectAsTemplate && options.project == null) {
+        SaveAndSyncHandler.getInstance().saveSettingsUnderModalProgress(ProjectManager.getInstance().defaultProject)
+      }
+
       val frame = createFrameIfNeeded()
       val progressTask = object : Task.Modal(null, progressTitle, true) {
         override fun run(indicator: ProgressIndicator) {
@@ -109,6 +116,12 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
       }
     }
     return result
+  }
+
+  @NlsContexts.ProgressTitle
+  private fun getProgressTitle(): String {
+    val projectName = options.projectName ?: (projectStoreBaseDir.fileName ?: projectStoreBaseDir).toString()
+    return IdeUICustomization.getInstance().projectMessage("progress.title.project.loading.name", projectName)
   }
 
   @CalledInAwt

@@ -15,7 +15,7 @@ public final class PythonPsiApiIcons {
     return IconManager.getInstance().getIcon(path, PythonPsiApiIcons.class);
   }
 
-  /** 16x16 */ public static final @NotNull Icon IpythonNotebook = load("/icons/com/jetbrains/python/IpythonNotebook.svg");
+  /** 16x16 */ public static final @NotNull Icon IPythonNotebook = load("/icons/com/jetbrains/python/iPythonNotebook.svg");
 
   public final static class Nodes {
     /** 16x16 */ public static final @NotNull Icon Cyan_dot = load("/icons/com/jetbrains/python/nodes/cyan-dot.svg");

@@ -111,7 +111,7 @@ class GradleDaemonStartupIssueChecker : GradleIssueChecker {
       val column = values[1]
 
       messageConsumer.accept(object : FileMessageEventImpl(
-        parentEventId, MessageEvent.Kind.ERROR, null, failedStartupReason, message,
+        parentEventId, MessageEvent.Kind.ERROR, null, failedStartupReason, message, //NON-NLS
         FilePosition(location.file, line, column)), DuplicateMessageAware {}
       )
       return true

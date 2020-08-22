@@ -16,10 +16,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileSystemItem;
-import com.intellij.psi.PsiNamedElement;
+import com.intellij.psi.*;
 import com.intellij.psi.util.QualifiedName;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyFile;
@@ -43,7 +40,8 @@ public class PythonExternalDocumentationProvider extends PythonDocumentationProv
   @Override
   public String fetchExternalDocumentation(Project project, PsiElement element, List<String> docUrls, boolean onHover) {
     PsiNamedElement namedElement = ApplicationManager.getApplication().runReadAction((Computable<PsiNamedElement>)() -> {
-      final Module module = ModuleUtilCore.findModuleForPsiElement(element);
+      PsiElement moduleAnchor = element instanceof PsiDirectory ? element : element.getContainingFile();
+      final Module module = ModuleUtilCore.findModuleForPsiElement(moduleAnchor);
       if (module != null && !PyDocumentationSettings.getInstance(module).isRenderExternalDocumentation()) return null;
 
       PsiFileSystemItem file = PythonDocumentationProvider.getFile(element);

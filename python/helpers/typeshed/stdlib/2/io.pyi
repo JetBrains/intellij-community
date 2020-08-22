@@ -4,8 +4,7 @@
 
 # Only a subset of functionality is included.
 
-from typing import List, BinaryIO, TextIO, IO, overload, Iterator, Iterable, Any, Union, Optional
-from typing_extensions import Literal
+from typing import IO, Any, Union
 import _io
 
 from _io import BlockingIOError as BlockingIOError
@@ -21,27 +20,6 @@ from _io import StringIO as StringIO
 from _io import TextIOWrapper as TextIOWrapper
 from _io import UnsupportedOperation as UnsupportedOperation
 from _io import open as open
-
-_OpenTextMode = Literal[
-    'r', 'r+', '+r', 'rt', 'tr', 'rt+', 'r+t', '+rt', 'tr+', 't+r', '+tr',
-    'w', 'w+', '+w', 'wt', 'tw', 'wt+', 'w+t', '+wt', 'tw+', 't+w', '+tw',
-    'a', 'a+', '+a', 'at', 'ta', 'at+', 'a+t', '+at', 'ta+', 't+a', '+ta',
-    'U', 'rU', 'Ur', 'rtU', 'rUt', 'Urt', 'trU', 'tUr', 'Utr',
-]
-_OpenBinaryModeUpdating = Literal[
-    'rb+', 'r+b', '+rb', 'br+', 'b+r', '+br',
-    'wb+', 'w+b', '+wb', 'bw+', 'b+w', '+bw',
-    'ab+', 'a+b', '+ab', 'ba+', 'b+a', '+ba',
-]
-_OpenBinaryModeWriting = Literal[
-    'wb', 'bw',
-    'ab', 'ba',
-]
-_OpenBinaryModeReading = Literal[
-    'rb', 'br',
-    'rbU', 'rUb', 'Urb', 'brU', 'bUr', 'Ubr',
-]
-_OpenBinaryMode = Union[_OpenBinaryModeUpdating, _OpenBinaryModeReading, _OpenBinaryModeWriting]
 
 def _OpenWrapper(file: Union[str, unicode, int],
                  mode: unicode = ..., buffering: int = ..., encoding: unicode = ...,

@@ -56,16 +56,12 @@ public final class SupertypesHierarchyTreeStructure extends HierarchyTreeStructu
     if (modifierList != null) {
       for (PsiAnnotation annotation : modifierList.getAnnotations()) {
         if (isJavaLangAnnotation(annotation)) continue;
-        PsiJavaCodeReferenceElement ref = annotation.getNameReferenceElement();
-        if (ref != null) {
-          PsiElement annotationType = ref.resolve();
-          if (annotationType instanceof PsiClass) {
-            final PsiClass aClass = (PsiClass)annotationType;
-            final PsiAnnotation.TargetType target = AnnotationTargetUtil
-              .findAnnotationTarget(aClass, PsiAnnotation.TargetType.TYPE, PsiAnnotation.TargetType.ANNOTATION_TYPE);
-            if (target !=  null && target != PsiAnnotation.TargetType.UNKNOWN) {
-                supers.add(aClass);
-            }
+        PsiClass aClass = annotation.resolveAnnotationType();
+        if (aClass != null) {
+          PsiAnnotation.TargetType target = AnnotationTargetUtil
+            .findAnnotationTarget(aClass, PsiAnnotation.TargetType.TYPE, PsiAnnotation.TargetType.ANNOTATION_TYPE);
+          if (target !=  null && target != PsiAnnotation.TargetType.UNKNOWN) {
+              supers.add(aClass);
           }
         }
       }

@@ -16,7 +16,7 @@ public final class ProjectTopics {
    * Modules added or removed from project.
    */
   @Topic.ProjectLevel
-  public static final Topic<ModuleListener> MODULES = new Topic<>(ModuleListener.class);
+  public static final Topic<ModuleListener> MODULES = new Topic<>(ModuleListener.class, Topic.BroadcastDirection.NONE);
 
   private ProjectTopics() {
   }

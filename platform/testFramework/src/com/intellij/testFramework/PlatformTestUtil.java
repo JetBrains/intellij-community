@@ -4,6 +4,7 @@ package com.intellij.testFramework;
 import com.intellij.configurationStore.StateStorageManagerKt;
 import com.intellij.configurationStore.StoreReloadManager;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.Executor;
 import com.intellij.execution.*;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
@@ -12,7 +13,8 @@ import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.process.CapturingProcessAdapter;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -27,6 +29,7 @@ import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.AbstractTreeUi;
+import com.intellij.model.psi.PsiSymbolReferenceService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
@@ -43,6 +46,7 @@ import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.paths.UrlReference;
 import com.intellij.openapi.paths.WebReference;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
@@ -51,7 +55,10 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.PsiMultiReference;
@@ -247,17 +254,16 @@ public final class PlatformTestUtil {
   public static void assertTreeEqual(@NotNull JTree tree, @NotNull String expected, boolean checkSelected, boolean ignoreOrder) {
     String treeStringPresentation = print(tree, checkSelected);
     if (ignoreOrder) {
-      String[] lines = treeStringPresentation.split("\n");
-      for (String line : lines) {
+      for (String line : treeStringPresentation.split("\n")) {
         if (!expected.contains(line + "\n")) {
           fail("Missing node: " + line);
         }
       }
-    } else {
+    }
+    else {
       assertEquals(expected.trim(), treeStringPresentation.trim());
     }
   }
-
 
   public static void expand(JTree tree, int... rows) {
     for (int row : rows) {
@@ -474,10 +480,16 @@ public final class PlatformTestUtil {
    * Dispatch all pending events (if any) in the {@link IdeEventQueue}.
    * Should only be invoked in Swing thread (asserted inside {@link IdeEventQueue#dispatchEvent(AWTEvent)})
    */
-  public static void dispatchAllEventsInIdeEventQueue() throws InterruptedException {
+  public static void dispatchAllEventsInIdeEventQueue() {
     IdeEventQueue eventQueue = IdeEventQueue.getInstance();
-    //noinspection StatementWithEmptyBody
-    while (dispatchNextEventIfAny(eventQueue) != null);
+    while (true) {
+      try {
+        if (dispatchNextEventIfAny(eventQueue) == null) break;
+      }
+      catch (InterruptedException e) {
+        throw new RuntimeException(e);
+      }
+    }
   }
 
   /**
@@ -724,7 +736,7 @@ public final class PlatformTestUtil {
   private static void shallowCompare(VirtualFile dir, VirtualFile[] vfs) {
     if (dir.isInLocalFileSystem() && dir.getFileSystem() != TempFileSystem.getInstance()) {
       String vfsPaths = Stream.of(vfs).map(VirtualFile::getPath).sorted().collect(Collectors.joining("\n"));
-      File[] io = notNull(new File(dir.getPath()).listFiles());
+      File[] io = Objects.requireNonNull(new File(dir.getPath()).listFiles());
       String ioPaths = Stream.of(io).map(f -> FileUtil.toSystemIndependentName(f.getPath())).sorted().collect(Collectors.joining("\n"));
       assertEquals(vfsPaths, ioPaths);
     }
@@ -808,11 +820,6 @@ public final class PlatformTestUtil {
     };
   }
 
-  public static @NotNull <T> T notNull(@Nullable T t) {
-    assertNotNull(t);
-    return t;
-  }
-
   public static @NotNull String loadFileText(@NotNull String fileName) throws IOException {
     return StringUtil.convertLineSeparators(FileUtil.loadFile(new File(fileName)));
   }
@@ -881,6 +888,18 @@ public final class PlatformTestUtil {
       }
     });
     return refs;
+  }
+
+  public static @NotNull List<UrlReference> collectUrlReferences(@NotNull PsiElement element) {
+    List<UrlReference> result = new SmartList<>();
+    element.accept(new PsiRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitElement(@NotNull PsiElement element) {
+        result.addAll(PsiSymbolReferenceService.getService().getReferences(element, UrlReference.class));
+        super.visitElement(element);
+      }
+    });
+    return result;
   }
 
   @SuppressWarnings("unchecked")
@@ -986,20 +1005,8 @@ public final class PlatformTestUtil {
    * 2. Be aware the method doesn't refresh VFS as it should be done in tests (see {@link PlatformTestCase#synchronizeTempDirVfs})
    *    (it is assumed that project is already created in a correct way).
    */
-  public static @NotNull VirtualFile getOrCreateProjectTestBaseDir(@NotNull Project project) {
-    try {
-      String path = Objects.requireNonNull(project.getBasePath());
-      VirtualFile result = LocalFileSystem.getInstance().refreshAndFindFileByPath(path);
-      if (result != null) {
-        return result;
-      }
-
-      // createDirectories executes in write action
-      return Objects.requireNonNull(VfsUtil.createDirectories(Objects.requireNonNull(project.getBasePath())));
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+  public static @NotNull VirtualFile getOrCreateProjectBaseDir(@NotNull Project project) {
+    return HeavyTestHelper.getOrCreateProjectBaseDir(project);
   }
 
   public static @Nullable RunConfiguration getRunConfiguration(@NotNull PsiElement element, @NotNull RunConfigurationProducer<?> producer) {
@@ -1015,11 +1022,44 @@ public final class PlatformTestUtil {
     return configuration != null ? configuration.getConfiguration() : null;
   }
 
-  public static ExecutionEnvironment executeConfiguration(@NotNull RunConfiguration runConfiguration) throws InterruptedException {
-    return executeConfiguration(runConfiguration, DefaultRunExecutor.EXECUTOR_ID);
+  /**
+   * Executing {@code runConfiguration} with {@link DefaultRunExecutor#EXECUTOR_ID run} executor and wait for 60 seconds till process ends.
+   */
+  public static ExecutionEnvironment executeConfigurationAndWait(@NotNull RunConfiguration runConfiguration) throws InterruptedException {
+    return executeConfigurationAndWait(runConfiguration, DefaultRunExecutor.EXECUTOR_ID);
   }
 
-  public static ExecutionEnvironment executeConfiguration(@NotNull RunConfiguration runConfiguration, @NotNull String executorId) throws InterruptedException {
+  /**
+   * Executing {@code runConfiguration} with executor {@code executoId} and wait for 60 seconds till process ends.
+   */
+  public static ExecutionEnvironment executeConfigurationAndWait(@NotNull RunConfiguration runConfiguration,
+                                                                 @NotNull String executorId) throws InterruptedException {
+    Pair<ExecutionEnvironment, RunContentDescriptor> result = executeConfiguration(runConfiguration, executorId);
+    ProcessHandler processHandler = result.second.getProcessHandler();
+    processHandler.waitFor(60000);
+    LOG.debug("Process terminated: " + processHandler.isProcessTerminated());
+    return result.first;
+  }
+
+
+  @NotNull
+  public static Pair<ExecutionEnvironment, RunContentDescriptor> executeConfiguration(@NotNull RunConfiguration runConfiguration,
+                                                                                      @NotNull String executorId)
+    throws InterruptedException {
+    Executor executor = ExecutorRegistry.getInstance().getExecutorById(executorId);
+    assertNotNull("Unable to find executor: " + executorId, executor);
+    return executeConfiguration(runConfiguration, executor);
+  }
+
+  /**
+   * Executes {@code runConfiguration} with executor defined by {@code executorId} and returns pair of {@link ExecutionEnvironment} and
+   * {@link RunContentDescriptor}
+   */
+  @NotNull
+  public static Pair<ExecutionEnvironment, RunContentDescriptor> executeConfiguration(@NotNull RunConfiguration runConfiguration,
+                                                                                      @NotNull Executor executor)
+    throws InterruptedException {
+
     Project project = runConfiguration.getProject();
     ConfigurationFactory factory = runConfiguration.getFactory();
     if (factory == null) {
@@ -1027,40 +1067,44 @@ public final class PlatformTestUtil {
     }
     RunnerAndConfigurationSettings runnerAndConfigurationSettings =
       RunManager.getInstance(project).createConfiguration(runConfiguration, factory);
-    ProgramRunner<?> runner = ProgramRunner.getRunner(executorId, runConfiguration);
+    ProgramRunner<?> runner = ProgramRunner.getRunner(executor.getId(), runConfiguration);
     if (runner == null) {
-      fail("No runner found for: " + executorId + " and " + runConfiguration);
+      fail("No runner found for: " + executor.getId() + " and " + runConfiguration);
     }
     Ref<RunContentDescriptor> refRunContentDescriptor = new Ref<>();
-    ExecutionEnvironment executionEnvironment =
-      new ExecutionEnvironment(DefaultRunExecutor.getRunExecutorInstance(), runner, runnerAndConfigurationSettings,
-                               project);
+    ExecutionEnvironment executionEnvironment = new ExecutionEnvironment(executor, runner, runnerAndConfigurationSettings, project);
     CountDownLatch latch = new CountDownLatch(1);
     ProgramRunnerUtil.executeConfigurationAsync(executionEnvironment, false, false, new ProgramRunner.Callback() {
       @Override
       public void processStarted(RunContentDescriptor descriptor) {
         LOG.debug("Process started");
+        ProcessHandler processHandler = descriptor.getProcessHandler();
+        assertNotNull(processHandler);
+        processHandler.addProcessListener(new ProcessAdapter() {
+          @Override
+          public void startNotified(@NotNull ProcessEvent event) {
+            LOG.debug("Process notified");
+          }
+
+          @Override
+          public void processTerminated(@NotNull ProcessEvent event) {
+            LOG.debug("Process terminated: exitCode: " + event.getExitCode() + "; text: " + event.getText());
+          }
+
+          @Override
+          public void onTextAvailable(@NotNull ProcessEvent event, @NotNull Key outputType) {
+            LOG.debug(outputType + ": " + event.getText());
+          }
+        });
         refRunContentDescriptor.set(descriptor);
         latch.countDown();
       }
     });
-    latch.await(60, TimeUnit.SECONDS);
-    ProcessHandler processHandler = refRunContentDescriptor.get().getProcessHandler();
-    if (processHandler == null) {
-      fail("No process handler found");
+    LOG.debug("Waiting for process to start");
+    if (!latch.await(60, TimeUnit.SECONDS)) {
+      fail("Process failed to start");
     }
-
-    CapturingProcessAdapter capturingProcessAdapter = new CapturingProcessAdapter();
-    processHandler.addProcessListener(capturingProcessAdapter);
-    processHandler.waitFor(60000);
-
-    LOG.debug("Process terminated: " + processHandler.isProcessTerminated());
-    ProcessOutput processOutput = capturingProcessAdapter.getOutput();
-    LOG.debug("Exit code: " + processOutput.getExitCode());
-    LOG.debug("Stdout: " + processOutput.getStdout());
-    LOG.debug("Stderr: " + processOutput.getStderr());
-
-    return executionEnvironment;
+    return Pair.create(executionEnvironment, refRunContentDescriptor.get());
   }
 
   public static PsiElement findElementBySignature(@NotNull String signature, @NotNull String fileRelativePath, @NotNull Project project) {
@@ -1100,7 +1144,7 @@ public final class PlatformTestUtil {
   }
 
   public static @NotNull Project loadAndOpenProject(@NotNull Path path) {
-    return Objects.requireNonNull(ProjectManagerEx.getInstanceEx().openProject(path, FixtureRuleKt.createTestOpenProjectOptions()));
+    return Objects.requireNonNull(ProjectManagerEx.getInstanceEx().openProject(path, new OpenProjectTaskBuilder().build()));
   }
 
   public static void openProject(@NotNull Project project) {
@@ -1111,16 +1155,5 @@ public final class PlatformTestUtil {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       dispatchAllInvocationEventsInIdeEventQueue();
     }
-  }
-
-  public static @NotNull Project createProject(@NotNull Path file, @NotNull Disposable parentDisposable) {
-    Project project = FixtureRuleKt.createHeavyProject(file, /* useDefaultProjectAsTemplate = */ false);
-    Disposer.register(parentDisposable, () -> forceCloseProjectWithoutSaving(project));
-    return project;
-  }
-
-  public static void closeAndDisposeProjectAndCheckThatNoOpenProjects(@NotNull Project projectToClose) {
-    ProjectManagerEx.getInstanceEx().forceCloseProject(projectToClose);
-    ProjectRule.checkThatNoOpenProjects();
   }
 }

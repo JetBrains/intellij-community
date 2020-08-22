@@ -1,15 +1,5 @@
 fragment commit on Commit {
-    ...commitHash
-    url
-    author {
-        name
-        email
-        avatarUrl
-        date
-        user {
-            url
-        }
-    }
+    ...commitShort
     committer {
         name
         email
@@ -20,7 +10,6 @@ fragment commit on Commit {
         }
     }
     messageHeadline
-    messageHeadlineHTML
     messageBodyHTML
     parents(first: 100) {
         nodes {

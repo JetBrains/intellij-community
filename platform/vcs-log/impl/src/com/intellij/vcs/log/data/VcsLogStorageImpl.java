@@ -18,6 +18,7 @@ import com.intellij.vcs.log.util.PersistentUtil;
 import com.intellij.vcs.log.util.StorageId;
 import gnu.trove.TObjectIntHashMap;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,15 +27,16 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 /**
  * Supports the int <-> Hash and int <-> VcsRef persistent mappings.
  */
 public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
   @NotNull private static final Logger LOG = Logger.getInstance(VcsLogStorage.class);
-  @NotNull private static final String HASHES_STORAGE = "hashes"; // NON-NLS
-  @NotNull private static final String REFS_STORAGE = "refs"; // NON-NLS
-  @NotNull private static final String STORAGE = "storage"; // NON-NLS
+  @NotNull @NonNls private static final String HASHES_STORAGE = "hashes";
+  @NotNull @NonNls private static final String REFS_STORAGE = "refs";
+  @NotNull @NonNls private static final String STORAGE = "storage";
   @NotNull public static final VcsLogStorage EMPTY = new EmptyLogStorage();
 
   public static final int VERSION = 8;
@@ -130,13 +132,13 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
   }
 
   @Override
-  public void iterateCommits(@NotNull Function<? super CommitId, Boolean> consumer) {
+  public void iterateCommits(@NotNull Predicate<CommitId> consumer) {
     checkDisposed();
     try {
       myCommitIdEnumerator.iterateData(new CommonProcessors.FindProcessor<CommitId>() {
         @Override
         protected boolean accept(CommitId commitId) {
-          return consumer.fun(commitId);
+          return !consumer.test(commitId);
         }
       });
     }
@@ -249,7 +251,7 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
     }
 
     @Override
-    public void iterateCommits(@NotNull Function<? super CommitId, Boolean> consumer) {
+    public void iterateCommits(@NotNull Predicate<CommitId> consumer) {
     }
 
     @Override
@@ -305,8 +307,8 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
     }
   }
 
-  private static class MyPersistentBTreeEnumerator extends PersistentBTreeEnumerator<CommitId> {
-    MyPersistentBTreeEnumerator(@NotNull StorageId storageId, @NotNull MyCommitIdKeyDescriptor commitIdKeyDescriptor) throws IOException {
+  private static final class MyPersistentBTreeEnumerator extends PersistentBTreeEnumerator<CommitId> {
+    MyPersistentBTreeEnumerator(@NotNull StorageId storageId, @NotNull KeyDescriptor<CommitId> commitIdKeyDescriptor) throws IOException {
       super(storageId.getStorageFile(STORAGE), commitIdKeyDescriptor, Page.PAGE_SIZE, null, storageId.getVersion());
     }
 

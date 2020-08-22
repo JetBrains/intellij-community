@@ -12,10 +12,12 @@ open class GHPullRequestShort(id: String,
                               override val number: Long,
                               val title: String,
                               val state: GHPullRequestState,
+                              val isDraft: Boolean,
                               val author: GHActor?,
                               val createdAt: Date,
                               @JsonProperty("assignees") assignees: GHNodes<GHUser>,
                               @JsonProperty("labels") labels: GHNodes<GHLabel>,
+                              val viewerCanUpdate: Boolean,
                               val viewerDidAuthor: Boolean) : GHNode(id), GHPRIdentifier {
 
   @JsonIgnore

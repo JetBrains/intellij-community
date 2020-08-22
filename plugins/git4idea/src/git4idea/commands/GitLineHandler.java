@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands;
 
 import com.intellij.execution.ExecutionException;
@@ -15,6 +15,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.io.BaseDataReader;
 import git4idea.config.GitExecutable;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,8 +26,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Future;
-
-import static java.util.Collections.singletonList;
 
 /**
  * The handler that is based on per-line processing of the text.
@@ -71,8 +70,8 @@ public class GitLineHandler extends GitTextHandler {
     super(project, directory, executable, command, configParameters);
   }
 
-  public void setUrl(@NotNull String url) {
-    setUrls(singletonList(url));
+  public void setUrl(@NotNull @NonNls String url) {
+    setUrls(Collections.singletonList(url));
   }
 
   public void setUrls(@NotNull Collection<String> urls) {
@@ -169,7 +168,7 @@ public class GitLineHandler extends GitTextHandler {
     };
   }
 
-  public void overwriteConfig(String ... params) {
+  public void overwriteConfig(@NonNls String ... params) {
     for (String param : params) {
       myCommandLine.getParametersList().prependAll("-c", param);
     }

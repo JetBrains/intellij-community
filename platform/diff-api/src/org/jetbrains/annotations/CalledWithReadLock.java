@@ -24,7 +24,8 @@ import java.lang.annotation.Target;
 /**
  * Used to indicate that a method should be called holding read lock
  */
-@Retention(RetentionPolicy.SOURCE)
+@Retention(RetentionPolicy.CLASS)
 @Target({ElementType.METHOD, ElementType.CONSTRUCTOR, ElementType.PARAMETER})
 public @interface CalledWithReadLock {
+  boolean instrument() default true;
 }

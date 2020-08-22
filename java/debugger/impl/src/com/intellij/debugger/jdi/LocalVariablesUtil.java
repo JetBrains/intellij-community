@@ -80,7 +80,7 @@ import java.util.*;
       }
       return map;
  */
-public class LocalVariablesUtil {
+public final class LocalVariablesUtil {
   private static final Logger LOG = Logger.getInstance(LocalVariablesUtil.class);
 
   private static final boolean ourInitializationOk;

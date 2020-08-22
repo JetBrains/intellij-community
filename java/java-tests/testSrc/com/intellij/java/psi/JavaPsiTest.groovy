@@ -4,11 +4,12 @@ package com.intellij.java.psi
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.DefaultLogger
 import com.intellij.openapi.project.DumbServiceImpl
+import com.intellij.openapi.roots.LanguageLevelProjectExtension
+import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightRecordMethod
 import com.intellij.psi.impl.source.PsiClassReferenceType
 import com.intellij.psi.impl.source.PsiImmediateClassType
-import com.intellij.testFramework.EdtTestUtil
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
@@ -20,7 +21,7 @@ import groovy.transform.CompileStatic
 class JavaPsiTest extends LightJavaCodeInsightFixtureTestCase {
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_14
+    return JAVA_15
   }
 
   void testEmptyImportList() {
@@ -196,13 +197,13 @@ class JavaPsiTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   void "test record has members in dumb mode"() {
-    final DumbServiceImpl dumbService = DumbServiceImpl.getInstance(getProject());
-    EdtTestUtil.runInEdtAndWait({ -> dumbService.setDumb(true) })
-    def clazz = configureFile("record A(@Foo A... i)").classes[0]
-    def methods = clazz.findMethodsByName("i")
-    assert 1 == methods.size()
-    def method = methods.first()
-    assert method instanceof LightRecordMethod
+    DumbServiceImpl.getInstance(getProject()).runInDumbMode {
+      def clazz = configureFile("record A(@Foo A... i)").classes[0]
+      def methods = clazz.findMethodsByName("i")
+      assert 1 == methods.size()
+      def method = methods.first()
+      assert method instanceof LightRecordMethod
+    }
   }
 
   void "test add record component"() {
@@ -228,6 +229,30 @@ class JavaPsiTest extends LightJavaCodeInsightFixtureTestCase {
     }
 
     assert "record A(String s, int i)" == clazz.text
+  }
+
+  void "test permits list"() {
+    def clazz = configureFile("class A permits B {}").classes[0]
+    def elements = clazz.permitsList.referenceElements
+    assert 1 == elements.size()
+    assert "B" == elements.first().referenceName
+  }
+
+  void "test enum with name sealed"() {
+    withLanguageLevel(LanguageLevel.JDK_15_PREVIEW) {
+      def clazz = configureFile("enum sealed {}").classes[0]
+      assert !clazz.getAllMethods().any { it.name == "values" }
+    }
+  }
+
+  private void withLanguageLevel(LanguageLevel level, Runnable r) {
+    def old = LanguageLevelProjectExtension.getInstance(getProject()).getLanguageLevel()
+    LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(level)
+    try {
+      r.run()
+    } finally {
+      LanguageLevelProjectExtension.getInstance(getProject()).setLanguageLevel(old)
+    }
   }
 
   private PsiJavaFile configureFile(String text) {

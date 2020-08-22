@@ -107,7 +107,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
           File jreArchive = jreManager.findJreArchive(OsFamily.MACOS)
           if (jreArchive.file) {
             MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties, macZipPath,
-                                          jreArchive.absolutePath, jreManager.isBundledJreModular(), "", notarize)
+                                          jreArchive.absolutePath, "", notarize)
           }
           else {
             buildContext.messages.info("Skipping building macOS distribution with bundled JRE because JRE archive is missing")
@@ -115,7 +115,7 @@ class MacDistributionBuilder extends OsSpecificDistributionBuilder {
           // Without JRE
           if (buildContext.options.buildDmgWithoutBundledJre) {
             MacDmgBuilder.signAndBuildDmg(buildContext, customizer, buildContext.proprietaryBuildTools.macHostProperties, macZipPath,
-                                          null, false, "-no-jdk", notarize)
+                                          null, "-no-jdk", notarize)
           }
           buildContext.ant.delete(file: macZipPath)
         }

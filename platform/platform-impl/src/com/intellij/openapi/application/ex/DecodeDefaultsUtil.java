@@ -6,7 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.lang.UrlClassLoader;
-import gnu.trove.THashMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,11 +14,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 public final class DecodeDefaultsUtil {
   private static final Logger LOG = Logger.getInstance(DecodeDefaultsUtil.class);
-  private static final Map<String, URL> RESOURCE_CACHE = Collections.synchronizedMap(new THashMap<>());
+  private static final Map<String, URL> RESOURCE_CACHE = Collections.synchronizedMap(new HashMap<>());
 
   public static URL getDefaults(Object requestor, @NotNull String componentResourcePath) {
     URL url = RESOURCE_CACHE.get(componentResourcePath);
@@ -52,7 +53,7 @@ public final class DecodeDefaultsUtil {
     return requestor.getClass().getResource(path);
   }
 
-  private static String appendExt(@NotNull String s) {
+  private static String appendExt(@NotNull @NonNls String s) {
     return appendIfNeeded(s, FileStorageCoreUtil.DEFAULT_EXT);
   }
 
@@ -62,12 +63,16 @@ public final class DecodeDefaultsUtil {
 
   public static @Nullable InputStream getDefaultsInputStream(Object requestor, @NotNull String componentResourcePath) {
     try {
-      final URL defaults = getDefaults(requestor, componentResourcePath);
+      URL defaults = getDefaults(requestor, componentResourcePath);
       return defaults == null ? null : URLUtil.openStream(defaults);
     }
     catch (IOException e) {
       LOG.error(e);
       return null;
     }
+  }
+
+  public static void clearResourceCache() {
+    RESOURCE_CACHE.clear();
   }
 }

@@ -25,18 +25,18 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 class ReplaceUsageViewContext extends UsageViewContext {
-  private final HashMap<Usage,ReplacementInfo> usage2ReplacementInfo = new HashMap<>();
+  private final Map<Usage,ReplacementInfo> usage2ReplacementInfo = new HashMap<>();
   private final Replacer replacer = new Replacer(mySearchContext.getProject(), myConfiguration.getReplaceOptions());
 
-  ReplaceUsageViewContext(SearchContext context, Configuration configuration, Runnable searchStarter) {
+  ReplaceUsageViewContext(@NotNull SearchContext context, @NotNull Configuration configuration, @NotNull Runnable searchStarter) {
     super(configuration, context, searchStarter);
   }
 
-  public void addReplaceUsage(Usage usage, MatchResult result) {
+  public void addReplaceUsage(@NotNull Usage usage, @NotNull MatchResult result) {
     usage2ReplacementInfo.put(usage, replacer.buildReplacement(result));
   }
 
-  private static boolean isValid(UsageInfo2UsageAdapter info) {
+  private static boolean isValid(@NotNull UsageInfo2UsageAdapter info) {
     final PsiElement element = info.getUsageInfo().getElement();
     return element != null && element.isValid();
   }
@@ -69,7 +69,7 @@ class ReplaceUsageViewContext extends UsageViewContext {
     myUsageView.addButtonToLowerPane(previewReplacement, SSRBundle.message("preview.replacement.button"));
   }
 
-  private void replace(@NotNull Collection<Usage> usages) {
+  private void replace(@NotNull Collection<? extends Usage> usages) {
     final Set<Usage> excluded = myUsageView.getExcludedUsages();
     usages = usages.stream().filter(u -> !excluded.contains(u)).filter(u -> isValid((UsageInfo2UsageAdapter)u)).collect(Collectors.toList());
 
@@ -88,7 +88,7 @@ class ReplaceUsageViewContext extends UsageViewContext {
     }
   }
 
-  private void removeUsagesAndSelectNext(Collection<Usage> usages, Collection<Usage> excluded) {
+  private void removeUsagesAndSelectNext(@NotNull Collection<? extends Usage> usages, @NotNull Collection<? extends Usage> excluded) {
     final List<Usage> sortedUsages = myUsageView.getSortedUsages();
     if (sortedUsages.size() == usages.size()) {
       myUsageView.close();

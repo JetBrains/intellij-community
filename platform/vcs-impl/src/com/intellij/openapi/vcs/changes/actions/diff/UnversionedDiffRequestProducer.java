@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions.diff;
 
 import com.intellij.diff.DiffContentFactory;
@@ -8,6 +8,7 @@ import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
 import com.intellij.diff.util.DiffUtil;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -23,7 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-public class UnversionedDiffRequestProducer implements ChangeDiffRequestChain.Producer {
+public final class UnversionedDiffRequestProducer implements ChangeDiffRequestChain.Producer {
   @Nullable private final Project myProject;
   @NotNull private final FilePath myPath;
 
@@ -61,7 +62,7 @@ public class UnversionedDiffRequestProducer implements ChangeDiffRequestChain.Pr
   public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
     throws DiffRequestProducerException, ProcessCanceledException {
     VirtualFile file = myPath.getVirtualFile();
-    if (file == null) throw new DiffRequestProducerException("Can't show diff - file not found");
+    if (file == null) throw new DiffRequestProducerException(DiffBundle.message("error.cant.show.diff.file.not.found"));
     return createRequest(myProject, file);
   }
 

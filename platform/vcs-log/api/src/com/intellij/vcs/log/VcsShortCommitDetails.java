@@ -1,5 +1,6 @@
 package com.intellij.vcs.log;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,6 +26,7 @@ public interface VcsShortCommitDetails extends TimedVcsCommit {
   VirtualFile getRoot();
 
   @NotNull
+  @NlsSafe
   String getSubject();
 
   @NotNull

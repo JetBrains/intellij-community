@@ -13,6 +13,6 @@ PyFile:FStringIncompleteFragmentWithTypeConversion.py
           PyNumericLiteralExpression
             PsiElement(Py:INTEGER_LITERAL)('42')
           PsiElement(Py:FSTRING_FRAGMENT_TYPE_CONVERSION)('!r')
-          PsiErrorElement:} expected
+          PsiErrorElement:'}' expected
             <empty list>
         PsiElement(Py:FSTRING_END)(''')

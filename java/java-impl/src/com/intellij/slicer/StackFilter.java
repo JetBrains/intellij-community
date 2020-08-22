@@ -24,7 +24,7 @@ import java.util.Objects;
 /**
  * Allows to narrow dataflow-to-here results based on known stacktrace.
  */
-class StackFilter {
+final class StackFilter {
   final int myExtraFrames;
   final @NotNull String myClassName;
   final @NotNull String myMethodName;
@@ -41,7 +41,7 @@ class StackFilter {
     myFileName = fileName;
     myNext = next;
   }
-  
+
   SearchScope correctScope(SearchScope base) {
     if (base instanceof GlobalSearchScope && myExtraFrames == 0 && myFileName != null) {
       return new DelegatingGlobalSearchScope((GlobalSearchScope)base) {
@@ -119,7 +119,7 @@ class StackFilter {
   @NotNull StackFilter pushFrame() {
     return new StackFilter(myExtraFrames + 1, myClassName, myMethodName, myFileName, myNext);
   }
-  
+
   @Nullable StackFilter popFrame(Project project) {
     if (myExtraFrames == 0) {
       if (myNext != null && myClassName.equals(myNext.myClassName) &&
@@ -141,7 +141,7 @@ class StackFilter {
     PsiMethod[] superMethods = method.findSuperMethods();
     if (superMethods.length == 0) return false;
     PsiType returnType = TypeConversionUtil.erasure(method.getReturnType());
-    List<PsiType> parameterTypes = ContainerUtil.map(method.getParameterList().getParameters(), 
+    List<PsiType> parameterTypes = ContainerUtil.map(method.getParameterList().getParameters(),
                                                      p -> TypeConversionUtil.erasure(p.getType()));
     for (PsiMethod superMethod : superMethods) {
       if (!Objects.equals(returnType, TypeConversionUtil.erasure(superMethod.getReturnType()))) {

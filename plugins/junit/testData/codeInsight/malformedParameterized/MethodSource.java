@@ -4,6 +4,7 @@ import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.TestReporter;
 import org.junit.jupiter.api.TestInstance;
 
+import java.util.List;
 import java.util.Iterator;
 import java.util.stream.Stream;
 import java.util.stream.DoubleStream;
@@ -161,7 +162,15 @@ class MethodSourceMalformed {
 }
 
 interface MyInterface {
-    String[] data();
+  String[] data();
+
+  default List<String> methodSample() {
+    return null;
+  }
+
+  @ParameterizedTest
+  @MethodSource("methodSample")
+  default void test(String value) { }
 }
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -169,4 +178,65 @@ abstract class MyTestBaseClass implements MyInterface {
     @ParameterizedTest
     @MethodSource("data")
     void myTest(String param) { }
+}
+
+abstract class FooTwo {
+
+  @ParameterizedTest
+  @MethodSource("method1")
+  void test(String value) {}
+  List<String> method1() {
+    return null;
+  }
+}
+
+class BarTestT extends FooTwo {}
+
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+class BarTestTwo extends FooTwo {}
+
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+class BarTestThree extends FooThree {
+  @Override
+  List<String> method1() {
+    return null;
+  }
+}
+
+abstract class FooThree {
+
+  @ParameterizedTest
+  @MethodSource("method1")
+  void test(String value) {}
+
+  abstract List<String> method1();
+}
+
+class SomeTest extends Base {
+
+  @ParameterizedTest
+  @MethodSource
+  void testSomething(String content) {}
+}
+
+class SomeTestTwo implements Inter {
+
+  @ParameterizedTest
+  @MethodSource
+  void testSomething(String content) {}
+}
+
+interface Inter extends Inter2{ }
+
+interface Inter2 {
+  static Stream<String> testSomething() {
+    return Stream.of("a", "aa");
+  }
+}
+
+
+class Base {
+  static Stream<String> testSomething() {
+    return Stream.of("a", "aa");
+  }
 }

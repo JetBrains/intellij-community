@@ -4,7 +4,7 @@ package org.jetbrains.jps.appengine.build;
 import com.intellij.appengine.rt.EnhancerRunner;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.containers.CollectionFactory;
+import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.ModuleChunk;
@@ -66,7 +66,7 @@ public final class AppEngineEnhancerBuilder extends ModuleLevelBuilder {
   private static boolean processModule(final CompileContext context,
                                        DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
                                        JpsAppEngineModuleExtension extension) throws IOException, ProjectBuildException {
-    final Set<File> roots = CollectionFactory.createFileSet();
+    final Set<File> roots = FileCollectionFactory.createCanonicalFileSet();
     for (String path : extension.getFilesToEnhance()) {
       roots.add(new File(FileUtil.toSystemDependentName(path)));
     }

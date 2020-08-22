@@ -52,7 +52,7 @@ abstract class ConfigurationTypeBase protected constructor(@NonNls private val i
 }
 
 abstract class SimpleConfigurationType protected constructor(@NonNls private val id: String,
-                                                             private val name: String,
+                                                             @Nls private val name: String,
                                                              @Nls private val description: String? = null,
                                                              private val icon: NotNullLazyValue<Icon>) : ConfigurationType, ConfigurationFactory() {
   @Suppress("LeakingThis")

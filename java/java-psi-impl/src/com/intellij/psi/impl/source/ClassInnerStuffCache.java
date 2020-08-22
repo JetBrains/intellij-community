@@ -2,21 +2,24 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.impl.PsiClassImplUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.light.LightMethod;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.ConcurrentFactoryMap;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.JBIterable;
+import com.intellij.util.containers.*;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -25,13 +28,14 @@ import static com.intellij.util.ObjectUtils.notNull;
 
 public class ClassInnerStuffCache {
   private final PsiExtensibleClass myClass;
+  private final Ref<Pair<Long, Interner<PsiMember>>> myInterner = Ref.create();
 
   public ClassInnerStuffCache(@NotNull PsiExtensibleClass aClass) {
     myClass = aClass;
   }
 
   public PsiMethod @NotNull [] getConstructors() {
-    return copy(CachedValuesManager.getProjectPsiDependentCache(myClass, __ -> PsiImplUtil.getConstructors(myClass)));
+    return copy(CachedValuesManager.getProjectPsiDependentCache(myClass, PsiImplUtil::getConstructors));
   }
 
   public PsiField @NotNull [] getFields() {
@@ -81,12 +85,20 @@ public class ClassInnerStuffCache {
 
   @Nullable
   PsiMethod getValuesMethod() {
-    return myClass.isEnum() && !isAnonymousClass() ? CachedValuesManager.getProjectPsiDependentCache(myClass, __ -> makeValuesMethod()) : null;
+    return myClass.isEnum() && !isAnonymousClass() && !classNameIsSealed()
+           ? internMember(CachedValuesManager.getProjectPsiDependentCache(myClass, ClassInnerStuffCache::makeValuesMethod))
+           : null;
+  }
+
+  private boolean classNameIsSealed() {
+    return PsiUtil.getLanguageLevel(myClass).isAtLeast(LanguageLevel.JDK_15_PREVIEW) && PsiKeyword.SEALED.equals(myClass.getName());
   }
 
   @Nullable
   private PsiMethod getValueOfMethod() {
-    return myClass.isEnum() && !isAnonymousClass() ? CachedValuesManager.getProjectPsiDependentCache(myClass, __ -> makeValueOfMethod()) : null;
+    return myClass.isEnum() && !isAnonymousClass()
+           ? internMember(CachedValuesManager.getProjectPsiDependentCache(myClass, ClassInnerStuffCache::makeValueOfMethod))
+           : null;
   }
 
   private boolean isAnonymousClass() {
@@ -99,14 +111,33 @@ public class ClassInnerStuffCache {
 
   private PsiField @NotNull [] calcFields() {
     List<PsiField> own = myClass.getOwnFields();
-    List<PsiField> ext = PsiAugmentProvider.collectAugments(myClass, PsiField.class, null);
+    List<PsiField> ext = internMembers(PsiAugmentProvider.collectAugments(myClass, PsiField.class, null));
     return ArrayUtil.mergeCollections(own, ext, PsiField.ARRAY_FACTORY);
+  }
+
+  @NotNull
+  private <T extends PsiMember> List<T> internMembers(List<T> members) {
+    return ContainerUtil.map(members, this::internMember);
+  }
+
+  private <T extends PsiMember> T internMember(T m) {
+    if (m == null) return null;
+    long modCount = myClass.getManager().getModificationTracker().getModificationCount();
+    synchronized (myInterner) {
+      Pair<Long, Interner<PsiMember>> pair = myInterner.get();
+      if (pair == null || pair.first.longValue() != modCount) {
+        myInterner.set(pair = Pair.create(modCount, Interner.createWeakInterner()));
+      }
+      //noinspection unchecked
+      return (T)pair.second.intern(m);
+    }
   }
 
   private PsiMethod @NotNull [] calcMethods() {
     List<PsiMethod> own = myClass.getOwnMethods();
-    List<PsiMethod> ext = PsiAugmentProvider.collectAugments(myClass, PsiMethod.class, null);
+    List<PsiMethod> ext = internMembers(PsiAugmentProvider.collectAugments(myClass, PsiMethod.class, null));
     if (myClass.isEnum()) {
+      ext = new ArrayList<>(ext);
       ContainerUtil.addIfNotNull(ext, getValuesMethod());
       ContainerUtil.addIfNotNull(ext, getValueOfMethod());
     }
@@ -115,7 +146,7 @@ public class ClassInnerStuffCache {
 
   private PsiClass @NotNull [] calcInnerClasses() {
     List<PsiClass> own = myClass.getOwnInnerClasses();
-    List<PsiClass> ext = PsiAugmentProvider.collectAugments(myClass, PsiClass.class, null);
+    List<PsiClass> ext = internMembers(PsiAugmentProvider.collectAugments(myClass, PsiClass.class, null));
     return ArrayUtil.mergeCollections(own, ext, PsiClass.ARRAY_FACTORY);
   }
 
@@ -135,7 +166,8 @@ public class ClassInnerStuffCache {
     }
     return ConcurrentFactoryMap.createMap(name -> {
       PsiField result = cachedFields.get(name);
-      return result != null ? result : ContainerUtil.getFirstItem(PsiAugmentProvider.collectAugments(myClass, PsiField.class, name));
+      return result != null ? result :
+             internMember(ContainerUtil.getFirstItem(PsiAugmentProvider.collectAugments(myClass, PsiField.class, name)));
     });
   }
 
@@ -147,7 +179,7 @@ public class ClassInnerStuffCache {
         .from(ownMethods).filter(m -> name.equals(m.getName()))
         .append("values".equals(name) ? getValuesMethod() : null)
         .append("valueOf".equals(name) ? getValueOfMethod() : null)
-        .append(PsiAugmentProvider.collectAugments(myClass, PsiMethod.class, name))
+        .append(internMembers(PsiAugmentProvider.collectAugments(myClass, PsiMethod.class, name)))
         .toArray(PsiMethod.EMPTY_ARRAY);
     });
   }
@@ -166,16 +198,17 @@ public class ClassInnerStuffCache {
     }
     return ConcurrentFactoryMap.createMap(name -> {
       PsiClass result = cachedInners.get(name);
-      return result != null ? result : ContainerUtil.getFirstItem(PsiAugmentProvider.collectAugments(myClass, PsiClass.class, name));
+      return result != null ? result :
+             internMember(ContainerUtil.getFirstItem(PsiAugmentProvider.collectAugments(myClass, PsiClass.class, name)));
     });
   }
 
-  private PsiMethod makeValuesMethod() {
-    return new EnumSyntheticMethod(myClass, "public static " + myClass.getName() + "[] values() { }");
+  private static PsiMethod makeValuesMethod(PsiExtensibleClass enumClass) {
+    return new EnumSyntheticMethod(enumClass, "public static " + enumClass.getName() + "[] values() { }");
   }
 
-  private PsiMethod makeValueOfMethod() {
-    return new EnumSyntheticMethod(myClass, "public static " + myClass.getName() + " valueOf(java.lang.String name) throws java.lang.IllegalArgumentException { }");
+  private static PsiMethod makeValueOfMethod(PsiExtensibleClass enumClass) {
+    return new EnumSyntheticMethod(enumClass, "public static " + enumClass.getName() + " valueOf(java.lang.String name) throws java.lang.IllegalArgumentException { }");
   }
 
   /**

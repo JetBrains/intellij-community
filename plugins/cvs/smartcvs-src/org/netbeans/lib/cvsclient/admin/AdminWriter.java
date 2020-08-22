@@ -403,7 +403,7 @@ public final class AdminWriter implements IAdminWriter {
     return new File(file.getParentFile(), CVS_BASE_FILE_PATH + file.getName());
   }
 
-  private static class SimpleEntriesWriter implements EntriesWriter {
+  private static final class SimpleEntriesWriter implements EntriesWriter {
     private final String myCharset;
     private final String myLineSeparator;
 

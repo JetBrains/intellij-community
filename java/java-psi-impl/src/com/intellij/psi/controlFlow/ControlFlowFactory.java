@@ -1,18 +1,21 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.controlFlow;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyKey;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.AnyPsiChangeListener;
 import com.intellij.util.containers.ConcurrentList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
 
-public final class ControlFlowFactory {
+import static com.intellij.psi.impl.PsiManagerImpl.ANY_PSI_CHANGE_TOPIC;
+
+public final class ControlFlowFactory implements Disposable {
   // psiElements hold weakly, controlFlows softly
   private final Map<PsiElement, ConcurrentList<ControlFlowContext>> cachedFlows = ContainerUtil.createConcurrentWeakKeySoftValueMap();
 
@@ -23,7 +26,12 @@ public final class ControlFlowFactory {
   }
 
   public ControlFlowFactory(@NotNull Project project) {
-    PsiManagerEx.getInstanceEx(project).registerRunnableToRunOnChange(() -> clearCache());
+    project.getMessageBus().connect(this).subscribe(ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
+      @Override
+      public void beforePsiChanged(boolean isPhysical) {
+        if (isPhysical) clearCache();
+      }
+    });
   }
 
   private void clearCache() {
@@ -32,21 +40,22 @@ public final class ControlFlowFactory {
 
   void registerSubRange(final PsiElement codeFragment,
                         final ControlFlowSubRange flow,
-                        final boolean evaluateConstantIfConfition,
-                        boolean enableShortCircuit, final ControlFlowPolicy policy) {
-    registerControlFlow(codeFragment, flow, evaluateConstantIfConfition, enableShortCircuit, policy);
+                        final ControlFlowOptions options, 
+                        final ControlFlowPolicy policy) {
+    registerControlFlow(codeFragment, flow, options, policy);
   }
 
-  private static class ControlFlowContext {
+  private static final class ControlFlowContext {
     private final ControlFlowPolicy policy;
-    private final boolean evaluateConstantIfCondition;
-    private final boolean enableShortCircuit;
+    private final @NotNull ControlFlowOptions options;
     private final long modificationCount;
-    private final ControlFlow controlFlow;
+    private final @NotNull ControlFlow controlFlow;
 
-    private ControlFlowContext(boolean evaluateConstantIfCondition, boolean enableShortCircuit, @NotNull ControlFlowPolicy policy, long modificationCount, @NotNull ControlFlow controlFlow) {
-      this.evaluateConstantIfCondition = evaluateConstantIfCondition;
-      this.enableShortCircuit = enableShortCircuit;
+    private ControlFlowContext(@NotNull ControlFlowOptions options,
+                               @NotNull ControlFlowPolicy policy,
+                               long modificationCount,
+                               @NotNull ControlFlow controlFlow) {
+      this.options = options;
       this.policy = policy;
       this.modificationCount = modificationCount;
       this.controlFlow = controlFlow;
@@ -65,75 +74,77 @@ public final class ControlFlowFactory {
     @Override
     public int hashCode() {
       int result = policy.hashCode();
-      result = 31 * result + (evaluateConstantIfCondition ? 1 : 0);
+      result = 31 * result + (options.hashCode());
       result = 31 * result + (int)(modificationCount ^ (modificationCount >>> 32));
       return result;
     }
 
     private boolean isFor(@NotNull ControlFlowPolicy policy,
-                          final boolean evaluateConstantIfCondition,
-                          final boolean enableShortCircuit,
+                          @NotNull ControlFlowOptions options,
                           long modificationCount) {
       if (modificationCount != this.modificationCount) return false;
       if (!policy.equals(this.policy)) return false;
-      if (enableShortCircuit != this.enableShortCircuit) return false;
-
-      // optimization: when no constant condition were computed, both control flows are the same
-      if (this.evaluateConstantIfCondition && !controlFlow.isConstantConditionOccurred()) return true;
-
-      return evaluateConstantIfCondition == this.evaluateConstantIfCondition;
+      if (!options.equals(this.options)) {
+        // optimization: when no constant condition were computed, both control flows are the same
+        return !controlFlow.isConstantConditionOccurred() && this.options.dontEvaluateConstantIfCondition().equals(options);
+      }
+      return true;
     }
 
     private boolean isFor(@NotNull ControlFlowContext that) {
-      return isFor(that.policy, that.evaluateConstantIfCondition, that.enableShortCircuit, that.modificationCount);
+      return isFor(that.policy, that.options, that.modificationCount);
     }
   }
 
   @NotNull
   public ControlFlow getControlFlow(@NotNull PsiElement element, @NotNull ControlFlowPolicy policy) throws AnalysisCanceledException {
-    return getControlFlow(element, policy, true, true);
+    return doGetControlFlow(element, policy, new ControlFlowOptions(true, true));
   }
 
   @NotNull
   public ControlFlow getControlFlow(@NotNull PsiElement element, @NotNull ControlFlowPolicy policy, boolean evaluateConstantIfCondition) throws AnalysisCanceledException {
-    return getControlFlow(element, policy, true, evaluateConstantIfCondition);
+    return doGetControlFlow(element, policy, new ControlFlowOptions(true, evaluateConstantIfCondition));
   }
 
   @NotNull
-  public ControlFlow getControlFlow(@NotNull PsiElement element,
-                                    @NotNull ControlFlowPolicy policy,
-                                    boolean enableShortCircuit,
-                                    boolean evaluateConstantIfCondition) throws AnalysisCanceledException {
+  public static ControlFlow getControlFlow(@NotNull PsiElement element,
+                                           @NotNull ControlFlowPolicy policy,
+                                           @NotNull ControlFlowOptions options) throws AnalysisCanceledException {
+    return getInstance(element.getProject()).doGetControlFlow(element, policy, options);
+  }
+
+  @NotNull
+  private ControlFlow doGetControlFlow(@NotNull PsiElement element,
+                                       @NotNull ControlFlowPolicy policy,
+                                       @NotNull ControlFlowOptions options) throws AnalysisCanceledException {
     if (!element.isPhysical()) {
-      return new ControlFlowAnalyzer(element, policy, enableShortCircuit, evaluateConstantIfCondition).buildControlFlow();
+      return new ControlFlowAnalyzer(element, policy, options).buildControlFlow();
     }
     final long modificationCount = element.getManager().getModificationTracker().getModificationCount();
     ConcurrentList<ControlFlowContext> cached = getOrCreateCachedFlowsForElement(element);
     for (ControlFlowContext context : cached) {
-      if (context.isFor(policy, evaluateConstantIfCondition, enableShortCircuit, modificationCount)) return context.controlFlow;
+      if (context.isFor(policy, options, modificationCount)) return context.controlFlow;
     }
-    ControlFlow controlFlow = new ControlFlowAnalyzer(element, policy, enableShortCircuit, evaluateConstantIfCondition).buildControlFlow();
-    ControlFlowContext context = createContext(evaluateConstantIfCondition, enableShortCircuit, policy, controlFlow, modificationCount);
+    ControlFlow controlFlow = new ControlFlowAnalyzer(element, policy, options).buildControlFlow();
+    ControlFlowContext context = createContext(options, policy, controlFlow, modificationCount);
     cached.addIfAbsent(context);
     return controlFlow;
   }
 
   @NotNull
-  private static ControlFlowContext createContext(final boolean evaluateConstantIfCondition,
-                                                  boolean enableShortCircuit,
+  private static ControlFlowContext createContext(@NotNull ControlFlowOptions options,
                                                   @NotNull ControlFlowPolicy policy,
                                                   @NotNull ControlFlow controlFlow,
                                                   final long modificationCount) {
-    return new ControlFlowContext(evaluateConstantIfCondition, enableShortCircuit, policy, modificationCount,controlFlow);
+    return new ControlFlowContext(options, policy, modificationCount, controlFlow);
   }
 
   private void registerControlFlow(@NotNull PsiElement element,
                                    @NotNull ControlFlow flow,
-                                   boolean evaluateConstantIfCondition,
-                                   boolean enableShortCircuit,
+                                   @NotNull ControlFlowOptions options,
                                    @NotNull ControlFlowPolicy policy) {
     final long modificationCount = element.getManager().getModificationTracker().getModificationCount();
-    ControlFlowContext controlFlowContext = createContext(evaluateConstantIfCondition, enableShortCircuit, policy, flow, modificationCount);
+    ControlFlowContext controlFlowContext = createContext(options, policy, flow, modificationCount);
 
     ConcurrentList<ControlFlowContext> cached = getOrCreateCachedFlowsForElement(element);
     cached.addIfAbsent(controlFlowContext);
@@ -142,6 +153,11 @@ public final class ControlFlowFactory {
   @NotNull
   private ConcurrentList<ControlFlowContext> getOrCreateCachedFlowsForElement(@NotNull PsiElement element) {
     return cachedFlows.computeIfAbsent(element, __ -> ContainerUtil.createConcurrentList());
+  }
+
+  @Override
+  public void dispose() {
+
   }
 }
 

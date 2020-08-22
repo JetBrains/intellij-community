@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.projectImport;
 
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.components.StorageScheme;
@@ -11,16 +12,16 @@ import javax.swing.*;
 
 public class ProjectFormatPanel {
   private static final String STORAGE_FORMAT_PROPERTY = "default.storage.format";
-  public static final String DIR_BASED = Project.DIRECTORY_STORE_FOLDER + " (directory based)";
-  private static final String FILE_BASED = ".ipr (file based)";
+  public static final String PROPERTY_COMPONENT_DIR_BASED = Project.DIRECTORY_STORE_FOLDER + " (directory based)";
+  private static final String PROPERTY_COMPONENT_FILE_BASED = ".ipr (file based)";
 
   private JComboBox<String> myStorageFormatCombo;
   private JPanel myWholePanel;
 
   public ProjectFormatPanel() {
-    myStorageFormatCombo.insertItemAt(DIR_BASED, 0);
-    myStorageFormatCombo.insertItemAt(FILE_BASED, 1);
-    myStorageFormatCombo.setSelectedItem(PropertiesComponent.getInstance().getValue(STORAGE_FORMAT_PROPERTY, DIR_BASED));
+    myStorageFormatCombo.insertItemAt(JavaUiBundle.message("label.directory.based", Project.DIRECTORY_STORE_FOLDER), 0);
+    myStorageFormatCombo.insertItemAt(JavaUiBundle.message("label.ipr.file.based"), 1);
+    myStorageFormatCombo.setSelectedItem(PropertiesComponent.getInstance().getValue(STORAGE_FORMAT_PROPERTY, PROPERTY_COMPONENT_DIR_BASED));
   }
 
   public JPanel getPanel() {
@@ -28,14 +29,17 @@ public class ProjectFormatPanel {
   }
 
   @NotNull
-  public JComboBox getStorageFormatComboBox() {
+  public JComboBox<String> getStorageFormatComboBox() {
     return myStorageFormatCombo;
   }
 
   public void updateData(@NotNull WizardContext context) {
-    StorageScheme format = FILE_BASED.equals(myStorageFormatCombo.getSelectedItem()) ? StorageScheme.DEFAULT : StorageScheme.DIRECTORY_BASED;
+    final String fileBased = JavaUiBundle.message("label.ipr.file.based");
+    StorageScheme format = fileBased.equals(myStorageFormatCombo.getSelectedItem()) ? StorageScheme.DEFAULT : StorageScheme.DIRECTORY_BASED;
     context.setProjectStorageFormat(format);
-    PropertiesComponent.getInstance().setValue(STORAGE_FORMAT_PROPERTY, isDefault() ? FILE_BASED : DIR_BASED, DIR_BASED);
+    PropertiesComponent.getInstance().setValue(STORAGE_FORMAT_PROPERTY, isDefault() ? PROPERTY_COMPONENT_FILE_BASED
+                                                                                    : PROPERTY_COMPONENT_DIR_BASED,
+                                               PROPERTY_COMPONENT_DIR_BASED);
   }
 
   public void setVisible(boolean visible) {
@@ -43,6 +47,7 @@ public class ProjectFormatPanel {
   }
 
   public boolean isDefault() {
-    return FILE_BASED.equals(myStorageFormatCombo.getSelectedItem());
+    final String fileBased = JavaUiBundle.message("label.ipr.file.based");
+    return fileBased.equals(myStorageFormatCombo.getSelectedItem());
   }
 }

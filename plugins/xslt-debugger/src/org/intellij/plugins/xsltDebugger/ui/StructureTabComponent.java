@@ -9,12 +9,13 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.util.Key;
 import com.intellij.ui.ScrollPaneFactory;
+import org.intellij.plugins.xsltDebugger.XsltDebuggerBundle;
 import org.intellij.plugins.xsltDebugger.ui.actions.HideWhitespaceAction;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class StructureTabComponent extends AbstractTabComponent {
+public final class StructureTabComponent extends AbstractTabComponent {
   private static final Key<StructureTabComponent> KEY = Key.create("STRUCTURE");
 
   private final DefaultActionGroup myToolbarActions;
@@ -22,7 +23,7 @@ public class StructureTabComponent extends AbstractTabComponent {
   private final GeneratedStructureModel myEventModel;
 
   private StructureTabComponent(@NotNull Disposable disposable) {
-    super("Structure");
+    super(XsltDebuggerBundle.message("tab.title.structure"));
 
     myEventModel = new GeneratedStructureModel();
 

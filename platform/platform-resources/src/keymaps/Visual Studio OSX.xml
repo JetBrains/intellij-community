@@ -16,6 +16,7 @@
     <keyboard-shortcut first-keystroke="alt T"/>
   </action>
   <action id="StepInto">
+    <keyboard-shortcut first-keystroke="meta F11"/>
     <keyboard-shortcut first-keystroke="F11"/>
   </action>
   <action id="ForceStepInto">

@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -105,12 +106,12 @@ public class ConvertToInstanceMethodHandler implements RefactoringActionHandler 
         message = JavaRefactoringBundle.message("convertToInstanceMethod.no.parameters.with.reference.type");
       }
       else if (!resolvableClassesFound) {
-        message = JavaRefactoringBundle.message("convertToInstanceMethod.all.reference.type.parametres.have.unknown.types");
+        message = JavaRefactoringBundle.message("convertToInstanceMethod.all.reference.type.parameters.have.unknown.types");
       }
       else {
         message = JavaRefactoringBundle.message("convertToInstanceMethod.all.reference.type.parameters.are.not.in.project");
       }
-      message += " and containing class doesn't have default constructor";
+      message += " " + JavaRefactoringBundle.message("convertToInstanceMethod.no.default.ctor");
       Editor editor = CommonDataKeys.EDITOR.getData(dataContext);
       CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(message), getRefactoringName(), HelpID.CONVERT_TO_INSTANCE_METHOD);
       return;
@@ -119,7 +120,7 @@ public class ConvertToInstanceMethodHandler implements RefactoringActionHandler 
     new ConvertToInstanceMethodDialog(method, ArrayUtil.toObjectArray(targetQualifiers)).show();
   }
 
-  static String getRefactoringName() {
+  static @NlsContexts.DialogTitle String getRefactoringName() {
     return JavaRefactoringBundle.message("convert.to.instance.method.title");
   }
 }

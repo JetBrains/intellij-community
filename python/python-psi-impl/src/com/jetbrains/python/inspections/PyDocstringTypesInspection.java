@@ -3,6 +3,7 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.SmartPointerManager;
@@ -69,16 +70,14 @@ public class PyDocstringTypesInspection extends PyInspection {
       }
 
       for (String param : docString.getParameters()) {
-        Substring type = docString.getParamTypeSubstring(param);
+        @NlsSafe Substring type = docString.getParamTypeSubstring(param);
         if (type != null) {
           String dynamicType = signature.getArgTypeQualifiedName(param);
           if (dynamicType != null) {
-            String dynamicTypeShortName = getShortestImportableName(function, dynamicType);
+            @NlsSafe String dynamicTypeShortName = getShortestImportableName(function, dynamicType);
             if (!match(function, dynamicType, type.getValue())) {
-              registerProblem(node, "Dynamically inferred type '" +
-                                    dynamicTypeShortName +
-                                    "' doesn't match specified type '" +
-                                    type + "'",
+              registerProblem(node, PyPsiBundle.message("INSP.docstring.types.dynamically.inferred.type.does.not.match.specified.type",
+                                                        dynamicTypeShortName, type),
                               ProblemHighlightType.WEAK_WARNING, null, type.getTextRange(),
                               new ChangeTypeQuickFix(param, type, dynamicTypeShortName, node)
               );
@@ -127,7 +126,7 @@ public class PyDocstringTypesInspection extends PyInspection {
   }
 
 
-  private static class ChangeTypeQuickFix implements LocalQuickFix {
+  private static final class ChangeTypeQuickFix implements LocalQuickFix {
     private final String myParamName;
     private final Substring myTypeSubstring;
     private final String myNewType;

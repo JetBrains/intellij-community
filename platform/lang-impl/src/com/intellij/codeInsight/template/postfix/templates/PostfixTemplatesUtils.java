@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -28,7 +28,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-public abstract class PostfixTemplatesUtils {
+public final class PostfixTemplatesUtils {
   public static final String CONDITION_TAG = "condition";
   public static final String CONDITIONS_TAG = "conditions";
   public static final String TOPMOST_ATTR = "topmost";

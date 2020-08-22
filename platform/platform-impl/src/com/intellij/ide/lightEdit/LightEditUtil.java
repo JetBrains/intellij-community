@@ -7,19 +7,27 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.lightEdit.intentions.openInProject.LightEditOpenInProjectIntention;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileChooser.FileSaverDescriptor;
 import com.intellij.openapi.fileChooser.FileSaverDialog;
+import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
+import com.intellij.ui.EditorNotifications;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.ApiStatus;
@@ -28,6 +36,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
+import java.io.File;
 import java.nio.file.Path;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -37,6 +46,10 @@ import static com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil.OpenPlace.Co
 public final class LightEditUtil {
   private static final String ENABLED_FILE_OPEN_KEY = "light.edit.file.open.enabled";
   private static final String OPEN_FILE_IN_PROJECT_HREF = "open_file_in_project";
+
+  static final Key<String> CREATION_MESSAGE = Key.create("light.edit.file.creation.message");
+
+  private final static Logger LOG = Logger.getInstance(LightEditUtil.class);
 
   private static boolean ourForceOpenInExistingProjectFlag;
 
@@ -50,6 +63,34 @@ public final class LightEditUtil {
         LightEditFeatureUsagesUtil.logFileOpen(CommandLine);
         return true;
       }
+    }
+    else {
+      return handleNonExisting(path);
+    }
+    return false;
+  }
+
+  private static boolean handleNonExisting(@NotNull Path path) {
+    if (path.getFileName() == null) {
+      LOG.error("No file name is given");
+    }
+    if (path.getNameCount() > 0) {
+      String fileName = path.getFileName().toString();
+      final Ref<String> creationMessage = Ref.create();
+      if (path.getNameCount() > 1) {
+        File newFile = path.toFile();
+        if (!FileUtil.ensureCanCreateFile(newFile)) {
+          creationMessage.set(ApplicationBundle.message("light.edit.file.creation.failed.message", path.toString(), fileName));
+        }
+      }
+      ApplicationManager.getApplication().invokeLater(() -> {
+        LightEditorInfo editorInfo = LightEditService.getInstance().createNewDocument(path);
+        if (creationMessage.get() != null) {
+          editorInfo.getFile().putUserData(CREATION_MESSAGE, creationMessage.get());
+          EditorNotifications.getInstance(getProject()).updateNotifications(editorInfo.getFile());
+        }
+      });
+      return true;
     }
     return false;
   }
@@ -68,8 +109,8 @@ public final class LightEditUtil {
     return LightEditService.getInstance().getProject();
   }
 
-  static boolean confirmClose(@NotNull String message,
-                              @NotNull String title,
+  static boolean confirmClose(@NotNull @NlsContexts.DialogMessage String message,
+                              @NotNull @NlsContexts.DialogTitle String title,
                               @NotNull LightEditSaveConfirmationHandler handler) {
     final String[] options = {getCloseSave(), getCloseDiscard(), getCloseCancel()};
     int result = Messages.showDialog(getProject(), message, title, options, 0, Messages.getWarningIcon());
@@ -112,15 +153,15 @@ public final class LightEditUtil {
           .map(fileType -> fileType.getDefaultExtension()).sorted().distinct().collect(Collectors.toList()));
   }
 
-  private static String getCloseSave() {
+  private static @NlsContexts.Button String getCloseSave() {
     return ApplicationBundle.message("light.edit.close.save");
   }
 
-  private static String getCloseDiscard() {
+  private static @NlsContexts.Button String getCloseDiscard() {
     return ApplicationBundle.message("light.edit.close.discard");
   }
 
-  private static String getCloseCancel() {
+  private static @NlsContexts.Button String getCloseCancel() {
     return ApplicationBundle.message("light.edit.close.cancel");
   }
 
@@ -159,7 +200,26 @@ public final class LightEditUtil {
     };
   }
 
+  @Nullable
+  public static EditorWithProviderComposite findEditorComposite(@NotNull VirtualFile virtualFile) {
+    return ((LightEditServiceImpl)LightEditService.getInstance()).getEditPanel().getTabs().findEditorComposite(virtualFile);
+  }
+
   public static void setForceOpenInExistingProject(boolean openInExistingProject) {
     ourForceOpenInExistingProjectFlag = openInExistingProject;
+  }
+
+  @Nullable
+  public static VirtualFile getPreferredSaveTarget(@NotNull LightEditorInfo editorInfo) {
+    if (editorInfo.isNew()) {
+      Path preferredPath = editorInfo.getPreferredSavePath();
+      if (preferredPath != null) {
+        File targetFile = preferredPath.toFile();
+        if (FileUtil.createIfDoesntExist(targetFile)) {
+          return VfsUtil.findFile(preferredPath, true);
+        }
+      }
+    }
+    return null;
   }
 }

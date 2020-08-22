@@ -91,6 +91,22 @@ public class YAMLFormattingTest extends BasePlatformTestCase {
     doWholeFileTest(() -> getCustomSettings().INDENT_SEQUENCE_VALUE = true);
   }
 
+  public void testSpaces_default() {
+    doWholeFileTest();
+  }
+
+  public void testSpaces_colon() {
+    doWholeFileTest(() -> getCustomSettings().SPACE_BEFORE_COLON = true);
+  }
+
+  public void testSpaces_brackets() {
+    doWholeFileTest(() -> getCommonSettings().SPACE_WITHIN_BRACKETS = false);
+  }
+
+  public void testSpaces_braces() {
+    doWholeFileTest(() -> getCommonSettings().SPACE_WITHIN_BRACES = false);
+  }
+
   public void testRegression21787() {
     doWholeFileTest();
   }

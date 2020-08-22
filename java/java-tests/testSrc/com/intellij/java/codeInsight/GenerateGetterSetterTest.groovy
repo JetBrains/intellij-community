@@ -8,6 +8,7 @@ import com.intellij.codeInsight.generation.SetterTemplatesManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
+import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.ui.UIUtil
 import com.siyeh.ig.style.UnqualifiedFieldAccessInspection
@@ -251,6 +252,28 @@ class Foo {
   void foo() {}
 }'''
   }
+  
+  void "test record accessor"() {
+    myFixture.configureByText('a.java', '''
+record Point(int x, int y) {
+  <caret>
+}
+''')
+    generateGetter()
+    myFixture.checkResult('''
+record Point(int x, int y) {
+    @Override
+    public int x() {
+        return x;
+    }
+
+    @Override
+    public int y() {
+        return y;
+    }
+}
+''')
+  }
 
   private void generateSetter() {
     new GenerateSetterHandler() {
@@ -265,5 +288,10 @@ class Foo {
       }
     }.invoke(project, myFixture.editor, myFixture.file)
     UIUtil.dispatchAllInvocationEvents()
+  }
+
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_15
   }
 }

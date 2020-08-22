@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.github.pullrequest.action
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonPainter
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
@@ -13,7 +12,7 @@ import com.intellij.openapi.editor.actions.IncrementalFindAction
 import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.ui.ComponentContainer
-import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.EditorTextField
@@ -32,15 +31,12 @@ import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProv
 import org.jetbrains.plugins.github.ui.GHHtmlErrorPanel
 import org.jetbrains.plugins.github.ui.GHSimpleErrorPanelModel
 import org.jetbrains.plugins.github.ui.InlineIconButton
-import org.jetbrains.plugins.github.util.GithubUIUtil
 import org.jetbrains.plugins.github.util.errorOnEdt
 import org.jetbrains.plugins.github.util.successOnEdt
-import java.awt.Component
 import java.awt.FlowLayout
 import java.awt.Font
 import java.awt.event.ActionListener
 import javax.swing.*
-import javax.swing.border.Border
 
 class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.message("pull.request.review.submit.action.description")) {
 
@@ -169,16 +165,15 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
 
       init {
         discardButton = pendingReview?.let { review ->
-          InlineIconButton(GithubIcons.Delete, GithubIcons.DeleteHovered,
-                           tooltip = GithubBundle.message("pull.request.discard.pending.comments")).apply {
-            actionListener = ActionListener {
-              if (Messages.showConfirmationDialog(this, GithubBundle.message("pull.request.discard.pending.comments.dialog.msg"),
-                                                  GithubBundle.message("pull.request.discard.pending.comments.dialog.title"),
-                                                  Messages.getYesButton(), Messages.getNoButton()) == Messages.YES) {
-                reviewDataProvider.deleteReview(EmptyProgressIndicator(), review.id)
-              }
+          val button = InlineIconButton(icon = GithubIcons.Delete, hoveredIcon = GithubIcons.DeleteHovered,
+                                        tooltip = GithubBundle.message("pull.request.discard.pending.comments"))
+          button.actionListener = ActionListener {
+            if (MessageDialogBuilder.yesNo(GithubBundle.message("pull.request.discard.pending.comments.dialog.title"),
+                                           GithubBundle.message("pull.request.discard.pending.comments.dialog.msg")).ask(button)) {
+              reviewDataProvider.deleteReview(EmptyProgressIndicator(), review.id)
             }
           }
+          button
         }
       }
 
@@ -251,20 +246,10 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
     }
   }
 
-  override fun createButtonBorder(button: JButton): Border {
-    return JBUI.Borders.empty(0, if (UIUtil.isUnderDefaultMacTheme()) 6 else 4)
-  }
-
   override fun createButton(): JButton {
     return object : JButton() {
       override fun isDefaultButton(): Boolean {
         return getClientProperty(PROP_DEFAULT) as? Boolean ?: super.isDefaultButton()
-      }
-    }.also {
-      GithubUIUtil.overrideUIDependentProperty(it) {
-        border = object : DarculaButtonPainter() {
-          override fun getBorderInsets(c: Component) = JBUI.insets(0)
-        }
       }
     }
   }

@@ -1,5 +1,4 @@
-# Stubs for logging.config (Python 3.4)
-
+from _typeshed import AnyPath, StrPath
 from typing import Any, Callable, Dict, Optional, IO, Union
 from threading import Thread
 import sys
@@ -7,15 +6,11 @@ if sys.version_info >= (3,):
     from configparser import RawConfigParser
 else:
     from ConfigParser import RawConfigParser
-if sys.version_info >= (3, 6):
-    from os import PathLike
 
 if sys.version_info >= (3, 7):
-    _Path = Union[str, bytes, PathLike[str]]
-elif sys.version_info >= (3, 6):
-    _Path = Union[str, PathLike[str]]
+    _Path = AnyPath
 else:
-    _Path = str
+    _Path = StrPath
 
 
 def dictConfig(config: Dict[str, Any]) -> None: ...

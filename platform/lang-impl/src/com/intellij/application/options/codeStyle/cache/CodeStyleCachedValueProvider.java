@@ -1,7 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.codeStyle.cache;
 
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SimpleModificationTracker;
@@ -111,7 +114,7 @@ class CodeStyleCachedValueProvider implements CachedValueProvider<CodeStyleSetti
    * Always contains some result which can be obtained by {@code getCurrResult()} method. Listeners are notified after
    * the computation is finished and {@code getCurrResult()} contains a stable computed value.
    */
-  private class AsyncComputation {
+  private final class AsyncComputation {
     private final             AtomicBoolean             myIsActive = new AtomicBoolean();
     private volatile          CodeStyleSettings         myCurrResult;
     private final @NotNull    CodeStyleSettingsManager  mySettingsManager;

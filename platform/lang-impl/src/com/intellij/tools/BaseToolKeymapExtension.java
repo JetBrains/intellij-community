@@ -28,7 +28,9 @@ public abstract class BaseToolKeymapExtension implements KeymapExtension {
         if (filtered != null && !filtered.value(actionManager.getActionOrStub(tool.getActionId()))) continue;
         group.addGroup(new Group(tool.getName(), tool.getActionId(), null));
       }
-      rootGroup.addGroup(group);
+      if (group.getSize() > 0) {
+        rootGroup.addGroup(group);
+      }
     }
     return rootGroup;
   }

@@ -44,12 +44,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   private final Stack<BranchingInstruction.Role> myStartJumpRoles = new Stack<>();
   private final Stack<BranchingInstruction.Role> myEndJumpRoles = new Stack<>();
 
-  // true if generate direct jumps for short-circuited operations,
-  // e.g. jump to else branch of if statement after each calculation of '&&' operand in condition
-  private final boolean myEnabledShortCircuit;
-  // true if evaluate constant expression inside 'if' statement condition and alter control flow accordingly
-  // in case of unreachable statement analysis must be false
-  private final boolean myEvaluateConstantIfCondition;
+  private final @NotNull ControlFlowOptions myOptions;
   private final boolean myAssignmentTargetsAreElements;
 
   private final Stack<TIntArrayList> intArrayPool = new Stack<>();
@@ -64,20 +59,17 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
   ControlFlowAnalyzer(@NotNull PsiElement codeFragment,
                       @NotNull ControlFlowPolicy policy,
-                      boolean enabledShortCircuit,
-                      boolean evaluateConstantIfCondition) {
-    this(codeFragment, policy, enabledShortCircuit, evaluateConstantIfCondition, false);
+                      @NotNull ControlFlowOptions options) {
+    this(codeFragment, policy, options, false);
   }
 
   private ControlFlowAnalyzer(@NotNull PsiElement codeFragment,
                               @NotNull ControlFlowPolicy policy,
-                              boolean enabledShortCircuit,
-                              boolean evaluateConstantIfCondition,
+                              @NotNull ControlFlowOptions options,
                               boolean assignmentTargetsAreElements) {
     myCodeFragment = codeFragment;
     myPolicy = policy;
-    myEnabledShortCircuit = enabledShortCircuit;
-    myEvaluateConstantIfCondition = evaluateConstantIfCondition;
+    myOptions = options;
     myAssignmentTargetsAreElements = assignmentTargetsAreElements;
     Project project = codeFragment.getProject();
     myControlFlowFactory = ControlFlowFactory.getInstance(project);
@@ -216,7 +208,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
       ProgressManager.checkCanceled();
       ControlFlowSubRange subRange = entry.getValue();
       PsiElement element = entry.getKey();
-      myControlFlowFactory.registerSubRange(element, subRange, myEvaluateConstantIfCondition, myEnabledShortCircuit, myPolicy);
+      myControlFlowFactory.registerSubRange(element, subRange, myOptions, myPolicy);
     }
   }
 
@@ -236,6 +228,20 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private void generateUncheckedExceptionJumpsIfNeeded(@NotNull PsiElement element, boolean atStart) {
+    if (!myOptions.isExceptionAfterAssignment() && !atStart) {
+      if (element instanceof PsiExpression) {
+        PsiElement parent = PsiUtil.skipParenthesizedExprUp(element.getParent());
+        if (parent instanceof PsiAssignmentExpression && parent.getParent() instanceof PsiExpressionStatement) {
+          generateUncheckedExceptionJumps(element, false);
+          return;
+        }
+      }
+      if (element instanceof PsiCodeBlock || 
+          element instanceof PsiExpressionStatement && 
+          ((PsiExpressionStatement)element).getExpression() instanceof PsiAssignmentExpression) {
+        return;
+      }
+    }
     // optimization: reduce number of instructions
     boolean isGeneratingStatement = element instanceof PsiStatement && !(element instanceof PsiSwitchLabelStatement);
     boolean isGeneratingCodeBlock = element instanceof PsiCodeBlock && !(element.getParent() instanceof PsiSwitchStatement);
@@ -608,6 +614,9 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
 
     for (PsiParameter catchParameter : myCatchParameters) {
       ProgressManager.checkCanceled();
+      if (myUnhandledExceptionCatchBlocks.contains(((PsiCatchSection)catchParameter.getDeclarationScope()).getCatchBlock())) {
+        continue;
+      }
       PsiType type = catchParameter.getType();
       List<PsiType> types =
         type instanceof PsiDisjunctionType ? ((PsiDisjunctionType)type).getDisjunctions() : Collections.singletonList(type);
@@ -777,7 +786,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
      *     [ generate (B) ]
      * :end
      */
-    if (myEvaluateConstantIfCondition) {
+    if (myOptions.shouldEvaluateConstantIfCondition()) {
       final Object value = myConstantEvaluationHelper.computeConstantExpression(conditionExpression);
       if (value instanceof Boolean) {
         thenReachable = ((Boolean)value).booleanValue();
@@ -1056,7 +1065,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     final PsiExpression condition = statement.getAssertCondition();
     boolean generateCondition = true;
     boolean throwReachable = true;
-    if (myEvaluateConstantIfCondition) {
+    if (myOptions.shouldEvaluateConstantIfCondition()) {
       Object conditionValue = myConstantEvaluationHelper.computeConstantExpression(condition);
       if (conditionValue instanceof Boolean) {
         throwReachable = !((Boolean)conditionValue);
@@ -1484,7 +1493,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     Boolean rValue = null;
     for (int i = 0; i < operands.length; i++) {
       PsiExpression rOperand = operands[i];
-      if ((isAndAnd || isOrOr) && myEnabledShortCircuit) {
+      if ((isAndAnd || isOrOr) && myOptions.enableShortCircuit()) {
         Object exprValue = myConstantEvaluationHelper.computeConstantExpression(rOperand);
         if (exprValue instanceof Boolean) {
           myCurrentFlow.setConstantConditionOccurred(true);
@@ -1564,7 +1573,7 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
   }
 
   private boolean shouldCalculateConstantExpression(@NotNull PsiExpression expression) {
-    return myEvaluateConstantIfCondition || !isInsideIfCondition(expression);
+    return myOptions.shouldEvaluateConstantIfCondition() || !isInsideIfCondition(expression);
   }
 
   @Override

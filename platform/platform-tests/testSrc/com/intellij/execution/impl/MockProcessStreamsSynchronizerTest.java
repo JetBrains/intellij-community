@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.process.ProcessOutputType;
@@ -46,7 +46,7 @@ public class MockProcessStreamsSynchronizerTest extends LightPlatformTestCase {
                         new FlushedChunk("info:", ProcessOutputType.STDOUT, 10),
                         new FlushedChunk("Hello from stdout", ProcessOutputType.STDOUT, 15),
                         new FlushedChunk("\n", ProcessOutputType.STDOUT, 16));
-    
+
     mySynchronizer.advanceTimeTo(10 + AWAIT_SAME_STREAM_TEXT_MILLIS);
     assertFlushedChunks(new FlushedChunk("warn:", ProcessOutputType.STDERR, 10 + AWAIT_SAME_STREAM_TEXT_MILLIS),
                         new FlushedChunk("Error\n", ProcessOutputType.STDERR, 10 + AWAIT_SAME_STREAM_TEXT_MILLIS));
@@ -217,7 +217,7 @@ public class MockProcessStreamsSynchronizerTest extends LightPlatformTestCase {
     }
   }
 
-  private static class FlushedChunk {
+  private static final class FlushedChunk {
     private final String myText;
     private final ProcessOutputType myOutputType;
     private final long myFlushTimeMillis;

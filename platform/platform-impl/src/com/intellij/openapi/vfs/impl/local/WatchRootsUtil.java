@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl.local;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,14 +17,14 @@ import java.util.function.Predicate;
 final class WatchRootsUtil {
   static boolean isCoveredRecursively(@NotNull NavigableSet<String> recursiveRoots, @NotNull String path) {
     String recursiveRoot = recursiveRoots.floor(path);
-    return recursiveRoot != null && FileUtil.startsWith(path, recursiveRoot);
+    return recursiveRoot != null && OSAgnosticPathUtil.startsWith(path, recursiveRoot);
   }
 
   static <T> void collectByPrefix(@NotNull NavigableMap<String, T> paths,
                                   @NotNull String prefix,
                                   @NotNull Consumer<Map.Entry<String, T>> collector) {
     for (Map.Entry<String, T> entry : paths.tailMap(prefix, false).entrySet()) {
-      if (FileUtil.startsWith(entry.getKey(), prefix)) {
+      if (OSAgnosticPathUtil.startsWith(entry.getKey(), prefix)) {
         collector.accept(entry);
       }
       else {
@@ -38,7 +38,7 @@ final class WatchRootsUtil {
       recursiveRoots.add(path);
       // Remove any roots covered by newly added
       String higher;
-      while ((higher = recursiveRoots.higher(path)) != null && FileUtil.startsWith(higher, path)) {
+      while ((higher = recursiveRoots.higher(path)) != null && OSAgnosticPathUtil.startsWith(higher, path)) {
         recursiveRoots.remove(higher);
       }
     }
@@ -57,11 +57,21 @@ final class WatchRootsUtil {
     consumer.test(path);
   }
 
-  static @NotNull NavigableSet<String> optimizeFlatRoots(@NotNull Iterable<String> flatRoots, @NotNull NavigableSet<String> recursiveRoots) {
+  static @NotNull NavigableSet<String> optimizeFlatRoots(@NotNull Collection<String> flatRoots, @NotNull NavigableSet<String> recursiveRoots,
+                                                         boolean convertToForwardSlashes) {
     NavigableSet<String> result = createFileNavigableSet();
-    for (String flatRoot : flatRoots) {
-      if (!isCoveredRecursively(recursiveRoots, flatRoot)) {
-        result.add(flatRoot);
+    if (convertToForwardSlashes) {
+      for (String flatRoot : flatRoots) {
+        flatRoot = flatRoot.replace('/', '\\');
+        if (!isCoveredRecursively(recursiveRoots, flatRoot)) {
+          result.add(flatRoot);
+        }
+      }
+    } else {
+      for (String flatRoot : flatRoots) {
+        if (!isCoveredRecursively(recursiveRoots, flatRoot)) {
+          result.add(flatRoot);
+        }
       }
     }
     return result;
@@ -75,6 +85,10 @@ final class WatchRootsUtil {
     return new TreeMap<>(OSAgnosticPathUtil.COMPARATOR);
   }
 
+  static @NotNull NavigableSet<Pair<String, String>> createMappingsNavigableSet() {
+    return new TreeSet<>((a,b) -> OSAgnosticPathUtil.COMPARATOR.compare(a.first, b.first));
+  }
+
   static boolean removeRecursivePath(@NotNull NavigableSet<String> optimizedRecursiveRoots,
                                      @NotNull NavigableMap<String, ?> sourceRecursiveRoots,
                                      @NotNull String path) {
@@ -85,7 +99,7 @@ final class WatchRootsUtil {
     collectByPrefix(sourceRecursiveRoots, path, entry -> {
       String lastPath = lastPathRef.get();
       String childPath = entry.getKey();
-      if (lastPath == null || !FileUtil.startsWith(childPath, lastPath)) {
+      if (lastPath == null || !OSAgnosticPathUtil.startsWith(childPath, lastPath)) {
         optimizedRecursiveRoots.add(childPath);
         lastPathRef.set(childPath);
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.update;
 
 import com.intellij.CommonBundle;
@@ -8,6 +8,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.components.JBTabbedPane;
@@ -47,10 +48,12 @@ public abstract class UpdateOrStatusOptionsDialog extends OptionsDialog {
   }
 
   @Override
+  @NlsSafe
   protected String getDimensionServiceKey() {
     return "com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialog" + getActionNameForDimensions();
   }
 
+  @NlsSafe
   protected abstract String getActionNameForDimensions();
 
   private void addComponent(Configurable configurable, String constraint) {
@@ -106,7 +109,7 @@ public abstract class UpdateOrStatusOptionsDialog extends OptionsDialog {
     return helpTopic;
   }
 
-  private class MyHelpAction extends AbstractAction {
+  private final class MyHelpAction extends AbstractAction {
     private MyHelpAction() {
       super(CommonBundle.getHelpButtonText());
     }

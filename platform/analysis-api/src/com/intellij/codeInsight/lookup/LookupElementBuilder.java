@@ -10,7 +10,6 @@ import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiUtilCore;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,6 +18,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -185,14 +185,15 @@ public final class LookupElementBuilder extends LookupElement {
   }
   @Contract(pure=true)
   public LookupElementBuilder withLookupString(@NotNull String another) {
-    final THashSet<String> set = new THashSet<>(myAllLookupStrings);
+    final Set<String> set = new HashSet<>(myAllLookupStrings);
     set.add(another);
     return cloneWithUserData(myLookupString, myObject, myInsertHandler, myRenderer, myExpensiveRenderer, myHardcodedPresentation,
                              myPsiElement, Collections.unmodifiableSet(set), myCaseSensitive);
   }
   @Contract(pure=true)
   public LookupElementBuilder withLookupStrings(@NotNull Collection<String> another) {
-    final THashSet<String> set = new THashSet<>(myAllLookupStrings);
+    Set<String> set = new HashSet<>(myAllLookupStrings.size() + another.size());
+    set.addAll(myAllLookupStrings);
     set.addAll(another);
     return cloneWithUserData(myLookupString, myObject, myInsertHandler, myRenderer, myExpensiveRenderer, myHardcodedPresentation,
                              myPsiElement, Collections.unmodifiableSet(set), myCaseSensitive);

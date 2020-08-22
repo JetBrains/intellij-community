@@ -17,24 +17,41 @@ package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiParameter;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Max Medvedev
  */
 public class CreateFieldFromParameterAction extends CreateFieldFromParameterActionBase {
+  private final boolean myIsFix;
+
+  public CreateFieldFromParameterAction() {
+    this(false);
+  }
+
+  public CreateFieldFromParameterAction(boolean isFix) {
+    myIsFix = isFix;
+  }
 
   @Override
-  protected boolean isAvailable(@NotNull PsiParameter psiParameter) {
-    final PsiType type = getSubstitutedType(psiParameter);
-    final PsiClass targetClass = PsiTreeUtil.getParentOfType(psiParameter, PsiClass.class);
-    return FieldFromParameterUtils.isAvailable(psiParameter, type, targetClass, false) &&
-           psiParameter.getLanguage().isKindOf(JavaLanguage.INSTANCE);
+  protected boolean isAvailable(@NotNull PsiParameter parameter) {
+    PsiElement scope = parameter.getDeclarationScope();
+    if (!(scope instanceof PsiMethod)) {
+      return false;
+    }
+    PsiCodeBlock body = ((PsiMethod)scope).getBody();
+    if (body == null) return false;
+    if (!myIsFix && !VariableAccessUtils.variableIsUsed(parameter, body)) {
+      // for unused parameter there will be a separate quick fix
+      return false;
+    }
+    final PsiType type = getSubstitutedType(parameter);
+    final PsiClass targetClass = PsiTreeUtil.getParentOfType(parameter, PsiClass.class);
+    return FieldFromParameterUtils.isAvailable(parameter, type, targetClass, false) &&
+           parameter.getLanguage().isKindOf(JavaLanguage.INSTANCE);
   }
 
   @Override
@@ -43,12 +60,12 @@ public class CreateFieldFromParameterAction extends CreateFieldFromParameterActi
   }
 
   @Override
-  protected void performRefactoring(Project project,
-                                    PsiClass targetClass,
-                                    PsiMethod method,
-                                    PsiParameter myParameter,
+  protected void performRefactoring(@NotNull Project project,
+                                    @NotNull PsiClass targetClass,
+                                    @NotNull PsiMethod method,
+                                    @NotNull PsiParameter myParameter,
                                     PsiType type,
-                                    String fieldName,
+                                    @NotNull String fieldName,
                                     boolean methodStatic,
                                     boolean isFinal) {
     FieldFromParameterUtils.createFieldAndAddAssignment(project, targetClass, method, myParameter, type, fieldName, methodStatic, isFinal);

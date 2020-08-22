@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
@@ -31,15 +32,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Predicate;
-
-import static java.awt.event.InputEvent.ALT_DOWN_MASK;
-import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
 
 public final class ActionUtil {
   private static final Logger LOG = Logger.getInstance(ActionUtil.class);
@@ -78,7 +75,7 @@ public final class ActionUtil {
   }
 
   @NotNull
-  private static String getActionUnavailableMessage(@NotNull List<String> actionNames) {
+  private static @NlsContexts.PopupContent String getActionUnavailableMessage(@NotNull List<String> actionNames) {
     String message;
     if (actionNames.isEmpty()) {
       message = getUnavailableMessage("This action", false);
@@ -94,7 +91,7 @@ public final class ActionUtil {
   }
 
   @NotNull
-  public static String getUnavailableMessage(@NotNull String action, boolean plural) {
+  public static @NlsContexts.PopupContent String getUnavailableMessage(@NotNull String action, boolean plural) {
     return action + (plural ? " are" : " is")
            + " not available while " + ApplicationNamesInfo.getInstance().getProductName() + " is updating indices";
   }
@@ -464,23 +461,7 @@ public final class ActionUtil {
 
   @Nullable
   public static ShortcutSet getMnemonicAsShortcut(@NotNull AnAction action) {
-    int mnemonic = KeyEvent.getExtendedKeyCodeForChar(action.getTemplatePresentation().getMnemonic());
-    if (mnemonic != KeyEvent.VK_UNDEFINED) {
-      KeyboardShortcut ctrlAltShortcut = new KeyboardShortcut(KeyStroke.getKeyStroke(mnemonic, ALT_DOWN_MASK | CTRL_DOWN_MASK), null);
-      KeyboardShortcut altShortcut = new KeyboardShortcut(KeyStroke.getKeyStroke(mnemonic, ALT_DOWN_MASK), null);
-      CustomShortcutSet shortcutSet;
-      if (SystemInfo.isMac) {
-        if (Registry.is("ide.mac.alt.mnemonic.without.ctrl")) {
-          shortcutSet = new CustomShortcutSet(ctrlAltShortcut, altShortcut);
-        } else {
-          shortcutSet = new CustomShortcutSet(ctrlAltShortcut);
-        }
-      } else {
-        shortcutSet = new CustomShortcutSet(altShortcut);
-      }
-      return shortcutSet;
-    }
-    return null;
+    return KeymapUtil.getMnemonicAsShortcut(action.getTemplatePresentation().getMnemonic());
   }
 
   private static class ActionUpdateData {

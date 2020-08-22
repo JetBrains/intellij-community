@@ -9,14 +9,19 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CheckoutProviderEx;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.ui.VcsCloneComponent;
+import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListener;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.Git;
@@ -24,17 +29,21 @@ import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandlerListener;
 import git4idea.commands.GitStandardProgressAnalyzer;
 import git4idea.ui.GitCloneDialogComponent;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 
 /**
  * Checkout provider for the Git
  */
 public final class GitCheckoutProvider extends CheckoutProviderEx {
+  private static final List<@NonNls String> NON_ERROR_LINE_PREFIXES = Arrays.asList("Cloning into", "remote:", "submodule");
+
   @Override
   public String getVcsName() {
     return "_Git";
@@ -100,13 +109,11 @@ public final class GitCheckoutProvider extends CheckoutProviderEx {
     if (result.success()) {
       return true;
     }
-    String description = result.getErrorOutput().stream()
-      .filter(msg -> !StringUtil.startsWithIgnoreCase(msg, "Cloning into")
-                     && !StringUtil.startsWithIgnoreCase(msg, "remote:")
-                     && !StringUtil.startsWithIgnoreCase(msg, "submodule"))
-      .map(msg -> GitUtil.cleanupErrorPrefixes(msg))
-      .collect(Collectors.joining("<br/>"));
-    VcsNotifier.getInstance(project).notifyError("Clone failed", StringUtil.capitalize(description), true);
+    List<@NlsSafe String> errorLines = ContainerUtil.filter(result.getErrorOutput(), line ->
+      !ContainerUtil.exists(NON_ERROR_LINE_PREFIXES, prefix -> StringUtil.startsWithIgnoreCase(line, prefix)));
+    List<HtmlChunk> displayErrorLines = ContainerUtil.map(errorLines, msg -> HtmlChunk.text(GitUtil.cleanupErrorPrefixes(msg)));
+    String description = new HtmlBuilder().appendWithSeparators(HtmlChunk.br(), displayErrorLines).toString();
+    VcsNotifier.getInstance(project).notifyError(DvcsBundle.message("error.title.cloning.repository.failed"), description, true);
     return false;
   }
 
@@ -124,7 +131,7 @@ public final class GitCheckoutProvider extends CheckoutProviderEx {
 
   @NotNull
   @Override
-  public VcsCloneComponent buildVcsCloneComponent(@NotNull Project project, @NotNull ModalityState modalityState) {
-    return new GitCloneDialogComponent(project, modalityState);
+  public VcsCloneComponent buildVcsCloneComponent(@NotNull Project project, @NotNull ModalityState modalityState, @NotNull VcsCloneDialogComponentStateListener dialogStateListener) {
+    return new GitCloneDialogComponent(project, modalityState, dialogStateListener);
   }
 }

@@ -868,7 +868,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
     myRepaintCallback = callback;
   }
 
-  private static class EmptyButton extends JButton {
+  private static final class EmptyButton extends JButton {
     private EmptyButton() {
       setFocusable(false);
       setRequestFocusEnabled(false);

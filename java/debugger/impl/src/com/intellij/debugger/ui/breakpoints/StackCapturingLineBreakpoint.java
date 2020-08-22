@@ -124,7 +124,7 @@ public class StackCapturingLineBreakpoint extends SyntheticMethodBreakpoint {
 
   @Override
   public void customizeRenderer(SimpleColoredComponent renderer) {
-    renderer.append("Capture point at " + myCapturePoint.myClassName + "." + myCapturePoint.myMethodName);
+    renderer.append(JavaDebuggerBundle.message("label.capture.point.at", myCapturePoint.myClassName, myCapturePoint.myMethodName));
   }
 
   @Override

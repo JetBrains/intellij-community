@@ -5,6 +5,8 @@ import com.intellij.openapi.editor.EditorBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.FontComboBox;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.TabbedPaneWrapper;
@@ -60,9 +62,9 @@ class PrintDialog extends DialogWrapper {
   private final String myDirectoryName;
   private final boolean isSelectedTextEnabled;
   private final int mySelectedFileCount;
-  private final String mySelectedText;
+  private final @NlsSafe String mySelectedText;
 
-  PrintDialog(String fileName, String directoryName, String selectedText, int selectedFileCount, Project project) {
+  PrintDialog(String fileName, String directoryName, @NlsSafe String selectedText, int selectedFileCount, Project project) {
     super(project, true);
     mySelectedText = selectedText;
     setOKButtonText(EditorBundle.message("print.print.button"));
@@ -399,7 +401,7 @@ class PrintDialog extends DialogWrapper {
     return panel;
   }
 
-  private static JPanel createLinePanel(String name,
+  private static JPanel createLinePanel(@NlsContexts.BorderTitle String name,
                                         JTextField lineTextField,
                                         JComboBox<PrintSettings.Placement> linePlacementCombo,
                                         JComboBox<PrintSettings.Alignment> lineAlignmentCombo) {
@@ -638,7 +640,7 @@ class PrintDialog extends DialogWrapper {
   }
 
   private static class MyLabel extends JLabel {
-    MyLabel(String text) {
+    MyLabel(@NlsContexts.Label String text) {
      super(text);
     }
 

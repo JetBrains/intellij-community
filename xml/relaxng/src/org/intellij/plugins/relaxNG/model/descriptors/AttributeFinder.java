@@ -23,7 +23,7 @@ import javax.xml.namespace.QName;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-class AttributeFinder extends RecursionSaveWalker {
+final class AttributeFinder extends RecursionSaveWalker {
   private int depth;
   private int optional;
   private final QName myQname;

@@ -5,6 +5,7 @@ import com.intellij.analysis.AnalysisBundle;
 import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -18,6 +19,9 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.function.Function;
+
+import static com.intellij.openapi.util.Pair.pair;
 
 /**
  * Common interface of archive-based file systems (jar://, phar:// etc).
@@ -133,15 +137,21 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
     return StringUtil.trimLeading(relativePath, '/');
   }
 
+  private final Function<VirtualFile, FileAttributes> myAttrGetter = ManagingFS.getInstance().accessDiskWithCheckCanceled(
+    file -> getHandler(file).getAttributes(getRelativePath(file)));
+
   @Nullable
   @Override
   public FileAttributes getAttributes(@NotNull VirtualFile file) {
-    return getHandler(file).getAttributes(getRelativePath(file));
+    return myAttrGetter.apply(file);
   }
+
+  private final Function<VirtualFile, String[]> myChildrenGetter = ManagingFS.getInstance().accessDiskWithCheckCanceled(
+    file -> getHandler(file).list(getRelativePath(file)));
 
   @Override
   public String @NotNull [] list(@NotNull VirtualFile file) {
-    return getHandler(file).list(getRelativePath(file));
+    return myChildrenGetter.apply(file);
   }
 
   @Override
@@ -190,9 +200,21 @@ public abstract class ArchiveFileSystem extends NewVirtualFileSystem {
     return ArchiveHandler.DEFAULT_LENGTH;
   }
 
+  private final Function<VirtualFile, Pair<byte[], IOException>> myContentGetter = ManagingFS.getInstance().accessDiskWithCheckCanceled(
+    file -> {
+      try {
+        return pair(getHandler(file).contentsToByteArray(getRelativePath(file)), null);
+      }
+      catch (IOException e) {
+        return pair(null, e);
+      }
+    });
+
   @Override
   public byte @NotNull [] contentsToByteArray(@NotNull VirtualFile file) throws IOException {
-    return getHandler(file).contentsToByteArray(getRelativePath(file));
+    Pair<byte[], IOException> pair = myContentGetter.apply(file);
+    if (pair.second != null) throw pair.second;
+    return pair.first;
   }
 
   @NotNull

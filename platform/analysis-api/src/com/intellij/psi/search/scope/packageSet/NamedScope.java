@@ -2,7 +2,8 @@
 package com.intellij.psi.search.scope.packageSet;
 
 import com.intellij.icons.AllIcons;
-import org.jetbrains.annotations.Nls;
+import com.intellij.openapi.util.NlsSafe;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,23 +11,34 @@ import javax.swing.*;
 
 public class NamedScope {
   public static final NamedScope[] EMPTY_ARRAY = new NamedScope[0];
-  private final String myName;
+  private final @NonNls String myName;
+  private final String myPresentableName;
   private final Icon myIcon;
   private final PackageSet myValue;
 
-  public NamedScope(@NotNull @Nls String name, @Nullable PackageSet value) {
+  public NamedScope(@NotNull @NonNls String name, @Nullable PackageSet value) {
     this(name, AllIcons.Ide.LocalScope, value);
   }
 
-  public NamedScope(@NotNull String name, @NotNull Icon icon, @Nullable PackageSet value) {
+  public NamedScope(@NotNull @NonNls String name, @NotNull Icon icon, @Nullable PackageSet value) {
+    this(name, name, icon, value);
+  }
+
+  public NamedScope(@NotNull @NonNls String name, @NotNull @NlsSafe String presentableName, @NotNull Icon icon, @Nullable PackageSet value) {
+    myPresentableName = presentableName;
     myIcon = icon;
     myName = name;
     myValue = value;
   }
 
-  @NotNull
+  @NonNls
   public String getName() {
     return myName;
+  }
+
+  @NlsSafe
+  public String getPresentableName() {
+    return myPresentableName;
   }
 
   @NotNull
@@ -41,7 +53,7 @@ public class NamedScope {
 
   @NotNull
   public NamedScope createCopy() {
-    return new NamedScope(myName, myIcon, myValue == null ? null : myValue.createCopy());
+    return new NamedScope(myName, myPresentableName, myIcon, myValue == null ? null : myValue.createCopy());
   }
 
   @Nullable
@@ -51,7 +63,7 @@ public class NamedScope {
 
   public static class UnnamedScope extends NamedScope {
     public UnnamedScope(@NotNull PackageSet value) {
-      super(value.getText(), value);
+      super(value.getText(), value.getText(), AllIcons.Ide.LocalScope, value);
     }
   }
 

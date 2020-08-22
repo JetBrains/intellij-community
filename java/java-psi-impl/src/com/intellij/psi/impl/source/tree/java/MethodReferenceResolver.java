@@ -188,7 +188,7 @@ public class MethodReferenceResolver implements ResolveCache.PolyVariantContextR
     return JavaPsiFacade.getElementFactory(containingClass.getProject()).createType(containingClass, isRawSubst ? PsiSubstitutor.EMPTY : substitutor);
   }
 
-  private static class MethodReferenceConflictResolver extends JavaMethodsConflictResolver {
+  private static final class MethodReferenceConflictResolver extends JavaMethodsConflictResolver {
     private final MethodSignature mySignature;
     private final PsiMethod myInterfaceMethod;
     private final PsiMethodReferenceExpressionImpl myReferenceExpression;

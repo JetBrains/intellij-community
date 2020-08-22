@@ -47,6 +47,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.stubs.StubTextInconsistencyException;
 import com.intellij.psi.util.PsiUtilBase;
@@ -281,7 +282,7 @@ public class CodeCompletionHandlerBase {
       phase = new CompletionPhase.BgCalculation(indicator);
       indicator.showLookup();
     } else {
-      phase = new CompletionPhase.CommittingDocuments(indicator, InjectedLanguageUtil.getTopLevelEditor(indicator.getEditor()));
+      phase = new CompletionPhase.CommittingDocuments(indicator, InjectedLanguageEditorUtil.getTopLevelEditor(indicator.getEditor()));
     }
     CompletionServiceImpl.setCompletionPhase(phase);
 
@@ -320,9 +321,9 @@ public class CodeCompletionHandlerBase {
         completionFinished(indicator, hasModifiers);
       }
       catch (Throwable e) {
+        LOG.error(e);
         indicator.closeAndFinish(true);
         CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
-        LOG.error(e);
       }
       return;
     }
@@ -582,7 +583,7 @@ public class CodeCompletionHandlerBase {
     WatchingInsertionContext context;
     if (editor.getCaretModel().supportsMultipleCarets()) {
       Ref<WatchingInsertionContext> lastContext = Ref.create();
-      Editor hostEditor = InjectedLanguageUtil.getTopLevelEditor(editor);
+      Editor hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
       boolean wasInjected = hostEditor != editor;
       hostEditor.getCaretModel().runForEachCaret(caret -> {
         OffsetsInFile targetOffsets = findInjectedOffsetsIfAny(caret, wasInjected, topLevelOffsets, hostEditor);
@@ -621,7 +622,7 @@ public class CodeCompletionHandlerBase {
   }
 
   private static void checkPsiTextConsistency(CompletionProcessEx indicator) {
-    PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(InjectedLanguageUtil.getTopLevelEditor(indicator.getEditor()), indicator.getProject());
+    PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(InjectedLanguageEditorUtil.getTopLevelEditor(indicator.getEditor()), indicator.getProject());
     if (psiFile != null) {
       if (Registry.is("ide.check.stub.text.consistency") ||
           ApplicationManager.getApplication().isUnitTestMode() && !ApplicationInfoImpl.isInStressTest()) {
@@ -756,7 +757,7 @@ public class CodeCompletionHandlerBase {
   }
 
   private static Runnable rememberDocumentState(final Editor _editor) {
-    final Editor editor = InjectedLanguageUtil.getTopLevelEditor(_editor);
+    final Editor editor = InjectedLanguageEditorUtil.getTopLevelEditor(_editor);
     final String documentText = editor.getDocument().getText();
     final int caret = editor.getCaretModel().getOffset();
     final int selStart = editor.getSelectionModel().getSelectionStart();

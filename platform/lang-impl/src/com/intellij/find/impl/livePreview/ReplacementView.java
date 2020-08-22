@@ -15,6 +15,7 @@
  */
 package com.intellij.find.impl.livePreview;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
@@ -32,7 +33,7 @@ public class ReplacementView extends JPanel {
   protected void paintComponent(@NotNull Graphics graphics) {
   }
 
-  public ReplacementView(@Nullable String replacement) {
+  public ReplacementView(@NlsSafe @Nullable String replacement) {
     String textToShow = StringUtil.notNullize(replacement, MALFORMED_REPLACEMENT_STRING);
     textToShow = StringUtil.escapeXmlEntities(StringUtil.shortenTextWithEllipsis(textToShow, 500, 0, true)).replaceAll("\n+", "\n").replace("\n", "<br>");
     //noinspection HardCodedStringLiteral

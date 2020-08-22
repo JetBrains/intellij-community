@@ -2,9 +2,13 @@
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.CaretModel;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,7 +17,7 @@ public class AddCaretPerSelectedLineAction extends EditorAction {
     super(new Handler());
   }
 
-  private static class Handler extends EditorActionHandler {
+  private static final class Handler extends EditorActionHandler {
     private Handler() {
       super(true);
     }
@@ -28,21 +32,18 @@ public class AddCaretPerSelectedLineAction extends EditorAction {
       int startLine = document.getLineNumber(selectionStart);
       int selectionEnd = caret.getSelectionEnd();
       int endLine = document.getLineNumber(selectionEnd);
+      if (endLine > startLine && selectionEnd == document.getLineStartOffset(endLine)) endLine--;
+
+      if (caretModel.getCaretCount() + endLine - startLine > caretModel.getMaxCaretCount()) {
+        EditorUtil.notifyMaxCarets(editor);
+        return;
+      }
 
       caret.removeSelection();
 
       boolean primary = caret.getOffset() != selectionStart;
       for (int i = startLine; i <= endLine; i++) {
-        int targetOffset;
-        if (i < endLine) {
-          targetOffset = document.getLineEndOffset(i);
-        }
-        else {
-          targetOffset = selectionEnd;
-          if (i != startLine && targetOffset == document.getLineStartOffset(i)) {
-            continue;
-          }
-        }
+        int targetOffset = document.getLineEndOffset(i);
 
         if (targetOffset == caret.getOffset()) {
           // move caret away, so that it doesn't prevent creating a new one

@@ -6,11 +6,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.Icon;
+import javax.swing.*;
 
 public class FilteredNamedScope extends NamedScope {
-  public FilteredNamedScope(@NotNull String name, @NotNull Icon icon, int priority, @NotNull VirtualFileFilter filter) {
-    super(name, icon, new FilteredPackageSet(name, priority) {
+  public FilteredNamedScope(@NotNull String name, String presentableName, @NotNull Icon icon, int priority, @NotNull VirtualFileFilter filter) {
+    super(name, presentableName, icon, new FilteredPackageSet(name, priority) {
       @Override
       public boolean contains(@NotNull VirtualFile file, @NotNull Project project) {
         return filter.accept(file);

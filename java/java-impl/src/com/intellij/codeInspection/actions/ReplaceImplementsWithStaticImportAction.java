@@ -35,14 +35,12 @@ import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
 public class ReplaceImplementsWithStaticImportAction extends BaseIntentionAction {
   private static final Logger LOG = Logger.getInstance(ReplaceImplementsWithStaticImportAction.class);
-  @NonNls private static final String FIND_CONSTANT_FIELD_USAGES = "Find Constant Field Usages...";
 
   @Override
   @NotNull
@@ -151,7 +149,7 @@ public class ReplaceImplementsWithStaticImportAction extends BaseIntentionAction
           }
         }
       }
-    }), FIND_CONSTANT_FIELD_USAGES, true, project)) {
+    }), JavaBundle.message("replace.implements.with.static.import.field.usages.progress"), true, project)) {
       return;
     }
 

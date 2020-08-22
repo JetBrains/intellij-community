@@ -44,6 +44,8 @@ import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.mock.MockProgressIndicator;
+import com.intellij.model.psi.PsiSymbolReference;
+import com.intellij.model.psi.impl.ReferencesKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
@@ -91,6 +93,7 @@ import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.impl.source.tree.FileElement;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.StubTextInconsistencyException;
@@ -134,6 +137,7 @@ import java.util.stream.Stream;
 
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 import static com.intellij.testFramework.RunAll.runAll;
+import static com.intellij.testFramework.UsefulTestCase.assertOneElement;
 import static org.junit.Assert.*;
 
 /**
@@ -595,6 +599,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
+  public @NotNull PsiSymbolReference findSingleReferenceAtCaret() {
+    PsiFile file = getFile();
+    assertNotNull(file);
+    return assertOneElement(ReferencesKt.referencesAt(file, getCaretOffset()));
+  }
+
+  @Override
   @Nullable
   public PsiReference getReferenceAtCaretPosition(final String @NotNull ... filePaths) {
     if (filePaths.length > 0) {
@@ -638,7 +649,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
 
   @NotNull
   private Editor getHostEditor() {
-    return InjectedLanguageUtil.getTopLevelEditor(getEditor());
+    return InjectedLanguageEditorUtil.getTopLevelEditor(getEditor());
   }
 
   private PsiFile getHostFileAtCaret() {
@@ -661,7 +672,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     else if (list.size() > 1) {
       fail("Too many intentions found for \"" + hint + "\": [" + StringUtil.join(list, INTENTION_NAME_FUN, ", ") + "]");
     }
-    return UsefulTestCase.assertOneElement(list);
+    return assertOneElement(list);
   }
 
   @Override
@@ -872,7 +883,9 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @Override
   public Collection<Usage> testFindUsagesUsingAction(String @NotNull ... fileNames) {
     assertInitialized();
-    configureByFiles(fileNames);
+    if (fileNames.length > 0) { // don't change configured files if already configured
+      configureByFiles(fileNames);
+    }
     EdtTestUtil.runInEdtAndWait(() -> myEditorTestFixture.performEditorAction(IdeActions.ACTION_FIND_USAGES));
     Disposer.register(getTestRootDisposable(), () -> {
       UsageViewContentManager usageViewManager = UsageViewContentManager.getInstance(getProject());
@@ -1988,13 +2001,13 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @NotNull
-  private String getUsageViewTreeTextRepresentation(@NotNull final UsageViewImpl usageView) {
+  public String getUsageViewTreeTextRepresentation(@NotNull final UsageViewImpl usageView) {
     Disposer.register(getTestRootDisposable(), usageView);
     usageView.expandAll();
     return TreeNodeTester.forNode(usageView.getRoot()).withPresenter(usageView::getNodeText).constructTextRepresentation();
   }
 
-  private static class SelectionAndCaretMarkupLoader {
+  private static final class SelectionAndCaretMarkupLoader {
     private final String fileText;
     private final String filePath;
     private final String newFileText;
@@ -2034,7 +2047,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     }
   }
 
-  private static class Border implements Comparable<Border> {
+  private static final class Border implements Comparable<Border> {
     private final boolean isLeftBorder;
     private final int offset;
     private final String text;

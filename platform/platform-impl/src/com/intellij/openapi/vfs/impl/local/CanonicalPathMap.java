@@ -22,23 +22,25 @@ import static com.intellij.util.PathUtil.getParentPath;
  */
 final class CanonicalPathMap {
   static CanonicalPathMap empty() {
-    return new CanonicalPathMap(Collections.emptyNavigableSet(), Collections.emptyNavigableSet(), MultiMap.empty());
+    return new CanonicalPathMap(Collections.emptyNavigableSet(), Collections.emptyNavigableSet(), Collections.emptyNavigableSet());
   }
 
   private final NavigableSet<String> myOptimizedRecursiveWatchRoots;
   private final NavigableSet<String> myOptimizedFlatWatchRoots;
+  private Collection<Pair<String, String>> myInitialPathMappings;
   private final MultiMap<String, String> myPathMappings;
 
   CanonicalPathMap(@NotNull NavigableSet<String> optimizedRecursiveWatchRoots,
                    @NotNull NavigableSet<String> optimizedFlatWatchRoots,
-                   @NotNull MultiMap<String, String> initialPathMappings) {
+                   @NotNull Collection<Pair<String, String>> initialPathMappings) {
     myOptimizedRecursiveWatchRoots = optimizedRecursiveWatchRoots;
     myOptimizedFlatWatchRoots = optimizedFlatWatchRoots;
+    myInitialPathMappings = initialPathMappings;
     myPathMappings = MultiMap.createConcurrentSet();
-    myPathMappings.putAllValues(initialPathMappings);
   }
 
   @NotNull Pair<List<String>, List<String>> getCanonicalWatchRoots() {
+    initializeMappings();
     Map<String, String> canonicalPathMappings = new ConcurrentHashMap<>();
     Stream.concat(myOptimizedRecursiveWatchRoots.stream(), myOptimizedFlatWatchRoots.stream())
       .parallel()
@@ -78,9 +80,27 @@ final class CanonicalPathMap {
     return pair(new ArrayList<>(canonicalRecursiveRoots), new ArrayList<>(canonicalFlatRoots));
   }
 
+  private void initializeMappings() {
+    String lastMapping = "";
+    Collection<String> lastCollection = null;
+    for (Pair<String, String> mapping: myInitialPathMappings) {
+      String currentMapping = mapping.first;
+      // If mappings are sorted, below check should improve performance by avoiding
+      // unnecessary gets from the concurrent multi map.
+      if (!currentMapping.equals(lastMapping) || lastCollection == null) {
+        lastMapping = mapping.first;
+        lastCollection = myPathMappings.getModifiable(lastMapping);
+      }
+      lastCollection.add(mapping.second);
+    }
+    // Free the memory
+    myInitialPathMappings = null;
+  }
+
   void addMapping(@NotNull Collection<? extends Pair<String, String>> mapping) {
     for (Pair<String, String> pair : mapping) {
-      String from = pair.first, to = pair.second;
+      String from = pair.first;
+      String to = pair.second;
 
       // See if we are adding a mapping that itself should be mapped to a different path
       // Example: /foo/real_path -> /foo/symlink, /foo/remapped_path -> /foo/real_path
@@ -136,7 +156,7 @@ final class CanonicalPathMap {
     return changedPaths;
   }
 
-  private Collection<String> applyMapping(String reportedPath) {
+  private @NotNull Collection<String> applyMapping(@NotNull String reportedPath) {
     if (myPathMappings.isEmpty()) {
       return Collections.singletonList(reportedPath);
     }
@@ -151,7 +171,7 @@ final class CanonicalPathMap {
     return results;
   }
 
-  private static void addPrefixedPaths(NavigableSet<String> paths, String prefix, Collection<String> result) {
+  private static void addPrefixedPaths(@NotNull NavigableSet<String> paths, @NotNull String prefix, @NotNull Collection<? super String> result) {
     String possibleRoot = paths.ceiling(prefix);
     if (possibleRoot != null && FileUtil.startsWith(possibleRoot, prefix)) {
       // It's worth going for the set and iterator

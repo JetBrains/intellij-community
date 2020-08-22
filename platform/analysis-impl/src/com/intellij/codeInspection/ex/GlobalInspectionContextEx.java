@@ -49,6 +49,7 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
   protected GlobalReportedProblemFilter myGlobalReportedProblemFilter;
   private ReportedProblemFilter myReportedProblemFilter;
   Map<Path, Long> myProfile;
+  protected InspectionProblemConsumer myProblemConsumer = null;
 
   public GlobalInspectionContextEx(@NotNull Project project) {super(project);}
 
@@ -70,8 +71,12 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
     final Runnable action = () -> {
       myOutputDir = outputDir;
       try {
-        performInspectionsWithProgress(scope, runGlobalToolsOnly, isOfflineInspections);
-        exportResultsSmart(inspectionsResults, outputDir);
+        try {
+          performInspectionsWithProgress(scope, runGlobalToolsOnly, isOfflineInspections);
+        }
+        finally {
+          exportResultsSmart(inspectionsResults, outputDir);
+        }
       }
       finally {
         myOutputDir = null;
@@ -304,5 +309,13 @@ public class GlobalInspectionContextEx extends GlobalInspectionContextBase {
       Path path = Paths.get(virtualFile.getPath());
       myProfile.merge(path, millis, Long::sum);
     }
+  }
+
+  public InspectionProblemConsumer getProblemConsumer() {
+    return myProblemConsumer;
+  }
+
+  public void setProblemConsumer(InspectionProblemConsumer problemConsumer) {
+    myProblemConsumer = problemConsumer;
   }
 }

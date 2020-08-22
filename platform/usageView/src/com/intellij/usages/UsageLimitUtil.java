@@ -1,11 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.GuiUtils;
 import com.intellij.usageView.UsageViewBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,13 +16,12 @@ public final class UsageLimitUtil {
   }
 
   @NotNull
-  public static Result showTooManyUsagesWarning(@NotNull final Project project,
-                                                @NotNull final String message,
-                                                @NotNull final UsageViewPresentation usageViewPresentation) {
+  public static Result showTooManyUsagesWarning(@NotNull final Project project, @NotNull final String message) {
     int result = runOrInvokeAndWait(() -> {
-      String title = UsageViewBundle.message("find.excessive.usages.title", StringUtil.capitalize(StringUtil.pluralize(usageViewPresentation.getUsagesWord())));
-      return Messages.showOkCancelDialog(project, message,
-                                         title, UsageViewBundle.message("button.text.continue"), UsageViewBundle.message("button.text.abort"),
+      String title = UsageViewBundle.message("find.excessive.usages.title");
+      return Messages.showOkCancelDialog(project, message, title,
+                                         UsageViewBundle.message("button.text.continue"),
+                                         UsageViewBundle.message("button.text.abort"),
                                          Messages.getWarningIcon());
     });
     return result == Messages.OK ? Result.CONTINUE : Result.ABORT;
@@ -32,7 +30,7 @@ public final class UsageLimitUtil {
   private static int runOrInvokeAndWait(@NotNull final Computable<Integer> f) {
     final int[] answer = new int[1];
     try {
-      GuiUtils.runOrInvokeAndWait(() -> answer[0] = f.compute());
+      ApplicationManager.getApplication().invokeAndWait(() -> answer[0] = f.compute());
     }
     catch (Exception e) {
       answer[0] = 0;

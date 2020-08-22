@@ -8,7 +8,7 @@ import com.intellij.openapi.wm.impl.simpleTitleParts.RegistryOption
 import com.intellij.openapi.wm.impl.simpleTitleParts.SimpleTitleInfoProvider
 import com.intellij.xdebugger.*
 
-class DebuggerTitleInfoProvider(var project: Project) : SimpleTitleInfoProvider(RegistryOption("ide.title.debug", project)) {
+class DebuggerTitleInfoProvider(var project: Project) : SimpleTitleInfoProvider(RegistryOption("ide.debug.in.title", project)) {
   private var subscriptionDisposable: Disposable? = null
 
   private var debuggerSessionStarted = false

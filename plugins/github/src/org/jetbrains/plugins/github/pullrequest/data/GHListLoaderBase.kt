@@ -78,6 +78,14 @@ abstract class GHListLoaderBase<T>(protected val progressManager: ProgressManage
     }
   }
 
+  override fun removeData(predicate: (T) -> Boolean) {
+    val (index, data) = loadedData.withIndex().find { predicate(it.value) } ?: return
+    if (index >= 0) {
+      loadedData.removeAt(index)
+      dataEventDispatcher.multicaster.onDataRemoved(data as Any)
+    }
+  }
+
   override fun reset() {
     lastFuture = lastFuture.handle { _, _ ->
       listOf<T>()

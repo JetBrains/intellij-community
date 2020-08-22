@@ -15,6 +15,8 @@
  */
 package com.intellij.navigation;
 
+import com.intellij.openapi.util.NlsSafe;
+
 /**
  * Interface for location string decoration
  *
@@ -24,7 +26,7 @@ public interface LocationPresentation {
   String DEFAULT_LOCATION_PREFIX = " (";
   String DEFAULT_LOCATION_SUFFIX = ")";
 
-  String getLocationPrefix();
+  @NlsSafe String getLocationPrefix();
 
-  String getLocationSuffix();
+  @NlsSafe String getLocationSuffix();
 }

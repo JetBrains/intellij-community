@@ -7,9 +7,11 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.roots.ui.configuration.artifacts.LayoutTreeComponent;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.CompositePackagingElementNode;
 import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.PackagingElementNode;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -20,7 +22,11 @@ public class MovePackagingElementAction extends DumbAwareAction {
   private final LayoutTreeComponent myLayoutTreeComponent;
   private final int myDirection;
 
-  public MovePackagingElementAction(LayoutTreeComponent layoutTreeComponent, String text, String description, Icon icon, int direction) {
+  public MovePackagingElementAction(LayoutTreeComponent layoutTreeComponent,
+                                    @Nullable @NlsActions.ActionText String text,
+                                    @Nullable @NlsActions.ActionDescription String description,
+                                    @Nullable Icon icon,
+                                    int direction) {
     super(text, description, icon);
     myLayoutTreeComponent = layoutTreeComponent;
     myDirection = direction;

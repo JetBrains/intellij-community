@@ -25,14 +25,14 @@ public class RunnerAndConfigurationSettingsEditor extends SettingsEditor<RunnerA
 
   @Override
   protected void resetEditorFrom(@NotNull RunnerAndConfigurationSettings s) {
-    myConfigurationEditor.resetFrom((RunConfigurationBase<?>)s.getConfiguration());
     myConfigurationEditor.resetEditorFrom((RunnerAndConfigurationSettingsImpl)s);
+    myConfigurationEditor.resetFrom((RunConfigurationBase<?>)s.getConfiguration());
   }
 
   @Override
   protected void applyEditorTo(@NotNull RunnerAndConfigurationSettings s) throws ConfigurationException {
-    myConfigurationEditor.applyTo((RunConfigurationBase<?>)s.getConfiguration());
     myConfigurationEditor.applyEditorTo((RunnerAndConfigurationSettingsImpl)s);
+    myConfigurationEditor.applyTo((RunConfigurationBase<?>)s.getConfiguration());
   }
 
   @Override

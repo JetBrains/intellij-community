@@ -18,7 +18,7 @@ public final class TestsScope extends NamedScope {
   public static final TestsScope INSTANCE = new TestsScope();
 
   private TestsScope() {
-    super(NAME, IconManager.getInstance().createOffsetIcon(AllIcons.Scope.Tests), new FilteredPackageSet(NAME) {
+    super(NAME, "Tests", IconManager.getInstance().createOffsetIcon(AllIcons.Scope.Tests), new FilteredPackageSet(NAME) {
       @Override
       public boolean contains(@NotNull VirtualFile file, @NotNull Project project) {
         return TestSourcesFilter.isTestSources(file, project);

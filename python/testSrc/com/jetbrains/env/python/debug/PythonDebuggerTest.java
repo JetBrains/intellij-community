@@ -11,16 +11,12 @@ import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.xdebugger.XDebuggerTestUtil;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.frame.XValueChildrenList;
-import com.jetbrains.TestEnv;
 import com.jetbrains.env.PyEnvTestCase;
-import com.jetbrains.env.Staging;
-import com.jetbrains.env.StagingOn;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.PyDebugValue;
 import com.jetbrains.python.debugger.PyExceptionBreakpointProperties;
 import com.jetbrains.python.debugger.PyExceptionBreakpointType;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
-import com.jetbrains.python.debugger.settings.PySteppingFilter;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,7 +24,6 @@ import org.junit.Assume;
 import org.junit.Test;
 
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
@@ -36,7 +31,6 @@ import java.util.Set;
 import static com.jetbrains.env.python.debug.PyBaseDebuggerTask.addExceptionBreakpoint;
 import static org.junit.Assert.*;
 
-@Staging
 public class PythonDebuggerTest extends PyEnvTestCase {
   private static class BreakpointStopAndEvalTask extends PyDebuggerTask {
     BreakpointStopAndEvalTask(String scriptName) {
@@ -269,7 +263,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  @StagingOn(os = TestEnv.WINDOWS)
   public void testExceptionBreakpointIgnoreLibrariesOnRaise() {
     runPythonTest(new PyDebuggerTask("/debug", "test_ignore_lib.py") {
 
@@ -296,7 +289,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  @StagingOn(os = TestEnv.WINDOWS)
   public void testExceptionBreakpointIgnoreInUnittestModule() {
     runPythonTest(new PyDebuggerTask("/debug", "test_ignore_exceptions_in_unittest.py") {
 
@@ -429,7 +421,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  @StagingOn(os = TestEnv.WINDOWS)
   public void testEggDebug() {
     runPythonTest(new PyDebuggerTask("/debug", "test_egg.py") {
       @Override
@@ -748,7 +739,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  @Staging
   public void testSetNextStatement() {
     runPythonTest(new PyDebuggerTask("/debug", "test_set_next_statement.py") {
       @Override
@@ -818,7 +808,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   //TODO: That doesn't work now: case from test_continuation.py and test_continuation2.py are treated differently by interpreter
   // (first line is executed in first case and last line in second)
   @Test
-  @Staging
   public void testBreakOnContinuationLine() {
     runPythonTest(new PyDebuggerTask("/debug", "test_continuation.py") {
       @Override
@@ -858,7 +847,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         setScriptName("test1");
         setWaitForTermination(false);
 
-        myRunConfiguration.setModuleMode(true);
+        getRunConfiguration().setModuleMode(true);
       }
     });
   }
@@ -871,7 +860,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         toggleBreakpoint(getFilePath(getScriptName()), 6);
         setWaitForTermination(false);
 
-        myRunConfiguration.setShowCommandLineAfterwards(true);
+        getRunConfiguration().setShowCommandLineAfterwards(true);
       }
 
       @Override
@@ -885,7 +874,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
       @Override
       public void doFinally() {
-        myRunConfiguration.setShowCommandLineAfterwards(false);
+        getRunConfiguration().setShowCommandLineAfterwards(false);
       }
     });
   }
@@ -899,8 +888,8 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         setScriptName("test2");
         setWaitForTermination(false);
 
-        myRunConfiguration.setShowCommandLineAfterwards(true);
-        myRunConfiguration.setModuleMode(true);
+        getRunConfiguration().setShowCommandLineAfterwards(true);
+        getRunConfiguration().setModuleMode(true);
       }
 
       @Override
@@ -914,8 +903,8 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
       @Override
       public void doFinally() {
-        myRunConfiguration.setShowCommandLineAfterwards(false);
-        myRunConfiguration.setModuleMode(false);
+        getRunConfiguration().setShowCommandLineAfterwards(false);
+        getRunConfiguration().setModuleMode(false);
       }
     });
   }
@@ -1317,7 +1306,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
     Assume.assumeFalse("Don't run under Windows", UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows);
 
-    class ExecAndSpawnWithBytesArgsTask extends PyDebuggerTaskTagAware {
+    final class ExecAndSpawnWithBytesArgsTask extends PyDebuggerTaskTagAware {
 
       private final static String BYTES_ARGS_WARNING = "pydev debugger: bytes arguments were passed to a new process creation function. " +
                                                        "Breakpoints may not work correctly.\n";
@@ -1534,7 +1523,6 @@ public class PythonDebuggerTest extends PyEnvTestCase {
   }
 
   @Test
-  @StagingOn(os = TestEnv.WINDOWS)
   public void testNoDebuggerRelatedStacktraceOnDebuggerStop() {
     runPythonTest(new PyDebuggerTask("/debug", "test1.py") {
       @Override

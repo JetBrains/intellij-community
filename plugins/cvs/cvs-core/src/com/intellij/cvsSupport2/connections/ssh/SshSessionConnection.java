@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.cvsSupport2.connections.ssh;
 
 import com.intellij.openapi.util.ThrowableComputable;
@@ -117,7 +117,7 @@ public class SshSessionConnection implements IConnection {
     return myState;
   }
 
-  private static class MyInputStreamWrapper extends InputStream {
+  private static final class MyInputStreamWrapper extends InputStream {
     private final Runnable myListener;
     private final InputStream myDelegate;
 
@@ -175,7 +175,7 @@ public class SshSessionConnection implements IConnection {
     }
   }
 
-  private static class MyOutputStreamWrapper extends OutputStream {
+  private static final class MyOutputStreamWrapper extends OutputStream {
     private final Runnable myListener;
     private final OutputStream myDelegate;
 

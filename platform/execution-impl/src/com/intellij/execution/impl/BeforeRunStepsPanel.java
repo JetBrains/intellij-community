@@ -22,7 +22,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.SmartList;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +40,7 @@ import java.util.Set;
 /**
  * @author Vassiliy Kudryashov
  */
-final class BeforeRunStepsPanel extends JPanel {
+public final class BeforeRunStepsPanel extends JPanel {
   private final JCheckBox myShowSettingsBeforeRunCheckBox;
   private final JCheckBox myActivateToolWindowBeforeRunCheckBox;
   private final JBList<BeforeRunTask<?>> myList;
@@ -51,9 +51,9 @@ final class BeforeRunStepsPanel extends JPanel {
   private final StepsBeforeRunListener myListener;
   private final JPanel myPanel;
 
-  private final Set<BeforeRunTask<?>> clonedTasks = new ObjectOpenHashSet<>();
+  private final Set<BeforeRunTask<?>> clonedTasks = CollectionFactory.createSmallMemoryFootprintSet();
 
-  BeforeRunStepsPanel(@NotNull StepsBeforeRunListener listener) {
+  public BeforeRunStepsPanel(@NotNull StepsBeforeRunListener listener) {
     myListener = listener;
     myModel = new CollectionListModel<>();
     myList = new JBList<>(myModel);
@@ -170,7 +170,7 @@ final class BeforeRunStepsPanel extends JPanel {
     return provider == null ? null : new BeforeRunTaskAndProvider(task, provider, index);
   }
 
-  void doReset(@NotNull RunnerAndConfigurationSettings settings) {
+  public void doReset(@NotNull RunnerAndConfigurationSettings settings) {
     clonedTasks.clear();
 
     myRunConfiguration = settings.getConfiguration();
@@ -258,7 +258,7 @@ final class BeforeRunStepsPanel extends JPanel {
               }
               task.setEnabled(true);
 
-              Set<RunConfiguration> configurationSet = new ObjectOpenHashSet<>();
+              Set<RunConfiguration> configurationSet = CollectionFactory.createSmallMemoryFootprintSet();
               getAllRunBeforeRuns(task, configurationSet);
               if (configurationSet.contains(myRunConfiguration)) {
                 JOptionPane.showMessageDialog(BeforeRunStepsPanel.this,
@@ -290,7 +290,7 @@ final class BeforeRunStepsPanel extends JPanel {
 
   private @NotNull Set<Key<?>> getActiveProviderKeys() {
     List<BeforeRunTask<?>> items = myModel.getItems();
-    Set<Key<?>> result = new ObjectOpenHashSet<>(items.size());
+    Set<Key<?>> result = CollectionFactory.createSmallMemoryFootprintSet(items.size());
     for (BeforeRunTask<?> task : items) {
       result.add(task.getProviderId());
     }
@@ -310,7 +310,7 @@ final class BeforeRunStepsPanel extends JPanel {
     }
   }
 
-  interface StepsBeforeRunListener {
+  public interface StepsBeforeRunListener {
     void fireStepsBeforeRunChanged();
 
     void titleChanged(@NotNull String title);

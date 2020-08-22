@@ -15,7 +15,7 @@ import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.SmartList
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap
+import com.intellij.util.containers.CollectionFactory
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
@@ -45,8 +45,8 @@ class InspectionToolRegistrar : InspectionToolsSupplier() {
 
   init {
     val app = ApplicationManager.getApplication()
-    val result = Object2ObjectOpenHashMap<Any, MutableList<InspectionFactory>>()
-    val shortNames = Object2ObjectOpenHashMap<String, InspectionEP>()
+    val result = CollectionFactory.createSmallMemoryFootprintMap<Any, MutableList<InspectionFactory>>()
+    val shortNames = CollectionFactory.createSmallMemoryFootprintMap<String, InspectionEP>()
     registerToolProviders(app, result)
     registerInspections(result, app, shortNames, LocalInspectionEP.LOCAL_INSPECTION)
     registerInspections(result, app, shortNames, InspectionEP.GLOBAL_INSPECTION)
@@ -77,7 +77,7 @@ class InspectionToolRegistrar : InspectionToolsSupplier() {
         unregisterInspectionOrProvider(inspection, factories)
         shortNames.remove(inspection.getShortName())
       }
-    }, app)
+    }, null)
   }
 
   private fun registerToolProviders(app: Application, factories: MutableMap<Any, MutableList<InspectionFactory>>) {
@@ -101,7 +101,7 @@ class InspectionToolRegistrar : InspectionToolsSupplier() {
       override fun extensionRemoved(provider: InspectionToolProvider, pluginDescriptor: PluginDescriptor) {
         unregisterInspectionOrProvider(provider, factories)
       }
-    }, app)
+    }, null)
   }
 
   private fun fireToolAdded(factory: InspectionFactory) {

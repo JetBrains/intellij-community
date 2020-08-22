@@ -26,7 +26,7 @@ import java.util.List;
 /**
  * Element utilities.
  */
-public class ElementUtils {
+public final class ElementUtils {
 
     private ElementUtils() {}
 

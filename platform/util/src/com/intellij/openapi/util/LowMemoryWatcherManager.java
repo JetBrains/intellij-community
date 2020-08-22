@@ -7,6 +7,7 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.management.Notification;
 import javax.management.NotificationEmitter;
@@ -15,8 +16,7 @@ import java.lang.management.ManagementFactory;
 import java.lang.management.MemoryNotificationInfo;
 import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.MemoryType;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 import java.util.function.Consumer;
 
 public final class LowMemoryWatcherManager implements Disposable {
@@ -54,23 +54,31 @@ public final class LowMemoryWatcherManager implements Disposable {
   @NotNull
   private Future<?> initializeMXBeanListenersLater(@NotNull ExecutorService backendExecutorService) {
     // do it in the other thread to get it out of the way during startup
-    return backendExecutorService.submit(() -> {
-      try {
-        for (MemoryPoolMXBean bean : ManagementFactory.getMemoryPoolMXBeans()) {
-          if (bean.getType() == MemoryType.HEAP && bean.isCollectionUsageThresholdSupported() && bean.isUsageThresholdSupported()) {
-            long max = bean.getUsage().getMax();
-            long threshold = Math.min((long)(max * getOccupiedMemoryThreshold()), max - MEM_THRESHOLD);
-            if (threshold > 0) {
-              bean.setUsageThreshold(threshold);
-              bean.setCollectionUsageThreshold(threshold);
+    return backendExecutorService.submit(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          for (MemoryPoolMXBean bean : ManagementFactory.getMemoryPoolMXBeans()) {
+            if (bean.getType() == MemoryType.HEAP && bean.isCollectionUsageThresholdSupported() && bean.isUsageThresholdSupported()) {
+              long max = bean.getUsage().getMax();
+              long threshold = Math.min((long)(max * getOccupiedMemoryThreshold()), max - MEM_THRESHOLD);
+              if (threshold > 0) {
+                bean.setUsageThreshold(threshold);
+                bean.setCollectionUsageThreshold(threshold);
+              }
             }
           }
+          ((NotificationEmitter)ManagementFactory.getMemoryMXBean()).addNotificationListener(myLowMemoryListener, null, null);
         }
-        ((NotificationEmitter)ManagementFactory.getMemoryMXBean()).addNotificationListener(myLowMemoryListener, null, null);
+        catch (Throwable e) {
+          // should not happen normally
+          getLogger().info("Errors initializing LowMemoryWatcher: ", e);
+        }
       }
-      catch (Throwable e) {
-        // should not happen normally
-        getLogger().info("Errors initializing LowMemoryWatcher: ", e);
+
+      @Override
+      public String toString() {
+        return "initializeMXBeanListeners runnable";
       }
     });
   }
@@ -117,5 +125,10 @@ public final class LowMemoryWatcherManager implements Disposable {
     }
 
     LowMemoryWatcher.stopAll();
+  }
+
+  @TestOnly
+  public void waitForInitComplete(int timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+    myMemoryPoolMXBeansFuture.get(timeout, unit);
   }
 }

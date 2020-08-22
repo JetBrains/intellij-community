@@ -227,11 +227,6 @@ public class IntroduceFieldDialogPanel extends IntroduceFieldCentralPanel {
   }
 
   @Override
-  public void setVisibility(String visibility) {
-    myVisibilityPanel.setVisibility(visibility);
-  }
-
-  @Override
   protected boolean allowFinal() {
     boolean allowFinal = myRbInFieldDeclaration.isSelected() || (myRbInConstructor.isSelected() && !myWillBeDeclaredStatic);
     if (myRbInCurrentMethod.isSelected() && myIsCurrentMethodConstructor) {

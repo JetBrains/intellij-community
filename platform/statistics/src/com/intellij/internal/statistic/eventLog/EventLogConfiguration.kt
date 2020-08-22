@@ -3,6 +3,7 @@ package com.intellij.internal.statistic.eventLog
 
 import com.intellij.internal.statistic.DeviceIdManager
 import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
 import com.intellij.openapi.diagnostic.Logger
@@ -21,10 +22,12 @@ import java.util.prefs.Preferences
 object EventLogConfiguration {
   private val LOG = Logger.getInstance(EventLogConfiguration::class.java)
   private const val SALT_PREFERENCE_KEY = "feature_usage_event_log_salt"
+  private const val IDEA_HEADLESS_STATISTICS_DEVICE_ID = "idea.headless.statistics.device.id"
+  private const val IDEA_HEADLESS_STATISTICS_SALT = "idea.headless.statistics.salt"
 
   val sessionId: String = UUID.randomUUID().toString().shortedUUID()
 
-  val deviceId: String = DeviceIdManager.getOrGenerateId()
+  val deviceId: String = getOrGenerateDeviceId()
   val bucket: Int = deviceId.asBucket()
 
   val build: String by lazy { ApplicationInfo.getInstance().build.asBuildNumber() }
@@ -74,7 +77,24 @@ object EventLogConfiguration {
     return MathUtil.nonNegativeAbs(this.hashCode()) % 256
   }
 
+  private fun getOrGenerateDeviceId(): String {
+    val app = ApplicationManager.getApplication()
+    if (app != null && app.isHeadlessEnvironment) {
+      System.getProperty(IDEA_HEADLESS_STATISTICS_DEVICE_ID)?.let {
+        return it
+      }
+    }
+    return DeviceIdManager.getOrGenerateId()
+  }
+
   private fun getOrGenerateSalt(): ByteArray {
+    val app = ApplicationManager.getApplication()
+    if (app != null && app.isHeadlessEnvironment) {
+      System.getProperty(IDEA_HEADLESS_STATISTICS_SALT)?.let {
+        return it.toByteArray(Charsets.UTF_8)
+      }
+    }
+
     val companyName = ApplicationInfoImpl.getShadowInstance().shortCompanyName
     val name = if (StringUtil.isEmptyOrSpaces(companyName)) "jetbrains" else companyName.toLowerCase(Locale.US)
     val prefs = Preferences.userRoot().node(name)
@@ -91,5 +111,6 @@ object EventLogConfiguration {
 
   fun getEventLogDataPath(): Path = Paths.get(PathManager.getSystemPath()).resolve("event-log-data")
 
+  @JvmStatic
   fun getEventLogSettingsPath(): Path = getEventLogDataPath().resolve("settings")
 }

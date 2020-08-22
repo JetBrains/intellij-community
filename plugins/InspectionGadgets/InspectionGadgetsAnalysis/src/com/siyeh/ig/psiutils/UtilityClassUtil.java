@@ -19,7 +19,7 @@ import com.intellij.codeInspection.inheritance.ImplicitSubclassProvider;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-public class UtilityClassUtil {
+public final class UtilityClassUtil {
 
   private UtilityClassUtil() {}
 

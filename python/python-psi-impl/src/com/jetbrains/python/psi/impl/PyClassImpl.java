@@ -768,8 +768,8 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
       return property;
     }
 
-    if (findMethodByName(name, false, null) != null ||
-        findClassAttribute(name, false, null) != null ||
+    if (findMethodByName(name, false, context) != null ||
+        findClassAttribute(name, false, context) != null ||
         ContainerUtil.notNullize(getOwnSlots()).contains(name)) {
       return null;
     }
@@ -845,7 +845,7 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
     return null;
   }
 
-  private static class PropertyImpl extends PropertyBunch<PyCallable> implements Property {
+  private static final class PropertyImpl extends PropertyBunch<PyCallable> implements Property {
     private final String myName;
 
     private PropertyImpl(String name,
@@ -1325,6 +1325,11 @@ public class PyClassImpl extends PyBaseElementImpl<PyClassStub> implements PyCla
   @NotNull
   @Override
   public List<PyClassLikeType> getSuperClassTypes(@NotNull final TypeEvalContext context) {
+    return PyUtil.getParameterizedCachedValue(this, context, this::doGetSuperClassTypes);
+  }
+
+  @NotNull
+  private List<PyClassLikeType> doGetSuperClassTypes(@NotNull TypeEvalContext context) {
     final List<PyClassLikeType> result = new ArrayList<>();
 
     // In some cases stub may not provide all information, so we use stubs only if AST access id disabled

@@ -3,11 +3,15 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.google.common.collect.Sets;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorListenerAdapter;
+import com.intellij.openapi.progress.util.RelayUiToDelegateIndicator;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -263,15 +267,6 @@ public class SdkDownloadTracker {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {
-            // we need a progress indicator from the outside, to avoid race condition
-            // (progress may start with a delay, but UI would need a PI)
-            ProgressIndicatorBase middleMan = new ProgressIndicatorBase() {
-              @Override
-              protected void delegateProgressChange(@NotNull IndicatorAction action) {
-                action.execute((ProgressIndicatorEx)indicator);
-              }
-            };
-
             new ProgressIndicatorListenerAdapter() {
               @Override
               public void cancelled() {
@@ -279,13 +274,15 @@ public class SdkDownloadTracker {
               }
             }.installToProgress((ProgressIndicatorEx)indicator);
 
-            myProgressIndicator.addStateDelegate(middleMan);
-            myProgressIndicator.checkCanceled();
+            ProgressIndicatorEx relayToVisibleIndicator = new RelayUiToDelegateIndicator(indicator);
+
+            myProgressIndicator.addStateDelegate(relayToVisibleIndicator);
             try {
+              myProgressIndicator.checkCanceled();
               myTask.doDownload(myProgressIndicator);
             }
             finally {
-              myProgressIndicator.removeStateDelegate(middleMan);
+              myProgressIndicator.removeStateDelegate(relayToVisibleIndicator);
             }
 
             // make sure VFS has the right image of our SDK to avoid empty SDK from being created

@@ -31,6 +31,8 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ModuleProjectStructureElement;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -98,10 +100,18 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
           clearCaches();
         }
       });
-      myJdkPanel.add(new JLabel(JavaUiBundle.message("module.libraries.target.jdk.project.radio")), new GridBagConstraints(0, 0, 3, 1, 0, 0, NORTHWEST, NONE, JBUI.insetsBottom(4), 0, 0));
+      String accessibleName = StringUtil.removeHtmlTags(JavaUiBundle.message("module.libraries.target.jdk.project.radio.name"));
+      String accessibleDescription = StringUtil.removeHtmlTags(JavaUiBundle.message("module.libraries.target.jdk.project.radio.description"));
+      myCbProjectJdk.getAccessibleContext().setAccessibleName(accessibleName);
+      myCbProjectJdk.getAccessibleContext().setAccessibleDescription(
+        accessibleDescription);
+      String labelString = new HtmlBuilder()
+        .appendRaw(JavaUiBundle.message("module.libraries.target.jdk.project.radio.name")).br()
+        .appendRaw(JavaUiBundle.message("module.libraries.target.jdk.project.radio.description")).wrapWith("html").toString();
+      myJdkPanel.add(new JLabel(labelString), new GridBagConstraints(0, 0, 3, 1, 0, 0, NORTHWEST, NONE, JBUI.insetsBottom(4), 0, 0));
       myJdkPanel.add(myCbProjectJdk, new GridBagConstraints(0, 1, 1, 1, 0, 1.0, NORTHWEST, NONE, JBUI.insetsLeft(4), 0, 0));
       final JButton editButton = new JButton(ApplicationBundle.message("button.edit"));
-      myCbProjectJdk.setEditButton(editButton, myProject, () -> myJdksModel.getProjectSdk());
+      myCbProjectJdk.setEditButton(editButton, myProject, myJdksModel::getProjectSdk);
 
       myJdkPanel.add(editButton, new GridBagConstraints(RELATIVE, 1, 1, 1, 1.0, 0, NORTHWEST, NONE, JBUI.insetsLeft(4), 0, 0));
     }

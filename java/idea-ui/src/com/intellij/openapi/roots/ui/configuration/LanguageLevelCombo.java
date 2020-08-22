@@ -12,6 +12,7 @@ import com.intellij.pom.java.AcceptedLanguageLevelsSettings;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -20,9 +21,9 @@ import javax.swing.*;
  * @author ven
  */
 public abstract class LanguageLevelCombo extends ComboBox<Object> {
-  private final String myDefaultItem;
+  private final @Nls String myDefaultItem;
 
-  public LanguageLevelCombo(String defaultItem) {
+  public LanguageLevelCombo(@Nls String defaultItem) {
     myDefaultItem = defaultItem;
     insertItemAt(myDefaultItem, 0);
     for (LanguageLevel level : LanguageLevel.values()) {

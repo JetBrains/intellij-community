@@ -1,4 +1,5 @@
-from typing import Any, IO, Optional, Tuple, Callable, Dict, List, Union, Text, Protocol, Type
+from typing import Any, IO, Optional, Tuple, Callable, Dict, List, Union, Text, Type
+from _typeshed import SupportsRead
 
 class JSONDecodeError(ValueError):
     def dumps(self, obj: Any) -> str: ...
@@ -43,10 +44,7 @@ def loads(s: Union[Text, bytes],
           object_pairs_hook: Optional[Callable[[List[Tuple[Any, Any]]], Any]] = ...,
           **kwds: Any) -> Any: ...
 
-class _Reader(Protocol):
-    def read(self) -> Union[Text, bytes]: ...
-
-def load(fp: _Reader,
+def load(fp: SupportsRead[Union[Text, bytes]],
          encoding: Optional[str] = ...,
          cls: Optional[Type[JSONDecoder]] = ...,
          object_hook: Optional[Callable[[Dict[Any, Any]], Any]] = ...,

@@ -9,8 +9,7 @@ import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 
-public class SvnRepositoryLocation implements RepositoryLocation {
-
+public final class SvnRepositoryLocation implements RepositoryLocation {
   private final String myUrlValue;
   @Nullable private final Url myUrl;
   @Nullable private final Url myRepositoryUrl;

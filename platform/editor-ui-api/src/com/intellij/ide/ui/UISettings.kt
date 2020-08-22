@@ -29,7 +29,7 @@ import kotlin.math.roundToInt
 
 private val LOG = logger<UISettings>()
 
-@State(name = "UISettings", storages = [(Storage("ui.lnf.xml"))], reportStatistic = true)
+@State(name = "UISettings", storages = [(Storage("ui.lnf.xml"))])
 class UISettings @NonInjectable constructor(private val notRoamableOptions: NotRoamableUiSettings) : PersistentStateComponent<UISettingsState> {
   constructor() : this(ApplicationManager.getApplication().getService(NotRoamableUiSettings::class.java))
 
@@ -50,10 +50,10 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     }
 
   val allowMergeButtons: Boolean
-    get() = Registry.`is`("ide.allow.merge.buttons")
+    get() = Registry.`is`("ide.allow.merge.buttons", true)
 
   val animateWindows: Boolean
-    get() = Registry.`is`("ide.animate.toolwindows")
+    get() = Registry.`is`("ide.animate.toolwindows", false)
 
   @Deprecated("use StatusBarWidgetSettings#isEnabled(MemoryUsagePanel.WIDGET_ID)")
   var showMemoryIndicator: Boolean
@@ -81,7 +81,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     }
 
   val hideNavigationOnFocusLoss: Boolean
-    get() = Registry.`is`("ide.hide.navigation.on.focus.loss")
+    get() = Registry.`is`("ide.hide.navigation.on.focus.loss", false)
 
   var reuseNotModifiedTabs: Boolean
     get() = state.reuseNotModifiedTabs
@@ -132,7 +132,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     get() = state.closeTabButtonOnTheRight
 
   val cycleScrolling: Boolean
-    get() = Registry.`is`("ide.cycle.scrolling")
+    get() = Registry.`is`("ide.cycle.scrolling", false)
 
   var navigateToPreview: Boolean
     get() = state.navigateToPreview
@@ -186,7 +186,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     }
 
   val showIconInQuickNavigation: Boolean
-    get() = Registry.`is`("ide.show.icons.in.quick.navigation")
+    get() = Registry.`is`("ide.show.icons.in.quick.navigation", false)
 
   var showTreeIndentGuides: Boolean
     get() = state.showTreeIndentGuides
@@ -214,8 +214,11 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.showMainToolbar = value
     }
 
-  val showIconsInMenus: Boolean
-    get() = Registry.`is`("ide.show.icons.in.menus")
+  var showIconsInMenus: Boolean
+    get() = state.showIconsInMenus
+    set(value) {
+      state.showIconsInMenus = value
+    }
 
   var sortLookupElementsLexicographically: Boolean
     get() = state.sortLookupElementsLexicographically
@@ -224,7 +227,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     }
 
   val hideTabsIfNeeded: Boolean
-    get() = state.hideTabsIfNeeded
+    get() = state.hideTabsIfNeeded || editorTabPlacement == SwingConstants.LEFT || editorTabPlacement == SwingConstants.RIGHT
   var showFileIconInTabs: Boolean
     get() = state.showFileIconInTabs
     set(value) {
@@ -417,6 +420,12 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.fullPathsInWindowHeader = value
     }
 
+  var mergeMainMenuWithWindowTitle: Boolean
+    get() = state.mergeMainMenuWithWindowTitle
+    set(value) {
+      state.mergeMainMenuWithWindowTitle = value
+    }
+
   init {
     // TODO Remove the registry keys and migration code in 2019.3
     if (SystemProperties.`is`("tabs.alphabetical")) {
@@ -475,14 +484,19 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     val shadowInstance: UISettings
       get() = instanceOrNull ?: UISettings(NotRoamableUiSettings())
 
-    @JvmField
-    val FORCE_USE_FRACTIONAL_METRICS = SystemProperties.getBooleanProperty("idea.force.use.fractional.metrics", SystemInfo.isMacOSCatalina)
+    @JvmStatic
+    val PREFERRED_FRACTIONAL_METRICS_VALUE: Any
+      get() {
+        return if (!Registry.`is`("ide.disable.fractionalMetrics", false)
+                   && SystemProperties.getBooleanProperty("idea.force.use.fractional.metrics", SystemInfo.isMacOSCatalina))
+          RenderingHints.VALUE_FRACTIONALMETRICS_ON
+        else
+          RenderingHints.VALUE_FRACTIONALMETRICS_OFF
+      }
 
     @JvmStatic
     fun setupFractionalMetrics(g2d: Graphics2D) {
-      if (FORCE_USE_FRACTIONAL_METRICS) {
-        g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, RenderingHints.VALUE_FRACTIONALMETRICS_ON)
-      }
+      g2d.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, PREFERRED_FRACTIONAL_METRICS_VALUE)
     }
 
     /**
@@ -555,6 +569,11 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       LOG.info("Loaded: fontSize=$readSize, fontScale=$readScale; restored: fontSize=$size, fontScale=$defFontScale")
       return size
     }
+
+    const val MERGE_MAIN_MENU_WITH_WINDOW_TITLE_PROPERTY = "ide.win.frame.decoration"
+    @JvmStatic
+    val mergeMainMenuWithWindowTitleOverrideValue = System.getProperty(MERGE_MAIN_MENU_WITH_WINDOW_TITLE_PROPERTY)?.toBoolean()
+    val isMergeMainMenuWithWindowTitleOverridden = mergeMainMenuWithWindowTitleOverrideValue != null
   }
 
   @Suppress("DeprecatedCallableAddReplaceWith")
@@ -634,7 +653,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
   @Suppress("DEPRECATION")
   private fun migrateOldSettings() {
     if (state.ideAAType != AntialiasingType.SUBPIXEL) {
-      editorAAType = state.ideAAType
+      ideAAType = state.ideAAType
       state.ideAAType = AntialiasingType.SUBPIXEL
     }
     if (state.editorAAType != AntialiasingType.SUBPIXEL) {
@@ -647,6 +666,10 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     if (state.moveMouseOnDefaultButton) {
       Registry.get("ide.settings.move.mouse.on.default.button").setValue(true)
       state.moveMouseOnDefaultButton = false
+    }
+    if (!state.allowMergeButtons) {
+      Registry.get("ide.allow.merge.buttons").setValue(false)
+      state.allowMergeButtons = true
     }
   }
 

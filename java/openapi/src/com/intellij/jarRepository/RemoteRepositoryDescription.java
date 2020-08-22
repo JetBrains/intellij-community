@@ -1,7 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jarRepository;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -27,10 +29,10 @@ public class RemoteRepositoryDescription {
 
   private final String myId;
   private final String myName;
-  private final String myUrl;
+  private final @NlsSafe String myUrl;
   private final boolean myAllowSnapshots;
 
-  public RemoteRepositoryDescription(@NotNull String id, @NotNull String name, @NotNull String url) {
+  public RemoteRepositoryDescription(@NonNls @NotNull String id, @NotNull String name, @NotNull String url) {
     this(id, name, url, true);
   }
 
@@ -52,7 +54,7 @@ public class RemoteRepositoryDescription {
     return myName;
   }
 
-  public String getUrl() {
+  public @NlsSafe String getUrl() {
     return myUrl;
   }
 

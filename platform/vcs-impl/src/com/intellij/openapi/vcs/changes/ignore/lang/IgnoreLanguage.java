@@ -50,7 +50,7 @@ public class IgnoreLanguage extends Language {
     this("IgnoreLang", "ignore");
   }
 
-  protected IgnoreLanguage(@NotNull String name, @NotNull String extension) {
+  protected IgnoreLanguage(@NotNull @NonNls String name, @NotNull @NonNls String extension) {
     super(INSTANCE, name, ArrayUtilRt.EMPTY_STRING_ARRAY);
     myExtension = extension;
   }

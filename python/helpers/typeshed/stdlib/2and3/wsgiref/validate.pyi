@@ -1,7 +1,7 @@
 import sys
 from typing import Any, Iterable, Iterator, Optional, NoReturn, Callable
 
-from wsgiref.types import WSGIApplication, InputStream, ErrorStream
+from _typeshed.wsgi import WSGIApplication, InputStream, ErrorStream
 
 class WSGIWarning(Warning): ...
 

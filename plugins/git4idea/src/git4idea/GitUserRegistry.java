@@ -84,7 +84,7 @@ public final class GitUserRegistry implements Disposable, VcsListener {
           getOrReadUser(root);
         }
       };
-      BackgroundTaskUtil.executeOnPooledThread(myProject, task);
+      BackgroundTaskUtil.executeOnPooledThread(this, task);
     }
   }
 }

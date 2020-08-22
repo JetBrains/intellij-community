@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diagnostic;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PathUtilRt;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,20 +24,20 @@ public class Attachment {
   private final @Nullable File myTemporaryFile;
   private boolean myIncluded;   // opt-out for traces, opt-in otherwise
 
-  public Attachment(@NotNull String name, @NotNull Throwable throwable) {
+  public Attachment(@NotNull @NonNls String name, @NotNull Throwable throwable) {
     this(name + ".trace", ExceptionUtil.getThrowableText(throwable));
     myIncluded = true;
   }
 
-  public Attachment(@NotNull String path, @NotNull String content) {
+  public Attachment(@NotNull @NonNls String path, @NotNull @NonNls String content) {
     this(path, content, content.getBytes(StandardCharsets.UTF_8), null);
   }
 
-  public Attachment(@NotNull String path, byte @NotNull [] bytes, @NotNull String displayText) {
+  public Attachment(@NotNull @NonNls String path, byte @NotNull [] bytes, @NotNull @NonNls String displayText) {
     this(path, displayText, bytes, null);
   }
 
-  public Attachment(@NotNull String path, @NotNull File temporaryFile, @NotNull String displayText) {
+  public Attachment(@NotNull @NonNls String path, @NotNull File temporaryFile, @NotNull @NonNls String displayText) {
     this(path, displayText, null, temporaryFile);
   }
 

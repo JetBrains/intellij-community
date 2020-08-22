@@ -27,6 +27,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
@@ -50,6 +51,7 @@ import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.TIntArrayList;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -232,11 +234,11 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
   @Override
   protected boolean preprocessUsages(@NotNull Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usagesIn = refUsages.get();
-    MultiMap<PsiElement, String> conflicts = new MultiMap<>();
+    MultiMap<PsiElement, @Nls String> conflicts = new MultiMap<>();
 
     AnySameNameVariables anySameNameVariables = new AnySameNameVariables();
     myMethodToReplaceIn.accept(anySameNameVariables);
-    final Pair<PsiElement, String> conflictPair = anySameNameVariables.getConflict();
+    final Pair<PsiElement, @Nls String> conflictPair = anySameNameVariables.getConflict();
     if (conflictPair != null) {
       conflicts.putValue(conflictPair.first, conflictPair.second);
     }
@@ -322,9 +324,9 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
   }
 
   public class AnySameNameVariables extends JavaRecursiveElementWalkingVisitor {
-    private Pair<PsiElement, String> conflict;
+    private Pair<PsiElement, @Nls String> conflict;
 
-    public Pair<PsiElement, String> getConflict() {
+    public Pair<PsiElement, @Nls String> getConflict() {
       return conflict;
     }
 
@@ -339,7 +341,7 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
         String descr = JavaRefactoringBundle.message("there.is.already.a.0.it.will.conflict.with.an.introduced.parameter",
                                                  RefactoringUIUtil.getDescription(variable, true));
 
-        conflict = Pair.create(variable, CommonRefactoringUtil.capitalize(descr));
+        conflict = Pair.create(variable, descr);
       }
     }
 

@@ -7,11 +7,14 @@ import com.intellij.util.BitUtil;
 import com.intellij.util.Consumer;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.Vector;
 
-public abstract class Node extends DefaultMutableTreeNode {
+abstract class Node extends DefaultMutableTreeNode {
+
+
   private int myCachedTextHash;
 
   private byte myCachedFlags; // guarded by this; bit packed flags below:
@@ -22,11 +25,17 @@ public abstract class Node extends DefaultMutableTreeNode {
   static final byte EXCLUDED_MASK = 1 << 3;
   private static final byte UPDATED_MASK = 1 << 4;
   private static final byte FORCE_UPDATE_REQUESTED_MASK = 1 << 5;
+  /**
+   * It is set if there was a structural change in one of the parent nodes (so the node has to be deleted),
+   * Otherwise unset
+   */
+  private static final byte STRUCTURAL_CHANGE_DETECTED_IN_PATH_MASK = 1 << 6;
 
   @MagicConstant(intValues = {
     CACHED_INVALID_MASK, CACHED_READ_ONLY_MASK, READ_ONLY_COMPUTED_MASK,
-    EXCLUDED_MASK, UPDATED_MASK, FORCE_UPDATE_REQUESTED_MASK})
-  private @interface FlagConstant {}
+    EXCLUDED_MASK, UPDATED_MASK, FORCE_UPDATE_REQUESTED_MASK, STRUCTURAL_CHANGE_DETECTED_IN_PATH_MASK})
+  private @interface FlagConstant {
+  }
 
   private synchronized boolean isFlagSet(@FlagConstant byte mask) {
     return BitUtil.isSet(myCachedFlags, mask);
@@ -42,7 +51,8 @@ public abstract class Node extends DefaultMutableTreeNode {
   /**
    * debug method for producing string tree presentation
    */
-  public abstract String tree2string(int indent, String lineSeparator);
+  @TestOnly
+  abstract String tree2string(int indent, @NotNull String lineSeparator);
 
   /**
    * isDataXXX methods perform actual (expensive) data computation.
@@ -50,7 +60,9 @@ public abstract class Node extends DefaultMutableTreeNode {
    * to be compared later with cached data stored in {@link #myCachedFlags} and {@link #myCachedTextHash}
    */
   protected abstract boolean isDataValid();
+
   protected abstract boolean isDataReadOnly();
+
   protected abstract boolean isDataExcluded();
 
   protected void updateCachedPresentation() {}
@@ -58,11 +70,11 @@ public abstract class Node extends DefaultMutableTreeNode {
   @NotNull
   protected abstract String getText(@NotNull UsageView view);
 
-  public final boolean isValid() {
+  final boolean isValid() {
     return !isFlagSet(CACHED_INVALID_MASK);
   }
 
-  public final boolean isReadOnly() {
+  final boolean isReadOnly() {
     boolean result;
     boolean computed = isFlagSet(READ_ONLY_COMPUTED_MASK);
     if (computed) {
@@ -76,24 +88,24 @@ public abstract class Node extends DefaultMutableTreeNode {
     return result;
   }
 
-  public final boolean isExcluded() {
+  final boolean isExcluded() {
     return isFlagSet(EXCLUDED_MASK);
   }
 
-  final void update(@NotNull UsageView view, @NotNull Consumer<? super Node> edtNodeChangedQueue) {
+  final void update(@NotNull UsageView view, @NotNull Consumer<? super Node> edtFireTreeNodesChangedQueue) {
     // performance: always update in background because smart pointer' isValid() can cause PSI chameleons expansion which is ridiculously expensive in cpp
     assert !ApplicationManager.getApplication().isDispatchThread();
     boolean isDataValid = isDataValid();
     boolean isReadOnly = isDataReadOnly();
     String text = getText(view);
     updateCachedPresentation();
-    doUpdate(edtNodeChangedQueue, isDataValid, isReadOnly, text);
+    doUpdate(isDataValid, isReadOnly, text, edtFireTreeNodesChangedQueue);
   }
 
-  private synchronized void doUpdate(@NotNull Consumer<? super Node> edtNodeChangedQueue,
-                                     boolean isDataValid,
+  private synchronized void doUpdate(boolean isDataValid,
                                      boolean isReadOnly,
-                                     String text) {
+                                     @NotNull String text,
+                                     @NotNull Consumer<? super Node> edtFireTreeNodesChangedQueue) {
     boolean cachedValid = isValid();
     boolean cachedReadOnly = isFlagSet(CACHED_READ_ONLY_MASK);
 
@@ -107,7 +119,7 @@ public abstract class Node extends DefaultMutableTreeNode {
 
       myCachedTextHash = text.hashCode();
       updateNotify();
-      edtNodeChangedQueue.consume(this);
+      edtFireTreeNodesChangedQueue.consume(this);
     }
     setFlag(UPDATED_MASK, true);
   }
@@ -115,6 +127,7 @@ public abstract class Node extends DefaultMutableTreeNode {
   void markNeedUpdate() {
     setFlag(UPDATED_MASK, false);
   }
+
   boolean needsUpdate() {
     return !isFlagSet(UPDATED_MASK);
   }
@@ -139,8 +152,20 @@ public abstract class Node extends DefaultMutableTreeNode {
     children.insertElementAt(newChild, childIndex);
   }
 
-  void setExcluded(boolean excluded, @NotNull Consumer<? super Node> edtNodeChangedQueue) {
+  void setExcluded(boolean excluded, @NotNull Consumer<? super Node> edtFireTreeNodesChangedQueue) {
     setFlag(EXCLUDED_MASK, excluded);
-    edtNodeChangedQueue.consume(this);
+    edtFireTreeNodesChangedQueue.consume(this);
+  }
+
+  /**
+   * @return true if there was a structural change in the tree from the root element to the current one,
+   * otherwise false
+   */
+  public boolean isStructuralChangeDetected() {
+    return isFlagSet(STRUCTURAL_CHANGE_DETECTED_IN_PATH_MASK);
+  }
+
+  public void setStructuralChangeDetected(boolean valid) {
+    setFlag(STRUCTURAL_CHANGE_DETECTED_IN_PATH_MASK, valid);
   }
 }

@@ -1,17 +1,8 @@
-# Stubs for tempfile
-# Ron Murawski <ron@horizonchess.com>
-
-# based on http://docs.python.org/3.3/library/tempfile.html
-
 import os
 import sys
 from types import TracebackType
 from typing import Any, AnyStr, Generic, IO, Iterable, Iterator, List, Optional, overload, Tuple, Type, TypeVar, Union
-
-if sys.version_info >= (3, 8):
-    from typing import Literal
-else:
-    from typing_extensions import Literal
+from typing_extensions import Literal
 
 # global variables
 TMP_MAX: int

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.maddyhome.idea.copyright.actions;
 
@@ -65,11 +65,9 @@ public class UpdateCopyrightAction extends BaseAnalysisAction {
     final Editor editor = CommonDataKeys.EDITOR.getData(context);
     if (editor != null) {
       final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
-      if (file == null || !FileTypeUtil.isSupportedFile(file)) {
-        return false;
-      }
+      return FileTypeUtil.isSupportedFile(file);
     }
-    else if (files != null && areFiles(files)) {
+    if (files != null && areFiles(files)) {
       boolean copyrightEnabled  = false;
       for (VirtualFile vfile : files) {
         if (vfile != null && FileTypeUtil.isSupportedFile(vfile)) {
@@ -77,12 +75,9 @@ public class UpdateCopyrightAction extends BaseAnalysisAction {
           break;
         }
       }
-      if (!copyrightEnabled) {
-        return false;
-      }
-
+      return copyrightEnabled;
     }
-    else if ((files == null || files.length != 1) &&
+    if ((files == null || files.length != 1) &&
              LangDataKeys.MODULE_CONTEXT.getData(context) == null &&
              LangDataKeys.MODULE_CONTEXT_ARRAY.getData(context) == null &&
              PlatformDataKeys.PROJECT_CONTEXT.getData(context) == null) {
@@ -98,9 +93,7 @@ public class UpdateCopyrightAction extends BaseAnalysisAction {
             }
           }
         }
-        if (!copyrightEnabled){
-          return false;
-        }
+        return copyrightEnabled;
       }
     }
     return true;
@@ -144,7 +137,7 @@ public class UpdateCopyrightAction extends BaseAnalysisAction {
       public void onSuccess() {
         if (!preparations.isEmpty()) {
           if (!FileModificationService.getInstance().preparePsiElementsForWrite(preparations.keySet())) return;
-          final SequentialModalProgressTask progressTask = new SequentialModalProgressTask(project, UpdateCopyrightProcessor.TITLE, true);
+          final SequentialModalProgressTask progressTask = new SequentialModalProgressTask(project, UpdateCopyrightProcessor.TITLE.get(), true);
           progressTask.setMinIterationTime(200);
           progressTask.setTask(new UpdateCopyrightSequentialTask(preparations, progressTask));
           CommandProcessor.getInstance().executeCommand(project, () -> {
@@ -158,11 +151,11 @@ public class UpdateCopyrightAction extends BaseAnalysisAction {
     ProgressManager.getInstance().run(task);
   }
 
-  private static class UpdateCopyrightSequentialTask implements SequentialTask {
+  private static final class UpdateCopyrightSequentialTask implements SequentialTask {
     private final int mySize;
     private final Iterator<Runnable> myRunnables;
     private final SequentialModalProgressTask myProgressTask;
-    private int myIdx = 0;
+    private int myIdx;
 
     private UpdateCopyrightSequentialTask(Map<PsiFile, Runnable> runnables, SequentialModalProgressTask progressTask) {
       myRunnables = runnables.values().iterator();
@@ -192,8 +185,8 @@ public class UpdateCopyrightAction extends BaseAnalysisAction {
     }
   }
 
-  private static boolean areFiles(VirtualFile[] files) {
-    if (files == null || files.length < 2) {
+  private static boolean areFiles(VirtualFile @NotNull [] files) {
+    if (files.length < 2) {
       return false;
     }
 

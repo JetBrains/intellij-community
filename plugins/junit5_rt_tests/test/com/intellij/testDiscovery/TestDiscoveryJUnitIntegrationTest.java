@@ -14,24 +14,18 @@ import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.testFramework.EdtRule;
 import com.intellij.testFramework.MapDataContext;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.RunsInEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
-import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
@@ -42,12 +36,8 @@ import java.util.stream.Collectors;
 
 // TODO parametrize by TD protocol
 // TODO get agent from sources
-@RunsInEdt
 @RunWith(Parameterized.class)
 public class TestDiscoveryJUnitIntegrationTest extends AbstractTestFrameworkCompilingIntegrationTest {
-  @Rule public final EdtRule edtRule = new EdtRule();
-  @Rule public final TestName myNameRule = new TestName();
-
   @Parameterized.Parameter
   public String myJUnitVersion;
 
@@ -74,16 +64,8 @@ public class TestDiscoveryJUnitIntegrationTest extends AbstractTestFrameworkComp
   }
 
   @Before
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  public void before() {
     Registry.get(TestDiscoveryExtension.TEST_DISCOVERY_REGISTRY_KEY).setValue(true, myProject);
-  }
-
-  @After
-  @Override
-  public void tearDown() throws Exception {
-    super.tearDown();
   }
 
   @Test
@@ -169,15 +151,8 @@ public class TestDiscoveryJUnitIntegrationTest extends AbstractTestFrameworkComp
   }
 
   @Override
-  public String getName() {
-    return myNameRule.getMethodName();
-  }
-
-  @Override
   protected String getTestContentRoot() {
-    String methodName = myNameRule.getMethodName();
-    methodName = methodName.substring(0, methodName.indexOf("["));
-    methodName = StringUtil.decapitalize(StringUtil.trimStart(methodName, "test"));
-    return VfsUtilCore.pathToUrl(PlatformTestUtil.getCommunityPath() + "/plugins/junit5_rt_tests/testData/integration/testDiscovery/" + methodName);
+    return VfsUtilCore.pathToUrl(PlatformTestUtil.getCommunityPath() + "/plugins/junit5_rt_tests/testData/integration/testDiscovery/" +
+                                 getTestName(true));
   }
 }

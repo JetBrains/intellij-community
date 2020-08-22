@@ -12,6 +12,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.TextBrowseFolderListener;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -90,7 +91,7 @@ public class StartBrowserPanel {
     return url;
   }
 
-  public void setUrl(@Nullable String url) {
+  public void setUrl(@NlsSafe @Nullable String url) {
     myUrlField.setText(url);
   }
 

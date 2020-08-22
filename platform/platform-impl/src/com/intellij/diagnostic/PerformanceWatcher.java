@@ -2,8 +2,13 @@
 package com.intellij.diagnostic;
 
 import com.intellij.application.options.RegistryManager;
+import com.intellij.execution.process.OSProcessUtil;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.notification.NotificationDisplayType;
+import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -12,6 +17,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -23,16 +29,12 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.management.ListenerNotFoundException;
-import javax.management.Notification;
-import javax.management.NotificationEmitter;
-import javax.management.NotificationListener;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
-import java.lang.management.ManagementFactory;
-import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.ThreadInfo;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -43,9 +45,9 @@ import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 public final class PerformanceWatcher implements Disposable {
   private static final Logger LOG = Logger.getInstance(PerformanceWatcher.class);
@@ -53,8 +55,16 @@ public final class PerformanceWatcher implements Disposable {
   private static final String THREAD_DUMPS_PREFIX = "threadDumps-";
   static final String DUMP_PREFIX = "threadDump-";
   private static final String DURATION_FILE_NAME = ".duration";
+  private static final String PID_FILE_NAME = ".pid";
+  private static final NotificationGroup NOTIFICATION_GROUP =
+    new NotificationGroup("PerformanceWatcher", NotificationDisplayType.STICKY_BALLOON);
   private ScheduledFuture<?> myThread;
   private final File myLogDir = new File(PathManager.getLogPath());
+
+  private Method myIsCompilationEnabledMethod;
+  private Method myIsCompilationStoppedForeverMethod;
+  @NotNull
+  private CompilerState myCompilationStateLastValue = CompilerState.STATE_UNKNOWN;
 
   private volatile ApdexData mySwingApdex = ApdexData.EMPTY;
   private volatile ApdexData myGeneralApdex = ApdexData.EMPTY;
@@ -68,6 +78,7 @@ public final class PerformanceWatcher implements Disposable {
   private FreezeCheckerTask myCurrentEDTEventChecker;
 
   private static final boolean SHOULD_WATCH = shouldWatch();
+  private final AtomicBoolean myJitProblemReported = new AtomicBoolean();
 
   public static @NotNull PerformanceWatcher getInstance() {
     LoadingState.CONFIGURATION_STORE_INITIALIZED.checkOccurred();
@@ -78,11 +89,11 @@ public final class PerformanceWatcher implements Disposable {
     if (!shouldWatch()) return;
 
     AppScheduledExecutorService service = (AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService();
-    service.setNewThreadListener(new Consumer<Thread>() {
+    service.setNewThreadListener(new BiConsumer<Thread, Runnable>() {
       private final int ourReasonableThreadPoolSize = RegistryManager.getInstance().intValue("core.pooled.threads");
 
       @Override
-      public void accept(Thread thread) {
+      public void accept(Thread thread, Runnable runnable) {
         if (service.getBackendPoolExecutorSize() > ourReasonableThreadPoolSize
             && ApplicationInfoImpl.getShadowInstance().isEAP()) {
           File file = dumpThreads("newPooledThread/", true);
@@ -91,11 +102,21 @@ public final class PerformanceWatcher implements Disposable {
       }
     });
 
-    for (MemoryPoolMXBean bean : ManagementFactory.getMemoryPoolMXBeans()) {
-      if ("Code Cache".equals(bean.getName())) {
-        watchCodeCache(bean);
-        break;
-      }
+    // jit compilation check preparations
+    try {
+      Class<?> clazz = Class.forName("com.jetbrains.management.JitState");
+
+      myIsCompilationEnabledMethod = clazz.getMethod("isCompilationEnabled");
+      myIsCompilationEnabledMethod.setAccessible(true);
+
+      myIsCompilationStoppedForeverMethod = clazz.getMethod("isCompilationStoppedForever");
+      myIsCompilationStoppedForeverMethod.setAccessible(true);
+
+      myCompilationStateLastValue = getJitCompilerState();
+      LOG.info("JIT compilation state checking enabled");
+    }
+    catch (NoSuchMethodException | ClassNotFoundException e) {
+      LOG.debug("Could not enable JIT compilation state checking", e);
     }
 
     reportCrashesIfAny();
@@ -105,31 +126,65 @@ public final class PerformanceWatcher implements Disposable {
       myExecutor.scheduleWithFixedDelay(this::samplePerformance, getSamplingInterval(), getSamplingInterval(), TimeUnit.MILLISECONDS);
   }
 
+
+  private enum CompilerState {
+    STATE_UNKNOWN,
+    DISABLED,
+    ENABLED,
+    STOPPED_FOREVER
+  }
+  private CompilerState getJitCompilerState() {
+    if (myIsCompilationEnabledMethod != null && myIsCompilationStoppedForeverMethod != null) {
+      try {
+        boolean compilationStateCurrentValue = (Boolean)myIsCompilationEnabledMethod.invoke(null);
+
+        if ((Boolean)myIsCompilationStoppedForeverMethod.invoke(null)) {
+          return CompilerState.STOPPED_FOREVER;
+        }
+        if (compilationStateCurrentValue) {
+          return CompilerState.ENABLED;
+        }
+        return CompilerState.DISABLED;
+      }
+      catch (IllegalAccessException | InvocationTargetException | IllegalStateException e) {
+        LOG.error("Could not perform compilation state check, disabling", e);
+        myIsCompilationEnabledMethod = null;
+        myIsCompilationStoppedForeverMethod = null;
+      }
+    }
+    return CompilerState.STATE_UNKNOWN;
+  }
+
   private static void reportCrashesIfAny() {
+    File systemDir = new File(PathManager.getSystemPath());
     try {
-      File systemDir = new File(PathManager.getSystemPath());
       File appInfoFile = new File(systemDir, IdeaFreezeReporter.APPINFO_FILE_NAME);
-      if (appInfoFile.isFile()) {
+      File pidFile = new File(systemDir, PID_FILE_NAME);
+      if (appInfoFile.isFile() && pidFile.isFile()) {
+        String pid = FileUtil.loadFile(pidFile);
         File[] crashFiles = new File(SystemProperties.getUserHome())
-          .listFiles(file -> file.getName().startsWith("java_error_in") && !file.getName().endsWith("hprof") && file.isFile());
-        for (File file : crashFiles) {
-          if (file.lastModified() > appInfoFile.lastModified()) {
-            if (file.length() > 5 * FileUtilRt.MEGABYTE) {
-              LOG.info("Crash file " + file + " is too big to report");
+          .listFiles(file -> file.getName().startsWith("java_error_in") && file.getName().endsWith(pid + ".log") && file.isFile());
+        if (crashFiles != null) {
+          for (File file : crashFiles) {
+            if (file.lastModified() > appInfoFile.lastModified()) {
+              if (file.length() > 5 * FileUtilRt.MEGABYTE) {
+                LOG.info("Crash file " + file + " is too big to report");
+                break;
+              }
+              String content = FileUtil.loadFile(file);
+              Attachment attachment = new Attachment("crash.txt", content);
+              attachment.setIncluded(true);
+              String message = StringUtil.substringBefore(content, "---------------  P R O C E S S  ---------------");
+              IdeaLoggingEvent event = LogMessage.createEvent(new JBRCrash(), message, attachment);
+              IdeaFreezeReporter.setAppInfo(event, FileUtil.loadFile(appInfoFile));
+              IdeaFreezeReporter.report(event);
               break;
             }
-            String content = FileUtil.loadFile(file);
-            Attachment attachment = new Attachment("crash.txt", content);
-            attachment.setIncluded(true);
-            String message = StringUtil.substringBefore(content, "---------------  P R O C E S S  ---------------");
-            IdeaLoggingEvent event = LogMessage.createEvent(new JBRCrash(), message, attachment);
-            IdeaFreezeReporter.setAppInfo(event, FileUtil.loadFile(appInfoFile));
-            IdeaFreezeReporter.report(event);
-            break;
           }
         }
       }
       IdeaFreezeReporter.saveAppInfo(systemDir, true);
+      FileUtil.writeToFile(new File(systemDir, PID_FILE_NAME), OSProcessUtil.getApplicationPid());
     }
     catch (IOException e) {
       LOG.info(e);
@@ -144,30 +199,7 @@ public final class PerformanceWatcher implements Disposable {
     return RegistryManager.getInstance().intValue("performance.watcher.unresponsive.max.attempts.before.log");
   }
 
-  private void watchCodeCache(final MemoryPoolMXBean bean) {
-    final long threshold = bean.getUsage().getMax() - 5 * 1024 * 1024;
-    if (!bean.isUsageThresholdSupported() || threshold <= 0) return;
-
-    bean.setUsageThreshold(threshold);
-    final NotificationEmitter emitter = (NotificationEmitter)ManagementFactory.getMemoryMXBean();
-    emitter.addNotificationListener(new NotificationListener() {
-      @Override
-      public void handleNotification(Notification n, Object hb) {
-        if (bean.getUsage().getUsed() > threshold) {
-          LOG.info("Code Cache is almost full");
-          dumpThreads("codeCacheFull", true);
-          try {
-            emitter.removeNotificationListener(this);
-          }
-          catch (ListenerNotFoundException e) {
-            LOG.error(e);
-          }
-        }
-      }
-    }, null, null);
-  }
-
-  public void processUnfinishedFreeze(@NotNull BiConsumer<File, Integer> consumer) {
+  public void processUnfinishedFreeze(@NotNull BiConsumer<? super File, ? super Integer> consumer) {
     File[] files = myLogDir.listFiles();
     if (files != null) {
       Arrays.stream(files)
@@ -215,7 +247,8 @@ public final class PerformanceWatcher implements Disposable {
   }
 
   private static boolean shouldWatch() {
-    return !ApplicationManager.getApplication().isHeadlessEnvironment() &&
+    Application application = ApplicationManager.getApplication();
+    return application != null && !application.isHeadlessEnvironment() &&
            getUnresponsiveInterval() != 0 &&
            getMaxAttempts() != 0;
   }
@@ -228,20 +261,52 @@ public final class PerformanceWatcher implements Disposable {
     // an unexpected delay of 3 seconds is considered as several delays: of 3, 2 and 1 seconds, because otherwise
     // this background thread would be sampled 3 times.
     while (diffMs >= 0) {
+      //noinspection NonAtomicOperationOnVolatileField
       myGeneralApdex = myGeneralApdex.withEvent(TOLERABLE_LATENCY, diffMs);
       diffMs -= getSamplingInterval();
     }
 
-    //noinspection SSBasedInspection
+    // jit compilation check
+    CompilerState compilationStateCurrentValue = getJitCompilerState();
+    if (compilationStateCurrentValue != myCompilationStateLastValue) {
+      myCompilationStateLastValue = compilationStateCurrentValue;
+      switch (myCompilationStateLastValue) {
+        case STATE_UNKNOWN:
+          break;
+        case DISABLED:
+          notifyJitDisabled();
+          LOG.warn("The JIT compiler was temporary disabled.");
+          break;
+        case ENABLED:
+          LOG.warn("The JIT compiler was enabled.");
+          break;
+        case STOPPED_FOREVER:
+          notifyJitDisabled();
+          LOG.warn("The JIT compiler was stopped forever. This will affect IDE performance.");
+          break;
+      }
+    }
+
     SwingUtilities.invokeLater(() -> {
       long latencyMs = TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - current);
+      //noinspection NonAtomicOperationOnVolatileField
       mySwingApdex = mySwingApdex.withEvent(TOLERABLE_LATENCY, latencyMs);
       if (ApplicationManager.getApplication().isDisposed()) return;
       getPublisher().uiResponded(latencyMs);
     });
   }
 
-  public static @NotNull String printStacktrace(@NotNull String headerMsg, @NotNull Thread thread, StackTraceElement @NotNull [] stackTrace) {
+  private void notifyJitDisabled() {
+    if (myJitProblemReported.compareAndSet(false, true)) {
+      NOTIFICATION_GROUP.createNotification(
+        IdeBundle.message("notification.content.jit.compiler.disabled"),
+        MessageType.ERROR).notify(null);
+    }
+  }
+
+  public static @NotNull String printStacktrace(@NotNull String headerMsg,
+                                                @NotNull Thread thread,
+                                                StackTraceElement @NotNull [] stackTrace) {
     @SuppressWarnings("NonConstantStringShouldBeStringBuffer")
     StringBuilder trace = new StringBuilder(
       headerMsg + thread + " (" + (thread.isAlive() ? "alive" : "dead") + ") " + thread.getState() + "\n--- its stacktrace:\n");
@@ -316,7 +381,10 @@ public final class PerformanceWatcher implements Disposable {
     return dumpThreads(pathPrefix, millis, ThreadDumper.getThreadInfos(), null);
   }
 
-  private @Nullable File dumpThreads(@NotNull String pathPrefix, boolean millis, ThreadInfo[] threadInfos, @Nullable FreezeCheckerTask task) {
+  private @Nullable File dumpThreads(@NotNull String pathPrefix,
+                                     boolean millis,
+                                     ThreadInfo[] threadInfos,
+                                     @Nullable FreezeCheckerTask task) {
     if (!shouldWatch()) return null;
 
     if (!pathPrefix.contains("/")) {
@@ -353,26 +421,48 @@ public final class PerformanceWatcher implements Disposable {
     return file;
   }
 
-  private static void checkMemoryUsage(File file) {
+  private void checkMemoryUsage(File file) {
     Runtime rt = Runtime.getRuntime();
     long maxMemory = rt.maxMemory();
     long usedMemory = rt.totalMemory() - rt.freeMemory();
     long freeMemory = maxMemory - usedMemory;
+
+    String diagnosticInfo = "";
+
     if (freeMemory < maxMemory / 5) {
-      LOG.info("High memory usage (free " + freeMemory / 1024 / 1024 +
-               " of " + maxMemory / 1024 / 1024 +
-               " MB) while dumping threads to " + file);
+      diagnosticInfo = "High memory usage (free " + (freeMemory / 1024 / 1024) + " of " + (maxMemory / 1024 / 1024) + " MB)";
+    }
+
+    String jitProblem = getJitProblem();
+    if (jitProblem != null) {
+      if (!diagnosticInfo.isEmpty()) {
+        diagnosticInfo += ", ";
+      }
+      diagnosticInfo += jitProblem;
+    }
+
+    if (!diagnosticInfo.isEmpty()) {
+      LOG.info(diagnosticInfo + " while dumping threads to " + file);
     }
   }
 
+  @Nullable
+  String getJitProblem() {
+    if (myCompilationStateLastValue == CompilerState.DISABLED || myCompilationStateLastValue == CompilerState.STOPPED_FOREVER) {
+      return "JIT compiler " + myCompilationStateLastValue;
+    }
+    return null;
+  }
+
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  public static void dumpThreadsToConsole(String message) {
+  public static void dumpThreadsToConsole(@NonNls String message) {
     System.err.println(message);
     System.err.println(ThreadDumper.dumpThreadsToString());
   }
 
-  static List<StackTraceElement> getStacktraceCommonPart(final List<StackTraceElement> commonPart,
-                                                         final StackTraceElement[] stackTraceElements) {
+  @NotNull
+  static List<StackTraceElement> getStacktraceCommonPart(final @NotNull List<StackTraceElement> commonPart,
+                                                         final StackTraceElement @NotNull [] stackTraceElements) {
     for (int i = 0; i < commonPart.size() && i < stackTraceElements.length; i++) {
       StackTraceElement el1 = commonPart.get(commonPart.size() - i - 1);
       StackTraceElement el2 = stackTraceElements[stackTraceElements.length - i - 1];
@@ -425,7 +515,6 @@ public final class PerformanceWatcher implements Disposable {
     private final Future<?> myFuture;
     private final long myFreezeStart;
     private String myFreezeFolder;
-    private boolean myFreezeDuringStartup;
     private volatile SamplingTask myDumpTask;
 
     FreezeCheckerTask(long start, int delay) {
@@ -450,7 +539,7 @@ public final class PerformanceWatcher implements Disposable {
 
     private void edtFrozen() {
       myFreezeFolder = THREAD_DUMPS_PREFIX +
-                       (myFreezeDuringStartup ? "freeze-startup-" : "freeze-") +
+                       "freeze-" +
                        formatTime(System.currentTimeMillis()) + "-" + buildName();
       if (myState.compareAndSet(CheckerState.CHECKING, CheckerState.FREEZE)) {
         //TODO always true for some reason
@@ -480,6 +569,7 @@ public final class PerformanceWatcher implements Disposable {
         cleanup(dir);
         reportDir = new File(myLogDir, dir.getName() + getFreezePlaceSuffix() + "-" + TimeUnit.MILLISECONDS.toSeconds(durationMs) + "sec");
         if (!dir.renameTo(reportDir)) {
+          LOG.warn("Unable to create freeze folder " + reportDir);
           reportDir = dir;
         }
         String message = "UI was frozen for " + durationMs + "ms, details saved to " + reportDir;
@@ -519,7 +609,10 @@ public final class PerformanceWatcher implements Disposable {
 
       if (!ContainerUtil.isEmpty(stacktraceCommonPart)) {
         StackTraceElement element = stacktraceCommonPart.get(0);
-        return "-" + StringUtil.getShortName(element.getClassName()) + "." + element.getMethodName();
+        return "-" +
+               FileUtil.sanitizeFileName(StringUtil.getShortName(element.getClassName())) +
+               "." +
+               FileUtil.sanitizeFileName(element.getMethodName());
       }
       return "";
     }

@@ -1103,6 +1103,30 @@ public class PsiTreeUtil {
     return nextLeaf;
   }
 
+  /**
+   * @return closest leaf (not necessarily a sibling) before the given element
+   * which has non-empty range and is neither a whitespace nor a comment
+   */
+  public static @Nullable PsiElement prevCodeLeaf(@NotNull PsiElement element) {
+    PsiElement prevLeaf = prevLeaf(element, true);
+    while (prevLeaf != null && isNonCodeLeaf(prevLeaf)) prevLeaf = prevLeaf(prevLeaf, true);
+    return prevLeaf;
+  }
+
+  /**
+   * @return closest leaf (not necessarily a sibling) after the given element
+   * which has non-empty range and is neither a whitespace nor a comment
+   */
+  public static @Nullable PsiElement nextCodeLeaf(@NotNull PsiElement element) {
+    PsiElement nextLeaf = nextLeaf(element, true);
+    while (nextLeaf != null && isNonCodeLeaf(nextLeaf)) nextLeaf = nextLeaf(nextLeaf, true);
+    return nextLeaf;
+  }
+
+  private static boolean isNonCodeLeaf(PsiElement leaf) {
+    return StringUtil.isEmptyOrSpaces(leaf.getText()) || getNonStrictParentOfType(leaf, PsiComment.class) != null;
+  }
+
   public static @Nullable PsiElement nextLeaf(@NotNull PsiElement element, final boolean skipEmptyElements) {
     PsiElement nextLeaf = nextLeaf(element);
     while (skipEmptyElements && nextLeaf != null && nextLeaf.getTextLength() == 0) nextLeaf = nextLeaf(nextLeaf);

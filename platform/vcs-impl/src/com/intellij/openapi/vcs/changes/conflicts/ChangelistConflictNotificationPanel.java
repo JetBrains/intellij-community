@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.conflicts;
 
 import com.intellij.icons.AllIcons;
@@ -18,7 +18,7 @@ import java.util.Collections;
 /**
 * @author Dmitry Avdeev
 */
-public class ChangelistConflictNotificationPanel extends EditorNotificationPanel {
+public final class ChangelistConflictNotificationPanel extends EditorNotificationPanel {
 
   private final ChangeList myChangeList;
   private final VirtualFile myFile;
@@ -39,9 +39,9 @@ public class ChangelistConflictNotificationPanel extends EditorNotificationPanel
     myFile = file;
     final ChangeListManager manager = tracker.getChangeListManager();
     myChangeList = changeList;
-    myLabel.setText("File from non-active changelist is modified");
+    myLabel.setText(VcsBundle.message("changes.file.from.non.active.changelist.is.modified"));
     createActionLabel(VcsBundle.message("link.label.move.changes"), () -> ChangelistConflictResolution.MOVE.resolveConflict(myTracker.getProject(), myChangeList.getChanges(), myFile)).
-      setToolTipText("Move changes to active changelist (" + manager.getDefaultChangeList().getName() + ")");
+      setToolTipText(VcsBundle.message("changes.move.changes.to.active.change.list.name", manager.getDefaultChangeList().getName()));
 
     createActionLabel(VcsBundle.message("link.label.switch.changelist"), () -> {
       Change change = myTracker.getChangeListManager().getChange(myFile);
@@ -51,9 +51,10 @@ public class ChangelistConflictNotificationPanel extends EditorNotificationPanel
       else {
         ChangelistConflictResolution.SWITCH.resolveConflict(myTracker.getProject(), Collections.singletonList(change), null);
       }
-    }).setToolTipText("Set active changelist to '" + myChangeList.getName() + "'");
+    }).setToolTipText(VcsBundle.message("changes.set.active.changelist.to.change.list.name", myChangeList.getName()));
 
-    createActionLabel(VcsBundle.message("link.label.ignore"), () -> myTracker.ignoreConflict(myFile, true)).setToolTipText("Hide this notification");
+    createActionLabel(VcsBundle.message("link.label.ignore"), () -> myTracker.ignoreConflict(myFile, true)).setToolTipText(
+      VcsBundle.message("changes.hide.this.notification"));
 
     myLinksPanel.add(new InplaceButton(VcsBundle.message("tooltip.show.options.dialog"), AllIcons.General.Settings, new ActionListener() {
       @Override

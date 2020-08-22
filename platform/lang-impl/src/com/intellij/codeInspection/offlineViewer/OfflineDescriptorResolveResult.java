@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.offlineViewer;
 
 import com.intellij.codeInsight.daemon.impl.CollectHighlightsUtil;
@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
 /**
  * @author Dmitry Batkovich
  */
-public class OfflineDescriptorResolveResult {
+public final class OfflineDescriptorResolveResult {
   private static final Logger LOG = Logger.getInstance(OfflineDescriptorResolveResult.class);
   private final RefEntity myResolvedEntity;
   private final CommonProblemDescriptor myResolvedDescriptor;
@@ -234,7 +234,7 @@ public class OfflineDescriptorResolveResult {
   private static CommonProblemDescriptor createRerunGlobalToolDescriptor(@NotNull GlobalInspectionToolWrapper wrapper,
                                                                          @Nullable RefEntity entity,
                                                                          OfflineProblemDescriptor offlineDescriptor) {
-    
+
 
     QuickFix rerunFix = new QuickFix() {
       @Nls
@@ -271,7 +271,7 @@ public class OfflineDescriptorResolveResult {
     return new CommonProblemDescriptorImpl(new QuickFix[]{rerunFix}, offlineDescriptor.getDescription());
   }
 
-  private static class ProblemDescriptorBackedByRefElement implements ProblemDescriptor {
+  private static final class ProblemDescriptorBackedByRefElement implements ProblemDescriptor {
     private final RefElement myElement;
     private final OfflineProblemDescriptor myOfflineProblemDescriptor;
     private final QuickFix[] myFixes;

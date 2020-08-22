@@ -34,7 +34,7 @@ import java.util.*;
 /**
  * author: lesya
  */
-public class TagsHelper {
+public final class TagsHelper {
   private static final Logger LOG = Logger.getInstance(TagsHelper.class);
 
   private TagsHelper() {

@@ -14,16 +14,17 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryProperties
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.TraceableDisposable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.EventDispatcher
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
-import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.FilePointerProviderImpl
+import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.FilePointerProvider
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.findLibraryEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleLibraryTableBridge
-import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.CachedValue
+import com.intellij.workspaceModel.storage.VersionedEntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
 
@@ -40,17 +41,12 @@ internal class LibraryBridgeImpl(
   val project: Project,
   initialId: LibraryId,
   initialEntityStorage: VersionedEntityStorage,
-  parent: Disposable,
   private var targetBuilder: WorkspaceEntityStorageDiffBuilder?
 ) : LibraryBridge, RootProvider, TraceableDisposable(true) {
 
-  init {
-    Disposer.register(parent, this)
-  }
-
   override fun getModule(): Module? = (libraryTable as? ModuleLibraryTableBridge)?.module
 
-  val filePointerProvider = FilePointerProviderImpl(project).also { Disposer.register(this, it) }
+  val filePointerProvider: FilePointerProvider = FilePointerProvider.getInstance(project)
 
   var entityStorage: VersionedEntityStorage = initialEntityStorage
     internal set(value) {
@@ -66,24 +62,25 @@ internal class LibraryBridgeImpl(
   var modifiableModelFactory: ((LibraryStateSnapshot, WorkspaceEntityStorageBuilder) -> LibraryModifiableModelBridgeImpl)? = null
 
   internal fun cleanCachedValue() {
-    entityStorage.clearCachedValue(librarySnapshotCached, entityId)
+    entityStorage.clearCachedValue(librarySnapshotCached)
   }
 
   private val dispatcher = EventDispatcher.create(RootSetChangedListener::class.java)
 
-  private val librarySnapshotCached: CachedValueWithParameter<LibraryId, LibraryStateSnapshot> = CachedValueWithParameter { storage, id: LibraryId ->
+  private val librarySnapshotCached = CachedValue { storage ->
     LibraryStateSnapshot(
-      libraryEntity = storage.resolve(id) ?: FakeLibraryEntity(id.name),
+      libraryEntity = storage.findLibraryEntity(this) ?: error("Cannot find entity for library with ID $entityId"),
       filePointerProvider = filePointerProvider,
       storage = storage,
-      libraryTable = libraryTable
+      libraryTable = libraryTable,
+      parentDisposable = this
     )
   }
 
   internal val librarySnapshot: LibraryStateSnapshot
     get() {
       checkDisposed()
-      return entityStorage.cachedValue(librarySnapshotCached, entityId)
+      return entityStorage.cachedValue(librarySnapshotCached)
     }
 
   override val libraryId: LibraryId
@@ -95,7 +92,7 @@ internal class LibraryBridgeImpl(
     return getModifiableModel(WorkspaceEntityStorageBuilder.from(librarySnapshot.storage))
   }
   override fun getModifiableModel(builder: WorkspaceEntityStorageBuilder): LibraryEx.ModifiableModelEx {
-    return LibraryModifiableModelBridgeImpl(this, librarySnapshot, builder, targetBuilder)
+    return LibraryModifiableModelBridgeImpl(this, librarySnapshot, builder, targetBuilder, false)
   }
   override fun getSource(): Library? = null
   override fun getExternalSource(): ProjectModelExternalSource? = librarySnapshot.externalSource
@@ -110,6 +107,17 @@ internal class LibraryBridgeImpl(
   override fun isJarDirectory(url: String): Boolean = librarySnapshot.isJarDirectory(url)
   override fun isJarDirectory(url: String, rootType: OrderRootType): Boolean = librarySnapshot.isJarDirectory(url, rootType)
   override fun isValid(url: String, rootType: OrderRootType): Boolean = librarySnapshot.isValid(url, rootType)
+  override fun hasSameContent(library: Library): Boolean {
+    if (this === library) return true
+    if (library !is LibraryBridgeImpl) return false
+
+    if (name != library.name) return false
+    if (kind != library.kind) return false
+    if (properties != library.properties) return false
+    if (librarySnapshot.libraryEntity.roots != library.librarySnapshot.libraryEntity.roots) return false
+    if (!excludedRoots.contentEquals(library.excludedRoots)) return false
+    return true
+  }
 
   override fun readExternal(element: Element?) = throw NotImplementedError()
   override fun writeExternal(element: Element) = throw NotImplementedError()
@@ -132,25 +140,6 @@ internal class LibraryBridgeImpl(
     if (isDisposed) {
       throwDisposalError("library $entityId already disposed: $stackTrace")
     }
-  }
-
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (javaClass != other?.javaClass) return false
-
-    other as LibraryBridgeImpl
-    if (name != other.name) return false
-    if (kind != other.kind) return false
-    if (properties != other.properties) return false
-    if (librarySnapshot.libraryEntity.roots != other.librarySnapshot.libraryEntity.roots) return false
-    if (!excludedRoots.contentEquals(other.excludedRoots)) return false
-    return true
-  }
-
-  override fun hashCode(): Int {
-    var result = librarySnapshot.name.hashCode()
-    result = 31 * result + librarySnapshot.libraryEntity.roots.hashCode()
-    return result
   }
 
   internal fun fireRootSetChanged() {
@@ -201,31 +190,5 @@ internal class LibraryBridgeImpl(
         index++
       }
     }
-  }
-
-  class FakeLibraryEntity(name: String) : LibraryEntity(LibraryTableId.ProjectLibraryTableId, name, emptyList(), emptyList()) {
-    override var entitySource: EntitySource
-      get() = throw NotImplementedError()
-      set(value) {
-        throw NotImplementedError()
-      }
-
-    override fun <R : WorkspaceEntity> referrers(entityClass: Class<R>, propertyName: String): Sequence<R> = emptySequence()
-    override val tableId: LibraryTableId
-      get() = throw NotImplementedError()
-
-    override fun hasEqualProperties(e: WorkspaceEntity): Boolean {
-      return e is LibraryEntity && e.name == name && e.roots.isEmpty() && e.excludedRoots.isEmpty()
-    }
-
-    override fun toString(): String = "FakeLibraryEntity($name)"
-
-    override fun equals(other: Any?): Boolean {
-      if (other !is FakeLibraryEntity) return false
-
-      return this.name == other.name
-    }
-
-    override fun hashCode(): Int = name.hashCode()
   }
 }

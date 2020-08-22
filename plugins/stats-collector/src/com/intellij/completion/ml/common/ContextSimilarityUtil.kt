@@ -10,13 +10,14 @@ import com.intellij.util.text.NameUtilCore
 import kotlin.math.max
 
 internal object ContextSimilarityUtil {
+  private val STOP_WORDS: List<String> = listOf("get", "set")
   val LINE_SIMILARITY_SCORER_KEY: Key<ContextSimilarityScoringFunction> = Key.create("LINE_SIMILARITY_SCORER")
   val PARENT_SIMILARITY_SCORER_KEY: Key<ContextSimilarityScoringFunction> = Key.create("PARENT_SIMILARITY_SCORER")
 
   fun createLineSimilarityScoringFunction(line: String): ContextSimilarityScoringFunction {
     return ContextSimilarityScoringFunction(
       StringUtil.getWordsIn(line).map {
-        NameUtilCore.nameToWords(it).toList()
+        clearWords(NameUtilCore.nameToWords(it))
       }
     )
   }
@@ -33,7 +34,7 @@ internal object ContextSimilarityUtil {
     }
     return ContextSimilarityScoringFunction(
       parents.map {
-        NameUtilCore.nameToWords(it).toList()
+        clearWords(NameUtilCore.nameToWords(it))
       }
     )
   }
@@ -65,7 +66,7 @@ internal object ContextSimilarityUtil {
 
   fun calculateSimilarity(tokens: List<List<String>>, lookupString: String): Similarity {
     val result = Similarity()
-    val lookupWords = NameUtilCore.nameToWords(lookupString)
+    val lookupWords = clearWords(NameUtilCore.nameToWords(lookupString))
     if (lookupWords.isEmpty()) return result
     for (tokenWords in tokens) {
       var tokenSimilarity = 0.0
@@ -83,4 +84,7 @@ internal object ContextSimilarityUtil {
     }
     return result
   }
+
+  private fun clearWords(words: Array<String>): List<String> =
+    words.filter { it.length > 2 && it !in STOP_WORDS }
 }

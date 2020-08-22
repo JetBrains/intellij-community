@@ -402,7 +402,8 @@ public final class SvnVcs extends AbstractVcs {
   }
 
   @Override
-  public VcsHistoryProvider getVcsHistoryProvider() {
+  @NotNull
+  public SvnHistoryProvider getVcsHistoryProvider() {
     // no heavy state, but it would be useful to have place to keep state in -> do not reuse instance
     return new SvnHistoryProvider(this);
   }
@@ -708,7 +709,7 @@ public final class SvnVcs extends AbstractVcs {
                       .toList();
   }
 
-  private static class MyPair<T> implements RootUrlPair {
+  private static final class MyPair<T> implements RootUrlPair {
     @NotNull private final VirtualFile myFile;
     @NotNull private final Url myUrl;
     private final T mySrc;
@@ -736,7 +737,7 @@ public final class SvnVcs extends AbstractVcs {
     }
   }
 
-  private static class MyFrameStateListener implements FrameStateListener {
+  private static final class MyFrameStateListener implements FrameStateListener {
     private final ChangeListManager myClManager;
     private final VcsDirtyScopeManager myDirtyScopeManager;
 

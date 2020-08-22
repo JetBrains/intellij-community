@@ -40,7 +40,8 @@ public class TestDialogBuilder implements CreateFileFromTemplateDialog.Builder {
   }
 
   @Override
-  public CreateFileFromTemplateDialog.Builder addKind(@Nls @NotNull String kind, @Nullable Icon icon, @NotNull String templateName) {
+  public CreateFileFromTemplateDialog.Builder addKind(@Nls @NotNull String kind, @Nullable Icon icon, @NotNull String templateName,
+                                                      @Nullable InputValidator extraValidator) {
     return this;
   }
 

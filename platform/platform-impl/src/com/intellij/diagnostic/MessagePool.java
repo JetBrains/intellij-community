@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.openapi.diagnostic.Attachment;
@@ -16,7 +16,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
-public class MessagePool {
+public final class MessagePool {
   public enum State { NoErrors, ReadErrors, UnreadErrors }
 
   private static final int MAX_POOL_SIZE = 100;
@@ -153,7 +153,7 @@ public class MessagePool {
     }
   }
 
-  public static class TooManyErrorsException extends Exception {
+  public static final class TooManyErrorsException extends Exception {
     private TooManyErrorsException() {
       super(DiagnosticBundle.message("error.monitor.too.many.errors"));
     }

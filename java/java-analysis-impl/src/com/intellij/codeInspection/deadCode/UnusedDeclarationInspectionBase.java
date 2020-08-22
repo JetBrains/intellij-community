@@ -353,7 +353,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     return findUnusedDeclarationInspection(method).isEntryPoint(method);
   }
 
-  private static class StrictUnreferencedFilter extends UnreferencedFilter {
+  private static final class StrictUnreferencedFilter extends UnreferencedFilter {
     private StrictUnreferencedFilter(@NotNull UnusedDeclarationInspectionBase tool, @NotNull GlobalInspectionContext context) {
       super(tool, context);
     }
@@ -506,7 +506,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
   }
 
   @Override
-  public JobDescriptor @Nullable [] getAdditionalJobs(GlobalInspectionContext context) {
+  public JobDescriptor @Nullable [] getAdditionalJobs(@NotNull GlobalInspectionContext context) {
     return new JobDescriptor[]{context.getStdJobDescriptors().BUILD_GRAPH, context.getStdJobDescriptors().FIND_EXTERNAL_USAGES};
   }
 

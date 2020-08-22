@@ -361,7 +361,7 @@ public abstract class ResourceInspection extends BaseInspection {
     return visitor.isEscaped();
   }
 
-  private class CloseVisitor extends JavaRecursiveElementWalkingVisitor {
+  private final class CloseVisitor extends JavaRecursiveElementWalkingVisitor {
     private boolean containsClose;
     private final PsiVariable resource;
     private final String resourceName;

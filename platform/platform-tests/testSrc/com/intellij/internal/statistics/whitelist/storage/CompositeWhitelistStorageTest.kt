@@ -2,7 +2,7 @@
 package com.intellij.internal.statistics.whitelist.storage
 
 import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator
-import com.intellij.internal.statistic.eventLog.validator.rules.beans.WhiteListGroupRules
+import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules
 import com.intellij.internal.statistic.eventLog.whitelist.InMemoryWhitelistStorage
 import com.intellij.internal.statistic.eventLog.whitelist.LocalWhitelistGroup
 import com.intellij.internal.statistic.eventLog.whitelist.WhitelistTestGroupStorage
@@ -28,7 +28,7 @@ internal class CompositeWhitelistStorageTest : WhitelistBaseStorageTest() {
         "      }\n" +
         "    }"
       ))
-    InMemoryWhitelistStorage.eventsValidators[groupId] = WhiteListGroupRules.EMPTY
+    InMemoryWhitelistStorage.eventsValidators[groupId] = EventGroupRules.EMPTY
 
     val groupRules = storage.getGroupRules(groupId)
     assertThat(groupRules).isNotNull
@@ -37,7 +37,7 @@ internal class CompositeWhitelistStorageTest : WhitelistBaseStorageTest() {
 
   fun testGetGroupRules() {
     val mergedStorage = SensitiveDataValidator.getInstance(recorderId).whiteListStorage
-    InMemoryWhitelistStorage.eventsValidators[groupId] = WhiteListGroupRules.EMPTY
+    InMemoryWhitelistStorage.eventsValidators[groupId] = EventGroupRules.EMPTY
 
     val groupRules = mergedStorage.getGroupRules(groupId)
     assertThat(groupRules).isNotNull

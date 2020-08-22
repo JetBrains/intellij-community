@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -134,13 +135,13 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
       suitableVariables.toArray(new PsiVariable[0])).show();
   }
 
-  private static void showErrorHint(Project project, DataContext dataContext, String message) {
+  private static void showErrorHint(Project project, DataContext dataContext, @NlsContexts.DialogMessage String message) {
     Editor editor = dataContext == null ? null : CommonDataKeys.EDITOR.getData(dataContext);
     CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.getCannotRefactorMessage(message), getRefactoringName(), HelpID.MOVE_INSTANCE_METHOD);
   }
 
   @Nullable
-  private static String collectSuitableVariables(final PsiMethod method, final List<? super PsiVariable> suitableVariables) {
+  private static @NlsContexts.DialogMessage String collectSuitableVariables(final PsiMethod method, final List<? super PsiVariable> suitableVariables) {
     final List<PsiVariable> allVariables = new ArrayList<>();
     ContainerUtil.addAll(allVariables, method.getParameterList().getParameters());
     ContainerUtil.addAll(allVariables, method.getContainingClass().getFields());
@@ -207,7 +208,7 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
     return PsiTypesUtil.mentionsTypeParameters(method.getReturnType(), typeParameters);
   }
 
-  static String getRefactoringName() {
+  static @NlsContexts.DialogTitle String getRefactoringName() {
     return RefactoringBundle.message("move.instance.method.title");
   }
 }

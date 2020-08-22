@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Set;
 import java.util.TreeSet;
 
-class GrowlNotifications implements SystemNotificationsImpl.Notifier {
+final class GrowlNotifications implements SystemNotificationsImpl.Notifier {
   private static final Logger LOG = Logger.getInstance(GrowlNotifications.class);
 
   private static GrowlNotifications ourNotifications;

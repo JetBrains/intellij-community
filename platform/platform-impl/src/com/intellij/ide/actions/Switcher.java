@@ -30,10 +30,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Iconable;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -61,6 +58,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -91,7 +89,7 @@ public final class Switcher extends AnAction implements DumbAware {
   public static final Key<SwitcherPanel> SWITCHER_KEY = Key.create("SWITCHER_KEY");
   private static volatile SwitcherPanel SWITCHER = null;
   private static final Color SEPARATOR_COLOR = JBColor.namedColor("Popup.separatorColor", new JBColor(Gray.xC0, Gray.x4B));
-  private static final String TOGGLE_CHECK_BOX_ACTION_ID = "SwitcherRecentEditedChangedToggleCheckBox";
+  @NonNls private static final String TOGGLE_CHECK_BOX_ACTION_ID = "SwitcherRecentEditedChangedToggleCheckBox";
 
   private static final int MINIMUM_HEIGHT = JBUIScale.scale(400);
   private static final int MINIMUM_WIDTH = JBUIScale.scale(500);
@@ -231,10 +229,6 @@ public final class Switcher extends AnAction implements DumbAware {
     public void update(@NotNull AnActionEvent e) {
       Project project = e.getProject();
       e.getPresentation().setEnabledAndVisible(SWITCHER_KEY.get(project) != null);
-    }
-
-    static boolean isEnabled() {
-      return getActiveKeymapShortcuts(TOGGLE_CHECK_BOX_ACTION_ID).getShortcuts().length > 0;
     }
   }
 
@@ -498,7 +492,7 @@ public final class Switcher extends AnAction implements DumbAware {
 
       final ListSelectionListener filesSelectionListener = new ListSelectionListener() {
         @Nullable
-        private String getTitle2Text(@Nullable String fullText) {
+        private @NlsSafe String getTitle2Text(@Nullable String fullText) {
           int labelWidth = pathLabel.getWidth();
           if (fullText == null || fullText.length() == 0) return " ";
           while (pathLabel.getFontMetrics(pathLabel.getFont()).stringWidth(fullText) > labelWidth) {
@@ -552,9 +546,7 @@ public final class Switcher extends AnAction implements DumbAware {
       myClickListener.installOn(files);
       ScrollingUtil.ensureSelectionExists(files);
 
-      myShowOnlyEditedFilesCheckBox = new MyCheckBox(ToggleCheckBoxAction.isEnabled() ? TOGGLE_CHECK_BOX_ACTION_ID
-                                                                                      : actionId,
-                                                     onlyEdited);
+      myShowOnlyEditedFilesCheckBox = new MyCheckBox(TOGGLE_CHECK_BOX_ACTION_ID, onlyEdited);
       myTopPanel = createTopPanel(myShowOnlyEditedFilesCheckBox,
                                   isCheckboxMode() ? IdeBundle.message("title.popup.recent.files") : title,
                                   pinned);
@@ -691,7 +683,7 @@ public final class Switcher extends AnAction implements DumbAware {
       };
     }
 
-    static String getRecentLocationsLabel(@NotNull Supplier<Boolean> showEdited) {
+    static @Nls String getRecentLocationsLabel(@NotNull Supplier<Boolean> showEdited) {
       return showEdited.get() ? IdeBundle.message("recent.locations.changed.locations") : IdeBundle.message("recent.locations.popup.title");
     }
 
@@ -742,64 +734,58 @@ public final class Switcher extends AnAction implements DumbAware {
       return myPopup.isDisposed() ? null : myPopup.getContent().getFocusCycleRootAncestor();
     }
 
-    @NotNull
-    static List<VirtualFile> collectFiles(@NotNull Project project, boolean onlyEdited) {
-      return onlyEdited ? Arrays.asList(IdeDocumentHistory.getInstance(project).getChangedFiles())
-                        : getRecentFiles(project);
+    static @NotNull List<VirtualFile> collectFiles(@NotNull Project project, boolean onlyEdited) {
+      return onlyEdited ? IdeDocumentHistory.getInstance(project).getChangedFiles() : getRecentFiles(project);
     }
 
     @NotNull
     static List<FileInfo> getFilesToShow(@NotNull Project project, @NotNull List<VirtualFile> filesForInit,
                                          int toolWindowsCount, boolean pinned) {
-      final FileEditorManagerImpl editorManager = (FileEditorManagerImpl)FileEditorManager.getInstance(project);
-      final ArrayList<FileInfo> filesData = new ArrayList<>();
-      final ArrayList<FileInfo> editors = new ArrayList<>();
-      LinkedHashSet<VirtualFile> addedFiles = new LinkedHashSet<>();
+      FileEditorManagerImpl editorManager = (FileEditorManagerImpl)FileEditorManager.getInstance(project);
+      List<FileInfo> filesData = new ArrayList<>();
+      ArrayList<FileInfo> editors = new ArrayList<>();
+      Set<VirtualFile> addedFiles = new LinkedHashSet<>();
       if (!pinned) {
         for (Pair<VirtualFile, EditorWindow> pair : editorManager.getSelectionHistory()) {
           editors.add(new FileInfo(pair.first, pair.second, project));
         }
       }
 
-      List<VirtualFile> selectedFiles = Arrays.asList(editorManager.getSelectedFiles());
       if (!pinned) {
-        for (VirtualFile file : selectedFiles) {
-          if (addedFiles.add(file)) {
-            filesData.add(new FileInfo(file, null, project));
-          }
-        }
-
         for (FileInfo editor : editors) {
-          if (addedFiles.add(editor.first)) {
-            filesData.add(editor);
-            if (filesData.size() >= SWITCHER_ELEMENTS_LIMIT) break;
-          }
+          addedFiles.add(editor.first);
+          filesData.add(editor);
+          if (filesData.size() >= SWITCHER_ELEMENTS_LIMIT) break;
         }
       }
 
-      if (filesData.size() <= selectedFiles.size() || pinned) {
-        int maxFiles = Math.max(editors.size(), filesForInit.size());
-        int minIndex = pinned ? 0 : (filesForInit.size() - Math.min(toolWindowsCount, maxFiles));
-        for (int i = filesForInit.size() - 1; i >= minIndex; i--) {
-          if (pinned
-              && UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE
-              && selectedFiles.contains(filesForInit.get(i)) ) {
-            continue;
-          }
+      List<VirtualFile> selectedFiles = Arrays.asList(editorManager.getSelectedFiles());
+      if (filesData.size() <= 1 || pinned) {
+        if (!filesForInit.isEmpty()) {
+          int editorsFilesCount = (int) editors.stream().map(info -> info.first).distinct().count();
+          int maxFiles = Math.max(editorsFilesCount, filesForInit.size());
+          int minIndex = pinned ? 0 : (filesForInit.size() - Math.min(toolWindowsCount, maxFiles));
+          for (int i = filesForInit.size() - 1; i >= minIndex; i--) {
+            if (pinned
+                && UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE
+                && selectedFiles.contains(filesForInit.get(i))) {
+              continue;
+            }
 
-          FileInfo info = new FileInfo(filesForInit.get(i), null, project);
-          boolean add = true;
-          if (pinned) {
-            for (FileInfo fileInfo : filesData) {
-              if (fileInfo.first.equals(info.first)) {
-                add = false;
-                break;
+            FileInfo info = new FileInfo(filesForInit.get(i), null, project);
+            boolean add = true;
+            if (pinned) {
+              for (FileInfo fileInfo : filesData) {
+                if (fileInfo.first.equals(info.first)) {
+                  add = false;
+                  break;
+                }
               }
             }
-          }
-          if (add) {
-            if (addedFiles.add(info.first)) {
-              filesData.add(info);
+            if (add) {
+              if (addedFiles.add(info.first)) {
+                filesData.add(info);
+              }
             }
           }
         }
@@ -822,7 +808,7 @@ public final class Switcher extends AnAction implements DumbAware {
       if (forward) {
         for (int i = 0; i < model.getSize(); i++) {
           FileInfo fileInfo = model.getElementAt(i);
-          if (!fileInfo.first.equals(currentFile)) {
+          if (!isTheSameTab(currentWindow, currentFile, fileInfo)) {
             return i;
           }
         }
@@ -830,13 +816,17 @@ public final class Switcher extends AnAction implements DumbAware {
       else {
         for (int i = model.getSize() - 1; i >= 0; i--) {
           FileInfo fileInfo = model.getElementAt(i);
-          if (!fileInfo.first.equals(currentFile)) {
+          if (!isTheSameTab(currentWindow, currentFile, fileInfo)) {
             return i;
           }
         }
       }
 
       return -1;
+    }
+
+    private static boolean isTheSameTab(EditorWindow currentWindow, VirtualFile currentFile, FileInfo fileInfo) {
+      return fileInfo.first.equals(currentFile) && (fileInfo.second == null || fileInfo.second.equals(currentWindow));
     }
 
     @NotNull
@@ -1399,20 +1389,22 @@ public final class Switcher extends AnAction implements DumbAware {
     }
   }
 
-  private static class MyCheckBox extends JBCheckBox {
+  private static final class MyCheckBox extends JBCheckBox {
     private MyCheckBox(@NotNull String actionId, boolean selected) {
       super(layoutText(actionId), selected);
       setOpaque(false);
       setFocusable(false);
     }
 
-    private static String layoutText(@NotNull String actionId) {
+    private static @NlsContexts.Checkbox String layoutText(@NotNull String actionId) {
+      String text = "<html>" + IdeBundle.message("recent.files.checkbox.label");
       ShortcutSet shortcuts = getActiveKeymapShortcuts(actionId);
-      return "<html>"
-             + IdeBundle.message("recent.files.checkbox.label")
-             + " <font color=\"" + RecentLocationsAction.Holder.SHORTCUT_HEX_COLOR + "\">"
-             + KeymapUtil.getShortcutsText(shortcuts.getShortcuts()) + "</font>"
-             + "</html>";
+      if (shortcuts.getShortcuts().length > 0) {
+        text += " <font color=\"" + RecentLocationsAction.Holder.SHORTCUT_HEX_COLOR + "\">"
+                + KeymapUtil.getShortcutsText(shortcuts.getShortcuts()) + "</font>"
+                + "</html>";
+      }
+      return text;
     }
   }
 

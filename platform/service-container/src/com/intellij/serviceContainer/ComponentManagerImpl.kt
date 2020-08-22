@@ -5,7 +5,7 @@ import com.intellij.diagnostic.LoadingState
 import com.intellij.diagnostic.PluginException
 import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.ide.plugins.*
-import com.intellij.ide.plugins.cl.PluginClassLoader
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.idea.Main
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.Application
@@ -45,13 +45,14 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentMap
 import java.util.concurrent.Executor
 import java.util.concurrent.atomic.AtomicReference
+import java.util.function.Consumer
 
 internal val LOG = logger<ComponentManagerImpl>()
 
 abstract class ComponentManagerImpl @JvmOverloads constructor(internal val parent: ComponentManagerImpl?,
                                                               setExtensionsRootArea: Boolean = parent == null) : ComponentManager, Disposable.Parent, MessageBusOwner, UserDataHolderBase() {
   protected enum class ContainerState {
-    ACTIVE, DISPOSE_IN_PROGRESS, DISPOSED, DISPOSE_COMPLETED
+    PRE_INIT, COMPONENT_CREATED, DISPOSE_IN_PROGRESS, DISPOSED, DISPOSE_COMPLETED
   }
 
   companion object {
@@ -82,7 +83,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
   }
 
   internal val picoContainer: DefaultPicoContainer = DefaultPicoContainer(parent?.picoContainer)
-  private val containerState = AtomicReference(ContainerState.ACTIVE)
+  protected val containerState = AtomicReference(ContainerState.PRE_INIT)
 
   protected val containerStateName: String
     get() = containerState.get().name
@@ -102,9 +103,6 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
 
   @Suppress("LeakingThis")
   internal val serviceParentDisposable = Disposer.newDisposable("services of ${javaClass.name}@${System.identityHashCode(this)}")
-
-  var componentCreated = false
-    private set
 
   private val lightServices: ConcurrentMap<Class<*>, Any>? = when {
     parent == null || parent.picoContainer.parent == null -> ConcurrentHashMap()
@@ -135,6 +133,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
 
   final override fun getMessageBus(): MessageBus {
     if (containerState.get() >= ContainerState.DISPOSE_IN_PROGRESS) {
+      ProgressManager.checkCanceled()
       throw AlreadyDisposedException("Already disposed: $this")
     }
     return messageBus!!
@@ -163,7 +162,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
   )
 
   @Internal
-  open fun registerComponents(plugins: List<DescriptorToLoad>, listenerCallbacks: List<Runnable>?) {
+  open fun registerComponents(plugins: List<DescriptorToLoad>, listenerCallbacks: MutableList<in Runnable>?) {
     val activityNamePrefix = activityNamePrefix()
 
     val app = getApplication()
@@ -242,7 +241,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
   }
 
   protected fun createComponents(indicator: ProgressIndicator?) {
-    LOG.assertTrue(!componentCreated)
+    LOG.assertTrue(containerState.get() == ContainerState.PRE_INIT)
 
     if (indicator != null) {
       indicator.isIndeterminate = false
@@ -261,7 +260,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
 
     activity?.end()
 
-    componentCreated = true
+    LOG.assertTrue(containerState.compareAndSet(ContainerState.PRE_INIT, ContainerState.COMPONENT_CREATED))
   }
 
   @TestOnly
@@ -526,7 +525,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
 
   protected open fun logMessageBusDelivery(topic: Topic<*>, messageName: String?, handler: Any, duration: Long) {
     val loader = handler.javaClass.classLoader
-    val pluginId = if (loader is PluginClassLoader) loader.pluginId.idString else PluginManagerCore.CORE_ID.idString
+    val pluginId = if (loader is PluginAwareClassLoader) loader.pluginId.idString else PluginManagerCore.CORE_ID.idString
     StartUpMeasurer.addPluginCost(pluginId, "MessageBus", duration)
   }
 
@@ -597,7 +596,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
       Disposer.register(serviceParentDisposable, result)
     }
 
-    val pluginId = (serviceClass.classLoader as? PluginClassLoader)?.pluginId
+    val pluginId = (serviceClass.classLoader as? PluginAwareClassLoader)?.pluginId
     initializeComponent(result, null, pluginId)
     StartUpMeasurer.addCompletedActivity(startTime, serviceClass, getServiceActivityCategory(this), pluginId?.idString)
     return result
@@ -755,7 +754,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
       val iterator = lightServices.iterator()
       while (iterator.hasNext()) {
         val entry = iterator.next()
-        if ((entry.key.classLoader as? PluginClassLoader)?.pluginId == pluginId) {
+        if ((entry.key.classLoader as? PluginAwareClassLoader)?.pluginId == pluginId) {
           val instance = entry.value
           if (instance is Disposable) {
             Disposer.dispose(instance)
@@ -818,6 +817,8 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
             try {
               adapter.getInstance<Any>(this, null)
             }
+            catch (ignore: AlreadyDisposedException) {
+            }
             catch (e: StartupAbortedException) {
               isServicePreloadingCancelled = true
               throw e
@@ -841,7 +842,8 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
 
     ApplicationManager.getApplication().assertIsWriteThread()
 
-    if (!containerState.compareAndSet(ContainerState.ACTIVE, ContainerState.DISPOSE_IN_PROGRESS)) {
+    if (!(containerState.compareAndSet(ContainerState.COMPONENT_CREATED, ContainerState.DISPOSE_IN_PROGRESS) ||
+          containerState.compareAndSet(ContainerState.PRE_INIT, ContainerState.DISPOSE_IN_PROGRESS))) {
       // disposed in a recommended way using ProjectManager
       return
     }
@@ -947,6 +949,16 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
 
   override fun getDisposed(): Condition<*> {
     return Condition<Any?> { isDisposed }
+  }
+
+  @Internal
+  fun processServices(processor: Consumer<Any>) {
+    lightServices?.values?.forEach(processor)
+    for (adapter in picoContainer.componentAdapters) {
+      if (adapter is BaseComponentAdapter) {
+        processor.accept(adapter.getInitializedInstance() ?: continue)
+      }
+    }
   }
 }
 

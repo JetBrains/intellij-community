@@ -18,6 +18,7 @@ package com.intellij.lang.properties.editor.inspections;
 import com.intellij.codeInspection.CommonProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.QuickFix;
+import com.intellij.codeInspection.util.InspectionMessage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,10 +27,10 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ResourceBundleEditorProblemDescriptor implements CommonProblemDescriptor {
   private final ProblemHighlightType myHighlightType;
-  private final String myDescriptionTemplate;
+  private final @InspectionMessage String myDescriptionTemplate;
   private final QuickFix[] myFixes;
 
-  public ResourceBundleEditorProblemDescriptor(final ProblemHighlightType type, String template, QuickFix... fixes) {
+  public ResourceBundleEditorProblemDescriptor(final ProblemHighlightType type, @InspectionMessage String template, QuickFix... fixes) {
     myHighlightType = type;
     myDescriptionTemplate = template;
     myFixes = fixes;

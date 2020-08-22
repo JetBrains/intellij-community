@@ -19,10 +19,11 @@ import com.intellij.diagnostic.hprof.classstore.ThreadInfo
 import com.intellij.diagnostic.hprof.navigator.RootReason
 import com.intellij.diagnostic.hprof.parser.HProfVisitor
 import com.intellij.diagnostic.hprof.parser.HeapDumpRecordType
-import gnu.trove.TLongObjectHashMap
+import it.unimi.dsi.fastutil.longs.Long2ObjectMap
+import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap
 
-class CollectRootReasonsVisitor(private val threadsMap: TLongObjectHashMap<ThreadInfo>) : HProfVisitor() {
-  val roots = TLongObjectHashMap<RootReason>()
+class CollectRootReasonsVisitor(private val threadsMap: Long2ObjectMap<ThreadInfo>) : HProfVisitor() {
+  val roots = Long2ObjectOpenHashMap<RootReason>()
 
   override fun preVisit() {
     disableAll()

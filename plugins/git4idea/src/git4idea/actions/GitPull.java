@@ -16,35 +16,46 @@
 package git4idea.actions;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitUtil;
+import git4idea.GitVcs;
+import git4idea.branch.GitRebaseParams;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
 import git4idea.config.GitConfigUtil;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.i18n.GitBundle;
 import git4idea.pull.GitPullDialog;
-import git4idea.pull.PullOption;
+import git4idea.pull.GitPullOption;
+import git4idea.rebase.GitRebaseUtils;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Supplier;
 
 import static git4idea.commands.GitImpl.REBASE_CONFIG_PARAMS;
+import static java.util.Collections.singletonList;
 
 public class GitPull extends GitMergeAction {
   private static final Logger LOG = Logger.getInstance(GitPull.class);
+  @NonNls private static final String INTERACTIVE = "interactive";
 
   @Override
   @NotNull
   protected String getActionName() {
-    return GitBundle.getString("pull.action.name");
+    return GitBundle.message("pull.action.name");
   }
 
   @Override
@@ -59,9 +70,38 @@ public class GitPull extends GitMergeAction {
     GitRepository repository = repositoryManager.getRepositoryForRootQuick(dialog.gitRoot());
     assert repository != null : "Repository can't be null for root " + dialog.gitRoot();
 
-    return new DialogState(dialog.gitRoot(), GitBundle.message("pulling.title", dialog.getRemote().getName()),
+    return new DialogState(dialog.gitRoot(),
+                           GitBundle.message("pulling.title", dialog.getSelectedRemote().getName()),
                            getHandlerProvider(project, dialog),
-                           dialog.getSelectedBranches(), dialog.isCommitAfterMerge());
+                           dialog.getSelectedBranches(),
+                           dialog.isCommitAfterMerge(),
+                           ContainerUtil.map(dialog.getSelectedOptions(), option -> option.getOption()));
+  }
+
+  @Override
+  protected void perform(@NotNull DialogState dialogState, @NotNull Project project) {
+    if (!dialogState.selectedOptions.contains(GitPullOption.REBASE.getOption())) {
+      super.perform(dialogState, project);
+    }
+    else {
+      performRebase(project, dialogState);
+    }
+  }
+
+  private static void performRebase(@NotNull Project project, DialogState dialogState) {
+    VirtualFile selectedRoot = dialogState.selectedRoot;
+    String selectedBranch = dialogState.selectedBranches.get(0);
+
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, GitBundle.message("rebase.progress.indicator.title")) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        GitRepository selectedRepository = Objects.requireNonNull(
+          GitRepositoryManager.getInstance(project).getRepositoryForRoot(selectedRoot));
+
+        GitRebaseParams rebaseParams = new GitRebaseParams(GitVcs.getInstance(project).getVersion(), selectedBranch);
+        GitRebaseUtils.rebase(project, singletonList(selectedRepository), rebaseParams, indicator);
+      }
+    });
   }
 
   @Override
@@ -73,16 +113,16 @@ public class GitPull extends GitMergeAction {
     catch (VcsException e) {
       LOG.warn(e);
     }
-    return "interactive".equals(value);
+    return INTERACTIVE.equals(value);
   }
 
   @NotNull
   protected Supplier<GitLineHandler> getHandlerProvider(Project project, GitPullDialog dialog) {
-    GitRemote remote = dialog.getRemote();
+    GitRemote remote = dialog.getSelectedRemote();
     String remoteName = remote.getName();
 
     VirtualFile root = dialog.gitRoot();
-    Set<PullOption> selectedOptions = dialog.getSelectedOptions();
+    Set<GitPullOption> selectedOptions = dialog.getSelectedOptions();
     List<String> selectedBranches = dialog.getSelectedBranches();
 
     return () -> {
@@ -92,7 +132,7 @@ public class GitPull extends GitMergeAction {
       h.setUrls(urls);
       h.addParameters("--no-stat");
 
-      for (PullOption option : selectedOptions) {
+      for (GitPullOption option : selectedOptions) {
         h.addParameters(option.getOption());
       }
 

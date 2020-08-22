@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.ex;
 
 import com.intellij.openapi.Disposable;
@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 public interface ProjectEx extends Project {
@@ -14,8 +15,10 @@ public interface ProjectEx extends Project {
   /**
    * Consider using only and only if {@link com.intellij.configurationStore.SettingsSavingComponent} is not possible to use.
    */
+  @ApiStatus.Internal
   interface ProjectSaved {
-    Topic<ProjectSaved> TOPIC = Topic.create("SaveProjectTopic", ProjectSaved.class);
+    @Topic.ProjectLevel
+    Topic<ProjectSaved> TOPIC = new Topic<>("SaveProjectTopic", ProjectSaved.class, Topic.BroadcastDirection.NONE);
 
     /**
      * Not called in EDT.
@@ -46,4 +49,9 @@ public interface ProjectEx extends Project {
   @ApiStatus.Experimental
   @ApiStatus.Internal
   Disposable getEarlyDisposable();
+
+  @TestOnly
+  default @Nullable String getCreationTrace() {
+    return null;
+  }
 }

@@ -14,11 +14,11 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
 import it.unimi.dsi.fastutil.ints.Int2ObjectRBTreeMap;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,11 +46,11 @@ public final class SearchUtil {
 
   private SearchUtil() { }
 
-  public static void processProjectConfigurables(Project project, Map<SearchableConfigurable, Set<OptionDescription>> options) {
+  public static void processProjectConfigurables(@NotNull Project project, Map<SearchableConfigurable, @NotNull Set<OptionDescription>> options) {
     processConfigurables(ShowSettingsUtilImpl.getConfigurables(project, true), options);
   }
 
-  private static void processConfigurables(@NotNull List<? extends Configurable> configurables, Map<SearchableConfigurable, Set<OptionDescription>> options) {
+  private static void processConfigurables(@NotNull List<? extends Configurable> configurables, Map<SearchableConfigurable, @NotNull Set<OptionDescription>> options) {
     for (final Configurable configurable : configurables) {
       if (!(configurable instanceof SearchableConfigurable)) {
         continue;
@@ -223,7 +223,8 @@ public final class SearchUtil {
       renderer = new DefaultListCellRenderer();
     }
 
-    JList<?> jList = new BasicComboPopup(comboBox).getList();
+    @SuppressWarnings({"RedundantCast", "unchecked"})
+    JList<?> jList = new BasicComboPopup((JComboBox<Object>)comboBox).getList();
 
     List<String> result = new ArrayList<>();
 
@@ -474,7 +475,7 @@ public final class SearchUtil {
     else {
       textRenderer.setDynamicSearchMatchHighlighting(true);
       //markup
-      ObjectOpenHashSet<String> quoted = new ObjectOpenHashSet<>();
+      Set<String> quoted = CollectionFactory.createSmallMemoryFootprintSet();
       filter = processFilter(quoteStrictOccurrences(text, filter), quoted);
       final Int2ObjectRBTreeMap<String> indexToString = new Int2ObjectRBTreeMap<>();
       for (String stripped : quoted) {

@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.plugins.api;
 
 import com.intellij.lang.Language;
@@ -202,7 +203,7 @@ public class MavenPluginParamInfo {
     }
   }
 
-  public static class ParamInfo {
+  public static final class ParamInfo {
     private final ClassLoader myClassLoader;
 
     private final MavenPluginDescriptor.Param myParam;
@@ -313,7 +314,7 @@ public class MavenPluginParamInfo {
     }
   }
 
-  private static class PsiReferenceProviderWrapper implements MavenParamReferenceProvider, MavenSoftAwareReferenceProvider {
+  private static final class PsiReferenceProviderWrapper implements MavenParamReferenceProvider, MavenSoftAwareReferenceProvider {
 
     private final PsiReferenceProvider myProvider;
 

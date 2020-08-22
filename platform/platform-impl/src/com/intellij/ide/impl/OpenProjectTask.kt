@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.impl.FrameInfo
 import com.intellij.projectImport.ProjectOpenedCallback
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import java.util.function.Predicate
 
 data class OpenProjectTask(val forceOpenInNewFrame: Boolean = false,
@@ -20,20 +21,13 @@ data class OpenProjectTask(val forceOpenInNewFrame: Boolean = false,
                             */
                            val project: Project? = null,
                            val projectName: String? = null,
-                           val sendFrameBack: Boolean = false,
                            /**
                             * Whether to show welcome screen if failed to open project.
                             */
                            val showWelcomeScreen: Boolean = true,
                            @set:Deprecated(message = "Pass to constructor", level = DeprecationLevel.ERROR)
                            var callback: ProjectOpenedCallback? = null,
-                           /**
-                            * Ignored if project is explicitly set.
-                            */
-                           internal val beforeOpen: ((Project) -> Boolean)? = null,
-                           internal val preparedToOpen: ((Module) -> Unit)? = null,
                            val frame: FrameInfo? = null,
-                           val projectWorkspaceId: String? = null,
                            val line: Int = -1,
                            val column: Int = -1,
                            val isRefreshVfsNeeded: Boolean = true,
@@ -41,7 +35,18 @@ data class OpenProjectTask(val forceOpenInNewFrame: Boolean = false,
                             * Whether to run DirectoryProjectConfigurator if a new project or no modules.
                             */
                            val runConfigurators: Boolean = false,
-                           val runConversionBeforeOpen: Boolean = true) {
+                           val runConversionBeforeOpen: Boolean = true,
+                           internal val projectWorkspaceId: String? = null,
+                           internal val isProjectCreatedWithWizard: Boolean = false,
+                           internal val sendFrameBack: Boolean = false,
+                           @TestOnly
+                           internal val preloadServices: Boolean = true,
+                           internal val beforeInit: ((Project) -> Unit)? = null,
+                           /**
+                            * Ignored if project is explicitly set.
+                            */
+                           internal val beforeOpen: ((Project) -> Boolean)? = null,
+                           internal val preparedToOpen: ((Module) -> Unit)? = null) {
   @ApiStatus.Internal
   fun withBeforeOpenCallback(callback: Predicate<Project>) = copy(beforeOpen = { callback.test(it) })
 
@@ -49,7 +54,7 @@ data class OpenProjectTask(val forceOpenInNewFrame: Boolean = false,
   fun withProjectName(value: String?) = copy(projectName = value)
 
   @ApiStatus.Internal
-  fun asNewProjectAndRunConfigurators() = copy(isNewProject = true, runConfigurators = true)
+  fun asNewProjectAndRunConfigurators() = copy(isNewProject = true, runConfigurators = true, useDefaultProjectAsTemplate = true)
 
   @ApiStatus.Internal
   fun withRunConfigurators() = copy(runConfigurators = true)
@@ -62,8 +67,12 @@ data class OpenProjectTask(val forceOpenInNewFrame: Boolean = false,
     }
 
     @JvmStatic
-    fun newProjectAndRunConfigurators(projectToClose: Project?, isRefreshVfsNeeded: Boolean): OpenProjectTask {
-      return OpenProjectTask(isNewProject = true, projectToClose = projectToClose, runConfigurators = true, isRefreshVfsNeeded = isRefreshVfsNeeded)
+    fun newProjectFromWizardAndRunConfigurators(projectToClose: Project?, isRefreshVfsNeeded: Boolean): OpenProjectTask {
+      return OpenProjectTask(isNewProject = true,
+                             projectToClose = projectToClose,
+                             runConfigurators = true,
+                             isProjectCreatedWithWizard = true,
+                             isRefreshVfsNeeded = isRefreshVfsNeeded)
     }
 
     @JvmStatic
@@ -80,5 +89,5 @@ data class OpenProjectTask(val forceOpenInNewFrame: Boolean = false,
 
   /** Used only by [ProjectUtil.openOrImport] */
   @JvmField
-  var checkDirectoryForFileBasedProjects = true
+  internal var checkDirectoryForFileBasedProjects = true
 }

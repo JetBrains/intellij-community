@@ -7,6 +7,8 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.ComboBoxTableRenderer;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TitlePanel;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -91,7 +93,7 @@ public class DetectedRootsChooserDialog extends DialogWrapper {
 
   private CheckboxTreeTable myTreeTable;
   private JScrollPane myPane;
-  private String myDescription;
+  private @NlsContexts.Label String myDescription;
 
   public DetectedRootsChooserDialog(Component component, Collection<SuggestedChildRootInfo> suggestedRoots) {
     super(component, true);
@@ -127,7 +129,7 @@ public class DetectedRootsChooserDialog extends DialogWrapper {
         if (!(value instanceof VirtualFileCheckedTreeNode)) return;
         VirtualFileCheckedTreeNode node = (VirtualFileCheckedTreeNode)value;
         VirtualFile file = node.getFile();
-        String text;
+        @NlsSafe String text;
         SimpleTextAttributes attributes;
         boolean isValid = true;
         if (leaf) {

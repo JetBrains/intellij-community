@@ -17,6 +17,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.scale.JBUIScale;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,7 +54,7 @@ public class SearchTextField extends JPanel {
     this(historyPopupEnabled, null);
   }
 
-  public SearchTextField(String historyPropertyName) {
+  public SearchTextField(@NonNls String historyPropertyName) {
     this(true, historyPropertyName);
   }
 
@@ -266,6 +267,9 @@ public class SearchTextField extends JPanel {
     }
   }
 
+  protected void historyItemChosen(String item) {
+  }
+
   private void addMenuItem(final String item) {
     if (myNativeSearchPopup != null) {
       myNativeSearchPopup.remove(myNoItems);
@@ -274,6 +278,7 @@ public class SearchTextField extends JPanel {
       menuItem.addActionListener(e -> {
         myTextField.setText(item);
         addCurrentTextToHistory();
+        historyItemChosen(item);
       });
     }
   }

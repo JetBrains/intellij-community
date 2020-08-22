@@ -3,6 +3,7 @@ package com.intellij.stats.completion
 
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.stats.completion.events.CompletionStartedEvent
 import com.intellij.stats.completion.events.LogEvent
@@ -44,7 +45,7 @@ abstract class CompletionLoggingTestBase : LightFixtureCompletionTestCase() {
         trackedEvents.add(event)
       }
     }
-    return CompletionFileLogger("installation-uid", "completion-uid", "0", eventLogger)
+    return CompletionFileLogger("installation-uid", "completion-uid", "0", Language.ANY, eventLogger)
   }
 
   override fun setUp() {
@@ -53,7 +54,7 @@ abstract class CompletionLoggingTestBase : LightFixtureCompletionTestCase() {
     trackedEvents.clear()
 
     mockLoggerProvider = Mockito.mock(CompletionLoggerProvider::class.java)
-    Mockito.`when`(mockLoggerProvider.newCompletionLogger()).thenReturn(completionFileLogger())
+    Mockito.`when`(mockLoggerProvider.newCompletionLogger(any())).thenReturn(completionFileLogger())
     ApplicationManager.getApplication().replaceService(CompletionLoggerProvider::class.java, mockLoggerProvider, testRootDisposable)
 
     myFixture.addClass(runnableInterface)
@@ -67,5 +68,7 @@ abstract class CompletionLoggingTestBase : LightFixtureCompletionTestCase() {
 
     super.tearDown()
   }
+
+  private fun <T> any(): T = Mockito.any()
 }
 

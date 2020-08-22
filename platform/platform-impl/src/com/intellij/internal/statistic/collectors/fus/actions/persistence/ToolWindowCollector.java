@@ -8,17 +8,16 @@ import com.intellij.ide.actions.ToolWindowViewModeAction;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.ToolWindowAllowlistEP;
 import com.intellij.openapi.wm.ToolWindowEP;
-import com.intellij.openapi.wm.ToolWindowWhitelistEP;
 import com.intellij.openapi.wm.ext.LibraryDependentToolWindow;
 import com.intellij.openapi.wm.impl.WindowInfoImpl;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +39,7 @@ import static com.intellij.openapi.wm.ToolWindowId.*;
  *
  * <p>
  *   If toolwindow is registered dynamically is <b>should</b> be explicitly whitelisted
- *   in plugin.xml {@link ToolWindowWhitelistEP#EP_NAME} or here in {@link ToolWindowCollector#ourToolwindowWhitelist}
+ *   in plugin.xml {@link ToolWindowAllowlistEP#EP_NAME} or here in {@link ToolWindowCollector#ourToolwindowWhitelist}
  * </p>
  */
 public final class ToolWindowCollector {
@@ -54,9 +53,9 @@ public final class ToolWindowCollector {
    * Use this set to whitelist dynamically registered platform toolwindows.<br/><br/>
    *
    * If toolwindow is registered in plugin.xml, it's whitelisted automatically. <br/>
-   * To whitelist dynamically registered plugin toolwindow use {@link ToolWindowWhitelistEP#EP_NAME}
+   * To whitelist dynamically registered plugin toolwindow use {@link ToolWindowAllowlistEP#EP_NAME}
    */
-  public static final Map<String, ToolWindowInfo> ourToolwindowWhitelist = new HashMap<>();
+  private static final Map<String, ToolWindowInfo> ourToolwindowWhitelist = new HashMap<>();
   static {
     ourToolwindowWhitelist.put(MESSAGES_WINDOW, new ToolWindowInfo("Messages"));
     ourToolwindowWhitelist.put(DEBUG, new ToolWindowInfo("Debug"));
@@ -78,18 +77,18 @@ public final class ToolWindowCollector {
   }
 
   private ToolWindowCollector() {
-    for (ToolWindowWhitelistEP extension : ToolWindowWhitelistEP.EP_NAME.getExtensionList()) {
+    for (ToolWindowAllowlistEP extension : ToolWindowAllowlistEP.EP_NAME.getExtensionList()) {
       addToolwindowToWhitelist(extension);
     }
-    ToolWindowWhitelistEP.EP_NAME.addExtensionPointListener(new ExtensionPointListener<ToolWindowWhitelistEP>() {
+    ToolWindowAllowlistEP.EP_NAME.addExtensionPointListener(new ExtensionPointListener<ToolWindowAllowlistEP>() {
       @Override
-      public void extensionAdded(@NotNull ToolWindowWhitelistEP extension, @NotNull PluginDescriptor pluginDescriptor) {
+      public void extensionAdded(@NotNull ToolWindowAllowlistEP extension, @NotNull PluginDescriptor pluginDescriptor) {
         addToolwindowToWhitelist(extension);
       }
-    }, ApplicationManager.getApplication());
+    }, null);
   }
 
-  private static void addToolwindowToWhitelist(ToolWindowWhitelistEP extension) {
+  private static void addToolwindowToWhitelist(ToolWindowAllowlistEP extension) {
     PluginDescriptor pluginDescriptor = extension == null ? null : extension.getPluginDescriptor();
     PluginInfo info = pluginDescriptor != null ? PluginInfoDetectorKt.getPluginInfoByDescriptor(pluginDescriptor) : null;
     if (info != null && info.isDevelopedByJetBrains()) {
@@ -97,20 +96,20 @@ public final class ToolWindowCollector {
     }
   }
 
-  public static void recordActivation(@Nullable String toolWindowId, @Nullable WindowInfoImpl info) {
+  public void recordActivation(@Nullable String toolWindowId, @Nullable WindowInfoImpl info) {
     record(toolWindowId, ACTIVATED, info);
   }
 
-  public static void recordHidden(@NotNull WindowInfoImpl info) {
+  public void recordHidden(@NotNull WindowInfoImpl info) {
     record(info.getId(), HIDDEN, info);
   }
 
-  public static void recordShown(@NotNull WindowInfoImpl info) {
+  public void recordShown(@NotNull WindowInfoImpl info) {
     record(info.getId(), SHOWN, info);
   }
 
   //todo[kb] provide a proper way to track activations by clicks
-  public static void recordClick(String toolWindowId, @Nullable WindowInfoImpl info) {
+  public void recordClick(String toolWindowId, @Nullable WindowInfoImpl info) {
     record(toolWindowId, CLICKED, info);
   }
 
@@ -161,7 +160,7 @@ public final class ToolWindowCollector {
     ACTIVATED, CLICKED, SHOWN, HIDDEN
   }
 
-  public static class ToolWindowUtilValidator extends CustomWhiteListRule {
+  public static class ToolWindowUtilValidator extends CustomValidationRule {
 
     @Override
     public boolean acceptRuleId(@Nullable String ruleId) {
@@ -176,7 +175,7 @@ public final class ToolWindowCollector {
     }
   }
 
-  private static class ToolWindowInfo {
+  private static final class ToolWindowInfo {
     private final String myRecordedId;
     private final PluginInfo myPluginInfo;
 

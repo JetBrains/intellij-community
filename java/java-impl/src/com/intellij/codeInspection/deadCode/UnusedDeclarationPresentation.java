@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.deadCode;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -44,10 +44,7 @@ import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TObjectIntHashMap;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -112,7 +109,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
   public RefFilter getFilter() {
     return myFilter;
   }
-  private static class WeakUnreferencedFilter extends UnreferencedFilter {
+  private static final class WeakUnreferencedFilter extends UnreferencedFilter {
     private WeakUnreferencedFilter(@NotNull UnusedDeclarationInspectionBase tool, @NotNull GlobalInspectionContextImpl context) {
       super(tool, context);
     }
@@ -335,7 +332,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     }
   }
 
-  private static class CommentOutFix implements QuickFix {
+  private static final class CommentOutFix implements QuickFix {
     private final RefElement myElement;
 
     private CommentOutFix(RefElement element) {
@@ -556,7 +553,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     return null;
   }
 
-  private static class PermanentDeleteFix implements QuickFix {
+  private static final class PermanentDeleteFix implements QuickFix {
     private final RefElement myElement;
 
     private PermanentDeleteFix(@Nullable RefElement element) {
@@ -638,6 +635,7 @@ public class UnusedDeclarationPresentation extends DefaultInspectionToolPresenta
     css.addRule("div.problem-description {margin-left: " + JBUIScale.scale(9) + "px;}");
     css.addRule("ul {margin-left:" + JBUIScale.scale(10) + "px;text-indent: 0}");
     css.addRule("code {font-family:" + StartupUiUtil.getLabelFont().getFamily() + "}");
+    @Nls
     final StringBuilder buf = new StringBuilder();
     getComposer().compose(buf, entity, false);
     final String text = buf.toString();

@@ -111,7 +111,7 @@ public class Py3QuickFixTest extends PyTestCase {
   // PY-16428 
   public void testAddParameterNotAvailableInsideAnnotation() {
     runWithLanguageLevel(LanguageLevel.PYTHON34, () -> doInspectionTest(PyUnresolvedReferencesInspection.class,
-                                                                    PyBundle.message("QFIX.unresolved.reference.add.param.$0", "unresolved"), false, false));
+                                                                    PyPsiBundle.message("QFIX.unresolved.reference.add.param.$0", "unresolved"), false, false));
   }
 
   // PY-8991

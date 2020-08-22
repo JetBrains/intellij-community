@@ -4,12 +4,11 @@ package com.intellij.ui.mac.foundation;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.awt.AWTAccessor;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
@@ -28,7 +27,7 @@ import static com.intellij.ui.mac.foundation.Foundation.*;
  * @author pegov
  */
 public final class MacUtil {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.mac.foundation.MacUtil");
+  private static final Logger LOG = Logger.getInstance(MacUtil.class);
   public static final String MAC_NATIVE_WINDOW_SHOWING = "MAC_NATIVE_WINDOW_SHOWING";
 
   private MacUtil() {
@@ -48,10 +47,10 @@ public final class MacUtil {
       while (true) {
         // dirty hack: walks through all the windows to find a cocoa window to show sheet for
         final ID window = invoke(windowEnumerator, "nextObject");
-        if (0 == window.intValue()) break;
+        if (ID.NIL.equals(window)) break;
 
         final ID windowTitle = invoke(window, "title");
-        if (windowTitle != null && windowTitle.intValue() != 0) {
+        if (windowTitle != null && !ID.NIL.equals(windowTitle)) {
           final String titleString = toStringViaUTF8(windowTitle);
           if (Objects.equals(titleString, title)) {
             focusedWindow = window;
@@ -106,15 +105,21 @@ public final class MacUtil {
   }
 
   public static boolean isFullKeyboardAccessEnabled() {
-    if (!SystemInfo.isMacOSSnowLeopard) return false;
-    final AtomicBoolean result = new AtomicBoolean();
-    executeOnMainThread(true, true,
-                        () -> result.set(invoke(invoke("NSApplication", "sharedApplication"), "isFullKeyboardAccessEnabled").intValue() == 1));
+    if (!SystemInfoRt.isMac) {
+      return false;
+    }
+
+    AtomicBoolean result = new AtomicBoolean();
+    executeOnMainThread(true, true, () -> {
+      result.set(invoke(invoke("NSApplication", "sharedApplication"), "isFullKeyboardAccessEnabled").booleanValue());
+    });
     return result.get();
   }
 
   public static void adjustFocusTraversal(@NotNull Disposable disposable) {
-    if (!SystemInfo.isMacOSSnowLeopard) return;
+    if (!SystemInfoRt.isMac) {
+      return;
+    }
     final AWTEventListener listener = new AWTEventListener() {
       @Override
       public void eventDispatched(AWTEvent event) {
@@ -139,14 +144,17 @@ public final class MacUtil {
     ID windowId = null;
     if (Registry.is("skip.untitled.windows.for.mac.messages")) {
       try {
-        Class <?> cWindowPeerClass  = AWTAccessor.getComponentAccessor().getPeer(w).getClass();
+        Class<?> awtAccessor = Class.forName("sun.awt.AWTAccessor");
+        Object componentAccessor = awtAccessor.getMethod("getComponentAccessor").invoke(null);
+        Object peer = componentAccessor.getClass().getMethod("getPeer", Component.class).invoke(componentAccessor, w);
+        Class<?> cWindowPeerClass  = peer.getClass();
         Method getPlatformWindowMethod = cWindowPeerClass.getDeclaredMethod("getPlatformWindow");
-        Object cPlatformWindow = getPlatformWindowMethod.invoke(AWTAccessor.getComponentAccessor().getPeer(w));
-        Class <?> cPlatformWindowClass = cPlatformWindow.getClass();
+        Object cPlatformWindow = getPlatformWindowMethod.invoke(peer);
+        Class<?> cPlatformWindowClass = cPlatformWindow.getClass();
         Method getNSWindowPtrMethod = cPlatformWindowClass.getDeclaredMethod("getNSWindowPtr");
         windowId = new ID((Long)getNSWindowPtrMethod.invoke(cPlatformWindow));
       }
-      catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+      catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | ClassNotFoundException e) {
         LOG.debug(e);
       }
     }
@@ -222,7 +230,7 @@ public final class MacUtil {
   }
 
   public static Activity wakeUpNeo(@NotNull Object reason) {
-    return SystemInfo.isMacOSMavericks && Registry.is("idea.mac.prevent.app.nap") ? new ActivityImpl(reason) : null;
+    return SystemInfoRt.isMac && Registry.is("idea.mac.prevent.app.nap") ? new ActivityImpl(reason) : null;
   }
 
   @NotNull

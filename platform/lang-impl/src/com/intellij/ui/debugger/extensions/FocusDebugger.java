@@ -28,6 +28,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.debugger.UiDebuggerExtension;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -173,7 +174,7 @@ public class FocusDebugger implements UiDebuggerExtension, PropertyChangeListene
                                          boolean hasFocus) {
       clear();
       final SimpleColoredText text = value.getText();
-      final ArrayList<String> strings = text.getTexts();
+      final ArrayList<@Nls String> strings = text.getTexts();
       final ArrayList<SimpleTextAttributes> attributes = value.getText().getAttributes();
       for (int i = 0; i < strings.size(); i++) {
         append(strings.get(i), attributes.get(i));

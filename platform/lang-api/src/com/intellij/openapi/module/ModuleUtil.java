@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.module;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.ParameterizedCachedValue;
@@ -12,11 +13,12 @@ import com.intellij.psi.util.ParameterizedCachedValueProvider;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Collection;
 
-public class ModuleUtil extends ModuleUtilCore {
+public final class ModuleUtil extends ModuleUtilCore {
   private static final ParameterizedCachedValueProvider<MultiMap<ModuleType<?>, Module>, Project> MODULE_BY_TYPE_VALUE_PROVIDER = param -> {
     MultiMap<ModuleType<?>, Module> map = new MultiMap<>();
     for (Module module : ModuleManager.getInstance(param).getModules()) {
@@ -52,6 +54,20 @@ public class ModuleUtil extends ModuleUtilCore {
 
   public static boolean hasTestSourceRoots(@NotNull Project project) {
     return CachedValuesManager.getManager(project).getParameterizedCachedValue(project, HAS_TEST_ROOTS_KEY, HAS_TEST_ROOTS_PROVIDER, false, project);
+  }
+
+  /**
+   * Returns some directory which is located near module files. <br>
+   * There is no such thing as "base directory" for a module in IntelliJ project model. A module may have multiple content roots, or not have
+   * content roots at all. The module configuration file (.iml) may be located far away from the module files or doesn't exist at all. So this
+   * method tries to suggest some directory which is related to the module but due to its heuristics nature its result shouldn't be used for
+   * real actions as is, user should be able to review and change it. For example it can be used as a default selection in a file chooser.
+   */
+  public static @Nullable VirtualFile suggestBaseDirectory(@NotNull Module module) {
+    VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
+    if (contentRoots.length > 0) return contentRoots[0];
+    VirtualFile moduleFile = module.getModuleFile();
+    return moduleFile != null ? moduleFile.getParent() : null;
   }
 
   /** @deprecated use {@link ModuleType#get(Module)} instead */

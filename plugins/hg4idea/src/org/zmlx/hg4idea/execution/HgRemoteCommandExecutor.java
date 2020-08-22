@@ -110,7 +110,7 @@ public class HgRemoteCommandExecutor extends HgCommandExecutor {
     super.logCommand(operation, null);
   }
 
-  private static class PassReceiver extends SocketServer.Protocol {
+  private static final class PassReceiver extends SocketServer.Protocol {
     private final Project myProject;
     private HgCommandAuthenticator myAuthenticator;
     private final boolean myForceAuthorization;

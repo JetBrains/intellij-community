@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectTrackerSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +43,7 @@ public class MavenWorkspaceSettingsComponent implements PersistentStateComponent
   public void loadState(@NotNull MavenWorkspaceSettings state) {
     mySettings = state;
     applyDefaults(mySettings);
+    migrateSettings(mySettings);
   }
 
   public MavenWorkspaceSettings getSettings() {
@@ -51,6 +53,16 @@ public class MavenWorkspaceSettingsComponent implements PersistentStateComponent
   private static void applyDefaults(MavenWorkspaceSettings settings) {
     if (StringUtil.isEmptyOrSpaces(settings.generalSettings.getMavenHome())) {
       settings.generalSettings.setMavenHome(MavenServerManager.BUNDLED_MAVEN_3);
+    }
+  }
+
+  @SuppressWarnings("deprecation")
+  private void migrateSettings(MavenWorkspaceSettings settings) {
+    MavenImportingSettings importingSettings = settings.importingSettings;
+    if (importingSettings.isImportAutomatically()) {
+      importingSettings.setImportAutomatically(false);
+      ExternalSystemProjectTrackerSettings projectTrackerSettings = ExternalSystemProjectTrackerSettings.getInstance(myProject);
+      projectTrackerSettings.setAutoReloadType(ExternalSystemProjectTrackerSettings.AutoReloadType.ALL);
     }
   }
 }

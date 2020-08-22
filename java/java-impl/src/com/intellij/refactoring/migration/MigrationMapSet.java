@@ -7,6 +7,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -224,11 +225,11 @@ public class MigrationMapSet {
 
     for (Element node : root.getChildren()) {
       if (NAME.equals(node.getName())) {
-        String name = node.getAttributeValue(VALUE);
+        @NlsSafe String name = node.getAttributeValue(VALUE);
         map.setName(name);
       }
       if (DESCRIPTION.equals(node.getName())) {
-        String description = node.getAttributeValue(VALUE);
+        @NlsSafe String description = node.getAttributeValue(VALUE);
         map.setDescription(description);
       }
 

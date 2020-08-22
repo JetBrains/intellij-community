@@ -2,6 +2,7 @@
 package com.intellij.structuralsearch;
 
 import com.intellij.psi.PsiErrorElement;
+import org.jetbrains.annotations.NotNull;
 
 public class MalformedPatternException extends StructuralSearchException {
 
@@ -11,12 +12,12 @@ public class MalformedPatternException extends StructuralSearchException {
     isErrorElement = false;
   }
 
-  public MalformedPatternException(String msg) {
+  public MalformedPatternException(@NotNull String msg) {
     super(msg);
     isErrorElement = false;
   }
 
-  public MalformedPatternException(PsiErrorElement errorElement) {
+  public MalformedPatternException(@NotNull PsiErrorElement errorElement) {
     super(errorElement.getErrorDescription());
     isErrorElement = true;
   }

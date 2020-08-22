@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.compiler.CompilerReferenceService;
@@ -39,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class JavaCompilerElementRetriever {
+public final class JavaCompilerElementRetriever {
   private static final Logger LOG = Logger.getInstance(JavaCompilerElementRetriever.class);
 
   private final static TokenSet FUN_EXPR = TokenSet.create(JavaElementType.LAMBDA_EXPRESSION, JavaElementType.METHOD_REF_EXPRESSION);
@@ -58,16 +44,14 @@ public class JavaCompilerElementRetriever {
     }
 
     if (result.length != resIdx) {
-      final CompilerReferenceServiceImpl compilerReferenceService =
-        (CompilerReferenceServiceImpl)CompilerReferenceService.getInstance(psiFile.getProject());
-      final Set<Module> state = compilerReferenceService.getDirtyScopeHolder().getAllDirtyModules();
-      final VirtualFile file = psiFile.getVirtualFile();
-      final Module moduleForFile = ProjectFileIndex.getInstance(psiFile.getProject()).getModuleForFile(file);
+      CompilerReferenceServiceImpl compilerReferenceService = (CompilerReferenceServiceImpl)CompilerReferenceService.getInstance(psiFile.getProject());
+      Set<Module> state = compilerReferenceService.getDirtyScopeHolder().getAllDirtyModules();
+      VirtualFile file = psiFile.getVirtualFile();
+      Module moduleForFile = ProjectFileIndex.getInstance(psiFile.getProject()).getModuleForFile(file);
       LOG.error("Compiler functional expression index doesn't match to stub index.\n" +
                 "Functional expression indices: " + indices + "\n" +
                 "Does the file belong to dirty scope?: " + state.contains(moduleForFile),
                 new Attachment(psiFile.getName(), psiFile.getText()));
-
       return ContainerUtil.filter(result, Objects::nonNull).toArray(PsiFunctionalExpression.EMPTY_ARRAY);
     }
 
@@ -106,7 +90,7 @@ public class JavaCompilerElementRetriever {
     }
   }
 
-  private static class ClassMatcher {
+  private static final class ClassMatcher {
     @Nullable
     private final TIntHashSet myAnonymousIndices;
     @NotNull

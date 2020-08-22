@@ -127,14 +127,8 @@ public class SpellCheckerManager implements Disposable {
     }
 
     if (settings != null && settings.getCustomDictionariesPaths() != null) {
-      final Set<String> disabledDictionaries = settings.getDisabledDictionariesPaths();
       for (String dictionary : settings.getCustomDictionariesPaths()) {
-        boolean dictionaryShouldBeLoad = !disabledDictionaries.contains(dictionary);
-        boolean dictionaryIsLoad = mySpellChecker.isDictionaryLoad(dictionary);
-        if (dictionaryIsLoad && !dictionaryShouldBeLoad) {
-          mySpellChecker.removeDictionary(dictionary);
-        }
-        else if (!dictionaryIsLoad && dictionaryShouldBeLoad) {
+        if (!mySpellChecker.isDictionaryLoad(dictionary)) {
           loadDictionary(dictionary);
         }
       }
@@ -189,12 +183,7 @@ public class SpellCheckerManager implements Disposable {
 
   private void loadCustomDictionaries() {
     if (settings != null && settings.getCustomDictionariesPaths() != null) {
-      final Set<String> disabledDictionaries = settings.getDisabledDictionariesPaths();
-      for (String dictionary : settings.getCustomDictionariesPaths()) {
-        if (!disabledDictionaries.contains(dictionary)) {
-          loadDictionary(dictionary);
-        }
-      }
+      settings.getCustomDictionariesPaths().forEach(this::loadDictionary);
     }
   }
 
@@ -453,7 +442,7 @@ public class SpellCheckerManager implements Disposable {
     public void contentsChanged(@NotNull VirtualFileEvent event) {
       final String path = toSystemDependentName(event.getFile().getPath());
 
-      if (!mySpellChecker.isDictionaryLoad(path) || mySettings.getDisabledDictionariesPaths().contains(path)) return;
+      if (!mySpellChecker.isDictionaryLoad(path)) return;
 
       mySpellChecker.removeDictionary(path);
       loadDictionary(path);
@@ -484,7 +473,6 @@ public class SpellCheckerManager implements Disposable {
       if (affectCustomDicts(path)) {
         mySpellChecker.removeDictionariesRecursively(systemDependentPath);
         mySettings.getCustomDictionariesPaths().removeIf(dict -> isAncestor(systemDependentPath, dict, false));
-        mySettings.getDisabledDictionariesPaths().removeIf(dict -> isAncestor(systemDependentPath, dict, false));
         restartInspections();
       }
     }

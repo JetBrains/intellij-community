@@ -4,7 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.config
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 
-@State(name = "GithubPullRequestsUISettings", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
+@State(name = "GithubPullRequestsUISettings", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)], reportStatistic = false)
 class GithubPullRequestsProjectUISettings : PersistentStateComponentWithModificationTracker<GithubPullRequestsProjectUISettings.SettingsState> {
   private var state: SettingsState = SettingsState()
 

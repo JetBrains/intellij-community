@@ -1,0 +1,40 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+repositories {
+  maven {
+    url 'https://repo.labs.intellij.net/intellij'
+  }
+}
+
+configurations {
+  zkm
+}
+
+dependencies {
+  zkm "com.jetbrains:zkm:$zkmVersion"
+}
+
+task setupZkm(dependsOn: configurations.zkm) {
+  def zkmJar = { configurations.zkm.singleFile }
+  def outputDir = file("$buildDir/zkm/")
+  def outputJar = file("$outputDir/zkm-${zkmVersion}.jar")
+  inputs.file(zkmJar)
+  outputs.file(outputJar)
+  outputs.upToDateWhen {
+    // output file non-existent shouldn't be cached
+    outputJar.exists()
+  }
+  doLast {
+    if (inJetBrainsNetwork) {
+      logger.info("Copying $zkmJar to $outputDir")
+      copy {
+        from file(zkmJar)
+        into outputDir
+      }
+    }
+    else if (outputDir.listFiles()?.any {
+      it.name.endsWith('.jar') && it.name != "zkm-${zkmVersion}.jar"
+    }) {
+      throw new GradleException('ZKM version is outdated, please connect to JetBrains VPN to update it')
+    }
+  }
+}

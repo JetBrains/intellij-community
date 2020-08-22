@@ -165,6 +165,8 @@ public class VcsProjectLog implements Disposable {
 
   @CalledInAwt
   private void recreateOnError(@NotNull Throwable t) {
+    if (myDisposeStarted) return;
+
     myRecreatedLogCount++;
     String logMessage = "Recreating Vcs Log after storage corruption. Recreated count " + myRecreatedLogCount;
     if (myRecreatedLogCount % RECREATE_LOG_TRIES == 0) {
@@ -228,7 +230,7 @@ public class VcsProjectLog implements Disposable {
   }
 
   @NotNull
-  static Map<VirtualFile, VcsLogProvider> getLogProviders(@NotNull Project project) {
+  public static Map<VirtualFile, VcsLogProvider> getLogProviders(@NotNull Project project) {
     return VcsLogManager.findLogProviders(Arrays.asList(ProjectLevelVcsManager.getInstance(project).getAllVcsRoots()), project);
   }
 
@@ -333,10 +335,10 @@ public class VcsProjectLog implements Disposable {
       LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
       if (myValue != null) {
         VcsLogManager oldValue = myValue;
+        myValue = null;
 
         LOG.debug("Disposing Vcs Log for " + VcsLogUtil.getProvidersMapText(oldValue.getDataManager().getLogProviders()));
         myMessageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logDisposed(oldValue);
-        myValue = null;
 
         return oldValue;
       }

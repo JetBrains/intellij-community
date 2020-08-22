@@ -37,7 +37,7 @@ public class PyParameterCompletionContributor extends CompletionContributor {
            new ParameterCompletionProvider("kwargs"));
   }
 
-  private static class ParameterCompletionProvider extends CompletionProvider<CompletionParameters> {
+  private static final class ParameterCompletionProvider extends CompletionProvider<CompletionParameters> {
     private final String myName;
 
     private ParameterCompletionProvider(String name) {

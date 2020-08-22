@@ -44,10 +44,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
 import com.intellij.ui.*;
@@ -342,11 +339,11 @@ public abstract class DiffRequestProcessor implements Disposable {
       myPopupActionGroup.removeAll();
       ActionUtil.clearActions(myMainPanel);
 
-      myActiveRequest.onAssigned(false);
-      myActiveRequest = request;
-      myActiveRequest.onAssigned(true);
-
       ProgressManager.getInstance().executeNonCancelableSection(() -> {
+        onAssigned(myActiveRequest, false);
+        myActiveRequest = request;
+        onAssigned(myActiveRequest, true);
+
         try {
           myState = createState();
           try {
@@ -366,7 +363,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     });
   }
 
-  protected void setWindowTitle(@NotNull String title) {
+  protected void setWindowTitle(@NotNull @NlsContexts.DialogTitle String title) {
   }
 
   protected void onAfterNavigate() {
@@ -459,7 +456,7 @@ public abstract class DiffRequestProcessor implements Disposable {
       myPopupActionGroup.removeAll();
       ActionUtil.clearActions(myMainPanel);
 
-      myActiveRequest.onAssigned(false);
+      onAssigned(myActiveRequest, false);
 
       myState = EmptyState.INSTANCE;
       myActiveRequest = NoDiffRequest.INSTANCE;
@@ -518,7 +515,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     DiffUtil.registerAction(new ShowActionGroupPopupAction(), myMainPanel);
   }
 
-  private void setTitle(@Nullable String title) {
+  private void setTitle(@Nullable @NlsContexts.DialogTitle String title) {
     if (getContextUserData(DiffUserDataKeys.DO_NOT_CHANGE_WINDOW_TITLE) == Boolean.TRUE) return;
     if (title == null) title = DiffBundle.message("diff.files.dialog.title");
     setWindowTitle(title);
@@ -631,7 +628,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
   }
 
-  private class DiffToolToggleAction extends AnAction implements DumbAware {
+  private final class DiffToolToggleAction extends AnAction implements DumbAware {
     @NotNull private final DiffTool myDiffTool;
 
     private DiffToolToggleAction(@NotNull DiffTool tool) {
@@ -1127,6 +1124,15 @@ public abstract class DiffRequestProcessor implements Disposable {
       this.request = request;
       this.force = force;
       this.scrollToChangePolicy = scrollToChangePolicy;
+    }
+  }
+
+  private static void onAssigned(@NotNull DiffRequest request, boolean isAssigned) {
+    try {
+      request.onAssigned(isAssigned);
+    }
+    catch (Exception e) {
+      LOG.error(e);
     }
   }
 

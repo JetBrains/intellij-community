@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.wizards
 
 import com.intellij.openapi.externalSystem.importing.AbstractOpenProjectProvider
+import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import com.intellij.openapi.vfs.VirtualFile
@@ -10,6 +11,8 @@ import org.jetbrains.idea.maven.utils.MavenUtil
 import java.nio.file.Path
 
 internal class MavenOpenProjectProvider : AbstractOpenProjectProvider() {
+  override val systemId: ProjectSystemId = MavenUtil.SYSTEM_ID
+
   val builder: MavenProjectBuilder
     get() = ProjectImportBuilder.EXTENSIONS_POINT_NAME.findExtensionOrFail(MavenProjectBuilder::class.java)
 

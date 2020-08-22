@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class RefactoringHierarchyUtil {
+public final class RefactoringHierarchyUtil {
   private static final Logger LOG = Logger.getInstance(RefactoringHierarchyUtil.class);
 
   private static final List<? extends PsiType> PRIMITIVE_TYPES = Arrays.asList(

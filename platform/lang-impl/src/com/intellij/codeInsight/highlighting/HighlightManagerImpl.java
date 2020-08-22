@@ -27,6 +27,7 @@ import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.BitUtil;
@@ -266,8 +267,6 @@ public final class HighlightManagerImpl extends HighlightManager {
                                 boolean hideByTextChange,
                                 boolean hideByAnyKey,
                                 @Nullable Collection<? super RangeHighlighter> highlighters) {
-    if (editor instanceof ImaginaryEditor) return;
-
     int flags = HIDE_BY_ESCAPE;
     if (hideByTextChange) {
       flags |= HIDE_BY_TEXT_CHANGE;
@@ -351,7 +350,7 @@ public final class HighlightManagerImpl extends HighlightManager {
     List<RangeHighlighter> highlightersToRemove = new ArrayList<>();
     for (RangeHighlighter highlighter : map.keySet()) {
       HighlightFlags info = map.get(highlighter);
-      if (!InjectedLanguageUtil.getTopLevelEditor(info.editor).equals(InjectedLanguageUtil.getTopLevelEditor(editor))) continue;
+      if (!InjectedLanguageEditorUtil.getTopLevelEditor(info.editor).equals(InjectedLanguageEditorUtil.getTopLevelEditor(editor))) continue;
       if ((info.flags & mask) != 0) {
         highlightersToRemove.add(highlighter);
         done = true;

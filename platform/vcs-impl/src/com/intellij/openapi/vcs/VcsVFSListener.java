@@ -58,7 +58,11 @@ public abstract class VcsVFSListener implements Disposable {
 
     @Override
     public String toString() {
-      return String.format("MovedFileInfo{[%s] -> [%s]}", myOldPath, myNewPath);
+      return String.format("MovedFileInfo{[%s] -> [%s]}", myOldPath, myNewPath);  //NON-NLS
+    }
+
+    public boolean isCaseSensitive() {
+      return myFile.isCaseSensitive();
     }
   }
 
@@ -211,7 +215,7 @@ public abstract class VcsVFSListener implements Disposable {
 
       List<VcsException> exceptions = acquireExceptions();
       if (!exceptions.isEmpty()) {
-        AbstractVcsHelper.getInstance(myProject).showErrors(exceptions, myVcs.getDisplayName() + " operations errors");
+        AbstractVcsHelper.getInstance(myProject).showErrors(exceptions, VcsBundle.message("vcs.tab.title.vcs.name.operations.errors", myVcs.getDisplayName()));
       }
     }
 

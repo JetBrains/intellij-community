@@ -1,13 +1,17 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.javadoc;
 
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.documentation.DocumentationMarkup;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.PsiParameter;
+import com.intellij.psi.util.JavaElementKind;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -70,18 +74,20 @@ public class NonCodeAnnotationGenerator {
   }
 
   @NotNull
-  public static String getNonCodeHeader(Collection<? extends AnnotationDocGenerator> values) {
+  public static @Nls String getNonCodeHeader(Collection<? extends AnnotationDocGenerator> values) {
     boolean hasExternal = values.stream().anyMatch(AnnotationDocGenerator::isExternal);
     boolean hasInferred = values.stream().anyMatch(AnnotationDocGenerator::isInferred);
 
-    return (hasExternal && hasInferred ? "External and <i>inferred</i>" : hasExternal ? "External" : "<i>Inferred</i>") + " annotations";
+    if (hasExternal && hasInferred) {
+      return JavaBundle.message("non.code.annotations.explanation.external.and.inferred");
+    }
+    if (hasExternal) {
+      return JavaBundle.message("non.code.annotations.explanation.external");
+    }
+    return JavaBundle.message("non.code.annotations.explanation.inferred");
   }
 
   private static String getKind(PsiModifierListOwner owner) {
-    if (owner instanceof PsiParameter) return "Parameter";
-    if (owner instanceof PsiMethod) {
-      return ((PsiMethod)owner).isConstructor() ? "Constructor" : "Method";
-    }
-    return owner.getClass().getName(); // unexpected
+    return StringUtil.capitalize(JavaElementKind.fromElement(owner).subject());
   }
 }

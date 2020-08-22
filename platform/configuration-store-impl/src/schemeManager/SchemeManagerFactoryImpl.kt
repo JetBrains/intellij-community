@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore.schemeManager
 
 import com.intellij.configurationStore.*
@@ -16,7 +16,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.lang.CompoundRuntimeException
+import com.intellij.util.throwIfNotEmpty
 import org.jetbrains.annotations.TestOnly
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -98,7 +98,7 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), com.intellij.ope
         errors.add(e)
       }
     }
-    CompoundRuntimeException.throwIfNotEmpty(errors)
+    throwIfNotEmpty(errors)
   }
 
   @Suppress("unused")
@@ -117,7 +117,7 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), com.intellij.ope
     }
 
     override fun pathToFile(path: String): Path {
-      return Paths.get(ApplicationManager.getApplication().stateStore.storageManager.expandMacros(ROOT_CONFIG), path)
+      return ApplicationManager.getApplication().stateStore.storageManager.expandMacro(ROOT_CONFIG).resolve(path)
     }
   }
 
@@ -144,16 +144,16 @@ sealed class SchemeManagerFactoryBase : SchemeManagerFactory(), com.intellij.ope
 
     override fun pathToFile(path: String): Path {
       if (project.isDefault) {
-        // not idea how to solve this issue (run SingleInspectionProfilePanelTest) in a quick and safe way
+        // no idea how to solve this issue (run SingleInspectionProfilePanelTest) in a quick and safe way
         return Paths.get("__not_existent_path__")
       }
 
-      val projectFileDir = (project.stateStore as? IProjectStore)?.projectConfigDir
+      val projectFileDir = (project.stateStore as? IProjectStore)?.directoryStorePath
       if (projectFileDir == null) {
         return Paths.get(project.basePath!!, ".$path")
       }
       else {
-        return Paths.get(projectFileDir, path)
+        return projectFileDir.resolve(path)
       }
     }
   }

@@ -17,7 +17,7 @@ import static com.intellij.util.ui.SmoothScrollUtil.*;
 import static java.lang.Math.abs;
 import static java.lang.Math.max;
 
-public class TouchScroll {
+public final class TouchScroll {
   private final InertialAnimator horizontal = new InertialAnimator(), vertical = new InertialAnimator();
   private final FlingManager horizontalFling = new FlingManager(), verticalFling = new FlingManager();
   private final @NotNull Supplier<Boolean> myScrollEnabled;

@@ -266,7 +266,7 @@ public final class LogLoadedApplicationClassesAgent {
    * Generated report file in the classes list format
    * compatible with JDK loader from src/hotspot/share/classfile/classListParser.cpp
    */
-  private static class ClassesLogger {
+  private static final class ClassesLogger {
     private int myIdCounter = 0;
     private final Map<Class<?>, ClassInfo> myClasses = new LinkedHashMap<>();
     private final List<String> myLog = new ArrayList<>();

@@ -4,6 +4,7 @@ package com.intellij.openapi.projectRoots.impl;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.intellij.codeInsight.intention.PriorityAction;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -155,7 +156,7 @@ public class UnknownSdkEditorNotification {
     abstract EditorNotificationPanel createNotificationPanelImpl(@NotNull VirtualFile file, @NotNull Project project);
 
     @NotNull
-    protected EditorNotificationPanel newNotificationPanel(@NotNull String intentionActionText) {
+    protected EditorNotificationPanel newNotificationPanel(@IntentionName @NotNull String intentionActionText) {
       return new EditorNotificationPanel() {
         @Override
         protected String getIntentionActionText() {

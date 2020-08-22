@@ -1,32 +1,22 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.testFramework.TestApplicationManager;
+import com.intellij.ui.tree.TreeTestUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import junit.framework.TestCase;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
 
 public class TreeExpandCollapseTest extends TestCase {
   private final DefaultMutableTreeNode myRoot = new DefaultMutableTreeNode();
   private final DefaultTreeModel myTreeModel = new DefaultTreeModel(myRoot);
-  private JTree myTree = new JTree(myTreeModel);
+  private JTree myTree;
   private final DefaultMutableTreeNode myChildA = new DefaultMutableTreeNode();
   private final DefaultMutableTreeNode myChild2 = new DefaultMutableTreeNode();
   private TreePath myChildAPath;
@@ -34,10 +24,19 @@ public class TreeExpandCollapseTest extends TestCase {
   private final DefaultMutableTreeNode myChildB = new DefaultMutableTreeNode();
   private TreePath myChildBPath;
 
+  private static @NotNull JTree createTree(@NotNull TreeModel model) {
+    @SuppressWarnings("UndesirableClassUsage")
+    JTree tree = new JTree(model);
+    TreeTestUtil.assertTreeUI(tree);
+    tree.setRootVisible(true);
+    return tree;
+  }
+
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myTree.setRootVisible(true);
+    TestApplicationManager.getInstance();
+    myTree = createTree(myTreeModel);
     myTreeModel.insertNodeInto(myChildA, myRoot, 0);
     myTreeModel.insertNodeInto(myChildB, myRoot, 1);
     myTreeModel.insertNodeInto(myChild2, myChildA, 0);
@@ -87,8 +86,7 @@ public class TreeExpandCollapseTest extends TestCase {
 
   public void testInfiniteExpand() {
     InfiniteTreeModel model = new InfiniteTreeModel();
-    myTree = new JTree(model);
-    myTree.setRootVisible(true);
+    myTree = createTree(model);
     TreePath rootPath = new TreePath(model.getRoot());
     myTree.setSelectionPath(rootPath);
     myTree.collapsePath(rootPath);
@@ -99,8 +97,7 @@ public class TreeExpandCollapseTest extends TestCase {
 
   public void testSubsequentExpand() {
     InfiniteTreeModel model = new InfiniteTreeModel();
-    myTree = new JTree(model);
-    myTree.setRootVisible(true);
+    myTree = createTree(model);
     TreeExpandCollapse.expandAll(myTree);
     TreePath path = new TreePath(model.getRoot());
     while (myTree.isExpanded(path)) path = path.pathByAddingChild(model.getChild(path.getLastPathComponent(), 0));

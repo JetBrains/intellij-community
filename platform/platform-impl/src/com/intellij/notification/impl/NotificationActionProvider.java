@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification.impl;
 
+import com.intellij.openapi.util.NlsActions;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -16,11 +17,11 @@ public interface NotificationActionProvider extends NotificationFullContent {
     private final String myLink;
     private final boolean myDefaultAction;
 
-    public Action(HyperlinkListener listener, String link, String name) {
+    public Action(HyperlinkListener listener, String link, @NlsActions.ActionText String name) {
       this(listener, link, name, false);
     }
 
-    public Action(HyperlinkListener listener, String link, String name, boolean defaultAction) {
+    public Action(HyperlinkListener listener, String link, @NlsActions.ActionText String name, boolean defaultAction) {
       super(name);
       myListener = listener;
       myLink = link;

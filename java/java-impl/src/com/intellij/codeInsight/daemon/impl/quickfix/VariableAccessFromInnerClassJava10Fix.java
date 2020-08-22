@@ -19,6 +19,7 @@ import com.intellij.util.SmartList;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +32,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 import static java.util.Collections.emptyList;
 
 public class VariableAccessFromInnerClassJava10Fix extends BaseIntentionAction {
-  private final static String[] NAMES = {
+  @NonNls private final static String[] NAMES = {
     "ref",
     "lambdaContext",
     "context",

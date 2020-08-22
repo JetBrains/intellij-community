@@ -32,7 +32,7 @@ public class PyAbstractClassInspection extends PyInspection {
     return new Visitor(holder, session);
   }
 
-  private static class Visitor extends PyInspectionVisitor {
+  private static final class Visitor extends PyInspectionVisitor {
 
     private Visitor(@NotNull ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
       super(holder, session);

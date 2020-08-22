@@ -317,7 +317,7 @@ public class BuildTargetSourcesState implements BuildListener {
     return result;
   }
 
-  private static class BuildTargetState {
+  private static final class BuildTargetState {
     private final String hash;
     private final String relativePath;
 

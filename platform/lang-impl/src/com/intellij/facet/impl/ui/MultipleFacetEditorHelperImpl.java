@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.facet.impl.ui;
 
 import com.intellij.facet.ui.FacetEditor;
@@ -122,7 +122,7 @@ public class MultipleFacetEditorHelperImpl implements MultipleFacetEditorHelper 
     }
   }
 
-  private static class TextFieldBinding extends AbstractBinding {
+  private static final class TextFieldBinding extends AbstractBinding {
     private final JTextField myCommon;
     private final List<JTextField> myTextFields;
     private final List<String> myInitialValues;

@@ -21,11 +21,12 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
+import com.intellij.util.DeprecatedMethodException;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -34,10 +35,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Set;
+import java.util.*;
 
 public final class VfsRootAccess {
   private static final boolean SHOULD_PERFORM_ACCESS_CHECK =
@@ -48,7 +46,7 @@ public final class VfsRootAccess {
   private static boolean insideGettingRoots;
 
   @TestOnly
-  static void assertAccessInTests(@NotNull VirtualFileSystemEntry child, @NotNull NewVirtualFileSystem delegate) {
+  static void assertAccessInTests(@NotNull VirtualFile child, @NotNull NewVirtualFileSystem delegate) {
     Application application = ApplicationManager.getApplication();
     if (SHOULD_PERFORM_ACCESS_CHECK &&
         application.isUnitTestMode() &&
@@ -69,20 +67,19 @@ public final class VfsRootAccess {
       boolean isUnder = allowed == null || allowed.isEmpty();
 
       if (!isUnder) {
-        String childPath = child.getPath();
+        VirtualFile local = child;
         if (delegate == JarFileSystem.getInstance()) {
-          VirtualFile local = JarFileSystem.getInstance().getVirtualFileForJar(child);
+          local = JarFileSystem.getInstance().getVirtualFileForJar(child);
           assert local != null : child;
-          childPath = local.getPath();
         }
         for (String root : allowed) {
-          if (FileUtil.startsWith(childPath, root)) {
+          if (PathUtil.isAncestorOrSelf(root, local)) {
             isUnder = true;
             break;
           }
           if (root.startsWith(JarFileSystem.PROTOCOL_PREFIX)) {
             String rootLocalPath = FileUtil.toSystemIndependentName(PathUtil.toPresentableUrl(root));
-            isUnder = FileUtil.startsWith(childPath, rootLocalPath);
+            isUnder = PathUtil.isAncestorOrSelf(rootLocalPath, local);
             if (isUnder) break;
           }
         }
@@ -99,7 +96,7 @@ public final class VfsRootAccess {
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     if (openProjects.length == 0) return null;
 
-    Set<String> allowed = CollectionFactory.createFilePathSet();
+    @NonNls Set<String> allowed = CollectionFactory.createFilePathSet();
     allowed.add(FileUtil.toSystemIndependentName(PathManager.getHomePath()));
 
     // In plugin development environment PathManager.getHomePath() returns path like "~/.IntelliJIdea/system/plugins-sandbox/test" when running tests
@@ -179,7 +176,7 @@ public final class VfsRootAccess {
   private static Collection<String> getAllRootUrls(Project project) {
     insideGettingRoots = true;
     try {
-      Set<String> roots = new ObjectOpenHashSet<>();
+      Set<String> roots = CollectionFactory.createSmallMemoryFootprintSet();
       OrderEnumerator enumerator = ProjectRootManager.getInstance(project).orderEntries().using(new DefaultModulesProvider(project));
       ContainerUtil.addAll(roots, enumerator.classes().getUrls());
       ContainerUtil.addAll(roots, enumerator.sources().getUrls());
@@ -193,25 +190,30 @@ public final class VfsRootAccess {
   @TestOnly
   public static void allowRootAccess(@NotNull Disposable disposable, @NotNull String @NotNull ... roots) {
     if (roots.length == 0) return;
-    allowRootAccess(roots);
+    doAllow(roots);
     Disposer.register(disposable, () -> disallowRootAccess(roots));
   }
 
   /** @deprecated Use {@link #allowRootAccess(Disposable, String...)} instead */
   @Deprecated
   @TestOnly
-  @SuppressWarnings("DeprecatedIsStillUsed")
   public static void allowRootAccess(String @NotNull ... roots) {
+    DeprecatedMethodException.report("Use `allowRootAccess(Disposable, String...)` instead");
+    doAllow(roots);
+  }
+
+  private static void doAllow(String @NotNull ... roots) {
     for (String root : roots) {
-      ourAdditionalRoots.add(StringUtil.trimEnd(FileUtil.toSystemIndependentName(root), '/'));
+      String path = StringUtil.trimEnd(FileUtil.toSystemIndependentName(root), '/');
+      if (path.isEmpty()) {
+        throw new IllegalArgumentException("Must not pass empty pat but got: '" + Arrays.toString(roots) + "'");
+      }
+      ourAdditionalRoots.add(path);
     }
   }
 
-  /** @deprecated Use {@link #allowRootAccess(Disposable, String...)} instead */
-  @Deprecated
   @TestOnly
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  public static void disallowRootAccess(String @NotNull ... roots) {
+  private static void disallowRootAccess(String @NotNull ... roots) {
     for (String root : roots) {
       ourAdditionalRoots.remove(StringUtil.trimEnd(FileUtil.toSystemIndependentName(root), '/'));
     }

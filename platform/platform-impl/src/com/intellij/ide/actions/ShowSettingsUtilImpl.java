@@ -28,12 +28,13 @@ import java.util.List;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
 
+// extended externally
 public class ShowSettingsUtilImpl extends ShowSettingsUtil {
   private static final Logger LOG = Logger.getInstance(ShowSettingsUtilImpl.class);
 
   @NotNull
   private static Project getProject(@Nullable Project project) {
-    return project != null ? project : ProjectManager.getInstance().getDefaultProject();
+    return project == null ? ProjectManager.getInstance().getDefaultProject() : project;
   }
 
   @NotNull
@@ -56,20 +57,26 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
    * @param withIdeSettings specifies whether to load application settings or not
    * @return all configurables as a plain list except the root configurable group
    */
-  @NotNull
-  public static List<Configurable> getConfigurables(@Nullable Project project, boolean withIdeSettings) {
-    ConfigurableGroup group = ConfigurableExtensionPointUtil.getConfigurableGroup(project, withIdeSettings);
+  public static @NotNull List<Configurable> getConfigurables(@Nullable Project project, boolean withIdeSettings) {
     List<Configurable> list = new ArrayList<>();
-    collect(list, group.getConfigurables());
+    if (!withIdeSettings && project == null) {
+      project = ProjectManager.getInstance().getDefaultProject();
+    }
+
+    for (Configurable configurable : ConfigurableExtensionPointUtil.getConfigurables(project, withIdeSettings)) {
+      list.add(configurable);
+      if (configurable instanceof Configurable.Composite) {
+        collect(list, ((Configurable.Composite)configurable).getConfigurables());
+      }
+    }
     return list;
   }
 
-  private static void collect(List<? super Configurable> list, Configurable... configurables) {
+  private static void collect(@NotNull List<Configurable> list, Configurable @NotNull [] configurables) {
     for (Configurable configurable : configurables) {
       list.add(configurable);
       if (configurable instanceof Configurable.Composite) {
-        Configurable.Composite composite = (Configurable.Composite)configurable;
-        collect(list, composite.getConfigurables());
+        collect(list, ((Configurable.Composite)configurable).getConfigurables());
       }
     }
   }

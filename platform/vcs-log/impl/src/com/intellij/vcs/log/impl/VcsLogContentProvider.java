@@ -72,7 +72,9 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
   @Override
   public void initTabContent(@NotNull Content content) {
     myContent = content;
-    myContent.setTabName(TAB_NAME);
+    // Display name is always used for presentation, tab name is used as an id.
+    // See com.intellij.vcs.log.impl.VcsLogContentUtil.selectMainLog.
+    myContent.setTabName(TAB_NAME); //NON-NLS
     updateDisplayName();
 
     myProjectLog.createLogInBackground(true);
@@ -94,7 +96,7 @@ public class VcsLogContentProvider implements ChangesViewContentProvider {
       DataManager.registerDataProvider(myContainer, panel);
 
       updateDisplayName();
-      myUi.addFilterListener(this::updateDisplayName);
+      myUi.getFilterUi().addFilterListener(this::updateDisplayName);
 
       if (myOnCreatedListener != null) myOnCreatedListener.consume(myUi);
       myOnCreatedListener = null;

@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
@@ -100,17 +101,18 @@ public class MavenServerConnector implements @NotNull Disposable {
     }
   }
 
-  private static MavenDistribution findMavenDistribution(Project project, MavenWorkspaceSettings settings) {
+
+  private static @Nullable String getWrapperDistributionUrl(Project project) {
     VirtualFile baseDir = project.getBaseDir();
     if (baseDir == null) {
-      return MavenServerManager.resolveEmbeddedMavenHome();
+      return null;
     }
-    //in future we should get rid of Project and create connector per each root maven project,
-    // in case if different maven projects are imported into idea project
+    return MavenWrapperSupport.getWrapperDistributionUrl(baseDir);
+  }
 
+  private static MavenDistribution findMavenDistribution(Project project, MavenWorkspaceSettings settings) {
     MavenSyncConsole console = MavenProjectsManager.getInstance(project).getSyncConsole();
-    String distributionUrl = MavenWrapperSupport.getWrapperDistributionUrl(baseDir);
-
+    String distributionUrl = getWrapperDistributionUrl(project);
     if (distributionUrl == null) {
       MavenDistribution distribution = new MavenDistributionConverter().fromString(settings.generalSettings.getMavenHome());
       if (distribution == null) {
@@ -122,8 +124,9 @@ public class MavenServerConnector implements @NotNull Disposable {
     }
     else {
       try {
+
         console.startWrapperResolving();
-        MavenDistribution distribution = new MavenWrapperSupport().downloadAndInstallMaven(distributionUrl);
+        MavenDistribution distribution = new MavenWrapperSupport().downloadAndInstallMaven(distributionUrl, console.progressIndicatorForWrapper());
         console.finishWrapperResolving(null);
         return distribution;
       }
@@ -142,6 +145,7 @@ public class MavenServerConnector implements @NotNull Disposable {
     try {
       if (myDebugPort != null) {
         //simple connection using JavaDebuggerConsoleFilterProvider
+        //noinspection UseOfSystemOutOrSystemErr
         System.out.println("Listening for transport dt_socket at address: " + myDebugPort);
       }
 

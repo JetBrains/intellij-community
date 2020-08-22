@@ -16,6 +16,7 @@ import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
 import com.intellij.workspaceModel.ide.impl.virtualFile
 import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.FilePointerProvider
 import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.FilePointerScope
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.findModuleEntity
 import com.intellij.workspaceModel.storage.*
 import java.util.*
 
@@ -27,12 +28,9 @@ class CompilerModuleExtensionBridge(
 
   private var changed = false
   private val virtualFileManager = VirtualFileUrlManager.getInstance(module.project)
-  private val javaSettingsValue: CachedValue<JavaModuleSettingsEntity?> = CachedValue {
-    it.resolve(module.moduleEntityId)?.javaSettings
-  }
 
   private val javaSettings
-    get() = entityStorage.cachedValue(javaSettingsValue)
+    get() = entityStorage.current.findModuleEntity(module)?.javaSettings
 
   private fun getSanitizedModuleName(): String {
     val file = module.moduleFile
@@ -87,7 +85,7 @@ class CompilerModuleExtensionBridge(
       error("Read-only $javaClass")
     }
 
-    val moduleEntity = entityStorage.current.resolve(module.moduleEntityId) ?: error("Could not resolve ${module.moduleEntityId}")
+    val moduleEntity = entityStorage.current.findModuleEntity(module) ?: error("Could not find entity for $module")
     val moduleSource = moduleEntity.entitySource
 
     val oldJavaSettings = javaSettings ?: diff.addJavaModuleSettingsEntity(

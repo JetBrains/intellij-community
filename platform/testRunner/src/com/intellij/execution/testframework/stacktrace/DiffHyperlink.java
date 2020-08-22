@@ -27,6 +27,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,11 +78,11 @@ public class DiffHyperlink implements Printable {
     return filePath == null ? null : filePath.replace(File.separatorChar, '/');
   }
 
-  protected String getTitle() {
-    return ExecutionBundle.message("strings.equal.failed.dialog.title") + (myTestProxyName != null ? " (" + myTestProxyName + ")" : "");
+  protected @NlsContexts.DialogTitle String getTitle() {
+    return ExecutionBundle.message("strings.equal.failed.dialog.title", myTestProxyName != null ? " (" + myTestProxyName + ")" : "");
   }
 
-  public String getDiffTitle() {
+  public @NlsContexts.DialogTitle String getDiffTitle() {
     return getTitle();
   }
 

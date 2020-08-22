@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.tests
 
 import com.intellij.openapi.application.ApplicationManager
@@ -11,7 +11,6 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.testFramework.VfsTestUtil.createDir
 import com.intellij.testFramework.runInEdtAndGet
-import com.intellij.ui.GuiUtils
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.test.add
 import git4idea.test.addCommit
@@ -104,7 +103,7 @@ class GitChangeProviderVersionedTest : GitChangeProviderTest() {
   }
 
   fun testDeleteDirRecursively() {
-    GuiUtils.runOrInvokeAndWait {
+    ApplicationManager.getApplication().invokeAndWait {
       ApplicationManager.getApplication().runWriteAction {
         val dir = projectRoot.findChild("dir")!!
         dirtyScope.addDirtyDirRecursively(VcsUtil.getFilePath(dir))
@@ -248,7 +247,7 @@ class GitChangeProviderVersionedTest : GitChangeProviderTest() {
     VfsUtil.markDirtyAndRefresh(false, true, true, projectRoot)
     dirty(projectRoot)
 
-    if (SystemInfo.isWindows) {
+    if (!SystemInfo.isFileSystemCaseSensitive) {
       assertProviderChangesIn(listOf("rename.txt", "RENAME.txt"),
                               listOf(null, MODIFIED))
 

@@ -18,6 +18,7 @@ package com.siyeh.ig.security;
 import com.intellij.codeInspection.concurrencyAnnotations.JCiPUtil;
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
@@ -57,7 +58,7 @@ public class PublicStaticCollectionFieldInspection extends BaseInspection {
       Arrays.asList(myMethodMatcher.getClassNames(), myMethodMatcher.getMethodNamePatterns()),
       InspectionGadgetsBundle.message("result.of.method.call.ignored.class.column.title"),
       InspectionGadgetsBundle.message("result.of.method.call.ignored.method.column.title")));
-    return UiUtils.createAddRemoveTreeClassChooserPanel(table, "Choose class");
+    return UiUtils.createAddRemoveTreeClassChooserPanel(table, JavaBundle.message("dialog.title.choose.class"));
   }
 
   @Override

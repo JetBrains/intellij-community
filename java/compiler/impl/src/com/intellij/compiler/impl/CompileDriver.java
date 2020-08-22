@@ -30,9 +30,11 @@ import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -67,7 +69,6 @@ public final class CompileDriver {
   private static final Key<Boolean> COMPILATION_STARTED_AUTOMATICALLY = Key.create("compilation_started_automatically");
   private static final Key<ExitStatus> COMPILE_SERVER_BUILD_STATUS = Key.create("COMPILE_SERVER_BUILD_STATUS");
   private static final long ONE_MINUTE_MS = 60L * 1000L;
-  public static final String CLASSES_UP_TO_DATE_CHECK = "Classes up-to-date check";
 
   private final Project myProject;
   private final Map<Module, String> myModuleOutputPaths = new HashMap<>();
@@ -103,7 +104,7 @@ public final class CompileDriver {
       LOG.debug("isUpToDate operation started");
     }
 
-    final CompilerTask task = new CompilerTask(myProject, CLASSES_UP_TO_DATE_CHECK, true, false, false, isCompilationStartedAutomatically(scope));
+    final CompilerTask task = new CompilerTask(myProject, JavaCompilerBundle.message("classes.up.to.date.check"), true, false, false, isCompilationStartedAutomatically(scope));
     final CompileContextImpl compileContext = new CompileContextImpl(myProject, task, scope, true, false);
 
     final Ref<ExitStatus> result = new Ref<>();
@@ -113,7 +114,10 @@ public final class CompileDriver {
       if (indicator.isCanceled() || myProject.isDisposed()) {
         return;
       }
+      final BuildManager buildManager = BuildManager.getInstance();
       try {
+        buildManager.postponeBackgroundTasks();
+        buildManager.cancelAutoMakeTasks(myProject);
         TaskFuture<?> future = compileInExternalProcess(compileContext, true);
         if (future != null) {
           while (!future.waitFor(200L, TimeUnit.MILLISECONDS)) {
@@ -130,6 +134,7 @@ public final class CompileDriver {
         ExitStatus exitStatus = COMPILE_SERVER_BUILD_STATUS.get(compileContext);
         task.setEndCompilationStamp(exitStatus, System.currentTimeMillis());
         result.set(exitStatus);
+        buildManager.allowBackgroundTasks();
         if (!myProject.isDisposed()) {
           CompilerCacheManager.getInstance(myProject).flushCaches();
         }
@@ -241,9 +246,7 @@ public final class CompileDriver {
     }
 
     Map<String, List<Artifact>> outputToArtifact = ArtifactCompilerUtil.containsArtifacts(scopes) ? ArtifactCompilerUtil.createOutputToArtifactMap(myProject) : null;
-    final BuildManager buildManager = BuildManager.getInstance();
-    buildManager.cancelAutoMakeTasks(myProject);
-    return buildManager.scheduleBuild(myProject, compileContext.isRebuild(), compileContext.isMake(), onlyCheckUpToDate, scopes, paths, builderParams, new DefaultMessageHandler(myProject) {
+    return BuildManager.getInstance().scheduleBuild(myProject, compileContext.isRebuild(), compileContext.isMake(), onlyCheckUpToDate, scopes, paths, builderParams, new DefaultMessageHandler(myProject) {
       @Override
       public void sessionTerminated(@NotNull UUID sessionId) {
         if (compileContext.shouldUpdateProblemsView()) {
@@ -315,7 +318,7 @@ public final class CompileDriver {
               }
               if (outputToArtifact != null) {
                 Collection<Artifact> artifacts = outputToArtifact.get(root);
-                if (!artifacts.isEmpty()) {
+                if (artifacts != null && !artifacts.isEmpty()) {
                   writtenArtifactOutputPaths.add(FileUtil.toSystemDependentName(DeploymentUtil.appendToPath(root, relativePath)));
                 }
               }
@@ -403,13 +406,16 @@ public final class CompileDriver {
         return;
       }
       CompilerCacheManager compilerCacheManager = CompilerCacheManager.getInstance(myProject);
+      final BuildManager buildManager = BuildManager.getInstance();
       try {
+        buildManager.postponeBackgroundTasks();
+        buildManager.cancelAutoMakeTasks(myProject);
         LOG.info("COMPILATION STARTED (BUILD PROCESS)");
         if (message != null) {
           compileContext.addMessage(message);
         }
         if (isRebuild) {
-          CompilerUtil.runInContext(compileContext, "Clearing build system data...",
+          CompilerUtil.runInContext(compileContext, JavaCompilerBundle.message("progress.text.clearing.build.system.data"),
                                     (ThrowableRunnable<Throwable>)() -> compilerCacheManager
                                       .clearCaches(compileContext));
         }
@@ -443,6 +449,7 @@ public final class CompileDriver {
         LOG.error(e); // todo
       }
       finally {
+        buildManager.allowBackgroundTasks();
         compilerCacheManager.flushCaches();
 
         final long duration = notifyCompilationCompleted(compileContext, callback, COMPILE_SERVER_BUILD_STATUS.get(compileContext));
@@ -519,7 +526,8 @@ public final class CompileDriver {
           ToolWindowManager.getInstance(myProject).notifyByBalloon(toolWindowId, messageType, statusMessage);
         }
 
-        final String wrappedMessage = _status != ExitStatus.UP_TO_DATE? "<a href='#'>" + statusMessage + "</a>" : statusMessage;
+        final String wrappedMessage = _status != ExitStatus.UP_TO_DATE?
+                                      HtmlChunk.link("#", statusMessage).toString() : statusMessage;
         final Notification notification = CompilerManager.NOTIFICATION_GROUP.createNotification(
           "", wrappedMessage,
           messageType.toNotificationType(),
@@ -547,15 +555,16 @@ public final class CompileDriver {
       message = JavaCompilerBundle.message("status.all.up.to.date");
     }
     else  {
+      String durationString = StringUtil.formatDurationApproximate(duration);
       if (status == ExitStatus.SUCCESS) {
         message = warningCount > 0
-               ? JavaCompilerBundle.message("status.compilation.completed.successfully.with.warnings", warningCount)
-               : JavaCompilerBundle.message("status.compilation.completed.successfully");
+               ? JavaCompilerBundle.message("status.compilation.completed.successfully.with.warnings", warningCount, durationString)
+               : JavaCompilerBundle.message("status.compilation.completed.successfully", durationString);
       }
       else {
-        message = JavaCompilerBundle.message("status.compilation.completed.successfully.with.warnings.and.errors", errorCount, warningCount);
+        message = JavaCompilerBundle.message("status.compilation.completed.successfully.with.warnings.and.errors", 
+                                             errorCount, warningCount, durationString);
       }
-      message = message + " in " + StringUtil.formatDurationApproximate(duration);
     }
     return message;
   }
@@ -566,7 +575,7 @@ public final class CompileDriver {
     return map.computeIfAbsent(module, k -> CompilerPaths.getModuleOutputPath(module, inTestSourceContent));
   }
 
-  public void executeCompileTask(final CompileTask task, final CompileScope scope, final String contentName, final Runnable onTaskFinished) {
+  public void executeCompileTask(final CompileTask task, final CompileScope scope, final @NlsContexts.TabTitle String contentName, final Runnable onTaskFinished) {
     final CompilerTask progressManagerTask = new CompilerTask(myProject, contentName, false, false, true, isCompilationStartedAutomatically(scope));
     final CompileContextImpl compileContext = new CompileContextImpl(myProject, progressManagerTask, scope, false, false);
 

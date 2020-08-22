@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon.indentGuide;
 
 import com.intellij.application.options.CodeStyle;
@@ -90,7 +91,7 @@ public abstract class BaseIndentGuideTest extends LightJavaCodeInsightFixtureTes
     return new IndentGuideTestData(sb.toString(), guides);
   }
 
-  private static class IndentGuideTestData {
+  private static final class IndentGuideTestData {
 
     private final String myText;
     private final List<Guide> myGuides;

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.roots;
 
 import com.intellij.ide.projectView.impl.RenameModuleHandler;
@@ -7,7 +7,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.ui.InputValidator;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.TestDialogManager;
 import com.intellij.openapi.ui.TestInputDialog;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,11 +28,10 @@ import org.jetbrains.annotations.Nullable;
  * @author Vladislav.Soroka
  */
 public class RenameModuleTest extends JavaModuleTestCase {
-
   @Override
   protected void tearDown() throws Exception {
     try {
-      Messages.setTestInputDialog(TestInputDialog.DEFAULT);
+      TestDialogManager.setTestInputDialog(TestInputDialog.DEFAULT);
     }
     catch (Throwable e) {
       addSuppressedException(e);
@@ -112,7 +111,7 @@ public class RenameModuleTest extends JavaModuleTestCase {
   }
 
   private void rename(RenameHandler renameHandler, String newName, DataContext context) {
-    Messages.setTestInputDialog(new TestInputDialog() {
+    TestDialogManager.setTestInputDialog(new TestInputDialog() {
       @Override
       public String show(String message) {
         return null;

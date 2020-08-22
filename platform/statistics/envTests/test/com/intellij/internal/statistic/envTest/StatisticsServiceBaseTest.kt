@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.ThreadTracker
 import junit.framework.TestCase
@@ -18,9 +17,7 @@ internal abstract class StatisticsServiceBaseTest : HeavyPlatformTestCase() {
 
   override fun setUp() {
     super.setUp()
-    val tempDir = LocalFileSystem.getInstance().findFileByPath(FileUtil.getTempDirectory())
-    TestCase.assertNotNull(tempDir)
-    tmpLocalRoot = createChildDirectory(tempDir!!, "docker_server_root").path
+    tmpLocalRoot = tempDir.createVirtualDir("docker_server_root").path
     FileUtil.copyDir(File("${getTestDataPath()}/default_root"), File(tmpLocalRoot))
 
     ThreadTracker.longRunningThreadCreated(longRunningThreadDisposable, "Okio Watchdog")

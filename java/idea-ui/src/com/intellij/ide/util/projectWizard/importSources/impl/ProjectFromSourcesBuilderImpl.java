@@ -3,6 +3,7 @@ package com.intellij.ide.util.projectWizard.importSources.impl;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.util.importProject.LibraryDescriptor;
 import com.intellij.ide.util.importProject.ModuleDescriptor;
 import com.intellij.ide.util.importProject.ModuleInsight;
@@ -13,6 +14,7 @@ import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.ide.util.projectWizard.importSources.*;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.SdkTypeId;
@@ -29,9 +31,11 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.MultiMap;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -48,7 +52,6 @@ import java.util.*;
  */
 public final class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder implements ProjectFromSourcesBuilder {
   private static final Logger LOG = Logger.getInstance(ProjectFromSourcesBuilderImpl.class);
-  private static final String NAME = "Existing Sources";
   private String myBaseProjectPath;
   private final List<ProjectConfigurationUpdater> myUpdaters = new ArrayList<>();
   private final Map<ProjectStructureDetector, ProjectDescriptor> myProjectDescriptors = new LinkedHashMap<>();
@@ -122,7 +125,7 @@ public final class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder im
   @NotNull
   @Override
   public String getName() {
-    return NAME;
+    return JavaUiBundle.message("existing.sources");
   }
 
   @Override
@@ -140,7 +143,7 @@ public final class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder im
   }
 
   @Override
-  public void setFileToImport(String path) {
+  public void setFileToImport(@NotNull String path) {
     setBaseProjectPath(path);
   }
 
@@ -178,11 +181,25 @@ public final class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder im
 
     final Map<ModuleDescriptor, Module> descriptorToModuleMap = new HashMap<>();
 
+    ModulesProvider updatedModulesProvider = fromProjectStructure ? modulesProvider : new DefaultModulesProvider(project);
     try {
       WriteAction.run(() -> {
         final ModifiableModuleModel moduleModel = fromProjectStructure ? model : ModuleManager.getInstance(project).getModifiableModel();
+        Map<String, Module> contentRootToModule = new HashMap<>();
+        for (Module module : moduleModel.getModules()) {
+          for (String url : updatedModulesProvider.getRootModel(module).getContentRootUrls()) {
+            contentRootToModule.put(url, module);
+          }
+        }
         for (ProjectDescriptor descriptor : getSelectedDescriptors()) {
           for (final ModuleDescriptor moduleDescriptor : descriptor.getModules()) {
+            for (File contentRoot : moduleDescriptor.getContentRoots()) {
+              String url = VfsUtilCore.fileToUrl(contentRoot);
+              Module existingModule = contentRootToModule.get(url);
+              if (existingModule != null && ArrayUtil.contains(existingModule, moduleModel.getModules())) {
+                moduleModel.disposeModule(existingModule);
+              }
+            }
             final Module module;
             if (moduleDescriptor.isReuseExistingElement()) {
               final ExistingModuleLoader moduleLoader =
@@ -238,7 +255,6 @@ public final class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder im
     }
 
     WriteAction.run(() -> {
-      ModulesProvider updatedModulesProvider = fromProjectStructure ? modulesProvider : new DefaultModulesProvider(project);
       for (ProjectConfigurationUpdater updater : myUpdaters) {
         updater.updateProject(project, modelsProvider, updatedModulesProvider);
       }

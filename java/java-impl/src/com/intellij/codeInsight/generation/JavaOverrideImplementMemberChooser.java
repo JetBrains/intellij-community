@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.generation;
 
 import com.intellij.icons.AllIcons;
@@ -23,13 +9,17 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -47,8 +37,7 @@ import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 /**
  * @author Dmitry Batkovich
  */
-public class JavaOverrideImplementMemberChooser extends MemberChooser<PsiMethodMember> {
-  private static final String SORT_METHODS_BY_PERCENT_DESCRIPTION = "Sort by Percent of Classes which Overrides a Method";
+public final class JavaOverrideImplementMemberChooser extends MemberChooser<PsiMethodMember> {
 
   @NonNls public static final String PROP_COMBINED_OVERRIDE_IMPLEMENT = "OverrideImplement.combined";
   @NonNls public static final String PROP_OVERRIDING_SORTED_OVERRIDE_IMPLEMENT = "OverrideImplement.overriding.sorted";
@@ -104,7 +93,15 @@ public class JavaOverrideImplementMemberChooser extends MemberChooser<PsiMethodM
       if (onlyPrimary.length == 0) {
         javaOverrideImplementMemberChooser.selectElements(new ClassMember[] {all[0]});
       } else {
-        javaOverrideImplementMemberChooser.selectElements(onlyPrimary);
+        PsiClass currClass = ObjectUtils.tryCast(aClass, PsiClass.class);
+        if (currClass != null && currClass.isRecord()) {
+          PsiMethodMember[] toImplementMembers = ContainerUtil
+            .filter(onlyPrimary, m -> !OverrideImplementExploreUtil.belongsToRecord(m.getElement()))
+            .toArray(new PsiMethodMember[0]);
+          javaOverrideImplementMemberChooser.selectElements(ArrayUtil.isEmpty(toImplementMembers) ? onlyPrimary : toImplementMembers);
+        } else {
+          javaOverrideImplementMemberChooser.selectElements(onlyPrimary);
+        }
       }
     }
 
@@ -181,7 +178,7 @@ public class JavaOverrideImplementMemberChooser extends MemberChooser<PsiMethodM
     group.add(myMergeAction);
   }
 
-  private static String getChooserTitle(final boolean toImplement, final boolean merge) {
+  private static @NlsContexts.DialogTitle String getChooserTitle(final boolean toImplement, final boolean merge) {
     return toImplement
            ? JavaBundle.message("methods.to.implement.chooser.title")
            : merge
@@ -200,7 +197,8 @@ public class JavaOverrideImplementMemberChooser extends MemberChooser<PsiMethodM
 
   private class MySortByOverridingAction extends ToggleAction {
     MySortByOverridingAction() {
-      super(SORT_METHODS_BY_PERCENT_DESCRIPTION, SORT_METHODS_BY_PERCENT_DESCRIPTION, AllIcons.ObjectBrowser.SortedByUsage);
+      super(JavaBundle.message("action.sort.by.percent.classes.which.overrides.method.text"),
+            JavaBundle.message("action.sort.by.percent.classes.which.overrides.method.description"), AllIcons.ObjectBrowser.SortedByUsage);
       registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_U, InputEvent.ALT_MASK)), myTree);
     }
 
@@ -227,7 +225,7 @@ public class JavaOverrideImplementMemberChooser extends MemberChooser<PsiMethodM
     }
   }
 
-  private class MyMergeAction extends ToggleAction {
+  private final class MyMergeAction extends ToggleAction {
     private MyMergeAction() {
       super(JavaBundle.message("action.text.show.methods.to.implement"), JavaBundle.message(
         "action.text.show.methods.to.implement"), AllIcons.General.Show_to_implement);

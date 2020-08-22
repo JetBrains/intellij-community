@@ -23,7 +23,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.openapi.progress.util.BackgroundTaskUtil;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.*;
@@ -39,9 +40,7 @@ import com.intellij.openapi.vcs.roots.VcsRootDetector;
 import com.intellij.openapi.vcs.update.UpdateEnvironment;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.zmlx.hg4idea.provider.*;
 import org.zmlx.hg4idea.provider.annotate.HgAnnotationProvider;
 import org.zmlx.hg4idea.provider.commit.HgCheckinEnvironment;
@@ -60,6 +59,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.function.Supplier;
 
 import static com.intellij.util.containers.ContainerUtil.exists;
 import static com.intellij.util.containers.ContainerUtil.newArrayList;
@@ -70,13 +70,14 @@ public class HgVcs extends AbstractVcs {
   public static final Topic<HgWidgetUpdater> INCOMING_OUTGOING_CHECK_TOPIC = new Topic<>("hg4idea.incomingcheck", HgWidgetUpdater.class);
   private static final Logger LOG = Logger.getInstance(HgVcs.class);
 
-  public static final String VCS_NAME = "hg4idea";
-  public static final String DISPLAY_NAME = "Mercurial";
+  public static final @NonNls String VCS_NAME = "hg4idea";
+  public static final Supplier<@Nls String> DISPLAY_NAME = HgBundle.messagePointer("hg4idea.vcs.name");
+  public static final Supplier<@Nls String> SHORT_DISPLAY_NAME = HgBundle.messagePointer("hg4idea.vcs.short.name");
   private final static VcsKey ourKey = createKey(VCS_NAME);
   private static final int MAX_CONSOLE_OUTPUT_SIZE = 10000;
 
-  private static final String ORIG_FILE_PATTERN = "*.orig";
-  @Nullable public static final String HGENCODING = System.getenv("HGENCODING");
+  private static final @NonNls String ORIG_FILE_PATTERN = "*.orig";
+  @Nullable public static final @NonNls String HGENCODING = System.getenv("HGENCODING");
 
   private final HgChangeProvider changeProvider;
   private final HgRollbackEnvironment rollbackEnvironment;
@@ -121,13 +122,13 @@ public class HgVcs extends AbstractVcs {
   @Override
   @NotNull
   public String getDisplayName() {
-    return DISPLAY_NAME;
+    return DISPLAY_NAME.get();
   }
 
   @NotNull
   @Override
   public String getShortName() {
-    return "Hg";
+    return SHORT_DISPLAY_NAME.get();
   }
 
   @Override
@@ -326,10 +327,13 @@ public class HgVcs extends AbstractVcs {
   @Override
   @CalledInAwt
   public void enableIntegration() {
-    BackgroundTaskUtil.executeOnPooledThread(myProject, () -> {
-      Collection<VcsRoot> roots = ServiceManager.getService(myProject, VcsRootDetector.class).detect();
-      new HgIntegrationEnabler(this).enable(roots);
-    });
+    new Task.Backgroundable(myProject, HgBundle.message("progress.title.enabling.hg"), true) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        Collection<VcsRoot> roots = ServiceManager.getService(myProject, VcsRootDetector.class).detect();
+        new HgIntegrationEnabler(HgVcs.this).enable(roots);
+      }
+    }.queue();
   }
 
   @Override

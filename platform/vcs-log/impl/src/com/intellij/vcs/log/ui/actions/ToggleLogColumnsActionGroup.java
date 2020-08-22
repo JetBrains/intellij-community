@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.openapi.actionSystem.*;
@@ -53,7 +53,7 @@ public class ToggleLogColumnsActionGroup extends ActionGroup implements DumbAwar
     return properties != null && properties.exists(CommonUiProperties.COLUMN_ORDER);
   }
 
-  private static class ToggleColumnAction extends ToggleAction implements DumbAware {
+  private static final class ToggleColumnAction extends ToggleAction implements DumbAware {
     private final int myIndex;
 
     private ToggleColumnAction(@NotNull VcsLogColumn column) {

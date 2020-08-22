@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.icons.AllIcons;
@@ -230,7 +230,7 @@ public class PropertiesComponent extends JPanel {
     }
   }
 
-  private static class CloseAction extends DumbAwareAction {
+  private static final class CloseAction extends DumbAwareAction {
     private CloseAction() {
       super(
         messagePointer("action.Subversion.PropertiesView.Close.text"),
@@ -248,7 +248,7 @@ public class PropertiesComponent extends JPanel {
     }
   }
 
-  private class RefreshAction extends DumbAwareAction {
+  private final class RefreshAction extends DumbAwareAction {
     private RefreshAction() {
       super(
         messagePointer("action.Subversion.PropertiesView.Refresh.text"),
@@ -293,7 +293,7 @@ public class PropertiesComponent extends JPanel {
     }
   }
 
-  private class SetKeywordsAction extends BasePropertyAction {
+  private final class SetKeywordsAction extends BasePropertyAction {
     private SetKeywordsAction() {
       super(
         messagePointer("action.Subversion.PropertiesView.EditKeywords.text"),
@@ -326,7 +326,7 @@ public class PropertiesComponent extends JPanel {
     }
   }
 
-  private class DeletePropertyAction extends BasePropertyAction {
+  private final class DeletePropertyAction extends BasePropertyAction {
     private DeletePropertyAction() {
       super(
         messagePointer("action.Subversion.PropertiesView.DeleteProperty.text"),
@@ -347,7 +347,7 @@ public class PropertiesComponent extends JPanel {
     }
   }
 
-  private class AddPropertyAction extends BasePropertyAction {
+  private final class AddPropertyAction extends BasePropertyAction {
     private AddPropertyAction() {
       super(
         messagePointer("action.Subversion.PropertiesView.AddProperty.text"),
@@ -375,7 +375,7 @@ public class PropertiesComponent extends JPanel {
     }
   }
 
-  private class EditPropertyAction extends BasePropertyAction {
+  private final class EditPropertyAction extends BasePropertyAction {
     private EditPropertyAction() {
       super(
         messagePointer("action.Subversion.PropertiesView.EditProperty.text"),
@@ -402,7 +402,7 @@ public class PropertiesComponent extends JPanel {
     }
   }
 
-  private class FollowSelectionAction extends DumbAwareToggleAction {
+  private final class FollowSelectionAction extends DumbAwareToggleAction {
     private FollowSelectionAction() {
       super(
         messagePointer("action.Subversion.PropertiesView.FollowSelection.text"),

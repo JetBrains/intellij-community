@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.impl.perFileVersion;
 
 import com.intellij.openapi.util.Key;
@@ -136,7 +136,7 @@ public class PersistentSubIndexerVersionEnumeratorTest extends LightJavaCodeInsi
 
   private final MyIndexFileAttribute boo1 = new MyIndexFileAttribute(1, "boo");
 
-  private static class MyIndexFileAttribute {
+  private static final class MyIndexFileAttribute {
     final int version;
     final String name;
 

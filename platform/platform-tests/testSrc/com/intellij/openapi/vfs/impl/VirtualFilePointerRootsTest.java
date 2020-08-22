@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl;
 
 import com.intellij.openapi.Disposable;
@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 @RunFirst
 @SkipSlowTestLocally
@@ -98,7 +99,7 @@ public class VirtualFilePointerRootsTest extends HeavyPlatformTestCase {
     VirtualFile v = refreshAndFindFile(f);
     VirtualFilePointer thePointer = myVirtualFilePointerManager.create(v, disposable, listener);
     assertNotNull(TempFileSystem.getInstance());
-    PlatformTestUtil.startPerformanceTest("same url vfp create", 9000, () -> {
+    PlatformTestUtil.startPerformanceTest("same file vfp create", 10000, () -> {
       for (int i = 0; i < 10_000_000; i++) {
         VirtualFilePointer pointer = myVirtualFilePointerManager.create(v, disposable, listener);
         assertSame(pointer, thePointer);
@@ -138,7 +139,7 @@ public class VirtualFilePointerRootsTest extends HeavyPlatformTestCase {
     VirtualFile f = WriteAction.compute(() -> dir.createChildData(this, "file.txt"));
 
     VirtualFilePointer pointer = myVirtualFilePointerManager.create(dir.getUrl()+"/file.txt", disposable, new VirtualFilePointerListener() {});
-    FileAttributes attributes = new FileAttributes(false, false, false, false, 0, 1, true);
+    FileAttributes attributes = new FileAttributes(false, false, false, false, 0, 1, true, FileAttributes.CaseSensitivity.UNSPECIFIED);
     List<VFileEvent> createEvents = Collections.singletonList(new VFileCreateEvent(this, dir, "file.txt", false, attributes, null, true, null));
     List<VFileEvent> deleteEvents = Collections.singletonList(new VFileDeleteEvent(this, f, true));
 
@@ -236,7 +237,7 @@ public class VirtualFilePointerRootsTest extends HeavyPlatformTestCase {
     }
     finally {
       WriteAction.run(() -> {
-        Library library = PlatformTestUtil.notNull(LibraryUtil.findLibrary(getModule(), "dir1"));
+        Library library = Objects.requireNonNull(LibraryUtil.findLibrary(getModule(), "dir1"));
         LibraryTable.ModifiableModel model = library.getTable().getModifiableModel();
         model.removeLibrary(library);
         model.commit();

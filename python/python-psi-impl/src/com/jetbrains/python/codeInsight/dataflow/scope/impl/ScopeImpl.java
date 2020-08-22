@@ -3,7 +3,6 @@
 // found in the LICENSE file.
 package com.jetbrains.python.codeInsight.dataflow.scope.impl;
 
-import com.google.common.collect.Sets;
 import com.intellij.codeInsight.controlflow.Instruction;
 import com.intellij.codeInsight.dataflow.DFALimitExceededException;
 import com.intellij.codeInsight.dataflow.map.DFAMap;
@@ -301,7 +300,7 @@ public class ScopeImpl implements Scope {
       }
 
       private void processNamedElement(@NotNull PsiNamedElement element) {
-        namedElements.computeIfAbsent(element.getName(), __ -> Sets.newLinkedHashSet()).add(element);
+        namedElements.computeIfAbsent(element.getName(), __ -> new LinkedHashSet<PsiNamedElement>()).add(element);
       }
     });
 

@@ -13,7 +13,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ClassExtension
 import com.intellij.openapi.util.Computable
 import com.intellij.psi.PsiElement
-import com.intellij.psi.impl.cache.impl.id.IdIndexEntry
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.PsiSearchHelper
 import com.intellij.psi.search.SearchSession
@@ -21,7 +20,6 @@ import com.intellij.util.Processor
 import com.intellij.util.Query
 import com.intellij.util.SmartList
 import com.intellij.util.text.StringSearcher
-import gnu.trove.THashMap
 import org.jetbrains.annotations.ApiStatus.Internal
 import java.util.*
 import kotlin.collections.ArrayList
@@ -34,7 +32,6 @@ private val searchersExtension = ClassExtension<Searcher<*, *>>("com.intellij.se
 
 internal val indicatorOrEmpty: ProgressIndicator
   get() = EmptyProgressIndicator.notNullize(ProgressIndicatorProvider.getGlobalProgressIndicator())
-
 
 @Internal
 fun <R> runSearch(project: Project, query: Query<out R>, processor: Processor<in R>): Boolean {
@@ -199,15 +196,15 @@ private class Layer<T>(
       return processSingleRequest(globals.first())
     }
 
-    val globalsIds: Map<Set<IdIndexEntry>, List<WordRequestInfo>> = globals.groupBy(
-      { (request: WordRequestInfo, _) -> PsiSearchHelperImpl.getWordEntries(request.word, request.isCaseSensitive).toSet() },
+    val globalsIds: Map<PsiSearchHelperImpl.TextIndexQuery, List<WordRequestInfo>> = globals.groupBy(
+      { (request: WordRequestInfo, _) -> PsiSearchHelperImpl.TextIndexQuery.fromWord(request.word, request.isCaseSensitive, null) },
       { (request: WordRequestInfo, _) -> progress.checkCanceled(); request }
     )
     return myHelper.processGlobalRequests(globalsIds, progress, scopeProcessors(globals))
   }
 
   private fun scopeProcessors(globals: Collection<RequestAndProcessors>): Map<WordRequestInfo, Processor<in PsiElement>> {
-    val result = THashMap<WordRequestInfo, Processor<in PsiElement>>()
+    val result = HashMap<WordRequestInfo, Processor<in PsiElement>>()
     for (requestAndProcessors: RequestAndProcessors in globals) {
       progress.checkCanceled()
       result[requestAndProcessors.request] = scopeProcessor(requestAndProcessors)

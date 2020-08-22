@@ -408,7 +408,8 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
   }
 
   private boolean isUnderMouseCursor() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return false;
+    if (ApplicationManager.getApplication().isUnitTestMode() || 
+        ApplicationManager.getApplication().isHeadlessEnvironment()) return false;
     try {
       return getMousePosition() != null;
     }
@@ -558,7 +559,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
 
   public abstract static class MyTableCellRenderer extends ColoredTableCellRenderer {
     @Override
-    protected void customizeCellRenderer(JTable table, @Nullable Object value, boolean isSelected,
+    protected void customizeCellRenderer(@NotNull JTable table, @Nullable Object value, boolean isSelected,
                                          boolean hasFocus, int row, int column) {
 
       if (hasFocus) {

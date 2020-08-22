@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.projectView;
 
 import com.intellij.ide.projectView.PresentationData;
@@ -34,7 +20,6 @@ import java.util.List;
 import java.util.function.Function;
 
 public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
-
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -83,7 +68,18 @@ public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
     myStructure.setShowMembers(false);
     assertStructureEqual(getPackageDirectory(), "package1\n" +
                                                 " Class1\n" +
-                                                " Class2\n");
+                                                "  InnerClass\n" +
+                                                " Class2\n" +
+                                                "  InnerClass1\n" +
+                                                "   InnerClass12\n" +
+                                                "    InnerClass13\n" +
+                                                "     InnerClass14\n" +
+                                                "      InnerClass15\n" +
+                                                "  InnerClass2\n" +
+                                                "   InnerClass22\n" +
+                                                "    InnerClass23\n" +
+                                                "     InnerClass24\n" +
+                                                "      InnerClass25\n");
 
     myStructure.setShowMembers(true);
     assertStructureEqual(getPackageDirectory(), "package1\n" +
@@ -159,13 +155,11 @@ public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
     myStructure.hideExcludedFiles();
 
     assertStructureEqual("Project\n" +
-                         " nested_module.iml\n" +
                          " noDuplicateModules\n" +
                          "  src\n" +
                          "   com\n" +
                          "    package1\n" +
-                         "     Test.java\n" +
-                         " testNoDuplicateModules.iml\n");
+                         "     Test.java\n");
   }
 
   public void testContentRootUnderExcluded() {
@@ -183,8 +177,7 @@ public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
                          "  exc\n" +
                          "   excluded.txt\n" +
                          "   gen\n" +
-                         "    A.java\n" +
-                         " testContentRootUnderExcluded.iml\n");
+                         "    A.java\n");
 
     myStructure.hideExcludedFiles();
     assertStructureEqual("Project\n" +
@@ -192,8 +185,7 @@ public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
                          "  contentRootUnderExcluded\n" +
                          "   B.txt\n" +
                          "  gen\n" +
-                         "   A.java\n" +
-                         " testContentRootUnderExcluded.iml\n");
+                         "   A.java\n");
   }
 
   public void testQualifiedModuleNames() {
@@ -227,9 +219,6 @@ public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
     };
     String treeStructure = ModuleGroupTestsKt.runWithQualifiedModuleNamesEnabled(() -> PlatformTestUtil.print(myStructure, myStructure.getRootElement(), nodePresenter));
     assertEquals("testQualifiedModuleNames\n" +
-                 " a.foo.iml\n" +
-                 " a.iml\n" +
-                 " a.main.iml\n" +
                  " qualifiedModuleNames [testQualifiedModuleNames]\n" +
                  "  a\n" +
                  "   Foo\n" +
@@ -239,10 +228,7 @@ public class ProjectTreeStructureTest extends BaseProjectViewTestCase {
                  "   main\n" +
                  "    main.txt\n" +
                  "   util\n" +
-                 "    util.txt\n" +
-                 " testQualifiedModuleNames.iml\n" +
-                 " util.iml\n" +
-                 " x.b.iml\n",
+                 "    util.txt\n",
                  treeStructure);
   }
 }

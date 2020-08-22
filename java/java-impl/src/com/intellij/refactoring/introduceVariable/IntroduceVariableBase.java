@@ -10,6 +10,7 @@ import com.intellij.codeInspection.RemoveRedundantTypeArgumentsUtil;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.featureStatistics.ProductivityFeatureNames;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.LanguageRefactoringSupport;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -26,9 +27,7 @@ import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pass;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
@@ -82,7 +81,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     public static final JavaReplaceChoice NO_WRITE = new JavaReplaceChoice(ReplaceChoice.NO_WRITE, null, false);
     public static final JavaReplaceChoice ALL = new JavaReplaceChoice(ReplaceChoice.ALL, null, false);
 
-    private final String myDescription;
+    private final @Nls String myDescription;
     private final boolean myChain;
     private final ReplaceChoice myChoice;
 
@@ -305,26 +304,33 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     while (expression != null) {
       if (!expressions.contains(expression) && !(expression instanceof PsiParenthesizedExpression) && !(expression instanceof PsiSuperExpression) &&
           (acceptVoid || !PsiType.VOID.equals(expression.getType()))) {
-        if (expression instanceof PsiMethodReferenceExpression) {
+        if (isExtractable(expression)) {
           expressions.add(expression);
-        }
-        else if (!(expression instanceof PsiAssignmentExpression)) {
-          if (!(expression instanceof PsiReferenceExpression)) {
-            expressions.add(expression);
-          }
-          else {
-            if (!(expression.getParent() instanceof PsiMethodCallExpression)) {
-              final PsiElement resolve = ((PsiReferenceExpression)expression).resolve();
-              if (!(resolve instanceof PsiClass) && !(resolve instanceof PsiPackage)) {
-                expressions.add(expression);
-              }
-            }
-          }
         }
       }
       expression = PsiTreeUtil.getParentOfType(expression, PsiExpression.class);
     }
     return expressions;
+  }
+
+  public static boolean isExtractable(PsiExpression expression) {
+    if (expression instanceof PsiMethodReferenceExpression) {
+      return true;
+    }
+    else if (!(expression instanceof PsiAssignmentExpression)) {
+      if (!(expression instanceof PsiReferenceExpression)) {
+        return true;
+      }
+      else {
+        if (!(expression.getParent() instanceof PsiMethodCallExpression)) {
+          final PsiElement resolve = ((PsiReferenceExpression)expression).resolve();
+          if (!(resolve instanceof PsiClass) && !(resolve instanceof PsiPackage)) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
   }
 
   public static PsiElement[] findStatementsAtOffset(final Editor editor, final PsiFile file, final int offset) {
@@ -369,7 +375,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     if (tempExpr == null) {
       tempExpr = getSelectedExpression(project, file, startOffset, endOffset);
     }
-    return tempExpr;
+    return isExtractable(tempExpr) ? tempExpr : null;
   }
 
   /**
@@ -527,11 +533,12 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     return getSelectedExpression(project, injectionHost.getContainingFile(), injectedLanguageManager.injectedToHost(file, startOffset), injectedLanguageManager.injectedToHost(file, endOffset));
   }
 
+  @NlsContexts.DialogMessage
   @Nullable
   public static String getErrorMessage(PsiExpression expr) {
     final Boolean needParenthesis = expr.getCopyableUserData(NEED_PARENTHESIS);
     if (needParenthesis != null && needParenthesis.booleanValue()) {
-      return "Extracting selected expression would change the semantic of the whole expression.";
+      return JavaBundle.message("introduce.variable.change.semantics.warning");
     }
     return null;
   }
@@ -628,6 +635,16 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
 
     if (PsiType.VOID.equals(originalType)) {
       String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("selected.expression.has.void.type"));
+      showErrorMessage(project, editor, message);
+      return false;
+    }
+
+    try {
+      JavaPsiFacade.getElementFactory(project).createTypeElementFromText(
+        GenericsUtil.getVariableTypeByExpressionType(originalType).getCanonicalText(), expr);
+    }
+    catch (IncorrectOperationException ignore) {
+      String message = RefactoringBundle.getCannotRefactorMessage(JavaRefactoringBundle.message("unknown.expression.type"));
       showErrorMessage(project, editor, message);
       return false;
     }
@@ -1010,10 +1027,10 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     }
   }
 
-  private static PsiElement createReplacement(final String refText, final Project project,
-                                                 final String prefix,
-                                                 final String suffix,
-                                                 final PsiElement parent, final RangeMarker rangeMarker, int[] refIdx) {
+  private static PsiElement createReplacement(final @NonNls String refText, final Project project,
+                                              final String prefix,
+                                              final String suffix,
+                                              final PsiElement parent, final RangeMarker rangeMarker, int[] refIdx) {
     String text = refText;
     if (parent != null) {
       final String allText = parent.getContainingFile().getText();
@@ -1076,7 +1093,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     final boolean replaceWrite = anyAssignmentLHS && replaceAll;
     return new IntroduceVariableSettings() {
       @Override
-      public String getEnteredName() {
+      public @NlsSafe String getEnteredName() {
         return variableName;
       }
 
@@ -1133,7 +1150,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
   public static boolean checkAnchorBeforeThisOrSuper(final Project project,
                                                      final Editor editor,
                                                      final PsiElement tempAnchorElement,
-                                                     final String refactoringName,
+                                                     final @NlsContexts.DialogTitle String refactoringName,
                                                      final String helpID) {
     if (tempAnchorElement instanceof PsiExpressionStatement) {
       PsiExpression enclosingExpr = ((PsiExpressionStatement)tempAnchorElement).getExpression();
@@ -1168,7 +1185,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     if (!modifiedInBody.isEmpty()) {
       for (PsiVariable variable : modifiedInBody) {
         final String message = JavaRefactoringBundle.message("is.modified.in.loop.body", RefactoringUIUtil.getDescription(variable, false));
-        conflicts.putValue(variable, CommonRefactoringUtil.capitalize(message));
+        conflicts.putValue(variable, StringUtil.capitalize(message));
       }
       conflicts.putValue(occurence, JavaRefactoringBundle.message("introducing.variable.may.break.code.logic"));
     }
@@ -1289,7 +1306,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
         currentOccurrences.addAll(occurrences);
         if (currentOccurrences.size() == 1) return;
         PsiElement current = parent.getParent();
-        String keyword = null;
+        @NonNls String keyword = null;
         while (current != nextParent) {
           if (current instanceof PsiIfStatement || current instanceof PsiWhileStatement || current instanceof PsiForStatement ||
               current instanceof PsiTryStatement) {
@@ -1329,7 +1346,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     }
   }
 
-  protected static String getRefactoringName() {
+  protected static @NlsContexts.Command String getRefactoringName() {
     return RefactoringBundle.message("introduce.variable.title");
   }
 }

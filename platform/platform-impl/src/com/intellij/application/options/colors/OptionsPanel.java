@@ -16,6 +16,7 @@
 
 package com.intellij.application.options.colors;
 
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,5 +40,5 @@ public interface OptionsPanel {
 
   Set<String> processListOptions();
   
-  default void setEmptyText(@NotNull String text, @Nullable ActionListener linkListener) {}
+  default void setEmptyText(@NlsContexts.StatusText @NotNull String text, @Nullable ActionListener linkListener) {}
 }

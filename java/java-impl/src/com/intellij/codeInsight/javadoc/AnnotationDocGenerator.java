@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.javadoc;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -18,7 +18,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class AnnotationDocGenerator {
+public final class AnnotationDocGenerator {
   private static final Logger LOG = Logger.getInstance(AnnotationDocGenerator.class);
   @NotNull private final PsiAnnotation myAnnotation;
   @NotNull private final PsiJavaCodeReferenceElement myNameReference;
@@ -168,7 +168,7 @@ public class AnnotationDocGenerator {
 
     buffer.append(XmlStringUtil.escapeString(memberValue.getText()));
   }
-  
+
   public static List<AnnotationDocGenerator> getAnnotationsToShow(@NotNull PsiAnnotationOwner owner, @NotNull PsiElement context) {
     if (owner instanceof PsiModifierList) {
       return getAnnotationsToShow(((PsiModifierListOwner)((PsiModifierList)owner).getParent()));
@@ -181,7 +181,7 @@ public class AnnotationDocGenerator {
   public static List<AnnotationDocGenerator> getAnnotationsToShow(@NotNull PsiModifierListOwner owner) {
     Set<String> shownAnnotations = new HashSet<>();
     return StreamEx.of(AnnotationUtil.getAllAnnotations(owner, false, null))
-      .filter(owner instanceof PsiClass || owner instanceof PsiJavaModule ? anno -> true 
+      .filter(owner instanceof PsiClass || owner instanceof PsiJavaModule ? anno -> true
                                                                           : anno -> !AnnotationTargetUtil.isTypeAnnotation(anno))
       .map(annotation -> forAnnotation(owner, shownAnnotations, annotation))
       .nonNull()

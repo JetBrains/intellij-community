@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui.impl;
 
 import com.intellij.diagnostic.LoadingState;
@@ -28,6 +28,7 @@ import com.intellij.openapi.wm.impl.IdeGlassPaneEx;
 import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.components.JBLayeredPane;
+import com.intellij.ui.jcef.HwFacadeJPanel;
 import com.intellij.util.MathUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
@@ -325,7 +326,7 @@ public final class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
     });
   }
 
-  private static class MyDialog extends JPanel implements Disposable, DialogWrapperDialog, DataProvider {
+  private static final class MyDialog extends HwFacadeJPanel implements Disposable, DialogWrapperDialog, DataProvider {
     private final WeakReference<DialogWrapper> myDialogWrapper;
     private final IdeGlassPaneEx myPane;
     private JComponent myContentPane;
@@ -607,7 +608,7 @@ public final class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
     }
   }
 
-  private static class MyRootPane extends JRootPane implements Disposable {
+  private static final class MyRootPane extends JRootPane implements Disposable {
     private MyDialog myDialog;
 
     private MyRootPane(final MyDialog dialog) {
@@ -655,7 +656,7 @@ public final class GlassPaneDialogWrapperPeer extends DialogWrapperPeer {
   public static class GlasspanePeerUnavailableException extends Exception {
   }
 
-  public static class TransparentLayeredPane extends JBLayeredPane {
+  public static final class TransparentLayeredPane extends JBLayeredPane {
     private TransparentLayeredPane() {
       setLayout(new BorderLayout());
       setOpaque(false);

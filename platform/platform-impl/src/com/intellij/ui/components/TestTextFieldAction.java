@@ -18,6 +18,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.function.Consumer;
 
+@SuppressWarnings("HardCodedStringLiteral")
 public class TestTextFieldAction extends DumbAwareAction {
   private JFrame frame;
 

@@ -50,12 +50,15 @@ private class JavaConstructorRenderer(
   private val factory = JavaPsiFacade.getElementFactory(project)!!
 
   fun doMagic() {
+    //calculate expected parameter types before constructor is inserted 
+    //to avoid possible overload conflicts
+    val parameters = request.expectedParameters 
     var constructor = renderConstructor()
     constructor = insertConstructor(constructor)
     constructor = forcePsiPostprocessAndRestoreElement(constructor) ?: return
 
     val builder = TemplateBuilderImpl(constructor)
-    createTemplateContext(builder).setupParameters(constructor, request.expectedParameters)
+    createTemplateContext(builder).setupParameters(constructor, parameters)
     val superConstructor = setupSuperCall(targetClass, constructor, builder)
 
     constructor = forcePsiPostprocessAndRestoreElement(constructor) ?: return

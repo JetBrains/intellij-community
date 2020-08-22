@@ -1,9 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.diagnostic.PluginException;
-import com.intellij.ide.plugins.cl.PluginClassLoader;
+import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -30,10 +30,9 @@ public final class IntentionActionMetaData extends BeforeAfterActionMetaData {
     return getFamily();
   }
 
-  @Nullable
-  public PluginId getPluginId() {
-    if (myLoader instanceof PluginClassLoader) {
-      return ((PluginClassLoader)myLoader).getPluginId();
+  public @Nullable PluginId getPluginId() {
+    if (myLoader instanceof PluginAwareClassLoader) {
+      return ((PluginAwareClassLoader)myLoader).getPluginId();
     }
     return null;
   }
@@ -75,5 +74,9 @@ public final class IntentionActionMetaData extends BeforeAfterActionMetaData {
   @NotNull
   private static String getResourceLocationStatic(String dirName, String resourceName) {
     return INTENTION_DESCRIPTION_FOLDER + "/" + dirName + "/" + resourceName;
+  }
+
+  public String getDescriptionDirectoryName() {
+    return myDescriptionDirectoryName;
   }
 }

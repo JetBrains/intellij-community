@@ -12,10 +12,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.win32.Win32LocalFileSystem;
-import com.intellij.openapi.vfs.newvfs.ChildInfoImpl;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
-import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.openapi.vfs.newvfs.*;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
@@ -25,13 +22,13 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PairConsumer;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.keyFMap.KeyFMap;
-import com.intellij.util.text.CharSequenceHashingStrategy;
-import gnu.trove.THashSet;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,7 +71,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
                                            boolean doRefresh,
                                            boolean ensureCanonicalName,
                                            @NotNull NewVirtualFileSystem delegate) {
-    boolean caseSensitive = delegate.isCaseSensitive();
+    boolean caseSensitive = isCaseSensitive();
     VirtualFileSystemEntry result = doFindChild(name, ensureCanonicalName, delegate, caseSensitive);
 
     //noinspection UseVirtualFileEquals
@@ -90,12 +87,12 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @Nullable // null if there can't be a child with this name, NULL_VIRTUAL_FILE
-  private VirtualFileSystemEntry doFindChildInArray(@NotNull String name, boolean caseSensitive) {
+  private VirtualFileSystemEntry doFindChildInArray(@NotNull String name) {
     if (myData.isAdoptedName(name)) return NULL_VIRTUAL_FILE;
     int[] array = myData.myChildrenIds;
-    int indexInReal = findIndex(array, name, caseSensitive);
+    int indexInReal = findIndex(array, name);
     if (indexInReal >= 0) {
-      return mySegment.vfsData.getFileById(array[indexInReal], this, true);
+      return getVfsData().getFileById(array[indexInReal], this, true);
     }
     return null;
   }
@@ -112,14 +109,14 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       return handleInvalidDirectory(null);
     }
 
-    VirtualFileSystemEntry found = doFindChildInArray(name, caseSensitive);
+    VirtualFileSystemEntry found = doFindChildInArray(name);
     if (found != null) return found;
 
     if (ensureCanonicalName) {
       String trimmedName = deSlash(name);
       if (trimmedName == null) return null;
       if (!trimmedName.equals(name)) {
-        found = doFindChildInArray(trimmedName, caseSensitive);
+        found = doFindChildInArray(trimmedName);
         if (found != null) return found;
         name = trimmedName;
       }
@@ -140,7 +137,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     VirtualFileSystemEntry child;
     synchronized (myData) {
       // maybe another doFindChild() sneaked in the middle
-      child = doFindChildInArray(name, caseSensitive);
+      child = doFindChildInArray(name);
       if (child != null) return child; // including NULL_VIRTUAL_FILE
       if (allChildrenLoaded()) {
         return null;
@@ -158,15 +155,15 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         CharSequence persistedName = childInfo.getName();
         if (!Comparing.equal(name, persistedName)) {
           name = persistedName.toString();
-          child = doFindChildInArray(name, caseSensitive);
+          child = doFindChildInArray(name);
           if (child != null) return child;
         }
       }
 
       int nameId = childInfo.getNameId(); // name can change if file record was created
       int id = childInfo.getId();
-      FileAttributes attributes = PersistentFS.toFileAttributes(ourPersistence.getFileAttributes(id));
-      boolean isEmptyDirectory = attributes.isDirectory() && !ourPersistence.mayHaveChildren(id);
+      int attributes = ourPersistence.getFileAttributes(id);
+      boolean isEmptyDirectory = PersistentFS.isDirectory(attributes) && !ourPersistence.mayHaveChildren(id);
 
       child = createChild(id, nameId, delegate, attributes, isEmptyDirectory);
 
@@ -226,10 +223,11 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @NotNull
+  @ApiStatus.Internal
   public VirtualFileSystemEntry createChild(@NotNull String name,
                                             int id,
                                             @NotNull NewVirtualFileSystem delegate,
-                                            @NotNull FileAttributes attributes,
+                                            @PersistentFS.Attributes int attributes,
                                             boolean isEmptyDirectory) {
     int nameId = FileNameCache.storeName(name);
     synchronized (myData) {
@@ -241,26 +239,29 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   private VirtualFileSystemEntry createChild(int id,
                                              int nameId,
                                              @NotNull NewVirtualFileSystem delegate,
-                                             @NotNull FileAttributes attributes,
+                                             @PersistentFS.Attributes int attributes,
                                              boolean isEmptyDirectory) {
     FileLoadingTracker.fileLoaded(this, nameId);
 
-    VfsData.Segment segment = mySegment.vfsData.getSegment(id, true);
-    VfsData.initFile(id, segment, nameId, attributes.isDirectory() ? new VfsData.DirectoryData() : KeyFMap.EMPTY_MAP);
+    VfsData vfsData = getVfsData();
+    VfsData.Segment segment = vfsData.getSegment(id, true);
+    VfsData.initFile(id, segment, nameId, PersistentFS.isDirectory(attributes) ? new VfsData.DirectoryData() : KeyFMap.EMPTY_MAP);
     LOG.assertTrue(!(getFileSystem() instanceof Win32LocalFileSystem));
 
-    VirtualFileSystemEntry child = mySegment.vfsData.getFileById(id, this, true);
+    VirtualFileSystemEntry child = vfsData.getFileById(id, this, true);
     assert child != null;
-    segment.setFlag(id, IS_SYMLINK_FLAG, attributes.isSymLink());
-    segment.setFlag(id, IS_SPECIAL_FLAG, attributes.isSpecial());
-    segment.setFlag(id, IS_WRITABLE_FLAG, attributes.isWritable());
-    segment.setFlag(id, IS_HIDDEN_FLAG, attributes.isHidden());
+    int newFlags = (PersistentFS.isSymLink(attributes) ? IS_SYMLINK_FLAG : 0) |
+                   (PersistentFS.isSpecialFile(attributes) ? IS_SPECIAL_FLAG : 0) |
+                   (PersistentFS.isWritable(attributes) ? IS_WRITABLE_FLAG : 0) |
+                   (PersistentFS.isHidden(attributes) ? IS_HIDDEN_FLAG : 0) |
+                   (PersistentFS.isCaseSensitive(attributes) ? IS_CASE_SENSITIVE : 0);
+    segment.setFlags(id, IS_SYMLINK_FLAG | IS_SPECIAL_FLAG | IS_WRITABLE_FLAG | IS_HIDDEN_FLAG | IS_CASE_SENSITIVE, newFlags);
     child.updateLinkStatus();
 
     if (delegate.markNewFilesAsDirty()) {
       child.markDirty();
     }
-    if (attributes.isDirectory() && child instanceof VirtualDirectoryImpl && isEmptyDirectory) {
+    if (PersistentFS.isDirectory(attributes) && child instanceof VirtualDirectoryImpl && isEmptyDirectory) {
       // when creating empty directory we need to make sure
       // every file created inside will fire "file created" event
       // in order to virtual file pointer manager get those events
@@ -275,7 +276,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   @Nullable
   private VirtualFileSystemEntry createAndFindChildWithEventFire(@NotNull String name, @NotNull NewVirtualFileSystem delegate) {
     final VirtualFile fake = new FakeVirtualFile(this, name);
-    final FileAttributes attributes = delegate.getAttributes(fake);
+    final FileAttributes attributes = VfsImplUtil.getAttributesWithCaseSensitivity(delegate, fake);
     if (attributes == null) return null;
     final String realName = delegate.getCanonicallyCasedName(fake);
     boolean isDirectory = attributes.isDirectory();
@@ -296,8 +297,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   @Override
   @Nullable
   public NewVirtualFile findChildIfCached(@NotNull String name) {
-    final boolean caseSensitive = getFileSystem().isCaseSensitive();
-    VirtualFileSystemEntry found = doFindChildInArray(name, caseSensitive);
+    VirtualFileSystemEntry found = doFindChildInArray(name);
     //noinspection UseVirtualFileEquals
     return found == NULL_VIRTUAL_FILE ? null : found;
   }
@@ -353,7 +353,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   private VirtualFile @NotNull [] loadAllChildren() {
     NewVirtualFileSystem delegate = getFileSystem();
-    boolean caseSensitive = delegate.isCaseSensitive();
+    boolean caseSensitive = isCaseSensitive();
     synchronized (myData) {
       boolean wasChildrenLoaded = ourPersistence.areChildrenLoaded(this);
       List<? extends ChildInfo> children = ourPersistence.listAll(this);
@@ -373,6 +373,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
             LOG.error(ourPersistence + " returned duplicate file names(" + name1 + "," + name2 + ")" +
                       " caseSensitive: " + caseSensitive +
                       " SystemInfo.isFileSystemCaseSensitive: " + SystemInfo.isFileSystemCaseSensitive +
+                      " isCaseSensitive(): " + isCaseSensitive() +
                       " SystemInfo.OS: " + SystemInfo.OS_NAME + " " + SystemInfo.OS_VERSION +
                       " wasChildrenLoaded: " + wasChildrenLoaded +
                       " in the dir: " + this + ";" +
@@ -389,17 +390,18 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
           }
           return cmp;
         });
-        TIntHashSet prevChildren = new TIntHashSet(myData.myChildrenIds);
+        IntOpenHashSet prevChildren = new IntOpenHashSet(myData.myChildrenIds);
+        VfsData vfsData = getVfsData();
         for (int i = 0; i < children.size(); i++) {
           ChildInfo child = children.get(i);
           int id = child.getId();
           assert id > 0 : child;
           result[i] = id;
           prevChildren.remove(id);
-          VirtualFileSystemEntry file = mySegment.vfsData.getFileById(id, this, true);
+          VirtualFileSystemEntry file = vfsData.getFileById(id, this, true);
           if (file == null) {
-            FileAttributes attributes = PersistentFS.toFileAttributes(ourPersistence.getFileAttributes(id));
-            boolean isEmptyDirectory = attributes.isDirectory() && !ourPersistence.mayHaveChildren(id);
+            int attributes = ourPersistence.getFileAttributes(id);
+            boolean isEmptyDirectory = PersistentFS.isDirectory(attributes) && !ourPersistence.mayHaveChildren(id);
             file = createChild(id, child.getNameId(), delegate, attributes, isEmptyDirectory);
           }
           files[i] = file;
@@ -407,7 +409,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         if (!prevChildren.isEmpty()) {
           LOG.error("Loaded child disappeared: " +
                     "parent=" + verboseToString(this) +
-                    "; child=" + verboseToString(mySegment.vfsData.getFileById(prevChildren.toArray()[0], this, true)));
+                    "; child=" + verboseToString(vfsData.getFileById(prevChildren.iterator().nextInt(), this, true)));
         }
       }
 
@@ -426,17 +428,18 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     if (!CHECK || ApplicationInfoImpl.isInStressTest()) return;
     int[] childrenIds = myData.myChildrenIds;
     if (childrenIds.length == 0) return;
-    CharSequence prevName = mySegment.vfsData.getNameByFileId(childrenIds[0]);
+    VfsData vfsData = getVfsData();
+    CharSequence prevName = vfsData.getNameByFileId(childrenIds[0]);
     for (int i = 1; i < childrenIds.length; i++) {
       int id = childrenIds[i];
       int prev = childrenIds[i - 1];
-      CharSequence name = mySegment.vfsData.getNameByFileId(id);
+      CharSequence name = vfsData.getNameByFileId(id);
       int cmp = compareNames(name, prevName, caseSensitive);
       prevName = name;
       if (cmp <= 0) {
-        error(verboseToString(mySegment.vfsData.getFileById(prev, this, true)) +
+        error(verboseToString(vfsData.getFileById(prev, this, true)) +
               " is wrongly placed before " +
-              verboseToString(mySegment.vfsData.getFileById(id, this, true)), getArraySafely(true), details);
+              verboseToString(vfsData.getFileById(id, this, true)), getArraySafely(true), details);
       }
       synchronized (myData) {
         if (myData.isAdoptedName(name)) {
@@ -453,6 +456,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   @NotNull
+  @NonNls
   private static String verboseToString(VirtualFileSystemEntry file) {
     if (file == null) return "null";
     return file + " (name: '" + file.getName()
@@ -461,12 +465,12 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
            + "; id: "+file.getId()
            + "; FS: " +file.getFileSystem()
            + "; delegate.attrs: " +file.getFileSystem().getAttributes(file)
-           + "; caseSensitive: " +file.getFileSystem().isCaseSensitive()
+           + "; caseSensitive: " +file.isCaseSensitive()
            + "; canonical: " +file.getFileSystem().getCanonicallyCasedName(file)
            + ") ";
   }
 
-  private static void error(@NonNls String message, VirtualFileSystemEntry[] array, Object... details) {
+  private static void error(@NonNls String message, VirtualFileSystemEntry[] array, @NonNls Object... details) {
     String children = StringUtil.join(array, VirtualDirectoryImpl::verboseToString, "\n");
     String detailsStr = StringUtil.join(ContainerUtil.<Object, Object>map(details, o -> o instanceof Object[] ? Arrays.toString((Object[])o) : o), "\n");
     throw new AssertionError(message + "; children: " + children + "\nDetails: " + detailsStr);
@@ -482,7 +486,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   public VirtualFileSystemEntry doFindChildById(int id) {
     int i = ArrayUtil.indexOf(myData.myChildrenIds, id);
     if (i >= 0) {
-      return mySegment.vfsData.getFileById(id, this, true);
+      return getVfsData().getFileById(id, this, true);
     }
 
     String name = ourPersistence.getName(id);
@@ -503,7 +507,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       for (int i = 0; i < added.size(); i++) {
         ChildInfo info = added.get(i);
         assert info.getId() > 0 : info;
-        FileAttributes attributes = info.getFileAttributes();
+        @PersistentFS.Attributes
+        int attributes = info.getFileAttributeFlags();
         boolean isEmptyDirectory = info.getChildren() != null && info.getChildren().length == 0;
         synchronized (myData) {
           int[] oldIds = myData.myChildrenIds;
@@ -521,29 +526,31 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
     // optimization: when there are many children, it's cheaper to
     // merge sorted added and existing lists just like in merge sort
-    final boolean caseSensitive = getFileSystem().isCaseSensitive();
+    final boolean caseSensitive = isCaseSensitive();
     Comparator<ChildInfo> pairComparator = (p1, p2) -> compareNames(p1.getName(), p2.getName(), caseSensitive);
     added.sort(pairComparator);
 
     synchronized (myData) {
       int[] oldIds = myData.myChildrenIds;
-      TIntArrayList mergedIds = new TIntArrayList(oldIds.length + added.size());
+      IntArrayList mergedIds = new IntArrayList(oldIds.length + added.size());
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0; i < added.size(); i++) {
         ChildInfo info = added.get(i);
         assert info.getId() > 0 : info;
-        FileAttributes attributes = info.getFileAttributes();
+        @PersistentFS.Attributes
+        int attributes = info.getFileAttributeFlags();
         boolean isEmptyDirectory = info.getChildren() != null && info.getChildren().length == 0;
         myData.removeAdoptedName(info.getName());
         VirtualFileSystemEntry file = createChild(info.getId(), info.getNameId(), getFileSystem(), attributes, isEmptyDirectory);
         fileCreated.consume(file, info);
       }
+      VfsData vfsData = getVfsData();
       List<ChildInfo> existingChildren = new AbstractList<ChildInfo>() {
         @Override
         public ChildInfo get(int index) {
           int id = oldIds[index];
           assert id > 0 : id;
-          int nameId = mySegment.vfsData.getNameId(id);
+          int nameId = vfsData.getNameId(id);
           return new ChildInfoImpl(id, nameId, null, null, null/*irrelevant here*/);
         }
 
@@ -552,8 +559,8 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
           return oldIds.length;
         }
       };
-      ContainerUtil.processSortedListsInOrder(added, existingChildren, pairComparator, true, nextInfo -> mergedIds.add(nextInfo.getId()));
-      myData.myChildrenIds = mergedIds.toNativeArray();
+      ContainerUtil.processSortedListsInOrder(added, existingChildren, pairComparator, true, (nextInfo,__) -> mergedIds.add(nextInfo.getId()));
+      myData.myChildrenIds = mergedIds.toIntArray();
 
       if (markAllChildrenLoaded) {
         setChildrenLoaded();
@@ -564,10 +571,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   public void addChild(@NotNull VirtualFileSystemEntry child) {
     final CharSequence childName = child.getNameSequence();
-    final boolean caseSensitive = getFileSystem().isCaseSensitive();
+    final boolean caseSensitive = isCaseSensitive();
     synchronized (myData) {
       myData.removeAdoptedName(childName);
-      int indexInReal = findIndex(myData.myChildrenIds, childName, caseSensitive);
+      int indexInReal = findIndex(myData.myChildrenIds, childName);
       if (indexInReal < 0) {
         insertChildAt(child, indexInReal);
       }
@@ -584,10 +591,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   public void removeChild(@NotNull VirtualFile file) {
-    boolean caseSensitive = getFileSystem().isCaseSensitive();
+    boolean caseSensitive = isCaseSensitive();
     String name = file.getName();
     synchronized (myData) {
-      int indexInReal = findIndex(myData.myChildrenIds, name, caseSensitive);
+      int indexInReal = findIndex(myData.myChildrenIds, name);
       if (indexInReal >= 0) {
         // there suddenly can be that we ask to add name to adopted whereas it already contained in the real part
         // in this case we should remove it from there
@@ -603,7 +610,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
 
   // optimization: faster than forEach(this::removeChild)
   public void removeChildren(@NotNull IntSet idsToRemove, @NotNull List<? extends CharSequence> namesToRemove) {
-    boolean caseSensitive = getFileSystem().isCaseSensitive();
+    boolean caseSensitive = isCaseSensitive();
     synchronized (myData) {
       // remove from array by merging two sorted lists
       int[] newIds = new int[myData.myChildrenIds.length];
@@ -629,7 +636,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
   }
 
   // check if all these names are not existing, remove invalid events from the list
-  public void validateChildrenToCreate(@NotNull List<? extends VFileCreateEvent> childrenToCreate) {
+  public void validateChildrenToCreate(@NotNull List<VFileCreateEvent> childrenToCreate) {
     if (childrenToCreate.size() <= 1) {
       for (int i = childrenToCreate.size() - 1; i >= 0; i--) {
         VFileCreateEvent event = childrenToCreate.get(i);
@@ -639,12 +646,12 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       }
       return;
     }
-    boolean caseSensitive = getFileSystem().isCaseSensitive();
+    boolean caseSensitive = isCaseSensitive();
 
-    CharSequenceHashingStrategy strategy = caseSensitive ? CharSequenceHashingStrategy.CASE_SENSITIVE : CharSequenceHashingStrategy.CASE_INSENSITIVE;
-    Set<CharSequence> existingNames = new THashSet<>(myData.myChildrenIds.length, strategy);
+    Set<CharSequence> existingNames = CollectionFactory.createCharSequenceSet(caseSensitive, myData.myChildrenIds.length);
+    VfsData vfsData = getVfsData();
     for (int id : myData.myChildrenIds) {
-      existingNames.add(mySegment.vfsData.getNameByFileId(id));
+      existingNames.add(vfsData.getNameByFileId(id));
     }
     int id = getId();
     synchronized (myData) {
@@ -664,7 +671,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     }
   }
 
-  private void validateAgainst(@NotNull List<? extends VFileCreateEvent> childrenToCreate, @NotNull Set<CharSequence> existingNames) {
+  private void validateAgainst(@NotNull List<VFileCreateEvent> childrenToCreate, @NotNull Set<CharSequence> existingNames) {
     for (int i = childrenToCreate.size() - 1; i >= 0; i--) {
       VFileCreateEvent event = childrenToCreate.get(i);
       String childName = event.getChildName();
@@ -689,8 +696,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     return myData.getAdoptedNames();
   }
 
-  private int findIndex(int @NotNull [] ids, @NotNull CharSequence name, boolean caseSensitive) {
-    return ObjectUtils.binarySearch(0, ids.length, mid -> compareNames(mySegment.vfsData.getNameByFileId(ids[mid]), name, caseSensitive));
+  private int findIndex(int @NotNull [] ids, @NotNull CharSequence name) {
+    VfsData vfsData = getVfsData();
+    boolean caseSensitive = isCaseSensitive();
+    return ObjectUtils.binarySearch(0, ids.length, mid -> compareNames(vfsData.getNameByFileId(ids[mid]), name, caseSensitive));
   }
 
   private static int compareNames(@NotNull CharSequence name1, @NotNull CharSequence name2, boolean caseSensitive) {
@@ -765,5 +774,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         throw new AssertionError("Don't store CachedValue in VFS user data, since it leads to memory leaks");
       }
     }
+  }
+
+  @Override
+  public boolean isCaseSensitive() {
+    return getFlagInt(IS_CASE_SENSITIVE);
   }
 }

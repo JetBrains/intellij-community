@@ -4,23 +4,15 @@ import time
 import gzip
 import http.client
 
-from typing import Any, Callable, Dict, IO, Iterable, List, Mapping, Optional, Protocol, Text, Tuple, Type, TypeVar, Union, overload
+from typing import Any, Callable, Dict, Iterable, List, Mapping, Optional, Protocol, Text, Tuple, Type, Union, overload
+from typing_extensions import Literal
 from types import TracebackType
 from datetime import datetime
+from _typeshed import SupportsRead, SupportsWrite
 
-if sys.version_info >= (3, 8):
-    from typing import Literal
-else:
-    from typing_extensions import Literal
-
-_T = TypeVar("_T")
-class _HasTimeTuple(Protocol):
+class _SupportsTimeTuple(Protocol):
     def timetuple(self) -> time.struct_time: ...
-class _HasWrite(Protocol):
-    def write(self, __o: str) -> None: ...
-class _HasRead(Protocol):
-    def read(self) -> bytes: ...
-_DateTimeComparable = Union[DateTime, datetime, str, _HasTimeTuple]
+_DateTimeComparable = Union[DateTime, datetime, str, _SupportsTimeTuple]
 _Marshallable = Union[None, bool, int, float, str, bytes, tuple, list, dict, datetime, DateTime, Binary]
 _XMLDate = Union[int, datetime, Tuple[int, ...], time.struct_time]
 _HostType = Union[Tuple[str, Dict[str, str]], str]
@@ -81,7 +73,7 @@ class DateTime:
     def make_comparable(self, other: _DateTimeComparable) -> Tuple[str, str]: ...  # undocumented
     def timetuple(self) -> time.struct_time: ...  # undocumented
     def decode(self, data: Any) -> None: ...
-    def encode(self, out: _HasWrite) -> None: ...
+    def encode(self, out: SupportsWrite[str]) -> None: ...
 
 def _datetime(data: Any) -> DateTime: ...  # undocumented
 def _datetime_type(data: str) -> datetime: ...  # undocumented
@@ -92,7 +84,7 @@ class Binary:
 
     def __init__(self, data: Optional[bytes] = ...) -> None: ...
     def decode(self, data: bytes) -> None: ...
-    def encode(self, out: _HasWrite) -> None: ...
+    def encode(self, out: SupportsWrite[str]) -> None: ...
 
 def _binary(data: bytes) -> Binary: ...  # undocumented
 
@@ -208,7 +200,7 @@ class GzipDecodedResponse(gzip.GzipFile):  # undocumented
 
     io: io.BytesIO
 
-    def __init__(self, response: _HasRead) -> None: ...
+    def __init__(self, response: SupportsRead[bytes]) -> None: ...
     def close(self) -> None: ...
 
 class _Method:  # undocumented

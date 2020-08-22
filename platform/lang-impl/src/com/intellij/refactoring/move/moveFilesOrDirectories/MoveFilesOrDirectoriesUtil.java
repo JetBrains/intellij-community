@@ -2,6 +2,7 @@
 package com.intellij.refactoring.move.moveFilesOrDirectories;
 
 import com.intellij.ide.util.DirectoryChooserUtil;
+import com.intellij.model.ModelBranch;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.project.DumbService;
@@ -45,7 +46,9 @@ public final class MoveFilesOrDirectoriesUtil {
     catch (IOException e) {
       throw new IncorrectOperationException(e);
     }
-    DumbService.getInstance(manager.getProject()).completeJustSubmittedTasks();
+    if (ModelBranch.getPsiBranch(destDirectory) == null) {
+      DumbService.getInstance(manager.getProject()).completeJustSubmittedTasks();
+    }
   }
 
   /**
@@ -61,10 +64,7 @@ public final class MoveFilesOrDirectoriesUtil {
       // do actual move
       checkMove(file, newDirectory);
 
-      VirtualFile vFile = file.getVirtualFile();
-      if (vFile == null) {
-        throw new IncorrectOperationException("Non-physical file: " + file + " (" + file.getClass() + ")");
-      }
+      VirtualFile vFile = file.getViewProvider().getVirtualFile();
 
       try {
         vFile.move(file.getManager(), newDirectory.getVirtualFile());

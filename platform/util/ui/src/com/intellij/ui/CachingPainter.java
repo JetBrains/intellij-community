@@ -88,7 +88,7 @@ public final class CachingPainter {
     }
   }
 
-  private static class CachedPainting {
+  private static final class CachedPainting {
     private final float width;
     private final float height;
     private final Object[] parameters;

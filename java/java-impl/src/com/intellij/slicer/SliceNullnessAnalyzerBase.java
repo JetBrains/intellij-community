@@ -5,6 +5,7 @@ import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
+import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -13,10 +14,10 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.WalkingState;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import gnu.trove.THashSet;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,7 +39,8 @@ public abstract class SliceNullnessAnalyzerBase {
 
     SliceUsage rootUsage = oldRoot.getCachedChildren().get(0).getValue();
     SliceManager.getInstance(Objects.requireNonNull(root.getProject()))
-      .createToolWindow(true, root, true, SliceManager.getElementDescription(null, Objects.requireNonNull(rootUsage).getElement(), " Grouped by Nullness") );
+      .createToolWindow(true, root, true, SliceManager.getElementDescription(null, Objects.requireNonNull(rootUsage).getElement(),
+                                                                             JavaBundle.message("tab.title.slices.grouped.by.nullness")) );
   }
 
   public @NotNull SliceRootNode createNewTree(NullAnalysisResult result, SliceRootNode oldRoot, final Map<SliceNode, NullAnalysisResult> map) {
@@ -203,7 +205,7 @@ public abstract class SliceNullnessAnalyzerBase {
     static final int NULLS = 0;
     static final int NOT_NULLS = 1;
     static final int UNKNOWNS = 2;
-    final List<ObjectOpenHashSet<PsiElement>> groupedByValue = Arrays.asList(new ObjectOpenHashSet<>(), new ObjectOpenHashSet<>(), new ObjectOpenHashSet<>());
+    final List<Set<PsiElement>> groupedByValue = Arrays.asList(CollectionFactory.createSmallMemoryFootprintSet(), CollectionFactory.createSmallMemoryFootprintSet(), CollectionFactory.createSmallMemoryFootprintSet());
 
     public void clear() {
       for (Collection<PsiElement> elements : groupedByValue) {

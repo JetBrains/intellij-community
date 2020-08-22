@@ -21,29 +21,28 @@ import java.util.ArrayList;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-final class ComponentTreeStructure extends AbstractTreeStructure{
+final class ComponentTreeStructure extends AbstractTreeStructure {
   private static final Logger LOG = Logger.getInstance(ComponentPtr.class);
-  private static final Object[] ourEmptyObjectArray=new Object[]{};
 
   private final Object myRootElement;
   private final GuiEditor myEditor;
 
-  ComponentTreeStructure(@NotNull final GuiEditor editor){
+  ComponentTreeStructure(@NotNull final GuiEditor editor) {
     myRootElement = new ComponentTreeStructureRoot();
     myEditor = editor;
   }
 
   @NotNull
   @Override
-  public Object getRootElement(){
+  public Object getRootElement() {
     return myRootElement;
   }
 
   @Override
-  public Object @NotNull [] getChildElements(@NotNull final Object element){
-    if(element==myRootElement){
+  public Object @NotNull [] getChildElements(@NotNull final Object element) {
+    if (element == myRootElement) {
       ArrayList<Object> elements = new ArrayList<>();
-      final RadRootContainer rootContainer=myEditor.getRootContainer();
+      final RadRootContainer rootContainer = myEditor.getRootContainer();
       elements.add(new ComponentPtr(myEditor, rootContainer));
       final LwInspectionSuppression[] suppressions = rootContainer.getInspectionSuppressions();
       if (suppressions.length > 0) {
@@ -55,44 +54,45 @@ final class ComponentTreeStructure extends AbstractTreeStructure{
       }
       return elements.toArray();
     }
-    else if(element instanceof ComponentPtr){
-      final ComponentPtr ptr=(ComponentPtr)element;
+    else if (element instanceof ComponentPtr) {
+      final ComponentPtr ptr = (ComponentPtr)element;
       LOG.assertTrue(ptr.isValid()); // pointer must be valid
-      final RadComponent component=ptr.getComponent();
-      if(component instanceof RadContainer){
-        final RadContainer container=(RadContainer)component;
-        final ComponentPtr[] ptrs=new ComponentPtr[container.getComponentCount()];
-        for(int i=0;i<ptrs.length;i++){
-          ptrs[i]=new ComponentPtr(myEditor,container.getComponent(i));
+      final RadComponent component = ptr.getComponent();
+      if (component instanceof RadContainer) {
+        final RadContainer container = (RadContainer)component;
+        final ComponentPtr[] ptrs = new ComponentPtr[container.getComponentCount()];
+        for (int i = 0; i < ptrs.length; i++) {
+          ptrs[i] = new ComponentPtr(myEditor, container.getComponent(i));
         }
         return ptrs;
-      }else{
-        return ourEmptyObjectArray;
+      }
+      else {
+        return ArrayUtil.EMPTY_OBJECT_ARRAY;
       }
     }
     else if (element instanceof LwInspectionSuppression[]) {
       ArrayList<LwInspectionSuppression> result = new ArrayList<>();
-      for(LwInspectionSuppression suppression: (LwInspectionSuppression[]) element) {
+      for (LwInspectionSuppression suppression : (LwInspectionSuppression[])element) {
         if (suppression.getComponentId() == null ||
-          FormEditingUtil.findComponent(myEditor.getRootContainer(), suppression.getComponentId()) != null) {
+            FormEditingUtil.findComponent(myEditor.getRootContainer(), suppression.getComponentId()) != null) {
           result.add(suppression);
         }
       }
       return ArrayUtil.toObjectArray(result);
     }
     else if (element instanceof RadButtonGroup[]) {
-      return (RadButtonGroup[]) element;
+      return (RadButtonGroup[])element;
     }
     else if (element instanceof LwInspectionSuppression || element instanceof RadButtonGroup) {
       return ArrayUtilRt.EMPTY_OBJECT_ARRAY;
     }
-    else{
-      throw new IllegalArgumentException("unknown element: "+element);
+    else {
+      throw new IllegalArgumentException("unknown element: " + element);
     }
   }
 
   @Override
-  public Object getParentElement(@NotNull final Object element){
+  public Object getParentElement(@NotNull final Object element) {
     if (element instanceof ComponentTreeStructureRoot) {
       return null;
     }
@@ -123,15 +123,15 @@ final class ComponentTreeStructure extends AbstractTreeStructure{
 
   @Override
   @NotNull
-  public NodeDescriptor createDescriptor(@NotNull final Object element, final NodeDescriptor parentDescriptor){
-    if(element==myRootElement){
-      return new RootDescriptor(parentDescriptor,myRootElement);
+  public NodeDescriptor createDescriptor(@NotNull final Object element, final NodeDescriptor parentDescriptor) {
+    if (element == myRootElement) {
+      return new RootDescriptor(parentDescriptor, myRootElement);
     }
-    else if(element instanceof ComponentPtr){
-      return new ComponentPtrDescriptor(parentDescriptor,(ComponentPtr)element);
+    else if (element instanceof ComponentPtr) {
+      return new ComponentPtrDescriptor(parentDescriptor, (ComponentPtr)element);
     }
     else if (element instanceof LwInspectionSuppression[]) {
-      return new SuppressionGroupDescriptor(parentDescriptor, (LwInspectionSuppression[]) element);
+      return new SuppressionGroupDescriptor(parentDescriptor, (LwInspectionSuppression[])element);
     }
     else if (element instanceof LwInspectionSuppression) {
       final LwInspectionSuppression suppression = (LwInspectionSuppression)element;
@@ -141,39 +141,39 @@ final class ComponentTreeStructure extends AbstractTreeStructure{
       return new SuppressionDescriptor(parentDescriptor, target, suppression);
     }
     else if (element instanceof RadButtonGroup[]) {
-      return new ButtonGroupListDescriptor(parentDescriptor, (RadButtonGroup[]) element);
+      return new ButtonGroupListDescriptor(parentDescriptor, (RadButtonGroup[])element);
     }
     else if (element instanceof RadButtonGroup) {
-      return new ButtonGroupDescriptor(parentDescriptor, (RadButtonGroup) element);
+      return new ButtonGroupDescriptor(parentDescriptor, (RadButtonGroup)element);
     }
-    else{
-      throw new IllegalArgumentException("unknown element: "+element);
+    else {
+      throw new IllegalArgumentException("unknown element: " + element);
     }
   }
 
   /**
    * Only tree root (it's invisible) node and RadRootContainer are auto-expanded
    */
-  public boolean isAutoExpandNode(final NodeDescriptor descriptor){
-    final Object element=descriptor.getElement();
-    return element==myRootElement || element==myEditor.getRootContainer();
+  boolean isAutoExpandNode(final @NotNull NodeDescriptor<?> descriptor) {
+    final Object element = descriptor.getElement();
+    return element == myRootElement || element == myEditor.getRootContainer();
   }
 
   @Override
-  public void commit(){}
+  public void commit() {}
 
   /**
    * Nothing to commit
    */
   @Override
-  public boolean hasSomethingToCommit(){
+  public boolean hasSomethingToCommit() {
     return false;
   }
 
   private class ComponentTreeStructureRoot {
     @Override
     public String toString() {
-      return "root of component tree structure " + ComponentTreeStructure.this.toString();
+      return "root of component tree structure " + ComponentTreeStructure.this;
     }
   }
 }

@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.xml.namespace.QName;
 
-public class QNameUtil {
+public final class QNameUtil {
     public static final QName NONE = null;
     public static final QName UNRESOLVED = new ExtendedQName("null");
     public static final QName ANY = new ExtendedQName("*");

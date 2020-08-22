@@ -167,6 +167,9 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
       if (!(listParent instanceof PsiClass)) {
         return;
       }
+      if (referenceList.equals(((PsiClass)listParent).getPermitsList())) {
+        return;
+      }
       checkReferenceElement(reference);
     }
 

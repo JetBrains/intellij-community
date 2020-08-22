@@ -148,4 +148,16 @@ class PyTypeHintsQuickFixTest : PyQuickFixTestCase() {
       }
     )
   }
+
+  // PY-42418
+  fun testReplacingParameterizedBuiltinWithItsTypingAliasBefore39() {
+    doQuickFixTest(PyTypeHintsInspection::class.java,"Replace with typing alias", LanguageLevel.PYTHON38)
+  }
+
+  // PY-42418
+  fun testBatchReplacingParameterizedBuiltinsWithTheirTypingAliasesBefore39() {
+    doQuickFixTest(PyTypeHintsInspection::class.java,
+                   "Fix all 'Type hints definitions and usages' problems in file",
+                   LanguageLevel.PYTHON38)
+  }
 }

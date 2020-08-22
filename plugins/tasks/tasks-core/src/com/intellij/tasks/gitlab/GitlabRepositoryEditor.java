@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.gitlab;
 
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -80,7 +81,7 @@ public class GitlabRepositoryEditor extends BaseRepositoryEditor<GitlabRepositor
     myTestButton.setEnabled(myRepository.isConfigured());
   }
 
-  private class FetchProjectsTask extends TaskUiUtil.ComboBoxUpdater<GitlabProject> {
+  private final class FetchProjectsTask extends TaskUiUtil.ComboBoxUpdater<GitlabProject> {
     private FetchProjectsTask() {
       super(GitlabRepositoryEditor.this.myProject, "Downloading Gitlab projects...", myProjectComboBox);
     }

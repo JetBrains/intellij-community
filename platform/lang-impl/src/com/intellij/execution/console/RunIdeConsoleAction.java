@@ -350,7 +350,7 @@ public final class RunIdeConsoleAction extends DumbAwareAction {
     engine.setStdErr(new ConsoleWriter(ref, ConsoleViewContentType.ERROR_OUTPUT));
   }
 
-  private static class ConsoleWriter extends Writer {
+  private static final class ConsoleWriter extends Writer {
     private final WeakReference<RunContentDescriptor> myDescriptor;
     private final ConsoleViewContentType myOutputType;
 

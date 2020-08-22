@@ -5,6 +5,7 @@ import com.intellij.compiler.server.BuildManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.jps.cache.JpsCacheBundle;
 import com.intellij.jps.cache.client.JpsServerClient;
+import com.intellij.jps.cache.git.GitCommitsIterator;
 import com.intellij.jps.cache.git.GitRepositoryUtil;
 import com.intellij.jps.cache.loader.JpsOutputLoader.LoaderStatus;
 import com.intellij.jps.cache.model.BuildTargetState;
@@ -14,6 +15,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -35,6 +37,7 @@ import org.jetbrains.jps.model.serialization.JpsLoaderBase;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import org.jetbrains.jps.util.JpsPathUtil;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -48,7 +51,7 @@ import static com.intellij.jps.cache.ui.JpsLoaderNotifications.STICKY_NOTIFICATI
 import static org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.OUTPUT_TAG;
 import static org.jetbrains.jps.model.serialization.java.JpsJavaModelSerializerExtension.URL_ATTRIBUTE;
 
-public class JpsOutputLoaderManager {
+public class JpsOutputLoaderManager implements Disposable {
   private static final Logger LOG = Logger.getInstance("com.intellij.jps.cache.loader.JpsOutputLoaderManager");
   private static final String LATEST_COMMIT_ID = "JpsOutputLoaderManager.latestCommitId";
   private static final String PROGRESS_TITLE = "Updating Compiler Caches";
@@ -60,6 +63,9 @@ public class JpsOutputLoaderManager {
   private final JpsServerClient myServerClient;
   private final String myBuildOutDir;
   private final Project myProject;
+
+  @Override
+  public void dispose() { }
 
   @NotNull
   public static JpsOutputLoaderManager getInstance(@NotNull Project project) {
@@ -85,7 +91,15 @@ public class JpsOutputLoaderManager {
         Pair<String, Integer> commitInfo = getNearestCommit(isForceUpdate);
         if (commitInfo != null) {
           // Drop JPS metadata to force plugin for downloading all compilation outputs
-          if (isForceUpdate) myMetadataLoader.dropCurrentProjectMetadata();
+          if (isForceUpdate) {
+            myMetadataLoader.dropCurrentProjectMetadata();
+            File outDir = new File(myBuildOutDir);
+            if (outDir.exists()) {
+              indicator.setText("Clean output directories");
+              FileUtil.delete(outDir);
+            }
+            LOG.info("Compilation output folder empty");
+          }
           startLoadingForCommit(commitInfo.first);
         }
         hasRunningTask.set(false);
@@ -99,47 +113,47 @@ public class JpsOutputLoaderManager {
   }
 
   public void notifyAboutNearestCache() {
-    INSTANCE.execute(() -> {
-      Pair<String, Integer> commitInfo = getNearestCommit(false);
-      if (commitInfo == null) return;
+    Pair<String, Integer> commitInfo = getNearestCommit(false);
+    if (commitInfo == null) return;
 
-      String notificationContent = commitInfo.second == 1
-                                   ? "Caches are for the current commit."
-                                   : "Caches are for the commit " + (commitInfo.second - 1) + " commits prior to yours.";
+    String notificationContent = commitInfo.second == 1
+                                 ? "Caches are for the current commit."
+                                 : "Caches are for the commit " + (commitInfo.second - 1) + " commits prior to yours.";
 
-      ApplicationManager.getApplication().invokeLater(() -> {
-        Notification notification = STICKY_NOTIFICATION_GROUP.createNotification("Compiler caches available", notificationContent,
-                                                                                 NotificationType.INFORMATION, null);
-        notification
-          .addAction(NotificationAction.createSimple(JpsCacheBundle.messagePointer(
-            "action.NotificationAction.JpsOutputLoaderManager.text.update.caches"), () -> {
+    ApplicationManager.getApplication().invokeLater(() -> {
+      Notification notification = STICKY_NOTIFICATION_GROUP.createNotification("Compiler caches available", notificationContent,
+                                                                               NotificationType.INFORMATION, null);
+      notification
+        .addAction(NotificationAction.createSimple(JpsCacheBundle.messagePointer(
+          "action.NotificationAction.JpsOutputLoaderManager.text.update.caches"), () -> {
           notification.expire();
           load(false);
         }));
-        Notifications.Bus.notify(notification, myProject);
-      });
+      Notifications.Bus.notify(notification, myProject);
     });
   }
 
   @Nullable
   private Pair<String, Integer> getNearestCommit(boolean isForceUpdate) {
-    Set<String> allCacheKeys = myServerClient.getAllCacheKeys(myProject);
+    Map<String, Set<String>> availableCommitsPerRemote = myServerClient.getCacheKeysPerRemote(myProject);
 
     String previousCommitId = PropertiesComponent.getInstance().getValue(LATEST_COMMIT_ID);
-    List<Iterator<String>> repositoryList = GitRepositoryUtil.getCommitsIterator(myProject);
+    List<GitCommitsIterator> repositoryList = GitRepositoryUtil.getCommitsIterator(myProject, availableCommitsPerRemote.keySet());
     String commitId = "";
     int commitsBehind = 0;
-    for (Iterator<String> commitsIterator : repositoryList) {
-      if (allCacheKeys.contains(commitId)) continue;
+    Set<String> availableCommitsForRemote = new HashSet<>();
+    for (GitCommitsIterator commitsIterator : repositoryList) {
+      availableCommitsForRemote = availableCommitsPerRemote.get(commitsIterator.getRemote());
+      if (availableCommitsForRemote.contains(commitId)) continue;
       commitsBehind = 0;
-      while (commitsIterator.hasNext() && !allCacheKeys.contains(commitId)) {
+      while (commitsIterator.hasNext() && !availableCommitsForRemote.contains(commitId)) {
         commitId = commitsIterator.next();
         commitsBehind++;
       }
     }
 
-    if (!allCacheKeys.contains(commitId)) {
-      LOG.warn("Not found any caches for the latest commits in the brunch");
+    if (!availableCommitsForRemote.contains(commitId)) {
+      LOG.warn("Not found any caches for the latest commits in the branch");
       return null;
     }
     if (previousCommitId != null && commitId.equals(previousCommitId) && !isForceUpdate) {

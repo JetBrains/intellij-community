@@ -1,18 +1,4 @@
-/*
- * Copyright 2006-2019 Bas Leijdekkers
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.abstraction;
 
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
@@ -22,6 +8,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.undo.BasicUndoableAction;
@@ -101,7 +88,7 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
     @Override
     public String getName() {
       if (myCandidates.size() == 1) {
-        InspectionGadgetsBundle.message("inspection.type.may.be.weakened.add.stopper.single", myCandidates.get(0));
+        return InspectionGadgetsBundle.message("inspection.type.may.be.weakened.add.stopper.single", myCandidates.get(0));
       }
       return InspectionGadgetsBundle.message("inspection.type.may.be.weakened.add.stopper");
     }
@@ -195,7 +182,7 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
     }
   }
 
-  private static void writeBool(@NotNull Element node, boolean value, @NotNull String name) {
+  private static void writeBool(@NotNull Element node, boolean value, @NotNull @NonNls String name) {
     Element optionElement = new Element("option");
     optionElement.setAttribute("name", name);
     optionElement.setAttribute("value", String.valueOf(value));
@@ -542,7 +529,7 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
     }
 
     @NotNull
-    private String getDescription(@NotNull PsiElement element, @NotNull Collection<PsiClass> weakerClasses) {
+    private @InspectionMessage String getDescription(@NotNull PsiElement element, @NotNull Collection<PsiClass> weakerClasses) {
       @NonNls final StringBuilder builder = new StringBuilder();
       final Iterator<PsiClass> iterator = weakerClasses.iterator();
       if (iterator.hasNext()) {

@@ -7,16 +7,14 @@ import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.roots.RootProvider
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
-import com.intellij.openapi.roots.libraries.Library
-import com.intellij.openapi.roots.libraries.LibraryProperties
-import com.intellij.openapi.roots.libraries.LibraryTable
-import com.intellij.openapi.roots.libraries.PersistentLibraryKind
+import com.intellij.openapi.roots.libraries.*
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
+import com.intellij.workspaceModel.ide.legacyBridge.LibraryModifiableModelBridge
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jdom.Element
@@ -26,8 +24,9 @@ internal class LibraryModifiableModelBridgeImpl(
   private val originalLibrary: LibraryBridgeImpl,
   private val originalLibrarySnapshot: LibraryStateSnapshot,
   diff: WorkspaceEntityStorageBuilder,
-  private val targetBuilder: WorkspaceEntityStorageDiffBuilder?
-) : LegacyBridgeModifiableBase(diff), LibraryEx.ModifiableModelEx, LibraryEx, RootProvider {
+  private val targetBuilder: WorkspaceEntityStorageDiffBuilder?,
+  cacheStorageResult: Boolean = true
+) : LegacyBridgeModifiableBase(diff, cacheStorageResult), LibraryModifiableModelBridge, RootProvider {
 
   private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(originalLibrary.project)
   private var entityId = originalLibrarySnapshot.libraryEntity.persistentId()
@@ -38,7 +37,8 @@ internal class LibraryModifiableModelBridgeImpl(
       libraryEntity = storage.resolve(entityId) ?: error("Can't resolve library via $entityId"),
       filePointerProvider = originalLibrarySnapshot.filePointerProvider,
       storage = storage,
-      libraryTable = originalLibrarySnapshot.libraryTable
+      libraryTable = originalLibrarySnapshot.libraryTable,
+      parentDisposable = originalLibrary
     )
 
     newLibrary
@@ -95,6 +95,15 @@ internal class LibraryModifiableModelBridgeImpl(
       originalLibrary.entityId = entityId
       originalLibrary.fireRootSetChanged()
     }
+  }
+
+  override fun prepareForCommit() {
+    assertModelIsLive()
+
+    modelIsCommittedOrDisposed = true
+
+    if (reloadKind) originalLibrary.cleanCachedValue()
+    if (isChanged) originalLibrary.entityId = entityId
   }
 
   private fun update(updater: ModifiableLibraryEntity.() -> Unit) {
@@ -184,6 +193,18 @@ internal class LibraryModifiableModelBridgeImpl(
 
   override fun isValid(url: String, rootType: OrderRootType): Boolean = currentLibrary.isValid(url, rootType)
 
+  override fun hasSameContent(library: Library): Boolean {
+    if (this === library) return true
+    if (library !is LibraryBridgeImpl) return false
+
+    if (name != library.name) return false
+    if (kind != library.kind) return false
+    if (properties != library.properties) return false
+    if (currentLibrary.libraryEntity.roots != library.librarySnapshot.libraryEntity.roots) return false
+    if (!excludedRoots.contentEquals(library.excludedRoots)) return false
+    return true
+  }
+
   override fun addExcludedRoot(url: String) {
     assertModelIsLive()
 
@@ -229,7 +250,7 @@ internal class LibraryModifiableModelBridgeImpl(
 
     val kind = currentLibrary.kind
     if (kind == null) {
-      if (properties != null) error("Setting properties with null kind is unsupported")
+      if (properties != null && properties !is DummyLibraryProperties) error("Setting properties with null kind is unsupported")
       return
     }
 

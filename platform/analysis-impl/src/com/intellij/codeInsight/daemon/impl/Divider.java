@@ -96,12 +96,12 @@ public final class Divider {
     int startOffset = restrictRange.getStartOffset();
     int endOffset = restrictRange.getEndOffset();
 
-    final Condition<PsiElement>[] filters = CollectHighlightsUtil.EP_NAME.getExtensions();
+    Condition<PsiElement>[] filters = CollectHighlightsUtil.EP_NAME.getExtensions();
 
-    final TIntStack starts = new TIntStack(STARTING_TREE_HEIGHT);
+    TIntStack starts = new TIntStack(STARTING_TREE_HEIGHT);
     starts.push(startOffset);
-    final Stack<PsiElement> elements = new Stack<>(STARTING_TREE_HEIGHT);
-    final Stack<PsiElement> children = new Stack<>(STARTING_TREE_HEIGHT);
+    Stack<PsiElement> elements = new Stack<>(STARTING_TREE_HEIGHT);
+    Stack<PsiElement> children = new Stack<>(STARTING_TREE_HEIGHT);
     PsiElement element = root;
 
     PsiElement child = HAVE_TO_GET_CHILDREN;

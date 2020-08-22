@@ -16,9 +16,11 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.KeyedExtensionCollector;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.psi.tree.IFileElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.util.BitUtil;
@@ -27,7 +29,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.indexing.impl.IndexStorage;
-import com.intellij.util.indexing.impl.InputData;
+import com.intellij.util.indexing.impl.InputDataDiffBuilder;
 import com.intellij.util.indexing.impl.forward.EmptyForwardIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
@@ -42,15 +44,15 @@ import org.jetbrains.annotations.Nullable;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Stream;
 
 public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<SerializedStubTree>
   implements CustomImplementationFileBasedIndexExtension<Integer, SerializedStubTree> {
-  static final Logger LOG = Logger.getInstance(StubUpdatingIndex.class);
+  private static final Logger LOG = Logger.getInstance(StubUpdatingIndex.class);
   public static final boolean USE_SNAPSHOT_MAPPINGS = SystemProperties.is("stubs.use.snapshot.mappings");
 
   private static final int VERSION = 45 + (PersistentHashMapValueStorage.COMPRESSION_ENABLED ? 1 : 0);
@@ -136,6 +138,18 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
       }
 
       @Override
+      protected @Nullable SerializedStubTree computeValue(@NotNull FileContent inputData) {
+        StubBuilderType subIndexerType = calculateSubIndexer(inputData);
+        if (subIndexerType == null) {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Stub builder not found for " + inputData.getFile() + ", " + calculateIndexingStamp(inputData));
+          }
+          return null;
+        }
+        return computeValue(inputData, Objects.requireNonNull(subIndexerType));
+      }
+
+      @Override
       @Nullable
       protected SerializedStubTree computeValue(@NotNull final FileContent inputData, @NotNull StubBuilderType type) {
         try {
@@ -156,11 +170,17 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
         try {
           Stub stub = StubTreeBuilder.buildStubTree(inputData, type);
           if (stub == null) {
+            if (LOG.isDebugEnabled()) {
+              LOG.debug("No stub present for " + inputData.getFile() + ", " + calculateIndexingStamp(inputData));
+            }
             return null;
           }
           SerializedStubTree serializedStubTree = SerializedStubTree.serializeStub(stub, mySerializationManager, myStubIndexesExternalizer);
           if (IndexDebugProperties.DEBUG) {
             assertDeserializedStubMatchesOriginalStub(serializedStubTree, stub);
+          }
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Indexing stubs for " + inputData.getFile() + ", " + calculateIndexingStamp(inputData));
           }
           return serializedStubTree;
         }
@@ -200,10 +220,10 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
   }
 
   private static void assertStubsAreSimilar(@NotNull Stub stub, @NotNull Stub stub2) {
-    assert stub.getStubType() == stub2.getStubType();
+    assert stub.getStubType() == stub2.getStubType() : stub.getStubType() + "!=" + stub2.getStubType();
     List<? extends Stub> stubs = stub.getChildrenStubs();
     List<? extends Stub> stubs2 = stub2.getChildrenStubs();
-    assert stubs.size() == stubs2.size();
+    assert stubs.size() == stubs2.size() : stub.getStubType() + ": " + stubs.size() + "!=" + stubs2.size();
     for (int i = 0, len = stubs.size(); i < len; ++i) {
       assertStubsAreSimilar(stubs.get(i), stubs2.get(i));
     }
@@ -233,31 +253,30 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
 
   private static final byte IS_BINARY_MASK = 1;
   private static final byte BYTE_AND_CHAR_LENGTHS_ARE_THE_SAME_MASK = 1 << 1;
-  private static void rememberIndexingStamp(@NotNull FileContent content) {
+  @NotNull
+  private static IndexingStampInfo calculateIndexingStamp(@NotNull FileContent content) {
     VirtualFile file = content.getFile();
     boolean isBinary = file.getFileType().isBinary();
     int contentLength = isBinary ? -1 : content.getPsiFile().getTextLength();
     long byteLength = file.getLength();
-    rememberIndexingStamp(file, isBinary, byteLength, contentLength);
 
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("Indexing stubs for " + file + "; " + IndexingStampInfo.dumpSize(byteLength, contentLength));
-    }
+    return new IndexingStampInfo(file.getTimeStamp(), byteLength, contentLength, isBinary);
   }
 
-  private static void rememberIndexingStamp(@NotNull VirtualFile file, boolean isBinary, long contentByteLength, int contentCharLength) {
-    try (DataOutputStream stream = INDEXED_STAMP.writeAttribute(file)) {
-      DataInputOutputUtil.writeTIME(stream, file.getTimeStamp());
-      DataInputOutputUtil.writeLONG(stream, contentByteLength);
+  static void saveIndexingStampInfo(@Nullable IndexingStampInfo indexingStampInfo, int fileId) {
+    try (DataOutputStream stream = FSRecords.writeAttribute(fileId, INDEXED_STAMP)) {
+      if (indexingStampInfo == null) return;
+      DataInputOutputUtil.writeTIME(stream, indexingStampInfo.indexingFileStamp);
+      DataInputOutputUtil.writeLONG(stream, indexingStampInfo.indexingByteLength);
 
-      boolean lengthsAreTheSame = contentByteLength == contentCharLength;
+      boolean lengthsAreTheSame = indexingStampInfo.indexingCharLength == indexingStampInfo.indexingByteLength;
       byte flags = 0;
-      flags = BitUtil.set(flags, IS_BINARY_MASK, isBinary);
+      flags = BitUtil.set(flags, IS_BINARY_MASK, indexingStampInfo.isBinary);
       flags = BitUtil.set(flags, BYTE_AND_CHAR_LENGTHS_ARE_THE_SAME_MASK, lengthsAreTheSame);
       stream.writeByte(flags);
 
-      if (!lengthsAreTheSame && !isBinary) {
-        DataInputOutputUtil.writeINT(stream, contentCharLength);
+      if (!lengthsAreTheSame && !indexingStampInfo.isBinary) {
+        DataInputOutputUtil.writeINT(stream, indexingStampInfo.indexingCharLength);
       }
     }
     catch (IOException e) {
@@ -266,9 +285,9 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
   }
 
   @Nullable
-  static IndexingStampInfo getIndexingStampInfo(@NotNull VirtualFile file) {
+  static IndexingStampInfo readSavedIndexingStampInfo(@NotNull VirtualFile file) {
     try (DataInputStream stream = INDEXED_STAMP.readAttribute(file)) {
-      if (stream == null) {
+      if (stream == null || stream.available() <= 0) {
         return null;
       }
       long stamp = DataInputOutputUtil.readTIME(stream);
@@ -288,7 +307,7 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
       else {
         charLength = DataInputOutputUtil.readINT(stream);
       }
-      return new IndexingStampInfo(stamp, byteLength, charLength);
+      return new IndexingStampInfo(stamp, byteLength, charLength, isBinary);
     }
     catch (IOException e) {
       LOG.error(e);
@@ -300,7 +319,7 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
   @Override
   public DataExternalizer<SerializedStubTree> getValueExternalizer() {
     ensureSerializationManagerInitialized(mySerializationManager);
-    return new SerializedStubTreeDataExternalizer(true, mySerializationManager, myStubIndexesExternalizer);
+    return new SerializedStubTreeDataExternalizer(mySerializationManager, myStubIndexesExternalizer);
   }
 
   @NotNull
@@ -312,6 +331,11 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
   @Override
   public int getVersion() {
     return VERSION;
+  }
+
+  @Override
+  public void handleInitializationError(@NotNull Throwable e) {
+    ((StubIndexImpl)StubIndex.getInstance()).initializationFailed(e);
   }
 
   @NotNull
@@ -399,47 +423,54 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
     }
 
     @Override
-    protected @NotNull InputData<Integer, SerializedStubTree> mapInput(int inputId, @Nullable FileContent content) {
-      InputData<Integer, SerializedStubTree> data = super.mapInput(inputId, content);
-      if (content != null && !data.getKeyValues().isEmpty()) {
-        rememberIndexingStamp(content);
-      }
-      return data;
+    public @NotNull Computable<Boolean> mapInputAndPrepareUpdate(int inputId, @Nullable FileContent content)
+      throws MapInputException, ProcessCanceledException {
+      Computable<Boolean> indexUpdateComputable = super.mapInputAndPrepareUpdate(inputId, content);
+      IndexingStampInfo indexingStampInfo = content == null ? null : calculateIndexingStamp(content);
+
+      return () -> {
+        try {
+          Boolean result = indexUpdateComputable.compute();
+          if (Boolean.TRUE.equals(result)) {
+            saveIndexingStampInfo(indexingStampInfo, inputId);
+          }
+          return result;
+        } catch (ProcessCanceledException e) {
+          LOG.error("ProcessCanceledException is not expected here", e);
+          throw e;
+        }
+      };
     }
 
     @Override
-    protected void removeTransientDataForInMemoryKeys(int inputId, @NotNull Map<? extends Integer, ? extends SerializedStubTree> map) {
+    protected void removeTransientDataForInMemoryKeys(int inputId, @NotNull Map<Integer, SerializedStubTree> map) throws IOException {
       super.removeTransientDataForInMemoryKeys(inputId, map);
-      removeStubIndexKeys(inputId, getStubIndexMaps(map));
     }
 
     @Override
-    public void removeTransientDataForKeys(int inputId, @NotNull Collection<? extends Integer> keys) {
-      Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> maps;
-      try {
-        Map<Integer, SerializedStubTree> data = getIndexedFileData(inputId);
-        maps = getStubIndexMaps(data);
+    public void removeTransientDataForKeys(int inputId, @NotNull InputDataDiffBuilder<Integer, SerializedStubTree> diffBuilder) {
+      Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> maps = getStubIndexMaps((StubCumulativeInputDiffBuilder)diffBuilder);
+
+      if (FileBasedIndexImpl.DO_TRACE_STUB_INDEX_UPDATE) {
+        LOG.info("removing transient data for inputId = " + inputId +
+                 ", keys = " + ((StubCumulativeInputDiffBuilder)diffBuilder).getKeys() +
+                 ", data = " + maps);
       }
-      catch (StorageException e) {
-        throw new RuntimeException(e);
-      }
-      super.removeTransientDataForKeys(inputId, keys);
-      removeStubIndexKeys(inputId, maps);
+
+      super.removeTransientDataForKeys(inputId, diffBuilder);
+      removeTransientStubIndexKeys(inputId, maps);
     }
 
-    private static void removeStubIndexKeys(int inputId, @NotNull Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> indexedStubs) {
+    private static void removeTransientStubIndexKeys(int inputId, @NotNull Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> indexedStubs) {
       StubIndexImpl stubIndex = (StubIndexImpl)StubIndex.getInstance();
       for (StubIndexKey key : indexedStubs.keySet()) {
-        stubIndex.removeTransientDataForFile(key, inputId, indexedStubs.get(key).keySet());
+        stubIndex.removeTransientDataForFile(key, inputId, indexedStubs.get(key));
       }
     }
 
     @NotNull
-    private static Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> getStubIndexMaps(@NotNull Map<? extends Integer, ? extends SerializedStubTree> data) {
-      if (data.isEmpty()) {
-        return Collections.emptyMap();
-      }
-      SerializedStubTree tree = data.values().iterator().next();
+    private static Map<StubIndexKey<?, ?>, Map<Object, StubIdList>> getStubIndexMaps(@NotNull StubCumulativeInputDiffBuilder diffBuilder) {
+      SerializedStubTree tree = diffBuilder.getSerializedStubTree();
       return tree == null ? Collections.emptyMap() : tree.getStubIndicesValueMap();
     }
 
@@ -465,15 +496,7 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
     @Override
     public void setIndexedStateForFile(int fileId, @NotNull IndexedFile file) {
       super.setIndexedStateForFile(fileId, file);
-
-      if (myCompositeBinaryBuilderMap != null) {
-        try {
-          myCompositeBinaryBuilderMap.persistState(fileId, file.getFile());
-        }
-        catch (IOException e) {
-          LOG.error(e);
-        }
-      }
+      setBinaryBuilderConfiguration(fileId, file);
     }
 
     @Override
@@ -484,6 +507,22 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
       } catch (IOException e) {
         LOG.error(e);
         return false;
+      }
+    }
+
+    @Override
+    protected void setIndexConfigurationUpToDate(int fileId, @NotNull IndexedFile file) {
+      setBinaryBuilderConfiguration(fileId, file);
+    }
+
+    private void setBinaryBuilderConfiguration(int fileId, @NotNull IndexedFile file) {
+      if (myCompositeBinaryBuilderMap != null) {
+        try {
+          myCompositeBinaryBuilderMap.persistState(fileId, file.getFile());
+        }
+        catch (IOException e) {
+          LOG.error(e);
+        }
       }
     }
   }

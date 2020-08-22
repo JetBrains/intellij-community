@@ -38,7 +38,6 @@
     <resolveScopeProvider implementation="com.intellij.psi.impl.file.impl.JavaOutOfSourcesResolveScopeProvider"/>
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.JavaSoftKeywordHighlightingPassFactory"/>
     <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.impl.JavaTextBlockIndentPassFactory"/>
-    <highlightingPassFactory implementation="com.intellij.codeInsight.daemon.problems.pass.ProjectProblemPassFactory"/>
     <deadCode implementation="com.intellij.codeInspection.java19modules.Java9ModuleEntryPoint"/>
     <metaLanguage implementation="com.intellij.uast.UastMetaLanguage"/>
     <lang.inspectionSuppressor language="JAVA" implementationClass="com.intellij.codeInspection.SuppressManagerImpl"/>
@@ -73,7 +72,7 @@
                      bundle="messages.JavaAnalysisBundle" key="inspection.java.module.naming"
                      implementationClass="com.intellij.codeInspection.java19modules.JavaModuleNamingInspection"/>
     <localInspection language="JAVA" shortName="JavaRequiresAutoModule" enabledByDefault="true" level="WARNING"
-                     groupPath="Java,Java language level migration aids"
+                     groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids9"
                      bundle="messages.JavaAnalysisBundle" key="inspection.requires.auto.module"
                      implementationClass="com.intellij.codeInspection.java19modules.JavaRequiresAutoModuleInspection"/>
@@ -82,12 +81,12 @@
                      enabledByDefault="true" level="WARNING"
                      key="inspection.module.exports.package.to.itself" bundle="messages.JavaAnalysisBundle"
                      implementationClass="com.intellij.codeInspection.java19modules.Java9ModuleExportsPackageToItselfInspection"/>
-    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="Java8ListSort"
+    <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA" shortName="Java8ListSort"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids8" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.java18api.Java8ListSortInspection"
                      key="inspection.java.8.list.sort.display.name" bundle="messages.JavaAnalysisBundle"/>
-    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="AnonymousHasLambdaAlternative"
+    <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA" shortName="AnonymousHasLambdaAlternative"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids8" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.AnonymousHasLambdaAlternativeInspection"
                      key="inspection.anonymous.has.lambda.alternative.display.name" bundle="messages.JavaAnalysisBundle"/>
@@ -110,12 +109,12 @@
     <localInspection groupPath="Java" language="JAVA" shortName="JavacQuirks" bundle="messages.JavaAnalysisBundle" key="inspection.compiler.javac.quirks.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.compiler.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.compiler.JavacQuirksInspection" />
-    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" suppressId="unchecked" shortName="SafeVarargsDetector"
+    <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA" suppressId="unchecked" shortName="SafeVarargsDetector"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids7" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.PossibleHeapPollutionVarargsInspection"
                      key="inspection.safe.varargs.detector.display.name" bundle="messages.JavaAnalysisBundle"/>
-    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="CodeBlock2Expr"
+    <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA" shortName="CodeBlock2Expr"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids8" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.RedundantLambdaCodeBlockInspection"
                      key="statement.lambda.can.be.replaced.with.expression.lambda" bundle="messages.JavaAnalysisBundle"/>
@@ -123,11 +122,11 @@
                      groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.InvalidComparatorMethodReferenceInspection"
                      key="inspection.invalid.comparator.method.reference.display.name" bundle="messages.JavaAnalysisBundle"/>
-    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="Convert2Lambda"
+    <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA" shortName="Convert2Lambda"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids8" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.AnonymousCanBeLambdaInspection"
                      key="inspection.convert.2.lambda.display.name" bundle="messages.JavaAnalysisBundle"/>
-    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="Convert2Diamond"
+    <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA" shortName="Convert2Diamond"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids7" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.ExplicitTypeCanBeDiamondInspection"
                      key="inspection.convert.2.diamond.display.name" bundle="messages.JavaAnalysisBundle"/>
@@ -256,6 +255,7 @@
     <lang.foldingBuilder language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.actions.SuppressWarningsFoldingBuilder" />
     <highlightVisitor implementation="com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl"/>
     <lang.inferredAnnotationProvider implementation="com.intellij.codeInsight.DefaultInferredAnnotationProvider"/>
+    <lang.inferredAnnotationProvider implementation="com.intellij.codeInsight.ProtobufInferredAnnotationProvider"/>
     <projectService serviceInterface="com.intellij.codeInsight.guess.GuessManager"
                     serviceImplementation="com.intellij.codeInsight.guess.impl.GuessManagerImpl"/>
     <projectService serviceInterface="com.intellij.codeInsight.InferredAnnotationsManager"

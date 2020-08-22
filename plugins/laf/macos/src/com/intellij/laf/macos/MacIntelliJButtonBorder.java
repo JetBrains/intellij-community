@@ -15,6 +15,8 @@ import java.awt.*;
 import java.awt.geom.Path2D;
 import java.awt.geom.RoundRectangle2D;
 
+import static com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI.isSmallVariant;
+
 /**
  * @author Konstantin Bulenkov
  */
@@ -29,7 +31,7 @@ public class MacIntelliJButtonBorder implements Border, UIResource {
 
       float arc = MacIntelliJTextBorder.ARC.getFloat();
 
-      if (DarculaButtonUI.isSmallComboButton(c) && c.isFocusable() && c.hasFocus()) {
+      if (DarculaButtonUI.isSmallVariant(c) && c.isFocusable() && c.hasFocus()) {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL,
                             MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
@@ -55,7 +57,7 @@ public class MacIntelliJButtonBorder implements Border, UIResource {
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return JBUI.insets(3).asUIResource();
+    return isSmallVariant(c) ? JBUI.insets(1, 2).asUIResource() : JBUI.insets(3).asUIResource();
   }
 
   @Override

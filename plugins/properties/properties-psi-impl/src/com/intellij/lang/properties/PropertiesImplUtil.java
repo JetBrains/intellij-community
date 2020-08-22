@@ -202,7 +202,7 @@ public class PropertiesImplUtil extends PropertiesUtil {
     return null;
   }
 
-  public static class ResourceBundleWithCachedFiles {
+  public static final class ResourceBundleWithCachedFiles {
     private static final ResourceBundleWithCachedFiles EMPTY =
       new ResourceBundleWithCachedFiles(EmptyResourceBundle.getInstance(), Collections.emptyList());
 

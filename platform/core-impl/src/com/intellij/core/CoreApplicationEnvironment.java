@@ -46,6 +46,7 @@ import com.intellij.util.KeyedLazyInstanceEP;
 import com.intellij.util.Processor;
 import com.intellij.util.graph.GraphAlgorithms;
 import com.intellij.util.graph.impl.GraphAlgorithmsImpl;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.MutablePicoContainer;
@@ -203,7 +204,7 @@ public class CoreApplicationEnvironment {
     }
   }
 
-  public void registerFileType(@NotNull FileType fileType, @NotNull String extension) {
+  public void registerFileType(@NotNull FileType fileType, @NotNull @NonNls String extension) {
     myFileTypeRegistry.registerFileType(fileType, extension);
   }
 
@@ -251,15 +252,34 @@ public class CoreApplicationEnvironment {
   }
 
   public static <T> void registerExtensionPoint(@NotNull ExtensionsArea area, @NotNull String name, @NotNull Class<? extends T> aClass) {
+    registerExtensionPoint(area, name, aClass, false);
+  }
+
+  public static <T> void registerDynamicExtensionPoint(@NotNull ExtensionsArea area, @NotNull String name, @NotNull Class<? extends T> aClass) {
+    registerExtensionPoint(area, name, aClass, true);
+  }
+
+  @SuppressWarnings("TestOnlyProblems")
+  private static <T> void registerExtensionPoint(@NotNull ExtensionsArea area, @NotNull String name, @NotNull Class<? extends T> aClass, boolean dymanic) {
     if (!area.hasExtensionPoint(name)) {
       ExtensionPoint.Kind kind = aClass.isInterface() || Modifier.isAbstract(aClass.getModifiers()) ? ExtensionPoint.Kind.INTERFACE : ExtensionPoint.Kind.BEAN_CLASS;
-      //noinspection TestOnlyProblems
-      area.registerExtensionPoint(name, aClass.getName(), kind);
+      if (dymanic) {
+        area.registerDynamicExtensionPoint(name, aClass.getName(), kind);
+      }
+      else {
+        area.registerExtensionPoint(name, aClass.getName(), kind);
+      }
     }
   }
 
+  @SuppressWarnings("deprecation")
   public static <T> void registerApplicationExtensionPoint(@NotNull ExtensionPointName<T> extensionPointName, @NotNull Class<? extends T> aClass) {
     registerExtensionPoint(Extensions.getRootArea(), extensionPointName, aClass);
+  }
+
+  @SuppressWarnings("deprecation")
+  public static <T> void registerApplicationDynamicExtensionPoint(@NotNull String extensionPointName, @NotNull Class<? extends T> aClass) {
+    registerDynamicExtensionPoint(Extensions.getRootArea(), extensionPointName, aClass);
   }
 
   public static void registerExtensionPointAndExtensions(@NotNull Path pluginRoot, @NotNull String fileName, @NotNull ExtensionsArea area) {

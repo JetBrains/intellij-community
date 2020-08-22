@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.appengine.converter;
 
 import com.intellij.appengine.facet.AppEngineFacetType;
@@ -11,9 +11,8 @@ import org.jetbrains.jps.model.serialization.facet.JpsFacetSerializer;
 import java.util.ArrayList;
 import java.util.List;
 
-public final class AppEngineFacetConverterProvider extends ConverterProvider {
-  public AppEngineFacetConverterProvider() {
-    super("google-app-engine-facet");
+final class AppEngineFacetConverterProvider extends ConverterProvider {
+  AppEngineFacetConverterProvider() {
   }
 
   @NotNull

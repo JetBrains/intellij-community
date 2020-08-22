@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.artifacts;
 
 import com.intellij.compiler.CompilerTestUtil;
@@ -162,8 +163,8 @@ public class IncrementalArtifactsCompilerTest extends ArtifactCompilerTestCase {
     make(a);
     assertOutput(a, fs().file("1.txt"));
 
-    VirtualFile virtualDir = getVirtualFile(createTempDir("externalDir"));
-    final VirtualFile file = VfsTestUtil.createFile(virtualDir, "2.txt", "a");
+    VirtualFile virtualDir = getTempDir().createVirtualDir();
+    VirtualFile file = VfsTestUtil.createFile(virtualDir, "2.txt", "a");
     WriteAction.runAndWait(() -> {
       ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
       model.getOrCreateModifiableArtifact(a).getRootElement()

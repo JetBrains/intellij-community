@@ -8,15 +8,16 @@ import org.jetbrains.annotations.NotNull;
 import java.util.function.Function;
 
 public class CapturingProcessRunner {
-  @NotNull private final ProcessOutput myOutput;
-  @NotNull private final BaseProcessHandler myProcessHandler;
   @NotNull private static final Logger LOG = Logger.getInstance(CapturingProcessRunner.class);
 
-  public CapturingProcessRunner(@NotNull BaseProcessHandler processHandler) {
+  @NotNull private final ProcessOutput myOutput;
+  @NotNull private final BaseProcessHandler<?> myProcessHandler;
+
+  public CapturingProcessRunner(@NotNull BaseProcessHandler<?> processHandler) {
     this(processHandler, processOutput -> new CapturingProcessAdapter(processOutput));
   }
 
-  public CapturingProcessRunner(@NotNull BaseProcessHandler processHandler,
+  public CapturingProcessRunner(@NotNull BaseProcessHandler<?> processHandler,
                                 @NotNull Function<? super ProcessOutput, ? extends ProcessAdapter> processAdapterProducer) {
     myOutput = new ProcessOutput();
     myProcessHandler = processHandler;

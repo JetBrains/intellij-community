@@ -15,7 +15,7 @@ import org.jetbrains.annotations.ApiStatus
 @Deprecated("Use version from `LifetimeDisposableEx`")
 fun defineNestedLifetime(disposable: Disposable): LifetimeDefinition {
   val lifetimeDefinition = Lifetime.Eternal.createNested()
-  if (Disposer.isDisposing(disposable) || Disposer.isDisposed(disposable)) {
+  if (Disposer.isDisposed(disposable)) {
     lifetimeDefinition.terminate()
     return lifetimeDefinition
   }
@@ -53,7 +53,7 @@ internal fun Lifetime.createNestedDisposable(debugName: String = "lifetimeToDisp
 }
 
 @Suppress("ObjectLiteralToLambda")
-fun Disposable.attach(disposable: () -> Unit) {
+inline fun Disposable.attach(crossinline disposable: () -> Unit) {
   Disposer.register(this, object : Disposable {
     override fun dispose() {
       disposable()

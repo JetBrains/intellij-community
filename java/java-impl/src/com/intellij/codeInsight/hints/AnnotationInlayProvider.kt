@@ -34,7 +34,8 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
     val document = PsiDocumentManager.getInstance(project).getDocument(file)
     return object : FactoryInlayHintsCollector(editor) {
       override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {
-        if (file.project.service<DumbService>().isDumb) return true
+        if (file.project.service<DumbService>().isDumb) return false
+        if (file.project.isDefault) return false
         val presentations = SmartList<InlayPresentation>()
         if (element is PsiModifierListOwner) {
           var annotations = emptySequence<PsiAnnotation>()
@@ -69,10 +70,10 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
                   val column = offset - startOffset
                   val shifted = factory.inset(presentation, left = column * width)
 
-                  sink.addBlockElement(offset, false, true, BlockInlayPriority.ANNOTATIONS, shifted)
+                  sink.addBlockElement(offset, true, true, BlockInlayPriority.ANNOTATIONS, shifted)
                 }
                 else -> {
-                  sink.addInlineElement(offset, false, factory.inset(presentation, left = 1, right = 1))
+                  sink.addInlineElement(offset, false, factory.inset(presentation, left = 1, right = 1), false)
                 }
               }
             }
@@ -156,14 +157,7 @@ class AnnotationInlayProvider : InlayHintsProvider<AnnotationInlayProvider.Setti
     get() = JavaBundle.message("settings.inlay.java.annotations")
   override val key: SettingsKey<Settings>
     get() = ourKey
-  override val previewText: String?
-    get() = """
-      class Demo {
-        private static int pure(int x, int y) {
-          return x * y + 10;
-        }
-      }
-    """.trimIndent()
+  override val previewText: String? = null
 
   override fun createConfigurable(settings: Settings): ImmediateConfigurable {
     return object : ImmediateConfigurable {

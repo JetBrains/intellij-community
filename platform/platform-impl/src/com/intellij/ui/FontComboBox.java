@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.ui.FontInfo;
 import com.intellij.util.ui.JBDimension;
 import org.jetbrains.annotations.Nullable;
@@ -78,7 +79,7 @@ public final class FontComboBox extends ComboBox {
     return item == null ? null : item.toString();
   }
 
-  public void setFontName(@Nullable String item) {
+  public void setFontName(@NlsSafe @Nullable String item) {
     myModel.setSelectedItem(item);
   }
 

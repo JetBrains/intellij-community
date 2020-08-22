@@ -1,8 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics.whitelist.storage
 
-import com.intellij.internal.statistic.service.fus.EventLogWhitelistLoadException
-import com.intellij.internal.statistic.service.fus.EventLogWhitelistLoadException.EventLogWhitelistLoadErrorType
+import com.intellij.internal.statistic.service.fus.EventLogMetadataLoadException
+import com.intellij.internal.statistic.service.fus.EventLogMetadataLoadException.EventLogMetadataLoadErrorType
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.UsefulTestCase
@@ -124,7 +124,9 @@ class WhitelistStorageUpdateTest : UsefulTestCase() {
     val storage = newBuilder().
       withCachedLastModified(1583852308336).
       withServerLastModified(1583852318336).
-      withServerContentProvider { throw EventLogWhitelistLoadException(EventLogWhitelistLoadErrorType.ERROR_ON_LOAD) }.
+      withServerContentProvider { throw EventLogMetadataLoadException(
+        EventLogMetadataLoadErrorType.ERROR_ON_LOAD)
+      }.
       build()
     doTest(storage, "cached.test.group")
   }

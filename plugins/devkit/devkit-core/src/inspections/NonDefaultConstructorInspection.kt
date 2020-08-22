@@ -14,7 +14,6 @@ import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.SmartList
-import gnu.trove.THashSet
 import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.dom.ExtensionPoint
 import org.jetbrains.idea.devkit.dom.ExtensionPoint.Area
@@ -162,7 +161,7 @@ private fun findExtensionPointByImplementationClass(searchString: String, qualif
 }
 
 // todo can we use attribute `with`?
-private val ignoredTagNames = THashSet(listOf("semContributor", "modelFacade", "scriptGenerator", "editorActionHandler", "editorTypedHandler", "dataImporter", "java.error.fix", "explainPlanProvider"))
+private val ignoredTagNames = HashSet(listOf("semContributor", "modelFacade", "scriptGenerator", "editorActionHandler", "editorTypedHandler", "dataImporter", "java.error.fix", "explainPlanProvider"))
 
 // problem - tag
 //<lang.elementManipulator forClass="com.intellij.psi.css.impl.CssTokenImpl"
@@ -229,12 +228,12 @@ private fun isAllowedParameters(list: PsiParameterList,
   return true
 }
 
-private val interfacesToCheck = THashSet(listOf(
+private val interfacesToCheck = HashSet(listOf(
   "com.intellij.codeInsight.daemon.LineMarkerProvider",
   "com.intellij.openapi.fileTypes.SyntaxHighlighterFactory"
 ))
 
-private val classesToCheck = THashSet(listOf(
+private val classesToCheck = HashSet(listOf(
   "com.intellij.codeInsight.completion.CompletionContributor",
   "com.intellij.codeInsight.completion.CompletionConfidence",
   "com.intellij.psi.PsiReferenceContributor"

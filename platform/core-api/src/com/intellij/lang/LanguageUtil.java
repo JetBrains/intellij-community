@@ -16,11 +16,11 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.templateLanguages.TemplateLanguage;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.containers.JBIterable;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Function;
 
 public final class LanguageUtil {
   private LanguageUtil() {
@@ -102,6 +102,10 @@ public final class LanguageUtil {
     return LanguageParserDefinitions.INSTANCE.forLanguage(language) != null;
   }
 
+  public static @NotNull List<Language> getInjectableLanguages() {
+    return getLanguages((lang) -> isInjectableLanguage(lang));
+  }
+
   public static boolean isFileLanguage(@NotNull Language language) {
     if (language instanceof DependentLanguage || language instanceof InjectableLanguage) return false;
     if (LanguageParserDefinitions.INSTANCE.forLanguage(language) == null) return false;
@@ -111,10 +115,14 @@ public final class LanguageUtil {
   }
 
   public static @NotNull List<Language> getFileLanguages() {
+    return getLanguages((lang) -> isFileLanguage(lang));
+  }
+
+  public static @NotNull List<Language> getLanguages(Function<Language, Boolean> filter) {
     LanguageParserDefinitions.INSTANCE.ensureValuesLoaded();
     List<Language> result = new ArrayList<>();
     for (Language language : Language.getRegisteredLanguages()) {
-      if (!isFileLanguage(language)) continue;
+      if (!filter.apply(language)) continue;
       result.add(language);
     }
     result.sort(LANGUAGE_COMPARATOR);
@@ -152,7 +160,7 @@ public final class LanguageUtil {
       result = Collections.emptySet();
     }
     else {
-      result = new THashSet<>();
+      result = new HashSet<>();
       MetaLanguage.EP_NAME.forEachExtensionSafe(metaLanguage -> {
         if (metaLanguage.matchesLanguage(language)) {
           result.add(metaLanguage);

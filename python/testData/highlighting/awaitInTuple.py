@@ -1,6 +1,6 @@
 async def f51():
-    await<error descr="expression expected"> </error>= 5  # fail
-    return (await<error descr="expression expected">)</error>  # fail
+    await<error descr="Expression expected"> </error>= 5  # fail
+    return (await<error descr="Expression expected">)</error>  # fail
 
 
 def f52():
@@ -9,8 +9,8 @@ def f52():
 
 
 async def f61():
-    await<error descr="expression expected"> </error>= 5  # fail
-    return ("a", await<error descr="expression expected">,</error> "b")  # fail
+    await<error descr="Expression expected"> </error>= 5  # fail
+    return ("a", await<error descr="Expression expected">,</error> "b")  # fail
 
 
 def f62():

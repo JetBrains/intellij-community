@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.repo;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,6 +7,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,64 +22,64 @@ import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
  * Stores paths to Git service files that are used by IDEA, and provides test-methods to check if a file
  * matches once of them.
  */
-public class GitRepositoryFiles {
+public final class GitRepositoryFiles {
   private static final Logger LOG = Logger.getInstance(GitRepositoryFiles.class);
 
   public static final String GITIGNORE = ".gitignore";
 
-  private static final String CHERRY_PICK_HEAD = "CHERRY_PICK_HEAD";
-  public static final String COMMIT_EDITMSG = "COMMIT_EDITMSG";
-  private static final String CONFIG = "config";
-  private static final String HEAD = "HEAD";
-  private static final String INDEX = "index";
-  private static final String INFO = "info";
-  private static final String INFO_EXCLUDE = INFO + "/exclude";
-  private static final String MERGE_HEAD = "MERGE_HEAD";
-  private static final String MERGE_MSG = "MERGE_MSG";
-  private static final String ORIG_HEAD = "ORIG_HEAD";
-  private static final String REBASE_APPLY = "rebase-apply";
-  private static final String REBASE_MERGE = "rebase-merge";
-  private static final String PACKED_REFS = "packed-refs";
-  private static final String REFS = "refs";
-  private static final String REVERT_HEAD = "REVERT_HEAD";
-  private static final String HEADS = "heads";
-  private static final String TAGS = "tags";
-  private static final String REMOTES = "remotes";
-  private static final String SQUASH_MSG = "SQUASH_MSG";
-  private static final String HOOKS = "hooks";
-  private static final String PRE_COMMIT_HOOK = "pre-commit";
-  private static final String PRE_PUSH_HOOK = "pre-push";
-  private static final String COMMIT_MSG_HOOK = "commit-msg";
-  private static final String SHALLOW = "shallow";
+  private static final @NonNls String CHERRY_PICK_HEAD = "CHERRY_PICK_HEAD";
+  public static final @NonNls String COMMIT_EDITMSG = "COMMIT_EDITMSG";
+  private static final @NonNls String CONFIG = "config";
+  private static final @NonNls String HEAD = "HEAD";
+  private static final @NonNls String INDEX = "index";
+  private static final @NonNls String INFO = "info";
+  private static final @NonNls String INFO_EXCLUDE = INFO + "/exclude";
+  private static final @NonNls String MERGE_HEAD = "MERGE_HEAD";
+  private static final @NonNls String MERGE_MSG = "MERGE_MSG";
+  private static final @NonNls String ORIG_HEAD = "ORIG_HEAD";
+  private static final @NonNls String REBASE_APPLY = "rebase-apply";
+  private static final @NonNls String REBASE_MERGE = "rebase-merge";
+  private static final @NonNls String PACKED_REFS = "packed-refs";
+  private static final @NonNls String REFS = "refs";
+  private static final @NonNls String REVERT_HEAD = "REVERT_HEAD";
+  private static final @NonNls String HEADS = "heads";
+  private static final @NonNls String TAGS = "tags";
+  private static final @NonNls String REMOTES = "remotes";
+  private static final @NonNls String SQUASH_MSG = "SQUASH_MSG";
+  private static final @NonNls String HOOKS = "hooks";
+  private static final @NonNls String PRE_COMMIT_HOOK = "pre-commit";
+  private static final @NonNls String PRE_PUSH_HOOK = "pre-push";
+  private static final @NonNls String COMMIT_MSG_HOOK = "commit-msg";
+  private static final @NonNls String SHALLOW = "shallow";
 
   private final VirtualFile myMainDir;
   private final VirtualFile myWorktreeDir;
 
-  private final String myConfigFilePath;
-  private final String myHeadFilePath;
-  private final String myIndexFilePath;
-  private final String myMergeHeadPath;
-  private final String myCherryPickHeadPath;
-  private final String myRevertHeadPath;
-  private final String myOrigHeadPath;
-  private final String myRebaseApplyPath;
-  private final String myRebaseMergePath;
-  private final String myPackedRefsPath;
-  private final String myRefsHeadsDirPath;
-  private final String myRefsRemotesDirPath;
-  private final String myRefsTagsPath;
-  private final String myCommitMessagePath;
-  private final String myMergeMessagePath;
-  private final String myMergeSquashPath;
-  private final String myInfoDirPath;
-  private final String myExcludePath;
-  private final String myHooksDirPath;
-  private final String myShallow;
+  private final @NonNls String myConfigFilePath;
+  private final @NonNls String myHeadFilePath;
+  private final @NonNls String myIndexFilePath;
+  private final @NonNls String myMergeHeadPath;
+  private final @NonNls String myCherryPickHeadPath;
+  private final @NonNls String myRevertHeadPath;
+  private final @NonNls String myOrigHeadPath;
+  private final @NonNls String myRebaseApplyPath;
+  private final @NonNls String myRebaseMergePath;
+  private final @NonNls String myPackedRefsPath;
+  private final @NonNls String myRefsHeadsDirPath;
+  private final @NonNls String myRefsRemotesDirPath;
+  private final @NonNls String myRefsTagsPath;
+  private final @NonNls String myCommitMessagePath;
+  private final @NonNls String myMergeMessagePath;
+  private final @NonNls String myMergeSquashPath;
+  private final @NonNls String myInfoDirPath;
+  private final @NonNls String myExcludePath;
+  private final @NonNls String myHooksDirPath;
+  private final @NonNls String myShallow;
 
   private GitRepositoryFiles(@NotNull VirtualFile mainDir, @NotNull VirtualFile worktreeDir) {
     myMainDir = mainDir;
     myWorktreeDir = worktreeDir;
-    
+
     String mainPath = myMainDir.getPath();
     myConfigFilePath = mainPath + slash(CONFIG);
     myPackedRefsPath = mainPath + slash(PACKED_REFS);

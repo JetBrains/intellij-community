@@ -425,7 +425,7 @@ public final class PyClassRefactoringUtil {
     PyImportOptimizer.onlyRemoveUnused().processFile(file).run();
   }
 
-  private static class DynamicNamedElement extends LightElement implements PsiNamedElement {
+  private static final class DynamicNamedElement extends LightElement implements PsiNamedElement {
     private final PsiFile myFile;
     private final String myName;
 

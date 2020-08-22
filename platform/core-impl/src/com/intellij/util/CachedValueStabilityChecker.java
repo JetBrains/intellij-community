@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
+import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
@@ -9,6 +10,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,12 +75,12 @@ final class CachedValueStabilityChecker {
 
     if (p1.getClass() != p2.getClass()) {
       if (!seemConcurrentlyCreatedLambdas(p1.getClass(), p2.getClass())) {
-        complain("Incorrect CachedValue use: different providers supplied for the same key: " + p1 + " and " + p2, key.toString());
+        complain("Incorrect CachedValue use: different providers supplied for the same key: " + p1 + " and " + p2, key.toString(), p1.getClass());
       }
       return;
     }
 
-    checkFieldEquivalence(p1, p2, key.toString(), 0);
+    checkFieldEquivalence(p1, p2, key.toString(), 0, p1.getClass());
   }
 
   /**
@@ -97,9 +99,9 @@ final class CachedValueStabilityChecker {
            ourFieldCache.get(c1).size() == ourFieldCache.get(c2).size();
   }
 
-  private static boolean checkFieldEquivalence(Object o1, Object o2, String key, int depth) {
+  private static boolean checkFieldEquivalence(Object o1, Object o2, String key, int depth, @NotNull Class<?> pluginClass) {
     if (depth > 100) {
-      complain("Too deep function delegation inside CachedValueProvider. If you have cyclic dependencies, please remove them.", key);
+      complain("Too deep function delegation inside CachedValueProvider. If you have cyclic dependencies, please remove them.", key, pluginClass);
       return false;
     }
 
@@ -112,8 +114,7 @@ final class CachedValueStabilityChecker {
         v2 = field.get(o2);
       }
       catch (Exception e) {
-        complain("Please allow full reflective access", key);
-        return false;
+        throw new UnsupportedOperationException("Please allow full reflective access");
       }
 
       if (areEqual(v1, v2)) continue;
@@ -123,11 +124,11 @@ final class CachedValueStabilityChecker {
       }
 
       if (v1 != null && v2 != null && v1.getClass() == v2.getClass() && shouldGoDeeper(v1)) {
-        if (!checkFieldEquivalence(v1, v2, key, depth + 1)) {
+        if (!checkFieldEquivalence(v1, v2, key, depth + 1, v1.getClass())) {
           return false;
         }
       } else {
-        complain(nonEquivalence(o1.getClass(), field, v1, v2), key);
+        complain(nonEquivalence(o1.getClass(), field, v1, v2), key, pluginClass);
         return false;
       }
     }
@@ -149,7 +150,7 @@ final class CachedValueStabilityChecker {
   }
 
   @NotNull
-  private static String nonEquivalence(Class<?> objectClass, Field field, @Nullable Object v1, @Nullable Object v2) {
+  private static @NonNls String nonEquivalence(Class<?> objectClass, Field field, @Nullable Object v1, @Nullable Object v2) {
     return "Incorrect CachedValue use: same CV with different captured context, this can cause unstable results and invalid PSI access." +
            "\nField " + field.getName() + " in " + objectClass + " has non-equivalent values:" +
            "\n  " + v1 + (v1 == null ? "" : " (" + v1.getClass().getName() + ")") + " and" +
@@ -157,10 +158,10 @@ final class CachedValueStabilityChecker {
            "\nEither make `equals()` hold for these values, or avoid this dependency, e.g. by extracting CV provider into a static method.";
   }
 
-  private static void complain(String message, String key) {
+  private static void complain(@NonNls String message, String key, @NotNull Class<?> pluginClass) {
     if (ourReportedKeys.add(key)) {
       // curious why you've gotten this error? Maybe this class' javadoc will help.
-      LOG.error(message);
+      PluginException.logPluginError(LOG, message, null, pluginClass);
     }
   }
 

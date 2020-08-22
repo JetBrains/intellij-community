@@ -9,6 +9,7 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFile;
@@ -19,6 +20,7 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -113,7 +115,7 @@ public final class VcsShelveUtils {
    */
   @Nullable
   public static ShelvedChangeList shelveChanges(final Project project, final ShelveChangesManager shelveManager, Collection<? extends Change> changes,
-                                                final String description,
+                                                final @Nls String description,
                                                 final List<? super VcsException> exceptions, boolean rollback, boolean markToBeDeleted) {
     try {
       ShelvedChangeList shelve = shelveManager.shelveChanges(changes, description, rollback, markToBeDeleted);
@@ -122,7 +124,7 @@ public final class VcsShelveUtils {
     }
 
     catch (IOException e) {
-      exceptions.add(new VcsException("Shelving changes failed: " + description, e));
+      exceptions.add(new VcsException(VcsBundle.message("changes.error.shelving.changes.failed", description), e));
       return null;
     }
     catch (VcsException e) {

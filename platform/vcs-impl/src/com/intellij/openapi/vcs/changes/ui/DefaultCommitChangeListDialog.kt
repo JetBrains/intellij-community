@@ -40,9 +40,11 @@ class DefaultCommitChangeListDialog(workflow: SingleChangeListCommitWorkflow) : 
     browser.viewer.rebuildTree()
     browser.viewer.setKeepTreeState(true)
 
-    val commitMessageEditor = DiffCommitMessageEditor(project, commitMessageComponent)
-    Disposer.register(this, commitMessageEditor)
-    browser.setBottomDiffComponent(commitMessageEditor)
+    browser.setBottomDiffComponent {
+      DiffCommitMessageEditor(project, commitMessageComponent).also { editor ->
+        Disposer.register(this, editor)
+      }
+    }
 
     browser.setSelectedListChangeListener { changeListEventDispatcher.multicaster.changeListChanged() }
 

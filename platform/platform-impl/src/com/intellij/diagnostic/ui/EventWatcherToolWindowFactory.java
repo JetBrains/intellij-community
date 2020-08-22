@@ -1,10 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic.ui;
 
 import com.intellij.diagnostic.EventWatcher;
 import com.intellij.diagnostic.RunnablesListener;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
 import com.intellij.ui.components.JBScrollPane;
@@ -123,7 +124,7 @@ public final class EventWatcherToolWindowFactory implements ToolWindowFactory, D
     }
 
     @NotNull
-    private static Content createTableContent(@NotNull String tableName,
+    private static Content createTableContent(@NotNull @NlsContexts.TabTitle String tableName,
                                               @NotNull ListTableModel<?> tableModel) {
       JPanel panel = new JPanel(new BorderLayout());
       panel.add(
@@ -136,7 +137,7 @@ public final class EventWatcherToolWindowFactory implements ToolWindowFactory, D
         .createContent(panel, tableName, false);
     }
 
-    private static class FunctionBasedColumnInfo<Item extends Comparable<? super Item>, Aspect extends Comparable<? super Aspect>>
+    private static final class FunctionBasedColumnInfo<Item extends Comparable<? super Item>, Aspect extends Comparable<? super Aspect>>
       extends ColumnInfo<Item, Aspect> {
 
       @NotNull
@@ -146,7 +147,7 @@ public final class EventWatcherToolWindowFactory implements ToolWindowFactory, D
       @NotNull
       private final Comparator<Item> myComparator;
 
-      private FunctionBasedColumnInfo(@NotNull String name,
+      private FunctionBasedColumnInfo(@NotNull @NlsContexts.ColumnName String name,
                                       @NotNull Class<? extends Aspect> columnClass,
                                       @NotNull Function<? super Item, ? extends Aspect> extractor,
                                       @NotNull Comparator<Item> comparator) {

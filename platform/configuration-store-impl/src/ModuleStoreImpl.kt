@@ -6,11 +6,12 @@ import com.intellij.openapi.components.impl.stores.ModuleStore
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.project.ProjectStoreOwner
 import com.intellij.project.isDirectoryBased
 import com.intellij.util.io.exists
+import com.intellij.util.messages.MessageBus
 import org.jetbrains.annotations.ApiStatus
-import java.nio.file.Paths
-import kotlin.streams.asSequence
+import java.nio.file.Path
 
 private val MODULE_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(StoragePathMacros.MODULE_FILE, false)
 
@@ -24,52 +25,70 @@ internal open class ModuleStoreImpl(module: Module) : ModuleStoreBase() {
 
   final override fun getPathMacroManagerForDefaults() = pathMacroManager
 
-  // todo what about Upsource? For now this implemented not in the ModuleStoreBase because `project` and `module` are available only in this class (ModuleStoreImpl)
   override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): List<Storage> {
     val result = super.getStorageSpecs(component, stateSpec, operation)
     if (!project.isDirectoryBased) {
       return result
     }
-    return StreamProviderFactory.EP_NAME.extensions(project).asSequence()
-             .map { LOG.runAndLogException { it.customizeStorageSpecs(component, storageManager, stateSpec, result, operation) } }
-             .find { it != null } ?: result
+
+    for (provider in StreamProviderFactory.EP_NAME.getExtensions(project)) {
+      LOG.runAndLogException {
+        provider.customizeStorageSpecs(component, storageManager, stateSpec, result, operation)?.let {
+          return it
+        }
+      }
+    }
+    return result
+  }
+
+  final override fun reloadStates(componentNames: Set<String>, messageBus: MessageBus) {
+    runBatchUpdate(project) {
+      reinitComponents(componentNames)
+    }
   }
 }
 
 private class TestModuleStore(module: Module) : ModuleStoreImpl(module) {
   private var moduleComponentLoadPolicy: StateLoadPolicy? = null
 
-  override fun setPath(path: String, virtualFile: VirtualFile?, isNew: Boolean) {
+  override fun setPath(path: Path, virtualFile: VirtualFile?, isNew: Boolean) {
     super.setPath(path, virtualFile, isNew)
-    if (!isNew && Paths.get(path).exists()) {
+    if (!isNew && path.exists()) {
       moduleComponentLoadPolicy = StateLoadPolicy.LOAD
     }
   }
 
   override val loadPolicy: StateLoadPolicy
-    get() = moduleComponentLoadPolicy ?: (project.stateStore as ComponentStoreImpl).loadPolicy
+    get() = moduleComponentLoadPolicy ?: ((project as ProjectStoreOwner).componentStore as ComponentStoreImpl).loadPolicy
 }
 
 // used in upsource
 abstract class ModuleStoreBase : ChildlessComponentStore(), ModuleStore {
+  final override fun isReportStatisticAllowed(stateSpec: State) = false
+
   abstract override val storageManager: StateStorageManagerImpl
 
-  override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): List<Storage> =
-    if (stateSpec.storages.isEmpty()) listOf(MODULE_FILE_STORAGE_ANNOTATION)
-    else super.getStorageSpecs(component, stateSpec, operation)
+  override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation): List<Storage> {
+    if (stateSpec.storages.isEmpty()) {
+      return listOf(MODULE_FILE_STORAGE_ANNOTATION)
+    }
+    else {
+      return super.getStorageSpecs(component, stateSpec, operation)
+    }
+  }
 
-  final override fun setPath(path: String) = setPath(path, null, false)
+  final override fun setPath(path: Path) = setPath(path, null, false)
 
-  override fun setPath(path: String, virtualFile: VirtualFile?, isNew: Boolean) {
-    val isMacroAdded = storageManager.addMacro(StoragePathMacros.MODULE_FILE, path)
+  override fun setPath(path: Path, virtualFile: VirtualFile?, isNew: Boolean) {
+    val isMacroAdded = storageManager.setMacros(listOf(Macro(StoragePathMacros.MODULE_FILE, path))).isEmpty()
     // if file not null - update storage
-    storageManager.getOrCreateStorage(StoragePathMacros.MODULE_FILE, storageCustomizer = {
+    storageManager.getOrCreateStorage(StoragePathMacros.MODULE_FILE, RoamingType.DEFAULT, storageCustomizer = {
       if (this !is FileBasedStorage) {
         // upsource
         return@getOrCreateStorage
       }
 
-      setFile(virtualFile, if (isMacroAdded) null else Paths.get(path))
+      setFile(virtualFile, if (isMacroAdded) null else path)
       // ModifiableModuleModel#newModule should always create a new module from scratch
       // https://youtrack.jetbrains.com/issue/IDEA-147530
 

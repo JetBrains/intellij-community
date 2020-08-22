@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.ide.IdeBundle;
@@ -38,7 +38,7 @@ public class HighlightersActionGroup extends ActionGroup implements DumbAware {
     return actions.toArray(AnAction.EMPTY_ARRAY);
   }
 
-  private static class EnableHighlighterAction extends BooleanPropertyToggleAction {
+  private static final class EnableHighlighterAction extends BooleanPropertyToggleAction {
     @NotNull private final VcsLogHighlighterFactory myFactory;
 
     private EnableHighlighterAction(@NotNull VcsLogHighlighterFactory factory) {

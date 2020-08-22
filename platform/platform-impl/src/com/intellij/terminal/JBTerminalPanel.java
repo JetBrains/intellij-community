@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.JBHiDPIScaledImage;
@@ -49,6 +50,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     "ActivateFindToolWindow",
     "ActivateRunToolWindow",
     "ActivateDebugToolWindow",
+    "ActivateProblemsViewToolWindow",
     "ActivateTODOToolWindow",
     "ActivateStructureToolWindow",
     "ActivateHierarchyToolWindow",
@@ -223,20 +225,17 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
 
   @Override
   public void focusGained(FocusEvent event) {
-    installKeyDispatcher();
-
-    if (GeneralSettings.getInstance().isSaveOnFrameDeactivation()) {
-      ApplicationManager.getApplication().invokeLater(() -> FileDocumentManager.getInstance().saveAllDocuments(), ModalityState.NON_MODAL);
-    }
-  }
-
-  private void installKeyDispatcher() {
     if (mySettingsProvider.overrideIdeShortcuts()) {
       myActionsToSkip = setupActionsToSkip();
       myEventDispatcher.register();
     }
     else {
       myActionsToSkip = null;
+      myEventDispatcher.unregister();
+    }
+
+    if (GeneralSettings.getInstance().isSaveOnFrameDeactivation()) {
+      ApplicationManager.getApplication().invokeLater(() -> FileDocumentManager.getInstance().saveAllDocuments(), ModalityState.NON_MODAL);
     }
   }
 
@@ -255,11 +254,8 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
 
   @Override
   public void focusLost(FocusEvent event) {
-    if (myActionsToSkip != null) {
-      myActionsToSkip = null;
-      myEventDispatcher.unregister();
-    }
-
+    myActionsToSkip = null;
+    myEventDispatcher.unregister();
     SaveAndSyncHandler.getInstance().scheduleRefresh();
   }
 
@@ -312,6 +308,14 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
 
     private boolean dispatchKeyEvent(@NotNull KeyEvent e) {
       if (!skipKeyEvent(e)) {
+        if (!JBTerminalPanel.this.isFocusOwner()) {
+          if (LOG.isDebugEnabled()) {
+            LOG.debug("Prevented attempt to process " + KeyStroke.getKeyStrokeForEvent(e) + " by not focused " +
+                      getDebugTerminalPanelName() + ", unregistering");
+          }
+          unregister();
+          return false;
+        }
         if (LOG.isDebugEnabled()) {
           LOG.debug("Consuming " + KeyStroke.getKeyStrokeForEvent(e) + ", registered:" + myRegistered);
         }
@@ -328,27 +332,37 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     }
 
     void register() {
+      ApplicationManager.getApplication().assertIsDispatchThread();
       if (LOG.isDebugEnabled()) {
-        ApplicationManager.getApplication().assertIsDispatchThread();
-        if (myRegistered) {
-          LOG.error("Already registered terminal event dispatcher");
-        }
-        LOG.debug("Register terminal event dispatcher");
+        LOG.debug("Register terminal event dispatcher for " + getDebugTerminalPanelName());
       }
-      myRegistered = true;
-      IdeEventQueue.getInstance().addDispatcher(this, JBTerminalPanel.this);
+      if (myRegistered) {
+        LOG.info("Already registered terminal event dispatcher");
+      }
+      else {
+        if (Disposer.isDisposed(JBTerminalPanel.this)) {
+          LOG.info("Already disposed " + JBTerminalPanel.this);
+        }
+        else {
+          IdeEventQueue.getInstance().addDispatcher(this, JBTerminalPanel.this);
+          myRegistered = true;
+        }
+      }
     }
 
     void unregister() {
+      ApplicationManager.getApplication().assertIsDispatchThread();
       if (LOG.isDebugEnabled()) {
-        ApplicationManager.getApplication().assertIsDispatchThread();
-        if (!myRegistered) {
-          LOG.error("Not registered terminal event dispatcher");
-        }
-        LOG.debug("Unregister terminal event dispatcher");
+        LOG.debug("Unregister terminal event dispatcher for " + getDebugTerminalPanelName());
+      }
+      if (myRegistered) {
+        IdeEventQueue.getInstance().removeDispatcher(this);
       }
       myRegistered = false;
-      IdeEventQueue.getInstance().removeDispatcher(this);
+    }
+
+    private @NotNull String getDebugTerminalPanelName() {
+      return JBTerminalPanel.class.getSimpleName() + "@" + System.identityHashCode(JBTerminalPanel.this);
     }
   }
 }

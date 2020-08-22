@@ -2,7 +2,9 @@
 package org.jetbrains.idea.maven.externalSystemIntegration.output
 
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.containers.ContainerUtil
+import org.jetbrains.annotations.Nls
 import java.util.concurrent.CopyOnWriteArrayList
 
 class MavenParsingContext(private val myTaskId: ExternalSystemTaskId) {
@@ -104,13 +106,13 @@ class MavenParsingContext(private val myTaskId: ExternalSystemTaskId) {
   }
 
 
-  inner class ProjectExecutionEntry internal constructor(name: String, threadId: Int) : MavenExecutionEntry(name, threadId) {
+  inner class ProjectExecutionEntry internal constructor(@NlsSafe name: String, threadId: Int) : MavenExecutionEntry(name, threadId) {
 
     override val parentId: Any
       get() = this@MavenParsingContext.myTaskId
   }
 
-  inner class MojoExecutionEntry internal constructor(name: String,
+  inner class MojoExecutionEntry internal constructor(@NlsSafe name: String,
                                                       threadId: Int,
                                                       private val myProject: ProjectExecutionEntry?) : MavenExecutionEntry(name, threadId) {
 
@@ -118,7 +120,7 @@ class MavenParsingContext(private val myTaskId: ExternalSystemTaskId) {
       get() = myProject?.id ?: this@MavenParsingContext.myTaskId
   }
 
-  inner class NodeExecutionEntry internal constructor(name: String,
+  inner class NodeExecutionEntry internal constructor(@NlsSafe name: String,
                                                       threadId: Int,
                                                       private val parent: MavenExecutionEntry?) : MavenExecutionEntry(name, threadId) {
     override val parentId: Any
@@ -149,7 +151,8 @@ class MavenParsingContext(private val myTaskId: ExternalSystemTaskId) {
     return null
   }
 
-  abstract inner class MavenExecutionEntry(val name: String, private val myThreadId: Int) {
+  abstract inner class MavenExecutionEntry(@NlsSafe @get:NlsSafe val name: String, private val myThreadId: Int) {
+
     val id = Any()
 
     abstract val parentId: Any

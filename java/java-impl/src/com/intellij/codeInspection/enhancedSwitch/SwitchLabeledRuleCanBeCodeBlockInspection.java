@@ -66,7 +66,7 @@ public class SwitchLabeledRuleCanBeCodeBlockInspection extends LocalInspectionTo
   }
 
   private static class WrapWithCodeBlockFix implements LocalQuickFix {
-    private final String myMessage;
+    private final @Nls String myMessage;
 
     WrapWithCodeBlockFix(boolean isResultExpression) {
       myMessage = message(isResultExpression ? "inspection.switch.labeled.rule.can.be.code.block.fix.expression.name"

@@ -4,6 +4,7 @@ package com.intellij.openapi.roots.impl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,6 +18,12 @@ final class ProjectPackageIndexImpl extends PackageIndex {
   @Override
   public VirtualFile @NotNull [] getDirectoriesByPackageName(@NotNull String packageName, boolean includeLibrarySources) {
     return getDirsByPackageName(packageName, includeLibrarySources).toArray(VirtualFile.EMPTY_ARRAY);
+  }
+
+  @Override
+  public Query<VirtualFile> getDirsByPackageName(@NotNull String packageName,
+                                                 @NotNull GlobalSearchScope scope) {
+    return myDirectoryIndex.getDirectoriesByPackageName(packageName, scope);
   }
 
   @NotNull

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.typeMigration.inspections;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -22,6 +22,7 @@ import com.intellij.refactoring.typeMigration.rules.guava.*;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,10 +34,7 @@ import java.util.*;
  */
 public class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
   private final static Logger LOG = Logger.getInstance(GuavaInspection.class);
-  private final static Set<String> FLUENT_ITERABLE_STOP_METHODS = ContainerUtil.newHashSet("append", "cycle", "uniqueIndex", "index", "toMultiset");
-
-  public final static String PROBLEM_DESCRIPTION = "Guava's functional primitives can be replaced by Java API";
-
+  private final static Set<@NonNls String> FLUENT_ITERABLE_STOP_METHODS = ContainerUtil.newHashSet("append", "cycle", "uniqueIndex", "index", "toMultiset");
 
   public boolean checkVariables = true;
   public boolean checkChains = true;
@@ -91,7 +89,7 @@ public class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
         PsiType targetType = getConversionClassType(type);
         if (targetType != null) {
           holder.registerProblem(variable.getNameIdentifier(),
-                                 PROBLEM_DESCRIPTION,
+                                 TypeMigrationBundle.message("guava.functional.primitives.can.be.replaced.by.java.api.problem.description"),
                                  new MigrateGuavaTypeFix(variable, targetType));
         }
       }
@@ -105,7 +103,7 @@ public class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
           final PsiTypeElement typeElement = method.getReturnTypeElement();
           if (typeElement != null) {
             holder.registerProblem(typeElement,
-                                   PROBLEM_DESCRIPTION,
+                                   TypeMigrationBundle.message("guava.functional.primitives.can.be.replaced.by.java.api.problem.description"),
                                    new MigrateGuavaTypeFix(method, targetType));
           }
         }
@@ -123,7 +121,7 @@ public class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
           PsiClassType targetType = createTargetType(initialType);
           if (targetType == null) return;
           holder.registerProblem(expression.getMethodExpression().getReferenceNameElement(),
-                                 PROBLEM_DESCRIPTION,
+                                 TypeMigrationBundle.message("guava.functional.primitives.can.be.replaced.by.java.api.problem.description"),
                                  new MigrateGuavaTypeFix(expression, targetType));
         }
       }
@@ -146,7 +144,8 @@ public class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
         if (chain.getParent() instanceof PsiReferenceExpression && chain.getParent().getParent() instanceof PsiMethodCallExpression) {
           highlightedElement = chain.getParent().getParent();
         }
-        holder.registerProblem(highlightedElement, PROBLEM_DESCRIPTION, new MigrateGuavaTypeFix(chain, targetType));
+        holder.registerProblem(highlightedElement,
+                               TypeMigrationBundle.message("guava.functional.primitives.can.be.replaced.by.java.api.problem.description"), new MigrateGuavaTypeFix(chain, targetType));
       }
 
       @Nullable
@@ -252,8 +251,7 @@ public class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
     };
   }
 
-  public class MigrateGuavaTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement implements BatchQuickFix<CommonProblemDescriptor> {
-    public static final String FAMILY_NAME = "Migrate Guava's type to Java";
+  public final class MigrateGuavaTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement implements BatchQuickFix<CommonProblemDescriptor> {
     private final PsiType myTargetType;
 
     private MigrateGuavaTypeFix(@NotNull PsiElement element, PsiType targetType) {
@@ -282,21 +280,20 @@ public class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
       if (!myTargetType.isValid() || !element.isValid()) {
         return getFamilyName();
       }
-      final String presentation;
       if (element instanceof PsiMethodCallExpression) {
-        presentation = "method chain";
+        return TypeMigrationBundle.message("migrate.method.chain.fix.text", myTargetType.getCanonicalText(false));
       }
-      else {
-        presentation = TypeMigrationProcessor.getPresentation(element);
-      }
-      return TypeMigrationBundle.message("migrate.fix.text", presentation, myTargetType.getCanonicalText(false));
+
+      return TypeMigrationBundle.message("migrate.fix.text", 
+                                         TypeMigrationProcessor.getPresentation(element), 
+                                         myTargetType.getCanonicalText(false));
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return FAMILY_NAME;
+      return TypeMigrationBundle.message("migrate.guava.to.java.family.name");
     }
 
     @Override

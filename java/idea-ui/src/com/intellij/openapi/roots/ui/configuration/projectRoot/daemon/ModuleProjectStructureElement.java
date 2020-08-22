@@ -1,5 +1,6 @@
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -11,6 +12,7 @@ import com.intellij.openapi.roots.ui.configuration.ModuleEditor;
 import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -66,18 +68,6 @@ public class ModuleProjectStructureElement extends ProjectStructureElement {
                                          null);
         }
       }
-      //todo[nik] highlight libraries with invalid paths in ClasspathEditor
-      //else if (entry instanceof LibraryOrderEntry) {
-      //  final LibraryEx library = (LibraryEx)((LibraryOrderEntry)entry).getLibrary();
-      //  if (library != null) {
-      //    if (!library.allPathsValid(OrderRootType.CLASSES)) {
-      //      problemsHolder.registerError(ProjectBundle.message("project.roots.tooltip.library.misconfigured", entry.getName()));
-      //    }
-      //    else if (!library.allPathsValid(OrderRootType.SOURCES)) {
-      //      problemsHolder.registerWarning(ProjectBundle.message("project.roots.tooltip.library.misconfigured", entry.getName()));
-      //    }
-      //  }
-      //}
     }
   }
 
@@ -137,13 +127,13 @@ public class ModuleProjectStructureElement extends ProjectStructureElement {
   }
 
   @Override
-  public String getPresentableName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) String getPresentableName() {
     return myModule.getName();
   }
 
   @Override
-  public String getTypeName() {
-    return "Module";
+  public @Nls(capitalization = Nls.Capitalization.Sentence) String getTypeName() {
+    return CommonBundle.message("label.module");
   }
 
   @Override

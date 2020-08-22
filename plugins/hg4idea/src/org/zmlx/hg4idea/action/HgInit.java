@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgBundle;
+import org.zmlx.hg4idea.HgDisposable;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.command.HgInitCommand;
 import org.zmlx.hg4idea.execution.HgCommandResult;
@@ -72,8 +73,7 @@ public class HgInit extends DumbAwareAction {
 
     boolean finalNeedToCreateRepo = needToCreateRepo;
     VirtualFile finalMapRoot = mapRoot;
-    BackgroundTaskUtil.executeOnPooledThread(myProject, () ->
-    {
+    BackgroundTaskUtil.executeOnPooledThread(HgDisposable.getInstance(myProject), () -> {
       if (!finalNeedToCreateRepo || createRepository(requireNonNull(myProject), selectedRoot)) {
         updateDirectoryMappings(finalMapRoot);
       }

@@ -15,7 +15,7 @@ import java.awt.*;
 /**
  * @author Konstantin Bulenkov
  */
-public class DnDSupport implements DnDTarget, DnDSource, DnDDropHandler.WithResult, Disposable {
+public final class DnDSupport implements DnDTarget, DnDSource, DnDDropHandler.WithResult, Disposable {
   private final JComponent myComponent;
   private final Function<? super DnDActionInfo, ? extends DnDDragStartBean> myBeanProvider;
   private final Function<? super DnDActionInfo, ? extends DnDImage> myImageProvider;
@@ -130,7 +130,7 @@ public class DnDSupport implements DnDTarget, DnDSource, DnDDropHandler.WithResu
     }
   }
 
-  private static class DnDNativeTargetWrapper implements DnDNativeTarget, DnDDropHandler.WithResult {
+  private static final class DnDNativeTargetWrapper implements DnDNativeTarget, DnDDropHandler.WithResult {
     @NotNull private final DnDSupport myTarget;
 
     private DnDNativeTargetWrapper(@NotNull DnDSupport target) {

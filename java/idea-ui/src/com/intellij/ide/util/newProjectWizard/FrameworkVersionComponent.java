@@ -5,6 +5,7 @@ import com.intellij.framework.PresentableVersion;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.ui.FormBuilder;
 
@@ -23,7 +24,7 @@ public class FrameworkVersionComponent {
   private final String myFrameworkOrGroupId;
 
   public FrameworkVersionComponent(final FrameworkSupportModelBase model, final String frameworkOrGroupId,
-                                   final List<? extends FrameworkVersion> versions_, String labelText) {
+                                   final List<? extends FrameworkVersion> versions_, @NlsContexts.Label String labelText) {
     myModel = model;
     myAllVersions = versions_;
     myMainPanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 3, true, false));

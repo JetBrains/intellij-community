@@ -22,7 +22,7 @@ import java.util.Set;
  * Allows to build {@link AbstractBlockWrapper formatting block wrappers} for the target {@link Block formatting blocks}.
  * The main idea of block wrapping is to associate information about {@link WhiteSpace white space before block} with the block itself.
  */
-public class InitialInfoBuilder {
+public final class InitialInfoBuilder {
 
   @SuppressWarnings("unused") private static final Logger LOG = Logger.getInstance(InitialInfoBuilder.class);
 

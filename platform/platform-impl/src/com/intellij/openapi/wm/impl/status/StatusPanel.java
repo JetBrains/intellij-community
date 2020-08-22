@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.wm.impl.status;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.ClipboardSynchronizer;
+import com.intellij.ide.IdeBundle;
 import com.intellij.notification.EventLog;
 import com.intellij.notification.Notification;
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -26,7 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.JBMenuItem;
 import com.intellij.openapi.ui.JBPopupMenu;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
@@ -58,6 +60,7 @@ class StatusPanel extends JPanel {
   private boolean myAfterClick;
   private Alarm myLogAlarm;
   private Action myCopyAction;
+  private Action myClearAction;
   private final TextPanel myTextPanel = new TextPanel() {
     @Override
     protected String getTextForPreferredSize() {
@@ -117,6 +120,14 @@ class StatusPanel extends JPanel {
 
           JBPopupMenu menu = new JBPopupMenu();
           menu.add(new JBMenuItem(myCopyAction));
+
+          if (myClearAction == null) {
+            myClearAction = createClearAction();
+          }
+          if (myClearAction != null) {
+            menu.add(new JBMenuItem(myClearAction));
+          }
+
           menu.show(myTextPanel, e.getX(), e.getY());
         }
       }
@@ -144,6 +155,24 @@ class StatusPanel extends JPanel {
     };
   }
 
+  private Action createClearAction() {
+    Project project = getActiveProject();
+    if (project == null) {
+      return null;
+    }
+    return new AbstractAction(IdeBundle.message("clear.event.log.action", IdeBundle.message("toolwindow.stripe.Event_Log")),
+                              AllIcons.Actions.GC) {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        EventLog.doClear(project);
+      }
+
+      @Override
+      public boolean isEnabled() {
+        return EventLog.isClearAvailable(project);
+      }
+    };
+  }
 
   @Nullable
   private Project getActiveProject() {
@@ -164,10 +193,11 @@ class StatusPanel extends JPanel {
   // editor window.
   @Nullable
   private Alarm getAlarm() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (myLogAlarm == null || myLogAlarm.isDisposed()) {
       myLogAlarm = null; //Welcome screen
       Project project = getActiveProject();
-      if (project != null && !project.isDisposed() && !Disposer.isDisposing(project)) {
+      if (project != null && !project.isDisposed()) {
         myLogAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
       }
     }
@@ -215,7 +245,7 @@ class StatusPanel extends JPanel {
     return myCurrentNotification != null;
   }
 
-  private void setStatusText(String text) {
+  private void setStatusText(@NlsContexts.StatusBarText String text) {
     myTextPanel.setText(text);
   }
 

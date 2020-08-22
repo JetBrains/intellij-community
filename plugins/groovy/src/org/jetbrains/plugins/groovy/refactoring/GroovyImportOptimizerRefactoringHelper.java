@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -14,6 +14,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringHelper;
 import com.intellij.usageView.UsageInfo;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -68,7 +69,7 @@ public class GroovyImportOptimizerRefactoringHelper implements RefactoringHelper
       }
     };
 
-    if (!progressManager.runProcessWithProgressSynchronously(findUnusedImports, "Optimizing Imports (Groovy) ... ", false, project)) {
+    if (!progressManager.runProcessWithProgressSynchronously(findUnusedImports, GroovyBundle.message("optimize.imports.progress.title"), false, project)) {
       return;
     }
 

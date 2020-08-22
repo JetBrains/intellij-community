@@ -10,6 +10,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -57,7 +58,7 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode,
     render(renderer, null);
   }
 
-  public void render(@NotNull ColoredTreeCellRenderer renderer, @Nullable String syncEditingText) {
+  public void render(@NotNull ColoredTreeCellRenderer renderer, @Nullable @Nls String syncEditingText) {
     int repoFixedWidth = 120;
     SimpleTextAttributes repositoryDetailsTextAttributes = PushLogTreeUtil
       .addTransparencyIfNeeded(renderer, SimpleTextAttributes.REGULAR_ATTRIBUTES, isChecked());
@@ -70,6 +71,7 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode,
     pushTargetPanel.render(renderer, renderer.getTree().isPathSelected(TreeUtil.getPathFromRoot(this)), isChecked(), syncEditingText);
   }
 
+  @Nls
   @NotNull
   private String getRepoName(@NotNull ColoredTreeCellRenderer renderer, int maxWidth) {
     String name = getRepositoryName();
@@ -129,6 +131,7 @@ public class RepositoryNode extends CheckedTreeNode implements EditableTreeNode,
     return myLoading.get();
   }
 
+  @Nls
   @NotNull
   String getRepositoryName() {
     return myRepositoryPanel.getRepositoryName();

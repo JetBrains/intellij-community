@@ -2,6 +2,7 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
@@ -14,9 +15,9 @@ import javax.swing.*;
 
 public class CustomEditInspectionToolsSettingsAction implements IntentionAction, Iconable {
   private final EditInspectionToolsSettingsAction myEditInspectionToolsSettingsAction;   // we delegate due to priority
-  private final Computable<String> myText;
+  private final Computable<@IntentionName String> myText;
 
-  public CustomEditInspectionToolsSettingsAction(HighlightDisplayKey displayKey, Computable<String> text) {
+  public CustomEditInspectionToolsSettingsAction(HighlightDisplayKey displayKey, Computable<@IntentionName String> text) {
     myEditInspectionToolsSettingsAction = new EditInspectionToolsSettingsAction(displayKey);
     myText = text;
   }

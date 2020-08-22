@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.ide
 
 import com.google.common.base.Supplier
@@ -32,7 +32,10 @@ import io.netty.channel.Channel
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.*
 import org.jetbrains.builtInWebServer.isSignedRequest
-import org.jetbrains.io.*
+import org.jetbrains.io.addCommonHeaders
+import org.jetbrains.io.addNoCache
+import org.jetbrains.io.response
+import org.jetbrains.io.send
 import java.awt.Window
 import java.io.IOException
 import java.io.OutputStream
@@ -241,7 +244,7 @@ abstract class RestService : HttpRequestHandler() {
   @Throws(InterruptedException::class, InvocationTargetException::class)
   // e.g. upsource trust to configured host
   protected open fun isHostTrusted(request: FullHttpRequest): Boolean {
-    if (request.isSignedRequest()) {
+    if (request.isSignedRequest() || isOriginAllowed(request) == OriginCheckResult.ALLOW) {
       return true
     }
 
@@ -280,4 +283,8 @@ abstract class RestService : HttpRequestHandler() {
    */
   @Throws(IOException::class)
   abstract fun execute(urlDecoder: QueryStringDecoder, request: FullHttpRequest, context: ChannelHandlerContext): String?
+}
+
+internal fun HttpResponseStatus.orInSafeMode(safeStatus: HttpResponseStatus): HttpResponseStatus {
+  return if (Registry.`is`("ide.http.server.response.actual.status", true) || ApplicationManager.getApplication()?.isUnitTestMode == true) this else safeStatus
 }

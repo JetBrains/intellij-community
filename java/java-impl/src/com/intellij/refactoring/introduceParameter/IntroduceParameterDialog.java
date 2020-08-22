@@ -7,6 +7,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.PsiUtil;
@@ -290,7 +291,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
   protected void canRun() throws ConfigurationException {
     String name = getParameterName();
     if (!PsiNameHelper.getInstance(myProject).isIdentifier(name)) {
-      throw new ConfigurationException("'" + name + "' is invalid parameter name");
+      throw new ConfigurationException(RefactoringBundle.message("refactoring.introduce.parameter.invalid.name", name));
     }
   }
 
@@ -325,7 +326,7 @@ public class IntroduceParameterDialog extends RefactoringDialog {
     }
   }
 
-  private static String getRefactoringName() {
+  private static @NlsContexts.DialogTitle String getRefactoringName() {
     return RefactoringBundle.message("introduce.parameter.title");
   }
 }

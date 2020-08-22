@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.internal.statistic.IdeActivity;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -31,8 +32,9 @@ final class DumbServiceGuiTaskQueue {
     myTaskQueue = queue;
   }
 
-  void processTasksWithProgress(@NotNull Consumer<ProgressIndicatorEx> bindProgress,
-                                @NotNull IdeActivity activity) {
+  void processTasksWithProgress(@NotNull IdeActivity activity,
+                                @NotNull Consumer<? super ProgressIndicatorEx> bindProgress,
+                                @NotNull Consumer<? super ProgressIndicatorEx> unbindProgress) {
     while (true) {
       //we do jump in EDT to
       if (myProject.isDisposed()) break;
@@ -43,8 +45,11 @@ final class DumbServiceGuiTaskQueue {
         bindProgress.accept(pair.getIndicator());
         pair.registerStageStarted(activity);
 
-        try (AccessToken ignored = HeavyProcessLatch.INSTANCE.processStarted("Performing indexing tasks", HeavyProcessLatch.Type.Indexing)) {
+        try (AccessToken ignored = HeavyProcessLatch.INSTANCE.processStarted(IdeBundle.message("progress.performing.indexing.tasks"), HeavyProcessLatch.Type.Indexing)) {
           runSingleTask(pair);
+        }
+        finally {
+          unbindProgress.accept(pair.getIndicator());
         }
       }
     }

@@ -63,7 +63,8 @@ public class IdempotentLoopBodyInspection extends AbstractBaseJavaLocalInspectio
         Collection<PsiVariable> variables = ControlFlowUtil.getWrittenVariables(bodyFlow, 0, bodyFlow.getSize(), true);
         if (variables.isEmpty()) return;
         List<PsiReferenceExpression> reads = ControlFlowUtil.getReadBeforeWrite(bodyFlow);
-        if (StreamEx.of(reads).map(PsiReferenceExpression::resolve).select(PsiVariable.class).noneMatch(variables::contains)) {
+        if (StreamEx.of(reads).map(PsiReferenceExpression::resolve).select(PsiVariable.class)
+          .noneMatch(v -> v.hasModifierProperty(PsiModifier.VOLATILE) || variables.contains(v))) {
           holder.registerProblem(loop.getFirstChild(), JavaBundle.message("inspection.idempotent.loop.body"));
         }
       }

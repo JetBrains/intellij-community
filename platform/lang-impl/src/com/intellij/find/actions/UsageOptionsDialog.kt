@@ -15,6 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
 import com.intellij.ui.UserActivityWatcher
@@ -29,7 +30,7 @@ import javax.swing.JPanel
 
 internal class UsageOptionsDialog<O>(
   private val project: Project,
-  private val presentableText: String?,
+  @NlsContexts.Label private val presentableText: String?,
   private val handler: UsageHandler<O>,
   allOptions: AllSearchOptions<O>,
   canReuseTab: Boolean

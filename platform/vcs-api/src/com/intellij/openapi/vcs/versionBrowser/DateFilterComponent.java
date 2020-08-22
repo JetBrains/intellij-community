@@ -106,10 +106,10 @@ public class DateFilterComponent {
   @Nullable
   public String validateInput() {
     if (myUseDateAfterFilter.isSelected() && myDateAfter.getDate() == null) {
-      return "Date After must be a valid date";
+      return VcsBundle.message("error.date.after.must.be.a.valid.date");
     }
     if (myUseDateBeforeFilter.isSelected() && myDateBefore.getDate() == null) {
-      return "Date Before must be a valid date";
+      return VcsBundle.message("error.date.before.must.be.a.valid.date");
     }
     return null;
   }

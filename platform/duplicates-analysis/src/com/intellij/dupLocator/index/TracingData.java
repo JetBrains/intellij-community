@@ -2,20 +2,22 @@ package com.intellij.dupLocator.index;
 
 import com.intellij.dupLocator.util.PsiFragment;
 import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.util.CommonProcessors;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.io.EnumeratorIntegerDescriptor;
 import com.intellij.util.io.PersistentHashMap;
-import gnu.trove.TIntIntHashMap;
+import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntListIterator;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.List;
+import java.nio.file.Paths;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class TracingData {
+public final class TracingData {
   private static final String tracingDataLocation = "E:\\ultimate\\system\\occurrences";
   private final PersistentHashMap<Integer, Integer> keys;
   private final ScheduledThreadPoolExecutor pool = ConcurrencyUtil.newSingleScheduledThreadExecutor("My flushing thread");
@@ -37,14 +39,15 @@ public class TracingData {
         }
       }, 5, 5, TimeUnit.SECONDS);
       ShutDownTracker.getInstance().registerShutdownTask(() -> flushingFuture.cancel(false));
-    } catch (IOException ex) {
+    }
+    catch (IOException ex) {
       ex.printStackTrace();
     }
     keys = lkeys;
   }
 
   private static PersistentHashMap<Integer, Integer> createOrOpenMap() throws IOException {
-    return new PersistentHashMap<>(new File(tracingDataLocation).toPath(), EnumeratorIntegerDescriptor.INSTANCE,
+    return new PersistentHashMap<>(Paths.get(tracingDataLocation), EnumeratorIntegerDescriptor.INSTANCE,
                                    EnumeratorIntegerDescriptor.INSTANCE);
   }
 
@@ -65,25 +68,30 @@ public class TracingData {
           }
           currentMaxValue = maxValue.get();
         }
-      } catch (IOException ex) {
+      }
+      catch (IOException ex) {
         ex.printStackTrace();
       }
     }
   }
 
   public static void main(String[] args) throws IOException {
-    PersistentHashMap<Integer, Integer> lkeys = createOrOpenMap();
-    List<Integer> mapping = (List<Integer>)lkeys.getAllKeysWithExistingMapping();
+    PersistentHashMap<Integer, Integer> lKeys = createOrOpenMap();
+    IntArrayList mapping = new IntArrayList();
+    lKeys.processKeysWithExistingMapping(new CommonProcessors.CollectProcessor<>(mapping));
     System.out.println(mapping.size());
-    final TIntIntHashMap map = new TIntIntHashMap(mapping.size());
-    for(Integer i:mapping) map.put(i, lkeys.get(i));
+    Int2IntOpenHashMap map = new Int2IntOpenHashMap(mapping.size());
+    for (IntListIterator iterator = mapping.iterator(); iterator.hasNext(); ) {
+      int i = iterator.nextInt();
+      map.put(i, lKeys.get(i).intValue());
+    }
 
     mapping.sort((o1, o2) -> map.get(o2) - map.get(o1));
 
     for(int i = 0; i < 500; ++i) {
       //System.out.println(mapping.get(i) + ",");
-      System.out.println(mapping.get(i) + ":" + map.get(mapping.get(i)));
+      System.out.println(mapping.getInt(i) + ":" + map.get(mapping.getInt(i)));
     }
-    lkeys.close();
+    lKeys.close();
   }
 }

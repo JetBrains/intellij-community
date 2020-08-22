@@ -34,6 +34,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon CheckMulticaret = load("/actions/CheckMulticaret.svg");
     /** 16x16 */ public static final @NotNull Icon CheckOut = load("/actions/checkOut.svg");
     /** 16x16 */ public static final @NotNull Icon Close = load("/actions/close.svg");
+    /** 16x16 */ public static final @NotNull Icon CloseDarkGrey = load("/actions/closeDarkGrey.svg");
     /** 16x16 */ public static final @NotNull Icon CloseHovered = load("/actions/closeHovered.svg");
     /** 16x16 */ public static final @NotNull Icon Collapseall = load("/actions/collapseall.svg");
     /** 16x16 */ public static final @NotNull Icon Colors = load("/actions/colors.svg");
@@ -123,6 +124,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon PreserveCase = load("/actions/preserveCase.svg");
     /** 16x16 */ public static final @NotNull Icon PreserveCaseHover = load("/actions/preserveCaseHover.svg");
     /** 16x16 */ public static final @NotNull Icon PreserveCaseSelected = load("/actions/preserveCaseSelected.svg");
+    /** 16x16 */ public static final @NotNull Icon PrettyPrint = load("/actions/prettyPrint.svg");
     /** 16x16 */ public static final @NotNull Icon Preview = load("/actions/preview.svg");
     /** 16x16 */ public static final @NotNull Icon PreviewDetails = load("/actions/previewDetails.svg");
     /** 16x16 */ public static final @NotNull Icon PreviewDetailsVertically = load("/actions/previewDetailsVertically.svg");
@@ -210,6 +212,8 @@ public class AllIcons {
   }
 
   public final static class CodeWithMe {
+    /** 16x16 */ public static final @NotNull Icon CwmAccessOff = load("/codeWithMe/cwmAccessOff.svg");
+    /** 16x16 */ public static final @NotNull Icon CwmAccessOn = load("/codeWithMe/cwmAccessOn.svg");
     /** 16x16 */ public static final @NotNull Icon CwmFollow = load("/codeWithMe/cwmFollow.svg");
     /** 16x16 */ public static final @NotNull Icon CwmFollowMe = load("/codeWithMe/cwmFollowMe.svg");
     /** 16x16 */ public static final @NotNull Icon CwmForceFollowMe = load("/codeWithMe/cwmForceFollowMe.svg");
@@ -400,6 +404,7 @@ public class AllIcons {
     /** 2x19 */ public static final @NotNull Icon Divider = load("/general/divider.svg");
     /** 16x16 */ public static final @NotNull Icon Dropdown = load("/general/dropdown.svg");
     /** 13x13 */ public static final @NotNull Icon DropdownGutter = load("/general/dropdownGutter.svg");
+    /** 2x20 */ public static final @NotNull Icon DropPlace = load("/general/dropPlace.svg");
     /** 9x9 */ public static final @NotNull Icon Ellipsis = load("/general/ellipsis.svg");
     /** 16x16 */ public static final @NotNull Icon Error = load("/general/error.svg");
     /** 32x32 */ public static final @NotNull Icon ErrorDialog = load("/general/errorDialog.svg");
@@ -435,6 +440,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon LayoutEditorPreview = load("/general/layoutEditorPreview.svg");
     /** 16x16 */ public static final @NotNull Icon LayoutPreviewOnly = load("/general/layoutPreviewOnly.svg");
     /** 14x14 */ public static final @NotNull Icon LinkDropTriangle = load("/general/linkDropTriangle.svg");
+    /** 16x16 */ public static final @NotNull Icon LocalizationSettings = load("/general/localizationSettings.svg");
     /** 16x16 */ public static final @NotNull Icon Locate = load("/general/locate.svg");
     /** 13x13 */ public static final @NotNull Icon Modified = load("/general/modified.svg");
     /** 13x13 */ public static final @NotNull Icon ModifiedSelected = load("/general/modifiedSelected.svg");
@@ -454,6 +460,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon ProjectStructure = load("/general/projectStructure.svg");
     /** 16x16 */ public static final @NotNull Icon ProjectTab = load("/general/projectTab.svg");
     /** 32x32 */ public static final @NotNull Icon QuestionDialog = load("/general/questionDialog.svg");
+    /** 16x16 */ public static final @NotNull Icon ReaderMode = load("/general/readerMode.svg");
     /** 16x16 */ public static final @NotNull Icon Remove = load("/general/remove.svg");
     /** 16x16 */ public static final @NotNull Icon Reset = load("/general/reset.svg");
     /** 16x16 */ public static final @NotNull Icon RunWithCoverage = load("/general/runWithCoverage.svg");
@@ -549,6 +556,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon IncomingChangesOn = load("/ide/incomingChangesOn.svg");
     /** 12x12 */ public static final @NotNull Icon Link = load("/ide/link.svg");
     /** 16x16 */ public static final @NotNull Icon LocalScope = load("/ide/localScope.svg");
+    /** 16x16 */ public static final @NotNull Icon LocalScopeAction = load("/ide/localScopeAction.svg");
 
     public final static class Macro {
       /** 16x16 */ public static final @NotNull Icon Recording_1 = load("/ide/macro/recording_1.svg");
@@ -850,7 +858,6 @@ public class AllIcons {
   public final static class Plugins {
     /** 16x16 */ public static final @NotNull Icon Disabled = load("/plugins/disabled.svg");
     /** 12x12 */ public static final @NotNull Icon Downloads = load("/plugins/downloads.svg");
-    /** 16x16 */ public static final @NotNull Icon Hieroglyph = load("/plugins/hieroglyph.svg");
     /** 15x15 */ public static final @NotNull Icon ModifierInvalid = load("/plugins/modifierInvalid.svg");
     /** 14x14 */ public static final @NotNull Icon ModifierJBLogo = load("/plugins/modifierJBLogo.svg");
     /** 40x40 */ public static final @NotNull Icon PluginLogo = load("/plugins/pluginLogo.svg");
@@ -930,9 +937,11 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Apache = load("/providers/apache.svg");
     /** 16x16 */ public static final @NotNull Icon ApacheDerby = load("/providers/apacheDerby.svg");
     /** 16x16 */ public static final @NotNull Icon Azure = load("/providers/azure.svg");
+    /** 16x16 */ public static final @NotNull Icon BigQuery = load("/providers/bigQuery.svg");
     /** 16x16 */ public static final @NotNull Icon Cassandra = load("/providers/cassandra.svg");
     /** 16x16 */ public static final @NotNull Icon ClickHouse = load("/providers/clickHouse.svg");
     /** 16x16 */ public static final @NotNull Icon CockroachDB = load("/providers/cockroachDB.svg");
+    /** 16x16 */ public static final @NotNull Icon Couchbase = load("/providers/couchbase.svg");
     /** 16x16 */ public static final @NotNull Icon DB2 = load("/providers/DB2.svg");
     /** 16x16 */ public static final @NotNull Icon Eclipse = load("/providers/eclipse.svg");
     /** 16x16 */ public static final @NotNull Icon Exasol = load("/providers/exasol.svg");
@@ -985,6 +994,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon TestMark = load("/runConfigurations/testMark.svg");
     /** 16x16 */ public static final @NotNull Icon TestNotRan = load("/runConfigurations/testNotRan.svg");
     /** 16x16 */ public static final @NotNull Icon TestPassed = load("/runConfigurations/testPassed.svg");
+    /** 16x16 */ public static final @NotNull Icon TestPassedIgnored = load("/runConfigurations/testPassedIgnored.svg");
     /** 16x16 */ public static final @NotNull Icon TestPaused = load("/runConfigurations/testPaused.svg");
     /** 16x16 */ public static final @NotNull Icon TestSkipped = load("/runConfigurations/testSkipped.svg");
 
@@ -1062,7 +1072,6 @@ public class AllIcons {
     /** 13x13 */ public static final @NotNull Icon ToolWindowMessages = load("/toolwindows/toolWindowMessages.svg");
     /** 13x13 */ public static final @NotNull Icon ToolWindowModuleDependencies = load("/toolwindows/toolWindowModuleDependencies.svg");
     /** 13x13 */ public static final @NotNull Icon ToolWindowPalette = load("/toolwindows/toolWindowPalette.svg");
-    /** 13x13 */ public static final @NotNull Icon ToolWindowPreview = load("/toolwindows/toolWindowPreview.png");
     /** 13x13 */ public static final @NotNull Icon ToolWindowProblems = load("/toolwindows/toolWindowProblems.svg");
     /** 13x13 */ public static final @NotNull Icon ToolWindowProblemsEmpty = load("/toolwindows/toolWindowProblemsEmpty.svg");
     /** 13x13 */ public static final @NotNull Icon ToolWindowProfiler = load("/toolwindows/toolWindowProfiler.svg");
@@ -1075,17 +1084,25 @@ public class AllIcons {
     /** 13x13 */ public static final @NotNull Icon WarningEvents = load("/toolwindows/warningEvents.svg");
     /** 13x13 */ public static final @NotNull Icon WebToolWindow = load("/toolwindows/webToolWindow.svg");
 
+    /** @deprecated to be removed in IDEA 2021.1 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    @ScheduledForRemoval(inVersion = "2021.1")
+    public static final @NotNull Icon ToolWindowPreview = load("/toolwindows/toolWindowPreview.png");
+
   }
 
   public final static class Vcs {
     /** 16x16 */ public static final @NotNull Icon Arrow_left = load("/vcs/arrow_left.svg");
     /** 16x16 */ public static final @NotNull Icon Arrow_right = load("/vcs/arrow_right.svg");
     /** 16x16 */ public static final @NotNull Icon Branch = load("/vcs/branch.svg");
+    /** 16x16 */ public static final @NotNull Icon BranchNode = load("/vcs/branchNode.svg");
     /** 16x16 */ public static final @NotNull Icon Changelist = load("/vcs/changelist.svg");
     /** 16x16 */ public static final @NotNull Icon Clone = load("/vcs/clone.svg");
     /** 16x16 */ public static final @NotNull Icon CommitNode = load("/vcs/commitNode.svg");
     /** 16x16 */ public static final @NotNull Icon Equal = load("/vcs/equal.svg");
     /** 16x16 */ public static final @NotNull Icon Folders = load("/vcs/folders.svg");
+    /** 24x24 */ public static final @NotNull Icon FromVCSDialog = load("/vcs/fromVCSDialog.svg");
     /** 16x16 */ public static final @NotNull Icon History = load("/vcs/history.svg");
     /** 16x16 */ public static final @NotNull Icon HistoryInline = load("/vcs/historyInline.svg");
     /** 16x16 */ public static final @NotNull Icon HistoryInlineHovered = load("/vcs/historyInlineHovered.svg");
@@ -1118,16 +1135,44 @@ public class AllIcons {
   }
 
   public final static class Welcome {
-    /** 32x32 */ public static final @NotNull Icon CreateDesktopEntry = load("/welcome/createDesktopEntry.png");
-    /** 16x16 */ public static final @NotNull Icon CreateNewProject = load("/welcome/createNewProject.svg");
-    /** 16x16 */ public static final @NotNull Icon FromVCS = load("/welcome/fromVCS.svg");
+    /** 24x24 */ public static final @NotNull Icon CreateNewProjectTab = load("/welcome/createNewProjectTab.svg");
+    /** 24x24 */ public static final @NotNull Icon CreateNewProjectTabSelected = load("/welcome/createNewProjectTabSelected.svg");
+    /** 24x24 */ public static final @NotNull Icon FromVCSTab = load("/welcome/fromVCSTab.svg");
+    /** 24x24 */ public static final @NotNull Icon FromVCSTabSelected = load("/welcome/fromVCSTabSelected.svg");
+    /** 24x24 */ public static final @NotNull Icon Open = load("/welcome/open.svg");
+    /** 24x24 */ public static final @NotNull Icon OpenSelected = load("/welcome/openSelected.svg");
 
     public final static class Project {
       /** 10x10 */ public static final @NotNull Icon Remove_hover = load("/welcome/project/remove-hover.svg");
       /** 10x10 */ public static final @NotNull Icon Remove = load("/welcome/project/remove.svg");
+      /** 10x10 */ public static final @NotNull Icon RemoveDisabled_hover = load("/welcome/project/removeDisabled-hover.svg");
+      /** 10x10 */ public static final @NotNull Icon RemoveDisabled = load("/welcome/project/removeDisabled.svg");
 
     }
-    /** 32x32 */ public static final @NotNull Icon Register = load("/welcome/register.png");
+
+    /** @deprecated to be removed in IDEA 2021.1 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    @ScheduledForRemoval(inVersion = "2021.1")
+    public static final @NotNull Icon CreateDesktopEntry = load("/welcome/createDesktopEntry.png");
+
+    /** @deprecated to be removed in IDEA 2021.1 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    @ScheduledForRemoval(inVersion = "2021.1")
+    public static final @NotNull Icon CreateNewProject = load("/welcome/createNewProject.svg");
+
+    /** @deprecated to be removed in IDEA 2021.1 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    @ScheduledForRemoval(inVersion = "2021.1")
+    public static final @NotNull Icon FromVcs = load("/welcome/fromVcs.svg");
+
+    /** @deprecated to be removed in IDEA 2021.1 */
+    @SuppressWarnings("unused")
+    @Deprecated
+    @ScheduledForRemoval(inVersion = "2021.1")
+    public static final @NotNull Icon Register = load("/welcome/register.png");
 
   }
 

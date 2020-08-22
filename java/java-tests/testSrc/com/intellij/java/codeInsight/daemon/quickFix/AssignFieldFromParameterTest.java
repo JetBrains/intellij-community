@@ -16,6 +16,7 @@
 package com.intellij.java.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 
 /**
@@ -27,10 +28,11 @@ public class AssignFieldFromParameterTest extends LightIntentionActionTestCase {
     super.setUp();
     JavaCodeStyleSettings.getInstance(getProject()).FIELD_NAME_PREFIX = "my";
     JavaCodeStyleSettings.getInstance(getProject()).STATIC_FIELD_NAME_PREFIX = "our";
+    enableInspectionTool(new UnusedDeclarationInspectionBase());
   }
+
   @Override
   protected String getBasePath() {
     return "/codeInsight/daemonCodeAnalyzer/quickFix/assignFieldFromParameter";
   }
-
 }

@@ -8,8 +8,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.text.CharSequenceHashingStrategy;
-import gnu.trove.THashMap;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class FileTypeAssocTable<T> {
+public final class FileTypeAssocTable<T> {
   private final Map<CharSequence, T> myExtensionMappings;
   private final Map<CharSequence, T> myExactFileNameMappings;
   private final Map<CharSequence, T> myExactFileNameAnyCaseMappings;
@@ -29,13 +28,13 @@ public class FileTypeAssocTable<T> {
                              @NotNull Map<? extends CharSequence, ? extends T> exactFileNameAnyCaseMappings,
                              @NotNull Map<String, ? extends T> hashBangMap,
                              @NotNull List<? extends Pair<FileNameMatcher, T>> matchingMappings) {
-    myExtensionMappings = new THashMap<>(Math.max(10, extensionMappings.size()), 0.5f, CharSequenceHashingStrategy.CASE_INSENSITIVE);
+    myExtensionMappings = CollectionFactory.createCharSequenceMap(false, Math.max(10, extensionMappings.size()), 0.5f);
     myExtensionMappings.putAll(extensionMappings);
-    myExactFileNameMappings = new THashMap<>(Math.max(10, exactFileNameMappings.size()), 0.5f, CharSequenceHashingStrategy.CASE_SENSITIVE);
+    myExactFileNameMappings = CollectionFactory.createCharSequenceMap(true, Math.max(10, exactFileNameMappings.size()), 0.5f);
     myExactFileNameMappings.putAll(exactFileNameMappings);
-    myExactFileNameAnyCaseMappings = new THashMap<>(Math.max(10, exactFileNameAnyCaseMappings.size()), 0.5f, CharSequenceHashingStrategy.CASE_INSENSITIVE);
+    myExactFileNameAnyCaseMappings = CollectionFactory.createCharSequenceMap(false, Math.max(10, exactFileNameAnyCaseMappings.size()), 0.5f);
     myExactFileNameAnyCaseMappings.putAll(exactFileNameAnyCaseMappings);
-    myHashBangMap = new THashMap<>(Math.max(10, hashBangMap.size()), 0.5f);
+    myHashBangMap = CollectionFactory.createSmallMemoryFootprintMap(Math.max(10, hashBangMap.size()), 0.5f);
     myHashBangMap.putAll(hashBangMap);
     myMatchingMappings = new ArrayList<>(matchingMappings);
   }
@@ -276,7 +275,7 @@ public class FileTypeAssocTable<T> {
   }
 
   @NotNull
-  Map<String, T> getAllHashBangPatterns() {
-    return Collections.unmodifiableMap(new THashMap<>(myHashBangMap));
+  Map<String, T> getInternalRawHashBangPatterns() {
+    return CollectionFactory.createSmallMemoryFootprintMap(myHashBangMap);
   }
 }

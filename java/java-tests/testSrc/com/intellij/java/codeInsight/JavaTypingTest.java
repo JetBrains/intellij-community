@@ -1,11 +1,15 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -101,6 +105,14 @@ public class JavaTypingTest extends BasePlatformTestCase {
   public void testInsertPairedBraceForLambdaBody() {
     doTest('{');
   }
+  
+  public void testInsertPairedBraceForLocalClass() {
+    doTest('{');
+  }
+  
+  public void testInsertPairedBraceForLocalRecord() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_15_PREVIEW, () -> doTest('{'));
+  }
 
   public void testSemicolonInStringLiteral() {
     doTest(';');
@@ -131,6 +143,28 @@ public class JavaTypingTest extends BasePlatformTestCase {
   }
 
   public void testCommaInDefaultAnnotationStringArgumentWhenArrayIsExpected() { doTest(','); }
+
+  public void testQuestionAfterPolyadic() { doTest('?'); }
+  public void testQuestionAfterPolyadic2() { doTest('?'); }
+
+  public void testQuestionAfterPolyadicBoolean() { doTest('?'); }
+
+  public void testQuestionInVoidContext() { doTest('?'); }
+
+  public void testEqualAfterBitwiseOp() { doTest('='); }
+
+  public void testEqualAfterBitwiseOp2() {
+    myFixture.configureByFile(getTestName(true) + "_before.java");
+    CommonCodeStyleSettings settings = CodeStyle.getLanguageSettings(myFixture.getFile());
+    settings.SPACE_WITHIN_PARENTHESES = true;
+    try {
+      myFixture.type('=');
+      myFixture.checkResultByFile(getTestName(true) + "_after.java");
+    }
+    finally {
+      settings.SPACE_WITHIN_PARENTHESES = false;
+    }
+  }
 
   private void doTest(char c) {
     myFixture.configureByFile(getTestName(true) + "_before.java");

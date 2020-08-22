@@ -1,12 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter;
 
-import com.intellij.openapi.util.text.StringUtilRt;
-import gnu.trove.THashMap;
 import org.gradle.tooling.model.idea.IdeaDependencyScope;
 
-public class InternalIdeaDependencyScope implements IdeaDependencyScope {
-  private static final THashMap<String, InternalIdeaDependencyScope> SCOPES_MAP = new THashMap<String, InternalIdeaDependencyScope>();
+import java.util.HashMap;
+import java.util.Map;
+
+public final class InternalIdeaDependencyScope implements IdeaDependencyScope {
+  private static final Map<String, InternalIdeaDependencyScope> SCOPES_MAP = new HashMap<String, InternalIdeaDependencyScope>();
 
   static {
     SCOPES_MAP.put("Compile", new InternalIdeaDependencyScope("Compile"));
@@ -34,7 +35,7 @@ public class InternalIdeaDependencyScope implements IdeaDependencyScope {
   }
 
   public static InternalIdeaDependencyScope getInstance(String scope) {
-    InternalIdeaDependencyScope dependencyScope = SCOPES_MAP.get(StringUtilRt.isEmpty(scope) ? "Compile" : scope);
+    InternalIdeaDependencyScope dependencyScope = SCOPES_MAP.get(scope == null || scope.isEmpty() ? "Compile" : scope);
     return dependencyScope == null ? new InternalIdeaDependencyScope(scope) : dependencyScope;
   }
 }

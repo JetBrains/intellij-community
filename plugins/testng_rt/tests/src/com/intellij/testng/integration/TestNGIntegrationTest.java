@@ -7,17 +7,11 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testFramework.EdtRule;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.RunsInEdt;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
@@ -25,12 +19,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.stream.Collectors;
 
-@RunsInEdt
 @RunWith(Parameterized.class)
 public class TestNGIntegrationTest extends AbstractTestFrameworkCompilingIntegrationTest {
-  @Rule public final EdtRule edtRule = new EdtRule();
-  @Rule public final TestName myNameRule = new TestName();
-
   @Parameterized.Parameter
   public String myTestNGVersion;
 
@@ -60,24 +50,7 @@ public class TestNGIntegrationTest extends AbstractTestFrameworkCompilingIntegra
 
   @Override
   protected String getTestContentRoot() {
-    String methodName = myNameRule.getMethodName();
-    methodName = methodName.substring(0, methodName.indexOf("["));
-    return VfsUtilCore.pathToUrl(PlatformTestUtil.getCommunityPath() + "/plugins/testng_rt/tests/testData/integration/" + methodName);
-  }
-
- @Before
-  public void before() throws Exception {
-    setUp();
-  }
-
-  @After
-  public void after() throws Exception {
-    tearDown();
-  }
-
-  @Override
-  public String getName() {
-    return myNameRule.getMethodName();
+    return VfsUtilCore.pathToUrl(PlatformTestUtil.getCommunityPath() + "/plugins/testng_rt/tests/testData/integration/" + getName());
   }
 
   @Test

@@ -20,6 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.Nls;
 
 /**
  * @author Maxim.Medvedev
@@ -30,7 +31,7 @@ public interface IntroduceParameterMethodUsagesProcessor {
 
   boolean isMethodUsage(UsageInfo usage);
 
-  void findConflicts(IntroduceParameterData data, UsageInfo[] usages, MultiMap<PsiElement, String> conflicts);
+  void findConflicts(IntroduceParameterData data, UsageInfo[] usages, MultiMap<PsiElement, @Nls String> conflicts);
 
   boolean processChangeMethodUsage(IntroduceParameterData data, UsageInfo usage, UsageInfo[] usages) throws IncorrectOperationException;
 

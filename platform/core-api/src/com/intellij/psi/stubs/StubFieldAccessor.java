@@ -1,26 +1,31 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.stubs;
 
-import com.intellij.openapi.util.Computable;
-
 import java.lang.reflect.Field;
+import java.util.function.Supplier;
 
-class StubFieldAccessor implements Computable<ObjectStubSerializer> {
+final class StubFieldAccessor implements Supplier<ObjectStubSerializer<?, Stub>> {
   private final Field myField;
   final String externalId;
-  private volatile ObjectStubSerializer myFieldValue;
+  private volatile ObjectStubSerializer<?, Stub> myFieldValue;
 
   StubFieldAccessor(String externalId, Field field) {
     this.externalId = externalId;
     myField = field;
+    try {
+      field.setAccessible(true);
+    }
+    catch (SecurityException ignore) {
+    }
   }
 
   @Override
-  public ObjectStubSerializer compute() {
-    ObjectStubSerializer delegate = myFieldValue;
+  public ObjectStubSerializer<?, Stub> get() {
+    ObjectStubSerializer<?, Stub> delegate = myFieldValue;
     if (delegate == null) {
       try {
-        myFieldValue = delegate = (ObjectStubSerializer)myField.get(null);
+        //noinspection unchecked
+        myFieldValue = delegate = (ObjectStubSerializer<?, Stub>)myField.get(null);
       }
       catch (IllegalAccessException e) {
         throw new RuntimeException(e);

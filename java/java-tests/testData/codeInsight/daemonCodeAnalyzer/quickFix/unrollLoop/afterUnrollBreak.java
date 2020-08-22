@@ -12,7 +12,7 @@ class Test {
                   }
               }
           }
-      }
+      }//Comment
   }
 
   void foo(boolean b) {}

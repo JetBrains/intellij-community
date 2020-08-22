@@ -9,7 +9,6 @@ from typing import (
     Iterator,
     List,
     Optional,
-    Protocol,
     Text,
     TextIO,
     Tuple,
@@ -20,6 +19,7 @@ from typing import (
 from types import TracebackType
 from socket import socket
 from ssl import SSLContext
+from _typeshed import SupportsRead, SupportsReadline
 
 _T = TypeVar("_T")
 _IntOrStr = Union[int, Text]
@@ -38,12 +38,6 @@ class error_perm(Error): ...
 class error_proto(Error): ...
 
 all_errors = Tuple[Type[Exception], ...]
-
-class _Readable(Protocol):
-    def read(self, __length: int) -> bytes: ...
-
-class _ReadLineable(Protocol):
-    def readline(self, _length: int) -> bytes: ...
 
 class FTP:
     debugging: int
@@ -118,13 +112,13 @@ class FTP:
     def storbinary(
         self,
         cmd: Text,
-        fp: _Readable,
+        fp: SupportsRead[bytes],
         blocksize: int = ...,
         callback: Optional[Callable[[bytes], Any]] = ...,
         rest: Optional[_IntOrStr] = ...,
     ) -> str: ...
     def retrlines(self, cmd: Text, callback: Optional[Callable[[str], Any]] = ...) -> str: ...
-    def storlines(self, cmd: Text, fp: _ReadLineable, callback: Optional[Callable[[bytes], Any]] = ...) -> str: ...
+    def storlines(self, cmd: Text, fp: SupportsReadline[bytes], callback: Optional[Callable[[bytes], Any]] = ...) -> str: ...
     def acct(self, password: Text) -> str: ...
     def nlst(self, *args: Text) -> List[str]: ...
     # Technically only the last arg can be a Callable but ...

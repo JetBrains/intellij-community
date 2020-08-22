@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.push;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -39,12 +25,12 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.ViewUpdateInfoNotification;
 import git4idea.GitVcs;
 import git4idea.branch.GitBranchUtil;
-import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.update.GitUpdateInfoAsLog;
 import git4idea.update.GitUpdateResult;
 import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,7 +41,7 @@ import static com.intellij.openapi.util.text.StringUtil.pluralize;
 import static com.intellij.openapi.vcs.update.ActionInfo.UPDATE;
 import static java.util.Collections.singletonList;
 
-class GitPushResultNotification extends Notification {
+final class GitPushResultNotification extends Notification {
 
   public static final String VIEW_FILES_UPDATED_DURING_THE_PUSH = "View files updated during the push";
 
@@ -69,8 +55,8 @@ class GitPushResultNotification extends Notification {
   private static final Logger LOG = Logger.getInstance(GitPushResultNotification.class);
 
   private GitPushResultNotification(@NotNull String groupDisplayId,
-                                    @NotNull String title,
-                                    @NotNull String content,
+                                    @NotNull @Nls String title,
+                                    @NotNull @Nls String content,
                                     @NotNull NotificationType type) {
     super(groupDisplayId, "", emulateTitle(title, content), type);
   }
@@ -195,7 +181,7 @@ class GitPushResultNotification extends Notification {
   }
 
   @NotNull
-  static String emulateTitle(@NotNull String title, @NotNull String content) {
+  static String emulateTitle(@NotNull @Nls String title, @NotNull @Nls String content) {
     return "<b>" + title + "</b><br/>" + content;
   }
 
@@ -230,8 +216,8 @@ class GitPushResultNotification extends Notification {
     }, "<br/>");
   }
 
-  private static String formRepoDescription(@NotNull GitPushRepoResult result) {
-    String description;
+  private static @Nls String formRepoDescription(@NotNull GitPushRepoResult result) {
+    @Nls String description;
     String sourceBranch = GitBranchUtil.stripRefsPrefix(result.getSourceBranch());
     String targetBranch = GitBranchUtil.stripRefsPrefix(result.getTargetBranch());
     String tagDescription = formTagDescription(result.getPushedTags(), result.getTargetRemote());
@@ -282,7 +268,7 @@ class GitPushResultNotification extends Notification {
   }
 
   @Nullable
-  private static String formTagDescription(@NotNull List<String> pushedTags, @NotNull String remoteName) {
+  private static @Nls String formTagDescription(@NotNull List<String> pushedTags, @NotNull String remoteName) {
     if (pushedTags.isEmpty()) {
       return null;
     }
@@ -292,7 +278,7 @@ class GitPushResultNotification extends Notification {
     return pushedTags.size() + " tags to " + remoteName;
   }
 
-  private static String formDescriptionBasedOnUpdateResult(GitUpdateResult updateResult, String targetBranch) {
+  private static @Nls String formDescriptionBasedOnUpdateResult(GitUpdateResult updateResult, String targetBranch) {
     if (updateResult == null || updateResult == GitUpdateResult.SUCCESS || updateResult == GitUpdateResult.NOTHING_TO_UPDATE) {
       return String.format("push to %s was rejected", targetBranch);
     }
@@ -310,7 +296,7 @@ class GitPushResultNotification extends Notification {
     }
   }
 
-  private static class ForcePushNotificationAction extends NotificationAction {
+  private static final class ForcePushNotificationAction extends NotificationAction {
     @NotNull private final Project myProject;
     @NotNull private final GitPushOperation myOperation;
     @NotNull private final List<GitRepository> myRepositories;

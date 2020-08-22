@@ -15,7 +15,9 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,16 +25,11 @@ import org.jetbrains.annotations.NotNull;
 public class LightEditAssociateFileTypesAction extends DumbAwareAction implements LightEditCompatible {
   public final static String ENABLE_REG_KEY =  "system.file.type.associations.enabled";
 
+  private static final Logger LOG = Logger.getInstance(LightEditAssociateFileTypesAction.class);
   private final static String NOTIFICATION_GROUP_ID = "associate.files";
 
   public LightEditAssociateFileTypesAction() {
-    super(getActionTitle());
-  }
-
-  private static String getActionTitle() {
-    return ActionsBundle.message(
-      "action.LightEditAssociateFileTypesAction.text",
-      ApplicationNamesInfo.getInstance().getFullProductName());
+    super(ActionsBundle.message("action.LightEditAssociateFileTypesAction.text", ApplicationNamesInfo.getInstance().getFullProductName()));
   }
 
   @Override
@@ -49,6 +46,7 @@ public class LightEditAssociateFileTypesAction extends DumbAwareAction implement
             }
             catch (FileAssociationException exception) {
               notifyOnError(exception.getMessage());
+              LOG.info(exception);
             }
           }
         );
@@ -56,7 +54,7 @@ public class LightEditAssociateFileTypesAction extends DumbAwareAction implement
     }
   }
 
-  private static void notifyOnError(@NotNull String message) {
+  private static void notifyOnError(@NotNull @NlsContexts.NotificationContent String message) {
     ApplicationManager.getApplication().invokeLater(
       () -> Notifications.Bus.notify(new Notification(
         NOTIFICATION_GROUP_ID,

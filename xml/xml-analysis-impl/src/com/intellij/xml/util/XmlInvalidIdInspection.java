@@ -42,12 +42,12 @@ public class XmlInvalidIdInspection extends XmlDuplicatedIdInspection {
 
         final FileViewProvider viewProvider = tag.getContainingFile().getViewProvider();
         if (viewProvider instanceof MultiplePsiFilesPerDocumentFileViewProvider) {
-          holder.registerProblem(value, XmlAnalysisBundle.message("invalid.id.reference"), ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
+          holder.registerProblem(value, XmlAnalysisBundle.message("xml.inspections.invalid.id.reference"), ProblemHighlightType.LIKE_UNKNOWN_SYMBOL,
                                  new XmlDeclareIdInCommentAction(idRef));
 
         }
         else {
-          holder.registerProblem(value, XmlAnalysisBundle.message("invalid.id.reference"), ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+          holder.registerProblem(value, XmlAnalysisBundle.message("xml.inspections.invalid.id.reference"), ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
         }
       }
     }

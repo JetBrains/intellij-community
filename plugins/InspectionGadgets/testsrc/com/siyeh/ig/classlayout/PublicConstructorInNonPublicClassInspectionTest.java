@@ -2,6 +2,8 @@
 package com.siyeh.ig.classlayout;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.siyeh.ig.LightJavaInspectionTestCase;
@@ -26,6 +28,9 @@ public class PublicConstructorInNonPublicClassInspectionTest extends LightJavaCo
 
   public void testPublicConstructorInNonPublicClass() {
     doTest();
+  }
+  public void testRecordsJava15() {
+    IdeaTestUtil.withLevel(myFixture.getModule(), LanguageLevel.JDK_15_PREVIEW, this::doTest);
   }
 
   public void testQuickfix() {

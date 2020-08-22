@@ -14,6 +14,7 @@ import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JButtonAction
 import com.intellij.util.ui.UIUtil
+import git4idea.i18n.GitBundle
 import java.awt.BorderLayout
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -46,7 +47,7 @@ class GitConflictsView(
 
     val mainPanel = JPanel(BorderLayout())
 
-    descriptionLabel = JLabel("Loading merge conflicts...")
+    descriptionLabel = JLabel(GitBundle.message("conflicts.loading.status"))
     conflictsPanel.addListener(object : GitConflictsPanel.Listener {
       override fun onDescriptionChange(description: String) {
         descriptionLabel.text = description
@@ -73,7 +74,7 @@ class GitConflictsView(
   }
 
   private inner class ResolveAction
-    : JButtonAction("Resolve") {
+    : JButtonAction(GitBundle.message("conflicts.resolve.action.text")) {
 
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabled = conflictsPanel.canShowMergeWindowForSelection()
@@ -86,7 +87,8 @@ class GitConflictsView(
   }
 
   private inner class AcceptSideAction(val takeTheirs: Boolean)
-    : JButtonAction(if (takeTheirs) "Accept Theirs" else "Accept Yours") {
+    : JButtonAction(if (takeTheirs) GitBundle.message("conflicts.accept.theirs.action.text")
+                    else GitBundle.message("conflicts.accept.yours.action.text") ) {
 
     override fun update(e: AnActionEvent) {
       e.presentation.isEnabled = conflictsPanel.canAcceptConflictSideForSelection()

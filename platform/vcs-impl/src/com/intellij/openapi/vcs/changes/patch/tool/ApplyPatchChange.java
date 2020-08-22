@@ -20,6 +20,7 @@ import com.intellij.diff.merge.MergeModelBase;
 import com.intellij.diff.util.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diff.DiffBundle;
+import com.intellij.openapi.diff.LineStatusMarkerDrawUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -29,7 +30,6 @@ import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch.HunkStatus;
-import com.intellij.openapi.vcs.ex.LineStatusMarkerRenderer;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.containers.ContainerUtil;
@@ -334,7 +334,7 @@ class ApplyPatchChange {
 
     @Override
     public void paint(@NotNull Editor editor, @NotNull Graphics g, @NotNull Rectangle r) {
-      LineStatusMarkerRenderer.paintSimpleRange(g, editor, myLine1, myLine2, myColor);
+      LineStatusMarkerDrawUtil.paintSimpleRange(g, editor, myLine1, myLine2, myColor);
     }
 
     @Override
@@ -344,7 +344,7 @@ class ApplyPatchChange {
 
     @Override
     public boolean canDoAction(@NotNull MouseEvent e) {
-      return LineStatusMarkerRenderer.isInsideMarkerArea(e);
+      return LineStatusMarkerDrawUtil.isInsideMarkerArea(e);
     }
 
     @Override

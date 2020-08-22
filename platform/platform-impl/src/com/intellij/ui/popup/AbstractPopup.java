@@ -18,6 +18,7 @@ import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.TransactionGuardImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorActivityManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
@@ -59,12 +60,12 @@ import static java.awt.event.WindowEvent.WINDOW_ACTIVATED;
 import static java.awt.event.WindowEvent.WINDOW_GAINED_FOCUS;
 
 public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
-  public static final String SHOW_HINTS = "ShowHints";
+  @NonNls public static final String SHOW_HINTS = "ShowHints";
 
   // Popup size stored with DimensionService is null first time
   // In this case you can put Dimension in content client properties to adjust size
   // Zero or negative values (with/height or both) would be ignored (actual values would be obtained from preferred size)
-  public static final String FIRST_TIME_SIZE = "FirstTimeSize";
+  @NonNls public static final String FIRST_TIME_SIZE = "FirstTimeSize";
 
   private static final Logger LOG = Logger.getInstance(AbstractPopup.class);
 
@@ -201,7 +202,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
                                         boolean movable,
                                         String dimensionServiceKey,
                                         boolean resizable,
-                                        @Nullable String caption,
+                                        @NlsContexts.PopupTitle @Nullable String caption,
                                         @Nullable Computable<Boolean> callback,
                                         boolean cancelOnClickOutside,
                                         @NotNull Set<? extends JBPopupListener> listeners,
@@ -220,7 +221,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
                                         boolean inStack,
                                         boolean modalContext,
                                         Component @NotNull [] focusOwners,
-                                        @Nullable String adText,
+                                        @Nullable @NlsContexts.PopupAdvertisement String adText,
                                         int adTextAlignment,
                                         boolean headerAlwaysFocusable,
                                         @NotNull List<? extends Pair<ActionListener, KeyStroke>> keyboardActions,
@@ -543,7 +544,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
   public void showInBestPositionFor(@NotNull Editor editor) {
     // Intercept before the following assert; otherwise assertion may fail
     if (UiInterceptors.tryIntercept(this)) return;
-    assert editor.getComponent().isShowing() : "Editor must be showing on the screen";
+    assert EditorActivityManager.getInstance().isVisible(editor) : "Editor must be showing on the screen";
 
     // Set the accessible parent so that screen readers don't announce
     // a window context change -- the tooltip is "logically" hosted
@@ -863,6 +864,11 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     if (myLocateWithinScreen) {
       ScreenUtil.moveToFit(targetBounds, screen, null);
     }
+    else {
+      //even when LocateWithinScreen option is disabled, popup should not be shown in invisible area
+      fitToVisibleArea(targetBounds);
+    }
+
 
     if (myMouseOutCanceller != null) {
       myMouseOutCanceller.myEverEntered = targetBounds.equals(original);
@@ -921,7 +927,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
         private Cursor myCursor;
 
         @Override
-        protected void setCursor(Component content, Cursor cursor) {
+        protected void setCursor(@NotNull Component content, Cursor cursor) {
           if (myCursor != cursor || myCursor != Cursor.getDefaultCursor()) {
             glass.setCursor(cursor, this);
             myCursor = cursor;
@@ -1100,6 +1106,18 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     myState = State.SHOWN;
 
     afterShowSync();
+  }
+
+  private static void fitToVisibleArea(Rectangle targetBounds) {
+    Point topLeft = new Point(targetBounds.x, targetBounds.y);
+    Point bottomRight = new Point((int)targetBounds.getMaxX(), (int)targetBounds.getMaxY());
+    Rectangle topLeftScreen = ScreenUtil.getScreenRectangle(topLeft);
+    Rectangle bottomRightScreen = ScreenUtil.getScreenRectangle(bottomRight);
+    if (topLeft.x < topLeftScreen.x || topLeft.y < topLeftScreen.y
+        || bottomRight.x > bottomRightScreen.getMaxX() || bottomRight.y > bottomRightScreen.getMaxY()) {
+      Rectangle centerScreen = ScreenUtil.getScreenRectangle(new Point((int)targetBounds.getCenterX(), (int)targetBounds.getCenterY()));
+      ScreenUtil.moveToFit(targetBounds, centerScreen, null);
+    }
   }
 
   public void focusPreferredComponent() {
@@ -1829,7 +1847,7 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     if (doRevalidate) myContent.revalidate();
   }
 
-  public void setWarning(@NotNull String text) {
+  public void setWarning(@NotNull @NlsContexts.Label String text) {
     JBLabel label = new JBLabel(text, UIUtil.getBalloonWarningIcon(), SwingConstants.CENTER);
     label.setOpaque(true);
     Color color = HintUtil.getInformationColor();

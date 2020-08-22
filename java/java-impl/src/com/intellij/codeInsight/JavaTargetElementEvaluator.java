@@ -11,12 +11,12 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
-import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.util.*;
 import com.intellij.util.BitUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -346,7 +346,7 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
       if (memberClass != null && memberClass.length == 1) {
         PsiClass aClass = memberClass[0];
         return CachedValuesManager.getCachedValue(aClass, () -> {
-          return new CachedValueProvider.Result<>(getHierarchyScope(aClass, aClass.getUseScope()),
+          return new CachedValueProvider.Result<>(getHierarchyScope(aClass, aClass.getUseScope(), true),
                                                   PsiModificationTracker.MODIFICATION_COUNT);
         });
       }
@@ -359,22 +359,28 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
    * 
    * @param aClass qualifier type class
    * @param scope a scope to narrow
-   * @return narrowed scope
+   * @param areFunctionalInheritorsExpected true, iff scope should be ignored for functional interfaces to avoid eager functional expressions search           
+   * @return narrowed scope or null if <code>aClass</code> is a functional interface and functional expressions can be processed by the caller
    */
-  public @NotNull static SearchScope getHierarchyScope(@NotNull PsiClass aClass, @NotNull SearchScope scope) {
+  @Contract("_,_,false->!null")
+  public @Nullable static SearchScope getHierarchyScope(@NotNull PsiClass aClass, 
+                                                        @NotNull SearchScope scope, 
+                                                        boolean areFunctionalInheritorsExpected) {
     final List<PsiClass> classesToSearch = new ArrayList<>();
     classesToSearch.add(aClass);
     classesToSearch.addAll(ClassInheritorsSearch.search(aClass, scope, true).findAll());
 
     final Set<PsiClass> supers = new HashSet<>();
     for (PsiClass psiClass : classesToSearch) {
+      if (areFunctionalInheritorsExpected && LambdaUtil.isFunctionalClass(psiClass)) {
+        return null;
+      }
       supers.addAll(InheritanceUtil.getSuperClasses(psiClass));
     }
 
     final List<PsiElement> elements = new ArrayList<>();
     elements.addAll(classesToSearch);
     elements.addAll(supers);
-    elements.addAll(FunctionalExpressionSearch.search(aClass, scope).findAll());
 
     return new LocalSearchScope(PsiUtilCore.toPsiElementArray(elements));
   }

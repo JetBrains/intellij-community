@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.config
 
+import com.intellij.execution.ExecutionException
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.util.ExecUtil
 import com.intellij.execution.wsl.WSLDistribution
@@ -9,6 +10,8 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import git4idea.commands.GitHandler
+import git4idea.i18n.GitBundle
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.io.File
 
@@ -18,8 +21,8 @@ sealed class GitExecutable {
     private const val CYGDRIVE_PREFIX = "/cygdrive/"
   }
 
-  abstract val id: String
-  abstract val exePath: String
+  abstract val id: @NonNls String
+  abstract val exePath: @NonNls String
   abstract val isLocal: Boolean
 
   /**
@@ -31,6 +34,8 @@ sealed class GitExecutable {
    * Convert file path, returned by git, to be used by IDE.
    */
   abstract fun convertFilePathBack(path: String, workingDir: File): File
+
+  @Throws(ExecutionException::class)
   abstract fun patchCommandLine(handler: GitHandler, commandLine: GeneralCommandLine, withLowPriority: Boolean, withNoTty: Boolean)
 
   data class Local(override val exePath: String)
@@ -110,6 +115,21 @@ sealed class GitExecutable {
       //commandLine.exePath = executable
 
       distribution.patchCommandLine(commandLine, handler.project(), null, false)
+    }
+  }
+
+  data class Unknown(override val id: String,
+                     override val exePath: String,
+                     val errorMessage: @Nls String)
+    : GitExecutable() {
+    override val isLocal: Boolean = false
+    override fun toString(): String = "$id: $exePath"
+
+    override fun convertFilePath(file: File): String = file.absolutePath
+    override fun convertFilePathBack(path: String, workingDir: File): File = File(path)
+
+    override fun patchCommandLine(handler: GitHandler, commandLine: GeneralCommandLine, withLowPriority: Boolean, withNoTty: Boolean) {
+      throw ExecutionException(errorMessage)
     }
   }
 }

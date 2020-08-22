@@ -11,7 +11,7 @@ import com.intellij.util.SmartList
 import com.intellij.util.io.DigestUtil
 import com.intellij.util.io.sanitizeFileName
 import com.intellij.util.isEmpty
-import com.intellij.util.lang.CompoundRuntimeException
+import com.intellij.util.throwIfNotEmpty
 import com.intellij.util.xmlb.annotations.Attribute
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
@@ -163,7 +163,7 @@ class BundledSchemeEP : AbstractExtensionPointBean() {
 fun SchemeManager<*>.save() {
   val errors = SmartList<Throwable>()
   save(errors)
-  CompoundRuntimeException.throwIfNotEmpty(errors)
+  throwIfNotEmpty(errors)
 }
 
 @ApiStatus.Internal

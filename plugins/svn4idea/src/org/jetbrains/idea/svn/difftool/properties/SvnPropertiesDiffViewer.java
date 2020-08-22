@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.difftool.properties;
 
 import com.intellij.diff.DiffContentFactory;
@@ -47,7 +47,7 @@ import java.awt.geom.AffineTransform;
 import java.util.List;
 import java.util.*;
 
-public class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
+public final class SvnPropertiesDiffViewer extends TwosideTextDiffViewer {
   @NotNull private final List<DiffChange> myDiffChanges;
 
   private boolean myFirstRediff = true;

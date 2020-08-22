@@ -39,6 +39,12 @@ interface GHPRReviewDataProvider {
     : CompletableFuture<GHPullRequestPendingReview>
 
   @CalledInAwt
+  fun getReviewMarkdownBody(progressIndicator: ProgressIndicator, reviewId: String): CompletableFuture<String>
+
+  @CalledInAwt
+  fun updateReviewBody(progressIndicator: ProgressIndicator, reviewId: String, newText: String): CompletableFuture<String>
+
+  @CalledInAwt
   fun deleteReview(progressIndicator: ProgressIndicator, reviewId: String): CompletableFuture<out Any?>
 
   @CalledInAwt

@@ -16,6 +16,7 @@
 package com.intellij.slicer;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.SimpleTextAttributes;
 import org.jetbrains.annotations.NotNull;
 
@@ -23,7 +24,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 
 class SliceLeafValueClassNode extends SliceLeafValueRootNode {
-  private final String myClassName;
+  private final @NlsSafe String myClassName;
 
   SliceLeafValueClassNode(@NotNull Project project, @NotNull SliceNode root, @NotNull String className) {
     super(project,

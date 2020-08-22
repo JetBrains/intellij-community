@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.extension;
 
 import com.intellij.json.JsonBundle;
@@ -31,7 +31,7 @@ public class JsonSchemaProjectSelfProviderFactory implements JsonSchemaProviderF
               new MyJsonSchemaFileProvider(project, SCHEMA07_JSON_FILE_NAME));
   }
 
-  public static class MyJsonSchemaFileProvider implements JsonSchemaFileProvider {
+  public static final class MyJsonSchemaFileProvider implements JsonSchemaFileProvider {
     @NotNull private final Project myProject;
     @NotNull private final NullableLazyValue<VirtualFile> mySchemaFile;
     @NotNull private final String myFileName;

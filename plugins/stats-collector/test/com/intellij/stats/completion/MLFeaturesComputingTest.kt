@@ -7,20 +7,27 @@ import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.completion.sorting.RankingSupport
 import com.intellij.lang.java.JavaLanguage
+import com.intellij.mocks.TestExperimentStatus
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.stats.CompletionStatsPolicy
+import com.intellij.stats.experiment.ExperimentStatus
 import com.intellij.stats.storage.factors.MutableLookupStorage
+import com.intellij.testFramework.replaceService
 import junit.framework.TestCase
 
 class MLFeaturesComputingTest : CompletionLoggingTestBase() {
-  fun `test features should be calculated if logging enabled`() = doTest(true, false, true)
+  fun `test features should be calculated if logging enabled`() = doTest(true, false, false, true)
 
-  fun `test features should be calculated if ranking enabled`() = doTest(false, true, true)
+  fun `test features should be calculated if ranking enabled`() = doTest(false, true, false, true)
 
-  fun `test features should be calculated if ranking and logging enabled`() = doTest(true, true, true)
+  fun `test features should be calculated if ranking and logging enabled`() = doTest(true, true, false, true)
 
-  fun `test features should not be calculated if ranking and logging disabled`() = doTest(false, false, false)
+  fun `test features should not be calculated if ranking and logging disabled`() = doTest(false, false, false, false)
 
-  private fun doTest(enableLogging: Boolean, enableRanking: Boolean, shouldCompute: Boolean) {
+  fun `test features should not be calculated if in such experiment group`() = doTest(true, false, true, false)
+
+  private fun doTest(enableLogging: Boolean, enableRanking: Boolean, experimentWithoutComputing: Boolean, shouldCompute: Boolean) {
+    ApplicationManager.getApplication().replaceService(ExperimentStatus::class.java, TestExperimentStatus(), testRootDisposable)
     val contextFeatureProvider = TestContextFeatureProvider()
     ContextFeatureProvider.EP_NAME.addExplicitExtension(JavaLanguage.INSTANCE, contextFeatureProvider, testRootDisposable)
     val elementFeatureProvider = TestElementFeatureProvider()
@@ -30,6 +37,7 @@ class MLFeaturesComputingTest : CompletionLoggingTestBase() {
 
     setLoggingEnabled(enableLogging)
     setRankingEnabled(enableRanking)
+    setExperimentWithoutFeaturesComputation(experimentWithoutComputing)
 
     myFixture.completeBasic()
     myFixture.type("r")
@@ -54,6 +62,16 @@ class MLFeaturesComputingTest : CompletionLoggingTestBase() {
   private fun setRankingEnabled(value: Boolean) {
     if (value) {
       RankingSupport.enableInTests(testRootDisposable)
+    }
+  }
+
+  private fun setExperimentWithoutFeaturesComputation(value: Boolean) {
+    if (value) {
+      val experimentStatus = ExperimentStatus.getInstance() as TestExperimentStatus
+      experimentStatus.updateExperimentSettings(inExperiment = true,
+                                                shouldRank = false,
+                                                shouldShowArrows = false,
+                                                shouldCalculateFeatures = false)
     }
   }
 

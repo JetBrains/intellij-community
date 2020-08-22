@@ -4,11 +4,14 @@ package com.siyeh.ig.psiutils;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.fixes.DeleteUnnecessaryStatementFix;
+import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A class which converts switch statement breaks before switch statement
@@ -25,11 +28,14 @@ public class BreakConverter {
 
   public void process() {
     List<PsiBreakStatement> breaks = collectBreaks();
-    for (PsiBreakStatement breakStatement : breaks) {
-      if (isRemovable(mySwitchBlock, breakStatement)) {
-        DeleteUnnecessaryStatementFix.deleteUnnecessaryStatement(breakStatement);
-      } else {
-        assert myReplacement != null;
+    Map<Boolean, List<PsiBreakStatement>> groups =
+      StreamEx.of(breaks).partitioningBy(breakStatement -> isRemovable(mySwitchBlock, breakStatement));
+    List<PsiBreakStatement> removableBreaks = groups.get(true);
+    removableBreaks.forEach(DeleteUnnecessaryStatementFix::deleteUnnecessaryStatement);
+    List<PsiBreakStatement> replaceableBreaks = groups.get(false);
+    if (!replaceableBreaks.isEmpty()) {
+      assert myReplacement != null;
+      for (PsiBreakStatement breakStatement : replaceableBreaks) {
         new CommentTracker().replaceAndRestoreComments(breakStatement, myReplacement);
       }
     }
@@ -58,8 +64,7 @@ public class BreakConverter {
     return breaks;
   }
 
-  @Nullable
-  private static String getReplacement(PsiStatement statement) {
+  private static @Nullable @NonNls String getReplacement(PsiStatement statement) {
     PsiElement parent = statement.getParent();
     if (parent instanceof PsiIfStatement || parent instanceof PsiLabeledStatement) {
       return getReplacement((PsiStatement)parent);

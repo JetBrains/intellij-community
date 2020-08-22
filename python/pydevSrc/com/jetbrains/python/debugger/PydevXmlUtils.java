@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger;
 
 import com.intellij.util.io.URLUtil;
@@ -21,7 +21,7 @@ import java.util.List;
  * Translate XML protocol responses into Py structures.
  *
  */
-public class PydevXmlUtils {
+public final class PydevXmlUtils {
 
   private static final SAXParserFactory parserFactory = SAXParserFactory.newInstance();
 

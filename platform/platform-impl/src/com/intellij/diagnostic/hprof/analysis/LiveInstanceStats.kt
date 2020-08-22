@@ -19,7 +19,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.ProjectManager
 
-class LiveInstanceStats {
+internal class LiveInstanceStats {
   fun createReport(): String {
     val result = StringBuilder()
 

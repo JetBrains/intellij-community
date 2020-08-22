@@ -1,45 +1,52 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle.arrangement.std;
 
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Svetlana.Zemlyanskaya
  */
-public class StdInvertibleArrangementSettingsToken extends StdArrangementSettingsToken implements InvertibleArrangementSettingsToken {
-  private static final String NOT = "not ";
+public final class StdInvertibleArrangementSettingsToken extends StdArrangementSettingsToken implements InvertibleArrangementSettingsToken {
+
+  private final @Nls @NotNull String myInvertedName;
 
   private StdInvertibleArrangementSettingsToken(@NotNull String id,
-                                                @NotNull String uiName,
+                                                @Nls @NotNull String displayName,
+                                                @Nls @NotNull String invertedName,
                                                 @NotNull StdArrangementTokenType tokenType) {
-    super(id, uiName, tokenType);
+    super(id, displayName, tokenType);
+    myInvertedName = invertedName;
   }
 
+  /**
+   * @deprecated please use {@link #invertibleToken}
+   */
+  @Deprecated
+  @ScheduledForRemoval(inVersion = "2021.1")
   @NotNull
   public static StdInvertibleArrangementSettingsToken invertibleTokenById(@NonNls @NotNull String id,
                                                                           @NotNull StdArrangementTokenType tokenType) {
-    return new StdInvertibleArrangementSettingsToken(id, StringUtil.toLowerCase(id).replace("_", " "), tokenType);
+    //noinspection HardCodedStringLiteral
+    String displayName = StringUtil.toLowerCase(id).replace("_", " ");
+    //noinspection HardCodedStringLiteral
+    return new StdInvertibleArrangementSettingsToken(id, displayName, "not " + displayName, tokenType);
+  }
+
+  @NotNull
+  public static StdInvertibleArrangementSettingsToken invertibleToken(@NonNls @NotNull String id,
+                                                                      @Nls @NotNull String displayName,
+                                                                      @Nls @NotNull String invertedDisplayName,
+                                                                      @NotNull StdArrangementTokenType tokenType) {
+    return new StdInvertibleArrangementSettingsToken(id, displayName, invertedDisplayName, tokenType);
   }
 
   @NotNull
   @Override
   public String getInvertedRepresentationValue() {
-    return NOT + getRepresentationValue();
+    return myInvertedName;
   }
 }

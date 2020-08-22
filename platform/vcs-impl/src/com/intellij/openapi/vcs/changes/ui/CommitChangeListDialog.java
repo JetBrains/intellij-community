@@ -347,7 +347,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
       }
     };
     // TODO: there are no reason to use such heavy interface for a simple task.
-    return new SplitterWithSecondHideable(true, "Diff", rootPane, listener) {
+    return new SplitterWithSecondHideable(true, message("changes.diff.separator"), rootPane, listener) {
       @Override
       protected RefreshablePanel createDetails() {
         JPanel panel = JBUI.Panels.simplePanel(myDiffDetails.getComponent());
@@ -427,7 +427,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
       if (updateException != null) {
         String[] messages = updateException.getMessages();
         if (!isEmpty(messages)) {
-          String message = "Warning: not all local changes may be shown due to an error: " + messages[0];
+          String message = message("changes.warning.not.all.local.changes.may.be.shown.due.to.an.error", messages[0]);
           String htmlMessage = buildHtml(getCssFontDeclaration(getLabelFont()), getHtmlBody(escapeXmlEntities(message)));
 
           myWarningLabel.setText(htmlMessage);
@@ -443,7 +443,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
     return myHelpId;
   }
 
-  private class CommitAction extends AbstractAction implements OptionAction {
+  private final class CommitAction extends AbstractAction implements OptionAction {
     private Action @NotNull [] myOptions = new Action[0];
 
     private CommitAction(String okActionText) {
@@ -689,11 +689,10 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
 
   @Override
   public boolean confirmCommitWithEmptyMessage() {
-    return Messages.YES == Messages.showYesNoDialog(
-      message("confirmation.text.check.in.with.empty.comment"),
-      message("confirmation.title.check.in.with.empty.comment"),
-      Messages.getWarningIcon()
-    );
+    return MessageDialogBuilder
+      .yesNo(message("confirmation.title.check.in.with.empty.comment"), message("confirmation.text.check.in.with.empty.comment"))
+      .icon(Messages.getWarningIcon())
+      .ask(myProject);
   }
 
   @Override

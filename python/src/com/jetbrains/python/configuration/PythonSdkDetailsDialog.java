@@ -393,7 +393,7 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     /* PythonSdkUpdater.update invalidates the modificator so we need to create a new
       one for further changes
      */
-    if (PythonSdkUpdater.update(currentSdk, myModificators.get(currentSdk), myProject, null)){
+    if (PythonSdkUpdater.update(currentSdk, myModificators.get(currentSdk), myProject, null)) {
       myModifiedModificators.remove(myModificators.get(currentSdk));
       myModificators.put(currentSdk, currentSdk.getSdkModificator());
     }
@@ -450,7 +450,8 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
       return new PyRemotePathEditor(sdk);
     }
     else {
-      return new PythonPathEditor("Classes", OrderRootType.CLASSES, FileChooserDescriptorFactory.createAllButJarContentsDescriptor()) {
+      return new PythonPathEditor(PyBundle.message("python.sdk.configuration.tab.title"), OrderRootType.CLASSES,
+                                  FileChooserDescriptorFactory.createAllButJarContentsDescriptor()) {
         @Override
         protected void onReloadButtonClicked() {
           reloadSdk();
@@ -466,7 +467,8 @@ public class PythonSdkDetailsDialog extends DialogWrapper {
     private final List<PathMappingSettings.PathMapping> myNewMappings = new ArrayList<>();
 
     PyRemotePathEditor(Sdk sdk) {
-      super("Classes", OrderRootType.CLASSES, FileChooserDescriptorFactory.createAllButJarContentsDescriptor());
+      super(PyBundle.message("python.sdk.configuration.tab.title"), OrderRootType.CLASSES,
+            FileChooserDescriptorFactory.createAllButJarContentsDescriptor());
       mySdk = sdk;
       myRemoteSdkData = (PyRemoteSdkAdditionalDataBase)mySdk.getSdkAdditionalData();
     }

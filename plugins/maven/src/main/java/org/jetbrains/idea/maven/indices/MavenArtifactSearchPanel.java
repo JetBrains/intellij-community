@@ -6,6 +6,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
@@ -19,6 +20,7 @@ import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.onlinecompletion.model.MavenDependencyCompletionItem;
+import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
 import javax.swing.*;
@@ -54,7 +56,7 @@ public class MavenArtifactSearchPanel extends JPanel {
   private final Map<Pair<String, String>, String> myManagedDependenciesMap;
 
   public MavenArtifactSearchPanel(Project project,
-                                  String initialText,
+                                  @NlsSafe String initialText,
                                   boolean classMode,
                                   Listener listener,
                                   MavenArtifactSearchDialog dialog, Map<Pair<String, String>, String> managedDependenciesMap) {
@@ -72,7 +74,7 @@ public class MavenArtifactSearchPanel extends JPanel {
     return mySearchField;
   }
 
-  private void initComponents(String initialText) {
+  private void initComponents(@NlsSafe String initialText) {
     myResultList = new Tree();
     myResultList.setExpandableItemsEnabled(false);
     myResultList.getEmptyText().setText(CommonBundle.getLoadingTreeNodeText());
@@ -214,7 +216,7 @@ public class MavenArtifactSearchPanel extends JPanel {
     return result;
   }
 
-  private static class MyTreeModel implements TreeModel {
+  private static final class MyTreeModel implements TreeModel {
     List<? extends MavenArtifactSearchResult> myItems;
 
     private MyTreeModel(List<? extends MavenArtifactSearchResult> items) {
@@ -336,7 +338,7 @@ public class MavenArtifactSearchPanel extends JPanel {
       myRightComponent.setForeground(selected ? UIUtil.getTreeSelectionForeground(hasFocus) : null);
 
       if (value == tree.getModel().getRoot()) {
-        myLeftComponent.append("Results", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+        myLeftComponent.append(MavenProjectBundle.message("maven.search.artifract.results"), SimpleTextAttributes.REGULAR_ATTRIBUTES);
       }
       else if (value instanceof MavenArtifactSearchResult) {
         formatSearchResult(tree, (MavenArtifactSearchResult)value, selected);
@@ -351,7 +353,7 @@ public class MavenArtifactSearchPanel extends JPanel {
         if (managedVersion != null && managedVersion.equals(version)) {
           myLeftComponent.setIcon(icon);
           myLeftComponent.append(version, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-          myLeftComponent.append(" (from <dependencyManagement>)", SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          myLeftComponent.append(MavenProjectBundle.message("from.dependency.management"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
         }
         else {
           myLeftComponent.setIcon(icon);
@@ -382,7 +384,7 @@ public class MavenArtifactSearchPanel extends JPanel {
   }
 
 
-  private class MyClassCellRenderer extends MyArtifactCellRenderer {
+  private final class MyClassCellRenderer extends MyArtifactCellRenderer {
 
     private MyClassCellRenderer(Tree tree) {
       super(tree);

@@ -2,6 +2,7 @@ package com.intellij.application.options;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.SimpleListCellRenderer;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,13 +12,13 @@ import javax.swing.*;
 * @author yole
 */
 public class ModuleListCellRenderer extends SimpleListCellRenderer<Module> {
-  private final String myEmptySelectionText;
+  private final @NlsContexts.ListItem String myEmptySelectionText;
 
   public ModuleListCellRenderer() {
     this("[none]");
   }
 
-  public ModuleListCellRenderer(@NotNull String emptySelectionText) {
+  public ModuleListCellRenderer(@NotNull @NlsContexts.ListItem String emptySelectionText) {
     myEmptySelectionText = emptySelectionText;
   }
 

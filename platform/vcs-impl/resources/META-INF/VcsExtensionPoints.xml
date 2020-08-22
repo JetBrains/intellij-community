@@ -11,7 +11,6 @@
                     dynamic="true"/>
     <extensionPoint name="vcsIgnoreChecker"
                     interface="com.intellij.openapi.vcs.VcsIgnoreChecker"
-                    area="IDEA_PROJECT"
                     dynamic="true"/>
     <extensionPoint name="checkoutListener"
                     interface="com.intellij.openapi.vcs.checkout.CheckoutListener"
@@ -54,6 +53,9 @@
       <with attribute="implementationClass" implements="com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory"/>
     </extensionPoint>
 
+    <extensionPoint name="openapi.vcs.impl.LocalLineStatusTrackerProvider"
+                    interface="com.intellij.openapi.vcs.impl.LocalLineStatusTrackerProvider"
+                    dynamic="true"/>
     <extensionPoint name="vcs.branchStateProvider"
                     interface="com.intellij.vcs.branch.BranchStateProvider"
                     area="IDEA_PROJECT"
@@ -102,7 +104,6 @@
                     dynamic="true"/>
     <extensionPoint name="patch.extension"
                     interface="com.intellij.openapi.diff.impl.patch.PatchEP"
-                    area="IDEA_PROJECT"
                     dynamic="true"/>
     <extensionPoint name="vcsChangesViewRefresher"
                     interface="com.intellij.openapi.vcs.changes.ChangesViewRefresher"
@@ -176,6 +177,10 @@
 
     <extensionPoint name="vcsBulkMovesOnlyChangesFilter"
                     interface="com.intellij.openapi.vcs.changes.ui.browser.BulkMovesOnlyChangesFilter"
+                    dynamic="true"/>
+
+    <extensionPoint name="vcs.consoleFolding"
+                    interface="com.intellij.vcs.console.VcsConsoleFolding"
                     dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

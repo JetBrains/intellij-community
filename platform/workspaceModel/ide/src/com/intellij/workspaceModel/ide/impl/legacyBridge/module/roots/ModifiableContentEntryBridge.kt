@@ -26,7 +26,7 @@ import org.jetbrains.jps.model.serialization.module.JpsModuleSourceRootPropertie
 
 internal class ModifiableContentEntryBridge(
   private val diff: WorkspaceEntityStorageDiffBuilder,
-  private val modifiableRootModel: ModifiableRootModelBridge,
+  private val modifiableRootModel: ModifiableRootModelBridgeImpl,
   val contentEntryUrl: VirtualFileUrl
 ): ContentEntry {
   private val LOG = Logger.getInstance(javaClass)
@@ -53,9 +53,10 @@ internal class ModifiableContentEntryBridge(
     val serializer: JpsModuleSourceRootPropertiesSerializer<P> = SourceRootPropertiesHelper.findSerializer(type)
                                                                  ?: error("Module source root type $type is not registered as JpsModelSerializerExtension")
 
-    val entitySource = currentContentEntry.value.entity.entitySource
+    val contentRootEntity = currentContentEntry.value.entity
+    val entitySource = contentRootEntity.entitySource
     val sourceRootEntity = diff.addSourceRootEntity(
-      module = currentContentEntry.value.entity.module,
+      contentRoot = contentRootEntity,
       url = sourceFolderUrl,
       tests = type.isForTests,
       rootType = serializer.typeId,
@@ -99,11 +100,7 @@ internal class ModifiableContentEntryBridge(
   }
 
   override fun clearSourceFolders() {
-    for (sourceRoot in modifiableRootModel.currentModel.moduleEntity?.sourceRoots ?: emptySequence()) {
-      if (contentEntryUrl.isEqualOrParentOf(sourceRoot.url)) {
-        diff.removeEntity(sourceRoot)
-      }
-    }
+    currentContentEntry.value.sourceRootEntities.forEach { sourceRoot -> diff.removeEntity(sourceRoot) }
   }
 
   private fun addExcludeFolder(excludeUrl: VirtualFileUrl): ExcludeFolder {

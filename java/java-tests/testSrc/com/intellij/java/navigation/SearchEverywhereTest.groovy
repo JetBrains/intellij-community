@@ -3,9 +3,15 @@ package com.intellij.java.navigation
 
 import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.ide.actions.searcheverywhere.mixed.SearchEverywhereUIMixedResults
+import com.intellij.ide.util.gotoByName.GotoActionTest
+import com.intellij.openapi.actionSystem.AbbreviationManager
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.Disposer
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.Processor
 import org.jetbrains.annotations.NotNull
@@ -15,7 +21,7 @@ import javax.swing.*
 import static com.intellij.testFramework.PlatformTestUtil.waitForFuture
 
 class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
-  static final int SEARCH_TIMEOUT = 5000
+  static final int SEARCH_TIMEOUT = 10_000
 
   SearchEverywhereUIBase mySearchUI
 
@@ -33,7 +39,7 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
     def strBuffer = myFixture.addClass("class StrBuffer{ }")
     def stringBuffer = myFixture.findClass("java.lang.StringBuffer")
 
-    def ui = createTestUI([ChooseByNameTest.createClassContributor(project)])
+    def ui = createTestUI([ChooseByNameTest.createClassContributor(project, testRootDisposable)])
 
     def future = ui.findElementsForPattern("StrBuffer")
     assert waitForFuture(future, SEARCH_TIMEOUT) == [strBuffer]
@@ -49,8 +55,8 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
       def testFile = myFixture.addFileToProject("testClass.txt", "")
 
       def ui = createTestUI([
-        ChooseByNameTest.createClassContributor(project),
-        ChooseByNameTest.createFileContributor(project)
+        ChooseByNameTest.createClassContributor(project, testRootDisposable),
+        ChooseByNameTest.createFileContributor(project, testRootDisposable)
       ])
 
       def future = ui.findElementsForPattern("TestClass")
@@ -79,6 +85,130 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
       def ui = createTestUI([contributor2, contributor1, contributor3])
       def future = ui.findElementsForPattern("ignored")
       assert waitForFuture(future, SEARCH_TIMEOUT) == ["item8", "item7", "item2", "item5", "item1", "item4", "item6", "item3"]
+    })
+  }
+
+  void "test priority for actions with space in pattern"() {
+    withMixingEnabled({
+      def action1 = new StubAction("Imaginary Action")
+      def action2 = new StubAction("Another Imaginary Action")
+      def class1 = myFixture.addClass("class ImaginaryAction{}")
+      def class2 = myFixture.addClass("class AnotherImaginaryAction{}")
+
+      def ui = createTestUI([
+        ChooseByNameTest.createClassContributor(project, testRootDisposable),
+        GotoActionTest.createActionContributor(project, testRootDisposable)
+      ])
+
+      def actions = ["ia1": action1, "ia2": action2]
+      def actionManager = ActionManager.getInstance()
+      actions.each {actionManager.registerAction(it.key, it.value)}
+      try {
+        def future = ui.findElementsForPattern("imaginaryaction")
+        def matchedAction1 = GotoActionTest.createMatchedAction(project, action1, "imaginaryaction")
+        def matchedAction2 = GotoActionTest.createMatchedAction(project, action2, "imaginaryaction")
+        assert PlatformTestUtil.waitForFuture(future, SEARCH_TIMEOUT) == [class1, matchedAction1, class2, matchedAction2]
+
+        future = ui.findElementsForPattern("imaginary action")
+        matchedAction1 = GotoActionTest.createMatchedAction(project, action1, "imaginary action")
+        matchedAction2 = GotoActionTest.createMatchedAction(project, action2, "imaginary action")
+        assert PlatformTestUtil.waitForFuture(future, SEARCH_TIMEOUT) == [matchedAction1, class1, matchedAction2,  class2]
+      }
+      finally {
+        actions.each {actionManager.unregisterAction(it.key)}
+      }
+    })
+  }
+
+  void "test top hit priority"() {
+    withMixingEnabled({
+      def action1 = new StubAction("Imaginary Action")
+      def action2 = new StubAction("Another Imaginary Action")
+      def class1 = myFixture.addClass("class ImaginaryAction{}")
+      def class2 = myFixture.addClass("class AnotherImaginaryAction{}")
+
+      def ui = createTestUI([
+        ChooseByNameTest.createClassContributor(project, testRootDisposable),
+        GotoActionTest.createActionContributor(project, testRootDisposable),
+        new TopHitSEContributor(project, null, null)
+      ])
+
+      def actions = ["ia1": action1, "ia2": action2]
+      def actionManager = ActionManager.getInstance()
+      def abbreviationManager = AbbreviationManager.getInstance()
+      actions.each {actionManager.registerAction(it.key, it.value)}
+      try {
+        def matchedAction1 = GotoActionTest.createMatchedAction(project, action1, "imaginary")
+        def matchedAction2 = GotoActionTest.createMatchedAction(project, action2, "imaginary")
+        def future = ui.findElementsForPattern("imaginary")
+        assert PlatformTestUtil.waitForFuture(future, SEARCH_TIMEOUT) == [class1, matchedAction1, class2, matchedAction2]
+
+        abbreviationManager.register("imaginary", "ia2")
+        future = ui.findElementsForPattern("imaginary")
+        assert PlatformTestUtil.waitForFuture(future, SEARCH_TIMEOUT) == [action2, class1, matchedAction1, class2]
+      }
+      finally {
+        actions.each {actionManager.unregisterAction(it.key)}
+        abbreviationManager.removeAllAbbreviations("ia2" )
+      }
+    })
+  }
+
+  void "test abbreviations on top"() {
+    def abbreviationManager = AbbreviationManager.getInstance()
+    def actionManager = ActionManager.getInstance()
+    def ui = createTestUI([GotoActionTest.createActionContributor(project, testRootDisposable)])
+
+    try {
+      abbreviationManager.register("cp", "CloseProject")
+      def future = ui.findElementsForPattern("cp")
+      def firstItem = PlatformTestUtil.waitForFuture(future, SEARCH_TIMEOUT)[0]
+      def matchedAction = GotoActionTest.createMatchedAction(project, actionManager.getAction("CloseProject"), "cp")
+      assert firstItem == matchedAction
+    }
+    finally {
+      abbreviationManager.remove("cp", "CloseProject")
+    }
+
+    ui.clearResults()
+    try {
+      abbreviationManager.register("cp", "ScanSourceCommentsAction")
+      def future = ui.findElementsForPattern("cp")
+      def firstItem = PlatformTestUtil.waitForFuture(future, SEARCH_TIMEOUT)[0]
+      def matchedAction = GotoActionTest.createMatchedAction(project, actionManager.getAction("ScanSourceCommentsAction"), "cp")
+      assert matchedAction == firstItem
+    }
+    finally {
+      abbreviationManager.remove("cp", "ScanSourceCommentsAction")
+    }
+  }
+
+  void "test recent files at the top of results"() {
+    withMixingEnabled({
+      def file1 = myFixture.addFileToProject("ApplicationFile.txt", "")
+      def file2 = myFixture.addFileToProject("AppFile.txt", "")
+      def file3 = myFixture.addFileToProject("ActionPerformerPreviewFile.txt", "")
+      def file4 = myFixture.addFileToProject("AppInfoFile.txt", "")
+      def file5 = myFixture.addFileToProject("SecondAppInfoFile.txt", "")
+      def file6 = myFixture.addFileToProject("SecondAppFile.txt", "")
+      def wrongFile = myFixture.addFileToProject("wrong.txt", "")
+
+      def recentFilesContributor = new RecentFilesSEContributor(ChooseByNameTest.createEvent(project))
+      Disposer.register(testRootDisposable, recentFilesContributor)
+      def ui = createTestUI([
+        ChooseByNameTest.createFileContributor(project, testRootDisposable),
+        recentFilesContributor
+      ])
+
+      def future = ui.findElementsForPattern("appfile")
+      assert PlatformTestUtil.waitForFuture(future, SEARCH_TIMEOUT) == [file2, file1, file4, file3, file6, file5]
+
+      myFixture.openFileInEditor(file4.getOriginalFile().getVirtualFile())
+      myFixture.openFileInEditor(file3.getOriginalFile().getVirtualFile())
+      myFixture.openFileInEditor(file5.getOriginalFile().getVirtualFile())
+      myFixture.openFileInEditor(wrongFile.getOriginalFile().getVirtualFile())
+      future = ui.findElementsForPattern("appfile")
+      assert PlatformTestUtil.waitForFuture(future, SEARCH_TIMEOUT) == [file4, file3, file5, file2, file1, file6]
     })
   }
 
@@ -159,5 +289,14 @@ class SearchEverywhereTest extends LightJavaCodeInsightFixtureTestCase {
     Object getDataForItem(@NotNull Object element, @NotNull String dataId) {
       return null
     }
+  }
+
+  private static class StubAction extends AnAction{
+    StubAction(String text) {
+      super(text)
+    }
+
+    @Override
+    void actionPerformed(@NotNull AnActionEvent e) {}
   }
 }

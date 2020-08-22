@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.configmanagement.finder;
 
 import com.intellij.navigation.ChooseByNameContributor;
@@ -38,7 +38,7 @@ public class EditorConfigGotoFileContributor implements ChooseByNameContributor 
     return NavigationItem.EMPTY_NAVIGATION_ITEM_ARRAY;
   }
 
-  private static class NavigationItemFactory implements EditorConfigFinder.Callback {
+  private static final class NavigationItemFactory implements EditorConfigFinder.Callback {
     private final List<NavigationItem> myItems = new ArrayList<>();
     private final Project myProject;
 

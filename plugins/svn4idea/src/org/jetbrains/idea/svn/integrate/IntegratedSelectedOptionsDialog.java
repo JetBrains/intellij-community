@@ -226,7 +226,7 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
     return contentPane;
   }
 
-  public static class WorkingCopyInfoComparator implements Comparator<WorkingCopyInfo> {
+  public static final class WorkingCopyInfoComparator implements Comparator<WorkingCopyInfo> {
     private static final WorkingCopyInfoComparator instance = new WorkingCopyInfoComparator();
 
     public static WorkingCopyInfoComparator getInstance() {

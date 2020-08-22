@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -11,7 +11,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class LanguageFormatting extends LanguageExtension<FormattingModelBuilder> {
+public final class LanguageFormatting extends LanguageExtension<FormattingModelBuilder> {
   public static final LanguageFormatting INSTANCE = new LanguageFormatting();
 
   private LanguageFormatting() {

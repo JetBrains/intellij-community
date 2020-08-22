@@ -20,14 +20,10 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.IOUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.Set;
+import java.util.*;
 
 import static com.intellij.serviceContainer.ComponentManagerImplKt.handleComponentError;
 
@@ -99,7 +95,11 @@ class FileBasedIndexDataInitialization extends IndexInfrastructure.DataInitializ
 
     currentVersionCorrupted = CorruptionMarker.invalidateIndexesIfNeeded();
 
-    FileBasedIndexInfrastructureExtension.EP_NAME.extensions().forEach(ex -> ex.initialize());
+    for (FileBasedIndexInfrastructureExtension ex : FileBasedIndexInfrastructureExtension.EP_NAME.getExtensions()) {
+      FileBasedIndexInfrastructureExtension.InitializationResult result = ex.initialize();
+      currentVersionCorrupted = currentVersionCorrupted &&
+                                result == FileBasedIndexInfrastructureExtension.InitializationResult.INDEX_REBUILD_REQUIRED;
+    }
   }
 
   @Override
@@ -167,7 +167,7 @@ class FileBasedIndexDataInitialization extends IndexInfrastructure.DataInitializ
       return;
     }
     final File registeredIndicesFile = new File(PathManager.getIndexRoot(), "registered");
-    final Set<String> indicesToDrop = new THashSet<>();
+    final Set<String> indicesToDrop = new HashSet<>();
     boolean exceptionThrown = false;
     if (registeredIndicesFile.exists()) {
       try (DataInputStream in = new DataInputStream(new BufferedInputStream(new FileInputStream(registeredIndicesFile)))) {

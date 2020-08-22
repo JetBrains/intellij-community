@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -613,7 +613,7 @@ public class ForCanBeForeachInspection extends BaseInspection {
     return text;
   }
 
-  private static class IteratorNextVisitor extends JavaRecursiveElementWalkingVisitor {
+  private static final class IteratorNextVisitor extends JavaRecursiveElementWalkingVisitor {
 
     private int numCallsToIteratorNext = 0;
     private boolean iteratorUsed = false;
@@ -662,7 +662,7 @@ public class ForCanBeForeachInspection extends BaseInspection {
       while (parent != null) {
         if (parent.equals(context)) return false;
         final PsiElement p = parent;
-        if (psiStatements.stream().anyMatch(ps -> ps.isAssignableFrom(p.getClass()))) return true;
+        if (psiStatements.stream().anyMatch(ps -> ps.isInstance(p))) return true;
         if (parent instanceof PsiFile) return false;
         parent = parent.getParent();
       }
@@ -670,7 +670,7 @@ public class ForCanBeForeachInspection extends BaseInspection {
     }
   }
 
-  private static class VariableOnlyUsedAsIndexVisitor extends JavaRecursiveElementWalkingVisitor {
+  private static final class VariableOnlyUsedAsIndexVisitor extends JavaRecursiveElementWalkingVisitor {
 
     private boolean indexVariableUsedOnlyAsIndex = true;
     private boolean arrayAccessed = false;
@@ -737,7 +737,7 @@ public class ForCanBeForeachInspection extends BaseInspection {
     }
   }
 
-  private static class VariableOnlyUsedAsListIndexVisitor
+  private static final class VariableOnlyUsedAsListIndexVisitor
     extends JavaRecursiveElementWalkingVisitor {
 
     private boolean indexVariableUsedOnlyAsIndex = true;

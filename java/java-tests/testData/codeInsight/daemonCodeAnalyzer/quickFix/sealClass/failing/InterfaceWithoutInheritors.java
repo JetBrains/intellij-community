@@ -1,0 +1,2 @@
+interface Par<caret>ent {
+}

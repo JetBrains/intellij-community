@@ -2,29 +2,29 @@
 package com.intellij.completion.settings
 
 import com.intellij.completion.StatsCollectorBundle
+import com.intellij.internal.ml.completion.RankingModelProvider
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.layout.*
-import com.intellij.util.PlatformUtils
 
-class MLRankingConfigurable(private val supportedLanguages: List<String>)
-  : BoundConfigurable("ML Ranking") {
+class MLRankingConfigurable(private val availableProviders: List<RankingModelProvider>) : BoundConfigurable("ML Ranking") {
   private val settings = CompletionMLRankingSettings.getInstance()
 
   override fun createPanel(): DialogPanel {
+    val providers = availableProviders.distinctBy { it.displayNameInSettings }.sortedBy { it.displayNameInSettings }
     return panel {
       var enableRankingCheckbox: CellBuilder<JBCheckBox>? = null
       titledRow(StatsCollectorBundle.message("ml.completion.settings.group")) {
         row {
           val enableRanking = checkBox(StatsCollectorBundle.message("ml.completion.enable"), settings::isRankingEnabled,
                                        { settings.isRankingEnabled = it })
-          for (language in supportedLanguages) {
+          for (ranker in providers) {
             row {
-              checkBox(language, { settings.isLanguageEnabled(language) }, { settings.setLanguageEnabled(language, it) })
+              checkBox(ranker.displayNameInSettings, { settings.isLanguageEnabled(ranker.id) },
+                       { settings.setLanguageEnabled(ranker.id, it) })
                 .enableIf(enableRanking.selected)
-            }.apply { if (language === supportedLanguages.last()) largeGapAfter() }
+            }.apply { if (ranker === providers.last()) largeGapAfter() }
           }
           enableRankingCheckbox = enableRanking
           row {

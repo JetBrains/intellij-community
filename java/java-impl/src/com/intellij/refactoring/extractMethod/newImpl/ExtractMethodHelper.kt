@@ -6,9 +6,11 @@ import com.intellij.codeInsight.Nullability
 import com.intellij.codeInsight.NullableNotNullManager
 import com.intellij.codeInsight.PsiEquivalenceUtil
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix
+import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
+import com.intellij.psi.formatter.java.MultipleFieldDeclarationHelper
 import com.intellij.psi.impl.source.DummyHolder
 import com.intellij.psi.impl.source.codeStyle.JavaCodeStyleManagerImpl
 import com.intellij.psi.search.GlobalSearchScope
@@ -20,6 +22,12 @@ import com.intellij.refactoring.extractMethod.newImpl.structures.InputParameter
 import com.intellij.refactoring.util.RefactoringUtil
 
 object ExtractMethodHelper {
+
+  @JvmStatic
+  fun findEditorSelection(editor: Editor): TextRange? {
+    val selectionModel = editor.selectionModel
+    return if (selectionModel.hasSelection()) TextRange(selectionModel.selectionStart, selectionModel.selectionEnd) else null
+  }
 
   fun wrapWithCodeBlock(elements: List<PsiElement>): List<PsiCodeBlock> {
     require(elements.isNotEmpty())
@@ -53,18 +61,9 @@ object ExtractMethodHelper {
 
   fun normalizedAnchor(anchor: PsiMember): PsiMember {
     return if (anchor is PsiField) {
-      findLastFieldInDeclaration(anchor)
+      MultipleFieldDeclarationHelper.findLastFieldInGroup(anchor.node).psi as? PsiField ?: anchor
     } else {
       anchor
-    }
-  }
-
-  private fun findLastFieldInDeclaration(field: PsiField): PsiField {
-    val nextSibling = PsiTreeUtil.skipWhitespacesForward(field)
-    return if (PsiUtil.getElementType(nextSibling) == JavaTokenType.COMMA) {
-      PsiTreeUtil.skipWhitespacesForward(nextSibling) as PsiField
-    } else {
-      field
     }
   }
 

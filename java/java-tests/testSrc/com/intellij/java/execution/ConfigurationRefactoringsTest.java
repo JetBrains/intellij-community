@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.execution;
 
 import com.intellij.execution.RunManager;
@@ -25,7 +25,6 @@ import com.intellij.testFramework.MapDataContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.HashSet;
 
 public class ConfigurationRefactoringsTest extends BaseConfigurationTestCase {
@@ -42,7 +41,7 @@ public class ConfigurationRefactoringsTest extends BaseConfigurationTestCase {
   private static final String NOT_A_TEST = "public class NotATest {" +
                                            "public void test() {}" +
                                            "}";
-  public void testRenameApplication() throws IOException {
+  public void testRenameApplication() {
     PsiClass psiClass = mySource.createClass("Application", APPLICATION_CODE);
     assertNotNull(psiClass);
     ApplicationConfiguration configuration = createConfiguration(psiClass);
@@ -57,7 +56,7 @@ public class ConfigurationRefactoringsTest extends BaseConfigurationTestCase {
     assertEquals("NewName", configuration.getMainClassName());
   }
 
-  public void testMoveApplication() throws IOException {
+  public void testMoveApplication() {
     PsiClass psiClass = mySource.createClass("Application", APPLICATION_CODE);
     assertNotNull(psiClass);
     ApplicationConfiguration configuration = createConfiguration(psiClass);
@@ -86,7 +85,7 @@ public class ConfigurationRefactoringsTest extends BaseConfigurationTestCase {
     checkPackage("outer2.pkg2", configuration);
   }
 
-  public void testRenameJUnitContainingPackage() throws IOException {
+  public void testRenameJUnitContainingPackage() {
     PsiClass psiClass = mySource.createClass("ATest", TEST_CODE);
     assertNotNull(psiClass);
     JUnitConfiguration configuration = createConfiguration(psiClass);
@@ -102,7 +101,7 @@ public class ConfigurationRefactoringsTest extends BaseConfigurationTestCase {
     checkClassName("pkg2.newPkg.ATest", configuration);
   }
 
-  public void testRefactorTestMethod() throws IOException {
+  public void testRefactorTestMethod() {
     PsiClass psiClass = mySource.createClass("ATest", TEST_CODE);
     assertNotNull(psiClass);
     PsiMethod testMethod = psiClass.findMethodsByName("test", false)[0];
@@ -134,7 +133,7 @@ public class ConfigurationRefactoringsTest extends BaseConfigurationTestCase {
     checkMethodName("test1", configuration);
   }
 
-  public void testRenameBadTestClass() throws IOException {
+  public void testRenameBadTestClass() {
     PsiClass psiClass = mySource.createClass("NotATest", NOT_A_TEST);
     assertNotNull(psiClass);
     JUnitConfiguration configuration = new JUnitConfiguration("notATest", myProject);
@@ -168,7 +167,7 @@ public class ConfigurationRefactoringsTest extends BaseConfigurationTestCase {
     fail("ConfigurationException expected");
   }
 
-  public void testRefactorOtherClass() throws IOException {
+  public void testRefactorOtherClass() {
     PsiClass psiClass = mySource.createClass("ATest", TEST_CODE);
     assertNotNull(psiClass);
     JUnitConfiguration configuration = createConfiguration(psiClass);
@@ -219,7 +218,7 @@ public class ConfigurationRefactoringsTest extends BaseConfigurationTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    mySource = new TestSources(myProject, myFilesToDelete);
+    mySource = new TestSources(myProject, getTempDir());
     initModule();
   }
 
@@ -247,7 +246,7 @@ public class ConfigurationRefactoringsTest extends BaseConfigurationTestCase {
 
   @Override
   protected JUnitConfiguration createJUnitConfiguration(@NotNull PsiElement psiElement,
-                                                        @NotNull Class<? extends AbstractJavaTestConfigurationProducer> producerClass,
+                                                        @NotNull Class<? extends AbstractJavaTestConfigurationProducer<?>> producerClass,
                                                         @NotNull MapDataContext dataContext) {
     final JUnitConfiguration configuration = super.createJUnitConfiguration(psiElement, producerClass, dataContext);
     RunManagerImpl manager = (RunManagerImpl)RunManager.getInstance(myProject);

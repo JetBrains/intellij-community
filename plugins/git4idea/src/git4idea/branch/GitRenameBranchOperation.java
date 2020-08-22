@@ -16,9 +16,10 @@
 package git4idea.branch;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vcs.VcsNotifier;
-import com.intellij.util.ui.UIUtil;
-import com.intellij.xml.util.XmlStringUtil;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitCompoundResult;
@@ -32,14 +33,14 @@ import java.util.List;
 
 class GitRenameBranchOperation extends GitBranchOperation {
   @NotNull private final VcsNotifier myNotifier;
-  @NotNull private final String myCurrentName;
-  @NotNull private final String myNewName;
+  @NotNull @NlsSafe private final String myCurrentName;
+  @NotNull @NlsSafe private final String myNewName;
 
   GitRenameBranchOperation(@NotNull Project project,
                                   @NotNull Git git,
                                   @NotNull GitBranchUiHandler uiHandler,
-                                  @NotNull String currentName,
-                                  @NotNull String newName,
+                                  @NotNull @NlsSafe String currentName,
+                                  @NotNull @NlsSafe String newName,
                                   @NotNull List<? extends GitRepository> repositories) {
     super(project, git, uiHandler, repositories);
     myCurrentName = currentName;
@@ -86,19 +87,19 @@ class GitRenameBranchOperation extends GitBranchOperation {
   @Override
   public String getSuccessMessage() {
     return GitBundle.message("git.rename.branch.was.renamed.to",
-                             XmlStringUtil.wrapInHtmlTag(XmlStringUtil.wrapInHtmlTag(myCurrentName, "code"), "b"),
-                             XmlStringUtil.wrapInHtmlTag(XmlStringUtil.wrapInHtmlTag(myNewName, "code"), "b"));
+                             HtmlChunk.text(myCurrentName).code().bold(), HtmlChunk.text(myCurrentName).code().bold());
   }
 
   @NotNull
   @Override
   @Nls(capitalization = Nls.Capitalization.Sentence)
   protected String getRollbackProposal() {
-    return GitBundle.message("git.rename.branch.has.succeeded.for.the.following.repositories", getSuccessfulRepositories().size()) +
-           UIUtil.BR +
-           successfulRepositoriesJoined() +
-           UIUtil.BR +
-           GitBundle.message("git.rename.branch.you.may.rename.branch.back", myCurrentName);
+    return new HtmlBuilder().append(GitBundle.message("git.rename.branch.has.succeeded.for.the.following.repositories",
+                                                      getSuccessfulRepositories().size()))
+      .append(HtmlChunk.br())
+      .append(successfulRepositoriesJoined())
+      .append(HtmlChunk.br())
+      .append(GitBundle.message("git.rename.branch.you.may.rename.branch.back", myCurrentName)).toString();
   }
 
   @NotNull

@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -142,8 +143,8 @@ final class LibraryPresentationManagerImpl extends LibraryPresentationManager im
 
   @NotNull
   @Override
-  public List<String> getDescriptions(VirtualFile @NotNull [] classRoots, final Set<? extends LibraryKind> excludedKinds) {
-    final SmartList<String> result = new SmartList<>();
+  public List<@Nls String> getDescriptions(VirtualFile @NotNull [] classRoots, final Set<? extends LibraryKind> excludedKinds) {
+    final SmartList<@Nls String> result = new SmartList<>();
     LibraryDetectionManager.getInstance().processProperties(Arrays.asList(classRoots), new LibraryDetectionManager.LibraryPropertiesProcessor() {
       @Override
       public <P extends LibraryProperties> boolean processProperties(@NotNull LibraryKind kind, @NotNull P properties) {

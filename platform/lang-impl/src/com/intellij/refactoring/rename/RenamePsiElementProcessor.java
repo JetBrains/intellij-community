@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.rename;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -126,6 +126,14 @@ public abstract class RenamePsiElementProcessor {
                                         @NotNull MultiMap<PsiElement, String> conflicts) {
   }
 
+  /**
+   * Entry point for finding conflicts.
+   *
+   * @param element primary element being renamed
+   * @param newName new name of primary element
+   * @param conflicts map to put conflicts
+   * @param allRenames other elements being renamed with their new names; not expected to be modified
+   */
   public void findExistingNameConflicts(@NotNull PsiElement element,
                                         @NotNull String newName,
                                         @NotNull MultiMap<PsiElement, String> conflicts,

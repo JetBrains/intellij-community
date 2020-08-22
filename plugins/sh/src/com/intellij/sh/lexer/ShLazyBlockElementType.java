@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.tree.ICompositeElementType;
 import com.intellij.psi.tree.IReparseableElementType;
 import com.intellij.sh.ShLanguage;
-import com.intellij.sh.psi.impl.ShLazyBlockImpl;
+import com.intellij.sh.psi.impl.ShBlockImpl;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.sh.ShTypes.LEFT_CURLY;
@@ -27,7 +27,7 @@ public class ShLazyBlockElementType extends IReparseableElementType implements I
   @NotNull
   @Override
   public ASTNode createNode(CharSequence text) {
-    return new ShLazyBlockImpl(this, text);
+    return new ShBlockImpl(this, text);
   }
 
   @Override

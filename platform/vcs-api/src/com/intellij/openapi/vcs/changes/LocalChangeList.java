@@ -1,10 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,17 +26,18 @@ public abstract class LocalChangeList implements Cloneable, ChangeList {
    * Logical id that identifies the changelist and should survive name changing.
    */
   @NotNull
+  @NonNls
   public String getId() {
     return getName();
   }
 
   @Override
   @NotNull
-  public abstract String getName();
+  public abstract @Nls String getName();
 
   @Override
   @Nullable
-  public abstract String getComment();
+  public abstract @NlsSafe String getComment();
 
   public abstract boolean isDefault();
 
@@ -75,7 +77,7 @@ public abstract class LocalChangeList implements Cloneable, ChangeList {
   @Deprecated
   public abstract void setReadOnly(boolean isReadOnly);
 
-  public static String getDefaultName() {
+  public static @NotNull @NlsSafe String getDefaultName() {
     return VcsBundle.message("changes.default.changelist.name");
   }
 }

@@ -17,7 +17,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 
-public class ProtocolParser {
+public final class ProtocolParser {
 
   private ProtocolParser() {
   }

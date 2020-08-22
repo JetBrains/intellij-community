@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections.quickfix;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -11,7 +11,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
-public class ImplementOrExtendFix extends BaseFix {
+public final class ImplementOrExtendFix extends BaseFix {
   private final SmartPsiElementPointer<PsiClass> myCompClassPointer;
 
   private ImplementOrExtendFix(@NotNull PsiClass compClass,

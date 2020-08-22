@@ -17,7 +17,7 @@ import java.util.List;
 
 public class SvnNativeListsTest extends SvnTestCase {
   @Override
-  public void tearDown() throws Exception {
+  public void after() throws Exception {
     final List<LocalChangeList> changeListList = changeListManager.getChangeLists();
     for (LocalChangeList list : changeListList) {
       if (list.hasDefaultName()) continue;
@@ -28,7 +28,7 @@ public class SvnNativeListsTest extends SvnTestCase {
       }
     }
 
-    super.tearDown();
+    super.after();
   }
 
   private void clearListForRevision(final ContentRevision revision) throws VcsException {

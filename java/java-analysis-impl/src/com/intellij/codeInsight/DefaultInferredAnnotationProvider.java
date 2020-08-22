@@ -13,6 +13,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -212,7 +213,7 @@ public class DefaultInferredAnnotationProvider implements InferredAnnotationProv
 
   @Nullable
   public static PsiAnnotation createContractAnnotation(Project project, boolean pure, String contracts, String mutates) {
-    Map<String, String> attrMap = new LinkedHashMap<>();
+    @NonNls Map<String, String> attrMap = new LinkedHashMap<>();
     if (!contracts.isEmpty()) {
       attrMap.put("value", StringUtil.wrapWithDoubleQuote(contracts));
     }

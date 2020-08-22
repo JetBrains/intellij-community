@@ -45,7 +45,7 @@ public class DomElementProblemDescriptorImpl implements DomElementProblemDescrip
   private static final Logger LOG = Logger.getInstance(DomElementProblemDescriptorImpl.class);
   private final DomElement myDomElement;
   private final HighlightSeverity mySeverity;
-  private final String myMessage;
+  private final @InspectionMessage String myMessage;
   private final LocalQuickFix[] myFixes;
   private List<Annotation> myAnnotations;
   private Pair<TextRange, PsiElement> myPair;

@@ -1,12 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.io.fastCgi
 
 import com.intellij.util.Consumer
-import gnu.trove.TIntObjectHashMap
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.CompositeByteBuf
 import io.netty.channel.ChannelHandlerContext
 import io.netty.util.CharsetUtil
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 import org.jetbrains.io.Decoder
 
 internal const val HEADER_LENGTH = 8
@@ -37,7 +37,7 @@ internal class FastCgiDecoder(private val errorOutputConsumer: Consumer<String>,
   private var contentLength: Int = 0
   private var paddingLength: Int = 0
 
-  private val dataBuffers = TIntObjectHashMap<ByteBuf>()
+  private val dataBuffers = Int2ObjectOpenHashMap<ByteBuf>()
 
   override fun messageReceived(context: ChannelHandlerContext, input: ByteBuf) {
     while (true) {
@@ -79,15 +79,14 @@ internal class FastCgiDecoder(private val errorOutputConsumer: Consumer<String>,
 
   override fun channelInactive(context: ChannelHandlerContext) {
     try {
-      if (!dataBuffers.isEmpty) {
-        dataBuffers.forEachEntry { _, buffer ->
+      if (!dataBuffers.isEmpty()) {
+        for (buffer in dataBuffers.values) {
           try {
             buffer.release()
           }
           catch (e: Throwable) {
             LOG.error(e)
           }
-          true
         }
         dataBuffers.clear()
       }

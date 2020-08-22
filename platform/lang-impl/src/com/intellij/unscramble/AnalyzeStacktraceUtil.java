@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.EditorSettings;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -42,26 +43,22 @@ public final class AnalyzeStacktraceUtil {
 
   public static void printStacktrace(@NotNull ConsoleView consoleView, @NotNull String unscrambledTrace) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    String text = unscrambledTrace + "\n";
-    String consoleText = ((ConsoleViewImpl)consoleView).getText();
-    if (!text.equals(consoleText)) {
-      consoleView.clear();
-      consoleView.print(text, ConsoleViewContentType.ERROR_OUTPUT);
-      consoleView.scrollTo(0);
-    }
+    consoleView.clear();
+    consoleView.print(unscrambledTrace + "\n", ConsoleViewContentType.ERROR_OUTPUT);
+    consoleView.scrollTo(0);
   }
 
   public interface ConsoleFactory {
     JComponent createConsoleComponent(ConsoleView consoleView, DefaultActionGroup toolbarActions);
   }
 
-  public static void addConsole(Project project, @Nullable ConsoleFactory consoleFactory, final String tabTitle, String text) {
+  public static void addConsole(Project project, @Nullable ConsoleFactory consoleFactory, final @NlsContexts.TabTitle String tabTitle, String text) {
     addConsole(project, consoleFactory, tabTitle, text, null);
   }
 
   public static RunContentDescriptor addConsole(Project project,
                                                 @Nullable ConsoleFactory consoleFactory,
-                                                final String tabTitle,
+                                                final @NlsContexts.TabTitle String tabTitle,
                                                 String text,
                                                 @Nullable Icon icon) {
     final TextConsoleBuilder builder = TextConsoleBuilderFactory.getInstance().createBuilder(project);

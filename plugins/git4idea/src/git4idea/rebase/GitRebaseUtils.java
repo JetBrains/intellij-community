@@ -18,6 +18,7 @@ import git4idea.history.GitHistoryUtils;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.stash.GitChangesSaver;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,7 +32,7 @@ import java.util.Objects;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 
-public class GitRebaseUtils {
+public final class GitRebaseUtils {
   private final static Logger LOG = Logger.getInstance(GitRebaseUtils.class.getName());
 
   private GitRebaseUtils() {
@@ -88,8 +89,8 @@ public class GitRebaseUtils {
   private static void notifyContinueFailed(@NotNull Project project, @NotNull @NonNls String action) {
     LOG.warn(String.format("Refusing to %s: no rebase spec", action));
     VcsNotifier.getInstance(project).notifyError(
-      GitBundle.getString("rebase.notification.no.rebase.in.progress.continue.title"),
-      GitBundle.getString("rebase.notification.no.rebase.in.progress.message"),
+      GitBundle.message("rebase.notification.no.rebase.in.progress.continue.title"),
+      GitBundle.message("rebase.notification.no.rebase.in.progress.message"),
       true
     );
   }
@@ -109,8 +110,8 @@ public class GitRebaseUtils {
     else {
       LOG.warn("Refusing to abort: no rebase spec");
       VcsNotifier.getInstance(project).notifyError(
-        GitBundle.getString("rebase.notification.no.rebase.in.progress.abort.title"),
-        GitBundle.getString("rebase.notification.no.rebase.in.progress.message"),
+        GitBundle.message("rebase.notification.no.rebase.in.progress.abort.title"),
+        GitBundle.message("rebase.notification.no.rebase.in.progress.message"),
         true
       );
     }
@@ -157,7 +158,7 @@ public class GitRebaseUtils {
       }
       if (message != null) {
         VcsNotifier.getInstance(project).notifyError(
-          GitBundle.getString("rebase.notification.not.allowed.title"),
+          GitBundle.message("rebase.notification.not.allowed.title"),
           message
         );
         return false;
@@ -246,13 +247,13 @@ public class GitRebaseUtils {
   }
 
   @NotNull
-  static String mentionLocalChangesRemainingInStash(@Nullable GitChangesSaver saver) {
+  static @Nls String mentionLocalChangesRemainingInStash(@Nullable GitChangesSaver saver) {
     if (saver == null || !saver.wereChangesSaved()) {
       return "";
     }
     return saver.getSaveMethod().selectBundleMessage(
-      GitBundle.getString("rebase.notification.saved.local.changes.part.stash.text"),
-      GitBundle.getString("rebase.notification.saved.local.changes.part.shelf.text")
+      GitBundle.message("rebase.notification.saved.local.changes.part.stash.text"),
+      GitBundle.message("rebase.notification.saved.local.changes.part.shelf.text")
     );
   }
 
@@ -306,7 +307,7 @@ public class GitRebaseUtils {
       return HashImpl.build(FileUtil.loadFile(new File(getRebaseDir(project, root), fileName)).trim());
     }
     catch (IOException e) {
-      throw new VcsException("Couldn't resolve " + fileName, e);
+      throw new VcsException(GitBundle.message("rebase.couldnt.resolve.file", fileName), e);
     }
   }
 

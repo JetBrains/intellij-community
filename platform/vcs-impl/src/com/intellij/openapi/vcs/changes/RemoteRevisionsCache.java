@@ -17,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class RemoteRevisionsCache implements VcsListener {
+public final class RemoteRevisionsCache implements VcsListener {
   private static final Logger LOG = Logger.getInstance(RemoteRevisionsCache.class);
 
   public static final Topic<Runnable> REMOTE_VERSION_CHANGED  = new Topic<>("REMOTE_VERSION_CHANGED", Runnable.class);
@@ -58,7 +58,7 @@ public class RemoteRevisionsCache implements VcsListener {
         }
       }
       return shouldBeDone;
-    }, "Finishing \"changed on server\" update", DEFAULT_REFRESH_INTERVAL);
+    }, VcsBundle.message("changes.finishing.changed.on.server.update"), DEFAULT_REFRESH_INTERVAL);
 
     MessageBusConnection connection = myProject.getMessageBus().connect();
     connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, this);

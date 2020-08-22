@@ -34,8 +34,11 @@ class RemoveChangeListAction : AbstractChangeListAction() {
     val hasChanges = !ArrayUtil.isEmpty(e.getData(VcsDataKeys.CHANGES))
     if (hasChanges) {
       val containsActiveChangelist = changeLists.any { it is LocalChangeList && it.isDefault }
+      val changeListName =
+        if (containsActiveChangelist) VcsBundle.message("changes.another.change.list")
+        else VcsBundle.message("changes.default.change.list")
       presentation.description = ActionsBundle.message("action.ChangesView.RemoveChangeList.description.template",
-                                                       changeLists.size, if (containsActiveChangelist) "another" else "default")
+                                                       changeLists.size, changeListName)
     }
     else {
       presentation.description = null

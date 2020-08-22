@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -22,7 +22,7 @@ import static com.intellij.codeInsight.completion.ReferenceExpressionCompletionC
 /**
  * @author peter
  */
-class FromArrayConversion {
+final class FromArrayConversion {
   static void addConversions(final PsiElement element,
                              final String prefix,
                              final PsiType itemType,
@@ -34,7 +34,8 @@ class FromArrayConversion {
 
     final String qualifierText = ReferenceExpressionCompletionContributor.getQualifierText(qualifier);
     final PsiExpression conversion = createExpression("java.util.Arrays." + methodName + "(" + qualifierText + prefix + ")", element);
-    if (!expectedType.isAssignableFrom(conversion.getType())) return;
+    PsiType type = conversion.getType();
+    if (type == null || !expectedType.isAssignableFrom(type)) return;
 
     final String presentable = "Arrays." + methodName + "(" + qualifierText + prefix + ")";
     String[] lookupStrings = {StringUtil.isEmpty(qualifierText) ? presentable : prefix, prefix, presentable, methodName + "(" + prefix + ")"};

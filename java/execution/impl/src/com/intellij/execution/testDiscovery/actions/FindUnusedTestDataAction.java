@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -83,10 +84,10 @@ public class FindUnusedTestDataAction extends DumbAwareAction {
                 () -> FindUtil.showInUsageView(
                   null, files,
                   file -> new UsageInfo2UsageAdapter(new UsageInfo(file)),
-                  "Unused Test Data",
+                  JavaCompilerBundle.message("test.discovery.unused.test.data.tab.title"),
                   p -> {
                     p.setCodeUsages(false);
-                    p.setUsagesWord("file");
+                    p.setUsagesWord(count -> ExecutionBundle.message("label.usages.word.file", count));
                   }, project));
             }
           });

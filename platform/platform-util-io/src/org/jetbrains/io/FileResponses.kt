@@ -1,9 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.io
 
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.PathUtilRt
-import gnu.trove.THashMap
+import com.intellij.util.containers.CollectionFactory
 import io.netty.channel.Channel
 import io.netty.channel.ChannelFutureListener
 import io.netty.channel.DefaultFileRegion
@@ -26,7 +26,7 @@ fun flushChunkedResponse(channel: Channel, isKeepAlive: Boolean) {
 }
 
 private val fileExtToMimeType by lazy {
-  val map = THashMap<String, String>(1100)
+  val map = CollectionFactory.createSmallMemoryFootprintMap<String, String>(1100)
   FileResponses.javaClass.getResourceAsStream("/mime-types.csv").bufferedReader().useLines {
     for (line in it) {
       if (line.isBlank()) {

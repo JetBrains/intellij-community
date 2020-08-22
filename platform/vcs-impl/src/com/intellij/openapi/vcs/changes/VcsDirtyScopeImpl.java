@@ -140,9 +140,11 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
   }
 
   /**
-   * Remove potential duplicates from the sets.
+   * @return VcsDirtyScope with trimmed duplicated paths from the sets.
    */
-  public void pack() {
+  @NotNull
+  public VcsDirtyScopeImpl pack() {
+    VcsDirtyScopeImpl copy = new VcsDirtyScopeImpl(myVcs, myWasEverythingDirty);
     for (VirtualFile root : myAffectedContentRoots) {
       RecursiveFilePathSet rootDirs = myDirtyDirectoriesRecursively.get(root);
       Set<FilePath> rootFiles = notNullize(myDirtyFiles.get(root));
@@ -150,9 +152,11 @@ public class VcsDirtyScopeImpl extends VcsModifiableDirtyScope {
       RecursiveFilePathSet filteredDirs = removeAncestorsRecursive(rootDirs);
       THashSet<FilePath> filteredFiles = removeAncestorsNonRecursive(filteredDirs, rootFiles);
 
-      myDirtyDirectoriesRecursively.put(root, filteredDirs);
-      myDirtyFiles.put(root, filteredFiles);
+      copy.myAffectedContentRoots.add(root);
+      copy.myDirtyDirectoriesRecursively.put(root, filteredDirs);
+      copy.myDirtyFiles.put(root, filteredFiles);
     }
+    return copy;
   }
 
   @NotNull

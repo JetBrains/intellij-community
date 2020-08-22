@@ -12,9 +12,9 @@ import java.util.Collection;
 class IntObjectTransientMultiMaplet<V> extends IntObjectMultiMaplet<V> {
 
   private final TIntObjectHashMap<Collection<V>> myMap = new TIntObjectHashMap<>();
-  private final CollectionFactory<V> myCollectionFactory;
+  private final BuilderCollectionFactory<V> myCollectionFactory;
 
-  IntObjectTransientMultiMaplet(CollectionFactory<V> collectionFactory) {
+  IntObjectTransientMultiMaplet(BuilderCollectionFactory<V> collectionFactory) {
     myCollectionFactory = collectionFactory;
   }
 

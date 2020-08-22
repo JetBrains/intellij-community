@@ -36,6 +36,8 @@ import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.openapi.vcs.history.VcsHistorySession;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -47,8 +49,6 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntListIterator;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMaps;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.CalledWithReadLock;
 import org.jetbrains.annotations.NotNull;
@@ -65,7 +65,7 @@ public final class AnnotateStackTraceAction extends DumbAwareAction {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    ConsoleViewImpl consoleView = (ConsoleViewImpl)e.getData(LangDataKeys.CONSOLE_VIEW);
+    ConsoleViewImpl consoleView = ObjectUtils.tryCast(e.getData(LangDataKeys.CONSOLE_VIEW), ConsoleViewImpl.class);
     boolean isShown = consoleView != null && consoleView.getEditor().getGutter().isAnnotationsShown();
     e.getPresentation().setEnabled(consoleView != null && !isShown && !myIsLoading);
   }
@@ -98,7 +98,7 @@ public final class AnnotateStackTraceAction extends DumbAwareAction {
 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        Object2ObjectOpenHashMap<VirtualFile, IntArrayList> files2lines = new Object2ObjectOpenHashMap<>();
+        Map<VirtualFile, IntArrayList> files2lines = CollectionFactory.createSmallMemoryFootprintMap();
         Int2ObjectMap<LastRevision> revisions = new Int2ObjectOpenHashMap<>();
 
         ApplicationManager.getApplication().runReadAction(() -> {
@@ -111,7 +111,7 @@ public final class AnnotateStackTraceAction extends DumbAwareAction {
           }
         });
 
-        for (Map.Entry<VirtualFile, IntArrayList> entry : Object2ObjectMaps.fastIterable(files2lines)) {
+        for (Map.Entry<VirtualFile, IntArrayList> entry : files2lines.entrySet()) {
           VirtualFile file = entry.getKey();
           IntArrayList value = entry.getValue();
           indicator.checkCanceled();
@@ -216,7 +216,7 @@ public final class AnnotateStackTraceAction extends DumbAwareAction {
     @NotNull
     public static LastRevision create(@NotNull VcsFileRevision revision) {
       VcsRevisionNumber number = revision.getRevisionNumber();
-      String author = StringUtil.notNullize(revision.getAuthor(), "Unknown");
+      String author = StringUtil.notNullize(revision.getAuthor(), VcsBundle.message("vfs.revision.author.unknown"));
       Date date = revision.getRevisionDate();
       String message = StringUtil.notNullize(revision.getCommitMessage());
       return new LastRevision(number, author, date, message);

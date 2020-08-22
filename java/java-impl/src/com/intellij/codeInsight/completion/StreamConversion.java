@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.application.options.CodeStyle;
@@ -28,7 +28,7 @@ import static com.intellij.psi.CommonClassNames.*;
 /**
  * @author peter
  */
-class StreamConversion {
+final class StreamConversion {
 
   static List<LookupElement> addToStreamConversion(PsiReferenceExpression ref, CompletionParameters parameters) {
     PsiExpression qualifier = ref.getQualifierExpression();
@@ -37,12 +37,17 @@ class StreamConversion {
     PsiType type = qualifier.getType();
     if (type instanceof PsiClassType) {
       PsiClass qualifierClass = ((PsiClassType)type).resolve();
-      if (qualifierClass == null) return Collections.emptyList();
+      if (qualifierClass == null || InheritanceUtil.isInheritor(qualifierClass, JAVA_UTIL_STREAM_BASE_STREAM)) {
+        return Collections.emptyList();
+      }
 
-      PsiMethod streamMethod = ContainerUtil.find(qualifierClass.findMethodsByName("stream", true), m ->
-        !m.hasParameters() &&
-        InheritanceUtil.isInheritor(m.getReturnType(), JAVA_UTIL_STREAM_BASE_STREAM));
-      if (streamMethod == null) return Collections.emptyList();
+      PsiMethod streamMethod = ContainerUtil.find(qualifierClass.findMethodsByName("stream", true), m -> !m.hasParameters());
+      if (streamMethod == null ||
+          streamMethod.hasModifierProperty(PsiModifier.STATIC) ||
+          !PsiUtil.isAccessible(streamMethod, ref, null) ||
+          !InheritanceUtil.isInheritor(streamMethod.getReturnType(), JAVA_UTIL_STREAM_BASE_STREAM)) {
+        return Collections.emptyList();
+      }
 
       return generateStreamSuggestions(parameters, qualifier, qualifier.getText() + ".stream()", context -> {
         String space = getSpace(CodeStyle.getLanguageSettings(context.getFile()).SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES);
@@ -63,14 +68,18 @@ class StreamConversion {
                                                                PsiExpression qualifier,
                                                                String changedQualifier,
                                                                Consumer<InsertionContext> beforeInsertion) {
-    PsiReferenceExpression asStream = (PsiReferenceExpression)PsiElementFactory.getInstance(qualifier.getProject())
-      .createExpressionFromText(changedQualifier + ".x", qualifier);
+    String refText = changedQualifier + ".x";
+    PsiExpression expr = PsiElementFactory.getInstance(qualifier.getProject()).createExpressionFromText(refText, qualifier);
+    if (!(expr instanceof PsiReferenceExpression)) {
+      return Collections.emptyList();
+    }
 
     Set<LookupElement> streamSuggestions = ReferenceExpressionCompletionContributor
-      .completeFinalReference(qualifier, asStream, TrueFilter.INSTANCE,
+      .completeFinalReference(qualifier, (PsiReferenceExpression)expr, TrueFilter.INSTANCE,
                               PsiType.getJavaLangObject(qualifier.getManager(), qualifier.getResolveScope()),
                               parameters);
-    return ContainerUtil.map(streamSuggestions, e -> new StreamMethodInvocation(e, beforeInsertion));
+    return ContainerUtil.mapNotNull(streamSuggestions, e ->
+      ChainedCallCompletion.OBJECT_METHOD_PATTERN.accepts(e.getObject()) ? null : new StreamMethodInvocation(e, beforeInsertion));
   }
 
   private static void wrapQualifiedIntoMethodCall(@NotNull InsertionContext context, @NotNull String methodQualifiedName) {
@@ -140,7 +149,7 @@ class StreamConversion {
       consumer.consume(new CollectLookupElement(pair.first, pair.second, ref));
     }
   }
-  
+
   // each pair of method name in Collectors class, and the corresponding collection type
   private static List<Pair<String, PsiType>> suggestCollectors(Collection<? extends ExpectedTypeInfo> expectedTypes, PsiExpression qualifier) {
     PsiType component = PsiUtil.substituteTypeParameter(qualifier.getType(), JAVA_UTIL_STREAM_STREAM, 0, true);
@@ -151,7 +160,7 @@ class StreamConversion {
     GlobalSearchScope scope = qualifier.getResolveScope();
 
     boolean joiningApplicable = InheritanceUtil.isInheritor(component, CharSequence.class.getName());
-    
+
     PsiClass list = facade.findClass(JAVA_UTIL_LIST, scope);
     PsiClass set = facade.findClass(JAVA_UTIL_SET, scope);
     PsiClass collection = facade.findClass(JAVA_UTIL_COLLECTION, scope);
@@ -168,7 +177,7 @@ class StreamConversion {
         hasString = true;
         continue;
       }
-      
+
       PsiClass expectedClass = PsiUtil.resolveClassInClassTypeOnly(type);
       PsiType expectedComponent = PsiUtil.extractIterableTypeParameter(type, true);
       if (expectedClass == null || expectedComponent == null || !TypeConversionUtil.isAssignable(expectedComponent, component)) continue;
@@ -250,7 +259,7 @@ class StreamConversion {
     public void handleInsert(@NotNull InsertionContext context) {
       context.getDocument().replaceString(context.getStartOffset(), context.getTailOffset(), getInsertString());
       context.commitDocument();
-      
+
       PsiMethodCallExpression call =
         PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), PsiMethodCallExpression.class, false);
       if (call == null) return;

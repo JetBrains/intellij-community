@@ -75,6 +75,8 @@ public class Java15APIUsageInspection extends AbstractBaseJavaLocalInspectionToo
     ourPresentableShortMessage.put(LanguageLevel.JDK_11, "12");
     ourPresentableShortMessage.put(LanguageLevel.JDK_12, "13");
     ourPresentableShortMessage.put(LanguageLevel.JDK_13, "14");
+    ourPresentableShortMessage.put(LanguageLevel.JDK_14, "15");
+    ourPresentableShortMessage.put(LanguageLevel.JDK_14_PREVIEW, "15nopreview");
 
   }
 

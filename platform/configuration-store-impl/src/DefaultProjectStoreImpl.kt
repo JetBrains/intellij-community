@@ -6,9 +6,9 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import java.io.Writer
 import java.nio.file.Path
-import java.nio.file.Paths
 
 private const val FILE_SPEC = "${APP_CONFIG}/project.default.xml"
 
@@ -56,13 +56,14 @@ private class DefaultProjectStorage(file: Path, fileSpec: String, pathMacroManag
 }
 
 // cannot be `internal`, used in Upsource
+@ApiStatus.Internal
 class DefaultProjectStoreImpl(override val project: Project) : ChildlessComponentStore() {
   // see note about default state in project store
   override val loadPolicy: StateLoadPolicy
     get() = if (ApplicationManager.getApplication().isUnitTestMode) StateLoadPolicy.NOT_LOAD else StateLoadPolicy.LOAD
 
   private val storage by lazy {
-    DefaultProjectStorage(Paths.get(ApplicationManager.getApplication().stateStore.storageManager.expandMacros(FILE_SPEC)), FILE_SPEC, PathMacroManager.getInstance(project))
+    DefaultProjectStorage(ApplicationManager.getApplication().stateStore.storageManager.expandMacro(FILE_SPEC), FILE_SPEC, PathMacroManager.getInstance(project))
   }
 
   override val storageManager = object : StateStorageManager {
@@ -75,12 +76,9 @@ class DefaultProjectStoreImpl(override val project: Project) : ChildlessComponen
     override fun removeStreamProvider(clazz: Class<out StreamProvider>) {
     }
 
-    override fun rename(path: String, newName: String) {
-    }
-
     override fun getStateStorage(storageSpec: Storage) = storage
 
-    override fun expandMacros(path: String) = throw UnsupportedOperationException()
+    override fun expandMacro(path: String) = throw UnsupportedOperationException()
 
     override fun getOldStorage(component: Any, componentName: String, operation: StateStorageOperation) = storage
   }
@@ -94,7 +92,7 @@ class DefaultProjectStoreImpl(override val project: Project) : ChildlessComponen
 
   override fun <T> getStorageSpecs(component: PersistentStateComponent<T>, stateSpec: State, operation: StateStorageOperation) = listOf(PROJECT_FILE_STORAGE_ANNOTATION)
 
-  override fun setPath(path: String) {
+  override fun setPath(path: Path) {
   }
 
   override fun toString() = "default project"

@@ -13,14 +13,18 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonHelpersLocator;
+import kotlin.text.Regex;
+import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
 
-import static com.jetbrains.python.sdk.flavors.WinAppxToolsKt.*;
+import static com.jetbrains.python.sdk.flavors.WinAppxToolsKt.getAppxFiles;
+import static com.jetbrains.python.sdk.flavors.WinAppxToolsKt.getAppxProduct;
 
 /**
  * This class knows how to find python in Windows Registry according to
@@ -30,8 +34,15 @@ import static com.jetbrains.python.sdk.flavors.WinAppxToolsKt.*;
  */
 public class WinPythonSdkFlavor extends CPythonSdkFlavor {
   @NotNull
-  private static final String NOTHING = "";
   private static final String[] REG_ROOTS = {"HKEY_LOCAL_MACHINE", "HKEY_CURRENT_USER"};
+  /**
+   * There may be a lot of python files in APPX folder. We do not need "w" files, but may need "python[version]?.exe"
+   */
+  private static final Regex PYTHON_EXE = new Regex("^python[0-9.]*?.exe$");
+  /**
+   * All Pythons from WinStore have "Python[something]" as their product name
+   */
+  private static final String APPX_PRODUCT = "Python";
   private static final Map<String, String> REGISTRY_MAP =
     ImmutableMap.of("Python", "python.exe",
                     "IronPython", "ipy.exe");
@@ -39,6 +50,9 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor {
   @NotNull
   private final ClearableLazyValue<Set<String>> myRegistryCache =
     ClearableLazyValue.createAtomic(() -> findInRegistry(getWinRegistryService()));
+  @NotNull
+  private final ClearableLazyValue<Set<String>> myAppxCache =
+    ClearableLazyValue.createAtomic(() -> getPythonsFromStore());
 
   public static WinPythonSdkFlavor getInstance() {
     return PythonSdkFlavor.EP_NAME.findExtension(WinPythonSdkFlavor.class);
@@ -65,10 +79,7 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor {
     }
 
     findInRegistry(candidates);
-
-    getAppXAppsInstalled((dir, name) -> name.equals("python.exe")).stream()
-      .findFirst()
-      .ifPresent(python -> candidates.add(python.getAbsolutePath()));
+    candidates.addAll(myAppxCache.getValue());
   }
 
   @Override
@@ -77,13 +88,18 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor {
       return true;
     }
 
+    if (myAppxCache.getValue().contains(path)) {
+      return true;
+    }
+
     final File file = new File(path);
-    return mayBeAppXReparsePoint(file) && isValidSdkPath(file);
+    return StringUtils.contains(getAppxProduct(file), APPX_PRODUCT) && isValidSdkPath(file);
   }
 
   @Override
   public void dropCaches() {
     myRegistryCache.drop();
+    myAppxCache.drop();
   }
 
 
@@ -115,6 +131,11 @@ public class WinPythonSdkFlavor extends CPythonSdkFlavor {
         candidates.add(FileUtil.toSystemDependentName(f.getPath()));
       }
     }
+  }
+
+  @NotNull
+  private static Set<String> getPythonsFromStore() {
+    return ContainerUtil.map2Set(getAppxFiles(APPX_PRODUCT, PYTHON_EXE), file -> file.getAbsolutePath());
   }
 
   @NotNull

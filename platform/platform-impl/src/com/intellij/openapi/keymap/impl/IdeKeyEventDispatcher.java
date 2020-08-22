@@ -33,6 +33,7 @@ import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -480,7 +481,7 @@ public final class IdeKeyEventDispatcher implements Disposable {
       final ArrayList<Pair<AnAction, KeyStroke>> secondKeyStrokes = getSecondKeystrokeActions();
 
       final Project project = CommonDataKeys.PROJECT.getData(dataContext);
-      StringBuilder message = new StringBuilder();
+      @NlsContexts.StatusBarText StringBuilder message = new StringBuilder();
       message.append(KeyMapBundle.message("prefix.key.pressed.message"));
       message.append(' ');
       for (int i = 0; i < secondKeyStrokes.size(); i++) {
@@ -751,10 +752,18 @@ public final class IdeKeyEventDispatcher implements Disposable {
   /**
    * This method fills {@code myActions} list.
    */
+  KeyEvent lastKeyEventForCurrentContext;
   public void updateCurrentContext(Component component, @NotNull Shortcut sc) {
+    KeyEvent keyEvent = myContext.getInputEvent();
     myContext.setFoundComponent(null);
     myContext.setHasSecondStroke(false);
     myContext.getActions().clear();
+
+    if (Registry.is("ide.edt.update.context.only.on.key.pressed.event")) {
+      if (keyEvent == null || keyEvent.getID() != KeyEvent.KEY_PRESSED) return;
+      if (keyEvent == lastKeyEventForCurrentContext) return;
+      lastKeyEventForCurrentContext = keyEvent;
+    }
 
     if (isControlEnterOnDialog(component, sc)) return;
 

@@ -3,6 +3,7 @@ package com.intellij.ide.passwordSafe.ui;
 
 import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
@@ -23,11 +24,11 @@ public class PasswordPromptComponent {
   private JTextField myUserTextField;
   private JLabel myIconLabel;
 
-  public PasswordPromptComponent(boolean memoryOnly, String message) {
+  public PasswordPromptComponent(boolean memoryOnly, @NlsContexts.DialogMessage String message) {
     this(memoryOnly, message, true, null);
   }
 
-  public PasswordPromptComponent(boolean memoryOnly, String message, boolean showUserName, @Nullable String passwordFieldLabel) {
+  public PasswordPromptComponent(boolean memoryOnly, @NlsContexts.DialogMessage String message, boolean showUserName, @NlsContexts.Label @Nullable String passwordFieldLabel) {
     myIconLabel.setText("");
     myIconLabel.setIcon(Messages.getWarningIcon());
     JTextPane messageField = Messages.configureMessagePaneUi(new JTextPane(), message, UIUtil.FontSize.SMALL);

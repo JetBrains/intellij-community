@@ -9,7 +9,7 @@ import javax.swing.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
-public class SearchFieldStatisticsCollector implements Disposable {
+public final class SearchFieldStatisticsCollector implements Disposable {
 
   private final Project myProject;
   private final JTextField myTextField;

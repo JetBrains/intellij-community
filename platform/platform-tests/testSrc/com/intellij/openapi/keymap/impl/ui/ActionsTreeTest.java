@@ -197,7 +197,7 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
     ActionManager manager = ActionManager.getInstance();
 
     List<String> failures = new SmartList<>();
-    for (String id : manager.getActionIds("")) {
+    for (String id : manager.getActionIdList("")) {
       if (ACTION_WITHOUT_TEXT_AND_DESCRIPTION.equals(id)) {
         continue;
       }
@@ -273,7 +273,7 @@ public class ActionsTreeTest extends LightPlatformCodeInsightTestCase {
                missing.isEmpty() && present.isEmpty());
   }
 
-  private static class MyAction extends AnAction {
+  private static final class MyAction extends AnAction {
     private MyAction(@Nullable String text, @Nullable String description) {
       super(text, description, null);
     }

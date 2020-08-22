@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.execution.testDiscovery.TestDiscoveryExtension;
@@ -55,7 +55,7 @@ public class TestDataGuessByTestDiscoveryUtil {
     return Registry.is(TestDiscoveryExtension.TEST_DISCOVERY_REGISTRY_KEY) || ApplicationManager.getApplication().isInternal();
   }
 
-  private static class AffectedPathConsumer implements Consumer<String> {
+  private static final class AffectedPathConsumer implements Consumer<String> {
     private final List<String> myTestData = new ArrayList<>();
     private final String myBasePath;
 

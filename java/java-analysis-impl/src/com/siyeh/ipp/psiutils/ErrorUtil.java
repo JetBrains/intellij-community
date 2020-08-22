@@ -23,7 +23,7 @@ import com.intellij.psi.util.PsiLiteralUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 
-public class ErrorUtil {
+public final class ErrorUtil {
 
   private ErrorUtil() {
   }

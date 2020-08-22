@@ -27,6 +27,19 @@ for f in *; do
 done
 cd ../..
 
+# vim script
+echo "Adding vim script"
+git clone git@github.com:AlexPl292/language-viml.git
+cd language-viml
+
+mkdir -p "$ROOT/lib/bundles/viml"
+cp -r "LICENSE.txt" "$ROOT/lib/bundles/viml"
+cp -r "package.json" "$ROOT/lib/bundles/viml"
+cp -r "tests" "$ROOT/lib/bundles/viml"
+cp -r "grammars" "$ROOT/lib/bundles/viml"
+
+cd ..
+
 # mdx
 git clone https://github.com/silvenon/vscode-mdx.git
 cd vscode-mdx

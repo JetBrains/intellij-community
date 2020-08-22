@@ -667,10 +667,10 @@ public class EditorView implements TextDrawingCallback, Disposable, Dumpable, Hi
 
   float getCodePointWidth(int codePoint, @JdkConstants.FontStyle int fontStyle) {
     if (myEditor.getSettings().isShowingSpecialChars()) {
-      // This is a simplification - we don't account for special characters not rendered due to non-ASCII characters present nearby,
-      // so a premature wrapping can occur sometimes (as the representation using Unicode name is most certainly wider than the
+      // This is a simplification - we don't account for special characters not rendered in certain circumstances (based on surrounding
+      // characters), so a premature wrapping can occur sometimes (as the representation using Unicode name is most certainly wider than the
       // original character).
-      SpecialCharacterFragment specialCharacterFragment = SpecialCharacterFragment.create(this, codePoint);
+      SpecialCharacterFragment specialCharacterFragment = SpecialCharacterFragment.create(this, codePoint, null, 0);
       if (specialCharacterFragment != null) {
         return specialCharacterFragment.visualColumnToX(0, 1);
       }

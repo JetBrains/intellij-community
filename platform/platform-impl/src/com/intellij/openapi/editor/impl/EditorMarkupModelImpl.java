@@ -19,7 +19,6 @@ import com.intellij.openapi.actionSystem.ex.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
@@ -31,6 +30,8 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.extensions.ExtensionPointListener;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.impl.EditorWindowHolder;
@@ -54,7 +55,6 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -152,6 +152,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   private InspectionPopupManager myPopupManager;
   private final Disposable resourcesDisposable = Disposer.newDisposable();
   private final Alarm statusTimer = new Alarm(resourcesDisposable);
+  private final Map<InspectionWidgetActionProvider, AnAction> extensionActions = new HashMap<>();
 
   EditorMarkupModelImpl(@NotNull EditorImpl editor) {
     super(editor.getDocument());
@@ -172,8 +173,9 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       }
     };
 
-    AnAction statusAction = new StatusAction();
-    ActionGroup actions = new DefaultActionGroup(statusAction, navigateGroup);
+    StatusAction statusAction = new StatusAction();
+    DefaultActionGroup actions = new DefaultActionGroup(createEPActions(), statusAction, navigateGroup);
+
     ActionButtonLook editorButtonLook = new EditorToolbarButtonLook();
     statusToolbar = new ActionToolbarImpl(ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR, actions, true) {
       @Override
@@ -185,6 +187,11 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       protected @NotNull Color getSeparatorColor() {
         Color separatorColor = myEditor.getColorsScheme().getColor(EditorColors.SEPARATOR_BELOW_COLOR);
         return separatorColor != null ? separatorColor : super.getSeparatorColor();
+      }
+
+      @Override
+      protected int getSeparatorHeight() {
+        return getStatusIconSize();
       }
 
       @Override
@@ -224,6 +231,15 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
         actionButton.setLook(editorButtonLook);
         return actionButton;
+      }
+
+      @Override
+      protected JComponent createCustomComponent(@NotNull CustomComponentAction action, @NotNull Presentation presentation) {
+        JComponent component = super.createCustomComponent(action, presentation);
+        if (component instanceof ActionButton) {
+          ((ActionButton)component).setLook(editorButtonLook);
+        }
+        return component;
       }
 
       @Override
@@ -268,33 +284,20 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     smallIconLabel.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent event) {
-        if (Experiments.getInstance().isFeatureEnabled("problems.view.enabled")) {
-          myPopupManager.hidePopup();
-          if (analyzerStatus != null) {
-            analyzerStatus.getController().toggleProblemsView();
-          }
-        }
-        else {
-          AnActionEvent actionEvent = AnActionEvent.createFromInputEvent(event, ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR,
-                                                                         statusAction.getTemplatePresentation(),
-                                                                         myEditor.getDataContext(), true, false);
-          ActionsCollector.getInstance().record(myEditor.getProject(), statusAction, actionEvent, null);
-          myPopupManager.showPopup(event);
+        myPopupManager.hidePopup();
+        if (analyzerStatus != null) {
+          analyzerStatus.getController().toggleProblemsView();
         }
       }
 
       @Override
       public void mouseEntered(MouseEvent event) {
-        if (Experiments.getInstance().isFeatureEnabled("problems.view.enabled")) {
-          myPopupManager.scheduleShow(event);
-        }
+        myPopupManager.scheduleShow(event);
       }
 
       @Override
       public void mouseExited(MouseEvent event) {
-        if (Experiments.getInstance().isFeatureEnabled("problems.view.enabled")) {
-          myPopupManager.scheduleHide();
-        }
+        myPopupManager.scheduleHide();
       }
 
     });
@@ -389,29 +392,39 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     }
   }
 
-  private AnAction createAction(@NotNull String id, @NotNull Icon icon) {
-    AnAction delegate = ActionManager.getInstance().getAction(id);
-    AnAction result = new DumbAwareAction(delegate.getTemplatePresentation().getText(), null, icon) {
+  private DefaultActionGroup createEPActions() {
+    DefaultActionGroup epActions = new DefaultActionGroup();
+
+    InspectionWidgetActionProvider.EP_NAME.getExtensionList().
+      forEach(extension -> {
+        AnAction action = extension.createAction(myEditor);
+        extensionActions.put(extension, action);
+        epActions.add(action);
+      });
+
+    InspectionWidgetActionProvider.EP_NAME.addExtensionPointListener(new ExtensionPointListener<InspectionWidgetActionProvider>() {
       @Override
-      public void actionPerformed(@NotNull AnActionEvent e) {
-        IdeFocusManager focusManager = IdeFocusManager.getInstance(myEditor.getProject());
+      public void extensionAdded(@NotNull InspectionWidgetActionProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
+        AnAction action = extension.createAction(myEditor);
+        extensionActions.put(extension, action);
+        epActions.add(action);
+      }
 
-        AnActionEvent delegateEvent = AnActionEvent.createFromAnAction(delegate,
-                                                                       e.getInputEvent(),
-                                                                       ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR,
-                                                                       myEditor.getDataContext());
-
-        if (focusManager.getFocusOwner() != myEditor.getContentComponent()) {
-          focusManager.requestFocus(myEditor.getContentComponent(), true).
-            doWhenDone(() -> {
-              delegate.actionPerformed(delegateEvent);
-            });
-        }
-        else {
-          delegate.actionPerformed(delegateEvent);
+      @Override
+      public void extensionRemoved(@NotNull InspectionWidgetActionProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
+        AnAction action = extensionActions.remove(extension);
+        if (action != null) {
+          epActions.remove(action);
         }
       }
-    };
+    }, resourcesDisposable);
+
+    return epActions;
+  }
+
+  private AnAction createAction(@NotNull String id, @NotNull Icon icon) {
+    AnAction delegate = ActionManager.getInstance().getAction(id);
+    AnAction result = new MarkupModelDelegateAction(delegate, icon);
 
     result.copyShortcutFrom(delegate);
     return result;
@@ -475,9 +488,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     boolean resetAnalyzingStatus = analyzerStatus != null &&
                             analyzerStatus.isTextStatus() && analyzerStatus.getAnalyzingType() == AnalyzingType.COMPLETE;
     analyzerStatus = newStatus;
-    if (analyzerStatus.getAnalyzingType() != AnalyzingType.PARTIAL) {
-      smallIconLabel.setIcon(analyzerStatus.getIcon());
-    }
+    smallIconLabel.setIcon(analyzerStatus.getAnalyzingType() == AnalyzingType.COMPLETE ? analyzerStatus.getIcon() : AllIcons.General.InspectionsEye);
 
     if (showToolbar != analyzerStatus.getController().enableToolbar()) {
       showToolbar = EditorSettingsExternalizable.getInstance().isShowInspectionWidget() &&
@@ -503,7 +514,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     ActivityTracker.getInstance().inc();
   }
 
-  private static class PositionedStripe {
+  private static final class PositionedStripe {
     private @NotNull Color color;
     private int yEnd;
     private final boolean thin;
@@ -552,7 +563,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     boolean isVisible = myWheelAccumulator == 0 && area.contains(area.x, visualY);
 
     if (UIUtil.uiParents(myEditor.getComponent(), false).filter(EditorWindowHolder.class).isEmpty() || isVisible || !UISettings.getInstance().getShowEditorToolTip()) {
-      final Set<RangeHighlighter> highlighters = new THashSet<>();
+      final Set<RangeHighlighter> highlighters = new HashSet<>();
       getNearestHighlighters(this, me.getY(), highlighters);
       getNearestHighlighters(((EditorEx)getEditor()).getFilteredDocumentMarkupModel(), me.getY(), highlighters);
       if (highlighters.isEmpty()) return false;
@@ -793,6 +804,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
     myPopupManager.hidePopup();
     myPopupManager = null;
+    extensionActions.clear();
 
     Disposer.dispose(resourcesDisposable);
 
@@ -1041,10 +1053,9 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       final int[] thinYStart = new int[1];  // in range 0..yStart all spots are drawn
       final int[] wideYStart = new int[1];  // in range 0..yStart all spots are drawn
 
-      MarkupIterator<ErrorStripeMarkerImpl> iterator = myErrorStripeMarkersModel.overlappingIterator(startOffset, endOffset);
+      MarkupIterator<RangeHighlighterEx> iterator = myErrorStripeMarkersModel.highlighterIterator(startOffset, endOffset);
       try {
-        ContainerUtil.process(iterator, errorStripeMarker -> {
-          RangeHighlighterEx highlighter = errorStripeMarker.getHighlighter();
+        ContainerUtil.process(iterator, highlighter -> {
           boolean isThin = highlighter.isThinErrorStripeMark();
           int[] yStart = isThin ? thinYStart : wideYStart;
           List<PositionedStripe> stripes = isThin ? thinStripes : wideStripes;
@@ -1360,7 +1371,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         if (text == null) continue;
 
         if (tooltips == null) {
-          tooltips = new THashSet<>();
+          tooltips = new HashSet<>();
         }
         if (tooltips.add(text)) {
           if (bigRenderer == null) {
@@ -1492,14 +1503,9 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      if (Experiments.getInstance().isFeatureEnabled("problems.view.enabled")) {
-        myPopupManager.hidePopup();
-        if (analyzerStatus != null) {
-          analyzerStatus.getController().toggleProblemsView();
-        }
-      }
-      else {
-        myPopupManager.showPopup(e.getInputEvent());
+      myPopupManager.hidePopup();
+      if (analyzerStatus != null) {
+        analyzerStatus.getController().toggleProblemsView();
       }
     }
 
@@ -1532,7 +1538,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     }
   }
 
-  private static class StatusButton extends JPanel {
+  private static final class StatusButton extends JPanel {
     private static final int LEFT_RIGHT_INDENT = 5;
     private static final int INTER_GROUP_OFFSET = 6;
 
@@ -1576,6 +1582,10 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       mouseListener = new MouseAdapter() {
         @Override
         public void mouseClicked(MouseEvent me) {
+          if (SwingUtilities.isLeftMouseButton(me)) showInspectionsHint(me);
+        }
+
+        private void showInspectionsHint(MouseEvent me) {
           DataContext context = getDataContext();
           AnActionEvent event = AnActionEvent.createFromInputEvent(me, place, presentation, context, false, true);
           if (!ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
@@ -1598,14 +1608,31 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
           }
         }
 
+        private void showContextMenu(MouseEvent me) {
+          DefaultActionGroup group = new DefaultActionGroup();
+          /*
+          TODO: show context menu by right click
+          group.addAll(analyzerStatus.getController().getActions());
+          group.add(new CompactViewAction());
+          */
+          if (0 < group.getChildrenCount()) {
+            ActionManager.getInstance()
+              .createActionPopupMenu(ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR, group)
+              .getComponent()
+              .show(me.getComponent(), me.getX(), me.getY());
+          }
+        }
+
         @Override
         public void mousePressed(MouseEvent me) {
+          if (me.isPopupTrigger()) showContextMenu(me);
           mousePressed = true;
           repaint();
         }
 
         @Override
         public void mouseReleased(MouseEvent me) {
+          if (me.isPopupTrigger()) showContextMenu(me);
           mousePressed = false;
           repaint();
         }
@@ -1613,18 +1640,14 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         @Override
         public void mouseEntered(MouseEvent me) {
           mouseHover = true;
-          if (Experiments.getInstance().isFeatureEnabled("problems.view.enabled")) {
-            popupManager.scheduleShow(me);
-          }
+          popupManager.scheduleShow(me);
           repaint();
         }
 
         @Override
         public void mouseExited(MouseEvent me) {
           mouseHover = false;
-          if (Experiments.getInstance().isFeatureEnabled("problems.view.enabled")) {
-            popupManager.scheduleHide();
-          }
+          popupManager.scheduleHide();
           repaint();
         }
       };
@@ -1681,7 +1704,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       GridBag gc = new GridBag().nextLine();
       if (status.size() == 1 && StringUtil.isEmpty(status.get(0).getText())) {
         add(createStyledLabel(null, status.get(0).getIcon(), SwingConstants.CENTER),
-            gc.next().weightx(1).fillCellHorizontally());
+            gc.next().weightx(1).weighty(1).fillCell());
       }
       else if (status.size() > 0) {
         int leftRightOffset = JBUIScale.scale(LEFT_RIGHT_INDENT);
@@ -1690,7 +1713,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         int counter = 0;
         for (StatusItem item : status) {
           add(createStyledLabel(item.getText(), item.getIcon(), SwingConstants.LEFT),
-              gc.next().insetLeft(counter++ > 0 ? INTER_GROUP_OFFSET : 0));
+              gc.next().insetLeft(counter++ > 0 ? INTER_GROUP_OFFSET : 0).fillCell().weighty(1));
         }
 
         add(Box.createHorizontalStrut(leftRightOffset), gc.next());
@@ -1754,50 +1777,47 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
   }
 
   private static class StatusComponentLayout implements LayoutManager {
-    private JComponent statusComponent;
-    private final List<JComponent> actionButtons = new ArrayList<>();
+    private final List<Pair<Component, String>> actionButtons = new ArrayList<>();
 
     @Override
     public void addLayoutComponent(String s, Component component) {
-      JComponent jc = (JComponent)component;
-      if (ActionToolbar.CUSTOM_COMPONENT_CONSTRAINT.equals(s) && jc instanceof StatusButton) {
-        statusComponent = jc;
-      }
-      else if (ActionToolbar.ACTION_BUTTON_CONSTRAINT.equals(s) && jc instanceof ActionButton) {
-        actionButtons.add(jc);
-      }
+      actionButtons.add(Pair.pair(component, s));
     }
 
     @Override
     public void removeLayoutComponent(Component component) {
-      JComponent jc = (JComponent)component;
-      if (jc instanceof StatusButton) {
-        statusComponent = null;
-      }
-      else if (jc instanceof ActionButton) {
-        actionButtons.remove(jc);
+      for (int i = 0; i < actionButtons.size(); i++) {
+        if (Comparing.equal(component, actionButtons.get(i).first)) {
+          actionButtons.remove(i);
+          break;
+        }
       }
     }
 
     @Override
     public Dimension preferredLayoutSize(Container container) {
-      Dimension size = statusComponent != null && statusComponent.isVisible() ? statusComponent.getPreferredSize() : JBUI.emptySize();
+      Dimension size = JBUI.emptySize();
 
-      for (JComponent jc : actionButtons) {
-        if (jc.isVisible()) {
-          Dimension prefSize = jc.getPreferredSize();
+      for (Pair<Component, String> c : actionButtons) {
+        if (c.first.isVisible()) {
+          Dimension prefSize = c.first.getPreferredSize();
           size.height = Math.max(size.height, prefSize.height);
         }
       }
 
-      for (JComponent jc : actionButtons) {
-        if (jc.isVisible()) {
-          Dimension prefSize = jc.getPreferredSize();
-          Insets i = jc.getInsets();
+      for (Pair<Component, String> c : actionButtons) {
+        if (c.first.isVisible()) {
+          Dimension prefSize = c.first.getPreferredSize();
+          Insets i = ((JComponent)c.first).getInsets();
           JBInsets.removeFrom(prefSize, i);
 
-          int maxBareHeight = size.height - i.top - i.bottom;
-          size.width += Math.max(prefSize.width, maxBareHeight) + i.left + i.right;
+          if (ActionToolbar.SEPARATOR_CONSTRAINT.equals(c.second)) {
+            size.width += prefSize.width + i.left + i.right;
+          }
+          else {
+            int maxBareHeight = size.height - i.top - i.bottom;
+            size.width += Math.max(prefSize.width, maxBareHeight) + i.left + i.right;
+          }
         }
       }
 
@@ -1821,23 +1841,30 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         JBInsets.removeFrom(prefSize, i);
         int offset = i.left;
 
-        if (statusComponent != null && statusComponent.isVisible()) {
-          Dimension size = statusComponent.getPreferredSize();
-          statusComponent.setBounds(offset, i.top, size.width, prefSize.height);
-          offset += size.width;
-        }
+        for (Pair<Component, String> c : actionButtons) {
+          if (c.first.isVisible()) {
+            Dimension cPrefSize = c.first.getPreferredSize();
 
-        for (JComponent jc : actionButtons) {
-          if (jc.isVisible()) {
-            Dimension jcPrefSize = jc.getPreferredSize();
-            Insets jcInsets = jc.getInsets();
-            JBInsets.removeFrom(jcPrefSize, jcInsets);
+            if (c.first instanceof StatusButton) {
+              c.first.setBounds(offset, i.top, cPrefSize.width, prefSize.height);
+              offset += cPrefSize.width;
+            }
+            else {
+              Insets jcInsets = ((JComponent)c.first).getInsets();
+              JBInsets.removeFrom(cPrefSize, jcInsets);
 
-            int maxBareHeight = prefSize.height - jcInsets.top - jcInsets.bottom;
-            int width = Math.max(jcPrefSize.width, maxBareHeight) + jcInsets.left + jcInsets.right;
+              if (ActionToolbar.SEPARATOR_CONSTRAINT.equals(c.second)) {
+                c.first.setBounds(offset, i.top, cPrefSize.width, prefSize.height);
+                offset += cPrefSize.width;
+              }
+              else {
+                int maxBareHeight = prefSize.height - jcInsets.top - jcInsets.bottom;
+                int width = Math.max(cPrefSize.width, maxBareHeight) + jcInsets.left + jcInsets.right;
 
-            jc.setBounds(offset, i.top, width, prefSize.height);
-            offset += width;
+                c.first.setBounds(offset, i.top, width, prefSize.height);
+                offset += width;
+              }
+            }
           }
         }
       }
@@ -1909,6 +1936,41 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     @Override
     public boolean isDumbAware() {
       return true;
+    }
+  }
+
+  private final class MarkupModelDelegateAction extends DumbAwareAction implements ActionWithDelegate<AnAction> {
+    private final AnAction myDelegate;
+
+    private MarkupModelDelegateAction(AnAction delegate, @NotNull Icon icon) {
+      super(delegate.getTemplatePresentation().getText(), null, icon);
+      myDelegate = delegate;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      IdeFocusManager focusManager = IdeFocusManager.getInstance(myEditor.getProject());
+
+      AnActionEvent delegateEvent = AnActionEvent.createFromAnAction(myDelegate,
+                                                                     e.getInputEvent(),
+                                                                     ActionPlaces.EDITOR_INSPECTIONS_TOOLBAR,
+                                                                     myEditor.getDataContext());
+
+      if (focusManager.getFocusOwner() != myEditor.getContentComponent()) {
+        focusManager.requestFocus(myEditor.getContentComponent(), true).
+          doWhenDone(() -> {
+            myDelegate.actionPerformed(delegateEvent);
+          });
+      }
+      else {
+        myDelegate.actionPerformed(delegateEvent);
+      }
+    }
+
+    @NotNull
+    @Override
+    public AnAction getDelegate() {
+      return myDelegate;
     }
   }
 }

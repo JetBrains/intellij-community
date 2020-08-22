@@ -21,6 +21,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
@@ -185,9 +187,20 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
       if (!(element instanceof PsiReferenceParameterList)) return;
       final PsiReferenceParameterList typeArgumentList = (PsiReferenceParameterList)element;
       try {
-        final PsiMethodCallExpression expr =
-          (PsiMethodCallExpression)JavaPsiFacade.getElementFactory(project).createExpressionFromText("foo()", null);
-        new CommentTracker().replaceAndRestoreComments(typeArgumentList, expr.getTypeArgumentList());
+        PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);
+        PsiMethodReferenceExpression ref = PsiTreeUtil.getParentOfType(typeArgumentList, PsiMethodReferenceExpression.class);
+        PsiTypeElement qualifierType = ref != null ? ref.getQualifierType() : null;
+        if (qualifierType != null && PsiTreeUtil.isAncestor(qualifierType, typeArgumentList, false)) {
+          PsiClass targetClass = PsiUtil.resolveClassInType(qualifierType.getType());
+          if (targetClass != null) {
+            new CommentTracker().replaceAndRestoreComments(qualifierType, elementFactory.createReferenceExpression(targetClass));
+          }
+        }
+        else {
+          final PsiMethodCallExpression expr =
+            (PsiMethodCallExpression)elementFactory.createExpressionFromText("foo()", null);
+          new CommentTracker().replaceAndRestoreComments(typeArgumentList, expr.getTypeArgumentList());
+        }
       }
       catch (IncorrectOperationException e) {
         LOG.error(e);

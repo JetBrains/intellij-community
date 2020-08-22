@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -67,7 +68,7 @@ public class OptimizeImportsAction extends AnAction {
       }
       return;
     }
-    else{
+    else {
       Project projectContext = PlatformDataKeys.PROJECT_CONTEXT.getData(dataContext);
       Module moduleContext = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
 
@@ -128,7 +129,7 @@ public class OptimizeImportsAction extends AnAction {
     if (processDirectory){
       new OptimizeImportsProcessor(project, dir, true, processOnlyVcsChangedFiles).run();
     }
-    else{
+    else {
       OptimizeImportsProcessor optimizer = new OptimizeImportsProcessor(project, file);
       if (editor != null && EditorSettingsExternalizable.getInstance().isShowNotificationAfterOptimizeImports()) {
         optimizer.setCollectInfo(true);
@@ -221,7 +222,7 @@ public class OptimizeImportsAction extends AnAction {
     return !LanguageImportStatements.INSTANCE.forFile(file).isEmpty();
   }
 
-  private static Boolean isProcessVcsChangedText(Project project, String text, boolean hasChanges) {
+  private static Boolean isProcessVcsChangedText(Project project, @NlsContexts.Label String text, boolean hasChanges) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return myProcessVcsChangedFilesInTests;
     }
@@ -242,11 +243,11 @@ public class OptimizeImportsAction extends AnAction {
   private static class OptimizeImportsDialog extends DialogWrapper {
     private final boolean myContextHasChanges;
 
-    private final String myText;
+    private final @NlsContexts.Label String myText;
     private JCheckBox myOnlyVcsCheckBox;
     private final LastRunReformatCodeOptionsProvider myLastRunOptions;
 
-    OptimizeImportsDialog(Project project, String text, boolean hasChanges) {
+    OptimizeImportsDialog(Project project, @NlsContexts.Label String text, boolean hasChanges) {
       super(project, false);
       myText = text;
       myContextHasChanges = hasChanges;

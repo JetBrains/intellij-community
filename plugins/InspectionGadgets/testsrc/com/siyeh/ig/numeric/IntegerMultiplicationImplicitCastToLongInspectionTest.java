@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 public class IntegerMultiplicationImplicitCastToLongInspectionTest extends LightJavaInspectionTestCase {
 
   public void testIntegerMultiplicationImplicitCastToLong() {
+    myFixture.addClass("package org.junit;public class Assert {public static native void assertEquals(long expected, long actual);}");
     doTest();
   }
 

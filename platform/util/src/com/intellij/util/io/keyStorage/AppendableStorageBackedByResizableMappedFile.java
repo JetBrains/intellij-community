@@ -221,7 +221,7 @@ public class AppendableStorageBackedByResizableMappedFile<Data> extends Resizeab
     return comparer;
   }
 
-  private static class MyDataIS extends DataInputStream {
+  private static final class MyDataIS extends DataInputStream {
     private MyDataIS() {
       super(new MyBufferedIS());
     }

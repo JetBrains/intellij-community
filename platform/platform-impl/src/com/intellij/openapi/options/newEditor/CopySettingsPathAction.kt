@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys.CONTEXT_COMPONENT
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.SystemInfo.isMac
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.tabs.JBTabs
@@ -148,7 +149,7 @@ private fun getTextLabel(component: Any?): String? {
   return null
 }
 
-private inline fun createSwingAction(id: String?, name: String, crossinline performer: () -> Unit): Action {
+private inline fun createSwingAction(id: String?, @NlsActions.ActionText name: String, crossinline performer: () -> Unit): Action {
   val action = object : AbstractAction(name) {
     override fun actionPerformed(event: ActionEvent) {
       performer()

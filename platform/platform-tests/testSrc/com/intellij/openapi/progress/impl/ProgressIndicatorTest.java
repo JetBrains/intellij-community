@@ -893,4 +893,105 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     assertEquals(progressIndicator.getText(), progressIndicatorWatcher1.getText());
     assertEquals(progressIndicator.getText(), progressIndicatorWatcher2.getText());
   }
+
+  public void testProgressWrapperDoesWrapWrappers() {
+    EmptyProgressIndicator indicator = new EmptyProgressIndicator();
+    ProgressWrapper wrapper = ProgressWrapper.wrap(indicator);
+    assertNotNull(wrapper);
+    ProgressWrapper wrapper2 = ProgressWrapper.wrap(wrapper);
+    assertNotSame(wrapper2, wrapper);
+    assertSame(wrapper, wrapper2.getOriginalProgressIndicator());
+  }
+
+  public void testRelayUiToDelegateIndicatorMustNotPassChangeStateToDelegate() {
+    ProgressIndicatorEx ui = new ProgressIndicatorBase();
+    ProgressIndicatorEx indicator = new ProgressIndicatorBase();
+    indicator.pushState();
+    indicator.addStateDelegate(new RelayUiToDelegateIndicator(ui));
+    indicator.popState(); // should not cause NPE
+  }
+
+  public void testRelayUiToDelegateIndicatorMustBeReusable() {
+    ProgressIndicatorEx ui = new ProgressIndicatorBase();
+    RelayUiToDelegateIndicator relay = new RelayUiToDelegateIndicator(ui);
+    ProgressIndicatorBase indicator = new ProgressIndicatorBase(true);
+    indicator.addStateDelegate(relay);
+    indicator.start();
+    indicator.cancel();
+    indicator.stop();
+    indicator.start();
+    indicator.cancel();
+    indicator.removeStateDelegate(relay);
+  }
+
+  public void testRelayUiToDelegate() {
+    ProgressIndicatorEx ui = new ProgressIndicatorBase();
+    ProgressIndicatorEx indicator = new ProgressIndicatorBase();
+
+    indicator.addStateDelegate(new RelayUiToDelegateIndicator(ui));
+
+    assertNull(ui.getText());
+    indicator.setText("A");
+    assertEquals("A", ui.getText());
+    assertNull(ui.getText2());
+    indicator.setText2("B");
+    assertEquals("B", ui.getText2());
+    assertEquals(0.0, ui.getFraction());
+    indicator.setIndeterminate(false);
+    indicator.setFraction(1);
+    assertEquals(1.0, ui.getFraction());
+
+    try {
+      new RelayUiToDelegateIndicator(ui).addStateDelegate(new ProgressIndicatorBase());
+      fail("Must not allow to call addStateDelegate()");
+    }
+    catch (IllegalStateException ignored) {
+    }
+  }
+
+  public void testRunProcessWithIndicatorAlreadyUsedInTheThisThreadMustBeWarned() {
+    DefaultLogger.disableStderrDumping(getTestRootDisposable());
+
+    ProgressIndicatorEx p = new ProgressIndicatorBase();
+    ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+      boolean allowed = true;
+      try {
+        ProgressManager.getInstance().runProcess(() -> {}, p);
+      }
+      catch (Throwable ignored) {
+        allowed = false;
+      }
+      assertFalse("pm.runProcess() with the progress already used in the other thread must be prohibited", allowed);
+    }, p);
+  }
+  public void testRunProcessWithIndicatorAlreadyUsedInTheOtherThreadMustBeWarned() throws Exception {
+    DefaultLogger.disableStderrDumping(getTestRootDisposable());
+    ProgressIndicatorEx p = new ProgressIndicatorBase();
+    CountDownLatch run = new CountDownLatch(1);
+    CountDownLatch exit = new CountDownLatch(1);
+    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      ProgressManager.getInstance().runProcess(() -> {
+        try {
+          run.countDown();
+          exit.await();
+        }
+        catch (InterruptedException e) {
+          throw new RuntimeException(e);
+        }
+      }, p);
+    });
+    run.await();
+    boolean allowed = true;
+    try {
+      ProgressManager.getInstance().runProcess(() -> { }, p);
+    }
+    catch (Throwable ignored) {
+      allowed = false;
+    }
+    finally {
+      exit.countDown();
+      future.get();
+    }
+    assertFalse("pm.runProcess() with the progress already used in the other thread must be prohibited", allowed);
+  }
 }

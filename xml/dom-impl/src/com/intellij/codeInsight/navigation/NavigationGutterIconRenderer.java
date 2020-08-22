@@ -29,6 +29,8 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NlsContexts.PopupContent;
+import com.intellij.openapi.util.NlsContexts.PopupTitle;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -53,12 +55,14 @@ import java.util.List;
  */
 public abstract class NavigationGutterIconRenderer extends GutterIconRenderer
   implements GutterIconNavigationHandler<PsiElement>, DumbAware {
-  protected final String myPopupTitle;
-  private final String myEmptyText;
+  protected final @PopupTitle String myPopupTitle;
+  private final @PopupContent String myEmptyText;
   protected final Computable<? extends PsiElementListCellRenderer> myCellRenderer;
   private final NotNullLazyValue<? extends List<SmartPsiElementPointer<?>>> myPointers;
 
-  protected NavigationGutterIconRenderer(final String popupTitle, final String emptyText, @NotNull Computable<? extends PsiElementListCellRenderer<?>> cellRenderer,
+  protected NavigationGutterIconRenderer(final @PopupTitle String popupTitle,
+                                         final @PopupContent String emptyText,
+                                         @NotNull Computable<? extends PsiElementListCellRenderer<?>> cellRenderer,
                                          @NotNull NotNullLazyValue<? extends List<SmartPsiElementPointer<?>>> pointers) {
     myPopupTitle = popupTitle;
     myEmptyText = emptyText;
@@ -136,20 +140,7 @@ public abstract class NavigationGutterIconRenderer extends GutterIconRenderer
   protected void navigateToItems(@Nullable MouseEvent event) {
     List<Navigatable> navigatables = new ArrayList<>();
     for (SmartPsiElementPointer<?> pointer : myPointers.getValue()) {
-      VirtualFile virtualFile = pointer.getVirtualFile();
-      Segment actualRange = pointer.getRange();
-      Navigatable navigatable = null;
-      if (virtualFile != null && actualRange != null && virtualFile.isValid() && actualRange.getStartOffset() >= 0) {
-        navigatable = new OpenFileDescriptor(pointer.getProject(), virtualFile, actualRange.getStartOffset());
-      }
-      else {
-        PsiElement element = pointer.getElement();
-        element = element == null ? null : element.getNavigationElement();
-        if (element instanceof Navigatable) {
-          navigatable = (Navigatable)element;
-        }
-      }
-      ContainerUtil.addIfNotNull(navigatables, navigatable);
+       ContainerUtil.addIfNotNull(navigatables, getNavigatable(pointer));
     }
     if (navigatables.size() == 1) {
       navigatables.get(0).navigate(true);
@@ -159,5 +150,27 @@ public abstract class NavigationGutterIconRenderer extends GutterIconRenderer
       JBPopup popup = NavigationUtil.getPsiElementPopup(elements, myCellRenderer.compute(), myPopupTitle);
       popup.show(new RelativePoint(event));
     }
+  }
+
+  @Nullable
+  private static Navigatable getNavigatable(SmartPsiElementPointer<?> pointer) {
+    Navigatable element = getNavigationElement(pointer);
+    if (element != null) return element;
+
+    VirtualFile virtualFile = pointer.getVirtualFile();
+    Segment actualRange = pointer.getRange();
+    if (virtualFile != null && actualRange != null && virtualFile.isValid() && actualRange.getStartOffset() >= 0) {
+      return new OpenFileDescriptor(pointer.getProject(), virtualFile, actualRange.getStartOffset());
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private static Navigatable getNavigationElement(SmartPsiElementPointer<?> pointer) {
+    PsiElement element = pointer.getElement();
+    if (element == null) return null;
+    final PsiElement navigationElement = element.getNavigationElement();
+    return navigationElement instanceof Navigatable ? (Navigatable)navigationElement : null;
   }
 }

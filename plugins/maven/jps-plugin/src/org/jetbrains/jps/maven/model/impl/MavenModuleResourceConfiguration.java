@@ -1,14 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.maven.model.impl;
 
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,7 +48,7 @@ public class MavenModuleResourceConfiguration {
   public Map<String, String> properties = new HashMap<>();
 
   @XCollection(propertyElementName = "filtering-excluded-extensions", elementName = "extension")
-  public Set<String> filteringExclusions = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
+  public Set<String> filteringExclusions = CollectionFactory.createFilePathSet();
 
   @OptionTag
   public String escapeString = null;
@@ -78,7 +75,7 @@ public class MavenModuleResourceConfiguration {
     if (filteringExclusions.isEmpty()) {
       return MavenProjectConfiguration.DEFAULT_FILTERING_EXCLUDED_EXTENSIONS;
     }
-    final Set<String> result = new THashSet<>(FileUtil.PATH_HASHING_STRATEGY);
+    final Set<String> result = CollectionFactory.createFilePathSet();
     result.addAll(MavenProjectConfiguration.DEFAULT_FILTERING_EXCLUDED_EXTENSIONS);
     result.addAll(filteringExclusions);
     return Collections.unmodifiableSet(result);

@@ -66,7 +66,7 @@ import static com.intellij.util.SystemProperties.getUserHome;
 import static com.intellij.util.containers.ContainerUtil.map2Array;
 import static java.util.Collections.emptyList;
 
-public class SvnUtil {
+public final class SvnUtil {
   @NonNls public static final String SVN_ADMIN_DIR_NAME =
     SystemInfo.isWindows && EnvironmentUtil.getValue("SVN_ASP_DOT_NET_HACK") != null ? "_svn" : ".svn";
   @NonNls public static final String ENTRIES_FILE_NAME = "entries";

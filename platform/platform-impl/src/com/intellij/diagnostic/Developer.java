@@ -3,9 +3,11 @@ package com.intellij.diagnostic;
 
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Tag;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 @Tag("developer")
+@NonNls
 public class Developer {
   public static final Developer NULL = new Developer(-1, "<none>");
 

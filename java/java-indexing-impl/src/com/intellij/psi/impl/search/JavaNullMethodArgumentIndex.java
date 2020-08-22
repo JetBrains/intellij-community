@@ -4,7 +4,7 @@ package com.intellij.psi.impl.search;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.lang.java.parser.JavaParserUtil;
-import com.intellij.lexer.TokenizedText;
+import com.intellij.lexer.TokenList;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.tree.IElementType;
@@ -46,7 +46,7 @@ public final class JavaNullMethodArgumentIndex extends ScalarIndexExtension<Java
 
       Map<MethodCallData, Void> result = new THashMap<>();
 
-      TokenizedText tokens = JavaParserUtil.obtainTokens(inputData.getPsiFile());
+      TokenList tokens = JavaParserUtil.obtainTokens(inputData.getPsiFile());
       for (int i = 0; i < tokens.getTokenCount(); i++) {
         if (tokens.hasType(i, NULL_KEYWORD)) {
           MethodCallData data = findCallData(tokens, i);
@@ -60,7 +60,7 @@ public final class JavaNullMethodArgumentIndex extends ScalarIndexExtension<Java
   }
 
   @Nullable
-  private static MethodCallData findCallData(TokenizedText tokens, int nullIndex) {
+  private static MethodCallData findCallData(TokenList tokens, int nullIndex) {
     if (!tokens.hasType(tokens.forwardWhile(nullIndex + 1, JavaParserUtil.WS_COMMENTS), RPARENTH, COMMA)) return null;
 
     int i = tokens.backWhile(nullIndex - 1, JavaParserUtil.WS_COMMENTS);
@@ -87,7 +87,7 @@ public final class JavaNullMethodArgumentIndex extends ScalarIndexExtension<Java
   }
 
   @Nullable
-  private static String findMethodName(TokenizedText tokens, int lparenth) {
+  private static String findMethodName(TokenList tokens, int lparenth) {
     int i = tokens.backWhile(lparenth - 1, JavaParserUtil.WS_COMMENTS);
     if (tokens.hasType(i, GT)) {
       i = tokens.backWhile(tokens.backWithBraceMatching(i, LT, GT), JavaParserUtil.WS_COMMENTS);

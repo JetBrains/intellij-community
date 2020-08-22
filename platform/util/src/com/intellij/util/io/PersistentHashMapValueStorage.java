@@ -1,8 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
-/*
- * @author max
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -29,7 +25,7 @@ import java.util.PriorityQueue;
 
 import static com.intellij.util.io.FileChannelUtil.unInterruptible;
 
-public class PersistentHashMapValueStorage {
+public final class PersistentHashMapValueStorage {
   @Nullable
   private RAReader myCompactionModeReader;
   private volatile long mySize;
@@ -47,7 +43,7 @@ public class PersistentHashMapValueStorage {
   static final long SOFT_MAX_RETAINED_LIMIT = 10 * 1024 * 1024;
   static final int BLOCK_SIZE_TO_WRITE_WHEN_SOFT_MAX_RETAINED_LIMIT_IS_HIT = 1024;
 
-  public static class CreationTimeOptions {
+  public static final class CreationTimeOptions {
     public static final ThreadLocal<ExceptionalIOCancellationCallback> EXCEPTIONAL_IO_CANCELLATION =
       new ThreadLocal<>();
     public static final ThreadLocal<Boolean> READONLY = new ThreadLocal<>();
@@ -787,7 +783,7 @@ public class PersistentHashMapValueStorage {
     }
   }
 
-  private static class ReaderOverFileChannelCache implements RAReader {
+  private static final class ReaderOverFileChannelCache implements RAReader {
     private final Path myPath;
 
     private ReaderOverFileChannelCache(@NotNull Path path) {
@@ -807,7 +803,7 @@ public class PersistentHashMapValueStorage {
     }
   }
 
-  private static class FileReader implements RAReader {
+  private static final class FileReader implements RAReader {
     private final FileChannel myFile;
 
     private FileReader(Path file) {

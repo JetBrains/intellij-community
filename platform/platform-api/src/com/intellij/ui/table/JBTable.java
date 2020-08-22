@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.table;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -32,16 +32,14 @@ import javax.swing.event.TableModelListener;
 import javax.swing.plaf.basic.BasicTableHeaderUI;
 import javax.swing.table.*;
 import java.awt.*;
-import java.awt.event.KeyEvent;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionAdapter;
+import java.awt.event.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EventObject;
+import java.util.function.Predicate;
 
 import static com.intellij.ui.components.JBViewport.FORCE_VISIBLE_ROW_COUNT_KEY;
 
@@ -404,6 +402,40 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
                                       KeyboardFocusManager.DOWN_CYCLE_TRAVERSAL_KEYS)) {
       setFocusTraversalKeys(each, m.getDefaultFocusTraversalKeys(each));
     }
+  }
+
+  public void setupEasyFocusTraversing() {
+    wrapAction("TAB", table -> {
+      if (table.getRowCount() == 0 ||
+          table.getSelectionModel().getLeadSelectionIndex() == table.getRowCount() - 1 &&
+          table.getColumnModel().getSelectionModel().getLeadSelectionIndex() == table.getColumnCount() - 1) {
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().focusNextComponent();
+        return true;
+      }
+      return false;
+    });
+    wrapAction("shift TAB", table -> {
+      if (table.getRowCount() == 0 ||
+          table.getSelectionModel().getLeadSelectionIndex() == 0 &&
+          table.getColumnModel().getSelectionModel().getLeadSelectionIndex() == 0) {
+        KeyboardFocusManager.getCurrentKeyboardFocusManager().focusPreviousComponent();
+        return true;
+      }
+      return false;
+    });
+  }
+
+  private void wrapAction(String shortcut, Predicate<JTable> predicate) {
+    Object actionKey = getInputMap(JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).get(KeyStroke.getKeyStroke(shortcut));
+    Action action = getActionMap().get(actionKey);
+    getActionMap().put(actionKey, new AbstractAction() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        if (!predicate.test(JBTable.this)) {
+          action.actionPerformed(e);
+        }
+      }
+    });
   }
 
   @NotNull
@@ -809,7 +841,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
       return false;
     }
 
-    private class TableRowSorterModelWrapper extends ModelWrapper<TableModel, Integer> {
+    private final class TableRowSorterModelWrapper extends ModelWrapper<TableModel, Integer> {
       private final TableModel myModel;
 
       private TableRowSorterModelWrapper(@NotNull TableModel model) {
@@ -1093,6 +1125,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
     }
 
     protected boolean canMoveOrResizeColumn(int modelIndex) {
+      if (table.getRowCount() == 0) return false;
       return true;
     }
   }
@@ -1206,7 +1239,7 @@ public class JBTable extends JTable implements ComponentWithEmptyText, Component
 
     @Override
     public void mouseMoved(@NotNull MouseEvent e) {
-      if (isOnBorder(e)) return;
+      if (isOnBorder(e) || header.getTable().getRowCount() == 0) return;
       mouseInputListener.mouseMoved(convertMouseEvent(e));
     }
 

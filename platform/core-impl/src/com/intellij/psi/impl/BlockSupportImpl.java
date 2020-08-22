@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.impl;
 
@@ -33,6 +33,7 @@ import com.intellij.util.diff.DiffTree;
 import com.intellij.util.diff.DiffTreeChangeBuilder;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import com.intellij.util.diff.ShallowNodeComparator;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -162,7 +163,7 @@ public class BlockSupportImpl extends BlockSupport {
   @Nullable
   protected static ASTNode tryReparseNode(@NotNull IReparseableElementTypeBase reparseable, @NotNull ASTNode node, @NotNull CharSequence newTextStr,
                                           @NotNull PsiManager manager, @NotNull Language baseLanguage, @NotNull CharTable charTable) {
-    if (!reparseable.isParsable(node.getTreeParent(), newTextStr, baseLanguage, manager.getProject())) {
+    if (!reparseable.isReparseable(node, newTextStr, baseLanguage, manager.getProject())) {
       return null;
     }
     ASTNode chameleon;
@@ -193,12 +194,12 @@ public class BlockSupportImpl extends BlockSupport {
   }
 
   private static void reportInconsistentLength(PsiFile file, CharSequence newFileText, ASTNode node, int start, int end) {
-    String message = "Index out of bounds: type=" + node.getElementType() +
-                     "; file=" + file +
-                     "; file.class=" + file.getClass() +
-                     "; start=" + start +
-                     "; end=" + end +
-                     "; length=" + node.getTextLength();
+    @NonNls String message = "Index out of bounds: type=" + node.getElementType() +
+                             "; file=" + file +
+                             "; file.class=" + file.getClass() +
+                             "; start=" + start +
+                             "; end=" + end +
+                             "; length=" + node.getTextLength();
     String newTextBefore = newFileText.subSequence(0, start).toString();
     String oldTextBefore = file.getText().subSequence(0, start).toString();
     if (oldTextBefore.equals(newTextBefore)) {
@@ -281,7 +282,7 @@ public class BlockSupportImpl extends BlockSupport {
     return newFile;
   }
 
-  private static String details(FileViewProvider providerCopy, FileViewProvider viewProvider) {
+  private static @NonNls String details(FileViewProvider providerCopy, FileViewProvider viewProvider) {
     return "; languages: " + viewProvider.getLanguages() +
            "; base: " + viewProvider.getBaseLanguage() +
            "; copy: " + providerCopy +
@@ -381,38 +382,5 @@ public class BlockSupportImpl extends BlockSupport {
       fileImpl.putUserData(TREE_DEPTH_LIMIT_EXCEEDED, Boolean.TRUE);
     }
     return childTooDeep;
-  }
-
-  public static void sendBeforeChildrenChangeEvent(@NotNull PsiManagerImpl manager, @NotNull PsiElement scope, boolean isGenericChange) {
-    if (!scope.isPhysical()) {
-      manager.beforeChange(false);
-      return;
-    }
-    PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(manager);
-    event.setParent(scope);
-    event.setFile(scope.getContainingFile());
-    TextRange range = scope.getTextRange();
-    event.setOffset(range == null ? 0 : range.getStartOffset());
-    event.setOldLength(scope.getTextLength());
-    // the "generic" event is being sent on every PSI change. It does not carry any specific info except the fact that "something has changed"
-    event.setGenericChange(isGenericChange);
-    manager.beforeChildrenChange(event);
-  }
-
-  public static void sendAfterChildrenChangedEvent(@NotNull PsiManagerImpl manager,
-                                                   @NotNull PsiFile scope,
-                                                   int oldLength,
-                                                   boolean isGenericChange) {
-    if (!scope.isPhysical()) {
-      manager.afterChange(false);
-      return;
-    }
-    PsiTreeChangeEventImpl event = new PsiTreeChangeEventImpl(manager);
-    event.setParent(scope);
-    event.setFile(scope);
-    event.setOffset(0);
-    event.setOldLength(oldLength);
-    event.setGenericChange(isGenericChange);
-    manager.childrenChanged(event);
   }
 }

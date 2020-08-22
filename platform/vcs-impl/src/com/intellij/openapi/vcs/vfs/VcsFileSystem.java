@@ -28,9 +28,9 @@ public class VcsFileSystem extends DeprecatedVirtualFileSystem implements NonPhy
    * @deprecated Use {@link #getCouldNotImplementMessage()} instead
    */
   @Deprecated
-  public static final String COULD_NOT_IMPLEMENT_MESSAGE = "Could not implement";
+  public static final String COULD_NOT_IMPLEMENT_MESSAGE = "Could not implement"; //NON-NLS
 
-  private static final String PROTOCOL = "vcs";
+  private static final String PROTOCOL = "vcs";  //NON-NLS
 
   public static VcsFileSystem getInstance() {
     return (VcsFileSystem)VirtualFileManager.getInstance().getFileSystem(PROTOCOL);

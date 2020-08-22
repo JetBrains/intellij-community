@@ -16,6 +16,7 @@
 package com.intellij.remote.ext;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -25,14 +26,14 @@ public class PathMappingType {
   public static final PathMappingType DEPLOYMENT = new PathMappingType(AllIcons.Ide.Readonly, "From deployment configuration:");
 
   @Nullable private final Icon myIcon;
-  @Nullable private final String myTooltip;
+  @NlsContexts.Tooltip @Nullable private final String myTooltip;
 
   public PathMappingType() {
     myIcon = null;
     myTooltip = null;
   }
 
-  public PathMappingType(@Nullable Icon icon, @Nullable String tooltip) {
+  public PathMappingType(@Nullable Icon icon, @NlsContexts.Tooltip @Nullable String tooltip) {
     myIcon = icon;
     myTooltip = tooltip;
   }
@@ -42,6 +43,7 @@ public class PathMappingType {
     return myIcon;
   }
 
+  @NlsContexts.Tooltip
   @Nullable
   public String getTooltip() {
     return myTooltip;

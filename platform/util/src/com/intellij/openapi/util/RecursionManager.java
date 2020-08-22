@@ -80,7 +80,9 @@ public final class RecursionManager {
   public static <Key> RecursionGuard<Key> createGuard(@NonNls final String id) {
     return new RecursionGuard<Key>() {
       @Override
-      public <T> T doPreventingRecursion(@NotNull Key key, boolean memoize, @NotNull Computable<T> computation) {
+      public <T, E extends Throwable> @Nullable T computePreventingRecursion(@NotNull Key key,
+                                                                             boolean memoize,
+                                                                             @NotNull ThrowableComputable<T, E> computation) throws E{
         MyKey realKey = new MyKey(id, key, true);
         final CalculationStack stack = ourStack.get();
 
@@ -348,7 +350,7 @@ public final class RecursionManager {
     }
   }
 
-  private static final String[] toleratedFrames = {
+  private static final @NonNls String[] toleratedFrames = {
     "com.intellij.psi.impl.source.xml.XmlAttributeImpl.getDescriptor(", // IDEA-228451
     "org.jetbrains.plugins.ruby.ruby.codeInsight.symbols.structure.util.SymbolHierarchy.getAncestorsCaching(", // RUBY-25487
     "com.intellij.lang.aspectj.psi.impl.PsiInterTypeReferenceImpl.", // IDEA-228779

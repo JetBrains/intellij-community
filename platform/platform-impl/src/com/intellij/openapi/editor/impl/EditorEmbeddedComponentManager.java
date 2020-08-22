@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.Disposable;
@@ -31,7 +31,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 
-public class EditorEmbeddedComponentManager {
+public final class EditorEmbeddedComponentManager {
   private static final Key<ComponentInlays> COMPONENT_INLAYS_KEY = Key.create("editor.embedded.component.inlays");
   private static final int RESIZE_POINT_DELTA = JBUI.scale(5);
 
@@ -61,7 +61,7 @@ public class EditorEmbeddedComponentManager {
     return COMPONENT_INLAYS_KEY.get(editor);
   }
 
-  public static class ResizePolicy {
+  public static final class ResizePolicy {
     private static final int RIGHT = 2;
     private static final int BOTTOM = RIGHT * 2;
 

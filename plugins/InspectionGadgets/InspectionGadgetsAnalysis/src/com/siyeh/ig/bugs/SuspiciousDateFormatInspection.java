@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -53,7 +54,7 @@ public class SuspiciousDateFormatInspection extends AbstractBaseJavaLocalInspect
           }
         }
       }
-      
+
       private void processExpression(@NotNull PsiExpression expression) {
         if (expression instanceof PsiLiteralExpression) {
           processLiteral((PsiLiteralExpression)expression);
@@ -155,7 +156,7 @@ public class SuspiciousDateFormatInspection extends AbstractBaseJavaLocalInspect
       }
       this.length = length;
     }
-    
+
     public String fixed() {
       return Character.isUpperCase(character) ? toString().toLowerCase(Locale.ROOT) : toString().toUpperCase(Locale.ROOT);
     }
@@ -165,8 +166,8 @@ public class SuspiciousDateFormatInspection extends AbstractBaseJavaLocalInspect
       return StringUtil.repeat(String.valueOf(character), length);
     }
   }
-  
-  private static class Problem {
+
+  private static final class Problem {
     final Token token;
     final String usedName;
     final String intendedName;
@@ -178,7 +179,7 @@ public class SuspiciousDateFormatInspection extends AbstractBaseJavaLocalInspect
     }
 
     @Override
-    public String toString() {
+    public @InspectionMessage String toString() {
       String key = Character.isUpperCase(token.character) ? "inspection.suspicious.date.format.message.upper"
                                                           : "inspection.suspicious.date.format.message.lower";
       return InspectionGadgetsBundle.message(key, token, usedName, token.fixed(), intendedName);

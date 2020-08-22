@@ -157,6 +157,10 @@ public interface Git {
 
 
   @NotNull
+  GitCommandResult setUpstream(@NotNull GitRepository repository,
+                               @NotNull String upstreamBranchName,
+                               @NotNull String branchName);
+  @NotNull
   GitCommandResult branchCreate(@NotNull GitRepository repository, @NotNull String branchName, @NotNull String startPoint, boolean force);
 
   @NotNull

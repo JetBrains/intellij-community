@@ -38,7 +38,7 @@ public class XmlDeprecatedElementInspection extends XmlSuppressableInspectionToo
         if (checkDeprecated(tag.getDescriptor(), pattern)) {
           ASTNode nameNode = XmlChildRole.START_TAG_NAME_FINDER.findChild(tag.getNode());
           if (nameNode != null) {
-            holder.registerProblem(nameNode.getPsi(), XmlAnalysisBundle.message("the.tag.is.marked.as.deprecated"), ProblemHighlightType.LIKE_DEPRECATED);
+            holder.registerProblem(nameNode.getPsi(), XmlAnalysisBundle.message("xml.inspections.the.tag.is.marked.as.deprecated"), ProblemHighlightType.LIKE_DEPRECATED);
           }
         }
       }
@@ -46,7 +46,8 @@ public class XmlDeprecatedElementInspection extends XmlSuppressableInspectionToo
       @Override
       public void visitXmlAttribute(XmlAttribute attribute) {
         if (checkDeprecated(attribute.getDescriptor(), pattern)) {
-          holder.registerProblem(attribute.getNameElement(), XmlAnalysisBundle.message("the.attribute.is.marked.as.deprecated"), ProblemHighlightType.LIKE_DEPRECATED);
+          holder.registerProblem(attribute.getNameElement(), XmlAnalysisBundle.message(
+            "xml.inspections.the.attribute.is.marked.as.deprecated"), ProblemHighlightType.LIKE_DEPRECATED);
         }
       }
     };

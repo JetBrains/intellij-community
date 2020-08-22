@@ -33,6 +33,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgBundle;
+import org.zmlx.hg4idea.HgDisposable;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.command.HgBookmarkCommand;
@@ -158,8 +159,8 @@ public class HgBranchPopupActions {
     @NotNull final HgRepository myPreselectedRepo;
 
     HgCloseBranchAction(@NotNull List<HgRepository> repositories, @NotNull HgRepository preselectedRepo) {
-      super(HgBundle.message("action.hg4idea.branch.close", repositories.size()),
-            HgBundle.message("action.hg4idea.branch.close.description", repositories.size()),
+      super(HgBundle.messagePointer("action.hg4idea.branch.close", repositories.size()),
+            HgBundle.messagePointer("action.hg4idea.branch.close.description", repositories.size()),
             AllIcons.Actions.Cancel);
       myRepositories = repositories;
       myPreselectedRepo = preselectedRepo;
@@ -186,7 +187,7 @@ public class HgBranchPopupActions {
       HgCloseBranchExecutor closeBranchExecutor = vcs.getCloseBranchExecutor();
       closeBranchExecutor.setRepositories(myRepositories);
       CommitChangeListDialog.commitChanges(project, changesForRepositories, changesForRepositories, activeChangeList,
-                                           Collections.singletonList(closeBranchExecutor), false, vcs, "Close Branch", null, false);
+                                           Collections.singletonList(closeBranchExecutor), false, vcs, "Close Branch", null, false); //NON-NLS
     }
 
     @Override
@@ -202,7 +203,9 @@ public class HgBranchPopupActions {
     @NotNull final HgRepository myPreselectedRepo;
 
     HgNewBookmarkAction(@NotNull List<HgRepository> repositories, @NotNull HgRepository preselectedRepo) {
-      super(HgBundle.message("action.hg4idea.bookmark.new"), HgBundle.message("action.hg4idea.bookmark.new.description"), AllIcons.General.Add);
+      super(HgBundle.messagePointer("action.hg4idea.bookmark.new"),
+            HgBundle.messagePointer("action.hg4idea.bookmark.new.description"),
+            AllIcons.General.Add);
       myRepositories = repositories;
       myPreselectedRepo = preselectedRepo;
     }
@@ -314,12 +317,12 @@ public class HgBranchPopupActions {
     private static class DeleteBookmarkAction extends HgBranchAbstractAction {
 
       DeleteBookmarkAction(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull String branchName) {
-        super(project, CommonBundle.message("button.delete"), repositories, branchName);
+        super(project, CommonBundle.messagePointer("button.delete"), repositories, branchName);
       }
 
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
-        BackgroundTaskUtil.executeOnPooledThread(myProject, () -> {
+        BackgroundTaskUtil.executeOnPooledThread(HgDisposable.getInstance(myProject), () -> {
           for (HgRepository repository : myRepositories) {
             HgBookmarkCommand.deleteBookmarkSynchronously(myProject, repository.getRoot(), myBranchName);
           }

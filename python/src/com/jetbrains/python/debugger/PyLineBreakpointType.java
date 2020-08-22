@@ -33,11 +33,13 @@ import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.breakpoints.SuspendPolicy;
 import com.intellij.xdebugger.breakpoints.XLineBreakpointTypeBase;
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
 import com.jetbrains.python.sdk.PythonSdkUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,7 +48,6 @@ import java.util.Set;
 
 public class PyLineBreakpointType extends XLineBreakpointTypeBase {
   public static final String ID = "python-line";
-  private static final String NAME = "Python Line Breakpoint";
 
   private final static Set<IElementType> UNSTOPPABLE_ELEMENT_TYPES = Sets.newHashSet(PyTokenTypes.TRIPLE_QUOTED_STRING,
                                                                                      PyTokenTypes.SINGLE_QUOTED_STRING,
@@ -57,10 +58,10 @@ public class PyLineBreakpointType extends XLineBreakpointTypeBase {
   private final static Class<? extends PsiElement>[] UNSTOPPABLE_ELEMENTS = new Class[]{PsiWhiteSpace.class, PsiComment.class};
 
   public PyLineBreakpointType() {
-    super(ID, NAME, new PyDebuggerEditorsProvider());
+    super(ID, PyBundle.message("debugger.line.breakpoint.type"), new PyDebuggerEditorsProvider());
   }
 
-  public PyLineBreakpointType(@NotNull final String id, @NotNull final String title, @Nullable XDebuggerEditorsProvider editorsProvider) {
+  public PyLineBreakpointType(@NotNull final String id, @NotNull @Nls final String title, @Nullable XDebuggerEditorsProvider editorsProvider) {
     super(id, title, editorsProvider);
   }
 

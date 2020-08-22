@@ -6,6 +6,7 @@ import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.theoryinpractice.testng.model.TestType;
@@ -20,6 +21,10 @@ public class AbstractTestNGSuiteConfigurationProducer extends TestNGConfiguratio
     final PsiElement element = context.getPsiLocation();
     final PsiFile containingFile = element != null ? element.getContainingFile() : null;
     if (containingFile == null) return false;
+    if (JavaPsiFacade.getInstance(configuration.project)
+          .findClass(TestNGUtil.TEST_ANNOTATION_FQN, containingFile.getResolveScope()) != null) {
+      return false;
+    }
     final VirtualFile virtualFile = containingFile.getVirtualFile();
     if (virtualFile == null || !virtualFile.isValid()) return false;
     if (!TestNGUtil.isTestngSuiteFile(virtualFile)) return false;

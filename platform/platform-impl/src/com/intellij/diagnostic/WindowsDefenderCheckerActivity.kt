@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.util.ui.UIUtil
 import java.nio.file.Path
 
@@ -29,8 +30,8 @@ class WindowsDefenderCheckerActivity : StartupActivity.Background {
 
       val nonExcludedPaths = checkResult.pathStatus.filter { !it.value }.keys
       val notification = WindowsDefenderNotification(
-        DiagnosticBundle.message("virus.scanning.warn.message", ApplicationNamesInfo.getInstance().fullProductName,
-                                 nonExcludedPaths.joinToString("<br/>")),
+        DiagnosticBundle.message("virus.scanning.warn.title"),
+        windowsDefenderChecker.getNotificationText(nonExcludedPaths),
         nonExcludedPaths
       )
       notification.isImportant = true
@@ -44,10 +45,10 @@ class WindowsDefenderCheckerActivity : StartupActivity.Background {
   }
 }
 
-class WindowsDefenderNotification(text: String, val paths: Collection<Path>) :
-  Notification(NotificationGroup.createIdWithTitle("System Health", IdeBundle.message("notification.group.system.health")), "", text, NotificationType.WARNING), NotificationFullContent
+class WindowsDefenderNotification(@NlsContexts.NotificationTitle title: String, @NlsContexts.NotificationContent text: String, val paths: Collection<Path>) :
+  Notification(NotificationGroup.createIdWithTitle("System Health", IdeBundle.message("notification.group.system.health")), title, text, NotificationType.WARNING), NotificationFullContent
 
-class WindowsDefenderFixAction(val paths: Collection<Path>) : NotificationAction("Fix...") {
+class WindowsDefenderFixAction(val paths: Collection<Path>) : NotificationAction(DiagnosticBundle.message("virus.scanning.fix.action")) {
   override fun actionPerformed(e: AnActionEvent, notification: Notification) {
     val rc = Messages.showDialog(
       e.project,

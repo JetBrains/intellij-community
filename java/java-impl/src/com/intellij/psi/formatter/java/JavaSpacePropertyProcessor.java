@@ -45,7 +45,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.*;
 
-public class JavaSpacePropertyProcessor extends JavaElementVisitor {
+public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
   private static final Logger LOG = Logger.getInstance(JavaSpacePropertyProcessor.class);
 
   private static final TokenSet REF_LIST_KEYWORDS = TokenSet.create(
@@ -1228,10 +1228,10 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
   @Override
   public void visitRecordHeader(PsiRecordHeader recordHeader) {
     if (myType2 == JavaTokenType.RPARENTH) {
-      createParenthSpace(myJavaSettings.RPAREN_ON_NEW_LINE_IN_RECORD_HEADER, false);
+      createParenthSpace(myJavaSettings.RPAREN_ON_NEW_LINE_IN_RECORD_HEADER, myJavaSettings.SPACE_WITHIN_RECORD_HEADER);
     }
     else if (myType1 == JavaTokenType.LPARENTH) {
-      createParenthSpace(myJavaSettings.NEW_LINE_AFTER_LPAREN_IN_RECORD_HEADER, false);
+      createParenthSpace(myJavaSettings.NEW_LINE_AFTER_LPAREN_IN_RECORD_HEADER, myJavaSettings.SPACE_WITHIN_RECORD_HEADER);
     }
     else if (myChild1.getElementType() == JavaTokenType.COMMA) {
       createSpaceInCode(mySettings.SPACE_AFTER_COMMA);
@@ -1834,6 +1834,16 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
   }
 
+  @Override
+  public void visitRecordComponent(PsiRecordComponent recordComponent) {
+    if (myType1 == JavaElementType.TYPE && myType2 == JavaTokenType.IDENTIFIER) {
+      createSpaceInCode(true);
+    }
+    else if (myType1 == JavaElementType.MODIFIER_LIST && myType2 == JavaElementType.TYPE) {
+      createSpaceInCode(true);
+    }
+  }
+
   public static Spacing getSpacing(Block node, CommonCodeStyleSettings settings, JavaCodeStyleSettings javaSettings) {
     return new JavaSpacePropertyProcessor(node, settings, javaSettings).myResult;
   }
@@ -1854,6 +1864,9 @@ public class JavaSpacePropertyProcessor extends JavaElementVisitor {
     IElementType type1 = token1.getElementType();
     IElementType type2 = token2.getElementType();
     if (!(type1 instanceof IJavaElementType && type2 instanceof IJavaElementType)) return true;
+
+    // A workaround for IDEA-197644. The lexer below generates GT,EQ instead of GE.
+    if (type1 == JavaTokenType.GE || type2 == JavaTokenType.GE) return true;
 
     Pair<IElementType, IElementType> key = pair(type1, type2);
     Boolean result = ourTokenStickingMatrix.get(key);

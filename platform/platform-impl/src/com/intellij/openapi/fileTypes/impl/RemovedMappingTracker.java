@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.openapi.fileTypes.ExtensionFileNameMatcher;
@@ -11,8 +11,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 import java.util.function.BiPredicate;
 
-class RemovedMappingTracker {
-  public static class RemovedMapping {
+final class RemovedMappingTracker {
+  public static final class RemovedMapping {
     private final FileNameMatcher myFileNameMatcher;
     private final String myFileTypeName;
     private boolean myApproved;

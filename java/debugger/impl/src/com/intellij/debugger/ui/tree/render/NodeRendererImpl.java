@@ -2,6 +2,7 @@
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerContext;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContext;
@@ -176,7 +177,7 @@ public abstract class NodeRendererImpl implements NodeRenderer {
 
     @Override
     public void customizeRenderer(SimpleColoredComponent renderer) {
-      renderer.append(myRenderer.getName() + " renderer");
+      renderer.append(JavaDebuggerBundle.message("renderer.name", myRenderer.getName()));
     }
 
     @Override

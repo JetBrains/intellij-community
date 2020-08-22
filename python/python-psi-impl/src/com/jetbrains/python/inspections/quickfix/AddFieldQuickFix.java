@@ -8,15 +8,14 @@ import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.PythonTemplateRunner;
 import com.jetbrains.python.PythonUiService;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -133,11 +132,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
           else {
             builder.replaceElement(leftExpression.getLastChild(), myIdentifier);
           }
-          final VirtualFile virtualFile = file.getVirtualFile();
-          if (virtualFile == null) return;
-          final Editor editor = PythonUiService.getInstance().openTextEditor(file.getProject(), virtualFile);
-          if (editor == null) return;
-          builder.run(editor, false);
+          PythonTemplateRunner.runTemplate(file, builder);
         }
       }
     }
@@ -218,7 +213,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
           else {
             seen = true;
           }
-          sb.append(params[i].getText());
+          sb.append(params[i].getName());
         }
         sb.append(")");
         functionText += "    " + sb;
@@ -233,7 +228,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
     );
   }
 
-  private static class CreateFieldCallback implements Function<String, PyStatement> {
+  private static final class CreateFieldCallback implements Function<String, PyStatement> {
     private final Project myProject;
     private final String myItemName;
     private final String myInitializer;

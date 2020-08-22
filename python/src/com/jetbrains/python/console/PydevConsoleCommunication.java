@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -329,7 +330,7 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
   }
 
   private <T> void executeBackgroundTaskSuppressException(Callable<T> task,
-                                                          String userVisibleMessage,
+                                                          @NlsContexts.ProgressTitle String userVisibleMessage,
                                                           String errorLogMessage) {
     try {
       executeBackgroundTask(task, false, userVisibleMessage, errorLogMessage);
@@ -340,7 +341,10 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
   }
 
   @Nullable
-  private <T> T executeBackgroundTask(Callable<T> task, boolean waitForResult, String userVisibleMessage, String errorLogMessage)
+  private <T> T executeBackgroundTask(Callable<T> task,
+                                      boolean waitForResult,
+                                      @NlsContexts.ProgressTitle String userVisibleMessage,
+                                      String errorLogMessage)
     throws PyDebuggerException {
     final FutureResult<T> future = new FutureResult<>();
     new Task.Backgroundable(myProject, userVisibleMessage, false) {
@@ -653,7 +657,10 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
    * @param extraEnvs
    * @throws Exception if connection fails
    */
-  public void connectToDebugger(int localPort, @Nullable String debuggerHost, @NotNull Map<String, Boolean> dbgOpts, @NotNull Map<String, String> extraEnvs)
+  public void connectToDebugger(int localPort,
+                                @Nullable String debuggerHost,
+                                @NotNull Map<String, Boolean> dbgOpts,
+                                @NotNull Map<String, String> extraEnvs)
     throws Exception {
     if (waitingForInput) {
       throw new Exception("Can't connect debugger now, waiting for input");

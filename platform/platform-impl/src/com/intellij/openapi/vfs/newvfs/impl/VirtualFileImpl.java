@@ -31,11 +31,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.function.Supplier;
 
-/**
- * @author max
- */
-public class VirtualFileImpl extends VirtualFileSystemEntry {
+public final class VirtualFileImpl extends VirtualFileSystemEntry {
   VirtualFileImpl(int id, @NotNull VfsData.Segment segment, VirtualDirectoryImpl parent) {
     super(id, segment, parent);
     registerLink(getFileSystem());
@@ -92,8 +90,14 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
   private static final Key<byte[]> ourPreloadedContentKey = Key.create("preloaded.content.key");
 
   @Override
-  public void setPreloadedContentHint(byte[] preloadedContentHint) {
+  public <T> T computeWithPreloadedContentHint(byte @NotNull [] preloadedContentHint, @NotNull Supplier<? extends T> computable) {
     putUserData(ourPreloadedContentKey, preloadedContentHint);
+    try {
+      return computable.get();
+    }
+    finally {
+      putUserData(ourPreloadedContentKey, null);
+    }
   }
 
   @Override
@@ -124,13 +128,15 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
       // optimisation: take the opportunity to not load bytes again in getCharset()
       // use getByFile() to not fall into recursive trap from vfile.getFileType() which would try to load contents again to detect charset
       FileType fileType = ObjectUtils.notNull(((FileTypeManagerImpl)FileTypeManager.getInstance()).getByFile(this), UnknownFileType.INSTANCE);
-
-      try {
-        // execute in impatient mode to not deadlock when the indexing process waits under write action for the queue to load contents in other threads
-        // and that other thread asks JspManager for encoding which requires read action for PSI
-        ((ApplicationImpl)ApplicationManager.getApplication()).executeByImpatientReader(() -> LoadTextUtil.detectCharsetAndSetBOM(this, bytes, fileType));
-      }
-      catch (ProcessCanceledException ignored) {
+      if (fileType != UnknownFileType.INSTANCE && !fileType.isBinary()) {
+        try {
+          // execute in impatient mode to not deadlock when the indexing process waits under write action for the queue to load contents in other threads
+          // and that other thread asks JspManager for encoding which requires read action for PSI
+          ((ApplicationImpl)ApplicationManager.getApplication())
+            .executeByImpatientReader(() -> LoadTextUtil.detectCharsetAndSetBOM(this, bytes, fileType));
+        }
+        catch (ProcessCanceledException ignored) {
+        }
       }
     }
     return bytes;
@@ -176,19 +182,19 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
 
   @Override
   protected void setUserMap(@NotNull KeyFMap map) {
-    mySegment.setUserMap(myId, map);
+    getSegment().setUserMap(myId, map);
   }
 
   @NotNull
   @Override
   protected KeyFMap getUserMap() {
-    return mySegment.getUserMap(this, myId);
+    return getSegment().getUserMap(this, myId);
   }
 
   @Override
   protected boolean changeUserMap(@NotNull KeyFMap oldMap, @NotNull KeyFMap newMap) {
     VirtualDirectoryImpl.checkLeaks(newMap);
-    return mySegment.changeUserMap(myId, oldMap, UserDataInterner.internUserData(newMap));
+    return getSegment().changeUserMap(myId, oldMap, UserDataInterner.internUserData(newMap));
   }
 
   private void checkNotTooLarge(@Nullable Object requestor) throws FileTooBigException {
@@ -197,5 +203,10 @@ public class VirtualFileImpl extends VirtualFileSystemEntry {
 
   private boolean isTooLarge() {
     return FileUtilRt.isTooLarge(getLength());
+  }
+
+  @Override
+  public boolean isCaseSensitive() {
+    return getParent().isCaseSensitive();
   }
 }

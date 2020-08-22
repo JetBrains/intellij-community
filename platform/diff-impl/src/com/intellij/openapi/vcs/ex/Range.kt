@@ -28,15 +28,16 @@ open class Range(val line1: Int,
 
   class InnerRange(val line1: Int, val line2: Int, val type: Byte)
 
-  init {
-    assert(line1 != line2 || vcsLine1 != vcsLine2)
-  }
+  fun hasLines(): Boolean = line1 != line2
+  fun hasVcsLines(): Boolean = vcsLine1 != vcsLine2
 
-  val type: Byte get() {
-    if (line1 == line2) return DELETED
-    if (vcsLine1 == vcsLine2) return INSERTED
-    return MODIFIED
-  }
+  val type: Byte
+    get() {
+      if (!hasLines() && !hasVcsLines()) return MODIFIED
+      if (!hasLines()) return DELETED
+      if (!hasVcsLines()) return INSERTED
+      return MODIFIED
+    }
 
   override fun toString(): String = "[$vcsLine1, $vcsLine2) - [$line1, $line2)"
 

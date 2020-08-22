@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
@@ -222,7 +223,7 @@ public class ProjectSettingsPanel {
     }
   }
 
-  private class SettingColumn extends MyColumnInfo<CopyrightProfile> {
+  private final class SettingColumn extends MyColumnInfo<CopyrightProfile> {
     private SettingColumn() {
       super(CopyrightBundle.message("copyright.copyright.column"));
     }
@@ -279,7 +280,7 @@ public class ProjectSettingsPanel {
     }
   }
 
-  private class ScopeColumn extends MyColumnInfo<NamedScope> {
+  private final class ScopeColumn extends MyColumnInfo<NamedScope> {
     private ScopeColumn() {
       super(CopyrightBundle.message("copyright.scope.column"));
     }
@@ -299,7 +300,7 @@ public class ProjectSettingsPanel {
               final NamedScope scope = NamedScopesHolder.getScope(myProject, scopeName);
               if (scope == null) setForeground(JBColor.RED);
             }
-            setText(scopeName);
+            setText(((NamedScope)value).getPresentableName());
           }
           return this;
         }
@@ -347,7 +348,7 @@ public class ProjectSettingsPanel {
   }
 
   private static abstract class MyColumnInfo<T> extends ColumnInfo<ScopeSetting, T> {
-    protected MyColumnInfo(final String name) {
+    protected MyColumnInfo(final @NlsContexts.ColumnName String name) {
       super(name);
     }
 

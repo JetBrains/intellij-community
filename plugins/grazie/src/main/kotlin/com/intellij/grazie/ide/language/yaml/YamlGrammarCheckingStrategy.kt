@@ -6,6 +6,8 @@ import com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy.TextDomain
 import com.intellij.grazie.grammar.strategy.StrategyUtils
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.PsiCommentImpl
+import com.intellij.psi.tree.TokenSet
+import com.intellij.psi.util.elementType
 import org.jetbrains.yaml.YAMLTokenTypes.*
 
 class YamlGrammarCheckingStrategy : BaseGrammarCheckingStrategy {
@@ -29,5 +31,14 @@ class YamlGrammarCheckingStrategy : BaseGrammarCheckingStrategy {
   override fun getStealthyRanges(root: PsiElement, text: CharSequence) = when (root) {
     is PsiCommentImpl -> StrategyUtils.indentIndexes(text, setOf(' ', '\t', '#'))
     else -> StrategyUtils.emptyLinkedSet()
+  }
+
+  override fun getWhiteSpaceTokens() = TokenSet.create(WHITESPACE, INDENT, EOL)
+
+  override fun getRootsChain(root: PsiElement): List<PsiElement> {
+    return if (root.elementType == COMMENT) {
+      StrategyUtils.getNotSoDistantSiblingsOfTypes(this, root, setOf(COMMENT)).toList()
+    }
+    else super.getRootsChain(root)
   }
 }

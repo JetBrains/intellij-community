@@ -100,7 +100,7 @@ public class EqualsHashCodeTemplatesPanel extends NamedItemsListEditor<Couple<Te
 
   @Override
   protected String subjDisplayName() {
-    return "template";
+    return JavaBundle.message("equals.hashcode.dialog.title.template");
   }
 
   @Override

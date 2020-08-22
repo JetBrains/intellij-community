@@ -16,6 +16,7 @@
 package com.intellij.refactoring.typeMigration.rules.guava;
 
 import com.intellij.codeInspection.AnonymousCanBeLambdaInspection;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
 import com.intellij.refactoring.typeMigration.TypeEvaluator;
@@ -47,13 +48,13 @@ public abstract class BaseGuavaTypeConversionRule extends TypeConversionRule {
     }
   };
 
-  protected void fillSimpleDescriptors(Map<String, TypeConversionDescriptorBase> descriptorsMap) {}
+  protected void fillSimpleDescriptors(Map<@NlsSafe String, TypeConversionDescriptorBase> descriptorsMap) {}
 
   @Nullable
   protected TypeConversionDescriptorBase findConversionForMethod(PsiType from,
                                                                  PsiType to,
                                                                  @NotNull PsiMethod method,
-                                                                 @NotNull String methodName,
+                                                                 @NotNull @NlsSafe String methodName,
                                                                  PsiExpression context,
                                                                  TypeMigrationLabeler labeler) {
     return null;

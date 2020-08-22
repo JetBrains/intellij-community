@@ -1,11 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaLensSettings;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaTelescope;
 import com.intellij.codeInsight.hints.*;
-import com.intellij.codeInsight.hints.presentation.*;
+import com.intellij.codeInsight.hints.presentation.InlayPresentation;
+import com.intellij.codeInsight.hints.presentation.MouseButton;
+import com.intellij.codeInsight.hints.presentation.PresentationFactory;
+import com.intellij.codeInsight.hints.presentation.SequencePresentation;
 import com.intellij.codeInsight.hints.settings.InlayHintsConfigurable;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
@@ -16,7 +19,6 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.BlockInlayPriority;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.ui.awt.RelativePoint;
@@ -33,7 +35,7 @@ import java.util.List;
 
 public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
   private static final String CODE_LENS_ID = "JavaLens";
-  private static final String FUS_GROUP_ID = "java.lens";
+  public static final String FUS_GROUP_ID = "java.lens";
   private static final String USAGES_CLICKED_EVENT_ID = "usages.clicked";
   private static final String IMPLEMENTATIONS_CLICKED_EVENT_ID = "implementations.clicked";
   private static final String SETTING_CLICKED_EVENT_ID = "setting.clicked";
@@ -131,15 +133,14 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
           PresentationFactory factory = getFactory();
           Document document = editor.getDocument();
           int offset = getAnchorOffset(element);
-          int columnWidth = EditorUtil.getPlainSpaceWidth(editor);
           int line = document.getLineNumber(offset);
           int startOffset = document.getLineStartOffset(line);
           int column = offset - startOffset;
           List<InlayPresentation> presentations = new SmartList<>();
-          presentations.add(new SpacePresentation(column * columnWidth, 0));
+          presentations.add(factory.textSpacePlaceholder(column, true));
           for (InlResult inlResult : hints) {
             presentations.add(createPresentation(factory, element, editor, inlResult));
-            presentations.add(new SpacePresentation(columnWidth, 0));
+            presentations.add(factory.textSpacePlaceholder(1, true));
           }
           SequencePresentation shiftedPresentation = new SequencePresentation(presentations);
           InlayPresentation withSettings = addSettings(element.getProject(), factory, shiftedPresentation);
@@ -181,7 +182,7 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
     JMenuItem item = new JMenuItem(JavaBundle.message("button.text.settings"));
     item.addActionListener(e -> {
       FUCounterUsageLogger.getInstance().logEvent(project, FUS_GROUP_ID, SETTING_CLICKED_EVENT_ID);
-      openSettings(JavaLanguage.INSTANCE, project);
+      InlayHintsConfigurable.showSettingsDialogForLanguage(project, JavaLanguage.INSTANCE, model -> model.getId().equals(CODE_LENS_ID));
     });
     popupMenu.add(item);
 
@@ -189,14 +190,6 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
       popupMenu.show(e.getComponent(), e.getX(), e.getY());
       return Unit.INSTANCE;
     });
-  }
-
-  public static void openSettings(@NotNull Language language, @NotNull Project project) {
-    InlayHintsConfigurable.showSettingsDialogForLanguage(project, language, model -> model.getId().equals(CODE_LENS_ID));
-  }
-
-  public static JavaLensSettings getSettings() {
-    return InlayHintsSettings.instance().findSettings(KEY, JavaLanguage.INSTANCE, JavaLensSettings::new);
   }
 
   @NotNull
@@ -218,7 +211,10 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
     return KEY;
   }
 
-  @Nullable
+  @NotNull
+  public static SettingsKey<JavaLensSettings> getSettingsKey() {
+    return KEY;
+  }
   @Override
   public String getPreviewText() {
     return null;
@@ -237,6 +233,6 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
 
   @Override
   public boolean isVisibleInSettings() {
-    return false;
+    return true;
   }
 }

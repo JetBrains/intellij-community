@@ -1,10 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsContexts.TabTitle;
+import com.intellij.psi.codeStyle.CodeStyleConstraints;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.presentation.CodeStyleBoundedIntegerSettingPresentation;
 import com.intellij.psi.codeStyle.presentation.CodeStyleSelectSettingPresentation;
 import com.intellij.psi.codeStyle.presentation.CodeStyleSettingPresentation;
@@ -20,13 +25,15 @@ import javax.swing.*;
 import java.util.*;
 import java.util.function.Function;
 
+import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions.getInstance;
+
 public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
 
   private final MultiMap<String, String> myGroupToFields = new MultiMap<>();
   private Map<String, SettingsGroup> myFieldNameToGroup;
   private final CommaSeparatedIntegersField mySoftMarginsEditor =
     new CommaSeparatedIntegersField(null, 0, CodeStyleConstraints.MAX_RIGHT_MARGIN, "Optional");
-  private final JComboBox<String> myWrapOnTypingCombo = new ComboBox<>(WRAP_ON_TYPING_OPTIONS);
+  private final JComboBox<String> myWrapOnTypingCombo = new ComboBox<>(getInstance().WRAP_ON_TYPING_OPTIONS);
 
   public WrappingAndBracesPanel(CodeStyleSettings settings) {
     super(settings);
@@ -112,8 +119,8 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
   }
 
   @Override
-  protected String getTabTitle() {
-    return ApplicationBundle.message("wrapping.and.braces");
+  protected @TabTitle @NotNull String getTabTitle() {
+    return ApplicationBundle.message("settings.code.style.tab.title.wrapping.and.braces");
   }
 
   protected static class SettingsGroup {
@@ -191,7 +198,7 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
   }
 
   @NotNull
-  private String getSoftMarginsString(@NotNull List<Integer> intList) {
+  private @NlsContexts.Label String getSoftMarginsString(@NotNull List<Integer> intList) {
     if (intList.size() > 0) {
       return CommaSeparatedIntegersValueEditor.intListToString(intList);
     }
@@ -209,8 +216,8 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
     else if ("WRAP_ON_TYPING".equals(optionName)) {
       Object value = node.getValue();
       if (value instanceof String) {
-        for (int i = 0; i < CodeStyleSettingsCustomizable.WRAP_ON_TYPING_OPTIONS.length; i ++) {
-          if (CodeStyleSettingsCustomizable.WRAP_ON_TYPING_OPTIONS.equals(value)) {
+        for (int i = 0; i < getInstance().WRAP_ON_TYPING_OPTIONS.length; i++) {
+          if (getInstance().WRAP_ON_TYPING_OPTIONS.equals(value)) {
             myWrapOnTypingCombo.setSelectedIndex(i);
             break;
           }
@@ -229,7 +236,7 @@ public class WrappingAndBracesPanel extends OptionTableWithPreviewPanel {
     }
     else if (customEditor == myWrapOnTypingCombo) {
       int i = myWrapOnTypingCombo.getSelectedIndex();
-      return i >= 0 ? CodeStyleSettingsCustomizable.WRAP_ON_TYPING_OPTIONS[i] : null;
+      return i >= 0 ? getInstance().WRAP_ON_TYPING_OPTIONS[i] : null;
     }
     return super.getCustomNodeEditorValue(customEditor);
   }

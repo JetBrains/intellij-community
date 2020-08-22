@@ -85,6 +85,8 @@ To use the <b>Ant</b> tool window, select <b>View > Tool Windows > Ant Build</b>
     <compiler.task execute="BEFORE" implementation="com.intellij.lang.ant.config.impl.AntBeforeCompileTask"/>
     <compiler.task execute="AFTER" implementation="com.intellij.lang.ant.config.impl.AntAfterCompileTask"/>
     <postStartupActivity implementation="com.intellij.lang.ant.config.impl.AntShortcutStartupActivity"/>
+
+    <externalSystemUnlinkedProjectAware implementation="com.intellij.lang.ant.config.impl.AntUnlinkedProjectAware"/>
   </extensions>
 
   <actions>

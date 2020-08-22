@@ -1,9 +1,6 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui;
 
-import com.intellij.CommonBundle;
 import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.settings.DebuggerSettings;
@@ -83,8 +80,7 @@ public class RunHotswapDialog extends OptionsDialog {
 
   @Override
   protected Action @NotNull [] createActions(){
-    setOKButtonText(CommonBundle.getYesButtonText());
-    setCancelButtonText(CommonBundle.getNoButtonText());
+    setOKButtonText(JavaDebuggerBundle.message("hotswap.dialog.reload.action.text"));
     return new Action[]{getOKAction(), getCancelAction()};
   }
 

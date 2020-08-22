@@ -22,7 +22,7 @@ import com.intellij.openapi.wm.ex.IdeFrameEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.*
 import com.intellij.openapi.wm.impl.LinuxIdeMenuBar.Companion.doBindAppMenuOfParent
-import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent.Companion.getCustomContentHolder
+import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.BalloonLayout
 import com.intellij.ui.ComponentUtil
@@ -45,7 +45,7 @@ import javax.swing.*
 open class FrameWrapper @JvmOverloads constructor(project: Project?,
                                                   @param:NonNls protected open val dimensionKey: String? = null,
                                                   private val isDialog: Boolean = false,
-                                                  var title: String = "",
+                                                  @NlsContexts.DialogTitle var title: String = "",
                                                   open var component: JComponent? = null) : Disposable, DataProvider {
   open var preferredFocusedComponent: JComponent? = null
   private var images: List<Image>? = null
@@ -130,8 +130,21 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
     }
 
     if (IdeFrameDecorator.isCustomDecorationActive()) {
-      component = getCustomContentHolder(frame, component!!)
+      component?.let {
+
+
+        component = /*UIUtil.findComponentOfType(it, EditorsSplitters::class.java)?.let {
+          if(frame !is JFrame) null else {
+            val header = CustomHeader.createMainFrameHeader(frame, IdeMenuBar.createMenuBar())
+            getCustomContentHolder(frame, it, header)
+          }
+
+        } ?:*/
+
+          CustomFrameDialogContent.getCustomContentHolder(frame, it)
+      }
     }
+
     frame.contentPane.add(component!!, BorderLayout.CENTER)
     if (frame is JFrame) {
       frame.title = title
@@ -248,7 +261,7 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
     return if (CommonDataKeys.PROJECT.`is`(dataId)) project else null
   }
 
-  private fun getDataInner(dataId: String): Any? {
+  private fun getDataInner(@NonNls dataId: String): Any? {
     return when {
       CommonDataKeys.PROJECT.`is`(dataId) -> project
       else -> getData(dataId)

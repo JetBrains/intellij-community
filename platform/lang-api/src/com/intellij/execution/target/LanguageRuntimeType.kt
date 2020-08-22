@@ -4,7 +4,10 @@ package com.intellij.execution.target
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.target.LanguageRuntimeType.Companion.EXTENSION_NAME
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.options.Configurable
+import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
 import java.util.concurrent.CompletableFuture
 
 /**
@@ -45,9 +48,19 @@ abstract class LanguageRuntimeType<C : LanguageRuntimeConfiguration>(id: String)
    */
   open fun createIntrospector(config: C): Introspector? = null
 
+  /**
+   * List of all the volume types defined in the volume runtime
+   */
+  open fun volumeDescriptors(): List<VolumeDescriptor> = emptyList()
+
+  abstract fun createConfigurable(project: Project, config: C, target: TargetEnvironmentConfiguration): Configurable
+
   companion object {
     @JvmField
     val EXTENSION_NAME = ExtensionPointName.create<LanguageRuntimeType<*>>("com.intellij.executionTargetLanguageRuntimeType")
+
+    fun LanguageRuntimeType<*>.findVolumeDescriptor(type: VolumeType): VolumeDescriptor? =
+      this.volumeDescriptors().firstOrNull { it.type == type }
   }
 
   /**
@@ -61,5 +74,26 @@ abstract class LanguageRuntimeType<C : LanguageRuntimeConfiguration>(id: String)
 
   interface Introspector {
     fun introspect(subject: Introspectable): CompletableFuture<*>?
+  }
+
+  /**
+   * When launching of the application on target requires the grouping of the transferred files in the target, the
+   * [VolumeType] defines an unique ID to identify the specific group.
+   * <p/>
+   * Language runtime should allow user to configure the remote locations for volume roots along with the target-specific properties for
+   * the transfer.
+   */
+  data class VolumeType(val id: String)
+
+  /**
+   * Volume descriptor is identified by its [type] and defines the UI properties to explain user the semantic of the volume.
+   */
+  data class VolumeDescriptor(val type: VolumeType,
+                              @get:Nls val wizardLabel: String,
+                              @get:Nls val description: String,
+                              @get:NonNls val defaultPath: String) {
+
+    constructor(typeId: String, wizardLabel: String, description: String, defaultPath: String) :
+      this(VolumeType(typeId), wizardLabel, description, defaultPath)
   }
 }

@@ -24,6 +24,7 @@ import com.intellij.ide.util.TreeClassChooserFactory;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -38,7 +39,7 @@ import javax.swing.table.TableCellEditor;
 import java.awt.*;
 import java.util.Collection;
 
-public class UiUtils {
+public final class UiUtils {
 
   private UiUtils() {
   }
@@ -68,7 +69,7 @@ public class UiUtils {
     return panel;
   }
 
-  public static JPanel createAddRemoveTreeClassChooserPanel(final ListTable table, final String chooserTitle,
+  public static JPanel createAddRemoveTreeClassChooserPanel(final ListTable table, @NlsContexts.DialogTitle final String chooserTitle,
                                                             @NonNls String... ancestorClasses) {
     final ClassFilter filter;
     if (ancestorClasses.length == 0) {
@@ -132,8 +133,8 @@ public class UiUtils {
   }
 
   public static JPanel createTreeClassChooserList(final Collection<String> collection,
-                                                  String borderTitle,
-                                                  final String chooserTitle,
+                                                  @NlsContexts.BorderTitle String borderTitle,
+                                                  final @NlsContexts.DialogTitle String chooserTitle,
                                                   String... ancestorClasses) {
     final ClassFilter filter;
     if (ancestorClasses.length == 0) {
@@ -188,7 +189,7 @@ public class UiUtils {
     return optionsPanel;
   }
 
-  private static class SubclassFilter implements ClassFilter {
+  private static final class SubclassFilter implements ClassFilter {
 
     private final String[] ancestorClasses;
 

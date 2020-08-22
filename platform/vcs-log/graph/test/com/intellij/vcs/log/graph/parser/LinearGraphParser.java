@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.vcs.log.graph.parser;
 
@@ -96,7 +96,7 @@ public class LinearGraphParser {
     return new Pair<>(Integer.decode(in.substring(0, in.length() - 2)), in.charAt(in.length() - 1));
   }
 
-  private static class TestLinearGraphWithElementsInfo implements LinearGraph {
+  private static final class TestLinearGraphWithElementsInfo implements LinearGraph {
 
     private final List<GraphNode> myGraphNodes;
     private final MultiMap<Integer, GraphEdge> myUpEdges;

@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
@@ -25,9 +26,9 @@ import org.jetbrains.annotations.NotNull;
 
 public class RunRefactoringAction extends BaseRefactoringIntentionAction {
   private final RefactoringActionHandler myHandler;
-  private final String myCommandName;
+  private final @IntentionName String myCommandName;
 
-  public RunRefactoringAction(RefactoringActionHandler handler, String commandName) {
+  public RunRefactoringAction(RefactoringActionHandler handler, @IntentionName String commandName) {
     myHandler = handler;
     myCommandName = commandName;
   }

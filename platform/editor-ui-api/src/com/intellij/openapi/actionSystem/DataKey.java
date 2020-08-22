@@ -23,7 +23,7 @@ import java.util.concurrent.ConcurrentMap;
  * @see com.intellij.openapi.actionSystem.PlatformDataKeys
  * @see LangDataKeys
  */
-public class DataKey<T> implements ValueKey<T> {
+public final class DataKey<T> implements ValueKey<T> {
   private static final ConcurrentMap<String, DataKey> ourDataKeyIndex = new ConcurrentHashMap<>();
 
   private final String myName;

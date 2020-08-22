@@ -41,7 +41,7 @@ public final class UpDownHandler {
     }
   }
 
-  private static class SelectionMover {
+  private static final class SelectionMover {
     private JComboBox myCombo;
     private JList myList;
 

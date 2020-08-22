@@ -26,6 +26,8 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 public class ClsPsiTest extends LightIdeaTestCase {
   private static final String TEST_DATA_PATH = "/psi/cls/repo";
 
@@ -470,17 +472,15 @@ public class ClsPsiTest extends LightIdeaTestCase {
     File file1 = new File(PathManagerEx.getTestDataPath() + TEST_DATA_PATH + "/1_TestClass.class");
     FileUtil.copy(file1, testFile);
     VirtualFile copyVFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(testFile);
-
     ClsFileImpl clsFile = (ClsFileImpl)PsiManager.getInstance(getProject()).findFile(copyVFile);
     PsiElement mirror = clsFile.getMirror();
-
     assertTrue(clsFile.isValid());
     assertTrue(mirror.isValid());
 
     WriteAction.run(() -> copyVFile.delete(this));
     assertFalse(clsFile.isValid());
     assertFalse(mirror.isValid());
-    assertTrue(PsiInvalidElementAccessException.findOutInvalidationReason(mirror)
-                 .contains(PsiInvalidElementAccessException.findOutInvalidationReason(clsFile)));
+    assertThat(PsiInvalidElementAccessException.findOutInvalidationReason(mirror))
+      .contains(PsiInvalidElementAccessException.findOutInvalidationReason(clsFile));
   }
 }

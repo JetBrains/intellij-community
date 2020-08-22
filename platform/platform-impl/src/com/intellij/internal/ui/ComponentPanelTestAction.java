@@ -19,11 +19,11 @@ import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
+import com.intellij.ui.components.DropDownLink;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.ui.components.fields.ExtendableTextComponent;
 import com.intellij.ui.components.fields.ExtendableTextField;
-import com.intellij.ui.components.labels.DropDownLink;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.Alarm;
@@ -89,7 +89,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
   }
 
   @SuppressWarnings({"MethodMayBeStatic", "UseOfSystemOutOrSystemErr"})
-  private static class ComponentPanelTest extends DialogWrapper {
+  private static final class ComponentPanelTest extends DialogWrapper {
 
     private static final Set<String> ALLOWED_VALUES = ContainerUtil
       .set("one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen",
@@ -353,7 +353,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         { setIpad(JBUI.emptyInsets()); } // Reset standard pads
 
         @Override
-        protected void customizeCellRenderer(JTable table, @Nullable Object value, boolean selected,
+        protected void customizeCellRenderer(@NotNull JTable table, @Nullable Object value, boolean selected,
                                              boolean hasFocus, int row, int column) {
           if (value == null) {
             append("No data", SimpleTextAttributes.ERROR_ATTRIBUTES);
@@ -672,7 +672,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
       return JBUI.Panels.simplePanel().addToTop(panel);
     }
 
-    private class ProgressTimerRequest implements Runnable {
+    private final class ProgressTimerRequest implements Runnable {
       private final JProgressBar myProgressBar;
 
       private ProgressTimerRequest(JProgressBar progressBar) {

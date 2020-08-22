@@ -3,6 +3,7 @@ package com.intellij.psi;
 
 import com.intellij.lang.jvm.JvmAnnotation;
 import com.intellij.lang.jvm.annotation.JvmAnnotationAttribute;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NonNls;
@@ -53,8 +54,7 @@ public interface PsiAnnotation extends PsiAnnotationMemberValue, JvmAnnotation {
    * @return the class name, or null if the annotation is unresolved.
    */
   @Override
-  @Nullable
-  @NonNls
+  @Nullable @NlsSafe
   String getQualifiedName();
 
   /**
@@ -102,6 +102,17 @@ public interface PsiAnnotation extends PsiAnnotationMemberValue, JvmAnnotation {
    */
   @Nullable
   PsiAnnotationOwner getOwner();
+
+  /**
+   * @return the target of {@link #getNameReferenceElement()}, if it's an {@code @interface}, otherwise null
+   */
+  @Nullable
+  default PsiClass resolveAnnotationType() {
+    PsiJavaCodeReferenceElement element = getNameReferenceElement();
+    PsiElement declaration = element == null ? null : element.resolve();
+    if (!(declaration instanceof PsiClass) || !((PsiClass)declaration).isAnnotationType()) return null;
+    return (PsiClass)declaration;
+  }
 
   @NotNull
   @Override

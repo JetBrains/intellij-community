@@ -182,7 +182,7 @@
                 <clientProperties>
                   <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
                 </clientProperties>
-                <border type="etched" title="CDATA"/>
+                <border type="etched" title-resource-bundle="messages/XmlBundle" title-key="xml.code.style.border.title.cdata"/>
                 <children>
                   <component id="a3e4f" class="javax.swing.JLabel">
                     <constraints>
@@ -190,7 +190,7 @@
                     </constraints>
                     <properties>
                       <labelFor value="ecfb8"/>
-                      <text value="Whitespace around:"/>
+                      <text resource-bundle="messages/XmlBundle" key="xml.code.style.label.whitespace.around"/>
                     </properties>
                   </component>
                   <component id="9ab20" class="javax.swing.JCheckBox" binding="myKeepWhitespaceInsideCDATACheckBox">
@@ -198,7 +198,7 @@
                       <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                     </constraints>
                     <properties>
-                      <text value="Keep whitespace inside"/>
+                      <text resource-bundle="messages/XmlBundle" key="xml.code.style.checkbox.keep.whitespace.inside"/>
                     </properties>
                   </component>
                   <component id="ecfb8" class="javax.swing.JComboBox" binding="myWhiteSpaceAroundCDATA">

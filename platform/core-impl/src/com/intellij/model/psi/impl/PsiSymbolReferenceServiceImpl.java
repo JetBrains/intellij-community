@@ -41,7 +41,7 @@ final class PsiSymbolReferenceServiceImpl implements PsiSymbolReferenceService {
   @Override
   public @NotNull List<PsiSymbolReference> getReferences(@NotNull PsiElement element, @NotNull PsiSymbolReferenceHints hints) {
     List<PsiSymbolReference> result = ContainerUtil.newArrayList(element.getOwnReferences());
-    if (element instanceof PsiExternalReferenceHost) {
+    if (result.isEmpty() && element instanceof PsiExternalReferenceHost) {
       result.addAll(doGetExternalReferences((PsiExternalReferenceHost)element, hints));
     }
     return applyHints(result, hints);

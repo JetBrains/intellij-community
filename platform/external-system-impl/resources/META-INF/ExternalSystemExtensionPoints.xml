@@ -62,6 +62,9 @@
     <extensionPoint qualifiedName="com.intellij.externalIconProvider" beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.openapi.externalSystem.ui.ExternalSystemIconProvider"/>
     </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.externalSystemUnlinkedProjectAware"
+                    interface="com.intellij.openapi.externalSystem.autolink.ExternalSystemUnlinkedProjectAware"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.externalExecutionAware" beanClass="com.intellij.util.KeyedLazyInstanceEP" dynamic="true">
       <with attribute="implementationClass"
             implements="com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware"/>

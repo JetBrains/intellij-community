@@ -7,7 +7,7 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.OrderEnumerationHandler;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,7 +30,7 @@ public final class ModuleOrderEnumerator extends OrderEnumeratorBase {
 
   @Override
   protected void forEach(@NotNull PairProcessor<? super OrderEntry, ? super List<? extends OrderEnumerationHandler>> processor) {
-    processEntries(myRootModel, myRecursively ? new ObjectOpenHashSet<>() : null, true, getCustomHandlers(myRootModel.getModule()), processor);
+    processEntries(myRootModel, myRecursively ? CollectionFactory.createSmallMemoryFootprintSet() : null, true, getCustomHandlers(myRootModel.getModule()), processor);
   }
 
   @Override

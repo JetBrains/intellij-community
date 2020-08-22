@@ -25,7 +25,7 @@ from _pydev_imps._pydev_saved_modules import threading
 import traceback
 from _pydevd_bundle import pydevd_save_locals
 from _pydev_bundle.pydev_imports import Exec, execfile
-from _pydevd_bundle.pydevd_utils import to_string, VariableWithOffset
+from _pydevd_bundle.pydevd_utils import VariableWithOffset
 
 SENTINEL_VALUE = []
 DEFAULT_DF_FORMAT = "s"
@@ -600,9 +600,9 @@ def get_formatted_row_elements(row, iat, dim, cols, format, dtypes):
         val = iat[row, c] if dim > 1 else iat[row]
         col_formatter = get_column_formatter_by_type(format, dtypes[c])
         try:
-            yield ("%" + col_formatter) % val
+            yield ("%" + col_formatter) % (val, )
         except TypeError:
-            yield ("%" + DEFAULT_DF_FORMAT) % val
+            yield ("%" + DEFAULT_DF_FORMAT) % (val, )
 
 
 def array_default_format(type):
@@ -693,7 +693,7 @@ def dataframe_to_xml(df, name, roffset, coffset, rows, cols, format):
 def array_data_to_xml(rows, cols, get_row, format):
     xml = "<arraydata rows=\"%s\" cols=\"%s\"/>\n" % (rows, cols)
     for row in range(rows):
-        xml += "<row index=\"%s\"/>\n" % to_string(row)
+        xml += "<row index=\"%s\"/>\n" % row
         for value in get_row(row):
             xml += var_to_xml(value, '', format=format)
     return xml

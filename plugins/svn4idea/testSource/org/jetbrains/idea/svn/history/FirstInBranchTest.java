@@ -25,8 +25,8 @@ public class FirstInBranchTest extends SvnTestCase {
   private Url myRepositoryUrl;
 
   @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  public void before() throws Exception {
+    super.before();
 
     myRepositoryUrl = createUrl(myRepoUrl);
     myTrunkUrl = myRepositoryUrl.appendPath("trunk", true);

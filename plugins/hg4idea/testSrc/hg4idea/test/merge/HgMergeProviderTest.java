@@ -2,6 +2,7 @@
 package hg4idea.test.merge;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.merge.MergeData;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -29,7 +30,7 @@ public class HgMergeProviderTest extends HgPlatformTest {
     assertNotNull(myMergeProvider);
   }
 
-  public void testMerge2BranchesIfFileCreatedSeparatelyInBoth() {
+  public void testMerge2BranchesIfFileCreatedSeparatelyInBoth() throws Exception {
     cd(myRepository);
     hg("branch branchA");
     hg("commit -m 'create branchA' ");
@@ -46,7 +47,7 @@ public class HgMergeProviderTest extends HgPlatformTest {
     verifyMergeData(myRepository.findChild(aFile), "", "default", "a");
   }
 
-  public void testMerge2Branches() {
+  public void testMerge2Branches() throws Exception {
     cd(myRepository);
     String aFile = "A.txt";
     touch(aFile, "base");
@@ -168,7 +169,8 @@ public class HgMergeProviderTest extends HgPlatformTest {
     return Pair.create(parentFile, childFile);
   }
 
-  private void verifyMergeData(final VirtualFile file, String expectedBase, String expectedLocal, String expectedServer) {
+  private void verifyMergeData(final VirtualFile file,
+                               String expectedBase, String expectedLocal, String expectedServer) throws VcsException {
     EdtTestUtil.runInEdtAndWait(() -> {
       MergeData mergeData = myMergeProvider.loadRevisions(file);
       assertEquals(expectedBase, mergeData.ORIGINAL);

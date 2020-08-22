@@ -6,7 +6,7 @@ import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.ui.layout.LayoutAttractionPolicy
 import com.intellij.execution.ui.layout.PlaceInGrid
 import com.intellij.icons.AllIcons
-import com.intellij.icons.AllIcons.Actions.StartDebugger
+import com.intellij.ide.actions.TabListAction
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
@@ -146,35 +146,29 @@ class XDebugSessionTab2(
   override fun getWatchesContentId() = debuggerContentId
   override fun getFramesContentId() = debuggerContentId
 
-  override fun setWatchesInVariablesImpl() {
-    setWatchesInVariablesImpl(true)
-  }
+  override fun addVariablesAndWatches(session: XDebugSessionImpl) {
+    val variablesView: XVariablesView?
+    val watchesView: XVariablesView?
+    if (isWatchesInVariables) {
+      variablesView = XWatchesViewImpl(session, true)
+      registerView(DebuggerContentInfo.VARIABLES_CONTENT, variablesView)
+      variables = variablesView
 
-  private fun setWatchesInVariablesImpl(attach: Boolean) {
-    val session = mySession ?: return
-
-    unregisterView(DebuggerContentInfo.VARIABLES_CONTENT)
-    unregisterView(DebuggerContentInfo.WATCHES_CONTENT)
-
-    val watchesView = XWatchesViewImpl(session, isWatchesInVariables, true).apply {
-      myWatchesView = this
-      registerView(DebuggerContentInfo.WATCHES_CONTENT, this)
-
-      if (attach) attachViewToSession(session, this)
+      watchesView = null
+      myWatchesView = variablesView
+    } else {
+      variablesView = XVariablesView(session)
+      registerView(DebuggerContentInfo.VARIABLES_CONTENT, variablesView)
+      variables = variablesView
+      
+      watchesView = XWatchesViewImpl(session, false, true)
+      registerView(DebuggerContentInfo.WATCHES_CONTENT, watchesView)
+      myWatchesView = watchesView
     }
-
-    fun tryCreateVariables(session: XDebugSessionImpl) = if (isWatchesInVariables) null else XVariablesView(session)
-
-    val variablesView = tryCreateVariables(session).apply {
-      registerView(DebuggerContentInfo.VARIABLES_CONTENT, this ?: watchesView)
-      if (attach) attachViewToSession(session, this)
-    }
-
-    variables = variablesView ?: watchesView
 
     splitter.apply {
-      innerComponent = variablesView?.panel
-      lastComponent = watchesView.panel
+      innerComponent = variablesView.panel
+      lastComponent = watchesView?.panel
     }
 
     UIUtil.removeScrollBorder(splitter)
@@ -182,8 +176,11 @@ class XDebugSessionTab2(
     splitter.revalidate()
     splitter.repaint()
 
+    updateTraversalPolicy()
+  }
+
+  private fun updateTraversalPolicy() {
     focusTraversalPolicy.components = getComponents().asSequence().toList()
-    session.rebuildViews()
   }
 
   override fun initDebuggerTab(session: XDebugSessionImpl) {
@@ -192,10 +189,10 @@ class XDebugSessionTab2(
 
     framesView.setThreadsVisible(threadsIsVisible)
     splitter.firstComponent = xThreadsFramesView.mainPanel
-    setWatchesInVariablesImpl(false)
+    addVariablesAndWatches(session)
 
     val name = debuggerContentId
-    val content = myUi.createContent(name, splitter, XDebuggerBundle.message("xdebugger.debugger.tab.title"), StartDebugger, framesView.defaultFocusedComponent).apply {
+    val content = myUi.createContent(name, splitter, XDebuggerBundle.message("xdebugger.debugger.tab.title"), AllIcons.Toolwindows.ToolWindowDebugger, framesView.defaultFocusedComponent).apply {
       isCloseable = false
     }
 
@@ -224,7 +221,9 @@ class XDebugSessionTab2(
   }
   private fun getComponents(): Iterator<Component> {
     return iterator {
-      yield(xThreadsFramesView.threads)
+      if (threadsIsVisible)
+        yield(xThreadsFramesView.threads)
+
       yield(xThreadsFramesView.frames)
       val vars = variables ?: return@iterator
 
@@ -240,7 +239,13 @@ class XDebugSessionTab2(
 
       val singleContent = toolWindow.contentManager.contents.singleOrNull()
       val headerVisible = toolWindow.isHeaderVisible
-      val toolbar = DefaultActionGroup().apply {
+      val topRightToolbar = DefaultActionGroup().apply {
+        if (headerVisible) return@apply
+        addAll(toolWindow.decorator.headerToolbar.actions.filter { it != null && it !is TabListAction })
+      }
+      myUi.options.setTopRightToolbar(topRightToolbar, ActionPlaces.DEBUGGER_TOOLBAR)
+
+      val topMiddleToolbar = DefaultActionGroup().apply {
         if (singleContent == null || headerVisible) return@apply
 
         add(object : AnAction() {
@@ -249,13 +254,13 @@ class XDebugSessionTab2(
           }
 
           override fun update(e: AnActionEvent) {
-            e.presentation.text = "Close"
+            e.presentation.text = "Close debug session"
             e.presentation.icon = AllIcons.Actions.Close
           }
         })
-        addAll(toolWindow.decorator.headerToolbar.actions)
+        addSeparator()
       }
-      myUi.options.setTopRightToolbar(toolbar, ActionPlaces.DEBUGGER_TOOLBAR)
+      myUi.options.setTopMiddleToolbar(topMiddleToolbar, ActionPlaces.DEBUGGER_TOOLBAR)
 
       toolWindow.decorator.isHeaderVisible = headerVisible
 
@@ -277,7 +282,10 @@ class XDebugSessionTab2(
 
       add(object : ToggleAction() {
         override fun setSelected(e: AnActionEvent, state: Boolean) {
-          threadsIsVisible = state
+          if (threadsIsVisible != state) {
+            threadsIsVisible = state
+            updateTraversalPolicy()
+          }
           xThreadsFramesView.setThreadsVisible(state)
           Toggleable.setSelected(e.presentation, state)
         }

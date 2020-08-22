@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.project.Project;
@@ -33,6 +34,7 @@ import com.intellij.openapi.vcs.impl.PartialChangesUtil;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.concurrency.FutureResult;
@@ -90,7 +92,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
   private final Project myProject;
   public static final SimpleDateFormat COMMIT_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
-  private VcsUser myNextCommitAuthor = null; // The author for the next commit
+  private VcsUser myNextCommitAuthor; // The author for the next commit
   private boolean myNextCommitAmend; // If true, the next commit is amended
   private Date myNextCommitAuthorDate;
   private boolean myNextCommitSignOff;
@@ -141,7 +143,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
     return DvcsUtil.joinMessagesOrNull(messages);
   }
 
-  private static String loadMessage(@NotNull File messageFile, @NotNull String encoding) throws IOException {
+  private static String loadMessage(@NotNull File messageFile, @NotNull @NonNls String encoding) throws IOException {
     return FileUtil.loadFile(messageFile, encoding);
   }
 
@@ -187,10 +189,10 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
 
   @NotNull
   @Override
-  public List<VcsException> commit(@NotNull List<Change> changes,
-                                   @NotNull String commitMessage,
+  public List<VcsException> commit(@NotNull List<? extends Change> changes,
+                                   @NotNull @NonNls String commitMessage,
                                    @NotNull CommitContext commitContext,
-                                   @NotNull Set<String> feedback) {
+                                   @NotNull Set<? super String> feedback) {
     updateState(commitContext);
 
     List<VcsException> exceptions = new ArrayList<>();
@@ -245,7 +247,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
   @NotNull
   private List<VcsException> commitRepository(@NotNull GitRepository repository,
                                               @NotNull Collection<? extends CommitChange> changes,
-                                              @NotNull String message) {
+                                              @NotNull @NonNls String message) {
     List<VcsException> exceptions = new ArrayList<>();
     VirtualFile root = repository.getRoot();
 
@@ -312,7 +314,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
 
       List<FilePath> unmergedFiles = GitChangeUtils.getUnmergedFiles(repository);
       if (!unmergedFiles.isEmpty()) {
-        throw new VcsException("Committing is not possible because you have unmerged files.");
+        throw new VcsException(GitBundle.message("error.commit.cant.commit.with.unmerged.paths"));
       }
 
       // Check what is staged besides our changes
@@ -374,7 +376,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
                                                                       @NotNull Collection<? extends CommitChange> changes) throws VcsException {
     Set<String> changelistIds = map2SetNotNull(changes, change -> change.changelistId);
     if (changelistIds.isEmpty()) return Pair.create(EmptyRunnable.INSTANCE, emptyList());
-    if (changelistIds.size() != 1) throw new VcsException("Can't commit changes from multiple changelists at once");
+    if (changelistIds.size() != 1) throw new VcsException(GitBundle.message("error.commit.cant.commit.multiple.changelists"));
     String changelistId = changelistIds.iterator().next();
 
     Pair<List<PartialCommitHelper>, List<CommitChange>> result = computeAfterLSTManagerUpdate(repository.getProject(), () -> {
@@ -402,7 +404,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
       return Pair.create(helpers, partialChanges);
     });
 
-    if (result == null) throw new VcsException("Can't collect partial changes to commit");
+    if (result == null) throw new VcsException(GitBundle.message("error.commit.cant.collect.partial.changes"));
     List<PartialCommitHelper> helpers = result.first;
     List<CommitChange> partialChanges = result.second;
 
@@ -424,12 +426,17 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
       FilePath path = Objects.requireNonNull(change.afterPath);
       PartialCommitHelper helper = helpers.get(i);
       VirtualFile file = change.virtualFile;
-      if (file == null) throw new VcsException("Can't find file: " + path.getPath());
+      if (file == null) throw new VcsException(DiffBundle.message("cannot.find.file.error", path.getPresentableUrl()));
 
       GitIndexUtil.StagedFile stagedFile = getStagedFile(repository, change);
       boolean isExecutable = stagedFile != null && stagedFile.isExecutable();
 
       byte[] fileContent = convertDocumentContentToBytes(repository, helper.getContent(), file);
+
+      byte[] bom = file.getBOM();
+      if (bom != null && !ArrayUtil.startsWith(fileContent, bom)) {
+        fileContent = ArrayUtil.mergeArrays(bom, fileContent);
+      }
 
       GitIndexUtil.write(repository, path, fileContent, isExecutable);
     }
@@ -450,7 +457,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
   }
 
   private static byte @NotNull [] convertDocumentContentToBytes(@NotNull GitRepository repository,
-                                                                @NotNull String documentContent,
+                                                                @NotNull @NonNls String documentContent,
                                                                 @NotNull VirtualFile file) {
     String text;
 
@@ -510,8 +517,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
                                                        @NotNull List<? super VcsException> exceptions) {
     if (SystemInfo.isFileSystemCaseSensitive) return Collections.emptyList();
 
-    List<CommitChange> caseOnlyRenames = filter(changes, it -> !alreadyProcessed.contains(it) && isCaseOnlyRename(it));
-    if (caseOnlyRenames.isEmpty()) return caseOnlyRenames;
+    List<CommitChange> caseOnlyRenames = filter(changes, change -> !alreadyProcessed.contains(change) && isCaseOnlyRename(change));
+    if (caseOnlyRenames.isEmpty()) return Collections.emptyList();
 
     LOG.info("Committing case only rename: " + getLogString(repository.getRoot().getPath(), caseOnlyRenames) +
              " in " + getShortRepositoryName(repository));
@@ -561,6 +568,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
     }
   }
 
+  @NonNls
   @NotNull
   private static String getLogString(@NotNull String root, @NotNull Collection<? extends ChangedPath> changes) {
     return GitUtil.getLogString(root, changes, it -> it.beforePath, it -> it.afterPath);
@@ -569,7 +577,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
   @NotNull
   private Pair<Collection<CommitChange>, List<VcsException>> commitExplicitRenames(@NotNull GitRepository repository,
                                                                                    @NotNull Collection<CommitChange> changes,
-                                                                                   @NotNull String message) {
+                                                                                   @NotNull @NonNls String message) {
     List<GitCheckinExplicitMovementProvider> providers =
       filter(GitCheckinExplicitMovementProvider.EP_NAME.getExtensions(), it -> it.isEnabled(myProject));
 
@@ -838,8 +846,9 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
       Ref<Boolean> mergeAll = new Ref<>();
       try {
         ApplicationManager.getApplication().invokeAndWait(() -> {
-          String message = GitBundle.message("commit.partial.merge.message", partialOperation.getName());
-          SelectFilePathsDialog dialog = new SelectFilePathsDialog(project, files, message, null, "Commit All Files",
+          String message = GitBundle.message("commit.partial.merge.message", partialOperation.getIndex());
+          SelectFilePathsDialog dialog = new SelectFilePathsDialog(project, files, message, null,
+                                                                   GitBundle.message("button.commit.all.files"),
                                                                    CommonBundle.getCancelButtonText(), false);
           dialog.setTitle(GitBundle.getString("commit.partial.merge.title"));
           dialog.show();
@@ -911,10 +920,10 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
    */
   private static PartialOperation isMergeCommit(final VcsException ex) {
     String message = ex.getMessage();
-    if (message.contains("cannot do a partial commit during a merge")) {
+    if (message.contains("cannot do a partial commit during a merge")) { //NON-NLS
       return PartialOperation.MERGE;
     }
-    if (message.contains("cannot do a partial commit during a cherry-pick")) {
+    if (message.contains("cannot do a partial commit during a cherry-pick")) { //NON-NLS
       return PartialOperation.CHERRY_PICK;
     }
     return PartialOperation.NONE;
@@ -966,7 +975,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
    * @throws IOException if file cannot be created
    */
   @NotNull
-  public static File createCommitMessageFile(@NotNull Project project, @NotNull VirtualFile root, @NotNull String message)
+  public static File createCommitMessageFile(@NotNull Project project, @NotNull VirtualFile root, @NotNull @NonNls String message)
     throws IOException {
     // filter comment lines
     File file = FileUtil.createTempFile(GIT_COMMIT_MSG_FILE_PREFIX, GIT_COMMIT_MSG_FILE_EXT);
@@ -979,14 +988,14 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
     return file;
   }
 
-  public static void runWithMessageFile(@NotNull Project project, @NotNull VirtualFile root, @NotNull String message,
+  public static void runWithMessageFile(@NotNull Project project, @NotNull VirtualFile root, @NotNull @NonNls String message,
                                         @NotNull ThrowableConsumer<? super File, ? extends VcsException> task) throws VcsException {
     File messageFile;
     try {
       messageFile = createCommitMessageFile(project, root, message);
     }
     catch (IOException ex) {
-      throw new VcsException("Creation of commit message file failed", ex);
+      throw new VcsException(GitBundle.message("error.commit.cant.create.message.file"), ex);
     }
 
     try {
@@ -1000,7 +1009,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
   }
 
   @Override
-  public List<VcsException> scheduleMissingFileForDeletion(@NotNull List<FilePath> files) {
+  public List<VcsException> scheduleMissingFileForDeletion(@NotNull List<? extends FilePath> files) {
     ArrayList<VcsException> rc = new ArrayList<>();
     Map<VirtualFile, List<FilePath>> sortedFiles;
     try {
@@ -1057,7 +1066,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
   }
 
   @Override
-  public List<VcsException> scheduleUnversionedFilesForAddition(@NotNull List<VirtualFile> files) {
+  public List<VcsException> scheduleUnversionedFilesForAddition(@NotNull List<? extends VirtualFile> files) {
     ArrayList<VcsException> rc = new ArrayList<>();
     Map<VirtualFile, List<VirtualFile>> sortedFiles;
     try {
@@ -1081,18 +1090,18 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
   }
 
   private enum PartialOperation {
-    NONE("none"),
-    MERGE("merge"),
-    CHERRY_PICK("cherry-pick");
+    NONE(0),
+    MERGE(1),
+    CHERRY_PICK(2);
 
-    private final String myName;
+    private final int myIndex; // See 'commit.partial.merge.message' bundle string
 
-    PartialOperation(String name) {
-      myName = name;
+    PartialOperation(int messageIndex) {
+      myIndex = messageIndex;
     }
 
-    String getName() {
-      return myName;
+    int getIndex() {
+      return myIndex;
     }
   }
 
@@ -1210,6 +1219,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
       return !CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY.equals(beforePath, afterPath);
     }
 
+    @NonNls
     @Override
     public String toString() {
       return String.format("%s -> %s", beforePath, afterPath);
@@ -1259,6 +1269,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment, AmendCommitAwa
       this.virtualFile = virtualFile;
     }
 
+    @NonNls
     @Override
     public String toString() {
       return super.toString() + ", changelist: " + changelistId;

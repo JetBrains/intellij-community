@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal.arrangement;
 
 import com.google.common.util.concurrent.Futures;
@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 
-public class ProcessInfoUtil {
+public final class ProcessInfoUtil {
   private static final Logger LOG = Logger.getInstance(ProcessInfoUtil.class);
   private static final int TIMEOUT_MILLIS = 2000;
   // restrict amount of concurrent cwd fetchings to not utilize all the threads in case of unpredicted hangings

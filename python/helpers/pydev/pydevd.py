@@ -22,7 +22,7 @@ from collections import defaultdict
 from _pydevd_bundle.pydevd_constants import IS_JYTH_LESS25, IS_PYCHARM, get_thread_id, get_current_thread_id, \
     dict_keys, dict_iter_items, DebugInfoHolder, PYTHON_SUSPEND, STATE_SUSPEND, STATE_RUN, get_frame, xrange, \
     clear_cached_thread_id, INTERACTIVE_MODE_AVAILABLE, SHOW_DEBUG_INFO_ENV, IS_PY34_OR_GREATER, IS_PY36_OR_GREATER, \
-    IS_PY2, NULL, NO_FTRACE, dummy_excepthook, IS_CPYTHON
+    IS_PY2, NULL, NO_FTRACE, dummy_excepthook, IS_CPYTHON, GOTO_HAS_RESPONSE
 from _pydev_bundle import fix_getpass
 from _pydev_bundle import pydev_imports, pydev_log
 from _pydev_bundle._pydev_filesystem_encoding import getfilesystemencoding
@@ -461,6 +461,9 @@ class PyDB(object):
 
         self.collect_return_info = collect_return_info
 
+        # If True, pydevd will stop on assertion errors in tests.
+        self.stop_on_failed_tests = False
+
     def get_thread_local_trace_func(self):
         try:
             thread_trace_func = self._local_thread_trace_func.thread_trace_func
@@ -576,6 +579,12 @@ class PyDB(object):
 
     def is_top_level_trace_in_project_scope(self, trace):
         return pydevd_utils.is_top_level_trace_in_project_scope(trace)
+
+    def is_test_item_or_set_up_caller(self, frame):
+        return pydevd_utils.is_test_item_or_set_up_caller(frame)
+
+    def set_unit_tests_debugging_mode(self):
+        self.stop_on_failed_tests = True
 
     def has_threads_alive(self):
         for t in pydevd_utils.get_non_pydevd_threads():
@@ -1033,7 +1042,7 @@ class PyDB(object):
             if curr_func_name in ('?', '<module>'):
                 curr_func_name = ''
 
-            if curr_func_name == func_name:
+            if func_name == '*' or curr_func_name == func_name:
                 line = next_line
                 frame.f_trace = self.trace_dispatch
                 frame.f_lineno = line
@@ -1156,10 +1165,11 @@ class PyDB(object):
                 except ValueError as e:
                     response_msg = "%s" % e
                 finally:
-                    seq = info.pydev_message
-                    cmd = self.cmd_factory.make_set_next_stmnt_status_message(seq, stop, response_msg)
-                    self.writer.add_command(cmd)
-                    info.pydev_message = ''
+                    if GOTO_HAS_RESPONSE:
+                        seq = info.pydev_message
+                        cmd = self.cmd_factory.make_set_next_stmnt_status_message(seq, stop, response_msg)
+                        self.writer.add_command(cmd)
+                        info.pydev_message = ''
 
                 if stop:
                     cmd = self.cmd_factory.make_thread_run_message(get_current_thread_id(thread), info.pydev_step_cmd)

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
 import com.intellij.diagnostic.LoadingState;
@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,9 +55,9 @@ public class TransactionGuardImpl extends TransactionGuard {
     Application app = ApplicationManager.getApplication();
     if (app.isWriteThread()) {
       if (!myWritingAllowed) {
-        String message = "Cannot run synchronous submitTransactionAndWait from invokeLater. " +
-                         "Please use asynchronous submit*Transaction. " +
-                         "See TransactionGuard FAQ for details.\nTransaction: " + runnable;
+        @NonNls String message = "Cannot run synchronous submitTransactionAndWait from invokeLater. " +
+                                 "Please use asynchronous submit*Transaction. " +
+                                 "See TransactionGuard FAQ for details.\nTransaction: " + runnable;
         if (!isWriteSafeModality(ModalityState.current())) {
           message += "\nUnsafe modality: " + ModalityState.current();
         }
@@ -145,7 +146,7 @@ public class TransactionGuardImpl extends TransactionGuard {
     }
   }
 
-  private static String reportWriteUnsafeContext(@NotNull ModalityState modality) {
+  private static @NonNls String reportWriteUnsafeContext(@NotNull ModalityState modality) {
     return "Write-unsafe context! Model changes are allowed from write-safe contexts only. " +
            "Please ensure you're using invokeLater/invokeAndWait with a correct modality state (not \"any\"). " +
            "See TransactionGuard documentation for details." +
@@ -190,29 +191,33 @@ public class TransactionGuardImpl extends TransactionGuard {
 
   @NotNull
   public Runnable wrapLaterInvocation(@NotNull final Runnable runnable, @NotNull ModalityState modalityState) {
-    if (isWriteSafeModality(modalityState)) {
-      return new Runnable() {
-        @Override
-        public void run() {
+    return new Runnable() {
+      @Override
+      public void run() {
+        if (isWriteSafeModality(modalityState)) {
           ApplicationManager.getApplication().assertIsWriteThread();
-          final boolean prev = myWritingAllowed;
-          myWritingAllowed = true;
-          try {
-            runnable.run();
-          }
-          finally {
-            myWritingAllowed = prev;
-          }
+          runWithWritingAllowed(runnable);
+        } else {
+          runnable.run();
         }
+      }
 
-        @Override
-        public String toString() {
-          return runnable.toString();
-        }
-      };
+      @Override
+      public String toString() {
+        return runnable.toString();
+      }
+    };
+  }
+
+  private void runWithWritingAllowed(@NotNull Runnable runnable) {
+    final boolean prev = myWritingAllowed;
+    myWritingAllowed = true;
+    try {
+      runnable.run();
     }
-
-    return runnable;
+    finally {
+      myWritingAllowed = prev;
+    }
   }
 
   @Override
@@ -220,7 +225,7 @@ public class TransactionGuardImpl extends TransactionGuard {
     return "TransactionGuardImpl{myWritingAllowed=" + myWritingAllowed + '}';
   }
 
-  private static class TransactionIdImpl implements TransactionId {
+  private static final class TransactionIdImpl implements TransactionId {
     final ModalityState myModality;
 
     private TransactionIdImpl(ModalityState modality) {

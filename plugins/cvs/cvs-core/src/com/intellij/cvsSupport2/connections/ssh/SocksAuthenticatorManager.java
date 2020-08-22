@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.cvsSupport2.connections.ssh;
 
 import com.intellij.cvsSupport2.config.ProxySettings;
@@ -17,7 +17,7 @@ import java.util.Map;
 
 import static com.intellij.openapi.util.Pair.pair;
 
-public class SocksAuthenticatorManager {
+public final class SocksAuthenticatorManager {
 
   private final Object myLock;
   private volatile CvsProxySelector mySelector;
@@ -60,7 +60,7 @@ public class SocksAuthenticatorManager {
     }
   }
 
-  private static class CvsProxySelector extends ProxySelector {
+  private static final class CvsProxySelector extends ProxySelector {
     private final Map<Pair<String, Integer>, Pair<String, Integer>> myKnownHosts;
     private final Map<Pair<String, Integer>, Pair<String, String>> myAuthMap;
     private final NonStaticAuthenticator myAuthenticator;

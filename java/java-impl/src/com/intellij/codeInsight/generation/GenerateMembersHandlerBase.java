@@ -22,6 +22,7 @@ import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
 import com.intellij.ide.util.MemberChooser;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -32,6 +33,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -49,10 +51,10 @@ import java.util.Objects;
 public abstract class GenerateMembersHandlerBase implements CodeInsightActionHandler, ContextAwareActionHandler {
   private static final Logger LOG = Logger.getInstance(GenerateMembersHandlerBase.class);
 
-  private final String myChooserTitle;
+  private final @NlsContexts.DialogTitle String myChooserTitle;
   protected boolean myToCopyJavaDoc;
 
-  public GenerateMembersHandlerBase(String chooserTitle) {
+  public GenerateMembersHandlerBase(@NlsContexts.DialogTitle String chooserTitle) {
     myChooserTitle = chooserTitle;
   }
 
@@ -170,8 +172,8 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
     generatedMembers.get(0).positionCaret(editor, false);
   }
 
-  protected String getNothingFoundMessage() {
-    return "Nothing found to insert";
+  protected @NlsContexts.HintText String getNothingFoundMessage() {
+    return JavaBundle.message("generate.members.nothing.to.insert");
   }
 
   private static void runTemplates(final Project myProject, final Editor editor, final List<? extends TemplateGenerationInfo> templates, final int index) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -21,7 +21,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 
-public class SetValueInplaceEditor extends XDebuggerTreeInplaceEditor {
+public final class SetValueInplaceEditor extends XDebuggerTreeInplaceEditor {
   private final JPanel myEditorPanel;
   private final XValueModifier myModifier;
   private final XValueNodeImpl myValueNode;

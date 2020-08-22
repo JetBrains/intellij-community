@@ -13,6 +13,7 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SettingsEditor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -31,6 +32,10 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
   protected RunConfigurationFragmentedEditor(Settings runConfiguration, RunConfigurationExtensionsManager extensionsManager) {
     myRunConfiguration = runConfiguration;
     myExtensionsManager = extensionsManager;
+  }
+
+  protected Project getProject() {
+    return myRunConfiguration.getProject();
   }
 
   @Override

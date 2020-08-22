@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.stubs.elements;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -23,14 +23,13 @@ import java.util.List;
  * @author ilyas
  */
 public abstract class GrReferenceListElementType<T extends GrReferenceList> extends GrStubElementType<GrReferenceListStub, T> {
-
   public GrReferenceListElementType(final String debugName) {
     super(debugName);
   }
 
   @NotNull
   @Override
-  public GrReferenceListStub createStub(@NotNull T psi, StubElement parentStub) {
+  public GrReferenceListStub createStub(@NotNull T psi, StubElement<?> parentStub) {
     List<String> refNames = new ArrayList<>();
     for (GrCodeReferenceElement element : psi.getReferenceElementsGroovy()) {
       final String name = GrStubUtils.getReferenceName(element);

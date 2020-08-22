@@ -5,29 +5,31 @@ import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiAnnotationMemberValue;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
-public class CaptureSettingsProvider {
+public final class CaptureSettingsProvider {
   private static final Logger LOG = Logger.getInstance(CaptureSettingsProvider.class);
 
   private static final KeyProvider THIS_KEY = new StringKeyProvider("this");
   private static final String ANY = "*";
 
   @NotNull
-  public static Properties getPointsProperties() {
+  public static Properties getPointsProperties(@Nullable Project project) {
     Properties res = new Properties();
     if (Registry.is("debugger.capture.points.agent.annotations")) {
       int idx = 0;
-      for (CaptureSettingsProvider.AgentPoint point : getAnnotationPoints()) {
+      for (CaptureSettingsProvider.AgentPoint point : getAnnotationPoints(project)) {
         res.setProperty((point.isCapture() ? "capture" : "insert") + idx++,
                         point.myClassName + AgentPoint.SEPARATOR +
                         point.myMethodName + AgentPoint.SEPARATOR +
@@ -38,10 +40,10 @@ public class CaptureSettingsProvider {
     return res;
   }
 
-  private static List<AgentPoint> getAnnotationPoints() {
+  private static List<AgentPoint> getAnnotationPoints(@Nullable Project project) {
     return ReadAction.compute(() -> {
       List<AgentPoint> annotationPoints = new ArrayList<>();
-      CaptureConfigurable.processCaptureAnnotations((capture, e, annotation) -> {
+      CaptureConfigurable.processCaptureAnnotations(project, (capture, e, annotation) -> {
         PsiMethod method;
         KeyProvider keyProvider;
         if (e instanceof PsiMethod) {

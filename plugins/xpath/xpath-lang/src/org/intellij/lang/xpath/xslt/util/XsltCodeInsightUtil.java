@@ -35,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class XsltCodeInsightUtil {
+public final class XsltCodeInsightUtil {
     public static final Comparator<PsiElement> POSITION_COMPARATOR = Comparator.comparingInt(PsiElement::getTextOffset);
 
     private XsltCodeInsightUtil() {

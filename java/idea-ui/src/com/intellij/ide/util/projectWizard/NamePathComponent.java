@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.ide.IdeBundle;
@@ -13,7 +13,9 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
@@ -36,7 +38,7 @@ import static java.awt.GridBagConstraints.*;
 /**
  * @author Eugene Zhuravlev
  */
-public class NamePathComponent extends JPanel {
+public final class NamePathComponent extends JPanel {
   private static final Logger LOG = Logger.getInstance(NamePathComponent.class);
 
   private final JTextField myTfName;
@@ -50,22 +52,25 @@ public class NamePathComponent extends JPanel {
   private boolean myIsNamePathSyncEnabled = true;
   private boolean myShouldBeAbsolute;
 
-  public NamePathComponent(String nameLabelText, String pathLabelText, String pathChooserTitle, String pathChooserDescription) {
+  public NamePathComponent(@NlsContexts.Label String nameLabelText,
+                           @NlsContexts.Label String pathLabelText,
+                           @NlsContexts.DialogTitle String pathChooserTitle,
+                           @NlsContexts.Label String pathChooserDescription) {
     this(nameLabelText, pathLabelText, pathChooserTitle, pathChooserDescription, true);
   }
 
-  public NamePathComponent(String nameLabelText,
-                           String pathLabelText,
-                           String pathChooserTitle,
-                           String pathChooserDescription,
+  public NamePathComponent(@NlsContexts.Label String nameLabelText,
+                           @NlsContexts.Label String pathLabelText,
+                           @NlsContexts.DialogTitle String pathChooserTitle,
+                           @NlsContexts.Label String pathChooserDescription,
                            boolean hideIgnored) {
     this(nameLabelText, pathLabelText, pathChooserTitle, pathChooserDescription, hideIgnored, true);
   }
 
-  public NamePathComponent(String nameLabelText,
-                           String pathLabelText,
-                           String pathChooserTitle,
-                           String pathChooserDescription,
+  public NamePathComponent(@NlsContexts.Label String nameLabelText,
+                           @NlsContexts.Label String pathLabelText,
+                           @NlsContexts.DialogTitle String pathChooserTitle,
+                           @NlsContexts.Label String pathChooserDescription,
                            boolean hideIgnored,
                            boolean bold) {
     super(new GridBagLayout());
@@ -132,7 +137,7 @@ public class NamePathComponent extends JPanel {
       throw new ConfigurationException(JavaUiBundle.message("prompt.enter.project.file.location", context.getPresentationName()));
     }
     if (myShouldBeAbsolute && !new File(projectDirectoryPath).isAbsolute()) {
-      throw new ConfigurationException(StringUtil.capitalize(JavaUiBundle.message("file.location.should.be.absolute", context.getPresentationName())));
+      throw new ConfigurationException(JavaUiBundle.message("file.location.should.be.absolute", StringUtil.capitalize(context.getPresentationName())));
     }
 
     boolean shouldPromptCreation = isPathChangedByUser();
@@ -146,7 +151,7 @@ public class NamePathComponent extends JPanel {
       throw new ConfigurationException(JavaUiBundle.message("project.directory.is.not.writable", projectDirectoryPath));
     }
     for (Project p : ProjectManager.getInstance().getOpenProjects()) {
-      if (ProjectUtil.isSameProject(projectDirectoryPath, p)) {
+      if (ProjectUtil.isSameProject(projectDirectory.toPath(), p)) {
         throw new ConfigurationException(JavaUiBundle.message("project.directory.is.already.taken", projectDirectoryPath, p.getName()));
       }
     }
@@ -159,8 +164,7 @@ public class NamePathComponent extends JPanel {
       File projectFile = new File(projectDirectory, fileName);
       if (projectFile.exists()) {
         message = JavaUiBundle.message("prompt.overwrite.project.file", projectFile.getAbsolutePath(), context.getPresentationName());
-        int answer = Messages.showYesNoDialog(message, IdeBundle.message("title.file.already.exists"), Messages.getQuestionIcon());
-        shouldContinue = (answer == Messages.YES);
+        shouldContinue = MessageDialogBuilder.yesNo(IdeBundle.message("title.file.already.exists"), message).show() == Messages.YES;
       }
     }
     return shouldContinue;

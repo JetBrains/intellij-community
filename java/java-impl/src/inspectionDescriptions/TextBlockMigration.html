@@ -1,6 +1,15 @@
 <html>
 <body>
-Reports when a string or concatenation of strings can be replaced with a text block.
+Suggests to replace string literals with text blocks.
+<p>
+Requirements:
+<ul>
+  <li><code>\n</code> occurs two or more times.</li>
+  <li>Text blocks are not concatenated.</li>
+</ul>
+<p>
+Use the <b>Apply to single string literals</b> option to suggest the fix for single literals containing line breaks.
+<p>
 <!-- tooltip end -->
 Example:
 <pre><code>
@@ -20,7 +29,7 @@ Example:
                 &lt;/html&gt;
                 """;
 </code></pre>
-<p>This inspection only reports if the configured language level is 14 Preview.</p>
+<p>This inspection only reports if the configured language level is 15 or higher.</p>
 <p><small>New in 2019.3</small></p>
 </body>
 </html>

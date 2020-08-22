@@ -114,18 +114,18 @@ public final class UIUtil {
                                              () -> document.replaceString(0, document.getTextLength(), value));
   }
 
-  public static void setContent(@NotNull EditorTextField editor, String text) {
-    final String value = text != null ? text : "";
+  public static void setContent(@NotNull EditorTextField editor, @NotNull String text) {
     final Document document = editor.getDocument();
     WriteCommandAction.runWriteCommandAction(editor.getProject(), SSRBundle.message("modify.editor.content.command.name"), SS_GROUP,
-                                             () -> document.replaceString(0, document.getTextLength(), value));
+                                             () -> document.replaceString(0, document.getTextLength(), text));
   }
 
-  public static void invokeAction(Configuration config, SearchContext context) {
+  public static void invokeAction(@NotNull Configuration config, @NotNull SearchContext context) {
     StructuralSearchAction.triggerAction(config, context, !(config instanceof SearchConfiguration));
   }
 
-  public static MatchVariableConstraint getOrAddVariableConstraint(String varName, Configuration configuration) {
+  @NotNull
+  public static MatchVariableConstraint getOrAddVariableConstraint(@NotNull String varName, @NotNull Configuration configuration) {
     final MatchOptions options = configuration.getMatchOptions();
     final MatchVariableConstraint varInfo = options.getVariableConstraint(varName);
 
@@ -135,7 +135,8 @@ public final class UIUtil {
     return configuration.getMatchOptions().addNewVariableConstraint(varName);
   }
 
-  public static ReplacementVariableDefinition getOrAddReplacementVariable(String varName, Configuration configuration) {
+  @NotNull
+  public static ReplacementVariableDefinition getOrAddReplacementVariable(@NotNull String varName, @NotNull Configuration configuration) {
     final ReplaceOptions replaceOptions = configuration.getReplaceOptions();
     ReplacementVariableDefinition definition = replaceOptions.getVariableDefinition(varName);
 
@@ -145,7 +146,7 @@ public final class UIUtil {
     return replaceOptions.addNewVariableDefinition(varName);
   }
 
-  public static boolean isTarget(String varName, MatchOptions matchOptions) {
+  public static boolean isTarget(@NotNull String varName, @NotNull MatchOptions matchOptions) {
     if (Configuration.CONTEXT_VAR_NAME.equals(varName)) {
       // Complete Match is default target
       for (String name : matchOptions.getVariableConstraintNames()) {
@@ -165,14 +166,14 @@ public final class UIUtil {
   }
 
   @NotNull
-  public static JComponent createCompleteMatchInfo(final Supplier<? extends Configuration> configurationProducer) {
+  public static JComponent createCompleteMatchInfo(@NotNull Supplier<? extends Configuration> configurationProducer) {
     return installCompleteMatchInfo(new JLabel(AllIcons.Actions.ListFiles), configurationProducer, null);
   }
 
   @NotNull
-  public static JComponent installCompleteMatchInfo(JLabel completeMatchInfo,
-                                                    Supplier<? extends Configuration> configurationProducer,
-                                                    Consumer<? super String> linkConsumer) {
+  public static JComponent installCompleteMatchInfo(@NotNull JLabel completeMatchInfo,
+                                                    @NotNull Supplier<? extends Configuration> configurationProducer,
+                                                    @Nullable Consumer<? super String> linkConsumer) {
     completeMatchInfo.putClientProperty(IdeTooltip.TOOLTIP_DISMISS_DELAY_KEY, 20000);
     completeMatchInfo.addMouseListener(new MouseAdapter() {
       @Override
@@ -219,29 +220,45 @@ public final class UIUtil {
     return completeMatchInfo;
   }
 
-  public static EditorTextField createTextComponent(String text, Project project) {
+  @NotNull
+  public static EditorTextField createTextComponent(@NotNull String text, @NotNull Project project) {
     return createEditorComponent(text, "1.txt", project);
   }
 
-  public static EditorTextField createRegexComponent(String text, Project project) {
+  @NotNull
+  public static EditorTextField createRegexComponent(@NotNull String text, @NotNull Project project) {
     return createEditorComponent(text, "1.regexp", project);
   }
 
-  public static EditorTextField createScriptComponent(String text, Project project) {
+  @NotNull
+  public static EditorTextField createScriptComponent(@NotNull String text, @NotNull Project project) {
     return createEditorComponent(text, "1.groovy", project);
   }
 
   @NotNull
-  public static EditorTextField createEditorComponent(String text, String fileName, Project project) {
-    return new EditorTextField(text, project, getFileType(fileName));
+  public static EditorTextField createEditorComponent(@NotNull String text, @NotNull String fileName, @NotNull Project project) {
+    final FileType fileType = getFileType(fileName);
+    final Document document = createDocument(fileType, text, project);
+    return new EditorTextField(document, project, fileType);
   }
 
-  private static FileType getFileType(final String fileName) {
+  @NotNull
+  public static Document createDocument(@NotNull FileType fileType, @NotNull String text, @NotNull Project project) {
+    final PsiFile file =
+      PsiFileFactory.getInstance(project).createFileFromText("Dummy." + fileType.getDefaultExtension(), fileType, text, -1, true);
+    final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+    assert document != null;
+    return document;
+  }
+
+  @NotNull
+  private static FileType getFileType(@NotNull String fileName) {
     FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
     if (fileType == FileTypes.UNKNOWN) fileType = FileTypes.PLAIN_TEXT;
     return fileType;
   }
 
+  @NotNull
   public static LanguageFileType detectFileType(@NotNull SearchContext searchContext) {
     final PsiFile file = searchContext.getFile();
     PsiElement context = null;
@@ -264,8 +281,11 @@ public final class UIUtil {
       final Language language = context.getLanguage();
       final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByLanguage(language);
       if (profile != null) {
-        final LanguageFileType fileType = profile.detectFileType(context);
-        return fileType != null ? fileType : language.getAssociatedFileType();
+        LanguageFileType fileType = profile.detectFileType(context);
+        if (fileType == null) {
+          fileType = language.getAssociatedFileType();
+        }
+        if (fileType != null) return fileType;
       }
     }
     return StructuralSearchUtil.getDefaultFileType();
@@ -318,7 +338,7 @@ public final class UIUtil {
            : factory.createFileFromText(name, dialect, text, true, true);
   }
 
-  public static TemplateContextType getTemplateContextType(StructuralSearchProfile profile) {
+  public static TemplateContextType getTemplateContextType(@NotNull StructuralSearchProfile profile) {
     final Class<? extends TemplateContextType> clazz = profile.getTemplateContextTypeClass();
     return ContainerUtil.findInstance(TemplateContextType.EP_NAME.getExtensions(), clazz);
   }

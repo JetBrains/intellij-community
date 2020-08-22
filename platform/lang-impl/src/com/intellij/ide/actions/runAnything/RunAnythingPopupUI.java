@@ -35,6 +35,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -518,8 +519,8 @@ public class RunAnythingPopupUI extends BigPopupUI {
 
   public static void adjustEmptyText(@NotNull JBTextField textEditor,
                                      @NotNull BooleanFunction<JBTextField> function,
-                                     @NotNull String leftText,
-                                     @NotNull String rightText) {
+                                     @NotNull @NlsContexts.StatusText String leftText,
+                                     @NotNull @NlsContexts.StatusText String rightText) {
 
     textEditor.putClientProperty("StatusVisibleFunction", function);
     StatusText statusText = textEditor.getEmptyText();
@@ -585,7 +586,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
   }
 
 
-  public void setAdText(@NotNull final String s) {
+  public void setAdText(@NlsContexts.PopupAdvertisement @NotNull final String s) {
     myHintLabel.setText(s);
   }
 
@@ -826,7 +827,7 @@ public class RunAnythingPopupUI extends BigPopupUI {
     resetFields();
   }
 
-  private class RunAnythingShowFilterAction extends ShowFilterAction {
+  private final class RunAnythingShowFilterAction extends ShowFilterAction {
     @NotNull private final Collection<RunAnythingGroup> myTemplateGroups;
 
     private RunAnythingShowFilterAction() {

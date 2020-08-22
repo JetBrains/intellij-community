@@ -18,6 +18,7 @@
 
   <depends>com.intellij.modules.lang</depends>
   <depends>com.intellij.modules.externalSystem</depends>
+  <depends optional="true" config-file="gradle-properties.xml">com.intellij.properties</depends>
 
   <resource-bundle>messages.GradleBundle</resource-bundle>
 
@@ -52,7 +53,7 @@
 
   <extensions defaultExtensionNs="com.intellij">
     <postStartupActivity implementation="org.jetbrains.plugins.gradle.service.project.GradleStartupActivity"/>
-    <postStartupActivity implementation="org.jetbrains.plugins.gradle.startup.GradleUnlinkedProjectProcessor"/>
+    <externalSystemUnlinkedProjectAware implementation="org.jetbrains.plugins.gradle.autolink.GradleUnlinkedProjectAware"/>
     <externalSystemSettingsListener implementation="org.jetbrains.plugins.gradle.startup.GradleProjectSettingsUpdater"/>
     <projectOpenProcessor id="gradle" implementation="org.jetbrains.plugins.gradle.service.project.open.GradleProjectOpenProcessor"/>
     <orderEnumerationHandlerFactory implementation="org.jetbrains.plugins.gradle.execution.GradleOrderEnumeratorHandler$FactoryImpl"/>
@@ -88,7 +89,6 @@
     <externalIconProvider key="GRADLE" implementationClass="org.jetbrains.plugins.gradle.ui.GradleIconProvider"/>
     <externalExecutionAware key="GRADLE" implementationClass="org.jetbrains.plugins.gradle.service.execution.GradleExecutionAware"/>
     <externalSystemNotificationExtension implementation="org.jetbrains.plugins.gradle.service.notification.GradleNotificationExtension" order="last"/>
-    <externalSystemTaskNotificationListener implementation="org.jetbrains.plugins.gradle.service.project.GradleProjectImportNotificationListener"/>
 
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.service.GradleInstallationManager"/>
 
@@ -109,8 +109,7 @@
     <runConfigurationProducer implementation="org.jetbrains.plugins.gradle.service.execution.GradleRuntimeConfigurationProducer"/>
 
     <toolWindow id="Gradle" anchor="right" icon="GradleIcons.ToolWindowGradle"
-                factoryClass="org.jetbrains.plugins.gradle.ui.GradleToolWindowFactory"
-                conditionClass="org.jetbrains.plugins.gradle.ui.GradleToolWindowFactoryCondition"/>
+                factoryClass="org.jetbrains.plugins.gradle.ui.GradleToolWindowFactory"/>
 
     <copyPastePreProcessor implementation="org.jetbrains.plugins.gradle.action.PasteMvnDependencyPreProcessor"/>
 
@@ -131,7 +130,7 @@
                  description="Enable custom serialization of custom tooling objects"/>
 
     <commandLineInspectionProjectConfigurator implementation="org.jetbrains.plugins.gradle.GradleCommandLineProjectConfigurator"/>
-    <notificationWhitelist groupIds="Gradle Notification Group"/>
+    <notificationGroup id="Gradle Notification Group" displayType="STICKY_BALLOON"/>
   </extensions>
 
   <actions>
@@ -156,8 +155,7 @@
 
     <group id="Gradle.View.ActionsToolbar.RightPanel">
       <reference id="Gradle.ToggleOfflineAction"/>
-      <add-to-group group-id="ExternalSystemView.ActionsToolbar.RightPanel" anchor="before"
-                    relative-to-action="ExternalSystem.ToggleAutoReload"/>
+      <add-to-group group-id="ExternalSystemView.ActionsToolbar.RightPanel"/>
     </group>
 
     <group id="Gradle.View.ProjectMenu">

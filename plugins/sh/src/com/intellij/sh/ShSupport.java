@@ -1,25 +1,31 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh;
 
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
-import com.intellij.sh.codeInsight.ShFunctionReference;
 import com.intellij.sh.psi.ShLiteral;
-import com.intellij.sh.psi.ShString;
 import com.intellij.sh.psi.ShVariable;
 import com.intellij.sh.run.ShRunConfiguration;
-import com.intellij.sh.run.ShRunConfigurationProfileState;
-import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @deprecated From now there are no plugins which use this API
+ */
+@Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
 public interface ShSupport {
-  static ShSupport getInstance() { return ServiceManager.getService(ShSupport.class); }
+  ExtensionPointName<ShSupport> EP_NAME = ExtensionPointName.create("com.intellij.sh.shSupport");
+
+  @NotNull
+  static ShSupport getInstance() {
+    return EP_NAME.findExtensionOrFail(ShSupport.class);
+  }
 
   boolean isExternalFormatterEnabled();
 
@@ -53,42 +59,4 @@ public interface ShSupport {
    */
   @Nullable
   PsiElement getNameIdentifier(@NotNull ShLiteral l);
-
-  class Impl implements ShSupport {
-    @Override
-    public boolean isExternalFormatterEnabled() { return true; }
-
-    @Override
-    public boolean isRenameEnabled() { return true; }
-
-    @NotNull
-    @Override
-    public RunProfileState createRunProfileState(@NotNull Executor executor,
-                                                 @NotNull ExecutionEnvironment environment,
-                                                 @NotNull ShRunConfiguration configuration) {
-      return new ShRunConfigurationProfileState(environment.getProject(), configuration);
-    }
-
-    @Override
-    public PsiReference @NotNull [] getVariableReferences(@NotNull ShVariable v) {
-      return PsiReference.EMPTY_ARRAY;
-    }
-
-    @Override
-    public PsiReference @NotNull [] getLiteralReferences(@NotNull ShLiteral o) {
-      return o instanceof ShString || o.getWord() != null
-             ? ArrayUtil.prepend(new ShFunctionReference(o), ReferenceProvidersRegistry.getReferencesFromProviders(o))
-             : PsiReference.EMPTY_ARRAY;
-    }
-
-    @Override
-    public @Nullable String getName(@NotNull ShLiteral l) {
-      return null;
-    }
-
-    @Override
-    public @Nullable PsiElement getNameIdentifier(@NotNull ShLiteral l) {
-      return null;
-    }
-  }
 }

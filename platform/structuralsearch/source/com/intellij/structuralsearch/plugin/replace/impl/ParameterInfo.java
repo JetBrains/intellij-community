@@ -3,8 +3,10 @@ package com.intellij.structuralsearch.plugin.replace.impl;
 
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 public final class ParameterInfo extends UserDataHolderBase {
+  @NotNull
   private final String name;
   private final int startIndex;
   private final boolean replacementVariable;
@@ -16,13 +18,13 @@ public final class ParameterInfo extends UserDataHolderBase {
   private boolean hasCommaAfter;
   private PsiElement myElement;
 
-  public ParameterInfo(String name, int startIndex, boolean replacementVariable) {
+  public ParameterInfo(@NotNull String name, int startIndex, boolean replacementVariable) {
     this.name = name;
     this.startIndex = startIndex;
     this.replacementVariable = replacementVariable;
   }
 
-  public String getName() {
+  public @NotNull String getName() {
     return name;
   }
 
@@ -86,7 +88,7 @@ public final class ParameterInfo extends UserDataHolderBase {
     return myElement;
   }
 
-  public void setElement(PsiElement element) {
+  public void setElement(@NotNull PsiElement element) {
     myElement = element;
   }
 }

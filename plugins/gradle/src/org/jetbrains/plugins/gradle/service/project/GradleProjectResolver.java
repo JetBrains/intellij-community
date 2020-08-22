@@ -23,6 +23,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashMap;
@@ -320,11 +321,9 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     final Map<String /* module id */, Pair<DataNode<GradleSourceSetData>, ExternalSourceSet>> sourceSetsMap = new HashMap<>();
     projectDataNode.putUserData(RESOLVED_SOURCE_SETS, sourceSetsMap);
 
-    final Map<String/* output path */, Pair<String /* module id*/, ExternalSystemSourceType>> moduleOutputsMap =
-      new THashMap<>(FileUtil.PATH_HASHING_STRATEGY);
+    final Map<String/* output path */, Pair<String /* module id*/, ExternalSystemSourceType>> moduleOutputsMap = CollectionFactory.createFilePathMap();
     projectDataNode.putUserData(MODULES_OUTPUTS, moduleOutputsMap);
-    final Map<String/* artifact path */, String /* module id*/> artifactsMap =
-      new THashMap<>(FileUtil.PATH_HASHING_STRATEGY);
+    final Map<String/* artifact path */, String /* module id*/> artifactsMap = CollectionFactory.createFilePathMap();
     projectDataNode.putUserData(CONFIGURATION_ARTIFACTS, artifactsMap);
 
     // import modules data
@@ -477,21 +476,24 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       for (Build build : includedBuilds) {
         if (!build.getProjects().isEmpty()) {
           IdeaProject ideaProject = allModels.getModel(build, IdeaProject.class);
-          assert ideaProject != null;
+          if (ideaProject != null) {
+            gradleIncludedModules.addAll(ideaProject.getModules());
+          }
           String rootProjectName = build.getName();
           BuildParticipant buildParticipant = new BuildParticipant();
-          gradleIncludedModules.addAll(ideaProject.getModules());
           try {
             String projectPath = toCanonicalPath(build.getBuildIdentifier().getRootDir().getCanonicalPath());
             buildParticipant.setRootProjectName(rootProjectName);
             buildParticipant.setRootPath(projectPath);
-            for (IdeaModule module : ideaProject.getModules()) {
-              try {
-                String modulePath = toCanonicalPath(module.getGradleProject().getProjectDirectory().getCanonicalPath());
-                buildParticipant.getProjects().add(modulePath);
-              }
-              catch (IOException e) {
-                LOG.warn("construction of the canonical path for the module fails", e);
+            if (ideaProject != null) {
+              for (IdeaModule module : ideaProject.getModules()) {
+                try {
+                  String modulePath = toCanonicalPath(module.getGradleProject().getProjectDirectory().getCanonicalPath());
+                  buildParticipant.getProjects().add(modulePath);
+                }
+                catch (IOException e) {
+                  LOG.warn("construction of the canonical path for the module fails", e);
+                }
               }
             }
             compositeBuildData.getCompositeParticipants().add(buildParticipant);
@@ -714,7 +716,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
   }
 
-  private class ProjectConnectionDataNodeFunction implements Function<ProjectConnection, DataNode<ProjectData>> {
+  private final class ProjectConnectionDataNodeFunction implements Function<ProjectConnection, DataNode<ProjectData>> {
     @NotNull private final GradleProjectResolverExtension myProjectResolverChain;
     private final boolean myIsBuildSrcProject;
     private final DefaultProjectResolverContext myResolverContext;

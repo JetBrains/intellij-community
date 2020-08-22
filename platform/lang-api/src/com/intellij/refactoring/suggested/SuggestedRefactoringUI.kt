@@ -38,7 +38,7 @@ abstract class SuggestedRefactoringUI {
     return model.improvePresentation()
   }
 
-  data class NewParameterData(
+  data class NewParameterData @JvmOverloads constructor(
     val presentableName: String,
     val valueFragment: PsiCodeFragment,
     val offerToUseAnyVariable: Boolean,

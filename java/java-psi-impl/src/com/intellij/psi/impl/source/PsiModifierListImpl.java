@@ -47,6 +47,8 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
     NAME_TO_KEYWORD_TYPE_MAP.put(DEFAULT, JavaTokenType.DEFAULT_KEYWORD);
     NAME_TO_KEYWORD_TYPE_MAP.put(OPEN, JavaTokenType.OPEN_KEYWORD);
     NAME_TO_KEYWORD_TYPE_MAP.put(TRANSITIVE, JavaTokenType.TRANSITIVE_KEYWORD);
+    NAME_TO_KEYWORD_TYPE_MAP.put(SEALED, JavaTokenType.SEALED_KEYWORD);
+    NAME_TO_KEYWORD_TYPE_MAP.put(NON_SEALED, JavaTokenType.NON_SEALED_KEYWORD);
 
     KEYWORD_TYPE_TO_NAME_MAP = new THashMap<>();
     for (String name : NAME_TO_KEYWORD_TYPE_MAP.keySet()) {
@@ -114,8 +116,8 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
       if (((PsiClass)parent).isInterface()) {
         implicitModifiers.add(ABSTRACT);
 
-        // nested interface is implicitly static
-        if (grandParent instanceof PsiClass) {
+        // nested or local interface is implicitly static
+        if (!(grandParent instanceof PsiFile)) {
           implicitModifiers.add(STATIC);
         }
       }
@@ -132,7 +134,10 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
         List<PsiField> fields = parent instanceof PsiExtensibleClass ? ((PsiExtensibleClass)parent).getOwnFields()
                                                                      : Arrays.asList(((PsiClass)parent).getFields());
         boolean hasSubClass = ContainerUtil.find(fields, field -> field instanceof PsiEnumConstant && ((PsiEnumConstant)field).getInitializingClass() != null) != null;
-        if (!hasSubClass) {
+        if (hasSubClass) {
+          implicitModifiers.add(SEALED);
+        }
+        else {
           implicitModifiers.add(FINAL);
         }
 
@@ -231,6 +236,18 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
           setModifierProperty(PROTECTED, false);
         }
         if (type == null) return;
+      }
+
+      if (type == JavaTokenType.SEALED_KEYWORD || type == JavaTokenType.FINAL_KEYWORD || type == JavaTokenType.NON_SEALED_KEYWORD) {
+        if (type != JavaTokenType.SEALED_KEYWORD) {
+          setModifierProperty(SEALED, false);
+        }
+        if (type != JavaTokenType.NON_SEALED_KEYWORD) {
+          setModifierProperty(NON_SEALED, false);
+        }
+        if (type != JavaTokenType.FINAL_KEYWORD) {
+          setModifierProperty(FINAL, false);
+        }
       }
 
       if (parent instanceof PsiField && grandParent instanceof PsiClass && ((PsiClass)grandParent).isInterface()) {

@@ -46,7 +46,7 @@ public class TextPanel extends NonOpaquePanel implements Accessible {
   }
 
   public void recomputeSize() {
-    final JLabel label = new JLabel("XXX");
+    final JLabel label = new JLabel("XXX"); //NON-NLS
     label.setFont(getFont());
     myPrefHeight = label.getPreferredSize().height;
   }
@@ -70,10 +70,10 @@ public class TextPanel extends NonOpaquePanel implements Accessible {
     UISettings.setupAntialiasing(g);
 
     Rectangle bounds = new Rectangle(panelWidth, panelHeight);
-    int x = getTextX(g2);
-    int maxWidth = panelWidth - x - getInsets().right;
     FontMetrics fm = g.getFontMetrics();
     int textWidth = fm.stringWidth(s);
+    int x = textWidth > panelWidth ? getInsets().left : getTextX(g2);
+    int maxWidth = panelWidth - x - getInsets().right;
     if (textWidth > maxWidth) {
       s = truncateText(s, bounds, fm, new Rectangle(), new Rectangle(), maxWidth);
     }
@@ -236,6 +236,8 @@ public class TextPanel extends NonOpaquePanel implements Accessible {
     }
 
     public boolean hasIcon() { return myIcon != null; }
+
+    public @Nullable Icon getIcon() { return myIcon; }
   }
 
   public static class ExtraSize extends TextPanel {

@@ -1,5 +1,6 @@
 package com.intellij.jps.cache.action;
 
+import com.intellij.jps.cache.client.JpsServerAuthExtension;
 import com.intellij.jps.cache.loader.JpsOutputLoaderManager;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -11,6 +12,7 @@ public class JpsUpdateCachesAction extends DumbAwareAction {
   public void actionPerformed(@NotNull AnActionEvent actionEvent) {
     Project project = actionEvent.getProject();
     if (project == null) return;
-    JpsOutputLoaderManager.getInstance(project).load(false);
+    JpsOutputLoaderManager outputLoaderManager = JpsOutputLoaderManager.getInstance(project);
+    JpsServerAuthExtension.checkAuthenticatedInBackgroundThread(outputLoaderManager, project, () -> outputLoaderManager.load(false));
   }
 }

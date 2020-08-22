@@ -34,6 +34,7 @@ public class TreeTest implements Disposable {
     assert !EventQueue.isDispatchThread() : "main thread is expected";
     invokeLater(() -> {
       tree = new JTree(function.apply(this));
+      TreeTestUtil.assertTreeUI(tree);
       invokeAfterProcessing(() -> {
         tree.collapseRow(0); // because root node is expanded by default
         consumer.accept(this);

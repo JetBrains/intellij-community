@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.scopes;
 
@@ -13,6 +13,7 @@ import com.intellij.packageDependencies.ui.TreeModel;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestSourceBasedTestCase;
+import com.intellij.ui.tree.TreeTestUtil;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -47,6 +48,7 @@ public class ScopeViewTest extends TestSourceBasedTestCase {
    TreeModel model = FileTreeModelBuilder.createTreeModel(getProject(), false, set, ALL_MARKED, panelSettings);
 
    JTree tree = new Tree();
+   TreeTestUtil.assertTreeUI(tree);
    tree.setModel(model);
    TreeUtil.expandAll(tree);
    PlatformTestUtil.assertTreeEqual(tree,
@@ -105,6 +107,7 @@ public class ScopeViewTest extends TestSourceBasedTestCase {
     settings.UI_GROUP_BY_SCOPE_TYPE = false;
     TreeModel model = FileTreeModelBuilder.createTreeModel(getProject(), false, files, ALL_MARKED, settings);
     JTree tree = new Tree(model);
+    TreeTestUtil.assertTreeUI(tree);
     TreeUtil.expandAll(tree);
     PlatformTestUtil.assertTreeEqual(tree, "-Root\n" +
                                            " -a\n" +

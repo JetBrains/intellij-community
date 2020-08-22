@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.CommonBundle;
@@ -25,7 +25,6 @@ import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.treeStructure.filtered.FilteringTreeBuilder;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +39,6 @@ import java.util.*;
 public class FacetStructureConfigurable extends BaseStructureConfigurable {
   private final Map<FacetType<?, ?>, FacetTypeEditor> myFacetTypeEditors = new HashMap<>();
   private MultipleFacetSettingsEditor myCurrentMultipleSettingsEditor;
-  @NonNls private static final String NO_FRAMEWORKS_NODE = "No facets are configured";
   private boolean myTreeWasInitialized;
 
   public FacetStructureConfigurable(@NotNull Project project) {
@@ -121,7 +119,10 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
       addFacetTypeNode(InvalidFacetType.getInstance());
     }
     if (!hasFacetTypeNodes) {
-      addNode(new MyNode(new TextConfigurable<>(NO_FRAMEWORKS_NODE, NO_FRAMEWORKS_NODE, "Facets", "Press '+' button to add a new facet",
+      String title = JavaUiBundle.message("no.facets.are.configured");
+      addNode(new MyNode(new TextConfigurable<>(title, title,
+                                                JavaUiBundle.message("project.facets.display.name"),
+                                                JavaUiBundle.message("text.press.button.to.add.new.facet"),
                                                 null)), myRoot);
     }
     addNode(new MyNode(new FrameworkDetectionConfigurable(myProject)), myRoot);
@@ -140,7 +141,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
   }
 
   private MyNode addFacetTypeNode(FacetType<?, ?> facetType) {
-    final MyNode noFrameworksNode = findNodeByObject(myRoot, NO_FRAMEWORKS_NODE);
+    final MyNode noFrameworksNode = findNodeByObject(myRoot, JavaUiBundle.message("no.facets.are.configured"));
     if (noFrameworksNode != null) {
       removePaths(TreeUtil.getPathFromRoot(noFrameworksNode));
     }
@@ -279,7 +280,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
         facetEditors.add(facetConfigurable.getEditor());
       }
     }
-    if (facetEditors.size() <= 1 || selectedFacetType == null) {
+    if (facetEditors.size() <= 1) {
       return false;
     }
 
@@ -397,7 +398,7 @@ public class FacetStructureConfigurable extends BaseStructureConfigurable {
     }
   }
 
-  private class MyNavigateAction extends AnAction implements DumbAware {
+  private final class MyNavigateAction extends AnAction implements DumbAware {
     private MyNavigateAction() {
       super(JavaUiBundle.message("action.name.facet.navigate"));
       registerCustomShortcutSet(CommonShortcuts.getEditSource(), myTree);

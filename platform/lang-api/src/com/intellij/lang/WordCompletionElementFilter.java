@@ -23,4 +23,8 @@ import com.intellij.psi.tree.IElementType;
 
 public interface WordCompletionElementFilter {
   boolean isWordCompletionEnabledIn(IElementType element);
+
+  default boolean isWordCompletionInDumbModeEnabled() {
+    return true;
+  }
 }

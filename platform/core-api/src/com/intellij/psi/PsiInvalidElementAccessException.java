@@ -14,6 +14,7 @@ import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,13 +27,13 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
 
   private final SoftReference<PsiElement> myElementReference;  // to prevent leaks, since exceptions are stored in IdeaLogger
   private final Attachment[] myDiagnostic;
-  private final String myMessage;
+  private final @NonNls String myMessage;
 
   public PsiInvalidElementAccessException(@Nullable PsiElement element) {
     this(element, null, null);
   }
 
-  public PsiInvalidElementAccessException(@Nullable PsiElement element, @Nullable String message) {
+  public PsiInvalidElementAccessException(@Nullable PsiElement element, @Nullable @NonNls String message) {
     this(element, message, null);
   }
 
@@ -40,7 +41,7 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
     this(element, null, cause);
   }
 
-  public PsiInvalidElementAccessException(@Nullable PsiElement element, @Nullable String message, @Nullable Throwable cause) {
+  public PsiInvalidElementAccessException(@Nullable PsiElement element, @Nullable @NonNls String message, @Nullable Throwable cause) {
     super(null, cause);
     myElementReference = new SoftReference<>(element);
 
@@ -67,7 +68,7 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
     }
   }
 
-  private PsiInvalidElementAccessException(@NotNull ASTNode node, @Nullable String message) {
+  private PsiInvalidElementAccessException(@NotNull ASTNode node, @Nullable @NonNls String message) {
     myElementReference = new SoftReference<>(null);
     final IElementType elementType = node.getElementType();
     myMessage = "Element " + node.getClass() + " of type " + elementType + " (" + elementType.getClass() + ")" +
@@ -75,7 +76,7 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
     myDiagnostic = createAttachments(findInvalidationTrace(node));
   }
 
-  public static PsiInvalidElementAccessException createByNode(@NotNull ASTNode node, @Nullable String message) {
+  public static PsiInvalidElementAccessException createByNode(@NotNull ASTNode node, @Nullable @NonNls String message) {
     return new PsiInvalidElementAccessException(node, message);
   }
 
@@ -101,7 +102,7 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
                                              @Nullable String message,
                                              boolean recursiveInvocation,
                                              @Nullable Object trace) {
-    String reason = "Element: " + element.getClass();
+    @NonNls String reason = "Element: " + element.getClass();
     if (!recursiveInvocation) {
       try {
         reason += " #" + getLanguage(element).getID() + " ";
@@ -153,6 +154,7 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
     return null;
   }
 
+  @SuppressWarnings("StringConcatenationInLoop")
   @NonNls
   @NotNull
   public static String findOutInvalidationReason(@NotNull PsiElement root) {
@@ -160,16 +162,17 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
       return "NULL_PSI_ELEMENT";
     }
 
+    PsiElement lastParent = root;
     PsiElement element = root instanceof PsiFile ? root : root.getParent();
     if (element == null) {
-      String m = "parent is null";
+      @NonNls String m = "parent is null";
       if (root instanceof StubBasedPsiElement) {
-        StubElement stub = ((StubBasedPsiElement)root).getStub();
+        StubElement<?> stub = ((StubBasedPsiElement<?>)root).getStub();
         while (stub != null) {
           //noinspection StringConcatenationInLoop
           m += "\n  each stub=" + stub;
           if (stub instanceof PsiFileStub) {
-            m += "; fileStub.psi=" + stub.getPsi() + "; reason=" + ((PsiFileStub)stub).getInvalidationReason();
+            m += "; fileStub.psi=" + stub.getPsi() + "; reason=" + ((PsiFileStub<?>)stub).getInvalidationReason();
           }
           stub = stub.getParentStub();
         }
@@ -177,10 +180,18 @@ public class PsiInvalidElementAccessException extends RuntimeException implement
       return m;
     }
 
-    while (element != null && !(element instanceof PsiFile)) element = element.getParent();
+    String hierarchy = "";
+    while (element != null && !(element instanceof PsiFile)) {
+      hierarchy += (hierarchy.isEmpty() ? "," : "") + element.getClass();
+      lastParent = element;
+      element = element.getParent();
+    }
     PsiFile file = (PsiFile)element;
     if (file == null) {
-      return "containing file is null";
+      PsiElement context = lastParent.getContext();
+      return "containing file is null; hierarchy=" + hierarchy +
+             ", context=" + context +
+             ", contextFile=" + JBIterable.generate(context, PsiElement::getParent).find(e -> e instanceof PsiFile);
     }
 
     FileViewProvider provider = file.getViewProvider();

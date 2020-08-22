@@ -13,7 +13,7 @@ import java.util.function.IntSupplier;
  * Only 'non-greedy' markers with zero length are supported (for such markers start offset is always equal to end offset).
  * Not thread safe - cannot be used from multiple threads simultaneously.
  */
-class MarkerTreeWithPartialSums<T extends RangeMarkerWithGetterImpl & IntSupplier> extends HardReferencingRangeMarkerTree<T> {
+class MarkerTreeWithPartialSums<T extends RangeMarkerImpl & IntSupplier> extends HardReferencingRangeMarkerTree<T> {
   MarkerTreeWithPartialSums(@NotNull Document document) {
     super(document);
   }
@@ -53,13 +53,13 @@ class MarkerTreeWithPartialSums<T extends RangeMarkerWithGetterImpl & IntSupplie
 
   @NotNull
   @Override
-  protected HardReferencingRangeMarkerTree.Node<T> createNewNode(@NotNull T key,
-                                                                 int start,
-                                                                 int end,
-                                                                 boolean greedyToLeft,
-                                                                 boolean greedyToRight,
-                                                                 boolean stickingToRight,
-                                                                 int layer) {
+  protected RMNode<T> createNewNode(@NotNull T key,
+                                    int start,
+                                    int end,
+                                    boolean greedyToLeft,
+                                    boolean greedyToRight,
+                                    boolean stickingToRight,
+                                    int layer) {
     assert start == end;
     assert !greedyToLeft;
     assert !greedyToRight;
@@ -72,7 +72,7 @@ class MarkerTreeWithPartialSums<T extends RangeMarkerWithGetterImpl & IntSupplie
     ((Node<T>)node).recalculateSubTreeSum();
   }
 
-  static class Node<T extends RangeMarkerWithGetterImpl & IntSupplier> extends HardReferencingRangeMarkerTree.Node<T> {
+  static class Node<T extends RangeMarkerImpl & IntSupplier> extends RMNode<T> {
     private int subtreeSum;
 
     Node(@NotNull RangeMarkerTree<T> rangeMarkerTree,

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.matcher;
 
 import org.fest.swing.core.GenericTypeMatcher;
@@ -10,7 +10,7 @@ import java.awt.*;
  * Matcher that checks the name of the actual implementation. This is useful when matching
  * against non-public IJ classes.
  */
-public class ClassNameMatcher<T extends Component> extends GenericTypeMatcher<T> {
+public final class ClassNameMatcher<T extends Component> extends GenericTypeMatcher<T> {
   private final String myClassName;
 
   private ClassNameMatcher(String className, Class<T> supportedType) {

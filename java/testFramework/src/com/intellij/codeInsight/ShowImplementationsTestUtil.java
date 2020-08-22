@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.hint.ImplementationViewElement;
@@ -17,7 +17,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class ShowImplementationsTestUtil {
+public final class ShowImplementationsTestUtil {
   public static PsiElement[] getImplementations() {
     return getImplementations(DataManager.getInstance().getDataContext());
   }

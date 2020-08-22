@@ -645,7 +645,7 @@ SHELL_SCRIPT
         LITERAL
           PsiElement(word)('echo')
       PsiWhiteSpace(' ')
-      SIMPLE_COMMAND_ELEMENT
+      LITERAL
         PsiElement(word)('for')
       PsiWhiteSpace(' ')
       SIMPLE_COMMAND_ELEMENT

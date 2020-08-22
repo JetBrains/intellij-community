@@ -6,6 +6,7 @@ import com.intellij.ide.plugins.cl.PluginClassLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionException;
 import com.intellij.openapi.extensions.ExtensionInstantiationException;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionUtil;
@@ -40,15 +41,24 @@ public final class PluginUtilImpl implements PluginUtil {
       return ((ExtensionInstantiationException)t).getExtensionOwnerId();
     }
 
+    PluginId bundledId = null;
     Set<String> visitedClassNames = new HashSet<>();
     for (StackTraceElement element : t.getStackTrace()) {
       if (element != null) {
         String className = element.getClassName();
         if (visitedClassNames.add(className)) {
-          PluginId id = PluginManagerCore.getPluginByClassName(className);
-          if (id != null) {
-            logPluginDetection(className, id);
-            return id;
+          PluginDescriptor descriptor = PluginManagerCore.getPluginDescriptorOrPlatformByClassName(className);
+          PluginId id = descriptor == null ? null : descriptor.getPluginId();
+          if (id != null && id != PluginManagerCore.CORE_ID) {
+            if (descriptor.isBundled()) {
+              if (bundledId == null) {
+                bundledId = id;
+                logPluginDetection(className, id);
+              }
+            } else {
+              logPluginDetection(className, id);
+              return id;
+            }
           }
         }
       }
@@ -117,7 +127,8 @@ public final class PluginUtilImpl implements PluginUtil {
     }
 
     Throwable cause = t.getCause();
-    return cause == null ? null : doFindPluginId(cause);
+    PluginId causeId = cause == null ? null : doFindPluginId(cause);
+    return causeId != null ? causeId : bundledId;
   }
 
   private static void logPluginDetection(String className, PluginId id) {

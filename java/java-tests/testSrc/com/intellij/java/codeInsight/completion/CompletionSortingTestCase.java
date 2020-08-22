@@ -5,6 +5,7 @@ import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase;
 import com.intellij.codeInsight.completion.StatisticsUpdate;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.psi.statistics.StatisticsManager;
@@ -66,17 +67,13 @@ public abstract class CompletionSortingTestCase extends LightFixtureCompletionTe
       myFixture.copyFileToProject(path, com.intellij.openapi.util.text.StringUtil.getShortName(path, '/')));
   }
 
-  protected static void incUseCount(final LookupImpl lookup, final int index) {
-    imitateItemSelection(lookup, index);
-    refreshSorting(lookup);
+  protected void incUseCount(int index) {
+    imitateItemSelection(getLookup(), index);
+    getLookup().hideLookup(true);
+    complete();
   }
 
-  protected static void refreshSorting(final LookupImpl lookup) {
-    lookup.setSelectionTouched(false);
-    lookup.resort(true);
-  }
-
-  protected static void imitateItemSelection(final LookupImpl lookup, final int index) {
+  protected static void imitateItemSelection(LookupEx lookup, final int index) {
     final LookupElement item = lookup.getItems().get(index);
     lookup.setCurrentItem(item);
     StatisticsUpdate.collectStatisticChanges(item);

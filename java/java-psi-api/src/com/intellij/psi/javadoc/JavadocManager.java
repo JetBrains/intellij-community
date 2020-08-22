@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface JavadocManager {
-  class SERVICE {
+  final class SERVICE {
     private SERVICE() { }
 
     public static JavadocManager getInstance(@NotNull Project project) {

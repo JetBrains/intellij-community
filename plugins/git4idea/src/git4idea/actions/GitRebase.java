@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import git4idea.branch.GitRebaseParams;
 import git4idea.i18n.GitBundle;
 import git4idea.rebase.GitRebaseDialog;
 import git4idea.rebase.GitRebaseUtils;
@@ -32,12 +33,11 @@ public class GitRebase extends DumbAwareAction {
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
     Project project = e.getProject();
-    if (project == null || !hasGitRepositories(project)) {
+    if (project == null || !hasGitRepositories(project) || !getRebasingRepositories(project).isEmpty()) {
       e.getPresentation().setEnabledAndVisible(false);
     }
     else {
-      e.getPresentation().setVisible(true);
-      e.getPresentation().setEnabled(getRebasingRepositories(project).size() < getRepositories(project).size());
+      e.getPresentation().setEnabledAndVisible(true);
     }
   }
 
@@ -50,12 +50,14 @@ public class GitRebase extends DumbAwareAction {
     VirtualFile defaultRoot = DvcsUtil.guessVcsRoot(project, e.getData(CommonDataKeys.VIRTUAL_FILE));
     final GitRebaseDialog dialog = new GitRebaseDialog(project, roots, defaultRoot);
     if (dialog.showAndGet()) {
-      ProgressManager.getInstance().run(new Task.Backgroundable(project, GitBundle.getString("rebase.progress.indicator.title")) {
+      VirtualFile root = dialog.gitRoot();
+      GitRebaseParams selectedParams = dialog.getSelectedParams();
+      ProgressManager.getInstance().run(new Task.Backgroundable(project, GitBundle.message("rebase.progress.indicator.title")) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           GitRepository selectedRepository =
-            Objects.requireNonNull(GitRepositoryManager.getInstance(project).getRepositoryForRoot(dialog.gitRoot()));
-          GitRebaseUtils.rebase(project, singletonList(selectedRepository), dialog.getSelectedParams(), indicator);
+            Objects.requireNonNull(GitRepositoryManager.getInstance(project).getRepositoryForRoot(root));
+          GitRebaseUtils.rebase(project, singletonList(selectedRepository), selectedParams, indicator);
         }
       });
     }

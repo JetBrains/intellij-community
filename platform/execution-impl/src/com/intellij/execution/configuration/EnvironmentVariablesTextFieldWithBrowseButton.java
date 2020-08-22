@@ -265,7 +265,7 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
     }
   }
 
-  private class MyEnvVariablesTable extends EnvVariablesTable {
+  private final class MyEnvVariablesTable extends EnvVariablesTable {
     private final boolean myUserList;
 
     private MyEnvVariablesTable(List<EnvironmentVariable> list, boolean userList) {

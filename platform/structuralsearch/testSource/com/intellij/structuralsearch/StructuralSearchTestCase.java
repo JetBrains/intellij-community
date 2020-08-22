@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -57,14 +56,14 @@ public abstract class StructuralSearchTestCase extends LightQuickFixTestCase {
     options.setFileType(patternFileType);
     options.setDialect(patternLanguage);
 
-    final String message = checkApplicableConstraints(options, getProject());
+    final CompiledPattern compiledPattern = PatternCompiler.compilePattern(getProject(), options, true, false);
+    final String message = checkApplicableConstraints(options, compiledPattern);
     assertNull(message, message);
-    final Matcher matcher = new Matcher(getProject(), options);
+    final Matcher matcher = new Matcher(getProject(), options, compiledPattern);
     return matcher.testFindMatches(in, true, sourceFileType, physicalSourceFile);
   }
 
-  public static String checkApplicableConstraints(MatchOptions options, Project project) {
-    final CompiledPattern compiledPattern = PatternCompiler.compilePattern(project, options, true, false);
+  public static String checkApplicableConstraints(MatchOptions options, CompiledPattern compiledPattern) {
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(options.getFileType());
     assert profile != null;
     for (String varName : options.getVariableConstraintNames()) {

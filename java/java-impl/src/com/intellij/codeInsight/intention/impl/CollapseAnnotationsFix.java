@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
@@ -19,7 +19,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-public class CollapseAnnotationsFix extends LocalQuickFixAndIntentionActionOnPsiElement {
+public final class CollapseAnnotationsFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private CollapseAnnotationsFix(PsiAnnotation annotation) {
     super(annotation);
   }

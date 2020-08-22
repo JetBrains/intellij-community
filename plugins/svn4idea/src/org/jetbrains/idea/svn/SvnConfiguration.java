@@ -29,7 +29,7 @@ import static org.jetbrains.idea.svn.IdeaSVNConfigFile.SERVERS_FILE_NAME;
 import static org.jetbrains.idea.svn.SvnUtil.SYSTEM_CONFIGURATION_PATH;
 import static org.jetbrains.idea.svn.SvnUtil.USER_CONFIGURATION_PATH;
 
-@State(name = "SvnConfiguration", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
+@State(name = "SvnConfiguration", storages = @Storage(StoragePathMacros.WORKSPACE_FILE), reportStatistic = false)
 public class SvnConfiguration implements PersistentStateComponent<SvnConfigurationState>, Disposable {
   public final static int ourMaxAnnotateRevisionsDefault = 500;
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search;
 
 import com.intellij.ide.IdeBundle;
@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
+import com.intellij.openapi.fileEditor.impl.OpenFilesScope;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.ModuleUtil;
@@ -40,13 +41,27 @@ import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
 
+// used by Rider
 public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProvider {
+
+  public static @NotNull @Nls String getRecentlyViewedFilesScopeName() {
+    return IdeBundle.message("scope.recent.files");
+  }
+
+  public static @NotNull @Nls String getRecentlyChangedFilesScopeName() {
+    return IdeBundle.message("scope.recent.modified.files");
+  }
+
+  public static @NotNull @Nls String getCurrentFileScopeName() {
+    return IdeBundle.message("scope.current.file");
+  }
 
   @NotNull
   @Override
@@ -79,20 +94,21 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
     GlobalSearchScope recentFilesScope = recentFilesScope(project, false);
     ContainerUtil.addIfNotNull(
       result, recentFilesScope != GlobalSearchScope.EMPTY_SCOPE ? recentFilesScope :
-              showEmptyScopes ? new LocalSearchScope(PsiElement.EMPTY_ARRAY, IdeBundle.message("scope.recent.files")) : null);
+              showEmptyScopes ? new LocalSearchScope(PsiElement.EMPTY_ARRAY, getRecentlyViewedFilesScopeName()) : null);
     GlobalSearchScope recentModFilesScope = recentFilesScope(project, true);
     ContainerUtil.addIfNotNull(
       result, recentModFilesScope != GlobalSearchScope.EMPTY_SCOPE ? recentModFilesScope :
-              showEmptyScopes ? new LocalSearchScope(PsiElement.EMPTY_ARRAY, IdeBundle.message("scope.recent.modified.files")) : null);
+              showEmptyScopes ? new LocalSearchScope(PsiElement.EMPTY_ARRAY, getRecentlyChangedFilesScopeName()) : null);
     GlobalSearchScope openFilesScope = GlobalSearchScopes.openFilesScope(project);
     ContainerUtil.addIfNotNull(
       result, openFilesScope != GlobalSearchScope.EMPTY_SCOPE ? openFilesScope :
-              showEmptyScopes ? new LocalSearchScope(PsiElement.EMPTY_ARRAY, IdeBundle.message("scope.open.files")) : null);
+              showEmptyScopes ? new LocalSearchScope(PsiElement.EMPTY_ARRAY, OpenFilesScope.getNameText()) : null);
 
     Editor selectedTextEditor = ApplicationManager.getApplication().isDispatchThread()
                                 ? FileEditorManager.getInstance(project).getSelectedTextEditor()
                                 : null;
-    PsiFile psiFile = selectedTextEditor == null ? null : PsiDocumentManager.getInstance(project).getPsiFile(selectedTextEditor.getDocument());
+    PsiFile psiFile =
+      selectedTextEditor == null ? null : PsiDocumentManager.getInstance(project).getPsiFile(selectedTextEditor.getDocument());
     PsiFile currentFile = psiFile;
 
     if (dataContext != null) {
@@ -122,8 +138,8 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
     }
 
     if (currentFile != null || showEmptyScopes) {
-      PsiElement[] scope = currentFile != null ? new PsiElement[] {currentFile} : PsiElement.EMPTY_ARRAY;
-      result.add(new LocalSearchScope(scope, IdeBundle.message("scope.current.file")));
+      PsiElement[] scope = currentFile != null ? new PsiElement[]{currentFile} : PsiElement.EMPTY_ARRAY;
+      result.add(new LocalSearchScope(scope, getCurrentFileScopeName()));
     }
 
     if (currentSelection && selectedTextEditor != null && psiFile != null) {
@@ -220,8 +236,8 @@ public class PredefinedSearchScopeProviderImpl extends PredefinedSearchScopeProv
 
   @NotNull
   public static GlobalSearchScope recentFilesScope(@NotNull Project project, boolean changedOnly) {
-    String name = changedOnly ? IdeBundle.message("scope.recent.modified.files") : IdeBundle.message("scope.recent.files");
-    List<VirtualFile> files = changedOnly ? Arrays.asList(IdeDocumentHistory.getInstance(project).getChangedFiles()) :
+    String name = changedOnly ? getRecentlyChangedFilesScopeName() : getRecentlyViewedFilesScopeName();
+    List<VirtualFile> files = changedOnly ? IdeDocumentHistory.getInstance(project).getChangedFiles() :
                               JBIterable.from(EditorHistoryManager.getInstance(project).getFileList())
                                 .append(FileEditorManager.getInstance(project).getOpenFiles()).unique().toList();
 

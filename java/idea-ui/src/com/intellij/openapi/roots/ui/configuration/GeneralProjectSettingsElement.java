@@ -18,6 +18,7 @@ package com.intellij.openapi.roots.ui.configuration;
 import com.intellij.compiler.ModuleCompilerUtil;
 import com.intellij.compiler.ModuleSourceSet;
 import com.intellij.compiler.server.impl.BuildProcessCustomPluginsConfiguration;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -32,6 +33,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Chunk;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,18 +46,18 @@ public class GeneralProjectSettingsElement extends ProjectStructureElement {
 
   @NotNull
   @Override
-  public String getPresentableText() {
-    return "Project";
+  public @Nls(capitalization = Nls.Capitalization.Sentence) String getPresentableText() {
+    return IdeBundle.message("title.project");
   }
 
   @Override
-  public String getPresentableName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) String getPresentableName() {
     return ProjectStructureConfigurable.getInstance(myContext.getProject()).getProjectConfig().getProjectName();
   }
 
   @Override
-  public String getTypeName() {
-    return "Project";
+  public @Nls(capitalization = Nls.Capitalization.Sentence) String getTypeName() {
+    return IdeBundle.message("title.project");
   }
 
   @Override
@@ -92,7 +94,7 @@ public class GeneralProjectSettingsElement extends ProjectStructureElement {
       final String message;
       final String description;
       if (cycles.size() > 1) {
-        message = "Circular dependencies";
+        message = JavaUiBundle.message("circular.dependencies.message");
         @NonNls final String br = "<br>&nbsp;&nbsp;&nbsp;&nbsp;";
         StringBuilder cyclesString = new StringBuilder();
         for (int i = 0; i < cycles.size(); i++) {
@@ -151,7 +153,8 @@ public class GeneralProjectSettingsElement extends ProjectStructureElement {
     for (String libraryName : BuildProcessCustomPluginsConfiguration.getInstance(myContext.getProject()).getProjectLibraries()) {
       Library library = myContext.getProjectLibrariesProvider().getModifiableModel().getLibraryByName(libraryName);
       if (library != null) {
-        usages.add(new UsageInProjectSettings(myContext, new LibraryProjectStructureElement(myContext, library), "Build process configuration"));
+        usages.add(new UsageInProjectSettings(myContext, new LibraryProjectStructureElement(myContext, library),
+                                              JavaUiBundle.message("label.build.process.configuration")));
       }
     }
 

@@ -20,10 +20,8 @@ import com.intellij.openapi.ui.panel.ProgressPanelBuilder;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonHandler;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.NlsContexts.PopupContent;
-import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
@@ -57,7 +55,7 @@ import java.util.*;
 
 public final class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidget {
   private final ProcessPopup myPopup;
-  private final ProcessBalloon myBalloon = new ProcessBalloon();
+  private final ProcessBalloon myBalloon = new ProcessBalloon(3);
 
   private final StatusPanel myInfoPanel = new StatusPanel();
   private final JPanel myRefreshAndInfoPanel = new JPanel();
@@ -353,7 +351,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     UIUtil.invokeLaterIfNeeded(() -> myRefreshIcon.setVisible(visible));
   }
 
-  void setRefreshToolTipText(String tooltip) {
+  void setRefreshToolTipText(@NlsContexts.Tooltip String tooltip) {
     myRefreshIcon.setToolTipText(tooltip);
   }
 
@@ -511,6 +509,21 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     }
 
     @Override
+    protected @NotNull Runnable createSuspendUpdateRunnable(@NotNull InplaceButton suspendButton) {
+      suspendButton.setVisible(false);
+
+      return () -> {
+        ProgressSuspender suspender = getSuspender();
+        suspendButton.setVisible(suspender != null);
+
+        if (suspender != null && (myProgressPanel.getState() == ProgressPanel.State.PAUSED) != suspender.isSuspended()) {
+          myProgressPanel.setState(suspender.isSuspended() ? ProgressPanel.State.PAUSED : ProgressPanel.State.PLAYING);
+          updateProgressIcon();
+        }
+      };
+    }
+
+    @Override
     protected boolean canCheckPowerSaveMode() {
       return false;
     }
@@ -551,17 +564,17 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
 
     @Override
     public void updateProgressNow() {
-      super_updateProgressNow();
+      super.updateProgressNow();
       mySuspendUpdateRunnable.run();
-      boolean painting = getInfo().isCancellable() && !isStopping();
-      myCancelButton.setPainting(painting);
-      myCancelButton.setVisible(painting || !mySuspendButton.isVisible());
+      updateCancelButton(mySuspendButton, myCancelButton);
     }
   }
 
   class MyInlineProgressIndicator extends InlineProgressIndicator {
     private ProgressIndicatorEx myOriginal;
     PresentationModeProgressPanel myPresentationModeProgressPanel;
+    Balloon myPresentationModeBalloon;
+    boolean myPresentationModeShowBalloon;
 
     MyInlineProgressIndicator(@NotNull TaskInfo task, @NotNull ProgressIndicatorEx original) {
       this(true, task, original);
@@ -585,8 +598,10 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     protected void createCompactTextAndProgress() {
       myText.setTextAlignment(Component.RIGHT_ALIGNMENT);
       myText.recomputeSize();
+      UIUtil.setCursor(myText, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       UIUtil.setCursor(myProgress, Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
       super.createCompactTextAndProgress();
+      ((JComponent)myProgress.getParent()).setBorder(JBUI.Borders.empty(0, 8, 0, 4));
     }
 
     protected boolean canCheckPowerSaveMode() {
@@ -603,6 +618,18 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     @Override
     protected JBIterable<ProgressButton> createEastButtons() {
       return JBIterable.of(createSuspendButton()).append(super.createEastButtons());
+    }
+
+    protected void updateCancelButton(@NotNull InplaceButton suspend, @NotNull InplaceButton cancel) {
+      boolean painting = getInfo().isCancellable() && !isStopping();
+      cancel.setPainting(painting);
+      cancel.setVisible(painting || !suspend.isVisible());
+    }
+
+    JBIterable<ProgressButton> createPresentationButtons() {
+      ProgressButton suspend = createSuspendButton();
+      ProgressButton cancel = createCancelButton();
+      return JBIterable.of(suspend).append(new ProgressButton(cancel.button, () -> updateCancelButton(suspend.button, cancel.button)));
     }
 
     private ProgressButton createSuspendButton() {
@@ -662,9 +689,11 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
 
     private void setIcons(InplaceButton button, Icon compactRegular, Icon regular, Icon compactHovered, Icon hovered) {
       button.setIcons(isCompact() ? compactRegular : regular, null, isCompact() ? compactHovered : hovered);
+      button.revalidate();
+      button.repaint();
     }
 
-    private @Nullable ProgressSuspender getSuspender() {
+    protected @Nullable ProgressSuspender getSuspender() {
       ProgressIndicatorEx original = myOriginal;
       return original == null ? null : ProgressSuspender.getSuspender(original);
     }
@@ -716,15 +745,15 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
       });
     }
 
-    protected final void super_updateProgressNow() {
-      super.updateProgressNow();
-    }
-
     @Override
     public void updateProgressNow() {
       myProgress.setVisible(!PowerSaveMode.isEnabled() || !isPaintingIndeterminate());
       super.updateProgressNow();
       if (myPresentationModeProgressPanel != null) myPresentationModeProgressPanel.update();
+    }
+
+    public boolean showInPresentationMode() {
+      return !isProcessWindowOpen();
     }
   }
 
@@ -750,7 +779,13 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
   private class InlineProgressPanel extends NonOpaquePanel {
     private MyInlineProgressIndicator myIndicator;
     private AsyncProcessIcon myProcessIconComponent;
-    private final LinkLabel<?> myMultiProcessLink = LinkLabel.create("", InfoAndProgressPanel.this::triggerPopupShowing);
+    private final LinkLabel<?> myMultiProcessLink = new LinkLabel<Object>("", null, (__, ___) -> triggerPopupShowing(), null, null) {
+      @Override
+      public void updateUI() {
+        super.updateUI();
+        setFont(SystemInfo.isMac ? JBUI.Fonts.label(11) : JBFont.label());
+      }
+    };
 
     InlineProgressPanel() {
       setLayout(new AbstractLayoutManager() {
@@ -795,6 +830,18 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
 
           if (indicator.isVisible()) {
             int preferredWidth = preferredLayoutSize(parent).width - insets.left - insets.right;
+            Dimension indicatorSize = null;
+
+            if (preferredWidth > width) {
+              int progressWidth2x = myIndicator.myProgress.getPreferredSize().width * 2;
+              if (width > progressWidth2x && myIndicator.myText.getPreferredSize().width > progressWidth2x) {
+                preferredWidth = width;
+                indicatorSize = new Dimension(width, indicator.getPreferredSize().height);
+                if (myMultiProcessLink.isVisible()) {
+                  indicatorSize.width -= myMultiProcessLink.getPreferredSize().width + gap;
+                }
+              }
+            }
 
             if (preferredWidth > width) {
               indicator.setBounds(0, 0, 0, 0);
@@ -813,14 +860,20 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
                   myMultiProcessLink.setBounds(0, 0, 0, 0);
                 }
 
-                setBounds(myProcessIconComponent, x, centerY, iconSize, false);
+                setBounds(myProcessIconComponent, 0, centerY, iconSize, false);
               }
               else {
+                boolean minisWidth = true;
+
                 if (myMultiProcessLink.isVisible()) {
                   rightX = setBounds(myMultiProcessLink, rightX, centerY, null, true) - gap;
                 }
+                else if (width < 60) {
+                  rightX = 0;
+                  minisWidth = false;
+                }
 
-                setBounds(myProcessIconComponent, rightX, centerY, iconSize, true);
+                setBounds(myProcessIconComponent, rightX, centerY, iconSize, minisWidth);
               }
 
               myProcessIconComponent.setVisible(true);
@@ -832,7 +885,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
                 rightX = setBounds(myMultiProcessLink, rightX, centerY, null, true) - gap;
               }
 
-              setBounds(indicator, rightX, centerY, null, true);
+              setBounds(indicator, rightX, centerY, indicatorSize, true);
             }
           }
           else {

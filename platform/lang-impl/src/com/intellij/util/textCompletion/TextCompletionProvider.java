@@ -18,6 +18,7 @@ package com.intellij.util.textCompletion;
 import com.intellij.codeInsight.completion.CompletionParameters;
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.lookup.CharFilter;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +32,7 @@ import org.jetbrains.annotations.Nullable;
  * See {@link TextCompletionContributor} and {@link TextCompletionCharFilter}.
  */
 public interface TextCompletionProvider {
-  @Nullable
+  @Nullable @NlsContexts.PopupAdvertisement
   String getAdvertisement();
 
   @Nullable

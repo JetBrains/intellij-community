@@ -3,20 +3,22 @@ package com.intellij.refactoring.inline;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 
 public class InlineFieldDialog extends InlineOptionsWithSearchSettingsDialog {
-  private final PsiReferenceExpression myReferenceExpression;
+  private final PsiElement myReferenceExpression;
 
   private final PsiField myField;
   protected final int myOccurrencesNumber;
 
-  public InlineFieldDialog(Project project, PsiField field, PsiReferenceExpression ref) {
+  public InlineFieldDialog(Project project, PsiField field, PsiElement ref) {
     super(project, true, field);
     myField = field;
     myReferenceExpression = ref;
@@ -29,9 +31,10 @@ public class InlineFieldDialog extends InlineOptionsWithSearchSettingsDialog {
 
   @Override
   protected String getNameLabelText() {
-    final String occurrencesString = myOccurrencesNumber > -1 ? "has " + myOccurrencesNumber + " occurrence" + (myOccurrencesNumber == 1 ? "" : "s") : "";
-
-    String fieldText = PsiFormatUtil.formatVariable(myField, PsiFormatUtil.SHOW_NAME | PsiFormatUtil.SHOW_TYPE,PsiSubstitutor.EMPTY);
+    String fieldText = PsiFormatUtil.formatVariable(myField, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_TYPE, PsiSubstitutor.EMPTY);
+    String occurrencesString = myOccurrencesNumber > -1 ?
+                              JavaRefactoringBundle.message("inline.field.field.occurrences", fieldText, myOccurrencesNumber) :
+                              JavaRefactoringBundle.message("inline.field.field.name.label", fieldText);
     return JavaRefactoringBundle.message("inline.field.field.name.label", fieldText, occurrencesString);
   }
 
@@ -110,7 +113,7 @@ public class InlineFieldDialog extends InlineOptionsWithSearchSettingsDialog {
     return HelpID.INLINE_FIELD;
   }
 
-  public static String getRefactoringName() {
+  public static @NlsContexts.DialogTitle String getRefactoringName() {
     return JavaRefactoringBundle.message("inline.field.title");
   }
 }

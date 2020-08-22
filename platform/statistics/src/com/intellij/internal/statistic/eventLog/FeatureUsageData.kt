@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog
 
+import com.intellij.codeWithMe.ClientId
+import com.intellij.internal.statistic.collectors.fus.ActionPlaceHolder
 import com.intellij.internal.statistic.eventLog.StatisticsEventEscaper.escapeFieldName
 import com.intellij.internal.statistic.utils.PluginInfo
 import com.intellij.internal.statistic.utils.StatisticsUtil
@@ -43,10 +45,33 @@ private val LOG = logger<FeatureUsageData>()
 class FeatureUsageData {
   private var data: MutableMap<String, Any> = HashMap()
 
+  init {
+    val clientId = ClientId.currentOrNull
+    if (clientId != null && clientId != ClientId.defaultLocalId) {
+      addClientId(clientId.value)
+    }
+  }
+
   companion object {
     // don't list "version" as "platformDataKeys" because it format depends a lot on the tool
     val platformDataKeys: List<String> = listOf("plugin", "project", "os", "plugin_type", "lang", "current_file", "input_event", "place",
-                                                "file_path", "anonymous_id")
+                                                "file_path", "anonymous_id", "client_id")
+  }
+
+  fun addClientId(clientId: String?): FeatureUsageData {
+    clientId?.let {
+      val permanentClientId = parsePermanentClientId(clientId)
+      data["client_id"] = EventLogConfiguration.anonymize(permanentClientId)
+    }
+    return this
+  }
+
+  private fun parsePermanentClientId(clientId: String): String {
+    val separator = clientId.indexOf('-')
+    if (separator > 0) {
+      return clientId.substring(0, separator)
+    }
+    return clientId
   }
 
   /**
@@ -177,7 +202,7 @@ class FeatureUsageData {
     if (place == null) return this
 
     var reported = ActionPlaces.UNKNOWN
-    if (isCommonPlace(place)) {
+    if (isCommonPlace(place) || ActionPlaceHolder.isCustomActionPlace(place)) {
       reported = place
     }
     else if (ActionPlaces.isPopupPlace(place)) {
@@ -275,6 +300,15 @@ class FeatureUsageData {
    * @param key key can contain "-", "_", latin letters or digits. All not allowed symbols will be replaced with "_" or "?".
    */
   fun addData(@NonNls key: String, value: List<String>): FeatureUsageData {
+    return addDataInternal(key, value)
+  }
+
+  /**
+   * The data reported by this method will be available ONLY for ad-hoc analysis.
+   *
+   * @param key key can contain "-", "_", latin letters or digits. All not allowed symbols will be replaced with "_" or "?".
+   */
+  internal fun addListLongData(@NonNls key: String, value: List<Long>): FeatureUsageData {
     return addDataInternal(key, value)
   }
 

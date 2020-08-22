@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pass;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.SearchScope;
@@ -18,7 +19,6 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
@@ -112,9 +112,9 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
     qualifyOuterMemberReferences(outerHides);
     qualifyStaticImportReferences(staticImportHides);
 
-    if (!method.isConstructor() && method.isPhysical() && method.findDeepestSuperMethods().length == 0) {
+    if (!method.isConstructor() && !(method instanceof LightElement) && method.findDeepestSuperMethods().length == 0) {
       PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, true, CommonClassNames.JAVA_LANG_OVERRIDE);
-      if (annotation != null && annotation.isPhysical()) {
+      if (annotation != null) {
         annotation.delete();
       }
     }
@@ -335,7 +335,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
     if (recordComponent != null) {
       return recordComponent;
     }
-    return SuperMethodWarningUtil.checkSuperMethod(psiMethod, RefactoringBundle.message("to.rename"));
+    return SuperMethodWarningUtil.checkSuperMethod(psiMethod);
   }
 
   @Override
@@ -358,7 +358,7 @@ public class RenameJavaMethodProcessor extends RenameJavaMemberProcessor {
         renameCallback.pass(recordComponent);
         return;
       }
-      SuperMethodWarningUtil.checkSuperMethod(psiMethod, "Rename", new PsiElementProcessor<PsiMethod>() {
+      SuperMethodWarningUtil.checkSuperMethod(psiMethod, new PsiElementProcessor<PsiMethod>() {
         @Override
         public boolean execute(@NotNull PsiMethod method) {
           if (!PsiElementRenameHandler.canRename(method.getProject(), editor, method)) return false;

@@ -14,10 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-@State(name = "masterDetails", storages = {
-  @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE),
-  @Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)
-})
+@State(name = "masterDetails", storages = @Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE))
 public final class MasterDetailsStateService implements PersistentStateComponent<MasterDetailsStateService.States>{
   private final Map<String, ComponentState> myStates = new HashMap<>();
 
@@ -60,7 +57,7 @@ public final class MasterDetailsStateService implements PersistentStateComponent
   @Tag("state")
   public static final class ComponentState {
     @Attribute("key")
-    public String myKey;
+    public @NonNls String myKey;
 
     @Tag("settings")
     public Element mySettings;

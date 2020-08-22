@@ -111,8 +111,8 @@ public final class TerminalView {
 
     myProject.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
       @Override
-      public void toolWindowShown(@NotNull String id, @NotNull ToolWindow toolWindow) {
-        if (TerminalToolWindowFactory.TOOL_WINDOW_ID.equals(id) && myToolWindow == toolWindow &&
+      public void toolWindowShown(@NotNull ToolWindow toolWindow) {
+        if (TerminalToolWindowFactory.TOOL_WINDOW_ID.equals(toolWindow.getId()) && myToolWindow == toolWindow &&
             toolWindow.isVisible() && toolWindow.getContentManager().getContentCount() == 0) {
           // open a new session if all tabs were closed manually
           createNewSession(myTerminalRunner, null, true);
@@ -139,10 +139,6 @@ public final class TerminalView {
         contentManager.setSelectedContent(content);
       }
     }
-
-    if (contentManager.getContentCount() == 0) {
-      createNewSession(myTerminalRunner, null);
-    }
   }
 
   public void createNewSession(@NotNull AbstractTerminalRunner<?> terminalRunner) {
@@ -166,12 +162,19 @@ public final class TerminalView {
   private JBTerminalWidget createNewSession(@NotNull AbstractTerminalRunner<?> terminalRunner,
                                             @Nullable TerminalTabState tabState,
                                             boolean requestFocus) {
-    ToolWindow toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID);
-    // ensure #initToolWindow is called
-    Objects.requireNonNull(toolWindow).activate(null);
-    LOG.assertTrue(toolWindow == myToolWindow);
-    Content content = createNewTab(null, terminalRunner, myToolWindow, tabState, requestFocus);
+    ToolWindow toolWindow = getOrInitToolWindow();
+    Content content = createNewTab(null, terminalRunner, toolWindow, tabState, requestFocus);
     return Objects.requireNonNull(getWidgetByContent(content));
+  }
+
+  private @NotNull ToolWindow getOrInitToolWindow() {
+    ToolWindow toolWindow = myToolWindow;
+    if (toolWindow == null) {
+      toolWindow = ToolWindowManager.getInstance(myProject).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID);
+      Objects.requireNonNull(toolWindow).getContentManager(); // to call #initToolWindow
+      LOG.assertTrue(toolWindow == myToolWindow);
+    }
+    return toolWindow;
   }
 
   @NotNull
@@ -189,7 +192,16 @@ public final class TerminalView {
     final ContentManager contentManager = toolWindow.getContentManager();
     contentManager.addContent(content);
     new TerminalTabCloseListener(content, myProject);
-    contentManager.setSelectedContent(content, requestFocus);
+    Runnable selectRunnable = () -> {
+      contentManager.setSelectedContent(content, requestFocus);
+    };
+    if (requestFocus && !toolWindow.isActive()) {
+      LOG.info("Activating " + toolWindow.getId() + " tool window");
+      toolWindow.activate(selectRunnable, true, true);
+    }
+    else {
+      selectRunnable.run();
+    }
     return content;
   }
 
@@ -218,7 +230,6 @@ public final class TerminalView {
       TerminalWorkingDirectoryManager.setInitialWorkingDirectory(content, currentWorkingDir);
     }
     else {
-      terminalWidget.setVirtualFile(null);
       terminalWidget.moveDisposable(content);
     }
     setupTerminalWidget(toolWindow, terminalWidget, tabState, content, true);
@@ -277,7 +288,7 @@ public final class TerminalView {
 
       @Override
       public void onSessionClosed() {
-        terminalWidget.close();
+        terminalWidget.terminateProcess();
       }
 
       @Override
@@ -450,6 +461,11 @@ public final class TerminalView {
     ContentManager contentManager = myToolWindow.getContentManager();
     LOG.assertTrue(contentManager.getIndexOfContent(content) >= 0, "Not a terminal content");
     contentManager.removeContent(content, true);
+    Collection<TerminalContainer> containers = ContainerUtil.filter(myContainerByWidgetMap.values(),
+                                                                    (container -> container.getContent().equals(content)));
+    for (TerminalContainer container : containers) {
+      container.detachWidget();
+    }
     content.putUserData(TERMINAL_WIDGET_KEY, null);
   }
 

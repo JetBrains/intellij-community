@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -27,7 +27,7 @@ import java.util.function.Supplier;
 /**
  * @author peter
  */
-public class JavaConstructorCallElement extends LookupElementDecorator<LookupElement> implements TypedLookupItem {
+public final class JavaConstructorCallElement extends LookupElementDecorator<LookupElement> implements TypedLookupItem {
   private static final Key<JavaConstructorCallElement> WRAPPING_CONSTRUCTOR_CALL = Key.create("WRAPPING_CONSTRUCTOR_CALL");
   @NotNull private final PsiMethod myConstructor;
   @NotNull private final PsiClassType myType;
@@ -55,7 +55,7 @@ public class JavaConstructorCallElement extends LookupElementDecorator<LookupEle
     super.handleInsert(context);
 
     context.commitDocument();
-    PsiCallExpression callExpression = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(), 
+    PsiCallExpression callExpression = PsiTreeUtil.findElementOfClassAtOffset(context.getFile(), context.getStartOffset(),
                                                                               PsiCallExpression.class, false);
     // make sure this is the constructor call we've just added, not the enclosing method/constructor call
     if (callExpression != null) {
@@ -134,7 +134,7 @@ public class JavaConstructorCallElement extends LookupElementDecorator<LookupEle
 
   static List<? extends LookupElement> wrap(@NotNull LookupElement classItem, @NotNull PsiClass psiClass,
                                             @NotNull PsiElement position, @NotNull Supplier<? extends PsiClassType> type) {
-    if ((Registry.is("java.completion.show.constructors") || CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION) && 
+    if ((Registry.is("java.completion.show.constructors") || CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION) &&
         isConstructorCallPlace(position)) {
       List<PsiMethod> constructors = ContainerUtil.filter(psiClass.getConstructors(), c -> shouldSuggestConstructor(psiClass, position, c));
       if (!constructors.isEmpty()) {

@@ -5,6 +5,7 @@ import com.intellij.internal.statistic.connect.StatServiceException;
 import com.intellij.internal.statistic.connect.StatisticsResult;
 import com.intellij.internal.statistic.connect.StatisticsResult.ResultCode;
 import com.intellij.internal.statistic.connect.StatisticsService;
+import com.intellij.internal.statistic.eventLog.filters.LogEventFilter;
 import com.intellij.internal.statistic.service.request.StatsHttpRequests;
 import com.intellij.internal.statistic.service.request.StatsHttpResponse;
 import org.apache.http.Consts;
@@ -102,6 +103,8 @@ public class EventLogStatisticsService implements StatisticsService {
     EventLogBuildType defaultBuildType = getDefaultBuildType(info);
     LogEventFilter baseFilter = settings.getBaseEventFilter();
     try {
+      EventLogConnectionSettings connectionSettings = info.getConnectionSettings();
+
       decorator.onLogsLoaded(logs.size());
       final List<File> toRemove = new ArrayList<>(logs.size());
       int size = Math.min(MAX_FILES_TO_SEND, logs.size());
@@ -124,7 +127,7 @@ public class EventLogStatisticsService implements StatisticsService {
         }
 
         try {
-          StatsHttpRequests.post(serviceUrl, info.getUserAgent()).
+          StatsHttpRequests.post(serviceUrl, connectionSettings).
             withBody(LogEventSerializer.INSTANCE.toString(recordRequest), APPLICATION_JSON).
             succeed((r, code) -> {
               toRemove.add(file);
@@ -232,7 +235,7 @@ public class EventLogStatisticsService implements StatisticsService {
     }
   }
 
-  private static class EventLogCounterResultDecorator implements EventLogResultDecorator {
+  private static final class EventLogCounterResultDecorator implements EventLogResultDecorator {
     private final EventLogSendListener myListener;
 
     private int myLocalFiles = -1;

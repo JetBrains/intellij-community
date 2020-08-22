@@ -1,5 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring;
 
 import com.intellij.codeInsight.actions.VcsFacade;
@@ -33,6 +32,7 @@ import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.NlsContexts.Command;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
@@ -52,7 +52,6 @@ import com.intellij.refactoring.listeners.impl.RefactoringTransaction;
 import com.intellij.refactoring.suggested.SuggestedRefactoringProvider;
 import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
-import com.intellij.ui.GuiUtils;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
@@ -62,13 +61,12 @@ import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.util.Processor;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
-import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 public abstract class BaseRefactoringProcessor implements Runnable {
@@ -180,8 +178,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     throw new UnsupportedOperationException();
   }
 
-  @NotNull
-  protected abstract String getCommandName();
+  protected abstract @NotNull @Command String getCommandName();
 
   protected void doRun() {
     if (!PsiDocumentManager.getInstance(myProject).commitAllDocumentsUnderProgress()) {
@@ -301,13 +298,18 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     return false;
   }
 
-  private boolean ensureElementsWritable(final UsageInfo @NotNull [] usages, @NotNull UsageViewDescriptor descriptor) {
-    Set<PsiElement> elements = ContainerUtil.newIdentityTroveSet(); // protect against poorly implemented equality
+  private boolean ensureElementsWritable(UsageInfo @NotNull [] usages, @NotNull UsageViewDescriptor descriptor) {
+    // protect against poorly implemented equality
+    Set<PsiElement> elements = new ReferenceOpenHashSet<>();
     for (UsageInfo usage : usages) {
       assert usage != null: "Found null element in usages array";
-      if (skipNonCodeUsages() && usage.isNonCodeUsage()) continue;
+      if (skipNonCodeUsages() && usage.isNonCodeUsage()) {
+        continue;
+      }
       PsiElement element = usage.getElement();
-      if (element != null) elements.add(element);
+      if (element != null) {
+        elements.add(element);
+      }
     }
     elements.addAll(getElementsToWrite(descriptor));
     return ensureFilesWritable(myProject, elements);
@@ -316,6 +318,10 @@ public abstract class BaseRefactoringProcessor implements Runnable {
   private static boolean ensureFilesWritable(@NotNull Project project, @NotNull Collection<? extends PsiElement> elements) {
     PsiElement[] psiElements = PsiUtilCore.toPsiElementArray(elements);
     return CommonRefactoringUtil.checkReadOnlyStatus(project, psiElements);
+  }
+
+  public void executeEx(final UsageInfo @NotNull [] usages) {
+    execute(usages);
   }
 
   protected void execute(final UsageInfo @NotNull [] usages) {
@@ -606,9 +612,9 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     if (myPrepareSuccessfulSwingThreadCallback != null) {
       // make sure that dialog is closed in swing thread
       try {
-        GuiUtils.runOrInvokeAndWait(myPrepareSuccessfulSwingThreadCallback);
+        ApplicationManager.getApplication().invokeAndWait(myPrepareSuccessfulSwingThreadCallback);
       }
-      catch (InterruptedException | InvocationTargetException e) {
+      catch (RuntimeException e) {
         LOG.error(e);
       }
     }
@@ -638,7 +644,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     return false;
   }
 
-  public static class ConflictsInTestsException extends RuntimeException {
+  public static final class ConflictsInTestsException extends RuntimeException {
     private final Collection<? extends String> messages;
 
     private static boolean myTestIgnore;

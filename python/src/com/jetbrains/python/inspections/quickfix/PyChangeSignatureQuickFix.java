@@ -38,7 +38,7 @@ import java.util.*;
 import static com.intellij.refactoring.changeSignature.ParameterInfo.NEW_PARAMETER;
 import static com.jetbrains.python.psi.PyUtil.as;
 
-public class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
+public final class PyChangeSignatureQuickFix extends LocalQuickFixOnPsiElement {
 
   public static final Key<Boolean> CHANGE_SIGNATURE_ORIGINAL_CALL = Key.create("CHANGE_SIGNATURE_ORIGINAL_CALL");
 

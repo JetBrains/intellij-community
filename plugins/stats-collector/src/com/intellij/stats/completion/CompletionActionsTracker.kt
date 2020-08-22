@@ -6,13 +6,13 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.stats.experiment.WebServiceStatus
+import com.intellij.stats.experiment.ExperimentInfo
 import com.intellij.stats.storage.factors.LookupStorage
 
 class CompletionActionsTracker(private val lookup: LookupImpl,
                                private val lookupStorage: LookupStorage,
                                private val logger: CompletionLogger,
-                               private val experimentHelper: WebServiceStatus)
+                               private val experimentInfo: ExperimentInfo)
     : CompletionActionsListener {
 
     private var completionStarted = false
@@ -37,7 +37,7 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
             logger.itemSelectedByTyping(lookup, performance, timestamp)
         }
         else {
-            logger.completionCancelled(performance, timestamp)
+            logger.completionCancelled(event.isCanceledExplicitly, performance, timestamp)
         }
     }
 
@@ -49,10 +49,7 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
         val timestamp = System.currentTimeMillis()
         completionStarted = true
         deferredLog.defer {
-            val isPerformExperiment = experimentHelper.isExperimentOnCurrentIDE()
-            val experimentVersion = experimentHelper.experimentVersion()
-            logger.completionStarted(lookup, isPerformExperiment, experimentVersion,
-                                     timestamp)
+            logger.completionStarted(lookup, experimentInfo.inExperiment, experimentInfo.version, timestamp)
         }
     }
 
@@ -66,7 +63,7 @@ class CompletionActionsTracker(private val lookup: LookupImpl,
             logger.itemSelectedByTyping(lookup, performance, timestamp)
         }
         else {
-            logger.itemSelectedCompletionFinished(lookup, performance, timestamp)
+            logger.itemSelectedCompletionFinished(lookup, event.completionChar, performance, timestamp)
         }
     }
 

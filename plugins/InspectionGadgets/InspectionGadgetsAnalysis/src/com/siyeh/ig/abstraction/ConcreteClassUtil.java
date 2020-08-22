@@ -20,7 +20,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.LibraryUtil;
 import org.jetbrains.annotations.Nullable;
 
-class ConcreteClassUtil {
+final class ConcreteClassUtil {
 
   private ConcreteClassUtil() {}
 

@@ -59,7 +59,7 @@ internal fun loadImage(file: Path): Image? {
     }
   }
   catch (e: Exception) {
-    e.printStackTrace()
+    e.printStackTrace(System.out)
     return null
   }
 }

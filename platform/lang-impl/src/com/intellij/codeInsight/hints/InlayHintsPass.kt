@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeHighlighting.EditorBoundHighlightingPass
@@ -16,11 +16,11 @@ import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SyntaxTraverser
 import com.intellij.util.Processor
-import gnu.trove.TIntHashSet
-import gnu.trove.TIntObjectHashMap
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap
+import it.unimi.dsi.fastutil.ints.Int2ObjectMaps
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.stream.IntStream
-
 
 class InlayHintsPass(
   private val rootElement: PsiElement,
@@ -80,6 +80,7 @@ class InlayHintsPass(
       val inlayModel = editor.inlayModel
 
       val existingInlineInlays = inlayModel.getInlineElementsInRange(startOffset, endOffset, InlineInlayRenderer::class.java)
+      val existingAfterLineEndInlays = inlayModel.getAfterLineEndElementsInRange(startOffset, endOffset, InlineInlayRenderer::class.java)
       val existingBlockInlays: List<Inlay<out BlockInlayRenderer>> = inlayModel.getBlockElementsInRange(startOffset, endOffset,
                                                                                                         BlockInlayRenderer::class.java)
       val existingBlockAboveInlays = mutableListOf<Inlay<out PresentationContainerRenderer<*>>>()
@@ -96,6 +97,7 @@ class InlayHintsPass(
       val factory = PresentationFactory(editor as EditorImpl)
       inlayModel.execute(isBulk) {
         updateOrDispose(existingInlineInlays, hints, Inlay.Placement.INLINE, factory, editor)
+        updateOrDispose(existingAfterLineEndInlays, hints, Inlay.Placement.INLINE /* 'hints' consider them as INLINE*/, factory, editor)
         updateOrDispose(existingBlockAboveInlays, hints, Inlay.Placement.ABOVE_LINE, factory, editor)
         updateOrDispose(existingBlockBelowInlays, hints, Inlay.Placement.BELOW_LINE, factory, editor)
         if (hints != null) {
@@ -113,32 +115,39 @@ class InlayHintsPass(
     }
 
 
-    private fun addInlineHints(hints: HintsBuffer,
-                               inlayModel: InlayModel) {
-      hints.inlineHints.forEachEntry { offset, presentations ->
-        val renderer = InlineInlayRenderer(presentations)
-        val inlay = inlayModel.addInlineElement(offset, renderer) ?: return@forEachEntry false
-        postprocessInlay(inlay)
-        true
+    private fun addInlineHints(hints: HintsBuffer, inlayModel: InlayModel) {
+      for (entry in Int2ObjectMaps.fastIterable(hints.inlineHints)) {
+        val renderer = InlineInlayRenderer(entry.value)
+
+        val toBePlacedAtTheEndOfLine = entry.value.any { it.constraints?.placedAtTheEndOfLine ?: false }
+        val inlay = if (toBePlacedAtTheEndOfLine) {
+          inlayModel.addAfterLineEndElement(entry.intKey, true, renderer)
+        } else {
+          inlayModel.addInlineElement(entry.intKey, renderer) ?: break
+        }
+
+        inlay?.let { postprocessInlay(it) }
       }
     }
 
     private fun addBlockHints(inlayModel: InlayModel,
-                              map: TIntObjectHashMap<MutableList<ConstrainedPresentation<*, BlockConstraints>>>,
+                              map: Int2ObjectMap<MutableList<ConstrainedPresentation<*, BlockConstraints>>>,
                               showAbove: Boolean
     ) {
-      map.forEachEntry { offset, presentations ->
-        val renderer = BlockInlayRenderer(presentations)
+      for (entry in Int2ObjectMaps.fastIterable(map)) {
+        val presentations = entry.value
         val constraints = presentations.first().constraints
         val inlay = inlayModel.addBlockElement(
-          offset,
+          entry.intKey,
           constraints?.relatesToPrecedingText ?: true,
           showAbove,
           constraints?.priority ?: 0,
-          renderer
-        ) ?: return@forEachEntry false
+          BlockInlayRenderer(presentations)
+        ) ?: break
         postprocessInlay(inlay)
-        showAbove
+        if (!showAbove) {
+          break
+        }
       }
     }
 
@@ -182,11 +191,9 @@ class InlayHintsPass(
     /**
      *  Estimates count of changes (removal, addition) for inlays
      */
-    fun estimateChangesCountForPlacement(existingInlayOffsets: IntStream,
-                                         collected: HintsBuffer,
-                                         placement: Inlay.Placement): Int {
+    fun estimateChangesCountForPlacement(existingInlayOffsets: IntStream, collected: HintsBuffer, placement: Inlay.Placement): Int {
       var count = 0
-      val offsetsWithExistingHints = TIntHashSet()
+      val offsetsWithExistingHints = IntOpenHashSet()
       for (offset in existingInlayOffsets) {
         if (!collected.contains(offset, placement)) {
           count++

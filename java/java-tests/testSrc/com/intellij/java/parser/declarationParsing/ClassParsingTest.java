@@ -61,4 +61,13 @@ public class ClassParsingTest extends JavaParsingTestCase {
     setLanguageLevel(LanguageLevel.JDK_13);
     doTest(true);
   }
+  public void testSealedInterface() {
+    doTest(true);
+  }
+  public void testNonSealedClass() {
+    doTest(true);
+  }
+  public void testProvidesList() {
+    doTest(true);
+  }
 }

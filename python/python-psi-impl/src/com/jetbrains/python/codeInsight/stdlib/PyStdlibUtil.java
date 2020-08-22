@@ -17,7 +17,7 @@ import java.util.Set;
 /**
  * @author vlan
  */
-public class PyStdlibUtil {
+public final class PyStdlibUtil {
   @Nullable private static final Set<String> PACKAGES = loadStdlibPackagesList();
 
   private PyStdlibUtil() {

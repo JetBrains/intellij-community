@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.formatting;
 
 import com.intellij.openapi.application.WriteAction;
@@ -14,7 +14,7 @@ import java.io.IOException;
 public abstract class FileSetTestCase extends HeavyPlatformTestCase {
   protected VirtualFile createFile(@NotNull String path) {
     String[] dirNames = path.split("/");
-    VirtualFile baseDir = PlatformTestUtil.getOrCreateProjectTestBaseDir(getProject());
+    VirtualFile baseDir = PlatformTestUtil.getOrCreateProjectBaseDir(getProject());
     for (int i = 0; i < dirNames.length - 1; i++) {
       VirtualFile existing = VfsUtilCore.findRelativeFile(dirNames[i], baseDir);
       if (existing == null) {

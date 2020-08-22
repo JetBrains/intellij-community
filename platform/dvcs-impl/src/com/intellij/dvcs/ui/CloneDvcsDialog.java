@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
@@ -39,6 +40,8 @@ import com.intellij.util.progress.ComponentVisibilityProgressManager;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -272,7 +275,8 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
         if (mySpinnerProgressManager.getDisposed()) return;
         if (!myNewRepositories.isEmpty()) {
           // otherwise editor content will be reset
-          myRepositoryUrlCombobox.setSelectedItem(myRepositoryUrlField.getText());
+          @NlsSafe String text = myRepositoryUrlField.getText();
+          myRepositoryUrlCombobox.setSelectedItem(text);
           myRepositoryUrlComboboxModel.addAll(myRepositoryUrlComboboxModel.getSize(), myNewRepositories);
           myRepositoryUrlField.setVariants(myRepositoryUrlComboboxModel.getItems());
         }
@@ -280,11 +284,12 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
         showRepositoryUrlAutoCompletionTooltip();
         if (!myErrors.isEmpty()) {
           for (RepositoryListLoadingException error : myErrors) {
-            StringBuilder errorMessageBuilder = new StringBuilder();
+            @Nls StringBuilder errorMessageBuilder = new StringBuilder();
             errorMessageBuilder.append(error.getMessage());
             Throwable cause = error.getCause();
             if (cause != null) errorMessageBuilder.append(": ").append(cause.getMessage());
-            myRepositoryListLoadingErrors.add(new ValidationInfo(errorMessageBuilder.toString()).asWarning().withOKEnabled());
+            @Nls String message = errorMessageBuilder.toString();
+            myRepositoryListLoadingErrors.add(new ValidationInfo(message).asWarning().withOKEnabled());
           }
           startTrackingValidation();
         }
@@ -455,11 +460,11 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
     }
   }
 
-  private static class MyTextFieldWithBrowseButton extends TextFieldWithBrowseButton {
+  private static final class MyTextFieldWithBrowseButton extends TextFieldWithBrowseButton {
     @NotNull private final Path myDefaultParentPath;
     private boolean myModifiedByUser = false;
 
-    private MyTextFieldWithBrowseButton(@NotNull String defaultParentPath) {
+    private MyTextFieldWithBrowseButton(@NotNull @NonNls String defaultParentPath) {
       myDefaultParentPath = Paths.get(defaultParentPath).toAbsolutePath();
       setText(myDefaultParentPath.toString());
       getTextField().getDocument().addDocumentListener(new DocumentAdapter() {

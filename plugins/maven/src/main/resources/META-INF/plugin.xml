@@ -54,6 +54,7 @@
     <projectImportProvider implementation="org.jetbrains.idea.maven.wizards.MavenProjectImportProvider"/>
     <projectOpenProcessor implementation="org.jetbrains.idea.maven.wizards.MavenProjectOpenProcessor"/>
     <projectImportBuilder implementation="org.jetbrains.idea.maven.wizards.MavenProjectBuilder"/>
+    <externalSystemUnlinkedProjectAware implementation="org.jetbrains.idea.maven.project.MavenUnlinkedProjectAware"/>
     <moduleBuilder builderClass="org.jetbrains.idea.maven.wizards.InternalMavenModuleBuilder"/>
     <frameworkSupport implementation="org.jetbrains.idea.maven.wizards.MavenFrameworkSupportProvider"/>
     <moduleExtension implementation="org.jetbrains.idea.maven.importing.MavenSourceFoldersModuleExtension"/>
@@ -109,6 +110,7 @@
 
     <fileIconProvider implementation="org.jetbrains.idea.maven.utils.MavenIconProvider"/>
     <editorTabTitleProvider implementation="org.jetbrains.idea.maven.utils.MavenEditorTabTitleProvider"/>
+    <treeStructureProvider implementation="org.jetbrains.idea.maven.utils.MavenTreeStructureProvider" order="last"/>
 
     <problemFileHighlightFilter implementation="org.jetbrains.idea.maven.utils.MavenProblemFileHighlighter"/>
 
@@ -139,6 +141,10 @@
     <localInspection language="XML" shortName="MavenDuplicateDependenciesInspection" bundle="messages.MavenDomBundle" key="inspection.duplicate.dependencies.name"
                      groupKey="inspection.group" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.maven.dom.inspections.MavenDuplicateDependenciesInspection"/>
+
+    <localInspection language="XML" shortName="MavenParentMissedVersionInspection" bundle="messages.MavenDomBundle" key="inspection.missed.parent.version"
+                     groupKey="inspection.group" enabledByDefault="true" level="ERROR"
+                     implementationClass="org.jetbrains.idea.maven.dom.inspections.MavenParentMissedVersionInspection"/>
     <localInspection language="XML" shortName="MavenDuplicatePluginInspection" bundle="messages.MavenDomBundle" key="inspection.duplicate.plugin.declaration"
                      groupKey="inspection.group" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.idea.maven.dom.inspections.MavenDuplicatePluginInspection"/>
@@ -260,14 +266,22 @@
     <registryKey key="maven.server.debug.default" defaultValue="false"
                  description="Debug maven server for default project"/>
 
+    <registryKey key="maven.modules.do.not.ignore.on.delete" defaultValue="false"
+                 description="Deleted maven modules will not be marked as ignored"/>
 
     <intentionAction>
       <className>org.jetbrains.idea.maven.dom.converters.MavenArtifactCoordinatesConverter$MyUpdateIndicesIntention</className>
     </intentionAction>
 
     <module.workingDirectoryProvider implementation="org.jetbrains.idea.maven.project.MavenWorkingDirectoryProvider"/>
-    <notificationWhitelist groupIds="Maven: non-managed pom.xml"/>
+    <notificationGroup id="Maven: non-managed pom.xml" displayType="BALLOON"/>
+    <notificationGroup id="Maven" displayType="BALLOON"/>
   </extensions>
+
+  <extensions defaultExtensionNs="com.intellij.properties">
+    <implicitPropertyUsageProvider implementation="org.jetbrains.idea.maven.utils.MavenWrapperImplicitPropertyUsageProvider"/>
+  </extensions>
+
 
   <extensions defaultExtensionNs="org.jetbrains.idea.maven">
     <pluginDescriptor mavenId="org.apache.maven.plugins:maven-surefire-plugin">
@@ -497,9 +511,13 @@
     </action>
 
     <action id="Maven.ShowSettings"
-            class="org.jetbrains.idea.maven.project.actions.EditSettingsAction"
-            icon="AllIcons.General.Settings">
+            class="org.jetbrains.idea.maven.project.actions.EditSettingsAction">
     </action>
+
+    <group id="Maven.ShowSettingsGroup" popup="true" icon="AllIcons.General.Settings">
+      <reference id="ExternalSystem.ShowCommonSettings"/>
+      <reference id="Maven.ShowSettings"/>
+    </group>
 
     <action id="Maven.ToggleOffline"
             class="org.jetbrains.idea.maven.project.actions.ToggleOfflineAction"
@@ -508,6 +526,10 @@
 
     <action id="Maven.ToggleLookNested"
             class="org.jetbrains.idea.maven.project.actions.LookForNestedToggleAction">
+    </action>
+
+    <action id="Maven.UseWrapperAction"
+            class="org.jetbrains.idea.maven.project.actions.UseWrapperAction">
     </action>
 
     <action id="Maven.ToggleSkipTests"
@@ -582,11 +604,10 @@
       <reference id="Maven.RunBuild"/>
       <reference id="Maven.ExecuteGoal"/>
       <reference id="Maven.ToggleOffline"/>
-      <reference id="ExternalSystem.ToggleAutoReload"/>
       <reference id="Maven.ToggleSkipTests"/>
       <reference id="Maven.CollapseAll"/>
       <separator/>
-      <reference id="Maven.ShowSettings"/>
+      <reference id="Maven.ShowSettingsGroup"/>
     </group>
 
     <group id="Maven.DependencyMenu">

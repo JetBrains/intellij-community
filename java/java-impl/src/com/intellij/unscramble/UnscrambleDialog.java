@@ -14,6 +14,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -120,7 +121,7 @@ public class UnscrambleDialog extends DialogWrapper {
     myLogFile.setHistorySize(10);
     myLogFile.setHistory(savedUrls);
 
-    String lastUrl = getPropertyValue(PROPERTY_LOG_FILE_LAST_URL);
+    String lastUrl = getPropertyValue(PROPERTY_LOG_FILE_LAST_URL); //NON-NLS URL is safe to show
     if (lastUrl == null && !savedUrls.isEmpty()) {
       lastUrl = savedUrls.get(savedUrls.size() - 1);
     }
@@ -259,7 +260,7 @@ public class UnscrambleDialog extends DialogWrapper {
   }
 
   @Nullable
-  private String getPropertyValue(@NotNull String name) {
+  private @NlsSafe String getPropertyValue(@NotNull String name) {
     String projectValue = PropertiesComponent.getInstance(myProject).getValue(name);
     if (projectValue != null) {
       return projectValue;

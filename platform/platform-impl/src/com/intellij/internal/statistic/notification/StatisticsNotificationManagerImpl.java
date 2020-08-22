@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.notification;
 
 import com.intellij.application.Topics;
@@ -26,24 +26,25 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.*;
 
 final class StatisticsNotificationManagerImpl implements StatisticsNotificationManager {
-
   @Override
   public void showNotificationIfNeeded() {
+    if (!isShouldShowNotification()) {
+      return;
+    }
+
     NotificationsConfigurationImpl.remove("SendUsagesStatistics");
 
-    if (isShouldShowNotification()) {
-      Disposable disposable = Disposer.newDisposable();
-      Topics.subscribe(FrameStateListener.TOPIC, disposable, new FrameStateListener() {
-        @Override
-        public void onFrameActivated() {
-          if (isEmpty(WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow())) {
-            final StatisticsService statisticsService = StatisticsUploadAssistant.getEventLogStatisticsService("FUS");
-            ApplicationManager.getApplication().invokeLater(() -> showNotification(statisticsService));
-            Disposer.dispose(disposable);
-          }
+    Disposable disposable = Disposer.newDisposable();
+    Topics.subscribe(FrameStateListener.TOPIC, disposable, new FrameStateListener() {
+      @Override
+      public void onFrameActivated() {
+        if (isEmpty(WindowManagerEx.getInstanceEx().getMostRecentFocusedWindow())) {
+          final StatisticsService statisticsService = StatisticsUploadAssistant.getEventLogStatisticsService("FUS");
+          ApplicationManager.getApplication().invokeLater(() -> showNotification(statisticsService));
+          Disposer.dispose(disposable);
         }
-      });
-    }
+      }
+    });
   }
 
   private static boolean isShouldShowNotification() {

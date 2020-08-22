@@ -6,15 +6,18 @@ import com.intellij.configurationStore.StateStorageManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.messages.MessageBus
-import org.jetbrains.annotations.SystemIndependent
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import java.nio.file.Path
 
+@ApiStatus.Internal
 interface IComponentStore {
   val storageManager: StateStorageManager
 
-  fun setPath(path: @SystemIndependent String)
+  fun setPath(path: Path)
 
   fun initComponent(component: Any, serviceDescriptor: ServiceDescriptor?, pluginId: PluginId?)
 
@@ -22,7 +25,7 @@ interface IComponentStore {
   fun unloadComponent(component: Any) {
   }
 
-  fun initPersistencePlainComponent(component: Any, key: String)
+  fun initPersistencePlainComponent(component: Any, @NlsSafe key: String)
 
   fun reloadStates(componentNames: Set<String>, messageBus: MessageBus)
 
@@ -34,6 +37,9 @@ interface IComponentStore {
 
   @TestOnly
   fun saveComponent(component: PersistentStateComponent<*>)
+
+  @TestOnly
+  fun removeComponent(name: String)
 
   @JvmDefault
   fun release() {}

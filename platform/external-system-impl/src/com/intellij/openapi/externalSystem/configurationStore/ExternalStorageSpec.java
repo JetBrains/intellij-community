@@ -14,7 +14,7 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class ExternalStorageSpec extends FileStorageAnnotation implements StorageCreator {
+public final class ExternalStorageSpec extends FileStorageAnnotation implements StorageCreator {
   private final State inProjectStateSpec;
 
   public ExternalStorageSpec(@NotNull String path, @Nullable State inProjectStateSpec) {

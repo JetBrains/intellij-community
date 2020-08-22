@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.resolve.graphInference;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 
-public class FunctionalInterfaceParameterizationUtil {
+public final class FunctionalInterfaceParameterizationUtil {
   private static final Logger LOG = Logger.getInstance(FunctionalInterfaceParameterizationUtil.class);
 
   public static boolean isWildcardParameterized(@Nullable PsiType classType) {
@@ -73,7 +59,7 @@ public class FunctionalInterfaceParameterizationUtil {
   }
 
   /**
-   * 18.5.3. Functional Interface Parameterization Inference 
+   * 18.5.3. Functional Interface Parameterization Inference
    */
   private static PsiType getFunctionalTypeExplicit(PsiType psiClassType, PsiLambdaExpression expr, boolean performFinalCheck) {
     final PsiParameter[] lambdaParams = expr.getParameterList().getParameters();
@@ -133,7 +119,7 @@ public class FunctionalInterfaceParameterizationUtil {
 
       final PsiClassType parameterization = elementFactory.createType(psiClass, newTypeParameters);
 
-      //If F<A'1, ..., A'm> is not a well-formed type (that is, the type arguments are not within their bounds), 
+      //If F<A'1, ..., A'm> is not a well-formed type (that is, the type arguments are not within their bounds),
       // or if F<A'1, ..., A'm> is not a subtype of F<A1, ..., Am>, no valid parameterization exists.
       if (!isWellFormed(psiClass, typeParameters, newTypeParameters) || performFinalCheck && !psiClassType.isAssignableFrom(parameterization)) {
         return null;
@@ -163,7 +149,7 @@ public class FunctionalInterfaceParameterizationUtil {
   }
 
   /**
-     The function type of a parameterized functional interface, F<A1...An>, where one or more of A1...An is a wildcard, is the function type of the non-wildcard parameterization of F, F<T1...Tn> determined as follows. 
+     The function type of a parameterized functional interface, F<A1...An>, where one or more of A1...An is a wildcard, is the function type of the non-wildcard parameterization of F, F<T1...Tn> determined as follows.
      Let P1, ..., Pn be the type parameters of F and B1, ..., Bn be the corresponding bounds. For all i, 1 <= i <= n, Ti is derived according to the form of Ai:
 
      If Ai is a type, then Ti = Ai.

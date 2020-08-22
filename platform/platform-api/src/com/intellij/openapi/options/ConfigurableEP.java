@@ -35,7 +35,6 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
   private PluginDescriptor pluginDescriptor;
 
   @Transient
-  @NotNull
   public final PluginDescriptor getPluginDescriptor() {
     return pluginDescriptor;
   }

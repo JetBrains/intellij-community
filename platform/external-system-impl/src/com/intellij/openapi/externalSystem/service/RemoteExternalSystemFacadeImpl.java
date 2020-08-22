@@ -132,7 +132,7 @@ public final class RemoteExternalSystemFacadeImpl<S extends ExternalSystemExecut
     }, (int)myTtlMs.get(), TimeUnit.MILLISECONDS);
   }
 
-  private static class LineAwarePrintStream extends PrintStream {
+  private static final class LineAwarePrintStream extends PrintStream {
     private LineAwarePrintStream(@NotNull final PrintStream delegate) {
       super(new OutputStream() {
 

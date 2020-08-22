@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom.impl;
 
-import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -14,7 +13,6 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.ConvertContext;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,11 +23,11 @@ import org.jetbrains.idea.devkit.util.DescriptorUtil;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
 
-public class IdeaPluginConverter extends IdeaPluginConverterBase {
-
-  private static final Condition<IdeaPlugin> NON_CORE_PLUGINS = plugin -> !PluginManagerCore.CORE_PLUGIN_ID.equals(plugin.getPluginId());
+public final class IdeaPluginConverter extends IdeaPluginConverterBase {
+  private static final Condition<IdeaPlugin> NON_CORE_PLUGINS = plugin -> plugin.hasRealPluginId();
 
   @Override
   @NotNull
@@ -41,7 +39,7 @@ public class IdeaPluginConverter extends IdeaPluginConverterBase {
   @NotNull
   @Override
   public Set<String> getAdditionalVariants(@NotNull final ConvertContext context) {
-    final THashSet<String> result = new THashSet<>();
+    Set<String> result = new HashSet<>();
     for (IdeaPlugin ideaPlugin : getAllPluginsWithoutSelf(context)) {
       for (PluginModule module : ideaPlugin.getModules()) {
         ContainerUtil.addIfNotNull(result, module.getValue().getValue());

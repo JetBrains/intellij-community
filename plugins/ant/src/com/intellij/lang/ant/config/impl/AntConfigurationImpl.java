@@ -259,10 +259,12 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
                 try {
                   myInitThread = Thread.currentThread();
                   // first, remove existing files
-                  for (AntBuildFile file : myBuildFiles) {
+                  Iterator<AntBuildFileBase> it = myBuildFiles.iterator();
+                  while (it.hasNext()) {
+                    AntBuildFile file = it.next();
+                    it.remove();
                     removeBuildFileImpl(file);
                   }
-                  myBuildFiles.clear();
 
                   // then fill the configuration with the files configured in xml
                   final VirtualFileManager vfManager = VirtualFileManager.getInstance();
@@ -446,9 +448,9 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
   private void removeBuildFiles(Collection<AntBuildFileBase> files) {
     for (AntBuildFileBase file : files) {
       incModificationCount();
+      myBuildFiles.remove(file);
       removeBuildFileImpl(file);
     }
-    myBuildFiles.removeAll(files);
     updateRegisteredActions();
   }
 
@@ -644,7 +646,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     if (!AntDomFileDescription.isAntFile(((XmlFile)xmlFile))) {
       throw new AntNoFileException("the file is not recognized as an Ant file", file);
     }
-    final AntBuildFileImpl buildFile = new AntBuildFileImpl((XmlFile)xmlFile, this);
+    final AntBuildFileImpl buildFile = new AntBuildFileImpl(xmlFile, this);
     myBuildFiles.add(buildFile);
     return buildFile;
   }
@@ -673,8 +675,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     synchronized (this) {
       // unregister Ant actions
       ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-      final String[] oldIds = actionManager.getActionIds(AntConfiguration.getActionIdPrefix(project));
-      for (String oldId : oldIds) {
+      for (String oldId : actionManager.getActionIdList(AntConfiguration.getActionIdPrefix(project))) {
         actionManager.unregisterAction(oldId);
       }
       final Set<String> registeredIds = new HashSet<>();

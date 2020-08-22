@@ -104,7 +104,7 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
         superMethod = (PsiMethod)navigationElement;
       }
       final PsiCodeBlock superBody = superMethod.getBody();
-
+      final PsiMethod finalSuperMethod = superMethod;
       final TrackingEquivalenceChecker checker = new TrackingEquivalenceChecker() {
         @Override
         protected boolean equivalentDeclarations(PsiElement element1, PsiElement element2) {
@@ -112,6 +112,22 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
           return result || element1 instanceof PsiMethod &&
                            element2 instanceof PsiMethod &&
                            MethodSignatureUtil.isSuperMethod((PsiMethod)element1, (PsiMethod)element2);
+        }
+
+        @Override
+        protected @NotNull Match thisExpressionsMatch(@NotNull PsiThisExpression thisExpression1,
+                                                      @NotNull PsiThisExpression thisExpression2) {
+          final PsiClass containingClass1 = PsiUtil.resolveClassInClassTypeOnly(thisExpression1.getType());
+          final PsiClass containingClass2 = PsiUtil.resolveClassInClassTypeOnly(thisExpression2.getType());
+          if (containingClass1 == finalSuperMethod.getContainingClass()) {
+            if (containingClass2 == method.getContainingClass()) {
+              return EXACT_MATCH;
+            }
+          }
+          else if (containingClass1 == containingClass2) {
+            return EXACT_MATCH;
+          }
+          return EXACT_MISMATCH;
         }
       };
       final PsiParameter[] parameters = method.getParameterList().getParameters();

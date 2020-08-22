@@ -24,6 +24,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.EditorTextField;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -110,8 +111,8 @@ public class MultilineEditor extends JPanel {
             public void update(@NotNull AnActionEvent e) {
                 final Presentation presentation = e.getPresentation();
                 presentation.setEnabled(myModel.getSelectedIndex() < myModel.getSize() - 1);
-                presentation.setText("Previous History Entry");
-                presentation.setDescription("Navigate to the previous history entry");
+                presentation.setText(XPathBundle.message("action.previous.history.entry.text"));
+                presentation.setDescription(XPathBundle.message("action.navigate.to.previous.history.entry.description"));
             }
 
             @Override
@@ -126,8 +127,8 @@ public class MultilineEditor extends JPanel {
             public void update(@NotNull AnActionEvent e) {
                 final Presentation presentation = e.getPresentation();
                 presentation.setEnabled(myModel.getSelectedIndex() > 0);
-                presentation.setText("Next History Entry");
-                presentation.setDescription("Navigate to the next history entry");
+                presentation.setText(XPathBundle.message("action.next.history.entry.text"));
+                presentation.setDescription(XPathBundle.message("action.navigate.to.next.history.entry.description"));
             }
 
             @Override

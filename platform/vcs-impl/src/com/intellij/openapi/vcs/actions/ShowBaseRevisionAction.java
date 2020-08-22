@@ -22,6 +22,7 @@ import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -38,7 +39,7 @@ public class ShowBaseRevisionAction extends AbstractVcsAction {
     ProgressManager.getInstance().run(new MyTask(file, vcs, vcsContext));
   }
 
-  private static class MyTask extends Task.Backgroundable {
+  private static final class MyTask extends Task.Backgroundable {
     private final AbstractVcs vcs;
     private final VirtualFile selectedFile;
     private VcsRevisionDescription myDescription;
@@ -82,7 +83,7 @@ public class ShowBaseRevisionAction extends AbstractVcsAction {
                                        commitMessage,
                                        description.getRevisionNumber().asString(),
                                        vf.getName());
-    return "<html><head>" + UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()) + "</head><body>" + message + "</body></html>";
+    return "<html><head>" + UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()) + "</head><body>" + message + "</body></html>"; //NON-NLS //NON-NLS
   }
 
   @Override
@@ -107,7 +108,7 @@ public class ShowBaseRevisionAction extends AbstractVcsAction {
       myLabel.setBackground(getBackground());
     }
 
-    public void setText(String text) {
+    public void setText(@Nls String text) {
       myLabel.setText(text);
     }
 

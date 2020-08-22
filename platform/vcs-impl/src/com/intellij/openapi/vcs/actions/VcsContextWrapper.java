@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.Change;
@@ -34,9 +35,12 @@ public class VcsContextWrapper implements VcsContext {
   @NotNull protected final DataContext myContext;
   protected final int myModifiers;
   @NotNull private final String myPlace;
-  @Nullable private final String myActionName;
+  @Nullable private final @NlsActions.ActionText String myActionName;
 
-  public VcsContextWrapper(@NotNull DataContext context, int modifiers, @NotNull String place, @Nullable String actionName) {
+  public VcsContextWrapper(@NotNull DataContext context,
+                           int modifiers,
+                           @NotNull String place,
+                           @Nullable @NlsActions.ActionText String actionName) {
     myContext = context;
     myModifiers = modifiers;
     myPlace = place;

@@ -56,12 +56,12 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
       currentGradleVersion < GradleVersion.version("2.14") -> expectedExecutionTree =
         "-\n" +
         " -failed\n" +
-        "  -impl/build.gradle\n" +
+        "  -build.gradle\n" +
         "   Could not find method ghostConf() for arguments [project ':api'] on project ':impl'"
       else -> expectedExecutionTree =
         "-\n" +
         " -failed\n" +
-        "  -impl/build.gradle\n" +
+        "  -build.gradle\n" +
         "   Could not find method ghostConf() for arguments [project ':api'] on object of type org.gradle.api.internal.artifacts.dsl.dependencies.DefaultDependencyHandler"
     }
     assertSyncViewTreeEquals(expectedExecutionTree)
@@ -110,7 +110,7 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
     assertSyncViewTreeEquals(expectedExecutionTree)
 
     val filePath = FileUtil.toSystemDependentName(myProjectConfig.path)
-    val tryScanSuggestion = if (isGradleNewerOrSameThen("4.10")) " Run with --scan to get full insights." else ""
+    val tryScanSuggestion = if (isGradleNewerOrSameAs("4.10")) " Run with --scan to get full insights." else ""
     assertSyncViewSelectedNode("Something's wrong!",
                                "Build file '$filePath' line: 1\n\n" +
                                "A problem occurred evaluating root project 'project'.\n" +
@@ -150,7 +150,7 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
                                "\n")
 
     // successful import when repository is added
-    buildScript.withMavenCentral(isGradleNewerOrSameThen("6.0"))
+    buildScript.withMavenCentral(isGradleNewerOrSameAs("6.0"))
     importProject(buildScript.generate())
     assertSyncViewTreeEquals("-\n" +
                              " finished")
@@ -237,7 +237,7 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
                                "\n")
 
     // successful import when repository is added
-    buildScript.withBuildScriptMavenCentral(isGradleNewerOrSameThen("6.0"))
+    buildScript.withBuildScriptMavenCentral(isGradleNewerOrSameAs("6.0"))
     importProject(buildScript.generate())
     assertSyncViewTreeEquals("-\n" +
                              " finished")
@@ -329,7 +329,7 @@ open class GradleOutputParsersMessagesImportingTest : BuildViewMessagesImporting
 
     val filePath = FileUtil.toSystemDependentName(myProjectConfig.path)
     assertSyncViewSelectedNode("Cannot get property 'foo' on null object", true) {
-      val tryScanSuggestion = if (isGradleNewerOrSameThen("4.10")) " Run with --scan to get full insights." else ""
+      val tryScanSuggestion = if (isGradleNewerOrSameAs("4.10")) " Run with --scan to get full insights." else ""
       assertThat(it).startsWith("Build file '$filePath' line: 1\n\n" +
                                 "A problem occurred evaluating root project 'project'.\n" +
                                 "> Cannot get property 'foo' on null object\n" +

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.breakpoints.ui;
 
 import com.intellij.icons.AllIcons;
@@ -36,7 +36,6 @@ import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointItemNode;
 import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointItemsTreeController;
 import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointsCheckboxTree;
 import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointsGroupNode;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -373,7 +372,7 @@ public class BreakpointsDialog extends DialogWrapper {
     saveTreeState(dialogState);
     final List<XBreakpointGroupingRule> rulesEnabled = ContainerUtil.filter(myRulesEnabled, rule -> !rule.isAlwaysEnabled());
 
-    dialogState.setSelectedGroupingRules(new THashSet<>(ContainerUtil.map(rulesEnabled, XBreakpointGroupingRule::getId)));
+    dialogState.setSelectedGroupingRules(new HashSet<>(ContainerUtil.map(rulesEnabled, XBreakpointGroupingRule::getId)));
     getBreakpointManager().setBreakpointsDialogSettings(dialogState);
   }
 
@@ -448,7 +447,7 @@ public class BreakpointsDialog extends DialogWrapper {
     return false;
   }
 
-  private class MoveToGroupAction extends AnAction {
+  private final class MoveToGroupAction extends AnAction {
     private final String myGroup;
     private final boolean myNewGroup;
 
@@ -484,7 +483,7 @@ public class BreakpointsDialog extends DialogWrapper {
     }
   }
 
-  private class SetAsDefaultGroupAction extends AnAction {
+  private final class SetAsDefaultGroupAction extends AnAction {
     private final String myName;
 
     private SetAsDefaultGroupAction(XBreakpointCustomGroup group) {
@@ -501,7 +500,7 @@ public class BreakpointsDialog extends DialogWrapper {
     }
   }
 
-  private class EditDescriptionAction extends AnAction {
+  private final class EditDescriptionAction extends AnAction {
     private final XBreakpointBase myBreakpoint;
 
     private EditDescriptionAction(XBreakpointBase breakpoint) {

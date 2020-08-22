@@ -33,7 +33,7 @@ public class StatusBarWidgetsActionGroup extends ActionGroup {
     return toggleActions.toArray(AnAction.EMPTY_ARRAY);
   }
 
-  private static class ToggleWidgetAction extends DumbAwareToggleAction {
+  private static final class ToggleWidgetAction extends DumbAwareToggleAction {
     private final StatusBarWidgetFactory myWidgetFactory;
 
     private ToggleWidgetAction(@NotNull StatusBarWidgetFactory widgetFactory) {

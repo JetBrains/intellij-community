@@ -39,7 +39,7 @@ public class DetectedPluginsPanel extends OrderPanel<PluginDownloader> {
     entryTable.setTableHeader(null);
     entryTable.setDefaultRenderer(PluginDownloader.class, new ColoredTableCellRenderer() {
       @Override
-      protected void customizeCellRenderer(JTable table,
+      protected void customizeCellRenderer(@NotNull JTable table,
                                            Object value,
                                            boolean selected,
                                            boolean hasFocus,

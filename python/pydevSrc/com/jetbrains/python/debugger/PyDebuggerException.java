@@ -1,20 +1,20 @@
 package com.jetbrains.python.debugger;
 
 
-import org.jetbrains.annotations.NonNls;
+import com.intellij.openapi.util.NlsContexts.DialogMessage;
 
 public class PyDebuggerException extends Exception {
 
-  public PyDebuggerException(@NonNls String message) {
+  public PyDebuggerException(@DialogMessage String message) {
     super(message);
   }
 
-  public PyDebuggerException(@NonNls String message, Throwable cause) {
+  public PyDebuggerException(@DialogMessage String message, Throwable cause) {
     super(message, cause);
   }
 
-  public String getTracebackError() {
-    @NonNls String text = getMessage();
+  public @DialogMessage String getTracebackError() {
+    @DialogMessage String text = getMessage();
     if (text != null && text.contains("Traceback (most recent call last):")) {
       final String[] lines = text.split("\n");
       if (lines.length > 0) {

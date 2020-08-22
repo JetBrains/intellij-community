@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ActionPromoter;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.actions.TabAction;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -13,7 +14,7 @@ import java.util.List;
 
 public class TabActionsPromoter implements ActionPromoter {
   @Override
-  public List<AnAction> promote(List<AnAction> actions, DataContext context) {
+  public List<AnAction> promote(@NotNull List<AnAction> actions, @NotNull DataContext context) {
     List<AnAction> newList = new ArrayList<>(actions);
     newList.sort(Comparator.comparingInt(action -> {
       if (action instanceof BraceOrQuoteOutAction) return 0;

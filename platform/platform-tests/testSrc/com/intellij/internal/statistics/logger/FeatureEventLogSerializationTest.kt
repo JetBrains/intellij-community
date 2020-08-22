@@ -4,6 +4,7 @@ package com.intellij.internal.statistics.logger
 import com.google.gson.Gson
 import com.google.gson.JsonObject
 import com.intellij.internal.statistic.eventLog.*
+import com.intellij.internal.statistic.eventLog.filters.LogEventTrueFilter
 import com.intellij.internal.statistics.StatisticsTestEventFactory.newEvent
 import com.intellij.internal.statistics.StatisticsTestEventFactory.newStateEvent
 import com.intellij.internal.statistics.StatisticsTestEventValidator.assertLogEventIsValid

@@ -6,6 +6,7 @@ import com.intellij.openapi.fileChooser.FileChooserDialog;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.fileChooser.FileElement;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
@@ -23,7 +24,7 @@ public final class SchemeImportUtil {
   public static VirtualFile selectImportSource(final String @NotNull [] sourceExtensions,
                                                @NotNull Component parent,
                                                @Nullable VirtualFile preselect,
-                                               @Nullable String description) {
+                                               @Nullable @NlsContexts.Label String description) {
     final Set<String> extensions = ContainerUtil.set(sourceExtensions);
     FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, canSelectJarFile(sourceExtensions), false, false, false) {
       @Override

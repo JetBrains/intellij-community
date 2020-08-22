@@ -4,6 +4,8 @@ import * as am4core from "@amcharts/amcharts4/core"
 import {DataManager} from "@/state/DataManager"
 
 am4core.options.onlyShowOnViewport = true
+// helps during hot-reload
+am4core.options.autoDispose = true
 
 export interface ChartManager {
   render(data: DataManager): void

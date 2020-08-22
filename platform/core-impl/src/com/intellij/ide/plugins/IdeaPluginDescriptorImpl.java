@@ -7,16 +7,14 @@ import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ref.GCWatcher;
 import org.jdom.Content;
 import org.jdom.Element;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -64,8 +62,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   private @Nullable List<Element> myActionElements;
   // extension point name -> list of extension elements
-  // LinkedHashMap for predictable register order
-  private @Nullable LinkedHashMap<String, List<Element>> epNameToExtensionElements;
+  private @Nullable Map<String, List<Element>> epNameToExtensionElements;
 
   final ContainerDescriptor appContainerDescriptor = new ContainerDescriptor();
   final ContainerDescriptor projectContainerDescriptor = new ContainerDescriptor();
@@ -73,7 +70,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   private List<PluginId> myModules;
   private ClassLoader myLoader;
-  private String myDescriptionChildText;
+  private @NlsSafe String myDescriptionChildText;
   boolean myUseIdeaClassLoader;
   private boolean myUseCoreClassLoader;
   boolean myAllowBundledUpdate;
@@ -109,6 +106,11 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return moduleContainerDescriptor;
   }
 
+  @Override
+  public @NotNull List<IdeaPluginDependency> getDependencies() {
+    return pluginDependencies == null ? Collections.emptyList() : Collections.unmodifiableList(pluginDependencies);
+  }
+
   @ApiStatus.Internal
   public @NotNull List<PluginDependency> getPluginDependencies() {
     return pluginDependencies == null ? Collections.emptyList() : pluginDependencies;
@@ -132,11 +134,12 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
     XmlReader.readIdAndName(this, element);
 
+    //some information required for "incomplete" plugins can be in included files
+    PathBasedJdomXIncluder.resolveNonXIncludeElement(element, basePath, context, pathResolver);
     if (myId != null && context.isPluginDisabled(myId)) {
       markAsIncomplete(context, null, null);
     }
     else {
-      PathBasedJdomXIncluder.resolveNonXIncludeElement(element, basePath, context, pathResolver);
       if (myId == null || myName == null) {
         // read again after resolve
         XmlReader.readIdAndName(this, element);
@@ -161,6 +164,10 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       Element productElement = element.getChild("product-descriptor");
       if (productElement != null) {
         readProduct(context, productElement);
+      }
+      List<Element> moduleElements = element.getChildren("module");
+      for (Element moduleElement : moduleElements) {
+        readModule(moduleElement);
       }
       return false;
     }
@@ -188,6 +195,10 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     doRead(element, DescriptorListLoadingContext.createSingleDescriptorContext(Collections.emptySet()), this);
   }
 
+  /**
+   * @return {@code true} - if there are compatibility problems with IDE (`depends`, `since-until`).
+   * <br>{@code false} - otherwise
+   */
   private boolean doRead(@NotNull Element element,
                         @NotNull DescriptorListLoadingContext context,
                         @NotNull IdeaPluginDescriptorImpl mainDescriptor) {
@@ -218,20 +229,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
           break;
 
         case "module":
-          String moduleName = child.getAttributeValue("value");
-          if (moduleName != null) {
-            if (myModules == null) {
-              myModules = Collections.singletonList(PluginId.getId(moduleName));
-            }
-            else {
-              if (myModules.size() == 1) {
-                List<PluginId> singleton = myModules;
-                myModules = new ArrayList<>(4);
-                myModules.addAll(singleton);
-              }
-              myModules.add(PluginId.getId(moduleName));
-            }
-          }
+          readModule(child);
           break;
 
         case "application-components":
@@ -314,6 +312,23 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       }
     }
     return false;
+  }
+
+  private void readModule(Element child) {
+    String moduleName = child.getAttributeValue("value");
+    if (moduleName != null) {
+      if (myModules == null) {
+        myModules = Collections.singletonList(PluginId.getId(moduleName));
+      }
+      else {
+        if (myModules.size() == 1) {
+          List<PluginId> singleton = myModules;
+          myModules = new ArrayList<>(4);
+          myModules.addAll(singleton);
+        }
+        myModules.add(PluginId.getId(moduleName));
+      }
+    }
   }
 
   private void readProduct(@NotNull DescriptorListLoadingContext context, @NotNull Element child) {
@@ -419,7 +434,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return builder.toString();
   }
 
-  private void markAsIncomplete(@NotNull DescriptorListLoadingContext context, @Nullable String errorMessage, @Nullable PluginId disabledDependency) {
+  private void markAsIncomplete(@NotNull DescriptorListLoadingContext context, @Nullable @Nls String errorMessage, @Nullable PluginId disabledDependency) {
     boolean wasIncomplete = incomplete;
     incomplete = true;
     setEnabled(false);
@@ -551,7 +566,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   public void registerExtensions(@NotNull ExtensionsAreaImpl area,
                                  @NotNull IdeaPluginDescriptorImpl rootDescriptor,
                                  @NotNull ContainerDescriptor containerDescriptor,
-                                 @Nullable List<Runnable> listenerCallbacks) {
+                                 @Nullable List<? super Runnable> listenerCallbacks) {
     Map<String, List<Element>> extensions = containerDescriptor.extensions;
     if (extensions != null) {
       area.registerExtensions(extensions, rootDescriptor, listenerCallbacks);
@@ -597,7 +612,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
   @Override
   public String getDescription() {
-    String result = myDescription;
+    @NlsSafe String result = myDescription;
     if (result != null) {
       return result;
     }
@@ -891,9 +906,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       epNameToExtensionElements = descriptor.epNameToExtensionElements;
     }
     else if (descriptor.epNameToExtensionElements != null) {
-      descriptor.epNameToExtensionElements.forEach((name, list) -> {
-        addExtensionList(epNameToExtensionElements, name, list);
-      });
+      descriptor.epNameToExtensionElements.forEach((name, list) -> addExtensionList(epNameToExtensionElements, name, list));
     }
 
     if (myActionElements == null) {

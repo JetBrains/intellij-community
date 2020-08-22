@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 {
   generate = [
     psi = 'no'
@@ -109,6 +109,7 @@
     KW_CLASS = 'class'
     KW_CONTINUE = 'continue'
     KW_DEF = 'def'
+    KW_VAR = 'var'
     KW_DEFAULT = 'default'
     KW_DO = 'do'
     KW_ELSE = 'else'
@@ -234,6 +235,7 @@ private modifier ::= 'abstract'
                    | 'transient'
                    | 'volatile'
                    | def_modifier
+                   | var_modifier
 {
   consumeTokenMethod = 'consumeTokenFast'
 }
@@ -241,8 +243,14 @@ private modifier ::= 'abstract'
  * 'def' is a part of a reference if followed by a dot
  */
 private def_modifier ::= 'def' !'.' { consumeTokenMethod = 'consumeTokenFast' }
+
+/*
+ * 'var' could be modifier or identifier
+ */
+private var_modifier ::= 'var' &(weak_keyword | IDENTIFIER | modifier | type_element | tuple_var_declaration_tuple)  { consumeTokenMethod = 'consumeTokenFast' }
 // endregion
 
+private weak_keyword ::= 'var' | clear_variants_and_fail
 
 // region Annotations
 annotation ::= '@' annotation_reference after_annotation_reference
@@ -265,7 +273,7 @@ annotation_member_value_pair ::= annotation_key '=' annotation_value | annotatio
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrNameValuePairElementType'
   extraRoot = true
 }
-private annotation_key ::= IDENTIFIER | 'as' | 'def' | 'in'
+private annotation_key ::= weak_keyword | IDENTIFIER | 'as' | 'def' | 'in'
 private annotation_value ::= annotation | annotation_array_value | expression
 {
   name = 'annotation attribute initializer'
@@ -371,7 +379,7 @@ private declaration_type_element ::= definitely_type_element | clear_variants_an
 private definitely_type_element ::= <<definitelyTypeElement type_element declaration_lookahead>>
 
 private declaration_lookahead ::= method_lookahead | variable_lookahead
-private variable_lookahead ::= &IDENTIFIER
+private variable_lookahead ::= &(weak_keyword | IDENTIFIER)
 private method_lookahead ::= &(method_identifier '(')
 // endregion
 
@@ -449,7 +457,7 @@ annotation_method ::= method_identifier method_parameter_list [mb_nl annotation_
 }
 private annotation_method_default ::= 'default' annotation_value { pin = 1 }
 
-private method_identifier ::= IDENTIFIER | string_literal_tokens { consumeTokenMethod = 'consumeTokenFast' }
+private method_identifier ::= weak_keyword | IDENTIFIER | string_literal_tokens { consumeTokenMethod = 'consumeTokenFast' }
 private constructor_identifier ::= <<constructorIdentifier>>
 // endregion
 
@@ -647,7 +655,7 @@ private tuple_var_declaration_item ::= type_element tuple_variable | tuple_varia
 {
   elementType = variable
 }
-tuple_variable ::= IDENTIFIER
+tuple_variable ::= weak_keyword | IDENTIFIER
 {
   elementType = variable
 }
@@ -742,7 +750,7 @@ private parse_catch_parameter ::= <<parseTailLeftFlat catch_parameter_start catc
 private catch_parameter_start ::= modifier_list catch_parameter_type_element?
 private catch_parameter_type_element ::= type_element_followed_by_identifier
                                        | type_element disjunction_type_element
-catch_parameter ::= IDENTIFIER { elementType = parameter }
+catch_parameter ::= weak_keyword | IDENTIFIER { elementType = parameter }
 finally_clause ::= 'finally' (mb_nl lazy_block)
 {
   pin = 1
@@ -761,7 +769,7 @@ private for_header ::= '(' mb_nl for_clause mb_nl ')' { pin = 1 }
 private for_clause ::= for_in_clause | traditional_for_clause
 
 for_in_clause ::= for_in_parameter (':' | 'in') expression { consumeTokenMethod = 'consumeTokenFast' }
-for_in_parameter ::= modifier_list mb_type_element IDENTIFIER | clear_variants_and_fail { elementType = parameter }
+for_in_parameter ::= modifier_list mb_type_element (weak_keyword | IDENTIFIER) | clear_variants_and_fail { elementType = parameter }
 
 traditional_for_clause ::= empty for_clause_initialization? ';' expression? ';' mb_nl for_clause_update? { pin = 1 }
 private for_clause_initialization ::= for_variable_declaration | expression | clear_variants_and_fail
@@ -814,7 +822,8 @@ private assert_message_separator ::= ':' | ','
 
 
 // region Expressions
-private expression_start ::= IDENTIFIER
+private expression_start ::= weak_keyword
+                           | IDENTIFIER
                            | '!' | '(' | '+' | '++' | '-' | '--' | '[' | '~'
                            | 'this' | 'super'
                            | DOLLAR_SLASHY_BEGIN
@@ -855,7 +864,7 @@ private priority0 ::= unqualified_reference_expression
                     | gstring
                     | regex
                     | parenthesized_expression
-unqualified_reference_expression ::= IDENTIFIER soft_type_argument_list?
+unqualified_reference_expression ::= (weak_keyword | IDENTIFIER) soft_type_argument_list?
                                    | 'this'
                                    | 'super'
                                    | code_reference_identifiers_soft &(reference_dot | '.&')
@@ -870,7 +879,8 @@ private string_literal_as_reference ::= '('                                     
 {
   consumeTokenMethod = 'consumeTokenFast'
 }
-private application_argument_start ::= IDENTIFIER
+private application_argument_start ::= weak_keyword
+                                     | IDENTIFIER
                                      | simple_literal_tokens
                                      | GSTRING_BEGIN
                                      | primitive_type
@@ -971,7 +981,7 @@ private single_parameter_lambda_expression_base ::= single_parameter_lambda_expr
 private single_parameter_lambda_expression_head ::= single_parameter_lambda_parameter_list mb_nl '->' { consumeTokenMethod = 'consumeTokenFast' }
 
 single_parameter_lambda_parameter_list ::= !<<isApplicationArguments>> single_parameter_lambda_parameter { elementType = parameter_list }
-single_parameter_lambda_parameter ::= modifier_list IDENTIFIER {
+single_parameter_lambda_parameter ::= modifier_list (weak_keyword | IDENTIFIER) {
   elementType = parameter
 }
 private single_parameter_lambda_body ::= expression_single_parameter_lambda_body | lazy_block_lambda_body
@@ -1034,7 +1044,7 @@ private attribute_dot ::= reference_dot mb_nl ('@') { consumeTokenMethod = 'fast
 private property_dot ::= attribute_dot | method_reference_dot | reference_dot
 
 private after_dot ::= <<mb_nl_group (type_argument_list? qualified_reference_expression_identifiers)>>
-private qualified_reference_expression_identifiers ::= IDENTIFIER
+private qualified_reference_expression_identifiers ::= weak_keyword | IDENTIFIER
                                                      | string_literal_tokens
                                                      | regex_literal
                                                      | modifier
@@ -1144,7 +1154,7 @@ private application ::= no_nl <<parseApplication application_ref application_exp
 {
   extends = expression
 }
-left application_ref ::= IDENTIFIER | simple_literal_tokens
+left application_ref ::= weak_keyword | IDENTIFIER | simple_literal_tokens
 {
   elementType = reference_expression
   consumeTokenMethod = 'consumeTokenFast'
@@ -1271,7 +1281,7 @@ private code_reference_dot ::= '.' !'*'
 private code_reference_part ::= code_reference_identifier [type_argument_list <<setRefHadTypeArguments>>]
 private code_reference_identifier ::= <<codeReferenceIdentifier code_reference_identifiers>>
 private code_reference_identifiers ::= IDENTIFIER | code_reference_identifiers_soft (<<isQualifiedName>> | &'.')
-private code_reference_identifiers_soft ::= 'def' | 'as' | 'in' | 'trait' { consumeTokenMethod = 'consumeTokenFast' }
+private code_reference_identifiers_soft ::= 'def' | 'as' | 'in' | 'trait' | 'var' { consumeTokenMethod = 'consumeTokenFast' }
 
 // for the sake of showing 'type expected' message
 type_code_reference ::= <<annotated code_reference_base>> { elementType = '' name = 'type' }
@@ -1285,7 +1295,7 @@ left doc_reference_tail ::= '.' code_reference_part { elementType = code_referen
 
 
 // region Variables
-private var ::= IDENTIFIER mb_initializer
+private var ::= (weak_keyword | IDENTIFIER) mb_initializer
 private mb_initializer ::= [mb_nl ('=') mb_nl expression_or_application]
 {
   pin('.*') = 2

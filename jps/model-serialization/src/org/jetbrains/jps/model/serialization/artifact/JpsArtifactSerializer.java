@@ -138,6 +138,7 @@ public final class JpsArtifactSerializer {
   @Nullable
   private static JpsPackagingElement createPackagingElement(Element element) {
     String typeId = element.getAttributeValue(ID_ATTRIBUTE);
+    if (typeId == null) return null;
     JpsPackagingElementSerializer<?> serializer = findElementSerializer(typeId);
     if (serializer != null) {
       return serializer.load(element);

@@ -1,5 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.ide.BrowserUtil;
@@ -19,33 +18,43 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.io.File;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 @State(
   name = "ProjectCodeStyleConfiguration",
   storages = @Storage(value = "codeStyles", stateSplitter = ProjectCodeStyleSettingsManager.StateSplitter.class)
 )
-public class ProjectCodeStyleSettingsManager extends CodeStyleSettingsManager {
+public final class ProjectCodeStyleSettingsManager extends CodeStyleSettingsManager {
   private static final Logger LOG = Logger.getInstance(ProjectCodeStyleSettingsManager.class);
 
   private static final String MAIN_PROJECT_CODE_STYLE_NAME = "Project";
   private static final String PROJECT_CODE_STYLE_CONFIG_FILE_NAME = "codeStyleConfig";
 
   private final Project myProject;
-  private boolean myIsLoaded;
+  private volatile boolean myIsLoaded;
   private final Map<String,CodeStyleSettings> mySettingsMap = new HashMap<>();
+  private final boolean mySettingsExist;
+
+  private final Object myStateLock = new Object();
 
   private static final NotificationGroup NOTIFICATION_GROUP =
     new NotificationGroup("Code style settings migration", NotificationDisplayType.STICKY_BALLOON, true, null, null, null, PluginId.getId("com.intellij"));
 
-  public ProjectCodeStyleSettingsManager(Project project) {
+  public ProjectCodeStyleSettingsManager(@NotNull Project project) {
     myProject = project;
     setMainProjectCodeStyle(null);
     registerExtensionPointListeners(project);
+    mySettingsExist = checkProjectSettingsExist();
   }
 
   @Override
@@ -56,20 +65,22 @@ public class ProjectCodeStyleSettingsManager extends CodeStyleSettingsManager {
   }
 
   private void initProjectSettings(@NotNull Project project) {
-    if (!myIsLoaded) {
-      LegacyCodeStyleSettingsManager legacySettingsManager = ServiceManager.getService(project, LegacyCodeStyleSettingsManager.class);
-      if (legacySettingsManager != null && legacySettingsManager.getState() != null) {
-        loadState(legacySettingsManager.getState());
-        if (!project.isDefault() &&
-            !ApplicationManager.getApplication().isUnitTestMode() &&
-            !ApplicationManager.getApplication().isHeadlessEnvironment()) {
-          saveProjectAndNotify(project);
+    synchronized (myStateLock) {
+      if (!myIsLoaded) {
+        LegacyCodeStyleSettingsManager legacySettingsManager = ServiceManager.getService(project, LegacyCodeStyleSettingsManager.class);
+        if (legacySettingsManager != null && legacySettingsManager.getState() != null) {
+          loadState(legacySettingsManager.getState());
+          if (!project.isDefault() &&
+              !ApplicationManager.getApplication().isUnitTestMode() &&
+              !ApplicationManager.getApplication().isHeadlessEnvironment()) {
+            saveProjectAndNotify(project);
+          }
+          LOG.info("Imported old project code style settings.");
         }
-        LOG.info("Imported old project code style settings.");
-      }
-      else {
-        initDefaults();
-        LOG.info("Initialized from default code style settings.");
+        else {
+          initDefaults();
+          LOG.info("Initialized from default code style settings.");
+        }
       }
     }
   }
@@ -84,7 +95,9 @@ public class ProjectCodeStyleSettingsManager extends CodeStyleSettingsManager {
 
   @Override
   public void setMainProjectCodeStyle(@Nullable CodeStyleSettings settings) {
-    mySettingsMap.put(MAIN_PROJECT_CODE_STYLE_NAME, settings != null ? settings : createSettings());
+    synchronized (myStateLock) {
+      mySettingsMap.put(MAIN_PROJECT_CODE_STYLE_NAME, settings != null ? settings : createSettings());
+    }
   }
 
   @NotNull
@@ -105,22 +118,24 @@ public class ProjectCodeStyleSettingsManager extends CodeStyleSettingsManager {
 
   @Override
   public void loadState(@NotNull Element state) {
-    LOG.info("Loading Project code style");
-    super.loadState(state);
-    updateFromOldProjectSettings();
-    for (Element subStyle : state.getChildren(CodeStyleScheme.CODE_STYLE_TAG_NAME)) {
-      String name = subStyle.getAttributeValue(CodeStyleScheme.CODE_STYLE_NAME_ATTR);
-      CodeStyleSettings settings = createSettings();
-      settings.readExternal(subStyle);
-      if (MAIN_PROJECT_CODE_STYLE_NAME.equals(name)) {
-        setMainProjectCodeStyle(settings);
+    synchronized (myStateLock) {
+      LOG.info("Loading Project code style");
+      super.loadState(state);
+      updateFromOldProjectSettings();
+      for (Element subStyle : state.getChildren(CodeStyleScheme.CODE_STYLE_TAG_NAME)) {
+        String name = subStyle.getAttributeValue(CodeStyleScheme.CODE_STYLE_NAME_ATTR);
+        CodeStyleSettings settings = createSettings();
+        settings.readExternal(subStyle);
+        if (MAIN_PROJECT_CODE_STYLE_NAME.equals(name)) {
+          setMainProjectCodeStyle(settings);
+        }
+        else {
+          mySettingsMap.put(name, settings);
+        }
+        LOG.info(name + " code style loaded");
       }
-      else {
-        mySettingsMap.put(name, settings);
-      }
-      LOG.info(name + " code style loaded");
+      myIsLoaded = true;
     }
-    myIsLoaded = true;
   }
 
   private void updateFromOldProjectSettings() {
@@ -132,21 +147,31 @@ public class ProjectCodeStyleSettingsManager extends CodeStyleSettingsManager {
 
   @Override
   public Element getState() {
-    Element e = super.getState();
-    if (e != null) {
-      LOG.info("Saving Project code style");
-      for (String name : mySettingsMap.keySet()) {
-        CodeStyleSettings settings = mySettingsMap.get(name);
-        Element codeStyle = new Element(CodeStyleScheme.CODE_STYLE_TAG_NAME);
-        codeStyle.setAttribute(CodeStyleScheme.CODE_STYLE_NAME_ATTR, name);
-        settings.writeExternal(codeStyle);
-        if (!codeStyle.getContent().isEmpty()) {
-          e.addContent(codeStyle);
-          LOG.info(name + " code style saved");
+    synchronized (myStateLock) {
+      checkState();
+      Element e = super.getState();
+      if (e != null) {
+        LOG.info("Saving Project code style");
+        for (String name : mySettingsMap.keySet()) {
+          CodeStyleSettings settings = mySettingsMap.get(name);
+          Element codeStyle = new Element(CodeStyleScheme.CODE_STYLE_TAG_NAME);
+          codeStyle.setAttribute(CodeStyleScheme.CODE_STYLE_NAME_ATTR, name);
+          settings.writeExternal(codeStyle);
+          if (!codeStyle.getContent().isEmpty()) {
+            e.addContent(codeStyle);
+            LOG.info(name + " code style saved");
+          }
         }
       }
+      return e;
     }
-    return e;
+  }
+
+  @Override
+  protected void checkState() {
+    if (mySettingsExist && !myIsLoaded) {
+      LOG.error("Invalid state: project settings exist but not loaded yet. The call may cause settings damage.");
+    }
   }
 
   private static class CodeStyleMigrationNotification extends Notification {
@@ -198,5 +223,16 @@ public class ProjectCodeStyleSettingsManager extends CodeStyleSettingsManager {
   @Override
   protected Collection<CodeStyleSettings> enumSettings() {
     return Collections.unmodifiableCollection(mySettingsMap.values());
+  }
+
+  private boolean checkProjectSettingsExist() {
+    VirtualFile projectFile = myProject.getProjectFile();
+    if (projectFile != null) {
+      VirtualFile ideaDir = projectFile.getParent();
+      File projectStyleFile =
+        new File(ideaDir.getPath() + File.separator + "codeStyles" + File.separator + MAIN_PROJECT_CODE_STYLE_NAME + ".xml");
+      return projectStyleFile.exists();
+    }
+    return false;
   }
 }

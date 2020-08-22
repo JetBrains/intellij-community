@@ -10,7 +10,7 @@ public final class ClassPathStorageUtil {
   @NonNls public static final String DEFAULT_STORAGE = "default";
 
   @NotNull
-  public static String getStorageType(@NotNull Module module) {
+  public static @NonNls String getStorageType(@NotNull Module module) {
     String id = module.getOptionValue(JpsProjectLoader.CLASSPATH_ATTRIBUTE);
     return id == null ? DEFAULT_STORAGE : id;
   }

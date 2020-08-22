@@ -22,7 +22,7 @@ import java.util.Collection;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-public class MethodChainLookupRangingHelper {
+public final class MethodChainLookupRangingHelper {
   @NotNull
   public static LookupElement toLookupElement(OperationChain chain,
                                               ChainCompletionContext context) {

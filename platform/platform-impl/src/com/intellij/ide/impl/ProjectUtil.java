@@ -19,12 +19,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -40,8 +40,8 @@ import com.intellij.util.PlatformUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.io.PathKt;
-import com.intellij.util.ui.FocusUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -62,7 +62,7 @@ public final class ProjectUtil {
   private static final Logger LOG = Logger.getInstance(ProjectUtil.class);
 
   private static final String MODE_PROPERTY = "OpenOrAttachDialog.OpenMode";
-  private static final String MODE_ATTACH = "attach";
+  @NonNls private static final String MODE_ATTACH = "attach";
   private static final String MODE_REPLACE = "replace";
   private static final String MODE_NEW = "new";
 
@@ -159,7 +159,8 @@ public final class ProjectUtil {
     }
 
     if (isValidProjectPath(file)) {
-      return ProjectManagerEx.getInstanceEx().openProject(file, options);
+      // see OpenProjectTest.`open valid existing project dir with inability to attach using OpenFileAction` test about why `runConfigurators = true` is specified here
+      return ProjectManagerEx.getInstanceEx().openProject(file, options.withRunConfigurators());
     }
 
     if (options.checkDirectoryForFileBasedProjects && Files.isDirectory(file)) {
@@ -314,10 +315,9 @@ public final class ProjectUtil {
   }
 
   public static boolean showYesNoDialog(@NotNull String message, @NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String titleKey) {
-    Window window = getActiveFrameOrWelcomeScreen();
-    Icon icon = Messages.getWarningIcon();
-    String title = IdeBundle.message(titleKey);
-    return (window == null ? Messages.showYesNoDialog(message, title, icon) : Messages.showYesNoDialog(window, message, title, icon)) == Messages.YES;
+    return MessageDialogBuilder.yesNo(IdeBundle.message(titleKey), message)
+      .icon(Messages.getWarningIcon())
+      .ask(getActiveFrameOrWelcomeScreen());
   }
 
   public static Window getActiveFrameOrWelcomeScreen() {
@@ -349,9 +349,8 @@ public final class ProjectUtil {
       return null;
     }
 
-    String path = FileUtil.toSystemIndependentName(file.toString());
     for (Project project : openProjects) {
-      if (isSameProject(path, project)) {
+      if (isSameProject(file, project)) {
         focusProjectWindow(project, false);
         return project;
       }
@@ -365,31 +364,31 @@ public final class ProjectUtil {
    * {@link Messages#CANCEL} - if user canceled the dialog
    */
   public static int confirmOpenNewProject(boolean isNewProject) {
-    final GeneralSettings settings = GeneralSettings.getInstance();
-    int confirmOpenNewProject =
-      ApplicationManager.getApplication().isUnitTestMode() ? GeneralSettings.OPEN_PROJECT_NEW_WINDOW : settings.getConfirmOpenNewProject();
+    GeneralSettings settings = GeneralSettings.getInstance();
+    int confirmOpenNewProject = ApplicationManager.getApplication().isUnitTestMode() ? GeneralSettings.OPEN_PROJECT_NEW_WINDOW : settings.getConfirmOpenNewProject();
     if (confirmOpenNewProject == GeneralSettings.OPEN_PROJECT_ASK) {
       if (isNewProject) {
-        int exitCode = Messages.showYesNoDialog(IdeBundle.message("prompt.open.project.in.new.frame"),
-                                                IdeBundle.message("title.new.project"),
-                                                IdeBundle.message("button.existing.frame"),
-                                                IdeBundle.message("button.new.frame"),
-                                                Messages.getQuestionIcon(),
-                                                new ProjectNewWindowDoNotAskOption());
-        LifecycleUsageTriggerCollector.onProjectFrameSelected(exitCode);
-        return exitCode == Messages.YES ? GeneralSettings.OPEN_PROJECT_SAME_WINDOW : GeneralSettings.OPEN_PROJECT_NEW_WINDOW;
+        boolean openInExistingFrame =
+          MessageDialogBuilder.yesNo(IdeBundle.message("title.new.project"), IdeBundle.message("prompt.open.project.in.new.frame"))
+            .yesText(IdeBundle.message("button.existing.frame"))
+            .noText(IdeBundle.message("button.new.frame"))
+            .doNotAsk(new ProjectNewWindowDoNotAskOption())
+            .guessWindowAndAsk();
+        int code = openInExistingFrame ? GeneralSettings.OPEN_PROJECT_SAME_WINDOW : GeneralSettings.OPEN_PROJECT_NEW_WINDOW;
+        LifecycleUsageTriggerCollector.onProjectFrameSelected(code);
+        return code;
       }
       else {
-        int exitCode = Messages.showYesNoCancelDialog(IdeBundle.message("prompt.open.project.in.new.frame"),
-                                                      IdeBundle.message("title.open.project"),
-                                                      IdeBundle.message("button.existing.frame"),
-                                                      IdeBundle.message("button.new.frame"),
-                                                      CommonBundle.getCancelButtonText(),
-                                                      Messages.getQuestionIcon(),
-                                                      new ProjectNewWindowDoNotAskOption());
-        LifecycleUsageTriggerCollector.onProjectFrameSelected(exitCode);
-        return exitCode == Messages.YES ? GeneralSettings.OPEN_PROJECT_SAME_WINDOW :
-               exitCode == Messages.NO ? GeneralSettings.OPEN_PROJECT_NEW_WINDOW : Messages.CANCEL;
+        int exitCode =
+          MessageDialogBuilder.yesNoCancel(IdeBundle.message("title.open.project"), IdeBundle.message("prompt.open.project.in.new.frame"))
+            .yesText(IdeBundle.message("button.existing.frame"))
+            .noText(IdeBundle.message("button.new.frame"))
+            .doNotAsk(new ProjectNewWindowDoNotAskOption())
+            .guessWindowAndAsk();
+        int code = exitCode == Messages.YES ? GeneralSettings.OPEN_PROJECT_SAME_WINDOW :
+                exitCode == Messages.NO ? GeneralSettings.OPEN_PROJECT_NEW_WINDOW : Messages.CANCEL;
+        LifecycleUsageTriggerCollector.onProjectFrameSelected(code);
+        return code;
       }
     }
     return confirmOpenNewProject;
@@ -414,68 +413,90 @@ public final class ProjectUtil {
       },
       MODE_NEW.equals(mode) ? 1 : MODE_REPLACE.equals(mode) ? 0 : MODE_ATTACH.equals(mode) ? 2 : 0,
       Messages.getQuestionIcon());
-    LifecycleUsageTriggerCollector.onProjectFrameSelected(exitCode);
-    return exitCode == 0 ? GeneralSettings.OPEN_PROJECT_SAME_WINDOW :
-           exitCode == 1 ? GeneralSettings.OPEN_PROJECT_NEW_WINDOW :
-           exitCode == 2 ? GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH :
-           -1;
+    int returnValue = exitCode == 0 ? GeneralSettings.OPEN_PROJECT_SAME_WINDOW :
+            exitCode == 1 ? GeneralSettings.OPEN_PROJECT_NEW_WINDOW :
+            exitCode == 2 ? GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH :
+            -1;
+    if (returnValue != -1) {
+      LifecycleUsageTriggerCollector.onProjectFrameSelected(returnValue);
+    }
+    return returnValue;
   }
 
+  /**
+   * @deprecated Use {@link #isSameProject(Path, Project)}
+   */
+  @Deprecated
   public static boolean isSameProject(@Nullable String projectFilePath, @NotNull Project project) {
-    if (projectFilePath == null) {
+    return projectFilePath != null && isSameProject(Paths.get(projectFilePath), project);
+  }
+
+  public static boolean isSameProject(@NotNull Path projectFile, @NotNull Project project) {
+    IProjectStore projectStore = ProjectKt.getStateStore(project);
+    Path existingBaseDirPath = projectStore.getProjectBasePath();
+
+    if (existingBaseDirPath.getFileSystem() != projectFile.getFileSystem()) {
       return false;
     }
 
-    IProjectStore projectStore = ProjectKt.getStateStore(project);
-    String existingBaseDirPath = projectStore.getProjectBasePath();
-    File projectFile = new File(projectFilePath);
-    if (projectFile.isDirectory()) {
-      return FileUtil.pathsEqual(projectFilePath, existingBaseDirPath);
+    if (Files.isDirectory(projectFile)) {
+      try {
+        return Files.isSameFile(projectFile, existingBaseDirPath);
+      }
+      catch (IOException ignore) {
+        return false;
+      }
     }
 
     if (projectStore.getStorageScheme() == StorageScheme.DEFAULT) {
-      return FileUtil.pathsEqual(projectFilePath, projectStore.getProjectFilePath());
+      try {
+        return Files.isSameFile(projectFile, projectStore.getProjectFilePath());
+      }
+      catch (IOException ignore) {
+        return false;
+      }
     }
 
-    File parent = projectFile.getParentFile();
-    if (parent == null) return false;
-    if (parent.getName().equals(Project.DIRECTORY_STORE_FOLDER)) {
-      parent = parent.getParentFile();
-      return parent != null && FileUtil.pathsEqual(parent.getPath(), existingBaseDirPath);
+    Path parent = projectFile.getParent();
+    if (parent == null) {
+      return false;
     }
 
-    return FileUtil.pathsEqual(parent.getPath(), existingBaseDirPath) &&
-           ProjectFileType.DEFAULT_EXTENSION.equals(FileUtilRt.getExtension(projectFile.getName()));
+    Path parentFileName = parent.getFileName();
+    if (parentFileName != null && parentFileName.toString().equals(Project.DIRECTORY_STORE_FOLDER)) {
+      parent = parent.getParent();
+      return parent != null && FileUtil.pathsEqual(parent.toString(), existingBaseDirPath.toString());
+    }
+
+    return projectFile.getFileName().toString().endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION) &&
+           FileUtil.pathsEqual(parent.toString(), existingBaseDirPath.toString());
   }
 
-  public static void focusProjectWindow(@Nullable Project project, boolean executeIfAppInactive) {
+  /**
+   * Focuses the specified project's window. If {@code stealFocusIfAppInactive} is {@code true} and corresponding logic is supported by OS
+   * (this is not the case for Windows), the window will get the focus even if other application is currently active. Otherwise, there will
+   * be some indication that the target window requires user attention. Focus stealing behaviour (enabled by
+   * {@code stealFocusIfAppInactive}) is generally not considered a proper application behaviour, and should only be used in special cases,
+   * when we know that user definitely expects it.
+   */
+  public static void focusProjectWindow(@Nullable Project project, boolean stealFocusIfAppInactive) {
     JFrame frame = WindowManager.getInstance().getFrame(project);
     if (frame == null) {
       return;
     }
 
-    Component mostRecentFocusOwner = frame.getMostRecentFocusOwner();
-    if (executeIfAppInactive) {
-      AppIcon.getInstance().requestFocus((IdeFrame)WindowManager.getInstance().getFrame(project));
-      frame.toFront();
-      if (!SystemInfo.isMac && !frame.isAutoRequestFocus()) {
-        if (mostRecentFocusOwner != null) {
-          IdeFocusManager.getInstance(project).requestFocus(mostRecentFocusOwner, true);
-        }
-        else {
-          LOG.warn("frame.getMostRecentFocusOwner() is null");
-        }
-      }
+    if (stealFocusIfAppInactive) {
+      AppIcon.getInstance().requestFocus((IdeFrame)frame);
     }
     else {
-      if (mostRecentFocusOwner != null) {
-        IdeFocusManager.getInstance(project).requestFocusInProject(mostRecentFocusOwner, project);
+      if (!SystemInfo.isXWindow || KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow() != null) {
+        // some Linux window managers allow 'toFront' to steal focus, so we don't call it on Linux if IDE application is not active
+        frame.toFront();
       }
-      else {
-        Component defaultFocusComponentInPanel = FocusUtil.getDefaultComponentInPanel(frame.getFocusCycleRootAncestor());
-        if (defaultFocusComponentInPanel != null) {
-          IdeFocusManager.getInstance(project).requestFocusInProject(defaultFocusComponentInPanel, project);
-        }
+
+      if (!SystemInfo.isWindows) {
+        // on Windows 'toFront' will request attention if needed
+        AppIcon.getInstance().requestAttention(project, true);
       }
     }
   }

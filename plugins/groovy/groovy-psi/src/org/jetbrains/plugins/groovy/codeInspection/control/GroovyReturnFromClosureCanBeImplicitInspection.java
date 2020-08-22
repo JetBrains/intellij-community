@@ -22,6 +22,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
@@ -36,7 +37,7 @@ public class GroovyReturnFromClosureCanBeImplicitInspection extends BaseInspecti
     @Override
     @Nullable
     protected String buildErrorString(Object... args) {
-        return "#ref statement at end of a closure can be made implicit #loc";
+        return GroovyBundle.message("inspection.message.ref.statement.at.end.closure.can.be.made.implicit");
 
     }
 
@@ -56,7 +57,7 @@ public class GroovyReturnFromClosureCanBeImplicitInspection extends BaseInspecti
         @Override
         @NotNull
         public String getFamilyName() {
-            return "Make return implicit";
+            return GroovyBundle.message("intention.family.name.make.return.implicit");
         }
 
         @Override

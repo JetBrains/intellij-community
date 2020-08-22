@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
@@ -69,7 +69,7 @@ public class RenameWrongRefFix implements IntentionAction, HintAction {
     if (!myRefExpr.isValid() || !BaseIntentionAction.canModify(myRefExpr)) return false;
     PsiElement refName = myRefExpr.getReferenceNameElement();
     if (refName == null) return false;
-    
+
     return !CreateFromUsageUtils.isValidReference(myRefExpr, myUnresolvedOnly);
   }
 
@@ -186,7 +186,7 @@ public class RenameWrongRefFix implements IntentionAction, HintAction {
     return true;
   }
 
-  private class RenameWrongRefQuestionAction implements QuestionAction {
+  private final class RenameWrongRefQuestionAction implements QuestionAction {
     private final LookupElement[] myItems;
     private final Editor myEditor;
 

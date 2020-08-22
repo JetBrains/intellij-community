@@ -299,7 +299,7 @@ public final class TypeRepr {
               break;
 
             default :
-              System.out.println("Unknown type!");
+              System.out.println("Unknown type with tag " + tag);
           }
         }
 

@@ -13,6 +13,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ui.PlusMinus;
@@ -31,7 +33,6 @@ import com.intellij.util.treeWithCheckedNodes.TreeNodeState;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsLogBundle;
-import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -237,10 +238,13 @@ public class VcsStructureChooser extends DialogWrapper {
           selectedLabel.setText("");
         }
         else {
-          String errorText = "<font color=red>(" +
-                             VcsLogBundle.message("vcs.log.filters.structure.max.selected.error.message", MAX_FOLDERS) +
-                             ")</font>";
-          selectedLabel.setText(XmlStringUtil.wrapInHtml(VcsLogBundle.message("vcs.log.filters.structure.label", errorText)));
+          HtmlChunk.Element errorText =
+            HtmlChunk.text("(" + VcsLogBundle.message("vcs.log.filters.structure.max.selected.error.message", MAX_FOLDERS) + ")")
+              .wrapWith(HtmlChunk.tag("font").attr("color", "red"));
+          selectedLabel.setText(new HtmlBuilder()
+                                  .appendRaw((VcsLogBundle.message("vcs.log.filters.structure.label", errorText.toString())))
+                                  .wrapWith("html")
+                                  .toString());
         }
         selectedLabel.revalidate();
       }
@@ -268,7 +272,7 @@ public class VcsStructureChooser extends DialogWrapper {
     return descriptor.getElement().getFile();
   }
 
-  private static class MyCheckboxTreeCellRenderer extends JPanel implements TreeCellRenderer {
+  private static final class MyCheckboxTreeCellRenderer extends JPanel implements TreeCellRenderer {
     @NotNull private final WithModulesListCellRenderer myTextRenderer;
     @NotNull public final JCheckBox myCheckbox;
     @NotNull private final SelectionManager mySelectionManager;
@@ -297,13 +301,14 @@ public class VcsStructureChooser extends DialogWrapper {
                                           boolean leaf,
                                           int row,
                                           boolean hasFocus) {
+          //noinspection HardCodedStringLiteral
           append(value.toString());
         }
       };
       myFictive = new JBList();
       myFictive.setBackground(RenderingUtil.getBackground(tree));
       myFictive.setSelectionBackground(UIUtil.getListSelectionBackground(true));
-      myFictive.setSelectionForeground(UIUtil.getListSelectionForeground());
+      myFictive.setSelectionForeground(UIUtil.getListSelectionForeground(true));
 
       myTextRenderer = new WithModulesListCellRenderer(project, myModulesSet) {
         @Override

@@ -2,7 +2,6 @@
 package com.intellij.util.xml;
 
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.JBIterableClassTraverser;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -15,6 +14,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
+
+import static com.intellij.util.ReflectionStartupUtil.classTraverser;
 
 /**
  * @author peter
@@ -56,7 +57,7 @@ public final class JavaMethodSignature {
   @NotNull
   List<Method> getAllMethods(@NotNull Class<?> startFrom) {
     List<Method> result = new ArrayList<>();
-    for (Class<?> superClass : JBIterable.from(JBIterableClassTraverser.classTraverser(startFrom)).append(Object.class).unique()) {
+    for (Class<?> superClass : JBIterable.from(classTraverser(startFrom)).append(Object.class).unique()) {
       for (Method method : superClass.getDeclaredMethods()) {
         if (myMethodName.equals(method.getName()) &&
             method.getParameterCount() == myMethodParameters.length &&
@@ -73,7 +74,7 @@ public final class JavaMethodSignature {
     String sampleMethodName = sampleMethod.getName();
     Class<?>[] sampleMethodParameters = sampleMethod.getParameterCount() == 0 ? ArrayUtil.EMPTY_CLASS_ARRAY : sampleMethod.getParameterTypes();
 
-    for (Class<?> superClass : JBIterable.from(JBIterableClassTraverser.classTraverser(startFrom)).append(Object.class).unique()) {
+    for (Class<?> superClass : JBIterable.from(classTraverser(startFrom)).append(Object.class).unique()) {
       for (Method method : superClass.getDeclaredMethods()) {
         if (sampleMethodName.equals(method.getName()) &&
             method.getParameterCount() == sampleMethodParameters.length &&

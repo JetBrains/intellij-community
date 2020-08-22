@@ -1,12 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.typeEnhancers;
 
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.impl.source.resolve.graphInference.constraints.ConstraintFormula;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.ConversionResult;
-import org.jetbrains.plugins.groovy.lang.resolve.processors.inference.GrConstraintFormula;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -42,9 +43,10 @@ public class GrStringConverter extends GrTypeConverter {
 
   @Nullable
   @Override
-  public Collection<GrConstraintFormula> reduceTypeConstraint(@NotNull PsiType leftType,
-                                                              @NotNull PsiType rightType,
-                                                              @NotNull Position position) {
+  public Collection<ConstraintFormula> reduceTypeConstraint(@NotNull PsiType leftType,
+                                                            @NotNull PsiType rightType,
+                                                            @NotNull Position position,
+                                                            @NotNull PsiElement context) {
     if (position == Position.METHOD_PARAMETER &&
         isClassType(leftType, JAVA_LANG_STRING) &&
         isClassType(rightType, GROOVY_LANG_GSTRING)) {

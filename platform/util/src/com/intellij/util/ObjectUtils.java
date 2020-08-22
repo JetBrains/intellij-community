@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NotNullFactory;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.Contract;
@@ -13,6 +12,8 @@ import java.lang.reflect.Proxy;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.IntUnaryOperator;
+import java.util.function.Predicate;
 
 /**
  * @author peter
@@ -127,7 +128,7 @@ public final class ObjectUtils {
     return Objects.requireNonNull(value);
   }
 
-  @Contract(pure = true)
+  @Contract(value = "null, _ -> param2; !null, _ -> param1", pure = true)
   public static @NotNull <T> T notNull(@Nullable T value, @NotNull T defaultValue) {
     return value == null ? defaultValue : value;
   }
@@ -171,8 +172,8 @@ public final class ObjectUtils {
   }
 
   @Contract("null, _ -> null")
-  public static @Nullable <T> T nullizeByCondition(final @Nullable T obj, final @NotNull Condition<? super T> condition) {
-    if (condition.value(obj)) {
+  public static @Nullable <T> T nullizeByCondition(final @Nullable T obj, final @NotNull Predicate<? super T> condition) {
+    if (condition.test(obj)) {
       return null;
     }
     return obj;
@@ -194,12 +195,12 @@ public final class ObjectUtils {
    * @see java.util.Arrays#binarySearch(Object[], Object, Comparator)
    * @see java.util.Collections#binarySearch(List, Object, Comparator)
    */
-  public static int binarySearch(int fromIndex, int toIndex, @NotNull IntIntFunction indexComparator) {
+  public static int binarySearch(int fromIndex, int toIndex, IntUnaryOperator indexComparator) {
     int low = fromIndex;
     int high = toIndex - 1;
     while (low <= high) {
       int mid = (low + high) >>> 1;
-      int cmp = indexComparator.fun(mid);
+      int cmp = indexComparator.applyAsInt(mid);
       if (cmp < 0) low = mid + 1;
       else if (cmp > 0) high = mid - 1;
       else return mid;

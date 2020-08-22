@@ -6,25 +6,21 @@ import com.intellij.configurationStore.*
 import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.StateStorage
-import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.impl.ProjectStoreFactory
 import com.intellij.util.ReflectionUtil
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 
-private class ConfigurationScriptProjectStoreFactory : ProjectStoreFactory {
-  override fun createStore(project: Project): IComponentStore {
-    return if (project.isDefault) DefaultProjectStoreImpl(project) else MyProjectStore(project)
-  }
+private class ConfigurationScriptProjectStoreFactory : ProjectStoreFactoryImpl() {
+  override fun createStore(project: Project) = MyProjectStore(project)
 }
 
 private class MyProjectStore(project: Project) : ProjectWithModulesStoreImpl(project) {
-  internal val isConfigurationFileListenerAdded = AtomicBoolean()
+  val isConfigurationFileListenerAdded = AtomicBoolean()
   private val storages = ConcurrentHashMap<Class<Any>, ReadOnlyStorage>()
 
-  internal fun configurationFileChanged() {
+  fun configurationFileChanged() {
     if (storages.isNotEmpty()) {
       StoreReloadManager.getInstance().storageFilesChanged(mapOf(project to storages.values.toList()))
     }
@@ -120,6 +116,6 @@ private class ReadOnlyStorage(val configurationSchemaKey: String, val componentC
 
   override fun createSaveSessionProducer(): SaveSessionProducer? = null
 
-  override fun analyzeExternalChangesAndUpdateIfNeeded(componentNames: MutableSet<in String>) {
+  override fun analyzeExternalChangesAndUpdateIfNeeded(componentNames: MutableSet<String>) {
   }
 }

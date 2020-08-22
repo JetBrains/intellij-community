@@ -72,7 +72,7 @@ public class ExtractToMethodReferenceIntention extends BaseElementAtCaretIntenti
       if (asMethodReference != null) return false;
       try {
         PsiElement[] toExtract = body instanceof PsiCodeBlock ? ((PsiCodeBlock)body).getStatements() : new PsiElement[]{body};
-        ControlFlowWrapper wrapper = new ControlFlowWrapper(project, body, toExtract);
+        ControlFlowWrapper wrapper = new ControlFlowWrapper(body, toExtract);
         wrapper.prepareExitStatements(toExtract, body);
         PsiVariable[] outputVariables = wrapper.getOutputVariables();
         List<PsiVariable> inputVariables = wrapper.getInputVariables(body, toExtract, outputVariables);

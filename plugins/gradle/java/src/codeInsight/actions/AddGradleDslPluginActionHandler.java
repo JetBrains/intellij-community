@@ -29,6 +29,8 @@ import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -140,7 +142,12 @@ class AddGradleDslPluginActionHandler implements CodeInsightActionHandler {
       myNameLabel.setForeground(isSelected ? list.getSelectionForeground() : list.getForeground());
       myPanel.setBackground(backgroundColor);
 
-      String description = String.format("<html><div WIDTH=%d>%s</div><html>", 400, String.valueOf(descriptor.second));
+      String description =
+        new HtmlBuilder()
+          .append(String.valueOf(descriptor.second))
+          .wrapWith(HtmlChunk.div().attr("WIDTH", "400"))
+          .wrapWith("html")
+          .toString();
       myDescLabel.setText(description);
       myDescLabel.setForeground(LookupCellRenderer.getGrayedForeground(isSelected));
       myDescLabel.setBackground(backgroundColor);

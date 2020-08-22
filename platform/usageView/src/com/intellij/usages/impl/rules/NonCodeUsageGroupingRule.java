@@ -10,19 +10,20 @@ import com.intellij.usages.*;
 import com.intellij.usages.impl.UnknownUsagesInUnloadedModules;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.usages.rules.SingleParentUsageGroupingRule;
+import com.intellij.usages.rules.UsageGroupingRuleEx;
 import com.intellij.usages.rules.UsageInFile;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class NonCodeUsageGroupingRule extends SingleParentUsageGroupingRule {
+class NonCodeUsageGroupingRule extends SingleParentUsageGroupingRule implements UsageGroupingRuleEx {
   private final Project myProject;
 
   NonCodeUsageGroupingRule(@NotNull Project project) {
     myProject = project;
   }
 
-  private static class CodeUsageGroup extends UsageGroupBase {
+  private static final class CodeUsageGroup extends UsageGroupBase {
     private static final UsageGroup INSTANCE = new CodeUsageGroup();
 
     private CodeUsageGroup() {
@@ -40,7 +41,7 @@ class NonCodeUsageGroupingRule extends SingleParentUsageGroupingRule {
     }
   }
 
-  private static class UsageInGeneratedCodeGroup extends UsageGroupBase {
+  private static final class UsageInGeneratedCodeGroup extends UsageGroupBase {
     public static final UsageGroup INSTANCE = new UsageInGeneratedCodeGroup();
 
     private UsageInGeneratedCodeGroup() {
@@ -58,7 +59,7 @@ class NonCodeUsageGroupingRule extends SingleParentUsageGroupingRule {
     }
   }
 
-  private static class NonCodeUsageGroup extends UsageGroupBase {
+  private static final class NonCodeUsageGroup extends UsageGroupBase {
     public static final UsageGroup INSTANCE = new NonCodeUsageGroup();
 
     private NonCodeUsageGroup() {
@@ -147,5 +148,10 @@ class NonCodeUsageGroupingRule extends SingleParentUsageGroupingRule {
       }
     }
     return null;
+  }
+
+  @Override
+  public boolean isGroupingToggleable() {
+    return false;
   }
 }

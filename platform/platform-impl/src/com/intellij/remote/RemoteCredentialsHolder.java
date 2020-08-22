@@ -6,6 +6,7 @@ import com.intellij.credentialStore.CredentialAttributes;
 import com.intellij.credentialStore.CredentialAttributesKt;
 import com.intellij.credentialStore.Credentials;
 import com.intellij.ide.passwordSafe.PasswordSafe;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.PasswordUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -56,7 +57,7 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     copyFrom(credentials);
   }
 
-  public static String getCredentialsString(@NotNull RemoteCredentials cred) {
+  public static @NlsSafe String getCredentialsString(@NotNull RemoteCredentials cred) {
     return SSH_PREFIX + cred.getUserName() + "@" + cred.getHost() + ":" + cred.getLiteralPort();
   }
 
@@ -66,7 +67,7 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
   }
 
   @Override
-  public void setHost(@Nullable String host) {
+  public void setHost(@Nullable @NlsSafe String host) {
     myHost = StringUtil.notNullize(host);
   }
 

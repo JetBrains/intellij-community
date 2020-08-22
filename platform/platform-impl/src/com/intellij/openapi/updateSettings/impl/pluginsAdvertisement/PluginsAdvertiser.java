@@ -119,19 +119,8 @@ public final class PluginsAdvertiser {
     BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl("https://www.jetbrains.com/idea/download/"));
   }
 
-  static void enablePlugins(Project project, final Collection<IdeaPluginDescriptor> disabledPlugins) {
-    PluginManagerConfigurable.showPluginConfigurableAndEnable(project, disabledPlugins.toArray(new IdeaPluginDescriptor[0]));
-  }
-
-  @Nullable
-  static IdeaPluginDescriptor getDisabledPlugin(Set<? extends Plugin> plugins) {
-    for (Plugin plugin : plugins) {
-      PluginId pluginId = PluginId.getId(plugin.myPluginId);
-      if (PluginManagerCore.isDisabled(pluginId)) {
-        return PluginManagerCore.getPlugin(pluginId);
-      }
-    }
-    return null;
+  static void enablePlugins(Project project, final Collection<PluginId> disabledPlugins) {
+    PluginManagerConfigurableService.getInstance().showPluginConfigurableAndEnable(project, disabledPlugins.toArray(PluginId.EMPTY_ARRAY));
   }
 
   static @Nullable List<String> hasBundledPluginToInstall(Collection<? extends Plugin> plugins) {
@@ -173,7 +162,7 @@ public final class PluginsAdvertiser {
           List<PluginNode> marketplacePlugins =  MarketplaceRequests.getInstance().loadLastCompatiblePluginDescriptors(ids);
           myCustomPlugins = RepositoryHelper.loadPluginsFromCustomRepositories(indicator);
 
-          myRepositoryPlugins = UpdateChecker.mergePluginsFromRepositories(marketplacePlugins, myCustomPlugins);
+          myRepositoryPlugins = UpdateChecker.mergePluginsFromRepositories(marketplacePlugins, myCustomPlugins, true);
 
           for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
             if (!descriptor.isEnabled() && pluginIds.contains(descriptor.getPluginId()) && PluginManagerCore.isCompatible(descriptor)) {

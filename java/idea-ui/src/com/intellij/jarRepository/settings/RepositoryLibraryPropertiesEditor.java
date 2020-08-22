@@ -1,8 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jarRepository.settings;
 
 import com.google.common.base.Strings;
 import com.intellij.CommonBundle;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.jarRepository.JarRepositoryManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -12,9 +13,9 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.SimpleListCellRenderer;
+import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.labels.SwingActionLink;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ThreeStateCheckBox;
 import com.intellij.util.ui.UI;
@@ -58,7 +59,7 @@ public class RepositoryLibraryPropertiesEditor {
   private JPanel myTransitiveDependenciesPanel;
 
   @NotNull private final ModelChangeListener onChangeListener;
-  private final SwingActionLink myManageDependenciesLink;
+  private final ActionLink myManageDependenciesLink;
 
   public interface ModelChangeListener {
     void onChange(@NotNull RepositoryLibraryPropertiesEditor editor);
@@ -86,14 +87,11 @@ public class RepositoryLibraryPropertiesEditor {
     this.project = project == null ? ProjectManager.getInstance().getDefaultProject() : project;
     repositoryLibraryDescription = description;
     mavenCoordinates.setCopyable(true);
-    myIncludeTransitiveDepsCheckBox = new ThreeStateCheckBox(UIUtil.replaceMnemonicAmpersand("Include &transitive dependencies"));
+    myIncludeTransitiveDepsCheckBox = new ThreeStateCheckBox(UIUtil.replaceMnemonicAmpersand(JavaUiBundle.message("repository.library.properties.include.transitive.dependencies")));
     myIncludeTransitiveDepsCheckBox.setThirdStateEnabled(false);
     myTransitiveDependenciesPanel.add(myIncludeTransitiveDepsCheckBox);
-    myManageDependenciesLink = new SwingActionLink(new AbstractAction(CommonBundle.message("action.text.configure.ellipsis")) {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        configureTransitiveDependencies();
-      }
+    myManageDependenciesLink = new ActionLink(CommonBundle.message("action.text.configure.ellipsis"), e -> {
+      configureTransitiveDependencies();
     });
     myManageDependenciesLink.setBorder(UI.Borders.emptyLeft(10));
     myTransitiveDependenciesPanel.add(myManageDependenciesLink);

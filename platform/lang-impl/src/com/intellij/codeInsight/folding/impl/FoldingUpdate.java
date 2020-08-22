@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
@@ -54,6 +55,10 @@ public final class FoldingUpdate {
     final Project project = file.getProject();
     final Document document = editor.getDocument();
     LOG.assertTrue(!PsiDocumentManager.getInstance(project).isUncommited(document));
+    if (document.getTextLength() != file.getTextLength()) {
+      LOG.error(DebugUtil.diagnosePsiDocumentInconsistency(file, document));
+      return EmptyRunnable.INSTANCE;
+    }
 
     CachedValue<Runnable> value = editor.getUserData(CODE_FOLDING_KEY);
 
@@ -320,7 +325,7 @@ public final class FoldingUpdate {
     editor.putUserData(LAST_UPDATE_INJECTED_STAMP_KEY, null);
   }
 
-  static class RegionInfo {
+  static final class RegionInfo {
     @NotNull
     final FoldingDescriptor descriptor;
     final PsiElement element;

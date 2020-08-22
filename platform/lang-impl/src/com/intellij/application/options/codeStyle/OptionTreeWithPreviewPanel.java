@@ -2,6 +2,7 @@
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
@@ -14,6 +15,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,8 +40,8 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
   private final Set<String> myAllowedOptions = new HashSet<>();
   protected MultiMap<String, CustomBooleanOptionInfo> myCustomOptions = new MultiMap<>();
   protected boolean isFirstUpdate = true;
-  private final Map<String, String> myRenamedFields = new THashMap<>();
-  private final Map<String, String> myRemappedGroups = new THashMap<>();
+  private final Map<String, @NlsContexts.Label String> myRenamedFields = new THashMap<>();
+  private final Map<String, @NlsContexts.Label String> myRemappedGroups = new THashMap<>();
 
   private SpeedSearchHelper mySearchHelper;
 
@@ -92,20 +94,21 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
   }
 
   @Override
-  public void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
-                               String fieldName,
-                               String title,
-                               String groupName, Object... options) {
+  public void showCustomOption(@NotNull Class<? extends CustomCodeStyleSettings> settingsClass,
+                               @NonNls @NotNull String fieldName,
+                               @NlsContexts.Label @NotNull String title,
+                               @Nls @Nullable String groupName,
+                               Object... options) {
     showCustomOption(settingsClass, fieldName, title, groupName, null, null, options);
   }
 
   @Override
-  public void showCustomOption(Class<? extends CustomCodeStyleSettings> settingsClass,
-                               String fieldName,
-                               String title,
-                               @Nullable String groupName,
+  public void showCustomOption(@NotNull Class<? extends CustomCodeStyleSettings> settingsClass,
+                               @NonNls @NotNull String fieldName,
+                               @NlsContexts.Label @NotNull String title,
+                               @Nls @Nullable String groupName,
                                @Nullable OptionAnchor anchor,
-                               @Nullable String anchorFieldName,
+                               @NonNls @Nullable String anchorFieldName,
                                Object... options) {
     if (isFirstUpdate) {
       myCustomOptions.putValue(groupName, new CustomBooleanOptionInfo(settingsClass, fieldName, title, groupName, anchor, anchorFieldName));
@@ -114,7 +117,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
   }
 
   @Override
-  public void renameStandardOption(String fieldName, String newTitle) {
+  public void renameStandardOption(@NonNls @NotNull String fieldName, @NlsContexts.Label @NotNull String newTitle) {
     if (isFirstUpdate) {
       myRenamedFields.put(fieldName, newTitle);
     }
@@ -359,13 +362,13 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
     return false;
   }
 
-  protected void initBooleanField(@NonNls String fieldName, String title, String groupName) {
+  protected void initBooleanField(@NonNls String fieldName, @NlsContexts.Label String title, @NlsContexts.Label String groupName) {
     if (myShowAllStandardOptions || myAllowedOptions.contains(fieldName)) {
       doInitBooleanField(fieldName, title, groupName);
     }
   }
 
-  private void doInitBooleanField(@NonNls String fieldName, String title, String groupName) {
+  private void doInitBooleanField(@NonNls String fieldName, @NlsContexts.Label String title, @NlsContexts.Label String groupName) {
     try {
       Class<?> styleSettingsClass = CommonCodeStyleSettings.class;
       Field field = styleSettingsClass.getField(fieldName);
@@ -381,7 +384,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
     }
   }
 
-  protected void initCustomOptions(String groupName) {
+  protected void initCustomOptions(@NlsContexts.Label String groupName) {
     for (CustomBooleanOptionInfo option : myCustomOptions.get(groupName)) {
       try {
         Field field = option.settingClass.getField(option.fieldName);
@@ -397,7 +400,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
     }
   }
 
-  private String getRenamedTitle(String fieldName, String defaultTitle) {
+  private @NlsContexts.Label String getRenamedTitle(String fieldName, @NlsContexts.Label String defaultTitle) {
     String renamed = myRenamedFields.get(fieldName);
     return renamed == null ? defaultTitle : renamed;
   }
@@ -456,21 +459,21 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
   }
 
   private class BooleanOptionKey extends OrderedOption {
-    final String groupName;
-    String title;
+    final @NlsContexts.Label String groupName;
+    @NlsContexts.Label String title;
     final Field field;
     private boolean enabled = true;
 
-    BooleanOptionKey(String fieldName, String groupName, String title, Field field) {
+    BooleanOptionKey(String fieldName, @NlsContexts.Label String groupName, @NlsContexts.Label String title, Field field) {
       this(fieldName, groupName, title, null, null, field);
     }
 
     BooleanOptionKey(String fieldName,
-                            String groupName,
-                            String title,
-                            @Nullable OptionAnchor anchor,
-                            @Nullable String anchorFiledName,
-                            Field field) {
+                     @NlsContexts.Label String groupName,
+                     @NlsContexts.Label String title,
+                     @Nullable OptionAnchor anchor,
+                     @Nullable String anchorFiledName,
+                     Field field) {
       super(fieldName, anchor, anchorFiledName);
       this.groupName = groupName;
       this.title = title;
@@ -501,18 +504,18 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
     }
   }
 
-  private static class CustomBooleanOptionInfo {
+  private static final class CustomBooleanOptionInfo {
     @NotNull final Class<? extends CustomCodeStyleSettings> settingClass;
     @NotNull final String fieldName;
-    @NotNull final String title;
-    @Nullable final String groupName;
+    @NotNull @NlsContexts.Label final String title;
+    @Nullable @NlsContexts.Label final String groupName;
     @Nullable final OptionAnchor anchor;
     @Nullable final String anchorFieldName;
 
     private CustomBooleanOptionInfo(@NotNull Class<? extends CustomCodeStyleSettings> settingClass,
                                     @NotNull String fieldName,
-                                    @NotNull String title,
-                                    @Nullable String groupName,
+                                    @NotNull @NlsContexts.Label String title,
+                                    @Nullable @NlsContexts.Label String groupName,
                                     @Nullable OptionAnchor anchor,
                                     @Nullable String anchorFieldName) {
       this.settingClass = settingClass;
@@ -528,12 +531,12 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
     private final Class<T> mySettingsClass;
 
     CustomBooleanOptionKey(String fieldName,
-                                  String groupName,
-                                  String title,
-                                  OptionAnchor anchor,
-                                  String anchorFieldName,
-                                  Class<T> settingsClass,
-                                  Field field) {
+                           @NlsContexts.Label String groupName,
+                           @NlsContexts.Label String title,
+                           OptionAnchor anchor,
+                           String anchorFieldName,
+                           Class<T> settingsClass,
+                           Field field) {
       super(fieldName, groupName, title, anchor, anchorFieldName, field);
       mySettingsClass = settingsClass;
     }
@@ -558,11 +561,11 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
 
   private static class MyToggleTreeNode extends DefaultMutableTreeNode {
     private final Object myKey;
-    private final String myText;
+    private final @NlsContexts.Label String myText;
     private boolean isSelected;
     private boolean isEnabled = true;
 
-    MyToggleTreeNode(Object key, String text) {
+    MyToggleTreeNode(Object key, @NlsContexts.Label String text) {
       myKey = key;
       myText = text;
     }
@@ -571,7 +574,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
       return myKey;
     }
 
-    public String getText() {
+    public @NlsContexts.Label String getText() {
       return myText;
     }
 
@@ -599,7 +602,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
 
   @NotNull
   @Override
-  public Set<String> processListOptions() {
+  public Set<@NlsContexts.Label String> processListOptions() {
     Set<String> result = new HashSet<>();
     for (BooleanOptionKey key : myKeys) {
       result.add(key.title);
@@ -631,11 +634,11 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
   }
 
   @Override
-  public void moveStandardOption(String fieldName, String newGroup) {
+  public void moveStandardOption(@NonNls @NotNull String fieldName, @NotNull @NlsContexts.Label String newGroup) {
     myRemappedGroups.put(fieldName, newGroup);
   }
 
-  private String getRemappedGroup(String fieldName, String defaultName) {
+  private @NlsContexts.Label String getRemappedGroup(String fieldName, @NlsContexts.Label String defaultName) {
     return myRemappedGroups.getOrDefault(fieldName, defaultName);
   }
 

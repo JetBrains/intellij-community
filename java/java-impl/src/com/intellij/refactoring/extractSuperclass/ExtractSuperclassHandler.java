@@ -24,11 +24,11 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
@@ -46,7 +46,6 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class ExtractSuperclassHandler implements ElementsHandler, ExtractSuperclassDialog.Callback, ContextAwareActionHandler {
-  private static final Logger LOG = Logger.getInstance(ExtractSuperclassHandler.class);
 
   private PsiClass mySubclass;
   private Project myProject;
@@ -155,6 +154,7 @@ public class ExtractSuperclassHandler implements ElementsHandler, ExtractSupercl
     }
   }
 
+  @NlsContexts.Label
   private static String getCommandName(final PsiClass subclass, String newName) {
     return RefactoringBundle.message("extract.superclass.command.name", newName, DescriptiveNameUtil.getDescriptiveName(subclass));
   }
@@ -165,7 +165,7 @@ public class ExtractSuperclassHandler implements ElementsHandler, ExtractSupercl
       &&!((PsiClass)elements[0]).isEnum();
   }
 
-  public static String getRefactoringName() {
+  public static @NlsContexts.DialogTitle String getRefactoringName() {
     return RefactoringBundle.message("extract.superclass.title");
   }
 }

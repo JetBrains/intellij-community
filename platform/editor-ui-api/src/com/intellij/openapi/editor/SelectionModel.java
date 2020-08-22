@@ -259,6 +259,9 @@ public interface SelectionModel {
 
   /**
    * Creates a multi-caret selection for the rectangular block of text with specified start and end positions.
+   * <p>
+   * If the number of carets to be created is larger than {@link CaretModel#getMaxCaretCount()}, the resulting block will be smaller than
+   * requested. Editor might display a user-visible notification in such a case.
    *
    * @param blockStart the start of the rectangle to select.
    * @param blockEnd   the end of the rectangle to select.

@@ -22,6 +22,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.TestUtils;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -63,7 +64,7 @@ public class BeforeClassOrAfterClassIsPublicStaticVoidNoArgInspection extends
     return new BeforeClassOrAfterClassIsPublicStaticVoidNoArgVisitor();
   }
 
-  protected static boolean isJunit4Annotation(String annotation) {
+  protected static boolean isJunit4Annotation(@NonNls String annotation) {
     return annotation.endsWith("Class");
   }
 

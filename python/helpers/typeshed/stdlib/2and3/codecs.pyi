@@ -3,11 +3,7 @@ from typing import Any, BinaryIO, Callable, Generator, IO, Iterable, Iterator, L
 
 from abc import abstractmethod
 import types
-
-if sys.version_info < (3,) or sys.version_info >= (3, 8):
-    from typing import Literal
-else:
-    from typing_extensions import Literal
+from typing_extensions import Literal
 
 # TODO: this only satisfies the most common interface, where
 # bytes (py2 str) is the raw form and str (py2 unicode) is the cooked form.

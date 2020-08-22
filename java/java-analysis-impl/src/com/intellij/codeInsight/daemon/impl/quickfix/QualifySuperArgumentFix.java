@@ -30,7 +30,7 @@ public class QualifySuperArgumentFix extends QualifyThisOrSuperArgumentFix {
 
   @Override
   protected String getQualifierText() {
-    return "super";
+    return PsiKeyword.SUPER;
   }
 
   @Override

@@ -32,7 +32,7 @@ public class SmartTypePointerManagerImpl extends SmartTypePointerManager {
     return pointer != null ? pointer : NULL_POINTER;
   }
 
-  private static class SimpleTypePointer implements SmartTypePointer {
+  private static final class SimpleTypePointer implements SmartTypePointer {
     private final PsiType myType;
 
     private SimpleTypePointer(@NotNull PsiType type) {
@@ -132,7 +132,7 @@ public class SmartTypePointerManagerImpl extends SmartTypePointerManager {
     }
   }
 
-  private class DisjunctionTypePointer extends TypePointerBase<PsiDisjunctionType> {
+  private final class DisjunctionTypePointer extends TypePointerBase<PsiDisjunctionType> {
     private final List<SmartTypePointer> myPointers;
 
     private DisjunctionTypePointer(@NotNull PsiDisjunctionType type) {

@@ -113,11 +113,6 @@ public final class DummyProject extends UserDataHolderBase implements Project {
     return false;
   }
 
-  @Override
-  public boolean isDefault() {
-    return false;
-  }
-
   @NotNull
   @Override
   public MessageBus getMessageBus() {

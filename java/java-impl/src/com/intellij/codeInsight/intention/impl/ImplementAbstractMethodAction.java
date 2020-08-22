@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.intention.impl;
 
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorActivityManager;
@@ -83,11 +84,10 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
     return false;
   }
 
-  protected String getIntentionName(final PsiMethod method) {
+  protected @IntentionName String getIntentionName(final PsiMethod method) {
     return method.hasModifierProperty(PsiModifier.ABSTRACT) ?
            JavaBundle.message("intention.implement.abstract.method.text", method.getName()) :
-           JavaBundle.message("intention.override.method.text", method.getName())
-      ;
+           JavaBundle.message("intention.override.method.text", method.getName());
   }
 
   static class MyElementProcessor implements PsiElementProcessor<PsiClass> {

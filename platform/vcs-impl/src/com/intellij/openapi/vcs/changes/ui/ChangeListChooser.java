@@ -7,6 +7,7 @@ import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.util.NullableConsumer;
 import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,13 +23,13 @@ public class ChangeListChooser extends DialogWrapper {
                            @NotNull Collection<? extends ChangeList> changelists,
                            @Nullable ChangeList defaultSelection,
                            @NlsContexts.DialogTitle String title,
-                           @Nullable final String suggestedName) {
+                           @Nullable final @Nls String suggestedName) {
     super(project, false);
     myProject = project;
 
     myPanel = new ChangeListChooserPanel(myProject, new NullableConsumer<String>() {
       @Override
-      public void consume(final @Nullable String errorMessage) {
+      public void consume(final @Nullable @NlsContexts.DialogMessage String errorMessage) {
         setOKActionEnabled(errorMessage == null);
         setErrorText(errorMessage, myPanel);
       }

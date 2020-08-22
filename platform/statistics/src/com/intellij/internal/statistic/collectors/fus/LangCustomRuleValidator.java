@@ -3,13 +3,13 @@ package com.intellij.internal.statistic.collectors.fus;
 
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.lang.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class LangCustomRuleValidator extends CustomWhiteListRule {
+public class LangCustomRuleValidator extends CustomValidationRule {
   @Override
   public boolean acceptRuleId(@Nullable String ruleId) {
     return "lang".equals(ruleId);

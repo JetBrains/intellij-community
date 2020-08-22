@@ -81,12 +81,12 @@ public abstract class DiffActionExecutor {
     DiffContent diffContent;
     if (fileRevision instanceof ByteBackedContentRevision) {
       byte[] content = ((ByteBackedContentRevision)fileRevision).getContentAsBytes();
-      if (content == null) throw new VcsException("Failed to load content");
+      if (content == null) throw new VcsException(VcsBundle.message("diff.action.executor.error.failed.to.load.content"));
       diffContent = contentFactory.createFromBytes(myProject, content, fileRevision.getFile());
     }
     else {
       String content = fileRevision.getContent();
-      if (content == null) throw new VcsException("Failed to load content");
+      if (content == null) throw new VcsException(VcsBundle.message("diff.action.executor.error.failed.to.load.content"));
       diffContent = contentFactory.create(myProject, content, fileRevision.getFile());
     }
 
@@ -111,7 +111,8 @@ public abstract class DiffActionExecutor {
     public @NotNull DiffRequest process(@NotNull UserDataHolder context,
                                         @NotNull ProgressIndicator indicator) throws DiffRequestProducerException {
       final ContentRevision contentRevision = getContentRevision();
-      if (contentRevision == null) throw new DiffRequestProducerException("Can't get revision content");
+      if (contentRevision == null) throw new DiffRequestProducerException(
+        VcsBundle.message("diff.producer.error.cant.get.revision.content"));
 
       try {
         DiffContent content1 = createRemote(contentRevision);

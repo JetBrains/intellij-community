@@ -17,7 +17,7 @@
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.lang.PerFileMappings;
+import com.intellij.lang.PerFileMappingsEx;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.editor.Document;
@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -45,8 +46,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 import java.util.function.Supplier;
 
 class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
@@ -117,9 +118,9 @@ class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
     VirtualFile file = target instanceof VirtualFile ? (VirtualFile)target : null;
     EncodingUtil.FailReason result = file == null || file.isDirectory() ? null : EncodingUtil.checkCanConvertAndReload(file);
 
-    String encodingText = t.displayName();
+    @NlsSafe String encodingText = t.displayName();
     SimpleTextAttributes attributes = result == null ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.GRAY_ATTRIBUTES;
-    renderer.append(encodingText + (result == null ? "" : " (" + result + ")"), attributes);
+    renderer.append(encodingText + (result == null ? "" : " (" + EncodingUtil.reasonToString(result, file) + ")"), attributes);
   }
 
   @NotNull
@@ -251,9 +252,9 @@ class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
   }
 
   @NotNull
-  private static PerFileMappings<Charset> createMappings(@NotNull Project project) {
+  private static PerFileMappingsEx<Charset> createMappings(@NotNull Project project) {
     EncodingProjectManagerImpl prjManager = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(project);
-    return new PerFileMappings<Charset>() {
+    return new PerFileMappingsEx<Charset>() {
       @NotNull
       @Override
       public Map<VirtualFile, Charset> getMappings() {

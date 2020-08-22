@@ -4,13 +4,13 @@ package com.intellij.openapi.project.impl
 import com.intellij.ide.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.project.stateStore
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.EdtRule
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.PathUtil
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.messages.SimpleMessageBusConnection
 import org.junit.ClassRule
 import org.junit.Rule
@@ -75,7 +75,7 @@ class RecentProjectsTest {
   }
 
   @Test
-  fun testTimestampForOpenProjectUpdatesWhenGetStateCalled() {
+  fun timestampForOpenProjectUpdatesWhenGetStateCalled() {
     val path = tempDir.newPath("z1")
     var project = PlatformTestUtil.loadAndOpenProject(path)
     try {
@@ -94,7 +94,7 @@ class RecentProjectsTest {
   private fun getProjectOpenTimestamp(@Suppress("SameParameterValue") projectName: String): Long {
     val additionalInfo = RecentProjectsManagerBase.instanceEx.state.additionalInfo
     for (s in additionalInfo.keys) {
-      if (s.endsWith(projectName)) {
+      if (s.endsWith(projectName) || s.substringBeforeLast('_').endsWith(projectName)) {
         return additionalInfo.get(s)!!.projectOpenTimestamp
       }
     }
@@ -117,10 +117,10 @@ class RecentProjectsTest {
     val recentProjects = listOf(*recents)
     val state = (RecentProjectsManager.getInstance() as RecentProjectsManagerBase).state
     val projects = state.additionalInfo.keys.asSequence()
-      .map { s -> PathUtil.getFileName(s).substringAfterLast("_") }
+      .map { s -> PathUtil.getFileName(s).substringAfter('_').substringBeforeLast('_') }
       .filter { recentProjects.contains(it) }
       .toList()
-    assertThat(ContainerUtil.reverse(projects)).isEqualTo(recentProjects)
+    assertThat(projects.reversed()).isEqualTo(recentProjects)
   }
 
   private fun checkGroups(groups: List<String>) {
@@ -135,7 +135,7 @@ class RecentProjectsTest {
     val path = tempDir.newPath(name)
     var project = PlatformTestUtil.loadAndOpenProject(path)
     try {
-      PlatformTestUtil.saveProject(project)
+      project.stateStore.saveComponent(RecentProjectsManager.getInstance() as RecentProjectsManagerBase)
       PlatformTestUtil.forceCloseProjectWithoutSaving(project)
       project = PlatformTestUtil.loadAndOpenProject(path)
       return path

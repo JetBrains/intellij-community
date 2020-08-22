@@ -21,6 +21,8 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.impl.status.InlineProgressIndicator;
@@ -131,6 +133,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
     myHomeComponent = createHomeComponent();
     myHomeComponent.getTextField().setEditable(false);
     myHomeFieldLabel = new JLabel(getHomeFieldLabelValue());
+    myHomeFieldLabel.setLabelFor(myHomeComponent.getTextField());
     myMainPanel.add(myHomeFieldLabel, new GridBagConstraints(
       0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.insets(2, 10, 2, 2), 0, 0));
     myMainPanel.add(myHomeComponent, new GridBagConstraints(
@@ -162,7 +165,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
     return ((SdkType)mySdk.getSdkType()).isRootTypeApplicable(type);
   }
 
-  private String getHomeFieldLabelValue() {
+  private @NlsContexts.Label String getHomeFieldLabelValue() {
     return ((SdkType)mySdk.getSdkType()).getHomeFieldLabel();
   }
 
@@ -263,7 +266,7 @@ public class SdkEditor implements Configurable, Place.Navigator {
     }
   }
 
-  private void setHomePathValue(String absolutePath) {
+  private void setHomePathValue(@NlsSafe String absolutePath) {
     myHomeComponent.setText(absolutePath);
     final Color fg;
     if (absolutePath != null && !absolutePath.isEmpty() && mySdk.getSdkType().isLocalSdk(mySdk)) {

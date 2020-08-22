@@ -3,7 +3,7 @@ from typing import Tuple, Union, Any, Dict, overload
 import sys
 from socket import SocketType
 from typing import Optional
-from _types import FileDescriptorLike
+from _typeshed import FileDescriptorLike
 
 # cyclic dependence with asynchat
 _maptype = Dict[int, Any]

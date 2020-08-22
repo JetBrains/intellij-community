@@ -35,6 +35,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.testFramework.PsiTestUtil;
@@ -61,7 +62,9 @@ public class InvokeCompletion extends ActionOnFile {
 
   @Override
   public void performCommand(@NotNull Environment env) {
-    int offset = generateDocOffset(env, "Invoke basic completion at offset %s");
+    int offset = generateDocOffset(env, null);
+    env.logMessage("Invoke basic completion at " + MadTestingUtil.getPositionDescription(offset, getDocument()));
+
     String selectionCharacters = myPolicy.getPossibleSelectionCharacters();
     char c = selectionCharacters.charAt(env.generateValue(Generator.integers(0, selectionCharacters.length() - 1), null));
     performActionAt(offset, c, env);
@@ -127,7 +130,7 @@ public class InvokeCompletion extends ActionOnFile {
         return;
       }
       env.logMessage("No lookup");
-      if (expectedVariant == null || prefixEqualsExpected || !checkAnnotatorErrorsAtCaret(editor, file, env, expectedVariant)) {
+      if (expectedVariant == null || prefixEqualsExpected || !checkAnnotatorErrorsAtCaret(editor, env, expectedVariant)) {
         return;
       }
 
@@ -139,7 +142,7 @@ public class InvokeCompletion extends ActionOnFile {
       LookupElement sameItem = ContainerUtil.find(items, e ->
         e.getAllLookupStrings().stream().anyMatch(
           s -> Comparing.equal(s, expectedVariant, e.isCaseSensitive())));
-      if (sameItem == null && !checkAnnotatorErrorsAtCaret(editor, file, env, expectedVariant)) {
+      if (sameItem == null && !checkAnnotatorErrorsAtCaret(editor, env, expectedVariant)) {
         return;
       }
       TestCase.assertNotNull("No variant '" + expectedVariant + "' among " + items + notFound, sameItem);
@@ -161,12 +164,10 @@ public class InvokeCompletion extends ActionOnFile {
     }
   }
 
-  private boolean checkAnnotatorErrorsAtCaret(@NotNull Editor editor,
-                                              @NotNull PsiFile file,
-                                              Environment env,
-                                              String expectedVariant) {
-    List<HighlightInfo> infos = InvokeIntention.highlightErrors(getProject(), editor);
-    int caretOffset = editor.getCaretModel().getOffset();
+  private boolean checkAnnotatorErrorsAtCaret(Editor editor, Environment env, String expectedVariant) {
+    Editor hostEditor = InjectedLanguageEditorUtil.getTopLevelEditor(editor);
+    List<HighlightInfo> infos = InvokeIntention.highlightErrors(getProject(), hostEditor);
+    int caretOffset = hostEditor.getCaretModel().getOffset();
     boolean hasErrors = ContainerUtil.exists(infos, i -> i.getStartOffset() <= caretOffset && caretOffset <= i.getEndOffset());
     if (hasErrors) {
       env.logMessage("Found syntax errors at the completion point, skipping expected completion check for '" + expectedVariant + "'");
@@ -184,8 +185,8 @@ public class InvokeCompletion extends ActionOnFile {
     return expectedEnd == caretOffset && getFile().getText().substring(0, caretOffset).endsWith(expectedVariant);
   }
 
-  private static void checkNoDuplicates(List<LookupElement> items) {
-    Set<List<?>> presentations = new HashSet<>();
+  private void checkNoDuplicates(List<LookupElement> items) {
+    Map<List<?>, LookupElement> presentations = new HashMap<>();
     for (LookupElement item : items) {
       LookupElementPresentation p = TestLookupElementPresentation.renderReal(item);
       if (seemsTruncated(p.getItemText()) || seemsTruncated(p.getTailText()) || seemsTruncated(p.getTypeText())) {
@@ -197,7 +198,8 @@ public class InvokeCompletion extends ActionOnFile {
                                         p.getTailFragments(),
                                         p.getTypeText(), TestLookupElementPresentation.unwrapIcon(p.getTypeIcon()), p.isTypeGrayed(),
                                         p.isStrikeout());
-      if (!presentations.add(info)) {
+      var prev = presentations.put(info, item);
+      if (prev != null && !myPolicy.areDuplicatesOk(prev, item)) {
         TestCase.fail("Duplicate suggestions: " + p);
       }
     }

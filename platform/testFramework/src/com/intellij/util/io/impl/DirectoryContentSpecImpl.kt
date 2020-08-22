@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io.impl
 
 import com.intellij.openapi.util.io.FileUtil
@@ -34,10 +34,10 @@ abstract class DirectorySpecBase : DirectoryContentSpecImpl() {
     }
   }
 
-  override fun generateInTempDir(): File {
+  override fun generateInTempDir(): Path {
     val target = FileUtil.createTempDirectory("directory-by-spec", null, true)
     generate(target)
-    return target
+    return target.toPath()
   }
 
   fun getChildren() : Map<String, DirectoryContentSpecImpl> = Collections.unmodifiableMap(children)
@@ -64,10 +64,10 @@ class ZipSpec : DirectorySpecBase() {
     }
   }
 
-  override fun generateInTempDir(): File {
+  override fun generateInTempDir(): Path {
     val target = FileUtil.createTempFile("zip-by-spec", ".zip", true)
     generate(target)
-    return target
+    return target.toPath()
   }
 }
 
@@ -76,10 +76,10 @@ class FileSpec(val content: ByteArray?) : DirectoryContentSpecImpl() {
     FileUtil.writeToFile(target, content ?: ByteArray(0))
   }
 
-  override fun generateInTempDir(): File {
+  override fun generateInTempDir(): Path {
     val target = FileUtil.createTempFile("file-by-spec", null, true)
     generate(target)
-    return target
+    return target.toPath()
   }
 }
 
@@ -159,8 +159,8 @@ private fun assertDirectoryMatches(file: File,
   val expectedChildrenNames = children.keys.sortedWith(String.CASE_INSENSITIVE_ORDER)
   assertEquals("Directory content mismatch${if (relativePath != "") " at $relativePath" else ""}:",
                expectedChildrenNames.joinToString("\n"), actualChildrenNames.joinToString("\n"))
-  actualChildrenNames.forEach { child ->
-    assertDirectoryContentMatches(File(file, child), children[child]!!, "$relativePath/$child", fileTextMatcher)
+  for (child in actualChildrenNames) {
+    assertDirectoryContentMatches(File(file, child), children.get(child)!!, "$relativePath/$child", fileTextMatcher)
   }
 }
 

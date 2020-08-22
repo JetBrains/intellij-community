@@ -23,6 +23,7 @@ import com.intellij.codeInsight.completion.StaticMemberProcessor;
 import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.TrueFilter;
@@ -51,7 +52,7 @@ public abstract class MembersGetter {
 
   protected MembersGetter(StaticMemberProcessor processor, @NotNull final PsiElement place) {
     myPlace = place;
-    processor.processMembersOfRegisteredClasses(PrefixMatcher.ALWAYS_TRUE, (member, psiClass) -> myImportedStatically.add(member));
+    processor.processMembersOfRegisteredClasses(Conditions.alwaysTrue(), (member, psiClass) -> myImportedStatically.add(member));
 
     PsiClass current = PsiTreeUtil.getContextOfType(place, PsiClass.class);
     while (current != null) {

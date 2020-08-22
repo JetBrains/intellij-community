@@ -5,6 +5,7 @@ import com.intellij.diagnostic.VMOptions;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.internal.DebugAttachDetector;
 import com.intellij.internal.statistic.eventLog.*;
+import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
@@ -18,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPlatformPlugin;
@@ -43,9 +45,10 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
   private static final EventId PROJECT_MODULE_ATTACHED = LIFECYCLE.registerEvent("project.module.attached");
   private static final EventId FRAME_ACTIVATED = LIFECYCLE.registerEvent("frame.activated");
   private static final EventId FRAME_DEACTIVATED = LIFECYCLE.registerEvent("frame.deactivated");
-  private static final EventId2<Long, String> IDE_FREEZE = LIFECYCLE.registerEvent("ide.freeze", EventFields.Long("duration_ms"), EventFields.String("duration_grouped"));
+  private static final EventField<String> DURATION_GROUPED = new DurationEventField();
+  private static final EventId2<Long, String> IDE_FREEZE = LIFECYCLE.registerEvent("ide.freeze", EventFields.Long("duration_ms"), DURATION_GROUPED);
 
-  private static final EventField<String> errorField = EventFields.String("error");
+  private static final EventField<String> errorField = EventFields.String("error").withCustomRule("class_name");
   private static final EventField<VMOptions.MemoryKind> memoryErrorKindField = EventFields.Enum("memory_error_kind", VMOptions.MemoryKind.class, (kind) -> StringUtil.toLowerCase(kind.name()));
   private static final EventField<Integer> errorHashField = EventFields.Int("error_hash");
   private static final StringListEventField errorFramesField = EventFields.StringList("error_frames").withCustomRule("method_name");
@@ -181,5 +184,26 @@ public final class LifecycleUsageTriggerCollector extends CounterUsagesCollector
         return;
     }
     PROJECT_FRAME_SELECTED.log(optionValue);
+  }
+
+  private static class DurationEventField extends PrimitiveEventField<String> {
+    @NotNull
+    @Override
+    public List<String> getValidationRule() {
+      return Arrays.asList("{regexp#integer}s", "-{regexp#integer}s", "{regexp#integer}s+");
+    }
+
+    @Override
+    public void addData(@NotNull FeatureUsageData fuData, String value) {
+      if (value != null) {
+        fuData.addData(getName(), value);
+      }
+    }
+
+    @NotNull
+    @Override
+    public String getName() {
+      return "duration_grouped";
+    }
   }
 }

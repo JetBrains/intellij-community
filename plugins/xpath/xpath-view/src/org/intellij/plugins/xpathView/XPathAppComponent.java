@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LightweightHint;
@@ -49,7 +50,7 @@ import java.util.List;
  * <p/>
  * Also used to manage highlighters.
  */
-@State(name = "XPathView.XPathViewPlugin", storages = @Storage("xpath.xml"), reportStatistic = true)
+@State(name = "XPathView.XPathViewPlugin", storages = @Storage("xpath.xml"))
 public final class XPathAppComponent implements PersistentStateComponent<Config> {
   private Config configuration = new Config();
 
@@ -123,12 +124,13 @@ public final class XPathAppComponent implements PersistentStateComponent<Config>
           startOffset = hl.get(isPrev ? hl.size() - 1 : 0).getStartOffset();
         }
         else {
-          final String info = (isPrev ? "First" : "Last") +
-                              " XPath match reached. Press " +
-                              (isPrev ? KeymapUtil.getShortcutText(IdeActions.ACTION_FIND_PREVIOUS) : KeymapUtil.getShortcutText(IdeActions.ACTION_FIND_NEXT)) +
-                              " to search from the " +
-                              (isPrev ? "bottom" : "top");
+          final String info =
+            XPathBundle.message("hint.text.choice.first.last.xpath.match.reached.press.to.search.from.choice.bottom.top",
+                                isPrev ? 0 : 1,
+                                isPrev ? KeymapUtil.getShortcutText(IdeActions.ACTION_FIND_PREVIOUS) : KeymapUtil.getShortcutText(IdeActions.ACTION_FIND_NEXT),
+                                isPrev ? 0 : 1);
 
+          //noinspection DialogTitleCapitalization
           showEditorHint(info, editor);
 
           wrapAround = true;
@@ -155,7 +157,7 @@ public final class XPathAppComponent implements PersistentStateComponent<Config>
     }
   }
 
-  public static void showEditorHint(final String info, final Editor editor) {
+  public static void showEditorHint(final @NlsContexts.HintText String info, final Editor editor) {
     final JLabel label = new JLabel(info);
     label.setBorder(BorderFactory.createCompoundBorder(
       BorderFactory.createBevelBorder(BevelBorder.RAISED, JBColor.WHITE, Gray._128),

@@ -76,4 +76,8 @@ public class MarkdownParserTest extends ParsingTestCase {
   public void testComment() {
     doTest(true);
   }
+
+  public void testComplex() {
+    doTest(true);
+  }
 }

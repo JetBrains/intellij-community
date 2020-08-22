@@ -14,6 +14,7 @@ import java.util.List;
 /**
  * @author Mikhail Golubev
  */
+@SuppressWarnings("HardCodedStringLiteral")
 public class ShowCertificateInfoAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(ShowCertificateInfoAction.class);
 

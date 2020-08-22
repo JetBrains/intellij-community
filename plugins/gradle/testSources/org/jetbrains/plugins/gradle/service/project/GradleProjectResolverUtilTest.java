@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
@@ -23,7 +9,6 @@ import com.intellij.openapi.roots.ExternalProjectSystemRegistry;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Test;
-import org.picocontainer.PicoContainer;
 
 import static org.jetbrains.plugins.gradle.util.GradleConstants.GRADLE_SOURCE_SET_MODULE_TYPE_KEY;
 import static org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID;
@@ -63,13 +48,9 @@ public class GradleProjectResolverUtilTest {
   private static Module createModuleMock(@Nullable String projectId, @Nullable String moduleType) {
     Module module = mock(Module.class);
     Project project = mock(Project.class);
-    PicoContainer container = mock(PicoContainer.class);
-
-    when(module.getPicoContainer()).thenReturn(container);
     when(module.getProject()).thenReturn(project);
-    when(project.getPicoContainer()).thenReturn(container);
     ExternalSystemModulePropertyManager modulePropertyManager = new ExternalSystemModulePropertyManagerImpl(module);
-    when(container.getComponentInstance(ExternalSystemModulePropertyManager.class.getName())).thenReturn(modulePropertyManager);
+    when(module.getService(ExternalSystemModulePropertyManager.class)).thenReturn(modulePropertyManager);
 
     when(module.getOptionValue(ExternalProjectSystemRegistry.EXTERNAL_SYSTEM_ID_KEY)).thenReturn(SYSTEM_ID.getId());
     when(module.getOptionValue("external.system.module.type")).thenReturn(moduleType);

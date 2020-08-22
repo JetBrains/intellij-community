@@ -2,9 +2,7 @@
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.serviceContainer.BaseKeyedLazyInstance;
 import com.intellij.util.xmlb.annotations.Attribute;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,28 +11,21 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * Extension point for schemes exporters.
- *
- * @author Rustam Vishnyakov
+ * Extension point for schemes exporters. Example of definition in {@code plugin.xml}:
+ * <pre>
+ * &lt;schemeExporter
+ *         nameBundle="messages.PluginBundle"
+ *         nameKey="bundle.name.key"
+ *         schemeClass="com.intellij.psi.codeStyle.CodeStyleScheme"
+ *         implementationClass="org.acme.ExporterClass"&gt;
+ * </pre>
+ * {@code ExporterClass} must extend {@link SchemeExporter}
  */
-public final class SchemeExporterEP<S extends Scheme> extends BaseKeyedLazyInstance<SchemeExporter<S>> {
+public final class SchemeExporterEP<S extends Scheme> extends SchemeConvertorEPBase<SchemeExporter<S>> {
   public static final ExtensionPointName<SchemeExporterEP<?>> EP_NAME = ExtensionPointName.create("com.intellij.schemeExporter");
-
-  @Attribute("name")
-  @Nls(capitalization = Nls.Capitalization.Sentence)
-  public String name;
 
   @Attribute("schemeClass")
   public String schemeClass;
-
-  @Attribute("implementationClass")
-  public String implementationClass;
-
-  @Nullable
-  @Override
-  protected String getImplementationClassName() {
-    return implementationClass;
-  }
 
   /**
    * Finds extensions supporting the given {@code schemeClass}
@@ -63,10 +54,11 @@ public final class SchemeExporterEP<S extends Scheme> extends BaseKeyedLazyInsta
   @Nullable
   public static <S extends Scheme> SchemeExporter<S> getExporter(@NotNull String name, Class<S> schemeClass) {
     for (SchemeExporterEP<S> exporterEP : getExtensions(schemeClass)) {
-      if (name.equals(exporterEP.name)) {
+      if (name.equals(exporterEP.getLocalizedName())) {
         return exporterEP.getInstance();
       }
     }
     return null;
   }
+
 }

@@ -9,6 +9,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.TextRange;
@@ -154,7 +155,7 @@ public abstract class DeprecationInspectionBase extends LocalInspectionTool {
     panel.addCheckbox(JavaAnalysisBundle.message("ignore.in.the.same.outermost.class"), "IGNORE_IN_SAME_OUTERMOST_CLASS");
   }
 
-  protected static String getDescription(@NotNull String description, boolean forRemoval, ProblemHighlightType highlightType) {
+  protected static @InspectionMessage String getDescription(@NotNull @InspectionMessage String description, boolean forRemoval, ProblemHighlightType highlightType) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       ProblemHighlightType defaultType = forRemoval ? ProblemHighlightType.LIKE_MARKED_FOR_REMOVAL : ProblemHighlightType.LIKE_DEPRECATED;
       if (highlightType != defaultType) {

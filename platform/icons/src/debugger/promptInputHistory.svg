@@ -1,3 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
-  <polygon fill="#6E6E6E" fill-rule="evenodd" points="6 4.94 9.06 8 6 11.06 6.94 12 10.94 8 6.94 4"/>
+<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="promptInputHistory">
+<path id="Combined Shape" fill-rule="evenodd" clip-rule="evenodd" d="M9.42 7.3L7.06 4.94L8 4L12 8L8 12L7.06 11.06L9.42 8.7H4V7.3H9.42Z" fill="#6E6E6E"/>
+</g>
 </svg>

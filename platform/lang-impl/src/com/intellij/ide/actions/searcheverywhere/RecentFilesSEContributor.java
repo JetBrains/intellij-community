@@ -62,11 +62,7 @@ public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
 
     String searchString = filterControlSymbols(pattern);
     boolean preferStartMatches = !searchString.startsWith("*");
-    NameUtil.MatcherBuilder builder = NameUtil.buildMatcher("*" + searchString);
-    if (preferStartMatches) {
-      builder = builder.preferringStartMatches();
-    }
-    MinusculeMatcher matcher = builder.build();
+    MinusculeMatcher matcher = createMatcher(searchString, preferStartMatches);
     List<VirtualFile> opened = Arrays.asList(FileEditorManager.getInstance(myProject).getSelectedFiles());
     List<VirtualFile> history = Lists.reverse(EditorHistoryManager.getInstance(myProject).getFileList());
 
@@ -83,7 +79,8 @@ public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
                      .distinct()
                      .map(vf -> {
                        PsiFile f = psiManager.findFile(vf);
-                       return f == null ? null : new FoundItemDescriptor<Object>(f, matcher.matchingDegree(vf.getName()));
+                       String name = vf.getName();
+                       return f == null ? null : new FoundItemDescriptor<Object>(f, matcher.matchingDegree(name));
                      })
                      .filter(file -> file != null)
                      .collect(Collectors.toList())
@@ -91,6 +88,14 @@ public class RecentFilesSEContributor extends FileSearchEverywhereContributor {
 
         ContainerUtil.process(res, consumer);
       }, progressIndicator);
+  }
+
+  private static MinusculeMatcher createMatcher(String searchString, boolean preferStartMatches) {
+    NameUtil.MatcherBuilder builder = NameUtil.buildMatcher("*" + searchString);
+    if (preferStartMatches) {
+      builder = builder.preferringStartMatches();
+    }
+    return builder.build();
   }
 
   @Override

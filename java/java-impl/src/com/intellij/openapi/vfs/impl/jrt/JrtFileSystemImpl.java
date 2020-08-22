@@ -5,10 +5,12 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.projectRoots.JdkUtil;
-import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.ArchiveHandler;
 import com.intellij.openapi.vfs.jrt.JrtFileSystem;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
@@ -18,7 +20,7 @@ import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import gnu.trove.THashMap;
+import com.intellij.util.containers.CollectionFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -26,25 +28,9 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class JrtFileSystemImpl extends JrtFileSystem {
-  private final Map<String, ArchiveHandler> myHandlers =
-    Collections.synchronizedMap(new THashMap<>(FileUtil.PATH_HASHING_STRATEGY));
+public final class JrtFileSystemImpl extends JrtFileSystem {
+  private final Map<String, ArchiveHandler> myHandlers = Collections.synchronizedMap(CollectionFactory.createFilePathMap());
   private final AtomicBoolean mySubscribed = new AtomicBoolean(false);
-
-  private final DiskQueryRelay<VirtualFile, FileAttributes> myAttrGetter = new DiskQueryRelay<>(super::getAttributes);
-
-  @Nullable
-  @Override
-  public FileAttributes getAttributes(@NotNull VirtualFile file) {
-    return myAttrGetter.accessDiskWithCheckCanceled(file);
-  }
-
-  private final DiskQueryRelay<VirtualFile, String[]> myChildrenGetter = new DiskQueryRelay<>(super::list);
-
-  @Override
-  public String @NotNull [] list(@NotNull VirtualFile file) {
-    return myChildrenGetter.accessDiskWithCheckCanceled(file);
-  }
 
   @NotNull
   @Override

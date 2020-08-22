@@ -35,8 +35,8 @@ public final class DefaultPatchBaseVersionProvider {
   /**
    * @see com.intellij.openapi.diff.impl.patch.TextPatchBuilder
    */
-  private static final Pattern ourTsPattern = Pattern.compile("\\(date ([0-9]+)\\)");
-  private static final String ourRevisionPatternTemplate = "\\(revision (%s)\\)";
+  private static final Pattern ourTsPattern = Pattern.compile("\\(date ([0-9]+)\\)"); // NON-NLS
+  private static final String ourRevisionPatternTemplate = "\\(revision (%s)\\)"; // NON-NLS
 
   @CalledInAny
   public static void getBaseVersionContent(@NotNull Project project,

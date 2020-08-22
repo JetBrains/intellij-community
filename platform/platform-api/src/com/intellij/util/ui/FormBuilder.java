@@ -116,7 +116,7 @@ public class FormBuilder {
                                new Box.Filler(new JBDimension(0, height), new JBDimension(0, height), new JBDimension(Short.MAX_VALUE, height)));
   }
 
-  public FormBuilder addTooltip(final String text) {
+  public FormBuilder addTooltip(final @NlsContexts.Label String text) {
     final JBLabel label = new JBLabel(text, UIUtil.ComponentStyle.SMALL, UIUtil.FontColor.BRIGHTER);
     label.setBorder(JBUI.Borders.emptyLeft(10));
     return addComponentToRightColumn(label, 1);

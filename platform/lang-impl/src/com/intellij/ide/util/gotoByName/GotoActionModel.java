@@ -222,14 +222,14 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     @NotNull final String pattern;
     final int matchingDegree;
 
-    public MatchedValue(@NotNull Object value, @NotNull String pattern) {
+    MatchedValue(@NotNull Object value, @NotNull String pattern) {
       assert value instanceof OptionDescription || value instanceof ActionWrapper;
       this.value = value;
       this.pattern = pattern;
       matchingDegree = calcMatchingDegree();
     }
 
-    public MatchedValue(@NotNull Object value, @NotNull String pattern, int degree) {
+    MatchedValue(@NotNull Object value, @NotNull String pattern, int degree) {
       assert value instanceof OptionDescription || value instanceof ActionWrapper;
       this.value = value;
       this.pattern = pattern;
@@ -313,9 +313,9 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     }
 
     @Override
-    public boolean equals(Object o) {
+    public final boolean equals(Object o) {
       if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
+      if (!(o instanceof MatchedValue)) return false;
       MatchedValue value1 = (MatchedValue)o;
       return Objects.equals(value, value1.value) &&
              Objects.equals(pattern, value1.pattern);
@@ -713,7 +713,10 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
         if (myGroupMapping != null) myGroupMapping.updateBeforeShow(myDataContext);
       };
       if (ApplicationManager.getApplication().isDispatchThread()) {
-        r.run();
+        try {
+          r.run();
+        }
+        catch (Exception e) {}
       }
       else {
         myModel.updateOnEdt(r);

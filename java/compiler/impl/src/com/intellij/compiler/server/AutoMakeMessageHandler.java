@@ -141,7 +141,7 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
     if (descr == null) {
       descr = failure.hasStacktrace()? failure.getStacktrace() : "";
     }
-    final String msg = "Auto build failure: " + descr;
+    final String msg = JavaCompilerBundle.message("notification.compiler.auto.build.failure", descr);
     CompilerManager.NOTIFICATION_GROUP.createNotification(msg, MessageType.INFO);
     ProblemsView.getInstance(myProject).addMessage(new CompilerMessageImpl(myProject, CompilerMessageCategory.ERROR, msg), sessionId);
   }
@@ -157,7 +157,7 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
         //statusMessage = "All files are up-to-date";
         break;
       case ERRORS:
-        statusMessage = "Auto build completed with errors";
+        statusMessage = JavaCompilerBundle.message("notification.compiler.auto.build.completed.with.errors");
         break;
       case CANCELED:
         //statusMessage = "Auto make has been canceled";

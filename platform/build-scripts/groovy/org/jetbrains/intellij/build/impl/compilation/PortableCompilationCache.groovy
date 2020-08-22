@@ -6,41 +6,226 @@ import com.intellij.openapi.util.text.StringUtil
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.CompilationTasks
+import org.jetbrains.intellij.build.impl.CompilationContextImpl
+import org.jetbrains.intellij.build.impl.JpsCompilationRunner
+import org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory
 import org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexWriter
 import org.jetbrains.jps.incremental.storage.ProjectStamps
 
+/**
+ * Portable Compilation Cache - combination of {@link PortableCompilationCache.JpsCaches} and {@link org.jetbrains.intellij.build.impl.compilation.cache.CompilationOutput}s
+ */
 @CompileStatic
-class PortableCompilationCache {
+final class PortableCompilationCache {
+  /**
+   * JPS data structures allowing incremental compilation for {@link org.jetbrains.intellij.build.impl.compilation.cache.CompilationOutput}
+   */
+  @CompileStatic
+  final class JpsCaches {
+    /**
+     * {@link JpsCaches} archive upload may be skipped if only {@link org.jetbrains.intellij.build.impl.compilation.cache.CompilationOutput}s are required
+     * without any incremental compilation (for tests execution as an example)
+     */
+    private static final String SKIP_UPLOAD_PROPERTY = 'intellij.jps.remote.cache.compilationOutputsOnly'
+    private final CompilationContext context
+    final boolean skipUpload = bool(SKIP_UPLOAD_PROPERTY, false)
+    final File dir = context.compilationData.dataStorageRoot
+
+    JpsCaches(CompilationContext context) {
+      this.context = context
+    }
+  }
+
+  /**
+   * Server which stores {@link PortableCompilationCache}
+   */
+  @CompileStatic
+  final class RemoteCache {
+    /**
+     * URL for read/write operations
+     */
+    private static final String UPLOAD_URL_PROPERTY = 'intellij.jps.remote.cache.upload.url'
+    /**
+     * URL for read-only operations
+     */
+    static final String URL_PROPERTY = 'intellij.jps.remote.cache.url'
+
+    @Lazy
+    String url = { require(URL_PROPERTY, "Remote Cache url") }()
+
+    @Lazy
+    String uploadUrl = { require(UPLOAD_URL_PROPERTY, "Remote Cache upload url") }()
+
+    /**
+     * If true then {@link RemoteCache} is configured to be used
+     */
+    final boolean isConfigured = !StringUtil.isEmptyOrSpaces(System.getProperty(RemoteCache.URL_PROPERTY))
+  }
+
   private final CompilationContext context
-  private static final String REMOTE_CACHE_URL_PROPERTY = 'intellij.jps.remote.cache.url'
+  /**
+   * IntelliJ repository git remote url
+   */
   private static final String GIT_REPOSITORY_URL_PROPERTY = 'intellij.remote.url'
+  /**
+   * If true then {@link PortableCompilationCache} for head commit is expected to exist and search in
+   * {@link org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory#JSON_FILE} is skipped.
+   * Required for temporary branch caches which are uploaded but not published in
+   * {@link org.jetbrains.intellij.build.impl.compilation.cache.CommitsHistory#JSON_FILE}.
+   */
   private static final String AVAILABLE_FOR_HEAD_PROPERTY = 'intellij.jps.cache.availableForHeadCommit'
+  /**
+   * Download {@link PortableCompilationCache} even if there are caches available locally
+   */
   private static final String FORCE_DOWNLOAD_PROPERTY = 'intellij.jps.cache.download.force'
+  /**
+   * If true then {@link PortableCompilationCache} will be rebuilt from scratch
+   */
+  private static final String FORCE_REBUILD_PROPERTY = 'intellij.jps.cache.rebuild.force'
+  /**
+   * Folder to store {@link PortableCompilationCache} for later upload to AWS S3 bucket.
+   * Upload performed in a separate process on CI.
+   */
+  private static final String AWS_SYNC_FOLDER_PROPERTY = 'jps.caches.aws.sync.folder'
+  /**
+   * Commit hash for which {@link PortableCompilationCache} is to be built/downloaded
+   */
+  private static final String COMMIT_HASH_PROPERTY = 'build.vcs.number'
+  /**
+   * System properties to be passed to child JVM process (like tests process) to enable {@link PortableCompilationCache} for it
+   */
   static final List<String> PROPERTIES = [
-    REMOTE_CACHE_URL_PROPERTY, GIT_REPOSITORY_URL_PROPERTY,
+    COMMIT_HASH_PROPERTY, PortableCompilationCache.RemoteCache.URL_PROPERTY, GIT_REPOSITORY_URL_PROPERTY,
     AVAILABLE_FOR_HEAD_PROPERTY, FORCE_DOWNLOAD_PROPERTY,
     JavaBackwardReferenceIndexWriter.PROP_KEY,
     ProjectStamps.PORTABLE_CACHES_PROPERTY
   ]
+  private final boolean forceDownload = bool(FORCE_DOWNLOAD_PROPERTY, false)
+  private final boolean forceRebuild = bool(FORCE_REBUILD_PROPERTY, false)
+  private final RemoteCache remoteCache = new RemoteCache()
+  private final JpsCaches jpsCaches = new JpsCaches(context)
+  final boolean canBeUsed = ProjectStamps.PORTABLE_CACHES && remoteCache.isConfigured
+
   @Lazy
-  private String remoteGitUrl = { require(GIT_REPOSITORY_URL_PROPERTY, "Repository url") }()
-  @Lazy
-  private String remoteCacheUrl = { require(REMOTE_CACHE_URL_PROPERTY, "JPS remote cache url") }()
-  /**
-   * If true then current execution is expected to perform only warm up and upload of new commits caches, nothing else like tests execution
-   */
-  private boolean uploadOnly = bool('intellij.jps.cache.uploadOnly', false)
-  @Lazy
-  private CompilationOutputsDownloader downloader = {
-    def availableForHeadCommit = bool(AVAILABLE_FOR_HEAD_PROPERTY, false)
-    new CompilationOutputsDownloader(context, remoteCacheUrl, remoteGitUrl, availableForHeadCommit)
+  private String remoteGitUrl = {
+    require(GIT_REPOSITORY_URL_PROPERTY, "Repository url").tap {
+      context.messages.info("Git remote url $it")
+    }
   }()
-  private File cacheDir = context.compilationData.dataStorageRoot
-  private boolean forceRebuild = bool('intellij.jps.cache.rebuild.force', false)
-  boolean canBeUsed = ProjectStamps.PORTABLE_CACHES && !StringUtil.isEmptyOrSpaces(System.getProperty(REMOTE_CACHE_URL_PROPERTY))
+
+  @Lazy
+  private PortableCompilationCacheDownloader downloader = {
+    def availableForHeadCommit = bool(AVAILABLE_FOR_HEAD_PROPERTY, false)
+    new PortableCompilationCacheDownloader(context, remoteCache.url, remoteGitUrl, availableForHeadCommit)
+  }()
+
+  @Lazy
+  private PortableCompilationCacheUploader uploader = {
+    def syncFolder = require(AWS_SYNC_FOLDER_PROPERTY, "AWS sync folder")
+    def commitHash = require(COMMIT_HASH_PROPERTY, "Repository commit")
+    context.messages.buildStatus(commitHash)
+    new PortableCompilationCacheUploader(context, remoteCache.uploadUrl, remoteGitUrl, commitHash,
+                                         syncFolder, jpsCaches.skipUpload, forceRebuild)
+  }()
 
   PortableCompilationCache(CompilationContext context) {
     this.context = context
+  }
+
+  /**
+   * Download latest available {@link PortableCompilationCache} and perform incremental compilation if necessary
+   *
+   * When force rebuilding incremental compilation flag has to be set to false otherwise backward-refs won't be created.
+   * During rebuild JPS checks {@code CompilerReferenceIndex.exists(buildDir) || isRebuild} and if
+   * incremental compilation is enabled JPS won't create {@link JavaBackwardReferenceIndexWriter}.
+   * For more details see {@link JavaBackwardReferenceIndexWriter#initialize}
+   */
+  def downloadCacheAndCompileProject() {
+    if (forceRebuild) {
+      clean()
+    }
+    else if (forceDownload || !jpsCaches.dir.isDirectory() || !jpsCaches.dir.list()) {
+      downloadCache()
+    }
+    // ensure that all Maven dependencies are resolved before compilation
+    CompilationTasks.create(context).resolveProjectDependencies()
+    if (forceRebuild || !downloader.availableForHeadCommit || downloader.anyLocalChanges() || !forceDownload) {
+      context.options.incrementalCompilation = !forceRebuild
+      compileProject()
+    }
+    context.options.incrementalCompilation = false
+    context.options.useCompiledClassesFromProjectOutput = true
+  }
+
+  /**
+   * Upload local {@link PortableCompilationCache} to {@link RemoteCache}
+   */
+  def upload() {
+    if (!forceRebuild && downloader.availableForHeadCommit) {
+      context.messages.info('Nothing new to upload')
+    }
+    else {
+      uploader.upload()
+    }
+  }
+
+  /**
+   * Publish already uploaded {@link PortableCompilationCache} to {@link RemoteCache}
+   */
+  def publish() {
+    uploader.updateCommitHistory()
+  }
+
+  def buildJpsCacheZip() {
+    uploader.buildJpsCacheZip()
+  }
+
+  /**
+   * Publish already uploaded {@link PortableCompilationCache} to {@link RemoteCache} overriding existing {@link CommitsHistory}.
+   * Used in force rebuild and cleanup.
+   */
+  def overrideCommitHistory(Set<String> forceRebuiltCommits) {
+    def newCommitHistory = new CommitsHistory([(remoteGitUrl): forceRebuiltCommits])
+    uploader.updateCommitHistory(newCommitHistory, true)
+  }
+
+  private def clean() {
+    [jpsCaches.dir, new File(context.paths.buildOutputRoot, 'classes')].each {
+      context.messages.info("Cleaning $it")
+      FileUtil.delete(it)
+    }
+  }
+
+  private def compileProject() {
+    // ensure that JBR and Kotlin plugin are downloaded before compilation
+    CompilationContextImpl.setupCompilationDependencies(context.gradle, context.options)
+    def jps = new JpsCompilationRunner(context)
+    try {
+      jps.buildAll()
+    }
+    catch (Exception e) {
+      if (context.options.incrementalCompilation && !forceDownload) {
+        // Portable Compilation Cache is rebuilt from scratch on CI and re-published every night to avoid possible incremental compilation issues.
+        // If download isn't forced then locally available cache will be used which may suffer from those issues.
+        // Hence compilation failure. Replacing local cache with remote one may help.
+        context.messages.warning('Incremental compilation using locally available caches failed. ' +
+                                 'Re-trying using Remote Cache.')
+        downloadCache()
+        jps.buildAll()
+      }
+      else {
+        throw e
+      }
+    }
+  }
+
+  private def downloadCache() {
+    try {
+      downloader.download()
+    }
+    finally {
+      downloader.close()
+    }
   }
 
   private String require(String systemProperty, String description) {
@@ -53,73 +238,5 @@ class PortableCompilationCache {
 
   private static boolean bool(String systemProperty, boolean defaultValue) {
     System.getProperty(systemProperty, "$defaultValue").toBoolean()
-  }
-
-  private def clearJpsOutputs() {
-    [cacheDir, new File(context.paths.buildOutputRoot, 'classes')].each {
-      context.messages.info("Cleaning $it")
-      FileUtil.delete(it)
-    }
-  }
-
-  private def compileProject() {
-    if (forceRebuild || !downloader.availableForHeadCommit) {
-      // When force rebuilding incrementalCompilation has to be set to false otherwise backward-refs won't be created.
-      // During rebuild JPS checks {@code CompilerReferenceIndex.exists(buildDir) || isRebuild} and if
-      // incremental compilation enabled JPS won't create {@link JavaBackwardReferenceIndexWriter}.
-      // For more details see {@link JavaBackwardReferenceIndexWriter#initialize}
-      context.options.incrementalCompilation = !forceRebuild
-      CompilationTasks.create(context).resolveProjectDependenciesAndCompileAll()
-    } else if (downloader.availableForHeadCommit) {
-      CompilationTasks.create(context).resolveProjectDependencies()
-    }
-    context.options.incrementalCompilation = false
-    context.options.useCompiledClassesFromProjectOutput = true
-  }
-
-  /**
-   * Download latest available compilation cache from remote cache and perform compilation if necessary
-   */
-  def warmUp() {
-    def forceDownload = bool(FORCE_DOWNLOAD_PROPERTY, false)
-    if (forceRebuild) {
-      clearJpsOutputs()
-    }
-    else if (uploadOnly && downloader.availableForHeadCommit) {
-      context.messages.info('Downloading is skipped because caches are ' +
-                            'available for the head commit so nothing new would be uploaded ' +
-                            '(current execution is expected to perform only upload of new commits caches)')
-    }
-    else if (forceDownload || !cacheDir.isDirectory() || !cacheDir.list()) {
-      try {
-        downloader.downloadCachesAndOutput()
-      }
-      finally {
-        downloader.close()
-      }
-    }
-    compileProject()
-  }
-
-  /**
-   * Upload local compilation cache to remote cache
-   */
-  def upload(Boolean publishTeamCityArtifacts) {
-    if (!forceRebuild && downloader.availableForHeadCommit) {
-      context.messages.info('Nothing new to upload')
-    }
-    else {
-      def remoteCacheUrl = require('intellij.jps.remote.cache.upload.url', "JPS remote cache upload url")
-      def syncFolder = require("jps.caches.aws.sync.folder", "AWS sync folder")
-      def commitHash = require("build.vcs.number", "Repository commit")
-      context.messages.buildStatus(commitHash)
-      def updateCommitHistory = bool('intellij.jps.remote.cache.updateHistory', true)
-      context.messages.info("Git remote url $remoteGitUrl")
-      Map<String, String> remotePerCommitHash = [:]
-      remotePerCommitHash[remoteGitUrl] = commitHash
-      new CompilationOutputsUploader(
-        context, remoteCacheUrl, remotePerCommitHash, syncFolder, updateCommitHistory
-      ).upload(publishTeamCityArtifacts)
-    }
   }
 }

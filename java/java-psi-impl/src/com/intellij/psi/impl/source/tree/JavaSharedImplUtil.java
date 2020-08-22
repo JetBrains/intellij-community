@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -9,6 +9,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.GeneratedMarkerVisitor;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
+import com.intellij.psi.impl.source.tree.java.AnnotationElement;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CharTable;
@@ -16,6 +17,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class JavaSharedImplUtil {
+public final class JavaSharedImplUtil {
   private static final Logger LOG = Logger.getInstance(JavaSharedImplUtil.class);
 
   private static final TokenSet BRACKETS = TokenSet.create(JavaTokenType.LBRACKET, JavaTokenType.RBRACKET);
@@ -133,8 +135,13 @@ public class JavaSharedImplUtil {
     ASTNode lastBracket = null;
     int arrayCount = 0;
     ASTNode element = name;
+    MultiMap<Integer, AnnotationElement> annotationElementsToMove = new MultiMap<>();
     while (element != null) {
       element = PsiImplUtil.skipWhitespaceAndComments(element.getTreeNext());
+      if (element instanceof AnnotationElement) {
+        annotationElementsToMove.putValue(arrayCount, (AnnotationElement)element);
+        continue;
+      }
       if (element == null || element.getElementType() != JavaTokenType.LBRACKET) break;
       if (firstBracket == null) firstBracket = element;
       lastBracket = element;
@@ -146,9 +153,9 @@ public class JavaSharedImplUtil {
     }
 
     if (firstBracket != null) {
-      element = firstBracket;
-      while (true) {
-        ASTNode next = element.getTreeNext();
+      element = PsiImplUtil.skipWhitespaceAndComments(name.getTreeNext());
+      while (element != null) {
+        ASTNode next = PsiImplUtil.skipWhitespaceAndComments(element.getTreeNext());
         CodeEditUtil.removeChild(variableElement, element);
         if (element == lastBracket) break;
         element = next;
@@ -158,6 +165,8 @@ public class JavaSharedImplUtil {
       for (int i = 0; i < arrayCount; i++) {
         CompositeElement newType1 = ASTFactory.composite(JavaElementType.TYPE);
         newType1.rawAddChildren(newType);
+
+        annotationElementsToMove.get(i).forEach(newType1::rawAddChildren);
 
         newType1.rawAddChildren(ASTFactory.leaf(JavaTokenType.LBRACKET, "["));
         newType1.rawAddChildren(ASTFactory.leaf(JavaTokenType.RBRACKET, "]"));
@@ -192,7 +201,7 @@ public class JavaSharedImplUtil {
     variable.addAfter(initializer, eq.getPsi());
   }
 
-  private static class FilteringTypeAnnotationProvider implements TypeAnnotationProvider {
+  private static final class FilteringTypeAnnotationProvider implements TypeAnnotationProvider {
     private final PsiAnnotation[] myCandidates;
     private final TypeAnnotationProvider myOriginalProvider;
     private volatile PsiAnnotation[] myCache;

@@ -56,8 +56,10 @@ public interface StatusBarWidgetFactory {
    * Once the method is invoked on project initialization, the widget won't be recreated or disposed implicitly.
    * <p>
    * You may need to recreate it if:
+   * <ul>
    * <li>its availability has changed. See {@link #isAvailable(Project)}</li>
    * <li>its visibility has changed. See {@link com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetSettings}</li>
+   * </ul>
    * <p>
    * To do this, you need to explicitly invoke {@link com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager#updateWidget(StatusBarWidgetFactory)}
    * to recreate the widget and re-add it to the status bar.
@@ -72,8 +74,8 @@ public interface StatusBarWidgetFactory {
    * Status bar's context menu with enable/disable action depends on the result of this method.
    * <p>
    * It's better to have this method aligned with {@link com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup.WidgetState#HIDDEN},
-   * whenever state is HIDDEN, this method should return false.
-   * Otherwise enabling widget via context menu won't take any visual effect.
+   * whenever state is {@code HIDDEN}, this method should return {@code false}.
+   * Otherwise, enabling widget via context menu will not have any visual effect.
    * <p>
    * E.g. {@link com.intellij.openapi.wm.impl.status.EditorBasedWidget} are available if editor is opened in a frame that given status bar is attached to
    * <p>

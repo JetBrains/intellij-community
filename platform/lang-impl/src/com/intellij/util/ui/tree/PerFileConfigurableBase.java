@@ -5,8 +5,8 @@ import com.intellij.CommonBundle;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.LanguagePerFileMappings;
-import com.intellij.lang.PerFileMappings;
 import com.intellij.lang.PerFileMappingsBase;
+import com.intellij.lang.PerFileMappingsEx;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
@@ -78,7 +78,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   protected static final Key<Boolean> SORT_VALUES = KeyWithDefaultValue.create("SORT_VALUES", Boolean.TRUE);
 
   protected final Project myProject;
-  protected final PerFileMappings<T> myMappings;
+  protected final PerFileMappingsEx<T> myMappings;
 
   /** @noinspection FieldCanBeLocal */
   private JPanel myPanel;
@@ -94,7 +94,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     void commit();
   }
 
-  protected PerFileConfigurableBase(@NotNull Project project, @NotNull PerFileMappings<T> mappings) {
+  protected PerFileConfigurableBase(@NotNull Project project, @NotNull PerFileMappingsEx<T> mappings) {
     myProject = project;
     myMappings = mappings;
   }
@@ -467,7 +467,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
       }
 
       @Override
-      protected void customizeCellRenderer(JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column) {
+      protected void customizeCellRenderer(@NotNull JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column) {
         renderTarget(value, this);
         SpeedSearchUtil.applySpeedSearchHighlighting(table, this, false, selected);
       }
@@ -479,7 +479,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
       }
 
       @Override
-      protected void customizeCellRenderer(JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column) {
+      protected void customizeCellRenderer(@NotNull JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column) {
         Pair<Object, T> p = myModel.data.get(myTable.convertRowIndexToModel(row));
         if (p.second != null) {
           setTransparentIconBackground(true);
@@ -763,7 +763,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   }
 
   @Nullable
-  protected String getClearValueText(@Nullable Object target) {
+  protected @NlsActions.ActionText String getClearValueText(@Nullable Object target) {
     return target == null ? getNullValueText(null) : null;
   }
 

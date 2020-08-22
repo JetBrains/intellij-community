@@ -36,7 +36,7 @@ import static com.intellij.util.containers.ContainerUtil.map2List;
 /**
  * Listens to VFS events (such as adding or deleting bunch of files) and performs necessary operations with the VCS.
  */
-public class HgVFSListener extends VcsVFSListener {
+public final class HgVFSListener extends VcsVFSListener {
 
   private final VcsDirtyScopeManager dirtyScopeManager;
   private static final Logger LOG = Logger.getInstance(HgVFSListener.class);
@@ -278,7 +278,7 @@ public class HgVFSListener extends VcsVFSListener {
     Map<VirtualFile, Collection<FilePath>> groupFilePathsByHgRoots = HgUtil.groupFilePathsByHgRoots(myProject, filePaths);
     return groupFilePathsByHgRoots.entrySet().stream()
       .map(entry -> getIgnoreRepoHolder(entry.getKey()).removeIgnoredFiles(entry.getValue()))
-      .flatMap(List::stream).collect(Collectors.toList());
+      .flatMap(Collection::stream).collect(Collectors.toList());
   }
 
   /**

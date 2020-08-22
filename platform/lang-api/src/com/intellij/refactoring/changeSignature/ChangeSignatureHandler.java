@@ -4,6 +4,7 @@ package com.intellij.refactoring.changeSignature;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -15,6 +16,10 @@ import org.jetbrains.annotations.Nullable;
  * @author Maxim.Medvedev
  */
 public interface ChangeSignatureHandler extends RefactoringActionHandler {
+  /**
+   * @deprecated inline this field for proper localization
+   */
+  @Deprecated
   String REFACTORING_NAME = RefactoringBundle.message("changeSignature.refactoring.name");
 
   @Nullable
@@ -29,6 +34,6 @@ public interface ChangeSignatureHandler extends RefactoringActionHandler {
   @Override
   void invoke(@NotNull Project project, PsiElement @NotNull [] elements, @Nullable DataContext dataContext);
 
-  @Nullable
+  @Nullable @NlsContexts.DialogMessage
   String getTargetNotFoundMessage();
 }

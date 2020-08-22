@@ -11,6 +11,7 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
@@ -162,7 +163,7 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
   }
 
   @ApiStatus.Internal
-  default @NotNull RuntimeException createError(@NotNull String message, @NotNull PluginId pluginId) {
+  default @NotNull RuntimeException createError(@NotNull @NonNls String message, @NotNull PluginId pluginId) {
     return new RuntimeException(message);
   }
 

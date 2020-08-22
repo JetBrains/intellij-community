@@ -194,7 +194,8 @@ public class URLReference implements PsiReference, EmptyResolveMessageProvider {
   @Override
   @NotNull
   public String getUnresolvedMessagePattern() {
-    return XmlPsiBundle.message(myIncorrectResourceMapped ? "registered.resource.is.not.recognized" : "uri.is.not.registered");
+    return XmlPsiBundle.message(myIncorrectResourceMapped ? "xml.inspections.registered.resource.is.not.recognized"
+                                                          : "xml.inspections.uri.is.not.registered");
   }
 
   public static void processWsdlSchemas(final XmlTag rootTag, Processor<? super XmlTag> processor) {

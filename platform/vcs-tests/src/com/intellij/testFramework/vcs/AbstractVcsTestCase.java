@@ -77,7 +77,7 @@ public abstract class AbstractVcsTestCase {
     testFixtureBuilder.addModule(EmptyModuleFixtureBuilder.class).addContentRoot(clientRoot.toString());
     myProjectFixture.setUp();
     myProject = myProjectFixture.getProject();
-    PlatformTestUtil.getOrCreateProjectTestBaseDir(myProject);
+    PlatformTestUtil.getOrCreateProjectBaseDir(myProject);
 
     projectCreated();
 

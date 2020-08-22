@@ -211,6 +211,8 @@ public class XDebuggerFramesList extends DebuggerFramesList {
       }
       else if (Registry.is("debugger.new.debug.tool.window.view")){
         setBackground(UIUtil.getListSelectionBackground(hasFocus));
+        setForeground(UIUtil.getListSelectionForeground(hasFocus));
+        mySelectionForeground = getForeground();
       }
 
       stackFrame.customizePresentation(this);

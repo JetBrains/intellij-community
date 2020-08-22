@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.preview;
 
@@ -37,7 +37,7 @@ import java.util.List;
 /**
  * @author spleaner
  */
-public class ImagePreviewComponent extends JPanel implements PreviewHintComponent {
+public final class ImagePreviewComponent extends JPanel implements PreviewHintComponent {
   private static final Key<Long> TIMESTAMP_KEY = Key.create("Image.timeStamp");
   private static final Key<SoftReference<BufferedImage>> BUFFERED_IMAGE_REF_KEY = Key.create("Image.bufferedImage");
 
@@ -174,7 +174,7 @@ public class ImagePreviewComponent extends JPanel implements PreviewHintComponen
     return new ImagePreviewComponent(image, imageFileSize);
   }
 
-  private class ImageComp extends JComponent {
+  private final class ImageComp extends JComponent {
     private final Dimension myPreferredSize;
 
     private ImageComp() {

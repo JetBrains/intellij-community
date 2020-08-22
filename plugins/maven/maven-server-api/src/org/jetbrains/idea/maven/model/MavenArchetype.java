@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.model;
 
 import com.intellij.openapi.util.text.StringUtilRt;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

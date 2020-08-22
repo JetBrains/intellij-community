@@ -1,10 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.ui.scale.DerivedScaleType;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.ui.svg.MyTranscoder;
@@ -93,15 +93,14 @@ public final class SVGLoader {
       }
 
       if (theme == DEFAULT_THEME) {
-        image = SVGLoaderPrebuilt.loadUrlFromPreBuiltCache(url, scale, docSize);
+        image = url == null ? null : SVGLoaderPrebuilt.loadUrlFromPreBuiltCache(url, scale, docSize);
         if (image != null) {
           return image;
         }
       }
 
-
       if (theme != null) {
-        svgBytes = FileUtil.loadBytes(stream);
+        svgBytes = FileUtilRt.loadBytes(stream);
         image = ourCache.loadFromCache(theme, svgBytes, scale, docSize);
         if (image != null) {
           return image;
@@ -271,8 +270,8 @@ public final class SVGLoader {
   }
 
   private static ImageLoader.Dimension2DDouble getDocumentSize(double scale, @NotNull TranscoderInput input) {
-    SVGOMDocument document = (SVGOMDocument)input.getDocument();
-    BridgeContext ctx = new MyTranscoder(scale).createBridgeContext(document);
+    Document document = input.getDocument();
+    BridgeContext ctx = new MyTranscoder(scale).createBridgeContext((SVGOMDocument)document);
     new GVTBuilder().build(ctx, document);
     Dimension2D size = ctx.getDocumentSize();
     return new ImageLoader.Dimension2DDouble(size.getWidth() * scale, size.getHeight() * scale);

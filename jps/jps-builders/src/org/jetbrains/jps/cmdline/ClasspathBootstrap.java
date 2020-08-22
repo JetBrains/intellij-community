@@ -24,13 +24,15 @@ import org.jetbrains.jps.builders.impl.java.EclipseCompilerTool;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.builders.java.JavaSourceTransformer;
 import org.jetbrains.jps.javac.ExternalJavacProcess;
+import org.jetbrains.jps.javac.ast.JavacReferenceCollector;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.impl.JpsModelImpl;
 import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 import org.jetbrains.org.objectweb.asm.ClassVisitor;
 import org.jetbrains.org.objectweb.asm.ClassWriter;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 import java.io.File;
 import java.util.*;
 
@@ -56,6 +58,7 @@ public final class ClasspathBootstrap {
 
     cp.add(getResourcePath(BuildMain.class));
     cp.add(getResourcePath(ExternalJavacProcess.class));  // intellij.platform.jps.build.javac.rt part
+    cp.add(getResourcePath(JavacReferenceCollector.class));  // jps-javac-extension library
 
     cp.addAll(PathManager.getUtilClassPath()); // intellij.platform.util
 
@@ -78,9 +81,6 @@ public final class ClasspathBootstrap {
 
     cp.addAll(ContainerUtil.map(ArtifactRepositoryManager.getClassesFromDependencies(), ClasspathBootstrap::getResourcePath));
 
-    cp.addAll(getJavac8RefScannerClasspath());
-    //don't forget to update CommunityStandaloneJpsBuilder.layoutJps accordingly
-
     try {
       final Class<?> cmdLineWrapper = Class.forName("com.intellij.rt.execution.CommandLineWrapper");
       cp.add(getResourcePath(cmdLineWrapper));  // idea_rt.jar
@@ -102,6 +102,8 @@ public final class ClasspathBootstrap {
   public static List<File> getExternalJavacProcessClasspath(String sdkHome, JavaCompilingTool compilingTool) {
     final Set<File> cp = new LinkedHashSet<>();
     cp.add(getResourceFile(ExternalJavacProcess.class)); // self
+    cp.add(getResourceFile(JavacReferenceCollector.class));  // jps-javac-extension library
+
     // util
     for (String path : PathManager.getUtilClassPath()) {
       cp.add(new File(path));
@@ -183,15 +185,4 @@ public final class ClasspathBootstrap {
     }
   }
 
-  private static List<String> getJavac8RefScannerClasspath() {
-    String instrumentationPath = getResourcePath(NotNullVerifyingInstrumenter.class);
-    File instrumentationUtil = new File(instrumentationPath);
-    if (instrumentationUtil.isDirectory()) {
-      //running from sources: load classes from .../out/production/intellij.java.jps.javacRefScanner8
-      return Collections.singletonList(new File(instrumentationUtil.getParentFile(), "intellij.java.jps.javacRefScanner8").getAbsolutePath());
-    }
-    else {
-      return Collections.singletonList(instrumentationPath);
-    }
-  }
 }

@@ -179,7 +179,7 @@ public class SyntheticCodeBlock implements Block, JavaBlock{
   private static boolean isDotFirst(final Block block) {
     Block current = block;
     while (!current.getSubBlocks().isEmpty()) {
-      current = block.getSubBlocks().get(0);
+      current = current.getSubBlocks().get(0);
     }
     ASTNode node = current instanceof LeafBlock ? ((LeafBlock)current).getNode() : null;
     return node != null && node.getElementType() == JavaTokenType.DOT;

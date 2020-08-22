@@ -16,6 +16,7 @@
 package com.intellij.openapi.util.io.win32;
 
 import com.intellij.openapi.util.io.FileAttributes;
+import com.intellij.openapi.util.io.FileSystemUtil;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.util.BitUtil.isSet;
@@ -52,7 +53,9 @@ public class FileInfo {
     final boolean isHidden = isSet(attributes, FILE_ATTRIBUTE_HIDDEN);
     final boolean isWritable = !isSet(attributes, FILE_ATTRIBUTE_READONLY);
     final long javaTimestamp = timestamp / 10000 - 11644473600000L;
-    return new FileAttributes(isDirectory, isSpecial, isSymlink, isHidden, length, javaTimestamp, isDirectory || isWritable);
+    // todo CaseSensitiveDir teach com.intellij.openapi.util.io.win32.IdeaWin32.getInfo0 to obtain case-sensitivity for directory
+    FileAttributes.CaseSensitivity sensitivity = FileSystemUtil.stubCaseSensitivity(isDirectory);
+    return new FileAttributes(isDirectory, isSpecial, isSymlink, isHidden, length, javaTimestamp, isDirectory || isWritable, sensitivity);
   }
 
   @Override

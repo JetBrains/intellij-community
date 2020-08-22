@@ -9,7 +9,7 @@ public enum ValidationResultType {
   REJECTED("validation.unmatched_rule", false),
   INCORRECT_RULE("validation.incorrect_rule", false),
   UNDEFINED_RULE("validation.undefined_rule", false),
-  UNREACHABLE_WHITELIST("validation.unreachable.whitelist", true),
+  UNREACHABLE_METADATA("validation.unreachable_metadata", true),
   PERFORMANCE_ISSUE("validation.performance_issue", true);
 
   private final String value;

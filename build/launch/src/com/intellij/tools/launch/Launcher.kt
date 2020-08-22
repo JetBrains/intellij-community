@@ -1,8 +1,10 @@
 package com.intellij.tools.launch
 
 import com.intellij.tools.launch.impl.ClassPathBuilder
+import java.io.File
 import java.net.InetAddress
 import java.net.ServerSocket
+import java.nio.file.Files
 
 object Launcher {
 
@@ -11,15 +13,18 @@ object Launcher {
   fun launch(paths: PathsProvider,
              modules: ModulesProvider,
              options: LauncherOptions): Process {
-
     val classPathBuilder = ClassPathBuilder(paths, modules)
     val classPathFile = classPathBuilder.build()
 
+    return launch(paths, classPathFile, options)
+  }
+
+  fun launch(paths: PathsProvider,
+             classPathFile: File,
+             options: LauncherOptions): Process {
+
     // We should create config folder to avoid import settings dialog.
-    //val configFolder = paths.configFolder
-    //if (!configFolder.exists()) {
-    //  configFolder.mkdirs()
-    //}
+    Files.createDirectories(paths.configFolder.toPath())
 
     val cmd = mutableListOf(
       paths.javaExecutable.canonicalPath,
@@ -27,10 +32,16 @@ object Launcher {
       "-classpath", classPathFile.canonicalPath,
       "-Dapple.laf.useScreenMenuBar=true",
       "-Dfus.internal.test.mode=true",
+      "-Djb.privacy.policy.text=\"<!--999.999-->\"",
+      "-Djb.consents.confirmation.enabled=false",
+      "-Didea.suppress.statistics.report=true",
+      "-Drsch.send.usage.stat=false",
+      "-Duse.linux.keychain=false",
+      "-Didea.initially.ask.config=force-not",
+      "-Dide.show.tips.on.startup.default.value=false",
       "-Didea.config.path=${paths.configFolder.canonicalPath}",
       "-Didea.system.path=${paths.systemFolder.canonicalPath}",
       "-Didea.log.path=${paths.logFolder.canonicalPath}",
-      "-Didea.log.config.file=bin/log.xml",
       "-Didea.is.internal=true",
       "-Didea.debug.mode=true",
       "-Didea.jre.check=true",
@@ -79,7 +90,16 @@ object Launcher {
     println("-- END")
 */
 
-    val processBuilder = ProcessBuilder(cmd).inheritIO()
+    val processBuilder = ProcessBuilder(cmd)
+    if (options.redirectOutputIntoParentProcess) {
+      processBuilder.inheritIO()
+    }
+    else {
+      paths.logFolder.mkdirs()
+      processBuilder.redirectOutput(paths.logFolder.resolve("out.log"))
+      processBuilder.redirectError(paths.logFolder.resolve("err.log"))
+    }
+
     processBuilder.environment().putAll(options.environment)
     options.beforeProcessStart.invoke(processBuilder)
 

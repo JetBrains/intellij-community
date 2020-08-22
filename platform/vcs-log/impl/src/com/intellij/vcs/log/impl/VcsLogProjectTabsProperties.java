@@ -18,7 +18,7 @@ import java.util.*;
 import static com.intellij.util.containers.ContainerUtil.emptyList;
 import static com.intellij.util.containers.ContainerUtil.map2List;
 
-@State(name = "Vcs.Log.Tabs.Properties", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
+@State(name = "Vcs.Log.Tabs.Properties", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class VcsLogProjectTabsProperties implements PersistentStateComponent<VcsLogProjectTabsProperties.State>,
                                                           VcsLogTabsProperties {
   @NonNls public static final String MAIN_LOG_ID = "MAIN";
@@ -39,12 +39,6 @@ public final class VcsLogProjectTabsProperties implements PersistentStateCompone
   @Override
   public void loadState(@NotNull State state) {
     myState = state;
-
-    // migration from the old toolwindow-only tabs
-    for (String tab : myState.OPEN_TABS) {
-      myState.OPEN_GENERIC_TABS.put(tab, VcsLogManager.LogWindowKind.TOOL_WINDOW);
-    }
-    myState.OPEN_TABS.clear();
 
     if (!myState.oldMeFiltersMigrated) {
       // migrate "me" to "*" for recent user filters
@@ -109,8 +103,6 @@ public final class VcsLogProjectTabsProperties implements PersistentStateCompone
 
   public static class State {
     public Map<String, MyState> TAB_STATES = new TreeMap<>();
-    @Deprecated
-    public LinkedHashSet<String> OPEN_TABS = new LinkedHashSet<>();
     public LinkedHashMap<String, VcsLogManager.LogWindowKind> OPEN_GENERIC_TABS = new LinkedHashMap<>();
     public Map<String, List<RecentGroup>> RECENT_FILTERS = new HashMap<>();
 

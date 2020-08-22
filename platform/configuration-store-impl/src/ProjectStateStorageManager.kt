@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.serviceContainer.isWorkspaceComponent
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
+import java.nio.file.Path
 
 // extended in upsource
 open class ProjectStateStorageManager(macroSubstitutor: PathMacroSubstitutor,
@@ -45,12 +46,13 @@ open class ProjectStateStorageManager(macroSubstitutor: PathMacroSubstitutor,
 
   override fun normalizeFileSpec(fileSpec: String) = removeMacroIfStartsWith(super.normalizeFileSpec(fileSpec), PROJECT_CONFIG_DIR)
 
-  override fun expandMacros(path: String): String {
-    if (path[0] == '$') {
-      return super.expandMacros(path)
+  override fun expandMacro(collapsedPath: String): Path {
+    if (collapsedPath[0] == '$') {
+      return super.expandMacro(collapsedPath)
     }
     else {
-      return "${expandMacro(PROJECT_CONFIG_DIR)}/$path"
+      // PROJECT_CONFIG_DIR is the first macro
+      return macros.get(0).value.resolve(collapsedPath)
     }
   }
 

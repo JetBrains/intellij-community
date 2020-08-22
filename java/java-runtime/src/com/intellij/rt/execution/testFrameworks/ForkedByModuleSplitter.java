@@ -16,6 +16,7 @@
 package com.intellij.rt.execution.testFrameworks;
 
 import java.io.*;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.jar.Attributes;
@@ -83,7 +84,21 @@ public abstract class ForkedByModuleSplitter {
     builder.add("-classpath");
     if (myDynamicClasspath.length() > 0) {
       try {
-        builder.add(createClasspathJarFile(new Manifest(), classpath).getAbsolutePath());
+        if ("ARGS_FILE".equals(myDynamicClasspath)) {
+          File argFile = File.createTempFile("arg_file", null);
+          argFile.deleteOnExit();
+          FileOutputStream writer = new FileOutputStream(argFile);
+          try {
+            writer.write(classpath.getBytes(Charset.defaultCharset()));
+          }
+          finally {
+            writer.close();
+          }
+          builder.add("@" + argFile.getAbsolutePath());
+        }
+        else {
+          builder.add(createClasspathJarFile(new Manifest(), classpath).getAbsolutePath());
+        }
       }
       catch (Throwable e) {
         builder.add(classpath);

@@ -3,26 +3,22 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.HeavyPlatformTestCase
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.VirtualFileUrlManager
-import com.intellij.workspaceModel.storage.bridgeEntities.projectLibraries
 import com.intellij.workspaceModel.ide.getInstance
+import com.intellij.workspaceModel.storage.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.projectLibraries
 import org.jetbrains.jps.util.JpsPathUtil
-import org.junit.Before
-import org.junit.Test
 import java.io.File
 
 class JpsProjectReloadingTest : HeavyPlatformTestCase() {
   private lateinit var virtualFileManager: VirtualFileUrlManager
 
-  @Before
   override fun setUp() {
     super.setUp()
     virtualFileManager = VirtualFileUrlManager.getInstance(project)
   }
 
-  @Test
   fun `test modify iml`() {
     checkProjectAfterReload("common/modifyIml", "common/modifyIml") { (storage, projectDirUrl) ->
       val modules = storage.entities(ModuleEntity::class.java).sortedBy { it.name }.toList()
@@ -42,7 +38,6 @@ class JpsProjectReloadingTest : HeavyPlatformTestCase() {
     }
   }
 
-  @Test
   fun `test add library`() {
     checkProjectAfterReload( "directoryBased/addLibrary", "fileBased/addLibrary") { (storage, projectDirUrl) ->
       val libraries = storage.projectLibraries.sortedBy { it.name }.toList()
@@ -52,6 +47,18 @@ class JpsProjectReloadingTest : HeavyPlatformTestCase() {
       val root = assertOneElement(junitLibrary.roots.toList())
       assertEquals("jar://${JpsPathUtil.urlToPath(projectDirUrl)}/lib/junit2.jar!/", root.url.url)
     }
+  }
+
+  fun `test add all libraries for directory based project`() {
+    val projectDir = File(PathManagerEx.getCommunityHomePath(), "jps/model-serialization/testData/imlUnderDotIdea")
+    val (storage, projectDirUrl) = reload(projectDir, "directoryBased/addLibrary")
+
+    val libraries = storage.projectLibraries.sortedBy { it.name }.toList()
+    assertEquals(1, libraries.size)
+    val junitLibrary = libraries[0]
+    assertEquals("junit2", junitLibrary.name)
+    val root = assertOneElement(junitLibrary.roots.toList())
+    assertEquals("jar://${JpsPathUtil.urlToPath(projectDirUrl)}/lib/junit2.jar!/", root.url.url)
   }
 
   fun `test add module`() {
@@ -71,7 +78,6 @@ class JpsProjectReloadingTest : HeavyPlatformTestCase() {
     }
   }
 
-  @Test
   fun `test modify library`() {
     checkProjectAfterReload("directoryBased/modifyLibrary", "fileBased/modifyLibrary") { (storage, projectDirUrl) ->
       val libraries = storage.projectLibraries.sortedBy { it.name }.toList()
@@ -83,10 +89,15 @@ class JpsProjectReloadingTest : HeavyPlatformTestCase() {
     }
   }
 
-  @Test
   fun `test remove library`() {
     checkProjectAfterReload("directoryBased/removeLibrary", "fileBased/removeLibrary") { (storage, _) ->
       assertEquals(setOf("jarDir", "log4j"), storage.projectLibraries.mapTo(HashSet()) {it.name})
+    }
+  }
+
+  fun `test remove all libraries`() {
+    checkProjectAfterReload("directoryBased/removeAllLibraries", "fileBased/removeAllLibraries") { (storage, _) ->
+      assertEquals(emptySet<String>(), storage.projectLibraries.mapTo(HashSet()) {it.name})
     }
   }
 
@@ -113,9 +124,9 @@ class JpsProjectReloadingTest : HeavyPlatformTestCase() {
   private fun reload(originalProjectDir: File, directoryName: String): ReloadedProjectData {
     return reload(originalProjectDir) { projectData ->
       val changedDir = PathManagerEx.findFileUnderCommunityHome("platform/workspaceModel/ide/tests/testData/serialization/reload/$directoryName")
-      val newUrls = collectFileUrls(changedDir, projectData.projectDirUrl) { it != "<delete/>"}
-      val urlsToDelete = collectFileUrls(changedDir, projectData.projectDirUrl) { it == "<delete/>"}
-      val oldUrls = collectFileUrls(projectData.projectDir, projectData.projectDirUrl) { true }
+      val newUrls = collectFileUrlsRec(changedDir, projectData.projectDirUrl, true) { it != "<delete/>"}
+      val urlsToDelete = collectFileUrlsRec(changedDir, projectData.projectDirUrl, true) { it == "<delete/>"}
+      val oldUrls = collectFileUrlsRec(projectData.projectDir, projectData.projectDirUrl, false) { true }
       FileUtil.copyDir(changedDir, projectData.projectDir)
       projectData.projectDir.walk().filter { it.isFile && it.readText().trim() == "<delete/>" }.forEach {
         FileUtil.delete(it)
@@ -126,10 +137,37 @@ class JpsProjectReloadingTest : HeavyPlatformTestCase() {
     }
   }
 
-  private fun collectFileUrls(dir: File, baseUrl: String, contentFilter: (String) -> Boolean): ArrayList<String> {
-    return dir.walkTopDown().filter { it.isFile && contentFilter(it.readText().trim()) }.mapTo(ArrayList()) {
-      baseUrl + "/${FileUtil.toSystemIndependentName(FileUtil.getRelativePath(dir, it)!!)}"
+  private fun collectFileUrlsRec(dir: File,
+                                 baseUrl: String,
+                                 replaceByParent: Boolean,
+                                 contentFilter: (String) -> Boolean): Set<String> {
+    val res = HashSet<String>()
+
+    dir.walkBottomUp().forEach { file ->
+      if (file.isFile && contentFilter(file.readText().trim())) {
+        res += replaceBaseUrl(baseUrl, dir, file)
+      }
+      else if (file.isDirectory) {
+        // If all removed files relate to the one directory, the directory event is sent
+        val relativeFileUrl = FileUtil.getRelativePath(dir, file) ?: return@forEach
+        if ("." == relativeFileUrl) return@forEach
+        if (!relativeFileUrl.endsWith(".idea/libraries") && !relativeFileUrl.endsWith(".idea/artifacts")) return@forEach
+
+        // Existing files + files that will be copied
+        val children = (JpsPathUtil.urlToFile(replaceBaseUrl(baseUrl, dir, file)).listFiles()?.map { JpsPathUtil.pathToUrl(it.absolutePath) } ?: emptyList()) +
+                       (file.listFiles()?.map { replaceBaseUrl(baseUrl, dir, it) } ?: emptyList())
+        if (children.all { it in res }) {
+          if (replaceByParent) children.forEach { res.remove(it) }
+          res += replaceBaseUrl(baseUrl, dir, file)
+        }
+      }
     }
+
+    return res
+  }
+
+  private fun replaceBaseUrl(newBaseUrl: String, oldBaseUrl: File, file: File): String {
+    return "$newBaseUrl/${FileUtil.toSystemIndependentName(FileUtil.getRelativePath(oldBaseUrl, file)!!)}"
   }
 
   private data class ReloadedProjectData(val storage: WorkspaceEntityStorageBuilder, val projectDirUrl: String)

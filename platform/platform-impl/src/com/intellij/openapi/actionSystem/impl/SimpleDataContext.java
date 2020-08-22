@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.ide.DataManager;
@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 
-public class SimpleDataContext implements DataContext {
+public final class SimpleDataContext implements DataContext {
   private final Map<String, Object> myDataId2Data;
   private final DataContext myParent;
   private final boolean myWithRules;
@@ -26,7 +26,7 @@ public class SimpleDataContext implements DataContext {
     this(new HashMap<>(1), parent, false);
     myDataId2Data.put(dataId, data);
   }
-  
+
   private SimpleDataContext(@NotNull Map<String, Object> dataId2data, DataContext parent, boolean withRules) {
     myDataId2Data = dataId2data;
     myParent = parent;
@@ -37,7 +37,7 @@ public class SimpleDataContext implements DataContext {
   @Override
   public Object getData(@NotNull String dataId) {
     Object result = getDataFromSelfOrParent(dataId);
-    
+
     if (result == null && PlatformDataKeys.CONTEXT_COMPONENT.getName().equals(dataId)) {
       result = IdeFocusManager.getGlobalInstance().getFocusOwner();
     }

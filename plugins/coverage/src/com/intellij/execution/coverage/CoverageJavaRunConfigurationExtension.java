@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.coverage;
 
 import com.intellij.coverage.*;
@@ -16,6 +16,7 @@ import com.intellij.execution.configurations.coverage.JavaCoverageEnabledConfigu
 import com.intellij.execution.junit.RefactoringListeners;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.SettingsEditorFragment;
+import com.intellij.java.coverage.JavaCoverageBundle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -92,9 +93,11 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
 
       final Sdk jdk = params.getJdk();
       if (jdk != null && JavaSdk.getInstance().isOfVersionOrHigher(jdk, JavaSdkVersion.JDK_1_7) && coverageRunner instanceof JavaCoverageRunner && !((JavaCoverageRunner)coverageRunner).isJdk7Compatible()) {
-        Notifications.Bus.notify(new Notification("Coverage", "Coverage instrumentation is not fully compatible with JDK 7",
-                                                  coverageRunner.getPresentableName() +
-                                                  " coverage instrumentation can lead to java.lang.VerifyError errors with JDK 7. If so, please try IDEA coverage runner.",
+        Notifications.Bus.notify(new Notification("Coverage",
+                                                  JavaCoverageBundle.message("coverage.instrumentation.jdk7.compatibility"),
+                                                  JavaCoverageBundle.message(
+                                                    "coverage.instrumentation.jdk7.compatibility.veryfy.error.warning",
+                                                    coverageRunner.getPresentableName()),
                                                   NotificationType.WARNING));
       }
     }
@@ -235,7 +238,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
     return CoverageEnabledConfiguration.isApplicableTo(configuration);
   }
 
-  private static class MyPackageAccessor extends MyAccessor implements RefactoringListeners.Accessor<PsiPackage> {
+  private static final class MyPackageAccessor extends MyAccessor implements RefactoringListeners.Accessor<PsiPackage> {
 
 
     private MyPackageAccessor(Project project, ClassFilter[] patterns, int idx, String[] filters) {
@@ -259,7 +262,7 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
     }
   }
 
-  private static class MyClassAccessor extends MyAccessor implements RefactoringListeners.Accessor<PsiClass> {
+  private static final class MyClassAccessor extends MyAccessor implements RefactoringListeners.Accessor<PsiClass> {
 
     private MyClassAccessor(Project project, ClassFilter[] patterns, int idx, String[] filters) {
       super(project, patterns, idx, filters);

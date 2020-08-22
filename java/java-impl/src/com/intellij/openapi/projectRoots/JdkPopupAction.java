@@ -14,6 +14,7 @@ import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.fileChooser.actions.FileChooserAction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -91,7 +92,7 @@ public class JdkPopupAction extends AnAction {
         @Override
         public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
           List<AnAction> result = new ArrayList<>();
-          for (final Pair<File, String> homes : jdkLocations) {
+          for (final Pair<File, @NlsSafe String> homes : jdkLocations) {
             result.add(new FileChooserAction("", null, null) {
               @Override
               protected void update(FileSystemTree fileChooser, AnActionEvent e) {

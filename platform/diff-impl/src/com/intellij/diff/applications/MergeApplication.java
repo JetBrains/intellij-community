@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.applications;
 
 import com.intellij.diff.DiffDialogHints;
@@ -57,7 +57,7 @@ class MergeApplication extends DiffApplicationBase {
 
     List<VirtualFile> contents = Arrays.asList(files.get(0), files.get(2), files.get(1)); // left, base, right
     VirtualFile outputFile = files.get(files.size() - 1);
-    if (outputFile == null) throw new Exception("Can't find output file: " + ContainerUtil.getLastItem(filePaths));
+    if (outputFile == null) throw new Exception(DiffBundle.message("cannot.find.file.error", ContainerUtil.getLastItem(filePaths)));
 
     CompletableFuture<CliResult> future = new CompletableFuture<>();
     AtomicReference<CliResult> resultRef = new AtomicReference<>(new CliResult(127, null));
@@ -78,7 +78,7 @@ class MergeApplication extends DiffApplicationBase {
     return future;
   }
 
-  private static class MyMergeRequestProducer implements MergeRequestProducer {
+  private static final class MyMergeRequestProducer implements MergeRequestProducer {
     private final Project myProject;
     private final VirtualFile myOutputFile;
     private final List<VirtualFile> myContents;

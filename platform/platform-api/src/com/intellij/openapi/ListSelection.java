@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * Utility class used to preserve index during 'map' operations
  */
-public class ListSelection<T> {
+public final class ListSelection<T> {
   @NotNull private final List<T> myList;
   private final int mySelectedIndex;
 

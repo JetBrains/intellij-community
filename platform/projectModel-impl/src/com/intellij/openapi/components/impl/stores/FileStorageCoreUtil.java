@@ -28,8 +28,7 @@ public final class FileStorageCoreUtil {
   public static final String NAME = "name";
   public static final String DEFAULT_EXT = PathManager.DEFAULT_EXT;
 
-  @NotNull
-  public static Map<String, Element> load(@NotNull Element rootElement, @Nullable PathMacroSubstitutor pathMacroSubstitutor) {
+  public static @NotNull Map<String, Element> load(@NotNull Element rootElement, @Nullable PathMacroSubstitutor pathMacroSubstitutor, boolean internElements) {
     if (pathMacroSubstitutor != null) {
       pathMacroSubstitutor.expandPaths(rootElement);
     }
@@ -66,7 +65,7 @@ public final class FileStorageCoreUtil {
       // remove only after "getMacroNames" - some PathMacroFilter requires element name attribute
       element.removeAttribute(NAME);
 
-      map.put(name, JDOMUtil.internElement(element));
+      map.put(name, internElements ? JDOMUtil.internElement(element) : element);
     }
     return map;
   }

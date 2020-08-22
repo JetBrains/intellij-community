@@ -8,12 +8,14 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.content.Content;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
+import com.jediterm.terminal.ui.TerminalWidgetListener;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.TerminalView;
@@ -33,6 +35,7 @@ public class TerminalContainer {
   private final JBTerminalWidget myTerminalWidget;
   private final Project myProject;
   private final TerminalView myTerminalView;
+  private final TerminalWidgetListener myListener;
   private JPanel myPanel;
 
   public TerminalContainer(@NotNull Project project,
@@ -44,11 +47,10 @@ public class TerminalContainer {
     myTerminalWidget = terminalWidget;
     myTerminalView = terminalView;
     myPanel = createPanel(terminalWidget);
-    terminalWidget.addListener(widget -> {
-      ApplicationManager.getApplication().invokeLater(() -> {
-        onSessionClosed();
-      }, myProject.getDisposed());
-    });
+    myListener = widget -> {
+      ApplicationManager.getApplication().invokeLater(() -> onSessionClosed(), myProject.getDisposed());
+    };
+    terminalWidget.addListener(myListener);
     terminalView.register(this);
   }
 
@@ -125,11 +127,17 @@ public class TerminalContainer {
       if (nextToFocus != null) {
         requestFocus(nextToFocus);
       }
-      myTerminalView.unregister(this);
+      Disposer.dispose(myTerminalWidget);
     }
     else {
       myTerminalView.closeTab(myContent);
     }
+    detachWidget();
+  }
+
+  public void detachWidget() {
+    myTerminalWidget.removeListener(myListener);
+    myTerminalView.unregister(this);
   }
 
   public boolean isSplitTerminal() {

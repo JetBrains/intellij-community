@@ -8,6 +8,7 @@ import com.intellij.openapi.fileChooser.PathChooserDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -16,6 +17,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Path;
 import java.util.List;
 
 public final class FileChooserUtil {
@@ -33,13 +35,28 @@ public final class FileChooserUtil {
     return path != null ? LocalFileSystem.getInstance().findFileByPath(path) : null;
   }
 
+  /**
+   * @deprecated Use {@link #setLastOpenedFile(Project, Path)}
+   */
+  @Deprecated
   public static void setLastOpenedFile(@Nullable Project project, @Nullable VirtualFile file) {
-    if (file == null) return;
+    if (file == null) {
+      return;
+    }
     if (project == null) {
       PropertiesComponent.getInstance().setValue(LAST_OPENED_FILE_PATH, file.getPath());
     }
     else if (!project.isDisposed()) {
       PropertiesComponent.getInstance(project).setValue(LAST_OPENED_FILE_PATH, file.getPath());
+    }
+  }
+
+  public static void setLastOpenedFile(@Nullable Project project, @NotNull Path file) {
+    if (project == null) {
+      PropertiesComponent.getInstance().setValue(LAST_OPENED_FILE_PATH, FileUtil.toSystemIndependentName(file.toString()));
+    }
+    else if (!project.isDisposed()) {
+      PropertiesComponent.getInstance(project).setValue(LAST_OPENED_FILE_PATH, FileUtil.toSystemIndependentName(file.toString()));
     }
   }
 

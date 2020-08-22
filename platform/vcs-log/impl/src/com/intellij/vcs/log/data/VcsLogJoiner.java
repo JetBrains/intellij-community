@@ -128,7 +128,7 @@ public class VcsLogJoiner<CommitId, Commit extends GraphCommit<CommitId>> {
     return new Pair<>(saveRegIndex, sorter.getAllRedCommit());
   }
 
-  private static class RedGreenSorter<CommitId, Commit extends GraphCommit<CommitId>> {
+  private static final class RedGreenSorter<CommitId, Commit extends GraphCommit<CommitId>> {
     private final Set<? super CommitId> currentRed;
     private final Set<? super CommitId> currentGreen;
     private final Set<CommitId> allRedCommit = new THashSet<>();

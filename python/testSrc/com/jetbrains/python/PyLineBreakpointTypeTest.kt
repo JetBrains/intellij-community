@@ -13,12 +13,12 @@ class PyLineBreakpointTypeTest : PyTestCase() {
   // PY-16932
   fun testPutAtUserSkeleton() {
     val skeletonsDir = getUserSkeletonsDirectory()
-    val pythonFile = skeletonsDir!!.findFileByRelativePath("lettuce/terrain.py")
-    val line = 20
+    val pythonFile = skeletonsDir!!.findFileByRelativePath("nose/tools/__init__.py")
+    val line = 13
 
     val document = FileDocumentManager.getInstance().getDocument(pythonFile!!)
     val range = TextRange.create(document!!.getLineStartOffset(line), document.getLineEndOffset(line))
-    assertEquals("        pass", document.getText(range))
+    assertEquals("    pass", document.getText(range))
 
     assertFalse(PyLineBreakpointType().canPutAt(pythonFile, line, myFixture.project))
   }
@@ -39,7 +39,7 @@ class PyLineBreakpointTypeTest : PyTestCase() {
   // PY-16932
   fun testPutAtPythonStub() {
     val pythonFile = PyTypeShed.directory!!.findFileByRelativePath("stdlib/2/__builtin__.pyi")
-    val line = 23
+    val line = 29
 
     val document = FileDocumentManager.getInstance().getDocument(pythonFile!!)
     val range = TextRange.create(document!!.getLineStartOffset(line), document.getLineEndOffset(line))

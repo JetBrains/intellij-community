@@ -5,7 +5,6 @@ import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.completion.JavaLookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -81,15 +80,15 @@ public class JavaLangInvokeHandleReference extends PsiReferenceBase<PsiLiteralEx
     return null;
   }
 
-  private static PsiElement resolveField(@NotNull String name, @NotNull ReflectiveClass ownerClass, Condition<? super PsiField> filter) {
+  private static PsiElement resolveField(@NotNull String name, @NotNull ReflectiveClass ownerClass, Predicate<? super PsiField> filter) {
     final PsiField field = ownerClass.getPsiClass().findFieldByName(name, true);
-    return field != null && filter.value(field) ? field : null;
+    return field != null && filter.test(field) ? field : null;
   }
 
-  private PsiElement resolveMethod(@NotNull String name, @NotNull ReflectiveClass ownerClass, Condition<? super PsiMethod> filter) {
+  private PsiElement resolveMethod(@NotNull String name, @NotNull ReflectiveClass ownerClass, Predicate<? super PsiMethod> filter) {
     PsiMethod[] methods = ownerClass.getPsiClass().findMethodsByName(name, true);
     if (methods.length != 0) {
-      methods = ContainerUtil.filter(methods, filter).toArray(PsiMethod.EMPTY_ARRAY);
+      methods = ContainerUtil.filter(methods, filter::test).toArray(PsiMethod.EMPTY_ARRAY);
       if (methods.length > 1) {
         final PsiMethodCallExpression definitionCall = PsiTreeUtil.getParentOfType(myElement, PsiMethodCallExpression.class);
         if (definitionCall != null) {

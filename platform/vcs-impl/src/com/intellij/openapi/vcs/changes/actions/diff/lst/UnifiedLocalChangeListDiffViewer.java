@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions.diff.lst;
 
 import com.intellij.diff.DiffContext;
@@ -99,7 +99,7 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
       new MyLocalTrackerDiffHandler(document1, document2, indicator));
   }
 
-  private class MyLocalTrackerDiffHandler implements LocalTrackerDiffUtil.LocalTrackerDiffHandler {
+  private final class MyLocalTrackerDiffHandler implements LocalTrackerDiffUtil.LocalTrackerDiffHandler {
     @NotNull private final Document myDocument1;
     @NotNull private final Document myDocument2;
     @NotNull private final ProgressIndicator myIndicator;
@@ -188,7 +188,7 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
     myExcludeAllCheckboxPanel.refresh();
   }
 
-  private static class MyUnifiedDiffChange extends UnifiedDiffChange {
+  private static final class MyUnifiedDiffChange extends UnifiedDiffChange {
     @NotNull private final String myChangelistId;
     private final boolean myIsFromActiveChangelist;
     private final boolean myIsExcludedFromCommit;
@@ -222,7 +222,7 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
     }
   }
 
-  private static class MyUnifiedDiffChangeUi extends UnifiedDiffChangeUi {
+  private static final class MyUnifiedDiffChangeUi extends UnifiedDiffChangeUi {
     private MyUnifiedDiffChangeUi(@NotNull UnifiedLocalChangeListDiffViewer viewer,
                                   @NotNull MyUnifiedDiffChange change) {
       super(viewer, change);
@@ -266,7 +266,7 @@ public class UnifiedLocalChangeListDiffViewer extends UnifiedDiffViewer {
     }
   }
 
-  private static class MyLocalTrackerActionProvider extends LocalTrackerDiffUtil.LocalTrackerActionProvider {
+  private static final class MyLocalTrackerActionProvider extends LocalTrackerDiffUtil.LocalTrackerActionProvider {
     @NotNull private final UnifiedLocalChangeListDiffViewer myViewer;
 
     private MyLocalTrackerActionProvider(@NotNull UnifiedLocalChangeListDiffViewer viewer,

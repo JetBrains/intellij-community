@@ -19,6 +19,8 @@ public interface RankingModelProvider {
 
   boolean isLanguageSupported(@NotNull Language language);
 
+  default @NotNull String getId() { return getDisplayNameInSettings();}
+
   default boolean isEnabledByDefault() {
     return false;
   }

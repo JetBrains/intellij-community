@@ -21,6 +21,7 @@ import com.intellij.openapi.module.*;
 import com.intellij.openapi.module.impl.LoadedModuleDescriptionImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.SortedComboBoxModel;
 import org.jetbrains.annotations.NotNull;
@@ -37,7 +38,7 @@ import java.util.Comparator;
  *
  * @see ModulesComboBox
  */
-public final class ModuleDescriptionsComboBox extends ComboBox<ModuleDescription> {
+public final class ModuleDescriptionsComboBox extends ComboBox<ModuleDescription> implements ModulesCombo {
   private final SortedComboBoxModel<ModuleDescription> myModel;
   private boolean myAllowEmptySelection;
 
@@ -49,12 +50,14 @@ public final class ModuleDescriptionsComboBox extends ComboBox<ModuleDescription
     setRenderer(new ModuleDescriptionListCellRenderer());
   }
 
+  @Override
   public void allowEmptySelection(@NotNull String emptySelectionText) {
     myAllowEmptySelection = true;
     myModel.add(null);
     setRenderer(new ModuleDescriptionListCellRenderer(emptySelectionText));
   }
 
+  @Override
   public void setModules(@NotNull Collection<? extends Module> modules) {
     myModel.clear();
     for (Module module : modules) {
@@ -69,10 +72,12 @@ public final class ModuleDescriptionsComboBox extends ComboBox<ModuleDescription
     setModules(Arrays.asList(ModuleManager.getInstance(project).getModules()));
   }
 
+  @Override
   public void setSelectedModule(@Nullable Module module) {
     myModel.setSelectedItem(module != null ? new LoadedModuleDescriptionImpl(module) : null);
   }
 
+  @Override
   public void setSelectedModule(@NotNull Project project, @NotNull String moduleName) {
     Module module = ModuleManager.getInstance(project).findModuleByName(moduleName);
     if (module != null) {
@@ -92,6 +97,7 @@ public final class ModuleDescriptionsComboBox extends ComboBox<ModuleDescription
     }
   }
 
+  @Override
   @Nullable
   public Module getSelectedModule() {
     ModuleDescription selected = myModel.getSelectedItem();
@@ -101,6 +107,7 @@ public final class ModuleDescriptionsComboBox extends ComboBox<ModuleDescription
     return null;
   }
 
+  @Override
   @Nullable
   public String getSelectedModuleName() {
     ModuleDescription selected = myModel.getSelectedItem();
@@ -108,13 +115,13 @@ public final class ModuleDescriptionsComboBox extends ComboBox<ModuleDescription
   }
 
   private static class ModuleDescriptionListCellRenderer extends SimpleListCellRenderer<ModuleDescription> {
-    private final String myEmptySelectionText;
+    private final @NlsContexts.ListItem String myEmptySelectionText;
 
     ModuleDescriptionListCellRenderer() {
       this("[none]");
     }
 
-    ModuleDescriptionListCellRenderer(@NotNull String emptySelectionText) {
+    ModuleDescriptionListCellRenderer(@NotNull @NlsContexts.ListItem String emptySelectionText) {
       myEmptySelectionText = emptySelectionText;
     }
 

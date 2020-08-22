@@ -12,7 +12,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class BaseIntentionAction implements IntentionAction {
-  private String myText = "";
+  private @IntentionName String myText = "";
 
   @Override
   @IntentionName

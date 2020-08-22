@@ -21,11 +21,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ComponentUtil;
@@ -36,6 +36,7 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StatusText;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,8 +72,8 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
   private final List<DirDiffElementImpl> myElements = new ArrayList<>();
   private final AtomicBoolean myUpdating = new AtomicBoolean(false);
   private JBTable myTable;
-  private final AtomicReference<String> text = new AtomicReference<>(prepareText(""));
-  private Updater myUpdater;
+  private final AtomicReference<@Nls String> text = new AtomicReference<>(prepareText(""));
+  private volatile Updater myUpdater;
   private final List<DirDiffModelListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private TableSelectionConfig mySelectionConfig;
   /** directory path -> map from name of source element name to name of target element which is manually specified as replacement for that source */
@@ -193,6 +194,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     return map != null ? map.get(source.getSourceName()) : null;
   }
 
+  @Nls
   private static String prepareText(String text) {
     final int LEN = EMPTY_STRING.length();
     String right;
@@ -242,8 +244,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
       ProgressManager.getInstance().executeProcessUnderProgress(() -> {
         try {
           if (myDisposed) return;
-          myUpdater = new Updater(loadingPanel, 100);
-          myUpdater.start();
+          startAndSetUpdater(new Updater(loadingPanel, 100));
           text.set(CommonBundle.getLoadingTreeNodeText());
           myTree = new DTree(null, "", true);
           mySource.refresh(userForcedRefresh);
@@ -299,7 +300,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     }
   }
 
-  private void reportException(@Nullable String htmlContent) {
+  private void reportException(@Nullable @Nls String htmlContent) {
     if (myDisposed || htmlContent == null) return;
     Runnable balloonShower = () -> {
       Balloon balloon = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(htmlContent, MessageType.WARNING, null).
@@ -326,8 +327,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     if (!loadingPanel.isLoading()) {
       loadingPanel.startLoading();
       if (myUpdater == null) {
-        myUpdater = new Updater(loadingPanel, 100);
-        myUpdater.start();
+        startAndSetUpdater(new Updater(loadingPanel, 100));
       }
     }
     Application app = ApplicationManager.getApplication();
@@ -430,6 +430,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
     }
   }
 
+  @NlsContexts.DialogTitle
   public String getTitle() {
     if (myDisposed) return DiffBundle.message("diff.files.dialog.title");
     if (mySource instanceof VirtualFileDiffElement &&
@@ -812,10 +813,10 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
 
   private boolean confirmDeletion(int count) {
     return MessageDialogBuilder.yesNo(DiffBundle.message("confirm.delete"),
-                                      DiffBundle.message("delete.0.items", count)).project(myProject)
-             .yesText(CommonBundle.message("button.delete"))
-             .noText(CommonBundle.getCancelButtonText()).doNotAsk(
-      new DialogWrapper.DoNotAskOption() {
+                                      DiffBundle.message("delete.0.items", count))
+      .yesText(CommonBundle.message("button.delete"))
+      .noText(CommonBundle.getCancelButtonText())
+      .doNotAsk(new DialogWrapper.DoNotAskOption() {
         @Override
         public boolean isToBeShown() {
           return WarnOnDeletion.isWarnWhenDeleteItems();
@@ -841,7 +842,8 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
         public String getDoNotShowMessage() {
           return DiffBundle.message("do.not.ask.me.again");
         }
-      }).show() == Messages.YES;
+      })
+      .ask(myProject);
   }
 
   private void syncElement(DirDiffElementImpl element) {
@@ -883,12 +885,16 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
             myLoadingPanel.setLoadingText(s);
           }
         }, ModalityState.stateForComponent(myLoadingPanel));
-        myUpdater = new Updater(myLoadingPanel, mySleep);
-        myUpdater.start();
+        startAndSetUpdater(new Updater(myLoadingPanel, mySleep));
       } else {
         myUpdater = null;
       }
     }
+  }
+
+  private void startAndSetUpdater(Updater updater) {
+    updater.start();
+    myUpdater = updater;
   }
 
   public void rememberSelection() {

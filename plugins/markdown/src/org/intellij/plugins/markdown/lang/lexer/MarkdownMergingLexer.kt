@@ -7,14 +7,14 @@ import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 
 class MarkdownMergingLexer : MergingLexerAdapterBase(MarkdownLexerAdapter()) {
   override fun getMergeFunction(): MergeFunction {
-    return MERGE_FUNCTION
+    return APOSTROPHE_MERGING_FUNCTION
   }
 
   companion object {
-    private val MERGE_FUNCTION = MergeFunction { type, originalLexer ->
-      if (type === MarkdownTokenTypes.TEXT && originalLexer.tokenType === MarkdownTokenTypes.SINGLE_QUOTE) {
+    private val APOSTROPHE_MERGING_FUNCTION = MergeFunction { type, originalLexer ->
+      if (type == MarkdownTokenTypes.TEXT && originalLexer.tokenType == MarkdownTokenTypes.SINGLE_QUOTE) {
         originalLexer.advance()
-        if (originalLexer.tokenType === MarkdownTokenTypes.TEXT) {
+        if (originalLexer.tokenType == MarkdownTokenTypes.TEXT) {
           originalLexer.advance()
         }
         return@MergeFunction MarkdownTokenTypes.TEXT

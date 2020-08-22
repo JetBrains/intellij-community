@@ -2,10 +2,9 @@
 package com.jetbrains.env.python.typeshed
 
 import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.testFramework.EdtTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestApplicationManager
-import com.intellij.util.ThrowableRunnable
+import com.intellij.testFramework.runInEdtAndWait
 import com.jetbrains.python.codeInsight.typing.PyTypeShed
 import com.jetbrains.python.inspections.PyTypeCheckerInspection
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection
@@ -24,7 +23,7 @@ import java.io.InputStreamReader
 class PyTypeShedTestDataTest(path: String, sdkPath: String) : PyTypeShedTestCase(path, sdkPath) {
   @Test
   fun test() {
-    EdtTestUtil.runInEdtAndWait(ThrowableRunnable {
+    runInEdtAndWait {
       val fullPath = "$testDataPath/$path"
       runProcess(sdkPath, "-m", "pytest", fullPath)
       val importablePath = path.split("/").drop(2).joinToString("/")
@@ -35,7 +34,7 @@ class PyTypeShedTestDataTest(path: String, sdkPath: String) : PyTypeShedTestCase
       fixture?.checkHighlighting(true, false, true)
       val moduleSdk = PythonSdkUtil.findPythonSdk(fixture?.module)
       TestCase.assertNotNull(moduleSdk)
-    })
+    }
   }
 
   private fun runProcess(vararg args: String) {

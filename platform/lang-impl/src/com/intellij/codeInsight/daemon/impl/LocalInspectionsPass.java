@@ -33,6 +33,8 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -46,7 +48,6 @@ import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -212,20 +213,22 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     final InspectionProfile inspectionProfile = myProfileWrapper.getInspectionProfile();
     if (key != null && inspectionProfile.isToolEnabled(key, getFile())) {
       InspectionToolWrapper<?,?> toolWrapper = inspectionProfile.getInspectionTool(RedundantSuppressInspection.SHORT_NAME, getFile());
-      InspectionSuppressor suppressor = LanguageInspectionSuppressors.INSTANCE.forLanguage(getFile().getLanguage());
+      Language fileLanguage = getFile().getLanguage();
+      InspectionSuppressor suppressor = LanguageInspectionSuppressors.INSTANCE.forLanguage(fileLanguage);
       if (suppressor instanceof RedundantSuppressionDetector) {
         if (toolWrappers.stream().anyMatch(LocalInspectionToolWrapper::runForWholeFile)) {
           return;
         }
         Set<String> activeTools = new HashSet<>();
         for (LocalInspectionToolWrapper tool : toolWrappers) {
-          if (!tool.isUnfair()) {
-            activeTools.add(tool.getID());
-            ContainerUtil.addIfNotNull(activeTools, tool.getAlternativeID());
-            InspectionElementsMerger elementsMerger = InspectionElementsMerger.getMerger(tool.getShortName());
-            if (elementsMerger != null) {
-              activeTools.addAll(Arrays.asList(elementsMerger.getSuppressIds()));
-            }
+          if (tool.isUnfair() || !tool.isApplicable(fileLanguage)) {
+            continue;
+          }
+          activeTools.add(tool.getID());
+          ContainerUtil.addIfNotNull(activeTools, tool.getAlternativeID());
+          InspectionElementsMerger elementsMerger = InspectionElementsMerger.getMerger(tool.getShortName());
+          if (elementsMerger != null) {
+            activeTools.addAll(Arrays.asList(elementsMerger.getSuppressIds()));
           }
         }
         LocalInspectionTool
@@ -366,8 +369,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
   private @Nullable HighlightInfo highlightInfoFromDescriptor(@NotNull ProblemDescriptor problemDescriptor,
                                                               @NotNull HighlightInfoType highlightInfoType,
-                                                              @NotNull String message,
-                                                              @Nullable String toolTip,
+                                                              @NotNull @NlsContexts.DetailedDescription String message,
+                                                              @Nullable @NlsContexts.Tooltip String toolTip,
                                                               @NotNull PsiElement psiElement,
                                                               @NotNull List<IntentionAction> quickFixes,
                                                               @NotNull String toolID) {
@@ -506,7 +509,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                              @NotNull LocalInspectionToolWrapper toolWrapper,
                                              @NotNull HighlightSeverity severity,
                                              @NotNull ProblemDescriptor descriptor,
-                                             @NotNull PsiElement element, 
+                                             @NotNull PsiElement element,
                                              boolean ignoreSuppressed) {
     if (descriptor instanceof ProblemDescriptorWithReporterName) {
       String reportingToolName = ((ProblemDescriptorWithReporterName)descriptor).getReportingToolName();
@@ -533,7 +536,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                              @NotNull ProblemDescriptor descriptor,
                                              @NotNull PsiElement element) {
     HighlightInfoType level = ProblemDescriptorUtil.highlightTypeFromDescriptor(descriptor, severity, mySeverityRegistrar);
-    @NonNls String message = ProblemDescriptorUtil.renderDescriptionMessage(descriptor, element);
+    @NlsSafe String message = ProblemDescriptorUtil.renderDescriptionMessage(descriptor, element);
 
     ProblemGroup problemGroup = descriptor.getProblemGroup();
     String problemName = problemGroup != null ? problemGroup.getProblemName() : null;
@@ -554,7 +557,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
              + "</a> " + myShortcutText;
     }
 
-    @NonNls String tooltip = null;
+    @NlsSafe String tooltip = null;
     if (descriptor.showTooltip()) {
       tooltip = tooltips.intern(XmlStringUtil.wrapInHtml((message.startsWith("<html>") ? XmlStringUtil.stripHtml(message): XmlStringUtil.escapeString(message)) + link));
     }
@@ -802,7 +805,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     return myInfos;
   }
 
-  private static class InspectionResult {
+  private static final class InspectionResult {
     private final @NotNull LocalInspectionToolWrapper tool;
     private final @NotNull List<? extends ProblemDescriptor> foundProblems;
 
@@ -812,7 +815,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     }
   }
 
-  private static class InspectionContext {
+  private static final class InspectionContext {
     private InspectionContext(@NotNull LocalInspectionToolWrapper tool,
                               @NotNull ProblemsHolder holder,
                               int problemsSize, // need this to diff between found problems in visible part and the rest

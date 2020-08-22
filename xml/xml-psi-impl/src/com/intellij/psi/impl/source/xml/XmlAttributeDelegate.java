@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.xml;
 
 import com.intellij.javaee.ExternalResourceManagerEx;
@@ -26,7 +26,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.util.XmlUtil;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -35,7 +35,6 @@ import java.util.Arrays;
 
 @ApiStatus.Experimental
 public abstract class XmlAttributeDelegate {
-
   @NotNull
   private final XmlAttribute myAttribute;
 
@@ -58,19 +57,15 @@ public abstract class XmlAttributeDelegate {
 
   @Nullable
   private static XmlAttributeDescriptor getDescriptionImpl(@NotNull XmlAttribute attribute) {
-    XmlAttributeDescriptor result = null;
     final XmlTag tag = attribute.getParent();
     // e.g. XmlDecl or PI
     if (tag != null) {
       final XmlElementDescriptor descr = tag.getDescriptor();
       if (descr != null) {
-        final XmlAttributeDescriptor attributeDescr = descr.getAttributeDescriptor(attribute);
-        result = attributeDescr == null
-                 ? descr.getAttributeDescriptor(attribute.getName(), tag)
-                 : attributeDescr;
+        return descr.getAttributeDescriptor(attribute);
       }
     }
-    return result;
+    return null;
   }
 
   @NotNull
@@ -157,8 +152,8 @@ public abstract class XmlAttributeDelegate {
       valueTextRange = new TextRange(child.getTextLength(), valueTextRange.getEndOffset());
       child = child.getTreeNext();
     }
-    final TIntArrayList gapsStarts = new TIntArrayList();
-    final TIntArrayList gapsShifts = new TIntArrayList();
+    final IntArrayList gapsStarts = new IntArrayList();
+    final IntArrayList gapsShifts = new IntArrayList();
     StringBuilder buffer = new StringBuilder(myAttribute.getTextLength());
     while (child != null) {
       final int start = buffer.length();
@@ -220,7 +215,7 @@ public abstract class XmlAttributeDelegate {
       }
     }
 
-    final PsiReference[] referencesFromProviders = ReferenceProvidersRegistry.getReferencesFromProviders(myAttribute);
+    PsiReference[] referencesFromProviders = ReferenceProvidersRegistry.getReferencesFromProviders(myAttribute, hints);
     PsiReference[] refs;
     if (myAttribute.isNamespaceDeclaration()) {
       refs = new PsiReference[referencesFromProviders.length + 1];

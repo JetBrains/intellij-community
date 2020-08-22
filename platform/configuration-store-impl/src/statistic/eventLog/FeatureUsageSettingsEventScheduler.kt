@@ -34,24 +34,25 @@ internal class FeatureUsageSettingsEventScheduler : FeatureUsageStateEventTracke
     AppExecutorUtil.getAppScheduledExecutorService().scheduleWithFixedDelay({ logConfigStateEvents() }, INITIAL_DELAY.toLong(), PERIOD_DELAY.toLong(), TimeUnit.MINUTES)
   }
 
-  override fun reportNow() {
-    logConfigStateEvents()
+  override fun reportNow(): CompletableFuture<Void> {
+    return logConfigStateEvents()
   }
 }
 
-private fun logConfigStateEvents() {
+private fun logConfigStateEvents(): CompletableFuture<Void> {
   if (!FeatureUsageLogger.isEnabled()) {
-    return
+    return CompletableFuture.completedFuture(null)
   }
 
-  logInitializedProjectComponents(ApplicationManager.getApplication())
+  val applicationCompletableFuture = logInitializedProjectComponents(ApplicationManager.getApplication())
 
   val projectManager = ProjectManagerEx.getInstanceEx()
   val projects = ArrayDeque(projectManager.openProjects.toList())
   if (projectManager.isDefaultProjectInitialized) {
     projects.addFirst(projectManager.defaultProject)
   }
-  logProjectInitializedComponentsAndContinue(projects)
+  val projectCompletableFuture = logProjectInitializedComponentsAndContinue(projects)
+  return CompletableFuture.allOf(applicationCompletableFuture, projectCompletableFuture);
 }
 
 private fun logProjectInitializedComponentsAndContinue(projects: ArrayDeque<Project>): CompletableFuture<Void?> {

@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.ext.spock
 
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.siblings
 import com.intellij.psi.util.skipTokens
@@ -10,6 +11,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
+
+@NlsSafe
+private const val WHERE_LABEL = "where"
+@NlsSafe
+private const val AND_LABEL = "and"
 
 /**
  * @return `true` if [this] expression is a binary `|` or `||` expression which is a part of Spock data table,
@@ -50,12 +56,12 @@ private fun PsiElement.isUnderTableHeader(): Boolean {
 }
 
 private fun PsiElement.isTableHeader(): Boolean {
-  return this is GrLabeledStatement && name == "where"
+  return this is GrLabeledStatement && name == WHERE_LABEL
 }
 
 private fun GrExpression.isTableRow(): Boolean {
   val parent = parent
-  if (parent is GrLabeledStatement && parent.name == "and") {
+  if (parent is GrLabeledStatement && parent.name == AND_LABEL) {
     return parent.isTableRow()
   }
   else {
@@ -75,7 +81,7 @@ private fun GrStatement.isTableRow(): Boolean {
     if (sibling !is GrLabeledStatement) {
       return false
     }
-    if (sibling.name == "and" && sibling.statement?.maybeTableColumnExpression() == true) {
+    if (sibling.name == AND_LABEL && sibling.statement?.maybeTableColumnExpression() == true) {
       continue
     }
     return findWhereLabeledStatement(sibling) != null
@@ -97,7 +103,7 @@ fun findWhereLabeledStatement(top: GrLabeledStatement): GrStatement? {
   while (true) {
     val labeledStatement = current.statement
     when {
-      "where" == current.name -> {
+      WHERE_LABEL == current.name -> {
         return labeledStatement
       }
       labeledStatement is GrLabeledStatement -> {

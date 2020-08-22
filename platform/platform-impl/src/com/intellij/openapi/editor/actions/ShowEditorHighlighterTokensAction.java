@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.actions;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -33,7 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
-class ShowEditorHighlighterTokensAction extends EditorAction {
+final class ShowEditorHighlighterTokensAction extends EditorAction {
   private static class Holder {
     private static final Key<String> TOKEN_NAME = Key.create("token.name");
     private static final Key<Boolean> LISTENER_ADDED = Key.create("token.mouse.listener.added");
@@ -72,7 +72,7 @@ class ShowEditorHighlighterTokensAction extends EditorAction {
   private static boolean ourEscHandlerInstalled;
 
 
-  private static class EscapeHandler extends EditorActionHandler {
+  private static final class EscapeHandler extends EditorActionHandler {
     private final EditorActionHandler myDelegate;
 
     private EscapeHandler(EditorActionHandler delegate) {myDelegate = delegate;}

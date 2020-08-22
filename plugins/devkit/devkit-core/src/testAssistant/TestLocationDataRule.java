@@ -24,13 +24,12 @@ import com.intellij.testFramework.Parameterized;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class TestLocationDataRule implements GetDataRule {
+public final class TestLocationDataRule implements GetDataRule {
   @Nullable
   @Override
   public Object getData(@NotNull DataProvider dataProvider) {
@@ -66,7 +65,7 @@ public class TestLocationDataRule implements GetDataRule {
             if (word.length() < 5) {
               continue;
             }
-            final Set<PsiFile> files = new THashSet<>();
+            final Set<PsiFile> files = new HashSet<>();
             searchHelper.processAllFilesWithWordInLiterals(word, testScope, new CommonProcessors.CollectProcessor<>(files));
             if (resultFiles == null) {
               resultFiles = files;

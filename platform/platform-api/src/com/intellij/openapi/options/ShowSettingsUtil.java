@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NonNls;
@@ -17,7 +17,7 @@ import java.util.function.Predicate;
  */
 public abstract class ShowSettingsUtil {
   public static ShowSettingsUtil getInstance() {
-    return ServiceManager.getService(ShowSettingsUtil.class);
+    return ApplicationManager.getApplication().getService(ShowSettingsUtil.class);
   }
 
   public abstract void showSettingsDialog(@NotNull Project project, ConfigurableGroup @NotNull ... groups);

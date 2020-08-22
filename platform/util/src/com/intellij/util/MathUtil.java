@@ -20,8 +20,12 @@ public final class MathUtil {
    * @param min min allowed value
    * @param max max allowed value
    * @return a clamped value that fits into [min..max] interval
+   * @throws IllegalArgumentException if min &gt; max
    */
   public static int clamp(int value, int min, int max) {
+    if (min > max) {
+      throw new IllegalArgumentException(min + ">" + max);
+    }
     return Math.min(max, Math.max(value, min));
   }
 
@@ -31,8 +35,12 @@ public final class MathUtil {
    * @param min min allowed value
    * @param max max allowed value
    * @return a clamped value that fits into [min..max] interval
+   * @throws IllegalArgumentException if min &gt; max
    */
   public static long clamp(long value, long min, long max) {
+    if (min > max) {
+      throw new IllegalArgumentException(min + ">" + max);
+    }
     return Math.min(max, Math.max(value, min));
   }
 
@@ -42,8 +50,12 @@ public final class MathUtil {
    * @param min min allowed value
    * @param max max allowed value
    * @return a clamped value that fits into [min..max] interval
+   * @throws IllegalArgumentException if min &gt; max
    */
   public static double clamp(double value, double min, double max) {
+    if (min > max) {
+      throw new IllegalArgumentException(min + ">" + max);
+    }
     return Math.min(max, Math.max(value, min));
   }
 
@@ -53,8 +65,12 @@ public final class MathUtil {
    * @param min min allowed value
    * @param max max allowed value
    * @return a clamped value that fits into [min..max] interval
+   * @throws IllegalArgumentException if min &gt; max
    */
   public static float clamp(float value, float min, float max) {
+    if (min > max) {
+      throw new IllegalArgumentException(min + ">" + max);
+    }
     return Math.min(max, Math.max(value, min));
   }
 }

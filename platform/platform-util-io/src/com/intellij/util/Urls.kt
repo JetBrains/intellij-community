@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util
 
 import com.intellij.openapi.diagnostic.logger
@@ -10,7 +10,7 @@ import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.URLUtil
-import gnu.trove.TObjectHashingStrategy
+import org.jetbrains.annotations.NonNls
 import java.net.MalformedURLException
 import java.net.URI
 import java.net.URISyntaxException
@@ -19,9 +19,8 @@ import java.util.regex.Pattern
 // about ";" see WEB-100359
 private val URI_PATTERN = Pattern.compile("^([^:/?#]+):(//)?([^/?#]*)([^?#;]*)(.*)")
 
+@NonNls
 object Urls {
-  val caseInsensitiveUrlHashingStrategy: TObjectHashingStrategy<Url> by lazy { CaseInsensitiveUrlHashingStrategy() }
-
   @JvmStatic
   fun newUri(scheme: String?, path: String): Url = UrlImpl(scheme, null, path)
 
@@ -83,8 +82,8 @@ object Urls {
   // java.net.URI.create cannot parse "file:///Test Stuff" - but you don't need to worry about it - this method is aware
   @JvmStatic
   fun parseFromIdea(url: CharSequence): Url? {
-    for (i in 0 until url.length) {
-      when (url[i]) {
+    for (element in url) {
+      when (element) {
         ':' -> return parseUrl(url)  // file:// or dart:core/foo
         '/', '\\' -> return newLocalFileUrl(url.toString())
       }
@@ -159,7 +158,7 @@ object Urls {
     urls.any { equals(url, it, caseSensitive, true) }
 
   fun equalsIgnoreParameters(url: Url, file: VirtualFile): Boolean = when {
-    file.isInLocalFileSystem -> url.isInLocalFileSystem && url.path.equals(file.path, ignoreCase = !SystemInfo.isFileSystemCaseSensitive)
+    file.isInLocalFileSystem -> url.isInLocalFileSystem && url.path.equals(file.path, ignoreCase = !file.isCaseSensitive)
     url.isInLocalFileSystem -> false
     else -> parseUrl(file.url)?.equalsIgnoreParameters(url) ?: false
   }
@@ -185,9 +184,4 @@ object Urls {
   catch (e: URISyntaxException) {
     throw RuntimeException(e)
   }
-}
-
-private class CaseInsensitiveUrlHashingStrategy : TObjectHashingStrategy<Url> {
-  override fun computeHashCode(url: Url?) = url?.hashCodeCaseInsensitive() ?: 0
-  override fun equals(url1: Url, url2: Url) = Urls.equals(url1, url2, caseSensitive = false, ignoreParameters = false)
 }

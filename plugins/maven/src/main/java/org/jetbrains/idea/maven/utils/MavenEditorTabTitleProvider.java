@@ -30,7 +30,11 @@ public class MavenEditorTabTitleProvider implements EditorTabTitleProvider {
 
     MavenProject mavenProject = projectsManager.findProject(file);
     if (mavenProject != null) {
-      return file.getName() + " (" + mavenProject.getMavenId().getArtifactId() + ")";
+      String name = file.getName() + " (" + mavenProject.getMavenId().getArtifactId() + ")";
+      if (projectsManager.isIgnored(mavenProject)) {
+        return "ignored " + name;
+      }
+      return name;
     }
 
     return null;

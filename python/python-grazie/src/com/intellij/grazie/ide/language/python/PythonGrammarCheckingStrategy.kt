@@ -14,13 +14,13 @@ import com.jetbrains.python.PyTokenTypes.FSTRING_TEXT
 import com.jetbrains.python.psi.PyFormattedStringElement
 import com.jetbrains.python.psi.PyStringLiteralExpression
 
-class PythonGrammarCheckingStrategy : BaseGrammarCheckingStrategy {
+internal class PythonGrammarCheckingStrategy : BaseGrammarCheckingStrategy {
   override fun isMyContextRoot(element: PsiElement) = element is PsiCommentImpl || element.elementType in PyTokenTypes.STRING_NODES
 
   override fun getContextRootTextDomain(root: PsiElement) = when (root.elementType) {
     PyTokenTypes.DOCSTRING -> GrammarCheckingStrategy.TextDomain.DOCS
     PyTokenTypes.END_OF_LINE_COMMENT -> GrammarCheckingStrategy.TextDomain.COMMENTS
-    PyTokenTypes.STRING_NODES -> GrammarCheckingStrategy.TextDomain.LITERALS
+    in PyTokenTypes.STRING_NODES -> GrammarCheckingStrategy.TextDomain.LITERALS
     else -> GrammarCheckingStrategy.TextDomain.NON_TEXT
   }
 

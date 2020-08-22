@@ -18,6 +18,7 @@ package com.intellij.diagnostic.hprof.action
 import com.intellij.diagnostic.DiagnosticBundle
 import com.intellij.diagnostic.HeapDumpAnalysisSupport
 import com.intellij.diagnostic.hprof.analysis.HProfAnalysis
+import com.intellij.diagnostic.hprof.analysis.analyzeGraph
 import com.intellij.diagnostic.hprof.util.HeapDumpAnalysisNotificationGroup
 import com.intellij.diagnostic.report.HeapReportProperties
 import com.intellij.ide.BrowserUtil
@@ -35,7 +36,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBScrollPane
@@ -99,7 +99,7 @@ class AnalysisRunnable(val hprofPath: Path,
         openOptions = setOf(StandardOpenOption.READ)
       }
       val reportString = FileChannel.open(hprofPath, openOptions).use { channel ->
-        HProfAnalysis(channel, SystemTempFilenameSupplier()).analyze(indicator)
+        HProfAnalysis(channel, SystemTempFilenameSupplier(), ::analyzeGraph).analyze(indicator)
       }
       if (deleteAfterAnalysis) {
         deleteHprofFileAsync()
@@ -198,6 +198,6 @@ class ShowReportDialog(reportText: String, heapProperties: HeapReportProperties)
 
 class SystemTempFilenameSupplier : HProfAnalysis.TempFilenameSupplier {
   override fun getTempFilePath(type: String): Path {
-    return FileUtil.createTempFile("studio-analysis-", "-$type.tmp").toPath()
+    return Files.createTempFile("heap-dump-analysis-", "-$type.tmp")
   }
 }

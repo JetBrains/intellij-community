@@ -7,10 +7,12 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
+import org.jetbrains.plugins.github.pullrequest.action.GHPRViewFilePullRequestAction
 
 class GHPRToolWindowFactory : ToolWindowFactory, DumbAware {
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     toolWindow.setToHideOnEmptyContent(true)
+    toolWindow.setTitleActions(listOf(GHPRViewFilePullRequestAction()))
     project.service<GHPRToolWindowTabsManager>().contentManager = GHPRToolWindowTabsContentManager(project, toolWindow.contentManager)
   }
 

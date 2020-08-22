@@ -25,9 +25,9 @@
     <orderEntry type="library" name="Trove4j" level="project" />
     <orderEntry type="module-library">
       <library name="file-prediction-model" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.filePrediction.model:file-prediction-model:0.0.1" />
+        <properties maven-id="org.jetbrains.intellij.deps.filePrediction.model:file-prediction-model:0.1.1" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/filePrediction/model/file-prediction-model/0.0.1/file-prediction-model-0.0.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/filePrediction/model/file-prediction-model/0.1.1/file-prediction-model-0.1.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

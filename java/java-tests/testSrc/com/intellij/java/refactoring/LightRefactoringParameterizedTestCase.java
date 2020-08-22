@@ -16,7 +16,6 @@
 
 package com.intellij.java.refactoring;
 
-import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -41,51 +40,35 @@ public abstract class LightRefactoringParameterizedTestCase extends LightRefacto
   protected abstract String getBeforeFile(String fileNameCore);
 
   @Test
-  public void runSingle() throws Throwable {
-    final Throwable[] throwables = new Throwable[1];
+  public void runSingle() {
+    final String filePath = getBeforeFile(myFileSuffix);
+    configureByFile(filePath);
 
-    final Runnable runnable = () -> {
-      try {
-        final String filePath = getBeforeFile(myFileSuffix);
-        configureByFile(filePath);
-
-        final File testDir = new File(getTestDataPath(), filePath).getParentFile();
-        final String afterName = getAfterFile(myFileSuffix);
-        final boolean conflictShouldBeFound = !new File(testDir, afterName).exists();
-        try {
-          perform();
-          if (conflictShouldBeFound) {
-            fail("Conflict expected.");
-          }
-        }
-        catch (BaseRefactoringProcessor.ConflictsInTestsException exception) {
-          if (!conflictShouldBeFound) {
-            fail("Conflict not expected");
-          } else {
-            final File conflicts = new File(testDir, FileUtilRt.getNameWithoutExtension(myFileSuffix) + CONFLICTS_SUFFIX);
-            if (!conflicts.exists()) {
-              fail("Conflict file " + conflicts.getPath() + " not found");
-            }
-            final VirtualFile conflictsFile = VfsUtil.findFileByIoFile(conflicts, false);
-            assertNotNull(conflictsFile);
-            assertEquals(LoadTextUtil.loadText(conflictsFile).toString(), exception.getMessage());
-          }
-        }
-
-        if (!conflictShouldBeFound) {
-          checkResultByFile(getAfterFile(myFileSuffix));
-        }
+    final File testDir = new File(getTestDataPath(), filePath).getParentFile();
+    final String afterName = getAfterFile(myFileSuffix);
+    final boolean conflictShouldBeFound = !new File(testDir, afterName).exists();
+    try {
+      perform();
+      if (conflictShouldBeFound) {
+        fail("Conflict expected.");
       }
-      catch (Throwable e) {
-        throwables[0] = e;
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException exception) {
+      if (!conflictShouldBeFound) {
+        fail("Conflict not expected");
+      } else {
+        final File conflicts = new File(testDir, FileUtilRt.getNameWithoutExtension(myFileSuffix) + CONFLICTS_SUFFIX);
+        if (!conflicts.exists()) {
+          fail("Conflict file " + conflicts.getPath() + " not found");
+        }
+        final VirtualFile conflictsFile = VfsUtil.findFileByIoFile(conflicts, false);
+        assertNotNull(conflictsFile);
+        assertEquals(LoadTextUtil.loadText(conflictsFile).toString(), exception.getMessage());
       }
-    };
-
-    invokeTestRunnable(() -> CommandProcessor.getInstance().executeCommand(getProject(), runnable, "", null));
-
-    if (throwables[0] != null) {
-      throw throwables[0];
     }
 
+    if (!conflictShouldBeFound) {
+      checkResultByFile(getAfterFile(myFileSuffix));
+    }
   }
 }

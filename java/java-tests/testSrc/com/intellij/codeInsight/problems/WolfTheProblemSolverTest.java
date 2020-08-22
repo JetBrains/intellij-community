@@ -1,10 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.problems;
 
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
@@ -14,6 +16,7 @@ import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyValidationManager;
@@ -26,6 +29,7 @@ import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.search.scope.ProblemsScope;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,7 +44,7 @@ public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myWolfTheProblemSolver = prepareWolf(myProject);
+    myWolfTheProblemSolver = prepareWolf(myProject, getTestRootDisposable());
   }
 
   @Override
@@ -130,12 +134,15 @@ public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
     assertFalse(myWolfTheProblemSolver.isProblemFile(x));
   }
 
-  public static MockWolfTheProblemSolver prepareWolf(final Project project) {
+  @NotNull
+  public static MockWolfTheProblemSolver prepareWolf(@NotNull Project project, @NotNull Disposable parentDisposable) {
     MockWolfTheProblemSolver wolfTheProblemSolver = (MockWolfTheProblemSolver)WolfTheProblemSolver.getInstance(project);
 
     WolfTheProblemSolverImpl theRealSolver = new WolfTheProblemSolverImpl(project);
     wolfTheProblemSolver.setDelegate(theRealSolver);
+    Disposer.register(parentDisposable, theRealSolver);
     return wolfTheProblemSolver;
+
   }
 
   private VirtualFile configureRoot() throws Exception {
@@ -226,8 +233,8 @@ public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
   }
 
   @Override
-  protected void invokeTestRunnable(@NotNull final Runnable runnable) {
-      ApplicationManager.getApplication().runReadAction(runnable);
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+    ReadAction.run(testRunnable);
   }
 
   private void highlightFile(@NotNull VirtualFile virtualFile) {
@@ -259,7 +266,7 @@ public class WolfTheProblemSolverTest extends DaemonAnalyzerTestCase {
     assertFalse(myWolfTheProblemSolver.isProblemFile(virtualFile));
   }
 
-  private static class MyProblemListener implements ProblemListener {
+  private static final class MyProblemListener implements ProblemListener {
     private final Set<VirtualFile> myEventAdded;
     private final Set<VirtualFile> myEventChanged;
     private final Set<VirtualFile> myEventRemoved;

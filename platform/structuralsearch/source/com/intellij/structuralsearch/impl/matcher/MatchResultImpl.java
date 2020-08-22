@@ -5,6 +5,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
 import com.intellij.util.SmartList;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -20,16 +22,16 @@ public final class MatchResultImpl extends MatchResult {
 
   private boolean myScopeMatch;
   private boolean myMultipleMatch;
-  private MatchResultImpl parent = null;
+  private MatchResultImpl parent;
 
   MatchResultImpl() {
   }
 
-  public MatchResultImpl(String name, String image, SmartPsiPointer ref, boolean target) {
-    this(name,image,ref,0,-1,target);
+  public MatchResultImpl(@NotNull String name, @Nullable String image, @NotNull SmartPsiPointer ref, boolean target) {
+    this(name, image, ref, 0, -1, target);
   }
 
-  public MatchResultImpl(String name, String image, SmartPsiPointer ref, int start, int end, boolean target) {
+  public MatchResultImpl(@NotNull String name, @Nullable String image, @NotNull SmartPsiPointer ref, int start, int end, boolean target) {
     matchRef = ref;
     this.name = name;
     matchImage = image;
@@ -56,7 +58,7 @@ public final class MatchResultImpl extends MatchResult {
     return matchRef.getElement();
   }
 
-  public void setMatchRef(SmartPsiPointer matchStart) {
+  public void setMatchRef(@NotNull SmartPsiPointer matchStart) {
     matchRef = matchStart;
   }
 
@@ -65,12 +67,12 @@ public final class MatchResultImpl extends MatchResult {
     return name;
   }
 
-  public void setName(String name) {
+  public void setName(@NotNull String name) {
     this.name = name;
   }
 
   @Override
-  public List<MatchResult> getChildren() {
+  public @NotNull List<MatchResult> getChildren() {
     return Collections.unmodifiableList(myChildren);
   }
 
@@ -90,21 +92,6 @@ public final class MatchResultImpl extends MatchResult {
     return myMultipleMatch;
   }
 
-  public void clear() {
-    if (matchRef != null) {
-      matchRef.clear();
-      matchRef = null;
-    }
-
-    for (final MatchResult match : myChildren) {
-      ((MatchResultImpl)match).clear();
-    }
-    myChildren.clear();
-
-    name = null;
-    matchImage = null;
-  }
-
   @Override
   public boolean hasChildren() {
     return !myChildren.isEmpty();
@@ -114,6 +101,7 @@ public final class MatchResultImpl extends MatchResult {
     myChildren.clear();
   }
 
+  @NotNull
   public MatchResult removeLastChild() {
     return myChildren.remove(myChildren.size() - 1);
   }
@@ -126,7 +114,7 @@ public final class MatchResultImpl extends MatchResult {
     myMultipleMatch = multipleMatch;
   }
 
-  public MatchResultImpl findChild(String name) {
+  public MatchResultImpl findChild(@NotNull String name) {
     // @todo this could be performance bottleneck, replace with hash lookup!
     for (final MatchResult match : myChildren) {
       final MatchResultImpl res = (MatchResultImpl)match;
@@ -138,7 +126,7 @@ public final class MatchResultImpl extends MatchResult {
     return null;
   }
 
-  public static MatchResultImpl findChildDeep(MatchResult match , String name) {
+  public static MatchResultImpl findChildDeep(@NotNull MatchResult match, @NotNull String name) {
     for (MatchResult child : match.getChildren()) {
       if (name.equals(child.getName())) {
         return (MatchResultImpl)child;
@@ -151,7 +139,7 @@ public final class MatchResultImpl extends MatchResult {
     return null;
   }
 
-  public MatchResult removeChild(String typedVar) {
+  public MatchResult removeChild(@NotNull String typedVar) {
     // @todo this could be performance bottleneck, replace with hash lookup!
     for (int i = 0, size = myChildren.size(); i < size; i++) {
       final MatchResult child = myChildren.get(i);
@@ -164,7 +152,7 @@ public final class MatchResultImpl extends MatchResult {
     return null;
   }
 
-  public void addChild(MatchResult result) {
+  public void addChild(@NotNull MatchResult result) {
     if (result instanceof MatchResultImpl) {
       ((MatchResultImpl)result).parent = this;
     }
@@ -172,7 +160,7 @@ public final class MatchResultImpl extends MatchResult {
   }
 
   @Override
-  public MatchResult getRoot() {
+  public @NotNull MatchResult getRoot() {
     if (parent == null) return this;
     MatchResultImpl root = parent;
     while (root.parent != null) {
@@ -181,7 +169,7 @@ public final class MatchResultImpl extends MatchResult {
     return root;
   }
 
-  public void setMatchImage(String matchImage) {
+  public void setMatchImage(@NotNull String matchImage) {
     this.matchImage = matchImage;
   }
 

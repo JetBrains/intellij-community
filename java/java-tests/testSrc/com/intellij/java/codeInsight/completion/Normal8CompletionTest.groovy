@@ -17,9 +17,10 @@ package com.intellij.java.codeInsight.completion
 
 import com.intellij.JavaTestUtil
 import com.intellij.codeInsight.CodeInsightSettings
-import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.psi.PsiClass
 import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.NeedsIndex
+
 /**
  * @author anna
  */
@@ -64,9 +65,10 @@ class Test {
   }
 }"""
     def items = myFixture.completeBasic()
-    assert LookupElementPresentation.renderElement(items[0]).itemText == 'x1 -> {}'
+    assert renderElement(items[0]).itemText == 'x1 -> {}'
   }
 
+  @NeedsIndex.ForStandardLibrary
   void "test lambda signature duplicate parameter name"() {
     myFixture.configureByText "a.java", """
 import java.util.function.Function;
@@ -90,7 +92,7 @@ class Smth<T> {
 class InterestingClass {}
 """
     def items = myFixture.completeBasic()
-    assert LookupElementPresentation.renderElement(items[0]).itemText == 'interestingClass -> {}'
+    assert renderElement(items[0]).itemText == 'interestingClass -> {}'
   }
 
   void "test suggest this method references"() {
@@ -106,8 +108,8 @@ class Test {
   void bar(int i) {}
 }"""
     def items = myFixture.completeBasic()
-    assert items.any { LookupElementPresentation.renderElement(it).itemText == 'x -> {}' }
-    assert items.any { LookupElementPresentation.renderElement(it).itemText.contains('this::bar') }
+    assert items.any { renderElement(it).itemText == 'x -> {}' }
+    assert items.any { renderElement(it).itemText.contains('this::bar') }
   }
 
   void "test suggest receiver method reference"() {
@@ -132,9 +134,10 @@ class MethodRef {
 }
 """
     def items = myFixture.completeBasic()
-    assert items.find {LookupElementPresentation.renderElement(it).itemText.contains('MethodRef::boo')}
+    assert items.find {renderElement(it).itemText.contains('MethodRef::boo')}
   }
 
+  @NeedsIndex.ForStandardLibrary
   void "test suggest receiver method reference for generic methods"() {
     myFixture.configureByText "a.java", """
 import java.util.*;
@@ -147,7 +150,7 @@ class MethodRef {
 }
 """
     def items = myFixture.completeBasic()
-    assert items.find {LookupElementPresentation.renderElement(it).itemText.contains('Entry::getKey')}
+    assert items.find {renderElement(it).itemText.contains('Entry::getKey')}
   }
 
   void "test constructor ref"() {
@@ -186,12 +189,13 @@ class Test88 {
 """
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testInheritorConstructorRef() {
     configureByTestName()
     myFixture.assertPreferredCompletionItems 0, 'ArrayList::new', 'ArrayList', 'CopyOnWriteArrayList::new'
 
     def constructorRef = myFixture.lookupElements[0]
-    def p = LookupElementPresentation.renderElement(constructorRef)
+    def p = renderElement(constructorRef)
     assert p.tailText == ' (java.util)'
     assert p.tailFragments[0].grayed
 
@@ -215,9 +219,10 @@ class Test88 {
 }
 """
     def items = myFixture.completeBasic()
-    assert items.find {LookupElementPresentation.renderElement(it).itemText.contains('Bar::new')}
+    assert items.find {renderElement(it).itemText.contains('Bar::new')}
   }
 
+  @NeedsIndex.ForStandardLibrary
   void "test new array ref"() {
     myFixture.configureByText "a.java", """
 interface Foo9<T> {
@@ -231,21 +236,24 @@ class Test88 {
 }
 """
     def items = myFixture.completeBasic()
-    assert items.find {LookupElementPresentation.renderElement(it).itemText.contains('String[]::new')}
+    assert items.find {renderElement(it).itemText.contains('String[]::new')}
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testCollectorsToList() {
     configureByTestName()
     selectItem(myItems.find { it.lookupString.contains('toList') })
     checkResultByFileName()
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testStaticallyImportedCollectorsToList() {
     configureByTestName()
     selectItem(myItems.find { it.lookupString.contains('collect(toList())') })
     checkResultByFileName()
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testAllCollectors() {
     configureByTestName()
     assert myFixture.lookupElementStrings == ['collect', 'collect', 'collect(Collectors.toCollection())', 'collect(Collectors.toList())', 'collect(Collectors.toSet())']
@@ -253,14 +261,17 @@ class Test88 {
     checkResultByFileName()
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testCollectorsJoining() { doTest() }
 
+  @NeedsIndex.ForStandardLibrary
   void testCollectorsToSet() {
     configureByTestName()
     selectItem(myItems.find { it.lookupString.contains('toSet') })
     checkResultByFileName()
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testCollectorsInsideCollect() {
     configureByTestName()
     myFixture.assertPreferredCompletionItems 0, 'toCollection', 'toList', 'toSet'
@@ -268,30 +279,36 @@ class Test88 {
     checkResultByFileName()
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testCollectorsJoiningInsideCollect() { doTest() }
 
+  @NeedsIndex.ForStandardLibrary
   void testNoExplicitTypeArgsInTernary() {
     configureByTestName()
     selectItem(myItems.find { it.lookupString.contains('empty') })
     checkResultByFileName()
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testCallBeforeLambda() {
     configureByTestName()
     checkResultByFileName()
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testLambdaInAmbiguousCall() {
     configureByTestName()
     myFixture.assertPreferredCompletionItems(0, 'toString', 'wait')
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testLambdaInAmbiguousConstructorCall() {
     configureByTestName()
     selectItem(myItems.find { it.lookupString.contains('Empty') })
     checkResultByFileName()
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testLambdaWithSuperWildcardInAmbiguousCall() {
     configureByTestName()
     myFixture.assertPreferredCompletionItems(0, 'substring', 'substring', 'subSequence')
@@ -303,6 +320,7 @@ class Test88 {
 
   void testNoContinueInsideLambdaInLoop() { doAntiTest() }
 
+  @NeedsIndex.ForStandardLibrary
   void testNoSemicolonAfterVoidMethodInLambda() {
     configureByTestName()
     myFixture.type('l\t')
@@ -315,12 +333,14 @@ class Test88 {
     checkResultByFileName()
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testPreferLocalsOverMethodRefs() {
-    CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
+    CodeInsightSettings.getInstance().setCompletionCaseSensitive(CodeInsightSettings.NONE)
     configureByTestName()
     myFixture.assertPreferredCompletionItems 0, "psiElement1 -> ", "psiElement", "getParent", "PsiElement"
   }
 
+  @NeedsIndex.Full
   void testStaticallyImportedFromInterface() {
     myFixture.addClass("package pkg;\n" +
                        "public interface Point {\n" +
@@ -331,18 +351,21 @@ class Test88 {
     checkResultByFileName()
   }
 
+  @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants works in smart mode only (for overriding method completion)")
   void testOverrideMethodAsDefault() {
     configureByTestName()
-    assert LookupElementPresentation.renderElement(myFixture.lookupElements[0]).itemText == 'default void run'
+    assert renderElement(myFixture.lookupElements[0]).itemText == 'default void run'
     myFixture.type('\t')
     checkResultByFileName()
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testChainedMethodReference() {
     configureByTestName()
     checkResultByFileName()
   }
 
+  @NeedsIndex.Full
   void testChainedMethodReferenceWithNoPrefix() {
     myFixture.addClass("package bar; public class Strings {}")
     myFixture.addClass("package foo; public class Strings { public static void goo() {} }")
@@ -350,9 +373,10 @@ class Test88 {
     myFixture.assertPreferredCompletionItems 0, 'Strings::goo'
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testOnlyAccessibleClassesInChainedMethodReference() {
     configureByTestName()
-    def p = LookupElementPresentation.renderElement(assertOneElement(myFixture.lookupElements))
+    def p = renderElement(assertOneElement(myFixture.lookupElements))
     assert p.itemText == 'Entry::getKey'
     assert p.tailText == ' java.util.Map'
     assert !p.typeText
@@ -363,16 +387,19 @@ class Test88 {
     myFixture.assertPreferredCompletionItems 0, 'output', 'out -> '
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testPreferLambdaToConstructorReference() {
     configureByTestName()
     myFixture.assertPreferredCompletionItems 0, '() -> ', 'Exception::new'
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testPreferLambdaToTooGenericLocalVariables() {
     configureByTestName()
     myFixture.assertPreferredCompletionItems 0, '(foo, foo2) -> '
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testPreferLambdaToRecentSelections() {
     configureByTestName()
     myFixture.assertPreferredCompletionItems 0, 'String'
@@ -401,7 +428,7 @@ class Test88 {
   }
 
   void "test only importable suggestions in import"() {
-    CodeInsightSettings.getInstance().COMPLETION_CASE_SENSITIVE = CodeInsightSettings.NONE
+    CodeInsightSettings.getInstance().setCompletionCaseSensitive(CodeInsightSettings.NONE)
     myFixture.addClass("package com.foo; public class Comments { public static final int B = 2; }")
     myFixture.configureByText("a.java", "import com.<caret>x.y;\n" +
                                         "import static java.util.stream.Collectors.joining;")
@@ -409,28 +436,34 @@ class Test88 {
     assert myFixture.lookupElementStrings == ['foo']
   }
 
+  @NeedsIndex.ForStandardLibrary
   void "test no overloaded method reference duplicates"() {
     myFixture.configureByText 'a.java', 'class C { { Runnable r = this::wa<caret>x; } }'
     myFixture.completeBasic()
     assert myFixture.lookupElementStrings == ['wait']
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testStreamMethodsOnCollection() {
     configureByTestName()
     myFixture.assertPreferredCompletionItems 0, 'filter'
-    assert LookupElementPresentation.renderElement(myFixture.lookupElements[0]).itemText == 'filter'
+    assert renderElement(myFixture.lookupElements[0]).itemText == 'filter'
 
     myFixture.type('ma')
     myFixture.assertPreferredCompletionItems 0, 'map', 'mapToDouble'
-    assert LookupElementPresentation.renderElement(myFixture.lookupElements[0]).itemText == 'stream().map'
+    assert renderElement(myFixture.lookupElements[0]).itemText == 'stream().map'
 
     myFixture.type('\n')
     checkResultByFileName()
   }
 
+  void testSuggestOnlyAccessibleStreamMethod() { doAntiTest() }
+
+  @NeedsIndex.ForStandardLibrary
   void testStreamMethodsOnArray() {
     configureByTestName()
     myFixture.assertPreferredCompletionItems 0, 'length', 'clone'
+    assert !myFixture.lookupElements.find { renderElement(it).itemText.contains('stream().toString') }
 
     myFixture.type('ma')
     myFixture.assertPreferredCompletionItems 0, 'map', 'mapToDouble'
@@ -438,4 +471,21 @@ class Test88 {
     myFixture.type('\n')
     checkResultByFileName()
   }
+
+  @NeedsIndex.ForStandardLibrary
+  void testPreferConstructorReferenceOfExpectedType() {
+    configureByTestName()
+    myFixture.assertPreferredCompletionItems 0, 'new'
+  }
+
+  @NeedsIndex.ForStandardLibrary
+  void testPreferQualifiedMethodReferenceOfExpectedType() {
+    configureByTestName()
+    myFixture.assertPreferredCompletionItems 0, 'aDouble -> ', 'doubleValue'
+  }
+
+  void testNoStreamSuggestionsOnBrokenCode() { doAntiTest() }
+
+  void testNoStreamSuggestionsInMethodReference() { doAntiTest() }
+
 }

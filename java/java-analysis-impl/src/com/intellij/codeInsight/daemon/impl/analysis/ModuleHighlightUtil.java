@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
@@ -12,10 +12,12 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.PsiPackageAccessibilityStatement.Role;
 import com.intellij.psi.search.FilenameIndex;
@@ -28,6 +30,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import gnu.trove.THashSet;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -40,7 +43,7 @@ import java.util.stream.Stream;
 import static com.intellij.openapi.module.ModuleUtilCore.findModuleForFile;
 import static com.intellij.psi.SyntaxTraverser.psiTraverser;
 
-class ModuleHighlightUtil {
+final class ModuleHighlightUtil {
   static HighlightInfo checkPackageStatement(@NotNull PsiPackageStatement statement, @NotNull PsiFile file, @Nullable PsiJavaModule module) {
     if (PsiUtil.isModuleFile(file)) {
       String message = JavaErrorBundle.message("module.no.package");
@@ -418,9 +421,45 @@ class ModuleHighlightUtil {
     return ObjectUtils.notNull(refElement.getReferenceNameElement(), refElement);
   }
 
-  private static HighlightInfo duplicateReference(@NotNull PsiElement refElement, @NotNull String message) {
+  private static HighlightInfo duplicateReference(@NotNull PsiElement refElement, @NotNull @NlsContexts.DetailedDescription String message) {
     HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(refElement).descriptionAndTooltip(message).create();
     QuickFixAction.registerQuickFixAction(info, factory().createDeleteFix(refElement, QuickFixBundle.message("delete.reference.fix.text")));
     return info;
+  }
+
+  @Nullable
+  public static HighlightInfo checkModulePreviewFeatureAnnotation(@Nullable final PsiStatement statement,
+                                                                  @NotNull final LanguageLevel level) {
+    if (statement instanceof PsiRequiresStatement) {
+      final PsiRequiresStatement requiresStatement = (PsiRequiresStatement)statement;
+      final PsiJavaModule module = requiresStatement.resolve();
+
+      return HighlightUtil.checkPreviewFeatureElement(statement, module, level);
+    }
+    else if (statement instanceof PsiPackageAccessibilityStatement) {
+      final PsiPackageAccessibilityStatement accessibilityStatement = (PsiPackageAccessibilityStatement)statement;
+      final PsiJavaCodeReferenceElement reference = accessibilityStatement.getPackageReference();
+      if (reference == null) return null;
+
+      final PsiElement resolve = reference.resolve();
+      if (!(resolve instanceof PsiPackage)) return null;
+
+      final PsiPackage psiPackage = (PsiPackage)resolve;
+      return HighlightUtil.checkPreviewFeatureElement(statement, psiPackage, level);
+    }
+    else if (statement instanceof PsiProvidesStatement) {
+      final PsiProvidesStatement providesStatement = (PsiProvidesStatement)statement;
+      final PsiReferenceList list = providesStatement.getImplementationList();
+      if (list == null) return null;
+
+      return StreamEx.of(list.getReferenceElements())
+        .map(PsiReference::resolve)
+        .select(PsiClass.class)
+        .map(clazz -> HighlightUtil.checkPreviewFeatureElement(statement, clazz, level))
+        .nonNull()
+        .findAny()
+        .orElse(null);
+    }
+    return null;
   }
 }

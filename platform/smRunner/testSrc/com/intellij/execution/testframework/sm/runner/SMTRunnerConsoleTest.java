@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.process.ProcessOutputTypes;
@@ -26,7 +26,7 @@ public class SMTRunnerConsoleTest extends BaseSMTRunnerTestCase {
   private SMTestProxy.SMRootTestProxy myRootSuite;
   private SMTestRunnerResultsForm myResultsViewer;
 
-  private class MyConsoleView extends SMTRunnerConsoleView {
+  private final class MyConsoleView extends SMTRunnerConsoleView {
     private final TestsOutputConsolePrinter myTestsOutputConsolePrinter;
 
     private MyConsoleView(final TestConsoleProperties consoleProperties) {

@@ -24,7 +24,6 @@ import com.intellij.util.containers.JBTreeTraverser;
 import org.intellij.lang.annotations.JdkConstants;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.*;
-import sun.awt.HeadlessToolkit;
 
 import javax.sound.sampled.AudioInputStream;
 import javax.sound.sampled.AudioSystem;
@@ -232,6 +231,11 @@ public final class UIUtil {
     }
   }
 
+  public static void setMonospaced(@NotNull Component component) {
+    Font font = component.getFont();
+    component.setFont(new FontUIResource(Font.MONOSPACED, font.getStyle(), font.getSize()));
+  }
+
   public static @NotNull Cursor getTextCursor(@NotNull Color backgroundColor) {
     return SystemInfo.isMac && ColorUtil.isDark(backgroundColor) ?
            MacUIUtil.getInvertedTextCursor() : Cursor.getPredefinedCursor(Cursor.TEXT_CURSOR);
@@ -380,7 +384,7 @@ public final class UIUtil {
   public enum FontColor {NORMAL, BRIGHTER}
 
   public static final char MNEMONIC = BundleBase.MNEMONIC;
-  @NonNls public static final String HTML_MIME = "text/html";
+  @NlsSafe public static final String HTML_MIME = "text/html";
   @NonNls public static final String JSLIDER_ISFILLED = "JSlider.isFilled";
   @NonNls public static final String TABLE_FOCUS_CELL_BACKGROUND_PROPERTY = "Table.focusCellBackground";
   /**
@@ -533,7 +537,7 @@ public final class UIUtil {
    * @param key       the client property key that specifies a return type
    * @return the property value from the specified component or {@code null}
    */
-  public static Object getClientProperty(Object component, @NotNull Object key) {
+  public static Object getClientProperty(Object component, @NotNull @NonNls Object key) {
     return component instanceof JComponent ? ((JComponent)component).getClientProperty(key) : null;
   }
 
@@ -579,7 +583,7 @@ public final class UIUtil {
     return text.substring(bodyIndex, Math.min(bodyCloseIndex, htmlCloseIndex));
   }
 
-  public static @NotNull String getHtmlBody(@NotNull Html html) {
+  public static @NotNull @Nls String getHtmlBody(@NotNull Html html) {
     String result = getHtmlBody(html.getText());
     return html.isKeepFont() ? result : result.replaceAll("<font(.*?)>", "").replaceAll("</font>", "");
   }
@@ -762,13 +766,14 @@ public final class UIUtil {
     return ArrayUtilRt.toStringArray(lines);
   }
 
-  public static void setActionNameAndMnemonic(@NotNull String text, @NotNull Action action) {
+  public static void setActionNameAndMnemonic(@NotNull @Nls String text, @NotNull Action action) {
     assignMnemonic(text, action);
 
+    //noinspection HardCodedStringLiteral
     text = text.replaceAll("&", "");
     action.putValue(Action.NAME, text);
   }
-  public static void assignMnemonic(@NotNull String text, @NotNull Action action) {
+  public static void assignMnemonic(@NotNull @Nls String text, @NotNull Action action) {
     int mnemoPos = text.indexOf('&');
     if (mnemoPos >= 0 && mnemoPos < text.length() - 2) {
       String mnemoChar = text.substring(mnemoPos + 1, mnemoPos + 2).trim();
@@ -871,7 +876,8 @@ public final class UIUtil {
     return JBColor.namedColor("Label.infoForeground", new JBColor(Gray.x78, Gray.x8C));
   }
 
-  public static @NotNull String removeMnemonic(@NotNull String s) {
+  @SuppressWarnings("HardCodedStringLiteral")
+  public static @Nls @NotNull String removeMnemonic(@Nls @NotNull String s) {
     if (s.indexOf('&') != -1) {
       s = StringUtil.replace(s, "&", "");
     }
@@ -894,7 +900,7 @@ public final class UIUtil {
     return -1;
   }
 
-  public static String replaceMnemonicAmpersand(final String value) {
+  public static @Nls String replaceMnemonicAmpersand(@Nls String value) {
     return BundleBase.replaceMnemonicAmpersand(value);
   }
 
@@ -1718,6 +1724,8 @@ public final class UIUtil {
     g.setComposite(X_RENDER_ACTIVE.getValue() ? AlphaComposite.SrcOver : AlphaComposite.Src);
   }
 
+  private static final Method dispatchEventMethod =
+    Objects.requireNonNull(ReflectionUtil.getDeclaredMethod(EventQueue.class, "dispatchEvent", AWTEvent.class));
   /**
    * Dispatch all pending invocation events (if any) in the {@link com.intellij.ide.IdeEventQueue}, ignores and removes all other events from the queue.
    * In tests, consider using {@link com.intellij.testFramework.PlatformTestUtil#dispatchAllInvocationEventsInIdeEventQueue()}
@@ -1727,8 +1735,6 @@ public final class UIUtil {
   public static void dispatchAllInvocationEvents() {
     assert EdtInvocationManager.getInstance().isEventDispatchThread() : Thread.currentThread() + "; EDT: "+getEventQueueThread();
     EventQueue eventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
-    Method dispatchEventMethod =
-      Objects.requireNonNull(ReflectionUtil.getDeclaredMethod(eventQueue.getClass(), "dispatchEvent", AWTEvent.class));
     for (int i = 1; ; i++) {
       AWTEvent event = eventQueue.peekEvent();
       if (event == null) break;
@@ -1944,7 +1950,7 @@ public final class UIUtil {
   }
 
   @Language("HTML")
-  public static @NotNull String getCssFontDeclaration(@NotNull Font font, @Nullable Color fgColor, @Nullable Color linkColor, @Nullable String liImg) {
+  public static @NlsSafe @NotNull String getCssFontDeclaration(@NotNull Font font, @Nullable Color fgColor, @Nullable Color linkColor, @Nullable String liImg) {
     @Language("HTML")
     String familyAndSize = "font-family:'" + font.getFamily() + "'; font-size:" + font.getSize() + "pt;";
     return "<style>\n"
@@ -2138,7 +2144,7 @@ public final class UIUtil {
   }
 
   public static @NotNull Font getFontWithFallbackIfNeeded(@NotNull Font font, @NotNull String text) {
-    if (font.canDisplayUpTo(text) != -1) {
+    if (!SystemInfo.isMac /* 'getFontWithFallback' does nothing on macOS */ && font.canDisplayUpTo(text) != -1) {
       return getFontWithFallback(font);
     }
     else {
@@ -2192,20 +2198,19 @@ public final class UIUtil {
     }
   }
 
-  public static @NotNull String toHtml(@NotNull String html) {
+  public static @NotNull @NlsSafe String toHtml(@NotNull @Nls String html) {
     return toHtml(html, 0);
   }
 
-  @NonNls
-  public static @NotNull String toHtml(@NotNull String html, final int hPadding) {
-    html = CLOSE_TAG_PATTERN.matcher(html).replaceAll("<$1$2></$1>");
+  public static @NotNull @NlsSafe String toHtml(@NotNull @Nls String html, final int hPadding) {
+    @NlsSafe final String withClosedTag = CLOSE_TAG_PATTERN.matcher(html).replaceAll("<$1$2></$1>");
     Font font = StartupUiUtil.getLabelFont();
     @NonNls String family = font != null ? font.getFamily() : "Tahoma";
     int size = font != null ? font.getSize() : JBUIScale.scale(11);
     return "<html><style>body { font-family: "
            + family + "; font-size: "
            + size + ";} ul li {list-style-type:circle;}</style>"
-           + addPadding(html, hPadding) + "</html>";
+           + addPadding(withClosedTag, hPadding) + "</html>";
   }
 
   public static @NotNull String addPadding(@NotNull String html, int hPadding) {
@@ -2350,9 +2355,13 @@ public final class UIUtil {
 
   public static void fixFormattedField(@NotNull JFormattedTextField field) {
     if (SystemInfo.isMac) {
-      final Toolkit toolkit = Toolkit.getDefaultToolkit();
-      if (toolkit instanceof HeadlessToolkit) return;
-      final int commandKeyMask = toolkit.getMenuShortcutKeyMask();
+      final int commandKeyMask;
+      try {
+        commandKeyMask = Toolkit.getDefaultToolkit().getMenuShortcutKeyMask();
+      }
+      catch (HeadlessException e) {
+        return;
+      }
       final InputMap inputMap = field.getInputMap();
       final KeyStroke copyKeyStroke = KeyStroke.getKeyStroke(KeyEvent.VK_C, commandKeyMask);
       inputMap.put(copyKeyStroke, "copy-to-clipboard");
@@ -2715,18 +2724,26 @@ public final class UIUtil {
   }
 
   public static void setNotOpaqueRecursively(@NotNull Component component) {
+    setOpaqueRecursively(component, false);
+  }
+
+  public static void setOpaqueRecursively(@NotNull Component component, boolean opaque) {
     if (!(component instanceof JComponent)) {
       return;
     }
     forEachComponentInHierarchy(component, c -> {
       if (c instanceof JComponent) {
-        ((JComponent)c).setOpaque(false);
+        ((JComponent)c).setOpaque(opaque);
       }
     });
   }
 
   public static void setBackgroundRecursively(@NotNull Component component, @NotNull Color bg) {
     forEachComponentInHierarchy(component, c -> c.setBackground(bg));
+  }
+
+  public static void setForegroundRecursively(@NotNull Component component, @NotNull Color bg) {
+    forEachComponentInHierarchy(component, c -> c.setForeground(bg));
   }
 
   private static void forEachComponentInHierarchy(@NotNull Component component, @NotNull Consumer<? super Component> action) {
@@ -2975,14 +2992,17 @@ public final class UIUtil {
     }, "play sound").start();
   }
 
+  @NlsSafe
   public static @NotNull String leftArrow() {
     return FontUtil.leftArrow(StartupUiUtil.getLabelFont());
   }
 
+  @NlsSafe
   public static @NotNull String rightArrow() {
     return FontUtil.rightArrow(StartupUiUtil.getLabelFont());
   }
 
+  @NlsSafe
   public static @NotNull String upArrow(@NotNull String defaultValue) {
     return FontUtil.upArrow(StartupUiUtil.getLabelFont(), defaultValue);
   }
@@ -3476,7 +3496,7 @@ public final class UIUtil {
   /**
    * This method (as opposed to {@link JEditorPane#scrollToReference}) supports also targets using {@code id} HTML attribute.
    */
-  public static void scrollToReference(@NotNull JEditorPane editor, @NotNull String reference) {
+  public static void scrollToReference(@NotNull JEditorPane editor, @NotNull @NonNls String reference) {
     Document document = editor.getDocument();
     if (document instanceof HTMLDocument) {
       Element elementById = ((HTMLDocument) document).getElement(reference);

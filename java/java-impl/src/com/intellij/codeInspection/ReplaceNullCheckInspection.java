@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.Nullability;
@@ -98,7 +98,7 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
     };
   }
 
-  private static class ReplaceWithRequireNonNullFix implements LocalQuickFix {
+  private static final class ReplaceWithRequireNonNullFix implements LocalQuickFix {
     private final @NotNull String myMethod;
     private final boolean myIsTernary;
 
@@ -172,7 +172,7 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
     return factory.createExpressionFromText(requireCallText, context);
   }
 
-  private static class NotNullContext {
+  private static final class NotNullContext {
     private final @NotNull PsiExpression myExpressionToReplace;
     private final @NotNull PsiExpression myDiff;
     private final @NotNull PsiStatement myNullBranchStmt;
@@ -281,7 +281,7 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
   }
 
 
-  private static class TernaryNotNullContext {
+  private static final class TernaryNotNullContext {
     private final @NotNull PsiConditionalExpression myTernary;
     private final @NotNull PsiExpression myNullExpr;
     private final @NotNull PsiReferenceExpression myReferenceExpression;
@@ -318,7 +318,7 @@ public class ReplaceNullCheckInspection extends AbstractBaseJavaLocalInspectionT
    * Represents difference between o1.m1().m2() and o2.m1().m2()
    * Relies that call chain and arguments are exactly the same
    */
-  private static class TopmostQualifierDiff {
+  private static final class TopmostQualifierDiff {
     private final @Nullable PsiExpression myLeft;
     private final @Nullable PsiExpression myRight;
 

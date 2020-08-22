@@ -3,6 +3,7 @@ package com.intellij.usageView;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.content.Content;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,12 +18,12 @@ public abstract class UsageViewContentManager {
   }
 
   @NotNull
-  public abstract Content addContent(@NotNull String contentName, boolean reusable, @NotNull JComponent component, boolean toOpenInNewTab, boolean isLockable);
+  public abstract Content addContent(@NlsContexts.TabTitle @NotNull String contentName, boolean reusable, @NotNull JComponent component, boolean toOpenInNewTab, boolean isLockable);
 
   @NotNull
-  public abstract Content addContent(@NotNull String contentName,
-                                     String tabName,
-                                     String toolwindowTitle,
+  public abstract Content addContent(@NlsContexts.TabTitle @NotNull String contentName,
+                                     @NlsContexts.TabTitle String tabName,
+                                     @NlsContexts.TabTitle String toolwindowTitle,
                                      boolean reusable,
                                      @NotNull JComponent component,
                                      boolean toOpenInNewTab,

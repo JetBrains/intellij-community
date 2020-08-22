@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -16,6 +16,7 @@ import com.intellij.util.xml.GenericDomValue;
 import com.intellij.util.xml.reflect.DomFixedChildDescription;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Extension;
 
 import java.util.Collections;
@@ -40,7 +41,7 @@ class ExperimentalFeatureIdContributor extends PsiReferenceContributor {
   }
 
 
-  private static class ExperimentalFeatureIdReference extends ExtensionPointReferenceBase {
+  private static final class ExperimentalFeatureIdReference extends ExtensionPointReferenceBase {
 
     private ExperimentalFeatureIdReference(PsiElement element) {
       super(element);
@@ -59,7 +60,7 @@ class ExperimentalFeatureIdContributor extends PsiReferenceContributor {
     @NotNull
     @Override
     public String getUnresolvedMessagePattern() {
-      return "Cannot resolve feature '" + getValue() + "'";
+      return DevKitBundle.message("code.convert.experimental.feature.id.cannot.resolve", getValue());
     }
 
     @Override

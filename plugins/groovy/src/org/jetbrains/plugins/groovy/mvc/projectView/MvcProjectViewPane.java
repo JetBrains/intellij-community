@@ -42,6 +42,7 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.mvc.MvcFramework;
 
 import javax.swing.*;
@@ -446,9 +447,13 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
     scrollFromSource();
   }
 
-  private class ScrollFromSourceAction extends AnAction implements DumbAware {
+  private final class ScrollFromSourceAction extends AnAction implements DumbAware {
     private ScrollFromSourceAction() {
-      super("Scroll from Source", "Select the file open in the active editor", AllIcons.General.Locate);
+      super(
+        GroovyBundle.message("scroll.from.source.action.text"),
+        GroovyBundle.message("scroll.from.source.action.description"),
+        AllIcons.General.Locate
+      );
     }
 
     @Override
@@ -481,10 +486,13 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
     }
   }
 
-  private class HideEmptyMiddlePackagesAction extends ToggleAction implements DumbAware {
+  private final class HideEmptyMiddlePackagesAction extends ToggleAction implements DumbAware {
     private HideEmptyMiddlePackagesAction() {
-      super("Compact Empty Middle Packages", "Show/Compact Empty Middle Packages",
-            AllIcons.ObjectBrowser.CompactEmptyPackages);
+      super(
+        GroovyBundle.message("compact.empty.middle.packages.action.text"),
+        GroovyBundle.message("compact.empty.middle.packages.action.description"),
+        AllIcons.ObjectBrowser.CompactEmptyPackages
+      );
     }
 
     @Override

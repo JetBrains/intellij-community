@@ -1,10 +1,13 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 import com.intellij.TestAll;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.testFramework.TestRunnerUtil;
 import com.intellij.testFramework.Timings;
+import com.intellij.util.SystemProperties;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -86,5 +89,12 @@ public class _FirstInSuiteTest extends TestCase {
     assertFalse(
       "The property '" + property + "' is set to a default value. Please make sure the build agent has sane locale settings.",
       Charset.forName(encoding).aliases().contains("default"));
+  }
+
+  // agents where this test is failing should be disabled and configured properly
+  public void testSymlinkAbility() {
+    assertTrue(
+      String.format("Symlink creation not supported for %s on %s (%s)", SystemProperties.getUserName(), SystemInfo.OS_NAME, SystemInfo.OS_VERSION),
+      IoTestUtil.isSymLinkCreationSupported);
   }
 }

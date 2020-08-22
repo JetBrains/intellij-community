@@ -2,6 +2,8 @@
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -24,11 +26,20 @@ public class LightRecordsHighlightingTest extends LightJavaCodeInsightFixtureTes
   public void testRecordAccessors() {
     doTest();
   }
+  public void testRecordAccessorsJava15() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_15_PREVIEW, this::doTest);
+  }
   public void testRecordConstructors() {
     doTest();
   }
+  public void testRecordConstructorAccessJava15() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_15_PREVIEW, this::doTest);
+  }
   public void testRecordCompactConstructors() {
     doTest();
+  }
+  public void testRecordCompactConstructorsJava15() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_15_PREVIEW, this::doTest);
   }
   public void testLocalRecords() {
     doTest();

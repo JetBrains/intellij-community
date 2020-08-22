@@ -34,7 +34,7 @@ import static com.jetbrains.python.psi.FutureFeature.ABSOLUTE_IMPORT;
 /**
  * @author dcheryasov
  */
-public class ResolveImportUtil {
+public final class ResolveImportUtil {
   private ResolveImportUtil() {
   }
 

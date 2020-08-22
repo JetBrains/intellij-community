@@ -56,10 +56,8 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction implements 
     if (enter) {
       applyAndSave(p, ui.getState(), eo, ds, BEFORE, AFTER, false);
       TogglePresentationModeAction.storeToolWindows(project);
-    }
-    else {
+    } else {
       applyAndSave(p, ui.getState(), eo, ds, AFTER, BEFORE, true);
-      TogglePresentationModeAction.restoreToolWindows(project, true, false);
     }
 
     UISettings.getInstance().fireUISettingsChanged();
@@ -67,6 +65,9 @@ public class ToggleDistractionFreeModeAction extends DumbAwareAction implements 
     EditorUtil.reinitSettings();
     DaemonCodeAnalyzer.getInstance(project).settingsChanged();
     EditorFactory.getInstance().refreshAllEditors();
+    if (!enter) {
+      TogglePresentationModeAction.restoreToolWindows(project, true, false);
+    }
     final JFrame projectJFrame = WindowManager.getInstance().getFrame(project);
     if (projectJFrame != null) {
       projectJFrame.transferFocus();

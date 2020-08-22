@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification.impl;
 
-import com.intellij.application.Topics;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.icons.AllIcons;
@@ -9,6 +8,7 @@ import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.FrameStateListener;
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonPainter;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
 import com.intellij.notification.*;
@@ -18,7 +18,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
@@ -27,10 +26,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.*;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -73,6 +69,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public final class NotificationsManagerImpl extends NotificationsManager {
   public static final Color DEFAULT_TEXT_COLOR = new JBColor(Gray._0, Gray._191);
@@ -83,25 +80,13 @@ public final class NotificationsManagerImpl extends NotificationsManager {
   private final List<Notification> myEarlyNotifications = new ArrayList<>();
 
   public NotificationsManagerImpl() {
-    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
-    connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+    ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectClosed(@NotNull Project project) {
         for (Notification notification : getNotificationsOfType(Notification.class, project)) {
           notification.hideBalloon();
         }
         TooltipController.getInstance().resetCurrent();
-      }
-    });
-    connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
-      @Override
-      public void appUiReady() {
-        GuiUtils.invokeLaterIfNeeded(() -> {
-          if (!myEarlyNotifications.isEmpty()) {
-            myEarlyNotifications.forEach(notification -> showNotification(notification, null));
-            myEarlyNotifications.clear();
-          }
-        }, ModalityState.any(), ApplicationManager.getApplication().getDisposed());
       }
     });
   }
@@ -118,7 +103,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
  }
 
   @Override
-  public <T extends Notification> T @NotNull [] getNotificationsOfType(@NotNull Class<T> klass, @Nullable final Project project) {
+  public <T extends Notification> T @NotNull [] getNotificationsOfType(@NotNull Class<T> klass, @Nullable Project project) {
     final List<T> result = new ArrayList<>();
     if (project == null || !project.isDefault() && !project.isDisposed()) {
       for (Notification notification : EventLog.getLogModel(project).getNotifications()) {
@@ -131,7 +116,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     return ArrayUtil.toObjectArray(result, klass);
   }
 
-  private void doNotify(Notification notification, @Nullable Project project) {
+  private void doNotify(@NotNull Notification notification, @Nullable Project project) {
     NotificationsConfigurationImpl configuration = NotificationsConfigurationImpl.getInstanceImpl();
     if (!configuration.isRegistered(notification.getGroupId())) {
       configuration.register(notification.getGroupId(), NotificationDisplayType.BALLOON);
@@ -147,27 +132,48 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     }
 
     if (NotificationsConfigurationImpl.getInstanceImpl().SHOW_BALLOONS) {
-      Runnable runnable;
-      if (notification.isShownInDumbMode()) {
-        runnable = (DumbAwareRunnable) () -> showNotification(notification, project);
-      } else {
-        runnable = () -> showNotification(notification, project);
-      }
-
       if (project == null) {
-        GuiUtils.invokeLaterIfNeeded(runnable, ModalityState.any(), ApplicationManager.getApplication().getDisposed());
+        GuiUtils.invokeLaterIfNeeded(() -> showNotification(notification, null), ModalityState.any(), ApplicationManager.getApplication().getDisposed());
       }
       else if (!project.isDisposed()) {
-        StartupManager.getInstance(project).runWhenProjectIsInitialized(runnable);
+        StartupManager.getInstance(project).runAfterOpened(() -> {
+          GuiUtils.invokeLaterIfNeeded(() -> showNotification(notification, project), ModalityState.any(), project.getDisposed());
+        });
       }
     }
+  }
+
+  @CalledInAwt
+  private void dispatchEarlyNotifications() {
+    List<Notification> copy = new ArrayList<>(myEarlyNotifications);
+    myEarlyNotifications.clear();
+    copy.forEach(early -> showNotification(early, null));
   }
 
   @CalledInAwt
   private void showNotification(Notification notification, @Nullable Project project) {
     if (!LoadingState.APP_STARTED.isOccurred()) {
       myEarlyNotifications.add(notification);
+
+      if (myEarlyNotifications.size() == 1) {
+        MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
+        connection.subscribe(AppLifecycleListener.TOPIC, new AppLifecycleListener() {
+          @Override
+          public void appStarted() {
+            assert LoadingState.APP_STARTED.isOccurred();
+            GuiUtils.invokeLaterIfNeeded(() -> dispatchEarlyNotifications(), ModalityState.any(), ApplicationManager.getApplication().getDisposed());
+            connection.disconnect();
+          }
+        });
+      }
+
       return;
+    }
+
+    if (!myEarlyNotifications.isEmpty()) {
+      // may happen if the "appStarted" event is fired after an early notification is collected but before a listener is subscribed
+      ApplicationManager.getApplication().invokeLater(
+        () -> dispatchEarlyNotifications(), ModalityState.any(), ApplicationManager.getApplication().getDisposed());
     }
 
     String groupId = notification.getGroupId();
@@ -240,15 +246,14 @@ public final class NotificationsManagerImpl extends NotificationsManager {
         }
 
         //noinspection SSBasedInspection
-        ToolWindowManager.getInstance(project).notifyByBalloon(toolWindowId, messageType, msg, notification.getIcon(), listener);
+        ToolWindowManager.getInstance(Objects.requireNonNull(project)).notifyByBalloon(toolWindowId, messageType, msg, notification.getIcon(), listener);
         NotificationCollector.getInstance().logToolWindowNotificationShown(project, notification);
     }
   }
 
-  @Nullable
-  private static Balloon notifyByBalloon(@NotNull final Notification notification,
-                                         @NotNull final NotificationDisplayType displayType,
-                                         @Nullable final Project project) {
+  private static @Nullable Balloon notifyByBalloon(@NotNull Notification notification,
+                                                   @NotNull NotificationDisplayType displayType,
+                                                   @Nullable Project project) {
     if (isDummyEnvironment()) {
       return null;
     }
@@ -307,25 +312,24 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     return balloon;
   }
 
-  public static void frameActivateBalloonListener(@NotNull Balloon balloon, @NotNull Runnable callback) {
+  public static void frameActivateBalloonListener(@NotNull Disposable parentDisposable, @NotNull Runnable callback) {
     if (ApplicationManager.getApplication().isActive()) {
       callback.run();
     }
     else {
-      Disposable listener = Disposer.newDisposable();
-      Disposer.register(balloon, listener);
-      Topics.subscribe(FrameStateListener.TOPIC, listener, new FrameStateListener() {
+      Disposable listenerDisposable = Disposer.newDisposable();
+      Disposer.register(parentDisposable, listenerDisposable);
+      ApplicationManager.getApplication().getMessageBus().connect(parentDisposable).subscribe(FrameStateListener.TOPIC, new FrameStateListener() {
         @Override
         public void onFrameActivated() {
-          Disposer.dispose(listener);
+          Disposer.dispose(listenerDisposable);
           callback.run();
         }
       });
     }
   }
 
-  @Nullable
-  public static Window findWindowForBalloon(@Nullable Project project) {
+  public static @Nullable Window findWindowForBalloon(@Nullable Project project) {
     Window frame = WindowManager.getInstance().getFrame(project);
     if (frame == null && project == null) {
       frame = (Window)WelcomeFrame.getInstance();
@@ -344,23 +348,21 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     return frame;
   }
 
-  @NotNull
-  public static Balloon createBalloon(@NotNull final IdeFrame window,
-                                      @NotNull final Notification notification,
-                                      final boolean showCallout,
-                                      final boolean hideOnClickOutside,
-                                      @NotNull Ref<BalloonLayoutData> layoutDataRef,
-                                      @NotNull Disposable parentDisposable) {
+  public static @NotNull Balloon createBalloon(@NotNull IdeFrame window,
+                                               @NotNull Notification notification,
+                                               boolean showCallout,
+                                               boolean hideOnClickOutside,
+                                               @NotNull Ref<BalloonLayoutData> layoutDataRef,
+                                               @NotNull Disposable parentDisposable) {
     return createBalloon(window.getComponent(), notification, showCallout, hideOnClickOutside, layoutDataRef, parentDisposable);
   }
 
-  @NotNull
-  public static Balloon createBalloon(@Nullable final JComponent windowComponent,
-                                      @NotNull final Notification notification,
-                                      final boolean showCallout,
-                                      final boolean hideOnClickOutside,
-                                      @NotNull Ref<BalloonLayoutData> layoutDataRef,
-                                      @NotNull Disposable parentDisposable) {
+  public static @NotNull Balloon createBalloon(@Nullable JComponent windowComponent,
+                                               @NotNull Notification notification,
+                                               boolean showCallout,
+                                               boolean hideOnClickOutside,
+                                               @NotNull Ref<BalloonLayoutData> layoutDataRef,
+                                               @NotNull Disposable parentDisposable) {
     final BalloonLayoutData layoutData = layoutDataRef.isNull() ? new BalloonLayoutData() : layoutDataRef.get();
     if (layoutData.groupId == null) {
       layoutData.groupId = notification.getGroupId();
@@ -420,7 +422,8 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       style = prefSize > BalloonLayoutConfiguration.MaxFullContentWidth() ? BalloonLayoutConfiguration.MaxFullContentWidthStyle() : null;
     }
 
-    text.setText(NotificationsUtil.buildHtml(notification, style, true, null, fontStyle));
+    String textContent = NotificationsUtil.buildHtml(notification, style, true, null, fontStyle);
+    text.setText(textContent);
     text.setEditable(false);
     text.setOpaque(false);
 
@@ -466,9 +469,8 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     }
     else if (!showFullContent && layoutData.maxScrollHeight != layoutData.fullHeight) {
       pane.setViewport(new GradientViewport(text, JBInsets.create(10, 0), true) {
-        @Nullable
         @Override
-        protected Color getViewColor() {
+        protected @Nullable Color getViewColor() {
           return layoutData.fillColor;
         }
 
@@ -664,14 +666,22 @@ public final class NotificationsManagerImpl extends NotificationsManager {
         new NotificationBalloonActionProvider(balloon, centerPanel.getTitle(), layoutData, notification.getGroupId(), notification.id, notification.displayId));
     }
 
+    ApplicationManager.getApplication().getMessageBus().connect(balloon).subscribe(LafManagerListener.TOPIC, source -> {
+      HTMLEditorKit newKit = new UIUtil.JBWordWrapHtmlEditorKit();
+      newKit.getStyleSheet().addRule("a {color: " + ColorUtil.toHtmlColor(JBUI.CurrentTheme.Link.linkColor()) + "}");
+      text.setEditorKit(newKit);
+      text.setText(textContent);
+      text.revalidate();
+      text.repaint();
+    });
+
     Disposer.register(parentDisposable, balloon);
     return balloon;
   }
 
-  @Nullable
-  private static JPanel createButtons(@NotNull Notification notification,
-                                      @NotNull final JPanel content,
-                                      @Nullable HyperlinkListener listener) {
+  private static @Nullable JPanel createButtons(@NotNull Notification notification,
+                                                @NotNull JPanel content,
+                                                @Nullable HyperlinkListener listener) {
     if (notification instanceof NotificationActionProvider) {
       JPanel buttons = new JPanel(new HorizontalLayout(5));
       buttons.setOpaque(false);
@@ -738,8 +748,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     return null;
   }
 
-  @NotNull
-  public static JScrollPane createBalloonScrollPane(@NotNull Component content, boolean configure) {
+  public static @NotNull JScrollPane createBalloonScrollPane(@NotNull Component content, boolean configure) {
     JScrollPane pane = ScrollPaneFactory.createScrollPane(content, true);
     if (configure) {
       configureBalloonScrollPane(pane, FILL_COLOR);
@@ -755,7 +764,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     pane.getVerticalScrollBar().setBackground(fillColor);
   }
 
-  private static void createActionPanel(@NotNull final Notification notification,
+  private static void createActionPanel(@NotNull Notification notification,
                                         @NotNull NotificationCenterPanel centerPanel,
                                         int gap,
                                         @NotNull HoverAdapter hoverAdapter) {
@@ -823,7 +832,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     actionPanel.addGroupedActionsLink(action);
   }
 
-  private static class HoverAdapter extends MouseAdapter implements MouseMotionListener {
+  private static final class HoverAdapter extends MouseAdapter implements MouseMotionListener {
     private final List<Pair<Component, ?>> myComponents = new ArrayList<>();
     private List<Component> mySources = new ArrayList<>();
 
@@ -944,13 +953,12 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       }
     }
 
-    @NotNull
-    private static MouseEvent createEvent(MouseEvent e, Component c) {
+    private static @NotNull MouseEvent createEvent(MouseEvent e, Component c) {
       return new MouseEvent(c, e.getID(), e.getWhen(), e.getModifiers(), 5, 5, e.getClickCount(), e.isPopupTrigger(), e.getButton());
     }
   }
 
-  private static void createMergeAction(@NotNull final BalloonLayoutData layoutData, @NotNull JPanel panel) {
+  private static void createMergeAction(@NotNull BalloonLayoutData layoutData, @NotNull JPanel panel) {
     StringBuilder title = new StringBuilder().append(layoutData.mergeData.count).append(" more");
     String shortTitle = NotificationParentGroup.getShortTitle(layoutData.groupId);
     if (shortTitle != null) {
@@ -1043,7 +1051,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
   private static class DropDownAction extends LinkLabel<Void> {
     Icon myIcon = AllIcons.Ide.Notification.DropTriangle;
 
-    DropDownAction(String text, @Nullable LinkListener<Void> listener) {
+    DropDownAction(@NlsContexts.LinkLabel String text, @Nullable LinkListener<Void> listener) {
       super(text, null, listener);
 
       setHorizontalTextPosition(SwingConstants.LEADING);
@@ -1067,9 +1075,8 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       });
     }
 
-    @NotNull
     @Override
-    protected Rectangle getTextBounds() {
+    protected @NotNull Rectangle getTextBounds() {
       Rectangle bounds = super.getTextBounds();
       bounds.x -= getIcon().getIconWidth();
       bounds.width += 8;
@@ -1084,7 +1091,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     }
   }
 
-  static class MyNotificationListener implements Notifications {
+  static final class MyNotificationListener implements Notifications {
     private final Project myProject;
 
     @SuppressWarnings("unused")
@@ -1102,8 +1109,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     }
   }
 
-  @Nullable
-  private static Point getCollapsedTextEndLocation(@NotNull JEditorPane text, @NotNull BalloonLayoutData layoutData) {
+  private static @Nullable Point getCollapsedTextEndLocation(@NotNull JEditorPane text, @NotNull BalloonLayoutData layoutData) {
     try {
       int end = text.viewToModel(new Point(10, layoutData.twoLineHeight + 5));
       if (end == -1) {
@@ -1137,7 +1143,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     return 0;
   }
 
-  private static class NotificationCenterPanel extends NonOpaquePanel {
+  private static final class NotificationCenterPanel extends NonOpaquePanel {
     private final CenteredLayoutWithActions myLayout;
     private final BalloonLayoutData myLayoutData;
 
@@ -1195,7 +1201,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     }
   }
 
-  private static class NotificationActionPanel extends NonOpaquePanel {
+  private static final class NotificationActionPanel extends NonOpaquePanel {
     private final List<LinkLabel<AnAction>> actionLinks = new ArrayList<>();
     private final Notification.CollapseActionsDirection collapseActionsDirection;
     private DropDownAction groupedActionsLink;
@@ -1233,8 +1239,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       myLayoutData = layoutData;
     }
 
-    @Nullable
-    public Component getTitle() {
+    public @Nullable Component getTitle() {
       if (myTitleComponent != null) {
         return myTitleComponent;
       }
@@ -1321,7 +1326,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
       if (myExpandAction != null) {
         Dimension size = myExpandAction.getPreferredSize();
-        int x = width - size.width - myLayoutData.configuration.rightActionsOffset.width;
+        int x = width - size.width - Objects.requireNonNull(myLayoutData.configuration.rightActionsOffset).width;
 
         if (myLayoutData.showMinSize) {
           Point location = getCollapsedTextEndLocation(myText, myLayoutData);

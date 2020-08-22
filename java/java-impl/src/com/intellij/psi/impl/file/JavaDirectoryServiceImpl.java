@@ -30,6 +30,7 @@ import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -193,7 +194,11 @@ public class JavaDirectoryServiceImpl extends CoreJavaDirectoryService {
       throw new IncorrectOperationException(getIncorrectTemplateMessage(templateName, project));
     }
     if (template.isLiveTemplateEnabled()) {
-      CreateFromTemplateActionBase.startLiveTemplate(file);
+      Document document = file.getViewProvider().getDocument();
+      if (document != null) {
+        PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
+        CreateFromTemplateActionBase.startLiveTemplate(file);
+      }
     }
     return classes[0];
   }

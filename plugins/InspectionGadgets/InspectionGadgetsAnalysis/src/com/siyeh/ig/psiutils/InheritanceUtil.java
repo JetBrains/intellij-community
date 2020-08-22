@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class InheritanceUtil {
+public final class InheritanceUtil {
 
   private InheritanceUtil() {}
 
@@ -66,7 +66,7 @@ public class InheritanceUtil {
       return false;
     }
     if (class1.hasModifierProperty(PsiModifier.FINAL) || class2.hasModifierProperty(PsiModifier.FINAL)) return false;
-    if (LambdaUtil.isFunctionalClass(class1) || class1Name.length() < class2Name.length() || 
+    if (LambdaUtil.isFunctionalClass(class1) || class1Name.length() < class2Name.length() ||
         (isJavaClass(class2) && !isJavaClass(class1))) {
       // Assume that it could be faster to search inheritors from non-functional interface or from class with a longer simple name
       // Also prefer searching inheritors from Java class over other JVM languages as Java is usually faster

@@ -2,7 +2,6 @@ from . import wasyncore
 from .proxy_headers import proxy_headers_middleware
 from socket import SocketType
 from typing import Any, Sequence, Optional, Tuple, Union
-from waitress import trigger
 from waitress.adjustments import Adjustments
 from waitress.channel import HTTPChannel
 from waitress.compat import IPPROTO_IPV6, IPV6_V6ONLY

@@ -1,22 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
-/*
- * @author max
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -26,30 +8,27 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.stream.Stream;
 
+/**
+ * @author max
+ */
 public interface BinaryFileStubBuilder {
   boolean acceptsFile(@NotNull VirtualFile file);
 
-  @Nullable
-  Stub buildStubTree(@NotNull FileContent fileContent);
+  @Nullable Stub buildStubTree(@NotNull FileContent fileContent);
 
   int getStubVersion();
 
   interface CompositeBinaryFileStubBuilder<SubBuilder> extends BinaryFileStubBuilder {
-    @NotNull
-    Stream<SubBuilder> getAllSubBuilders();
+    @NotNull Stream<SubBuilder> getAllSubBuilders();
 
-    @Nullable
-    SubBuilder getSubBuilder(@NotNull FileContent fileContent);
+    @Nullable SubBuilder getSubBuilder(@NotNull FileContent fileContent);
 
-    @NotNull
-    String getSubBuilderVersion(@Nullable SubBuilder subBuilder);
+    @NotNull String getSubBuilderVersion(@Nullable SubBuilder subBuilder);
 
-    @Nullable
-    Stub buildStubTree(@NotNull FileContent fileContent, @Nullable SubBuilder builder);
+    @Nullable Stub buildStubTree(@NotNull FileContent fileContent, @Nullable SubBuilder builder);
 
-    @Nullable
     @Override
-    default Stub buildStubTree(@NotNull FileContent fileContent) {
+    default @Nullable Stub buildStubTree(@NotNull FileContent fileContent) {
       return buildStubTree(fileContent, getSubBuilder(fileContent));
     }
   }

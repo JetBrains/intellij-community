@@ -34,8 +34,6 @@ import com.intellij.util.io.write
 import com.intellij.util.pooledThreadSingleAlarm
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.UIUtil
-import gnu.trove.THashMap
-import gnu.trove.THashSet
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.jps.util.JpsPathUtil
 import java.awt.image.BufferedImage
@@ -59,7 +57,7 @@ import kotlin.collections.component2
 /**
  * Used directly by IntelliJ IDEA.
  */
-@State(name = "RecentProjectsManager", storages = [Storage(value = "recentProjects.xml", roamingType = RoamingType.DISABLED)])
+@State(name = "RecentProjectsManager", storages = [Storage(value = "recentProjects.xml", roamingType = RoamingType.DISABLED)], reportStatistic = false)
 open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateComponent<RecentProjectManagerState>, ModificationTracker {
   companion object {
     const val MAX_PROJECTS_IN_MAIN_MENU = 6
@@ -79,14 +77,14 @@ open class RecentProjectsManagerBase : RecentProjectsManager(), PersistentStateC
 
   private val modCounter = AtomicLong()
   private val projectIconHelper by lazy { RecentProjectIconHelper() }
-  private val namesToResolve: MutableSet<String> = THashSet(MAX_PROJECTS_IN_MAIN_MENU)
+  private val namesToResolve: MutableSet<String> = HashSet(MAX_PROJECTS_IN_MAIN_MENU)
 
-  private val nameCache: MutableMap<String, String> = Collections.synchronizedMap(THashMap())
+  private val nameCache: MutableMap<String, String> = Collections.synchronizedMap(HashMap())
 
   private val nameResolver = pooledThreadSingleAlarm(50) {
     var paths: Set<String>
     synchronized(namesToResolve) {
-      paths = THashSet(namesToResolve)
+      paths = HashSet(namesToResolve)
       namesToResolve.clear()
     }
     for (p in paths) {
@@ -609,7 +607,9 @@ private fun convertToSystemIndependentPaths(list: MutableList<String>) {
 }
 
 @Service
-@State(name = "RecentDirectoryProjectsManager", storages = [Storage(value = "recentProjectDirectories.xml", roamingType = RoamingType.DISABLED, deprecated = true)])
+@State(name = "RecentDirectoryProjectsManager",
+       storages = [Storage(value = "recentProjectDirectories.xml", roamingType = RoamingType.DISABLED, deprecated = true)],
+       reportStatistic = false)
 private class OldRecentDirectoryProjectsManager : PersistentStateComponent<RecentProjectManagerState> {
   var loadedState: RecentProjectManagerState? = null
 

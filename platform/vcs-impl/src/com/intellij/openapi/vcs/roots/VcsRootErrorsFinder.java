@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.roots;
 
 import com.intellij.openapi.components.ServiceManager;
@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class VcsRootErrorsFinder {
+public final class VcsRootErrorsFinder {
   @NotNull private final Project myProject;
   @NotNull private final ProjectLevelVcsManager myVcsManager;
   @NotNull private final VcsRootDetector myRootDetector;
@@ -36,7 +36,7 @@ public class VcsRootErrorsFinder {
   }
 
   @NotNull
-  private Collection<VcsRootError> calcErrors(@NotNull Collection<? extends VcsRoot> detectedRoots) {
+  private Collection<VcsRootError> calcErrors(@NotNull Collection<VcsRoot> detectedRoots) {
     List<VcsDirectoryMapping> mappings = myVcsManager.getDirectoryMappings();
     Collection<VcsRootError> errors = new ArrayList<>();
     errors.addAll(findExtraMappings(mappings));
@@ -46,13 +46,14 @@ public class VcsRootErrorsFinder {
 
   @NotNull
   private Collection<VcsRootError> findUnregisteredRoots(@NotNull List<? extends VcsDirectoryMapping> mappings,
-                                                         @NotNull Collection<? extends VcsRoot> vcsRoots) {
+                                                         @NotNull Collection<VcsRoot> vcsRoots) {
     Collection<VcsRootError> errors = new ArrayList<>();
     List<String> mappedPaths = mappingsToPathsWithSelectedVcs(mappings);
     for (VcsRoot root : vcsRoots) {
       String vcsPath = root.getPath().getPath();
-      if (root.getVcs() != null && !mappedPaths.contains(vcsPath)) {
-        errors.add(new VcsRootErrorImpl(VcsRootError.Type.UNREGISTERED_ROOT, vcsPath, root.getVcs().getName()));
+      AbstractVcs vcs = root.getVcs();
+      if (vcs != null && !mappedPaths.contains(vcsPath)) {
+        errors.add(new VcsRootErrorImpl(VcsRootError.Type.UNREGISTERED_ROOT, new VcsDirectoryMapping(vcsPath, vcs.getName())));
       }
     }
     return errors;
@@ -65,16 +66,8 @@ public class VcsRootErrorsFinder {
       if (!hasVcsChecker(mapping.getVcs())) {
         continue;
       }
-      if (mapping.isDefaultMapping()) {
-        if (!isRoot(mapping)) {
-          errors.add(new VcsRootErrorImpl(VcsRootError.Type.EXTRA_MAPPING, VcsDirectoryMapping.PROJECT_CONSTANT, mapping.getVcs()));
-        }
-      }
-      else {
-        String mappedPath = mapping.getDirectory();
-        if (!isRoot(mapping)) {
-          errors.add(new VcsRootErrorImpl(VcsRootError.Type.EXTRA_MAPPING, mappedPath, mapping.getVcs()));
-        }
+      if (!isRoot(mapping)) {
+        errors.add(new VcsRootErrorImpl(VcsRootError.Type.EXTRA_MAPPING, mapping));
       }
     }
     return errors;

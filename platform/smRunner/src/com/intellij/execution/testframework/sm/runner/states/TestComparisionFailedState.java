@@ -21,7 +21,6 @@ import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,8 +30,6 @@ import java.io.File;
  * @author Roman.Chernyatchik
  */
 public class TestComparisionFailedState extends TestFailedState {
-  private final String myErrorMsgPresentation;
-  private final String myStacktracePresentation;
   private final DiffHyperlink myHyperlink;
   private boolean myToDeleteExpectedFile;
   private boolean myToDeleteActualFile;
@@ -62,9 +59,6 @@ public class TestComparisionFailedState extends TestFailedState {
                                     @Nullable final String actualFilePath) {
     super(localizedMessage, stackTrace);
     myHyperlink = new DiffHyperlink(expectedText, actualText, expectedFilePath, actualFilePath, printExpectedAndActualValues);
-
-    myErrorMsgPresentation = StringUtil.isEmptyOrSpaces(localizedMessage) ? "" : localizedMessage;
-    myStacktracePresentation = StringUtil.isEmptyOrSpaces(stackTrace) ? "" : stackTrace;
   }
 
   @Override
@@ -73,14 +67,14 @@ public class TestComparisionFailedState extends TestFailedState {
     printer.mark();
 
     // Error msg
-    printer.printWithAnsiColoring(myErrorMsgPresentation, ProcessOutputTypes.STDERR);
+    printer.printWithAnsiColoring(getErrorMsgPresentation(), ProcessOutputTypes.STDERR);
 
     // Diff link
     myHyperlink.printOn(printer);
 
     // Stacktrace
     printer.print(CompositePrintable.NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
-    printer.printWithAnsiColoring(myStacktracePresentation, ProcessOutputTypes.STDERR);
+    printer.printWithAnsiColoring(getStacktracePresentation(), ProcessOutputTypes.STDERR);
     printer.print(CompositePrintable.NEW_LINE, ConsoleViewContentType.ERROR_OUTPUT);
   }
 

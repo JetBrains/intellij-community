@@ -46,6 +46,7 @@ public class ChangeCompareModeGroup extends ComboBoxAction implements ShortcutPr
     super.update(e);
     getTemplatePresentation().setText(mySettings.compareMode.getPresentableName());
     e.getPresentation().setText(mySettings.compareMode.getPresentableName());
+    e.getPresentation().setEnabledAndVisible(mySettings.showCompareModes);
   }
 
   @NotNull

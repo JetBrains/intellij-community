@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -7,6 +7,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixAsIntentionAdapter;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.diagnostic.PluginException;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationBuilder;
@@ -18,10 +19,12 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.psi.PsiElement;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -30,7 +33,7 @@ import java.util.List;
 class B implements AnnotationBuilder {
   @NotNull
   private final AnnotationHolderImpl myHolder;
-  private final String message;
+  private final @Nls String message;
   @NotNull
   private final PsiElement myCurrentElement;
   @NotNull
@@ -44,12 +47,12 @@ class B implements AnnotationBuilder {
   private TextAttributesKey textAttributes;
   private ProblemHighlightType highlightType;
   private Boolean needsUpdateOnTyping;
-  private String tooltip;
+  private @NlsContexts.Tooltip String tooltip;
   private List<FixB> fixes;
   private boolean created;
   private final Throwable myDebugCreationPlace;
 
-  B(@NotNull AnnotationHolderImpl holder, @NotNull HighlightSeverity severity, String message, @NotNull PsiElement currentElement) {
+  B(@NotNull AnnotationHolderImpl holder, @NotNull HighlightSeverity severity, @Nls String message, @NotNull PsiElement currentElement) {
     myHolder = holder;
     this.severity = severity;
     this.message = message;
@@ -168,8 +171,8 @@ class B implements AnnotationBuilder {
     TextRange currentElementRange = myCurrentElement.getTextRange();
     if (!currentElementRange.contains(range)) {
       markNotAbandoned();
-      //LOG.warn("Range must be inside element being annotated: "+currentElementRange+"; but got: "+range, new IllegalArgumentException());
-      throw new IllegalArgumentException("Range must be inside element being annotated: "+currentElementRange+"; but got: "+range);
+      throw PluginException.createByClass("Range must be inside element being annotated: " + currentElementRange + "; but got: " + range,
+                                          null, myCurrentElement.getClass());
     }
 
     this.range = range;

@@ -17,9 +17,8 @@ except:
     OrderedDict = dict
 
 import inspect
-from _pydevd_bundle.pydevd_constants import BUILTINS_MODULE_NAME, dict_iter_items, get_global_debugger, IS_PY3K, LOAD_VALUES_POLICY, \
+from _pydevd_bundle.pydevd_constants import BUILTINS_MODULE_NAME, IS_PY38_OR_GREATER, dict_iter_items, get_global_debugger, IS_PY3K, LOAD_VALUES_POLICY, \
     ValuesPolicy
-
 import sys
 from _pydev_bundle import pydev_log
 from _pydev_imps._pydev_saved_modules import threading
@@ -319,6 +318,126 @@ def is_top_level_trace_in_project_scope(trace):
     return is_exception_trace_in_project_scope(trace)
 
 
+def is_test_item_or_set_up_caller(trace):
+    """Check if the frame is the test item or set up caller.
+
+    A test function caller is a function that calls actual test code which can be, for example,
+    `unittest.TestCase` test method or function `pytest` assumes to be a test. A caller function
+    is the one we want to trace to catch failed test events. Tracing test functions
+    themselves is not possible because some exceptions can be caught in the test code, and
+    we are interested only in exceptions that are propagated to the test framework level.
+    """
+    if not trace:
+        return False
+
+    frame = trace.tb_frame
+
+    abs_path, _, _ = pydevd_file_utils.get_abs_path_real_path_and_base_from_frame(frame)
+    if in_project_roots(abs_path):
+        # We are interested in exceptions made it to the test framework scope.
+        return False
+
+    if not trace.tb_next:
+        # This can happen when the exception has been raised inside a test item or set up caller.
+        return False
+
+    if not _is_next_stack_trace_in_project_roots(trace):
+        # The next stack frame must be the frame of a project scope function, otherwise we risk stopping
+        # at a line a few times since multiple test framework functions we are looking for may appear in the stack.
+        return False
+
+    # Set up and tear down methods can be checked immediately, since they are shared by both `pytest` and `unittest`.
+    unittest_set_up_and_tear_down_methods = ('_callSetUp', '_callTearDown')
+    if frame.f_code.co_name in unittest_set_up_and_tear_down_methods:
+        return True
+
+    # It is important to check if the tests are run with `pytest` first because it can run `unittest` code
+    # internally. This may lead to stopping on  broken tests twice: one in the `pytest` test runner
+    # and second in the `unittest` runner.
+    is_pytest = False
+
+    f = frame
+    while f:
+        # noinspection SpellCheckingInspection
+        if f.f_code.co_name == 'pytest_cmdline_main':
+            is_pytest = True
+        f = f.f_back
+
+    unittest_caller_names = ['_callTestMethod', 'runTest', 'run']
+    if IS_PY3K:
+        unittest_caller_names.append('subTest')
+
+    if is_pytest:
+        # noinspection SpellCheckingInspection
+        if frame.f_code.co_name in ('pytest_pyfunc_call', 'call_fixture_func', '_eval_scope_callable', '_teardown_yield_fixture'):
+            return True
+        else:
+            return frame.f_code.co_name in unittest_caller_names
+
+    else:
+        import unittest
+        test_case_obj = frame.f_locals.get('self')
+
+        # Check for `_FailedTest` is important to detect cases when tests cannot be run on the first place,
+        # e.g. there was an import error in the test module. Can happen both in Python 3.8 and earlier versions.
+        if isinstance(test_case_obj, getattr(getattr(unittest, 'loader', None), '_FailedTest', None)):
+            return False
+
+        if frame.f_code.co_name in unittest_caller_names:
+            # unittest and nose
+            return True
+
+    return False
+
+
+def _is_next_stack_trace_in_project_roots(trace):
+    if trace and trace.tb_next and trace.tb_next.tb_frame:
+        frame = trace.tb_next.tb_frame
+        return in_project_roots(pydevd_file_utils.get_abs_path_real_path_and_base_from_frame(frame)[0])
+    return False
+
+
+# noinspection SpellCheckingInspection
+def should_stop_on_failed_test(exc_info):
+    """Check if the debugger should stop on failed test. Some failed tests can be marked as expected failures
+    and should be ignored because of that.
+
+    :param exc_info: exception type, value, and traceback
+    :return: `False` if test is marked as an expected failure, ``True`` otherwise.
+    """
+    exc_type, _, trace = exc_info
+
+    # unittest
+    test_item = trace.tb_frame.f_locals.get('method') if IS_PY38_OR_GREATER else trace.tb_frame.f_locals.get('testMethod')
+    if test_item:
+        return not getattr(test_item, '__unittest_expecting_failure__', False)
+
+    # pytest
+    testfunction = trace.tb_frame.f_locals.get('testfunction')
+    if testfunction and hasattr(testfunction, 'pytestmark'):
+        # noinspection PyBroadException
+        try:
+            for attr in testfunction.pytestmark:
+                # noinspection PyUnresolvedReferences
+                if attr.name == 'xfail':
+                    # noinspection PyUnresolvedReferences
+                    exc_to_ignore = attr.kwargs.get('raises')
+                    if not exc_to_ignore:
+                        # All exceptions should be ignored, if no type is specified.
+                        return False
+                    elif hasattr(exc_to_ignore, '__iter__'):
+                        return exc_type not in exc_to_ignore
+                    else:
+                        return exc_type is not exc_to_ignore
+        except BaseException:
+            pass
+    return True
+
+
+def is_exception_in_test_unit_can_be_ignored(exception):
+    return exception.__name__ == 'SkipTest'
+
+
 def get_top_level_trace_in_project_scope(trace):
     while trace:
         if is_top_level_trace_in_project_scope(trace):
@@ -471,8 +590,9 @@ def is_numpy(x):
 
 
 def should_evaluate_full_value(val):
-    return LOAD_VALUES_POLICY == ValuesPolicy.SYNC or ((is_builtin(type(val)) or is_numpy(type(val)))
-                                                       and not isinstance(val, (list, tuple, dict, set, frozenset)))
+    return LOAD_VALUES_POLICY == ValuesPolicy.SYNC \
+           or ((is_builtin(type(val)) or is_numpy(type(val))) and not isinstance(val, (list, tuple, dict, set, frozenset))) \
+           or (is_in_unittests_debugging_mode() and isinstance(val, Exception))
 
 
 def should_evaluate_shape():
@@ -527,3 +647,9 @@ def pandas_to_str(df, type_name, max_items):
 
 def format_numpy_array(num_array, max_items):
     return str(num_array[:max_items]).replace('\n', ',').strip()
+
+
+def is_in_unittests_debugging_mode():
+    debugger = get_global_debugger()
+    if debugger:
+        return debugger.stop_on_failed_tests

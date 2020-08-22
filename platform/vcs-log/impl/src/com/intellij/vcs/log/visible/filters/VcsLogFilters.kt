@@ -20,14 +20,14 @@ import java.util.*
 import java.util.regex.Pattern
 import java.util.regex.PatternSyntaxException
 
-private val LOG = Logger.getInstance("#com.intellij.vcs.log.visible.filters.VcsLogFilters") // NON-NLS
+private val LOG = Logger.getInstance("#com.intellij.vcs.log.visible.filters.VcsLogFilters")
 
 object VcsLogFilterObject {
   const val ME = "*"
 
   @JvmStatic
   fun fromPattern(text: String, isRegexpAllowed: Boolean = false, isMatchCase: Boolean = false): VcsLogTextFilter {
-    if (isRegexpAllowed && VcsLogUtil.maybeRegexp(text)) {
+    if (isRegexpAllowed && VcsLogUtil.isRegexp(text)) {
       try {
         return VcsLogRegexTextFilter(Pattern.compile(text, if (isMatchCase) 0 else Pattern.CASE_INSENSITIVE))
       }
@@ -64,51 +64,60 @@ object VcsLogFilterObject {
     return VcsLogRangeFilterImpl(ranges)
   }
 
+  @JvmOverloads
   @JvmStatic
-  fun fromBranchPatterns(strings: Collection<String>, existingBranches: Set<String>): VcsLogBranchFilter {
-    val branchNames = ArrayList<String>()
-    val excludedBranches = ArrayList<String>()
-    val patterns = ArrayList<Pattern>()
-    val excludedPatterns = ArrayList<Pattern>()
+  fun fromBranchPatterns(patterns: Collection<String>,
+                         existingBranches: Set<String>,
+                         excludeNotMatched: Boolean = false): VcsLogBranchFilter {
 
-    for (s in strings) {
-      val isExcluded = s.startsWith("-")
-      val string = if (isExcluded) s.substring(1) else s
-      val isRegexp = (existingBranches.isNotEmpty() && !existingBranches.contains(string)) ||
-                     (existingBranches.isEmpty() && VcsLogUtil.maybeRegexp(string))
+    val includedBranches = ArrayList<String>()
+    val excludedBranches = ArrayList<String>()
+    val includedPatterns = ArrayList<Pattern>()
+    val excludedPatterns = ArrayList<Pattern>()
+    val shouldExcludeNotMatched = existingBranches.isNotEmpty() && excludeNotMatched
+
+    for (pattern in patterns) {
+      val isExcluded = pattern.startsWith("-")
+      val string = if (isExcluded) pattern.substring(1) else pattern
+      val isRegexp = !existingBranches.contains(string) && VcsLogUtil.isRegexp(string)
 
       if (isRegexp) {
         try {
-          val pattern = Pattern.compile(string)
+          val regex = Pattern.compile(string)
           if (isExcluded) {
-            excludedPatterns.add(pattern)
+            excludedPatterns.add(regex)
           }
           else {
-            patterns.add(pattern)
+            includedPatterns.add(regex)
           }
         }
         catch (e: PatternSyntaxException) {
           LOG.warn("Pattern $string is not a proper regular expression and no branch can be found with that name.", e)
+          if (shouldExcludeNotMatched) {
+            continue
+          }
           if (isExcluded) {
             excludedBranches.add(string)
           }
           else {
-            branchNames.add(string)
+            includedBranches.add(string)
           }
         }
-
       }
       else {
+        if (shouldExcludeNotMatched && !existingBranches.contains(string)) {
+          continue
+        }
         if (isExcluded) {
           excludedBranches.add(string)
         }
         else {
-          branchNames.add(string)
+          includedBranches.add(string)
         }
       }
     }
 
-    return VcsLogBranchFilterImpl(branchNames, patterns, excludedBranches, excludedPatterns)
+    return VcsLogBranchFilterImpl(includedBranches, includedPatterns, excludedBranches, excludedPatterns)
   }
 
   @JvmStatic
@@ -232,12 +241,12 @@ fun VcsLogFilterCollection.getPresentation(): String {
   if (get(HASH_FILTER) != null) {
     return get(HASH_FILTER)!!.displayText
   }
-  return filters.joinToString(" ") { filter ->
+  return StringUtil.join(filters, { filter: VcsLogFilter ->
     if (filters.size != 1) {
       filter.withPrefix()
     }
     else filter.displayText
-  }
+  }, " ")
 }
 
 @Nls

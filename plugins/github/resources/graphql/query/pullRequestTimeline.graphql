@@ -1,12 +1,13 @@
 fragment issueCommentInfo on IssueComment {
     ...comment
-    url
+    viewerCanUpdate
+    viewerCanDelete
 }
 
 fragment prCommitInfo on PullRequestCommit {
     ...nodeInfo
     commit {
-        ...commit
+        ...commitShort
     }
     url
 }
@@ -22,6 +23,20 @@ fragment reviewDismissedEvent on ReviewDismissedEvent {
             ...actorInfo
         }
     }
+}
+
+fragment readyForReviewEvent on ReadyForReviewEvent {
+    actor {
+        ...actorInfo
+    }
+    createdAt
+}
+
+fragment convertToDraftEvent on ConvertToDraftEvent {
+    actor {
+        ...actorInfo
+    }
+    createdAt
 }
 
 fragment renamedEvent on RenamedTitleEvent {
@@ -52,6 +67,10 @@ fragment mergedEvent on MergedEvent {
         ...actorInfo
     }
     createdAt
+    commit {
+        ...commitShort
+    }
+    mergeRefName
 }
 
 fragment assignedEvent on AssignedEvent {
@@ -172,6 +191,53 @@ fragment baseRefChangedEvent on BaseRefChangedEvent {
     createdAt
 }
 
+fragment referenceSubject on ReferencedSubject {
+    __typename
+    ... on PullRequest {
+        title
+        number
+        state
+        isDraft
+        url
+    }
+    ... on Issue {
+        title
+        number
+        state
+        url
+    }
+}
+
+fragment crossReferencedEvent on CrossReferencedEvent {
+    actor {
+        ...actorInfo
+    }
+    createdAt
+    source {
+        ...referenceSubject
+    }
+}
+
+#fragment connectedEvent on ConnectedEvent {
+#    actor {
+#        ...actorInfo
+#    }
+#    createdAt
+#    subject {
+#        ...referenceSubject
+#    }
+#}
+#
+#fragment disconnectedEvent on DisconnectedEvent {
+#    actor {
+#        ...actorInfo
+#    }
+#    createdAt
+#    subject {
+#        ...referenceSubject
+#    }
+#}
+
 query($repoOwner: String!, $repoName: String!, $number: Int!, $pageSize: Int = 100, $cursor: String, $since: DateTime) {
     repository(owner: $repoOwner, name: $repoName) {
         pullRequest(number: $number) {
@@ -202,12 +268,19 @@ query($repoOwner: String!, $repoName: String!, $number: Int!, $pageSize: Int = 1
 
                     ...reviewDismissedEvent
 
+                    ...readyForReviewEvent
+                    ...convertToDraftEvent
+
                     ...baseRefChangedEvent
                     ...baseRefForcePushedEvent
 
                     ...headRefForcePushedEvent
                     ...headRefDeletedEvent
                     ...headRefRestoredEvent
+
+                    ...crossReferencedEvent
+                    #...connectedEvent
+                    #...disconnectedEvent
                 }
             }
         }

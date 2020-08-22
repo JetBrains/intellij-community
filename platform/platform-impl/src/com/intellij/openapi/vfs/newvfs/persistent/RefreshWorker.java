@@ -17,34 +17,27 @@ import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
 import com.intellij.openapi.vfs.newvfs.ChildInfoImpl;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
+import com.intellij.openapi.vfs.newvfs.VfsImplUtil;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.OpenTHashSet;
-import com.intellij.util.containers.Queue;
-import com.intellij.util.text.FilePathHashingStrategy;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
+import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Consumer;
 
-import static com.intellij.openapi.util.Pair.pair;
 import static com.intellij.openapi.vfs.newvfs.persistent.VfsEventGenerationHelper.LOG;
-import static com.intellij.util.containers.ContainerUtil.newTroveSet;
 
-public class RefreshWorker {
+public final class RefreshWorker {
   private final boolean myIsRecursive;
-  private final Queue<NewVirtualFile> myRefreshQueue = new Queue<>(100);
+  private final Deque<NewVirtualFile> myRefreshQueue = new ArrayDeque<>(100);
   private final VfsEventGenerationHelper myHelper = new VfsEventGenerationHelper();
   private volatile boolean myCancelled;
   private final LocalFileSystemRefreshWorker myLocalFileSystemRefreshWorker;
@@ -75,14 +68,14 @@ public class RefreshWorker {
       return;
     }
 
-    NewVirtualFile root = myRefreshQueue.pullFirst();
+    NewVirtualFile root = myRefreshQueue.removeFirst();
     NewVirtualFileSystem fs = root.getFileSystem();
     if (root.isDirectory()) {
       fs = PersistentFS.replaceWithNativeFS(fs);
     }
     PersistentFS persistence = PersistentFS.getInstance();
 
-    FileAttributes attributes = fs.getAttributes(root);
+    FileAttributes attributes = VfsImplUtil.getAttributesWithCaseSensitivity(fs, root);
     if (attributes == null) {
       myHelper.scheduleDeletion(root);
       root.markClean();
@@ -118,17 +111,15 @@ public class RefreshWorker {
   }
 
   private void processQueue(@NotNull NewVirtualFileSystem fs, @NotNull PersistentFS persistence) throws RefreshCancelledException {
-    TObjectHashingStrategy<String> strategy = FilePathHashingStrategy.create(fs.isCaseSensitive());
-
     next:
     while (!myRefreshQueue.isEmpty()) {
-      VirtualDirectoryImpl dir = (VirtualDirectoryImpl)myRefreshQueue.pullFirst();
+      VirtualDirectoryImpl dir = (VirtualDirectoryImpl)myRefreshQueue.removeFirst();
       boolean fullSync = dir.allChildrenLoaded(), succeeded;
 
       do {
         myHelper.beginTransaction();
         try {
-          succeeded = fullSync ? fullDirRefresh(fs, persistence, strategy, dir) : partialDirRefresh(fs, persistence, strategy, dir);
+          succeeded = fullSync ? fullDirRefresh(fs, persistence, dir) : partialDirRefresh(fs, persistence, dir);
         }
         catch (InvalidVirtualFileAccessException e) {
           myHelper.endTransaction(false);
@@ -147,15 +138,16 @@ public class RefreshWorker {
 
   private boolean fullDirRefresh(@NotNull NewVirtualFileSystem fs,
                                  @NotNull PersistentFS persistence,
-                                 @NotNull TObjectHashingStrategy<String> strategy,
                                  @NotNull VirtualDirectoryImpl dir) {
     Pair<List<String>, List<VirtualFile>> snapshot = LocalFileSystemRefreshWorker.getDirectorySnapshot(dir);
-    if (snapshot == null) return false;
+    if (snapshot == null) {
+      return false;
+    }
     List<String> persistedNames = snapshot.getFirst();
     List<VirtualFile> children = snapshot.getSecond();
 
     String[] upToDateNames = VfsUtil.filterNames(fs.list(dir));
-    Set<String> newNames = new THashSet<>(Arrays.asList(upToDateNames), strategy);
+    Set<String> newNames = CollectionFactory.createFilePathSet(upToDateNames, dir.isCaseSensitive());
     if (dir.allChildrenLoaded() && children.size() < upToDateNames.length) {
       for (VirtualFile child : children) {
         newNames.remove(child.getName());
@@ -165,11 +157,13 @@ public class RefreshWorker {
       newNames.removeAll(persistedNames);
     }
 
-    Set<String> deletedNames = newTroveSet(strategy, persistedNames);
+    Set<String> deletedNames = CollectionFactory.createFilePathSet(persistedNames, dir.isCaseSensitive());
     ContainerUtil.removeAll(deletedNames, upToDateNames);
 
-    OpenTHashSet<String> actualNames = fs.isCaseSensitive() ? null : new OpenTHashSet<>(strategy, upToDateNames);
-    if (LOG.isTraceEnabled()) LOG.trace("current=" + persistedNames + " +" + newNames + " -" + deletedNames);
+    ObjectOpenCustomHashSet<String> actualNames = dir.isCaseSensitive() ? null : (ObjectOpenCustomHashSet<String>)CollectionFactory.createFilePathSet(upToDateNames, false);
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("current=" + persistedNames + " +" + newNames + " -" + deletedNames);
+    }
 
     List<ChildInfo> newKids = new ArrayList<>(newNames.size());
     for (String newName : newNames) {
@@ -178,16 +172,32 @@ public class RefreshWorker {
       if (record != null) {
         newKids.add(record);
       }
-      else {
-        if (LOG.isTraceEnabled()) LOG.trace("[+] fs=" + fs + " dir=" + dir + " name=" + newName);
+      else if (LOG.isTraceEnabled()) {
+        LOG.trace("[+] fs=" + fs + " dir=" + dir + " name=" + newName);
       }
     }
 
-    List<Pair<VirtualFile, FileAttributes>> updatedMap = new ArrayList<>(children.size());
-    for (VirtualFile child : children) {
-      checkCancelled(dir);
-      if (!deletedNames.contains(child.getName())) {
-        updatedMap.add(pair(child, fs.getAttributes(child)));
+    var updatedMap = new ArrayList<Pair<VirtualFile, FileAttributes>>(children.size() - deletedNames.size());
+    var chs = ContainerUtil.filter(children, file -> !deletedNames.contains(file.getName()));
+
+    var map = fs instanceof BatchingFileSystem
+                                      ? ((BatchingFileSystem)fs).listWithAttributes(dir, ContainerUtil.map(chs, file -> file.getName()))
+                                      : null;
+    if (map != null) {
+      Map<String, VirtualFile> nameToFile = new HashMap<>();
+      for (var file : chs) {
+        nameToFile.put(file.getName(), file);
+      }
+      for (var e : map.entrySet()) {
+        String name = e.getKey();
+        FileAttributes attributes = e.getValue();
+        updatedMap.add(Pair.create(nameToFile.get(name), VfsImplUtil.getAttributesWithCaseSensitivity(fs, attributes)));
+      }
+    }
+    else {
+      for (VirtualFile child : chs) {
+        checkCancelled(dir);
+        updatedMap.add(new Pair<>(child, VfsImplUtil.getAttributesWithCaseSensitivity(fs, child)));
       }
     }
 
@@ -203,7 +213,7 @@ public class RefreshWorker {
     }
 
     for (ChildInfo record : newKids) {
-      myHelper.scheduleCreation(dir, record.getName().toString(), record.getFileAttributes(), record.getSymLinkTarget(), () -> checkCancelled(dir));
+      myHelper.scheduleCreation(dir, record.getName().toString(), record.getFileAttributes(), record.getSymlinkTarget(), () -> checkCancelled(dir));
     }
 
     for (Pair<VirtualFile, FileAttributes> pair : updatedMap) {
@@ -232,24 +242,30 @@ public class RefreshWorker {
 
   private boolean partialDirRefresh(@NotNull NewVirtualFileSystem fs,
                                     @NotNull PersistentFS persistence,
-                                    @NotNull TObjectHashingStrategy<String> strategy,
                                     @NotNull VirtualDirectoryImpl dir) {
     Pair<List<VirtualFile>, List<String>> snapshot = ReadAction.compute(() -> {
       checkCancelled(dir);
-      return pair(dir.getCachedChildren(), dir.getSuspiciousNames());
+      return new Pair<>(dir.getCachedChildren(), dir.getSuspiciousNames());
     });
     List<VirtualFile> cached = snapshot.getFirst();
     List<String> wanted = snapshot.getSecond();
 
-    OpenTHashSet<String> actualNames =
-      fs.isCaseSensitive() || cached.isEmpty() ? null : new OpenTHashSet<>(strategy, VfsUtil.filterNames(fs.list(dir)));
+    ObjectOpenCustomHashSet<String> actualNames;
+    if (dir.isCaseSensitive() || cached.isEmpty()) {
+      actualNames = null;
+    }
+    else {
+      actualNames = (ObjectOpenCustomHashSet<String>)CollectionFactory.createFilePathSet(VfsUtil.filterNames(fs.list(dir)), false);
+    }
 
-    if (LOG.isTraceEnabled()) LOG.trace("cached=" + cached + " actual=" + actualNames + " suspicious=" + wanted);
+    if (LOG.isTraceEnabled()) {
+      LOG.trace("cached=" + cached + " actual=" + actualNames + " suspicious=" + wanted);
+    }
 
     List<Pair<VirtualFile, FileAttributes>> existingMap = new ArrayList<>(cached.size());
     for (VirtualFile child : cached) {
       checkCancelled(dir);
-      existingMap.add(pair(child, fs.getAttributes(child)));
+      existingMap.add(new Pair<>(child, VfsImplUtil.getAttributesWithCaseSensitivity(fs, child)));
     }
 
     List<ChildInfo> newKids = new ArrayList<>(wanted.size());
@@ -280,7 +296,7 @@ public class RefreshWorker {
     }
 
     for (ChildInfo record : newKids) {
-      myHelper.scheduleCreation(dir, record.getName().toString(), record.getFileAttributes(), record.getSymLinkTarget(), () -> checkCancelled(dir));
+      myHelper.scheduleCreation(dir, record.getName().toString(), record.getFileAttributes(), record.getSymlinkTarget(), () -> checkCancelled(dir));
     }
 
     return !isDirectoryChanged(dir, cached, wanted);
@@ -296,15 +312,15 @@ public class RefreshWorker {
   @Nullable
   private static ChildInfo childRecord(@NotNull NewVirtualFileSystem fs, @NotNull VirtualFile dir, @NotNull String name) {
     FakeVirtualFile file = new FakeVirtualFile(dir, name);
-    FileAttributes attributes = fs.getAttributes(file);
+    FileAttributes attributes = VfsImplUtil.getAttributesWithCaseSensitivity(fs, file);
     if (attributes == null) return null;
     boolean isEmptyDir = attributes.isDirectory() && !fs.hasChildren(file);
     String symlinkTarget = attributes.isSymLink() ? fs.resolveSymLink(file) : null;
-    if (!fs.isCaseSensitive()) {
+    if (!dir.isCaseSensitive()) {
       // extra check if "suspicious name" differs from the actual name - we want actual names in the file events
       name = fs.getCanonicallyCasedName(file);
     }
-    return new ChildInfoImpl(ChildInfoImpl.UNKNOWN_ID_YET, name, attributes, isEmptyDir ? ChildInfo.EMPTY_ARRAY : null, symlinkTarget);
+    return new ChildInfoImpl(name, attributes, isEmptyDir ? ChildInfo.EMPTY_ARRAY : null, symlinkTarget);
   }
 
   static class RefreshCancelledException extends RuntimeException {
@@ -321,8 +337,9 @@ public class RefreshWorker {
     if (myCancelled) {
       if (LOG.isTraceEnabled()) LOG.trace("cancelled at: " + stopAt);
       forceMarkDirty(stopAt);
-      while (!myRefreshQueue.isEmpty()) {
-        forceMarkDirty(myRefreshQueue.pullFirst());
+      NewVirtualFile file;
+      while ((file = myRefreshQueue.pollFirst()) != null) {
+        forceMarkDirty(file);
       }
       throw new RefreshCancelledException();
     }
@@ -391,7 +408,7 @@ public class RefreshWorker {
     return false;
   }
 
-  private void checkAndScheduleFileNameChange(@Nullable OpenTHashSet<String> actualNames, @NotNull VirtualFile child) {
+  private void checkAndScheduleFileNameChange(@Nullable ObjectOpenCustomHashSet<String> actualNames, @NotNull VirtualFile child) {
     if (actualNames != null) {
       String currentName = child.getName();
       String actualName = actualNames.get(currentName);

@@ -4,6 +4,7 @@ package com.intellij.openapi.util.text;
 import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.*;
@@ -12,10 +13,7 @@ import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceSubSequence;
 import com.intellij.util.text.MergingCharSequence;
 import com.intellij.util.text.StringFactory;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.text.MutableAttributeSet;
 import javax.swing.text.html.HTML;
@@ -245,6 +243,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
+  @NlsSafe
   public static @NotNull String getPackageName(@NotNull String fqName) {
     return getPackageName(fqName, '.');
   }
@@ -262,6 +261,7 @@ public class StringUtil extends StringUtilRt {
    * @return the package name of the type or the declarator of the type. The empty string if the given fqName is unqualified
    */
   @Contract(pure = true)
+  @NlsSafe
   public static @NotNull String getPackageName(@NotNull String fqName, char separator) {
     int lastPointIdx = fqName.lastIndexOf(separator);
     if (lastPointIdx >= 0) {
@@ -937,6 +937,28 @@ public class StringUtil extends StringUtilRt {
     return builder;
   }
 
+  @Contract(value = "null -> null; !null -> !null", pure = true)
+  public static @Nullable CharSequence trim(@Nullable CharSequence s) {
+    if (s == null) return null;
+    int startIndex = 0;
+    int length = s.length();
+    if (length == 0) return s;
+    while (startIndex < length && Character.isWhitespace(s.charAt(startIndex))) startIndex++;
+
+    if (startIndex == length) {
+      return Strings.EMPTY_CHAR_SEQUENCE;
+    }
+
+    int endIndex = length - 1;
+    while (endIndex >= startIndex && Character.isWhitespace(s.charAt(endIndex))) endIndex--;
+    endIndex++;
+
+    if (startIndex > 0 || endIndex < length) {
+      return s.subSequence(startIndex, endIndex);
+    }
+    return s;
+  }
+
   @Contract(pure = true)
   public static boolean startsWithChar(@Nullable CharSequence s, char prefix) {
     return s != null && s.length() != 0 && s.charAt(0) == prefix;
@@ -1472,7 +1494,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
-  public static boolean containsAnyChar(final @NotNull String value, final @NotNull String chars) {
+  public static boolean containsAnyChar(final @NotNull String value, final @NotNull @NonNls String chars) {
     return Strings.containsAnyChar(value, chars);
   }
 
@@ -1951,7 +1973,7 @@ public class StringUtil extends StringUtilRt {
    */
   @Contract(value = "null -> null; !null -> !null",pure = true)
   @Deprecated
-  public static String escapeXml(final @Nullable String text) {
+  public static String escapeXml(final @Nullable @Nls String text) {
     return text == null ? null : escapeXmlEntities(text);
   }
 
@@ -1967,10 +1989,11 @@ public class StringUtil extends StringUtilRt {
    * @return {@code text} with some characters replaced with standard XML entities, e.g. '<' replaced with '{@code &lt;}'
    */
   @Contract(pure = true)
-  public static @NotNull String escapeXmlEntities(@NotNull String text) {
+  public static @NotNull @Nls String escapeXmlEntities(@NotNull @Nls String text) {
     return replace(text, REPLACES_DISP, REPLACES_REFS);
   }
 
+  @Contract(pure = true)
   public static @NotNull String removeHtmlTags(@NotNull String htmlString) {
     return removeHtmlTags(htmlString, false);
   }
@@ -2011,8 +2034,9 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
-  public static @NotNull String htmlEmphasize(@NotNull String text) {
-    return "<b><code>" + escapeXmlEntities(text) + "</code></b>";
+  public static @NotNull String htmlEmphasize(@NotNull @Nls String text) {
+    return HtmlChunk.tag("code").addText(text)
+      .wrapWith("b").toString();
   }
 
 
@@ -2281,7 +2305,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
-  public static @NotNull String getQualifiedName(@Nullable String packageName, @NotNull String className) {
+  public static @NotNull @NonNls String getQualifiedName(@Nullable @NonNls String packageName, @NotNull @NonNls String className) {
     if (packageName == null || packageName.isEmpty()) {
       return className;
     }
@@ -2312,7 +2336,7 @@ public class StringUtil extends StringUtilRt {
 
       int cmp;
       if (p1.matches("\\d+") && p2.matches("\\d+")) {
-        cmp = new Integer(p1).compareTo(new Integer(p2));
+        cmp = Integer.valueOf(p1).compareTo(Integer.valueOf(p2));
       }
       else {
         cmp = part1[idx].compareTo(part2[idx]);
@@ -2328,7 +2352,7 @@ public class StringUtil extends StringUtilRt {
         String p = parts[idx];
         int cmp;
         if (p.matches("\\d+")) {
-          cmp = new Integer(p).compareTo(0);
+          cmp = Integer.valueOf(p).compareTo(0);
         }
         else {
           cmp = 1;
@@ -2862,17 +2886,17 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
-  public static @NotNull String getShortName(@NotNull Class<?> aClass) {
+  public static @NotNull @NlsSafe String getShortName(@NotNull Class<?> aClass) {
     return StringUtilRt.getShortName(aClass);
   }
 
   @Contract(pure = true)
-  public static @NotNull String getShortName(@NotNull String fqName) {
+  public static @NotNull @NlsSafe String getShortName(@NotNull @NonNls String fqName) {
     return StringUtilRt.getShortName(fqName);
   }
 
   @Contract(pure = true)
-  public static @NotNull String getShortName(@NotNull String fqName, char separator) {
+  public static @NotNull @NlsSafe String getShortName(@NotNull @NonNls String fqName, char separator) {
     return StringUtilRt.getShortName(fqName, separator);
   }
 

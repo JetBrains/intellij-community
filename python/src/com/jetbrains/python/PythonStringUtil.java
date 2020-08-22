@@ -21,7 +21,7 @@ import java.util.regex.Pattern;
  * @author Alexei Orischenko
  * @author vlan
  */
-public class PythonStringUtil {
+public final class PythonStringUtil {
 
   private PythonStringUtil() {
   }

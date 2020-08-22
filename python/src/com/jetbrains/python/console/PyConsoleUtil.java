@@ -28,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 
-public class PyConsoleUtil {
+public final class PyConsoleUtil {
   public static final String ORDINARY_PROMPT = ">>>";
   public static final String INPUT_PROMPT = ">?";
   public static final String INDENT_PROMPT = "...";

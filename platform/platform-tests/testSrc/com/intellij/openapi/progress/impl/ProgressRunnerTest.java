@@ -12,21 +12,18 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.testFramework.EdtTestUtilKt;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TestRule;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.junit.runners.model.Statement;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,8 +33,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
-import static org.apache.commons.lang.StringUtils.substringBefore;
-
 @RunWith(Parameterized.class)
 public class ProgressRunnerTest extends LightPlatformTestCase {
   @Parameterized.Parameter
@@ -45,15 +40,6 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
 
   @Parameterized.Parameter(1)
   public boolean myReleaseIWLockOnRun;
-
-  @Rule
-  public final TestRule myBaseRule = (base, description) -> new Statement() {
-    @Override
-    public void evaluate() throws Throwable {
-      setName(substringBefore(description.getMethodName(), "["));
-      runBare();
-    }
-  };
 
   @Parameterized.Parameters(name = "onEdt = {0}, releaseIW = {1}")
   public static List<Object[]> dataOnEdt() {
@@ -337,24 +323,18 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
   }
 
   @Override
-  protected void invokeTestRunnable(@NotNull Runnable runnable) {
-    if (runInDispatchThread()) {
-      EdtTestUtilKt.runInEdtAndWait(() -> {
-        if (myReleaseIWLockOnRun) {
-          return ApplicationManagerEx.getApplicationEx().runUnlockingIntendedWrite(() -> {
-            runnable.run();
-            return null;
-          });
-        }
-        else {
-          runnable.run();
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+    super.runTestRunnable(() -> {
+      if (runInDispatchThread() && myReleaseIWLockOnRun) {
+        ApplicationManagerEx.getApplicationEx().runUnlockingIntendedWrite(() -> {
+          testRunnable.run();
           return null;
-        }
-      });
-    }
-    else {
-      runnable.run();
-    }
+        });
+      }
+      else {
+        testRunnable.run();
+      }
+    });
   }
 
   private static <T> T computeAssertingExceptionConditionally(boolean shouldFail, @NotNull Supplier<T> computation) {
@@ -410,7 +390,7 @@ public class ProgressRunnerTest extends LightPlatformTestCase {
     }
   }
 
-  private static class TestTask implements Runnable {
+  private static final class TestTask implements Runnable {
 
     private final Semaphore mySemaphore;
 

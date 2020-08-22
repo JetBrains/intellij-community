@@ -343,7 +343,7 @@
       <action id="Diff.MagicResolveConflicts" class="com.intellij.openapi.actionSystem.EmptyAction"
               icon="AllIcons.Diff.MagicResolveToolbar"/>
 
-      <group text="Compare Contents" icon="AllIcons.Actions.Diff" popup="true">
+      <group id="compare.contents" icon="AllIcons.Actions.Diff" popup="true">
         <action id="Diff.ComparePartial.Base.Left" class="com.intellij.openapi.actionSystem.EmptyAction"
                 icon="AllIcons.Diff.Compare4LeftMiddle"/>
         <action id="Diff.ComparePartial.Base.Right" class="com.intellij.openapi.actionSystem.EmptyAction"
@@ -779,8 +779,10 @@
       <reference ref="$Cut"/>
       <reference ref="$Copy"/>
       <reference ref="$Paste"/>
-      <reference ref="PasteMultiple"/>
-      <reference ref="EditorPasteSimple"/>
+      <group id="Copy.Paste.Special" popup="true">
+        <reference ref="EditorPasteSimple"/>
+        <reference ref="PasteMultiple"/>
+      </group>
       <reference ref="EditorToggleColumnMode"/>
       <separator/>
       <group id="EditorPopupMenu1"/>
@@ -824,8 +826,6 @@
       <reference ref="PinActiveEditorTab"/>
       <reference ref="ConfigureEditorTabs"/>
       <separator/>
-      <reference ref="NextTab"/>
-      <reference ref="PreviousTab"/>
       <reference ref="ReopenClosedTab"/>
       <separator/>
       <reference ref="Unsplit"/>
@@ -834,6 +834,8 @@
 
     <group id="WelcomeScreen.QuickStart">
     </group>
+
+    <action id="WelcomeScreen.OpenDirectoryProject" class="com.intellij.ide.actions.OpenFileAction$OnWelcomeScreen"/>
 
     <group id="WelcomeScreen.Documentation">
       <reference ref="HelpTopics"/>
@@ -875,7 +877,8 @@
       <action id="WelcomeScreen.CopyProjectPath" class="com.intellij.openapi.wm.impl.welcomeScreen.CopyProjectPathAction"
               use-shortcut-of="CopyPaths"/>
       <separator/>
-      <action id="WelcomeScreen.RemoveSelected" class="com.intellij.openapi.wm.impl.welcomeScreen.RemoveSelectedProjectsAction"/>
+      <action id="WelcomeScreen.RemoveSelected" class="com.intellij.openapi.wm.impl.welcomeScreen.RemoveSelectedProjectsAction"
+              use-shortcut-of="$Delete"/>
     </group>
 
     <group id="FileChooser">
@@ -949,6 +952,7 @@
       <action internal="true" id="ReloadProjectAction" class="com.intellij.internal.ReloadProjectAction"/>
       <action internal="true" id="ShowMainMenu" class="com.intellij.internal.ui.ShowMainMenuAction"/>
       <action id="JBTabsDemo" internal="true" class="com.intellij.internal.JBTabsDemoAction"/>
+      <action id="JTabbedPaneDemo" internal="true" class="com.intellij.internal.JTabbedPaneDemoAction"/>
       <action id="DumbMode" internal="true" class="com.intellij.internal.ToggleDumbModeAction"/>
       <action id="ShowPoweredProgress" internal="true" class="com.intellij.internal.ShowPoweredProgressAction"/>
       <action id="DisablePCE" internal="true" class="com.intellij.internal.DisablePCEAction"/>
@@ -1226,9 +1230,6 @@
 
     <action class="com.intellij.openapi.editor.actions.ShowFontsUsedByEditorAction" id="ShowFontsUsedByEditor"/>
     <group id="AnalyzeStacktraceToolbar"/>
-
-    <group id="ReaderModeActionGroup" class="com.intellij.codeInsight.actions.ReaderModeActionGroup">
-      <action id="ReaderModeAction" class="com.intellij.codeInsight.actions.ReaderModeAction" icon="AllIcons.Actions.Show"/>
-    </group>
+    <group id="EditorTabActionGroup"/>
   </actions>
 </idea-plugin>

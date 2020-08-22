@@ -18,19 +18,12 @@ package com.intellij.java.codeInsight.daemon.quickFix;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixParameterizedTestCase;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.miscGenerics.RedundantTypeArgsInspection;
-import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class RedundantTypeArgsInspectionFixTest extends LightQuickFixParameterizedTestCase {
   @Override
   protected LocalInspectionTool @NotNull [] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{ new RedundantTypeArgsInspection()};
-  }
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    PsiTestUtil.disablePsiTextConsistencyChecks(getTestRootDisposable());
   }
 
   @Override

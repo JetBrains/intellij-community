@@ -9,6 +9,7 @@ import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.impl.ui.ArtifactProblemsHolderBase;
 import com.intellij.packaging.ui.ArtifactProblemQuickFix;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +37,7 @@ public abstract class PackagingValidationTestCase extends PackagingElementsTestC
     }
 
     @Override
-    public void registerError(@NotNull String message,
+    public void registerError(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String message,
                               @NotNull String problemTypeId,
                               @Nullable List<PackagingElement<?>> pathToPlace,
                               ArtifactProblemQuickFix @NotNull ... quickFixes) {
@@ -45,7 +46,7 @@ public abstract class PackagingValidationTestCase extends PackagingElementsTestC
     }
 
     @Override
-    public void registerWarning(@NotNull String message,
+    public void registerWarning(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String message,
                                 @NotNull String problemTypeId, @Nullable List<PackagingElement<?>> pathToPlace,
                                 ArtifactProblemQuickFix @NotNull ... quickFixes) {
       registerError(message, problemTypeId, pathToPlace, quickFixes);

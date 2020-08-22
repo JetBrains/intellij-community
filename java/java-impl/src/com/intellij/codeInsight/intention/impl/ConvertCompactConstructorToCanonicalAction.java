@@ -23,28 +23,44 @@ public class ConvertCompactConstructorToCanonicalAction extends PsiElementBaseIn
     if (method == null) return;
     PsiClass recordClass = method.getContainingClass();
     if (recordClass == null) return;
-    PsiMethod prototype = new RecordConstructorMember(recordClass, false).generateRecordConstructor();
-    PsiModifierList modifierList = method.getModifierList();
-    prototype.getModifierList().replace(modifierList);
-    PsiElement beforeModifier = modifierList.getPrevSibling();
-    if (beforeModifier != null) {
-      prototype.addRangeBefore(method.getFirstChild(), beforeModifier, prototype.getModifierList());
-    }
+    PsiMethod prototype = generateCanonicalConstructor(method);
     PsiCodeBlock oldBody = Objects.requireNonNull(method.getBody());
-    PsiCodeBlock body = (PsiCodeBlock)Objects.requireNonNull(prototype.getBody()).replace(oldBody);
-    PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-    for (PsiRecordComponent component : recordClass.getRecordComponents()) {
-      PsiField field = JavaPsiRecordUtil.getFieldForComponent(component);
-      if (field != null && !HighlightControlFlowUtil.variableDefinitelyAssignedIn(field, body)) {
-        body.add(factory.createStatementFromText("this." + field.getName() + "=" + field.getName() + ";", body));
-      }
-    }
+    PsiCodeBlock body = Objects.requireNonNull(prototype.getBody());
     int offset = editor.getCaretModel().getOffset();
     if (oldBody.getTextRange().contains(offset)) {
       offset += body.getTextRangeInParent().getStartOffset() - oldBody.getTextRangeInParent().getStartOffset();
     }
     method.replace(prototype);
     editor.getCaretModel().moveToOffset(offset);
+  }
+
+  /**
+   * @param compactConstructor compact constructor
+   * @return non-physical canonical constructor
+   */
+  @NotNull
+  public static PsiMethod generateCanonicalConstructor(@NotNull PsiMethod compactConstructor) {
+    if (!JavaPsiRecordUtil.isCompactConstructor(compactConstructor)) {
+      throw new IllegalArgumentException("Compact constructor required");
+    }
+    PsiClass recordClass = Objects.requireNonNull(compactConstructor.getContainingClass());
+    PsiMethod prototype = new RecordConstructorMember(recordClass, false).generateRecordConstructor();
+    PsiModifierList modifierList = compactConstructor.getModifierList();
+    prototype.getModifierList().replace(modifierList);
+    PsiElement beforeModifier = modifierList.getPrevSibling();
+    if (beforeModifier != null) {
+      prototype.addRangeBefore(compactConstructor.getFirstChild(), beforeModifier, prototype.getModifierList());
+    }
+    PsiCodeBlock oldBody = Objects.requireNonNull(compactConstructor.getBody());
+    PsiCodeBlock body = (PsiCodeBlock)Objects.requireNonNull(prototype.getBody()).replace(oldBody);
+    PsiElementFactory factory = JavaPsiFacade.getElementFactory(compactConstructor.getProject());
+    for (PsiRecordComponent component : recordClass.getRecordComponents()) {
+      PsiField field = JavaPsiRecordUtil.getFieldForComponent(component);
+      if (field != null && !HighlightControlFlowUtil.variableDefinitelyAssignedIn(field, body)) {
+        body.add(factory.createStatementFromText("this." + field.getName() + "=" + field.getName() + ";", body));
+      }
+    }
+    return prototype;
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)

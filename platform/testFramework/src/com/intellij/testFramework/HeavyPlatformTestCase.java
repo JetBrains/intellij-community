@@ -2,12 +2,12 @@
 package com.intellij.testFramework;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.ide.highlighter.ModuleFileType;
 import com.intellij.ide.highlighter.ProjectFileType;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.mock.MockApplication;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
@@ -28,9 +28,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
-import com.intellij.openapi.project.impl.ProjectImpl;
-import com.intellij.openapi.project.impl.TooManyProjectLeakedException;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
@@ -40,14 +39,14 @@ import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker;
 import com.intellij.openapi.vfs.impl.jar.JarFileSystemImpl;
+import com.intellij.openapi.vfs.impl.local.LocalFileSystemBase;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
+import com.intellij.project.ProjectKt;
+import com.intellij.project.TestProjectManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -55,27 +54,21 @@ import com.intellij.psi.impl.PsiDocumentManagerBase;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
-import com.intellij.util.MemoryDumpHelper;
-import com.intellij.util.PathUtil;
+import com.intellij.testFramework.fixtures.IdeaTestExecutionPolicy;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.IndexableSetContributor;
+import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.UIUtil;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-import it.unimi.dsi.fastutil.ints.IntSet;
 import junit.framework.TestCase;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
+import java.io.*;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -83,9 +76,9 @@ import java.lang.annotation.Target;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Objects;
@@ -104,12 +97,10 @@ import static com.intellij.testFramework.RunAll.runAll;
  */
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
 public abstract class HeavyPlatformTestCase extends UsefulTestCase implements DataProvider {
-  private static boolean ourReportedLeakedProjects;
   protected Project myProject;
   protected Module myModule;
 
-  protected final Collection<File> myFilesToDelete = new HashSet<>();
-  private final TempFiles myTempFiles = new TempFiles(myFilesToDelete);
+  private final TemporaryDirectory temporaryDirectory = new TemporaryDirectory();
 
   protected boolean myAssertionsInTestDetected;
   private static TestCase ourTestCase;
@@ -122,16 +113,49 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   private VirtualFilePointerTracker myVirtualFilePointerTracker;
   private @Nullable CodeStyleSettingsTracker myCodeStyleSettingsTracker;
 
-  public @NotNull TempFiles getTempDir() {
-    return myTempFiles;
+  private AccessToken projectTracker;
+
+  protected final @NotNull TemporaryDirectory getTempDir() {
+    return temporaryDirectory;
   }
 
-  protected final @NotNull VirtualFile createTestProjectStructure() throws IOException {
-    return PsiTestUtil.createTestProjectStructure(myProject, myModule, myFilesToDelete);
+  protected final @NotNull VirtualFile createTestProjectStructure() {
+    return createTestProjectStructure(null, true);
   }
 
-  protected final @NotNull VirtualFile createTestProjectStructure(String rootPath) throws Exception {
-    return PsiTestUtil.createTestProjectStructure(myProject, myModule, rootPath, myFilesToDelete);
+  protected final @NotNull VirtualFile createTestProjectStructure(@Nullable String rootPath) {
+    return createTestProjectStructure(rootPath, true);
+  }
+
+  protected final @NotNull VirtualFile createTestProjectStructure(@Nullable String rootPath, boolean addProjectRoots) {
+    Path dir = temporaryDirectory.newPath();
+    try {
+      Files.createDirectories(dir);
+    }
+    catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+
+    VirtualFile result = HeavyTestHelper.createTestProjectStructure(myModule, rootPath, dir, addProjectRoots);
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    return result;
+  }
+
+  public static @NotNull VirtualFile createTestProjectStructure(@Nullable Module module, @Nullable String rootPath, boolean addProjectRoots, @NotNull TemporaryDirectory temporaryDirectory) {
+    Path dir = temporaryDirectory.newPath();
+    try {
+      Files.createDirectories(dir);
+    }
+    catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+    return HeavyTestHelper.createTestProjectStructure(module, rootPath, dir, addProjectRoots);
+  }
+
+  protected @NotNull VirtualFile createTestProjectStructure(@NotNull Project project, @Nullable Module module, @Nullable String rootPath, boolean addProjectRoots) {
+    VirtualFile file = createTestProjectStructure(module, rootPath, addProjectRoots, getTempDir());
+    PsiDocumentManager.getInstance(project).commitAllDocuments();
+    return file;
   }
 
   /**
@@ -192,9 +216,31 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   }
 
   @Override
+  final @NotNull Path createGlobalTempDirectory() {
+    IdeaTestExecutionPolicy policy = IdeaTestExecutionPolicy.current();
+    String testName = policy == null ? null : policy.getPerTestTempDirName();
+    if (testName == null) {
+      testName = TEMP_DIR_MARKER + TemporaryDirectory.testNameToFileName(getName());
+    }
+
+    Path result = TemporaryDirectory.generateTemporaryPath(testName);
+    //noinspection deprecation
+    temporaryDirectory.scheduleDelete(result);
+    FileUtil.resetCanonicalTempPathCache(result.toString());
+
+    // no need to use common prefix as for now in any case global temp directory is set for each test
+    temporaryDirectory.init("", result);
+    return result;
+  }
+
+  @Override
+  final void removeGlobalTempDirectory(@NotNull Path dir) {
+    temporaryDirectory.after();
+  }
+
+  @Override
   protected void setUp() throws Exception {
     super.setUp();
-    myFilesToDelete.add(new File(FileUtilRt.getTempDirectory()));
 
     if (ourTestCase != null) {
       String message = "Previous test " + ourTestCase + " hasn't called tearDown(). Probably overridden without super call.";
@@ -206,6 +252,9 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     LOG.debug(getClass().getName() + ".setUp()");
 
     initApplication();
+
+    projectTracker = ((TestProjectManager)ProjectManager.getInstance()).startTracking();
+
     if (myOldSdks == null) { // some bastard's overridden initApplication completely
       myOldSdks = new SdkLeakTracker();
     }
@@ -243,9 +292,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   }
 
   protected void setUpProject() throws Exception {
-    myProject = doCreateProject(getProjectDirOrFile());
-    PlatformTestUtil.openProject(myProject);
-    LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete);
+    myProject = doCreateAndOpenProject();
 
     WriteAction.run(() ->
       ProjectRootManagerEx.getInstanceEx(myProject).mergeRootsChangesDuring(() -> {
@@ -259,90 +306,32 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     ((FileTypeManagerImpl)FileTypeManager.getInstance()).drainReDetectQueue();
   }
 
-  protected @NotNull Project doCreateProject(@NotNull Path projectFile) throws Exception {
-    return createProject(projectFile);
+  protected @NotNull OpenProjectTaskBuilder getOpenProjectOptions() {
+    // doCreateRealModule uses myProject.getName() as module name - use constant project name because projectFile here unique temp file
+    return new OpenProjectTaskBuilder().projectName(getProjectFilename());
   }
 
-  public static @NotNull Project createProject(@NotNull Path file) {
-    try {
-      return Objects.requireNonNull(ProjectManagerEx.getInstanceEx().newProject(file, FixtureRuleKt.createTestOpenProjectOptions()));
-    }
-    catch (TooManyProjectLeakedException e) {
-      if (ourReportedLeakedProjects) {
-        fail("Too many projects leaked, again.");
-        return null;
-      }
-      ourReportedLeakedProjects = true;
-
-      reportLeakedProjects(e);
-      return null;
-    }
+  protected @NotNull Project doCreateAndOpenProject() {
+    OpenProjectTaskBuilder optionBuilder = getOpenProjectOptions();
+    Path projectFile = getProjectDirOrFile(isCreateDirectoryBasedProject());
+    return Objects.requireNonNull(ProjectManagerEx.getInstanceEx().openProject(projectFile, optionBuilder.build()));
   }
 
-  public static @NotNull String publishHeapDump(@NotNull String fileNamePrefix) {
-    String fileName = fileNamePrefix + ".hprof.zip";
-    File dumpFile = new File(System.getProperty("teamcity.build.tempDir", System.getProperty("java.io.tmpdir")), fileName);
-    try {
-      FileUtil.delete(dumpFile);
-      MemoryDumpHelper.captureMemoryDumpZipped(dumpFile);
-    }
-    catch (Exception ex) {
-      ex.printStackTrace();
-    }
-    String dumpPath = dumpFile.getAbsolutePath();
-    System.out.println("##teamcity[publishArtifacts '" + dumpPath + "']");
-    return dumpPath;
+  protected boolean isCreateDirectoryBasedProject() {
+    return false;
   }
 
-  @Contract("_ -> fail")
-  public static void reportLeakedProjects(@NotNull TooManyProjectLeakedException e) {
-    IntSet hashCodes = new IntOpenHashSet();
-    for (Project project : e.getLeakedProjects()) {
-      hashCodes.add(System.identityHashCode(project));
-    }
-
-    String dumpPath = publishHeapDump("leakedProjects");
-
-    StringBuilder leakers = new StringBuilder();
-    leakers.append("Too many projects leaked: \n");
-    LeakHunter
-      .processLeaks(LeakHunter.allRoots(), ProjectImpl.class, p -> hashCodes.contains(System.identityHashCode(p)), (leaked, backLink) -> {
-        int hashCode = System.identityHashCode(leaked);
-        leakers.append("Leaked project found:").append(leaked).append("; hash: ").append(hashCode).append("; place: ")
-          .append(ProjectRule.getCreationPlace(leaked)).append("\n");
-        leakers.append(backLink).append("\n");
-        leakers.append(";-----\n");
-
-        hashCodes.remove(hashCode);
-        return !hashCodes.isEmpty();
-      });
-
-    fail(leakers + "\nPlease see '" + dumpPath + "' for a memory dump");
+  protected final @NotNull Path getProjectDirOrFile() {
+    return getProjectDirOrFile(isCreateDirectoryBasedProject());
   }
 
-  protected @NotNull Path getProjectDirOrFile() {
-    return getProjectDirOrFile(false);
+  protected @NotNull Path getProjectDirOrFile(boolean isDirectoryBasedProject) {
+    return temporaryDirectory.newPath(getProjectFilename() + (isDirectoryBasedProject ? "" : ProjectFileType.DOT_DEFAULT_EXTENSION));
   }
 
-  protected boolean isCreateProjectFileExplicitly() {
-    return true;
-  }
-
-  protected final @NotNull Path getProjectDirOrFile(boolean isDirectoryBasedProject) {
-    if (!isDirectoryBasedProject && isCreateProjectFileExplicitly()) {
-      try {
-        File tempFile = FileUtil.createTempFile(getName(), ProjectFileType.DOT_DEFAULT_EXTENSION);
-        myFilesToDelete.add(tempFile);
-        return tempFile.toPath();
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }
-
-    Path tempFile = TemporaryDirectory.generateTemporaryPath(FileUtil.sanitizeFileName(getName(), false) + (isDirectoryBasedProject ? "" : ProjectFileType.DOT_DEFAULT_EXTENSION));
-    myFilesToDelete.add(tempFile.toFile());
-    return tempFile;
+  private @Nullable String getProjectFilename() {
+    String testName = getName();
+    return testName == null ? null : FileUtil.sanitizeFileName(testName, false);
   }
 
   protected void setUpModule() {
@@ -366,33 +355,19 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     return doCreateRealModuleIn(moduleName, myProject, getModuleType());
   }
 
-  protected @NotNull Module doCreateRealModuleIn(@NotNull String moduleName, @NotNull Project project, @NotNull ModuleType<?> moduleType) {
-    return createModuleAt(moduleName, project, moduleType, Objects.requireNonNull(project.getBasePath()));
+  @SuppressWarnings("MethodMayBeStatic")
+  protected final @NotNull Module doCreateRealModuleIn(@NotNull String moduleName, @NotNull Project project, @NotNull ModuleType<?> moduleType) {
+    return HeavyTestHelper.createModuleAt(moduleName, project, moduleType, ProjectKt.getStateStore(project).getProjectBasePath());
   }
 
-  protected @NotNull Module createModuleAt(@NotNull String moduleName,
-                                           @NotNull Project project,
-                                           @NotNull ModuleType<?> moduleType,
-                                           @NotNull String path) {
-    if (isCreateProjectFileExplicitly()) {
-      File moduleFile = new File(FileUtil.toSystemDependentName(path), moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
-      FileUtil.createIfDoesntExist(moduleFile);
-      myFilesToDelete.add(moduleFile);
-      return WriteAction.computeAndWait(() -> {
-        VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(moduleFile);
-        assertNotNull(virtualFile);
-        Module module = ModuleManager.getInstance(project).newModule(virtualFile.getPath(), moduleType.getId());
-        module.getModuleFile();
-        return module;
-      });
-    }
-
-    ModuleManager moduleManager = ModuleManager.getInstance(project);
-    return WriteAction.computeAndWait(
-      () -> moduleManager.newModule(path + File.separatorChar + moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION, moduleType.getId()));
+  protected final @NotNull Module createModuleAt(@NotNull String moduleName,
+                                                 @NotNull Project project,
+                                                 @NotNull ModuleType<?> moduleType,
+                                                 @NotNull Path path) {
+    return HeavyTestHelper.createModuleAt(moduleName, project, moduleType, path);
   }
 
-  protected @NotNull ModuleType getModuleType() {
+  protected @NotNull ModuleType<?> getModuleType() {
     return EmptyModuleType.getInstance();
   }
 
@@ -423,12 +398,12 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     }
 
     FileBasedIndex fileBasedIndex = app.getServiceIfCreated(FileBasedIndex.class);
-    if (fileBasedIndex != null) {
+    if (fileBasedIndex instanceof FileBasedIndexImpl) {
       ((FileBasedIndexImpl)fileBasedIndex).cleanupForNextTest();
     }
 
     if (app.getServiceIfCreated(VirtualFileManager.class) != null) {
-      LocalFileSystemImpl localFileSystem = (LocalFileSystemImpl)LocalFileSystem.getInstance();
+      LocalFileSystemBase localFileSystem = (LocalFileSystemBase)LocalFileSystem.getInstance();
       if (localFileSystem != null) {
         localFileSystem.cleanupForNextTest();
       }
@@ -488,15 +463,17 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     runAll(
       () -> disposeRootDisposable(),
       () -> {
-        if (myProject != null) {
-          LightPlatformTestCase.doTearDown(myProject, TestApplicationManager.getInstanceIfCreated());
-          myProject = null;
+        if (project != null) {
+          TestApplicationManagerKt.tearDownProjectAndApp(project);
         }
+        // must be set to null only after dispose (maybe used by tests during dispose)
+        myProject = null;
       },
       () -> {
-        if (myProject != null) {
-          PlatformTestUtil.closeAndDisposeProjectAndCheckThatNoOpenProjects(myProject);
-          myProject = null;
+        AccessToken projectTracker = this.projectTracker;
+        if (projectTracker != null) {
+          this.projectTracker = null;
+          projectTracker.finish();
         }
       },
       () -> UIUtil.dispatchAllInvocationEvents(),
@@ -516,9 +493,6 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
       },
       () -> {
         JarFileSystemImpl.cleanupForNextTest();
-
-        getTempDir().deleteAll();
-        LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete);
         LaterInvocator.dispatchPendingFlushes();
       },
       () -> {
@@ -544,7 +518,6 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
       () -> myVirtualFilePointerTracker.assertPointersAreDisposed(),
       () -> {
         myModule = null;
-        myFilesToDelete.clear();
         myEditorListenerTracker = null;
         myThreadTracker = null;
         //noinspection AssignmentToStaticFieldFromInstanceMethod
@@ -603,12 +576,10 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   }
 
   @Override
-  public void runBare() throws Throwable {
-    if (!shouldRunTest()) return;
-
+  protected void runBare(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     TestRunnerUtil.replaceIdeEventQueueSafely();
     try {
-      runBareImpl();
+      runBareImpl(testRunnable);
     }
     finally {
       try {
@@ -622,7 +593,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     }
   }
 
-  private void runBareImpl() throws Throwable {
+  private void runBareImpl(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     ThrowableRunnable<Throwable> runnable = () -> {
       try {
         myAssertionsInTestDetected = true;
@@ -642,7 +613,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
       Throwable exception = null;
       try {
         myAssertionsInTestDetected = true;
-        runTest();
+        runTestRunnable(testRunnable);
         myAssertionsInTestDetected = false;
       }
       catch (Throwable e) {
@@ -697,31 +668,32 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   }
 
   @Override
-  protected void invokeTestRunnable(@NotNull Runnable runnable) throws Exception {
-    Ref<Exception> e = new Ref<>();
-    Runnable runnable1 = () -> {
-      try {
-        if (ApplicationManager.getApplication().isDispatchThread() && isRunInWriteAction()) {
-          ApplicationManager.getApplication().runWriteAction(runnable);
-        }
-        else {
-          runnable.run();
-        }
-      }
-      catch (Exception e1) {
-        e.set(e1);
-      }
-    };
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
+    boolean runInCommand = annotatedWith(WrapInCommand.class);
+    boolean runInWriteAction = isRunInWriteAction();
 
-    if (annotatedWith(WrapInCommand.class)) {
-      CommandProcessor.getInstance().executeCommand(myProject, runnable1, "", null);
+    if (runInCommand && runInWriteAction) {
+      WriteCommandAction.writeCommandAction(getProject()).run(() -> super.runTestRunnable(testRunnable));
+    }
+    else if (runInCommand) {
+      Ref<Throwable> e = new Ref<>();
+      CommandProcessor.getInstance().executeCommand(getProject(), () -> {
+        try {
+          super.runTestRunnable(testRunnable);
+        }
+        catch (Throwable throwable) {
+          e.set(throwable);
+        }
+      }, null, null);
+      if (!e.isNull()) {
+        throw e.get();
+      }
+    }
+    else if (runInWriteAction) {
+      WriteAction.runAndWait(() -> super.runTestRunnable(testRunnable));
     }
     else {
-      runnable1.run();
-    }
-
-    if (!e.isNull()) {
-      throw e.get();
+      super.runTestRunnable(testRunnable);
     }
   }
 
@@ -730,68 +702,54 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     return myProject == null || myProject.isDisposed() ? null : new TestDataProvider(myProject).getData(dataId);
   }
 
-  public @NotNull File createTempDir(@NonNls @NotNull String prefix) throws IOException {
-    return createTempDir(prefix, true);
-  }
-
-  public @NotNull File createTempDir(@NonNls @NotNull String prefix, final boolean refresh) throws IOException {
-    final File tempDirectory = FileUtilRt.createTempDirectory("idea_test_" + prefix, null, false);
-    myFilesToDelete.add(tempDirectory);
-    if (refresh) {
-      getVirtualFile(tempDirectory);
-    }
-    return tempDirectory;
+  protected final @NotNull File createTempDir(@NotNull String prefix) throws IOException {
+    Path dir = temporaryDirectory.newPath(prefix, true);
+    Files.createDirectories(dir);
+    return dir.toFile();
   }
 
   protected static VirtualFile getVirtualFile(@NotNull File file) {
     return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
   }
 
-  protected @NotNull File createTempDirectory() throws IOException {
+  protected final @NotNull File createTempDirectory() throws IOException {
     return createTempDir("");
   }
 
-  protected @NotNull File createTempDirectory(final boolean refresh) throws IOException {
-    return createTempDir("", refresh);
+  protected final @NotNull File createTempFile(@NotNull String name, @Nullable String text) throws IOException {
+    Path dir = temporaryDirectory.newPath("", true);
+    Path file = dir.resolve(name);
+    if (text == null) {
+      Files.createDirectories(dir);
+      Files.createFile(file);
+    }
+    else {
+      PathKt.write(file, text);
+    }
+    return file.toFile();
   }
 
-  protected @NotNull File createTempFile(@NotNull String name, @Nullable String text) throws IOException {
-    File directory = createTempDirectory();
-    File file = new File(directory, name);
-    if (!file.createNewFile()) {
-      throw new IOException("Can't create " + file);
-    }
-    if (text != null) {
-      FileUtil.writeToFile(file, text);
-    }
+  protected final @NotNull VirtualFile createVirtualFileWithBom(@NotNull String ext, @NotNull String content) throws IOException {
+    VirtualFile file = temporaryDirectory.createVirtualFile('.' + ext);
+    WriteAction.runAndWait(() -> {
+      try (OutputStream stream = file.getOutputStream(HeavyPlatformTestCase.class)) {
+        stream.write(CharsetToolkit.UTF8_BOM);
+        try (OutputStreamWriter writer = new OutputStreamWriter(stream, StandardCharsets.UTF_8)) {
+          writer.write(content);
+        }
+      }
+    });
     return file;
   }
 
-  public static void setContentOnDisk(@NotNull File file, byte @Nullable [] bom, @NotNull String content, @NotNull Charset charset)
-    throws IOException {
-    FileOutputStream stream = new FileOutputStream(file);
-    if (bom != null) {
-      stream.write(bom);
-    }
-    try (OutputStreamWriter writer = new OutputStreamWriter(stream, charset)) {
-      writer.write(content);
-    }
+  protected final @NotNull VirtualFile createVirtualFileWithEncodingUsingNio(@NotNull String ext,
+                                                                             byte @Nullable [] bom,
+                                                                             @NotNull String content,
+                                                                             @NotNull Charset charset) {
+    return HeavyTestHelper.createVirtualFileWithEncodingUsingNio(ext, bom, content, charset, getTempDir());
   }
 
-  public @NotNull VirtualFile createTempFile(@NonNls @NotNull String ext,
-                                             byte @Nullable [] bom,
-                                             @NonNls @NotNull String content,
-                                             @NotNull Charset charset) throws IOException {
-    File temp = FileUtil.createTempFile("copy", "." + ext);
-    setContentOnDisk(temp, bom, content, charset);
-
-    myFilesToDelete.add(temp);
-    final VirtualFile file = getVirtualFile(temp);
-    assert file != null : temp;
-    return file;
-  }
-
-  protected @Nullable PsiFile getPsiFile(@NotNull Document document) {
+  protected final @Nullable PsiFile getPsiFile(@NotNull Document document) {
     return PsiDocumentManager.getInstance(getProject()).getPsiFile(document);
   }
 
@@ -805,7 +763,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
   public @interface WrapInCommand {
   }
 
-  protected static @NotNull VirtualFile createChildData(final @NotNull VirtualFile dir, @NonNls final @NotNull String name) {
+  protected static @NotNull VirtualFile createChildData(@NotNull VirtualFile dir, @NotNull String name) {
     try {
       return WriteAction.computeAndWait(() -> dir.createChildData(null, name));
     }
@@ -814,16 +772,11 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     }
   }
 
-  protected static @NotNull VirtualFile createChildDirectory(final @NotNull VirtualFile dir, @NonNls final @NotNull String name) {
-    try {
-      return WriteAction.computeAndWait(() -> dir.createChildDirectory(null, name));
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+  protected static @NotNull VirtualFile createChildDirectory(@NotNull VirtualFile dir, @NotNull String name) {
+    return HeavyTestHelper.createChildDirectory(dir, name);
   }
 
-  protected static void rename(final @NotNull VirtualFile vFile1, final @NotNull String newName) {
+  protected static void rename(@NotNull VirtualFile vFile1, @NotNull String newName) {
     try {
       WriteCommandAction.writeCommandAction(null).run(() -> vFile1.rename(vFile1, newName));
     }
@@ -832,7 +785,7 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     }
   }
 
-  protected static void delete(final @NotNull VirtualFile vFile1) {
+  protected static void delete(@NotNull VirtualFile vFile1) {
     VfsTestUtil.deleteFile(vFile1);
   }
 
@@ -901,24 +854,18 @@ public abstract class HeavyPlatformTestCase extends UsefulTestCase implements Da
     }
   }
 
-  protected @NotNull VirtualFile getOrCreateProjectBaseDir() {
-    String basePath = myProject.getBasePath();
-    VirtualFile baseDir = LocalFileSystem.getInstance().findFileByPath(Objects.requireNonNull(basePath));
-    if (baseDir == null) {
-      try {
-        Files.createDirectories(Paths.get(basePath));
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-      return Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByPath(basePath));
-    }
-    return baseDir;
+  protected final @NotNull VirtualFile getOrCreateProjectBaseDir() {
+    return HeavyTestHelper.getOrCreateProjectBaseDir(myProject);
+  }
+
+  protected final @NotNull Path createTempDirectoryWithSuffix(@Nullable String suffix) throws IOException {
+    // heavy test sets canonical temp path per test and deletes it on the end - no need to add created directory to myFilesToDelete
+    return FileUtilRt.createTempDirectory(getTestName(true), suffix, false).toPath();
   }
 
   protected static @NotNull VirtualFile getOrCreateModuleDir(@NotNull Module module) throws IOException {
-    File moduleDir = new File(PathUtil.getParentPath(module.getModuleFilePath()));
-    FileUtil.ensureExists(moduleDir);
-    return Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(moduleDir));
+    Path moduleDir = module.getModuleNioFile().getParent();
+    Files.createDirectories(moduleDir);
+    return Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(moduleDir));
   }
 }

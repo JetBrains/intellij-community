@@ -27,7 +27,7 @@ import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class DeclarationSearchUtils {
+public final class DeclarationSearchUtils {
 
   private DeclarationSearchUtils() {}
 

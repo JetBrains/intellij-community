@@ -21,8 +21,7 @@ import org.jetbrains.jps.builders.impl.java.JavacCompilerTool;
 import org.jetbrains.jps.builders.java.JavaCompilingTool;
 import org.jetbrains.jps.javac.ast.api.JavacFileData;
 
-import javax.tools.Diagnostic;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.File;
 import java.util.*;
 import java.util.concurrent.*;
@@ -45,7 +44,7 @@ public class ExternalJavacProcess {
       root.setLevel(Level.INFO);
       root.addAppender(new ConsoleAppender(new PatternLayout(PatternLayout.DEFAULT_CONVERSION_PATTERN)));
     }
-    InternalLoggerFactory.setDefaultFactory(new Log4JLoggerFactory());
+    InternalLoggerFactory.setDefaultFactory(Log4JLoggerFactory.INSTANCE);
   }
 
   public ExternalJavacProcess(boolean keepRunning) {
@@ -245,7 +244,7 @@ public class ExternalJavacProcess {
                 modulePathBuilder.add(namesMap.get(path), new File(path));
               }
               final ModulePath modulePath = modulePathBuilder.create();
-              
+
               final List<File> upgradeModulePath = toFiles(request.getUpgradeModulePathList());
 
               final Map<File, Set<File>> outs = new HashMap<File, Set<File>>();

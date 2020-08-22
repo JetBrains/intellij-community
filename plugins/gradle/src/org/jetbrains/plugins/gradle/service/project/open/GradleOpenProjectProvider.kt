@@ -2,9 +2,12 @@
 package org.jetbrains.plugins.gradle.service.project.open
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.invokeLater
+import com.intellij.openapi.externalSystem.autolink.UnlinkedProjectNotificationAware
 import com.intellij.openapi.externalSystem.importing.AbstractOpenProjectProvider
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.model.DataNode
+import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.model.internal.InternalExternalProjectInfo
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode.MODAL_SYNC
@@ -20,7 +23,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
-import org.jetbrains.plugins.gradle.startup.GradleUnlinkedProjectProcessor
 import org.jetbrains.plugins.gradle.util.GradleConstants.BUILD_FILE_EXTENSIONS
 import org.jetbrains.plugins.gradle.util.GradleConstants.SYSTEM_ID
 import org.jetbrains.plugins.gradle.util.setupGradleJvm
@@ -29,6 +31,8 @@ import org.jetbrains.plugins.gradle.util.validateJavaHome
 import java.nio.file.Path
 
 internal class GradleOpenProjectProvider : AbstractOpenProjectProvider() {
+  override val systemId = SYSTEM_ID
+
   override fun isProjectFile(file: VirtualFile): Boolean {
     return !file.isDirectory && BUILD_FILE_EXTENSIONS.any { file.name.endsWith(it) }
   }
@@ -45,14 +49,6 @@ internal class GradleOpenProjectProvider : AbstractOpenProjectProvider() {
     attachGradleProjectAndRefresh(gradleProjectSettings, project)
 
     validateJavaHome(project, projectDirectory, gradleVersion)
-  }
-
-  override fun openProject(projectFile: VirtualFile, projectToClose: Project?, forceOpenInNewFrame: Boolean): Project? {
-    val project = super.openProject(projectFile, projectToClose, forceOpenInNewFrame)
-    if (project != null) {
-      GradleUnlinkedProjectProcessor.enableNotifications(project)
-    }
-    return project
   }
 
   private fun attachGradleProjectAndRefresh(settings: ExternalProjectSettings, project: Project) {

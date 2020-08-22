@@ -12,7 +12,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
-public class VcsConsoleLine {
+public final class VcsConsoleLine {
   private final List<Pair<String, ConsoleViewContentType>> myChunks;
 
   private VcsConsoleLine(@NotNull List<Pair<String, ConsoleViewContentType>> chunks) {

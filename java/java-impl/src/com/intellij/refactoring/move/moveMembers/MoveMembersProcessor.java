@@ -19,7 +19,9 @@ import com.intellij.ide.util.EditorHelper;
 import com.intellij.model.ModelBranch;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -29,7 +31,6 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.move.MoveCallback;
-import com.intellij.refactoring.move.MoveHandler;
 import com.intellij.refactoring.move.MoveMemberViewDescriptor;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
@@ -60,7 +61,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   private final MoveCallback myMoveCallback;
   private final boolean myOpenInEditor;
   private String myNewVisibility; // "null" means "as is"
-  private String myCommandName = MoveMembersImpl.getRefactoringName();
+  private @NlsContexts.Label String myCommandName = MoveMembersImpl.getRefactoringName();
   private MoveMembersOptions myOptions;
 
   public MoveMembersProcessor(Project project, MoveMembersOptions options) {
@@ -80,6 +81,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
 
   @Override
   @NotNull
+  @NlsContexts.Label
   protected String getCommandName() {
     return myCommandName;
   }
@@ -100,19 +102,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
   }
 
   private void setCommandName(final PsiMember[] members) {
-    StringBuilder commandName = new StringBuilder();
-    commandName.append(MoveHandler.getRefactoringName());
-    commandName.append(" ");
-    boolean first = true;
-    for (PsiMember member : members) {
-      if (!first) commandName.append(", ");
-      commandName.append(UsageViewUtil.getType(member));
-      commandName.append(' ');
-      commandName.append(UsageViewUtil.getShortName(member));
-      first = false;
-    }
-
-    myCommandName = commandName.toString();
+    myCommandName = RefactoringBundle.message("move.0.title", StringUtil.join(members, member -> UsageViewUtil.getType(member) + " " + UsageViewUtil.getShortName(member), ", "));
   }
 
   @Override
@@ -187,7 +177,7 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
 
     PsiClass targetCopy = branch.obtainPsiCopy(targetClass);
     Set<PsiMember> membersToMove = new LinkedHashSet<>(ContainerUtil.map(myMembersToMove, branch::obtainPsiCopy));
-    List<MoveMembersUsageInfo> usages = ContainerUtil.map(originalUsages, u -> ((MoveMembersUsageInfo)u).branched(branch));
+    List<MoveMembersUsageInfo> usages = ContainerUtil.map(originalUsages, u -> (MoveMembersUsageInfo)((MoveMembersUsageInfo)u).branched(branch));
 
     Map<PsiMember, SmartPsiElementPointer<PsiMember>> movedMembers = performMove(targetCopy, membersToMove, usages);
 
@@ -421,17 +411,5 @@ public class MoveMembersProcessor extends BaseRefactoringProcessor {
       reference = element;
     }
 
-    @NotNull
-    MoveMembersProcessor.MoveMembersUsageInfo branched(ModelBranch branch) {
-      PsiElement element = branch.obtainPsiCopy(reference);
-      PsiElement highlightElement = getElement();
-      PsiReference psiReference = getReference();
-      return new MoveMembersUsageInfo(
-        branch.findPsiCopy(member),
-        element,
-        qualifierClass == null ? null : branch.findPsiCopy(qualifierClass),
-        highlightElement == null ? null : branch.findPsiCopy(highlightElement),
-        psiReference == null ? null : branch.findReferenceCopy(psiReference));
-    }
   }
 }

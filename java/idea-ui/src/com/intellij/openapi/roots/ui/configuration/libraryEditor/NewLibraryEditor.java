@@ -13,6 +13,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.openapi.vfs.impl.LightFilePointer;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.TriConsumer;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
@@ -261,10 +262,5 @@ public class NewLibraryEditor extends LibraryEditorBase {
         return true;
       }
     });
-  }
-
-  @FunctionalInterface
-  private interface TriConsumer<T, U, P> {
-    void accept(T t, U u, P p);
   }
 }

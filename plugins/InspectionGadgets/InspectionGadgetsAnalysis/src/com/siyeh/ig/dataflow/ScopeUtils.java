@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-class ScopeUtils {
+final class ScopeUtils {
 
   private ScopeUtils() {}
 

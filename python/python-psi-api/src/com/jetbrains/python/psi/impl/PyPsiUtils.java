@@ -98,7 +98,7 @@ public final class PyPsiUtils {
   }
 
   /**
-   * Finds first non-whitespace sibling after given PSI element but stops at first whitespace containing line feed.
+   * Returns the first non-whitespace sibling following the given element but within its line boundaries.
    */
   @Nullable
   public static PsiElement getNextNonWhitespaceSiblingOnSameLine(@NotNull PsiElement element) {
@@ -111,6 +111,24 @@ public final class PyPsiUtils {
         break;
       }
       cur = cur.getNextSibling();
+    }
+    return null;
+  }
+
+  /**
+   * Returns the first non-whitespace sibling preceding the given element but within its line boundaries.
+   */
+  @Nullable
+  public static PsiElement getPrevNonWhitespaceSiblingOnSameLine(@NotNull PsiElement element) {
+    PsiElement cur = element.getPrevSibling();
+    while (cur != null) {
+      if (!(cur instanceof PsiWhiteSpace)) {
+        return cur;
+      }
+      else if (cur.textContains('\n')) {
+        break;
+      }
+      cur = cur.getPrevSibling();
     }
     return null;
   }

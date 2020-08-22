@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.tools.util;
 
 import com.intellij.codeInsight.breadcrumbs.FileBreadcrumbsCollector;
@@ -152,7 +152,7 @@ public class FoldingModelSupport {
     });
   }
 
-  private static class FoldingBuilder extends FoldingBuilderBase {
+  private static final class FoldingBuilder extends FoldingBuilderBase {
     private final EditorEx @NotNull [] myEditors;
 
     private FoldingBuilder(EditorEx @NotNull [] editors, @NotNull Settings settings) {
@@ -292,7 +292,7 @@ public class FoldingModelSupport {
     return new FoldedRangeDescription(description, anchorLine);
   }
 
-  protected static class FoldedRangeDescription {
+  protected static final class FoldedRangeDescription {
     @NotNull private final String description;
     private final int anchorLine;
 
@@ -730,7 +730,7 @@ public class FoldingModelSupport {
     }
   }
 
-  public static class Data {
+  public static final class Data {
     @NotNull private final List<Group> groups;
     @NotNull private final DescriptionComputer descriptionComputer;
 
@@ -739,7 +739,7 @@ public class FoldingModelSupport {
       this.descriptionComputer = descriptionComputer;
     }
 
-    private static class Group {
+    private static final class Group {
       @NotNull public final List<Block> blocks;
 
       private Group(@NotNull List<Block> blocks) {
@@ -747,7 +747,7 @@ public class FoldingModelSupport {
       }
     }
 
-    private static class Block {
+    private static final class Block {
       public final LineRange @NotNull [] ranges;
 
       /**
@@ -1007,7 +1007,7 @@ public class FoldingModelSupport {
     }
   }
 
-  private static class RangeDescription {
+  private static final class RangeDescription {
     @Nullable public final String description;
 
     private RangeDescription(@Nullable String description) {

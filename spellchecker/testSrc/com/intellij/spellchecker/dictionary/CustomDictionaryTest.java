@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.spellchecker.dictionary;
 
 import com.intellij.openapi.application.WriteAction;
@@ -191,12 +191,12 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
   public void testMoveDict() throws IOException {
     try {
       doBeforeCheck();
-      WriteAction.run(() -> getTestDictionaryFile().move(this, PlatformTestUtil.getOrCreateProjectTestBaseDir(getProject())));
+      WriteAction.run(() -> getTestDictionaryFile().move(this, PlatformTestUtil.getOrCreateProjectBaseDir(getProject())));
       doAfterCheck();
     }
     finally {
       WriteAction.run(() -> {
-        final VirtualFile child = PlatformTestUtil.getOrCreateProjectTestBaseDir(getProject()).findChild(TEST_DIC);
+        final VirtualFile child = PlatformTestUtil.getOrCreateProjectBaseDir(getProject()).findChild(TEST_DIC);
         if (child.exists()) {
           child.delete(this);
         }
@@ -239,13 +239,13 @@ public class CustomDictionaryTest extends SpellcheckerInspectionTestCase {
     try {
       doBeforeCheck();
       WriteAction.run(
-        () -> dictDir.move(this, PlatformTestUtil.getOrCreateProjectTestBaseDir(getProject()).createChildDirectory(this, "new_dir"))
+        () -> dictDir.move(this, PlatformTestUtil.getOrCreateProjectBaseDir(getProject()).createChildDirectory(this, "new_dir"))
       );
       doAfterCheck();
     }
     finally {
       WriteAction.run(() -> {
-        final VirtualFile dir = PlatformTestUtil.getOrCreateProjectTestBaseDir(getProject()).findChild("new_dir");
+        final VirtualFile dir = PlatformTestUtil.getOrCreateProjectBaseDir(getProject()).findChild("new_dir");
         if (dir.exists()) {
           dir.delete(this);
         }

@@ -5,13 +5,13 @@ import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.ApplicationInitializedListener;
 import com.intellij.ide.StatisticsNotificationManager;
 import com.intellij.internal.statistic.connect.StatisticsService;
+import com.intellij.internal.statistic.eventLog.StatisticsEventLogMigration;
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerKt;
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider;
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
 import com.intellij.internal.statistic.eventLog.uploader.EventLogExternalUploader;
 import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator;
 import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger;
-import com.intellij.internal.statistic.service.fus.collectors.FUStatisticsPersistence;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
@@ -59,8 +59,9 @@ final class StatisticsJobsScheduler implements ApplicationInitializedListener {
     checkPreviousExternalUploadResult();
     runEventLogStatisticsService();
     runStatesLogging();
-    runLegacyDataCleanupService();
     runWhitelistStorageUpdater();
+
+    StatisticsEventLogMigration.performMigration();
   }
 
   private static void runWhitelistStorageUpdater() {
@@ -122,12 +123,6 @@ final class StatisticsJobsScheduler implements ApplicationInitializedListener {
         }
       }
     });
-  }
-
-  private static void runLegacyDataCleanupService() {
-    JobScheduler.getScheduler().schedule(() -> {
-      FUStatisticsPersistence.clearLegacyStates();
-    }, 1, TimeUnit.MINUTES);
   }
 
   private static void runStatisticsServiceWithDelay(@NotNull final StatisticsService statisticsService, long delayInMs) {

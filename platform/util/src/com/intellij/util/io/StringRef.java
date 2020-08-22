@@ -9,7 +9,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-public class StringRef {
+public final class StringRef {
   public static final StringRef[] EMPTY_ARRAY = new StringRef[0];
 
   private int id;

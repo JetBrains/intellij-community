@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.cloneDialog
 
 import com.intellij.icons.AllIcons
@@ -27,7 +27,7 @@ import javax.swing.JPanel
 
 class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
 
-  override fun getIcon(): Icon = AllIcons.Welcome.FromVCS
+  override fun getIcon(): Icon = AllIcons.Vcs.FromVCSDialog
 
   override fun getName() = VcsBundle.message("clone.dialog.repository.url.item")
 
@@ -38,7 +38,7 @@ class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
   }
 
   override fun createMainComponent(project: Project): VcsCloneDialogExtensionComponent {
-    throw AssertionError("Shouldn't be called")
+    throw AssertionError("Shouldn't be called") // NON-NLS
   }
 
   override fun createMainComponent(project: Project, modalityState: ModalityState): VcsCloneDialogExtensionComponent {
@@ -83,7 +83,7 @@ class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
         if (e.stateChange == ItemEvent.SELECTED) {
           val provider = e.item as CheckoutProvider
           centerPanel.setContent(vcsComponents.getOrPut(provider, {
-            val cloneComponent = provider.buildVcsCloneComponent(project, modalityState)
+            val cloneComponent = provider.buildVcsCloneComponent(project, modalityState, dialogStateListener)
             Disposer.register(this, cloneComponent)
             cloneComponent
           }).getView())

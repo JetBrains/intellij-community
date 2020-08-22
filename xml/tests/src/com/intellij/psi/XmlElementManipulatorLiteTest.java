@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlAttributeValueManipulator;
 import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.XmlTextManipulator;
@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NonNls;
  */
 public class XmlElementManipulatorLiteTest extends LightPlatformTestCase {
   public XmlFile createXmlFile(@NonNls final String xml) {
-    return (XmlFile)createLightFile("a.xml", StdFileTypes.XML, xml);
+    return (XmlFile)createLightFile("a.xml", XmlFileType.INSTANCE, xml);
   }
   public PsiFile createLightFile(final String fileName, final FileType fileType, final String text) {
     return PsiFileFactory.getInstance(getProject()).createFileFromText(fileName, fileType, text);

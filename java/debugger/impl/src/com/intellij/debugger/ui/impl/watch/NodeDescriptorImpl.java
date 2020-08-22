@@ -12,6 +12,7 @@ import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.debugger.ui.tree.render.OnDemandRenderer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.xdebugger.impl.ui.tree.ValueMarkup;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.Nullable;
@@ -29,7 +30,7 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
   public boolean myIsSynthetic = false;
 
   private EvaluateException myEvaluateException;
-  private String myLabel = UNKNOWN_VALUE_MESSAGE;
+  private @NlsContexts.Label String myLabel = UNKNOWN_VALUE_MESSAGE;
 
   private Map<Key, Object> myUserData;
 
@@ -90,7 +91,7 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
         else {
           LOG.warn(e);
         }
-        throw new EvaluateException("Internal error, see logs for more details");
+        throw new EvaluateException(JavaDebuggerBundle.message("internal.debugger.error"));
       }
     }
     catch (EvaluateException e) {
@@ -98,7 +99,7 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
     }
   }
 
-  protected abstract String calcRepresentation(EvaluationContextImpl context, DescriptorLabelListener labelListener) throws EvaluateException;
+  protected abstract @NlsContexts.Label String calcRepresentation(EvaluationContextImpl context, DescriptorLabelListener labelListener) throws EvaluateException;
 
   @Override
   public void displayAs(NodeDescriptor descriptor) {
@@ -125,7 +126,7 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
   }
 
   @Override
-  public String getLabel() {
+  public @NlsContexts.Label String getLabel() {
     return myLabel;
   }
 
@@ -138,7 +139,7 @@ public abstract class NodeDescriptorImpl implements NodeDescriptor {
     return e.getMessage();
   }
 
-  protected String setLabel(String customLabel) {
+  protected String setLabel(@NlsContexts.Label String customLabel) {
     return myLabel = customLabel;
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.test;
 
 import com.intellij.compiler.artifacts.ArtifactsTestUtil;
@@ -35,19 +35,14 @@ import com.intellij.task.ProjectTaskManager;
 import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.PathUtil;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.io.TestFileSystemItem;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.SystemIndependent;
 import org.jetbrains.concurrency.Promise;
-import org.junit.After;
-import org.junit.Before;
 
 import java.awt.*;
 import java.io.File;
@@ -82,7 +77,6 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   protected List<VirtualFile> myAllConfigs = new ArrayList<>();
   protected boolean useProjectTaskManager;
 
-  @Before
   @Override
   public void setUp() throws Exception {
     super.setUp();
@@ -162,7 +156,6 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     myProjectRoot = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(projectDir);
   }
 
-  @After
   @Override
   public void tearDown() throws Exception {
     new RunAll(
@@ -175,6 +168,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
       () -> myProject = null,
       () -> PathKt.delete(myTestDir.toPath()),
       () -> ExternalSystemProgressNotificationManagerImpl.assertListenersReleased(null),
+      () -> ExternalSystemProgressNotificationManagerImpl.cleanupListeners(),
       () -> super.tearDown(),
       () -> resetClassFields(getClass())
     ).run();
@@ -215,18 +209,18 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   }
 
   @Override
-  protected void runTest() throws Throwable {
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     try {
       if (runInWriteAction()) {
         try {
-          WriteAction.runAndWait(() -> super.runTest());
+          WriteAction.runAndWait(() -> super.runTestRunnable(testRunnable));
         }
         catch (Throwable throwable) {
           ExceptionUtil.rethrowAllAsUnchecked(throwable);
         }
       }
       else {
-        super.runTest();
+        super.runTestRunnable(testRunnable);
       }
     }
     catch (Exception throwable) {
@@ -240,11 +234,6 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
       while ((each = each.getCause()) != null);
       throw throwable;
     }
-  }
-
-  @Override
-  protected void invokeTestRunnable(@NotNull Runnable runnable) {
-    runnable.run();
   }
 
   protected boolean runInWriteAction() {
@@ -541,8 +530,8 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   }
 
   protected static void assertUnorderedPathsAreEqual(Collection<String> actual, Collection<String> expected) {
-    assertEquals(new SetWithToString<>(new THashSet<>(expected, FileUtil.PATH_HASHING_STRATEGY)),
-                 new SetWithToString<>(new THashSet<>(actual, FileUtil.PATH_HASHING_STRATEGY)));
+    assertEquals(new SetWithToString<>(CollectionFactory.createFilePathSet(expected)),
+                 new SetWithToString<>(CollectionFactory.createFilePathSet(actual)));
   }
 
   protected static <T> void assertUnorderedElementsAreEqual(T[] actual, T... expected) {

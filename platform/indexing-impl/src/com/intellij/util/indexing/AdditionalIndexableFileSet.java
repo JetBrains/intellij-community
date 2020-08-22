@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.project.Project;
@@ -17,29 +17,33 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Set;
 import java.util.function.Supplier;
 
-/**
- * @author peter
- */
 public class AdditionalIndexableFileSet implements IndexableFileSet {
   @Nullable
   private final Project myProject;
+  private final boolean myOnlyProjectPart;
   private final Supplier<IndexableSetContributor[]> myExtensions;
 
   private final CachedValue<AdditionalIndexableRoots> myAdditionalIndexableRoots;
 
   public AdditionalIndexableFileSet(@Nullable Project project, IndexableSetContributor @NotNull ... extensions) {
     myProject = project;
+    myOnlyProjectPart = false;
     myExtensions = () -> extensions;
     myAdditionalIndexableRoots = new CachedValueImpl<>(() -> new CachedValueProvider.Result<>(collectFilesAndDirectories(),
                                                                                               VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS));
   }
 
-  public AdditionalIndexableFileSet(@Nullable Project project) {
+  public AdditionalIndexableFileSet(@Nullable Project project, boolean onlyProjectPart) {
     myProject = project;
     myExtensions = () -> IndexableSetContributor.EP_NAME.getExtensions();
     myAdditionalIndexableRoots = new CachedValueImpl<>(() -> new CachedValueProvider.Result<>(collectFilesAndDirectories(),
                                                                                               VirtualFileManager.VFS_STRUCTURE_MODIFICATIONS,
                                                                                               IndexableSetContributorModificationTracker.getInstance()));
+    myOnlyProjectPart = onlyProjectPart;
+  }
+
+  public AdditionalIndexableFileSet(@Nullable Project project) {
+    this(project, false);
   }
 
   public AdditionalIndexableFileSet() {
@@ -51,8 +55,10 @@ public class AdditionalIndexableFileSet implements IndexableFileSet {
     Set<VirtualFile> files = new THashSet<>();
     Set<VirtualFile> directories = new THashSet<>();
     for (IndexableSetContributor contributor : myExtensions.get()) {
-      for (VirtualFile root : IndexableSetContributor.getRootsToIndex(contributor)) {
-        (root.isDirectory() ? directories : files).add(root);
+      if (myProject == null || !myOnlyProjectPart) {
+        for (VirtualFile root : IndexableSetContributor.getRootsToIndex(contributor)) {
+          (root.isDirectory() ? directories : files).add(root);
+        }
       }
       if (myProject != null) {
         Set<VirtualFile> projectRoots = IndexableSetContributor.getProjectRootsToIndex(contributor, myProject);
@@ -88,7 +94,7 @@ public class AdditionalIndexableFileSet implements IndexableFileSet {
     });
   }
 
-  private static class AdditionalIndexableRoots {
+  private static final class AdditionalIndexableRoots {
     @NotNull
     private final Set<VirtualFile> files;
     @NotNull

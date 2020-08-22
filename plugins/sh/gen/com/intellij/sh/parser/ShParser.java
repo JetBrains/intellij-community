@@ -1235,7 +1235,7 @@ public class ShParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // HEREDOC_MARKER_TAG HEREDOC_MARKER_START [commands_list heredoc_pipeline_separator? | heredoc_pipeline_separator commands_list?] newlines
-  //             HEREDOC_CONTENT*
+  //             HEREDOC_CONTENT?
   //             (HEREDOC_MARKER_END | <<eof>>)
   public static boolean heredoc(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "heredoc")) return false;
@@ -1305,14 +1305,10 @@ public class ShParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // HEREDOC_CONTENT*
+  // HEREDOC_CONTENT?
   private static boolean heredoc_4(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "heredoc_4")) return false;
-    while (true) {
-      int c = current_position_(b);
-      if (!consumeToken(b, HEREDOC_CONTENT)) break;
-      if (!empty_element_parsed_guard_(b, "heredoc_4", c)) break;
-    }
+    consumeToken(b, HEREDOC_CONTENT);
     return true;
   }
 
@@ -1381,12 +1377,13 @@ public class ShParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // "in" w+ list_terminator newlines
+  // in w+ list_terminator newlines
   static boolean in_clause(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "in_clause")) return false;
+    if (!nextTokenIs(b, IN)) return false;
     boolean r, p;
     Marker m = enter_section_(b, l, _NONE_);
-    r = consumeToken(b, "in");
+    r = consumeToken(b, IN);
     p = r; // pin = 1
     r = r && report_error_(b, in_clause_1(b, l + 1));
     r = p && report_error_(b, list_terminator(b, l + 1)) && r;
@@ -2031,7 +2028,7 @@ public class ShParser implements PsiParser, LightPsiParser {
 
   /* ********************************************************** */
   // ('<&' | '>&') (number | '-')
-  //                             | ('>' | '<' | '>>' | '<<<' | '<<' | '<&' | '>&' | '&>>' | '<>' | '>|') (process_substitution | w+ )
+  //                             | ('>' | '<' | '>>' | '<<<' | '<<' | '<&' | '>&' | '&>>' | '<>' | '>|') redirection_target
   static boolean redirection_inner(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "redirection_inner")) return false;
     boolean r;
@@ -2071,13 +2068,13 @@ public class ShParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // ('>' | '<' | '>>' | '<<<' | '<<' | '<&' | '>&' | '&>>' | '<>' | '>|') (process_substitution | w+ )
+  // ('>' | '<' | '>>' | '<<<' | '<<' | '<&' | '>&' | '&>>' | '<>' | '>|') redirection_target
   private static boolean redirection_inner_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "redirection_inner_1")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = redirection_inner_1_0(b, l + 1);
-    r = r && redirection_inner_1_1(b, l + 1);
+    r = r && redirection_target(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -2099,29 +2096,15 @@ public class ShParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // process_substitution | w+
-  private static boolean redirection_inner_1_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "redirection_inner_1_1")) return false;
+  /* ********************************************************** */
+  // process_substitution | <<parseUntilSpace w>>
+  static boolean redirection_target(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "redirection_target")) return false;
     boolean r;
-    Marker m = enter_section_(b);
+    Marker m = enter_section_(b, l, _NONE_, null, "<redirection target>");
     r = process_substitution(b, l + 1);
-    if (!r) r = redirection_inner_1_1_1(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // w+
-  private static boolean redirection_inner_1_1_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "redirection_inner_1_1_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = w(b, l + 1);
-    while (r) {
-      int c = current_position_(b);
-      if (!w(b, l + 1)) break;
-      if (!empty_element_parsed_guard_(b, "redirection_inner_1_1_1", c)) break;
-    }
-    exit_section_(b, m, null, r);
+    if (!r) r = parseUntilSpace(b, l + 1, ShParser::w);
+    exit_section_(b, l, m, r, false, null);
     return r;
   }
 

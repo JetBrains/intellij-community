@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
 import com.intellij.ide.JavaUiBundle;
@@ -33,17 +19,19 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.LibraryConfigurab
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class LibraryProjectStructureElement extends ProjectStructureElement {
   private final Library myLibrary;
@@ -89,17 +77,22 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
     }
   }
 
-  private static String createInvalidRootsDescription(List<String> invalidClasses, String rootName, String libraryName) {
-    StringBuilder buffer = new StringBuilder();
+  private static @NlsContexts.DetailedDescription String createInvalidRootsDescription(List<String> invalidClasses, String rootName, @NlsSafe String libraryName) {
+    HtmlBuilder buffer = new HtmlBuilder();
     final String name = StringUtil.escapeXmlEntities(libraryName);
-    buffer.append("Library ");
-    buffer.append("<a href='http://library/").append(name).append("'>").append(name).append("</a>");
-    buffer.append(" has broken " + rootName + " " + StringUtil.pluralize("path", invalidClasses.size()) + ":");
+    final HtmlChunk.Element link = HtmlChunk.link("http://library/" + name, name);
+    buffer.appendRaw(
+      JavaUiBundle.message("library.project.structure.invalid.roots.description",
+                           link,
+                           rootName,
+                           invalidClasses.size()
+      )
+    );
     for (String url : invalidClasses) {
-      buffer.append("<br>&nbsp;&nbsp;");
+      buffer.br().nbsp(2);
       buffer.append(PathUtil.toPresentableUrl(url));
     }
-    return XmlStringUtil.wrapInHtml(buffer);
+    return buffer.wrapWith("html").toString();
   }
 
   @NotNull
@@ -149,21 +142,27 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
   @Override
   public ProjectStructureProblemDescription createUnusedElementWarning() {
     final List<ConfigurationErrorQuickFix> fixes = Arrays.asList(new AddLibraryToDependenciesFix(), new RemoveLibraryFix(), new RemoveAllUnusedLibrariesFix());
-    final String name = StringUtil.escapeXmlEntities(myLibrary.getName());
-    String libraryName = "<a href='http://library/" + name + "'>" + name + "</a>";
-    return new ProjectStructureProblemDescription(XmlStringUtil.wrapInHtml("Library " + libraryName + " is not used"), null, createPlace(),
-                                                  ProjectStructureProblemType.unused("unused-library"), ProjectStructureProblemDescription.ProblemLevel.PROJECT,
-                                                  fixes, false);
+    final String name = Objects.toString(myLibrary.getName());
+    final String libraryName = HtmlChunk.link("http://library/" + name, name).toString();
+
+    @Nls final String result = JavaUiBundle.message("library.0.is.not.used", libraryName);
+    return new ProjectStructureProblemDescription(XmlStringUtil.wrapInHtml(result),
+                                                  null,
+                                                  createPlace(),
+                                                  ProjectStructureProblemType.unused("unused-library"),
+                                                  ProjectStructureProblemDescription.ProblemLevel.PROJECT,
+                                                  fixes,
+                                                  false);
   }
 
   @Override
-  public String getPresentableName() {
+  public @Nls(capitalization = Nls.Capitalization.Sentence) String getPresentableName() {
     return myLibrary.getName();
   }
 
   @Override
-  public String getTypeName() {
-    return "Library";
+  public @Nls(capitalization = Nls.Capitalization.Sentence) String getTypeName() {
+    return JavaUiBundle.message("configurable.library.prefix");
   }
 
   @Override
@@ -177,7 +176,7 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
     private final List<String> myInvalidUrls;
 
     RemoveInvalidRootsQuickFix(Library library, OrderRootType type, List<String> invalidUrls) {
-      super("Remove invalid " + StringUtil.pluralize("root", invalidUrls.size()));
+      super(JavaUiBundle.message("label.remove.invalid.roots", invalidUrls.size()));
       myLibrary = library;
       myType = type;
       myInvalidUrls = invalidUrls;
@@ -203,9 +202,9 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
     }
   }
 
-  private class AddLibraryToDependenciesFix extends ConfigurationErrorQuickFix {
+  private final class AddLibraryToDependenciesFix extends ConfigurationErrorQuickFix {
     private AddLibraryToDependenciesFix() {
-      super("Add to Dependencies...");
+      super(JavaUiBundle.message("label.add.to.dependencies"));
     }
 
     @Override
@@ -214,9 +213,9 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
     }
   }
 
-  private class RemoveLibraryFix extends ConfigurationErrorQuickFix {
+  private final class RemoveLibraryFix extends ConfigurationErrorQuickFix {
     private RemoveLibraryFix() {
-      super("Remove Library");
+      super(JavaUiBundle.message("label.remove.library"));
     }
 
     @Override
@@ -225,9 +224,9 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
     }
   }
 
-  private class RemoveAllUnusedLibrariesFix extends ConfigurationErrorQuickFix {
+  private final class RemoveAllUnusedLibrariesFix extends ConfigurationErrorQuickFix {
     private RemoveAllUnusedLibrariesFix() {
-      super("Remove All Unused Libraries");
+      super(JavaUiBundle.message("label.remove.all.unused.libraries"));
     }
 
     @Override

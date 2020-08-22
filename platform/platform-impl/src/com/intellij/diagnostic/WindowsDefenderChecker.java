@@ -14,6 +14,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.impl.local.NativeFileWatcherImpl;
 import com.intellij.util.Restarter;
@@ -97,6 +98,10 @@ public class WindowsDefenderChecker {
         }
         return new CheckResult(scanningStatus, pathStatuses);
       }
+      else {
+        LOG.info("Windows Defender status: Failed to get excluded patterns");
+        return new CheckResult(RealtimeScanningStatus.ERROR, Collections.emptyMap());
+      }
     }
     if (scanningStatus == RealtimeScanningStatus.ERROR) {
       LOG.info("Windows Defender status: failed to detect");
@@ -170,6 +175,13 @@ public class WindowsDefenderChecker {
   private static List<Pattern> getExcludedPatterns() {
     final Collection<String> paths = getWindowsDefenderProperty("ExclusionPath");
     if (paths == null) return null;
+    if (paths.size() > 0) {
+      String path = paths.iterator().next();
+      if (path.length() > 0 && path.indexOf('\\') < 0) {
+        // "N/A: Must be admin to view exclusions"
+        return null;
+      }
+    }
     return ContainerUtil.map(paths, path -> wildcardsToRegex(expandEnvVars(path)));
   }
 
@@ -284,7 +296,7 @@ public class WindowsDefenderChecker {
         String canonical = path.toRealPath().toString();
         boolean found = false;
         for (Pattern pattern : excludedPatterns) {
-          if (pattern.matcher(canonical).matches()) {
+          if (pattern.matcher(canonical).matches() || pattern.matcher(path.toString()).matches()) {
             found = true;
             result.put(path, true);
             break;
@@ -310,14 +322,10 @@ public class WindowsDefenderChecker {
         PropertiesComponent.getInstance().setValue(IGNORE_VIRUS_CHECK, "true");
       }
     });
-    notification.addAction(new NotificationAction(DiagnosticBundle.message("virus.scanning.dont.show.again.this.project")) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-        notification.expire();
-        PropertiesComponent.getInstance(project).setValue(IGNORE_VIRUS_CHECK, "true");
-      }
-    });
+  }
 
+  public @NlsContexts.NotificationContent String getNotificationText(Set<? extends Path> nonExcludedPaths) {
+    return DiagnosticBundle.message("virus.scanning.warn.message", StringUtil.join(nonExcludedPaths, "<br/>"));
   }
 
   public String getConfigurationInstructionsUrl() {

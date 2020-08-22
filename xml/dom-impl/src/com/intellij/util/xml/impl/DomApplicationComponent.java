@@ -6,7 +6,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ReflectionAssignabilityCache;
 import com.intellij.util.ReflectionUtil;
@@ -18,10 +17,11 @@ import com.intellij.util.xml.DomElementVisitor;
 import com.intellij.util.xml.DomFileDescription;
 import com.intellij.util.xml.TypeChooserManager;
 import com.intellij.util.xml.highlighting.DomElementsAnnotator;
-import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Type;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
@@ -30,7 +30,7 @@ import java.util.Set;
  */
 public final class DomApplicationComponent {
   private final MultiMap<String, DomFileMetaData> myRootTagName2FileDescription = MultiMap.createSet();
-  private final Set<DomFileMetaData> myAcceptingOtherRootTagNamesDescriptions = new THashSet<>();
+  private final Set<DomFileMetaData> myAcceptingOtherRootTagNamesDescriptions = new HashSet<>();
   private final ImplementationClassCache myCachedImplementationClasses = new ImplementationClassCache(DomImplementationClassEP.EP_NAME);
   private final TypeChooserManager myTypeChooserManager = new TypeChooserManager();
   final ReflectionAssignabilityCache assignabilityCache = new ReflectionAssignabilityCache();
@@ -52,11 +52,12 @@ public final class DomApplicationComponent {
     //noinspection deprecation
     addChangeListener(DomFileDescription.EP_NAME, this::extensionsChanged);
     addChangeListener(DomFileMetaData.EP_NAME, this::extensionsChanged);
+    addChangeListener(DomImplementationClassEP.EP_NAME, this::extensionsChanged);
   }
 
   private static <T> void addChangeListener(ExtensionPointName<T> ep, Runnable onChange) {
     Application app = ApplicationManager.getApplication();
-    if (Disposer.isDisposing(app)) {
+    if (app.isDisposed()) {
       return;
     }
     ep.addChangeListener(onChange, app);
@@ -131,10 +132,11 @@ public final class DomApplicationComponent {
     initDescription(description);
   }
 
-  void registerFileDescription(DomFileMetaData meta) {
+  void registerFileDescription(@NotNull DomFileMetaData meta) {
     if (StringUtil.isEmpty(meta.rootTagName)) {
       myAcceptingOtherRootTagNamesDescriptions.add(meta);
-    } else {
+    }
+    else {
       myRootTagName2FileDescription.putValue(meta.rootTagName, meta);
     }
   }

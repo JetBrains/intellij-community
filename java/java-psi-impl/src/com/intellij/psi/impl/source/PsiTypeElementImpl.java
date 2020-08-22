@@ -1,22 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
@@ -25,10 +13,15 @@ import com.intellij.psi.impl.PsiJavaParserFacadeImpl;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,8 +52,8 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
   public @NotNull PsiType getType() {
     return getTypeInfo().myType;
   }
-  
-  private static class TypeInfo {
+
+  private static final class TypeInfo {
     private final PsiType myType;
     private final boolean myInferred;
 
@@ -69,7 +62,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
       myInferred = inferred;
     }
   }
-  
+
   private TypeInfo getTypeInfo() {
     return CachedValuesManager.getProjectPsiDependentCache(this, __ -> calculateTypeInfo());
   }
@@ -201,16 +194,35 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     return PsiUtil.isJavaToken(getFirstChild(), JavaTokenType.VAR_KEYWORD) || getTypeInfo().myInferred;
   }
 
-  private @NotNull ClassReferencePointer getReferenceComputable(@NotNull PsiJavaCodeReferenceElement ref) {
-    final PsiElement parent = getParent();
-    if (parent instanceof PsiMethod || parent instanceof PsiVariable) {
-      return computeFromTypeOwner(parent, new WeakReference<>(ref));
+  private static @NotNull ClassReferencePointer getReferenceComputable(@NotNull PsiJavaCodeReferenceElement ref) {
+    PsiTypeElement rootType = getRootTypeElement(ref);
+    if (rootType != null) {
+      PsiElement parent = rootType.getParent();
+      if (parent instanceof PsiMethod || parent instanceof PsiVariable) {
+        int index = allReferencesInside(rootType).indexOf(ref::equals);
+        if (index < 0) throw new AssertionError(rootType.getClass());
+        return computeFromTypeOwner(parent, index, new WeakReference<>(ref));
+      }
     }
-
     return ClassReferencePointer.constant(ref);
   }
 
-  private static @NotNull ClassReferencePointer computeFromTypeOwner(PsiElement parent, @NotNull WeakReference<PsiJavaCodeReferenceElement> ref) {
+  @Nullable
+  private static PsiTypeElement getRootTypeElement(@NotNull PsiJavaCodeReferenceElement ref) {
+    PsiElement root = SyntaxTraverser.psiApi()
+      .parents(ref.getParent())
+      .takeWhile(it -> it instanceof PsiTypeElement || it instanceof PsiReferenceParameterList || it instanceof PsiJavaCodeReferenceElement)
+      .last();
+    return ObjectUtils.tryCast(root, PsiTypeElement.class);
+  }
+
+  @NotNull
+  private static JBIterable<PsiJavaCodeReferenceElement> allReferencesInside(@NotNull PsiTypeElement rootType) {
+    return SyntaxTraverser.psiTraverser(rootType).filter(PsiJavaCodeReferenceElement.class);
+  }
+
+  private static @NotNull ClassReferencePointer computeFromTypeOwner(PsiElement parent, int index,
+                                                                     @NotNull WeakReference<PsiJavaCodeReferenceElement> ref) {
     return new ClassReferencePointer() {
       volatile WeakReference<PsiJavaCodeReferenceElement> myCache = ref;
 
@@ -220,7 +232,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
         if (result == null) {
           PsiType type = calcTypeByParent();
           if (type instanceof PsiClassReferenceType) {
-            result = ((PsiClassReferenceType)type).getReference();
+            result = findReferenceByIndex((PsiClassReferenceType)type);
           }
           myCache = new WeakReference<>(result);
         }
@@ -228,9 +240,15 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
       }
 
       @Nullable
+      private PsiJavaCodeReferenceElement findReferenceByIndex(PsiClassReferenceType type) {
+        PsiTypeElement root = getRootTypeElement(type.getReference());
+        return root == null ? null : allReferencesInside(root).get(index);
+      }
+
+      @Nullable
       private PsiType calcTypeByParent() {
         PsiType type = parent instanceof PsiMethod ? ((PsiMethod)parent).getReturnType() : ((PsiVariable)parent).getType();
-        if (type instanceof PsiArrayType) { //for c-style array, e.g. String args[]
+        if (type instanceof PsiArrayType) { //also, for c-style array, e.g. String args[]
           return type.getDeepComponentType();
         }
         return type;
@@ -245,14 +263,19 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
             PsiUtilCore.ensureValid(parent);
             throw new IllegalStateException("No reference type for " + parent.getClass() + "; type: " + (type != null ? type.getClass() : "null"));
           }
-          result = ((PsiClassReferenceType)type).getReference();
+          result = findReferenceByIndex((PsiClassReferenceType)type);
+          if (result == null) {
+            PsiUtilCore.ensureValid(parent);
+            throw new RuntimeExceptionWithAttachments("Can't retrieve reference by index " + index + " for " + parent.getClass() + "; type: " + type.getClass(),
+                                                      new Attachment("memberType.txt", type.getCanonicalText()));
+          }
         }
         return result;
       }
 
       @Override
       public String toString() {
-        String msg = "Type element reference of " + parent.getClass() + " #" + parent.getClass().getSimpleName();
+        String msg = "Type element reference of " + parent.getClass() + " #" + parent.getClass().getSimpleName() + ", index=" + index;
         return parent.isValid() ? msg + " #" + parent.getLanguage() : msg + ", invalid";
       }
     };

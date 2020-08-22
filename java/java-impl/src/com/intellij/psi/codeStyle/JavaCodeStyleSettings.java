@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiModifier;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.WrapConstant;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -62,6 +63,7 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   public boolean GENERATE_FINAL_LOCALS;
   public boolean GENERATE_FINAL_PARAMETERS;
 
+  @PsiModifier.ModifierConstant
   public String VISIBILITY = "public";
 
   public boolean USE_EXTERNAL_ANNOTATIONS;
@@ -152,6 +154,12 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   public boolean ALIGN_MULTILINE_RECORDS = true;
   public boolean NEW_LINE_AFTER_LPAREN_IN_RECORD_HEADER = false;
   public boolean RPAREN_ON_NEW_LINE_IN_RECORD_HEADER = false;
+  /**
+   * "record R( String s )"
+   * or
+   * "record R(String s)"
+   */
+  public boolean SPACE_WITHIN_RECORD_HEADER = false;
 
 
   // region JavaDoc

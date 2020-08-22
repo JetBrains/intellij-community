@@ -4,7 +4,7 @@ package com.intellij.ide.startup;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.util.io.ZipUtil;
+import com.intellij.util.io.Decompressor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Predicate;
 
 public final class StartupActionScriptManager {
   public static final String STARTUP_WIZARD_MODE = "StartupWizardMode";
@@ -25,24 +26,24 @@ public final class StartupActionScriptManager {
 
   public static synchronized void executeActionScript() throws IOException {
     try {
-      List<ActionCommand> commands = loadActionScript(getActionScriptFile());
-      for (ActionCommand command : commands) {
+      for (ActionCommand command : loadActionScript(getActionScriptFile())) {
         command.execute();
       }
     }
     finally {
-      saveActionScript(null);  // deleting a file should not cause an exception
+      // deleting a file should not cause an exception
+      saveActionScript(null);
     }
   }
 
-  public static synchronized void executeActionScript(@NotNull File scriptFile, @NotNull File oldTarget, @NotNull File newTarget) throws IOException {
-    List<ActionCommand> commands = loadActionScript(scriptFile.toPath());
+  public static synchronized void executeActionScript(@NotNull Path scriptFile, @NotNull Path oldTarget, @NotNull Path newTarget) throws IOException {
+    List<ActionCommand> commands = loadActionScript(scriptFile);
     executeActionScriptCommands(commands, oldTarget, newTarget);
   }
 
   public static void executeActionScriptCommands(List<ActionCommand> commands,
-                                                 @NotNull File oldTarget,
-                                                 @NotNull File newTarget) throws IOException {
+                                                 @NotNull Path oldTarget,
+                                                 @NotNull Path newTarget) throws IOException {
     for (ActionCommand command : commands) {
       ActionCommand toExecute = mapPaths(command, oldTarget, newTarget);
       if (toExecute != null) {
@@ -81,13 +82,12 @@ public final class StartupActionScriptManager {
     return Paths.get(PathManager.getPluginTempPath(), ACTION_SCRIPT_FILE);
   }
 
-  @NotNull
-  public static List<ActionCommand> loadActionScript(@NotNull Path scriptFile) throws IOException {
+  public static @NotNull List<ActionCommand> loadActionScript(@NotNull Path scriptFile) throws IOException {
     if (!Files.isRegularFile(scriptFile)) {
       return new ArrayList<>();
     }
 
-    try (ObjectInputStream ois = new ObjectInputStream(Files.newInputStream(scriptFile))) {
+    try (ObjectInput ois = new ObjectInputStream(Files.newInputStream(scriptFile))) {
       Object data = ois.readObject();
       if (data instanceof ActionCommand[]) {
         return new ArrayList<>(Arrays.asList((ActionCommand[])data));
@@ -109,34 +109,35 @@ public final class StartupActionScriptManager {
     saveActionScript(commands, scriptFile);
   }
 
-  public static void saveActionScript(@Nullable List<ActionCommand> commands, Path scriptFile)
+  public static void saveActionScript(@Nullable List<ActionCommand> commands, @NotNull Path scriptFile)
     throws IOException {
-    if (commands != null) {
+    if (commands == null) {
+      Files.deleteIfExists(scriptFile);
+    }
+    else {
       Files.createDirectories(scriptFile.getParent());
-      try (ObjectOutputStream oos = new ObjectOutputStream(Files.newOutputStream(scriptFile))) {
+      try (ObjectOutput oos = new ObjectOutputStream(Files.newOutputStream(scriptFile))) {
         oos.writeObject(commands.toArray(ActionCommand.EMPTY_ARRAY));
       }
     }
-    else if (Files.exists(scriptFile)) {
-      FileUtilRt.delete(scriptFile.toFile());
-    }
   }
 
-  private static ActionCommand mapPaths(ActionCommand command, File oldTarget, File newTarget) {
+  private static ActionCommand mapPaths(ActionCommand command, Path oldTarget, Path newTarget) {
     if (command instanceof CopyCommand) {
-      File destination = mapPath(((CopyCommand)command).myDestination, oldTarget, newTarget);
+      Path destination = mapPath(((CopyCommand)command).myDestination, oldTarget, newTarget);
       if (destination != null) {
-        return new CopyCommand(new File(((CopyCommand)command).mySource), destination);
+        return new CopyCommand(Paths.get(((CopyCommand)command).mySource), destination);
       }
     }
     else if (command instanceof UnzipCommand) {
-      File destination = mapPath(((UnzipCommand)command).myDestination, oldTarget, newTarget);
+      UnzipCommand unzipCommand = (UnzipCommand)command;
+      Path destination = mapPath(unzipCommand.myDestination, oldTarget, newTarget);
       if (destination != null) {
-        return new UnzipCommand(new File(((UnzipCommand)command).mySource), destination, ((UnzipCommand)command).myFilenameFilter);
+        return new UnzipCommand(Paths.get(unzipCommand.mySource), destination, unzipCommand.myFilenameFilter);
       }
     }
     else if (command instanceof DeleteCommand) {
-      File source = mapPath(((DeleteCommand)command).mySource, oldTarget, newTarget);
+      Path source = mapPath(((DeleteCommand)command).mySource, oldTarget, newTarget);
       if (source != null) {
         return new DeleteCommand(source);
       }
@@ -145,31 +146,39 @@ public final class StartupActionScriptManager {
     return null;
   }
 
-  private static File mapPath(String path, File oldTarget, File newTarget) {
-    String oldTargetPath = oldTarget.getPath();
+  private static @Nullable Path mapPath(String path, Path oldTarget, Path newTarget) {
+    String oldTargetPath = oldTarget.toString();
     if (path.startsWith(oldTargetPath)) {
       if (path.length() == oldTargetPath.length()) {
         return newTarget;
       }
       if (path.charAt(oldTargetPath.length()) == File.separatorChar) {
-        return new File(newTarget, path.substring(oldTargetPath.length() + 1));
+        return newTarget.resolve(path.substring(oldTargetPath.length() + 1));
       }
     }
     return null;
   }
-
 
   public interface ActionCommand {
     ActionCommand[] EMPTY_ARRAY = new ActionCommand[0];
     void execute() throws IOException;
   }
 
-  public static class CopyCommand implements Serializable, ActionCommand {
+  public static final class CopyCommand implements Serializable, ActionCommand {
     private static final long serialVersionUID = 201708031943L;
 
     private final String mySource;
     private final String myDestination;
 
+    public CopyCommand(@NotNull Path source, @NotNull Path destination) {
+      mySource = source.toAbsolutePath().toString();
+      myDestination = destination.toAbsolutePath().toString();
+    }
+
+    /**
+     * @deprecated Use {@link #CopyCommand(Path, Path)}
+     */
+    @Deprecated
     public CopyCommand(@NotNull File source, @NotNull File destination) {
       mySource = source.getAbsolutePath();
       myDestination = destination.getAbsolutePath();
@@ -178,7 +187,6 @@ public final class StartupActionScriptManager {
     @Override
     public void execute() throws IOException {
       File source = new File(mySource), destination = new File(myDestination);
-
       if (!source.isFile()) {
         throw new IOException("Source file missing: " + source);
       }
@@ -201,36 +209,42 @@ public final class StartupActionScriptManager {
     }
   }
 
-  public static class UnzipCommand implements Serializable, ActionCommand {
+  public static final class UnzipCommand implements Serializable, ActionCommand {
     private static final long serialVersionUID = 201708031943L;
 
     private final String mySource;
     private final String myDestination;
-    private final FilenameFilter myFilenameFilter;
+    private final Predicate<String> myFilenameFilter;
 
-    public UnzipCommand(@NotNull File source, @NotNull File destination) {
+    public UnzipCommand(@NotNull Path source, @NotNull Path destination) {
       this(source, destination, null);
     }
 
-    public UnzipCommand(@NotNull File source, @NotNull File destination, FilenameFilter filenameFilter) {
-      mySource = source.getAbsolutePath();
-      myDestination = destination.getAbsolutePath();
+    /**
+     * @deprecated Use {@link #UnzipCommand(Path, Path)}
+     */
+    @Deprecated
+    public UnzipCommand(@NotNull File source, @NotNull File destination) {
+      this(source.toPath(), destination.toPath());
+    }
+
+    public UnzipCommand(@NotNull Path source, @NotNull Path destination, @Nullable Predicate<String> filenameFilter) {
+      mySource = source.toAbsolutePath().toString();
+      myDestination = destination.toAbsolutePath().toString();
       myFilenameFilter = filenameFilter;
     }
 
     @Override
     public void execute() throws IOException {
-      File source = new File(mySource), destination = new File(myDestination);
+      Path source = Paths.get(mySource);
+      Path destination = Paths.get(myDestination);
 
-      if (!source.isFile()) {
+      if (!Files.isRegularFile(source)) {
         throw new IOException("Source file missing: " + source);
       }
 
-      if (!(destination.isDirectory() || destination.mkdirs())) {
-        throw new IOException("Cannot create a directory: " + destination);
-      }
-
-      ZipUtil.extract(source, destination, myFilenameFilter);
+      Files.createDirectories(destination);
+      new Decompressor.Zip(source).filter(myFilenameFilter).extract(destination);
     }
 
     @Override
@@ -243,11 +257,19 @@ public final class StartupActionScriptManager {
     }
   }
 
-  public static class DeleteCommand implements Serializable, ActionCommand {
+  public static final class DeleteCommand implements Serializable, ActionCommand {
     private static final long serialVersionUID = 201708031943L;
 
     private final String mySource;
 
+    public DeleteCommand(@NotNull Path source) {
+      mySource = source.toAbsolutePath().toString();
+    }
+
+    /**
+     * @deprecated Use {@link #DeleteCommand(Path)}
+     */
+    @Deprecated
     public DeleteCommand(@NotNull File source) {
       mySource = source.getAbsolutePath();
     }

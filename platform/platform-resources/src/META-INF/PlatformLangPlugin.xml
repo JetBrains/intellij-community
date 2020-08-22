@@ -94,8 +94,14 @@
     <projectService serviceInterface="com.intellij.refactoring.suggested.SuggestedRefactoringProvider"
                     serviceImplementation="com.intellij.refactoring.suggested.SuggestedRefactoringProviderImpl"/>
     <postStartupActivity implementation="com.intellij.refactoring.suggested.SuggestedRefactoringProviderImpl$Startup"/>
-    <notificationWhitelist groupIds="Code style settings migration;Find Problems;Missing SDKs;Automatic indent detection;Indexing;
-    Framework Detection;Power Save Mode;Show control flow group"/>
+    <notificationGroup id="Show control flow group" displayType="BALLOON"/>
+    <notificationGroup id="Power Save Mode" displayType="BALLOON"/>
+    <notificationGroup id="Indexing" displayType="BALLOON"/>
+    <notificationGroup id="Framework Detection" displayType="BALLOON"/>
+    <notificationGroup id="Code style settings migration" displayType="STICKY_BALLOON"/>
+    <notificationGroup id="Find Problems" displayType="STICKY_BALLOON" isLogByDefault="false"/>
+    <notificationGroup id="Missing SDKs" displayType="BALLOON"/>
+    <notificationGroup id="Automatic indent detection" displayType="STICKY_BALLOON"/>
 
     <applicationService serviceInterface="com.intellij.openapi.roots.impl.PushedFilePropertiesRetriever"
                         serviceImplementation="com.intellij.openapi.roots.impl.PushedFilePropertiesRetrieverImpl"/>

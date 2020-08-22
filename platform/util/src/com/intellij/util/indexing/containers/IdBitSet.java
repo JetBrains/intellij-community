@@ -3,6 +3,7 @@ package com.intellij.util.indexing.containers;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.indexing.ValueContainer;
+import com.intellij.util.indexing.impl.ValueContainerImpl;
 import org.jetbrains.annotations.NotNull;
 
 class IdBitSet implements Cloneable, RandomAccessIntContainer {
@@ -109,7 +110,7 @@ class IdBitSet implements Cloneable, RandomAccessIntContainer {
 
   @Override
   public @NotNull IntIdsIterator intIterator() {
-    return new Iterator();
+    return size() == 0 ? ValueContainerImpl.EMPTY_ITERATOR : new Iterator();
   }
 
   @Override
@@ -151,7 +152,9 @@ class IdBitSet implements Cloneable, RandomAccessIntContainer {
   }
 
   private int nextSetBit(int bitIndex) {
-    assert myBase >= 0;
+    if (myBase < 0) {
+      throw new IllegalStateException();
+    }
     if (bitIndex >= myBase) bitIndex -= myBase;
     int wordIndex = bitIndex >> SHIFT;
     if (wordIndex > myLastUsedSlot) {

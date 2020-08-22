@@ -1,5 +1,6 @@
 package com.intellij.coverage.actions;
 
+import com.intellij.coverage.CoverageBundle;
 import com.intellij.coverage.CoverageDataManager;
 import com.intellij.coverage.CoverageExecutor;
 import com.intellij.coverage.CoverageSuitesBundle;
@@ -34,7 +35,7 @@ public class TrackCoverageAction extends ToggleModelAction {
   private TreeSelectionListener myTreeSelectionListener;
 
   public TrackCoverageAction(TestConsoleProperties properties) {
-    super("Show coverage per test", "Show coverage per test", AllIcons.RunConfigurations.TrackCoverage, properties,
+    super(CoverageBundle.message("show.coverage.per.test.action.text"), CoverageBundle.message("show.coverage.per.test.action.text"), AllIcons.RunConfigurations.TrackCoverage, properties,
           TestConsoleProperties.TRACK_CODE_COVERAGE);
     myProperties = properties;
 

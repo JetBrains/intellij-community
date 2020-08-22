@@ -18,6 +18,8 @@ package com.intellij.codeInsight.completion;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.paths.PsiDynaReference;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -35,7 +37,7 @@ import java.util.Set;
 /**
  * @author peter
  */
-public class LegacyCompletionContributor extends CompletionContributor {
+public class LegacyCompletionContributor extends CompletionContributor implements DumbAware {
   private static final Logger LOG = Logger.getInstance(LegacyCompletionContributor.class);
 
   @Override
@@ -50,6 +52,8 @@ public class LegacyCompletionContributor extends CompletionContributor {
     final CompletionResultSet result = _result.withPrefixMatcher(completionData.findPrefix(insertedElement, parameters.getOffset()));
 
     completeReference(parameters, result);
+
+    if (DumbService.isDumb(insertedElement.getProject())) return;
 
     final Set<LookupElement> lookupSet = new LinkedHashSet<>();
     final Set<CompletionVariant> keywordVariants = new HashSet<>();

@@ -5,7 +5,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupListener;
@@ -63,13 +62,12 @@ public class Notification {
   private final String myGroupId;
   private Icon myIcon;
   private final NotificationType myType;
-  private boolean myShowInDumbMode = false;
 
-  private String myTitle;
+  private @NotificationTitle String myTitle;
   private String mySubtitle;
-  private String myContent;
+  private @NotificationContent String myContent;
   private NotificationListener myListener;
-  private String myDropDownText;
+  private @LinkLabel String myDropDownText;
   private List<AnAction> myActions;
   private CollapseActionsDirection myCollapseActionsDirection = CollapseActionsDirection.KEEP_RIGHTMOST;
   private AnAction myContextHelpAction;
@@ -100,18 +98,7 @@ public class Notification {
                       @Nullable @NotificationContent String content,
                       @NotNull NotificationType type,
                       @Nullable NotificationListener listener) {
-    myGroupId = groupId;
-    myTitle = StringUtil.notNullize(title);
-    myContent = StringUtil.notNullize(content);
-    myType = type;
-    myListener = listener;
-    myTimestamp = System.currentTimeMillis();
-
-    myIcon = icon;
-    mySubtitle = subtitle;
-
-    this.displayId = null;
-    id = calculateId(this);
+    this(groupId, icon, title, subtitle, content, type, listener, null, null, null, null, null, null);
   }
 
   public Notification(@NotNull @NonNls String groupId,
@@ -142,14 +129,37 @@ public class Notification {
                       @NotNull @NotificationContent String content,
                       @NotNull NotificationType type,
                       @Nullable NotificationListener listener) {
+    this(groupId, null, title, null, content, type, listener, displayId, null, null, null, null, null);
+  }
+
+  Notification(@NotNull @NonNls String groupId,
+               @Nullable Icon icon,
+               @Nullable @NotificationTitle String title,
+               @Nullable @NotificationSubtitle String subtitle,
+               @Nullable @NotificationContent String content,
+               @NotNull NotificationType type,
+               @Nullable NotificationListener listener,
+               @Nullable @NonNls String notificationId,
+               @Nullable @LinkLabel String dropDownText,
+               @Nullable List<AnAction> actions,
+               @Nullable AnAction contextHelpAction,
+               @Nullable Runnable whenExpired,
+               @Nullable Boolean important) {
     myGroupId = groupId;
-    myTitle = title;
-    myContent = content;
+    myIcon = icon;
+    myTitle = StringUtil.notNullize(title);
+    mySubtitle = subtitle;
+    myContent = StringUtil.notNullize(content);
     myType = type;
     myListener = listener;
-    myTimestamp = System.currentTimeMillis();
+    displayId = notificationId;
+    myDropDownText = dropDownText;
+    myActions = actions;
+    myContextHelpAction = contextHelpAction;
+    myWhenExpired = whenExpired;
+    myImportant = important;
 
-    this.displayId = displayId;
+    myTimestamp = System.currentTimeMillis();
     id = calculateId(this);
   }
 
@@ -181,7 +191,7 @@ public class Notification {
   }
 
   @NotNull
-  public String getTitle() {
+  public @NotificationTitle String getTitle() {
     return myTitle;
   }
 
@@ -212,27 +222,13 @@ public class Notification {
     return !StringUtil.isEmptyOrSpaces(myContent);
   }
 
-  /**
-   * Allows the notification balloon to be shown in DumbMode
-   * @see DumbService#isDumb()
-   */
   @NotNull
-  public Notification showInDumbMode() {
-    myShowInDumbMode = true;
-    return this;
-  }
-
-  public boolean isShownInDumbMode() {
-    return myShowInDumbMode;
-  }
-
-  @NotNull
-  public String getContent() {
+  public @NotificationContent String getContent() {
     return myContent;
   }
 
   @NotNull
-  public Notification setContent(@Nullable String content) {
+  public Notification setContent(@NotificationContent @Nullable String content) {
     myContent = StringUtil.notNullize(content);
     return this;
   }
@@ -280,7 +276,7 @@ public class Notification {
   }
 
   @NotNull
-  public String getDropDownText() {
+  public @LinkLabel String getDropDownText() {
     if (myDropDownText == null) {
       myDropDownText = "Actions";
     }
@@ -307,13 +303,19 @@ public class Notification {
   /**
    * @see NotificationAction
    */
-  @NotNull
-  public Notification addAction(@NotNull AnAction action) {
+  public @NotNull Notification addAction(@NotNull AnAction action) {
     if (myActions == null) {
       myActions = new ArrayList<>();
     }
     myActions.add(action);
     return this;
+  }
+
+  public final void addActions(@NotNull List<? extends AnAction> actions) {
+    if (myActions == null) {
+      myActions = new ArrayList<>();
+    }
+    myActions.addAll(actions);
   }
 
   public Notification setContextHelpAction(AnAction action) {

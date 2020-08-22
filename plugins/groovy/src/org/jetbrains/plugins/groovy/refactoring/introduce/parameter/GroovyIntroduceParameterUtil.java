@@ -391,7 +391,7 @@ public final class GroovyIntroduceParameterUtil {
     }
   }
 
-  private static class FieldSearcher extends GroovyRecursiveElementVisitor {
+  private static final class FieldSearcher extends GroovyRecursiveElementVisitor {
     PsiClass myClass;
     private final List<PsiField> result = new ArrayList<>();
 

@@ -120,7 +120,7 @@ public class SvnAuthenticationManager {
       .showOverChangesView(myProject, "Cannot store credentials: forbidden by \"store-auth-creds=no\"", MessageType.ERROR);
   }
 
-  public class HostOptions {
+  public final class HostOptions {
     @NotNull private final Url myUrl;
 
     private HostOptions(@NotNull Url url) {

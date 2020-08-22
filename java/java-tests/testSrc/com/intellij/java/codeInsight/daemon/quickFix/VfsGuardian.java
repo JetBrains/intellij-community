@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon.quickFix;
 
 import com.intellij.openapi.Disposable;
@@ -9,19 +9,19 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Map;
 
-class VfsGuardian {
+final class VfsGuardian {
   private static final Logger LOG = Logger.getInstance(VfsGuardian.class);
   /**
    * Listens for changes in files under {@code root} and reverts them back when {@code parent} gets disposed
    */
   static void guard(@NotNull String root, @NotNull Disposable parent) {
-    Map<VirtualFile, byte[]> oldContent = new THashMap<>();
+    Map<VirtualFile, byte[]> oldContent = new HashMap<>();
     VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileListener() {
       @Override
       public void beforeContentsChange(@NotNull VirtualFileEvent event) {

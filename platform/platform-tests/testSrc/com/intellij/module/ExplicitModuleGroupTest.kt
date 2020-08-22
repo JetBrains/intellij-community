@@ -34,12 +34,15 @@ class ExplicitModuleGroupTest : HeavyPlatformTestCase() {
 
     val parentGroup = ModuleGroup(listOf("a"))
     assertEmpty(parentGroup.modulesInGroup(myProject, false))
+    assertEmpty(parentGroup.modulesInGroup(myProject))
     assertSameElements(parentGroup.modulesInGroup(myProject, true), module)
 
     val group = assertOneElement(parentGroup.childGroups(grouper))
     assertArrayEquals(group.groupPath, arrayOf("a", "b"))
     assertSameElements(group.modulesInGroup(grouper, false), module)
+    assertSameElements(group.modulesInGroup(myProject), module)
     assertEmpty(group.childGroups(grouper))
+    assertEmpty(group.childGroups(myProject))
   }
 
   fun `test two modules`() {
@@ -48,12 +51,16 @@ class ExplicitModuleGroupTest : HeavyPlatformTestCase() {
 
     val parentGroup = ModuleGroup(listOf("a"))
     assertSameElements(parentGroup.modulesInGroup(myProject, false), module1)
+    assertSameElements(parentGroup.modulesInGroup(myProject), module1)
     assertSameElements(parentGroup.modulesInGroup(myProject, true), module1, module2)
 
+    assertArrayEquals(assertOneElement(parentGroup.childGroups(myProject)).groupPath, arrayOf("a", "b"))
     val group = assertOneElement(parentGroup.childGroups(grouper))
     assertArrayEquals(group.groupPath, arrayOf("a", "b"))
     assertSameElements(group.modulesInGroup(myProject, false), module2)
+    assertSameElements(group.modulesInGroup(myProject), module2)
     assertEmpty(group.childGroups(grouper))
+    assertEmpty(group.childGroups(myProject))
   }
 
   private val grouper: ModuleGrouper

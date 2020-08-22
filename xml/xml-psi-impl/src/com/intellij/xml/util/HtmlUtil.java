@@ -14,6 +14,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
@@ -39,8 +40,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.*;
 import com.intellij.xml.impl.schema.XmlAttributeDescriptorImpl;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.*;
 
 import java.nio.charset.Charset;
@@ -57,14 +56,14 @@ public final class HtmlUtil {
   @NonNls private static final String CHARSET_PREFIX = CHARSET + "=";
   @NonNls public static final String HTML5_DATA_ATTR_PREFIX = "data-";
 
-  public static final String SCRIPT_TAG_NAME = "script";
-  public static final String STYLE_TAG_NAME = "style";
-  public static final String TEMPLATE_TAG_NAME = "template";
+  @NlsSafe public static final String SCRIPT_TAG_NAME = "script";
+  @NlsSafe public static final String STYLE_TAG_NAME = "style";
+  @NlsSafe public static final String TEMPLATE_TAG_NAME = "template";
 
-  public static final String STYLE_ATTRIBUTE_NAME = STYLE_TAG_NAME;
-  public static final String SRC_ATTRIBUTE_NAME = "src";
-  public static final String ID_ATTRIBUTE_NAME = "id";
-  public static final String CLASS_ATTRIBUTE_NAME = "class";
+  @NlsSafe public static final String STYLE_ATTRIBUTE_NAME = STYLE_TAG_NAME;
+  @NlsSafe public static final String SRC_ATTRIBUTE_NAME = "src";
+  @NlsSafe public static final String ID_ATTRIBUTE_NAME = "id";
+  @NlsSafe public static final String CLASS_ATTRIBUTE_NAME = "class";
 
   @NonNls public static final String MATH_ML_NAMESPACE = "http://www.w3.org/1998/Math/MathML";
   @NonNls public static final String SVG_NAMESPACE = "http://www.w3.org/2000/svg";
@@ -107,7 +106,7 @@ public final class HtmlUtil {
   private static final Set<String> BLOCK_TAGS_MAP = new HashSet<>();
 
   @NonNls private static final String[] INLINE_ELEMENTS_CONTAINER = {"p", "h1", "h2", "h3", "h4", "h5", "h6", "pre"};
-  private static final Set<String> INLINE_ELEMENTS_CONTAINER_MAP = new THashSet<>();
+  private static final Set<String> INLINE_ELEMENTS_CONTAINER_MAP = new HashSet<>();
 
   private static final Set<String> POSSIBLY_INLINE_TAGS_MAP = new HashSet<>();
 
@@ -117,13 +116,13 @@ public final class HtmlUtil {
     "main"
   };
   private static final Set<String> HTML5_TAGS_SET = new HashSet<>();
-  private static final Map<String, Set<String>> AUTO_CLOSE_BY_MAP = new THashMap<>();
+  private static final Map<String, Set<String>> AUTO_CLOSE_BY_MAP = new HashMap<>();
 
   static {
     for (HTMLControls.Control control : HTMLControls.getControls()) {
       final String tagName = StringUtil.toLowerCase(control.name);
       if (control.endTag == HTMLControls.TagState.FORBIDDEN) EMPTY_TAGS_MAP.add(tagName);
-      AUTO_CLOSE_BY_MAP.put(tagName, new THashSet<>(control.autoClosedBy));
+      AUTO_CLOSE_BY_MAP.put(tagName, new HashSet<>(control.autoClosedBy));
     }
     ContainerUtil.addAll(OPTIONAL_END_TAGS_MAP, OPTIONAL_END_TAGS);
     ContainerUtil.addAll(BLOCK_TAGS_MAP, BLOCK_TAGS);
@@ -503,7 +502,7 @@ public final class HtmlUtil {
     final Ref<String> charsetNameRef = new Ref<>();
     try {
       new HtmlBuilderDriver(content).build(new XmlBuilder() {
-        @NonNls final Set<String> inTag = new THashSet<>();
+        @NonNls final Set<String> inTag = new HashSet<>();
         boolean metHttpEquiv;
         boolean metHtml5Charset;
 

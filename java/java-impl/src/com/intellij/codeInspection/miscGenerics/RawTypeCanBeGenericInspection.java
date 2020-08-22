@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.miscGenerics;
 
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -10,7 +11,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
 import com.intellij.refactoring.typeMigration.TypeMigrationRules;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,20 +73,18 @@ public class RawTypeCanBeGenericInspection extends AbstractBaseJavaLocalInspecti
   }
 
   private static class MyLocalQuickFix implements LocalQuickFix {
-    private final String myName;
+    private final @IntentionName String myName;
 
-    MyLocalQuickFix(@NotNull String name) {
+    MyLocalQuickFix(@NotNull @IntentionName String name) {
       myName = name;
     }
 
-    @Nls
     @NotNull
     @Override
     public String getName() {
       return myName;
     }
 
-    @Nls
     @NotNull
     @Override
     public String getFamilyName() {

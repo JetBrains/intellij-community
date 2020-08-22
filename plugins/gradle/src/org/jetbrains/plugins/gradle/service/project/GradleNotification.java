@@ -21,6 +21,7 @@ import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,8 +44,8 @@ public class GradleNotification {
     myProject = project;
   }
 
-  public void showBalloon(@NotNull final String title,
-                          @NotNull final String message,
+  public void showBalloon(@NotNull @NlsContexts.NotificationTitle final String title,
+                          @NotNull  @NlsContexts.NotificationContent final String message,
                           @NotNull final NotificationType type,
                           @Nullable final NotificationListener listener) {
     NOTIFICATION_GROUP.createNotification(title, message, type, listener).notify(myProject);

@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search.scope.packageSet;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +49,7 @@ public abstract class CustomScopesProviderEx implements CustomScopesProvider {
     @NotNull
     private static final String TEXT = FilePatternPackageSet.SCOPE_FILE + ":*//*";
     @NotNull
-    private static final NamedScope ALL = new NamedScope("All", new AbstractPackageSet(TEXT, 0) {
+    private static final NamedScope ALL = new NamedScope("All", "All", AllIcons.Ide.LocalScope, new AbstractPackageSet(TEXT, 0) {
       @Override
       public boolean contains(@NotNull final VirtualFile file, NamedScopesHolder scopesHolder) {
         return true;

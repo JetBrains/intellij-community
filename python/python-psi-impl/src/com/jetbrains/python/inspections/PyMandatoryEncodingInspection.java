@@ -17,6 +17,7 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyPsiBundle;
@@ -72,7 +73,7 @@ public class PyMandatoryEncodingInspection extends PyInspection {
     }
   }
 
-  public String myDefaultEncoding = "utf-8";
+  public @NlsSafe String myDefaultEncoding = "utf-8";
   public int myEncodingFormatIndex = 0;
   public boolean myAllPythons = false;
 
@@ -121,7 +122,7 @@ public class PyMandatoryEncodingInspection extends PyInspection {
   private JPanel onlyPython2Box() {
     final JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
     JCheckBox checkBox =
-      PythonUiService.getInstance().createInspectionCheckBox(PyPsiBundle.message("enable.in.python.3"), this, "myAllPythons");
+      PythonUiService.getInstance().createInspectionCheckBox(PyPsiBundle.message("INSP.mandatory.encoding.checkbox.enable.in.python.3"), this, "myAllPythons");
     if (checkBox != null) {
       panel.add(checkBox);
     }
@@ -131,7 +132,7 @@ public class PyMandatoryEncodingInspection extends PyInspection {
   @NotNull
   private static JPanel defaultEncodingLabel() {
     final JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-    panel.add(new JLabel(PyPsiBundle.message("INSP.mandatory.encoding.select.default.encoding")));
+    panel.add(new JLabel(PyPsiBundle.message("INSP.mandatory.encoding.label.select.default.encoding")));
     return panel;
   }
 
@@ -154,7 +155,7 @@ public class PyMandatoryEncodingInspection extends PyInspection {
   @NotNull
   private static JPanel encodingFormatLabel() {
     final JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-    panel.add(new JLabel(PyPsiBundle.message("INSP.mandatory.encoding.encoding.comment.format")));
+    panel.add(new JLabel(PyPsiBundle.message("INSP.mandatory.encoding.label.encoding.comment.format")));
     return panel;
   }
 

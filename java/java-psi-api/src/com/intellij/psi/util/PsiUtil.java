@@ -5,12 +5,14 @@ import com.intellij.core.JavaPsiBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -761,6 +763,7 @@ public final class PsiUtil extends PsiUtilCore {
     return topClass instanceof PsiTypeParameter ? null : topClass;
   }
 
+  @NlsSafe
   @Nullable
   public static String getPackageName(@NotNull PsiClass aClass) {
     PsiClass topClass = getTopLevelClass(aClass);
@@ -1024,6 +1027,10 @@ public final class PsiUtil extends PsiUtilCore {
     return getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_11);
   }
 
+  public static boolean isLanguageLevel14OrHigher(@NotNull PsiElement element) {
+    return getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_14);
+  }
+
   @NotNull
   public static LanguageLevel getLanguageLevel(@NotNull PsiElement element) {
     if (element instanceof PsiDirectory) {
@@ -1206,8 +1213,24 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   public static void ensureValidType(@NotNull PsiType type) {
-    ensureValidType(type, null);
+    ensureValidType(type, (String)null);
   }
+
+  public static void ensureValidType(@NotNull PsiType type, @Nullable PsiElement sourceOfType) {
+    try {
+      ensureValidType(type);
+    }
+    catch (ProcessCanceledException e) {
+      throw e;
+    }
+    catch (Throwable e) {
+      if (sourceOfType == null) throw e;
+
+      PsiUtilCore.ensureValid(sourceOfType);
+      throw new RuntimeException("Via " + sourceOfType.getClass() + " #" + sourceOfType.getLanguage(), e);
+    }
+  }
+
   public static void ensureValidType(@NotNull PsiType type, @Nullable String customMessage) {
     if (!type.isValid()) {
       TimeoutUtil.sleep(1); // to see if processing in another thread suddenly makes the type valid again (which is a bug)
@@ -1222,8 +1245,14 @@ public final class PsiUtil extends PsiUtilCore {
             ensureValid(psiClass);
           }
         }
-        catch (PsiInvalidElementAccessException e) {
-          throw customMessage == null? e : new RuntimeException(customMessage, e);
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch (Exception e) {
+          if (customMessage == null) {
+            throw e;
+          }
+          throw new RuntimeException(customMessage, e);
         }
       }
       throw new AssertionError("Invalid type: " + type + " of class " + type.getClass() + " " + customMessage);

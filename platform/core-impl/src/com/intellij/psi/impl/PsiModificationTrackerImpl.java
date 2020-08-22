@@ -7,7 +7,6 @@ import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.TransactionGuardImpl;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.psi.*;
@@ -21,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
+import java.util.function.Predicate;
 
 import static com.intellij.psi.impl.PsiTreeChangeEventImpl.PsiEventType.*;
 
@@ -49,14 +49,30 @@ public final class PsiModificationTrackerImpl implements PsiModificationTracker,
   }
 
   private void doIncCounter() {
-    ApplicationManager.getApplication().runWriteAction(() -> incCounter());
+    ApplicationManager.getApplication().runWriteAction(() -> incCountersInner());
   }
 
+  /**
+   * @deprecated use higher-level ways of dropping caches
+   * @see com.intellij.util.FileContentUtilCore#reparseFiles
+   * @see PsiManager#dropPsiCaches()
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public void incCounter() {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
     incCountersInner();
   }
 
+  /**
+   * @deprecated use higher-level ways of dropping caches
+   * @see com.intellij.util.FileContentUtilCore#reparseFiles
+   * @see PsiManager#dropPsiCaches()
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   public void incOutOfCodeBlockModificationCounter() {
+    ApplicationManager.getApplication().assertWriteAccessAllowed();
     incCountersInner();
   }
 
@@ -166,11 +182,11 @@ public final class PsiModificationTrackerImpl implements PsiModificationTracker,
   }
 
   @ApiStatus.Experimental
-  public @NotNull ModificationTracker forLanguages(@NotNull Condition<? super Language> condition) {
+  public @NotNull ModificationTracker forLanguages(@NotNull Predicate<? super Language> condition) {
     return () -> {
       long result = myAllLanguagesTracker.getModificationCount();
       for (Language l : myLanguageTrackers.keySet()) {
-        if (!condition.value(l)) continue;
+        if (!condition.test(l)) continue;
         result += myLanguageTrackers.get(l).getModificationCount();
       }
       return result;

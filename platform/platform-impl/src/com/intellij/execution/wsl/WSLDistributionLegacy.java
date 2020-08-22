@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.wsl;
 
 import com.intellij.openapi.util.AtomicNullableLazyValue;
@@ -15,7 +15,7 @@ import java.nio.file.Paths;
 /**
  * Represents legacy bash.exe WSL, see RUBY-20359
  */
-public class WSLDistributionLegacy extends WSLDistribution {
+public final class WSLDistributionLegacy extends WSLDistribution {
   private static final WslDistributionDescriptor LEGACY_WSL =
     new WslDistributionDescriptor("UBUNTU_LEGACY", "ubuntu_bash", "bash.exe", "Ubuntu (Legacy)");
 

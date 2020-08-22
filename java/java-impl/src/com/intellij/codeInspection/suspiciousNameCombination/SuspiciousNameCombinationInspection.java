@@ -26,6 +26,7 @@ import com.intellij.codeInspection.ui.ListWrappingTableModel;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -199,7 +200,7 @@ public class SuspiciousNameCombinationInspection extends AbstractBaseJavaLocalIn
     }
 
     @Override
-    protected String editSelectedItem(String inputValue) {
+    protected String editSelectedItem(@NlsSafe String inputValue) {
       return Messages.showInputDialog(this,
                                       AnalysisBundle.message("suspicious.name.combination.options.prompt"),
                                       AnalysisBundle.message("suspicious.name.combination.edit.title"),

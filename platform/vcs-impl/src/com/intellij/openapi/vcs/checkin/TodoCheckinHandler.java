@@ -17,6 +17,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
@@ -43,7 +44,6 @@ import java.awt.*;
 import java.util.Collection;
 
 import static com.intellij.CommonBundle.getCancelButtonText;
-import static com.intellij.openapi.ui.Messages.*;
 import static com.intellij.util.ui.UIUtil.getWarningIcon;
 
 /**
@@ -99,7 +99,8 @@ public class TodoCheckinHandler extends CheckinHandler {
           getCheckBox().setText(VcsBundle.message("before.checkin.new.todo.check", IdeBundle.message("action.todo.show.all")));
         }
         else {
-          getCheckBox().setText(VcsBundle.message("before.checkin.new.todo.check", "Filter: " + filterName));
+          getCheckBox().setText(VcsBundle.message("before.checkin.new.todo.check",
+                                                  VcsBundle.message("checkin.filter.filter.name", filterName)));
         }
       }
     };
@@ -109,13 +110,12 @@ public class TodoCheckinHandler extends CheckinHandler {
   public ReturnResult beforeCheckin(@Nullable CommitExecutor executor, PairConsumer<Object, Object> additionalDataConsumer) {
     if (! myConfiguration.CHECK_NEW_TODO) return ReturnResult.COMMIT;
     if (DumbService.getInstance(myProject).isDumb()) {
-      String todoName = VcsBundle.message("before.checkin.new.todo.check.title");
       if (Messages.showOkCancelDialog(myProject,
-                              todoName +
-                              " can't be performed while " + ApplicationNamesInfo.getInstance().getFullProductName() + " updates the indices in background.\n" +
-                              "You can commit the changes without running checks, or you can wait until indices are built.",
-                              todoName + " is not possible right now",
-                              "&Wait", "&Commit", null) == Messages.OK) {
+                                      VcsBundle.message("checkin.dialog.message.cant.be.performed",
+                                                        ApplicationNamesInfo.getInstance().getFullProductName()),
+                                      VcsBundle.message("checkin.dialog.title.not.possible.right.now"),
+                                      VcsBundle.message("checkin.wait"),
+                                      VcsBundle.message("checkin.commit"), null) == Messages.OK) {
         return ReturnResult.CANCEL;
       }
       return ReturnResult.COMMIT;
@@ -124,7 +124,7 @@ public class TodoCheckinHandler extends CheckinHandler {
     TodoCheckinHandlerWorker worker = new TodoCheckinHandlerWorker(myProject, changes, myTodoFilter);
 
     Ref<Boolean> completed = Ref.create(Boolean.FALSE);
-    ProgressManager.getInstance().run(new Task.Modal(myProject, "Looking for New and Edited TODO Items...", true) {
+    ProgressManager.getInstance().run(new Task.Modal(myProject, VcsBundle.message("checkin.dialog.title.looking.for.new.edited.todo.items"), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         indicator.setIndeterminate(true);
@@ -148,11 +148,11 @@ public class TodoCheckinHandler extends CheckinHandler {
 
     String text = createMessage(worker);
     boolean thereAreTodoFound = worker.getAddedOrEditedTodos().size() + worker.getInChangedTodos().size() > 0;
-    String title = "TODO";
+    String title = VcsBundle.message("checkin.dialog.title.todo");
     if (thereAreTodoFound) {
       return askReviewOrCommit(worker, commitButtonText, text, title);
     }
-    else if (YES == showYesNoDialog(myProject, text, title, commitButtonText, getCancelButtonText(), getWarningIcon())) {
+    else if (Messages.YES == Messages.showYesNoDialog(myProject, text, title, commitButtonText, getCancelButtonText(), getWarningIcon())) {
       return ReturnResult.COMMIT;
     }
     return ReturnResult.CANCEL;
@@ -160,22 +160,22 @@ public class TodoCheckinHandler extends CheckinHandler {
 
   @NotNull
   private ReturnResult askReviewOrCommit(@NotNull TodoCheckinHandlerWorker worker,
-                                         @NotNull String commitButton,
-                                         @NotNull String text,
-                                         @NotNull String title) {
+                                         @NotNull @NlsContexts.Button String commitButton,
+                                         @NotNull @NlsContexts.DialogMessage String text,
+                                         @NotNull @NlsContexts.DialogTitle String title) {
     String yesButton = VcsBundle.message("todo.in.new.review.button");
-    switch (showYesNoCancelDialog(myProject, text, title, yesButton, commitButton, getCancelButtonText(), getWarningIcon())) {
-      case YES:
+    switch (Messages.showYesNoCancelDialog(myProject, text, title, yesButton, commitButton, getCancelButtonText(), getWarningIcon())) {
+      case Messages.YES:
         showTodo(worker);
         return ReturnResult.CLOSE_WINDOW;
-      case NO:
+      case Messages.NO:
         return ReturnResult.COMMIT;
     }
     return ReturnResult.CANCEL;
   }
 
   private void showTodo(TodoCheckinHandlerWorker worker) {
-    String title = "For commit (" + DateFormatUtil.formatDateTime(System.currentTimeMillis()) + ")";
+    String title = VcsBundle.message("checkin.title.for.commit.0", DateFormatUtil.formatDateTime(System.currentTimeMillis()));
     ServiceManager.getService(myProject, TodoView.class).addCustomTodoView(new TodoTreeBuilderFactory() {
       @Override
       public TodoTreeBuilder createTreeBuilder(JTree tree, Project project) {
@@ -200,7 +200,7 @@ public class TodoCheckinHandler extends CheckinHandler {
     }, ModalityState.NON_MODAL, myProject.getDisposed());
   }
 
-  private static String createMessage(TodoCheckinHandlerWorker worker) {
+  private static @NlsContexts.DialogMessage String createMessage(TodoCheckinHandlerWorker worker) {
     int added = worker.getAddedOrEditedTodos().size();
     int changed = worker.getInChangedTodos().size();
     int skipped = worker.getSkipped().size();

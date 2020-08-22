@@ -47,11 +47,9 @@ public class FileManagerTest extends JavaPsiTestCase {
   protected void setUp() throws Exception {
     super.setUp();
 
-    final File root = createTempDir(getName(), false);
+    VirtualFile rootVFile = getTempDir().createVirtualDir();
 
     ApplicationManager.getApplication().runWriteAction(() -> {
-      VirtualFile rootVFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(root);
-
       VirtualFile found = VirtualFileManager.getInstance().findFileByUrl(rootVFile.getUrl());
       LOG.assertTrue(Comparing.equal(found, rootVFile));
 

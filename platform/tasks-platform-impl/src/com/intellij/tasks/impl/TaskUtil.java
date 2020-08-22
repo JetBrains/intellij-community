@@ -1,5 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.tasks.impl;
 
 import com.google.gson.Gson;
@@ -11,7 +10,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.tasks.CommitPlaceholderProvider;
 import com.intellij.tasks.LocalTask;
@@ -24,10 +22,9 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -58,16 +55,11 @@ public final class TaskUtil {
 
     Map<String, String> map = formatFromExtensions(task instanceof LocalTask ? (LocalTask)task : new LocalTaskImpl(task));
     format = updateToVelocity(format);
-    try {
-      return FileTemplateUtil.mergeTemplate(map, format, false);
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
+    return FileTemplateUtil.mergeTemplate(map, format, false);
   }
 
   private static Map<String, String> formatFromExtensions(@NotNull LocalTask task) {
-    HashMap<String, String> map = new HashMap<>();
+    Map<String, String> map = new HashMap<>();
     for (CommitPlaceholderProvider extension : CommitPlaceholderProvider.EXTENSION_POINT_NAME.getExtensionList()) {
       String[] placeholders = extension.getPlaceholders(task.getRepository());
       for (String placeholder : placeholders) {
@@ -256,12 +248,7 @@ public final class TaskUtil {
    */
   @NotNull
   public static String encodeUrl(@NotNull String s) {
-    try {
-      return URLEncoder.encode(s, CharsetToolkit.UTF8);
-    }
-    catch (UnsupportedEncodingException e) {
-      throw new AssertionError("UTF-8 is not supported");
-    }
+    return URLEncoder.encode(s, StandardCharsets.UTF_8);
   }
 
   public static List<Task> filterTasks(final String pattern, final List<? extends Task> tasks) {

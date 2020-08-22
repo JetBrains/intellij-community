@@ -102,6 +102,10 @@ public class ActionButtonWithText extends ActionButton {
     }
   }
 
+  protected Insets getMargins() {
+    return JBUI.insets(0);
+  }
+
   @Override
   public Dimension getPreferredSize() {
     Dimension basicSize = super.getPreferredSize();
@@ -132,6 +136,9 @@ public class ActionButtonWithText extends ActionButton {
       rv.width += AllIcons.General.LinkDropTriangle.getIconWidth()  + JBUI.scale(TEXT_ARROW_SPACE);
     }
 
+    Insets m = getMargins();
+    JBInsets.addTo(rv, m);
+
     rv.width = Math.max(rv.width, basicSize.width);
     rv.height = Math.max(rv.height, basicSize.height);
     return rv;
@@ -160,6 +167,7 @@ public class ActionButtonWithText extends ActionButton {
     FontMetrics fm = getFontMetrics(getFont());
     Rectangle viewRect = getButtonRect();
     JBInsets.removeFrom(viewRect, getInsets());
+    JBInsets.removeFrom(viewRect, getMargins());
 
     Rectangle iconRect = new Rectangle();
     Rectangle textRect = new Rectangle();
@@ -175,7 +183,7 @@ public class ActionButtonWithText extends ActionButton {
       iconRect.x -= dx;
       textRect.x -= dx;
     }
-    ActionButtonLook look = ActionButtonLook.SYSTEM_LOOK;
+    ActionButtonLook look = getButtonLook();
     look.paintBackground(g, this);
     look.paintIcon(g, this, icon, iconRect.x, iconRect.y);
     look.paintBorder(g, this);

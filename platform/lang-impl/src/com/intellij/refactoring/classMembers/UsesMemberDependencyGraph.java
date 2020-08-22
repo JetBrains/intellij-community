@@ -18,6 +18,7 @@ package com.intellij.refactoring.classMembers;
 
 import com.intellij.lang.LanguageDependentMembersRefactoringSupport;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.NavigatablePsiElement;
 import com.intellij.psi.PsiElement;
@@ -63,7 +64,7 @@ public class UsesMemberDependencyGraph<T extends NavigatablePsiElement, C extend
     return myDependenciesToDependentMap.get(member);
   }
 
-  public String getElementTooltip(T element) {
+  public @NlsContexts.Tooltip String getElementTooltip(T element) {
     final Set<? extends T> dependencies = getDependenciesOf(element);
     if(dependencies == null || dependencies.size() == 0) return null;
 

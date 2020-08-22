@@ -207,7 +207,7 @@ public class JUnitStarter {
                                             ArrayList<String> listeners,
                                             String name) {
     try {
-      IdeaTestRunner testRunner = (IdeaTestRunner)getAgentClass(agentName).newInstance();
+      IdeaTestRunner<?> testRunner = (IdeaTestRunner<?>)getAgentClass(agentName).newInstance();
       if (ourCommandFileName != null) {
         if (!"none".equals(ourForkMode) || ourWorkingDirs != null && new File(ourWorkingDirs).length() > 0) {
           final List<String> newArgs = new ArrayList<String>();

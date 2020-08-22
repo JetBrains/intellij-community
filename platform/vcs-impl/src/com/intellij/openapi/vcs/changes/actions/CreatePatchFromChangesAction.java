@@ -1,5 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -23,22 +22,20 @@ import com.intellij.openapi.vcs.changes.CommitContext;
 import com.intellij.openapi.vcs.changes.CommitSession;
 import com.intellij.openapi.vcs.changes.patch.CreatePatchCommitExecutor;
 import com.intellij.openapi.vcs.changes.patch.CreatePatchCommitExecutor.PatchBuilder;
+import com.intellij.openapi.vcs.changes.patch.PatchWriter;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangeList;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedChangesViewManager;
 import com.intellij.openapi.vcs.changes.ui.SessionDialog;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-
-import static com.intellij.openapi.vcs.changes.patch.PatchWriter.calculateBaseForWritingPatch;
-import static com.intellij.util.ObjectUtils.chooseNotNull;
-import static com.intellij.util.containers.ContainerUtil.emptyList;
-import static com.intellij.util.containers.ContainerUtil.getOnlyItem;
 
 public abstract class CreatePatchFromChangesAction extends ExtendableAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance(CreatePatchFromChangesAction.class);
@@ -70,16 +67,18 @@ public abstract class CreatePatchFromChangesAction extends ExtendableAction impl
   public void defaultActionPerformed(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     Change[] changes = e.getData(VcsDataKeys.CHANGES);
-    if (ArrayUtil.isEmpty(changes)) return;
+    if (changes == null || changes.length == 0) {
+      return;
+    }
     String commitMessage = extractCommitMessage(e);
-    project = chooseNotNull(project, ProjectManager.getInstance().getDefaultProject());
+    project = project == null ? ProjectManager.getInstance().getDefaultProject() : project;
 
     PatchBuilder patchBuilder;
 
-    ShelvedChangeList shelvedChangeList = getOnlyItem(ShelvedChangesViewManager.getShelvedLists(e.getDataContext()));
+    ShelvedChangeList shelvedChangeList = ContainerUtil.getOnlyItem(ShelvedChangesViewManager.getShelvedLists(e.getDataContext()));
     if (shelvedChangeList != null) {
-      boolean entireList = getOnlyItem(ShelvedChangesViewManager.getExactlySelectedLists(e.getDataContext())) != null;
-      List<String> selectedPaths = entireList ? emptyList() : ShelvedChangesViewManager.getSelectedShelvedChangeNames(e.getDataContext());
+      boolean entireList = ContainerUtil.getOnlyItem(ShelvedChangesViewManager.getExactlySelectedLists(e.getDataContext())) != null;
+      List<String> selectedPaths = entireList ? ContainerUtil.emptyList() : ShelvedChangesViewManager.getSelectedShelvedChangeNames(e.getDataContext());
       patchBuilder = new CreatePatchCommitExecutor.ShelfPatchBuilder(project, shelvedChangeList, selectedPaths);
     }
     else {
@@ -117,7 +116,7 @@ public abstract class CreatePatchFromChangesAction extends ExtendableAction impl
                                  @Nullable String commitMessage,
                                  @NotNull List<? extends Change> changes,
                                  boolean silentClipboard) {
-    project = chooseNotNull(project, ProjectManager.getInstance().getDefaultProject());
+    project = project == null ? ProjectManager.getInstance().getDefaultProject() : project;
     PatchBuilder patchBuilder = new CreatePatchCommitExecutor.DefaultPatchBuilder(project);
     createPatch(project, commitMessage, changes, silentClipboard, patchBuilder);
   }
@@ -159,7 +158,7 @@ public abstract class CreatePatchFromChangesAction extends ExtendableAction impl
                                           @NotNull CommitContext commitContext) {
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       try {
-        String baseDir = calculateBaseForWritingPatch(project, changes).getPath();
+        Path baseDir = PatchWriter.calculateBaseDirForWritingPatch(project, changes);
         CreatePatchCommitExecutor.writePatchToClipboard(project, baseDir, changes, false, false, patchBuilder, commitContext);
       }
       catch (IOException | VcsException exception) {

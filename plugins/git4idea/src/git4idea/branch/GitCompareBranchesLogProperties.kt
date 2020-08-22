@@ -11,12 +11,10 @@ import com.intellij.vcs.log.impl.VcsLogUiProperties.VcsLogUiProperty
 import com.intellij.vcs.log.impl.VcsLogUiPropertiesImpl
 import git4idea.update.VcsLogUiPropertiesWithSharedRecentFilters
 
-@State(name = "Git.Compare.Branches.Top.Log.Properties",
-       storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE), Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)])
+@State(name = "Git.Compare.Branches.Top.Log.Properties", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
 class GitCompareBranchesTopLogProperties(project: Project) : GitCompareBranchesLogProperties(project)
 
-@State(name = "Git.Compare.Branches.Bottom.Log.Properties",
-       storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE), Storage(value = StoragePathMacros.WORKSPACE_FILE, deprecated = true)])
+@State(name = "Git.Compare.Branches.Bottom.Log.Properties", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
 class GitCompareBranchesBottomLogProperties(project: Project) : GitCompareBranchesLogProperties(project)
 
 abstract class GitCompareBranchesLogProperties(project: Project) :

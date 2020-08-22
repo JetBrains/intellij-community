@@ -49,7 +49,7 @@ public class HtmlMissingClosingTagInspection extends HtmlLocalInspectionTool {
       return;
     }
 
-    holder.registerProblem(tagNameElement, XmlAnalysisBundle.message("element.missing.end.tag"),
+    holder.registerProblem(tagNameElement, XmlAnalysisBundle.message("html.inspections.element.missing.end.tag"),
                            new MissingClosingTagFix(tagName));
   }
 
@@ -65,14 +65,14 @@ public class HtmlMissingClosingTagInspection extends HtmlLocalInspectionTool {
     @NotNull
     @Override
     public String getName() {
-      return XmlAnalysisBundle.message("add.named.closing.tag", myName);
+      return XmlAnalysisBundle.message("html.quickfix.add.named.closing.tag", myName);
     }
 
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return XmlAnalysisBundle.message("add.closing.tag");
+      return XmlAnalysisBundle.message("html.quickfix.add.closing.tag");
     }
 
     @Override

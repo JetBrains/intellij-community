@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.DataContext
 
 class VcsLogActionPromoter : ActionPromoter {
-  override fun promote(actions: MutableList<AnAction>, context: DataContext?): MutableList<AnAction> {
-    return actions.filter { action -> action is RefreshLogAction || action is GoToParentOrChildAction }.toMutableList()
+  override fun promote(actions: List<AnAction>, context: DataContext): List<AnAction> {
+    return actions.filter { action -> action is RefreshLogAction || action is GoToParentOrChildAction }
   }
 }

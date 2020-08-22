@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
-import org.jetbrains.plugins.github.util.GithubGitHelper
+import org.jetbrains.plugins.github.util.GHProjectRepositoriesManager
 import org.jetbrains.plugins.github.util.GithubNotifications
 import org.jetbrains.plugins.github.util.GithubUtil
 
@@ -73,7 +73,9 @@ open class GHOpenInBrowserActionGroup
   }
 
   private fun getDataFromPullRequest(project: Project, dataContext: DataContext): List<Data>? {
-    val pullRequest = dataContext.getData(GHPRActionKeys.SELECTED_PULL_REQUEST) ?: return null
+    val pullRequest = dataContext.getData(GHPRActionKeys.SELECTED_PULL_REQUEST)
+                      ?: dataContext.getData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER)?.detailsData?.loadedDetails
+                      ?: return null
     return listOf(Data.URL(project, pullRequest.url))
   }
 
@@ -84,10 +86,10 @@ open class GHOpenInBrowserActionGroup
     val repository = GitUtil.getRepositoryManager(project).getRepositoryForFileQuick(fileRevision.path)
     if (repository == null) return null
 
-    val accessibleRepositories = service<GithubGitHelper>().getPossibleRepositories(repository)
+    val accessibleRepositories = project.service<GHProjectRepositoriesManager>().findKnownRepositories(repository)
     if (accessibleRepositories.isEmpty()) return null
 
-    return accessibleRepositories.map { Data.Revision(project, it, fileRevision.revisionNumber.asString()) }
+    return accessibleRepositories.map { Data.Revision(project, it.repository, fileRevision.revisionNumber.asString()) }
   }
 
   private fun getDataFromLog(project: Project, dataContext: DataContext): List<Data>? {
@@ -101,10 +103,11 @@ open class GHOpenInBrowserActionGroup
     val repository = GitUtil.getRepositoryManager(project).getRepositoryForRootQuick(commit.root)
     if (repository == null) return null
 
-    val accessibleRepositories = service<GithubGitHelper>().getPossibleRepositories(repository)
+
+    val accessibleRepositories = project.service<GHProjectRepositoriesManager>().findKnownRepositories(repository)
     if (accessibleRepositories.isEmpty()) return null
 
-    return accessibleRepositories.map { Data.Revision(project, it, commit.hash.asString()) }
+    return accessibleRepositories.map { Data.Revision(project, it.repository, commit.hash.asString()) }
   }
 
   private fun getDataFromVirtualFile(project: Project, dataContext: DataContext): List<Data>? {
@@ -113,7 +116,8 @@ open class GHOpenInBrowserActionGroup
     val repository = GitUtil.getRepositoryManager(project).getRepositoryForFileQuick(virtualFile)
     if (repository == null) return null
 
-    val accessibleRepositories = service<GithubGitHelper>().getPossibleRepositories(repository)
+
+    val accessibleRepositories = project.service<GHProjectRepositoriesManager>().findKnownRepositories(repository)
     if (accessibleRepositories.isEmpty()) return null
 
     val changeListManager = ChangeListManager.getInstance(project)
@@ -121,7 +125,7 @@ open class GHOpenInBrowserActionGroup
 
     val change = changeListManager.getChange(virtualFile)
     return if (change != null && change.type == Change.Type.NEW) null
-    else accessibleRepositories.map { Data.File(project, it, repository.root, virtualFile) }
+    else accessibleRepositories.map { Data.File(project, it.repository, repository.root, virtualFile) }
   }
 
   protected sealed class Data(val project: Project) {

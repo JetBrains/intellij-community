@@ -19,12 +19,14 @@ import com.intellij.codeInsight.JavaProjectCodeInsightSettings
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.StaticallyImportable
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.util.ClassConditionKey
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import com.intellij.testFramework.NeedsIndex
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import groovy.transform.CompileStatic
+
+import static com.intellij.java.codeInsight.completion.NormalCompletionTestCase.renderElement
 
 /**
  * @author peter
@@ -32,6 +34,7 @@ import groovy.transform.CompileStatic
 @CompileStatic
 class GlobalMemberNameCompletionTest extends LightJavaCodeInsightFixtureTestCase {
 
+  @NeedsIndex.Full
   void testMethodName() throws Exception {
     myFixture.addClass("""
 package foo;
@@ -47,6 +50,7 @@ public class Foo {
 class Bar {{ abcmethod()<caret> }}"""
   }
 
+  @NeedsIndex.Full
   void testFieldName() throws Exception {
     myFixture.addClass("""
 package foo;
@@ -62,6 +66,7 @@ public class Foo {
 class Bar {{ abcfield<caret> }}"""
   }
 
+  @NeedsIndex.Full
   void testFieldNameQualified() throws Exception {
     myFixture.addClass("""
 package foo;
@@ -77,6 +82,7 @@ public class Foo {
 class Bar {{ Foo.abcfield<caret> }}"""
   }
 
+  @NeedsIndex.Full
   void testFieldNamePresentation() {
     myFixture.addClass("""
 package foo;
@@ -88,7 +94,7 @@ public class Foo {
 """)
     myFixture.configureByText "a.java", "class Bar {{ abcf<caret> }}"
     def element = complete()[0]
-    def presentation = LookupElementPresentation.renderElement(element)
+    def presentation = renderElement(element)
     assert 'Foo.abcfield' == presentation.itemText
     assert ' (foo)' == presentation.tailText
     assert 'int' == presentation.typeText
@@ -98,6 +104,7 @@ public class Foo {
     myFixture.complete(CompletionType.BASIC, 2)
   }
 
+  @NeedsIndex.Full
   void testQualifiedMethodName() throws Exception {
     myFixture.addClass("""
 package foo;
@@ -112,6 +119,7 @@ public class Foo {
 class Bar {{ Foo.abcmethod()<caret> }}"""
   }
 
+  @NeedsIndex.Full
   void testIfThereAreAlreadyStaticImportsWithThatClass() throws Exception {
     myFixture.addClass("""
 package foo;
@@ -132,7 +140,7 @@ import static foo.Foo.anotherMethod;
 class Bar {{ abcmethod(); anotherMethod(<caret>) }}"""
   }
 
-
+  @NeedsIndex.Full
   void testExcludeClassFromCompletion() throws Exception {
     myFixture.addClass("""package foo;
       public class Foo {
@@ -152,6 +160,7 @@ class Bar {{ abcmethod(); anotherMethod(<caret>) }}"""
 class Bar {{ abcmethod()<caret> }}"""
   }
 
+  @NeedsIndex.Full
   void testExcludeMethodFromCompletion() throws Exception {
     myFixture.addClass("""package foo;
       public class Foo {
@@ -167,6 +176,7 @@ class Bar {{ abcmethod()<caret> }}"""
 class Bar {{ abcmethod1()<caret> }}"""
   }
 
+  @NeedsIndex.Full
   void testMergeOverloads() throws Exception {
     myFixture.addClass("""package foo;
       public class Foo {
@@ -179,7 +189,7 @@ class Bar {{ abcmethod1()<caret> }}"""
     myFixture.configureByText("a.java", "class Bar {{ abcm<caret> }}")
     def element = complete()[0]
 
-    def tail = LookupElementPresentation.renderElement(element).tailFragments
+    def tail = renderElement(element).tailFragments
     assert tail[0].text == '(...)'
     assert !tail[0].grayed
     assert tail[1].text == ' (foo)'
@@ -199,7 +209,7 @@ class A {
 }
 """)
     def element = complete()[0]
-    def presentation = LookupElementPresentation.renderElement(element)
+    def presentation = renderElement(element)
     assert 'foo' == presentation.itemText
     myFixture.type '\n'
     myFixture.checkResult '''
@@ -213,6 +223,7 @@ class A {
 '''
   }
 
+  @NeedsIndex.Full
   void "test static import before an identifier"() {
     myFixture.addClass '''
 package test.t1;
@@ -279,6 +290,7 @@ class Foo {
     myFixture.checkResult text
   }
 
+  @NeedsIndex.Full
   void "test no global reformatting"() {
     CodeStyleSettingsManager.getSettings(project).getCommonSettings(JavaLanguage.INSTANCE).ALIGN_MULTILINE_BINARY_OPERATION = true
 

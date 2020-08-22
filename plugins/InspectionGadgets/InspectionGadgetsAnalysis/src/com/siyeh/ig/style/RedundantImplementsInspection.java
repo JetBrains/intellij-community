@@ -17,6 +17,7 @@ package com.siyeh.ig.style;
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -30,9 +31,9 @@ import javax.swing.*;
 
 public class RedundantImplementsInspection extends BaseInspection implements CleanupLocalInspectionTool{
 
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public boolean ignoreSerializable = false;
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public boolean ignoreCloneable = false;
 
   @Override
@@ -167,12 +168,11 @@ public class RedundantImplementsInspection extends BaseInspection implements Cle
         }
         final PsiClass extendedClass = (PsiClass)extendsReferent;
         if (extendedClass.isInheritor(implementedClass, true)) {
-          registerError(implementsElement);
+          register(implementsElement);
           return;
         }
       }
-      for (final PsiJavaCodeReferenceElement testImplementElement :
-        implementsElements) {
+      for (final PsiJavaCodeReferenceElement testImplementElement : implementsElements) {
         if (testImplementElement.equals(implementsElement)) {
           continue;
         }
@@ -184,10 +184,14 @@ public class RedundantImplementsInspection extends BaseInspection implements Cle
         final PsiClass testImplementedClass =
           (PsiClass)implementsReferent;
         if (testImplementedClass.isInheritor(implementedClass, true)) {
-          registerError(implementsElement);
+          register(implementsElement);
           return;
         }
       }
+    }
+
+    private void register(PsiJavaCodeReferenceElement implementsElement) {
+      registerError(implementsElement, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
     }
 
     private void checkExtendedInterface(PsiJavaCodeReferenceElement extendsElement, PsiJavaCodeReferenceElement[] extendsElements) {
@@ -199,8 +203,7 @@ public class RedundantImplementsInspection extends BaseInspection implements Cle
       if (!extendedInterface.isInterface()) {
         return;
       }
-      for (final PsiJavaCodeReferenceElement testExtendsElement :
-        extendsElements) {
+      for (final PsiJavaCodeReferenceElement testExtendsElement : extendsElements) {
         if (testExtendsElement.equals(extendsElement)) {
           continue;
         }
@@ -212,7 +215,7 @@ public class RedundantImplementsInspection extends BaseInspection implements Cle
         final PsiClass testExtendedInterface =
           (PsiClass)implementsReferent;
         if (testExtendedInterface.isInheritor(extendedInterface, true)) {
-          registerError(extendsElement);
+          register(extendsElement);
           return;
         }
       }

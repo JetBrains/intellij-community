@@ -388,7 +388,7 @@ public final class GrClosureSignatureUtil {
     return createSignature((PsiMethod)resolved, substitutor);
   }
 
-  private static class ParameterMapperForVararg<Arg> {
+  private static final class ParameterMapperForVararg<Arg> {
     private final PsiElement context;
     private final GrClosureParameter[] params;
     private final Arg[] args;

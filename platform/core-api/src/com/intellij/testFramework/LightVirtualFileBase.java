@@ -1,12 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.DeprecatedVirtualFileSystem;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,13 +19,13 @@ import java.io.IOException;
  */
 public abstract class LightVirtualFileBase extends VirtualFile {
   private FileType myFileType;
-  private String myName;
+  private @NlsSafe String myName;
   private long myModStamp;
   private boolean myIsWritable = true;
   private boolean myValid = true;
   private VirtualFile myOriginalFile;
 
-  public LightVirtualFileBase(final String name, final FileType fileType, final long modificationStamp) {
+  public LightVirtualFileBase(final @NlsSafe String name, final FileType fileType, final long modificationStamp) {
     myName = name;
     myFileType = fileType;
     myModStamp = modificationStamp;
@@ -41,8 +43,8 @@ public abstract class LightVirtualFileBase extends VirtualFile {
     myOriginalFile = originalFile;
   }
 
-  private static class MyVirtualFileSystem extends DeprecatedVirtualFileSystem implements NonPhysicalFileSystem {
-    private static final String PROTOCOL = "mock";
+  private static final class MyVirtualFileSystem extends DeprecatedVirtualFileSystem implements NonPhysicalFileSystem {
+    private static final @NonNls String PROTOCOL = "mock";
 
     private MyVirtualFileSystem() {
       startEventPropagation();
@@ -91,8 +93,7 @@ public abstract class LightVirtualFileBase extends VirtualFile {
   }
 
   @Override
-  @NotNull
-  public String getName() {
+  public @NlsSafe @NotNull String getName() {
     return myName;
   }
 

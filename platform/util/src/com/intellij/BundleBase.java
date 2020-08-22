@@ -2,12 +2,13 @@
 package com.intellij;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.text.OrdinalFormat;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
+import java.lang.reflect.Field;
 import java.text.MessageFormat;
 import java.util.Locale;
 import java.util.MissingResourceException;
@@ -18,9 +19,11 @@ import java.util.ResourceBundle;
  */
 public abstract class BundleBase {
   public static final char MNEMONIC = 0x1B;
-  public static final String MNEMONIC_STRING = Character.toString(MNEMONIC);
-  private static final String L10N_MARKER = "🔅";
+  public static final @NlsSafe String MNEMONIC_STRING = Character.toString(MNEMONIC);
+  static final String L10N_MARKER = "🔅";
   public static final boolean SHOW_LOCALIZED_MESSAGES = Boolean.getBoolean("idea.l10n");
+  public static final boolean SHOW_DEFAULT_MESSAGES = Boolean.getBoolean("idea.l10n.english");
+  public static final boolean SHOW_KEYS = Boolean.getBoolean("idea.l10n.keys");
   private static final Logger LOG = Logger.getInstance(BundleBase.class);
 
   private static boolean assertOnMissedKeys;
@@ -29,15 +32,66 @@ public abstract class BundleBase {
     assertOnMissedKeys = doAssert;
   }
 
+  /**
+   * Performs partial application of the pattern message from the bundle leaving some parameters unassigned.
+   * It's expected that the message contains params.length+unassignedParams placeholders. Parameters
+   * {@code {0}..{params.length-1}} will be substituted using passed params array. The remaining parameters
+   * will be renumbered: {@code {params.length}} will become {@code {0}} and so on, so the resulting template
+   * could be applied once more.
+   * 
+   * @param bundle resource bundle to find the message in
+   * @param key resource key
+   * @param unassignedParams number of unassigned parameters
+   * @param params assigned parameters
+   * @return a template suitable to pass to {@link MessageFormat#format(Object)} having the specified number of placeholders left
+   */
+  public static @Nls String partialMessage(@NotNull ResourceBundle bundle,
+                                           @NotNull String key,
+                                           int unassignedParams,
+                                           Object @NotNull ... params) {
+    if (unassignedParams <= 0) throw new IllegalArgumentException();
+    Object[] newParams = new Object[params.length + unassignedParams];
+    System.arraycopy(params, 0, newParams, 0, params.length);
+    @NonNls String prefix = "#$$$TemplateParameter$$$#";
+    @NonNls String suffix = "#$$$/TemplateParameter$$$#";
+    for (int i = 0; i < unassignedParams; i++) {
+      newParams[i + params.length] = prefix + i + suffix;
+    }
+    String message = message(bundle, key, newParams);
+    return quotePattern(message).replace(prefix, "{").replace(suffix, "}"); //NON-NLS
+  }
+
+  private static String quotePattern(String message) {
+    boolean inQuotes = false;
+    StringBuilder sb = new StringBuilder(message.length()+5);
+    for (int i = 0; i < message.length(); i++) {
+      char c = message.charAt(i);
+      boolean needToQuote = c == '{' || c == '}';
+      if (needToQuote != inQuotes) {
+        inQuotes = needToQuote;
+        sb.append('\'');
+      }
+      if (c == '\'') {
+        sb.append("''");
+      } else {
+        sb.append(c);
+      }
+    }
+    if (inQuotes) {
+      sb.append('\'');
+    }
+    return sb.toString();
+  }
+
   @NotNull
-  public static String message(@NotNull ResourceBundle bundle, @NotNull String key, Object @NotNull ... params) {
+  public static @Nls String message(@NotNull ResourceBundle bundle, @NotNull String key, Object @NotNull ... params) {
     return messageOrDefault(bundle, key, null, params);
   }
 
-  public static String messageOrDefault(@Nullable ResourceBundle bundle,
-                                        @NotNull String key,
-                                        @Nullable String defaultValue,
-                                        Object @NotNull ... params) {
+  public static @Nls String messageOrDefault(@Nullable ResourceBundle bundle,
+                                             @NotNull String key,
+                                             @Nullable @Nls String defaultValue,
+                                             Object @NotNull ... params) {
     if (bundle == null) return defaultValue;
 
     boolean resourceFound = true;
@@ -53,24 +107,55 @@ public abstract class BundleBase {
 
     String result = postprocessValue(bundle, value, params);
 
-    if (SHOW_LOCALIZED_MESSAGES && resourceFound) {
-      return appendLocalizationMarker(result);
+    if (!resourceFound) {
+      return result;
+    }
+
+    if (SHOW_KEYS && SHOW_DEFAULT_MESSAGES) {
+      return appendLocalizationSuffix(result, " (" + key + "=" + getDefaultMessage(bundle, key) + ")");
+    }
+    if (SHOW_KEYS) {
+      return appendLocalizationSuffix(result, " (" + key + ")");
+    }
+    if (SHOW_DEFAULT_MESSAGES) {
+      return appendLocalizationSuffix(result, " (" + getDefaultMessage(bundle, key) + ")");
+    }
+    if (SHOW_LOCALIZED_MESSAGES) {
+      return appendLocalizationSuffix(result, L10N_MARKER);
     }
     return result;
+  }
+
+  @NotNull
+  public static String getDefaultMessage(@NotNull ResourceBundle bundle, @NotNull String key) {
+    try {
+      Field parent = ReflectionUtil.getDeclaredField(ResourceBundle.class, "parent");
+      if (parent != null) {
+        Object parentBundle = parent.get(bundle);
+        if (parentBundle instanceof ResourceBundle) {
+          return ((ResourceBundle)parentBundle).getString(key);
+        }
+      }
+    }
+    catch (IllegalAccessException e) {
+      LOG.warn("Cannot fetch default message with -Didea.l10n.english enabled, by key '" + key + "'");
+    }
+    //noinspection HardCodedStringLiteral
+    return "undefined";
   }
 
   private static final String[] SUFFIXES = {"</body></html>", "</html>"};
 
   @NotNull
-  protected static String appendLocalizationMarker(@NotNull String result) {
+  protected static @NlsSafe String appendLocalizationSuffix(@NotNull String result, @NotNull String suffixToAppend) {
     for (String suffix : SUFFIXES) {
       if (result.endsWith(suffix)) return result.substring(0, result.length() - suffix.length()) + L10N_MARKER + suffix;
     }
-    return result + L10N_MARKER;
+    return result + suffixToAppend;
   }
 
   @NotNull
-  static String useDefaultValue(@Nullable ResourceBundle bundle, @NotNull String key, @Nullable String defaultValue) {
+  static @Nls String useDefaultValue(@Nullable ResourceBundle bundle, @NotNull String key, @Nullable @Nls String defaultValue) {
     if (defaultValue != null) {
       return defaultValue;
     }
@@ -78,11 +163,13 @@ public abstract class BundleBase {
     if (assertOnMissedKeys) {
       LOG.error("'" + key + "' is not found in " + bundle);
     }
+    //noinspection HardCodedStringLiteral
     return "!" + key + "!";
   }
 
+  @SuppressWarnings("HardCodedStringLiteral")
   @NotNull
-  static String postprocessValue(@NotNull ResourceBundle bundle, @NotNull String value, Object @NotNull ... params) {
+  static @Nls String postprocessValue(@NotNull ResourceBundle bundle, @NotNull @Nls String value, Object @NotNull ... params) {
     value = replaceMnemonicAmpersand(value);
 
     if (params.length > 0 && value.indexOf('{') >= 0) {
@@ -106,7 +193,7 @@ public abstract class BundleBase {
   }
 
   @Contract("null -> null; !null -> !null")
-  public static String replaceMnemonicAmpersand(@Nullable String value) {
+  public static @Nls String replaceMnemonicAmpersand(@Nullable @Nls String value) {
     if (value == null || value.indexOf('&') < 0) {
       return value;
     }
@@ -141,6 +228,7 @@ public abstract class BundleBase {
       }
       i++;
     }
-    return builder.toString();
+    @NlsSafe final String result = builder.toString();
+    return result;
   }
 }

@@ -34,7 +34,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 
-public class AsyncStacksUtils {
+public final class AsyncStacksUtils {
   private static final Logger LOG = Logger.getInstance(AsyncStacksUtils.class);
   // TODO: obtain CaptureStorage fqn from the class somehow
   public static final String CAPTURE_STORAGE_CLASS_NAME = "com.intellij.rt.debugger.agent.CaptureStorage";
@@ -143,7 +143,7 @@ public class AsyncStacksUtils {
 
     // add points
     if (DebuggerUtilsImpl.isRemote(process)) {
-      Properties properties = CaptureSettingsProvider.getPointsProperties();
+      Properties properties = CaptureSettingsProvider.getPointsProperties(process.getProject());
       if (!properties.isEmpty()) {
         process.addDebugProcessListener(new DebugProcessAdapterImpl() {
           @Override

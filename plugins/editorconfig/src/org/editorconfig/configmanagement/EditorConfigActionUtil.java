@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.configmanagement;
 
 import com.intellij.application.options.CodeStyle;
@@ -57,7 +57,7 @@ public class EditorConfigActionUtil {
     notification.notify(project);
   }
 
-  private static class EditorConfigDisabledNotification extends Notification {
+  private static final class EditorConfigDisabledNotification extends Notification {
     private EditorConfigDisabledNotification(Project project) {
       super(NOTIFICATION_GROUP.getDisplayId(),
             EditorConfigBundle.message("disabled.notification"), "",
@@ -69,7 +69,7 @@ public class EditorConfigActionUtil {
   }
 
 
-  private static class ShowEditorConfigOption extends DumbAwareAction {
+  private static final class ShowEditorConfigOption extends DumbAwareAction {
     private ShowEditorConfigOption(@Nullable String text) {
       super(text);
     }
@@ -80,7 +80,7 @@ public class EditorConfigActionUtil {
     }
   }
 
-  private static class ReEnableAction extends DumbAwareAction {
+  private static final class ReEnableAction extends DumbAwareAction {
     private final Project myProject;
     private final Notification myNotification;
 

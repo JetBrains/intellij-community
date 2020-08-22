@@ -1,23 +1,28 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.ui;
 
+import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public final class BeforeRunFragment<S extends RunConfigurationBase<?>> extends RunConfigurationEditorFragment<S, JComponent> {
   private final BeforeRunComponent myComponent;
+  private final Key<?> myKey;
+  private RunnerAndConfigurationSettingsImpl mySettings;
 
   public static <S extends RunConfigurationBase<?>> List<SettingsEditorFragment<S, ?>> createGroup() {
-    ArrayList<SettingsEditorFragment<S, ?>> list = new ArrayList<>();
+    List<SettingsEditorFragment<S, ?>> list = new ArrayList<>();
     list.add(RunConfigurationEditorFragment.createSettingsTag("before.launch.openToolWindow",
                                                               ExecutionBundle.message("run.configuration.before.run.open.tool.window"),
                                                               ExecutionBundle.message("run.configuration.before.run.group"),
@@ -31,16 +36,21 @@ public final class BeforeRunFragment<S extends RunConfigurationBase<?>> extends 
     return list;
   }
 
-  public static <S extends RunConfigurationBase<?>> BeforeRunFragment<S> createComponent(BeforeRunComponent component) {
-    return new BeforeRunFragment<>(component);
+  public static <S extends RunConfigurationBase<?>> BeforeRunFragment<S> createBeforeRun(@NotNull BeforeRunComponent component, Key<?> key) {
+    return new BeforeRunFragment<>(component, key);
   }
 
-  private BeforeRunFragment(BeforeRunComponent component) {
+  private BeforeRunFragment(@NotNull BeforeRunComponent component, Key<?> key) {
     super("beforeRunTasks", ExecutionBundle.message("run.configuration.before.run.task"),
           ExecutionBundle.message("run.configuration.before.run.group"), wrap(component), -2);
     myComponent = component;
+    myKey = key;
     component.myChangeListener = () -> fireEditorStateChanged();
-    Disposer.register(this, component);
+  }
+
+  @Override
+  public boolean isInitiallyVisible(S s) {
+    return ContainerUtil.exists(mySettings.getManager().getBeforeRunTasks(s), task -> task.getProviderId() != myKey);
   }
 
   private static JComponent wrap(BeforeRunComponent component) {
@@ -69,11 +79,17 @@ public final class BeforeRunFragment<S extends RunConfigurationBase<?>> extends 
 
   @Override
   public void resetEditorFrom(@NotNull RunnerAndConfigurationSettingsImpl s) {
-    myComponent.reset(s);
+    mySettings = s;
+    myComponent.reset(mySettings);
   }
 
   @Override
   public void applyEditorTo(@NotNull RunnerAndConfigurationSettingsImpl s) {
-    myComponent.apply(s);
+    if (isSelected()) {
+      myComponent.apply(s);
+    }
+    else {
+      s.getManager().setBeforeRunTasks(s.getConfiguration(), Collections.<BeforeRunTask<?>>emptyList());
+    }
   }
 }

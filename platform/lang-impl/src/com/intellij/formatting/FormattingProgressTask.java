@@ -9,6 +9,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.SequentialModalProgressTask;
@@ -52,7 +53,7 @@ public class FormattingProgressTask extends SequentialModalProgressTask implemen
     addCallback(EventType.CANCEL, new MyCancelCallback());
   }
 
-  private static @NotNull String getTitle(@NotNull PsiFile file) {
+  private static @NotNull @NlsContexts.DialogTitle String getTitle(@NotNull PsiFile file) {
     VirtualFile virtualFile = file.getOriginalFile().getVirtualFile();
     if (virtualFile == null) {
       return CodeInsightBundle.message("reformat.progress.common.text");

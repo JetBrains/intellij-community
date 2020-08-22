@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.icons.AllIcons;
@@ -369,7 +369,7 @@ public class ToBeMergedDialog extends DialogWrapper {
     return myPanel;
   }
 
-  private class MoreXAction extends MoreAction {
+  private final class MoreXAction extends MoreAction {
     private final int myQuantity;
 
     private MoreXAction(final int quantity) {
@@ -388,7 +388,7 @@ public class ToBeMergedDialog extends DialogWrapper {
     }
   }
 
-  private class MySelectAll extends DumbAwareAction {
+  private final class MySelectAll extends DumbAwareAction {
     private MySelectAll() {
       super("Select All", "Select All", AllIcons.Actions.Selectall);
     }
@@ -400,7 +400,7 @@ public class ToBeMergedDialog extends DialogWrapper {
     }
   }
 
-  private class MyUnselectAll extends DumbAwareAction {
+  private final class MyUnselectAll extends DumbAwareAction {
     private MyUnselectAll() {
       super("Unselect All", "Unselect All", AllIcons.Actions.Unselectall);
     }
@@ -463,7 +463,7 @@ public class ToBeMergedDialog extends DialogWrapper {
     }
   }
 
-  private class MyListCellRenderer implements TableCellRenderer {
+  private final class MyListCellRenderer implements TableCellRenderer {
     private final JPanel myPanel;
     private final CommittedChangeListRenderer myRenderer;
     private final JCheckBox myCheckBox;

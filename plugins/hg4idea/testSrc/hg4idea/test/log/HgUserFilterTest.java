@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package hg4idea.test.log;
 
 import com.intellij.openapi.project.Project;
@@ -28,7 +28,7 @@ public class HgUserFilterTest extends HgPlatformTest {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    cd(myProject.getBaseDir());
+    cd(getOrCreateProjectBaseDir());
 
     myVcsLogUserFilterTest = new VcsLogUserFilterTest(findLogProvider(myProject), myProject) {
       @Override
@@ -40,14 +40,14 @@ public class HgUserFilterTest extends HgPlatformTest {
           success = commitAttempt(user);
         }
         while (!success && attempt++ < 10);
-        return new HgWorkingCopyRevisionsCommand(myProject).tip(myProject.getBaseDir()).getChangeset();
+        return new HgWorkingCopyRevisionsCommand(myProject).tip(getOrCreateProjectBaseDir()).getChangeset();
       }
 
       private boolean commitAttempt(@NotNull VcsUser user) throws IOException {
         try {
           String file = "file.txt";
           append(file, String.valueOf(Math.random()));
-          myProject.getBaseDir().refresh(false, true);
+          getOrCreateProjectBaseDir().refresh(false, true);
           hg("add " + file);
           hg("commit -m ' Commit by " + user.getName() + "' --user '" + VcsUserUtil.toExactString(user) + "'");
           debug(hg("tip"));
@@ -66,7 +66,7 @@ public class HgUserFilterTest extends HgPlatformTest {
   }
 
   @Override
-  protected void tearDown() throws Exception {
+  protected void tearDown() {
     myVcsLogUserFilterTest = null;
     super.tearDown();
   }

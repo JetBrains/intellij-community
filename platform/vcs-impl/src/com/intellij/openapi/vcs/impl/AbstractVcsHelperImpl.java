@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.CommonBundle;
@@ -623,11 +623,11 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   @NotNull
-  private static String failedText(@NotNull FilePath filePath, @NotNull VcsRevisionNumber revision) {
-    return "Show all affected files for " + filePath.getPath() + " at " + revision.asString() + " failed";
+  private static @Nls String failedText(@NotNull FilePath filePath, @NotNull VcsRevisionNumber revision) {
+    return VcsBundle.message("impl.show.all.affected.files.for.path.at.revision.failed", filePath.getPath(), revision.asString());
   }
 
-  private static class AsynchronousListsLoader extends Task.Backgroundable {
+  private static final class AsynchronousListsLoader extends Task.Backgroundable {
     @NotNull private final CommittedChangesProvider myProvider;
     @NotNull private final RepositoryLocation myLocation;
     private final ChangeBrowserSettings mySettings;

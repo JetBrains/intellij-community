@@ -229,6 +229,7 @@
       "spaces_within_method_call_parentheses": false,
       "spaces_within_method_parentheses": false,
       "spaces_within_parentheses": false,
+      "spaces_within_record_header": false,
       "spaces_within_switch_parentheses": false,
       "spaces_within_synchronized_parentheses": false,
       "spaces_within_try_parentheses": false,

@@ -53,7 +53,7 @@ public class GroovyStructuralSearchProfile extends StructuralSearchProfileBase {
   }
 
   @Override
-  public PsiCodeFragment createCodeFragment(Project project, String text, String contextId) {
+  public PsiCodeFragment createCodeFragment(@NotNull Project project, @NotNull String text, String contextId) {
     return new GroovyCodeFragment(project, text);
   }
 

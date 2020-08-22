@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
 import com.intellij.ide.fileTemplates.FileTemplate;
@@ -38,7 +24,7 @@ import java.util.Properties;
 /**
  * author: lesya
  */
-public class CreateClassUtil {
+public final class CreateClassUtil {
   private static final Logger LOG = Logger.getInstance(CreateClassUtil.class);
 
   @NonNls public static final String DEFAULT_CLASS_TEMPLATE = "#DEFAULT_CLASS_TEMPLATE";
@@ -134,7 +120,7 @@ public class CreateClassUtil {
   }
 
   @Nullable
-  public static PsiClass createClassWithDefaultProperties(String newClassName, Properties classProperties, String templateName, 
+  public static PsiClass createClassWithDefaultProperties(String newClassName, Properties classProperties, String templateName,
                                                           @NotNull PsiDirectory directory)
     throws IncorrectOperationException {
     Properties defaultProperties = FileTemplateManager.getInstance(directory.getProject()).getDefaultProperties();
@@ -160,7 +146,7 @@ public class CreateClassUtil {
   }
 
   @Nullable
-  public static PsiClass createClassFromCustomTemplate(@Nullable PsiDirectory classDirectory, 
+  public static PsiClass createClassFromCustomTemplate(@Nullable PsiDirectory classDirectory,
                                                        @Nullable final Module module,
                                                        final String className,
                                                        final String templateName) {

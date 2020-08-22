@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.wm.StatusBarWidgetFactory;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
 import com.intellij.ui.components.JBLabel;
@@ -26,7 +27,7 @@ final class NotificationWidgetListener implements UISettingsListener, ToolWindow
   }
 
   @Override
-  public void toolWindowsRegistered(@NotNull List<String> ids) {
+  public void toolWindowsRegistered(@NotNull List<String> ids, @NotNull ToolWindowManager toolWindowManager) {
     for (String id : ids) {
       if (EventLog.LOG_TOOL_WINDOW_ID.equals(id)) {
         updateWidgetAndIcon();

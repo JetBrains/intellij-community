@@ -2,6 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -15,6 +16,7 @@ import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -140,25 +142,26 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
   }
 
   private enum SimplificationMode {
-    SUM("Replace Stream.flatMap().count() with Stream.mapToLong().sum()", "Stream.flatMap().count() can be replaced with Stream.mapToLong().sum()"),
-    COLLECTION_SIZE("Replace Collection.stream().count() with Collection.size()", "Collection.stream().count() can be replaced with Collection.size()"),
-    ANY_MATCH("Replace Stream().filter().count() > 0 with stream.anyMatch()", "Stream().filter().count() > 0 can be replaced with stream.anyMatch()"),
-    NONE_MATCH("Replace Stream().filter().count() == 0 with stream.noneMatch()", "Stream().filter().count() == 0 can be replaced with stream.noneMatch()");
+    SUM("Stream.flatMap().count()", "Stream.mapToLong().sum()"),
+    COLLECTION_SIZE("Collection.stream().count()", "Collection.size()"),
+    ANY_MATCH("Stream().filter().count() > 0", "stream.anyMatch()"),
+    NONE_MATCH("Stream().filter().count() == 0", "stream.noneMatch()");
 
-    private final String myName;
-    private final String myMessage;
+    private final @NonNls @NotNull String myOld;
+    private final @NonNls @NotNull String myNew;
 
-    public String getName() {
-      return myName;
+    SimplificationMode(@NonNls @NotNull String old, @NonNls @NotNull String aNew) {
+      myOld = old;
+      myNew = aNew;
     }
 
-    SimplificationMode(String name, String message) {
-      myName = name;
-      myMessage = message;
+
+    public @Nls String getName() {
+      return CommonQuickFixBundle.message("fix.replace.x.with.y", myOld, myNew);
     }
 
-    public String getMessage() {
-      return myMessage;
+    public @InspectionMessage String getMessage() {
+      return CommonQuickFixBundle.message("fix.can.replace.x.with.y", myOld, myNew);
     }
   }
 
@@ -278,7 +281,7 @@ public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLoc
       }
     }
 
-    public String getMessage() {
+    public @InspectionMessage String getMessage() {
       return mySimplificationMode.getMessage();
     }
   }

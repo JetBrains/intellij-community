@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.facet;
 
@@ -8,7 +8,6 @@ import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -41,7 +40,7 @@ public class ProjectWideFacetListenersTest extends FacetTestCase {
 
     assertEquals("", listener.getEvents());
     File imlFile = PathManagerEx.findFileUnderCommunityHome("java/java-tests/testData/facet/module/MyFacetModule.iml");
-    Module module = WriteAction.compute(() -> ModuleManager.getInstance(myProject).loadModule(FileUtil.toSystemIndependentName(imlFile.getAbsolutePath())));
+    Module module = WriteAction.compute(() -> ModuleManager.getInstance(myProject).loadModule(imlFile.toPath()));
     assertEquals("firstAdded;added[MyMockFacet];", listener.getEvents());
 
     ModuleManager.getInstance(myProject).disposeModule(module);

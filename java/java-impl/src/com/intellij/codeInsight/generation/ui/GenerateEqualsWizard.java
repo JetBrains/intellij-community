@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.generation.ui;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -15,6 +15,7 @@ import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.classMembers.AbstractMemberInfoModel;
@@ -26,6 +27,7 @@ import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.SimpleListCellRenderer;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +50,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
 
   private static final MyMemberInfoFilter MEMBER_INFO_FILTER = new MyMemberInfoFilter();
 
-  public static class JavaGenerateEqualsWizardBuilder extends AbstractGenerateEqualsWizard.Builder<PsiClass, PsiMember, MemberInfo> {
+  public static final class JavaGenerateEqualsWizardBuilder extends AbstractGenerateEqualsWizard.Builder<PsiClass, PsiMember, MemberInfo> {
     private final PsiClass myClass;
 
     private final MemberSelectionPanel myEqualsPanel;
@@ -303,6 +305,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
       return OK;
     }
 
+    @NlsContexts.Tooltip
     @Override
     public String getTooltipText(MemberInfo member) {
       return myTooltipManager.getTooltip(member);
@@ -335,7 +338,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
     }
   }
 
-  private static class TemplateChooserStep extends StepAdapter {
+  private static final class TemplateChooserStep extends StepAdapter {
     private final JComponent myPanel;
 
     private TemplateChooserStep(boolean isFinal, PsiClass psiClass) {
@@ -346,7 +349,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
 
 
       final ComboBox<String> comboBox = new ComboBox<>();
-      final ComponentWithBrowseButton<ComboBox> comboBoxWithBrowseButton =
+      final ComponentWithBrowseButton<ComboBox<?>> comboBoxWithBrowseButton =
         new ComponentWithBrowseButton<>(comboBox, new MyEditTemplatesListener(psiClass, myPanel, comboBox));
       templateChooserLabel.setLabelFor(comboBox);
       final EqualsHashCodeTemplatesManager manager = EqualsHashCodeTemplatesManager.getInstance();
@@ -406,7 +409,7 @@ public class GenerateEqualsWizard extends AbstractGenerateEqualsWizard<PsiClass,
           }
         }
       }
-      comboBox.setRenderer(SimpleListCellRenderer.create((label, value, index) -> {
+      comboBox.setRenderer(SimpleListCellRenderer.create((@NotNull JBLabel label, @NlsContexts.Label String value, int index) -> {
         label.setText(value);
         if (invalid.contains(value)) {
           label.setForeground(JBColor.RED);

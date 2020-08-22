@@ -74,7 +74,8 @@ public class CommentZenCodingFilter extends ZenCodingFilter {
 
   @Override
   public boolean isMyContext(@NotNull PsiElement context) {
-    return context.getParent().getLanguage() instanceof XMLLanguage;
+    PsiElement parent = context.getParent();
+    return parent != null && parent.getLanguage() instanceof XMLLanguage;
   }
 
   @NotNull

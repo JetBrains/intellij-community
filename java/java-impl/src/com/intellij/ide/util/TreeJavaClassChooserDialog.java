@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiJavaFile;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -20,15 +21,15 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.List;
 
 public class TreeJavaClassChooserDialog extends AbstractTreeClassChooserDialog<PsiClass> implements TreeClassChooser {
-  public TreeJavaClassChooserDialog(String title, Project project) {
+  public TreeJavaClassChooserDialog(@NlsContexts.DialogTitle String title, Project project) {
     super(title, project, PsiClass.class);
   }
 
-  public TreeJavaClassChooserDialog(String title, Project project, @Nullable PsiClass initialClass) {
+  public TreeJavaClassChooserDialog(@NlsContexts.DialogTitle String title, Project project, @Nullable PsiClass initialClass) {
     super(title, project, PsiClass.class, initialClass);
   }
 
-  public TreeJavaClassChooserDialog(String title,
+  public TreeJavaClassChooserDialog(@NlsContexts.DialogTitle String title,
                                     @NotNull Project project,
                                     GlobalSearchScope scope,
                                     final ClassFilter classFilter, @Nullable PsiClass initialClass) {
@@ -36,7 +37,7 @@ public class TreeJavaClassChooserDialog extends AbstractTreeClassChooserDialog<P
   }
 
 
-  public TreeJavaClassChooserDialog(String title,
+  public TreeJavaClassChooserDialog(@NlsContexts.DialogTitle String title,
                                     @NotNull Project project,
                                     GlobalSearchScope scope,
                                     @Nullable ClassFilter classFilter,
@@ -45,7 +46,7 @@ public class TreeJavaClassChooserDialog extends AbstractTreeClassChooserDialog<P
     super(title, project, scope, PsiClass.class, createFilter(classFilter), baseClass, initialClass, isShowMembers, true);
   }
 
-  public static TreeJavaClassChooserDialog withInnerClasses(String title,
+  public static TreeJavaClassChooserDialog withInnerClasses(@NlsContexts.DialogTitle String title,
                                                             @NotNull Project project,
                                                             GlobalSearchScope scope,
                                                             final ClassFilter classFilter,

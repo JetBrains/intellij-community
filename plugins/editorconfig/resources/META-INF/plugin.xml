@@ -18,10 +18,9 @@ To create an EditorConfig file in a directory, right-click this directory and se
 
   <depends>com.intellij.modules.lang</depends>
 
-  <actions>
+  <actions resource-bundle="messages.EditorConfigBundle">
     <action id="NewEditorConfigFile" class="org.editorconfig.language.codeinsight.actions.CreateEditorConfigFileAction"/>
-    <action id="CreateEditorConfigFile" class="org.editorconfig.configmanagement.create.CreateEditorConfigAction"
-            text="EditorConfig File" description="Create new EditorConfig file">
+    <action id="CreateEditorConfigFile" class="org.editorconfig.configmanagement.create.CreateEditorConfigAction">
       <add-to-group group-id="NewGroup" anchor="after" relative-to-action="NewFromTemplate"/>
     </action>
   </actions>
@@ -59,6 +58,11 @@ To create an EditorConfig file in a directory, right-click this directory and se
         id="EditorConfigCompletionContributor"
         order="last"
         implementationClass="org.editorconfig.language.codeinsight.completion.EditorConfigCompletionContributor"/>
+    <completion.contributor
+        language="EditorConfig"
+        id="EditorConfigUnsetContributor"
+        order="last"
+        implementationClass="org.editorconfig.configmanagement.completion.EditorConfigUnsetCompletionContributor"/>
     <langCodeStyleSettingsProvider implementation="org.editorconfig.language.codestyle.EditorConfigLanguageCodeStyleSettingsProvider"/>
     <statementUpDownMover implementation="org.editorconfig.language.codeinsight.actions.EditorConfigStatementUpDownMover"/>
     <moveLeftRightHandler
@@ -387,10 +391,12 @@ To create an EditorConfig file in a directory, right-click this directory and se
         serviceImplementation="org.editorconfig.language.services.impl.EditorConfigFileHierarchyServiceImpl"/>
 
     <schemeExporter
-        name="EditorConfig File"
+        nameKey="scheme.exporter.target.name"
+        nameBundle="messages.EditorConfigBundle"
         schemeClass="com.intellij.psi.codeStyle.CodeStyleScheme"
         implementationClass="org.editorconfig.configmanagement.export.EditorConfigExporter"/>
-    <notificationWhitelist groupIds="EditorConfig;editorconfig"/>
+    <notificationGroup id="editorconfig" displayType="BALLOON"/>
+    <notificationGroup id="EditorConfig" displayType="STICKY_BALLOON"/>
   </extensions>
 
 

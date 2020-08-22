@@ -109,6 +109,14 @@ public final class EventLog {
     getProjectService(project).clearNMore(groups);
   }
 
+  public static boolean isClearAvailable(@NotNull Project project) {
+    return getProjectService(project).isClearAvailable();
+  }
+
+  public static void doClear(@NotNull Project project) {
+    getProjectService(project).doClear();
+  }
+
   public static @Nullable Trinity<Notification, String, Long> getStatusMessage(@Nullable Project project) {
     return getLogModel(project).getStatusMessage();
   }
@@ -325,7 +333,7 @@ public final class EventLog {
       "blockquote", "body", "br", "button", "canvas", "caption", "center", "cite", "code", "col", "colgroup", "command", "datalist", "dd",
       "del", "details", "dfn", "dir", "div", "dl", "dt", "em", "embed", "fieldset", "figcaption", "figure", "font", "footer", "form",
       "frame", "frameset", "h1", "h2", "h3", "h4", "h5", "h6", "head", "header", "hgroup", "hr", "html", "i", "iframe", "img", "input",
-      "ins", "kbd", "keygen", "label", "legend", "li", "link", "map", "mark", "menu", "meta", "meter", "nav", "noframes", "noscript",
+      "ins", "kbd", "keygen", "label", "legend", "li", "link", "map", "mark", "menu", "meta", "meter", "nav", "nobr", "noframes", "noscript",
       "object", "ol", "optgroup", "option", "output", "p", "param", "pre", "progress", "q", "rp", "rt", "ruby", "s", "samp", "script",
       "section", "select", "small", "source", "span", "strike", "strong", "style", "sub", "summary", "sup", "table", "tbody", "td",
       "textarea", "tfoot", "th", "thead", "time", "title", "tr", "track", "tt", "u", "ul", "var", "video", "wbr"};
@@ -536,6 +544,32 @@ public final class EventLog {
         if (console != null) {
           console.clearNMore();
         }
+      }
+    }
+
+    private boolean isClearAvailable() {
+      if (!myProjectModel.getNotifications().isEmpty()) {
+        return true;
+      }
+      for (EventLogConsole console : myCategoryMap.values()) {
+        if (console.getConsoleEditor().getDocument().getTextLength() > 0) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    private void doClear() {
+      for (Notification notification : myProjectModel.getNotifications()) {
+        notification.expire();
+        myProjectModel.removeNotification(notification);
+      }
+      myInitial.clear();
+      myProjectModel.setStatusMessage(null, 0);
+
+      for (EventLogConsole console : myCategoryMap.values()) {
+        Document document = console.getConsoleEditor().getDocument();
+        document.deleteString(0, document.getTextLength());
       }
     }
 

@@ -73,6 +73,7 @@ public class ProjectJdkForModuleStep extends ModuleWizardStep {
     jdkLabel.setFont(StartupUiUtil.getLabelFont().deriveFont(Font.BOLD));
     myPanel.add(jdkLabel, new GridBagConstraints(0, 1, 1, 1, 0, 0.0, GridBagConstraints.NORTHWEST,
                                                  GridBagConstraints.NONE, JBUI.insets(8, 10, 0, 10), 0, 0));
+    jdkLabel.setLabelFor(myJdkChooser);
 
     myPanel.add(myJdkChooser, new GridBagConstraints(1, 1, 1, 1, 1.0, 0, GridBagConstraints.NORTHWEST,
                                                      GridBagConstraints.HORIZONTAL, JBUI.insets(2, 10, 10, 5), 0, 0));

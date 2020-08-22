@@ -12,6 +12,7 @@ import git4idea.GitFormatException;
 import git4idea.GitUtil;
 import git4idea.config.GitVersionSpecialty;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,7 +62,7 @@ public class GitLogParser<R extends GitLogRecord> {
   @NotNull private final String myPretty;
 
   @NotNull private final OptionsParser myOptionsParser;
-  @NotNull private final PathsParser myPathsParser;
+  @NotNull private final PathsParser<R> myPathsParser;
 
   @NotNull private final GitLogRecordBuilder<R> myRecordBuilder;
 
@@ -287,10 +288,11 @@ public class GitLogParser<R extends GitLogRecord> {
 
     private final String myPlaceholder;
 
-    GitLogOption(String placeholder) {
+    GitLogOption(@NonNls String placeholder) {
       myPlaceholder = placeholder;
     }
 
+    @NonNls
     private String getPlaceholder() {
       return myPlaceholder;
     }

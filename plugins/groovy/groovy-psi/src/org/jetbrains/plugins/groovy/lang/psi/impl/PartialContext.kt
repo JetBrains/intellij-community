@@ -13,7 +13,7 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.createDescriptor
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType
 import java.util.function.Function
 
-class PartialContext(private val types: Map<VariableDescriptor, DFAType>) : InferenceContext {
+class PartialContext(private val types: Map<VariableDescriptor, DFAType>, private val isCachingAllowed: Boolean) : InferenceContext {
 
   private val myCache = THashMap<Any, Any>()
 
@@ -28,7 +28,7 @@ class PartialContext(private val types: Map<VariableDescriptor, DFAType>) : Infe
   override fun getVariableType(ref: GrReferenceExpression): PsiType? {
     val descriptor = ref.createDescriptor()
     if (types.containsKey(descriptor)) {
-      return types[descriptor]?.resultType
+      return types[descriptor]?.getResultType(ref.manager)
     }
     else {
       return null
@@ -40,6 +40,8 @@ class PartialContext(private val types: Map<VariableDescriptor, DFAType>) : Infe
       computable.compute()
     }
   }
+
+  override fun isInferenceResultsCachingAllowed(): Boolean = isCachingAllowed
 
   override fun <T : PsiReference, R> resolveWithCaching(ref: T, resolver: AbstractResolver<T, R>, incomplete: Boolean): R? {
     return doGetCachedValue(Pair(ref, incomplete)) {

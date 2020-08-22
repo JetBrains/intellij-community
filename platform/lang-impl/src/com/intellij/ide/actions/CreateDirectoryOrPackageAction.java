@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
@@ -164,7 +165,7 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
     }
   }
 
-  private static JBPopup createLightWeightPopup(String title,
+  private static JBPopup createLightWeightPopup(@NlsContexts.PopupTitle String title,
                                                 String initialText,
                                                 @NotNull PsiDirectory directory,
                                                 CreateGroupHandler validator,
@@ -309,13 +310,13 @@ public class CreateDirectoryOrPackageAction extends AnAction implements DumbAwar
     return createdDirectories;
   }
 
-  private static class CompletionItem {
+  private static final class CompletionItem {
     @NotNull final CreateDirectoryCompletionContributor contributor;
 
     @NotNull final String relativePath;
     @Nullable final JpsModuleSourceRootType<?> rootType;
 
-    @NotNull final String displayText;
+    @NlsContexts.ListItem @NotNull final String displayText;
     @Nullable final Icon icon;
 
     private CompletionItem(@NotNull CreateDirectoryCompletionContributor contributor,

@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public class PackageUtil {
+public final class PackageUtil {
   static PsiPackage @NotNull [] getSubpackages(@NotNull PsiPackage aPackage,
                                                @Nullable Module module,
                                                final boolean searchInLibraries) {

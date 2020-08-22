@@ -10,8 +10,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Base class for HTTP-based repositories functioning over Apache Commons HttpClient 3.1.
@@ -42,12 +42,7 @@ public abstract class BaseRepositoryImpl extends BaseRepository {
   }
 
   protected static String encodeUrl(@NotNull String s) {
-    try {
-      return URLEncoder.encode(s, "UTF-8");
-    }
-    catch (UnsupportedEncodingException e) {
-      throw new RuntimeException(e);
-    }
+    return URLEncoder.encode(s, StandardCharsets.UTF_8);
   }
 
   protected HttpClient getHttpClient() {

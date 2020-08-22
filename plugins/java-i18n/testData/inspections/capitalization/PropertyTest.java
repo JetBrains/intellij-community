@@ -1,14 +1,36 @@
-import org.jetbrains.annotations.*;
+package org.jetbrains.annotations;
+
+import java.lang.annotation.*;
+import java.util.*;
+import java.util.function.*;
+import static java.lang.annotation.ElementType.*;
+
+@Retention(RetentionPolicy.CLASS)
+@Target({METHOD, FIELD, PARAMETER, LOCAL_VARIABLE, TYPE_USE, TYPE, PACKAGE})
+@interface Nls {
+  enum Capitalization {
+    NotSpecified,
+    Title,
+    Sentence
+  }
+  Capitalization capitalization() default Capitalization.NotSpecified;
+}
 
 class X {
   static native String message(@PropertyKey(resourceBundle = "MyBundle") String key, Object... params);
+  
+  static native Supplier<String> messagePointer(@PropertyKey(resourceBundle = "MyBundle") String key, Object... params);
 
   void test(@Nls(capitalization = Nls.Capitalization.Title) String title) {
-
+    
   }
 
   void test2(@Nls(capitalization = Nls.Capitalization.Sentence) String title) {
 
+  }
+  
+  void testSupplier(Supplier<@Nls(capitalization = Nls.Capitalization.Sentence) String> title) {
+    
   }
 
   void main(int x) {
@@ -31,5 +53,14 @@ class X {
     test2(message("property.choice.lower", x));
 
     test2(message("property.sentence.with.quote"));
+
+    test(<warning descr="String '{0,choice,0#No|1#{0}} {0,choice,0#occurrences|1#occurrence|2#occurrences} found so far' is not properly capitalized. It should have title capitalization">message("property.choice.sentence.start", x)</warning>);
+    test2(message("property.choice.sentence.start", x));
+    
+    test(message("property.titlecase.html"));
+    test2(<warning descr="String '<html><b>Hello</b> World</html>' is not properly capitalized. It should have sentence capitalization">message("property.titlecase.html")</warning>);
+    
+    testSupplier(<warning descr="String 'Hello World' is not properly capitalized. It should have sentence capitalization">messagePointer("property.titlecase")</warning>);
+    testSupplier(messagePointer("property.parameterized", "foo"));
   }
 }

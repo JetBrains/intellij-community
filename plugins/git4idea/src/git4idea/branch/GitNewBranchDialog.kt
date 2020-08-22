@@ -4,10 +4,11 @@ package git4idea.branch
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.layout.*
-import com.intellij.openapi.util.NlsContexts
-import com.intellij.util.ui.UIUtil.BR
 import git4idea.branch.GitBranchOperationType.CHECKOUT
 import git4idea.branch.GitBranchOperationType.CREATE
 import git4idea.i18n.GitBundle
@@ -23,7 +24,8 @@ import javax.swing.event.DocumentEvent
 
 data class GitNewBranchOptions(val name: String,
                                @get:JvmName("shouldCheckout") val checkout: Boolean = true,
-                               @get:JvmName("shouldReset") val reset: Boolean = false)
+                               @get:JvmName("shouldReset") val reset: Boolean = false,
+                               @get:JvmName("shouldSetTracking") val setTracking: Boolean = false)
 
 
 enum class GitBranchOperationType(@Nls val text: String, @Nls val description: String = "") {
@@ -36,18 +38,21 @@ enum class GitBranchOperationType(@Nls val text: String, @Nls val description: S
 
 internal class GitNewBranchDialog @JvmOverloads constructor(project: Project,
                                                             private val repositories: Collection<GitRepository>,
-                                                            dialogTitle: @NlsContexts.DialogTitle String,
+                                                            @NlsContexts.DialogTitle dialogTitle: String,
                                                             initialName: String?,
                                                             private val showCheckOutOption: Boolean = true,
                                                             private val showResetOption: Boolean = false,
+                                                            private val showSetTrackingOption: Boolean = false,
                                                             private val localConflictsAllowed: Boolean = false,
                                                             private val operation: GitBranchOperationType = if (showCheckOutOption) CREATE else CHECKOUT)
   : DialogWrapper(project, true) {
 
   private var checkout = true
   private var reset = false
+  private var tracking = showSetTrackingOption
   private var branchName = initialName.orEmpty()
   private var overwriteCheckbox: JCheckBox? = null
+  private var setTrackingCheckbox: JCheckBox? = null
 
   init {
     title = dialogTitle
@@ -55,7 +60,7 @@ internal class GitNewBranchDialog @JvmOverloads constructor(project: Project,
     init()
   }
 
-  fun showAndGetOptions() = if (showAndGet()) GitNewBranchOptions(branchName.trim(), checkout, reset) else null
+  fun showAndGetOptions() = if (showAndGet()) GitNewBranchOptions(branchName.trim(), checkout, reset, tracking) else null
 
   override fun createCenterPanel() = panel {
     row {
@@ -77,6 +82,11 @@ internal class GitNewBranchDialog @JvmOverloads constructor(project: Project,
           isEnabled = false
         }
       }
+      if (showSetTrackingOption) {
+        setTrackingCheckbox = checkBox(GitBundle.message("new.branch.dialog.set.tracking.branch.checkbox"), ::tracking).component.apply {
+          mnemonic = KeyEvent.VK_T
+        }
+      }
     }
   }
 
@@ -88,9 +98,14 @@ internal class GitNewBranchDialog @JvmOverloads constructor(project: Project,
       overwriteCheckbox?.isEnabled = localBranchConflict != null
 
       if (localBranchConflict == null || overwriteCheckbox?.isSelected == true) null // no conflicts or ask to reset
-      else if (localBranchConflict.warning && localConflictsAllowed) warning("${localBranchConflict.message}.$BR${operation.description}")
-      else error(localBranchConflict.message +
-                 if (showResetOption) ".$BR" + GitBundle.message("new.branch.dialog.overwrite.existing.branch.warning") else "")
+      else if (localBranchConflict.warning && localConflictsAllowed) {
+        warning(HtmlBuilder().append(localBranchConflict.message).append(HtmlChunk.br()).append(operation.description).toString())
+      }
+      else if (showResetOption) {
+        error(HtmlBuilder().append(localBranchConflict.message).append(HtmlChunk.br())
+                .append(GitBundle.message("new.branch.dialog.overwrite.existing.branch.warning")))
+      }
+      else error(localBranchConflict.message)
     }
   }
 

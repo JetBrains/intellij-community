@@ -13,9 +13,9 @@ import java.util.Collection;
 public class ObjectObjectTransientMultiMaplet<K, V extends Streamable> extends ObjectObjectMultiMaplet<K, V>{
 
   private final THashMap<K, Collection<V>> myMap;
-  private final CollectionFactory<V> myCollectionFactory;
+  private final BuilderCollectionFactory<V> myCollectionFactory;
 
-  public ObjectObjectTransientMultiMaplet(TObjectHashingStrategy<K> hashingStrategy, CollectionFactory<V> collectionFactory) {
+  public ObjectObjectTransientMultiMaplet(TObjectHashingStrategy<K> hashingStrategy, BuilderCollectionFactory<V> collectionFactory) {
     myMap = new THashMap<>(hashingStrategy);
     myCollectionFactory = collectionFactory;
   }

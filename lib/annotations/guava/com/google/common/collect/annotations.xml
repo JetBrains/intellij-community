@@ -15,4 +15,13 @@
     name='com.google.common.collect.Lists java.util.concurrent.CopyOnWriteArrayList&lt;E&gt; newCopyOnWriteArrayList(java.lang.Iterable&lt;? extends E&gt;)'>
     <annotation name='java.lang.Deprecated'/>
   </item>
+  <item name='com.google.common.collect.Sets java.util.HashSet&lt;E&gt; newHashSet()'>
+    <annotation name='java.lang.Deprecated'/>
+  </item>
+  <item name='com.google.common.collect.Sets java.util.LinkedHashSet&lt;E&gt; newLinkedHashSet()'>
+    <annotation name='java.lang.Deprecated'/>
+  </item>
+  <item name='com.google.common.collect.Sets java.util.TreeSet&lt;E&gt; newTreeSet()'>
+    <annotation name='java.lang.Deprecated'/>
+  </item>
 </root>

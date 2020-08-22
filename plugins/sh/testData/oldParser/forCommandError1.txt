@@ -31,7 +31,7 @@ SHELL_SCRIPT
       FOR_CLAUSE
         PsiElement(word)('i')
         PsiWhiteSpace(' ')
-        PsiElement(word)('in')
+        PsiElement(in)('in')
         PsiWhiteSpace(' ')
         NUMBER
           PsiElement(int)('1')

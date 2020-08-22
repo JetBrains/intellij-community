@@ -28,10 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
@@ -40,11 +37,11 @@ import com.intellij.openapi.vcs.changes.patch.CreatePatchConfigurationPanel;
 import com.intellij.openapi.vcs.changes.patch.PatchWriter;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
+import com.intellij.project.ProjectKt;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLoadingPanel;
 import com.intellij.util.Consumer;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
@@ -53,8 +50,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
-import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 import static com.intellij.history.integration.LocalHistoryBundle.message;
@@ -262,7 +260,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
       public void run() {
         if (isDisposed() || myProject.isDisposed()) return;
 
-        UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+        ApplicationManager.getApplication().invokeAndWait(() -> {
           if (isDisposed() || myProject.isDisposed()) return;
 
           isUpdating = true;
@@ -279,7 +277,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
         }
 
         final Runnable finalApply = apply;
-        UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+        ApplicationManager.getApplication().invokeAndWait(() -> {
           if (isDisposed() || myProject.isDisposed()) return;
 
           isUpdating = false;
@@ -395,7 +393,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     return result.substring(0, result.length() - 1);
   }
 
-  private void showNotification(final String title) {
+  private void showNotification(@NlsContexts.PopupContent String title) {
     SwingUtilities.invokeLater(() -> {
       final Balloon b =
         JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(title, null, MessageType.INFO.getPopupBackground(), null)
@@ -435,16 +433,17 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
       p.setCommonParentPath(ChangesUtil.findCommonAncestor(myModel.getChanges()));
       if (!showAsDialog(p)) return;
 
-      String base = p.getBaseDirName();
-      List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(myProject, myModel.getChanges(), base, p.isReversePatch());
+      Path base = Paths.get(p.getBaseDirName());
+      List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(myProject, myModel.getChanges(), base, p.isReversePatch(), false);
       if (p.isToClipboard()) {
         writeAsPatchToClipboard(myProject, patches, base, new CommitContext());
-        showNotification("Patch copied to clipboard");
+        showNotification(message("message.patch.copied.to.clipboard"));
       }
       else {
-        PatchWriter.writePatches(myProject, p.getFileName(), base, patches, null, p.getEncoding());
+        Path file = Paths.get(p.getFileName());
+        PatchWriter.writePatches(myProject, file, base, patches, null, p.getEncoding(), false);
         showNotification(message("message.patch.created"));
-        RevealFileAction.openFile(new File(p.getFileName()));
+        RevealFileAction.openFile(file);
       }
     }
     catch (VcsException | IOException e) {
@@ -452,8 +451,8 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
     }
   }
 
-  private File getDefaultPatchFile() {
-    return FileUtil.findSequentNonexistentFile(new File(myProject.getBasePath()), "local_history", "patch");
+  private @NotNull Path getDefaultPatchFile() {
+    return FileUtil.findSequentNonexistentFile(ProjectKt.getStateStore(myProject).getProjectBasePath().toFile(), "local_history", "patch").toPath();
   }
 
   private boolean showAsDialog(CreatePatchConfigurationPanel p) {
@@ -465,12 +464,12 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
   }
 
 
-  public void showError(String s) {
+  public void showError(@NlsContexts.DialogMessage String s) {
     Messages.showErrorDialog(myProject, s, CommonBundle.getErrorTitle());
   }
 
   protected abstract class MyAction extends AnAction {
-    protected MyAction(String text, String description, Icon icon) {
+    protected MyAction(@NlsActions.ActionText String text, @NlsActions.ActionDescription String description, Icon icon) {
       super(text, description, icon);
     }
 

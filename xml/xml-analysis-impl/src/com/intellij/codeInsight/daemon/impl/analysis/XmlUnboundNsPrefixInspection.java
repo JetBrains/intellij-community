@@ -16,13 +16,30 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.XmlQuickFixFactory;
+import com.intellij.codeInspection.XmlSuppressableInspectionTool;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.impl.source.xml.SchemaPrefixReference;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
-import com.intellij.psi.xml.*;
+import com.intellij.psi.xml.XmlAttribute;
+import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlDocument;
+import com.intellij.psi.xml.XmlElement;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlToken;
+import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
 import com.intellij.xml.analysis.XmlAnalysisBundle;
@@ -101,8 +118,8 @@ public class XmlUnboundNsPrefixInspection extends XmlSuppressableInspectionTool 
         for (PsiReference reference : references) {
           if (reference instanceof SchemaPrefixReference) {
             if (!XML.equals(((SchemaPrefixReference)reference).getNamespacePrefix()) && reference.resolve() == null) {
-              holder.registerProblem(reference, XmlAnalysisBundle.message("unbound.namespace",
-                                                                       ((SchemaPrefixReference)reference).getNamespacePrefix()), ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
+              holder.registerProblem(reference, XmlAnalysisBundle.message("xml.inspections.unbound.namespace",
+                                                                          ((SchemaPrefixReference)reference).getNamespacePrefix()), ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
             }
           }
         }
@@ -132,8 +149,8 @@ public class XmlUnboundNsPrefixInspection extends XmlSuppressableInspectionTool 
       return;
     }
 
-    final String localizedMessage = isOnTheFly ? XmlAnalysisBundle.message("unbound.namespace", namespacePrefix) : XmlAnalysisBundle
-      .message("unbound.namespace.no.param");
+    final String localizedMessage = isOnTheFly ? XmlAnalysisBundle.message("xml.inspections.unbound.namespace", namespacePrefix) : XmlAnalysisBundle
+      .message("xml.inspections.unbound.namespace.no.param");
 
     if (namespacePrefix.isEmpty()) {
       final XmlTag tag = (XmlTag)element;
@@ -162,7 +179,8 @@ public class XmlUnboundNsPrefixInspection extends XmlSuppressableInspectionTool 
     }
   }
 
-  private static void reportTagProblem(final XmlElement element, final String localizedMessage, final TextRange range, final ProblemHighlightType highlightType,
+  private static void reportTagProblem(final XmlElement element, final @InspectionMessage String localizedMessage,
+                                       final TextRange range, final ProblemHighlightType highlightType,
                                        final LocalQuickFix fix,
                                        final ProblemsHolder holder) {
 

@@ -50,7 +50,7 @@ internal class ShowChangedStateEventsAction(private val recorderId: String) : Du
     }
     val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(eventLogToolWindowsId) ?: return
     val displayName = "Changed events: $recorderId"
-    val changedEventsComponent = ChangedStateEventsPanel(project, toolWindow.disposable, difference).component
+    val changedEventsComponent = ChangedStateEventsPanel(project, toolWindow.disposable, difference, recorderId).component
     val content = ContentFactory.SERVICE.getInstance().createContent(changedEventsComponent, displayName, true)
     content.preferredFocusableComponent = changedEventsComponent
     val contentManager = toolWindow.contentManager
@@ -74,6 +74,7 @@ internal class ShowChangedStateEventsAction(private val recorderId: String) : Du
 
       val difference = Maps.difference(newEvent.event.data, oldEvent.event.data)
       for (key in difference.entriesDiffering().keys) {
+        if (newEvent.group.id == "settings" && key == "id") continue
         if (key !in SYSTEM_FIELDS) {
           return false
         }

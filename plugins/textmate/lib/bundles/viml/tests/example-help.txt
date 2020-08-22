@@ -1,0 +1,26 @@
+*example-help.txt*   For Vim version 8.1.  Last change: 2019 Sep 27
+
+
+		  VIM REFERENCE MANUAL    by Bram Moolenaar
+
+
+Editing files						*edit-files*
+
+1.  Introduction		|edit-intro|
+2.  Editing a file		|edit-a-file|
+3.  The argument list		|argument-list|
+4.  Writing			|writing|
+5.  Writing and quitting	|write-quit|
+6.  Dialogs			|edit-dialogs|
+7.  The current directory	|current-directory|
+8.  Editing binary files	|edit-binary|
+9.  Encryption			|encryption|
+10. Timestamps			|timestamps|
+11. File Searching		|file-searching|
+
+==============================================================================
+1. Introduction						*edit-intro*
+
+Lorem ipsum dolor sit amet, that's all folks.
+
+vim:tw=78:ts=8:noet:ft=help:norl:

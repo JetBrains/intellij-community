@@ -26,6 +26,5 @@ public class CreateExceptionCloneMethodFixTest extends IGQuickFixesTestCase {
     String filePathWithoutExt = getRelativePath() + "/" + getTestName(false);
     myFixture.configureByFile(filePathWithoutExt + ".java");
     assertNull(myFixture.getAvailableIntention("cloneable.class.in.secure.context.quickfix"));
-    myFixture.checkResultByFile(filePathWithoutExt + ".after.java");
   }
 }

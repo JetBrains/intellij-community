@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl
 
 import com.intellij.execution.actions.ChooseRunConfigurationPopup
@@ -17,7 +17,6 @@ import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.ui.RowsDnDSupport
 import com.intellij.ui.RowsDnDSupport.RefinedDropSupport.Position.*
 import com.intellij.ui.treeStructure.Tree
-import org.jdom.Element
 import org.junit.ClassRule
 import org.junit.Rule
 import org.junit.Test
@@ -28,7 +27,8 @@ import kotlin.test.assertFalse
 
 private val ORDER = arrayOf(CONFIGURATION_TYPE, //Application
                             FOLDER, //1
-                            CONFIGURATION, CONFIGURATION, CONFIGURATION, CONFIGURATION, CONFIGURATION, TEMPORARY_CONFIGURATION, TEMPORARY_CONFIGURATION, FOLDER, //2
+                            CONFIGURATION, CONFIGURATION, CONFIGURATION, CONFIGURATION, CONFIGURATION, TEMPORARY_CONFIGURATION,
+                            TEMPORARY_CONFIGURATION, FOLDER, //2
                             TEMPORARY_CONFIGURATION, FOLDER, //3
                             CONFIGURATION, TEMPORARY_CONFIGURATION, CONFIGURATION_TYPE, //JUnit
                             FOLDER, //4
@@ -41,20 +41,7 @@ internal class RunConfigurableTest {
   companion object {
     @JvmField
     @ClassRule
-    val projectRule = ProjectRule()
-
-    private fun createRunManager(element: Element): RunManagerImpl {
-      val runManager = RunManagerImpl(projectRule.project)
-      runManager.initializeConfigurationTypes(listOf(ApplicationConfigurationType.getInstance(), JUnitConfigurationType.getInstance()))
-      runManager.loadState(element)
-      return runManager
-    }
-
-    private class MockRunConfigurable(override val runManager: RunManagerImpl) : ProjectRunConfigurationConfigurable(projectRule.project) {
-      init {
-        createComponent()
-      }
-    }
+    val projectRule = ProjectRule(runPostStartUpActivities = false)
   }
 
   @JvmField
@@ -66,8 +53,16 @@ internal class RunConfigurableTest {
   val disposableRule = DisposableRule()
 
   private val configurable by lazy {
-    val result = MockRunConfigurable(createRunManager(JDOMUtil.load(RunConfigurableTest::class.java.getResourceAsStream("folders.xml"))))
-    Disposer.register(disposableRule.disposable, result)
+    val runManager = RunManagerImpl(projectRule.project)
+    runManager.initializeConfigurationTypes(listOf(ApplicationConfigurationType.getInstance(), JUnitConfigurationType.getInstance()))
+    runManager.loadState(JDOMUtil.load(RunConfigurableTest::class.java.getResourceAsStream("folders.xml")))
+
+    val result = object : ProjectRunConfigurationConfigurable(projectRule.project) {
+      override val runManager = runManager
+    }
+    result.createComponent()
+    Disposer.register(disposableRule.disposable, runManager)
+    Disposer.register(runManager, result)
     result
   }
 
@@ -194,7 +189,9 @@ internal class RunConfigurableTest {
     checkPositionToMove(17, 1, Trinity.create<Int, Int, RowsDnDSupport.RefinedDropSupport.Position>(17, 18, BELOW))
   }
 
-  private fun checkPositionToMove(selectedRow: Int, direction: Int, expected: Trinity<Int, Int, RowsDnDSupport.RefinedDropSupport.Position>?) {
+  private fun checkPositionToMove(selectedRow: Int,
+                                  direction: Int,
+                                  expected: Trinity<Int, Int, RowsDnDSupport.RefinedDropSupport.Position>?) {
     tree.setSelectionRow(selectedRow)
     assertThat(configurable.getAvailableDropPosition(direction)).isEqualTo(expected)
   }

@@ -4,6 +4,7 @@ package com.intellij.util.ui;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -12,6 +13,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.components.BorderLayoutPanel;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,22 +31,24 @@ public class VcsExecutablePathSelector {
   @Nullable private String mySavedPath;
   @NotNull private String myAutoDetectedPath = "";
 
-  public VcsExecutablePathSelector(@NotNull String vcsName, @NotNull Consumer<String> executableTester) {
-    this(vcsName, null, executableTester);
+  @Deprecated
+  public VcsExecutablePathSelector(@NotNull @Nls String vcsName, @NotNull Consumer<String> executableTester) {
+    this(vcsName, null, (path) -> executableTester.accept(path));
   }
 
-  public VcsExecutablePathSelector(@NotNull String vcsName, @Nullable Disposable disposable, @NotNull Consumer<String> executableTester) {
+  public VcsExecutablePathSelector(@NotNull @Nls String vcsName, @Nullable Disposable disposable, @NotNull ExecutableHandler handler) {
     BorderLayoutPanel panel = JBUI.Panels.simplePanel(UIUtil.DEFAULT_HGAP, 0);
 
     myPathSelector = new TextFieldWithBrowseButton(null, disposable);
     myPathSelector.addBrowseFolderListener(VcsBundle.getString("executable.select.title"),
                                            null,
                                            null,
-                                           FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
+                                           FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(),
+                                           new MyTextComponentAccessor(handler));
     panel.addToCenter(myPathSelector);
 
     JButton testButton = new JButton(VcsBundle.getString("executable.test"));
-    testButton.addActionListener(e -> executableTester.accept(ObjectUtils.notNull(getCurrentPath(), myAutoDetectedPath)));
+    testButton.addActionListener(e -> handler.testExecutable(ObjectUtils.notNull(getCurrentPath(), myAutoDetectedPath)));
     panel.addToRight(testButton);
 
     myProjectPathCheckbox = new JBCheckBox(VcsBundle.getString("executable.project.override"));
@@ -129,5 +133,33 @@ public class VcsExecutablePathSelector {
   @NotNull
   public JPanel getMainPanel() {
     return myMainPanel;
+  }
+
+  private static class MyTextComponentAccessor implements TextComponentAccessor<JTextField> {
+    private final ExecutableHandler myHandler;
+
+    private MyTextComponentAccessor(ExecutableHandler handler) {
+      myHandler = handler;
+    }
+
+    @Override
+    public String getText(JTextField textField) {
+      return textField.getText();
+    }
+
+    @Override
+    public void setText(JTextField textField, @NotNull String text) {
+      String patchedText = myHandler.patchExecutable(text);
+      textField.setText(patchedText != null ? patchedText : text);
+    }
+  }
+
+  public interface ExecutableHandler {
+    @Nullable
+    default String patchExecutable(@NotNull String executable) {
+      return null;
+    }
+
+    void testExecutable(@NotNull String executable);
   }
 }

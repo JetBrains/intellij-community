@@ -17,6 +17,7 @@ package com.intellij.util.ui.classpath;
 
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
+import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
@@ -43,6 +44,7 @@ import com.intellij.openapi.roots.ui.CellAppearanceEx;
 import com.intellij.openapi.roots.ui.OrderEntryAppearanceService;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ScrollPaneFactory;
@@ -57,6 +59,7 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.JBUI;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,8 +71,8 @@ import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author Gregory.Shrago
@@ -81,12 +84,12 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
   private List<Library> myResult;
   private final Map<Object, Object> myParentsMap = new THashMap<>();
 
-  protected ChooseLibrariesDialogBase(final JComponent parentComponent, final String title) {
+  protected ChooseLibrariesDialogBase(final JComponent parentComponent, final @NlsContexts.DialogTitle String title) {
     super(parentComponent, false);
     setTitle(title);
   }
 
-  protected ChooseLibrariesDialogBase(Project project, String title) {
+  protected ChooseLibrariesDialogBase(Project project, @NlsContexts.DialogTitle String title) {
     super(project, false);
     setTitle(title);
   }
@@ -97,8 +100,8 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
     updateOKAction();
   }
 
-  private static String notEmpty(String nodeText) {
-    return StringUtil.isNotEmpty(nodeText) ? nodeText : "<unnamed>";
+  private static @Nls String notEmpty(@Nls String nodeText) {
+    return StringUtil.isNotEmpty(nodeText) ? nodeText : JavaUiBundle.message("unnamed.title");
   }
 
   @Override
@@ -348,7 +351,8 @@ public abstract class ChooseLibrariesDialogBase extends DialogWrapper {
 
   public boolean isEmpty() {
     List<Object> children = new ArrayList<>();
-    collectChildren(myBuilder.getTreeStructure().getRootElement(), children);
+    final AbstractTreeStructure structure = myBuilder.getTreeStructure();
+    if (structure != null) collectChildren(structure.getRootElement(), children);
     return children.isEmpty();
   }
 

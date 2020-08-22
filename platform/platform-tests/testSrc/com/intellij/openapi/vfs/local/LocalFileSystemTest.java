@@ -28,7 +28,10 @@ import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -85,7 +88,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
   @Test
   public void testBasics() throws IOException {
-    VirtualFile dir = PlatformTestUtil.notNull(myFS.refreshAndFindFileByIoFile(tempDir.newDirectory("xxx")));
+    VirtualFile dir = Objects.requireNonNull(myFS.refreshAndFindFileByIoFile(tempDir.newDirectory("xxx")));
     assertTrue(dir.isValid());
     assertEquals(0, dir.getChildren().length);
 
@@ -208,7 +211,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testCopyFile() {
+  public void testCopyFile() throws IOException {
     runInEdtAndWait(() -> {
       File fromDir = tempDir.newDirectory("from");
       File toDir = tempDir.newDirectory("to");
@@ -228,7 +231,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testCopyDir() {
+  public void testCopyDir() throws IOException {
     runInEdtAndWait(() -> {
       File fromDir = tempDir.newDirectory("from");
       File toDir = tempDir.newDirectory("to");
@@ -429,8 +432,8 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     NewVirtualFileSystem fs = (NewVirtualFileSystem)virtualFile.getFileSystem();
     FileAttributes attributes = fs.getAttributes(virtualFile);
     assertNotNull(attributes);
-    assertEquals(FileAttributes.Type.FILE, attributes.type);
-    assertEquals(FileAttributes.HIDDEN, attributes.flags);
+    assertEquals(FileAttributes.Type.FILE, attributes.getType());
+    assertTrue(attributes.isHidden());
   }
 
   @Test
@@ -536,7 +539,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
   @Test
   public void testCaseInsensitiveRename() throws IOException {
     File file = tempDir.newFile("file.txt");
-    File home = PlatformTestUtil.notNull(file.getParentFile());
+    File home = Objects.requireNonNull(file.getParentFile());
     assertThat(home.list()).containsExactly("file.txt");
 
     VirtualFile vFile = myFS.refreshAndFindFileByIoFile(file);
@@ -626,7 +629,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
 
     File target = tempDir.newDirectory("target");
     File link = new File(tempDir.getRoot(), "link");
-    Files.createSymbolicLink(link.toPath(), target.toPath()).toFile();
+    createSymbolicLink(link.toPath(), target.toPath()).toFile();
 
     VirtualFile vTop = myFS.refreshAndFindFileByIoFile(tempDir.getRoot());
     assertNotNull(vTop);
@@ -734,7 +737,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testDuplicateViaRename() {
+  public void testDuplicateViaRename() throws IOException {
     runInEdtAndWait(() -> {
       VirtualFile dir = myFS.refreshAndFindFileByIoFile(tempDir.getRoot());
       assertNotNull(dir);
@@ -754,13 +757,13 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testBrokenSymlinkMove() {
+  public void testBrokenSymlinkMove() throws IOException {
     assumeSymLinkCreationIsSupported();
 
     runInEdtAndWait(() -> {
       File srcDir = tempDir.newDirectory("src");
       File link = new File(tempDir.getRoot(), "link");
-      Files.createSymbolicLink(link.toPath(), new File(tempDir.getRoot(), "missing").toPath());
+      createSymbolicLink(link.toPath(), new File(tempDir.getRoot(), "missing").toPath());
       File dstDir = tempDir.newDirectory("dst");
 
       VirtualFile file = myFS.refreshAndFindFileByIoFile(link);
@@ -809,7 +812,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testReadOnly() {
+  public void testReadOnly() throws IOException {
     runInEdtAndWait(() -> {
       File file = tempDir.newFile("file.txt");
       VirtualFile vFile = myFS.refreshAndFindFileByIoFile(file);

@@ -24,6 +24,7 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.*;
 
 import javax.swing.*;
@@ -59,6 +60,9 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
     registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"key", "groupKey"},
                                                                   Holder.CONFIGURABLE_EP, Holder.INSPECTION_EP),
                                         new PropertyKeyReferenceProvider(false, "groupKey", "groupBundle"));
+
+    registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"groupPathKey"}, Holder.INSPECTION_EP),
+                                        new PropertyKeyReferenceProvider(false, "groupPathKey", "groupBundle"));
 
     registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"resourceKey"},
                                                                   Holder.TYPE_NAME_EP),
@@ -136,7 +140,7 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
         }))));
   }
 
-  private static class MyResourceBundleReference extends ResourceBundleReference implements EmptyResolveMessageProvider {
+  private static final class MyResourceBundleReference extends ResourceBundleReference implements EmptyResolveMessageProvider {
 
     private MyResourceBundleReference(PsiElement element) {
       super(element, false);
@@ -161,7 +165,7 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
     @NotNull
     @Override
     public String getUnresolvedMessagePattern() {
-      return "Cannot resolve property bundle";
+      return DevKitBundle.message("plugin.xml.convert.property.bundle.cannot.resolve");
     }
   }
 }

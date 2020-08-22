@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.refactoring.lang;
 
@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -49,7 +50,7 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Re
     return true;
   }
 
-  private static class IncludeDuplicate<E extends PsiElement> {
+  private static final class IncludeDuplicate<E extends PsiElement> {
     private final SmartPsiElementPointer<E> myStart;
     private final SmartPsiElementPointer<E> myEnd;
 
@@ -286,7 +287,7 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Re
     return RefactoringBundle.message("extract.include.file.action.title");
   }
 
-  protected String getRefactoringName() {
+  protected @NlsContexts.DialogTitle String getRefactoringName() {
     return getRefactoringNameText();
   }
 

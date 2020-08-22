@@ -17,11 +17,11 @@ internal abstract class GitSingleCommitEditingAction : GitCommitEditingActionBas
     log: VcsLog,
     logData: VcsLogData,
     logUi: VcsLogUi
-  ): SingleCommitEditingData? {
+  ): CommitEditingDataCreationResult<SingleCommitEditingData> {
     if (log.selectedCommits.size != 1) {
-      return null
+      return CommitEditingDataCreationResult.Prohibited()
     }
-    return SingleCommitEditingData(repository, log, logData, logUi)
+    return CommitEditingDataCreationResult.Created(SingleCommitEditingData(repository, log, logData, logUi))
   }
 
   override fun checkCommitsEditingAvailability(commitEditingData: SingleCommitEditingData): String? {
@@ -29,7 +29,7 @@ internal abstract class GitSingleCommitEditingAction : GitCommitEditingActionBas
     val branches = findContainingBranches(commitEditingData.logData, commit.root, commit.id)
 
     if (GitUtil.HEAD !in branches) {
-      return GitBundle.getString("rebase.log.commit.editing.action.commit.not.in.head.error.text")
+      return GitBundle.message("rebase.log.commit.editing.action.commit.not.in.head.error.text")
     }
 
     // and not if pushed to a protected branch

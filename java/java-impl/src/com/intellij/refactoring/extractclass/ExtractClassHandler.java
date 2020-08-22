@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.extractclass;
 
+import com.intellij.idea.ActionsBundle;
 import com.intellij.lang.ContextAwareActionHandler;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.CaretModel;
@@ -29,6 +30,7 @@ import com.intellij.refactoring.RefactorJBundle;
 import com.intellij.refactoring.actions.RefactoringActionContextUtil;
 import com.intellij.refactoring.lang.ElementsHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public class ExtractClassHandler implements ElementsHandler, ContextAwareActionHandler {
@@ -70,13 +72,13 @@ public class ExtractClassHandler implements ElementsHandler, ContextAwareActionH
     if (cannotRefactorMessage != null)  {
       CommonRefactoringUtil.showErrorHint(project, editor,
                                           RefactorJBundle.message("cannot.perform.the.refactoring") + cannotRefactorMessage,
-                                          ExtractClassProcessor.REFACTORING_NAME, getHelpID());
+                                          ActionsBundle.message("action.ExtractClass.description"), getHelpID());
       return;
     }
     new ExtractClassDialog(containingClass, selectedMember).show();
   }
 
-  private static String getCannotRefactorMessage(PsiClass containingClass) {
+  private static @Nls String getCannotRefactorMessage(PsiClass containingClass) {
     if (containingClass == null) {
       return RefactorJBundle.message("the.caret.should.be.positioned.within.a.class.to.be.refactored");
     }
@@ -96,7 +98,7 @@ public class ExtractClassHandler implements ElementsHandler, ContextAwareActionH
       return RefactorJBundle.message("the.selected.class.has.no.members.to.extract");
     }
     if (!containingClass.getManager().isInProject(containingClass)) {
-      return "The selected class should belong to project sources";
+      return RefactorJBundle.message("the.selected.class.should.belong.to.project.sources");
     }
     return null;
   }

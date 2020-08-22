@@ -43,15 +43,20 @@ public final class PsiElementFinderImpl extends PsiElementFinder implements Dumb
 
   @Override
   public PsiClass findClass(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
-    if (DumbService.getInstance(myProject).isDumb()) {
+    if (skipIndices()) {
       return null;
     }
     return myFileManager.findClass(qualifiedName, scope);
   }
 
+  private boolean skipIndices() {
+    DumbService dumbService = DumbService.getInstance(myProject);
+    return dumbService.isDumb() && dumbService.isAlternativeResolveEnabled();
+  }
+
   @Override
   public PsiClass @NotNull [] findClasses(@NotNull String qualifiedName, @NotNull GlobalSearchScope scope) {
-    if (DumbService.getInstance(myProject).isDumb()) {
+    if (skipIndices()) {
       return PsiClass.EMPTY_ARRAY;
     }
     return myFileManager.findClasses(qualifiedName, scope);

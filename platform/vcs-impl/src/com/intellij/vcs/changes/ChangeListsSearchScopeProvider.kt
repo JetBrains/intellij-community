@@ -3,6 +3,7 @@ package com.intellij.vcs.changes
 
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.psi.search.DefaultSearchScopeProviders
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.SearchScopeProvider
@@ -10,7 +11,7 @@ import java.util.*
 
 class ChangeListsSearchScopeProvider : SearchScopeProvider {
   override fun getDisplayName(): String? {
-    return "Local Changes"
+    return VcsBundle.message("change.list.scope.provider.local.changes")
   }
 
   override fun getSearchScopes(project: Project,

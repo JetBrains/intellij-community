@@ -25,10 +25,12 @@ import java.util.function.Function
 @NonNls
 private const val TAB_GROUP_ID = "History"
 
+fun isNewHistoryEnabled() = Registry.`is`("vcs.new.history")
+
 class VcsLogFileHistoryProviderImpl : VcsLogFileHistoryProvider {
 
   override fun canShowFileHistory(project: Project, paths: Collection<FilePath>, revisionNumber: String?): Boolean {
-    if (!Registry.`is`("vcs.new.history")) return false
+    if (!isNewHistoryEnabled()) return false
     val dataManager = VcsProjectLog.getInstance(project).dataManager ?: return false
 
     if (paths.size == 1) {

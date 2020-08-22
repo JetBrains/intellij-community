@@ -13,6 +13,7 @@ import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.MathUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -116,6 +117,7 @@ public class OnePixelDivider extends Divider {
 
     boolean isInDragZone(MouseEvent e) {
       MouseEvent event = getTargetEvent(e);
+      if (event == null) return false;
       Point p = event.getPoint();
       boolean vertical = isVertical();
       OnePixelDivider d = OnePixelDivider.this;
@@ -138,7 +140,7 @@ public class OnePixelDivider extends Divider {
 
     @Override
     public void mouseMoved(MouseEvent e) {
-      if (skipEventProcessing()) {
+      if (skipEventProcessing() || getTargetEvent(e) == null) {
         return;
       }
       final OnePixelDivider divider = OnePixelDivider.this;
@@ -190,8 +192,15 @@ public class OnePixelDivider extends Divider {
     }
   }
 
+  @Nullable
   private MouseEvent getTargetEvent(MouseEvent e) {
-    return SwingUtilities.convertMouseEvent(e.getComponent(), e, this);
+    Component eventComponent = e.getComponent();
+    if (eventComponent == null) return null;
+    Component deepestComponentAt = UIUtil.getDeepestComponentAt(eventComponent, e.getX(), e.getY());
+    if (deepestComponentAt == null || !SwingUtilities.isDescendingFrom(deepestComponentAt, getParent())) {
+      return null;//Event is related to some top layer (for example Undock tool window) and we shouldn't process it here
+    }
+    return SwingUtilities.convertMouseEvent(eventComponent, e, this);
   }
 
   private void init() {
@@ -221,14 +230,14 @@ public class OnePixelDivider extends Divider {
       if (isVertical()) {
         if (getHeight() > 0) {
           float ratio = (float)myPoint.y / (float)mySplitter.asComponent().getHeight();
-          proportion = MathUtil.clamp(MathUtil.clamp(ratio, firstMinProportion, 1 - secondMinProportion), 0f, 1f);
+          proportion = MathUtil.clamp(Math.min(Math.max(firstMinProportion, ratio), 1 - secondMinProportion), 0f, 1f);
           mySplitter.setProportion(proportion);
         }
       }
       else {
         if (getWidth() > 0) {
           float ratio = (float)myPoint.x / (float)mySplitter.asComponent().getWidth();
-          proportion = MathUtil.clamp(MathUtil.clamp(ratio, firstMinProportion, 1 - secondMinProportion), 0f, 1f);
+          proportion = MathUtil.clamp(Math.min(Math.max(firstMinProportion, ratio), 1 - secondMinProportion), 0f, 1f);
           mySplitter.setProportion(proportion);
         }
       }

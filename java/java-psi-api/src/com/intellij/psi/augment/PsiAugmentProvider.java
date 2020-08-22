@@ -31,6 +31,7 @@ import java.util.Set;
  * N.B. during indexing, only {@link DumbAware} providers are run.
  */
 public abstract class PsiAugmentProvider {
+  private static final Logger LOG = Logger.getInstance(PsiAugmentProvider.class);
   public static final ExtensionPointName<PsiAugmentProvider> EP_NAME = ExtensionPointName.create("com.intellij.lang.psiAugmentProvider");
   @SuppressWarnings("rawtypes")
   private /* non-static */ final Key<CachedValue<Map<Class, List>>> myCacheKey = Key.create(getClass().getName());
@@ -41,7 +42,7 @@ public abstract class PsiAugmentProvider {
    * An extension that enables one to add children to some PSI elements, e.g. methods to Java classes.
    * The class code remains the same, but its method accessors also include the results returned from {@link PsiAugmentProvider}s.
    * An augmenter can be called several times with the same parameters in the same state of the code model,
-   * and the PSI returned from these invocations should be equivalent (as in {@link PsiElement#isEquivalentTo} or {@link #equals}).
+   * and the PSI returned from these invocations must be equal and implement {@link #equals}/{@link #hashCode()} accordingly.
    * @param nameHint the expected name of the requested augmented members, or null if all members of the specified class are to be returned.
    *                 Implementations can ignore this parameter or use it for optimizations.
    */
@@ -63,7 +64,7 @@ public abstract class PsiAugmentProvider {
   /**
    * @deprecated invoke and override {@link #getAugments(PsiElement, Class, String)}.
    */
-  @SuppressWarnings("DeprecatedIsStillUsed")
+  @SuppressWarnings("unused")
   @Deprecated
   @NotNull
   protected <Psi extends PsiElement> List<Psi> getAugments(@NotNull PsiElement element, @NotNull Class<Psi> type) {
@@ -109,7 +110,16 @@ public abstract class PsiAugmentProvider {
       List<? extends Psi> augments = provider.getAugments(element, type, nameHint);
       for (Psi augment : augments) {
         if (nameHint == null || !(augment instanceof PsiNamedElement) || nameHint.equals(((PsiNamedElement)augment).getName())) {
-          result.add(augment);
+          try {
+            PsiUtilCore.ensureValid(augment);
+            result.add(augment);
+          }
+          catch (ProcessCanceledException e) {
+            throw e;
+          }
+          catch (Throwable e) {
+            LOG.error(PluginException.createByClass(e, provider.getClass()));
+          }
         }
       }
       return true;

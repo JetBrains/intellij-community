@@ -41,8 +41,8 @@ open class FileBasedStorage(file: Path,
   @Volatile
   private var cachedVirtualFile: VirtualFile? = null
 
-  protected var lineSeparator: LineSeparator? = null
-  protected var isBlockSavingTheContent = false
+  private var lineSeparator: LineSeparator? = null
+  private var blockSaving: BlockSaving? = null
 
   @Volatile
   var file = file
@@ -85,11 +85,10 @@ open class FileBasedStorage(file: Path,
         return false
       }
 
-      if (storage.isBlockSavingTheContent) {
-        LOG.info("Save blocked for ${storage.fileSpec}")
+      if (storage.blockSaving != null) {
+        LOG.warn("Save blocked for $storage")
         return false
       }
-
       return true
     }
 
@@ -163,7 +162,7 @@ open class FileBasedStorage(file: Path,
   }
 
   override fun loadLocalData(): Element? {
-    isBlockSavingTheContent = false
+    blockSaving = null
     return runAndHandleExceptions {
       if (configuration.isUseVfsForRead) {
         loadUsingVfs()
@@ -213,18 +212,15 @@ open class FileBasedStorage(file: Path,
       return null
     }
 
-    runAndHandleExceptions {
-      val byteArray = virtualFile.contentsToByteArray()
-      if (byteArray.isEmpty()) {
-        processReadException(null)
-        return null
-      }
-
-      val charBuffer = Charsets.UTF_8.decode(ByteBuffer.wrap(byteArray))
-      lineSeparator = detectLineSeparators(charBuffer, if (isUseXmlProlog) null else LineSeparator.LF)
-      return JDOMUtil.load(charBuffer)
+    val byteArray = virtualFile.contentsToByteArray()
+    if (byteArray.isEmpty()) {
+      processReadException(null)
+      return null
     }
-    return null
+
+    val charBuffer = Charsets.UTF_8.decode(ByteBuffer.wrap(byteArray))
+    lineSeparator = detectLineSeparators(charBuffer, if (isUseXmlProlog) null else LineSeparator.LF)
+    return JDOMUtil.load(charBuffer)
   }
 
   protected open fun handleVirtualFileNotFound() {
@@ -233,27 +229,31 @@ open class FileBasedStorage(file: Path,
   private fun processReadException(e: Exception?) {
     val contentTruncated = e == null
 
-    isBlockSavingTheContent = !contentTruncated &&
-      (PROJECT_FILE == fileSpec || fileSpec.startsWith(PROJECT_CONFIG_DIR) ||
-       fileSpec == StoragePathMacros.MODULE_FILE || fileSpec == StoragePathMacros.WORKSPACE_FILE)
-
+    if (!contentTruncated &&
+          (fileSpec == PROJECT_FILE || fileSpec.startsWith(PROJECT_CONFIG_DIR) ||
+           fileSpec == StoragePathMacros.MODULE_FILE || fileSpec == StoragePathMacros.WORKSPACE_FILE)) {
+      blockSaving = BlockSaving(reason = e?.toString() ?: "empty file")
+    }
+    else {
+      blockSaving = null
+    }
     if (e != null) {
-      LOG.warn(e)
+      LOG.warn("Cannot read ${toString()}", e)
     }
 
     val app = ApplicationManager.getApplication()
     if (!app.isUnitTestMode && !app.isHeadlessEnvironment) {
       val reason = if (contentTruncated) "content truncated" else e!!.message
-      val action = if (isBlockSavingTheContent) "Please correct the file content" else "File content will be recreated"
+      val action = if (blockSaving == null) "File content will be recreated" else "Please correct the file content"
       Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID,
-                   "Load Settings",
-                   "Cannot load settings from file '$file': $reason\n$action",
+                   ConfigurationStoreBundle.message("notification.load.settings.title"),
+                   "${ConfigurationStoreBundle.message("notification.load.settings.content", file)}: $reason\n$action",
                    NotificationType.WARNING)
         .notify(null)
     }
   }
 
-  override fun toString() = file.systemIndependentPath
+  override fun toString() = "FileBasedStorage(file=$file, fileSpec=$fileSpec, isBlockSavingTheContent=$blockSaving)"
 }
 
 internal fun writeFile(cachedFile: Path?,
@@ -374,3 +374,5 @@ private fun deleteFile(file: Path, requestor: StorageManagerFileWriteRequestor, 
 }
 
 internal class ReadOnlyModificationException(val file: VirtualFile, val session: SaveSession?) : RuntimeException("File is read-only: $file")
+
+private data class BlockSaving(val reason: String)

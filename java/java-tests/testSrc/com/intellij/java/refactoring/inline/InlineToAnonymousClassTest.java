@@ -271,6 +271,16 @@ public class InlineToAnonymousClassTest extends LightRefactoringTestCase {
     doTest(true, false);
   }
 
+  public void testSealed() {
+    setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);
+    doTest(false, false);
+  }
+
+  public void testSealedParentChildWithMembers() {
+    setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);
+    doTestCanBeInvokedOnReference(false);
+  }
+
   public void testNoInlineAbstract() {
     doTestNoInline("Abstract classes cannot be inlined");
   }

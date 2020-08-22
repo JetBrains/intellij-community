@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.ide.DataManager;
@@ -12,7 +10,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ObjectLongHashMap;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugSession;
@@ -23,17 +20,14 @@ import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
-import gnu.trove.THashMap;
-import gnu.trove.TObjectLongHashMap;
+import it.unimi.dsi.fastutil.objects.Object2LongMap;
+import it.unimi.dsi.fastutil.objects.Object2LongOpenHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeSet;
+import java.util.*;
 
 public class XVariablesView extends XVariablesViewBase implements DataProvider {
   private final JPanel myComponent;
@@ -118,10 +112,14 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
     return null;
   }
 
-  public static class InlineVariablesInfo {
-    private final Map<Pair<VirtualFile, Integer>, Set<Entry>> myData = new THashMap<>();
-    private final TObjectLongHashMap<VirtualFile> myTimestamps = new ObjectLongHashMap<>();
+  public static final class InlineVariablesInfo {
+    private final Map<Pair<VirtualFile, Integer>, Set<Entry>> myData = new HashMap<>();
+    private final Object2LongMap<VirtualFile> myTimestamps = new Object2LongOpenHashMap<>();
     private static final Key<InlineVariablesInfo> DEBUG_VARIABLES = Key.create("debug.variables");
+
+    public InlineVariablesInfo() {
+      myTimestamps.defaultReturnValue(-1);
+    }
 
     public static InlineVariablesInfo get(@Nullable XDebugSession session) {
       if (session != null) {
@@ -138,18 +136,18 @@ public class XVariablesView extends XVariablesViewBase implements DataProvider {
 
     @Nullable
     public synchronized List<XValueNodeImpl> get(@NotNull VirtualFile file, int line, long currentTimestamp) {
-      long timestamp = myTimestamps.get(file);
+      long timestamp = myTimestamps.getLong(file);
       if (timestamp == -1 || timestamp < currentTimestamp) {
         return null;
       }
-      Set<Entry> entries = myData.get(Pair.create(file, line));
+      Set<Entry> entries = myData.get(new Pair<>(file, line));
       if (entries == null) return null;
       return ContainerUtil.map(entries, entry -> entry.myNode);
     }
 
     public synchronized void put(@NotNull VirtualFile file, @NotNull XSourcePosition position, @NotNull XValueNodeImpl node, long timestamp) {
       myTimestamps.put(file, timestamp);
-      Pair<VirtualFile, Integer> key = Pair.create(file, position.getLine());
+      Pair<VirtualFile, Integer> key = new Pair<>(file, position.getLine());
       myData.computeIfAbsent(key, k -> new TreeSet<>()).add(new Entry(position.getOffset(), node));
     }
 

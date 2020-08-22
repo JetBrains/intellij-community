@@ -31,7 +31,7 @@ internal class JavaInjectedFileChangesHandler(shreds: List<Shred>, editor: Edito
     myHostDocument.addDocumentListener(object : DocumentListener {
       override fun documentChanged(event: DocumentEvent) {
         if (UndoManager.getInstance(myProject).isUndoInProgress) {
-          PsiDocumentManagerBase.addRunOnCommit(myHostDocument) {
+          (PsiDocumentManager.getInstance(myProject) as PsiDocumentManagerBase).addRunOnCommit(myHostDocument) {
             rebuildMarkers(markersWholeRange(markers) ?: failAndReport("can't get marker range in undo", event))
           }
         }

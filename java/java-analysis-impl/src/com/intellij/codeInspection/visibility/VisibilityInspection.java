@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.visibility;
 
@@ -8,6 +8,8 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.EntryPointsManager;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.reference.*;
+import com.intellij.codeInspection.util.InspectionMessage;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -47,7 +49,7 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
   private final Map<String, Boolean> myExtensions = new TreeMap<>();
   @NonNls public static final String SHORT_NAME = "WeakerAccess";
 
-  private class OptionsPanel extends JPanel {
+  private final class OptionsPanel extends JPanel {
     private final JCheckBox myPackageLocalForMembersCheckbox;
     private final JCheckBox myPrivateForInnersCheckbox;
     private final JCheckBox myPackageLocalForTopClassesCheckbox;
@@ -239,21 +241,21 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     final PsiElement nameIdentifier = element != null ? IdentifierUtil.getNameIdentifier(element) : null;
     if (nameIdentifier != null) {
       final String message;
-      String quickFixName = "Make " + ElementDescriptionUtil.getElementDescription(element, UsageViewTypeLocation.INSTANCE) + " ";
+      String targetVisibility;
       if (access.equals(PsiModifier.PRIVATE)) {
         message = getCanBePrivate();
-        quickFixName += VisibilityUtil.toPresentableText(PsiModifier.PRIVATE);
+        targetVisibility = VisibilityUtil.toPresentableText(PsiModifier.PRIVATE);
+      }
+      else if (access.equals(PsiModifier.PACKAGE_LOCAL)) {
+        message = getCanBePackageLocal();
+        targetVisibility = VisibilityUtil.toPresentableText(PsiModifier.PACKAGE_LOCAL);
       }
       else {
-        if (access.equals(PsiModifier.PACKAGE_LOCAL)) {
-          message = getCanBePackageLocal();
-          quickFixName += VisibilityUtil.toPresentableText(PsiModifier.PACKAGE_LOCAL);
-        }
-        else {
-          message = getCanBeProtected();
-          quickFixName += VisibilityUtil.toPresentableText(PsiModifier.PROTECTED);
-        }
+        message = getCanBeProtected();
+        targetVisibility = VisibilityUtil.toPresentableText(PsiModifier.PROTECTED);
       }
+      String quickFixName = JavaAnalysisBundle.message(
+        "change.visibility.level", ElementDescriptionUtil.getElementDescription(element, UsageViewTypeLocation.INSTANCE), targetVisibility);
       return new ProblemDescriptor[]{manager.createProblemDescriptor(nameIdentifier,
                                                                      message,
                                                                      new AcceptSuggestedAccess(globalContext.getRefManager(), access, quickFixName),
@@ -632,12 +634,12 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     myExtensions.put(entryPointId, enabled);
   }
 
-  private static class AcceptSuggestedAccess implements LocalQuickFix{
+  private static final class AcceptSuggestedAccess implements LocalQuickFix{
     private final RefManager myManager;
     @PsiModifier.ModifierConstant private final String myHint;
-    private final String myName;
+    private final @IntentionName String myName;
 
-    private AcceptSuggestedAccess(final RefManager manager, @PsiModifier.ModifierConstant String hint, String name) {
+    private AcceptSuggestedAccess(final RefManager manager, @PsiModifier.ModifierConstant String hint, @IntentionName String name) {
       myManager = manager;
       myHint = hint;
       myName = name;
@@ -689,15 +691,15 @@ public final class VisibilityInspection extends GlobalJavaBatchInspectionTool {
     }
   }
 
-  private static String getCanBePrivate() {
+  private static @InspectionMessage String getCanBePrivate() {
     return JavaAnalysisBundle.message("inspection.visibility.compose.suggestion", VisibilityUtil.toPresentableText(PsiModifier.PRIVATE));
   }
 
-  private static String getCanBePackageLocal() {
+  private static @InspectionMessage String getCanBePackageLocal() {
     return JavaAnalysisBundle.message("inspection.visibility.compose.suggestion", VisibilityUtil.toPresentableText(PsiModifier.PACKAGE_LOCAL));
   }
 
-  private static String getCanBeProtected() {
+  private static @InspectionMessage String getCanBeProtected() {
     return JavaAnalysisBundle.message("inspection.visibility.compose.suggestion", VisibilityUtil.toPresentableText(PsiModifier.PROTECTED));
   }
 }

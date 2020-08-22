@@ -18,6 +18,7 @@ import org.jdom.Attribute;
 import org.jdom.Content;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,6 +26,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 final class XmlReader {
   @SuppressWarnings("SSBasedInspection")
@@ -33,7 +35,7 @@ final class XmlReader {
   static final String APPLICATION_SERVICE = "com.intellij.applicationService";
   static final String PROJECT_SERVICE = "com.intellij.projectService";
   static final String MODULE_SERVICE = "com.intellij.moduleService";
-  private static final String ATTRIBUTE_AREA = "area";
+  private static final @NonNls String ATTRIBUTE_AREA = "area";
 
   @SuppressWarnings("BooleanMethodIsAlwaysInverted")
   static boolean isSuitableForOs(@NotNull String os) {
@@ -261,10 +263,10 @@ final class XmlReader {
     return value == null || Boolean.parseBoolean(value);
   }
 
-  static @Nullable LinkedHashMap<String, List<Element>> readExtensions(@NotNull IdeaPluginDescriptorImpl descriptor,
-                                                                       @Nullable LinkedHashMap<String, List<Element>> epNameToExtensions,
-                                                                       @NotNull DescriptorListLoadingContext loadingContext,
-                                                                       @NotNull Element child) {
+  static @Nullable Map<String, List<Element>> readExtensions(@NotNull IdeaPluginDescriptorImpl descriptor,
+                                                             @Nullable Map<String, List<Element>> epNameToExtensions,
+                                                             @NotNull DescriptorListLoadingContext loadingContext,
+                                                             @NotNull Element child) {
     String ns = child.getAttributeValue("defaultExtensionNs");
     for (Element extensionElement : child.getChildren()) {
       String os = extensionElement.getAttributeValue("os");
@@ -351,7 +353,7 @@ final class XmlReader {
         point = new BeanExtensionPoint<>(pointName, beanClassName, rootDescriptor, dynamic);
       }
       else {
-        point = new InterfaceExtensionPoint<>(pointName, interfaceClassName, rootDescriptor, dynamic);
+        point = new InterfaceExtensionPoint<>(pointName, interfaceClassName, rootDescriptor, null, dynamic);
       }
 
       List<ExtensionPointImpl<?>> result = containerDescriptor.extensionPoints;

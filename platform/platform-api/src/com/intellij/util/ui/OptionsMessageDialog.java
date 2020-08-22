@@ -25,7 +25,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public abstract class OptionsMessageDialog extends OptionsDialog{
-  private final String myMessage;
+  private final @NlsContexts.Label String myMessage;
   private final Icon myIcon;
 
   protected OptionsMessageDialog(Project project,
@@ -53,7 +53,7 @@ public abstract class OptionsMessageDialog extends OptionsDialog{
     return new Action[]{okAction,cancelAction};
   }
 
-  protected static void assignMnemonic(String option, Action action) {
+  protected static void assignMnemonic(@ActionText String option, Action action) {
     action.putValue(Action.NAME, option);
 
     int mnemoPos = option.indexOf("&");

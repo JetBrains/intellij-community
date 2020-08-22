@@ -7,6 +7,7 @@ import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.openapi.application.JetBrainsProtocolHandler;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.util.ArrayUtilRt;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -18,6 +19,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -62,6 +64,7 @@ public final class Main {
   public static void main(String[] args) {
     LinkedHashMap<String, Long> startupTimings = new LinkedHashMap<>();
     startupTimings.put("startup begin", System.nanoTime());
+
     if (args.length == 1 && "%f".equals(args[0])) {
       args = NO_ARGS;
     }
@@ -110,19 +113,21 @@ public final class Main {
   }
 
   private static void installPluginUpdates() {
-    if (!isCommandLine() || Boolean.getBoolean(FORCE_PLUGIN_UPDATES)) {
-      try {
-        StartupActionScriptManager.executeActionScript();
-      }
-      catch (IOException e) {
-        String message =
-          "The IDE failed to install some plugins.\n\n" +
-          "Most probably, this happened because of a change in a serialization format.\n" +
-          "Please try again, and if the problem persists, please report it\n" +
-          "to http://jb.gg/ide/critical-startup-errors" +
-          "\n\nThe cause: " + e.getMessage();
-        showMessage("Plugin Installation Error", message, false);
-      }
+    if (isCommandLine() && !Boolean.getBoolean(FORCE_PLUGIN_UPDATES)) {
+      return;
+    }
+
+    try {
+      StartupActionScriptManager.executeActionScript();
+    }
+    catch (IOException e) {
+      String message =
+        "The IDE failed to install some plugins.\n\n" +
+        "Most probably, this happened because of a change in a serialization format.\n" +
+        "Please try again, and if the problem persists, please report it\n" +
+        "to http://jb.gg/ide/critical-startup-errors" +
+        "\n\nThe cause: " + e.getMessage();
+      showMessage("Plugin Installation Error", message, false);
     }
   }
 
@@ -145,15 +150,25 @@ public final class Main {
       System.setProperty(AWT_HEADLESS, Boolean.TRUE.toString());
     }
 
-    boolean isFirstArgRegularFile;
-    try {
-      isFirstArgRegularFile = args.length > 0 && Files.isRegularFile(Paths.get(args[0]));
-    }
-    catch (Throwable t) {
-      isFirstArgRegularFile = false;
-    }
+    isLightEdit = "LightEdit".equals(System.getProperty(PLATFORM_PREFIX_PROPERTY)) || !isCommandLine && isFileAfterOptions(args);
+  }
 
-    isLightEdit = "LightEdit".equals(System.getProperty(PLATFORM_PREFIX_PROPERTY)) || isFirstArgRegularFile;
+  private static boolean isFileAfterOptions(String @NotNull [] args) {
+    for (String arg : args) {
+      if (!arg.startsWith("-")) { // If not an option
+        try {
+          Path path = Paths.get(arg);
+          return Files.isRegularFile(path) || !Files.exists(path);
+        }
+        catch (Throwable t) {
+          return false;
+        }
+      }
+      else if (arg.equals("-l") || arg.equals("--line") || arg.equals("-c") || arg.equals("--column")) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @TestOnly
@@ -224,7 +239,7 @@ public final class Main {
   }
 
   @SuppressWarnings({"UndesirableClassUsage", "UseOfSystemOutOrSystemErr"})
-  public static void showMessage(String title, String message, boolean error) {
+  public static void showMessage(@Nls String title, @Nls String message, boolean error) {
     PrintStream stream = error ? System.err : System.out;
     stream.println("\n" + title + ": " + message);
 

@@ -21,6 +21,11 @@ public class PyPIPackageCache extends PyAbstractPackageCache {
     return getInstance(getDefaultCachePath(CACHE_FILE_NAME));
   }
 
+  @NotNull
+  public static Path getDefaultCachePath() {
+    return getDefaultCachePath(CACHE_FILE_NAME);
+  }
+
   @VisibleForTesting
   @NotNull
   static synchronized PyPIPackageCache getInstance(@NotNull Path pathToCache) {

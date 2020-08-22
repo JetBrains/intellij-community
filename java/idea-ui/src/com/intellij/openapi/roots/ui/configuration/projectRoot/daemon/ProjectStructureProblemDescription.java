@@ -15,7 +15,10 @@
  */
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
+import com.intellij.openapi.util.NlsContexts.DetailedDescription;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,24 +27,24 @@ import java.util.List;
 public class ProjectStructureProblemDescription {
   public enum ProblemLevel {PROJECT, GLOBAL}
   @NotNull
-  private final String myMessage;
-  private final String myDescription;
+  private final @Nls(capitalization = Nls.Capitalization.Sentence) String myMessage;
+  private final @DetailedDescription String myDescription;
   private final PlaceInProjectStructure myPlace;
   private final List<? extends ConfigurationErrorQuickFix> myFixes;
   private final ProjectStructureProblemType myProblemType;
   private final ProblemLevel myProblemLevel;
   private final boolean myCanShowPlace;
 
-  public ProjectStructureProblemDescription(@NotNull String message,
-                                            @Nullable String description,
+  public ProjectStructureProblemDescription(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String message,
+                                            @Nullable @DetailedDescription String description,
                                             @NotNull PlaceInProjectStructure place,
                                             @NotNull ProjectStructureProblemType problemType,
                                             @NotNull List<? extends ConfigurationErrorQuickFix> fixes) {
     this(message, description, place, problemType, ProblemLevel.PROJECT, fixes, true);
   }
 
-  public ProjectStructureProblemDescription(@NotNull String message,
-                                            @Nullable String description,
+  public ProjectStructureProblemDescription(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String message,
+                                            @Nullable @DetailedDescription String description,
                                             @NotNull PlaceInProjectStructure place,
                                             @NotNull ProjectStructureProblemType problemType,
                                             @NotNull ProblemLevel level,
@@ -60,11 +63,11 @@ public class ProjectStructureProblemDescription {
   }
 
   @NotNull
-  public String getMessage(final boolean includePlace) {
-    if (includePlace && myCanShowPlace) {
-      return myPlace.getContainingElement().getPresentableText() + ": " + StringUtil.decapitalize(myMessage);
-    }
-    return myMessage;
+  public @Nls(capitalization = Nls.Capitalization.Sentence) String getMessage(final boolean includePlace) {
+    if (!includePlace || !myCanShowPlace) return myMessage;
+
+    @NlsSafe final String result = myPlace.getContainingElement().getPresentableText() + ": " + StringUtil.decapitalize(myMessage);
+    return result;
   }
 
   public boolean canShowPlace() {
@@ -72,7 +75,7 @@ public class ProjectStructureProblemDescription {
   }
 
   @Nullable
-  public String getDescription() {
+  public @DetailedDescription String getDescription() {
     return myDescription;
   }
 

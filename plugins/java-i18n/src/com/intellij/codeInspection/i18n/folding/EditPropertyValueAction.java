@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.i18n.folding;
 
 import com.intellij.codeInsight.folding.impl.EditorFoldingInfo;
@@ -313,7 +313,7 @@ public class EditPropertyValueAction extends BaseRefactoringAction {
     return !Experiments.getInstance().isFeatureEnabled("property.value.inplace.editing");
   }
 
-  private static class MyEnterAction extends AnAction {
+  private static final class MyEnterAction extends AnAction {
     private final EditorTextField field;
     private final FoldRegion foldRegion;
     private final JBPopup popup;
@@ -401,7 +401,7 @@ public class EditPropertyValueAction extends BaseRefactoringAction {
     }
   }
 
-  private static class MyShiftEnterAction extends EditorAction {
+  private static final class MyShiftEnterAction extends EditorAction {
     private MyShiftEnterAction() {
       super(new Handler());
       Presentation presentation = getTemplatePresentation();

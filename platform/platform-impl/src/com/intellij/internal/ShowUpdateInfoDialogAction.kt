@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal
 
 import com.intellij.ide.util.BrowseFilesListener
@@ -33,7 +33,7 @@ class ShowUpdateInfoDialogAction : DumbAwareAction() {
     val dialog = MyDialog(e.project)
     if (dialog.showAndGet()) {
       try {
-        UpdateChecker.testPlatformUpdate(AnAction.getEventProject(e), dialog.updateXmlText (), dialog.patchFilePath(), dialog.forceUpdate())
+        UpdateChecker.testPlatformUpdate(AnAction.getEventProject(e), dialog.updateXmlText(), dialog.patchFilePath(), dialog.forceUpdate())
       }
       catch (ex: Exception) {
         Messages.showErrorDialog(e.project, "${ex.javaClass.name}: ${ex.message}", "Something Went Wrong")

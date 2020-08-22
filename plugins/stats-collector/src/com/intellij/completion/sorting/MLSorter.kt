@@ -9,6 +9,8 @@ import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.completion.ml.common.PrefixMatchingUtil
 import com.intellij.completion.settings.CompletionMLRankingSettings
+import com.intellij.lang.Language
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
@@ -33,6 +35,7 @@ class MLSorter : CompletionFinalSorter() {
   }
 
   private val cachedScore: MutableMap<LookupElement, ItemRankInfo> = IdentityHashMap()
+  private lateinit var sortingRestrictions: SortingRestriction
   private val reorderOnlyTopItems: Boolean = Registry.`is`("completion.ml.reorder.only.top.items", true)
 
   override fun getRelevanceObjects(items: MutableIterable<LookupElement>): Map<LookupElement, List<Pair<String, Any>>> {
@@ -76,6 +79,10 @@ class MLSorter : CompletionFinalSorter() {
     val startedTimestamp = System.currentTimeMillis()
     val queryLength = lookup.queryLength()
     val prefix = lookup.prefix()
+
+    if (!this::sortingRestrictions.isInitialized) {
+      sortingRestrictions = SortingRestriction.forLanguage(lookupStorage.language)
+    }
 
     val element2score = mutableMapOf<LookupElement, Double?>()
     val elements = items.toList()
@@ -130,7 +137,10 @@ class MLSorter : CompletionFinalSorter() {
         PrefixMatchingUtil.calculateFeatures(element, prefix, additional)
       }
       val score = tracker.measure {
-        calculateElementScore(rankingModel, element, position, features.withElementFeatures(relevance, additional), queryLength)
+        val elementFeatures = features.withElementFeatures(relevance, additional)
+        val score = calculateElementScore(rankingModel, element, position, elementFeatures, queryLength)
+        sortingRestrictions.itemScored(elementFeatures)
+        return@measure score
       }
       element2score[element] = score
 
@@ -145,7 +155,7 @@ class MLSorter : CompletionFinalSorter() {
                              element2score: Map<LookupElement, Double?>,
                              positionsBefore: Map<LookupElement, Int>,
                              lookupStorage: MutableLookupStorage): Iterable<LookupElement> {
-    val mlScoresUsed = element2score.values.none { it == null }
+    val mlScoresUsed = element2score.values.none { it == null } && sortingRestrictions.shouldSort()
     if (LOG.isDebugEnabled) {
       LOG.debug("ML sorting in completion used=$mlScoresUsed for language=${lookupStorage.language.id}")
     }
@@ -248,6 +258,44 @@ class MLSorter : CompletionFinalSorter() {
       if (itemsScored != 0) {
         performanceTracker.itemsScored(itemsScored, TimeUnit.NANOSECONDS.toMillis(timeSpent))
       }
+    }
+  }
+
+  interface SortingRestriction {
+    companion object {
+      fun forLanguage(language: Language): SortingRestriction {
+        if (language.id.equals("Java", ignoreCase = true) && !ApplicationManager.getApplication().isUnitTestMode) {
+          return SortOnlyWithRecommendersScore()
+        }
+        return SortAll()
+      }
+    }
+
+    fun itemScored(features: RankingFeatures)
+
+    fun shouldSort(): Boolean
+  }
+
+  private class SortAll : SortingRestriction {
+    override fun shouldSort(): Boolean = true
+    override fun itemScored(features: RankingFeatures) {}
+  }
+
+  private class SortOnlyWithRecommendersScore : SortingRestriction {
+    companion object {
+      private val REC_FEATURES_NAMES: List<String> = listOf("ml_rec-instances_probability", "ml_rec-statics2_probability")
+    }
+
+    private var recommendersScoreFound: Boolean = false
+
+    override fun itemScored(features: RankingFeatures) {
+      if (!recommendersScoreFound) {
+        recommendersScoreFound = REC_FEATURES_NAMES.any { features.hasFeature(it) }
+      }
+    }
+
+    override fun shouldSort(): Boolean {
+      return recommendersScoreFound
     }
   }
 }

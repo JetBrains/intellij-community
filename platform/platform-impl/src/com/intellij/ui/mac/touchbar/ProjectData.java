@@ -12,6 +12,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
+import com.intellij.ui.XDebugSessionService;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.ContentManagerListener;
@@ -41,22 +42,41 @@ final class ProjectData {
     myProject.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
       @Override
       public void stateChanged(@NotNull ToolWindowManager toolWindowManager) {
-        String activeId = toolWindowManager.getActiveToolWindowId();
-        if (activeId != null &&
-            (activeId.equals(ToolWindowId.DEBUG) ||
-             activeId.equals(ToolWindowId.RUN_DASHBOARD) ||
-             activeId.equals(ToolWindowId.SERVICES))) {
-
-          final BarContainer bc = myPermanentBars.get(BarType.DEBUGGER);
-          if (bc != null)
-            bc.show();
+        BarContainer bc = myPermanentBars.get(BarType.DEBUGGER);
+        if (bc != null) {
+          handleDebugBar(toolWindowManager, bc);
         }
       }
 
+      private void handleDebugBar(@NotNull ToolWindowManager toolWindowManager,
+                                  @NotNull BarContainer debugBar) {
+        boolean hasActiveDebugSession = XDebugSessionService.getInstance(project).hasActiveDebugSession(project);
+        if (isRelatesToDebug(toolWindowManager.getActiveToolWindowId()) &&
+            hasActiveDebugSession) {
+          debugBar.show();
+        }
+        else if (!hasActiveDebugSession) {
+          debugBar.hide();
+          // TODO remove previous workaround by Artem Bochkarev after 2020.2 release
+          // This helps with permanently open debug touchbar
+          // Also these lines are probably should be removed after refactoring
+          BarContainer defaultBar = myPermanentBars.get(BarType.DEFAULT);
+          if (defaultBar != null) {
+            defaultBar.show();
+          }
+        }
+      }
+
+      private boolean isRelatesToDebug(@Nullable String toolWindowId) {
+        return toolWindowId != null &&
+               (toolWindowId.equals(ToolWindowId.DEBUG) ||
+                toolWindowId.equals(ToolWindowId.RUN_DASHBOARD) ||
+                toolWindowId.equals(ToolWindowId.SERVICES));
+      }
+
       @Override
-      public void toolWindowsRegistered(@NotNull List<String> ids) {
+      public void toolWindowsRegistered(@NotNull List<String> ids, @NotNull ToolWindowManager toolWindowManager) {
         ApplicationManager.getApplication().assertIsDispatchThread();
-        ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
         for (String id : ids) {
           ToolWindow toolWindow = toolWindowManager.getToolWindow(id);
           ToolWindowData toolWindowData = new ToolWindowData(toolWindow, id);
@@ -94,7 +114,7 @@ final class ProjectData {
     BarContainer result = myPermanentBars.get(type);
     if (result == null) {
       result = new BarContainer(type, TouchBar.EMPTY, null, null);
-      _fillBarContainer(result);
+      _fillBarContainer(result, myProject);
       myPermanentBars.put(type, result);
     }
     return result;
@@ -176,7 +196,7 @@ final class ProjectData {
     removed.release();
   }
 
-  private static void _fillBarContainer(@NotNull BarContainer container) {
+  private static void _fillBarContainer(@NotNull BarContainer container, @NotNull Project project) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     final @NotNull BarType type = container.getType();
@@ -219,6 +239,7 @@ final class ProjectData {
     }
 
     container.set(BuildUtils.buildFromCustomizedGroup(type.name(), mainLayout, replaceEsc), alts);
+    container.setProject(project);
   }
 
   void releaseAll() {
@@ -236,7 +257,7 @@ final class ProjectData {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myPermanentBars.forEach((t, bc) -> {
       bc.release();
-      _fillBarContainer(bc);
+      _fillBarContainer(bc, myProject);
     });
     // System.out.println("reloaded permanent bars");
   }

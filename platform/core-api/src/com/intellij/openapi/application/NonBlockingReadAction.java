@@ -39,6 +39,7 @@ public interface NonBlockingReadAction<T> {
    * @see com.intellij.openapi.project.DumbService
    */
   @Contract(pure = true)
+  @NotNull
   NonBlockingReadAction<T> inSmartMode(@NotNull Project project);
 
   /**
@@ -48,6 +49,7 @@ public interface NonBlockingReadAction<T> {
    * @see com.intellij.psi.PsiDocumentManager
    */
   @Contract(pure = true)
+  @NotNull
   NonBlockingReadAction<T> withDocumentsCommitted(@NotNull Project project);
 
   /**
@@ -63,6 +65,7 @@ public interface NonBlockingReadAction<T> {
    * (e.g. by putting {@link CancellablePromise#cancel()} inside some listener).
    */
   @Contract(pure = true)
+  @NotNull
   NonBlockingReadAction<T> expireWhen(@NotNull BooleanSupplier expireCondition);
 
   /**
@@ -70,6 +73,7 @@ public interface NonBlockingReadAction<T> {
    */
   @Contract(pure = true)
   @Deprecated
+  @NotNull
   default NonBlockingReadAction<T> cancelWith(@NotNull ProgressIndicator progressIndicator) {
     return wrapProgress(progressIndicator);
   }
@@ -80,6 +84,7 @@ public interface NonBlockingReadAction<T> {
    * and the visual changes (e.g. {@link ProgressIndicator#setText}) are propagated from the inner to the outer indicator.
    */
   @Contract(pure = true)
+  @NotNull
   NonBlockingReadAction<T> wrapProgress(@NotNull ProgressIndicator progressIndicator);
 
   /**
@@ -89,6 +94,7 @@ public interface NonBlockingReadAction<T> {
    * and if computations or {@link #finishOnUiThread} handlers are scheduled, they won't be executed.
    */
   @Contract(pure = true)
+  @NotNull
   NonBlockingReadAction<T> expireWith(@NotNull Disposable parentDisposable);
 
   /**
@@ -97,7 +103,8 @@ public interface NonBlockingReadAction<T> {
    * are invoked on UI thread, and no write action is allowed to interfere before that and possibly invalidate the result.
    */
   @Contract(pure = true)
-  NonBlockingReadAction<T> finishOnUiThread(@NotNull ModalityState modality, @NotNull Consumer<T> uiThreadAction);
+  @NotNull
+  NonBlockingReadAction<T> finishOnUiThread(@NotNull ModalityState modality, @NotNull Consumer<? super T> uiThreadAction);
 
   /**
    * Merges together similar computations by cancelling the previous ones when a new one is submitted.
@@ -109,6 +116,7 @@ public interface NonBlockingReadAction<T> {
    * @return a copy of this builder which, when submitted, cancels previously submitted running computations with equal equality objects
    */
   @Contract(pure = true)
+  @NotNull
   NonBlockingReadAction<T> coalesceBy(Object @NotNull ... equality);
 
   /**
@@ -120,6 +128,7 @@ public interface NonBlockingReadAction<T> {
    *                                 {@link AppExecutorUtil#getAppExecutorService()} or
    *                                 {@link com.intellij.util.concurrency.BoundedTaskExecutor} on top of that.
    */
+  @NotNull
   CancellablePromise<T> submit(@NotNull Executor backgroundThreadExecutor);
 
   /**

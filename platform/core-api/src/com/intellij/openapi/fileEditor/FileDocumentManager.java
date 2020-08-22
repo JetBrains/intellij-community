@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.core.CoreBundle;
@@ -7,9 +7,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.SavingRequestor;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.FileViewProvider;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,8 +29,9 @@ public abstract class FileDocumentManager implements SavingRequestor {
   /**
    * Returns the document for the specified virtual file.<p/>
    *
-   * Documents are cached on weak or strong references, depending on the nature of the virtual file. If the document for the given virtual file is not yet cached,
-   * the file's contents are read from VFS and loaded into heap memory. An appropriate encoding is used. All line separators are converted to {@code \n}.<p/>
+   * Documents are cached on weak or strong references, depending on the nature of the virtual file. If the document
+   * for the given virtual file is not yet cached, the file's contents are read from VFS and loaded into heap memory.
+   * An appropriate encoding is used. All line separators are converted to {@code \n}.<p/>
    *
    * Should be invoked in a read action.
    *
@@ -156,6 +160,15 @@ public abstract class FileDocumentManager implements SavingRequestor {
    */
   public abstract void reloadFiles(VirtualFile @NotNull ... files);
 
+  @ApiStatus.Internal
+  public void reloadBinaryFiles() { }
+
+  @ApiStatus.Internal
+  @Nullable
+  public FileViewProvider findCachedPsiInAnyProject(@NotNull VirtualFile file) {
+    return null;
+  }
+
   /**
    * Stores the write access status (true if the document has the write access; false otherwise)
    * and a message about the reason for the read-only status.
@@ -165,14 +178,14 @@ public abstract class FileDocumentManager implements SavingRequestor {
     public static final WriteAccessStatus WRITABLE = new WriteAccessStatus(true);
 
     private final boolean myWithWriteAccess;
-    @NotNull private final String myReadOnlyMessage;
+    private final @NotNull @NlsContexts.HintText String myReadOnlyMessage;
 
     private WriteAccessStatus(boolean withWriteAccess) {
       myWithWriteAccess = withWriteAccess;
       myReadOnlyMessage = withWriteAccess ? "" : CoreBundle.message("editing.read.only.file.hint");
     }
 
-    public WriteAccessStatus(@NotNull String readOnlyMessage) {
+    public WriteAccessStatus(@NotNull @NlsContexts.HintText String readOnlyMessage) {
       myWithWriteAccess = false;
       myReadOnlyMessage = readOnlyMessage;
     }
@@ -180,6 +193,6 @@ public abstract class FileDocumentManager implements SavingRequestor {
     public boolean hasWriteAccess() {return myWithWriteAccess;}
 
     @NotNull
-    public String getReadOnlyMessage() {return myReadOnlyMessage;}
+    public @NlsContexts.HintText String getReadOnlyMessage() {return myReadOnlyMessage;}
   }
 }

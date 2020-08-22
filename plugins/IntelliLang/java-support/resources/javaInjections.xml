@@ -39,8 +39,8 @@
     <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("skip").withParameters("java.lang.String").definedInClass("java.util.Scanner"))]]></place>
   </injection>
   <injection language="RegExp" injector-id="java">
-    <display-name>Pattern.regexp (javax.validation.constraints)</display-name>
-      <place><![CDATA[psiMethod().withName("regexp").withParameters().definedInClass("javax.validation.constraints.Pattern")]]></place>
+    <display-name>Pattern.regexp (javax/jakarta.validation.constraints)</display-name>
+      <place><![CDATA[psiMethod().withName("regexp").withParameters().definedInClass(psiClass().withQualifiedName(string().oneOf("javax.validation.constraints.Pattern", "jakarta.validation.constraints.Pattern")))]]></place>
   </injection>
 
   <injection language="RegExp" injector-id="java">
@@ -84,7 +84,7 @@
     <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("PrintStream").withParameters("java.lang.String", "java.lang.String").definedInClass("java.io.PrintStream"))]]></place>
     <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("encode").withParameters("java.lang.String", "java.lang.String").definedInClass("java.net.URLEncoder"))]]></place>
     <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("decode").withParameters("java.lang.String", "java.lang.String").definedInClass("java.net.URLDecoder"))]]></place>
-    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("setCharacterEncoding").withParameters("java.lang.String").definedInClass("javax.servlet.ServletResponse"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("setCharacterEncoding").withParameters("java.lang.String").definedInClass(psiClass().withQualifiedName(string().oneOf("javax.servlet.ServletResponse", "jakarta.servlet.ServletResponse"))))]]></place>
     <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("newReader").withParameters("java.nio.channels.ReadableByteChannel", "java.lang.String").definedInClass("java.nio.channels.Channels"))]]></place>
     <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("newWriter").withParameters("java.nio.channels.WritableByteChannel", "java.lang.String").definedInClass("java.nio.channels.Channels"))]]></place>
     <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("createXMLEventReader").withParameters("java.io.InputStream", "java.lang.String").definedInClass("javax.xml.stream.XMLInputFactory"))]]></place>
@@ -93,4 +93,28 @@
     <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("createXMLStreamWriter").withParameters("java.io.OutputStream", "java.lang.String").definedInClass("javax.xml.stream.XMLInputFactory"))]]></place>
   </injection>
 
+  <injection language="RegExp" injector-id="java">
+    <display-name>Validate (org.apache.commons.lang3)</display-name>
+    <place><![CDATA[psiParameter().ofMethod(1, psiMethod().withName("matchesPattern").definedInClass("org.apache.commons.lang3.Validate"))]]></place>
+  </injection>
+
+  <injection language="RegExp" injector-id="java">
+    <display-name>Matchers (org.hamcrest)</display-name>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("matchesPattern").definedInClass("org.hamcrest.Matchers"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("matchesRegex").definedInClass("org.hamcrest.Matchers"))]]></place>
+  </injection>
+
+  <injection language="XPath" injector-id="java">
+    <display-name>Matchers (org.hamcrest)</display-name>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("hasXPath").definedInClass("org.hamcrest.Matchers"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("hasXPath").definedInClass("org.hamcrest.Matchers"))]]></place>
+  </injection>
+
+  <injection language="RegExp" injector-id="java">
+    <display-name>StringSubject (com.google.common.truth)</display-name>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("matches").definedInClass("com.google.common.truth.StringSubject"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("containsMatch").definedInClass("com.google.common.truth.StringSubject"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("doesNotMatch").definedInClass("com.google.common.truth.StringSubject"))]]></place>
+    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("doesNotContainMatch").definedInClass("com.google.common.truth.StringSubject"))]]></place>
+  </injection>
 </component>

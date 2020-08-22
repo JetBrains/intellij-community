@@ -31,6 +31,7 @@ import com.intellij.openapi.ui.MasterDetailsComponent;
 import com.intellij.openapi.ui.MasterDetailsStateService;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.ui.JBSplitter;
 import com.intellij.ui.TreeSpeedSearch;
@@ -209,10 +210,8 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent {
   }
 
   @Override
-  protected
-  @Nullable
-  String getEmptySelectionString() {
-    return "Select an SDK to view or edit its details here";
+  protected @NlsContexts.StatusText @Nullable String getEmptySelectionString() {
+    return JavaUiBundle.message("project.jdks.configurable.empty.selection.string");
   }
 
   public void selectJdkVersion(JavaSdkVersion requiredJdkVersion) {

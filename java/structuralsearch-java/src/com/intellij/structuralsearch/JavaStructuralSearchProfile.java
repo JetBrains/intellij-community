@@ -56,7 +56,7 @@ import java.util.stream.Collectors;
 public class JavaStructuralSearchProfile extends StructuralSearchProfile {
 
   private static final Key<Map<String, ParameterInfo>> PARAMETER_CONTEXT = new Key<>("PARAMETER_CONTEXT");
-  private static final Key<Integer> PARAMETER_LENGTH = new Key<>(("PARAMETER_LENGTH"));
+  private static final Key<Integer> PARAMETER_LENGTH = new Key<>("PARAMETER_LENGTH");
 
   public static final PatternContext DEFAULT_CONTEXT = new PatternContext("default", "Default");
   public static final PatternContext MEMBER_CONTEXT = new PatternContext("member", "Class Member");
@@ -73,7 +73,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     ContainerUtil.set(MatchOptions.MODIFIER_ANNOTATION_NAME, MatchOptions.INSTANCE_MODIFIER_NAME, PsiModifier.PACKAGE_LOCAL);
 
   @Override
-  public String getText(PsiElement match, int start, int end) {
+  public @NotNull String getText(@NotNull PsiElement match, int start, int end) {
     if (match instanceof PsiIdentifier) {
       final PsiElement parent = match.getParent();
       if (parent instanceof PsiJavaCodeReferenceElement && !(parent instanceof PsiExpression)) {
@@ -97,7 +97,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
 
   @Override
   @NotNull
-  public String getTypedVarString(final PsiElement element) {
+  public String getTypedVarString(final @NotNull PsiElement element) {
     String text;
 
     if (element instanceof PsiReceiverParameter) {
@@ -131,7 +131,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   @Override
-  public String getMeaningfulText(PsiElement element) {
+  public String getMeaningfulText(@NotNull PsiElement element) {
     if (element instanceof PsiReferenceExpression && ((PsiReferenceExpression)element).getQualifierExpression() != null) {
       final PsiElement resolve = ((PsiReferenceExpression)element).resolve();
       if (resolve instanceof PsiClass) return element.getText();
@@ -139,7 +139,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
       final PsiElement referencedElement = ((PsiReferenceExpression)element).getReferenceNameElement();
       final String text = referencedElement != null ? referencedElement.getText() : "";
 
-      if (resolve == null && text.length() > 0 && Character.isUpperCase(text.charAt(0))) {
+      if (resolve == null && !text.isEmpty() && Character.isUpperCase(text.charAt(0))) {
         return element.getText();
       }
       return text;
@@ -149,31 +149,30 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
 
   @Override
   @Nullable
-  public String getAlternativeText(PsiElement node, String previousText) {
+  public String getAlternativeText(@NotNull PsiElement node, @NotNull String previousText) {
     // Short class name is matched with fully qualified name
-    if(node instanceof PsiJavaCodeReferenceElement || node instanceof PsiClass) {
+    if (node instanceof PsiJavaCodeReferenceElement || node instanceof PsiClass) {
       final PsiElement element = (node instanceof PsiJavaCodeReferenceElement)
                                  ? ((PsiJavaCodeReferenceElement)node).resolve()
                                  : node;
 
       if (element instanceof PsiClass) {
         String text = ((PsiClass)element).getQualifiedName();
-        if (text != null && text.equals(previousText)) {
+        if (previousText.equals(text)) {
           text = ((PsiClass)element).getName();
         }
 
-        if (text != null) {
-          return text;
-        }
+        return text;
       }
-    } else if (node instanceof PsiLiteralExpression || node instanceof PsiComment) {
+    }
+    else if (node instanceof PsiLiteralExpression || node instanceof PsiComment) {
       return node.getText();
     }
     return null;
   }
 
   @Override
-  public PsiElement updateCurrentNode(PsiElement targetNode) {
+  public @NotNull PsiElement updateCurrentNode(@NotNull PsiElement targetNode) {
     if (targetNode instanceof PsiCodeBlock && ((PsiCodeBlock)targetNode).getStatementCount() == 1) {
       PsiElement targetNodeParent = targetNode.getParent();
       if (targetNodeParent instanceof PsiBlockStatement) {
@@ -188,7 +187,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   @Override
-  public PsiElement extendMatchedByDownUp(PsiElement targetNode) {
+  public @NotNull PsiElement extendMatchedByDownUp(@NotNull PsiElement targetNode) {
     if (targetNode instanceof PsiIdentifier) {
       targetNode = targetNode.getParent();
       final PsiElement parent = targetNode.getParent();
@@ -198,7 +197,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   @Override
-  public PsiElement extendMatchOnePsiFile(PsiElement file) {
+  public @NotNull PsiElement extendMatchOnePsiFile(@NotNull PsiElement file) {
     if (file instanceof PsiIdentifier) {
       // Searching in previous results
       file = file.getParent();
@@ -208,7 +207,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
 
   @NotNull
   @Override
-  public PsiElement getPresentableElement(PsiElement element) {
+  public PsiElement getPresentableElement(@NotNull PsiElement element) {
     element = super.getPresentableElement(element);
     if (element instanceof PsiReferenceExpression) {
       final PsiElement parent = element.getParent();
@@ -227,7 +226,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   @Override
-  public void compile(PsiElement[] elements, @NotNull GlobalCompilingVisitor globalVisitor) {
+  public void compile(PsiElement @NotNull [] elements, @NotNull GlobalCompilingVisitor globalVisitor) {
     new JavaCompilingVisitor(globalVisitor).compile(elements);
   }
 
@@ -264,7 +263,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
 
   @NotNull
   @Override
-  public List<MatchPredicate> getCustomPredicates(MatchVariableConstraint constraint, String name, MatchOptions options) {
+  public List<MatchPredicate> getCustomPredicates(@NotNull MatchVariableConstraint constraint, @NotNull String name, @NotNull MatchOptions options) {
     final List<MatchPredicate> result = new SmartList<>();
 
     if (!StringUtil.isEmptyOrSpaces(constraint.getNameOfExprType())) {
@@ -375,7 +374,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     return result;
   }
 
-  private static boolean shouldTryExpressionPattern(List<PsiElement> elements) {
+  private static boolean shouldTryExpressionPattern(@NotNull List<? extends PsiElement> elements) {
     if (elements.size() >= 1 && elements.size() <= 3) {
       final PsiElement firstElement = elements.get(0);
       if (firstElement instanceof PsiDeclarationStatement) {
@@ -391,7 +390,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
     return false;
   }
 
-  private static boolean shouldTryClassPattern(List<PsiElement> elements) {
+  private static boolean shouldTryClassPattern(@NotNull List<? extends PsiElement> elements) {
     if (elements.isEmpty()) {
       return false;
     }
@@ -447,7 +446,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
 
   @NotNull
   @Override
-  public PsiCodeFragment createCodeFragment(Project project, String text, String contextId) {
+  public PsiCodeFragment createCodeFragment(@NotNull Project project, @NotNull String text, String contextId) {
     final PsiCodeFragmentImpl fragment =
       MEMBER_CONTEXT.getId().equals(contextId)
       ? (PsiCodeFragmentImpl)JavaCodeFragmentFactory.getInstance(project).createMemberCodeFragment(text, null, true)
@@ -457,7 +456,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   @Override
-  public String getCodeFragmentText(PsiFile fragment) {
+  public @NotNull String getCodeFragmentText(@NotNull PsiFile fragment) {
     final List<String> imports = StringUtil.split(((JavaCodeFragment)fragment).importsToString(), ",");
     final Map<String, String> importMap =
       imports.stream().collect(Collectors.toMap(s -> s.substring(s.lastIndexOf('.') + 1), Function.identity()));
@@ -493,7 +492,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   @Override
-  public boolean shouldShowProblem(PsiErrorElement error) {
+  public boolean shouldShowProblem(@NotNull PsiErrorElement error) {
     final String description = error.getErrorDescription();
     final PsiElement parent = error.getParent();
 
@@ -539,7 +538,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   @Override
-  public void checkSearchPattern(CompiledPattern pattern) {
+  public void checkSearchPattern(@NotNull CompiledPattern pattern) {
     final ValidatingVisitor visitor = new ValidatingVisitor();
     final NodeIterator nodes = pattern.getNodes();
     while (nodes.hasNext()) {
@@ -550,7 +549,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   @Override
-  public void checkReplacementPattern(Project project, ReplaceOptions options) {
+  public void checkReplacementPattern(@NotNull Project project, @NotNull ReplaceOptions options) {
     final MatchOptions matchOptions = options.getMatchOptions();
     final LanguageFileType fileType = matchOptions.getFileType();
     final Language dialect = matchOptions.getDialect();
@@ -629,12 +628,12 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   @Override
-  public Configuration[] getPredefinedTemplates() {
+  public Configuration @NotNull [] getPredefinedTemplates() {
     return JavaPredefinedConfigurations.createPredefinedTemplates();
   }
 
   @Override
-  public void provideAdditionalReplaceOptions(@NotNull PsiElement node, ReplaceOptions options, ReplacementBuilder builder) {
+  public void provideAdditionalReplaceOptions(@NotNull PsiElement node, @NotNull ReplaceOptions options, @NotNull ReplacementBuilder builder) {
     node.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitReferenceExpression(PsiReferenceExpression expression) {
@@ -656,7 +655,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
         setParameterContext(parameter, parameter.getNameIdentifier(), parameter.getTypeElement());
       }
 
-      private void setParameterContext(PsiElement element, PsiElement nameIdentifier, @Nullable PsiElement scopeElement) {
+      private void setParameterContext(@NotNull PsiElement element, PsiElement nameIdentifier, @Nullable PsiElement scopeElement) {
         final ParameterInfo nameInfo = builder.findParameterization(nameIdentifier);
         if (nameInfo == null) return;
         nameInfo.setArgumentContext(false);
@@ -689,7 +688,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   @Override
-  public void handleSubstitution(ParameterInfo info, MatchResult match, StringBuilder result, ReplacementInfo replacementInfo) {
+  public void handleSubstitution(@NotNull ParameterInfo info, @NotNull MatchResult match, @NotNull StringBuilder result, @NotNull ReplacementInfo replacementInfo) {
     if (info.getName().equals(match.getName())) {
       final String replacementString;
       boolean forceAddingNewLine = false;
@@ -784,7 +783,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   @Override
-  public void handleNoSubstitution(ParameterInfo info, StringBuilder result) {
+  public void handleNoSubstitution(@NotNull ParameterInfo info, @NotNull StringBuilder result) {
     final PsiElement element = info.getElement();
     final PsiElement prevSibling = PsiTreeUtil.skipWhitespacesBackward(element);
     if (prevSibling instanceof PsiJavaToken && isRemovableToken(prevSibling)) {
@@ -861,11 +860,11 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   @Override
-  public boolean isDocCommentOwner(PsiElement match) {
+  public boolean isDocCommentOwner(@NotNull PsiElement match) {
     return match instanceof PsiMember;
   }
 
-  private static String handleParameter(ParameterInfo info, ReplacementInfo replacementInfo, int offset, String template) {
+  private static String handleParameter(@NotNull ParameterInfo info, ReplacementInfo replacementInfo, int offset, String template) {
     final MatchResult matchResult = replacementInfo.getNamedMatchResult(info.getName());
     assert matchResult != null;
 
@@ -923,7 +922,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   }
 
   @Override
-  public boolean isApplicableConstraint(String constraintName, @Nullable PsiElement variableNode, boolean completePattern, boolean target) {
+  public boolean isApplicableConstraint(@NotNull String constraintName, @Nullable PsiElement variableNode, boolean completePattern, boolean target) {
     switch (constraintName) {
       case UIUtil.TEXT: return !completePattern;
       case UIUtil.TEXT_HIERARCHY:
@@ -1001,7 +1000,7 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
         final PsiType type = ((PsiTypeElement)greatGrandParent).getType();
         return type instanceof PsiWildcardType && ((PsiWildcardType)type).isExtends();
       }
-      if (greatGrandParent instanceof PsiMethod) {
+      if (greatGrandParent instanceof PsiMethod || greatGrandParent instanceof PsiVariable) {
         return true;
       }
     }

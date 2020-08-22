@@ -5,6 +5,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.LibraryKind;
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -92,6 +93,7 @@ final class GradleLibraryPresentationProvider extends GroovyLibraryPresentationP
   }
 
   @Nullable
+  @NlsSafe
   private static String getGradleVersion(VirtualFile[] libraryFiles) {
     for (VirtualFile file : libraryFiles) {
       final String version = getGradleJarVersion(file);

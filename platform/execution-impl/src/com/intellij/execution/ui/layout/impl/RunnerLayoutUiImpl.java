@@ -85,6 +85,13 @@ public class RunnerLayoutUiImpl implements Disposable.Parent, RunnerLayoutUi, La
 
   @Override
   @NotNull
+  public LayoutViewOptions setTopMiddleToolbar(@NotNull ActionGroup actions, @NotNull String place) {
+    myContentUI.setTopMiddleActions(actions, place);
+    return this;
+  }
+
+  @Override
+  @NotNull
   public LayoutViewOptions setTopRightToolbar(@NotNull ActionGroup actions, @NotNull String place) {
     myContentUI.setTopRightActions(actions, place);
     return this;

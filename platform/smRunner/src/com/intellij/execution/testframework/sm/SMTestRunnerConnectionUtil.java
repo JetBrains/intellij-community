@@ -306,7 +306,7 @@ public final class SMTestRunnerConnectionUtil {
   @SuppressWarnings("rawtypes")
   @ApiStatus.ScheduledForRemoval()
   @Deprecated
-  private static class CompositeTestLocationProvider implements SMTestLocator {
+  private static final class CompositeTestLocationProvider implements SMTestLocator {
     private final TestLocationProvider myPrimaryLocator;
 
     private CompositeTestLocationProvider(@Nullable TestLocationProvider primaryLocator) {

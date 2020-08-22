@@ -16,13 +16,12 @@
 package com.intellij.lang.impl;
 
 import com.intellij.util.containers.IntStack;
-
-import java.util.ArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 /**
  * @author peter
  */
-final class MarkerPool extends ArrayList<PsiBuilderImpl.ProductionMarker> {
+final class MarkerPool extends ObjectArrayList<PsiBuilderImpl.ProductionMarker> {
   private final PsiBuilderImpl myBuilder;
   private final IntStack myFreeStartMarkers = new IntStack();
   private final IntStack myFreeErrorItems = new IntStack();

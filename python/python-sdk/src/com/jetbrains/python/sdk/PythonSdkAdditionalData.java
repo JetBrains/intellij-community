@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk;
 
-import com.google.common.collect.Sets;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -21,6 +20,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -148,7 +148,7 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
   }
 
   private static Set<VirtualFile> getPathsAsVirtualFiles(VirtualFilePointerContainer paths) {
-    Set<VirtualFile> ret = Sets.newHashSet();
+    Set<VirtualFile> ret = new HashSet<VirtualFile>();
     Collections.addAll(ret, paths.getFiles());
     return ret;
   }

@@ -252,6 +252,7 @@ public final class TestsPresentationUtil {
     final TestStateInfo.Magnitude magnitude = testProxy.getMagnitudeInfo();
 
     final boolean hasErrors = testProxy.hasErrors();
+    final boolean hasPassedTests = testProxy.hasPassedTests();
 
     switch (magnitude) {
       case ERROR_INDEX:
@@ -259,7 +260,7 @@ public final class TestsPresentationUtil {
       case FAILED_INDEX:
         return hasErrors ? FAILED_E_ICON : FAILED_ICON;
       case IGNORED_INDEX:
-        return hasErrors ? IGNORED_E_ICON : IGNORED_ICON;
+        return hasErrors ? IGNORED_E_ICON : (hasPassedTests ? PASSED_IGNORED : IGNORED_ICON);
       case NOT_RUN_INDEX:
         return NOT_RAN;
       case COMPLETE_INDEX:

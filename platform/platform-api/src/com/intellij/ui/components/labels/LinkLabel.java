@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components.labels;
 
 import com.intellij.icons.AllIcons;
@@ -12,7 +12,6 @@ import com.intellij.util.ui.JBRectangle;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,6 +21,7 @@ import javax.accessibility.AccessibleRole;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -33,7 +33,7 @@ public class LinkLabel<T> extends JLabel {
   private LinkListener<T> myLinkListener;
   private T myLinkData;
 
-  private static final Set<String> ourVisitedLinks = new THashSet<>();
+  private static final Set<String> ourVisitedLinks = new HashSet<>();
 
   private boolean myIsLinkActive;
 
@@ -260,7 +260,7 @@ public class LinkLabel<T> extends JLabel {
     repaint();
   }
 
-  protected String getStatusBarText() {
+  protected @NlsContexts.StatusBarText String getStatusBarText() {
     return getToolTipText();
   }
 
@@ -272,7 +272,7 @@ public class LinkLabel<T> extends JLabel {
     setActive(false);
   }
 
-  private static void setStatusBarText(String statusBarText) {
+  private static void setStatusBarText(@NlsContexts.StatusBarText String statusBarText) {
     if (ApplicationManager.getApplication() == null) return; // makes this component work in UIDesigner preview.
     final Project[] projects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : projects) {

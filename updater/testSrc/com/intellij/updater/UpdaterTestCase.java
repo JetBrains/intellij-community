@@ -26,7 +26,7 @@ public abstract class UpdaterTestCase {
   protected CheckSums CHECKSUMS;
 
   @Before
-  public void setUp() throws Exception {
+  public void before() throws Exception {
     dataDir = PathManagerEx.findFileUnderCommunityHome("updater/testData");
 
     Runner.checkCaseSensitivity(dataDir.getPath());
@@ -40,7 +40,7 @@ public abstract class UpdaterTestCase {
   }
 
   @After
-  public void tearDown() throws Exception {
+  public void after() throws Exception {
     Utils.cleanup();
   }
 

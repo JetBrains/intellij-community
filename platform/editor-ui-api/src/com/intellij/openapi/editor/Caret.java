@@ -292,7 +292,7 @@ public interface Caret extends UserDataHolderEx, Disposable {
    *
    * @param above if {@code true}, new caret will be created at the previous line, if {@code false} - on the next line
    * @return newly created caret instance, or {@code null} if the caret cannot be created because it already exists at the new location
-   * or caret model doesn't support multiple carets.
+   * or maximum supported number of carets already exists in editor ({@link CaretModel#getMaxCaretCount()}).
    */
   @Nullable
   Caret clone(boolean above);

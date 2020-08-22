@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.fixtures;
 
 import com.intellij.execution.impl.ConsoleViewImpl;
@@ -38,7 +38,7 @@ import static org.fest.reflect.core.Reflection.method;
 import static org.fest.swing.timing.Pause.pause;
 
 public class ExecutionToolWindowFixture extends ToolWindowFixture {
-  public static class ContentFixture {
+  public static final class ContentFixture {
     @NotNull private final ExecutionToolWindowFixture myParentToolWindow;
     @NotNull private final Robot myRobot;
     @NotNull private final Content myContent;

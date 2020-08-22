@@ -5,10 +5,12 @@ import com.intellij.lang.jvm.JvmClass;
 import com.intellij.lang.jvm.JvmClassKind;
 import com.intellij.lang.jvm.JvmMethod;
 import com.intellij.lang.jvm.types.JvmReferenceType;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.pom.PomRenameableTarget;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +39,7 @@ public interface PsiClass
    * @return the qualified name of the class, or null for anonymous and local classes, and for type parameters
    */
   @Override
-  @Nullable
+  @Nullable @NlsSafe
   String getQualifiedName();
 
   /**
@@ -100,6 +102,31 @@ public interface PsiClass
    * enums and annotation types
    */
   PsiClassType @NotNull [] getImplementsListTypes();
+
+  /**
+   * Returns the list of classes that this class or interface permits.
+   *
+   * @return the permits list.
+   */
+  @Nullable
+  @ApiStatus.Experimental
+  default PsiReferenceList getPermitsList() {
+    return null;
+  }
+
+  /**
+   * Returns the list of class types that this class or interface explicitly permits.
+   *
+   * @return the list of explicitly permitted classes.
+   */
+  @ApiStatus.Experimental
+  default PsiClassType @NotNull [] getPermitsListTypes() {
+    PsiReferenceList permitsList = getPermitsList();
+    if (permitsList != null) {
+      return permitsList.getReferencedTypes();
+    }
+    return PsiClassType.EMPTY_ARRAY;
+  }
 
   /**
    * Returns the base class of this class.

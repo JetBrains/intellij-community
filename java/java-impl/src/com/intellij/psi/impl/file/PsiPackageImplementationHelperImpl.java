@@ -93,7 +93,7 @@ public class PsiPackageImplementationHelperImpl extends PsiPackageImplementation
       for (final ContentEntry contentEntry : rootModel.getContentEntries()) {
         for (final SourceFolder sourceFolder : contentEntry.getSourceFolders(JavaModuleSourceRootTypes.SOURCES)) {
           final String packagePrefix = sourceFolder.getPackagePrefix();
-          if (packagePrefix.startsWith(oldQualifiedName)) {
+          if (PsiNameHelper.isSubpackageOf(packagePrefix, oldQualifiedName)) {
             sourceFolder.setPackagePrefix(newQualifiedName + packagePrefix.substring(oldQualifiedName.length()));
             anyChange = true;
           }

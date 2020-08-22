@@ -95,8 +95,13 @@ public class UnBoxingEvaluator implements Evaluator {
             return getValue(value, valueField, now)
               .thenApply(primitiveValue -> {
                 if (primitiveValue instanceof PrimitiveValue) {
-                  LOG.assertTrue(
-                    type.name().equals(PsiJavaParserFacadeImpl.getPrimitiveType(primitiveValue.type().name()).getBoxedTypeName()));
+                  String expected = PsiJavaParserFacadeImpl.getPrimitiveType(primitiveValue.type().name()).getBoxedTypeName();
+                  String actual = type.name();
+                  LOG.assertTrue(actual.equals(expected),
+                                 "Unexpected unboxable value type" +
+                                 "\nType: " + actual +
+                                 "\nPrimitive value type: " + primitiveValue.type() +
+                                 "\nBoxed type: " + expected);
                   return (PrimitiveValue)primitiveValue;
                 }
                 return null;

@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui
 
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -17,6 +18,8 @@ import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
+import com.intellij.ui.content.ContentManagerEvent
+import com.intellij.ui.content.ContentManagerListener
 import com.intellij.util.ui.UIUtil.getClientProperty
 import com.intellij.util.ui.UIUtil.putClientProperty
 import javax.swing.JPanel
@@ -48,9 +51,11 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
       }
     })
     ChangesViewContentEP.EP_NAME.addExtensionPointListener(project, ExtensionListener(window), window.disposable)
+
+    window.addContentManagerListener(getContentManagerListener(project, window))
   }
 
-  override fun shouldBeAvailable(project: Project): Boolean = project.vcsManager.hasAnyMappings()
+  override fun shouldBeAvailable(project: Project): Boolean = project.vcsManager.hasAnyMappings() || project.vcsManager.isConsoleVisible
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     updateContent(project, toolWindow)
@@ -110,6 +115,18 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
       putUserData(CONTENT_PROVIDER_SUPPLIER_KEY) { extension.getInstance(project) }
 
       extension.newPreloaderInstance(project)?.preloadTabContent(this)
+    }
+  }
+
+  private fun getContentManagerListener(project: Project, toolWindow: ToolWindow) = object : ContentManagerListener {
+    override fun contentAdded(event: ContentManagerEvent) = scheduleUpdate()
+    override fun contentRemoved(event: ContentManagerEvent) = scheduleUpdate()
+
+    private fun scheduleUpdate() {
+      invokeLater {
+        if (project.isDisposed) return@invokeLater
+        updateState(project, toolWindow)
+      }
     }
   }
 

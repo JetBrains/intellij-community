@@ -47,15 +47,16 @@ SHELL_SCRIPT
           PsiWhiteSpace(' ')
           PsiElement(word)('y')
   PsiElement(\n)('\n')
-  PsiComment(Comment)('#fixme')
-  PsiElement(\n)('\n')
   COMMANDS_LIST
-    GENERIC_COMMAND_DIRECTIVE
-      REDIRECTION
-        PsiElement(>&)('>&')
-        PsiWhiteSpace(' ')
-        PsiElement(word)('x')
-        PsiWhiteSpace(' ')
+    SIMPLE_COMMAND
+      GENERIC_COMMAND_DIRECTIVE
+        REDIRECTION
+          PsiElement(>&)('>&')
+          PsiWhiteSpace(' ')
+          PsiElement(word)('x')
+      PsiWhiteSpace(' ')
+      LITERAL
         PsiElement(word)('.')
-        PsiWhiteSpace(' ')
+      PsiWhiteSpace(' ')
+      LITERAL
         PsiElement(word)('x')

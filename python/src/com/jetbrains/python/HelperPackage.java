@@ -18,6 +18,13 @@ public interface HelperPackage {
   @NotNull
   String getPythonPathEntry();
 
+  /**
+   * @return entries (directory or ZIP archive) that should be added to
+   * <tt>PYTHONPATH</tt> environment variable before the process is started.
+   */
+  @NotNull
+  List<String> getPythonPathEntries();
+
   void addToGroup(@NotNull ParamsGroup group, @NotNull GeneralCommandLine cmd);
 
   /**

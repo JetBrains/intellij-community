@@ -38,6 +38,6 @@ abstract class MarkdownCodeFenceCacheableProvider(var collector: MarkdownCodeFen
     val collectorKey = MarkdownUtil.md5(collector?.file?.path, MarkdownCodeFencePluginCache.MARKDOWN_FILE_PATH_KEY)
     val fileKey = MarkdownUtil.md5(text, "$language.${extension}")
 
-    return getCacheRootPath().resolve(collectorKey).resolve(fileKey)
+    return getCacheRootPath().resolve(collectorKey).resolve("$fileKey.$extension")
   }
 }

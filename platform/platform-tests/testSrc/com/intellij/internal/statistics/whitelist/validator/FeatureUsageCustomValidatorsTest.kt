@@ -6,7 +6,7 @@ import com.intellij.internal.statistic.collectors.fus.FacetTypeUsageCollector
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.LightPlatformTestCase
 import junit.framework.TestCase
@@ -14,22 +14,22 @@ import org.junit.Test
 
 class FeatureUsageCustomValidatorsTest : LightPlatformTestCase() {
 
-  private fun doValidateEventId(validator: CustomWhiteListRule, eventId: String, eventData: FeatureUsageData) {
+  private fun doValidateEventId(validator: CustomValidationRule, eventId: String, eventData: FeatureUsageData) {
     val context = EventContext.create(eventId, eventData.build())
     doTest(ValidationResultType.ACCEPTED, validator, context.eventId, context)
   }
 
-  private fun doValidateEventData(validator: CustomWhiteListRule, name: String, eventData: FeatureUsageData) {
+  private fun doValidateEventData(validator: CustomValidationRule, name: String, eventData: FeatureUsageData) {
     val context = EventContext.create("event_id", eventData.build())
     doTest(ValidationResultType.ACCEPTED, validator, context.eventData[name] as String, context)
   }
 
-  private fun doRejectEventId(validator: CustomWhiteListRule, eventId: String, eventData: FeatureUsageData) {
+  private fun doRejectEventId(validator: CustomValidationRule, eventId: String, eventData: FeatureUsageData) {
     val context = EventContext.create(eventId, eventData.build())
     doTest(ValidationResultType.REJECTED, validator, context.eventId, context)
   }
 
-  private fun doTest(expected: ValidationResultType, validator: CustomWhiteListRule, data: String, context: EventContext) {
+  private fun doTest(expected: ValidationResultType, validator: CustomValidationRule, data: String, context: EventContext) {
     TestCase.assertEquals(expected, validator.validate(data, context))
   }
 

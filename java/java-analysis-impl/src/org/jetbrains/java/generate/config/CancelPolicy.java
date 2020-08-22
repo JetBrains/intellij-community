@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * This policy is to cancel.
  */
-public class CancelPolicy implements ConflictResolutionPolicy {
+public final class CancelPolicy implements ConflictResolutionPolicy {
 
     private static final CancelPolicy instance = new CancelPolicy();
 

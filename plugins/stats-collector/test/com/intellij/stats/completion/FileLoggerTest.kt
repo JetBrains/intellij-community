@@ -2,8 +2,10 @@
 package com.intellij.stats.completion
 
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.CaretModel
+import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.stats.storage.FilePathProvider
 import com.intellij.testFramework.HeavyPlatformTestCase
@@ -60,10 +62,15 @@ class FileLoggerTest : HeavyPlatformTestCase() {
 
     val loggerProvider = CompletionFileLoggerProvider()
 
-    val logger = loggerProvider.newCompletionLogger()
+    val logger = loggerProvider.newCompletionLogger(Language.ANY)
+
+    val documentMock = mock(Document::class.java).apply {
+      `when`(text).thenReturn("")
+    }
 
     val editorMock = mock(Editor::class.java).apply {
       `when`(caretModel).thenReturn(mock(CaretModel::class.java))
+      `when`(document).thenReturn(documentMock)
     }
 
     val lookup = mock(LookupImpl::class.java).apply {
@@ -78,7 +85,7 @@ class FileLoggerTest : HeavyPlatformTestCase() {
 
     logger.completionStarted(lookup, true, 2, System.currentTimeMillis())
 
-    logger.completionCancelled(Fixtures.performance, System.currentTimeMillis())
+    logger.completionCancelled(true, emptyMap(), System.currentTimeMillis())
     loggerProvider.dispose()
 
     var attemps = 0

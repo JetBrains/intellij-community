@@ -57,11 +57,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
   private final ToolWindowManagerListener myWindowManagerListener = new ToolWindowManagerListener() {
     @Override
     public void stateChanged(@NotNull ToolWindowManager toolWindowManager) {
-        if (isInsideActiveToolWindow(toolWindowManager)) {
-          if (!isPopupActive()) {
-            showPopup();
-          }
-        } else {
+        if (!isInsideActiveToolWindow(toolWindowManager)) {
           manageSearchPopup(null);
         }
     }

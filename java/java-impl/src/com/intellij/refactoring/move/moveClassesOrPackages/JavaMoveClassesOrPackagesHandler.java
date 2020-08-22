@@ -32,6 +32,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -49,6 +50,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RadioUpDownListener;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -187,7 +189,7 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
                                                    PsiElement targetContainer,
                                                    MoveCallback callback,
                                                    PsiDirectory[] directories,
-                                                   String prompt) {
+                                                   @NlsContexts.DialogMessage String prompt) {
     final PsiPackage aPackage = JavaDirectoryService.getInstance().getPackage(directories[0]);
     LOG.assertTrue(aPackage != null);
     final PsiDirectory[] projectDirectories = aPackage.getDirectories(GlobalSearchScope.projectScope(project));
@@ -313,7 +315,7 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
   }
 
   @Nullable
-  private static String getPromptToMoveDirectoryLibrariesSafe(PsiElement @Nullable [] elements) {
+  private static @Nls String getPromptToMoveDirectoryLibrariesSafe(PsiElement @Nullable [] elements) {
     if (elements == null || elements.length != 1) return null;
     final Project project = elements[0].getProject();
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
@@ -332,9 +334,7 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
       inLib |= !fileIndex.isInContent(psiDirectory.getVirtualFile());
     }
 
-    return inLib ? "Package '" +
-                   aPackage.getName() +
-                   "' contains directories in libraries which cannot be moved. Do you want to move current directory" : null;
+    return inLib ? RefactoringBundle.message("dialog.message.move.dirs", aPackage.getName()) : null;
   }
 
   private static boolean canMoveOrRearrangePackages(PsiElement[] elements) {

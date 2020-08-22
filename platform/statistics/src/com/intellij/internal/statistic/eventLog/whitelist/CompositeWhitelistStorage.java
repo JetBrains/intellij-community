@@ -1,7 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.whitelist;
 
-import com.intellij.internal.statistic.eventLog.validator.rules.beans.WhiteListGroupRules;
+import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,8 +19,8 @@ public class CompositeWhitelistStorage implements WhitelistGroupRulesStorage, Wh
 
   @Nullable
   @Override
-  public WhiteListGroupRules getGroupRules(@NotNull String groupId) {
-    final WhiteListGroupRules testGroupRules = myWhitelistTestGroupStorage.getGroupRules(groupId);
+  public EventGroupRules getGroupRules(@NotNull String groupId) {
+    final EventGroupRules testGroupRules = myWhitelistTestGroupStorage.getGroupRules(groupId);
     if (testGroupRules != null) {
       return testGroupRules;
     }

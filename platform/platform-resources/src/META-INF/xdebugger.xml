@@ -19,6 +19,9 @@
     <applicationService serviceInterface="com.intellij.xdebugger.XDebuggerUtil"
                         serviceImplementation="com.intellij.xdebugger.impl.XDebuggerUtilImpl"/>
 
+    <projectService serviceInterface="com.intellij.ui.XDebugSessionService"
+                    serviceImplementation="com.intellij.xdebugger.impl.ui.XDebugSessionServiceImpl"/>
+
     <projectService serviceInterface="com.intellij.xdebugger.XDebuggerManager"
                     serviceImplementation="com.intellij.xdebugger.impl.XDebuggerManagerImpl"
                     preload="notLightEdit"/>
@@ -43,7 +46,7 @@
 
     <virtualFileSystem key="lazyAttachVfs" implementationClass="com.intellij.xdebugger.attach.fs.LazyAttachVirtualFS"/>
 
-    <statistics.validation.customWhiteListRule implementation="com.intellij.xdebugger.impl.breakpoints.BreakpointsUtilValidator"/>
+    <statistics.validation.customValidationRule implementation="com.intellij.xdebugger.impl.breakpoints.BreakpointsUtilValidator"/>
     <statistics.projectUsagesCollector implementation="com.intellij.xdebugger.impl.breakpoints.BreakpointsStatisticsCollector"/>
     <statistics.counterUsagesCollector groupId="debugger.breakpoints.usage" version="2"/>
     <statistics.counterUsagesCollector groupId="debugger.evaluate.usage" version="1"/>
@@ -69,7 +72,8 @@
     <projectService serviceImplementation="com.intellij.xdebugger.memory.component.InstancesTracker" />
 
     <titleInfoProvider implementation="com.intellij.xdebugger.impl.ui.DebuggerTitleInfoProvider"/>
-    <notificationWhitelist groupIds="Debugger messages;Attach to Process action"/>
+    <notificationGroup id="Debugger messages" displayType="TOOL_WINDOW" toolWindowId="Debug" isLogByDefault="false"/>
+    <notificationGroup id="Attach to Process action" displayType="BALLOON"/>
   </extensions>
 
   <actions>

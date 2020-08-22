@@ -39,7 +39,8 @@ public class PyFStringLikeCompletionContributor extends CompletionContributor {
 
   private static final PsiElementPattern.Capture<PyPlainStringElement> INSIDE_NON_FORMATTED_STRING_ELEMENT =
     psiElement(PyPlainStringElement.class)
-    .andNot(psiElement().inside(PyStringFormatCompletionContributor.FORMAT_STRING_CAPTURE));
+      .withParent(PyStringLiteralExpression.class)
+      .andNot(psiElement().inside(PyStringFormatCompletionContributor.FORMAT_STRING_CAPTURE));
 
   public PyFStringLikeCompletionContributor() {
     extend(CompletionType.BASIC, INSIDE_NON_FORMATTED_STRING_ELEMENT, new CompletionProvider<CompletionParameters>() {

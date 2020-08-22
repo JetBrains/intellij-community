@@ -82,14 +82,20 @@ public class Utils {
   }
 
   private static void tryDelete(Path path) throws IOException {
+    IOException lastError = null;
+
     for (int i = 0; i < 10; i++) {
       try {
-        if (Files.deleteIfExists(path) || !Files.exists(path)) {
-          Runner.logger().info("deleted: " + path);
-          return;
-        }
+        Files.delete(path);
+        Runner.logger().info("deleted: " + path);
+        return;
+      }
+      catch (NoSuchFileException e) {
+        Runner.logger().info("already deleted: " + path);
+        return;
       }
       catch (AccessDeniedException e) {
+        lastError = e;
         try {
           DosFileAttributeView view = Files.getFileAttributeView(path, DosFileAttributeView.class);
           if (view != null && view.readAttributes().isReadOnly()) {
@@ -99,12 +105,14 @@ public class Utils {
         }
         catch (IOException ignore) { }
       }
-      catch (IOException ignore) { }
+      catch (IOException e) {
+        lastError = e;
+      }
 
       pause(10);
     }
 
-    throw new IOException("Cannot delete: " + path);
+    throw new IOException("Cannot delete: " + path, lastError);
   }
 
   public static boolean isExecutable(File file) {
@@ -239,14 +247,14 @@ public class Utils {
 
   public static ZipEntry getZipEntry(ZipFile zipFile, String entryPath) throws IOException {
     ZipEntry entry = zipFile.getEntry(entryPath);
-    if (entry == null) throw new IOException("Entry " + entryPath + " not found");
+    if (entry == null) throw new FileNotFoundException("Entry " + entryPath + " not found");
     Runner.logger().info("entryPath: " + entryPath);
     return entry;
   }
 
   public static InputStream findEntryInputStreamForEntry(ZipFile zipFile, ZipEntry entry) throws IOException {
     if (entry.isDirectory()) return null;
-    // There is a bug in some JVM implementations where for a directory "X/" in a zipfile, if we do
+    // There is a bug in some JVM implementations where for a directory "X/" in a .zip file, if we do
     // "zip.getEntry("X/").isDirectory()" returns true, but if we do "zip.getEntry("X").isDirectory()" is false.
     // getEntry for "name" falls back to finding "X/", so here we make sure this didn't happen.
     if (zipFile.getEntry(entry.getName() + "/") != null) return null;
@@ -281,7 +289,7 @@ public class Utils {
     return normalize && isZipFile(file.getName()) ? new NormalizedZipInputStream(file) : new FileInputStream(file);
   }
 
-  private static class NormalizedZipInputStream extends InputStream {
+  private static final class NormalizedZipInputStream extends InputStream {
     private final ZipFile myZip;
     private final List<? extends ZipEntry> myEntries;
     private InputStream myStream = null;
@@ -337,6 +345,7 @@ public class Utils {
     @Override
     @SuppressWarnings("NonPrivateFieldAccessedInSynchronizedContext")
     public synchronized void writeTo(OutputStream out) throws IOException {
+      //noinspection UnnecessarilyQualifiedStaticUsage
       Utils.writeBytes(buf, count, out);
     }
   }

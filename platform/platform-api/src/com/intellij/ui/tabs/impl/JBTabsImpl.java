@@ -63,6 +63,8 @@ public class JBTabsImpl extends JComponent
              UISettingsListener, QuickActionProvider, MorePopupAware, Accessible {
 
   public static final boolean NEW_TABS = Registry.is("ide.editor.tabs.use.tabslayout");
+  public static final Key<Boolean> PINNED = Key.create("pinned");
+
   TabsLayout myTabsLayout;
   JPanel myTabContent;
 
@@ -1864,12 +1866,42 @@ public class JBTabsImpl extends JComponent
 
   protected List<TabInfo> getVisibleInfos() {
     if (!isAlphabeticalMode()) {
-      return myVisibleInfos;
+      return groupPinnedFirst(myVisibleInfos, null);
     } else {
       List<TabInfo> sortedCopy = new ArrayList<>(myVisibleInfos);
-      sortedCopy.sort(ABC_COMPARATOR);
-      return sortedCopy;
+      return groupPinnedFirst(sortedCopy, ABC_COMPARATOR);
     }
+  }
+
+  private static List<TabInfo> groupPinnedFirst(List<TabInfo> infos, @Nullable Comparator<TabInfo> comparator) {
+    int firstNotPinned = -1;
+    for (int i = 0; i < infos.size(); i++) {
+      TabInfo info = infos.get(i);
+      if (UIUtil.isClientPropertyTrue(info.getComponent(), PINNED)) {
+        if (firstNotPinned != -1) {
+          TabInfo tabInfo = infos.remove(firstNotPinned);
+          infos.add(firstNotPinned, info);
+          infos.set(i, tabInfo);
+          firstNotPinned++;
+        }
+      } else if (firstNotPinned == -1) {
+        firstNotPinned = i;
+      }
+    }
+
+    if (comparator != null) {
+      if (firstNotPinned != -1) {
+        List<TabInfo> pinned = infos.subList(0, firstNotPinned);
+        pinned.sort(comparator);
+        List<TabInfo> unpinned = infos.subList(firstNotPinned, infos.size());
+        unpinned.sort(comparator);
+        infos = new ArrayList<>(pinned);
+        infos.addAll(unpinned);
+      } else {
+        infos.sort(comparator);
+      }
+    }
+    return infos;
   }
 
   protected LayoutPassInfo getLastLayoutPass() {
@@ -2510,7 +2542,7 @@ public class JBTabsImpl extends JComponent
       });
   }
 
-  private static class SelectPreviousAction extends BaseNavigationAction {
+  private static final class SelectPreviousAction extends BaseNavigationAction {
     private SelectPreviousAction(JBTabsImpl tabs, @NotNull Disposable parentDisposable) {
       super(IdeActions.ACTION_PREVIOUS_TAB, tabs, parentDisposable);
     }

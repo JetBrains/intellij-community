@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.log;
 
 import com.intellij.openapi.components.ServiceManager;
@@ -22,11 +22,10 @@ import java.util.Set;
 import static com.intellij.openapi.vcs.Executor.cd;
 
 public abstract class GitRefManagerTest extends GitSingleRepoTest {
-
   @NotNull
   protected Collection<VcsRef> given(String @NotNull ... refs) {
     Collection<VcsRef> result = new ArrayList<>();
-    cd(projectRoot);
+    cd(getProjectRoot());
     Hash hash = HashImpl.build(git("rev-parse HEAD"));
     for (String refName : refs) {
       if (isHead(refName)) {
@@ -52,7 +51,7 @@ public abstract class GitRefManagerTest extends GitSingleRepoTest {
 
   @NotNull
   protected List<VcsRef> expect(String @NotNull ... refNames) {
-    final Set<VcsRef> refs = GitTestUtil.readAllRefs(this, projectRoot, ServiceManager.getService(myProject, VcsLogObjectsFactory.class));
+    final Set<VcsRef> refs = GitTestUtil.readAllRefs(this, getProjectRoot(), ServiceManager.getService(myProject, VcsLogObjectsFactory.class));
     return ContainerUtil.map2List(refNames, refName -> {
       VcsRef item = ContainerUtil.find(refs, ref -> ref.getName().equals(GitBranchUtil.stripRefsPrefix(refName)));
       assertNotNull("Ref " + refName + " not found among " + refs, item);
@@ -73,11 +72,11 @@ public abstract class GitRefManagerTest extends GitSingleRepoTest {
   }
 
   private VcsRef ref(Hash hash, String name, VcsRefType type) {
-    return new VcsRefImpl(hash, name, type, projectRoot);
+    return new VcsRefImpl(hash, name, type, getProjectRoot());
   }
 
   private void setUpTracking(@NotNull Collection<? extends VcsRef> refs) {
-    cd(projectRoot);
+    cd(getProjectRoot());
     for (final VcsRef ref : refs) {
       if (ref.getType() == GitRefManager.LOCAL_BRANCH) {
         final String localBranch = ref.getName();

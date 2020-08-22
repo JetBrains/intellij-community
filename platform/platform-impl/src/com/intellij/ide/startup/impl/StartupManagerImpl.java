@@ -41,12 +41,15 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+@SuppressWarnings("IncorrectParentDisposable")
 @ApiStatus.Internal
 public class StartupManagerImpl extends StartupManagerEx {
   private static final Logger LOG = Logger.getInstance(StartupManagerImpl.class);
@@ -59,6 +62,7 @@ public class StartupManagerImpl extends StartupManagerEx {
 
   @MagicConstant(intValues = {0, DUMB_AWARE_PASSED, ALL_PASSED})
   private volatile int postStartupActivitiesPassed;
+  private final CompletableFuture<Object> allActivitiesPassed = new CompletableFuture<>();
 
   private static final int DUMB_AWARE_PASSED = 1;
   private static final int ALL_PASSED = 2;
@@ -119,6 +123,11 @@ public class StartupManagerImpl extends StartupManagerEx {
   @Override
   public boolean postStartupActivityPassed() {
     return postStartupActivitiesPassed == ALL_PASSED;
+  }
+
+  @Override
+  public @NotNull Future<Object> getAllActivitiesPassedFuture() {
+    return allActivitiesPassed;
   }
 
   public final void projectOpened(@Nullable ProgressIndicator indicator) {
@@ -199,7 +208,7 @@ public class StartupManagerImpl extends StartupManagerEx {
 
     PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
     // strictly speaking, the activity is not sequential, because sub-activities are performed in different threads
-    // (depending on dumb-awareness), but because there is no other concurrent phase,
+    // (depending on dumb-awareness), but because there is no other concurrent phase,ur
     // we measure it as a sequential activity to put it on the timeline and make clear what's going on the end (avoid last "unknown" phase)
     Activity dumbAwareActivity = StartUpMeasurer.startMainActivity(Activities.PROJECT_DUMB_POST_START_UP_ACTIVITIES);
 
@@ -254,7 +263,13 @@ public class StartupManagerImpl extends StartupManagerEx {
       public void extensionAdded(@NotNull StartupActivity extension, @NotNull PluginDescriptor pluginDescriptor) {
         StartupManagerImpl startupManager = ((StartupManagerImpl)getInstance(project));
         if (DumbService.isDumbAware(extension)) {
-          startupManager.runActivity(new AtomicBoolean(), extension, pluginDescriptor, ProgressIndicatorProvider.getGlobalProgressIndicator());
+          AppExecutorUtil.getAppExecutorService().execute(() -> {
+            if (!project.isDisposed()) {
+              BackgroundTaskUtil.runUnderDisposeAwareIndicator(project, () -> {
+                startupManager.runActivity(null, extension, pluginDescriptor, ProgressManager.getInstance().getProgressIndicator());
+              });
+            }
+          });
         }
         else {
           DumbService.getInstance(project).unsafeRunWhenSmart(() -> {
@@ -325,6 +340,7 @@ public class StartupManagerImpl extends StartupManagerEx {
         synchronized (myLock) {
           if (postStartupActivities.isEmpty()) {
             postStartupActivitiesPassed = ALL_PASSED;
+            allActivitiesPassed.complete(null);
             return;
           }
         }
@@ -337,6 +353,7 @@ public class StartupManagerImpl extends StartupManagerEx {
         }
         else {
           postStartupActivitiesPassed = ALL_PASSED;
+          allActivitiesPassed.complete(null);
         }
       }
     });

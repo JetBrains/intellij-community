@@ -36,7 +36,6 @@ import com.intellij.util.ObjectUtils
 import com.intellij.util.SmartList
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.UIUtil
-import gnu.trove.THashMap
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.function.Predicate
@@ -46,7 +45,7 @@ private val EXECUTOR_KEY: Key<Executor> = Key.create("Executor")
 private val CLOSE_LISTENER_KEY: Key<ContentManagerListener> = Key.create("CloseListener")
 
 class RunContentManagerImpl(private val project: Project) : RunContentManager {
-  private val toolWindowIdToBaseIcon: MutableMap<String, Icon> = THashMap()
+  private val toolWindowIdToBaseIcon: MutableMap<String, Icon> = HashMap()
   private val toolWindowIdZBuffer = ConcurrentLinkedDeque<String>()
 
   init {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diff.impl;
 
 import com.intellij.diff.FrameDiffTool;
@@ -54,7 +54,7 @@ public class DiffPanelImpl implements DiffViewer {
     return null;
   }
 
-  private static class MyDiffRequestProcessor extends DiffRequestProcessor {
+  private static final class MyDiffRequestProcessor extends DiffRequestProcessor {
     @NotNull private final DiffRequest myRequest;
 
     private MyDiffRequestProcessor(@Nullable Project project, @NotNull DiffRequest request) {

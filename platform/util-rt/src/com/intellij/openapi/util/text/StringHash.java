@@ -113,6 +113,10 @@ public final class StringHash {
   private StringHash() {
   }
 
+  public static long calc(String arg) {
+    return buz(arg);
+  }
+
   /**
    * Calculates hash value of string using buzhash algorithm.
    * See http://www.serve.net/buz/hash.adt/java.008.html for details.
@@ -120,7 +124,7 @@ public final class StringHash {
    * @param arg string to calculate hash value upon
    * @return calculated hash value
    */
-  public static long calc(String arg) {
+  public static long buz(CharSequence arg) {
     if (arg == null) return 0;
     long h = initialHash;
     for (int i = 0; i < arg.length(); ++i) {
@@ -133,7 +137,7 @@ public final class StringHash {
    * Calculates hash value of byte array buzhash algorithm.
    * See http://www.serve.net/buz/hash.adt/java.008.html for details.
    *
-   * @param arg byte arrayg to calculate hash value upon
+   * @param arg byte array to calculate hash value upon
    * @return calculated hash value
    */
   public static long calc(byte[] arg) {
@@ -145,7 +149,11 @@ public final class StringHash {
     return h;
   }
 
-  public static int murmur(String data, int seed) {
+  public static int murmur(CharSequence data) {
+    return murmur(data, 31);
+  }
+
+  public static int murmur(CharSequence data, int seed) {
     final int length = data.length();
     // 'm' and 'r' are mixing constants generated offline.
     // They're not really 'magic', they just happen to work well.

@@ -101,7 +101,7 @@ public class FirstInBranch {
     }
   }
 
-  private class BranchPoint {
+  private final class BranchPoint {
     @NotNull private final Target myTarget;
     @Nullable private LogEntry myEntry;
     @Nullable private LogEntryPath myPath;

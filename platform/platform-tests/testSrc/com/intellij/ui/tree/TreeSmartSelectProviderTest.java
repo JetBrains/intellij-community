@@ -1,7 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree;
 
+import com.intellij.testFramework.TestApplicationManager;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import javax.swing.JTree;
@@ -58,6 +60,11 @@ public class TreeSmartSelectProviderTest {
       select(tree, row);
       testDecrease(tree, expected, expected);
     });
+  }
+
+  @Before
+  public void setUp() {
+    TestApplicationManager.getInstance();
   }
 
   @Test
@@ -714,6 +721,7 @@ public class TreeSmartSelectProviderTest {
                                node("fooo")),
                           node("zar.txt"),
                           node("zoo.txt")))))));
+    TreeTestUtil.assertTreeUI(tree);
     expandAll(tree);
     waitForTestOnEDT(() -> {
       tree.setSelectionRow(10);
@@ -814,6 +822,7 @@ public class TreeSmartSelectProviderTest {
   private static void test(int selectionMode, boolean rootVisible, Consumer<? super JTree> consumer) {
     @SuppressWarnings("UndesirableClassUsage")
     JTree tree = new JTree(new DefaultTreeModel(root()));
+    TreeTestUtil.assertTreeUI(tree);
     tree.getSelectionModel().setSelectionMode(selectionMode);
     tree.setRootVisible(rootVisible);
     expandAll(tree);

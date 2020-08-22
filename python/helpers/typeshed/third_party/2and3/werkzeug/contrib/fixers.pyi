@@ -1,5 +1,5 @@
 from typing import Any, Iterable, List, Mapping, Optional, Sequence, Set, Text
-from wsgiref.types import WSGIApplication, WSGIEnvironment, StartResponse
+from _typeshed.wsgi import WSGIApplication, WSGIEnvironment, StartResponse
 
 from ..middleware.proxy_fix import ProxyFix as ProxyFix
 

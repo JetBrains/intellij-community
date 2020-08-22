@@ -23,7 +23,8 @@ import java.lang.annotation.Target;
 /**
  * Used to indicate that a method should be called in background thread
  */
-@Retention(RetentionPolicy.SOURCE)
+@Retention(RetentionPolicy.CLASS)
 @Target({ElementType.METHOD, ElementType.CONSTRUCTOR, ElementType.PARAMETER})
 public @interface CalledInBackground {
+  boolean instrument() default true;
 }

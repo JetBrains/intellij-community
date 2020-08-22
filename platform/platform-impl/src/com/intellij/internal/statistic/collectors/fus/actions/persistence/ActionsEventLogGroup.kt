@@ -3,6 +3,9 @@ package com.intellij.internal.statistic.collectors.fus.actions.persistence
 
 import com.intellij.internal.statistic.eventLog.*
 import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger.configVersion
+import com.intellij.internal.statistic.eventLog.events.EventField
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.eventLog.events.VarargEventId
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
 class ActionsEventLogGroup : CounterUsagesCollector() {
@@ -12,9 +15,10 @@ class ActionsEventLogGroup : CounterUsagesCollector() {
     const val ACTION_INVOKED_EVENT_ID = "action.invoked"
     @JvmField val GROUP = EventLogGroup("actions", configVersion)
     @JvmField val ACTION_ID = EventFields.String("action_id").withCustomRule("action")
-    @JvmField val ACTION_CLASS = EventFields.String("class").withCustomRule("class")
-    @JvmField val ACTION_PARENT = EventFields.String("parent").withCustomRule("class")
+    @JvmField val ACTION_CLASS = EventFields.String("class").withCustomRule("class_name")
+    @JvmField val ACTION_PARENT = EventFields.String("parent").withCustomRule("class_name")
     @JvmField val CONTEXT_MENU = EventFields.Boolean("context_menu")
+    @JvmField val DUMB = EventFields.Boolean("dumb")
 
     @JvmField val ADDITIONAL = EventFields.createAdditionalDataField(GROUP.id, ACTION_INVOKED_EVENT_ID)
     @JvmField val ACTION_INVOKED = registerActionInvokedEvent(GROUP, ACTION_INVOKED_EVENT_ID, ADDITIONAL)
@@ -28,6 +32,7 @@ class ActionsEventLogGroup : CounterUsagesCollector() {
         EventFields.ActionPlace,
         EventFields.CurrentFile,
         CONTEXT_MENU,
+        DUMB,
         ACTION_ID,
         ACTION_CLASS,
         ACTION_PARENT,

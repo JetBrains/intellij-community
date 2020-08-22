@@ -3,25 +3,27 @@ package org.jetbrains.plugins.github.authentication
 
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
-import git4idea.DialogManager
+import com.intellij.util.AuthData
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.CalledInAwt
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder
-import org.jetbrains.plugins.github.authentication.ui.GithubLoginDialog
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import java.awt.Component
+
+internal class GHAccountAuthData(val account: GithubAccount, login: String, token: String) : AuthData(login, token) {
+  val server: GithubServerPath get() = account.server
+  val token: String get() = password!!
+}
 
 /**
  * Entry point for interactions with Github authentication subsystem
  */
 class GithubAuthenticationManager internal constructor() {
-  private val accountManager: GithubAccountManager
-    get() = service()
+  private val accountManager: GithubAccountManager get() = service()
 
   @CalledInAny
   fun hasAccounts() = accountManager.accounts.isNotEmpty()
@@ -34,107 +36,93 @@ class GithubAuthenticationManager internal constructor() {
 
   @CalledInAwt
   @JvmOverloads
-  internal fun requestNewToken(account: GithubAccount, project: Project?, parentComponent: Component? = null): String? {
-    val dialog = GithubLoginDialog(GithubApiRequestExecutor.Factory.getInstance(), project, parentComponent,
-                                   message = GithubBundle.message("account.token.missing.for", account))
-      .withServer(account.server.toString(), false)
-      .withCredentials(account.name)
-      .withToken()
-
-    DialogManager.show(dialog)
-    if (!dialog.isOK) return null
-
-    val token = dialog.getToken()
-    account.name = dialog.getLogin()
-    accountManager.updateAccountToken(account, token)
-    return token
-  }
+  internal fun requestNewToken(account: GithubAccount, project: Project?, parentComponent: Component? = null): String? =
+    login(
+      project, parentComponent,
+      GHLoginRequest(
+        text = GithubBundle.message("account.token.missing.for", account),
+        server = account.server, login = account.name
+      )
+    )?.updateAccount(account)
 
   @CalledInAwt
   @JvmOverloads
-  fun requestNewAccount(project: Project?, parentComponent: Component? = null): GithubAccount? {
-    val dialog = GithubLoginDialog(GithubApiRequestExecutor.Factory.getInstance(), project, parentComponent, ::isAccountUnique)
-    DialogManager.show(dialog)
-    if (!dialog.isOK) return null
-
-    return registerAccount(dialog.getLogin(), dialog.getServer(), dialog.getToken())
-  }
+  fun requestNewAccount(project: Project?, parentComponent: Component? = null): GithubAccount? =
+    login(
+      project, parentComponent,
+      GHLoginRequest(isCheckLoginUnique = true)
+    )?.registerAccount()
 
   @CalledInAwt
   @JvmOverloads
-  fun requestNewAccountForServer(server: GithubServerPath, project: Project?, parentComponent: Component? = null): GithubAccount? {
-    val dialog = GithubLoginDialog(GithubApiRequestExecutor.Factory.getInstance(), project, parentComponent, ::isAccountUnique).withServer(server.toUrl(), false)
-    DialogManager.show(dialog)
-    if (!dialog.isOK) return null
-
-    return registerAccount(dialog.getLogin(), dialog.getServer(), dialog.getToken())
-  }
+  fun requestNewAccountForServer(server: GithubServerPath, project: Project?, parentComponent: Component? = null): GithubAccount? =
+    login(
+      project, parentComponent,
+      GHLoginRequest(server = server, isCheckLoginUnique = true)
+    )?.registerAccount()
 
   @CalledInAwt
   @JvmOverloads
-  fun requestNewAccountForServer(server: GithubServerPath,
-                                 login: String,
-                                 project: Project?,
-                                 parentComponent: Component? = null): GithubAccount? {
-    val dialog = GithubLoginDialog(GithubApiRequestExecutor.Factory.getInstance(), project, parentComponent, ::isAccountUnique)
-      .withServer(server.toUrl(), false)
-      .withCredentials(login, editableLogin = false)
-    DialogManager.show(dialog)
-    if (!dialog.isOK) return null
+  fun requestNewAccountForServer(
+    server: GithubServerPath,
+    login: String,
+    project: Project?,
+    parentComponent: Component? = null
+  ): GithubAccount? =
+    login(
+      project, parentComponent,
+      GHLoginRequest(server = server, login = login, isLoginEditable = false, isCheckLoginUnique = true)
+    )?.registerAccount()
 
-    return registerAccount(dialog.getLogin(), dialog.getServer(), dialog.getToken())
-  }
-
-  internal fun isAccountUnique(name: String,
-                               server: GithubServerPath) = accountManager.accounts.none { it.name == name && it.server == server }
+  internal fun isAccountUnique(name: String, server: GithubServerPath) =
+    accountManager.accounts.none { it.name == name && it.server.equals(server, true) }
 
   @CalledInAwt
   @JvmOverloads
-  fun requestReLogin(account: GithubAccount, project: Project?, parentComponent: Component? = null): Boolean {
-    val dialog = GithubLoginDialog(GithubApiRequestExecutor.Factory.getInstance(), project, parentComponent)
-      .withServer(account.server.toString(), false)
-      .withCredentials(account.name)
+  fun requestReLogin(account: GithubAccount, project: Project?, parentComponent: Component? = null): Boolean =
+    login(
+      project, parentComponent,
+      GHLoginRequest(server = account.server, login = account.name)
+    )?.updateAccount(account) != null
 
-    DialogManager.show(dialog)
-    if (!dialog.isOK) return false
+  @CalledInAwt
+  internal fun login(project: Project?, parentComponent: Component?, request: GHLoginRequest): GHAccountAuthData? {
+    val isGH = request.server?.isGithubDotCom
 
-    val token = dialog.getToken()
-    account.name = dialog.getLogin()
-    accountManager.updateAccountToken(account, token)
-    return true
+    return when {
+      isGH == false -> request.loginWithToken(project, parentComponent)
+      isGH == true && isOAuthEnabled() -> request.loginWithOAuthOrToken(project, parentComponent)
+      else -> request.loginWithPasswordOrToken(project, parentComponent)
+    }
   }
 
   @CalledInAwt
-  internal fun removeAccount(githubAccount: GithubAccount) {
-    accountManager.accounts -= githubAccount
+  internal fun removeAccount(account: GithubAccount) {
+    accountManager.accounts -= account
   }
 
   @CalledInAwt
-  internal fun updateAccountToken(account: GithubAccount, newToken: String) {
+  internal fun updateAccountToken(account: GithubAccount, newToken: String) =
     accountManager.updateAccountToken(account, newToken)
-  }
 
-  private fun registerAccount(name: String, server: GithubServerPath, token: String): GithubAccount {
-    val account = GithubAccountManager.createAccount(name, server)
+  @CalledInAwt
+  internal fun registerAccount(name: String, server: GithubServerPath, token: String): GithubAccount =
+    registerAccount(GithubAccountManager.createAccount(name, server), token)
+
+  @CalledInAwt
+  internal fun registerAccount(account: GithubAccount, token: String): GithubAccount {
     accountManager.accounts += account
     accountManager.updateAccountToken(account, token)
     return account
   }
 
-  @CalledInAwt
-  internal fun registerAccount(name: String, host: String, token: String): GithubAccount {
-    return registerAccount(name, GithubServerPath.from(host), token)
-  }
-
   @TestOnly
   fun clearAccounts() {
-    for (account in accountManager.accounts) accountManager.updateAccountToken(account, null)
     accountManager.accounts = emptySet()
   }
 
-  fun getDefaultAccount(project: Project): GithubAccount? {
-    return project.service<GithubProjectDefaultAccountHolder>().account
-  }
+  fun getDefaultAccount(project: Project): GithubAccount? =
+    project.service<GithubProjectDefaultAccountHolder>().account
 
   @TestOnly
   fun setDefaultAccount(project: Project, account: GithubAccount?) {
@@ -143,26 +131,24 @@ class GithubAuthenticationManager internal constructor() {
 
   @CalledInAwt
   @JvmOverloads
-  fun ensureHasAccounts(project: Project?, parentComponent: Component? = null): Boolean {
-    if (!hasAccounts()) {
-      if (requestNewAccount(project, parentComponent) == null) {
-        return false
-      }
-    }
-    return true
-  }
+  fun ensureHasAccounts(project: Project?, parentComponent: Component? = null): Boolean =
+    hasAccounts() || requestNewAccount(project, parentComponent) != null
 
-  fun getSingleOrDefaultAccount(project: Project): GithubAccount? {
-    project.service<GithubProjectDefaultAccountHolder>().account?.let { return it }
-    val accounts = accountManager.accounts
-    if (accounts.size == 1) return accounts.first()
-    return null
-  }
+  fun getSingleOrDefaultAccount(project: Project): GithubAccount? =
+    project.service<GithubProjectDefaultAccountHolder>().account
+    ?: accountManager.accounts.singleOrNull()
 
   companion object {
     @JvmStatic
-    fun getInstance(): GithubAuthenticationManager {
-      return service()
-    }
+    fun getInstance(): GithubAuthenticationManager = service()
   }
+}
+
+private fun GHAccountAuthData.registerAccount(): GithubAccount =
+  GithubAuthenticationManager.getInstance().registerAccount(login, server, token)
+
+private fun GHAccountAuthData.updateAccount(account: GithubAccount): String {
+  account.name = login
+  GithubAuthenticationManager.getInstance().updateAccountToken(account, token)
+  return token
 }

@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * This policy is to create a duplicate {@code toString} method.
  */
-public class DuplicatePolicy implements ConflictResolutionPolicy {
+public final class DuplicatePolicy implements ConflictResolutionPolicy {
 
   private static final DuplicatePolicy instance = new DuplicatePolicy();
   private InsertNewMethodStrategy newMethodStrategy = InsertAtCaretStrategy.getInstance();

@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.codeInsight;
 
+import com.intellij.testFramework.TestDataFile;
 import com.intellij.testFramework.TestDataPath;
 import org.jetbrains.idea.devkit.DevkitJavaTestsUtil;
 import org.jetbrains.idea.devkit.inspections.PluginModuleTestCase;
@@ -21,14 +22,38 @@ public class PluginXmlPluginModuleTest extends PluginModuleTestCase {
   }
 
   public void testPluginWithoutVersionInPluginModule() {
-    myFixture.testHighlighting(false, false, false, "pluginWithoutVersionInPluginModule.xml");
+    doHighlightingTest("pluginWithoutVersionInPluginModule.xml");
+  }
+
+  public void testListeners() {
+    myFixture.addClass("public class MyCollectionWithoutDefaultCTOR implements java.util.Collection {" +
+                       " public MyCollectionWithoutDefaultCTOR(String something) {}" +
+                       "}");
+    doHighlightingTest("Listeners.xml");
   }
 
   public void testListenersNoSinceBuild() {
-    myFixture.testHighlighting(false, false, false, "ListenersNoSinceBuild.xml");
+    doHighlightingTest("ListenersNoSinceBuild.xml");
   }
 
   public void testListenersNoPluginIdStandalone() {
-    myFixture.testHighlighting(false, false, false, "ListenersNoPluginIdStandalone.xml");
+    doHighlightingTest("ListenersNoPluginIdStandalone.xml");
+  }
+
+  public void testListenersPre193() {
+    doHighlightingTest("ListenersPre193.xml");
+  }
+
+  public void testListenersOsAttributePre201() {
+    doHighlightingTest("ListenersOsAttributePre201.xml");
+  }
+
+  public void testListenersDepends() {
+    setPluginXml("ListenersDepends.xml");
+    doHighlightingTest("ListenersDepends-dependency.xml");
+  }
+
+  private void doHighlightingTest(@TestDataFile String path) {
+    myFixture.testHighlighting(false, false, false, path);
   }
 }

@@ -13,13 +13,13 @@ import com.intellij.psi.controlFlow.ControlFlow
 import com.intellij.psi.controlFlow.ControlFlowUtil.DEFAULT_EXIT_STATEMENTS_CLASSES
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
-import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor
+import com.intellij.refactoring.util.classMembers.ElementNeedsThis
 import com.siyeh.ig.psiutils.VariableAccessUtils
 import it.unimi.dsi.fastutil.ints.IntArrayList
 
 data class ExitDescription(val statements: List<PsiStatement>, val numberOfExits: Int, val hasSpecialExits: Boolean)
 data class ExternalReference(val variable: PsiVariable, val references: List<PsiReferenceExpression>)
-data class FieldUsage(val field: PsiField, val classMemberReference: PsiReferenceExpression, val isWrite: Boolean)
+data class MemberUsage(val member: PsiMember, val reference: PsiReferenceExpression)
 
 class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
 
@@ -28,15 +28,14 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
   }
 
   private val codeFragment = ControlFlowUtil.findCodeFragment(elements.first())
-  private val flow: ControlFlow = createControlFlow(elements)
+  private val flow: ControlFlow = createControlFlow()
   private val flowRange = findFlowRange(flow, elements)
 
-  private fun createControlFlow(elements: List<PsiElement>): ControlFlow {
+  private fun createControlFlow(): ControlFlow {
     try {
       val fragmentToAnalyze: PsiElement = codeFragment
       val flowPolicy = LocalsControlFlowPolicy(fragmentToAnalyze)
-      val factory: ControlFlowFactory = ControlFlowFactory.getInstance(elements.first().project)
-      return factory.getControlFlow(fragmentToAnalyze, flowPolicy, false, false)
+      return ControlFlowFactory.getControlFlow(fragmentToAnalyze, flowPolicy, ControlFlowOptions.NO_CONST_EVALUATE)
     } catch (e: AnalysisCanceledException) {
       throw ExtractException(JavaRefactoringBundle.message("extract.method.control.flow.analysis.failed"), e.errorElement)
     }
@@ -118,14 +117,15 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
     return declaredVariables.intersect(externallyWrittenVariables).toList()
   }
 
-  fun findFieldUsages(targetClass: PsiClass, elements: List<PsiElement>): List<FieldUsage> {
-    val usedFields = ArrayList<FieldUsage>()
-    val visitor = object : ClassMemberReferencesVisitor(targetClass) {
+  fun findInstanceMemberUsages(targetClass: PsiClass, elements: List<PsiElement>): List<MemberUsage> {
+    val usedFields = ArrayList<MemberUsage>()
+    val visitor: ElementNeedsThis = object : ElementNeedsThis(targetClass) {
       override fun visitClassMemberReferenceElement(classMember: PsiMember, classMemberReference: PsiJavaCodeReferenceElement) {
-        val expression = PsiTreeUtil.getParentOfType(classMemberReference, PsiExpression::class.java, false)
-        if (classMember is PsiField && expression != null && classMemberReference is PsiReferenceExpression) {
-          usedFields += FieldUsage(classMember, classMemberReference, PsiUtil.isAccessedForWriting(expression))
+        val expression = PsiTreeUtil.getParentOfType(classMemberReference, PsiReferenceExpression::class.java, false)
+        if (expression != null && !classMember.hasModifierProperty(PsiModifier.STATIC)) {
+          usedFields += MemberUsage(classMember, expression)
         }
+        super.visitClassMemberReferenceElement(classMember, classMemberReference)
       }
     }
     elements.forEach { it.accept(visitor) }

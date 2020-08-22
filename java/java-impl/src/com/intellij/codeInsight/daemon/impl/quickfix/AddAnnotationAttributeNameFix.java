@@ -146,16 +146,7 @@ public class AddAnnotationAttributeNameFix extends LocalQuickFixAndIntentionActi
 
   @Nullable
   private static PsiClass getAnnotationClass(@NotNull PsiAnnotationParameterList parameterList) {
-    final PsiElement parent = parameterList.getParent();
-    if (parent instanceof PsiAnnotation) {
-      final PsiJavaCodeReferenceElement reference = ((PsiAnnotation)parent).getNameReferenceElement();
-      if (reference != null) {
-        final PsiElement resolved = reference.resolve();
-        if (resolved instanceof PsiClass && ((PsiClass)resolved).isAnnotationType()) {
-          return (PsiClass)resolved;
-        }
-      }
-    }
-    return null;
+    PsiElement parent = parameterList.getParent();
+    return parent instanceof PsiAnnotation ? ((PsiAnnotation)parent).resolveAnnotationType() : null;
   }
 }

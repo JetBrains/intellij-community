@@ -2,8 +2,6 @@
 @file:JvmName("Responses")
 package org.jetbrains.io
 
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.util.registry.Registry
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufAllocator
 import io.netty.buffer.ByteBufUtil
@@ -99,14 +97,6 @@ fun HttpResponseStatus.response(request: HttpRequest? = null, description: Strin
 @JvmOverloads
 fun HttpResponseStatus.send(channel: Channel, request: HttpRequest? = null, description: String? = null, extraHeaders: HttpHeaders? = null) {
   createStatusResponse(this, request, description).send(channel, request, extraHeaders)
-}
-
-fun HttpResponseStatus.orInSafeMode(safeStatus: HttpResponseStatus): HttpResponseStatus {
-  @Suppress("NullableBooleanElvis")
-  return when {
-    Registry.`is`("ide.http.server.response.actual.status", true) || ApplicationManager.getApplication()?.isUnitTestMode ?: false -> this
-    else -> safeStatus
-  }
 }
 
 internal fun createStatusResponse(responseStatus: HttpResponseStatus, request: HttpRequest?, description: String? = null): HttpResponse {

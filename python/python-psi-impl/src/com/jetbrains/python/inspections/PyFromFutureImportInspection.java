@@ -20,6 +20,7 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.inspections.quickfix.MoveFromFutureImportQuickFix;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -69,7 +70,7 @@ public class PyFromFutureImportInspection extends PyInspection {
                 continue;
               }
             }
-            registerProblem(node, "from __future__ imports must occur at the beginning of the file",
+            registerProblem(node, PyPsiBundle.message("INSP.from.future.import.from.future.imports.must.occur.at.beginning.file"),
                             new MoveFromFutureImportQuickFix());
             return;
           }

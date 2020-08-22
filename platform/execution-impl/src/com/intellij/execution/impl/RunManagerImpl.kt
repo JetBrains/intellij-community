@@ -42,7 +42,6 @@ import com.intellij.util.ThreeState
 import com.intellij.util.containers.*
 import com.intellij.util.getAttributeBooleanValue
 import com.intellij.util.text.UniqueNameGenerator
-import gnu.trove.THashMap
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import java.util.*
@@ -133,7 +132,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   @Suppress("LeakingThis")
   private val listManager = RunConfigurationListManagerHelper(this)
 
-  private val templateIdToConfiguration = THashMap<String, RunnerAndConfigurationSettingsImpl>()
+  private val templateIdToConfiguration = HashMap<String, RunnerAndConfigurationSettingsImpl>()
 
   // template configurations are not included here
   private val idToSettings: LinkedHashMap<String, RunnerAndConfigurationSettings>
@@ -145,7 +144,9 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   private var selectedConfigurationId: String? = null
   // RCs stored in arbitrary *.run.xml files are loaded a bit later than RCs from workspace and from .idea/runConfigurations.
   // This var helps if initially selected RC is a one from such file.
+  // Empty string means that there's no information about initially selected RC in workspace.xml => IDE should select any.
   private var notYetAppliedInitialSelectedConfigurationId: String? = null
+  private var selectedRCSetupScheduled: Boolean = false
 
   private val iconCache = TimedIconCache()
 
@@ -369,13 +370,21 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
           addConfiguration(runConfig)
 
           if (!StartupManager.getInstance(project).postStartupActivityPassed()) {
-            if (notYetAppliedInitialSelectedConfigurationId != null &&
-                runConfig.uniqueID == notYetAppliedInitialSelectedConfigurationId) {
+            // Empty string means that there's no information about initially selected RC in workspace.xml => IDE should select any.
+            if (!selectedRCSetupScheduled && (notYetAppliedInitialSelectedConfigurationId == runConfig.uniqueID ||
+                                              notYetAppliedInitialSelectedConfigurationId == "" && runConfig.type.isManaged)) {
+              selectedRCSetupScheduled = true
               // Project is being loaded. Finally we can set the right RC as 'selected' in the RC combo box.
               // Need to set selectedConfiguration in EDT to avoid deadlock with ExecutionTargetManagerImpl or similar implementations of runConfigurationSelected()
-              notYetAppliedInitialSelectedConfigurationId = null
-              StartupManager.getInstance(project).runAfterOpened{
-                GuiUtils.invokeLaterIfNeeded(Runnable { selectedConfiguration = runConfig }, ModalityState.NON_MODAL, project.disposed)
+              StartupManager.getInstance(project).runAfterOpened {
+                GuiUtils.invokeLaterIfNeeded(Runnable {
+                  // Empty string means that there's no information about initially selected RC in workspace.xml
+                  // => IDE should select any if still none selected (CLion could have set the selected RC itself).
+                  if (selectedConfiguration == null || notYetAppliedInitialSelectedConfigurationId != "") {
+                    selectedConfiguration = runConfig
+                  }
+                  notYetAppliedInitialSelectedConfigurationId = null
+                }, ModalityState.NON_MODAL, project.disposed)
               }
             }
           }
@@ -691,7 +700,9 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
           }
         }
 
-        lock.write {  templateIdToConfiguration.retainEntries { _, settings -> settings.type != extension } }
+        lock.write {
+          templateIdToConfiguration.values.removeIf(java.util.function.Predicate { it.type == extension })
+        }
       }
     }, this)
 
@@ -702,7 +713,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
           settingsImpl.handleRunnerRemoved(extension)
         }
       }
-    }, project)
+    }, this)
   }
 
   override fun noStateLoaded() {
@@ -815,21 +826,9 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     }
 
     if (selectedConfiguration == null) {
-      notYetAppliedInitialSelectedConfigurationId = selectedConfigurationId
+      // Empty string means that there's no information about initially selected RC in workspace.xml => IDE should select any.
+      notYetAppliedInitialSelectedConfigurationId = selectedConfigurationId ?: "";
       selectedConfiguration = allSettings.firstOrNull { it.type.isManaged }
-
-      if (selectedConfiguration == null && notYetAppliedInitialSelectedConfigurationId == null) {
-        // This happens when there's exactly one RC in the project and it is stored in .run.xml file. It will be loaded later, and we need to set it as selected.
-        // This may also happen if there are several RCs but all stored in .run.xml files AND workspace.xml file is malformed or deleted or
-        // doesn't contain info about selected RC for any other reason. We'll set any RC as selected in this case.
-        StartupManager.getInstance(project).runAfterOpened {
-          GuiUtils.invokeLaterIfNeeded(Runnable {
-            if (selectedConfiguration == null) {
-              selectedConfiguration = allSettings.firstOrNull { it.type.isManaged }
-            }
-          }, ModalityState.NON_MODAL, project.disposed)
-        }
-      }
     }
   }
 
@@ -1071,7 +1070,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
     if (selectedConfiguration?.uniqueID == uniqueId) {
       iconCache.checkValidity(uniqueId)
     }
-    var icon = iconCache.get(uniqueId, settings, project)
+    var icon = iconCache.get(uniqueId, settings, project, this)
     if (withLiveIndicator) {
       val runningDescriptors = ExecutionManagerImpl.getInstance(project).getRunningDescriptors(Condition { it === settings })
       when {

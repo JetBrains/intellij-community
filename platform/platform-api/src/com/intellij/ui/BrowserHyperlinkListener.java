@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.ide.BrowserUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.HyperlinkEvent;
 
@@ -9,7 +10,7 @@ public class BrowserHyperlinkListener extends HyperlinkAdapter {
   public static final BrowserHyperlinkListener INSTANCE = new BrowserHyperlinkListener();
 
   @Override
-  protected void hyperlinkActivated(HyperlinkEvent e) {
+  protected void hyperlinkActivated(@NotNull HyperlinkEvent e) {
     BrowserUtil.browse(e.getDescription());
   }
 }

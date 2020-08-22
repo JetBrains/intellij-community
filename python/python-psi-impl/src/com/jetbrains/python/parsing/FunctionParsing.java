@@ -16,7 +16,6 @@
 package com.jetbrains.python.parsing;
 
 import com.intellij.lang.SyntaxTreeBuilder;
-import com.intellij.lang.WhitespacesBinders;
 import com.intellij.psi.tree.IElementType;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.PyTokenTypes;
@@ -83,15 +82,8 @@ public class FunctionParsing extends Parsing {
     while (myBuilder.getTokenType() == PyTokenTypes.AT) {
       SyntaxTreeBuilder.Marker decoratorMarker = myBuilder.mark();
       myBuilder.advanceLexer();
-      getStatementParser().parseDottedName();
-      if (myBuilder.getTokenType() == PyTokenTypes.LPAR) {
-        getExpressionParser().parseArgumentList();
-      }
-      else { // empty arglist node, so we always have it
-        SyntaxTreeBuilder.Marker argListMarker = myBuilder.mark();
-        argListMarker.setCustomEdgeTokenBinders(WhitespacesBinders.GREEDY_LEFT_BINDER, null);
-        argListMarker.done(PyElementTypes.ARGUMENT_LIST);
-      }
+
+      myContext.getFunctionParser().parseDecoratorExpression();
       if (atToken(PyTokenTypes.STATEMENT_BREAK)) {
         decoratorMarker.done(PyElementTypes.DECORATOR_CALL);
         nextToken();
@@ -105,6 +97,15 @@ public class FunctionParsing extends Parsing {
     if (decorated) decoListMarker.done(PyElementTypes.DECORATOR_LIST);
     //else decoListMarker.rollbackTo();
     parseDeclarationAfterDecorator(decoratorStartMarker);
+  }
+
+  /**
+   * Parses decorator expression after {@code @} according to PEP-614
+   */
+  public void parseDecoratorExpression() {
+    if (!getExpressionParser().parseSingleExpression(false)) {
+      myBuilder.error(message("PARSE.expected.expression"));
+    }
   }
 
   private void parseDeclarationAfterDecorator(SyntaxTreeBuilder.Marker endMarker) {
@@ -213,7 +214,7 @@ public class FunctionParsing extends Parsing {
         if (myContext.getLanguageLevel().isPython2()) {
           parameter.rollbackTo();
           parameter = myBuilder.mark();
-          advanceError(myBuilder, "Single star parameter is not supported in Python 2");
+          advanceError(myBuilder, message("PARSE.single.star.parameter.not.supported.py2"));
         }
         parameter.done(PyElementTypes.SINGLE_STAR_PARAMETER);
         return true;

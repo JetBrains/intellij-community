@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author vlan
  */
-public class PyABCUtil {
+public final class PyABCUtil {
   private PyABCUtil() {
   }
 
@@ -78,7 +78,7 @@ public class PyABCUtil {
       return isSized && hasIter && isContainer;
     }
     if (PyNames.ABC_MUTABLE_SET.equals(superClassName)) {
-      return isSized && hasIter && isContainer && 
+      return isSized && hasIter && isContainer &&
              hasMethod(subClass, "discard", inherited, context) &&
              hasMethod(subClass, "add", inherited, context);
     }

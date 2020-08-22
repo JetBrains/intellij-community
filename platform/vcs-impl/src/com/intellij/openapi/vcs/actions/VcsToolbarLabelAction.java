@@ -4,18 +4,13 @@ package com.intellij.openapi.vcs.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ex.ToolbarLabelAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
+import com.intellij.openapi.vcs.VcsBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
-
 public class VcsToolbarLabelAction extends ToolbarLabelAction {
-  private static final String DEFAULT_LABEL = "VCS:";
-
   @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
@@ -25,14 +20,11 @@ public class VcsToolbarLabelAction extends ToolbarLabelAction {
     e.getPresentation().setText(getConsolidatedVcsName(project));
   }
 
+  @NlsContexts.Label
   private static String getConsolidatedVcsName(@Nullable Project project) {
-    String name = DEFAULT_LABEL;
+    String name = VcsBundle.message("vcs.common.labels.vcs");
     if (project != null) {
-      AbstractVcs[] vcss = ProjectLevelVcsManager.getInstance(project).getAllActiveVcss();
-      List<String> ids = Arrays.stream(vcss).map(vcs -> vcs.getShortName()).distinct().collect(Collectors.toList());
-      if (ids.size() == 1) {
-        name = ids.get(0) + ":";
-      }
+      name = ProjectLevelVcsManager.getInstance(project).getConsolidatedVcsName() + ":";
     }
     return name;
   }

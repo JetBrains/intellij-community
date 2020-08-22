@@ -7,14 +7,16 @@ import com.intellij.codeInsight.NullableNotNullManager
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
+import com.intellij.psi.GenericsUtil
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.psi.util.PsiUtil
+import com.intellij.psi.util.TypeConversionUtil
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.findUsedTypeParameters
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.getExpressionType
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.guessName
-import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.hasExplicitModifier
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.haveReferenceToScope
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.inputParameterOf
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.normalizedAnchor
@@ -86,15 +88,16 @@ fun findExtractOptions(elements: List<PsiElement>): ExtractOptions {
 
   val targetClass = PsiTreeUtil.getParentOfType(ExtractMethodHelper.getValidParentOf(elements.first()), PsiClass::class.java)!!
 
-  val fieldUsages = analyzer.findFieldUsages(targetClass, elements)
-  val finalFieldsWrites = fieldUsages.filter { it.isWrite && it.field.hasExplicitModifier(PsiModifier.FINAL) }
-  val finalFields = finalFieldsWrites.map { it.field }.distinct()
-  val field = finalFields.singleOrNull()
+  val localWriteViolations = analyzer.findInstanceMemberUsages(targetClass, elements)
+    .filter { localUsage -> PsiUtil.isAccessedForWriting(localUsage.reference) && localUsage.member.hasModifierProperty(PsiModifier.FINAL) }
+
+  val fieldViolations = localWriteViolations.mapNotNull { it.member as? PsiField }.distinct()
+  val field = fieldViolations.singleOrNull()
   extractOptions = when {
-    finalFields.isEmpty() -> extractOptions
+    fieldViolations.isEmpty() -> extractOptions
     field != null && extractOptions.dataOutput is EmptyOutput ->
       extractOptions.copy(dataOutput = VariableOutput(field.type, field, false), requiredVariablesInside = listOf(field))
-    else -> throw ExtractException(JavaRefactoringBundle.message("extract.method.error.many.finals"), finalFieldsWrites.map { it.classMemberReference })
+    else -> throw ExtractException(JavaRefactoringBundle.message("extract.method.error.many.finals"), localWriteViolations.map { it.reference })
   }
 
   checkLocalClass(extractOptions)
@@ -141,21 +144,45 @@ private fun findFlowOutput(analyzer: CodeFragmentAnalyzer): FlowOutput? {
   }
 }
 
-private fun findOutputFromReturn(flowOutput: FlowOutput): ExpressionOutput? {
-  val returnExpressions = flowOutput.statements
+private fun findCommonType(first: PsiType, second: PsiType, nullability: Nullability, manager: PsiManager): PsiType? {
+  return if (TypeConversionUtil.isNumericType(first) && TypeConversionUtil.isNumericType(second) && nullability == Nullability.NOT_NULL) {
+    TypeConversionUtil.binaryNumericPromotion(first, second)
+  } else {
+    GenericsUtil.getLeastUpperBound(first, second, manager)
+  }
+}
+
+private fun findOutputFromReturn(returnStatements: List<PsiStatement>): ExpressionOutput? {
+  val returnExpressions = returnStatements
     .mapNotNull { statement -> (statement as? PsiReturnStatement)?.returnValue }
-    .sortedBy { returnStatement -> returnStatement.startOffset }
-  val returnType = returnExpressions.asSequence()
-                              .mapNotNull { expression -> expression.type }
-                              .filterNot { type -> type == PsiType.NULL }
-                              .firstOrNull()
+    .sortedBy { returnExpression -> returnExpression.startOffset }
+
+  val context = returnExpressions.firstOrNull() ?: return null
+  val manager = context.manager
+
   val variableName = returnExpressions.asSequence().map { expression -> guessName(expression) }.firstOrNull() ?: "x"
-  val nullability = CodeFragmentAnalyzer.inferNullability(returnExpressions)
-  return if (returnType != null) ExpressionOutput(returnType, variableName, returnExpressions, nullability) else null
+
+  val codeReturnType = PsiTypesUtil.getMethodReturnType(context) ?: PsiType.getJavaLangObject(manager, GlobalSearchScope.allScope(manager.project))
+  val nullability = if (codeReturnType is PsiPrimitiveType) {
+    Nullability.NOT_NULL
+  } else {
+    CodeFragmentAnalyzer.inferNullability(returnExpressions)
+  }
+
+  val inferredType = returnExpressions.map { it.type ?: PsiType.NULL }
+                    .reduce { commonType, type -> findCommonType(commonType, type, nullability, manager) ?: codeReturnType }
+
+  val returnType = when {
+    ! TypeConversionUtil.isAssignable(codeReturnType, inferredType) -> codeReturnType
+    inferredType is PsiPrimitiveType && nullability != Nullability.NOT_NULL -> inferredType.getBoxedType(context) ?: codeReturnType
+    else -> inferredType
+  }
+
+  return ExpressionOutput(returnType, variableName, returnExpressions, nullability)
 }
 
 private fun findFlowData(analyzer: CodeFragmentAnalyzer, flowOutput: FlowOutput): DataOutput? {
-  val returnOutput = findOutputFromReturn(flowOutput)
+  val returnOutput = findOutputFromReturn(flowOutput.statements)
   return when (flowOutput) {
     is ConditionalFlow -> when {
       returnOutput?.nullability == Nullability.NOT_NULL && returnOutput.type != PsiType.BOOLEAN -> returnOutput.copy(nullability = Nullability.NULLABLE)

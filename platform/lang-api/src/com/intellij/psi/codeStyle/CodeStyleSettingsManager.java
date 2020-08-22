@@ -98,7 +98,6 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
     if (project == null || project.isDefault()) {
       return getInstance();
     }
-
     return project.getService(ProjectCodeStyleSettingsManager.class);
   }
 
@@ -106,54 +105,49 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
     return ApplicationManager.getApplication().getService(AppCodeStyleSettingsManager.class);
   }
 
-  protected void registerExtensionPointListeners(@NotNull Disposable disposable) {
+  protected void registerExtensionPointListeners(@Nullable Disposable disposable) {
     FileIndentOptionsProvider.EP_NAME.addChangeListener(this::notifyCodeStyleSettingsChanged, disposable);
-    FileTypeIndentOptionsProvider.EP_NAME.addExtensionPointListener(
-      new ExtensionPointListener<FileTypeIndentOptionsProvider>() {
-        @Override
-        public void extensionAdded(@NotNull FileTypeIndentOptionsProvider extension,
+    FileTypeIndentOptionsProvider.EP_NAME.addExtensionPointListener(new ExtensionPointListener<FileTypeIndentOptionsProvider>() {
+      @Override
+      public void extensionAdded(@NotNull FileTypeIndentOptionsProvider extension,
+                                 @NotNull PluginDescriptor pluginDescriptor) {
+        registerFileTypeIndentOptions(getAllSettings(), extension.getFileType(), extension.createIndentOptions());
+      }
+
+      @Override
+      public void extensionRemoved(@NotNull FileTypeIndentOptionsProvider extension,
                                    @NotNull PluginDescriptor pluginDescriptor) {
-          registerFileTypeIndentOptions(getAllSettings(), extension.getFileType(), extension.createIndentOptions());
-        }
+        unregisterFileTypeIndentOptions(getAllSettings(), extension.getFileType());
+      }
+    }, disposable);
+    LanguageCodeStyleSettingsProvider.EP_NAME.addExtensionPointListener(new ExtensionPointListener<LanguageCodeStyleSettingsProvider>() {
+      @Override
+      public void extensionAdded(@NotNull LanguageCodeStyleSettingsProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
+        LanguageCodeStyleSettingsProvider.registerSettingsPageProvider(extension);
+        registerLanguageSettings(getAllSettings(), extension);
+        registerCustomSettings(getAllSettings(), extension);
+      }
 
-        @Override
-        public void extensionRemoved(@NotNull FileTypeIndentOptionsProvider extension,
-                                     @NotNull PluginDescriptor pluginDescriptor) {
-          unregisterFileTypeIndentOptions(getAllSettings(), extension.getFileType());
-        }
-      }, disposable);
-    LanguageCodeStyleSettingsProvider.EP_NAME.addExtensionPointListener(
-      new ExtensionPointListener<LanguageCodeStyleSettingsProvider>() {
-        @Override
-        public void extensionAdded(@NotNull LanguageCodeStyleSettingsProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
-          LanguageCodeStyleSettingsProvider.registerSettingsPageProvider(extension);
-          registerLanguageSettings(getAllSettings(), extension);
-          registerCustomSettings(getAllSettings(), extension);
-        }
+      @Override
+      public void extensionRemoved(@NotNull LanguageCodeStyleSettingsProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
+        LanguageCodeStyleSettingsProvider.unregisterSettingsPageProvider(extension);
+        unregisterLanguageSettings(getAllSettings(), extension);
+        unregisterCustomSettings(getAllSettings(), extension);
+      }
+    }, disposable);
+    CodeStyleSettingsProvider.EXTENSION_POINT_NAME.addExtensionPointListener(new ExtensionPointListener<CodeStyleSettingsProvider>() {
+      @Override
+      public void extensionAdded(@NotNull CodeStyleSettingsProvider extension,
+                                 @NotNull PluginDescriptor pluginDescriptor) {
+        registerCustomSettings(getAllSettings(), extension);
+      }
 
-        @Override
-        public void extensionRemoved(@NotNull LanguageCodeStyleSettingsProvider extension, @NotNull PluginDescriptor pluginDescriptor) {
-          LanguageCodeStyleSettingsProvider.unregisterSettingsPageProvider(extension);
-          unregisterLanguageSettings(getAllSettings(), extension);
-          unregisterCustomSettings(getAllSettings(), extension);
-        }
-      }, disposable
-    );
-    CodeStyleSettingsProvider.EXTENSION_POINT_NAME.addExtensionPointListener(
-      new ExtensionPointListener<CodeStyleSettingsProvider>() {
-        @Override
-        public void extensionAdded(@NotNull CodeStyleSettingsProvider extension,
+      @Override
+      public void extensionRemoved(@NotNull CodeStyleSettingsProvider extension,
                                    @NotNull PluginDescriptor pluginDescriptor) {
-          registerCustomSettings(getAllSettings(), extension);
-        }
-
-        @Override
-        public void extensionRemoved(@NotNull CodeStyleSettingsProvider extension,
-                                     @NotNull PluginDescriptor pluginDescriptor) {
-          unregisterCustomSettings(getAllSettings(), extension);
-        }
-      }, disposable
-    );
+        unregisterCustomSettings(getAllSettings(), extension);
+      }
+    }, disposable);
   }
 
   protected Collection<CodeStyleSettings> enumSettings() { return Collections.emptyList(); }
@@ -218,6 +212,8 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
     return getInstance(project).getCurrentSettings();
   }
 
+  protected void checkState() {}
+
   /**
    * @deprecated see comments for {@link #getSettings(Project)} or {@link CodeStyle#getDefaultSettings()}
    */
@@ -226,6 +222,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponentWithMod
   public CodeStyleSettings getCurrentSettings() {
     CodeStyleSettings temporarySettings = myTemporarySettings;
     if (temporarySettings != null) return temporarySettings;
+    checkState();
     CodeStyleSettings projectSettings = getMainProjectCodeStyle();
     if (USE_PER_PROJECT_SETTINGS && projectSettings != null) return projectSettings;
     return CodeStyleSchemes.getInstance().findPreferredScheme(PREFERRED_PROJECT_CODE_STYLE).getCodeStyleSettings();

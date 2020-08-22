@@ -25,7 +25,7 @@ class SplitIfTest extends GrIntentionTestCase {
   c();
 }
 ''',
-'Split into 2 if\'s',
+'Split into 2 \'if\' statements',
 '''if (a) {
     if (b) {
         c();
@@ -42,6 +42,6 @@ class SplitIfTest extends GrIntentionTestCase {
   d();
 }
 ''',
-'Split into 2 if\'s'
+'Split into 2 \'if\' statements'
   }
 }

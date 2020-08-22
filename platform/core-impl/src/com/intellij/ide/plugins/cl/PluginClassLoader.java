@@ -3,17 +3,15 @@ package com.intellij.ide.plugins.cl;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.lang.UrlClassLoader;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.awt.*;
 import java.io.File;
@@ -30,7 +28,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
-public final class PluginClassLoader extends UrlClassLoader {
+public final class PluginClassLoader extends UrlClassLoader implements PluginAwareClassLoader {
   static {
     if (registerAsParallelCapable()) {
       markParallelCapable(PluginClassLoader.class);
@@ -38,7 +36,7 @@ public final class PluginClassLoader extends UrlClassLoader {
   }
 
   private ClassLoader[] myParents;
-  private final IdeaPluginDescriptor myPluginDescriptor;
+  private final PluginDescriptor myPluginDescriptor;
   private final List<String> myLibDirectories;
 
   private final AtomicLong edtTime = new AtomicLong();
@@ -52,14 +50,14 @@ public final class PluginClassLoader extends UrlClassLoader {
 
   public PluginClassLoader(@NotNull List<URL> urls,
                            @NotNull ClassLoader @NotNull [] parents,
-                           @NotNull IdeaPluginDescriptor pluginDescriptor,
+                           @NotNull PluginDescriptor pluginDescriptor,
                            @Nullable Path pluginRoot) {
     this(build().urls(urls).allowLock().useCache(), parents, pluginDescriptor, pluginRoot);
   }
 
   public PluginClassLoader(@NotNull Builder builder,
                            @NotNull ClassLoader @NotNull [] parents,
-                           @NotNull IdeaPluginDescriptor pluginDescriptor,
+                           @NotNull PluginDescriptor pluginDescriptor,
                            @Nullable Path pluginRoot) {
     super(builder);
 
@@ -76,14 +74,17 @@ public final class PluginClassLoader extends UrlClassLoader {
     }
   }
 
+  @Override
   public long getEdtTime() {
     return edtTime.get();
   }
 
+  @Override
   public long getBackgroundTime() {
     return backgroundTime.get();
   }
 
+  @Override
   public long getLoadedClassCount() {
     return loadedClassCounter.get();
   }
@@ -223,17 +224,16 @@ public final class PluginClassLoader extends UrlClassLoader {
     return c;
   }
 
-  private static final Set<String> KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES = new HashSet<>(Arrays.asList(
+  private static final Set<String> KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES = ContainerUtil.set(
     "kotlin.sequences.Sequence",
     "kotlin.Lazy", "kotlin.Unit",
     "kotlin.Pair", "kotlin.Triple",
     "kotlin.jvm.internal.DefaultConstructorMarker",
     "kotlin.jvm.internal.ClassBasedDeclarationContainer",
     "kotlin.properties.ReadWriteProperty",
-    "kotlin.properties.ReadOnlyProperty"
-  ));
+    "kotlin.properties.ReadOnlyProperty");
 
-  private static boolean mustBeLoadedByPlatform(String className) {
+  private static boolean mustBeLoadedByPlatform(@NonNls String className) {
     if (className.startsWith("java.")) {
       return true;
     }
@@ -380,11 +380,13 @@ public final class PluginClassLoader extends UrlClassLoader {
     return null;
   }
 
+  @Override
   public @NotNull PluginId getPluginId() {
     return pluginId;
   }
 
-  public @NotNull IdeaPluginDescriptor getPluginDescriptor() {
+  @Override
+  public @NotNull PluginDescriptor getPluginDescriptor() {
     return myPluginDescriptor;
   }
 

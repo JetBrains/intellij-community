@@ -3,7 +3,6 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
 import com.intellij.facet.FacetFromExternalSourcesStorage
 import com.intellij.facet.FacetManager
-import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.components.impl.stores.IComponentStore
@@ -12,32 +11,32 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.ModuleImpl
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.externalSystem.ExternalSystemModulePropertyManagerBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetManagerBridge
-import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.FilePointerProvider
 import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.FilePointerProviderImpl
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.findModuleEntity
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageOnStorage
+import com.intellij.workspaceModel.storage.VersionedStorageChange
 import org.picocontainer.MutablePicoContainer
-import java.io.File
+import java.nio.file.Path
 
 internal class ModuleBridgeImpl(
   override var moduleEntityId: ModuleId,
   name: String,
   project: Project,
-  filePath: String?,
+  filePath: Path?,
   override var entityStorage: VersionedEntityStorage,
   override var diff: WorkspaceEntityStorageDiffBuilder?
-) : ModuleImpl(name, project, filePath), ModuleBridge {
-  private val directoryPath: String? = filePath?.let { File(it).parent }
-  private var vfsRefreshWasCalled = false
+) : ModuleImpl(name, project, filePath?.toString()), ModuleBridge {
+  internal val originalDirectoryPath: Path? = filePath?.parent
 
   init {
     // default project doesn't have modules
@@ -45,7 +44,7 @@ internal class ModuleBridgeImpl(
       val busConnection = project.messageBus.connect(this)
 
       WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(busConnection, object : WorkspaceModelChangeListener {
-        override fun beforeChanged(event: VersionedStorageChanged) {
+        override fun beforeChanged(event: VersionedStorageChange) {
           event.getChanges(ModuleEntity::class.java).filterIsInstance<EntityChange.Removed<ModuleEntity>>().forEach {
             if (it.entity.persistentId() == moduleEntityId) entityStorage = VersionedEntityStorageOnStorage(entityStorage.current)
           }
@@ -59,7 +58,7 @@ internal class ModuleBridgeImpl(
     super<ModuleImpl>.rename(newName, notifyStorage)
   }
 
-  override fun registerComponents(plugins: List<DescriptorToLoad>, listenerCallbacks: List<Runnable>?) {
+  override fun registerComponents(plugins: List<DescriptorToLoad>, listenerCallbacks: MutableList<in Runnable>?) {
     super.registerComponents(plugins, null)
 
     val corePlugin = plugins.asSequence().map { it.descriptor }.find { it.pluginId == PluginManagerCore.CORE_ID }
@@ -76,24 +75,8 @@ internal class ModuleBridgeImpl(
     }
   }
 
-  override fun getModuleFile(): VirtualFile? {
-    if (directoryPath == null) return null
-    val localFileSystem = LocalFileSystem.getInstance()
-    val moduleFile = File(moduleFilePath)
-    val fileWithoutRefresh = localFileSystem.findFileByIoFile(moduleFile)
-    // Call refreshAndFind only once if simple find's result was null on first call
-    return if (fileWithoutRefresh != null) {
-      vfsRefreshWasCalled = true
-      fileWithoutRefresh
-    } else {
-      if (vfsRefreshWasCalled) return null
-      vfsRefreshWasCalled = true
-      localFileSystem.refreshAndFindFileByIoFile(moduleFile)
-    }
-  }
-
   override fun getOptionValue(key: String): String? {
-    val moduleEntity = entityStorage.current.resolve(moduleEntityId)
+    val moduleEntity = entityStorage.current.findModuleEntity(this)
     if (key == Module.ELEMENT_TYPE) {
       return moduleEntity?.type
     }
@@ -127,7 +110,7 @@ internal class ModuleBridgeImpl(
 
     val diff = diff
     if (diff != null) {
-      val entity = entityStorage.current.resolve(moduleEntityId)
+      val entity = entityStorage.current.findModuleEntity(this)
       if (entity != null) {
         updateOptionInEntity(diff, entity)
       }
@@ -135,7 +118,7 @@ internal class ModuleBridgeImpl(
     else {
       WriteAction.runAndWait<RuntimeException> {
         WorkspaceModel.getInstance(project).updateProjectModel { builder ->
-          val entity = builder.resolve(moduleEntityId)
+          val entity = builder.findModuleEntity(this)
           if (entity != null) {
             updateOptionInEntity(builder, entity)
           }
@@ -147,6 +130,4 @@ internal class ModuleBridgeImpl(
   }
 
   override fun getOptionsModificationCount(): Long = 0
-
-  override fun getModuleFilePath(): String = directoryPath?.let { "$it/$name${ModuleFileType.DOT_DEFAULT_EXTENSION}" } ?: ""
 }

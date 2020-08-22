@@ -4,7 +4,7 @@ package com.intellij.openapi.options.ex;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.SearchableConfigurable;
-import org.jetbrains.annotations.Nls;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,14 +16,14 @@ public final class SortedConfigurableGroup
   implements SearchableConfigurable, Weighted, ConfigurableGroup, Configurable.NoScroll {
 
   private final String myId;
-  private final String myDisplayName;
-  private final String myDescription;
+  private final @NlsContexts.ConfigurableName String myDisplayName;
+  private final @NlsContexts.DetailedDescription String myDescription;
   private final String myHelpTopic;
   int myWeight; // see ConfigurableExtensionPointUtil.getConfigurableToReplace
 
   List<Configurable> myList = new ArrayList<>();
 
-  SortedConfigurableGroup(String id, String displayName, String description, String helpTopic, int weight) {
+  SortedConfigurableGroup(String id, @NlsContexts.ConfigurableName String displayName, @NlsContexts.DetailedDescription String description, String helpTopic, int weight) {
     myId = id;
     myDisplayName = displayName;
     myDescription = description;
@@ -57,13 +57,12 @@ public final class SortedConfigurableGroup
     return myWeight;
   }
 
-  @Nls
   @Override
   public String getDisplayName() {
     return myDisplayName;
   }
 
-  public String getDescription() {
+  public @NlsContexts.DetailedDescription String getDescription() {
     return myDescription;
   }
 }

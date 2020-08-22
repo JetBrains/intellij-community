@@ -92,6 +92,7 @@ class VcsLogStatusBarProgress(project: Project, logProviders: Map<VirtualFile, V
     override fun cancel() {
       val bigRepositoriesList = service<VcsLogBigRepositoriesList>()
       roots.forEach { bigRepositoriesList.addRepository(it) }
+      text2 = VcsLogBundle.message("vcs.log.status.bar.indexing.cancel.cancelling")
       LOG.info("Indexing for ${roots.map { it.presentableUrl }} was cancelled from the status bar.")
       super.cancel()
     }

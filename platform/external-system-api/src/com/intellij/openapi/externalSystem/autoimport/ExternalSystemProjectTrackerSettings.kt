@@ -10,17 +10,17 @@ interface ExternalSystemProjectTrackerSettings {
 
   enum class AutoReloadType {
     /**
-     * Auto-reload project after any changes to build files
+     * Reloads a project after any changes made to build script files
      */
     ALL,
 
     /**
-     * Auto-reload project after VCS updates and changes to build files made outside IDE
+     * Reloads a project after VCS updates and changes made to build script files outside the IDE
      */
     SELECTIVE,
 
     /**
-     * Don't auto-reload project
+     * Reloads a project only if cached data is corrupted, invalid or missing
      */
     NONE
   }

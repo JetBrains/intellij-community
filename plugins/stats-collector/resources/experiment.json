@@ -1,0 +1,82 @@
+{
+  "version": 2,
+  "groups": [
+    {
+      "number": 7,
+      "description": "Standard completion",
+      "useMLRanking": false,
+      "showArrows": false,
+      "calculateFeatures": true
+    },
+    {
+      "number": 8,
+      "description": "Default ML model without arrows",
+      "useMLRanking": true,
+      "showArrows": false,
+      "calculateFeatures": true
+    },
+    {
+      "number": 11,
+      "description": "Default ML model with arrows",
+      "useMLRanking": true,
+      "showArrows": true,
+      "calculateFeatures": true
+    },
+    {
+      "number": 12,
+      "description": "Standard completion without calculation features",
+      "useMLRanking": false,
+      "showArrows": false,
+      "calculateFeatures": false
+    },
+    {
+      "number": 13,
+      "description": "New ML model without arrows",
+      "useMLRanking": true,
+      "showArrows": false,
+      "calculateFeatures": true
+    }
+  ],
+  "languages": [
+    {
+      "id": "java",
+      "experimentBucketsCount": 16,
+      "includeGroups": [ 7, 8, 11, 12 ]
+    },
+    {
+      "id": "python",
+      "experimentBucketsCount": 8,
+      "includeGroups": [ 7, 8, 11, 12 ]
+    },
+    {
+      "id": "kotlin",
+      "experimentBucketsCount": 8,
+      "includeGroups": [ 7, 8, 11, 12, 13 ]
+    },
+    {
+      "id": "scala",
+      "experimentBucketsCount": 8,
+      "includeGroups": [ 7, 8, 11, 12, 13 ]
+    },
+    {
+      "id": "php",
+      "experimentBucketsCount": 8,
+      "includeGroups": [ 7, 8, 11, 12 ]
+    },
+    {
+      "id": "javascript",
+      "experimentBucketsCount": 8,
+      "includeGroups": [ 7, 8, 11, 12 ]
+    },
+    {
+      "id": "ruby",
+      "experimentBucketsCount": 2,
+      "includeGroups": [ 7, 8 ]
+    },
+    {
+      "id": "go",
+      "experimentBucketsCount": 8,
+      "includeGroups": [ 7, 8, 11, 12 ]
+    }
+  ]
+}

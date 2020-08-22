@@ -8,6 +8,7 @@ import com.intellij.openapi.vcs.update.UpdateInfoTree;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.ui.content.ContentManager;
 import org.jetbrains.annotations.CalledInAwt;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +37,7 @@ public abstract class ProjectLevelVcsManagerEx extends ProjectLevelVcsManager {
   @CalledInAwt
   @Nullable
   public abstract UpdateInfoTree showUpdateProjectInfo(UpdatedFiles updatedFiles,
-                                                       String displayActionName,
+                                                       @Nls String displayActionName,
                                                        ActionInfo actionInfo,
                                                        boolean canceled);
 

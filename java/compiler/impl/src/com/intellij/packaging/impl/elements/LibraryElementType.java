@@ -75,6 +75,6 @@ public class LibraryElementType extends ComplexPackagingElementType<LibraryPacka
 
   @Override
   public String getShowContentActionText() {
-    return "Show Library Files";
+    return JavaCompilerBundle.message("show.library.files");
   }
 }

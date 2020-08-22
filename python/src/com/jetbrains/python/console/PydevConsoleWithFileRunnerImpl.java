@@ -27,6 +27,7 @@ public class PydevConsoleWithFileRunnerImpl extends PydevConsoleRunnerImpl {
     myConfig = config;
   }
 
+  @NotNull
   @Override
   protected PythonConsoleRunParams createConsoleRunParams(@Nullable String workingDir,
                                                           @NotNull Sdk sdk,

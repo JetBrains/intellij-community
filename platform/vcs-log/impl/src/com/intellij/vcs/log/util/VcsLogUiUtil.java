@@ -152,8 +152,9 @@ public final class VcsLogUiUtil {
   }
 
   @NotNull
-  public static String shortenTextToFit(@NotNull String text, @NotNull FontMetrics fontMetrics, int availableWidth, int maxLength,
-                                        @NotNull String symbol) {
+  @Nls
+  public static String shortenTextToFit(@NotNull @Nls String text, @NotNull FontMetrics fontMetrics, int availableWidth, int maxLength,
+                                        @NotNull @Nls String symbol) {
     if (fontMetrics.stringWidth(text) <= availableWidth) return text;
 
     for (int i = text.length(); i > maxLength; i--) {
@@ -199,7 +200,14 @@ public final class VcsLogUiUtil {
     }
   }
 
-  private static class VcsLogPlaceNavigator implements Place.Navigator {
+  @NotNull
+  public static Dimension expandToFitToolbar(@NotNull Dimension size, @NotNull JComponent toolbar) {
+    Dimension preferredSize = toolbar.getPreferredSize();
+    int minToolbarSize = Math.round(Math.min(preferredSize.width, preferredSize.height) * 1.5f);
+    return new Dimension(Math.max(size.width, minToolbarSize), Math.max(size.height, minToolbarSize));
+  }
+
+  private static final class VcsLogPlaceNavigator implements Place.Navigator {
     @NonNls private static final String PLACE_KEY = "Vcs.Log.Ui.History.PlaceKey";
     @NotNull private final VcsLogUiEx myUi;
 

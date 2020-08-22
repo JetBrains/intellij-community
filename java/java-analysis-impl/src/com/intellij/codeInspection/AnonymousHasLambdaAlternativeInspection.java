@@ -10,6 +10,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -24,7 +25,10 @@ public class AnonymousHasLambdaAlternativeInspection extends AbstractBaseJavaLoc
     final String myLambdaAlternative;
     final String myReplacementMessage;
 
-    AnonymousLambdaAlternative(String className, String methodName, String lambdaAlternative, String replacementMessage) {
+    AnonymousLambdaAlternative(@NonNls String className,
+                               @NonNls String methodName,
+                               @NonNls String lambdaAlternative,
+                               @NonNls String replacementMessage) {
       myClassName = className;
       myMethodName = methodName;
       myLambdaAlternative = lambdaAlternative;

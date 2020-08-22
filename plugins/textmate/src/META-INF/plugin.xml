@@ -15,8 +15,12 @@
                  description="The maximum length of the line to be highlighted by TextMate lexer."/>
 
     <fileType name="textmate" implementationClass="org.jetbrains.plugins.textmate.TextMateFileType" language="textmate" fieldName="INSTANCE"/>
-    <applicationService id="textmateSettings"
-                        serviceImplementation="org.jetbrains.plugins.textmate.configuration.TextMateSettings"/>
+    <obsoleteStorage file="textmate_os.xml">
+      <components>
+        <component>TextMateSettings</component>
+      </components>
+    </obsoleteStorage>
+
     <applicationService id="textmateService" serviceInterface="org.jetbrains.plugins.textmate.TextMateService"
                         serviceImplementation="org.jetbrains.plugins.textmate.TextMateServiceImpl"/>
     <editorHighlighterProvider filetype="textmate" implementationClass="org.jetbrains.plugins.textmate.language.syntax.highlighting.TextMateEditorHighlighterProvider"/>
@@ -38,7 +42,7 @@
     <indexPatternBuilder implementation="org.jetbrains.plugins.textmate.TextMatePatternBuilder"/>
     <spellchecker.support language="textmate" implementationClass="org.jetbrains.plugins.textmate.spellchecker.TextMateSpellingStrategy"/>
     <completion.contributor language="textmate" implementationClass="org.jetbrains.plugins.textmate.editor.TextMateCompletionContributor"/>
-    <notificationWhitelist groupIds="TextMate Bundles"/>
+    <notificationGroup id="TextMate Bundles" displayType="BALLOON"/>
   </extensions>
   <actions>
     <action id="install-vscode-plugin" class="org.jetbrains.plugins.textmate.actions.InstallVSCodePluginAction"

@@ -25,7 +25,7 @@ import java.util.List;
 /**
  * @author vlan
  */
-public class PyDynamicallyEvaluatedType extends PyUnionType {
+public final class PyDynamicallyEvaluatedType extends PyUnionType {
   private PyDynamicallyEvaluatedType(@NotNull Collection<PyType> members) {
     super(members);
   }

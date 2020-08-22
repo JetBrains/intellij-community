@@ -146,7 +146,7 @@ public class PluginHostsConfigurable implements Configurable.NoScroll, Configura
         { setIpad(JBUI.emptyInsets());}
 
         @Override
-        protected void customizeCellRenderer(JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column) {
+        protected void customizeCellRenderer(@NotNull JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column) {
           if (row >= 0 && row < myModel.getRowCount()) {
             UrlInfo info = myModel.getRowValue(row);
             setForeground(selected ? table.getSelectionForeground() : table.getForeground());

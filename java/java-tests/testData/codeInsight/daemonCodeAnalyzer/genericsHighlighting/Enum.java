@@ -145,7 +145,7 @@ interface Barz {
 ///////////////////////
 class sss {
  void f() {
-   <error descr="Enum must not be local">enum EEEE</error> { EE, YY };
+   <error descr="Local enums are not supported at language level '5'">enum</error> EEEE { EE, YY };
  }
 }
 
@@ -216,4 +216,11 @@ class NestedEnums {
       <error descr="Inner classes cannot have static declarations">enum E2</error> { }
     };
   }
+}
+
+enum EnumWithoutExpectedArguments {
+  <error descr="'EnumWithoutExpectedArguments(int)' in 'EnumWithoutExpectedArguments' cannot be applied to '()'">ONE</error>, //comment
+  <error descr="'EnumWithoutExpectedArguments(int)' in 'EnumWithoutExpectedArguments' cannot be applied to '()'">TWO</error>
+  ;
+  EnumWithoutExpectedArguments(int a) {}
 }

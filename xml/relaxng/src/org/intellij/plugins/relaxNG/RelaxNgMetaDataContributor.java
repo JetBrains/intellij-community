@@ -80,7 +80,7 @@ public final class RelaxNgMetaDataContributor implements MetaDataContributor {
     return Arrays.asList(RngDomInspection.class, UnusedDefineInspection.class);
   }
 
-  public static final class ResourceProvider implements StandardResourceProvider {
+  static final class ResourceProvider implements StandardResourceProvider {
     @Override
     public void registerResources(ResourceRegistrar registrar) {
       registrar.addStdResource(RNG_NAMESPACE, "/resources/relaxng.rng", getClass());

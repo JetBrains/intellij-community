@@ -1,11 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.configmanagement.extended;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.application.options.codeStyle.properties.AbstractCodeStylePropertyMapper;
-import com.intellij.application.options.codeStyle.properties.CodeStyleFieldAccessor;
-import com.intellij.application.options.codeStyle.properties.CodeStylePropertyAccessor;
-import com.intellij.application.options.codeStyle.properties.GeneralCodeStylePropertyMapper;
+import com.intellij.application.options.codeStyle.properties.*;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationUtil;
@@ -16,6 +13,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -161,7 +159,7 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
       String intellijName = EditorConfigIntellijNameUtil.toIntellijName(optionKey);
       CodeStylePropertyAccessor<?> accessor = findAccessor(mapper, intellijName, langPrefix);
       if (accessor != null) {
-        final String val = preprocessValue(context, optionKey, option.getVal());
+        final String val = preprocessValue(accessor, context, optionKey, option.getVal());
         if (DEPENDENCIES.containsKey(optionKey)) {
           for (String dependency : DEPENDENCIES.get(optionKey)) {
             if (!processed.contains(dependency)) {
@@ -185,9 +183,16 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
     return isModified;
   }
 
-  private static String preprocessValue(@NotNull MyContext context, @NotNull String optionKey, @NotNull String optionValue) {
+  private static String preprocessValue(@NotNull CodeStylePropertyAccessor accessor,
+                                        @NotNull MyContext context,
+                                        @NotNull String optionKey,
+                                        @NotNull String optionValue) {
     if ("indent_size".equals(optionKey) && "tab".equals(optionValue)) {
       return context.getTabSize();
+    }
+    else if (EditorConfigValueUtil.EMPTY_LIST_VALUE.equals(optionValue) &&
+             CodeStylePropertiesUtil.isAccessorAllowingEmptyList(accessor)) {
+      return "";
     }
     return optionValue;
   }
@@ -214,13 +219,16 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
   private static void processEditorConfig(@NotNull Project project, @NotNull PsiFile psiFile, @NotNull MyContext context)
     throws EditorConfigException {
     try {
-      String filePath = Utils.getFilePath(project, psiFile.getVirtualFile());
+      final VirtualFile file = psiFile.getVirtualFile();
+      String filePath = Utils.getFilePath(project, file);
       if (filePath != null) {
         final Set<String> rootDirs = SettingsProviderComponent.getInstance().getRootDirs(project);
         context.setOptions(new EditorConfig().getProperties(filePath, rootDirs, context));
       }
       else {
-        LOG.error("No file path for " + psiFile.getName());
+        if (VfsUtilCore.isBrokenLink(file)) {
+          LOG.warn(file.getPresentableUrl() +  " is a broken link");
+        }
       }
     }
     catch (ParsingException pe) {
@@ -230,7 +238,7 @@ public class EditorConfigCodeStyleSettingsModifier implements CodeStyleSettingsM
     }
   }
 
-  private static class MyContext extends EditorConfigFilesCollector {
+  private static final class MyContext extends EditorConfigFilesCollector {
     private final @NotNull CodeStyleSettings mySettings;
     private @Nullable List<OutPair> myOptions;
     private final @NotNull PsiFile myFile;

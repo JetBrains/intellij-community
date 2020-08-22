@@ -6,9 +6,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
-import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.TObjectIdentityHashingStrategy;
+import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -180,7 +179,7 @@ public class AnimatedIcon implements Icon {
 
 
   private final Frame[] frames;
-  private final Set<Component> requested = new SmartHashSet<>(new TObjectIdentityHashingStrategy<>());
+  private final Set<Component> requested = new ReferenceOpenHashSet<>();
   private long time;
   private int index;
 

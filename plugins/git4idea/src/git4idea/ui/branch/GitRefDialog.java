@@ -188,7 +188,7 @@ public class GitRefDialog extends DialogWrapper {
     }
   }
 
-  private static class VcsRefDescriptor extends DefaultTextCompletionValueDescriptor<VcsRef> {
+  private static final class VcsRefDescriptor extends DefaultTextCompletionValueDescriptor<VcsRef> {
     @NotNull private final Comparator<? super VcsRef> myReferenceComparator;
 
     private VcsRefDescriptor(@NotNull Comparator<? super VcsRef> comparator) {

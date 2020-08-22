@@ -238,7 +238,7 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
     return configurables;
   }
 
-  private class AddRemoteServerGroup extends ActionGroup implements ActionGroupWithPreselection {
+  private final class AddRemoteServerGroup extends ActionGroup implements ActionGroupWithPreselection {
     private AddRemoteServerGroup() {
       super(CloudBundle.message("group.action.AddRemoteServerGroup.text"), "", IconUtil.getAddIcon());
       registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
@@ -260,7 +260,7 @@ public class RemoteServerListConfigurable extends MasterDetailsComponent impleme
     }
   }
 
-  private class AddRemoteServerAction extends DumbAwareAction {
+  private final class AddRemoteServerAction extends DumbAwareAction {
     private final ServerType<?> myServerType;
 
     private AddRemoteServerAction(ServerType<?> serverType, final Icon icon) {

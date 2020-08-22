@@ -1,5 +1,6 @@
 import sys
-from typing import Any, IO, Optional, Tuple, Callable, Dict, List, Union, Protocol, Type
+from typing import Any, IO, Optional, Tuple, Callable, Dict, List, Union, Type
+from _typeshed import SupportsRead
 
 from .decoder import JSONDecoder as JSONDecoder
 from .encoder import JSONEncoder as JSONEncoder
@@ -33,7 +34,7 @@ def dump(obj: Any,
          **kwds: Any) -> None: ...
 
 if sys.version_info >= (3, 6):
-    _LoadsString = Union[str, bytes, bytearray]
+    _LoadsString = Union[str, bytes]
 else:
     _LoadsString = str
 def loads(s: _LoadsString,
@@ -46,10 +47,7 @@ def loads(s: _LoadsString,
           object_pairs_hook: Optional[Callable[[List[Tuple[Any, Any]]], Any]] = ...,
           **kwds: Any) -> Any: ...
 
-class _Reader(Protocol):
-    def read(self) -> _LoadsString: ...
-
-def load(fp: _Reader,
+def load(fp: SupportsRead[_LoadsString],
          *,
          cls: Optional[Type[JSONDecoder]] = ...,
          object_hook: Optional[Callable[[Dict[Any, Any]], Any]] = ...,

@@ -1,10 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.ex;
 
-import com.intellij.codeInsight.hint.EditorFragmentComponent;
-import com.intellij.codeInsight.hint.EditorHintListener;
-import com.intellij.codeInsight.hint.HintManager;
-import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.diff.DiffApplicationSettings;
 import com.intellij.diff.DiffContentFactory;
 import com.intellij.diff.DiffManager;
@@ -14,24 +10,18 @@ import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.requests.SimpleDiffRequest;
-import com.intellij.diff.util.DiffDrawUtil;
 import com.intellij.diff.util.DiffUtil;
-import com.intellij.diff.util.TextDiffType;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diff.DiffBundle;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.diff.LineStatusMarkerDrawUtil;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.highlighter.EditorHighlighter;
-import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
-import com.intellij.openapi.editor.highlighter.FragmentedEditorHighlighter;
-import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.ide.CopyPasteManager;
@@ -42,33 +32,35 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.*;
-import com.intellij.util.ui.JBUI;
+import com.intellij.ui.EditorTextField;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
-import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.EventObject;
 import java.util.List;
 
-import static com.intellij.diff.util.DiffUtil.getDiffType;
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 
 public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRenderer {
+  /**
+   * @deprecated Use {@link LineStatusMarkerPopupRenderer#LineStatusMarkerPopupRenderer(LineStatusTrackerI)}
+   */
+  @Deprecated
   public LineStatusMarkerPopupRenderer(@NotNull LineStatusTrackerBase<?> tracker) {
+    this((LineStatusTrackerI<?>)tracker);
+  }
+
+  public LineStatusMarkerPopupRenderer(@NotNull LineStatusTrackerI<?> tracker) {
     super(tracker);
   }
 
   @Override
   protected boolean canDoAction(@NotNull Editor editor, @NotNull List<? extends Range> ranges, @NotNull MouseEvent e) {
-    return isInsideMarkerArea(e);
+    return LineStatusMarkerDrawUtil.isInsideMarkerArea(e);
   }
 
   @Override
@@ -88,11 +80,8 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
 
   @NotNull
   protected FileType getFileType() {
-    return PlainTextFileType.INSTANCE;
-  }
-
-  private static boolean isShowInnerDifferences() {
-    return DiffApplicationSettings.getInstance().SHOW_LST_WORD_DIFFERENCES;
+    VirtualFile virtualFile = myTracker.getVirtualFile();
+    return virtualFile != null ? virtualFile.getFileType() : PlainTextFileType.INSTANCE;
   }
 
   @Nullable
@@ -107,7 +96,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
   public void scrollAndShow(@NotNull Editor editor, @NotNull Range range) {
     if (!myTracker.isValid()) return;
     final Document document = myTracker.getDocument();
-    int line = Math.min(range.getType() == Range.DELETED ? range.getLine2() : range.getLine2() - 1, getLineCount(document) - 1);
+    int line = Math.min(!range.hasLines() ? range.getLine2() : range.getLine2() - 1, getLineCount(document) - 1);
     final int lastOffset = document.getLineStartOffset(line);
     editor.getCaretModel().moveToOffset(lastOffset);
     editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
@@ -117,8 +106,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
 
   public void showAfterScroll(@NotNull Editor editor, @NotNull Range range) {
     editor.getScrollingModel().runActionOnScrollingFinished(() -> {
-      Range newRange = myTracker.findRange(range);
-      if (newRange != null) showHintAt(editor, newRange, null);
+      reopenRange(editor, range, null);
     });
   }
 
@@ -134,270 +122,52 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     if (!myTracker.isValid()) return;
     final Disposable disposable = Disposer.newDisposable();
 
-    List<DiffFragment> wordDiff = computeWordDiff(range);
+    JComponent editorComponent = null;
+    if (range.hasVcsLines()) {
+      String content = getVcsContent(range).toString();
+      EditorTextField textField = LineStatusMarkerPopupPanel.createTextField(editor, content);
 
-    installMasterEditorHighlighters(editor, range, wordDiff, disposable);
-    JComponent editorComponent = createEditorComponent(editor, range, wordDiff);
+      LineStatusMarkerPopupPanel.installBaseEditorSyntaxHighlighters(myTracker.getProject(), textField, myTracker.getVcsDocument(),
+                                                                     getVcsTextRange(range), getFileType());
 
-    ActionToolbar toolbar = buildToolbar(editor, range, mousePosition, disposable);
-    toolbar.updateActionsImmediately(); // we need valid ActionToolbar.getPreferredSize() to calc size of popup
-    toolbar.setReservePlaceAutoPopupIcon(false);
+      installWordDiff(editor, textField, range, disposable);
+
+      editorComponent = LineStatusMarkerPopupPanel.createEditorComponent(editor, textField);
+    }
+
+    List<AnAction> actions = createToolbarActions(editor, range, mousePosition);
+    ActionToolbar toolbar = LineStatusMarkerPopupPanel.buildToolbar(editor, actions, disposable);
 
     JComponent additionalInfoPanel = createAdditionalInfoPanel(editor, range, mousePosition, disposable);
 
-    PopupPanel popupPanel = new PopupPanel(editor, toolbar, editorComponent, additionalInfoPanel);
+    LineStatusMarkerPopupPanel.showPopupAt(editor, toolbar, editorComponent, additionalInfoPanel, mousePosition, disposable);
+  }
 
-    LightweightHint hint = new LightweightHint(popupPanel);
-    HintListener closeListener = __ -> Disposer.dispose(disposable);
-    hint.addHintListener(closeListener);
-
-    int line = editor.getCaretModel().getLogicalPosition().line;
-    Point point = HintManagerImpl.getHintPosition(hint, editor, new LogicalPosition(line, 0), HintManager.UNDER);
-    if (mousePosition != null) { // show right after the nearest line
-      int lineHeight = editor.getLineHeight();
-      int delta = (point.y - mousePosition.y) % lineHeight;
-      if (delta < 0) delta += lineHeight;
-      point.y = mousePosition.y + delta;
-    }
-    point.x -= popupPanel.getEditorTextOffset(); // align main editor with the one in popup
-
-    int flags = HintManager.HIDE_BY_CARET_MOVE | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING;
-    HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, point, flags, -1, false, new HintHint(editor, point));
-
-    ApplicationManager.getApplication().getMessageBus().connect(disposable)
-      .subscribe(EditorHintListener.TOPIC, (project, newHint, newHintFlags) -> {
-        // Ex: if popup re-shown by ToggleByWordDiffAction
-        if (newHint.getComponent() instanceof PopupPanel) {
-          PopupPanel newPopupPanel = (PopupPanel)newHint.getComponent();
-          if (newPopupPanel.getEditor().equals(editor)) {
-            hint.hide();
-          }
-        }
-      });
-
-    if (!hint.isVisible()) {
-      closeListener.hintHidden(new EventObject(hint));
+  protected void reopenRange(@NotNull Editor editor, @NotNull Range range, @Nullable Point mousePosition) {
+    Range newRange = myTracker.findRange(range);
+    if (newRange != null) {
+      showHintAt(editor, newRange, mousePosition);
     }
   }
 
-  @Nullable
-  private List<DiffFragment> computeWordDiff(@NotNull Range range) {
-    if (!isShowInnerDifferences()) return null;
-    if (range.getType() != Range.MODIFIED) return null;
+  private void installWordDiff(@NotNull Editor editor,
+                               @NotNull EditorTextField textField,
+                               @NotNull Range range,
+                               @NotNull Disposable disposable) {
+    if (!DiffApplicationSettings.getInstance().SHOW_LST_WORD_DIFFERENCES) return;
+    if (!range.hasLines() || !range.hasVcsLines()) return;
 
-    final CharSequence vcsContent = getVcsContent(range);
-    final CharSequence currentContent = getCurrentContent(range);
+    CharSequence vcsContent = getVcsContent(range);
+    CharSequence currentContent = getCurrentContent(range);
+    int currentStartOffset = getCurrentTextRange(range).getStartOffset();
 
-    return BackgroundTaskUtil.tryComputeFast(
+    List<DiffFragment> wordDiff = BackgroundTaskUtil.tryComputeFast(
       indicator -> ByWord.compare(vcsContent, currentContent, ComparisonPolicy.DEFAULT, indicator), 200);
-  }
-
-  private void installMasterEditorHighlighters(@NotNull Editor editor,
-                                               @NotNull Range range,
-                                               @Nullable List<? extends DiffFragment> wordDiff,
-                                               @NotNull Disposable parentDisposable) {
     if (wordDiff == null) return;
-    final List<RangeHighlighter> highlighters = new ArrayList<>();
 
-    int currentStartShift = getCurrentTextRange(range).getStartOffset();
-    for (DiffFragment fragment : wordDiff) {
-      int currentStart = currentStartShift + fragment.getStartOffset2();
-      int currentEnd = currentStartShift + fragment.getEndOffset2();
-      TextDiffType type = getDiffType(fragment);
-
-      highlighters.addAll(DiffDrawUtil.createInlineHighlighter(editor, currentStart, currentEnd, type));
-    }
-
-    Disposer.register(parentDisposable, () -> highlighters.forEach(RangeMarker::dispose));
+    LineStatusMarkerPopupPanel.installMasterEditorWordHighlighters(editor, currentStartOffset, wordDiff, disposable);
+    LineStatusMarkerPopupPanel.installPopupEditorWordHighlighters(textField, wordDiff);
   }
-
-  @Nullable
-  private JComponent createEditorComponent(@NotNull Editor editor,
-                                           @NotNull Range range,
-                                           @Nullable List<? extends DiffFragment> wordDiff) {
-    if (range.getType() == Range.INSERTED) return null;
-
-    TextRange vcsTextRange = getVcsTextRange(range);
-    String content = getVcsContent(range).toString();
-
-    EditorHighlighterFactory highlighterFactory = EditorHighlighterFactory.getInstance();
-    EditorHighlighter highlighter = highlighterFactory.createEditorHighlighter(myTracker.getProject(), getFileName(myTracker.getDocument()));
-    highlighter.setText(myTracker.getVcsDocument().getImmutableCharSequence());
-    FragmentedEditorHighlighter fragmentedHighlighter = new FragmentedEditorHighlighter(highlighter, vcsTextRange);
-
-    Color backgroundColor = EditorFragmentComponent.getBackgroundColor(editor, true);
-
-    EditorTextField field = new EditorTextField(content);
-    field.setBorder(null);
-    field.setOneLineMode(false);
-    field.ensureWillComputePreferredSize();
-    field.setFontInheritedFromLAF(false);
-
-    field.addSettingsProvider(uEditor -> {
-      uEditor.setVerticalScrollbarVisible(true);
-      uEditor.setHorizontalScrollbarVisible(true);
-
-      uEditor.setRendererMode(true);
-      uEditor.setBorder(null);
-
-      uEditor.setColorsScheme(editor.getColorsScheme());
-      uEditor.setBackgroundColor(backgroundColor);
-      uEditor.getSettings().setCaretRowShown(false);
-
-      uEditor.getSettings().setTabSize(editor.getSettings().getTabSize(editor.getProject()));
-      uEditor.getSettings().setUseTabCharacter(editor.getSettings().isUseTabCharacter(editor.getProject()));
-
-      uEditor.setHighlighter(fragmentedHighlighter);
-
-      if (wordDiff != null) {
-        for (DiffFragment fragment : wordDiff) {
-          int vcsStart = fragment.getStartOffset1();
-          int vcsEnd = fragment.getEndOffset1();
-          TextDiffType type = getDiffType(fragment);
-
-          DiffDrawUtil.createInlineHighlighter(uEditor, vcsStart, vcsEnd, type);
-        }
-      }
-    });
-
-    JPanel panel = JBUI.Panels.simplePanel(field);
-    panel.setBorder(EditorFragmentComponent.createEditorFragmentBorder(editor));
-    panel.setBackground(backgroundColor);
-
-    DataManager.registerDataProvider(panel, data -> {
-      if (CommonDataKeys.HOST_EDITOR.is(data)) {
-        return field.getEditor();
-      }
-      return null;
-    });
-
-    return panel;
-  }
-
-  private static String getFileName(@NotNull Document document) {
-    final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-    if (file == null) return "";
-    return file.getName();
-  }
-
-  @NotNull
-  private ActionToolbar buildToolbar(@NotNull Editor editor,
-                                     @NotNull Range range,
-                                     @Nullable Point mousePosition,
-                                     @NotNull Disposable parentDisposable) {
-    List<AnAction> actions = createToolbarActions(editor, range, mousePosition);
-
-    JComponent editorComponent = editor.getComponent();
-    for (AnAction action : actions) {
-      DiffUtil.registerAction(action, editorComponent);
-    }
-
-    Disposer.register(parentDisposable, () -> ActionUtil.getActions(editorComponent).removeAll(actions));
-
-    return ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLBAR, new DefaultActionGroup(actions), true);
-  }
-
-  private static class PopupPanel extends JPanel {
-    @Nullable private final JComponent myEditorComponent;
-    @NotNull private final Editor myEditor;
-
-    PopupPanel(@NotNull Editor editor,
-               @NotNull ActionToolbar toolbar,
-               @Nullable JComponent editorComponent,
-               @Nullable JComponent additionalInfo) {
-      super(new BorderLayout());
-      setOpaque(false);
-
-      myEditor = editor;
-      myEditorComponent = editorComponent;
-      boolean isEditorVisible = myEditorComponent != null;
-
-      Color borderColor = new JBColor(Gray._206, Gray._75);
-
-      JComponent toolbarComponent = toolbar.getComponent();
-      toolbarComponent.setBorder(null);
-
-      JComponent toolbarPanel = JBUI.Panels.simplePanel(toolbarComponent);
-      Border outsideToolbarBorder = JBUI.Borders.customLine(borderColor, 1, 1, isEditorVisible ? 0 : 1, 1);
-      Border insideToolbarBorder = JBUI.Borders.empty(1, 5);
-      toolbarPanel.setBorder(BorderFactory.createCompoundBorder(outsideToolbarBorder, insideToolbarBorder));
-
-      if (additionalInfo != null) {
-        toolbarPanel.add(additionalInfo, BorderLayout.EAST);
-      }
-
-      if (myEditorComponent != null) {
-        // default border of EditorFragmentComponent is replaced here with our own.
-        Border outsideEditorBorder = JBUI.Borders.customLine(borderColor, 1);
-        Border insideEditorBorder = JBUI.Borders.empty(2);
-        myEditorComponent.setBorder(BorderFactory.createCompoundBorder(outsideEditorBorder, insideEditorBorder));
-      }
-
-      // 'empty space' to the right of toolbar
-      JPanel emptyPanel = new JPanel();
-      emptyPanel.setOpaque(false);
-      emptyPanel.setPreferredSize(new Dimension());
-
-      JPanel topPanel = new JPanel(new BorderLayout());
-      topPanel.setOpaque(false);
-      topPanel.add(toolbarPanel, BorderLayout.WEST);
-      topPanel.add(emptyPanel, BorderLayout.CENTER);
-
-      add(topPanel, BorderLayout.NORTH);
-      if (myEditorComponent != null) add(myEditorComponent, BorderLayout.CENTER);
-
-      // transfer clicks into editor
-      MouseAdapter listener = new MouseAdapter() {
-        @Override
-        public void mousePressed(MouseEvent e) {
-          transferEvent(e, editor);
-        }
-
-        @Override
-        public void mouseClicked(MouseEvent e) {
-          transferEvent(e, editor);
-        }
-
-        @Override
-        public void mouseReleased(MouseEvent e) {
-          transferEvent(e, editor);
-        }
-      };
-      emptyPanel.addMouseListener(listener);
-    }
-
-    @NotNull
-    public Editor getEditor() {
-      return myEditor;
-    }
-
-    private static void transferEvent(MouseEvent e, Editor editor) {
-      editor.getContentComponent().dispatchEvent(SwingUtilities.convertMouseEvent(e.getComponent(), e, editor.getContentComponent()));
-    }
-
-    int getEditorTextOffset() {
-      return EditorFragmentComponent.createEditorFragmentBorder(myEditor).getBorderInsets(myEditorComponent).left;
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-      int gap = JBUI.scale(10);
-      Rectangle screenRectangle = ScreenUtil.getScreenRectangle(myEditor.getComponent());
-      Rectangle maxSize = new Rectangle(screenRectangle.width - gap, screenRectangle.height - gap);
-
-      Dimension size = super.getPreferredSize();
-      if (size.width > maxSize.width) {
-        size.width = maxSize.width;
-        // Space for horizontal scrollbar
-        size.height += JBUI.scale(20);
-      }
-      if (size.height > maxSize.height) {
-        size.height = maxSize.height;
-      }
-      return size;
-    }
-  }
-
 
   @NotNull
   private CharSequence getCurrentContent(Range range) {
@@ -492,7 +262,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
 
     @Override
     protected boolean isEnabled(@NotNull Editor editor, @NotNull Range range) {
-      return Range.DELETED == range.getType() || Range.MODIFIED == range.getType();
+      return range.hasVcsLines();
     }
 
     @Override
@@ -574,10 +344,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
       if (!myTracker.isValid()) return;
       DiffApplicationSettings.getInstance().SHOW_LST_WORD_DIFFERENCES = state;
 
-      Range newRange = myTracker.findRange(myRange);
-      if (newRange != null) {
-        showHintAt(myEditor, newRange, myMousePosition);
-      }
+      reopenRange(myEditor, myRange, myMousePosition);
     }
   }
 }

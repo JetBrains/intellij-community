@@ -1,8 +1,6 @@
-# Stubs for multiprocessing
-
 import sys
-from typing import Any, Callable, Iterable, Mapping, Optional, List, Union, Sequence, Tuple, Type, overload
-
+from typing import Any, Callable, Iterable, Optional, List, Union, Sequence, Tuple, Type, overload
+from typing_extensions import Literal
 from ctypes import _CData
 from logging import Logger
 from multiprocessing import connection, pool, spawn, synchronize
@@ -24,9 +22,6 @@ from multiprocessing.spawn import set_executable as set_executable
 
 if sys.version_info >= (3, 8):
     from multiprocessing.process import parent_process as parent_process
-    from typing import Literal
-else:
-    from typing_extensions import Literal
 
 if sys.platform != "win32":
     from multiprocessing.context import ForkContext, ForkServerContext
@@ -55,7 +50,7 @@ def Pool(processes: Optional[int] = ...,
          initargs: Iterable[Any] = ...,
          maxtasksperchild: Optional[int] = ...) -> pool.Pool: ...
 
-class Array():
+class Array:
     value: Any = ...
 
     def __init__(self, typecode_or_type: Union[str, Type[_CData]], size_or_initializer: Union[int, Sequence[Any]], *, lock: Union[bool, _LockLike] = ...) -> None: ...

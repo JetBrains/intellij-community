@@ -39,7 +39,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
@@ -155,12 +154,11 @@ public final class BindingProperty extends Property<RadComponent, String> {
     // Show question to the user
 
     if (!isFieldUnreferenced(oldField)) {
-      @SuppressWarnings("UnresolvedPropertyKey") final int option =
-        Messages.showYesNoDialog(project,
-                                 MessageFormat.format(UIDesignerBundle.message("message.rename.field"), oldName, newName),
-                                 UIDesignerBundle.message("title.rename"),
-                                 Messages.getQuestionIcon()
-        );
+      final int option = Messages.showYesNoDialog(project,
+                                                  UIDesignerBundle.message("message.rename.field", oldName, newName),
+                                                  UIDesignerBundle.message("title.rename"),
+                                                  Messages.getQuestionIcon()
+      );
 
       if(option != Messages.YES/*Yes*/){
         return;

@@ -9,6 +9,7 @@ import com.intellij.ide.lightEdit.statusBar.LightEditLineSeparatorWidgetWrapper;
 import com.intellij.ide.lightEdit.statusBar.LightEditPositionWidget;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectFrameAllocatorKt;
 import com.intellij.openapi.util.Disposer;
@@ -19,6 +20,7 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.*;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsActionGroup;
+import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
 import com.intellij.ui.PopupHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,6 +34,8 @@ final class LightEditFrameWrapper extends ProjectFrameHelper implements Disposab
   private final BooleanSupplier myCloseHandler;
 
   private LightEditPanel myEditPanel;
+
+  private boolean myFrameTitleUpdateEnabled = true;
 
   LightEditFrameWrapper(@NotNull IdeFrameImpl frame, @NotNull BooleanSupplier closeHandler) {
     super(frame, null);
@@ -59,6 +63,11 @@ final class LightEditFrameWrapper extends ProjectFrameHelper implements Disposab
     statusBar.addWidget(new LightEditLineSeparatorWidgetWrapper(), StatusBar.Anchors.before(LightEditEncodingWidgetWrapper.WIDGET_ID), this);
 
     PopupHandler.installPopupHandler(statusBar, StatusBarWidgetsActionGroup.GROUP_ID, ActionPlaces.STATUS_BAR_PLACE);
+    StatusBarWidgetsManager statusBarWidgetsManager = project.getService(StatusBarWidgetsManager.class);
+    ApplicationManager.getApplication().invokeLater(() -> {
+      statusBarWidgetsManager.updateAllWidgets();
+    });
+    Disposer.register(statusBar, () -> statusBarWidgetsManager.disableAllWidgets());
   }
 
   @Override
@@ -125,9 +134,20 @@ final class LightEditFrameWrapper extends ProjectFrameHelper implements Disposab
     }
   }
 
-  static @NotNull LightEditFrameWrapper allocate(@NotNull BooleanSupplier closeHandler) {
+  static @NotNull LightEditFrameWrapper allocate(@NotNull Project project, @NotNull BooleanSupplier closeHandler) {
     return (LightEditFrameWrapper)((WindowManagerImpl)WindowManager.getInstance()).allocateFrame(
-      LightEditUtil.getProject(),
+      project,
       () -> new LightEditFrameWrapper(ProjectFrameAllocatorKt.createNewProjectFrame(false), closeHandler));
+  }
+
+  void setFrameTitleUpdateEnabled(boolean frameTitleUpdateEnabled) {
+    myFrameTitleUpdateEnabled = frameTitleUpdateEnabled;
+  }
+
+  @Override
+  public void setFrameTitle(String text) {
+    if (myFrameTitleUpdateEnabled) {
+      super.setFrameTitle(text);
+    }
   }
 }

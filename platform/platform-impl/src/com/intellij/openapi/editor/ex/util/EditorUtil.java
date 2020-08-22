@@ -5,6 +5,8 @@ import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.injected.editor.EditorWindow;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
@@ -984,5 +986,39 @@ public final class EditorUtil {
       }
     }
     return true;
+  }
+
+  /**
+   * Shows notification about maximum number of carets reached in editor.
+   */
+  public static void notifyMaxCarets(@NotNull Editor editor) {
+    Long lastTimeStamp = editor.getUserData(EditorNotification.LAST_MAX_CARETS_NOTIFY_TIMESTAMP);
+    long currentTimeStamp = System.currentTimeMillis();
+    if (lastTimeStamp != null && (currentTimeStamp - lastTimeStamp) < EditorNotification.MAX_CARETS_NOTIFY_INTERVAL_MS) return;
+    editor.putUserData(EditorNotification.LAST_MAX_CARETS_NOTIFY_TIMESTAMP, currentTimeStamp);
+    EditorNotification.GROUP
+            .createNotification(
+                    EditorBundle.message("editor.max.carets.hint", editor.getCaretModel().getMaxCaretCount()),
+                    NotificationType.INFORMATION)
+            .notify(editor.getProject());
+  }
+
+  /**
+   * Tells whether maximum allowed number of carets is reached in editor. If it's the case, notification is shown
+   * ({@link #checkMaxCarets(Editor)}).
+   */
+  public static boolean checkMaxCarets(@NotNull Editor editor) {
+    CaretModel caretModel = editor.getCaretModel();
+    if (caretModel.getCaretCount() >= caretModel.getMaxCaretCount()) {
+      notifyMaxCarets(editor);
+      return true;
+    }
+    return false;
+  }
+
+  private static class EditorNotification {
+    private static final NotificationGroup GROUP = NotificationGroup.balloonGroup("Editor notifications");
+    private static final Key<Long> LAST_MAX_CARETS_NOTIFY_TIMESTAMP = Key.create("last.max.carets.notify.timestamp");
+    private static final long MAX_CARETS_NOTIFY_INTERVAL_MS = 10_000;
   }
 }

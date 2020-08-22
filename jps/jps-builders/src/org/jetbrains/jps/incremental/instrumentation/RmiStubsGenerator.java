@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.instrumentation;
 
 import com.intellij.compiler.instrumentation.InstrumentationClassFinder;
@@ -12,6 +12,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.FileCollectionFactory;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,7 +38,7 @@ import java.util.concurrent.Future;
 /**
  * @author Eugene Zhuravlev
  */
-public class RmiStubsGenerator extends ClassProcessingBuilder {
+public final class RmiStubsGenerator extends ClassProcessingBuilder {
   private static final String REMOTE_INTERFACE_NAME = Remote.class.getName().replace('.', '/');
   private static final File[] EMPTY_FILE_ARRAY = new File[0];
   private static final Key<Boolean> IS_ENABLED = Key.create("_rmic_compiler_enabled_");
@@ -171,7 +172,7 @@ public class RmiStubsGenerator extends ClassProcessingBuilder {
     }
 
     // registering generated files
-    final Map<File, File[]> fsCache = new THashMap<>(FileUtil.FILE_HASHING_STRATEGY);
+    final Map<File, File[]> fsCache = FileCollectionFactory.createCanonicalFileMap();
     for (ModuleBuildTarget target : targetsProcessed) {
       final Collection<ClassItem> items = remoteClasses.get(target);
       for (ClassItem item : items) {
@@ -326,7 +327,7 @@ public class RmiStubsGenerator extends ClassProcessingBuilder {
     }
   }
 
-  private static class RmicOutputParser extends LineOutputWriter {
+  private static final class RmicOutputParser extends LineOutputWriter {
     private final CompileContext myContext;
     private final String myCompilerName;
     private boolean myErrorsReported = false;

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.impl.source.tree.injected;
 
@@ -50,7 +50,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.function.IntFunction;
 
-class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowImpl implements EditorWindow, EditorEx {
+final class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowImpl implements EditorWindow, EditorEx {
   private final DocumentWindowImpl myDocumentWindow;
   private final EditorImpl myDelegate;
   private volatile PsiFile myInjectedFile;
@@ -110,18 +110,11 @@ class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowImpl imp
       while (iterator.hasNext()) {
         EditorWindowImpl editorWindow = iterator.next();
         if (!editorWindow.isValid()) {
-          disposeEditor(editorWindow);
+          editorWindow.dispose();
           iterator.remove();
         }
       }
     }
-  }
-
-  private static void disposeEditor(@NotNull EditorWindow editorWindow) {
-    EditorWindowImpl impl = (EditorWindowImpl)editorWindow;
-    impl.dispose();
-
-    InjectedLanguageUtil.clearCaches(impl.myInjectedFile, impl.getDocument());
   }
 
   static void disposeEditorFor(@NotNull DocumentWindow documentWindow) {
@@ -129,7 +122,7 @@ class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowImpl imp
       for (Iterator<EditorWindowImpl> iterator = allEditors.iterator(); iterator.hasNext(); ) {
         EditorWindowImpl editor = iterator.next();
         if (InjectionRegistrarImpl.intersect(editor.getDocument(), (DocumentWindowImpl)documentWindow)) {
-          disposeEditor(editor);
+          editor.dispose();
           iterator.remove();
           break;
         }
@@ -211,6 +204,8 @@ class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowImpl imp
 
     myDisposed = true;
     Disposer.dispose(myDocumentWindow);
+
+    InjectedLanguageUtil.clearCaches(myInjectedFile.getProject(), getDocument());
   }
 
   @Override

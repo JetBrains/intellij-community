@@ -20,7 +20,7 @@ import org.jetbrains.annotations.TestOnly;
 @State(
   name = "CodeStyleSchemeSettings",
   storages = @Storage("code.style.schemes.xml"),
-  additionalExportFile = CodeStyleSchemesImpl.CODE_STYLES_DIR_PATH
+  additionalExportDirectory = CodeStyleSchemesImpl.CODE_STYLES_DIR_PATH
 )
 public final class PersistableCodeStyleSchemes extends CodeStyleSchemesImpl implements PersistentStateComponent<Element> {
   public String CURRENT_SCHEME_NAME = CodeStyleScheme.DEFAULT_SCHEME_NAME;

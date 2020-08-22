@@ -1,110 +1,100 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.analysis.problemsView.toolWindow
 
+import com.intellij.analysis.problemsView.FileProblem
+import com.intellij.analysis.problemsView.Problem
+import com.intellij.analysis.problemsView.ProblemsCollector
 import com.intellij.ide.projectView.PresentationData
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES
 import com.intellij.ui.tree.LeafState
-import com.intellij.util.containers.ContainerUtil.mapNotNull
+import com.intellij.util.ui.tree.TreeUtil
+import javax.swing.tree.TreePath
 
-internal open class Root(val panel: ProblemsViewPanel) : Node(panel.project), Disposable {
+internal abstract class Root(val panel: ProblemsViewPanel)
+  : Node(panel.project), ProblemsCollector, Disposable {
 
-  private val allProblems = mutableMapOf<VirtualFile, FileProblems>()
+  private val nodes = mutableMapOf<VirtualFile, FileNode>()
 
   override fun dispose() = Unit
 
   override fun getLeafState() = LeafState.NEVER
 
-  override fun getName() = panel.displayName
+  override fun getName() = panel.getName(0)
 
-  override fun update(project: Project, presentation: PresentationData) = Unit
-
-  override fun getChildren(): Collection<Node> = synchronized(allProblems) {
-    mapNotNull(allProblems.values) { it.getFileNode(getParentNode(it.file)) }
+  override fun update(project: Project, presentation: PresentationData) {
+    presentation.addText(name, REGULAR_ATTRIBUTES)
   }
 
-  open fun getChildren(file: VirtualFile): Collection<Node> = synchronized(allProblems) {
-    allProblems[file]?.getProblemNodes() ?: return emptyList()
+  override fun getChildren(): Collection<Node> {
+    val children = mutableListOf<Node>()
+    val files = getProblemFiles()
+    synchronized(nodes) {
+      files.forEach { children += nodes.computeIfAbsent(it) { file -> FileNode(this, file) } }
+    }
+    return children
   }
 
-  open fun getProblemsCount(): Int = synchronized(allProblems) {
-    allProblems.values.sumBy { it.count() }
+  open fun getChildren(file: VirtualFile): Collection<Node> {
+    val node = synchronized(nodes) { nodes[file] } ?: return emptyList()
+    return getFileProblems(node.file).map { ProblemNode(node, it) }
   }
 
-  open fun getProblemsCount(file: VirtualFile): Int = synchronized(allProblems) {
-    allProblems[file]?.count() ?: 0
-  }
-
-  open fun addProblem(file: VirtualFile, problem: Problem) {
-    synchronized(allProblems) { add(file, problem) }?.let { structureChanged(it) }
-  }
-
-  open fun removeProblem(file: VirtualFile, problem: Problem) {
-    synchronized(allProblems) { remove(file, problem) }?.let { structureChanged(it) }
-  }
-
-  open fun updateProblem(file: VirtualFile, problem: Problem) {
-    val node = synchronized(allProblems) { allProblems[file]?.findProblemNode(problem) } ?: return
-    node.update()
-    structureChanged(node)
-  }
-
-  open fun removeProblems(file: VirtualFile) {
-    synchronized(allProblems) { removeAll(file) }?.let { structureChanged(it) }
-  }
-
-  open fun updateProblems(file: VirtualFile, collection: Collection<Problem>) {
-    synchronized(allProblems) { update(file, collection) }?.let { structureChanged(it) }
-  }
-
-  private fun structureChanged(node: Node) {
-    val model = panel.treeModel
-    if (model.isRoot(this)) {
-      model.structureChanged(node)
-      panel.updateToolWindowContent()
+  override fun problemAppeared(problem: Problem) = when (problem) {
+    !is FileProblem -> structureChanged()
+    else -> {
+      val file = problem.file
+      when (1 == getFileProblemCount(file)) {
+        true -> fileAppeared(file)
+        else -> fileUpdated(file)
+      }
     }
   }
 
-  private fun add(file: VirtualFile, problem: Problem): Node? {
-    val fileProblems = allProblems.computeIfAbsent(file) { FileProblems(it) }
-    if (!fileProblems.add(problem)) return null
-    val parent = getParentNode(file)
-    if (fileProblems.count() > 1) return fileProblems.getFileNode(parent)
-    return parent
+  override fun problemDisappeared(problem: Problem) = when (problem) {
+    !is FileProblem -> structureChanged()
+    else -> {
+      val file = problem.file
+      when (0 == getFileProblemCount(file)) {
+        true -> fileDisappeared(file)
+        else -> fileUpdated(file)
+      }
+    }
   }
 
-  private fun remove(file: VirtualFile, problem: Problem): Node? {
-    val fileProblems = allProblems[file] ?: return null
-    if (!fileProblems.remove(problem)) return null
-    val parent = getParentNode(file)
-    if (fileProblems.count() > 0) return fileProblems.getFileNode(parent)
-    allProblems.remove(file)
-    return parent
+  override fun problemUpdated(problem: Problem) {
+    TreeUtil.promiseVisit(panel.tree, ProblemNodeFinder(problem)).onSuccess { path ->
+      val node = TreeUtil.getLastUserObject(ProblemNode::class.java, path) ?: return@onSuccess
+      onValidThread { if (node.update()) panel.treeModel.nodeChanged(node.getPath()) }
+    }
   }
 
-  private fun update(file: VirtualFile, collection: Collection<Problem>): Node? {
-    val fileProblems = allProblems[file] ?: return addAll(file, collection)
-    if (collection.isEmpty()) return removeAll(file)
-    fileProblems.update(collection)
-    val parent = getParentNode(file)
-    return fileProblems.getFileNode(parent)
+  private fun fileAppeared(file: VirtualFile) {
+    structureChanged()
+    TreeUtil.promiseExpand(panel.tree, FileNodeFinder(file))
   }
 
-  private fun addAll(file: VirtualFile, collection: Collection<Problem>): Node? {
-    if (collection.isEmpty()) return null
-    val fileProblems = FileProblems(file)
-    fileProblems.update(collection)
-    allProblems[file] = fileProblems
-    return getParentNode(file)
+  private fun fileDisappeared(file: VirtualFile) {
+    synchronized(nodes) { nodes.remove(file) }
+    structureChanged()
   }
 
-  private fun removeAll(file: VirtualFile): Node? {
-    val fileProblems = allProblems.remove(file) ?: return null
-    fileProblems.clear()
-    return getParentNode(file)
+  private fun fileUpdated(file: VirtualFile) {
+    TreeUtil.promiseVisit(panel.tree, FileNodeFinder(file)).onSuccess { path ->
+      path?.let { structureChanged(it) }
+    }
   }
 
-  @Suppress("UNUSED_PARAMETER") // TODO: support file hierarchy
-  private fun getParentNode(file: VirtualFile): Node = this
+  private fun structureChanged(path: TreePath? = null) {
+    panel.updateToolWindowContent()
+    panel.treeModel.structureChanged(path)
+  }
+
+  private fun onValidThread(task: () -> Unit) {
+    panel.treeModel.invoker.invoke {
+      if (panel.treeModel.isRoot(this)) task()
+    }
+  }
 }

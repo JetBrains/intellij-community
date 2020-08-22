@@ -21,6 +21,7 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonUiService;
 import com.jetbrains.python.inspections.quickfix.AddEncodingQuickFix;
@@ -79,7 +80,7 @@ public class PyNonAsciiCharInspection extends PyInspection {
 
         if (hasNonAscii) {
           if (charsetString == null) {
-            registerProblem(node, "Non-ASCII character " + c + " in file, but no encoding declared",
+            registerProblem(node, PyPsiBundle.message("INSP.non.ascii.char.non.ascii.character.in.file.but.no.encoding.declared", c),
                             new AddEncodingQuickFix(myDefaultEncoding, myEncodingFormatIndex));
           }
         }

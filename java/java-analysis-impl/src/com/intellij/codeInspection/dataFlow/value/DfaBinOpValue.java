@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
@@ -21,7 +21,7 @@ import java.util.Objects;
  * Represents a value like "variable+var/const", "variable-var/const".
  * Stored on the stack only (don't participate in equivalences)
  */
-public class DfaBinOpValue extends DfaValue {
+public final class DfaBinOpValue extends DfaValue {
   private final @NotNull DfaVariableValue myLeft;
   private final @NotNull DfaValue myRight;
   private final boolean myLong;
@@ -110,7 +110,7 @@ public class DfaBinOpValue extends DfaValue {
     Factory(DfaValueFactory factory) {
       myFactory = factory;
     }
-    
+
     public DfaValue create(DfaValue left, DfaValue right, DfaMemoryState state, boolean isLong, IElementType tokenType) {
       if (tokenType == null) return myFactory.getUnknown();
       BinOp op = BinOp.fromTokenType(tokenType);
@@ -195,7 +195,7 @@ public class DfaBinOpValue extends DfaValue {
           }
         }
         if (op == BinOp.MINUS && sumValue.getOperation() == BinOp.PLUS) {
-          // a+b-a => b; a+b-b => a 
+          // a+b-a => b; a+b-b => a
           if (state.areEqual(right, sumValue.getLeft())) {
             return sumValue.getRight();
           }
@@ -214,7 +214,7 @@ public class DfaBinOpValue extends DfaValue {
       return myValues.computeIfAbsent(key, k -> new DfaBinOpValue(left, right, isLong, op));
     }
   }
-  
+
   public enum BinOp {
     PLUS("+", JavaTokenType.PLUS), MINUS("-", JavaTokenType.MINUS), REM("%", JavaTokenType.PERC);
 
@@ -229,7 +229,7 @@ public class DfaBinOpValue extends DfaValue {
     IElementType getTokenType() {
       return myTokenType;
     }
-    
+
     @Nullable
     public static BinOp fromTokenType(IElementType tokenType) {
       if (PLUS.getTokenType() == tokenType) return PLUS;

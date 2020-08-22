@@ -12,42 +12,17 @@ import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.LineNumberConverter
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.impl.LineNumberConverterAdapter
-import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch
 import com.intellij.openapi.vcs.changes.patch.tool.PatchChangeBuilder
-import com.intellij.ui.SimpleColoredComponent
-import com.intellij.ui.SimpleTextAttributes
-import com.intellij.util.PathUtil
-import com.intellij.util.ui.JBUI
 import org.jetbrains.plugins.github.util.GHPatchHunkUtil
 import javax.swing.JComponent
 
-class GHPRReviewThreadDiffComponentFactory(private val fileTypeRegistry: FileTypeRegistry,
-                                           private val project: Project,
-                                           private val editorFactory: EditorFactory) {
-  fun createComponent(filePath: String, diffHunk: String): JComponent = JBUI.Panels
-    .simplePanel(createDiff(filePath, diffHunk))
-    .addToTop(createFileName(filePath))
-    .andTransparent()
+class GHPRReviewThreadDiffComponentFactory(private val project: Project, private val editorFactory: EditorFactory) {
 
-  private fun createFileName(filePath: String): SimpleColoredComponent {
-    val name = PathUtil.getFileName(filePath)
-    val path = PathUtil.getParentPath(filePath)
-    val fileType = fileTypeRegistry.getFileTypeByFileName(name)
-
-    return SimpleColoredComponent().apply {
-      isOpaque = false
-
-      icon = fileType.icon
-      append(name)
-      if (!path.isBlank()) append(" ").append(path, SimpleTextAttributes.GRAYED_ATTRIBUTES)
-    }
-  }
-
-  private fun createDiff(filePath: String, diffHunk: String): JComponent {
+  fun createComponent(diffHunk: String): JComponent {
     try {
-      val patchReader = PatchReader(GHPatchHunkUtil.createPatchFromHunk(filePath, diffHunk))
+      val patchReader = PatchReader(GHPatchHunkUtil.createPatchFromHunk("_", diffHunk))
       val patchHunk = patchReader.readTextPatches().firstOrNull()?.hunks?.firstOrNull()?.let { truncateHunk(it) }
                       ?: throw IllegalStateException("Could not parse diff hunk")
 

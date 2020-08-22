@@ -9,9 +9,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Objects;
 
 public class GitPushTargetTest extends GitSingleRepoTest {
-
   @Override
-  public void setUp() throws Exception {
+  public void setUp() {
     super.setUp();
     addRemote("origin");
   }

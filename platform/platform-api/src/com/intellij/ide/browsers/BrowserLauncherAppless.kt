@@ -24,6 +24,7 @@ import java.awt.Desktop
 import java.io.File
 import java.io.IOException
 import java.net.URI
+import java.nio.file.Path
 
 private val LOG = logger<BrowserLauncherAppless>()
 
@@ -40,6 +41,14 @@ open class BrowserLauncherAppless : BrowserLauncher() {
 
   override fun browse(file: File) {
     var path = file.absolutePath
+    if (SystemInfo.isWindows && path[0] != '/') {
+      path = "/$path"
+    }
+    openOrBrowse("${StandardFileSystems.FILE_PROTOCOL_PREFIX}$path", true)
+  }
+
+  override fun browse(file: Path) {
+    var path = file.toAbsolutePath().toString()
     if (SystemInfo.isWindows && path[0] != '/') {
       path = "/$path"
     }

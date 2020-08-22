@@ -314,7 +314,7 @@ public class JpsProjectTaskRunner extends ProjectTaskRunner {
     }
   }
 
-  private static class MyNotificationCollector implements AutoCloseable {
+  private static final class MyNotificationCollector implements AutoCloseable {
     @NotNull private final ProjectTaskContext myContext;
     @Nullable private final ProjectTaskNotification myTaskNotification;
     @NotNull private final Runnable myOnFinished;
@@ -371,7 +371,7 @@ public class JpsProjectTaskRunner extends ProjectTaskRunner {
     }
   }
 
-  private static class MyCompileStatusNotification implements CompileStatusNotification {
+  private static final class MyCompileStatusNotification implements CompileStatusNotification {
 
     private final MyNotificationCollector myCollector;
     private final AtomicBoolean finished = new AtomicBoolean();

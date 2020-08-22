@@ -13,7 +13,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class PyRemoteSdkFlavor extends CPythonSdkFlavor {
+public final class PyRemoteSdkFlavor extends CPythonSdkFlavor {
   private PyRemoteSdkFlavor() {
   }
 

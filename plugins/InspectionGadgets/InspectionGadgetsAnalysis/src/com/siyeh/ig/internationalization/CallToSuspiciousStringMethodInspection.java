@@ -53,13 +53,13 @@ public class CallToSuspiciousStringMethodInspection extends BaseInspection {
     final PsiModifierListOwner annotatableQualifier = NonNlsUtils.getAnnotatableQualifier(methodExpression);
     if (annotatableQualifier != null) {
       final InspectionGadgetsFix fix =
-        new DelegatingFix(new AddAnnotationPsiFix(AnnotationUtil.NON_NLS, annotatableQualifier, PsiNameValuePair.EMPTY_ARRAY));
+        new DelegatingFix(new AddAnnotationPsiFix(AnnotationUtil.NON_NLS, annotatableQualifier));
       result.add(fix);
     }
     final PsiModifierListOwner annotatableArgument = NonNlsUtils.getAnnotatableArgument(methodCallExpression);
     if (annotatableArgument != null) {
       final InspectionGadgetsFix fix =
-        new DelegatingFix(new AddAnnotationPsiFix(AnnotationUtil.NON_NLS, annotatableArgument, PsiNameValuePair.EMPTY_ARRAY));
+        new DelegatingFix(new AddAnnotationPsiFix(AnnotationUtil.NON_NLS, annotatableArgument));
       result.add(fix);
     }
     return result.toArray(InspectionGadgetsFix.EMPTY_ARRAY);

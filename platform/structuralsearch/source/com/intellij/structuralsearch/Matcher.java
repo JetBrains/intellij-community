@@ -44,24 +44,25 @@ import static com.intellij.structuralsearch.impl.matcher.iterators.SingleNodeIte
  * This class makes program structure tree matching:
  */
 public class Matcher {
-  static final Logger LOG = Logger.getInstance(Matcher.class);
+  private static final Logger LOG = Logger.getInstance(Matcher.class);
 
   @SuppressWarnings("SSBasedInspection")
   private static final ThreadLocal<Set<String>> ourRecursionGuard = ThreadLocal.withInitial(() -> new HashSet<>());
 
   // project being worked on
-  final Project project;
+  private final Project project;
 
   // context of matching
-  final MatchContext matchContext;
+  @NotNull
+  private final MatchContext matchContext;
   private boolean isTesting;
 
   // visitor to delegate the real work
   private final GlobalMatchingVisitor visitor = new GlobalMatchingVisitor();
   private final TaskScheduler scheduler = new TaskScheduler();
 
-  int totalFilesToScan;
-  int scannedFilesCount;
+  private int totalFilesToScan;
+  private int scannedFilesCount;
 
   public Matcher(@NotNull Project project, @NotNull MatchOptions matchOptions) {
     this(project, matchOptions, PatternCompiler.compilePattern(project, matchOptions, false, true));
@@ -69,15 +70,14 @@ public class Matcher {
 
   public Matcher(@NotNull Project project, @NotNull MatchOptions matchOptions, @NotNull CompiledPattern compiledPattern) {
     this.project = project;
-    matchContext = new MatchContext();
-    matchContext.setMatcher(visitor);
+    matchContext = new MatchContext(visitor);
     visitor.setMatchContext(matchContext);
 
     matchContext.setOptions(matchOptions);
     matchContext.setPattern(compiledPattern);
   }
 
-  public static Matcher buildMatcher(Project project, LanguageFileType fileType, String constraint) {
+  public static Matcher buildMatcher(@NotNull Project project, @NotNull LanguageFileType fileType, @NotNull String constraint) {
     if (StringUtil.isQuotedString(constraint)) {
       // keep old configurations working, also useful for testing
       final MatchOptions myMatchOptions = new MatchOptions();
@@ -88,12 +88,12 @@ public class Matcher {
     else {
       final Set<String> set = ourRecursionGuard.get();
       if (!set.add(constraint)) {
-        throw new MalformedPatternException("Pattern recursively references itself");
+        throw new MalformedPatternException(SSRBundle.message("error.pattern.recursively.references.itself"));
       }
       try {
         final Configuration configuration = ConfigurationManager.getInstance(project).findConfigurationByName(constraint);
         if (configuration == null) {
-          throw new MalformedPatternException("Configuration '" + constraint + "' not found");
+          throw new MalformedPatternException(SSRBundle.message("error.configuration.0.not.found", constraint));
         }
         return new Matcher(project, configuration.getMatchOptions());
       } finally {
@@ -110,7 +110,7 @@ public class Matcher {
     PatternCompiler.compilePattern(project, options, true, true);
   }
 
-  public boolean checkIfShouldAttemptToMatch(NodeIterator matchedNodes) {
+  public boolean checkIfShouldAttemptToMatch(@NotNull NodeIterator matchedNodes) {
     final CompiledPattern pattern = matchContext.getPattern();
     final NodeIterator patternNodes = pattern.getNodes();
     try {
@@ -168,7 +168,7 @@ public class Matcher {
       return;
     }
 
-    matchContext.getSink().setMatchingProcess( scheduler );
+    matchContext.getSink().setMatchingProcess(scheduler);
     scheduler.init();
 
     if (isTesting) {
@@ -239,7 +239,7 @@ public class Matcher {
     }
   }
 
-  public MatchContext getMatchContext() {
+  public @NotNull MatchContext getMatchContext() {
     return matchContext;
   }
 
@@ -385,7 +385,7 @@ public class Matcher {
    * Initiates the matching process for given element
    * @param element the current search tree element
    */
-  void match(@NotNull PsiElement element) {
+  private void match(@NotNull PsiElement element) {
     final MatchingStrategy strategy = matchContext.getPattern().getStrategy();
 
     if (strategy.continueMatching(element)) {
@@ -430,12 +430,13 @@ public class Matcher {
         }
         while (element.getClass() != targetNode.getClass()) {
           element = element.getParent();
-          if (element == null)  return Collections.emptyList();
+          if (element == null) return Collections.emptyList();
         }
 
         elementToStartMatching = element;
       }
-    } else {
+    }
+    else {
       final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(element);
       if (profile == null) return Collections.emptyList();
       targetNode = profile.extendMatchedByDownUp(targetNode);

@@ -4,6 +4,9 @@ package git4idea.branch
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.util.Consumer
@@ -17,7 +20,6 @@ import com.intellij.vcs.log.graph.PermanentGraph
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties
 import com.intellij.vcs.log.impl.VcsLogManager
 import com.intellij.vcs.log.impl.VcsProjectLog
-import com.intellij.vcs.log.impl.createAndOpenLogFile
 import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcs.log.ui.VcsLogColorManager
 import com.intellij.vcs.log.ui.VcsLogPanel
@@ -33,61 +35,57 @@ import com.intellij.vcs.log.visible.filters.VcsLogFilterObject.fromRoot
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import java.util.*
+import javax.swing.JComponent
 
-internal class GitCompareBranchesUi @JvmOverloads constructor(private val project: Project,
-                                                              private val repositories: List<GitRepository>,
-                                                              private val branchName: String,
-                                                              private val otherBranchName: String = "") {
+internal class GitCompareBranchesUi @JvmOverloads constructor(internal val project: Project,
+                                                              repositories: List<GitRepository>,
+                                                              branchName: String,
+                                                              otherBranchName: String = "") {
+  internal val rangeFilter: VcsLogRangeFilter
+  internal val rootFilter: VcsLogRootFilter?
 
+  init {
+    val oneRepo = repositories.size == 1
+    val firstRepo = repositories[0]
+    val currentBranchName = firstRepo.currentBranchName
+    val secondRef = when {
+      otherBranchName.isNotBlank() -> otherBranchName
+      oneRepo && !currentBranchName.isNullOrBlank() -> currentBranchName
+      else -> "HEAD"
+    }
+    rangeFilter = fromRange(secondRef, branchName)
+    rootFilter = if (oneRepo) fromRoot(firstRepo.root) else null
+  }
 
-  fun create() {
-    VcsProjectLog.runWhenLogIsReady(project) { _, logManager ->
-      val oneRepo = repositories.size == 1
-      val firstRepo = repositories[0]
-      val currentBranchName = firstRepo.currentBranchName
-      val secondRef = when {
-        otherBranchName.isNotBlank() -> otherBranchName
-        oneRepo && !currentBranchName.isNullOrBlank() -> currentBranchName
-        else -> "HEAD"
-      }
-
-      val rangeFilter = fromRange(secondRef, branchName)
-      val rootFilter = if (oneRepo) fromRoot(firstRepo.root) else null
-
-      createCompareBranchesUi(logManager, rangeFilter, rootFilter, secondRef)
+  fun open() {
+    VcsProjectLog.runWhenLogIsReady(project) { _, _ ->
+      GitCompareBranchesFilesManager.getInstance(project).openFile(this, true)
     }
   }
 
-  private fun createCompareBranchesUi(logManager: VcsLogManager,
-                                      rangeFilter: VcsLogRangeFilter,
-                                      rootFilter: VcsLogRootFilter?,
-                                      secondRef: String) {
-    val tabName = getEditorTabName(branchName, secondRef)
-
+  internal fun create(logManager: VcsLogManager): JComponent {
     val topLogUiFactory = MyLogUiFactory("git-compare-branches-top-" + UUID.randomUUID(),
                                          MyPropertiesForHardcodedFilters(project.service<GitCompareBranchesTopLogProperties>()),
-                                         logManager, rangeFilter, rootFilter)
+                                         logManager.colorManager, rangeFilter, rootFilter)
     val bottomLogUiFactory = MyLogUiFactory("git-compare-branches-bottom-" + UUID.randomUUID(),
                                             MyPropertiesForHardcodedFilters(project.service<GitCompareBranchesBottomLogProperties>()),
-                                            logManager, rangeFilter.asReversed(), rootFilter)
+                                            logManager.colorManager, rangeFilter.asReversed(), rootFilter)
     val topLogUi = logManager.createLogUi(topLogUiFactory, VcsLogManager.LogWindowKind.EDITOR)
     val bottomLogUi = logManager.createLogUi(bottomLogUiFactory, VcsLogManager.LogWindowKind.EDITOR)
-
-    val mainSplitter = OnePixelSplitter(true).apply {
+    return OnePixelSplitter(true).apply {
       firstComponent = VcsLogPanel(logManager, topLogUi)
       secondComponent = VcsLogPanel(logManager, bottomLogUi)
     }
-    createAndOpenLogFile(project, logManager, mainSplitter, listOf(topLogUi, bottomLogUi), tabName, { tabName }, true)
   }
 
-  private fun getEditorTabName(branch1Name: String, branch2Name: String) =
-    ContentUtilEx.getFullName(GitBundle.message("git.compare.branches.tab.name"),
-                              StringUtil.shortenTextWithEllipsis(
-                                GitBundle.message("git.compare.branches.tab.suffix", branch1Name, branch2Name), 150, 20))
+  internal fun getEditorTabName(): String {
+    val (start, end) = rangeFilter.getRange()
+    return getEditorTabName(end, start)
+  }
 
   private class MyLogUiFactory(val logId: String,
                                val properties: MainVcsLogUiProperties,
-                               val logManager: VcsLogManager,
+                               val colorManager: VcsLogColorManager,
                                val rangeFilter: VcsLogRangeFilter,
                                val rootFilter: VcsLogRootFilter?) : VcsLogManager.VcsLogUiFactory<MainVcsLogUi> {
     override fun createLogUi(project: Project, logData: VcsLogData): MainVcsLogUi {
@@ -96,7 +94,7 @@ internal class GitCompareBranchesUi @JvmOverloads constructor(private val projec
       val initialSortType = properties.get<PermanentGraph.SortType>(MainVcsLogUiProperties.BEK_SORT_TYPE)
       val refresher = VisiblePackRefresherImpl(project, logData, collection(), initialSortType, vcsLogFilterer, logId)
 
-      return MyVcsLogUi(logId, logData, logManager.colorManager, properties, refresher, rangeFilter, rootFilter)
+      return MyVcsLogUi(logId, logData, colorManager, properties, refresher, rangeFilter, rootFilter)
     }
   }
 
@@ -172,6 +170,11 @@ internal class GitCompareBranchesUi @JvmOverloads constructor(private val projec
   }
 }
 
+private fun getEditorTabName(branch1Name: String, branch2Name: String) =
+  ContentUtilEx.getFullName(GitBundle.message("git.compare.branches.tab.name"),
+                            StringUtil.shortenTextWithEllipsis(
+                              GitBundle.message("git.compare.branches.tab.suffix", branch1Name, branch2Name), 150, 20))
+
 private fun VcsLogRangeFilter?.getRange(): VcsLogRangeFilter.RefRange {
   check(this != null && ranges.size == 1) {
     "At this point there is one and only one range filter, changing it from the UI is disabled"
@@ -184,6 +187,10 @@ private fun VcsLogRangeFilter.asReversed(): VcsLogRangeFilter {
   return fromRange(end, start)
 }
 
-private fun getExplanationText(dontExist: String, existIn: String): String =
-  "<html>${GitBundle.message("git.compare.branches.explanation.message",
-                             "<code><b>$existIn</b></code>", "<code><b>$dontExist</b></code>")}</html>"
+@NlsContexts.LinkLabel
+private fun getExplanationText(@NlsSafe dontExist: String, @NlsSafe existIn: String): String {
+  return HtmlChunk.raw(GitBundle.message("git.compare.branches.explanation.message",
+                                         HtmlChunk.tag("code").child(HtmlChunk.text(existIn).bold()),
+                                         HtmlChunk.tag("code").child(HtmlChunk.text(dontExist).bold())))
+    .wrapWith("html").toString()
+}

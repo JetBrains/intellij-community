@@ -1,7 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon.problems
 
-import com.intellij.codeInsight.daemon.problems.pass.ProjectProblemPassUtils
+import com.intellij.codeInsight.daemon.problems.Problem
+import com.intellij.codeInsight.daemon.problems.pass.ProjectProblemUtils
+import com.intellij.lang.java.JavaLanguage
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.command.undo.UndoManager
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -29,6 +31,38 @@ internal class ClassProblemsTest : ProjectProblemsViewTest() {
     psiClass.extendsList?.replace(factory.createReferenceList(PsiJavaCodeReferenceElement.EMPTY_ARRAY))
   }
 
+  fun testSealedClassPermittedInheritors() {
+    val targetClass = myFixture.addClass("""
+        package foo;
+        public sealed class A {
+        }
+      """.trimIndent())
+    val refClass = myFixture.addClass("""
+        package foo;
+        
+        public class B extends A {
+        }
+      """.trimIndent())
+
+    doTest(targetClass) {
+      changeClass(targetClass) { psiClass, _ ->
+        val factory = PsiFileFactory.getInstance(project)
+        val javaFile = factory.createFileFromText(JavaLanguage.INSTANCE, "class __Dummy permits B {}") as PsiJavaFile
+        val dummyClass = javaFile.classes[0]
+        val permitsList = dummyClass.permitsList
+        psiClass.addAfter(permitsList!!, psiClass.implementsList)
+      }
+      assertTrue(hasReportedProblems<PsiClass>(refClass))
+      myFixture.openFileInEditor(refClass.containingFile.virtualFile)
+      changeClass(refClass) { psiClass, _ ->
+        psiClass.modifierList?.setModifierProperty(PsiModifier.FINAL, true)
+      }
+      myFixture.openFileInEditor(targetClass.containingFile.virtualFile)
+      myFixture.doHighlighting()
+      assertFalse(hasReportedProblems<PsiClass>(refClass))
+    }
+  }
+
   fun testMakeClassInterface() {
     val targetClass = myFixture.addClass("""
         package foo;
@@ -51,7 +85,7 @@ internal class ClassProblemsTest : ProjectProblemsViewTest() {
         val interfaceKeyword = factory.createKeyword(PsiKeyword.INTERFACE)
         classKeyword?.replace(interfaceKeyword)
       }
-      assertTrue(hasReportedProblems<PsiDeclarationStatement>(targetClass, refClass))
+      assertTrue(hasReportedProblems<PsiDeclarationStatement>(refClass))
     }
   }
 
@@ -91,7 +125,7 @@ internal class ClassProblemsTest : ProjectProblemsViewTest() {
         targetClass = targetClass.replace(annoType) as PsiClass
       }
     }
-    assertTrue(hasReportedProblems<PsiDeclarationStatement>(targetClass, refClass))
+    assertTrue(hasReportedProblems<PsiDeclarationStatement>(refClass))
   }
 
   fun testInheritedMethodUsage() {
@@ -125,7 +159,7 @@ internal class ClassProblemsTest : ProjectProblemsViewTest() {
         psiClass.extendsList?.replace(factory.createReferenceList(PsiJavaCodeReferenceElement.EMPTY_ARRAY))
       }
 
-      assertTrue(hasReportedProblems<PsiClass>(aClass, refClass))
+      assertTrue(hasReportedProblems<PsiClass>(refClass))
     }
   }
 
@@ -157,7 +191,7 @@ internal class ClassProblemsTest : ProjectProblemsViewTest() {
         psiClass.fields[0].modifierList?.setModifierProperty(PsiModifier.PRIVATE, true)
       }
 
-      assertNotEmpty(ProjectProblemPassUtils.getInlays(myFixture.editor).entries)
+      assertNotEmpty(getProblems())
 
       val selectedEditor = FileEditorManager.getInstance(project).selectedEditor
       WriteCommandAction.runWriteCommandAction(project) {
@@ -167,7 +201,61 @@ internal class ClassProblemsTest : ProjectProblemsViewTest() {
       }
       PsiDocumentManager.getInstance(project).commitAllDocuments()
 
-      assertEmpty(ProjectProblemPassUtils.getInlays(myFixture.editor).entries)
+      myFixture.doHighlighting()
+      assertEmpty(ProjectProblemUtils.getReportedProblems(myFixture.editor).entries)
+    }
+  }
+
+  fun testRenameClassRenameMethodAndUndoAll() {
+    val targetClass = myFixture.addClass("""
+        public class A {
+          public void foo() {}
+          
+          public void bar() {}
+        }
+    """.trimIndent())
+
+    myFixture.addClass("""
+        public class RefClass {
+          void test() {
+            A a = new A();
+            a.foo();
+            a.bar();
+          }
+        }
+    """.trimIndent())
+
+    doTest(targetClass) {
+      val factory = JavaPsiFacade.getInstance(project).elementFactory
+
+      changeClass(targetClass) { psiClass, _ ->
+        psiClass.identifyingElement?.replace(factory.createIdentifier("A1"))
+      }
+
+      val problems: Map<PsiMember, Set<Problem>> = ProjectProblemUtils.getReportedProblems(myFixture.editor)
+      val reportedMembers = problems.map { it.key }
+      assertSize(1, reportedMembers)
+      assertTrue(targetClass in reportedMembers)
+
+      WriteCommandAction.runWriteCommandAction(project) {
+        val method = targetClass.findMethodsByName("foo", false)[0]
+        method.identifyingElement?.replace(factory.createIdentifier("foo1"))
+      }
+      myFixture.doHighlighting()
+      assertNotEmpty(ProjectProblemUtils.getReportedProblems(myFixture.editor).entries)
+
+      WriteCommandAction.runWriteCommandAction(project) {
+        val method = targetClass.findMethodsByName("foo1", false)[0]
+        method.identifyingElement?.replace(factory.createIdentifier("foo"))
+      }
+      myFixture.doHighlighting()
+      assertSize(2, ProjectProblemUtils.getReportedProblems(myFixture.editor).entries)
+
+      changeClass(targetClass) { psiClass, _ ->
+        psiClass.identifyingElement?.replace(factory.createIdentifier("A"))
+      }
+
+      assertEmpty(ProjectProblemUtils.getReportedProblems(myFixture.editor).entries)
     }
   }
 
@@ -200,7 +288,7 @@ internal class ClassProblemsTest : ProjectProblemsViewTest() {
         val innerClass = psiClass.findInnerClassByName("Inner", false)
         innerClass?.modifierList?.setModifierProperty(PsiModifier.STATIC, !isStatic)
       }
-      assertTrue(hasReportedProblems<PsiDeclarationStatement>(targetClass, refClass))
+      assertTrue(hasReportedProblems<PsiDeclarationStatement>(refClass))
     }
   }
 
@@ -236,7 +324,7 @@ internal class ClassProblemsTest : ProjectProblemsViewTest() {
 
     doTest(targetClass) {
       changeClass(targetClass, classChangeAction)
-      assertTrue(hasReportedProblems<PsiDeclarationStatement>(targetClass, refClass))
+      assertTrue(hasReportedProblems<PsiDeclarationStatement>(refClass))
     }
   }
 

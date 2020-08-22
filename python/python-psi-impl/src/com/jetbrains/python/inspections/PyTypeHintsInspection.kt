@@ -17,10 +17,13 @@ import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnotationDialect
+import com.jetbrains.python.codeInsight.imports.AddImportHelper
+import com.jetbrains.python.codeInsight.imports.AddImportHelper.ImportPriority
+import com.jetbrains.python.codeInsight.typeHints.PyTypeHintFile
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.documentation.PythonDocumentationProvider
-import com.jetbrains.python.documentation.doctest.PyDocstringFile
 import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.resolve.PyResolveContext
@@ -31,8 +34,7 @@ class PyTypeHintsInspection : PyInspection() {
 
   override fun buildVisitor(holder: ProblemsHolder,
                             isOnTheFly: Boolean,
-                            session: LocalInspectionToolSession): PsiElementVisitor = Visitor(
-    holder, session)
+                            session: LocalInspectionToolSession): PsiElementVisitor = Visitor(holder, session)
 
   private class Visitor(holder: ProblemsHolder, session: LocalInspectionToolSession) : PyInspectionVisitor(holder, session) {
 
@@ -75,6 +77,18 @@ class PyTypeHintsInspection : PyInspection() {
       super.visitPySubscriptionExpression(node)
 
       checkParameters(node)
+      checkParameterizedBuiltins(node)
+    }
+
+    private fun checkParameterizedBuiltins(node: PySubscriptionExpression) {
+      if (LanguageLevel.forElement(node).isAtLeast(LanguageLevel.PYTHON39)) return
+
+      val qualifier = node.qualifier
+      if (qualifier is PyReferenceExpression) {
+        if (PyBuiltinCache.isInBuiltins(qualifier) && qualifier.name in PyTypingTypeProvider.TYPING_BUILTINS_GENERIC_ALIASES) {
+          registerProblem(node, "Builtin '${qualifier.name}' cannot be parameterized directly", ReplaceWithTypingGenericAliasQuickFix())
+        }
+      }
     }
 
     override fun visitPyReferenceExpression(node: PyReferenceExpression) {
@@ -83,27 +97,30 @@ class PyTypeHintsInspection : PyInspection() {
       if (node.referencedName == PyNames.CANONICAL_SELF && PyTypingTypeProvider.isInAnnotationOrTypeComment(node)) {
         val typeName = myTypeEvalContext.getType(node)?.name
         if (typeName != null && typeName != PyNames.CANONICAL_SELF) {
-          registerProblem(node, "Invalid type 'self'", ProblemHighlightType.GENERIC_ERROR, null,
-                          ReplaceWithTypeNameQuickFix(
-                            typeName))
+          registerProblem(node, "Invalid type 'self'", ProblemHighlightType.GENERIC_ERROR, null, ReplaceWithTypeNameQuickFix(typeName))
         }
       }
 
-      if ((node.parent is PyAnnotation || node.parent is PyExpressionStatement && node.parent.parent is PyDocstringFile) &&
-          node.multiFollowAssignmentsChain(resolveContext, this::followNotTypingOpaque)
-            .asSequence()
-            .mapNotNull { it.element }
-            .filterIsInstance<PyQualifiedNameOwner>()
-            .mapNotNull { it.qualifiedName }
-            .any { it == PyTypingTypeProvider.LITERAL || it == PyTypingTypeProvider.LITERAL_EXT }) {
-        registerProblem(node, "'Literal' must have at least one parameter")
+      if ((node.parent is PyAnnotation || node.parent is PyExpressionStatement && node.parent.parent is PyTypeHintFile)) {
+        val qNames = node.multiFollowAssignmentsChain(resolveContext, this::followNotTypingOpaque)
+          .asSequence()
+          .mapNotNull { it.element }
+          .filterIsInstance<PyQualifiedNameOwner>()
+          .mapNotNull { it.qualifiedName }
+          .toList()
+        if (qNames.any { it == PyTypingTypeProvider.LITERAL || it == PyTypingTypeProvider.LITERAL_EXT }) {
+          registerProblem(node, "'Literal' must have at least one parameter")
+        }
+        if (qNames.any { it == PyTypingTypeProvider.ANNOTATED || it == PyTypingTypeProvider.ANNOTATED_EXT }) {
+          registerProblem(node, "'Annotated' must be called with at least two arguments")
+        }
       }
     }
 
     override fun visitPyFile(node: PyFile?) {
       super.visitPyFile(node)
 
-      if (node is PyDocstringFile && PyTypingTypeProvider.isInAnnotationOrTypeComment(node)) {
+      if (node is PyTypeHintFile) {
         node.children.singleOrNull().also { if (it is PyExpressionStatement) checkTupleMatching(it.expression) }
       }
     }
@@ -118,20 +135,13 @@ class PyTypeHintsInspection : PyInspection() {
 
         if (node is PyFunction) {
           if (node.annotationValue != null || node.parameterList.parameters.any { it is PyNamedParameter && it.annotationValue != null }) {
-            registerProblem(node.typeComment, message,
-                            RemoveElementQuickFix(
-                              "Remove type comment"))
-            registerProblem(node.nameIdentifier, message,
-                            RemoveFunctionAnnotations())
+            registerProblem(node.typeComment, message, RemoveElementQuickFix("Remove type comment"))
+            registerProblem(node.nameIdentifier, message, RemoveFunctionAnnotations())
           }
         }
         else if (node.annotationValue != null) {
-          registerProblem(node.typeComment, message,
-                          RemoveElementQuickFix(
-                            "Remove type comment"))
-          registerProblem(node.annotation, message,
-                          RemoveElementQuickFix(
-                            "Remove annotation"))
+          registerProblem(node.typeComment, message, RemoveElementQuickFix("Remove type comment"))
+          registerProblem(node.annotation, message, RemoveElementQuickFix("Remove annotation"))
         }
       }
     }
@@ -200,8 +210,7 @@ class PyTypeHintsInspection : PyInspection() {
                   if (targetName != null && targetName != argument.stringValue) {
                     registerProblem(argument,
                                     "The argument to 'TypeVar()' must be a string equal to the variable name to which it is assigned",
-                                    ReplaceWithTargetNameQuickFix(
-                                      targetName))
+                                    ReplaceWithTargetNameQuickFix(targetName))
                   }
                 }
               "covariant" -> covariant = PyEvaluator.evaluateAsBoolean(argument, false)
@@ -275,7 +284,9 @@ class PyTypeHintsInspection : PyInspection() {
               PyTypingTypeProvider.FINAL,
               PyTypingTypeProvider.FINAL_EXT,
               PyTypingTypeProvider.LITERAL,
-              PyTypingTypeProvider.LITERAL_EXT ->
+              PyTypingTypeProvider.LITERAL_EXT,
+              PyTypingTypeProvider.ANNOTATED,
+              PyTypingTypeProvider.ANNOTATED_EXT ->
                 registerProblem(base,
                                 "'${it.substringAfterLast('.')}' cannot be used with instance and class checks",
                                 ProblemHighlightType.GENERIC_ERROR)
@@ -311,7 +322,9 @@ class PyTypeHintsInspection : PyInspection() {
                 PyTypingTypeProvider.FINAL,
                 PyTypingTypeProvider.FINAL_EXT,
                 PyTypingTypeProvider.LITERAL,
-                PyTypingTypeProvider.LITERAL_EXT -> {
+                PyTypingTypeProvider.LITERAL_EXT,
+                PyTypingTypeProvider.ANNOTATED,
+                PyTypingTypeProvider.ANNOTATED_EXT -> {
                   registerProblem(base,
                                   "'${qName.substringAfterLast('.')}' cannot be used with instance and class checks",
                                   ProblemHighlightType.GENERIC_ERROR)
@@ -363,8 +376,7 @@ class PyTypeHintsInspection : PyInspection() {
             .map { if (it is PyFunction) it.containingClass else it }
             .any { it is PyWithAncestors && PyTypingTypeProvider.isGeneric(it, myTypeEvalContext) }
             .also {
-              if (it) registerProblem(call, "Generics should be specified through square brackets",
-                                      ReplaceWithSubscriptionQuickFix())
+              if (it) registerProblem(call, "Generics should be specified through square brackets", ReplaceWithSubscriptionQuickFix())
             }
         }
       }
@@ -473,6 +485,8 @@ class PyTypeHintsInspection : PyInspection() {
       val callableQName = QualifiedName.fromDottedString(PyTypingTypeProvider.CALLABLE)
       val literalQName = QualifiedName.fromDottedString(PyTypingTypeProvider.LITERAL)
       val literalExtQName = QualifiedName.fromDottedString(PyTypingTypeProvider.LITERAL_EXT)
+      val annotatedQName = QualifiedName.fromDottedString(PyTypingTypeProvider.ANNOTATED)
+      val annotatedExtQName = QualifiedName.fromDottedString(PyTypingTypeProvider.ANNOTATED_EXT)
       val qNames = PyResolveUtil.resolveImportedElementQNameLocally(operand)
 
       var typingOnly = true
@@ -482,6 +496,7 @@ class PyTypeHintsInspection : PyInspection() {
         when (it) {
           genericQName -> checkGenericParameters(index)
           literalQName, literalExtQName -> checkLiteralParameter(index)
+          annotatedQName, annotatedExtQName -> checkAnnotatedParameter(index)
           callableQName -> {
             callableExists = true
             checkCallableParameters(index)
@@ -501,7 +516,7 @@ class PyTypeHintsInspection : PyInspection() {
       if (subParameter is PyReferenceExpression &&
           PyResolveUtil
             .resolveImportedElementQNameLocally(subParameter)
-            .any { qName -> qName.toString().let { it == PyTypingTypeProvider.LITERAL || it == PyTypingTypeProvider.LITERAL_EXT} }) {
+            .any { qName -> qName.toString().let { it == PyTypingTypeProvider.LITERAL || it == PyTypingTypeProvider.LITERAL_EXT } }) {
         // if `index` is like `typing.Literal[...]` and has invalid form,
         // outer `typing.Literal[...]` won't be highlighted
         return
@@ -511,6 +526,12 @@ class PyTypeHintsInspection : PyInspection() {
         registerProblem(index,
                         "'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, " +
                         "other literal types, or type aliases to other literal types")
+      }
+    }
+
+    private fun checkAnnotatedParameter(index: PyExpression) {
+      if (index !is PyTupleExpression) {
+        registerProblem(index, "'Annotated' must be called with at least two arguments")
       }
     }
 
@@ -660,7 +681,7 @@ class PyTypeHintsInspection : PyInspection() {
 
       val self = scopeOwner.parameterList.parameters.firstOrNull()?.takeIf { it.isSelf }
       if (self == null ||
-          PyUtil.multiResolveTopPriority(qualifier, resolveContext).let { it.isNotEmpty() && it.all { e -> e != self }}) {
+          PyUtil.multiResolveTopPriority(qualifier, resolveContext).let { it.isNotEmpty() && it.all { e -> e != self } }) {
         registerProblem(node, "Non-self attribute could not be type hinted")
       }
     }
@@ -834,6 +855,22 @@ class PyTypeHintsInspection : PyInspection() {
 
           index.replace(newIndex)
         }
+      }
+    }
+
+    private class ReplaceWithTypingGenericAliasQuickFix : LocalQuickFix {
+      override fun getFamilyName(): String = PyPsiBundle.message("QFIX.replace.with.typing.alias")
+
+      override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
+        val subscription = descriptor.psiElement as? PySubscriptionExpression ?: return
+        val refExpr = subscription.operand as? PyReferenceExpression ?: return
+        val alias = PyTypingTypeProvider.TYPING_BUILTINS_GENERIC_ALIASES[refExpr.name] ?: return
+
+        val languageLevel = LanguageLevel.forElement(subscription)
+        val priority = if (languageLevel.isAtLeast(LanguageLevel.PYTHON35)) ImportPriority.THIRD_PARTY else ImportPriority.BUILTIN
+        AddImportHelper.addOrUpdateFromImportStatement(subscription.containingFile, "typing", alias, null, priority, subscription)
+        val newRefExpr = PyElementGenerator.getInstance(project).createExpressionFromText(languageLevel, alias)
+        refExpr.replace(newRefExpr)
       }
     }
   }

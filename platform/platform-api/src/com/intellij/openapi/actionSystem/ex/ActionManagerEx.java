@@ -30,6 +30,8 @@ public abstract class ActionManagerEx extends ActionManager {
 
   public abstract void fireBeforeEditorTyping(char c, @NotNull DataContext dataContext);
 
+  public abstract void fireAfterEditorTyping(char c, @NotNull DataContext dataContext);
+
   /**
    * For logging purposes
    */

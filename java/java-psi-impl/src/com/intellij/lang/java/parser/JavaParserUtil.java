@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java.parser;
 
 import com.intellij.core.JavaPsiBundle;
@@ -8,10 +8,10 @@ import com.intellij.lang.impl.TokenSequence;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.lang.java.JavaParserDefinition;
 import com.intellij.lexer.Lexer;
-import com.intellij.lexer.TokenizedText;
+import com.intellij.lexer.TokenList;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
@@ -33,14 +33,15 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 
 import java.util.List;
+import java.util.function.Predicate;
 
-public class JavaParserUtil {
+public final class JavaParserUtil {
   public static final TokenSet WS_COMMENTS = TokenSet.orSet(ElementType.JAVA_COMMENT_BIT_SET, TokenSet.WHITE_SPACE);
   private static final Key<LanguageLevel> LANG_LEVEL_KEY = Key.create("JavaParserUtil.LanguageLevel");
   private static final Key<Boolean> DEEP_PARSE_BLOCKS_IN_STATEMENTS = Key.create("JavaParserUtil.ParserExtender");
 
   @NotNull
-  public static TokenizedText obtainTokens(@NotNull PsiFile file) {
+  public static TokenList obtainTokens(@NotNull PsiFile file) {
     return CachedValuesManager.getCachedValue(file, () ->
       CachedValueProvider.Result.create(
         TokenSequence.performLexing(file.getViewProvider().getContents(), JavaParserDefinition.createLexer(PsiUtil.getLanguageLevel(file))),
@@ -229,11 +230,11 @@ public class JavaParserUtil {
   }
 
   // used instead of PsiBuilder.error() as it keeps all subsequent error messages
-  public static void error(final PsiBuilder builder, @NotNull String message) {
+  public static void error(final PsiBuilder builder, @NotNull @NlsContexts.ParsingError String message) {
     builder.mark().error(message);
   }
 
-  public static void error(final PsiBuilder builder, @NotNull String message, @Nullable final PsiBuilder.Marker before) {
+  public static void error(final PsiBuilder builder, @NotNull @NlsContexts.ParsingError String message, @Nullable final PsiBuilder.Marker before) {
     if (before == null) {
       error(builder, message);
     }
@@ -302,18 +303,18 @@ public class JavaParserUtil {
     };
   }
 
-  public static PsiBuilder stoppingBuilder(final PsiBuilder builder, final Condition<? super Pair<IElementType, String>> condition) {
+  public static PsiBuilder stoppingBuilder(final PsiBuilder builder, final Predicate<? super Pair<IElementType, String>> condition) {
     return new PsiBuilderAdapter(builder) {
       @Override
       public IElementType getTokenType() {
         final Pair<IElementType, String> input = Pair.create(builder.getTokenType(), builder.getTokenText());
-        return condition.value(input) ? null : super.getTokenType();
+        return condition.test(input) ? null : super.getTokenType();
       }
 
       @Override
       public boolean eof() {
         final Pair<IElementType, String> input = Pair.create(builder.getTokenType(), builder.getTokenText());
-        return condition.value(input) || super.eof();
+        return condition.test(input) || super.eof();
       }
     };
   }

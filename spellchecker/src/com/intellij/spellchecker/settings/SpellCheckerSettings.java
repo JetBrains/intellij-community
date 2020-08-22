@@ -28,27 +28,23 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
   private static final String CUSTOM_DICTIONARIES_ATTR_NAME = "CustomDictionaries";
   private static final String CUSTOM_DICTIONARY_ATTR_NAME = "CustomDictionary";
 
-  private static final String DICTIONARIES_ATTR_NAME = "Dictionaries";
-  private static final String DICTIONARY_ATTR_NAME = "Dictionary";
-
   private static final String RUNTIME_DICTIONARIES_ATTR_NAME = "RuntimeDictionaries";
   private static final String RUNTIME_DICTIONARY_ATTR_NAME = "RuntimeDictionary";
 
-  private static final String CORRECTIONS_MAX_LIMIT = "CorrectionsLimit";
-  private static final int DEFAULT_MAX_VALUE = 5;
   private static final String DICTIONARY_TO_SAVE_ATTR_NAME = "DefaultDictionary";
   private static final String DEFAULT_DICTIONARY_TO_SAVE = SpellCheckerManager.DictionaryLevel.PROJECT.getName();
   private static final String USE_SINGLE_DICT_ATTR_NAME = "UseSingleDictionary";
   private static final boolean DEFAULT_USE_SINGLE_DICT = true;
+  private static final String SETTINGS_TRANSFERRED = "transferred"; 
 
   // Paths
   private final List<String> myOldDictionaryFoldersPaths = new ArrayList<>();
   private List<String> myCustomDictionariesPaths = new ArrayList<>();
-  private Set<String> myDisabledDictionariesPaths = new HashSet<>();
 
   private Set<String> myRuntimeDisabledDictionariesNames = new HashSet<>();
   private String myDictionaryToSave = DEFAULT_DICTIONARY_TO_SAVE;
   private boolean myUseSingleDictionaryToSave = DEFAULT_USE_SINGLE_DICT;
+  private boolean mySettingsTransferred = false;
 
   public String getDictionaryToSave() {
     return myDictionaryToSave;
@@ -66,6 +62,14 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
     this.myUseSingleDictionaryToSave = useSingleDictionaryToSave;
   }
 
+  public boolean isSettingsTransferred() {
+    return mySettingsTransferred;
+  }
+
+  public void setSettingsTransferred(boolean settingsTransferred) {
+    mySettingsTransferred = settingsTransferred;
+  }
+
   public static @NotNull SpellCheckerSettings getInstance(Project project) {
     return ServiceManager.getService(project, SpellCheckerSettings.class);
   }
@@ -76,15 +80,6 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
 
   public void setCustomDictionariesPaths(List<String> customDictionariesPaths) {
     myCustomDictionariesPaths = customDictionariesPaths;
-  }
-
-  public Set<String> getDisabledDictionariesPaths() {
-    return myDisabledDictionariesPaths;
-  }
-
-
-  public void setDisabledDictionariesPaths(Set<String> disabledDictionariesPaths) {
-    myDisabledDictionariesPaths = disabledDictionariesPaths;
   }
 
   public Set<String> getRuntimeDisabledDictionariesNames() {
@@ -105,9 +100,8 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
     if (myRuntimeDisabledDictionariesNames.isEmpty() &&
         myOldDictionaryFoldersPaths.isEmpty() &&
         myCustomDictionariesPaths.isEmpty() &&
-        myDisabledDictionariesPaths.isEmpty() &&
         myUseSingleDictionaryToSave == DEFAULT_USE_SINGLE_DICT &&
-        myDictionaryToSave.equals(DEFAULT_DICTIONARY_TO_SAVE)) {
+        myDictionaryToSave.equals(DEFAULT_DICTIONARY_TO_SAVE) && !mySettingsTransferred) {
       return null;
     }
 
@@ -131,15 +125,9 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
     for (int j = 0; j < myCustomDictionariesPaths.size(); j++) {
       element.setAttribute(CUSTOM_DICTIONARY_ATTR_NAME + j, myCustomDictionariesPaths.get(j));
     }
-    element.setAttribute(DICTIONARIES_ATTR_NAME, String.valueOf(myDisabledDictionariesPaths.size()));
-    iterator = myDisabledDictionariesPaths.iterator();
-    i = 0;
-    while (iterator.hasNext()) {
-      element.setAttribute(DICTIONARY_ATTR_NAME + i, iterator.next());
-      i++;
-    }
     element.setAttribute(DICTIONARY_TO_SAVE_ATTR_NAME, myDictionaryToSave);
     element.setAttribute(USE_SINGLE_DICT_ATTR_NAME, String.valueOf(myUseSingleDictionaryToSave));
+    element.setAttribute(SETTINGS_TRANSFERRED, String.valueOf(mySettingsTransferred));
     return element;
   }
 
@@ -149,7 +137,6 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
     myRuntimeDisabledDictionariesNames.clear();
     myCustomDictionariesPaths.clear();
     myOldDictionaryFoldersPaths.clear();
-    myDisabledDictionariesPaths.clear();
     try {
       // runtime
       final int runtimeDictionariesSize = parseInt(element.getAttributeValue(RUNTIME_DICTIONARIES_ATTR_NAME), 0);
@@ -174,19 +161,10 @@ public class SpellCheckerSettings implements PersistentStateComponent<Element> {
       for (int i = 0; i < customDictSize; i++) {
         myCustomDictionariesPaths.add(element.getAttributeValue(CUSTOM_DICTIONARY_ATTR_NAME + i));
       }
-      final int scriptsSize = parseInt(element.getAttributeValue(DICTIONARIES_ATTR_NAME), 0);
-      for (int i = 0; i < scriptsSize; i++) {
-        myDisabledDictionariesPaths.add(element.getAttributeValue(DICTIONARY_ATTR_NAME + i));
-      }
-      int correctionsLimit = parseInt(element.getAttributeValue(CORRECTIONS_MAX_LIMIT), DEFAULT_MAX_VALUE);
-      final RegistryValue registryValue = Registry.get("spellchecker.corrections.limit");
-      if (correctionsLimit != DEFAULT_MAX_VALUE && !registryValue.isChangedFromDefault()) {
-        registryValue.setValue(correctionsLimit);
-        element.setAttribute(CORRECTIONS_MAX_LIMIT, String.valueOf(DEFAULT_MAX_VALUE));
-      }
       myDictionaryToSave = notNullize(element.getAttributeValue(DICTIONARY_TO_SAVE_ATTR_NAME), DEFAULT_DICTIONARY_TO_SAVE);
       myUseSingleDictionaryToSave =
         Boolean.parseBoolean(notNullize(element.getAttributeValue(USE_SINGLE_DICT_ATTR_NAME), String.valueOf(DEFAULT_USE_SINGLE_DICT)));
+      mySettingsTransferred = Boolean.parseBoolean(notNullize(element.getAttributeValue(SETTINGS_TRANSFERRED), "false"));
     }
     catch (Exception ignored) {
     }

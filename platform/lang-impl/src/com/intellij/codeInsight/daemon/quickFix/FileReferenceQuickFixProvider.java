@@ -252,7 +252,7 @@ public final class FileReferenceQuickFixProvider {
     return file != null ? ModuleUtilCore.findModuleForFile(file, context.getProject()) : null;
   }
 
-  private static class MyCreateFileFix extends CreateFilePathFix {
+  private static final class MyCreateFileFix extends CreateFilePathFix {
     private final String myNewFileTemplateName;
 
     private MyCreateFileFix(@NotNull PsiElement psiElement,

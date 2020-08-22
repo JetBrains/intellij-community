@@ -9,15 +9,15 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
-import com.intellij.openapi.util.io.ByteArraySequence;
-import com.intellij.openapi.util.io.FileAttributes;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.impl.ZipHandlerBase;
+import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.ChildInfoImpl;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
-import com.intellij.openapi.vfs.newvfs.impl.CachedFileType;
 import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
@@ -25,25 +25,26 @@ import com.intellij.util.*;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ConcurrentIntObjectMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ObjectIntHashMap;
+import com.intellij.util.containers.FastUtilHashingStrategies;
 import com.intellij.util.hash.ContentHashEnumerator;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.*;
 import com.intellij.util.io.storage.*;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TObjectHashingStrategy;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenCustomHashMap;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.security.MessageDigest;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -64,9 +65,7 @@ public final class FSRecords {
   private static final boolean useSmallAttrTable = SystemProperties.getBooleanProperty("idea.use.small.attr.table.for.vfs", true);
   private static final boolean ourStoreRootsSeparately = SystemProperties.getBooleanProperty("idea.store.roots.separately", false);
 
-  //TODO[anyone] when bumping the version, please delete `ourSymlinkTargetAttr_old`, use it's value for `ourSymlinkTargetAttr`,
-  //             and drop path conversion from `readSymlinkTarget`
-  private static final int VERSION = 53 +
+  private static final int VERSION = 54 +
                                      (WE_HAVE_CONTENT_HASHES ? 0x10 : 0) +
                                      (IOUtil.BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER ? 0x37 : 0) +
                                      (bulkAttrReadSupport ? 0x27 : 0) +
@@ -74,7 +73,9 @@ public final class FSRecords {
                                      (ourStoreRootsSeparately ? 0x63 : 0) +
                                      (useCompressionUtil ? 0x7f : 0) +
                                      (useSmallAttrTable ? 0x31 : 0) +
-                                     (PersistentHashMapValueStorage.COMPRESSION_ENABLED ? 0x15 : 0);
+                                     (PersistentHashMapValueStorage.COMPRESSION_ENABLED ? 0x15 : 0) +
+                                     (FileSystemUtil.DO_NOT_RESOLVE_SYMLINKS ? 0x3b : 0) +
+                                     (ZipHandlerBase.USE_CRC_INSTEAD_OF_TIMESTAMP ? 0x4f : 0);
 
   private static final int PARENT_OFFSET = 0;
   private static final int PARENT_SIZE = 4;
@@ -109,9 +110,7 @@ public final class FSRecords {
   private static final int CORRUPTED_MAGIC = 0xabcf7f7f;
 
   private static final FileAttribute ourChildrenAttr = new FileAttribute("FsRecords.DIRECTORY_CHILDREN");
-  private static final FileAttribute ourSymlinkTargetAttr = new FileAttribute("FsRecords.SYMLINK_TARGET_2");
-  private static final FileAttribute ourSymlinkTargetAttr_old = new FileAttribute("FsRecords.SYMLINK_TARGET");
-
+  private static final FileAttribute ourSymlinkTargetAttr = new FileAttribute("FsRecords.SYMLINK_TARGET");
   private static final ReentrantReadWriteLock lock;
   private static final ReentrantReadWriteLock.ReadLock r;
   private static final ReentrantReadWriteLock.WriteLock w;
@@ -140,11 +139,7 @@ public final class FSRecords {
       setTimestamp(id, attributes.lastModified);
       setLength(id, attributes.isDirectory() ? -1L : attributes.length);
 
-      setFlags(id, (attributes.isDirectory() ? PersistentFS.IS_DIRECTORY_FLAG : 0) |
-                   (attributes.isWritable() ? 0 : PersistentFS.IS_READ_ONLY) |
-                   (attributes.isSymLink() ? PersistentFS.IS_SYMLINK : 0) |
-                   (attributes.isSpecial() ? PersistentFS.IS_SPECIAL : 0) |
-                   (attributes.isHidden() ? PersistentFS.IS_HIDDEN : 0), true);
+      setFlags(id, PersistentFSImpl.fileAttributesToFlags(attributes), true);
       setParent(id, parentId);
       return nameId;
     });
@@ -180,7 +175,7 @@ public final class FSRecords {
     private static RefCountingStorage myContents;
     private static ResizeableMappedFile myRecords;
     private static ContentHashEnumerator myContentHashesEnumerator;
-    private static File myRootsFile;
+    private static Path myRootsFile;
     private static final VfsDependentEnum<String> myAttributesList = new VfsDependentEnum<>("attrib", EnumeratorStringDescriptor.INSTANCE, 1);
     private static final IntList myFreeRecords = new IntArrayList();
 
@@ -252,24 +247,26 @@ public final class FSRecords {
       throw new RuntimeException("Can't initialize filesystem storage", exception);
     }
 
-    @Nullable
-    private static Exception tryInit() {
-      final File basePath = basePath().getAbsoluteFile();
-      if (!(basePath.isDirectory() || basePath.mkdirs())) {
-        return new RuntimeException("Cannot create storage directory: " + basePath);
+    private static @Nullable Exception tryInit() {
+      Path basePath = basePath().getAbsoluteFile().toPath();
+      try {
+        Files.createDirectories(basePath);
+      }
+      catch (IOException e) {
+        return e;
       }
 
-      final File namesFile = new File(basePath, "names" + VFS_FILES_EXTENSION);
-      final File attributesFile = new File(basePath, "attrib" + VFS_FILES_EXTENSION);
-      final File contentsFile = new File(basePath, "content" + VFS_FILES_EXTENSION);
-      final File contentsHashesFile = new File(basePath, "contentHashes" + VFS_FILES_EXTENSION);
-      final File recordsFile = new File(basePath, "records" + VFS_FILES_EXTENSION);
-      myRootsFile = ourStoreRootsSeparately ? new File(basePath, "roots" + VFS_FILES_EXTENSION) : null;
+      Path namesFile = basePath.resolve("names" + VFS_FILES_EXTENSION);
+      Path attributesFile = basePath.resolve("attrib" + VFS_FILES_EXTENSION);
+      Path contentsFile = basePath.resolve("content" + VFS_FILES_EXTENSION);
+      Path contentsHashesFile = basePath.resolve("contentHashes" + VFS_FILES_EXTENSION);
+      Path recordsFile = basePath.resolve("records" + VFS_FILES_EXTENSION);
+      myRootsFile = ourStoreRootsSeparately ? basePath.resolve("roots" + VFS_FILES_EXTENSION) : null;
 
-      final File vfsDependentEnumBaseFile = VfsDependentEnum.getBaseFile();
+      File vfsDependentEnumBaseFile = VfsDependentEnum.getBaseFile();
 
-      if (!namesFile.exists()) {
-        invalidateIndex("'" + namesFile.getPath() + "' does not exist");
+      if (!Files.exists(namesFile)) {
+        invalidateIndex("'" + namesFile + "' does not exist");
       }
 
       try {
@@ -279,16 +276,16 @@ public final class FSRecords {
         }
 
         StorageLockContext storageLockContext = new StorageLockContext(false);
-        myNames = new PersistentStringEnumerator(namesFile.toPath(), storageLockContext);
+        myNames = new PersistentStringEnumerator(namesFile, storageLockContext);
 
-        myAttributes = new Storage(attributesFile.getPath(), REASONABLY_SMALL) {
+        myAttributes = new Storage(attributesFile, REASONABLY_SMALL) {
           @Override
-          protected AbstractRecordsTable createRecordsTable(PagePool pool, File recordsFile) throws IOException {
+          protected AbstractRecordsTable createRecordsTable(PagePool pool, @NotNull Path recordsFile) throws IOException {
             return inlineAttributes && useSmallAttrTable ? new CompactRecordsTable(recordsFile, pool, false) : super.createRecordsTable(pool, recordsFile);
           }
         };
 
-        myContents = new RefCountingStorage(contentsFile.getPath(), CapacityAllocationPolicy.FIVE_PERCENT_FOR_GROWTH, useCompressionUtil) {
+        myContents = new RefCountingStorage(contentsFile, CapacityAllocationPolicy.FIVE_PERCENT_FOR_GROWTH, useCompressionUtil) {
           @NotNull
           @Override
           protected ExecutorService createExecutor() {
@@ -297,11 +294,11 @@ public final class FSRecords {
         };
 
         // sources usually zipped with 4x ratio
-        myContentHashesEnumerator = WE_HAVE_CONTENT_HASHES ? new ContentHashEnumerator(contentsHashesFile.toPath(), storageLockContext) : null;
+        myContentHashesEnumerator = WE_HAVE_CONTENT_HASHES ? new ContentHashEnumerator(contentsHashesFile, storageLockContext) : null;
 
         boolean aligned = PagedFileStorage.BUFFER_SIZE % RECORD_SIZE == 0;
         if (!aligned) LOG.error("Buffer size " + PagedFileStorage.BUFFER_SIZE + " is not aligned for record size " + RECORD_SIZE);
-        myRecords = new ResizeableMappedFile(recordsFile.toPath(), 20 * 1024, storageLockContext,
+        myRecords = new ResizeableMappedFile(recordsFile, 20 * 1024, storageLockContext,
                                              PagedFileStorage.BUFFER_SIZE, aligned, IOUtil.BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER);
 
         boolean initial = myRecords.length() == 0;
@@ -334,8 +331,8 @@ public final class FSRecords {
 
           boolean deleted = FileUtil.delete(getCorruptionMarkerFile());
           deleted &= IOUtil.deleteAllFilesStartingWith(namesFile);
-          deleted &= AbstractStorage.deleteFiles(attributesFile.getPath());
-          deleted &= AbstractStorage.deleteFiles(contentsFile.getPath());
+          deleted &= AbstractStorage.deleteFiles(attributesFile);
+          deleted &= AbstractStorage.deleteFiles(contentsFile);
           deleted &= IOUtil.deleteAllFilesStartingWith(contentsHashesFile);
           deleted &= IOUtil.deleteAllFilesStartingWith(recordsFile);
           deleted &= IOUtil.deleteAllFilesStartingWith(vfsDependentEnumBaseFile);
@@ -352,7 +349,7 @@ public final class FSRecords {
               e1.printStackTrace();
             }
             else {
-              final String message = "Files in " + basePath.getPath() + " are locked.\n" +
+              final String message = "Files in " + basePath + " are locked.\n" +
                                      ApplicationNamesInfo.getInstance().getProductName() + " will not be able to start up.";
               if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
                 JOptionPane.showMessageDialog(JOptionPane.getRootFrame(), message, IdeBundle.message("dialog.title.fatal.error"), JOptionPane.ERROR_MESSAGE);
@@ -714,10 +711,9 @@ public final class FSRecords {
   static int @NotNull [] listRoots() {
     return readAndHandleErrors(() -> {
       if (ourStoreRootsSeparately) {
-        TIntArrayList result = new TIntArrayList();
+        IntArrayList result = new IntArrayList();
 
-        try (@SuppressWarnings("ImplicitDefaultCharsetUsage") LineNumberReader stream =
-               new LineNumberReader(new BufferedReader(new InputStreamReader(new FileInputStream(DbConnection.myRootsFile))))) {
+        try (@SuppressWarnings("ImplicitDefaultCharsetUsage") LineNumberReader stream = new LineNumberReader(Files.newBufferedReader(DbConnection.myRootsFile))) {
           String str;
           while ((str = stream.readLine()) != null) {
             int index = str.indexOf(' ');
@@ -726,8 +722,7 @@ public final class FSRecords {
           }
         }
         catch (FileNotFoundException ignored) { }
-
-        return result.toNativeArray();
+        return result.toIntArray();
       }
 
       try (DataInputStream input = readAttribute(ROOT_RECORD_ID, ourChildrenAttr)) {
@@ -769,8 +764,7 @@ public final class FSRecords {
   static int findRootRecord(@NotNull String rootUrl) {
     return writeAndHandleErrors(() -> {
       if (ourStoreRootsSeparately) {
-        try (@SuppressWarnings("ImplicitDefaultCharsetUsage") LineNumberReader stream =
-               new LineNumberReader(new BufferedReader(new InputStreamReader(new FileInputStream(DbConnection.myRootsFile))))) {
+        try (@SuppressWarnings("ImplicitDefaultCharsetUsage") LineNumberReader stream = new LineNumberReader(Files.newBufferedReader(DbConnection.myRootsFile))) {
           String str;
           while((str = stream.readLine()) != null) {
             int index = str.indexOf(' ');
@@ -783,8 +777,7 @@ public final class FSRecords {
         catch (FileNotFoundException ignored) {}
 
         DbConnection.markDirty();
-        try (@SuppressWarnings("ImplicitDefaultCharsetUsage") Writer stream =
-               new BufferedWriter(new OutputStreamWriter(new FileOutputStream(DbConnection.myRootsFile, true)))) {
+        try (@SuppressWarnings("ImplicitDefaultCharsetUsage") Writer stream = Files.newBufferedWriter(DbConnection.myRootsFile, StandardOpenOption.APPEND)) {
           int id = createRecord();
           stream.write(id + " " + rootUrl + "\n");
           return id;
@@ -839,8 +832,7 @@ public final class FSRecords {
       DbConnection.markDirty();
       if (ourStoreRootsSeparately) {
         List<String> rootsThatLeft = new ArrayList<>();
-        try (@SuppressWarnings("ImplicitDefaultCharsetUsage") LineNumberReader stream =
-               new LineNumberReader(new BufferedReader(new InputStreamReader(new FileInputStream(DbConnection.myRootsFile))))) {
+        try (@SuppressWarnings("ImplicitDefaultCharsetUsage") LineNumberReader stream = new LineNumberReader(Files.newBufferedReader(DbConnection.myRootsFile))) {
           String str;
           while((str = stream.readLine()) != null) {
             int index = str.indexOf(' ');
@@ -852,9 +844,8 @@ public final class FSRecords {
         }
         catch (FileNotFoundException ignored) {}
 
-        try (@SuppressWarnings("ImplicitDefaultCharsetUsage") Writer stream =
-               new BufferedWriter(new OutputStreamWriter(new FileOutputStream(DbConnection.myRootsFile)))) {
-          for (String line:rootsThatLeft) {
+        try (@SuppressWarnings("ImplicitDefaultCharsetUsage") Writer stream = Files.newBufferedWriter(DbConnection.myRootsFile)) {
+          for (String line : rootsThatLeft) {
             stream.write(line);
             stream.write("\n");
           }
@@ -1008,13 +999,14 @@ public final class FSRecords {
       ListResult toSave;
       // optimization: if the children were never changed after list(), do not check for duplicates again
       if (result.childrenWereChangedSinceLastList()) {
-        ListResult reloadedChildren = doLoadChildren(parentId);
-        toSave = childrenConvertor.apply(reloadedChildren);
+        children = doLoadChildren(parentId);
+        toSave = childrenConvertor.apply(children);
       }
       else {
         toSave = result;
       }
 
+      updateSymlinksForNewChildren(parentId, children, toSave);
       doSaveChildren(parentId, toSave);
       return toSave;
     }
@@ -1032,6 +1024,33 @@ public final class FSRecords {
     }
   }
 
+  private static void updateSymlinksForNewChildren(int parentId, @NotNull ListResult oldChildren, @NotNull ListResult newChildren) {
+    // find children which are added to the list and call updateSymlinkInfoForNewChild() on them (once)
+    ContainerUtil.processSortedListsInOrder(oldChildren.children, newChildren.children, Comparator.comparingInt(ChildInfo::getId), true,
+                                            (childInfo, isOldInfo) -> {
+                                              if (!isOldInfo) {
+                                                updateSymlinkInfoForNewChild(parentId, childInfo);
+                                              }
+                                            });
+  }
+
+  private static void updateSymlinkInfoForNewChild(int parentId, @NotNull ChildInfo info) {
+    int attributes = info.getFileAttributeFlags();
+    if (attributes != -1 && PersistentFS.isSymLink(attributes)) {
+      int id = info.getId();
+      String symlinkTarget = info.getSymlinkTarget();
+      storeSymlinkTarget(id, symlinkTarget);
+      CharSequence name = info.getName();
+      LocalFileSystem fs = LocalFileSystem.getInstance();
+      if (fs instanceof LocalFileSystemImpl) {
+        VirtualFile parent = PersistentFS.getInstance().findFileById(parentId);
+        assert parent != null : parentId + '/' + id + ": " + name + " -> " + symlinkTarget;
+        String linkPath = parent.getPath() + '/' + name;
+        ((LocalFileSystemImpl)fs).symlinkUpdated(id, parent, name, linkPath, symlinkTarget);
+      }
+    }
+  }
+
   private static void doSaveChildren(int parentId, @NotNull ListResult toSave) throws IOException {
     DbConnection.markDirty();
     try (DataOutputStream record = writeAttribute(parentId, ourChildrenAttr)) {
@@ -1040,13 +1059,17 @@ public final class FSRecords {
       int prevId = parentId;
       for (ChildInfo childInfo : toSave.children) {
         int childId = childInfo.getId();
-        if (childId <= 0) throw new IllegalArgumentException("ids must be >0 but got: "+childId+"; list: "+toSave);
+        if (childId <= 0) {
+          throw new IllegalArgumentException("ids must be >0 but got: "+childId+"; childInfo: "+childInfo+"; list: "+toSave);
+        }
         if (childId == parentId) {
           LOG.error("Cyclic parent-child relations. parentId="+parentId+"; list: "+toSave);
         }
         else {
           int delta = childId - prevId;
-          if (prevId != parentId && delta <= 0) throw new IllegalArgumentException("The list must be sorted by (unique) id but got: " + toSave + "; delta=" + delta);
+          if (prevId != parentId && delta <= 0) {
+            throw new IllegalArgumentException("The list must be sorted by (unique) id but got parentId: " + parentId  + "; delta: " + delta+"; childInfo: "+childInfo+"; prevId: "+prevId+"; toSave: "+toSave);
+          }
           DataInputOutputUtil.writeINT(record, delta);
           prevId = childId;
         }
@@ -1057,9 +1080,7 @@ public final class FSRecords {
   // return entries from `existingList` plus `newList',
   // in case of name clash use id from the corresponding `existingList` entry and name from the `newList` entry (to avoid duplicating ids: preserve old id but supply new name)
   @NotNull
-  static ListResult mergeByName(@NotNull ListResult existingList,
-                                @NotNull ListResult newList,
-                                @NotNull TObjectHashingStrategy<? super CharSequence> hashingStrategy) {
+  static ListResult mergeByName(@NotNull ListResult existingList, @NotNull ListResult newList, boolean isCaseSensitive) {
     List<? extends ChildInfo> newChildren = newList.children;
     List<? extends ChildInfo> oldChildren = existingList.children;
     if (oldChildren.isEmpty()) return newList;
@@ -1068,8 +1089,10 @@ public final class FSRecords {
     // typically, when `newChildren` contains 5K entries + couple absent from `oldChildren`, and `oldChildren` contains 5K+couple entries, these maps will contain a couple of entries absent from each other
 
     // name -> index in result
-    // ObjectIntHashMap is used here to distinguish between absence and the 0th index
-    ObjectIntHashMap<CharSequence> name2I = new ObjectIntHashMap<>(Math.max(oldChildren.size(), newChildren.size()), hashingStrategy);
+    Object2IntOpenCustomHashMap<CharSequence> nameToIndex = new Object2IntOpenCustomHashMap<>(Math.max(oldChildren.size(), newChildren.size()), FastUtilHashingStrategies
+      .getCharSequenceStrategy(isCaseSensitive));
+    // distinguish between absence and the 0th index
+    nameToIndex.defaultReturnValue(-1);
 
     List<ChildInfo> result = new ArrayList<>(Math.max(oldChildren.size(), newChildren.size()));
     for (int i = 0, j = 0; i < newChildren.size() || j < oldChildren.size(); ) {
@@ -1085,7 +1108,7 @@ public final class FSRecords {
       else if (newId < oldId) {
         // newId is absent from `oldChildren`
         CharSequence name = newChild.getName();
-        int dupI = name2I.put(name, result.size(), -1);
+        int dupI = nameToIndex.put(name, result.size());
         if (dupI == -1) {
           result.add(newChild);
         }
@@ -1096,8 +1119,7 @@ public final class FSRecords {
           ChildInfo oldDup = result.get(dupI);
           int nameId = newChild.getNameId();
           assert nameId > 0 : newList;
-          ChildInfoImpl replaced = new ChildInfoImpl(oldDup.getId(), nameId, oldDup.getFileAttributes(), oldDup.getChildren(),
-                                                 oldDup.getSymLinkTarget());
+          ChildInfo replaced = ((ChildInfoImpl)oldDup).withNameId(nameId);
           result.set(dupI, replaced);
         }
         i++;
@@ -1105,7 +1127,7 @@ public final class FSRecords {
       else {
         // oldId is absent from `newChildren`
         CharSequence name = oldChild.getName();
-        int dupI = name2I.put(name, result.size(), -1);
+        int dupI = nameToIndex.put(name, result.size());
         if (dupI == -1) {
           result.add(oldChild);
         }
@@ -1116,23 +1138,19 @@ public final class FSRecords {
           ChildInfo dup = result.get(dupI);
           int nameId = dup.getNameId();
           assert nameId > 0 : existingList;
-          ChildInfoImpl replaced = new ChildInfoImpl(oldChild.getId(), nameId, dup.getFileAttributes(), dup.getChildren(),
-                                                 dup.getSymLinkTarget());
+          ChildInfo replaced = ((ChildInfoImpl)dup).withId(oldChild.getId());
           result.set(dupI, replaced);
         }
         j++;
       }
     }
-    return name2I.isEmpty() ? newList : new ListResult(result);
+    return nameToIndex.isEmpty() ? newList : new ListResult(result);
   }
 
   static @Nullable String readSymlinkTarget(int id) {
     String result = readAndHandleErrors(() -> {
       try (DataInputStream stream = readAttribute(id, ourSymlinkTargetAttr)) {
         if (stream != null) return StringUtil.nullize(IOUtil.readUTF(stream));
-      }
-      try (DataInputStream stream = readAttribute(id, ourSymlinkTargetAttr_old)) {
-        if (stream != null) return StringUtil.nullize(stream.readUTF());
       }
       return null;
     });
@@ -1150,7 +1168,6 @@ public final class FSRecords {
 
   private static void incModCount(int id) {
     incLocalModCount();
-    CachedFileType.clearCache();
 
     final int count = doGetModCount() + 1;
     getRecords().putInt(HEADER_GLOBAL_MOD_COUNT_OFFSET, count);
@@ -1191,7 +1208,7 @@ public final class FSRecords {
   @Nullable
   static VirtualFileSystemEntry findFileById(int id, @NotNull ConcurrentIntObjectMap<VirtualFileSystemEntry> idToDirCache) {
     class ParentFinder implements ThrowableComputable<Void, Throwable> {
-      @Nullable private TIntArrayList path;
+      @Nullable private IntArrayList path;
       private VirtualFileSystemEntry foundParent;
 
       @Override
@@ -1212,7 +1229,9 @@ public final class FSRecords {
           }
 
           currentId = parentId;
-          if (path == null) path = new TIntArrayList();
+          if (path == null) {
+            path = new IntArrayList();
+          }
           path.add(currentId);
         }
         return null;
@@ -1303,15 +1322,17 @@ public final class FSRecords {
     });
   }
 
+  @PersistentFS.Attributes
   static int getFlags(int id) {
     return readAndHandleErrors(() -> doGetFlags(id));
   }
 
+  @PersistentFS.Attributes
   private static int doGetFlags(int id) {
     return getRecordInt(id, FLAGS_OFFSET);
   }
 
-  static void setFlags(int id, int flags, final boolean markAsChange) {
+  static void setFlags(int id, @PersistentFS.Attributes int flags, final boolean markAsChange) {
     writeAndHandleErrors(() -> {
       if (markAsChange) {
         incModCount(id);
@@ -1719,14 +1740,26 @@ public final class FSRecords {
   private static int contents;
   private static int reuses;
 
-  // TODO replace with sha-256
-  public static final MessageDigest CONTENT_HASH_DIGEST = DigestUtil.sha1();
+  @NotNull
+  public static MessageDigest getContentHashDigest() {
+    // TODO replace with sha-256
+    return DigestUtil.sha1();
+  }
+
+  private static byte @NotNull[] calculateHash(byte[] bytes, int offset, int length) {
+    // Probably we don't need to hash the length and "\0000".
+    MessageDigest digest = getContentHashDigest();
+    digest.update(String.valueOf(length).getBytes(StandardCharsets.UTF_8));
+    digest.update("\u0000".getBytes(StandardCharsets.UTF_8));
+    digest.update(bytes, offset, length);
+    return digest.digest();
+  }
 
   private static int findOrCreateContentRecord(byte[] bytes, int offset, int length) throws IOException {
     assert WE_HAVE_CONTENT_HASHES;
 
     long started = DUMP_STATISTICS ? System.nanoTime():0;
-    byte[] contentHash = DigestUtil.calculateContentHash(CONTENT_HASH_DIGEST, bytes, offset, length);
+    byte[] contentHash = calculateHash(bytes, offset, length);
     long done = DUMP_STATISTICS ? System.nanoTime() - started : 0;
     time += done;
 

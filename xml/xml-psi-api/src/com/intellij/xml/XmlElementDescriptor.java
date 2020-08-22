@@ -18,6 +18,7 @@ package com.intellij.xml;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,7 +54,14 @@ public interface XmlElementDescriptor extends PsiMetaData {
   XmlAttributeDescriptor[] getAttributesDescriptors(final @Nullable XmlTag context);
   @Nullable
   XmlAttributeDescriptor getAttributeDescriptor(@NonNls String attributeName, final @Nullable XmlTag context);
+
+  /**
+   * Calling this method might be expensive,
+   * API consumers should use {@code XmlAttribute#getAttributeDescriptor()} instead,
+   * which caches result.
+   */
   @Nullable
+  @ApiStatus.OverrideOnly
   XmlAttributeDescriptor getAttributeDescriptor(XmlAttribute attribute);
 
   @Nullable

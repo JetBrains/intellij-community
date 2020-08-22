@@ -117,7 +117,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
   }
 
   @Override
-  public JComponent getPreferredFocusableComponent() {
+  public @NotNull JComponent getPreferredFocusableComponent() {
     return getConsoleEditor().getContentComponent();
   }
 
@@ -461,7 +461,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
       return this.title;
     }
 
-    public Helper setTitle(String title) {
+    public Helper setTitle(@NotNull String title) {
       this.title = title;
       return this;
     }

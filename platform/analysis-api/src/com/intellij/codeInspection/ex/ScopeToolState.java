@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -11,7 +11,6 @@ import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
-import com.intellij.util.containers.Queue;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -21,6 +20,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -160,7 +161,7 @@ public final class ScopeToolState {
     }
   }
 
-  private static class ConfigPanelState {
+  private static final class ConfigPanelState {
     private static final ConfigPanelState EMPTY = new ConfigPanelState(null, null);
 
     private final JComponent myOptionsPanel;
@@ -172,10 +173,10 @@ public final class ScopeToolState {
     private ConfigPanelState(JComponent optionsPanel, InspectionToolWrapper<?, ?> wrapper) {
       myOptionsPanel = optionsPanel;
       if (myOptionsPanel != null) {
-        Queue<Component> q = new Queue<>(1);
+        Deque<Component> q = new ArrayDeque<>(1);
         q.addLast(optionsPanel);
         while (!q.isEmpty()) {
-          final Component current = q.pullFirst();
+          final Component current = q.removeFirst();
           current.addPropertyChangeListener("enabled", new PropertyChangeListener() {
             @Override
             public void propertyChange(PropertyChangeEvent evt) {

@@ -29,6 +29,9 @@ interface GHListLoader<T> : Disposable {
   fun updateData(item: T)
 
   @CalledInAwt
+  fun removeData(predicate: (T) -> Boolean)
+
+  @CalledInAwt
   fun reset()
 
   @CalledInAwt
@@ -43,6 +46,7 @@ interface GHListLoader<T> : Disposable {
   interface ListDataListener : EventListener {
     fun onDataAdded(startIdx: Int) {}
     fun onDataUpdated(idx: Int) {}
+    fun onDataRemoved(data: Any) {}
     fun onAllDataRemoved() {}
   }
 }

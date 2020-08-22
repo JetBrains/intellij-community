@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <module relativePaths="true" type="JAVA_MODULE" version="4">
-  <component name="NewModuleRootManager" inherit-compiler-output="true">
+  <component name="NewModuleRootManager" LANGUAGE_LEVEL="JDK_1_8" inherit-compiler-output="true">
     <exclude-output />
     <annotation-paths>
       <root url="file://$MODULE_DIR$/anno" />
@@ -16,7 +16,7 @@
     <orderEntry type="library" name="Trove4j" level="project" />
     <orderEntry type="library" exported="" name="jetbrains-annotations" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.rt" exported="" />
-    <orderEntry type="module" module-name="intellij.platform.util.classLoader" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.util.classLoader" />
     <orderEntry type="library" name="jna" level="project" />
     <orderEntry type="library" name="OroMatcher" level="project" />
     <orderEntry type="library" name="lz4-java" level="project" />

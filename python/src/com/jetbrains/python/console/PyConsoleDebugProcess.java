@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.remote.RemoteProcessControl;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.debugger.PyDebugProcess;
 import com.jetbrains.python.debugger.PyDebugRunner;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
@@ -37,12 +38,12 @@ public class PyConsoleDebugProcess extends PyDebugProcess {
 
   @Override
   protected String getConnectionMessage() {
-    return "Connecting to console...";
+    return PyBundle.message("progress.text.connecting.to.console");
   }
 
   @Override
   protected String getConnectionTitle() {
-    return "Debugger connection";
+    return PyBundle.message("progress.title.debugger.connection");
   }
 
   @Override

@@ -18,6 +18,8 @@ import com.intellij.vcs.log.util.VcsLogUtil
 import git4idea.GitUtil
 import git4idea.findProtectedRemoteBranch
 import git4idea.i18n.GitBundle
+import git4idea.rebase.log.GitCommitEditingActionBase.CommitEditingDataCreationResult.Created
+import git4idea.rebase.log.GitCommitEditingActionBase.CommitEditingDataCreationResult.Prohibited
 import git4idea.repo.GitRepository
 import org.jetbrains.annotations.Nls
 
@@ -32,7 +34,7 @@ internal abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBas
             {
               branchesGetter.getContainingBranchesSynchronously(root, hash)
             },
-            GitBundle.getString("rebase.log.commit.editing.action.progress.containing.branches.title"),
+            GitBundle.message("rebase.log.commit.editing.action.progress.containing.branches.title"),
             true,
             data.project
           )
@@ -45,6 +47,7 @@ internal abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBas
 
   protected abstract fun actionPerformedAfterChecks(commitEditingData: T)
 
+  @Nls(capitalization = Nls.Capitalization.Title)
   protected abstract fun getFailureTitle(): String
 
   protected abstract fun createCommitEditingData(
@@ -52,7 +55,7 @@ internal abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBas
     log: VcsLog,
     logData: VcsLogData,
     logUi: VcsLogUi
-  ): T?
+  ): CommitEditingDataCreationResult<T>
 
   protected open fun update(e: AnActionEvent, commitEditingData: T) {
   }
@@ -62,7 +65,19 @@ internal abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBas
 
     e.presentation.isEnabledAndVisible = false
 
-    val commitEditingData = createCommitEditingData(e) ?: return
+    val commitEditingData = when (val commitEditingDataCreationResult = createCommitEditingData(e)) {
+      is Prohibited -> {
+        val description = commitEditingDataCreationResult.description
+        if (description != null) {
+          e.presentation.isVisible = true
+          e.presentation.description = description
+        }
+        return
+      }
+      is Created<T> -> {
+        commitEditingDataCreationResult.data
+      }
+    }
 
     e.presentation.isVisible = true
 
@@ -87,7 +102,7 @@ internal abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBas
       val branches = commitEditingData.log.getContainingBranches(commit.id, commit.root)
       if (branches != null) { // otherwise the information is not available yet, and we'll recheck harder in actionPerformed
         if (GitUtil.HEAD !in branches) {
-          e.presentation.description = GitBundle.getString("rebase.log.commit.editing.action.commit.not.in.head.error.text")
+          e.presentation.description = GitBundle.message("rebase.log.commit.editing.action.commit.not.in.head.error.text")
           return
         }
 
@@ -122,7 +137,7 @@ internal abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBas
   private fun VcsShortCommitDetails.isRootOrMerge() = parents.size != 1
 
   final override fun actionPerformed(e: AnActionEvent) {
-    val commitEditingRequirements = createCommitEditingData(e)!!
+    val commitEditingRequirements = (createCommitEditingData(e) as Created<T>).data
     val description = checkCommitsEditingAvailability(commitEditingRequirements)
 
     if (description != null) {
@@ -136,6 +151,7 @@ internal abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBas
     actionPerformedAfterChecks(commitEditingRequirements)
   }
 
+  @Nls
   protected open fun checkCommitsEditingAvailability(commitEditingData: T): String? {
     val description = checkHeadLinearHistory(commitEditingData)
     if (description != null) {
@@ -159,6 +175,7 @@ internal abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBas
   /**
    * Check that a path which contains selected commits and doesn't contain merge commits exists in HEAD
    */
+  @Nls
   private fun checkHeadLinearHistory(commitEditingData: MultipleCommitEditingData): String? {
     val project = commitEditingData.project
     val root = commitEditingData.repository.root
@@ -206,25 +223,34 @@ internal abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBas
           }
         }
       },
-      GitBundle.getString("rebase.log.multiple.commit.editing.action.progress.indicator.action.possibility.check"),
+      GitBundle.message("rebase.log.multiple.commit.editing.action.progress.indicator.action.possibility.check"),
       true,
       project
     )
     return description
   }
 
-  private fun createCommitEditingData(e: AnActionEvent): T? {
-    val project = e.project ?: return null
-    val log = e.getData(VcsLogDataKeys.VCS_LOG) ?: return null
-    val logDataProvider = e.getData(VcsLogDataKeys.VCS_LOG_DATA_PROVIDER) as VcsLogData? ?: return null
-    val logUi = e.getData(VcsLogDataKeys.VCS_LOG_UI) ?: return null
+  private fun createCommitEditingData(e: AnActionEvent): CommitEditingDataCreationResult<T> {
+    val project = e.project
+    val log = e.getData(VcsLogDataKeys.VCS_LOG)
+    val logDataProvider = e.getData(VcsLogDataKeys.VCS_LOG_DATA_PROVIDER) as VcsLogData?
+    val logUi = e.getData(VcsLogDataKeys.VCS_LOG_UI)
 
-    val commitList = log.selectedShortDetails.takeIf { it.isNotEmpty() } ?: return null
+    if (project == null || log == null || logDataProvider == null || logUi == null) {
+      return Prohibited()
+    }
+
+    val commitList = log.selectedShortDetails.takeIf { it.isNotEmpty() } ?: return Prohibited()
     val repositoryManager = GitUtil.getRepositoryManager(project)
-    // assume that commits are from one repo, we will check it in actionPerformed
-    val repository = repositoryManager.getRepositoryForRootQuick(commitList.first().root) ?: return null
+
+    val root = commitList.map { it.root }.distinct().singleOrNull() ?: return Prohibited(
+      GitBundle.message("rebase.log.multiple.commit.editing.action.disabled.multiple.repository.description", commitList.size)
+    )
+    val repository = repositoryManager.getRepositoryForRootQuick(root) ?: return Prohibited()
     if (repositoryManager.isExternal(repository)) {
-      return null
+      return Prohibited(
+        GitBundle.message("rebase.log.multiple.commit.editing.action.disabled.external.repository.description", commitList.size)
+      )
     }
 
     return createCommitEditingData(repository, log, logDataProvider, logUi)
@@ -254,6 +280,11 @@ internal abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBas
 
   protected sealed class ProhibitRebaseDuringRebasePolicy {
     object Allow : ProhibitRebaseDuringRebasePolicy()
-    class Prohibit(val operation: @Nls String) : ProhibitRebaseDuringRebasePolicy()
+    class Prohibit(@Nls val operation: String) : ProhibitRebaseDuringRebasePolicy()
+  }
+
+  protected sealed class CommitEditingDataCreationResult<T : MultipleCommitEditingData> {
+    class Created<T : MultipleCommitEditingData>(val data: T) : CommitEditingDataCreationResult<T>()
+    class Prohibited<T : MultipleCommitEditingData>(@Nls val description: String? = null) : CommitEditingDataCreationResult<T>()
   }
 }

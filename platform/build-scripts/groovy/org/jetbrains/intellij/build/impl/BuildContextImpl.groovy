@@ -58,13 +58,15 @@ class BuildContextImpl extends BuildContext {
     else if (productProperties.productCode == null && applicationInfo.productCode != null) {
       productProperties.productCode = applicationInfo.productCode
     }
-    bundledJreManager = new BundledJreManager(this, paths.buildOutputRoot)
+
+    bundledJreManager = new BundledJreManager(this)
 
     buildNumber = options.buildNumber ?: readSnapshotBuildNumber()
     fullBuildNumber = "$applicationInfo.productCode-$buildNumber"
-    systemSelector = productProperties.getSystemSelector(applicationInfo)
+    systemSelector = productProperties.getSystemSelector(applicationInfo, buildNumber)
 
-    bootClassPathJarNames = ["bootstrap.jar", "extensions.jar", "util.jar", "jdom.jar", "log4j.jar", "trove4j.jar", "jna.jar"]
+    bootClassPathJarNames = ["bootstrap.jar", "extensions.jar", "util.jar", "jdom.jar", "log4j.jar", "jna.jar"]
+    dependenciesProperties = new DependenciesProperties(this)
   }
 
   private String readSnapshotBuildNumber() {
@@ -226,14 +228,13 @@ class BuildContextImpl extends BuildContext {
   BuildContext forkForParallelTask(String taskName) {
     def ant = new AntBuilder(ant.project)
     def messages = messages.forkForParallelTask(taskName)
-    def compilationContextCopy = compilationContext.
-      createCopy(ant, messages, options, createBuildOutputRootEvaluator(compilationContext.paths.projectHome, productProperties))
-    def child = new BuildContextImpl(compilationContextCopy, productProperties,
-                                     windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer,
-                                     proprietaryBuildTools)
-    child.paths.artifacts = paths.artifacts
-    child.bundledJreManager.baseDirectoryForJre = bundledJreManager.baseDirectoryForJre
-    return child
+    def compilationContextCopy =
+      compilationContext.createCopy(ant, messages, options, createBuildOutputRootEvaluator(compilationContext.paths.projectHome, productProperties))
+    def copy = new BuildContextImpl(compilationContextCopy, productProperties,
+                                    windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer,
+                                    proprietaryBuildTools)
+    copy.paths.artifacts = paths.artifacts
+    return copy
   }
 
   @Override
@@ -250,7 +251,6 @@ class BuildContextImpl extends BuildContext {
                                     windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer,
                                     proprietaryBuildTools)
     copy.paths.artifacts = paths.artifacts
-    copy.bundledJreManager.baseDirectoryForJre = bundledJreManager.baseDirectoryForJre
     copy.compilationContext.prepareForBuild()
     return copy
   }

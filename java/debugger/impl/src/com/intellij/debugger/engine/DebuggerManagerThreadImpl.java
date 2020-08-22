@@ -28,6 +28,8 @@ import java.util.concurrent.TimeUnit;
  */
 public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerCommandImpl> implements DebuggerManagerThread, Disposable {
   private static final Logger LOG = Logger.getInstance(DebuggerManagerThreadImpl.class);
+  private static final ThreadLocal<DebuggerCommandImpl> myCurrentCommand = new ThreadLocal<>();
+
   static final int COMMAND_TIMEOUT = 3000;
 
   private volatile boolean myDisposed;
@@ -143,6 +145,7 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
   @Override
   public void processEvent(@NotNull DebuggerCommandImpl managerCommand) {
     assertIsManagerThread();
+    myCurrentCommand.set(managerCommand);
     try {
       if (myEvents.isClosed()) {
         managerCommand.notifyCancelled();
@@ -163,6 +166,13 @@ public class DebuggerManagerThreadImpl extends InvokeAndWaitThread<DebuggerComma
     catch (Exception e) {
       LOG.error(e);
     }
+    finally {
+      myCurrentCommand.set(null);
+    }
+  }
+
+  public static DebuggerCommandImpl getCurrentCommand() {
+    return myCurrentCommand.get();
   }
 
   public void startProgress(DebuggerCommandImpl command, ProgressWindow progressWindow) {

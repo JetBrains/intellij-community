@@ -58,7 +58,11 @@ class GHPRStateDataProviderImpl(private val stateService: GHPRStateService,
 
   override fun loadMergeabilityState(): CompletableFuture<GHPRMergeabilityState> = mergeabilityStateRequestValue.value
 
-  override fun reloadMergeabilityState() = mergeabilityStateRequestValue.drop()
+  override fun reloadMergeabilityState() {
+    if (baseBranchProtectionRulesRequestValue.lastLoadedValue == null)
+      baseBranchProtectionRulesRequestValue.drop()
+    mergeabilityStateRequestValue.drop()
+  }
 
   override fun addMergeabilityStateListener(disposable: Disposable, listener: () -> Unit) =
     mergeabilityStateRequestValue.addDropEventListener(disposable, listener)
@@ -68,6 +72,11 @@ class GHPRStateDataProviderImpl(private val stateService: GHPRStateService,
 
   override fun reopen(progressIndicator: ProgressIndicator): CompletableFuture<Unit> =
     stateService.reopen(progressIndicator, pullRequestId).notifyState()
+
+  override fun markReadyForReview(progressIndicator: ProgressIndicator): CompletableFuture<Unit> =
+    stateService.markReadyForReview(progressIndicator, pullRequestId).notifyState().completionOnEdt {
+      mergeabilityStateRequestValue.drop()
+    }
 
   override fun merge(progressIndicator: ProgressIndicator, commitMessage: Pair<String, String>, currentHeadRef: String)
     : CompletableFuture<Unit> = stateService.merge(progressIndicator, pullRequestId, commitMessage, currentHeadRef).notifyState()

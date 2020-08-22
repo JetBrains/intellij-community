@@ -514,12 +514,12 @@ open class GuiTestCase(enableScreenshotsDuringTest: Boolean = true) {
   }
 
   @Before
-  open fun setUp() {
+  open fun before() {
     logStartTest(testMethod.methodName)
   }
 
   @After
-  open fun tearDown() {
+  open fun after() {
     logEndTest(testMethod.methodName)
   }
 

@@ -25,7 +25,6 @@ import com.intellij.openapi.application.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.SystemDock
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
@@ -38,8 +37,6 @@ import com.intellij.util.ui.accessibility.ScreenReader
 import java.awt.EventQueue
 import java.beans.PropertyChangeListener
 import java.io.File
-import java.io.IOException
-import java.util.*
 import javax.swing.JOptionPane
 
 open class IdeStarter : ApplicationStarter {
@@ -94,13 +91,13 @@ open class IdeStarter : ApplicationStarter {
       System.setProperty("jbre.popupwindow.settype", "true")
     }
 
+    val lifecyclePublisher = app.messageBus.syncPublisher(AppLifecycleListener.TOPIC)
     val isStandaloneLightEdit = PlatformUtils.getPlatformPrefix() == "LightEdit"
     val needToOpenProject: Boolean
     if (isStandaloneLightEdit) {
       needToOpenProject = true
     }
     else {
-      val lifecyclePublisher = app.messageBus.syncPublisher(AppLifecycleListener.TOPIC)
       frameInitActivity.runChild("app frame created callback") {
         lifecyclePublisher.appFrameCreated(args)
       }
@@ -128,7 +125,7 @@ open class IdeStarter : ApplicationStarter {
       else -> null
     }
 
-    app.messageBus.syncPublisher(AppLifecycleListener.TOPIC).appStarting(project)
+    lifecyclePublisher.appStarting(project)
 
     if (needToOpenProject && project == null && !JetBrainsProtocolHandler.appStartedWithCommand()) {
       val recentProjectManager = RecentProjectsManager.getInstance()
@@ -157,6 +154,7 @@ open class IdeStarter : ApplicationStarter {
     }
 
     StartUpMeasurer.compareAndSetCurrentState(LoadingState.COMPONENTS_LOADED, LoadingState.APP_STARTED)
+    lifecyclePublisher.appStarted()
 
     if (PluginManagerCore.isRunningFromSources() && !app.isHeadlessEnvironment) {
       AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame())
@@ -211,8 +209,9 @@ private fun loadProjectFromExternalCommandLine(commandLineArgs: List<String>): P
   Logger.getInstance("#com.intellij.idea.ApplicationLoader").info("ApplicationLoader.loadProject (cwd=${currentDirectory})")
   val result = CommandLineProcessor.processExternalCommandLine(commandLineArgs, currentDirectory)
   if (result.hasError) {
-    ApplicationManager.getApplication().invokeLater {
+    ApplicationManager.getApplication().invokeAndWait {
       result.showErrorIfFailed()
+      ApplicationManager.getApplication().exit(true, true, false)
     }
   }
   return result.project
@@ -273,10 +272,10 @@ private fun reportPluginError() {
       }
 
       if (PluginManagerCore.ourPluginsToDisable != null && PluginManagerCore.DISABLE == description) {
-        DisabledPluginsState.enablePluginsById(PluginManagerCore.ourPluginsToDisable, false);
+        DisabledPluginsState.enablePluginsById(PluginManagerCore.ourPluginsToDisable, false)
       }
       else if (PluginManagerCore.ourPluginsToEnable != null && PluginManagerCore.ENABLE == description) {
-        DisabledPluginsState.enablePluginsById(PluginManagerCore.ourPluginsToEnable, true);
+        DisabledPluginsState.enablePluginsById(PluginManagerCore.ourPluginsToEnable, true)
         PluginManagerMain.notifyPluginsUpdated(null)
       }
 

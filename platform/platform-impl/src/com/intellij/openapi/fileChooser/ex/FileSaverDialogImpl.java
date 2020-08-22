@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.openapi.fileChooser.FileSaverDescriptor;
@@ -6,13 +6,15 @@ import com.intellij.openapi.fileChooser.FileSaverDialog;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.Strings;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.UIBundle;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,6 +22,7 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.io.File;
+import java.nio.file.Path;
 import java.util.List;
 
 /**
@@ -33,7 +36,7 @@ public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSa
   public FileSaverDialogImpl(@NotNull FileSaverDescriptor descriptor, @NotNull Component parent) {
     super(descriptor, parent);
     myDescriptor = descriptor;
-    for (String ext : descriptor.getFileExtensions()) {
+    for (@NlsSafe String ext : descriptor.getFileExtensions()) {
       myExtensions.addItem(ext);
     }
     setTitle(getChooserTitle(descriptor));
@@ -42,20 +45,25 @@ public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSa
   public FileSaverDialogImpl(@NotNull FileSaverDescriptor descriptor, @Nullable Project project) {
     super(descriptor, project);
     myDescriptor = descriptor;
-    for (String ext : descriptor.getFileExtensions()) {
+    for (@NlsSafe String ext : descriptor.getFileExtensions()) {
       myExtensions.addItem(ext);
     }
     setTitle(getChooserTitle(descriptor));
   }
 
-  private static String getChooserTitle(final FileSaverDescriptor descriptor) {
+  private static @NlsContexts.DialogTitle String getChooserTitle(final FileSaverDescriptor descriptor) {
     final String title = descriptor.getTitle();
     return title != null ? title : UIBundle.message("file.chooser.save.dialog.default.title");
   }
 
   @Override
+  public @Nullable VirtualFileWrapper save(@Nullable Path baseDir, @Nullable String filename) {
+    return save(baseDir == null ? null : LocalFileSystem.getInstance().refreshAndFindFileByNioFile(baseDir), filename);
+  }
+
+  @Override
   @Nullable
-  public VirtualFileWrapper save(@Nullable VirtualFile baseDir, @Nullable final String filename) {
+  public VirtualFileWrapper save(@Nullable VirtualFile baseDir, @Nullable String filename) {
     init();
     restoreSelection(baseDir);
     myFileSystemTree.addListener(new FileSystemTree.Listener() {
@@ -79,15 +87,14 @@ public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSa
     return null;
   }
 
-  @Nullable
-  protected File getFile() {
-    final VirtualFile selected = myFileSystemTree.getSelectedFile();
+  protected @Nullable File getFile() {
+    VirtualFile selected = myFileSystemTree.getSelectedFile();
     if (selected != null && !selected.isDirectory()) {
       return new File(selected.getPath());
     }
 
     String path = (selected == null) ? myPathTextField.getTextFieldText() : selected.getPath();
-    final File dir = new File(path);
+    File dir = new File(path);
     if (!dir.exists()) {
       return null;
     }
@@ -102,8 +109,9 @@ public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSa
     }
 
     if (!correctExt) {
-      final String selectedExtension = ObjectUtils.doIfNotNull(myExtensions.getSelectedItem(), item -> item.toString());
-      if (!StringUtil.isEmpty(selectedExtension)) {
+      Object obj = myExtensions.getSelectedItem();
+      String selectedExtension = obj == null ? null : obj.toString();
+      if (!Strings.isEmpty(selectedExtension)) {
         path += "." + selectedExtension;
       }
     }
@@ -115,7 +123,8 @@ public class FileSaverDialogImpl extends FileChooserDialogImpl implements FileSa
     for (VirtualFile file : selection) {
       if (file.isDirectory()) {
         myPathTextField.getField().setText(VfsUtil.getReadableUrl(file));
-      } else {
+      }
+      else {
         myFileName.setText(file.getName());
         final VirtualFile parent = file.getParent();
         if (parent != null) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.structureView;
 
 import com.intellij.util.PlatformIcons;
@@ -14,7 +14,7 @@ import javax.swing.*;
 
 import static org.jetbrains.yaml.structureView.YAMLStructureViewFactory.ALIAS_ICON;
 
-class YAMLStructureViewUtil {
+final class YAMLStructureViewUtil {
   private YAMLStructureViewUtil() {}
 
   @Nullable

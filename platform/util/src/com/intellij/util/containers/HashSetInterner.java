@@ -30,6 +30,10 @@ public class HashSetInterner<T> extends Interner<T> {
     return mySet.addOrGet(name);
   }
 
+  public T get(@NotNull T name) {
+    return mySet.get(name);
+  }
+
   @Override
   public void clear() {
     mySet.clear();

@@ -1,28 +1,28 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.conversion;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public abstract class ConverterProvider {
-  public static final ExtensionPointName<ConverterProvider> EP_NAME = ExtensionPointName.create("com.intellij.project.converterProvider");
-  private final String myId;
+  public static final ExtensionPointName<ConverterProvider> EP_NAME = new ExtensionPointName<>("com.intellij.project.converterProvider");
+  private String myId;
 
+  /**
+   * @deprecated Set id as part of extension definition.
+   */
+  @Deprecated
   protected ConverterProvider(@NotNull @NonNls String id) {
     myId = id;
   }
 
-  public String[] getPrecedingConverterIds() {
-    return ArrayUtilRt.EMPTY_STRING_ARRAY;
+  protected ConverterProvider() {
   }
 
-  public final String getId() {
+  public final String getDeprecatedId() {
     return myId;
   }
 
@@ -33,18 +33,4 @@ public abstract class ConverterProvider {
   @Nls(capitalization = Nls.Capitalization.Sentence)
   @NotNull
   public abstract ProjectConverter createConverter(@NotNull ConversionContext context);
-
-  @Nullable
-  public String getConversionDialogText(ConversionContext context) {
-    return null;
-  }
-
-  /**
-   * @return {@code false} if the converter cannot determine that the conversion was already performed using project files only.
-   * In such case the information about performed conversion will be stored in .ipr file so the converter will not be asked to perform
-   * the conversion again.
-   */
-  public boolean canDetermineIfConversionAlreadyPerformedByProjectFiles() {
-    return true;
-  }
 }

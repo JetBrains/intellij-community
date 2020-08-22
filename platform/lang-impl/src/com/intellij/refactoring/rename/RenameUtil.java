@@ -37,9 +37,9 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageInfoFactory;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.MultiMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -219,9 +219,7 @@ public final class RenameUtil {
     }
   }
 
-  public static void doRename(final PsiElement element, String newName, UsageInfo[] usages, final Project project,
-                              @Nullable final RefactoringElementListener listener) throws IncorrectOperationException{
-    final RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(element);
+  static void registerUndoableRename(PsiElement element, @Nullable RefactoringElementListener listener) {
     final String fqn = element instanceof PsiFile ? ((PsiFile)element).getVirtualFile().getPath() : CopyReferenceAction.elementToFqn(element);
     if (fqn != null) {
       UndoableAction action = new BasicUndoableAction() {
@@ -236,8 +234,14 @@ public final class RenameUtil {
         public void redo() {
         }
       };
-      UndoManager.getInstance(project).undoableActionPerformed(action);
+      UndoManager.getInstance(element.getProject()).undoableActionPerformed(action);
     }
+  }
+
+  public static void doRename(final PsiElement element, String newName, UsageInfo[] usages, final Project project,
+                              @Nullable final RefactoringElementListener listener) throws IncorrectOperationException{
+    registerUndoableRename(element, listener);
+    RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(element);
     processor.renameElement(element, newName, usages, listener);
   }
 
@@ -260,6 +264,13 @@ public final class RenameUtil {
 
   public static void doRenameGenericNamedElement(@NotNull PsiElement namedElement, String newName, UsageInfo[] usages,
                                                  @Nullable RefactoringElementListener listener) throws IncorrectOperationException {
+    Set<Class> reportedClasses = new HashSet<>();
+    for (UsageInfo usage : usages) {
+      PsiReference reference = usage.getReference();
+      if (reference != null && reportedClasses.add(reference.getClass())) {
+        RenameUsagesCollector.referenceProcessed.log(namedElement.getProject(), reference.getClass());
+      }
+    }
     RenameUtilBase.doRenameGenericNamedElement(namedElement, newName, usages, listener);
   }
 
@@ -290,7 +301,7 @@ public final class RenameUtil {
 
   public static void renameNonCodeUsages(@NotNull Project project, NonCodeUsageInfo @NotNull [] usages) {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
-    Object2ObjectOpenHashMap<Document, Int2ObjectOpenHashMap<UsageOffset>> docsToOffsetsMap = new Object2ObjectOpenHashMap<>();
+    Map<Document, Int2ObjectOpenHashMap<UsageOffset>> docsToOffsetsMap = CollectionFactory.createSmallMemoryFootprintMap();
     final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(project);
     for (NonCodeUsageInfo usage : usages) {
       PsiElement element = usage.getElement();

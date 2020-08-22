@@ -23,10 +23,7 @@ import com.intellij.vcs.log.data.VcsLogStatusBarProgress;
 import com.intellij.vcs.log.data.VcsLogStorage;
 import com.intellij.vcs.log.data.index.VcsLogModifiableIndex;
 import com.intellij.vcs.log.graph.PermanentGraph;
-import com.intellij.vcs.log.ui.MainVcsLogUi;
-import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
-import com.intellij.vcs.log.ui.VcsLogUiEx;
-import com.intellij.vcs.log.ui.VcsLogUiImpl;
+import com.intellij.vcs.log.ui.*;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.visible.VcsLogFiltererImpl;
 import com.intellij.vcs.log.visible.VisiblePackRefresherImpl;
@@ -116,7 +113,7 @@ public class VcsLogManager implements Disposable {
   public VcsLogUiFactory<? extends MainVcsLogUi> getMainLogUiFactory(@NotNull String logId, @Nullable VcsLogFilterCollection filters) {
     CustomVcsLogUiFactoryProvider factoryProvider = LOG_CUSTOM_UI_FACTORY_PROVIDER_EP.findFirstSafe(myProject, p -> p.isActive(this));
     if (factoryProvider == null) {
-      return new MainVcsLogUiFactory(logId, filters);
+      return new MainVcsLogUiFactory(logId, filters, myUiProperties, myColorManager);
     }
     return factoryProvider.createLogUiFactory(logId, this, filters);
   }
@@ -274,10 +271,10 @@ public class VcsLogManager implements Disposable {
     @NotNull private final String myLogId;
     @Nullable private final VcsLogFilterCollection myFilters;
     @NotNull private final VcsLogTabsProperties myUiProperties;
-    @NotNull private final VcsLogColorManagerImpl myColorManager;
+    @NotNull private final VcsLogColorManager myColorManager;
 
     public BaseVcsLogUiFactory(@NotNull String logId, @Nullable VcsLogFilterCollection filters, @NotNull VcsLogTabsProperties uiProperties,
-                               @NotNull VcsLogColorManagerImpl colorManager) {
+                               @NotNull VcsLogColorManager colorManager) {
       myLogId = logId;
       myFilters = filters;
       myUiProperties = uiProperties;
@@ -285,8 +282,7 @@ public class VcsLogManager implements Disposable {
     }
 
     @Override
-    public T createLogUi(@NotNull Project project,
-                         @NotNull VcsLogData logData) {
+    public T createLogUi(@NotNull Project project, @NotNull VcsLogData logData) {
       MainVcsLogUiProperties properties = myUiProperties.createProperties(myLogId);
       VcsLogFiltererImpl vcsLogFilterer = new VcsLogFiltererImpl(logData.getLogProviders(), logData.getStorage(),
                                                                  logData.getTopCommitsCache(),
@@ -302,14 +298,15 @@ public class VcsLogManager implements Disposable {
     protected abstract T createVcsLogUiImpl(@NotNull String logId,
                                             @NotNull VcsLogData logData,
                                             @NotNull MainVcsLogUiProperties properties,
-                                            @NotNull VcsLogColorManagerImpl colorManager,
+                                            @NotNull VcsLogColorManager colorManager,
                                             @NotNull VisiblePackRefresherImpl refresher,
                                             @Nullable VcsLogFilterCollection filters);
   }
 
-  private class MainVcsLogUiFactory extends BaseVcsLogUiFactory<VcsLogUiImpl> {
-    MainVcsLogUiFactory(@NotNull String logId, @Nullable VcsLogFilterCollection filters) {
-      super(logId, filters, myUiProperties, myColorManager);
+  private static class MainVcsLogUiFactory extends BaseVcsLogUiFactory<VcsLogUiImpl> {
+    MainVcsLogUiFactory(@NotNull String logId, @Nullable VcsLogFilterCollection filters, @NotNull VcsLogTabsProperties properties,
+                        @NotNull VcsLogColorManager colorManager) {
+      super(logId, filters, properties, colorManager);
     }
 
     @Override
@@ -317,7 +314,7 @@ public class VcsLogManager implements Disposable {
     protected VcsLogUiImpl createVcsLogUiImpl(@NotNull String logId,
                                               @NotNull VcsLogData logData,
                                               @NotNull MainVcsLogUiProperties properties,
-                                              @NotNull VcsLogColorManagerImpl colorManager,
+                                              @NotNull VcsLogColorManager colorManager,
                                               @NotNull VisiblePackRefresherImpl refresher,
                                               @Nullable VcsLogFilterCollection filters) {
       return new VcsLogUiImpl(logId, logData, colorManager, properties, refresher, filters);

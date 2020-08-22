@@ -4,6 +4,7 @@ package com.intellij.remote;
 import com.intellij.remote.ext.CredentialsManager;
 import com.intellij.util.PathMappingSettings;
 import org.jdom.Element;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -218,6 +219,7 @@ public class RemoteSdkCredentialsHolder extends RemoteCredentialsHolder implemen
   }
 
   @Override
+  @NonNls
   public String toString() {
     return "RemoteSdkDataHolder" +
            "{getHost()='" +

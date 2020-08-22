@@ -14,8 +14,8 @@ import org.jetbrains.idea.reposearch.DependencySearchProvider;
 import org.jetbrains.idea.reposearch.RepositoryArtifactData;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
@@ -161,11 +161,6 @@ public class PackageSearchService implements DependencySearchProvider {
 
   @NotNull
   private static String encode(@NotNull String s) {
-    try {
-      return URLEncoder.encode(s.trim(), "UTF-8");
-    }
-    catch (UnsupportedEncodingException e) {
-      throw new RuntimeException(e);
-    }
+    return URLEncoder.encode(s.trim(), StandardCharsets.UTF_8);
   }
 }

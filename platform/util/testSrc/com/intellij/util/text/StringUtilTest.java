@@ -65,6 +65,17 @@ public class StringUtilTest {
   }
 
   @Test
+  public void doTestTrimCharSequence() {
+    assertEquals(StringUtil.trim((CharSequence)"").toString(), "");
+    assertEquals(StringUtil.trim((CharSequence)" ").toString(), "");
+    assertEquals(StringUtil.trim((CharSequence)" \n\t\r").toString(), "");
+    assertEquals(StringUtil.trim((CharSequence)"a").toString(), "a");
+    assertEquals(StringUtil.trim((CharSequence)" a").toString(), "a");
+    assertEquals(StringUtil.trim((CharSequence)"bc ").toString(), "bc");
+    assertEquals(StringUtil.trim((CharSequence)" b a c   ").toString(), "b a c");
+  }
+
+  @Test
   public void testToUpperCase() {
     assertEquals('/', StringUtil.toUpperCase('/'));
     assertEquals(':', StringUtil.toUpperCase(':'));

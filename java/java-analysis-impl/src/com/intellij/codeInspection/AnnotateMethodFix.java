@@ -13,7 +13,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiNameValuePair;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -30,7 +29,7 @@ import static com.intellij.codeInsight.AnnotationUtil.CHECK_TYPE;
 public class AnnotateMethodFix implements LocalQuickFix {
   private static final Logger LOG = Logger.getInstance(AnnotateMethodFix.class);
 
-  private final String myAnnotation;
+  protected final String myAnnotation;
   private final String[] myAnnotationsToRemove;
 
   public AnnotateMethodFix(@NotNull String fqn, String @NotNull ... annotationsToRemove) {
@@ -42,12 +41,15 @@ public class AnnotateMethodFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getName() {
-    return getFamilyName() + " " + getPreposition() + " '@" + ClassUtil.extractClassName(myAnnotation) + "'";
-  }
-
-  @NotNull
-  protected String getPreposition() {
-    return "with";
+    if (annotateSelf()) {
+      if (annotateOverriddenMethods()) {
+        return JavaAnalysisBundle.message("inspection.annotate.overridden.method.and.self.quickfix.name",
+                                          ClassUtil.extractClassName(myAnnotation));
+      }
+      return JavaAnalysisBundle.message("inspection.annotate.method.quickfix.name", ClassUtil.extractClassName(myAnnotation));
+    }
+    return JavaAnalysisBundle.message("inspection.annotate.overridden.method.quickfix.name",
+                                      ClassUtil.extractClassName(myAnnotation));
   }
 
   @Override
@@ -64,7 +66,7 @@ public class AnnotateMethodFix implements LocalQuickFix {
 
   @Override
   public boolean startInWriteAction() {
-    return !annotateOverriddenMethods();
+    return false;
   }
 
   @Override
@@ -103,7 +105,7 @@ public class AnnotateMethodFix implements LocalQuickFix {
   }
 
   private void annotateMethod(@NotNull PsiMethod method) {
-    AddAnnotationPsiFix fix = new AddAnnotationPsiFix(myAnnotation, method, PsiNameValuePair.EMPTY_ARRAY, myAnnotationsToRemove);
+    AddAnnotationPsiFix fix = new AddAnnotationPsiFix(myAnnotation, method, myAnnotationsToRemove);
     fix.invoke(method.getProject(), method.getContainingFile(), method, method);
   }
 

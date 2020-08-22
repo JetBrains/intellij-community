@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.execution;
 
 import com.google.common.base.Predicates;
 import com.google.common.collect.Maps;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -125,11 +126,12 @@ public final class MavenRunnerParameters implements Cloneable {
   }
 
   @NotNull
+  @NlsSafe
   public String getWorkingDirPath() {
     return myWorkingDirPath.getPath();
   }
 
-  public void setWorkingDirPath(@NotNull String workingDirPath) {
+  public void setWorkingDirPath(@NotNull @NlsSafe String workingDirPath) {
     myWorkingDirPath = new Path(workingDirPath);
   }
 
@@ -142,6 +144,7 @@ public final class MavenRunnerParameters implements Cloneable {
     myPomFileName = pomFileName;
   }
 
+  @NlsSafe
   public String getPomFileName() {
     return myPomFileName;
   }

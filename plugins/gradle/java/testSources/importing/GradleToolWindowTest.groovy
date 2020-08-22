@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing
 
 import com.intellij.openapi.application.WriteAction
@@ -318,7 +318,6 @@ include 'p1:leaf', 'p2:leaf'
   protected String getPath() {
     def communityPath = PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/'.charAt(0))
     def testName = getTestName(true)
-    testName = testName.substring(0, testName.indexOf("_"))
     testName = getTestName(testName, true)
     return "$communityPath/plugins/gradle/java/testData/toolWindow/${testName}.test"
   }

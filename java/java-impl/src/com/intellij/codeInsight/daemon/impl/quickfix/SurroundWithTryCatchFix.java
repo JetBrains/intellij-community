@@ -26,8 +26,13 @@ public class SurroundWithTryCatchFix implements IntentionAction {
   private PsiElement myElement;
 
   public SurroundWithTryCatchFix(@NotNull PsiElement element) {
+    if (element instanceof PsiExpression &&
+        PsiTreeUtil.getParentOfType(element, PsiResourceListElement.class, false, PsiStatement.class) != null) {
+      // We are inside resource list: there's already a suggestion to add a catch to this try.
+      // Suggesting wrapping with another try-catch is confusing
+      return;
+    }
     if (element instanceof PsiStatement ||
-        element instanceof PsiResourceVariable ||
         (element instanceof PsiExpression &&
          !(element instanceof PsiMethodReferenceExpression) &&
          CodeBlockSurrounder.canSurround(ExpressionUtils.getTopLevelExpression((PsiExpression)element)))) {

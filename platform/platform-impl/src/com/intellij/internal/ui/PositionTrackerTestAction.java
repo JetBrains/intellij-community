@@ -28,7 +28,7 @@ public class PositionTrackerTestAction extends AnAction {
         .createBalloon()
         .show(new PositionTracker<Balloon>(editor.getContentComponent()) {
           @Override
-          public RelativePoint recalculateLocation(Balloon balloon) {
+          public RelativePoint recalculateLocation(@NotNull Balloon balloon) {
             return popupFactory.guessBestPopupLocation(editor);
           }
         }, position);

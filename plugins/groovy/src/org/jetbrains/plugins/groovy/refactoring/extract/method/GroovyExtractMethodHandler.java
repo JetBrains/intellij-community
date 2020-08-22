@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.refactoring.extract.method;
 
@@ -22,6 +22,7 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -52,6 +53,8 @@ import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.jetbrains.annotations.Nls.Capitalization.Title;
+
 /**
  * @author ilyas
  */
@@ -81,7 +84,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     }
   }
 
-  private class Callback extends Pass<GrExpression> {
+  private final class Callback extends Pass<GrExpression> {
     private final Project project;
     private final Editor editor;
     private final PsiFile file;
@@ -266,7 +269,7 @@ public class GroovyExtractMethodHandler implements RefactoringActionHandler {
     }
   }
 
-  static String getRefactoringName() {
+  static @Nls(capitalization = Title) String getRefactoringName() {
     return GroovyRefactoringBundle.message("extract.method.title");
   }
 }

@@ -24,7 +24,7 @@ public final class ProjectSystemId implements Serializable {
   public static final @NotNull ProjectSystemId IDE = new ProjectSystemId("IDE");
 
   private final @NotNull String id;
-  private final @NotNull String readableName;
+  private final @NotNull @Nls String readableName;
 
   public ProjectSystemId(@NotNull String id) {
     this(id, StringUtil.capitalize(StringUtil.toLowerCase(id)));
@@ -56,7 +56,7 @@ public final class ProjectSystemId implements Serializable {
     return id;
   }
 
-  public @NotNull String getReadableName() {
+  public @NotNull @Nls String getReadableName() {
     return readableName;
   }
 

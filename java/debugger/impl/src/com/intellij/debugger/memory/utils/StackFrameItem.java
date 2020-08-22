@@ -17,6 +17,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ShowSettingsUtil;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
@@ -240,7 +241,7 @@ public class StackFrameItem {
     private final boolean myIsInLibraryContent;
 
     private final String myPath;
-    private final String myMethodName;
+    private final @NlsSafe String myMethodName;
     private final int myLineNumber;
 
     private final List<XNamedValue> myVariables;
@@ -280,13 +281,13 @@ public class StackFrameItem {
     @Override
     public void customizePresentation(@NotNull ColoredTextContainer component) {
       component.setIcon(JBUI.scale(EmptyIcon.create(6)));
-      component.append(String.format("%s:%d", myMethodName, myLineNumber), getAttributes());
+      component.append(myMethodName + ":" + myLineNumber, getAttributes());
       ThreadsViewSettings settings = ThreadsViewSettings.getInstance();
       if (settings.SHOW_CLASS_NAME) {
-        component.append(String.format(", %s", StringUtil.getShortName(myPath)), getAttributes());
+        component.append(", " + StringUtil.getShortName(myPath), getAttributes());
         String packageName = StringUtil.getPackageName(myPath);
         if (settings.SHOW_PACKAGE_NAME && !packageName.trim().isEmpty()) {
-          component.append(String.format(" (%s)", packageName), SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES);
+          component.append(" (" + packageName + ")", SimpleTextAttributes.GRAYED_ITALIC_ATTRIBUTES);
         }
       }
     }

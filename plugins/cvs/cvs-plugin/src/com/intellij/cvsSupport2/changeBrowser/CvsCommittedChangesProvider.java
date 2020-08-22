@@ -69,7 +69,7 @@ public class CvsCommittedChangesProvider implements CachingCommittedChangesProvi
     return new MyZipper();
   }
 
-  private static class MyZipper extends VcsCommittedListsZipperAdapter {
+  private static final class MyZipper extends VcsCommittedListsZipperAdapter {
     private long lastNumber = 1;
     private final TObjectLongHashMap<CommittedChangeListKey> numberCache = new TObjectLongHashMap<>();
 

@@ -12,6 +12,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.StatusBar;
@@ -45,7 +46,7 @@ public class PositionPanel extends EditorBasedWidget
   private MergingUpdateQueue myQueue;
   private CodePointCountTask myCountTask;
 
-  private String myText;
+  private @NlsContexts.Label String myText;
 
   public PositionPanel(@NotNull Project project) {
     super(project);
@@ -194,7 +195,7 @@ public class PositionPanel extends EditorBasedWidget
     }
   }
 
-  private String getPositionText(@NotNull Editor editor) {
+  private @NlsContexts.Label String getPositionText(@NotNull Editor editor) {
     myCountTask = null;
     if (!editor.isDisposed() && !myAlarm.isDisposed()) {
       StringBuilder message = new StringBuilder();
@@ -205,10 +206,13 @@ public class PositionPanel extends EditorBasedWidget
         message.append(UIBundle.message("position.panel.caret.count", caretCount));
       }
       else {
+        LogicalPosition caret = editor.getCaretModel().getLogicalPosition();
+        message.append(caret.line + 1).append(SEPARATOR).append(caret.column + 1);
         if (selectionModel.hasSelection()) {
           int selectionStart = selectionModel.getSelectionStart();
           int selectionEnd = selectionModel.getSelectionEnd();
           if (selectionEnd > selectionStart) {
+            message.append(" (");
             CodePointCountTask countTask = new CodePointCountTask(editor.getDocument().getImmutableCharSequence(),
                                                                   selectionStart, selectionEnd);
             if (countTask.isQuick()) {
@@ -227,11 +231,9 @@ public class PositionPanel extends EditorBasedWidget
               message.append(", ");
               message.append(UIBundle.message("position.panel.selected.line.breaks.count", selectionEndLine - selectionStartLine));
             }
-            message.append(SPACE);
+            message.append(")");
           }
         }
-        LogicalPosition caret = editor.getCaretModel().getLogicalPosition();
-        message.append(caret.line + 1).append(SEPARATOR).append(caret.column + 1);
       }
 
       return message.toString();

@@ -6,6 +6,7 @@ import com.intellij.compiler.impl.CompileDriver;
 import com.intellij.compiler.impl.ExitStatus;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.ide.highlighter.ModuleFileType;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.compiler.*;
@@ -39,6 +40,7 @@ import org.junit.Assert;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.function.Consumer;
 
@@ -48,8 +50,9 @@ public abstract class BaseCompilerTestCase extends JavaModuleTestCase {
   }
 
   @Override
-  protected boolean isCreateProjectFileExplicitly() {
-    return false;
+  protected @NotNull OpenProjectTaskBuilder getOpenProjectOptions() {
+    // RecompileAfterVfsChangesTest fails runPostStartUpActivities is disabled
+    return super.getOpenProjectOptions().componentStoreLoadingEnabled(false);
   }
 
   @Override
@@ -123,13 +126,13 @@ public abstract class BaseCompilerTestCase extends JavaModuleTestCase {
     });
   }
 
-  protected Module addModule(final String moduleName, final @Nullable VirtualFile sourceRoot) {
+  protected Module addModule(@NotNull String moduleName, @Nullable VirtualFile sourceRoot) {
     return addModule(moduleName, sourceRoot, null);
   }
 
-  protected Module addModule(final String moduleName, final @Nullable VirtualFile sourceRoot, final @Nullable VirtualFile testRoot) {
+  protected Module addModule(String moduleName, @Nullable VirtualFile sourceRoot, @Nullable VirtualFile testRoot) {
     return WriteAction.computeAndWait(() -> {
-      final Module module = createModule(moduleName);
+      Module module = createModule(moduleName);
       if (sourceRoot != null) {
         PsiTestUtil.addSourceContentToRoots(module, sourceRoot, false);
       }
@@ -224,8 +227,8 @@ public abstract class BaseCompilerTestCase extends JavaModuleTestCase {
     return log;
   }
 
-  private CompilationLog compile(final Consumer<CompileStatusNotification> action) {
-    final Ref<CompilationLog> result = Ref.create(null);
+  private CompilationLog compile(@NotNull Consumer<CompileStatusNotification> action) {
+    final Ref<CompilationLog> result = new Ref<>(null);
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
     final List<String> generatedFilePaths = new ArrayList<>();
@@ -235,8 +238,11 @@ public abstract class BaseCompilerTestCase extends JavaModuleTestCase {
         generatedFilePaths.add(relativePath);
       }
     });
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
-      final CompileStatusNotification callback = new CompileStatusNotification() {
+    ApplicationManager.getApplication().invokeAndWait(() -> {
+      PlatformTestUtil.saveProject(myProject);
+      CompilerTestUtil.saveApplicationSettings();
+      CompilerTester.enableDebugLogging();
+      action.accept(new CompileStatusNotification() {
         @Override
         public void finished(boolean aborted, int errors, int warnings, @NotNull CompileContext compileContext) {
           try {
@@ -253,16 +259,7 @@ public abstract class BaseCompilerTestCase extends JavaModuleTestCase {
             semaphore.up();
           }
         }
-      };
-      PlatformTestUtil.saveProject(myProject);
-      CompilerTestUtil.saveApplicationSettings();
-      try {
-        CompilerTester.enableDebugLogging();
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-      action.accept(callback);
+      });
     });
 
     try {
@@ -322,12 +319,11 @@ public abstract class BaseCompilerTestCase extends JavaModuleTestCase {
   @Override
   protected Module doCreateRealModule(@NotNull String moduleName) {
     //todo[nik] reuse code from PlatformTestCase
-    final VirtualFile baseDir = getOrCreateProjectBaseDir();
-    final File moduleFile = new File(baseDir.getPath().replace('/', File.separatorChar), moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
-    myFilesToDelete.add(moduleFile);
+    VirtualFile baseDir = getOrCreateProjectBaseDir();
+    Path moduleFile = baseDir.toNioPath().resolve(moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
     return WriteAction.computeAndWait(() -> {
       Module module = ModuleManager.getInstance(myProject)
-                                   .newModule(FileUtil.toSystemIndependentName(moduleFile.getAbsolutePath()), getModuleType().getId());
+        .newModule(FileUtil.toSystemIndependentName(moduleFile.toString()), getModuleType().getId());
       module.getModuleFile();
       return module;
     });

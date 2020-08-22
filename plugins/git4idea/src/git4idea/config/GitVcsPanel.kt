@@ -4,7 +4,7 @@ package git4idea.config
 import com.intellij.application.options.editor.CheckboxDescriptor
 import com.intellij.application.options.editor.checkBox
 import com.intellij.dvcs.branch.DvcsSyncSettings
-import com.intellij.dvcs.ui.DvcsBundle.message
+import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -23,9 +23,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction
-import com.intellij.ui.CollectionComboBoxModel
-import com.intellij.ui.EnumComboBoxModel
-import com.intellij.ui.SimpleListCellRenderer
+import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.fields.ExpandableTextField
 import com.intellij.ui.layout.*
@@ -40,20 +38,21 @@ import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi
 import git4idea.GitVcs
 import git4idea.branch.GitBranchIncomingOutgoingManager
 import git4idea.i18n.GitBundle
+import git4idea.i18n.GitBundle.message
 import git4idea.repo.GitRepositoryManager
 import git4idea.update.GitUpdateProjectInfoLogProperties
 import git4idea.update.getUpdateMethods
 import org.jetbrains.annotations.CalledInAny
 import java.awt.Color
-import java.util.function.Consumer
 import javax.swing.JLabel
+import javax.swing.border.Border
 
 private fun projectSettings(project: Project) = GitVcsSettings.getInstance(project)
 private val applicationSettings get() = GitVcsApplicationSettings.getInstance()
 private val gitOptionGroupName get() = message("settings.git.option.group")
 
 // @formatter:off
-private fun cdSyncBranches(project: Project)                                  = CheckboxDescriptor(message("sync.setting"), PropertyBinding({ projectSettings(project).syncSetting == DvcsSyncSettings.Value.SYNC }, { projectSettings(project).syncSetting = if (it) DvcsSyncSettings.Value.SYNC else DvcsSyncSettings.Value.DONT_SYNC }), groupName = gitOptionGroupName)
+private fun cdSyncBranches(project: Project)                                  = CheckboxDescriptor(DvcsBundle.message("sync.setting"), PropertyBinding({ projectSettings(project).syncSetting == DvcsSyncSettings.Value.SYNC }, { projectSettings(project).syncSetting = if (it) DvcsSyncSettings.Value.SYNC else DvcsSyncSettings.Value.DONT_SYNC }), groupName = gitOptionGroupName)
 private val cdCommitOnCherryPick                                        get() = CheckboxDescriptor(message("settings.commit.automatically.on.cherry.pick"), PropertyBinding(applicationSettings::isAutoCommitOnCherryPick, applicationSettings::setAutoCommitOnCherryPick), groupName = gitOptionGroupName)
 private fun cdAddCherryPickSuffix(project: Project)                           = CheckboxDescriptor(message("settings.add.suffix"), PropertyBinding({ projectSettings(project).shouldAddSuffixToCherryPicksOfPublishedCommits() }, { projectSettings(project).setAddSuffixToCherryPicks(it) }), groupName = gitOptionGroupName)
 private fun cdWarnAboutCrlf(project: Project)                                 = CheckboxDescriptor(message("settings.crlf"), PropertyBinding({ projectSettings(project).warnAboutCrlf() }, { projectSettings(project).setWarnAboutCrlf(it) }), groupName = gitOptionGroupName)
@@ -94,10 +93,18 @@ internal class GitVcsPanel(private val project: Project) :
   private lateinit var supportedBranchUpLabel: JLabel
 
   private val pathSelector: VcsExecutablePathSelector by lazy {
-    VcsExecutablePathSelector("Git", disposable!!, Consumer { path -> testExecutable(path) })
+    VcsExecutablePathSelector(GitVcs.NAME, disposable!!, object : VcsExecutablePathSelector.ExecutableHandler {
+      override fun patchExecutable(executable: String): String? {
+        return GitExecutableDetector.patchExecutablePath(executable)
+      }
+
+      override fun testExecutable(executable: String) {
+        testGitExecutable(executable)
+      }
+    })
   }
 
-  private fun testExecutable(pathToGit: String) {
+  private fun testGitExecutable(pathToGit: String) {
     val modalityState = ModalityState.stateForComponent(pathSelector.mainPanel)
     val errorNotifier = InlineErrorNotifierFromSettings(
       GitExecutableInlineComponent(pathSelector.errorComponent, modalityState, null),
@@ -121,7 +128,7 @@ internal class GitVcsPanel(private val project: Project) :
 
       override fun onSuccess() {
         if (gitVersion.isSupported) {
-          errorNotifier.showMessage(GitBundle.message("git.executable.version.is", gitVersion.presentation))
+          errorNotifier.showMessage(message("git.executable.version.is", gitVersion.presentation))
         }
         else {
           showUnsupportedVersionError(project, gitVersion, errorNotifier)
@@ -237,7 +244,7 @@ internal class GitVcsPanel(private val project: Project) :
     branchUpdateInfoRow = row {
       supportedBranchUpLabel = JBLabel(message("settings.supported.for.2.9"))
       cell {
-        label(message("settings.explicitly.check"))
+        label(message("settings.explicitly.check") + " ")
         comboBox(
           EnumComboBoxModel(GitIncomingCheckStrategy::class.java),
           {
@@ -264,7 +271,7 @@ internal class GitVcsPanel(private val project: Project) :
     if (project.isDefault || GitRepositoryManager.getInstance(project).moreThanOneRoot()) {
       row {
         checkBox(cdSyncBranches(project)).applyToComponent {
-          toolTipText = message("sync.setting.description", "Git")
+          toolTipText = DvcsBundle.message("sync.setting.description", GitVcs.NAME)
         }
       }
     }
@@ -297,7 +304,7 @@ internal class GitVcsPanel(private val project: Project) :
         label(message("settings.clean.working.tree"))
         buttonGroup({ projectSettings.saveChangesPolicy }, { projectSettings.saveChangesPolicy = it }) {
           GitSaveChangesPolicy.values().forEach { saveSetting ->
-            radioButton(saveSetting.name.toLowerCase().capitalize(), saveSetting)
+            radioButton(saveSetting.text, saveSetting)
           }
         }
       }
@@ -346,9 +353,12 @@ internal class GitVcsPanel(private val project: Project) :
           override fun shouldDrawLabel(): Boolean = false
           override fun shouldIndicateHovering(): Boolean = false
           override fun getDefaultSelectorForeground(): Color = UIUtil.getLabelForeground()
+          override fun createUnfocusedBorder(): Border {
+            return FilledRoundedBorder(JBColor.namedColor("Component.borderColor", Gray.xBF), ARC_SIZE, 1)
+          }
         }.initUi()
 
-        label(message("settings.filter.update.info"))
+        label(message("settings.filter.update.info") + " ")
 
         component()
           .onIsModified {

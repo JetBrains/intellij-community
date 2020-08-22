@@ -2,19 +2,34 @@
 package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.application.PathManager
+import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.AppScheduledExecutorService
 import org.jetbrains.intellij.build.images.sync.jpsProject
 import org.jetbrains.jps.model.module.JpsModule
 import java.io.File
 
-fun main() = generateIconsClasses()
+fun main() = try {
+  generateIconsClasses()
+}
+finally {
+  shutdownAppScheduledExecutorService()
+}
 
-internal open class IconsClasses {
+internal abstract class IconsClasses {
   open val homePath: String get() = PathManager.getHomePath()
   open val modules: List<JpsModule> get() = jpsProject(homePath).modules
   open fun generator(home: File, modules: List<JpsModule>) = IconsClassGenerator(home, modules)
 }
 
-internal fun generateIconsClasses(config: IconsClasses = IconsClasses()) {
+private class IntellijIconsClasses : IconsClasses() {
+  override val modules: List<JpsModule>
+    get() = super.modules.filterNot {
+      // TODO: use icon-robots.txt
+      it.name.startsWith("fleet")
+    }
+}
+
+internal fun generateIconsClasses(config: IconsClasses = IntellijIconsClasses()) {
   val home = File(config.homePath)
 
   val modules = config.modules
@@ -37,4 +52,18 @@ internal fun generateIconsClasses(config: IconsClasses = IconsClasses()) {
 
   println()
   println("Done")
+}
+
+/**
+ * Initialized in [com.intellij.util.SVGLoader]
+ */
+internal fun shutdownAppScheduledExecutorService() {
+  try {
+    (AppExecutorUtil.getAppScheduledExecutorService() as AppScheduledExecutorService)
+      .shutdownAppScheduledExecutorService()
+  }
+  catch (e: Exception) {
+    System.err.println("Failed during executor service shutdown:")
+    e.printStackTrace(System.err)
+  }
 }

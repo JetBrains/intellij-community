@@ -101,7 +101,7 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
     return myBackgroundHighlighter;
   }
 
-  private static class PsiAwareTextEditorComponent extends TextEditorComponent {
+  private static final class PsiAwareTextEditorComponent extends TextEditorComponent {
     private final Project myProject;
     private final VirtualFile myFile;
 

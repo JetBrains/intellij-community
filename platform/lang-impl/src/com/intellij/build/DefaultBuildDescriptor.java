@@ -15,6 +15,7 @@
  */
 package com.intellij.build;
 
+import com.intellij.build.events.BuildEventsNls;
 import com.intellij.build.process.BuildProcessHandler;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -25,7 +26,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +41,7 @@ import java.util.function.Supplier;
 public class DefaultBuildDescriptor implements BuildDescriptor {
 
   private final Object myId;
-  private final String myTitle;
+  private final @BuildEventsNls.Title String myTitle;
   private final String myWorkingDir;
   private final long myStartTime;
 
@@ -60,7 +60,7 @@ public class DefaultBuildDescriptor implements BuildDescriptor {
   private @Nullable Supplier<RunContentDescriptor> myContentDescriptorSupplier;
 
   public DefaultBuildDescriptor(@NotNull Object id,
-                                @NotNull @Nls(capitalization = Nls.Capitalization.Title) String title,
+                                @NotNull @BuildEventsNls.Title String title,
                                 @NotNull String workingDir,
                                 long startTime) {
     myId = id;

@@ -28,7 +28,7 @@ public class JavaSliceUsage extends SliceUsage {
   private final PsiSubstitutor mySubstitutor;
   final int indexNesting; // 0 means bare expression 'x', 1 means x[?], 2 means x[?][?] etc
   @NotNull final String syntheticField; // "" means no field, otherwise it's a name of fake field of container, e.g. "keys" for Map
-
+  final boolean requiresAssertionViolation;
 
   JavaSliceUsage(@NotNull PsiElement element, @NotNull SliceUsage parent, @NotNull PsiSubstitutor substitutor) {
     this(element, parent, parent.params, substitutor, 0, "");
@@ -44,6 +44,8 @@ public class JavaSliceUsage extends SliceUsage {
     mySubstitutor = substitutor;
     this.syntheticField = syntheticField;
     this.indexNesting = indexNesting;
+    requiresAssertionViolation =
+      params.valueFilter instanceof JavaValueFilter && ((JavaValueFilter)params.valueFilter).requiresAssertionViolation(getJavaElement());
   }
 
   static @NotNull PsiElement simplify(PsiElement element) {
@@ -62,6 +64,7 @@ public class JavaSliceUsage extends SliceUsage {
     mySubstitutor = PsiSubstitutor.EMPTY;
     indexNesting = 0;
     syntheticField = "";
+    requiresAssertionViolation = false;
   }
 
   @NotNull

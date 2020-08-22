@@ -414,4 +414,42 @@ class PartiallyExcludedChangesTest : BasePartiallyExcludedChangesTest() {
       tracker.assertExcluded(1, true)
     }
   }
+
+  fun `test state tracking on file modifications separated with whitespaces`() {
+    setHolderPaths(FILE_1)
+    include(FILE_1)
+    assertIncluded(FILE_1)
+
+    val file = addLocalFile(FILE_1, "a_ _c_ _e")
+    setBaseVersion(FILE_1, "a1_ _c1_ _e1")
+    refreshCLM()
+
+    file.withOpenedEditor {
+      val tracker = file.tracker as PartialLocalLineStatusTracker
+      lstm.waitUntilBaseContentsLoaded()
+
+      tracker.exclude(0, true)
+      tracker.exclude(2, true)
+
+      tracker.assertExcluded(0, true)
+      tracker.assertExcluded(1, false)
+      tracker.assertExcluded(2, true)
+
+      runCommand { file.document.replaceString(0, 1, "a2") }
+
+      tracker.assertExcluded(0, true)
+      tracker.assertExcluded(1, false)
+      tracker.assertExcluded(2, true)
+
+      runCommand { file.document.replaceString(4, 5, "2") }
+      assertEquals(tracker.getRanges()!!.size, 2)
+      tracker.assertExcluded(0, false)
+      tracker.assertExcluded(1, true)
+
+      runCommand { file.document.replaceString(4, 5, parseInput("2_i_i_i_i")) }
+      assertEquals(tracker.getRanges()!!.size, 2)
+      tracker.assertExcluded(0, false)
+      tracker.assertExcluded(1, true)
+    }
+  }
 }

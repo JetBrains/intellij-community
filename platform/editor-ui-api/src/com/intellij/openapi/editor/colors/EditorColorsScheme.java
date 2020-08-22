@@ -89,6 +89,10 @@ public interface EditorColorsScheme extends Cloneable, TextAttributesScheme, Sch
    * Sets line spacing. Note, that this method checks that {@code lineSpacing} is within bounds and could change it if it is
    * more than {@link com.intellij.application.options.EditorFontsConstants#getMaxEditorLineSpacing()} or less than
    * {@link com.intellij.application.options.EditorFontsConstants#getMinEditorLineSpacing()}
+   * <p>
+   * Currently, changing line spacing does not change the editor's scrolling position (in pixels), so the viewport's logical
+   * location can change as a result.
+   *
    * @see com.intellij.application.options.EditorFontsConstants
    */
   void setLineSpacing(float lineSpacing);

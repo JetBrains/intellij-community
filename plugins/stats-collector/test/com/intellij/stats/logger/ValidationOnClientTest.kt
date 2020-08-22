@@ -31,11 +31,12 @@ class ValidationOnClientTest : HeavyPlatformTestCase() {
     private companion object {
         val EMPTY_STATE = LookupState(emptyList(), emptyList(), emptyList(), 1, emptyMap())
         const val bucket = "0"
+        const val language = "java"
     }
 
     fun `test validation before log`() {
-        val event1 = DownPressedEvent("1", "1", EMPTY_STATE, bucket, System.currentTimeMillis())
-        val event2 = DownPressedEvent("1", "2", EMPTY_STATE, bucket, System.currentTimeMillis())
+        val event1 = DownPressedEvent("1", "1", EMPTY_STATE, bucket, System.currentTimeMillis(), language)
+        val event2 = DownPressedEvent("1", "2", EMPTY_STATE, bucket, System.currentTimeMillis(), language)
 
         TestCase.assertEquals(ValidationStatus.UNKNOWN, event1.validationStatus)
         val queue = LinkedBlockingQueue<DeserializedLogEvent>()
@@ -49,9 +50,9 @@ class ValidationOnClientTest : HeavyPlatformTestCase() {
     }
 
     fun `test log after session finished`() {
-        val event1 = DownPressedEvent("1", "1", EMPTY_STATE, bucket, System.currentTimeMillis())
-        val event2 = DownPressedEvent("1", "1", EMPTY_STATE.withSelected(2), bucket, System.currentTimeMillis())
-        val event3 = DownPressedEvent("1", "2", EMPTY_STATE, bucket, System.currentTimeMillis())
+        val event1 = DownPressedEvent("1", "1", EMPTY_STATE, bucket, System.currentTimeMillis(), language)
+        val event2 = DownPressedEvent("1", "1", EMPTY_STATE.withSelected(2), bucket, System.currentTimeMillis(), language)
+        val event3 = DownPressedEvent("1", "2", EMPTY_STATE, bucket, System.currentTimeMillis(), language)
 
         val queue = LinkedBlockingQueue<DeserializedLogEvent>()
 
@@ -72,8 +73,8 @@ class ValidationOnClientTest : HeavyPlatformTestCase() {
     }
 
     fun `test log executed on pooled thread`() {
-        val event1 = DownPressedEvent("1", "1", EMPTY_STATE, bucket, System.currentTimeMillis())
-        val event2 = DownPressedEvent("1", "2", EMPTY_STATE, bucket, System.currentTimeMillis())
+        val event1 = DownPressedEvent("1", "1", EMPTY_STATE, bucket, System.currentTimeMillis(), language)
+        val event2 = DownPressedEvent("1", "2", EMPTY_STATE, bucket, System.currentTimeMillis(), language)
 
         val queue = LinkedBlockingQueue<Boolean>()
         val logger = createLogger { queue.add(ApplicationManager.getApplication().isDispatchThread) }

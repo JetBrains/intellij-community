@@ -36,6 +36,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.serviceContainer.ComponentManagerImpl;
@@ -43,7 +44,6 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
-import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.Topic;
@@ -55,6 +55,7 @@ import sun.awt.AWTAutoShutdown;
 
 import javax.swing.*;
 import java.awt.*;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -323,7 +324,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   }
 
   @Override
-  public final void load(@Nullable String configPath) {
+  public final void load(@Nullable Path configPath) {
     @SuppressWarnings("unchecked")
     List<IdeaPluginDescriptorImpl> plugins = (List<IdeaPluginDescriptorImpl>)PluginManagerCore.getLoadedPlugins();
     registerComponents(plugins);
@@ -583,6 +584,11 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
   }
 
+  @Override
+  public final boolean isExitInProgress() {
+    return myExitInProgress;
+  }
+
   private void doExit(int flags, boolean restart, String[] beforeRestart) {
     boolean force = BitUtil.isSet(flags, FORCE_EXIT);
     try {
@@ -598,6 +604,12 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       }
 
       stopServicePreloading();
+
+      if (isInstantShutdownPossible()) {
+        for (Frame frame : Frame.getFrames()) {
+          frame.setVisible(false);
+        }
+      }
 
       lifecycleListener.appWillBeClosed(restart);
       LifecycleUsageTriggerCollector.onIdeClose(restart);
@@ -634,26 +646,34 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
   }
 
-  private @NotNull CompletableFuture<ProgressWindow> createProgressWindowAsyncIfNeeded(@NotNull String progressTitle,
+  private static boolean isInstantShutdownPossible() {
+    if (!Registry.is("ide.instant.shutdown")) {
+      return false;
+    }
+
+    return !ProgressManager.getInstance().hasProgressIndicator();
+  }
+
+  private @NotNull CompletableFuture<ProgressWindow> createProgressWindowAsyncIfNeeded(@NotNull @NlsContexts.ProgressTitle String progressTitle,
                                                                                        boolean canBeCanceled,
                                                                                        boolean shouldShowModalWindow,
                                                                                        @Nullable Project project,
                                                                                        JComponent parentComponent,
-                                                                                       String cancelText) {
+                                                                                       @NlsContexts.Button String cancelText) {
     if (SwingUtilities.isEventDispatchThread()) {
       return CompletableFuture.completedFuture(createProgressWindow(progressTitle, canBeCanceled, shouldShowModalWindow, project, parentComponent, cancelText));
     }
     else {
       return CompletableFuture.supplyAsync(() -> createProgressWindow(progressTitle, canBeCanceled, shouldShowModalWindow, project, parentComponent, cancelText),
-                                           EdtExecutorService.getInstance());
+                                           this::invokeLater);
     }
   }
 
-  private @NotNull ProgressWindow createProgressWindow(@NotNull String progressTitle,
+  private @NotNull ProgressWindow createProgressWindow(@NotNull @NlsContexts.ProgressTitle String progressTitle,
                                                        boolean canBeCanceled,
                                                        boolean shouldShowModalWindow,
                                                        @Nullable Project project,
-                                                       JComponent parentComponent, String cancelText) {
+                                                       JComponent parentComponent, @NlsContexts.Button String cancelText) {
     final ProgressWindow progress = new ProgressWindow(canBeCanceled, !shouldShowModalWindow, project, parentComponent, cancelText);
     // in case of abrupt application exit when 'ProgressManager.getInstance().runProcess(process, progress)' below
     // does not have a chance to run, and as a result the progress won't be disposed
@@ -703,45 +723,45 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       }
     };
 
-    if (hasUnsafeBgTasks || option.isToBeShown()) {
-      AtomicBoolean alreadyGone = new AtomicBoolean(false);
-      if (hasUnsafeBgTasks) {
-        Runnable dialogRemover = Messages.createMessageDialogRemover(null);
-        Runnable task = new Runnable() {
-          @Override
-          public void run() {
-            if (alreadyGone.get()) return;
-            if (!ProgressManager.getInstance().hasUnsafeProgressIndicator()) {
-              alreadyGone.set(true);
-              dialogRemover.run();
-            }
-            else {
-              AppExecutorUtil.getAppScheduledExecutorService().schedule(this, 1, TimeUnit.SECONDS);
-            }
-          }
-        };
-        AppExecutorUtil.getAppScheduledExecutorService().schedule(task, 1, TimeUnit.SECONDS);
-      }
-      String name = ApplicationNamesInfo.getInstance().getFullProductName();
-      String message = ApplicationBundle.message(hasUnsafeBgTasks ? "exit.confirm.prompt.tasks" : "exit.confirm.prompt", name);
-      int result = MessageDialogBuilder.yesNo(ApplicationBundle.message("exit.confirm.title"), message)
-        .yesText(ApplicationBundle.message("command.exit"))
-        .noText(CommonBundle.getCancelButtonText())
-        .doNotAsk(option).show();
-      if (alreadyGone.getAndSet(true)) {
-        if (!option.isToBeShown()) {
-          return true;
-        }
-        result = MessageDialogBuilder.yesNo(ApplicationBundle.message("exit.confirm.title"),
-                                            ApplicationBundle.message("exit.confirm.prompt", name))
-          .yesText(ApplicationBundle.message("command.exit"))
-          .noText(CommonBundle.getCancelButtonText())
-          .doNotAsk(option).show();
-      }
-      return result == Messages.YES;
+    if (!hasUnsafeBgTasks && !option.isToBeShown()) {
+      return true;
     }
 
-    return true;
+    AtomicBoolean alreadyGone = new AtomicBoolean(false);
+    if (hasUnsafeBgTasks) {
+      Runnable dialogRemover = Messages.createMessageDialogRemover(null);
+      Runnable task = new Runnable() {
+        @Override
+        public void run() {
+          if (alreadyGone.get()) return;
+          if (!ProgressManager.getInstance().hasUnsafeProgressIndicator()) {
+            alreadyGone.set(true);
+            dialogRemover.run();
+          }
+          else {
+            AppExecutorUtil.getAppScheduledExecutorService().schedule(this, 1, TimeUnit.SECONDS);
+          }
+        }
+      };
+      AppExecutorUtil.getAppScheduledExecutorService().schedule(task, 1, TimeUnit.SECONDS);
+    }
+
+    String message = ApplicationBundle.message(hasUnsafeBgTasks ? "exit.confirm.prompt.tasks" : "exit.confirm.prompt");
+    exitConfirmed = MessageDialogBuilder.yesNo(ApplicationBundle.message("exit.confirm.title"), message)
+      .yesText(ApplicationBundle.message("command.exit"))
+      .noText(CommonBundle.getCancelButtonText())
+      .doNotAsk(option)
+      .guessWindowAndAsk();
+    if (alreadyGone.getAndSet(true)) {
+      if (!option.isToBeShown()) {
+        return true;
+      }
+      exitConfirmed = MessageDialogBuilder.okCancel(ApplicationBundle.message("exit.confirm.title"), ApplicationBundle.message("exit.confirm.prompt"))
+        .yesText(ApplicationBundle.message("command.exit"))
+        .doNotAsk(option)
+        .guessWindowAndAsk();
+    }
+    return exitConfirmed;
   }
 
   private boolean canExit() {
@@ -932,7 +952,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return runEdtProgressWriteAction(title, project, parentComponent, IdeBundle.message("action.stop"), action);
   }
 
-  private boolean runEdtProgressWriteAction(@NotNull String title,
+  private boolean runEdtProgressWriteAction(@NotNull @NlsContexts.ProgressTitle String title,
                                             @Nullable Project project,
                                             @Nullable JComponent parentComponent,
                                             @Nullable @Nls(capitalization = Nls.Capitalization.Title) String cancelText,
@@ -1040,7 +1060,15 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   public void assertIsDispatchThread() {
     if (isDispatchThread()) return;
     if (ShutDownTracker.isShutdownHookRunning()) return;
-    assertIsDispatchThread("Access is allowed from event dispatch thread with IW lock only.");
+    throwThreadAccessException("Access is allowed from event dispatch thread with IW lock only.");
+  }
+
+  @Override
+  public void assertIsNonDispatchThread() {
+    if (isUnitTestMode() || isHeadlessEnvironment()) return;
+    if (!isDispatchThread()) return;
+    if (ShutDownTracker.isShutdownHookRunning()) return;
+    throwThreadAccessException("Access from event dispatch thread is not allowed.");
   }
 
   @Override
@@ -1050,8 +1078,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     assertIsWriteThread("Access is allowed from write thread only.");
   }
 
-  private void assertIsDispatchThread(String message) {
-    if (isDispatchThread()) return;
+  private static void throwThreadAccessException(String message) {
     throw new RuntimeExceptionWithAttachments(
       message,
       "EventQueue.isDispatchThread()=" + EventQueue.isDispatchThread() +
@@ -1268,7 +1295,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
   }
 
-  private class ReadAccessToken extends AccessToken {
+  private final class ReadAccessToken extends AccessToken {
     private ReadAccessToken() {
       acquireReadLock(Runnable.class);
     }
@@ -1302,7 +1329,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
    * callers should be ready for those.
    */
   @ApiStatus.Internal
-  public void executeSuspendingWriteAction(@Nullable Project project, @NotNull String title, @NotNull Runnable runnable) {
+  public void executeSuspendingWriteAction(@Nullable Project project, @NotNull @NlsContexts.DialogTitle String title, @NotNull Runnable runnable) {
     assertIsWriteThread();
     if (!myLock.isWriteLocked()) {
       runModalProgress(project, title, runnable);
@@ -1318,7 +1345,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
   }
 
-  private static void runModalProgress(@Nullable Project project, @NotNull String title, @NotNull Runnable runnable) {
+  private static void runModalProgress(@Nullable Project project, @NotNull @NlsContexts.DialogTitle String title, @NotNull Runnable runnable) {
     ProgressManager.getInstance().run(new Task.Modal(project, title, false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
@@ -1424,5 +1451,10 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   @TestOnly
   void disableEventsUntil(@NotNull Disposable disposable) {
     myDispatcher.neuterMultiCasterWhilePerformanceTestIsRunningUntil(disposable);
+  }
+
+  @ApiStatus.Internal
+  public boolean getComponentCreated() {
+    return getContainerState().get().compareTo(ContainerState.COMPONENT_CREATED) >= 0;
   }
 }

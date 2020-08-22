@@ -4,6 +4,7 @@ package com.intellij.psi.impl.source.tree.injected;
 import com.intellij.lang.injection.ConcatenationAwareInjector;
 import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.project.Project;
@@ -14,21 +15,29 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.impl.AnyPsiChangeListener;
 import com.intellij.psi.impl.PsiParameterizedCachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.ParameterizedCachedValue;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.psi.impl.PsiManagerImpl.ANY_PSI_CHANGE_TOPIC;
+
 @Service
-public final class ConcatenationInjectorManager extends SimpleModificationTracker {
-  public static final ProjectExtensionPointName<ConcatenationAwareInjector> EP_NAME = new ProjectExtensionPointName<>("com.intellij.concatenationAwareInjector");
+public final class ConcatenationInjectorManager extends SimpleModificationTracker implements Disposable {
+  public static final ProjectExtensionPointName<ConcatenationAwareInjector> EP_NAME =
+    new ProjectExtensionPointName<>("com.intellij.concatenationAwareInjector");
 
   public ConcatenationInjectorManager(@NotNull Project project) {
     EP_NAME.addChangeListener(project, this::concatenationInjectorsChanged, null);
     // clear caches even on non-physical changes
-    PsiManagerEx.getInstanceEx(project).registerRunnableToRunOnAnyChange(this::incModificationCount);
+    project.getMessageBus().connect(this).subscribe(ANY_PSI_CHANGE_TOPIC, new AnyPsiChangeListener() {
+      @Override
+      public void beforePsiChanged(boolean isPhysical) {
+        incModificationCount();
+      }
+    });
   }
 
   public static ConcatenationInjectorManager getInstance(@NotNull Project project) {
@@ -122,5 +131,10 @@ public final class ConcatenationInjectorManager extends SimpleModificationTracke
 
   private void concatenationInjectorsChanged() {
     incModificationCount();
+  }
+
+  @Override
+  public void dispose() {
+
   }
 }

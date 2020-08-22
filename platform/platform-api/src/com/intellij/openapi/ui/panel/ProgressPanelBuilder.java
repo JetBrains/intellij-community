@@ -1,12 +1,16 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui.panel;
 
+import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.ui.popup.IconButton;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.*;
+import com.intellij.ui.InplaceButton;
+import com.intellij.ui.SeparatorComponent;
+import com.intellij.ui.SeparatorOrientation;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -21,14 +25,14 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
   private static final Color SEPARATOR_COLOR = JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground();
 
   private final JProgressBar myProgressBar;
-  private String initialLabelText;
+  private @NlsContexts.Label String initialLabelText;
   private boolean labelAbove = true;
 
   private Runnable cancelAction;
   private Runnable resumeAction;
   private Runnable pauseAction;
 
-  private String  cancelText = "Cancel";
+  private @NlsContexts.Button String  cancelText = CommonBundle.getCancelButtonText();
   private boolean cancelAsButton;
   private boolean smallVariant;
 
@@ -46,7 +50,7 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
      * @param text label text
      * @return <code>this</code>
      */
-  public ProgressPanelBuilder withLabel(@NotNull String text) {
+  public ProgressPanelBuilder withLabel(@NlsContexts.Label @NotNull String text) {
     initialLabelText = text;
     return this;
   }
@@ -184,12 +188,12 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
     return width;
   }
 
-  private class LabeledPanelImpl extends ProgressPanel {
+  private final class LabeledPanelImpl extends ProgressPanel {
     private final JLabel label;
     private final JLabel comment;
     private final JLabel text2;
 
-    private String myCommentText = emptyComment();
+    private @NlsContexts.DetailedDescription String myCommentText = emptyComment();
     private boolean myServiceComment = false;
 
     private final IconButton cancelIcon;
@@ -296,7 +300,11 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
     @Override
     public void setText2(@Nullable String text) {
       if (text2 != null) {
-        text2.setText(text);
+        boolean empty = StringUtil.isEmpty(text);
+        if (empty && !text2.isVisible()) {
+          return;
+        }
+        text2.setText(empty ? " " : text);
         text2.setVisible(true);
       }
     }
@@ -343,9 +351,30 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
       }
     }
 
+    @NotNull
     @Override
     public State getState() {
       return state;
+    }
+
+    @Override
+    public void setState(@NotNull State state) {
+      if (this.state == state || state == State.CANCELLED || mySuspendButton == null) {
+        return;
+      }
+
+      this.state = state;
+
+      if (state == State.PLAYING) {
+        mySuspendButton.setIcons(pauseIcon);
+        setCommentText(null, true);
+      }
+      else {
+        mySuspendButton.setIcons(resumeIcon);
+        setCommentText(IdeBundle.message("comment.text.paused"), true);
+      }
+      mySuspendButton.revalidate();
+      mySuspendButton.repaint();
     }
 
     private void addToPanel(JPanel panel, GridBagConstraints gc) {
@@ -402,10 +431,13 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
       }
       if (resumeAction != null && pauseAction != null) {
         mySuspendButton = new InplaceButton(pauseIcon, a -> {
+          if (state == State.CANCELLED) {
+            return;
+          }
           if (state == State.PLAYING) {
             mySuspendButton.setIcons(resumeIcon);
             state = State.PAUSED;
-            setCommentText(IdeBundle.message("comment.text.paused"), true);
+            setCommentText(IdeBundle.message("comment.text.resume"), true);
             pauseAction.run();
           }
           else {
@@ -461,7 +493,7 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
       panel.add(button, gc);
     }
 
-    private class HoverListener extends MouseAdapter {
+    private final class HoverListener extends MouseAdapter {
       private final boolean myCancel;
 
       private HoverListener(boolean cancel) {
@@ -480,7 +512,7 @@ public class ProgressPanelBuilder implements GridBagPanelBuilder, PanelBuilder {
 
       @Override
       public void mouseExited(MouseEvent e) {
-        setCommentText(state != State.PAUSED ? null : IdeBundle.message("comment.text.paused"), true);
+        setCommentText(state == State.PAUSED ? IdeBundle.message("comment.text.paused") : null, true);
       }
     }
   }

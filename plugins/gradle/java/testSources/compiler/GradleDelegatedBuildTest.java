@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.compiler;
 
 import com.intellij.openapi.roots.OrderEnumerator;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.task.ProjectTaskContext;
 import com.intellij.task.ProjectTaskListener;
@@ -10,9 +11,11 @@ import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.messages.MessageBusConnection;
+import org.assertj.core.api.Assertions;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -80,13 +83,26 @@ public class GradleDelegatedBuildTest extends GradleDelegatedBuildTestCase {
 
   @Test
   public void testDirtyOutputPathsCollection() throws Exception {
-    createSettingsFile("include 'api', 'impl' ");
+    doTestDirtyOutputCollection(false);
+  }
 
-    createProjectSubFile("src/main/java/my/pack/App.java",
-                         "package my.pack;\n" +
-                         "public class App {\n" +
-                         "  public int method() { return 42; }" +
-                         "}");
+  @Test
+  public void testDirtyOutputPathsCollectionWithBuildCacheEnabled() throws Exception {
+    doTestDirtyOutputCollection(true);
+  }
+
+  private void doTestDirtyOutputCollection(boolean enableBuildCache) throws IOException {
+    createSettingsFile("include 'api', 'impl' ");
+    if (enableBuildCache) {
+      createProjectSubFile("gradle.properties",
+                           "org.gradle.caching=true");
+    }
+
+    VirtualFile appFile = createProjectSubFile("src/main/java/my/pack/App.java",
+                                               "package my.pack;\n" +
+                                               "public class App {\n" +
+                                               "  public int method() { return 42; }" +
+                                               "}");
     createProjectSubFile("src/test/java/my/pack/AppTest.java",
                          "package my.pack;\n" +
                          "public class AppTest {\n" +
@@ -147,26 +163,33 @@ public class GradleDelegatedBuildTest extends GradleDelegatedBuildTestCase {
 
     compileModules("project.main");
 
-    String langPart = isGradleOlderThen("4.0") ? "build/classes" : "build/classes/java";
+    String langPart = isGradleOlderThan("4.0") ? "build/classes" : "build/classes/java";
     List<String> expected = newArrayList(path(langPart + "/main"),
                                          path("api/" + langPart + "/main"),
                                          path("impl/" + langPart + "/main"),
                                          path("api/build/libs/api.jar"),
                                          path("impl/build/libs/impl.jar"));
 
-    if (isGradleOlderThen("3.3")) {
+    if (isGradleOlderThan("3.3")) {
       expected.addAll(asList(path("build/dependency-cache"),
                              path("api/build/dependency-cache"),
                              path("impl/build/dependency-cache")));
     }
 
-    if (!isGradleOlderThen("5.2")) {
+    if (!isGradleOlderThan("5.2")) {
       expected.addAll(asList(path("build/generated/sources/annotationProcessor/java/main"),
                              path("api/build/generated/sources/annotationProcessor/java/main"),
                              path("impl/build/generated/sources/annotationProcessor/java/main")));
     }
 
-    assertSameElements(dirtyOutputRoots, expected);
+    if (isGradleNewerOrSameAs("6.3")) {
+      expected.addAll(asList(path("build/generated/sources/headers/java/main"),
+                             path("api/build/generated/sources/headers/java/main"),
+                             path("impl/build/generated/sources/headers/java/main")));
+    }
+
+    Assertions.assertThat(dirtyOutputRoots)
+      .containsExactlyInAnyOrderElementsOf(expected);
 
     assertCopied(langPart + "/main/my/pack/App.class");
     assertNotCopied(langPart + "/test/my/pack/AppTest.class");
@@ -179,25 +202,31 @@ public class GradleDelegatedBuildTest extends GradleDelegatedBuildTestCase {
 
     //----check incremental make and build dependant module----//
     dirtyOutputRoots.clear();
-    createProjectSubFile("src/main/java/my/pack/App.java",
-                         "package my.pack;\n" +
-                         "public class App {\n" +
-                         "  public int method() { return 42; }" +
-                         "  public int methodX() { return 42; }" +
-                         "}");
+    setFileContent(appFile, "package my.pack;\n" +
+                            "public class App {\n" +
+                            "  public int method() { return 42; }" +
+                            "  public int methodX() { return 42; }" +
+                            "}", false);
     compileModules("project.test");
 
     expected = newArrayList(path(langPart + "/main"),
                             path(langPart + "/test"));
 
-    if (isGradleOlderThen("3.3")) {
+    if (isGradleOlderThan("3.3")) {
       expected.add(path("build/dependency-cache"));
     }
-    if (!isGradleOlderThen("5.2")) {
+    if (!isGradleOlderThan("5.2")) {
       expected.addAll(asList(path("build/generated/sources/annotationProcessor/java/main"),
                              path("build/generated/sources/annotationProcessor/java/test")));
     }
-    assertUnorderedElementsAreEqual(dirtyOutputRoots, expected);
+
+    if (isGradleNewerOrSameAs("6.3")) {
+      expected.addAll(asList(path("build/generated/sources/headers/java/main"),
+                             path("build/generated/sources/headers/java/test")));
+    }
+
+    Assertions.assertThat(dirtyOutputRoots)
+      .containsExactlyInAnyOrderElementsOf(expected);
 
     assertCopied(langPart + "/main/my/pack/App.class");
     assertCopied(langPart + "/test/my/pack/AppTest.class");
@@ -207,5 +236,14 @@ public class GradleDelegatedBuildTest extends GradleDelegatedBuildTestCase {
 
     assertCopied("impl/" + langPart + "/main/my/pack/Impl.class");
     assertNotCopied("impl/" + langPart + "/test/my/pack/ImplTest.class");
+
+    //----check reverted change -> related build result can be obtained by Gradle from cache ---//
+    dirtyOutputRoots.clear();
+    setFileContent(appFile, "package my.pack;\n" +
+                            "public class App {\n" +
+                            "  public int method() { return 42; }" +
+                            "}", false);
+    compileModules("project.test");
+    assertUnorderedElementsAreEqual(dirtyOutputRoots, expected);
   }
 }

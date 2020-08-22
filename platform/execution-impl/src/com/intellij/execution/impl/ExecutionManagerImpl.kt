@@ -43,7 +43,6 @@ import com.intellij.ui.UIBundle
 import com.intellij.util.Alarm
 import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
-import gnu.trove.THashSet
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.concurrency.AsyncPromise
@@ -129,7 +128,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
   private val awaitingRunProfiles = HashMap<RunProfile, ExecutionEnvironment>()
   private val runningConfigurations: MutableList<RunningConfigurationEntry> = ContainerUtil.createLockFreeCopyOnWriteList()
 
-  private val inProgress = Collections.synchronizedSet(THashSet<InProgressEntry>())
+  private val inProgress = Collections.synchronizedSet(HashSet<InProgressEntry>())
 
   private fun processNotStarted(environment: ExecutionEnvironment) {
     val executorId = environment.executor.id
@@ -579,7 +578,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
     if (runnerAndConfigurationSettings != null) {
       val targetManager = ExecutionTargetManager.getInstance(project)
       if (!targetManager.doCanRun(runnerAndConfigurationSettings.configuration, environment.executionTarget)) {
-        ExecutionUtil.handleExecutionError(environment, ExecutionException(ProgramRunnerUtil.getCannotRunOnErrorMessage(environment.runProfile, environment.executionTarget)))
+        ExecutionUtil.handleExecutionError(environment, ExecutionException(ProgramRunnerUtil.getCannotRunOnErrorMessage( environment.runProfile, environment.executionTarget)))
         return
       }
 
@@ -692,8 +691,9 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
 }
 
 private fun triggerUsage(environment: ExecutionEnvironment): IdeActivity? {
-  val configurationFactory = environment.runnerAndConfigurationSettings?.configuration?.factory ?: return null
-  return RunConfigurationUsageTriggerCollector.trigger(environment.project, configurationFactory, environment.executor)
+  val runConfiguration = environment.runnerAndConfigurationSettings?.configuration
+  val configurationFactory = runConfiguration?.factory ?: return null
+  return RunConfigurationUsageTriggerCollector.trigger(environment.project, configurationFactory, environment.executor, runConfiguration)
 }
 
 private fun createEnvironmentBuilder(project: Project,

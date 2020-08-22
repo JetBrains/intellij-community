@@ -3,6 +3,7 @@ package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.Patches;
 import com.intellij.debugger.DebuggerContext;
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.*;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
@@ -23,6 +24,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -38,6 +40,7 @@ import javax.swing.*;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
@@ -292,7 +295,29 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
     DebugProcessImpl debugProcess = context.getDebugProcess();
     getRenderer(debugProcess)
-      .thenAccept(renderer -> calcRepresentation(context, labelListener, debugProcess, renderer));
+      .thenAccept(renderer -> calcRepresentation(context, labelListener, debugProcess, renderer))
+      .exceptionally(throwable -> {
+        throwable = DebuggerUtilsAsync.unwrap(throwable);
+        if (throwable instanceof EvaluateException) {
+          setValueLabelFailed((EvaluateException)throwable);
+        }
+        else {
+          String message;
+          if (throwable instanceof CancellationException) {
+            message = JavaDebuggerBundle.message("error.context.has.changed");
+          }
+          else if (throwable instanceof VMDisconnectedException) {
+            message = JavaDebuggerBundle.message("error.vm.disconnected");
+          }
+          else {
+            message = JavaDebuggerBundle.message("internal.debugger.error");
+            LOG.error(new Throwable(throwable));
+          }
+          setValueLabelFailed(new EvaluateException(message));
+        }
+        labelListener.labelChanged();
+        return null;
+      });
 
     return "";
   }
@@ -353,7 +378,13 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
         myIsExpandable = res;
       }
       else {
-        LOG.error(ex);
+        ex = DebuggerUtilsAsync.unwrap(ex);
+        if (ex instanceof EvaluateException) {
+          LOG.warn(new Throwable(ex));
+        }
+        else if (!(ex instanceof CancellationException) && !(ex instanceof VMDisconnectedException)) {
+          LOG.error(new Throwable(ex));
+        }
       }
       labelListener.labelChanged();
     });
@@ -363,7 +394,8 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
 
   @Override
   public String getLabel() {
-    return calcValueName() + getDeclaredTypeLabel() + " = " + getValueLabel();
+    @NlsSafe String label = calcValueName() + getDeclaredTypeLabel() + " = " + getValueLabel();
+    return label;
   }
 
   public ValueDescriptorImpl getFullValueDescriptor() {

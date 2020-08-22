@@ -25,6 +25,7 @@ import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.sdk.PythonSdkUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -128,10 +129,10 @@ public class AssignTargetAnnotator extends PyAnnotator {
 
   private class ExprVisitor extends PyElementVisitor {
     private final Operation myOp;
-    private final String DELETING_NONE = message("ANN.deleting.none");
-    private final String ASSIGNMENT_TO_NONE = message("ANN.assign.to.none");
-    private final String CANT_ASSIGN_TO_FUNCTION_CALL = message("ANN.cant.assign.to.call");
-    private final String CANT_DELETE_FUNCTION_CALL = message("ANN.cant.delete.call");
+    private final @Nls String DELETING_NONE = message("ANN.deleting.none");
+    private final @Nls String ASSIGNMENT_TO_NONE = message("ANN.assign.to.none");
+    private final @Nls String CANT_ASSIGN_TO_FUNCTION_CALL = message("ANN.cant.assign.to.call");
+    private final @Nls String CANT_DELETE_FUNCTION_CALL = message("ANN.cant.delete.call");
 
     ExprVisitor(Operation op) {
       myOp = op;
@@ -141,6 +142,7 @@ public class AssignTargetAnnotator extends PyAnnotator {
     public void visitPyReferenceExpression(final PyReferenceExpression node) {
       String referencedName = node.getReferencedName();
       if (PyNames.NONE.equals(referencedName)) {
+        //noinspection DialogTitleCapitalization
         getHolder().newAnnotation(HighlightSeverity.ERROR, (myOp == Operation.Delete) ? DELETING_NONE : ASSIGNMENT_TO_NONE).range(node).create();
       }
     }
@@ -151,6 +153,7 @@ public class AssignTargetAnnotator extends PyAnnotator {
       if (PyNames.NONE.equals(targetName)) {
         final VirtualFile vfile = node.getContainingFile().getVirtualFile();
         if (vfile != null && !vfile.getUrl().contains("/" + PythonSdkUtil.SKELETON_DIR_NAME + "/")){
+          //noinspection DialogTitleCapitalization
           getHolder().newAnnotation(HighlightSeverity.ERROR, (myOp == Operation.Delete) ? DELETING_NONE : ASSIGNMENT_TO_NONE).range(node).create();
         }
       }

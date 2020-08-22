@@ -5,8 +5,9 @@ import com.intellij.codeInsight.completion.CompletionUtilCoreImpl
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.model.search.SearchService
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.Key
-import com.intellij.patterns.uast.UElementPattern
+import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.uast.injectionHostUExpression
 import com.intellij.psi.impl.cache.CacheManager
 import com.intellij.psi.search.GlobalSearchScope
@@ -23,11 +24,11 @@ import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 
-internal class UastReferenceByUsageAdapter(private val usagePattern: UElementPattern<*, *>,
+internal class UastReferenceByUsageAdapter(private val usagePattern: ElementPattern<out UElement>,
                                            private val provider: UastReferenceProvider) : UastReferenceProvider(UExpression::class.java) {
 
   override fun acceptsTarget(target: PsiElement): Boolean {
-    return !target.project.isDefault && provider.acceptsTarget(target)
+    return provider.acceptsTarget(target) && !target.project.isDefault
   }
 
   override fun getReferencesByElement(element: UElement, context: ProcessingContext): Array<PsiReference> {
@@ -89,10 +90,19 @@ private fun getOriginalUastParent(element: UElement): UElement? {
 
 private fun getDirectVariableUsages(uVar: UVariable): Sequence<PsiElement> {
   val variablePsi = uVar.sourcePsi ?: return emptySequence()
+  val project = variablePsi.project
 
-  val cachedValue = CachedValuesManager.getManager(variablePsi.project).getCachedValue(variablePsi, CachedValueProvider {
-    val anchors = findDirectVariableUsages(variablePsi).map(PsiAnchor::create)
-    Result.createSingleDependency(anchors, PsiModificationTracker.MODIFICATION_COUNT)
+  if (DumbService.isDumb(project)) return emptySequence() // do not try to search in dumb mode
+
+  val cachedValue = CachedValuesManager.getManager(project).getCachedValue(variablePsi, CachedValueProvider {
+    val dumbService = DumbService.getInstance(variablePsi.project)
+    if (dumbService.isDumb) {
+      Result.createSingleDependency(emptyList(), dumbService.modificationTracker)
+    }
+    else {
+      val anchors = findDirectVariableUsages(variablePsi).map(PsiAnchor::create)
+      Result.createSingleDependency(anchors, PsiModificationTracker.MODIFICATION_COUNT)
+    }
   })
   return cachedValue.asSequence().mapNotNull(PsiAnchor::retrieve)
 }
@@ -118,15 +128,15 @@ private fun findDirectVariableUsages(variablePsi: PsiElement): Iterable<PsiEleme
   val module = ModuleUtilCore.findModuleForPsiElement(variablePsi) ?: return localUsages
   val uastScope = getUastScope(module.moduleScope)
 
-  val searchHelper = PsiSearchHelper.getInstance(variablePsi.project)
-  if (searchHelper.isCheapEnoughToSearch(variableName, uastScope, null, null) != SearchCostResult.FEW_OCCURRENCES) {
+  val searchHelper = PsiSearchHelper.getInstance(module.project)
+  if (searchHelper.isCheapEnoughToSearch(variableName, uastScope, currentFile, null) != SearchCostResult.FEW_OCCURRENCES) {
     return localUsages
   }
 
   val cacheManager = CacheManager.getInstance(variablePsi.project)
   val containingFiles = cacheManager.getVirtualFilesWithWord(
     variableName,
-    UsageSearchContext.ANY,
+    UsageSearchContext.IN_CODE,
     uastScope,
     true)
   val useScope = variablePsi.useScope
@@ -164,6 +174,7 @@ private fun findVariableUsages(variablePsi: PsiElement, variableName: String, fi
       emptyList<PsiElement>()
     }
     .findAll()
+    .sortedWith(compareBy({ it.containingFile?.virtualFile?.canonicalPath ?: "" }, { it.textOffset }))
 }
 
 private fun getUastScope(originalScope: GlobalSearchScope): GlobalSearchScope {

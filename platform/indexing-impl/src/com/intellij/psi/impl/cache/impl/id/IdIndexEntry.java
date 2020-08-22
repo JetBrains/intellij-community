@@ -62,7 +62,7 @@ public final class IdIndexEntry {
     return "IdIndexEntry[hash: " + myWordHashCode +"]";
   }
 
-  private static int getWordHash(@NotNull CharSequence line, int start, int end, boolean caseSensitive) {
+  static int getWordHash(@NotNull CharSequence line, int start, int end, boolean caseSensitive) {
     if (start == end) return 0;
     char firstChar = line.charAt(start);
     char lastChar = line.charAt(end - 1);

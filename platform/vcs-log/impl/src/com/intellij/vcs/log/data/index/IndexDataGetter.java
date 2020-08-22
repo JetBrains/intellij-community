@@ -181,11 +181,7 @@ public final class IndexDataGetter {
     return executeAndCatch(() -> {
       IntSet result = new IntOpenHashSet();
       for (FilePath path : paths) {
-        Set<Integer> commits = createFileHistoryData(path).build().getCommits();
-        if (commits.isEmpty() && !path.isDirectory()) {
-          commits = createFileHistoryData(VcsUtil.getFilePath(path.getPath(), true)).build().getCommits();
-        }
-        result.addAll(commits);
+        result.addAll(createFileHistoryData(path).build().getCommits());
       }
       return result;
     }, new IntOpenHashSet());

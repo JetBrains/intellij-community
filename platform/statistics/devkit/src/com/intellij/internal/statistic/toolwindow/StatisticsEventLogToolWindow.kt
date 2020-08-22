@@ -4,8 +4,8 @@ package com.intellij.internal.statistic.toolwindow
 import com.intellij.diagnostic.logging.LogConsoleBase
 import com.intellij.internal.statistic.StatisticsBundle
 import com.intellij.internal.statistic.actions.*
-import com.intellij.internal.statistic.actions.localWhitelist.AddTestGroupToLocalWhitelistAction
-import com.intellij.internal.statistic.actions.localWhitelist.EditLocalWhitelistAction
+import com.intellij.internal.statistic.actions.scheme.AddGroupToTestSchemeAction
+import com.intellij.internal.statistic.actions.scheme.EditEventsTestSchemeAction
 import com.intellij.internal.statistic.eventLog.EventLogNotificationService
 import com.intellij.internal.statistic.eventLog.LogEvent
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType.*
@@ -35,7 +35,7 @@ internal class StatisticsEventLogToolWindow(project: Project, private val record
 
   init {
     val model = StatisticsLogFilterModel()
-    consoleLog = StatisticsEventLogConsole(project, model)
+    consoleLog = StatisticsEventLogConsole(project, model, recorderId)
     eventLogListener = { logEvent -> consoleLog.addLogLine(messageBuilder.buildLogMessage(logEvent)) }
 
     val topPanel = JPanel(FlowLayout(FlowLayout.LEFT))
@@ -57,14 +57,14 @@ internal class StatisticsEventLogToolWindow(project: Project, private val record
     topToolbarActions.add(RecordStateStatisticsEventLogAction(recorderId, false))
     topToolbarActions.add(ShowChangedStateEventsAction(recorderId))
     topToolbarActions.add(OpenEventLogFileAction(recorderId))
-    topToolbarActions.addSeparator(StatisticsBundle.message("stats.whitelist"))
-    topToolbarActions.add(ConfigureWhitelistAction(recorderId))
-    topToolbarActions.add(UpdateWhitelistAction(recorderId))
-    topToolbarActions.add(OpenWhitelistFileAction(recorderId))
-    topToolbarActions.addSeparator(StatisticsBundle.message("stats.local.whitelist"))
-    topToolbarActions.add(AddTestGroupToLocalWhitelistAction(recorderId))
-    topToolbarActions.add(CleanupLocalWhitelistAction())
-    topToolbarActions.add(EditLocalWhitelistAction(recorderId))
+    topToolbarActions.addSeparator(StatisticsBundle.message("stats.events.scheme"))
+    topToolbarActions.add(ConfigureEventsSchemeFileAction(recorderId))
+    topToolbarActions.add(UpdateEventsSchemeAction(recorderId))
+    topToolbarActions.add(OpenEventsSchemeFileAction(recorderId))
+    topToolbarActions.addSeparator(StatisticsBundle.message("stats.events.test.scheme"))
+    topToolbarActions.add(AddGroupToTestSchemeAction(recorderId))
+    topToolbarActions.add(CleanupEventsTestSchemeAction())
+    topToolbarActions.add(EditEventsTestSchemeAction(recorderId))
     val toolbar = ActionManager.getInstance().createActionToolbar("FusEventLogToolWindow", topToolbarActions, true)
     toolbar.setShowSeparatorTitles(true)
     return toolbar.component
@@ -88,7 +88,7 @@ internal class StatisticsEventLogToolWindow(project: Project, private val record
   }
 
   companion object {
-    val rejectedValidationTypes = setOf(REJECTED, INCORRECT_RULE, UNDEFINED_RULE, UNREACHABLE_WHITELIST, PERFORMANCE_ISSUE)
+    val rejectedValidationTypes = setOf(REJECTED, INCORRECT_RULE, UNDEFINED_RULE, UNREACHABLE_METADATA, PERFORMANCE_ISSUE)
   }
 }
 

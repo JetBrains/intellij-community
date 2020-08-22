@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.icons.AllIcons;
@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.TaskInfo;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.popup.IconButton;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.InplaceButton;
@@ -122,7 +123,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
     return JBIterable.of(createCancelButton());
   }
 
-  private ProgressButton createCancelButton() {
+  protected final ProgressButton createCancelButton() {
     InplaceButton cancelButton = new InplaceButton(
       new IconButton(myInfo.getCancelTooltipText(),
                      myCompact ? AllIcons.Process.StopSmall : AllIcons.Process.Stop,
@@ -200,7 +201,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
     return myText.getText();
   }
 
-  protected void setTextValue(@NotNull String text) {
+  protected void setTextValue(@NlsContexts.ProgressText @NotNull String text) {
     myText.setText(text);
   }
 
@@ -208,7 +209,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
     myText.setEnabled(value);
   }
 
-  protected void setText2Value(@NotNull String text) {
+  protected void setText2Value(@NlsContexts.ProgressDetails @NotNull String text) {
     myText2.setText(text);
   }
 
@@ -216,7 +217,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
     myText2.setEnabled(value);
   }
 
-  protected void setProcessNameValue(@NotNull String text) {
+  protected void setProcessNameValue(@NlsContexts.ProgressTitle @NotNull String text) {
     myProcessName.setText(text);
   }
 
@@ -257,7 +258,7 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
     return myInfo;
   }
 
-  private class MyComponent extends JPanel {
+  private final class MyComponent extends JPanel {
     private final boolean myCompact;
     private final JComponent myProcessName;
 

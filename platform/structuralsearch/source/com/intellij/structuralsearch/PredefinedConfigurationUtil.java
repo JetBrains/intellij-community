@@ -6,6 +6,8 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.SearchConfiguration;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public final class PredefinedConfigurationUtil {
 
@@ -15,19 +17,22 @@ public final class PredefinedConfigurationUtil {
    * instead.
    */
   @Deprecated
-  public static Configuration createSearchTemplateInfo(String name, @NonNls String criteria, String category) {
+  @NotNull
+  public static Configuration createSearchTemplateInfo(@NotNull String name, @NonNls @NotNull String criteria, @NotNull String category) {
     return createSearchTemplateInfo(name, criteria, category, StdFileTypes.JAVA);
   }
 
-  public static Configuration createSearchTemplateInfo(String name, @NonNls String criteria, String category, LanguageFileType fileType) {
+  @NotNull
+  public static Configuration createSearchTemplateInfo(@NotNull String name, @NonNls @NotNull String criteria, @NotNull String category, @NotNull LanguageFileType fileType) {
     return createSearchTemplateInfo(name, criteria, category, fileType, null);
   }
 
-  public static Configuration createSearchTemplateInfo(String name,
-                                                       @NonNls String criteria,
-                                                       String category,
-                                                       LanguageFileType fileType,
-                                                       PatternContext context) {
+  @NotNull
+  public static Configuration createSearchTemplateInfo(@NotNull String name,
+                                                       @NonNls @NotNull String criteria,
+                                                       @NotNull String category,
+                                                       @NotNull LanguageFileType fileType,
+                                                       @Nullable PatternContext context) {
     final SearchConfiguration config = new SearchConfiguration(name, category);
     config.setPredefined(true);
 

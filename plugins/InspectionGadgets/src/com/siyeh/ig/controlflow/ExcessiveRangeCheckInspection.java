@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.controlflow;
 
 import com.intellij.codeInspection.*;
@@ -19,6 +19,7 @@ import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -117,7 +118,7 @@ public class ExcessiveRangeCheckInspection extends AbstractBaseJavaLocalInspecti
     return null;
   }
 
-  private static class RangeConstraint {
+  private static final class RangeConstraint {
     private final @NotNull TextRange myRange;
     private final @NotNull PsiExpression myExpression;
     private final @Nullable SpecialField myField;
@@ -154,7 +155,7 @@ public class ExcessiveRangeCheckInspection extends AbstractBaseJavaLocalInspecti
       return result == null ? LongRangeSet.all() : result;
     }
 
-    String getExpressionSuffix() {
+    @NonNls String getExpressionSuffix() {
       if (myField == null) return "";
       switch (myField) {
         case ARRAY_LENGTH:

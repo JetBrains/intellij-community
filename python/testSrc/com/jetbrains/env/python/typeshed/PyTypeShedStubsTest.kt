@@ -1,9 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.env.python.typeshed
 
-import com.intellij.testFramework.EdtTestUtil
 import com.intellij.testFramework.TestApplicationManager
-import com.intellij.util.ThrowableRunnable
+import com.intellij.testFramework.runInEdtAndWait
 import com.jetbrains.python.codeInsight.typing.PyTypeShed
 import com.jetbrains.python.inspections.PyTypeCheckerInspection
 import com.jetbrains.python.inspections.unresolvedReference.PyUnresolvedReferencesInspection
@@ -21,8 +20,8 @@ import java.io.File
 class PyTypeShedStubsTest(path: String, sdkPath: String) : PyTypeShedTestCase(path, sdkPath) {
   @Test
   fun test() {
-    EdtTestUtil.runInEdtAndWait(ThrowableRunnable {
-      val typeShedPath = PyTypeShed.directoryPath ?: return@ThrowableRunnable
+    runInEdtAndWait {
+      val typeShedPath = PyTypeShed.directoryPath ?: return@runInEdtAndWait
       val importablePath = path.split("/").drop(2).joinToString("/")
       fixture?.copyFileToProject("$typeShedPath/$path", importablePath)
       fixture?.configureFromTempProjectFile(importablePath)
@@ -31,7 +30,7 @@ class PyTypeShedStubsTest(path: String, sdkPath: String) : PyTypeShedTestCase(pa
       fixture?.checkHighlighting(true, false, true)
       val moduleSdk = PythonSdkUtil.findPythonSdk(fixture?.module)
       TestCase.assertNotNull(moduleSdk)
-    })
+    }
   }
 
   companion object {

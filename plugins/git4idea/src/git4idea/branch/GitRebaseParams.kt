@@ -1,25 +1,38 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.branch
 
+import com.intellij.openapi.diagnostic.logger
 import git4idea.config.GitVersion
 import git4idea.config.GitVersionSpecialty
 import git4idea.rebase.GitRebaseEditorHandler
+import git4idea.rebase.GitRebaseOption
 
-class GitRebaseParams private constructor(private val version: GitVersion,
-                                          branch: String?,
-                                          newBase: String?,
-                                          val upstream: String,
-                                          val interactive: Boolean,
-                                          private val preserveMerges: Boolean,
-                                          private val autoSquash: AutoSquashOption,
-                                          val editorHandler: GitRebaseEditorHandler? = null) {
+class GitRebaseParams internal constructor(private val version: GitVersion,
+                                           branch: String?,
+                                           newBase: String?,
+                                           val upstream: String,
+                                           private val selectedOptions: Set<GitRebaseOption>,
+                                           private val autoSquash: AutoSquashOption = AutoSquashOption.DEFAULT,
+                                           val editorHandler: GitRebaseEditorHandler? = null) {
   companion object {
+    private val LOG = logger<GitRebaseParams>()
+
     fun editCommits(version: GitVersion,
                     base: String,
                     editorHandler: GitRebaseEditorHandler?,
                     preserveMerges: Boolean,
-                    autoSquash: AutoSquashOption = AutoSquashOption.DEFAULT): GitRebaseParams =
-      GitRebaseParams(version, null, null, base, true, preserveMerges, autoSquash, editorHandler)
+                    autoSquash: AutoSquashOption = AutoSquashOption.DEFAULT) = GitRebaseParams(version, null, null, base,
+                                                                                               collectOptions(true, preserveMerges),
+                                                                                               autoSquash, editorHandler)
+
+    private fun collectOptions(interactive: Boolean, rebaseMerges: Boolean) = mutableSetOf<GitRebaseOption>().apply {
+      if (interactive) {
+        add(GitRebaseOption.INTERACTIVE)
+      }
+      if (rebaseMerges) {
+        add(GitRebaseOption.REBASE_MERGES)
+      }
+    }
   }
 
   enum class AutoSquashOption {
@@ -38,20 +51,19 @@ class GitRebaseParams private constructor(private val version: GitVersion,
               newBase: String?,
               upstream: String,
               interactive: Boolean,
-              preserveMerges: Boolean) : this(version, branch, newBase, upstream, interactive, preserveMerges, AutoSquashOption.DEFAULT)
+              preserveMerges: Boolean)
+    : this(version, branch, newBase, upstream, collectOptions(interactive, preserveMerges), AutoSquashOption.DEFAULT)
 
   fun asCommandLineArguments(): List<String> = mutableListOf<String>().apply {
-    if (interactive) {
-      add("--interactive")
-    }
-    if (preserveMerges) {
-      if (GitVersionSpecialty.REBASE_MERGES_REPLACES_PRESERVE_MERGES.existsIn(version)) {
-        add("--rebase-merges")
+    selectedOptions.mapNotNull { option ->
+      if (option == GitRebaseOption.REBASE_MERGES) {
+        handleRebaseMergesOption()
       }
       else {
-        add("--preserve-merges")
+        option.getOption(version)
       }
-    }
+    }.forEach { option -> add(option) }
+
     when (autoSquash) {
       AutoSquashOption.DEFAULT -> {
       }
@@ -67,7 +79,18 @@ class GitRebaseParams private constructor(private val version: GitVersion,
     }
   }
 
-  fun isInteractive(): Boolean = interactive
+  fun isInteractive() = GitRebaseOption.INTERACTIVE in selectedOptions
 
   override fun toString(): String = asCommandLineArguments().joinToString(" ")
+
+  private fun handleRebaseMergesOption(): String? {
+    return if (!rebaseMergesAvailable() && isInteractive()) {
+      LOG.warn("Git rebase --preserve-merges option is incompatible with --interactive and will be omitted")
+      null
+    }
+    else
+      GitRebaseOption.REBASE_MERGES.getOption(version)
+  }
+
+  private fun rebaseMergesAvailable() = GitVersionSpecialty.REBASE_MERGES_REPLACES_PRESERVE_MERGES.existsIn(version)
 }

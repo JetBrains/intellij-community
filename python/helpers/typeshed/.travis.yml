@@ -2,16 +2,6 @@ dist: bionic
 language: python
 python: 3.8
 
-aliases:
-  test_windows: &test_windows
-    os: windows
-    language: shell
-    env: &env_windows
-      PATH: /c/Python38:/c/Python38/Scripts:/c/Python37:/c/Python37/Scripts:/c/Python36:/c/Python36/Scripts:/c/Python35:/c/Python35/Scripts:$PATH
-    before_install:
-      - choco install python --version $PYTHON_VERSION
-      - python -m pip install -U pip
-
 jobs:
   include:
     - name: "pytype"
@@ -39,47 +29,3 @@ jobs:
     - name: "flake8"
       install: pip install -r requirements-tests-py3.txt
       script: flake8
-    - name: "stubtest py38"
-      python: 3.8
-      install: pip install -U git+git://github.com/python/mypy@b3d43984
-      script: ./tests/stubtest_test.py
-    - name: "stubtest py37"
-      python: 3.7
-      install: pip install -U git+git://github.com/python/mypy@b3d43984
-      script: ./tests/stubtest_test.py
-    - name: "stubtest py36"
-      python: 3.6
-      install: pip install -U git+git://github.com/python/mypy@b3d43984
-      script: ./tests/stubtest_test.py
-    - name: "stubtest py35"
-      python: 3.5
-      install: pip install -U git+git://github.com/python/mypy@b3d43984
-      script: ./tests/stubtest_test.py
-    - name: "stubtest py38 (Windows)"
-      <<: *test_windows
-      env:
-        <<: *env_windows
-        PYTHON_VERSION: 3.8.3
-      install: pip install -U git+git://github.com/python/mypy@b3d43984
-      script: python ./tests/stubtest_test.py
-    - name: "stubtest py37 (Windows)"
-      <<: *test_windows
-      env:
-        <<: *env_windows
-        PYTHON_VERSION: 3.7.7
-      install: pip install -U git+git://github.com/python/mypy@b3d43984
-      script: python ./tests/stubtest_test.py
-    - name: "stubtest py36 (Windows)"
-      <<: *test_windows
-      env:
-        <<: *env_windows
-        PYTHON_VERSION: 3.6.8
-      install: pip install -U git+git://github.com/python/mypy@b3d43984
-      script: python ./tests/stubtest_test.py
-    - name: "stubtest py35 (Windows)"
-      <<: *test_windows
-      env:
-        <<: *env_windows
-        PYTHON_VERSION: 3.5.4
-      install: pip install -U git+git://github.com/python/mypy@b3d43984
-      script: python ./tests/stubtest_test.py

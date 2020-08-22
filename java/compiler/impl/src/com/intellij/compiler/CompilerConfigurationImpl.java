@@ -1054,7 +1054,7 @@ public class CompilerConfigurationImpl extends CompilerConfiguration implements 
     return artifacts.isEmpty();
   }
 
-  private static class CompiledPattern {
+  private static final class CompiledPattern {
     @NotNull final Pattern fileName;
     @Nullable final Pattern dir;
     @Nullable final Pattern srcRoot;

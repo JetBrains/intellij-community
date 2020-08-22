@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -18,11 +18,11 @@ public final class LocalInspectionsPassFactory implements MainHighlightingPassFa
 
   @Override
   public void registerHighlightingPassFactory(@NotNull TextEditorHighlightingPassRegistrar registrar, @NotNull Project project) {
-    int[] GHP = {Pass.UPDATE_ALL};
-    boolean runInspectionsAfterCompletionOfGeneralHighlightPass =
-      ((TextEditorHighlightingPassRegistrarImpl)registrar).isRunInspectionsAfterCompletionOfGeneralHighlightPass();
-    registrar.registerTextEditorHighlightingPass(this, runInspectionsAfterCompletionOfGeneralHighlightPass ? GHP : null,
-                                                 runInspectionsAfterCompletionOfGeneralHighlightPass ? null : GHP, true, Pass.LOCAL_INSPECTIONS);
+    int[] ghp = {Pass.UPDATE_ALL};
+    boolean serializeCodeInsightPasses =
+      ((TextEditorHighlightingPassRegistrarImpl)registrar).isSerializeCodeInsightPasses();
+    registrar.registerTextEditorHighlightingPass(this, serializeCodeInsightPasses ? ghp : null,
+                                                 serializeCodeInsightPasses ? null : ghp, true, Pass.LOCAL_INSPECTIONS);
   }
 
   @NotNull
@@ -45,7 +45,7 @@ public final class LocalInspectionsPassFactory implements MainHighlightingPassFa
     return new MyLocalInspectionsPass(file, document, textRange, LocalInspectionsPass.EMPTY_PRIORITY_RANGE, highlightInfoProcessor);
   }
 
-  private static class MyLocalInspectionsPass extends LocalInspectionsPass {
+  private static final class MyLocalInspectionsPass extends LocalInspectionsPass {
     private MyLocalInspectionsPass(@NotNull PsiFile file,
                                    @NotNull Document document,
                                    @NotNull TextRange textRange,

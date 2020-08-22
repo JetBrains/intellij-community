@@ -25,12 +25,12 @@ public interface DirectoryProjectConfigurator {
   }
 
   /**
-   * @param isNewProject if true then new project created, existing folder opened otherwise
+   * @param isProjectCreatedWithWizard if true then new project created with wizard, existing folder opened otherwise
    */
   default void configureProject(@NotNull Project project,
                                 @NotNull VirtualFile baseDir,
                                 @NotNull Ref<Module> moduleRef,
-                                boolean isNewProject) {
+                                boolean isProjectCreatedWithWizard) {
     // todo: remove default impl in 2020.2
     configureProject(project, baseDir, moduleRef);
   }

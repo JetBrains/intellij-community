@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.progress.util.ProgressIndicatorListenerAdapter
+import com.intellij.openapi.progress.util.RelayUiToDelegateIndicator
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.Sdk
@@ -213,24 +214,20 @@ internal class SdkLookupImpl : SdkLookup {
     val title = progressMessageTitle ?: ProjectBundle.message("sdk.lookup.resolving.sdk.progress", sdkTypeName)
     ProgressManager.getInstance().run(object : Task.Backgroundable(project, title, true, ALWAYS_BACKGROUND) {
       override fun run(indicator: ProgressIndicator) {
-        val middleMan = object : ProgressIndicatorBase() {
-          override fun delegateProgressChange(action: IndicatorAction) {
-            action.execute(indicator as ProgressIndicatorEx)
-          }
-        }
-
-        object: ProgressIndicatorListenerAdapter() {
+        object : ProgressIndicatorListenerAdapter() {
           override fun cancelled() {
             rootProgressIndicator.cancel()
           }
         }.installToProgress(indicator as ProgressIndicatorEx)
 
-        rootProgressIndicator.addStateDelegate(middleMan)
+        val relayToVisibleIndicator: ProgressIndicatorEx = RelayUiToDelegateIndicator(indicator)
+        rootProgressIndicator.addStateDelegate(relayToVisibleIndicator)
 
         try {
           action(rootProgressIndicator)
-        } finally {
-          rootProgressIndicator.removeStateDelegate(middleMan)
+        }
+        finally {
+          rootProgressIndicator.removeStateDelegate(relayToVisibleIndicator)
         }
       }
 

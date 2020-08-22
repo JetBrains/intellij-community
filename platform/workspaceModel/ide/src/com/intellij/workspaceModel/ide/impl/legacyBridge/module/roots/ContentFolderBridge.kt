@@ -11,6 +11,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.FilePointer
 import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.FilePointerScope
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import org.jetbrains.jps.model.JpsElement
+import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.jps.model.module.UnknownSourceRootType
@@ -90,13 +91,17 @@ internal class SourceFolderBridge(private val entry: ContentEntryBridge, val sou
       updater { diff ->
         diff.addJavaSourceRootEntity(sourceRootEntity, false, packagePrefix, sourceRootEntity.entitySource)
       }
-    } else {
+    }
+    else {
       updater { diff ->
         diff.modifyEntity(ModifiableJavaSourceRootEntity::class.java, javaSourceRoot) {
           this.packagePrefix = packagePrefix
         }
       }
     }
+    //we need to also update package prefix in Jps root properties, otherwise this change will be lost if some code changes some other
+    // property (e.g. 'forGeneratedProperties') in Jps root later
+    jpsElement.getProperties(JavaModuleSourceRootTypes.SOURCES)?.packagePrefix = packagePrefix
 
     packagePrefixVar = packagePrefix
   }

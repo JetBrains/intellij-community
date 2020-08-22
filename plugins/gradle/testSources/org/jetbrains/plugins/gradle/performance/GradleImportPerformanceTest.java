@@ -89,7 +89,7 @@ public class GradleImportPerformanceTest extends GradleImportPerformanceTestCase
     final DataNode<PerformanceTrace> traceDataNode = ExternalSystemApiUtil.find(rootNode, PerformanceTrace.TRACE_NODE_KEY);
     final Map<String, Long> trace = traceDataNode.getData().getPerformanceTrace();
 
-    assertTracedTimePercentAtLeast(trace, consumedTime, 95);
+    assertTracedTimePercentAtLeast(trace, consumedTime, 93);
 
     final long gradleModelsTrace = sumByPrefix(trace, "Get model ");
     final long resolverChainTrace = sumByPrefix(trace, "Resolver chain ");

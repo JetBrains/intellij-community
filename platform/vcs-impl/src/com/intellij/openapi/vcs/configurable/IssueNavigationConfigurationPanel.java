@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.configurable;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -131,7 +131,11 @@ public class IssueNavigationConfigurationPanel extends JPanel implements Searcha
           myLinks.add(new IssueNavigationLink("[A-Z]+\\-\\d+", s + "issue/$0"));
           myModel.fireTableDataChanged();
         }
-      }).setButtonComparator("Add", "Add JIRA Pattern", "Add YouTrack Pattern", "Edit", "Remove")
+      }).setButtonComparator(VcsBundle.message("configurable.issue.link.add"),
+                             VcsBundle.message("configurable.issue.link.add.jira.pattern"),
+                             VcsBundle.message("configurable.issue.link.add.youtrack.pattern"),
+                             VcsBundle.message("configurable.issue.link.edit"),
+                             VcsBundle.message("configurable.issue.link.remove"))
         .disableUpDownActions().createPanel(), BorderLayout.CENTER);
   }
 
@@ -179,6 +183,7 @@ public class IssueNavigationConfigurationPanel extends JPanel implements Searcha
 
   @Override
   public JComponent createComponent() {
+    SwingUtilities.updateComponentTreeUI(this); // TODO: create Swing components in this method (see javadoc)
     return this;
   }
 }

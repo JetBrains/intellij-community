@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.intentions.style.parameterToEntry;
 
 import com.intellij.openapi.editor.event.DocumentEvent;
@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.EditorComboBoxEditor;
 import com.intellij.ui.EditorComboBoxRenderer;
@@ -34,14 +35,14 @@ public class GroovyMapParameterDialog extends DialogWrapper {
   private final Project myProject;
   private final EventListenerList myListenerList = new EventListenerList();
 
-  public GroovyMapParameterDialog(Project project, final String[] possibleNames, final boolean createNew) {
+  public GroovyMapParameterDialog(Project project, final @NlsSafe String[] possibleNames, final boolean createNew) {
     super(true);
     myProject = project;
     setUpDialog(possibleNames, createNew);
     init();
   }
 
-  private void setUpDialog(final String[] possibleNames, boolean createNew) {
+  private void setUpDialog(final @NlsSafe String[] possibleNames, boolean createNew) {
     setTitle(GroovyIntentionsBundle.message("convert.param.to.map.entry"));
 
     if (GroovyApplicationSettings.getInstance().CONVERT_PARAM_CREATE_NEW_PARAM != null) {
@@ -117,7 +118,7 @@ public class GroovyMapParameterDialog extends DialogWrapper {
     }
   }
 
-  private void setUpNameComboBox(String[] possibleNames) {
+  private void setUpNameComboBox(@NlsSafe String[] possibleNames) {
 
     final EditorComboBoxEditor comboEditor = new StringComboboxEditor(myProject, GroovyFileType.GROOVY_FILE_TYPE, myNameComboBox);
 
@@ -149,7 +150,7 @@ public class GroovyMapParameterDialog extends DialogWrapper {
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_N, InputEvent.ALT_MASK), JComponent.WHEN_IN_FOCUSED_WINDOW);
 
-    for (String possibleName : possibleNames) {
+    for (var possibleName : possibleNames) {
       myNameComboBox.addItem(possibleName);
     }
   }

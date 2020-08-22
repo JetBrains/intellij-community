@@ -3,6 +3,7 @@ package com.intellij.psi;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.PackageDirectoryCache;
 import com.intellij.openapi.util.LowMemoryWatcher;
@@ -53,7 +54,7 @@ public abstract class NonClasspathClassFinder extends PsiElementFinder {
         clearCache();
       }
     });
-    LowMemoryWatcher.register(() -> myCache = null, project);
+    LowMemoryWatcher.register(() -> myCache = null, ExtensionPointUtil.createExtensionDisposable(this, EP.getPoint(project)));
   }
 
   @NotNull

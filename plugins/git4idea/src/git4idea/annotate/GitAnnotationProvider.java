@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.annotate;
 
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.components.ServiceManager;
@@ -95,6 +96,11 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
       VcsRevisionNumber revisionNumber = revision.getRevisionNumber();
       return annotate(filePath, revisionNumber, file);
     }
+  }
+
+  @Override
+  public String getActionName() {
+    return ActionsBundle.message("action.Annotate.with.Blame.text");
   }
 
   @Override
@@ -201,7 +207,7 @@ public final class GitAnnotationProvider implements AnnotationProviderEx, Cachea
 
   private void loadFileHistoryInBackground(@NotNull GitFileAnnotation fileAnnotation) {
     List<VcsFileRevision> fileRevisions = BackgroundTaskUtil.computeInBackgroundAndTryWait(
-      () -> BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
+      () -> BackgroundTaskUtil.runUnderDisposeAwareIndicator(GitDisposable.getInstance(myProject), () -> {
         try {
           VirtualFile file = fileAnnotation.getFile();
           FilePath filePath = VcsUtil.getFilePath(file);

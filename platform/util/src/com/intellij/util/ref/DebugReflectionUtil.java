@@ -2,7 +2,6 @@
 package com.intellij.util.ref;
 
 import com.intellij.ReviseWhenPortedToJDK;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderEx;
 import com.intellij.openapi.util.text.StringUtil;
@@ -10,38 +9,47 @@ import com.intellij.util.PairProcessor;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import com.intellij.util.containers.FList;
-import com.intellij.util.containers.Queue;
-import gnu.trove.THashMap;
-import gnu.trove.TIntHashSet;
-import gnu.trove.TObjectHashingStrategy;
+import it.unimi.dsi.fastutil.Hash;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.objects.Object2ObjectOpenCustomHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.misc.Unsafe;
 
 import java.lang.ref.Reference;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.function.Predicate;
 
 public final class DebugReflectionUtil {
-  private static final Map<Class, Field[]> allFields = new THashMap<>(new TObjectHashingStrategy<Class>() {
+  private static final Map<Class<?>, Field[]> allFields = new Object2ObjectOpenCustomHashMap<>(new Hash.Strategy<Class<?>>() {
     // default strategy seems to be too slow
     @Override
-    public int computeHashCode(Class aClass) {
-      return aClass.getName().hashCode();
+    public int hashCode(@Nullable Class<?> aClass) {
+      return aClass == null ? 0 : aClass.getName().hashCode();
     }
 
     @Override
-    public boolean equals(Class o1, Class o2) {
+    public boolean equals(@Nullable Class<?> o1, @Nullable Class<?> o2) {
       return o1 == o2;
     }
   });
+
   private static final Field[] EMPTY_FIELD_ARRAY = new Field[0];
-  private static final Method Unsafe_shouldBeInitialized = ReflectionUtil.getDeclaredMethod(Unsafe.class, "shouldBeInitialized", Class.class);
+  private static final Method Unsafe_shouldBeInitialized;
+
+  static {
+    Method shouldBeInitialized;
+    try {
+      shouldBeInitialized = ReflectionUtil.getDeclaredMethod(Class.forName("sun.misc.Unsafe"), "shouldBeInitialized", Class.class);
+    }
+    catch (ClassNotFoundException ignored) {
+      shouldBeInitialized = null;
+    }
+    Unsafe_shouldBeInitialized = shouldBeInitialized;
+  }
 
   private static Field @NotNull [] getAllFields(@NotNull Class<?> aClass) {
     Field[] cached = allFields.get(aClass);
@@ -66,7 +74,7 @@ public final class DebugReflectionUtil {
         cached = fields.isEmpty() ? EMPTY_FIELD_ARRAY : fields.toArray(new Field[0]);
       }
       catch (IncompatibleClassChangeError | NoClassDefFoundError | SecurityException e) {
-        //this exception may be thrown because there are two different versions of org.objectweb.asm.tree.ClassNode from different plugins
+        // this exception may be thrown because there are two different versions of org.objectweb.asm.tree.ClassNode from different plugins
         //I don't see any sane way to fix it until we load all the plugins by the same classloader in tests
         cached = EMPTY_FIELD_ARRAY;
       }
@@ -96,6 +104,7 @@ public final class DebugReflectionUtil {
       isInitialized = !(Boolean)Unsafe_shouldBeInitialized.invoke(AtomicFieldUpdater.getUnsafe(), root);
     }
     catch (Exception e) {
+      //noinspection CallToPrintStackTrace
       e.printStackTrace();
     }
     return isInitialized;
@@ -105,30 +114,38 @@ public final class DebugReflectionUtil {
 
   public static boolean walkObjects(int maxDepth,
                                     @NotNull Map<Object, String> startRoots,
-                                    @NotNull final Class<?> lookFor,
-                                    @NotNull Condition<Object> shouldExamineValue,
-                                    @NotNull final PairProcessor<Object, ? super BackLink> leakProcessor) {
-    TIntHashSet visited = new TIntHashSet(100);
-    Queue<BackLink> toVisit = new Queue<>(100);
+                                    @NotNull Class<?> lookFor,
+                                    @NotNull Predicate<Object> shouldExamineValue,
+                                    @NotNull PairProcessor<Object, ? super BackLink> leakProcessor) {
+    IntSet visited = new IntOpenHashSet(100);
+    Deque<BackLink> toVisit = new ArrayDeque<>(100);
 
     for (Map.Entry<Object, String> entry : startRoots.entrySet()) {
       Object startRoot = entry.getKey();
-      final String description = entry.getValue();
-      toVisit.addLast(new BackLink(startRoot, null, null){
-        @NotNull
+      String description = entry.getValue();
+      toVisit.addLast(new BackLink(startRoot, null, null) {
         @Override
-        String print() {
-          return super.print() +" (from "+description+")";
+        void print(@NotNull StringBuilder result) {
+          super.print(result);
+          result.append(" (from ").append(description).append(")");
         }
       });
     }
 
     while (true) {
-      if (toVisit.isEmpty()) return true;
-      final BackLink backLink = toVisit.pullFirst();
-      if (backLink.depth > maxDepth) continue;
+      BackLink backLink;
+      backLink = toVisit.pollFirst();
+      if (backLink == null) {
+        return true;
+      }
+
+      if (backLink.depth > maxDepth) {
+        continue;
+      }
       Object value = backLink.value;
-      if (lookFor.isAssignableFrom(value.getClass()) && markLeaked(value) && !leakProcessor.process(value, backLink)) return false;
+      if (lookFor.isAssignableFrom(value.getClass()) && markLeaked(value) && !leakProcessor.process(value, backLink)) {
+        return false;
+      }
 
       if (visited.add(System.identityHashCode(value))) {
         queueStronglyReferencedValues(toVisit, value, shouldExamineValue, backLink);
@@ -136,14 +153,18 @@ public final class DebugReflectionUtil {
     }
   }
 
-  private static void queueStronglyReferencedValues(@NotNull Queue<? super BackLink> queue,
+  private static void queueStronglyReferencedValues(@NotNull Deque<BackLink> queue,
                                                     @NotNull Object root,
-                                                    @NotNull Condition<Object> shouldExamineValue,
+                                                    @NotNull Predicate<Object> shouldExamineValue,
                                                     @NotNull BackLink backLink) {
     Class<?> rootClass = root.getClass();
     for (Field field : getAllFields(rootClass)) {
       String fieldName = field.getName();
-      if (root instanceof Reference && ("referent".equals(fieldName) || "discovered".equals(fieldName))) continue; // do not follow weak/soft refs
+      // do not follow weak/soft refs
+      if (root instanceof Reference && ("referent".equals(fieldName) || "discovered".equals(fieldName))) {
+        continue;
+      }
+
       Object value;
       try {
         value = field.get(root);
@@ -164,8 +185,8 @@ public final class DebugReflectionUtil {
       }
     }
     // check for objects leaking via static fields. process initialized classes only
-    if (root instanceof Class && isInitialized((Class)root)) {
-        for (Field field : getAllFields((Class)root)) {
+    if (root instanceof Class && isInitialized((Class<?>)root)) {
+        for (Field field : getAllFields((Class<?>)root)) {
           if ((field.getModifiers() & Modifier.STATIC) == 0) continue;
           try {
             Object value = field.get(null);
@@ -177,12 +198,16 @@ public final class DebugReflectionUtil {
     }
   }
 
-  private static void queue(Object value, Field field, @NotNull BackLink backLink, @NotNull Queue<? super BackLink> queue,
-                            @NotNull Condition<Object> shouldExamineValue) {
-    if (value == null || isTrivial(value.getClass())) return;
-    if (shouldExamineValue.value(value)) {
-      BackLink newBackLink = new BackLink(value, field, backLink);
-      queue.addLast(newBackLink);
+  private static void queue(Object value,
+                            Field field,
+                            @NotNull BackLink backLink,
+                            @NotNull Deque<BackLink> queue,
+                            @NotNull Predicate<Object> shouldExamineValue) {
+    if (value == null || isTrivial(value.getClass())) {
+      return;
+    }
+    if (shouldExamineValue.test(value)) {
+      queue.addLast(new BackLink(value, field, backLink));
     }
   }
 
@@ -205,33 +230,34 @@ public final class DebugReflectionUtil {
 
     @Override
     public String toString() {
-      String result = "";
+      StringBuilder result = new StringBuilder();
       BackLink backLink = this;
       while (backLink != null) {
-        String s = backLink.print();
-        result += s;
+        backLink.print(result);
         backLink = backLink.backLink;
       }
-      return result;
+      return result.toString();
     }
 
-    @NotNull
-    String print() {
+    void print(@NotNull StringBuilder result) {
       String valueStr;
       Object value = this.value;
       try {
-        valueStr = value instanceof FList
-                   ? "FList (size=" + ((FList)value).size() + ")" :
-                   value instanceof Collection ? "Collection (size=" + ((Collection)value).size() + ")" :
-                   String.valueOf(value);
+        if (value instanceof FList) {
+          valueStr = "FList (size=" + ((FList<?>)value).size() + ")";
+        }
+        else {
+          valueStr = value instanceof Collection ? "Collection (size=" + ((Collection<?>)value).size() + ")" : String.valueOf(value);
+        }
         valueStr = StringUtil.first(StringUtil.convertLineSeparators(valueStr, "\\n"), 200, true);
       }
       catch (Throwable e) {
         valueStr = "(" + e.getMessage() + " while computing .toString())";
       }
+
       Field field = this.field;
       String fieldName = field == null ? "?" : field.getDeclaringClass().getName() + "." + field.getName();
-      return "via '" + fieldName + "'; Value: '" + valueStr + "' of " + value.getClass() + "\n";
+      result.append("via '").append(fieldName).append("'; Value: '").append(valueStr).append("' of ").append(value.getClass()).append("\n");
     }
   }
 }

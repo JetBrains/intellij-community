@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.ignore;
 
 import com.intellij.openapi.util.Ref;
@@ -18,7 +18,7 @@ import java.util.*;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 
-public class SvnPropertyService {
+public final class SvnPropertyService {
 
   private SvnPropertyService() {
   }
@@ -98,7 +98,7 @@ public class SvnPropertyService {
     }
   }
 
-  private static class IgnorePropertyChecker extends IgnorePropertyWorkTemplate {
+  private static final class IgnorePropertyChecker extends IgnorePropertyWorkTemplate {
     private final String myExtensionPattern;
     private boolean myFilesOk;
     private boolean myExtensionOk;
@@ -206,7 +206,7 @@ public class SvnPropertyService {
     }
   }
 
-  private static class IgnorePropertyRemover extends IgnorePropertyAddRemoveTemplate {
+  private static final class IgnorePropertyRemover extends IgnorePropertyAddRemoveTemplate {
     private IgnorePropertyRemover(@NotNull SvnVcs vcs, boolean useCommonExtension) {
       super(vcs, useCommonExtension);
     }
@@ -232,7 +232,7 @@ public class SvnPropertyService {
     return sb.toString();
   }
 
-  private static class IgnorePropertyAdder extends IgnorePropertyAddRemoveTemplate {
+  private static final class IgnorePropertyAdder extends IgnorePropertyAddRemoveTemplate {
     private IgnorePropertyAdder(@NotNull SvnVcs vcs, boolean useCommonExtension) {
       super(vcs, useCommonExtension);
     }

@@ -31,15 +31,28 @@ public interface FileBasedIndexInfrastructureExtension {
 
   interface FileIndexingStatusProcessor {
     /**
-     * Processes up to date file while "scanning files to index" in progress.
+     * Serves as an optimization when time-consuming {@link FileIndexingStatusProcessor#processUpToDateFile(VirtualFile, int, ID)}
+     * should not be called because takes no effect.
      */
-    void processUpToDateFile(@NotNull VirtualFile file, int inputId, @NotNull ID<?, ?> indexId);
+    boolean shouldProcessUpToDateFiles();
+
+    /**
+     * Processes up to date file for given content-dependent index while "scanning files to index" in progress.
+     */
+    boolean processUpToDateFile(@NotNull VirtualFile file, int inputId, @NotNull ID<?, ?> indexId);
+
+    /**
+     * Tries to index file given content-dependent index "scanning files to index" in progress before its content will be loaded.
+     *
+     * @return true if file was indexed by an extension.
+     */
+    boolean tryIndexFileWithoutContent(@NotNull IndexedFile file, int inputId, @NotNull ID<?, ?> indexId);
 
     /**
      * Whether the given file has index provided by this extension.
      */
     @ApiStatus.Experimental
-    boolean hasIndexForFile(@NotNull VirtualFile file, int inputId, @NotNull ID<?, ?> indexId);
+    boolean hasIndexForFile(@NotNull VirtualFile file, int inputId, @NotNull FileBasedIndexExtension<?, ?> extension);
   }
 
   @Nullable
@@ -81,7 +94,8 @@ public interface FileBasedIndexInfrastructureExtension {
    * This method and {@link FileBasedIndexInfrastructureExtension#shutdown()} synchronize
    * lifecycle of an extension with {@link FileBasedIndexImpl}.
    **/
-  void initialize();
+  @NotNull
+  InitializationResult initialize();
 
   /**
    * Executed when IntelliJ is shutting down it's indexes (IDE shutdown or plugin load/unload). It is the best time
@@ -97,4 +111,8 @@ public interface FileBasedIndexInfrastructureExtension {
    * all indexed data should be invalidate and full index rebuild will be requested
    */
   int getVersion();
+
+  enum InitializationResult {
+    SUCCESSFULLY, INDEX_REBUILD_REQUIRED
+  }
 }

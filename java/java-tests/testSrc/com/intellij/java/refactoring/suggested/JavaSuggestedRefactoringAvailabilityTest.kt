@@ -3,7 +3,6 @@ package com.intellij.java.refactoring.suggested
 
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.psi.PsiDocumentManager
@@ -625,13 +624,7 @@ class JavaSuggestedRefactoringAvailabilityTest : BaseSuggestedRefactoringAvailab
         PsiDocumentManager.getInstance(project).commitAllDocuments()
       },
       {
-        val intention = myFixture.availableIntentions.firstOrNull { it.familyName == "Suggested Refactoring" }
-        assertNotNull(intention)
-        executeCommand(project) {
-          runWriteAction {
-            intention!!.invoke(project, editor, file)
-          }
-        }
+        myFixture.launchAction(myFixture.availableIntentions.first { it.familyName == "Suggested Refactoring" }!!)
       },
       {
         myFixture.performEditorAction(IdeActions.ACTION_UNDO)

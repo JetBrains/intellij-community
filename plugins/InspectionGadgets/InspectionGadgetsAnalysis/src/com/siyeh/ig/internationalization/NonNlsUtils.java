@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
 
-public class NonNlsUtils {
+public final class NonNlsUtils {
 
   private static final Key<Boolean> KEY = new Key<>("IG_NON_NLS_ANNOTATED_USE");
 

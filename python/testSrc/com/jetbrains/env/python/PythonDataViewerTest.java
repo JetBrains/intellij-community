@@ -20,7 +20,6 @@ import com.intellij.util.Consumer;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerTestUtil;
 import com.jetbrains.env.PyEnvTestCase;
-import com.jetbrains.env.Staging;
 import com.jetbrains.env.python.debug.PyDebuggerTask;
 import com.jetbrains.python.debugger.ArrayChunk;
 import com.jetbrains.python.debugger.PyDebugValue;
@@ -38,7 +37,6 @@ import static org.junit.Assert.assertEquals;
 public class PythonDataViewerTest extends PyEnvTestCase {
 
   @Test
-  @Staging
   public void testDataFrameChunkRetrieval() {
     runPythonTest(new PyDataFrameDebuggerTask(getRelativeTestDataPath(), "test_dataframe.py", ImmutableSet.of(7, 15, 22)) {
       @Override
@@ -77,7 +75,6 @@ public class PythonDataViewerTest extends PyEnvTestCase {
   }
 
   @Test
-  @Staging
   public void testSeries() {
     runPythonTest(new PyDataFrameDebuggerTask(getRelativeTestDataPath(), "test_series.py", ImmutableSet.of(7)) {
       @Override
@@ -110,7 +107,6 @@ public class PythonDataViewerTest extends PyEnvTestCase {
   }
 
   @Test
-  @Staging
   public void testDataFrameFloatFormatting() {
     runPythonTest(new PyDataFrameDebuggerTask(getRelativeTestDataPath(), "test_dataframe.py", ImmutableSet.of(7)) {
       @Override
@@ -127,7 +123,6 @@ public class PythonDataViewerTest extends PyEnvTestCase {
   }
 
   @Test
-  @Staging
   public void testDataFrameDefaultFormatting() {
     runPythonTest(new PyDataFrameDebuggerTask(getRelativeTestDataPath(), "test_dataframe.py", ImmutableSet.of(7)) {
       @Override
@@ -144,7 +139,6 @@ public class PythonDataViewerTest extends PyEnvTestCase {
   }
 
   @Test
-  @Staging
   public void testSeriesFormatting() {
     runPythonTest(new PyDataFrameDebuggerTask(getRelativeTestDataPath(), "test_series.py", ImmutableSet.of(7)) {
       @Override
@@ -161,7 +155,6 @@ public class PythonDataViewerTest extends PyEnvTestCase {
   }
 
   @Test
-  @Staging
   public void testLabelWithPercentSign() {
     runPythonTest(new PyDataFrameDebuggerTask(getRelativeTestDataPath(), "test_dataframe.py", ImmutableSet.of(33)) {
       @Override
@@ -170,6 +163,26 @@ public class PythonDataViewerTest extends PyEnvTestCase {
           final List<ArrayChunk.ColHeader> labels = chunk.getColHeaders();
           assertEquals(1, labels.size());
           assertEquals("foo_%", labels.get(0).getLabel());
+        });
+      }
+    });
+  }
+
+  @Test
+  public void testTuples() {
+    runPythonTest(new PyDataFrameDebuggerTask(getRelativeTestDataPath(), "test_dataframe_tuple.py", ImmutableSet.of(5)) {
+      @Override
+      public void testing() throws Exception {
+        doTest("df1", 3, 3, chunk -> {
+          final Object[][] data = chunk.getData();
+
+          assertEquals("'{1: (1, 2)}'", data[0][1].toString());
+          assertEquals("'{2: (3,)}'", data[1][1].toString());
+          assertEquals("'{4: 5}'", data[2][1].toString());
+
+          assertEquals("'(1, 2, 3)'", data[0][2].toString());
+          assertEquals("'()'", data[1][2].toString());
+          assertEquals("'(4,)'", data[2][2].toString());
         });
       }
     });

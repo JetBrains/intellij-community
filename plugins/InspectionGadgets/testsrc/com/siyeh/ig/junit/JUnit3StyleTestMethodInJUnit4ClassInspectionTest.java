@@ -27,6 +27,7 @@ public class JUnit3StyleTestMethodInJUnit4ClassInspectionTest extends LightJavaI
   public void testJUnit3StyleTestMethodInJUnit4Class() { doTest(); }
   public void testBeforeAnnotationUsed() { doTest(); }
   public void testSimpleJUnit5() { doTest(); }
+  public void testOtherAnnotation() { doTest(); }
 
   @Nullable
   @Override
@@ -38,26 +39,27 @@ public class JUnit3StyleTestMethodInJUnit4ClassInspectionTest extends LightJavaI
   protected String[] getEnvironmentClasses() {
     return new String[] {
       "package org.junit;" +
-      "import java.lang.annotation.ElementType;" +
-      "import java.lang.annotation.Retention;" +
-      "import java.lang.annotation.RetentionPolicy;" +
-      "import java.lang.annotation.Target;" +
+      "import java.lang.annotation.*;" +
       "@Retention(RetentionPolicy.RUNTIME)" +
       "@Target({ElementType.METHOD})" +
       "public @interface Before {}",
       "package org.junit;" +
-      "import java.lang.annotation.ElementType;" +
-      "import java.lang.annotation.Retention;" +
-      "import java.lang.annotation.RetentionPolicy;" +
-      "import java.lang.annotation.Target;" +
+      "import java.lang.annotation.*;" +
+      "@Retention(RetentionPolicy.RUNTIME)" +
+      "@Target({ElementType.METHOD})" +
+      "public @interface After {}",
+      "package org.junit;" +
+      "import java.lang.annotation.*;" +
+      "@Retention(RetentionPolicy.RUNTIME)" +
+      "@Target({ElementType.METHOD})" +
+      "public @interface Ignore {}",
+      "package org.junit;" +
+      "import java.lang.annotation.*;" +
       "@Retention(RetentionPolicy.RUNTIME)" +
       "@Target({ElementType.METHOD})" +
       "public @interface Test {}",
       "package org.junit.jupiter.api;" +
-      "import java.lang.annotation.ElementType;" +
-      "import java.lang.annotation.Retention;" +
-      "import java.lang.annotation.RetentionPolicy;" +
-      "import java.lang.annotation.Target;" +
+      "import java.lang.annotation.*;" +
       "@Retention(RetentionPolicy.RUNTIME)" +
       "@Target({ElementType.METHOD})" +
       "public @interface Test {}",

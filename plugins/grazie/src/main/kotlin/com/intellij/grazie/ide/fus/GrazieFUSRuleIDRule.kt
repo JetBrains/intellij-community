@@ -4,9 +4,9 @@ package com.intellij.grazie.ide.fus
 import com.intellij.grazie.jlanguage.LangTool
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
 
-internal class GrazieFUSRuleIDRule : CustomWhiteListRule() {
+internal class GrazieFUSRuleIDRule : CustomValidationRule() {
   override fun doValidate(data: String, context: EventContext) = if (data in LangTool.allRules) {
     ValidationResultType.ACCEPTED
   }

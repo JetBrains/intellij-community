@@ -15,6 +15,8 @@ import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -145,7 +147,7 @@ public class PyCharmCustomizeCondaSetupStep extends AbstractCustomizeWizardStep 
     //noinspection SSBasedInspection
     AppExecutorUtil.getAppExecutorService().submit(() -> {
       try {
-        CapturingProcessHandler handler = InstallCondaUtils.installationHandler(path, (line) -> {
+        CapturingProcessHandler handler = InstallCondaUtils.installationHandler(path, (@NlsSafe var line) -> {
           myProgressBar.setString(line);
           return Unit.INSTANCE;
         });
@@ -223,7 +225,7 @@ public class PyCharmCustomizeCondaSetupStep extends AbstractCustomizeWizardStep 
                                           ActionsBundle.message("action.SetupMiniconda.actionNameWithDots"));
   }
 
-  private static void showErrorDialog(@NotNull String message, boolean log) {
+  private static void showErrorDialog(@NotNull @NlsContexts.DialogMessage String message, boolean log) {
     if (log) LOG.error(message);
     invokeLater(() -> Messages.showErrorDialog(message, ActionsBundle.message("action.SetupMiniconda.installFailed")));
   }

@@ -16,6 +16,7 @@ import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.QueueProcessor;
 import com.intellij.util.containers.ContainerUtil;
@@ -62,7 +63,7 @@ public final class VcsInitialization {
 
   private void startInitialization() {
     myFuture = ((CoreProgressManager)ProgressManager.getInstance())
-      .runProcessWithProgressAsynchronously(new Task.Backgroundable(myProject, "VCS Initialization") {
+      .runProcessWithProgressAsynchronously(new Task.Backgroundable(myProject, VcsBundle.message("impl.vcs.initialization")) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           execute();
@@ -72,26 +73,35 @@ public final class VcsInitialization {
 
   void add(@NotNull VcsInitObject vcsInitObject, @NotNull Runnable runnable) {
     if (myProject.isDefault()) return;
+    boolean wasScheduled = scheduleActivity(vcsInitObject, runnable);
+    if (!wasScheduled) {
+      BackgroundTaskUtil.executeOnPooledThread(myProject, runnable);
+    }
+  }
+
+  private boolean scheduleActivity(@NotNull VcsInitObject vcsInitObject, @NotNull Runnable runnable) {
     synchronized (myLock) {
       ProxyVcsStartupActivity activity = new ProxyVcsStartupActivity(vcsInitObject, runnable);
       if (isInitActivity(activity)) {
         if (myStatus == Status.PENDING) {
           myInitActivities.add(activity);
+          return true;
         }
         else {
           LOG.warn(String.format("scheduling late initialization: %s", activity));
-          BackgroundTaskUtil.executeOnPooledThread(myProject, runnable);
+          return false;
         }
       }
       else {
         if (myStatus == Status.PENDING || myStatus == Status.RUNNING_INIT) {
           myPostActivities.add(activity);
+          return true;
         }
         else {
           if (LOG.isDebugEnabled()) {
             LOG.debug(String.format("scheduling late post activity: %s", activity));
           }
-          BackgroundTaskUtil.executeOnPooledThread(myProject, runnable);
+          return false;
         }
       }
     }
@@ -220,7 +230,7 @@ public final class VcsInitialization {
     }
   }
 
-  private static class ProxyVcsStartupActivity implements VcsStartupActivity {
+  private static final class ProxyVcsStartupActivity implements VcsStartupActivity {
     @NotNull private final Runnable myRunnable;
     private final int myOrder;
 
@@ -241,7 +251,7 @@ public final class VcsInitialization {
 
     @Override
     public String toString() {
-      return String.format("ProxyVcsStartupActivity{runnable=%s, order=%s}", myRunnable, myOrder);
+      return String.format("ProxyVcsStartupActivity{runnable=%s, order=%s}", myRunnable, myOrder); //NON-NLS
     }
   }
 }

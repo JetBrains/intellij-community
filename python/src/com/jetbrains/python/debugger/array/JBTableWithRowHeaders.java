@@ -20,6 +20,8 @@ import java.util.Set;
  * @author amarch
  */
 public class JBTableWithRowHeaders extends JBTable {
+  private static final int AUTO_RESIZE_MAX_COLUMN_WIDTH = 200;
+
   private final JBScrollPane myScrollPane;
   private boolean myAutoResize;
   private final RowHeaderTable myRowHeaderTable;
@@ -38,8 +40,7 @@ public class JBTableWithRowHeaders extends JBTable {
     myRowHeaderTable = new JBTableWithRowHeaders.RowHeaderTable(this);
     myRowHeaderTable.getEmptyText().setText("");
     myScrollPane.setRowHeaderView(myRowHeaderTable);
-    myScrollPane.setCorner(ScrollPaneConstants.UPPER_LEFT_CORNER,
-                         myRowHeaderTable.getTableHeader());
+    myScrollPane.setCorner(ScrollPaneConstants.UPPER_LEFT_CORNER, myRowHeaderTable.getTableHeader()); //NON-NLS
   }
 
   @NotNull
@@ -64,7 +65,7 @@ public class JBTableWithRowHeaders extends JBTable {
     TableColumn tableColumn = table.getColumnModel().getColumn(column);
     int headerWidth = new ColumnHeaderRenderer().getTableCellRendererComponent(table, tableColumn.getHeaderValue(), false, false, -1, column).getPreferredSize().width + 4;
     int newWidth = Math.max(width, headerWidth) + 2 * table.getIntercellSpacing().width;
-    tableColumn.setPreferredWidth(Math.max(newWidth, tableColumn.getPreferredWidth()));
+    tableColumn.setPreferredWidth(Math.min(Math.max(newWidth, tableColumn.getPreferredWidth()), AUTO_RESIZE_MAX_COLUMN_WIDTH));
     return newWidth;
   }
 
@@ -181,7 +182,7 @@ public class JBTableWithRowHeaders extends JBTable {
           setFont(getFont().deriveFont(Font.BOLD));
         }
 
-        setText((value == null) ? "" : value.toString());
+        setText((value == null) ? "" : value.toString()); //NON-NLS
         setBorder(UIManager.getBorder("TableHeader.cellBorder"));
 
         return this;

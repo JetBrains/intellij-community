@@ -1,23 +1,28 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.config;
 
+import com.google.common.collect.ImmutableSet;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
+import git4idea.rebase.GitRebaseOption;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@State(name = "Git.Rebase.Settings", storages = {@Storage(StoragePathMacros.WORKSPACE_FILE)})
+import java.util.EnumSet;
+import java.util.Set;
+
+@State(name = "Git.Rebase.Settings", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class GitRebaseSettings implements PersistentStateComponent<GitRebaseSettings.State> {
+
+  private final static Set<GitRebaseOption> NO_OPTIONS = EnumSet.noneOf(GitRebaseOption.class);
 
   private State myState = new State();
 
   public static class State {
-    public boolean INTERACTIVE = true;
-    public boolean PRESERVE_MERGES = false;
-    public boolean SHOW_TAGS = false;
-    public String ONTO = null;
+    public Set<GitRebaseOption> OPTIONS = NO_OPTIONS;
+    public String NEW_BASE = null;
   }
 
   @Nullable
@@ -31,37 +36,23 @@ public class GitRebaseSettings implements PersistentStateComponent<GitRebaseSett
     myState = state;
   }
 
-  public boolean isInteractive() {
-    return myState.INTERACTIVE;
+  @NotNull
+  public Set<GitRebaseOption> getOptions() {
+    return ImmutableSet.copyOf(myState.OPTIONS);
   }
 
-  public void setInteractive(boolean interactive) {
-    myState.INTERACTIVE = interactive;
-  }
-
-  public boolean isPreserveMerges() {
-    return myState.PRESERVE_MERGES;
-  }
-
-  public void setPreserveMerges(boolean preserveMerges) {
-    myState.PRESERVE_MERGES = preserveMerges;
-  }
-
-  public boolean showTags() {
-    return myState.SHOW_TAGS;
-  }
-
-  public void setShowTags(boolean showTags) {
-    myState.SHOW_TAGS = showTags;
+  public void setOptions(@NotNull Set<GitRebaseOption> options) {
+    myState.OPTIONS = !options.isEmpty()
+                      ? EnumSet.copyOf(options)
+                      : NO_OPTIONS;
   }
 
   @Nullable
-  public String getOnto() {
-    return myState.ONTO;
+  public String getNewBase() {
+    return myState.NEW_BASE;
   }
 
-  public void setOnto(@Nullable String onto) {
-    myState.ONTO = onto;
+  public void setNewBase(@Nullable String newBase) {
+    myState.NEW_BASE = newBase;
   }
-
 }

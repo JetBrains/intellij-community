@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.convertToJava;
 
 import com.intellij.psi.*;
@@ -11,7 +11,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 /**
  * @author Medvedev Max
  */
-public class TypeWriter extends PsiTypeVisitor<Object> {
+public final class TypeWriter extends PsiTypeVisitor<Object> {
 
   private final boolean acceptEllipsis;
   private final StringBuilder builder;

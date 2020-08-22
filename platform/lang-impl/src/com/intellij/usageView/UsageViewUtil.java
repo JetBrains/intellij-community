@@ -8,6 +8,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.GeneratedSourcesFilter;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
@@ -22,6 +23,7 @@ import com.intellij.refactoring.util.NonCodeUsageInfo;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageInfo2UsageAdapter;
 import com.intellij.usages.UsageView;
+import com.intellij.usages.impl.UsageViewStatisticsCollector;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -36,24 +38,24 @@ public final class UsageViewUtil {
   private UsageViewUtil() { }
 
   @NotNull
-  public static String createNodeText(@NotNull PsiElement element) {
+  public static @NlsSafe String createNodeText(@NotNull PsiElement element) {
     return ElementDescriptionUtil.getElementDescription(element, UsageViewNodeTextLocation.INSTANCE);
   }
 
   @NotNull
-  public static String getShortName(@NotNull PsiElement psiElement) {
+  public static @NlsSafe String getShortName(@NotNull PsiElement psiElement) {
     LOG.assertTrue(psiElement.isValid(), psiElement);
     return ElementDescriptionUtil.getElementDescription(psiElement, UsageViewShortNameLocation.INSTANCE);
   }
 
   @NotNull
-  public static String getLongName(@NotNull PsiElement psiElement) {
+  public static @NlsSafe String getLongName(@NotNull PsiElement psiElement) {
     LOG.assertTrue(psiElement.isValid(), psiElement);
     return ElementDescriptionUtil.getElementDescription(psiElement, UsageViewLongNameLocation.INSTANCE);
   }
 
   @NotNull
-  public static String getType(@NotNull PsiElement psiElement) {
+  public static @NlsSafe String getType(@NotNull PsiElement psiElement) {
     return ElementDescriptionUtil.getElementDescription(psiElement, UsageViewTypeLocation.INSTANCE);
   }
 
@@ -142,6 +144,7 @@ public final class UsageViewUtil {
     VirtualFile file = info.getVirtualFile();
     Project project = info.getProject();
     if (file != null) {
+      UsageViewStatisticsCollector.logUsageNavigate(project, info);
       FileEditorManager.getInstance(project).openTextEditor(new OpenFileDescriptor(project, file, offset), requestFocus);
     }
   }

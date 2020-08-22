@@ -4,10 +4,12 @@ package com.intellij.execution.impl.statistics;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.ConfigurationFactory;
 import com.intellij.execution.configurations.ConfigurationType;
+import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.internal.statistic.IdeActivity;
+import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
-import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.project.Project;
@@ -15,18 +17,34 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesCollector.newFeatureUsageData;
+import java.util.List;
+
+import static com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesCollector.createFeatureUsageData;
 
 public final class RunConfigurationUsageTriggerCollector {
+  public static final String GROUP = "run.configuration.exec";
+  private static final ObjectEventField ADDITIONAL_FIELD = EventFields.createAdditionalDataField(GROUP, "started");
+  private static final StringEventField EXECUTOR = EventFields.String("executor").withCustomRule("run_config_executor");
+
   @NotNull
-  public static IdeActivity trigger(@NotNull Project project, @NotNull ConfigurationFactory factory, @NotNull Executor executor) {
+  public static IdeActivity trigger(@NotNull Project project,
+                                    @NotNull ConfigurationFactory factory,
+                                    @NotNull Executor executor,
+                                    @Nullable RunConfiguration runConfiguration) {
     final ConfigurationType configurationType = factory.getType();
-    return new IdeActivity(project, "run.configuration.exec").startedWithData(data -> {
-      data.addAll(newFeatureUsageData(configurationType, factory).addData("executor", executor.getId()));
+    return new IdeActivity(project, GROUP).startedWithData(data -> {
+      List<EventPair> eventPairs = createFeatureUsageData(configurationType, factory);
+      eventPairs.add(EXECUTOR.with(executor.getId()));
+      if (runConfiguration instanceof FusAwareRunConfiguration) {
+        List<EventPair> additionalData = ((FusAwareRunConfiguration)runConfiguration).getAdditionalUsageData();
+        ObjectEventData objectEventData = new ObjectEventData(additionalData.toArray(new EventPair[0]));
+        eventPairs.add(ADDITIONAL_FIELD.with(objectEventData));
+      }
+      eventPairs.forEach(pair -> pair.addData(data));
     });
   }
 
-  public static class RunConfigurationExecutorUtilValidator extends CustomWhiteListRule {
+  public static class RunConfigurationExecutorUtilValidator extends CustomValidationRule {
 
     @Override
     public boolean acceptRuleId(@Nullable String ruleId) {

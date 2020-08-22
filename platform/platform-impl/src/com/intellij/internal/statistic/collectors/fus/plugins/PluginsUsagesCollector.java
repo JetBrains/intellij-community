@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus.plugins;
 
 import com.intellij.ide.plugins.DisabledPluginsState;
@@ -11,9 +11,9 @@ import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesC
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.extensions.PluginId;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashSet;
 import java.util.Set;
 
 final class PluginsUsagesCollector extends ApplicationUsagesCollector {
@@ -31,7 +31,7 @@ final class PluginsUsagesCollector extends ApplicationUsagesCollector {
   @Override
   @NotNull
   public Set<MetricEvent> getMetrics() {
-    Set<MetricEvent> result = new THashSet<>();
+    Set<MetricEvent> result = new HashSet<>();
     for (PluginId id : DisabledPluginsState.disabledPlugins()) {
       PluginInfo info = PluginInfoDetectorKt.getPluginInfoById(id);
       FeatureUsageData data = new FeatureUsageData().addPluginInfo(info);

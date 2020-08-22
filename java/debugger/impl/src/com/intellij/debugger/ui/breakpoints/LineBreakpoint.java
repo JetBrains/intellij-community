@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.jsp.JspFile;
@@ -296,7 +297,7 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
     return getDisplayInfoInternal(true, -1);
   }
 
-  private String getDisplayInfoInternal(boolean showPackageInfo, int totalTextLength) {
+  private @NlsContexts.Label String getDisplayInfoInternal(boolean showPackageInfo, int totalTextLength) {
     if(isValid()) {
       final int lineNumber = getLineIndex() + 1;
       String className = getClassName();

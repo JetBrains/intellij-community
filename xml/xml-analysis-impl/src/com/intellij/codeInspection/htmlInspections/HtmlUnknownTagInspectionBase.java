@@ -105,13 +105,14 @@ public class HtmlUnknownTagInspectionBase extends HtmlUnknownElementInspection {
       final String name = tag.getName();
 
       if (!isCustomValuesEnabled() || !isCustomValue(name)) {
-        final AddCustomHtmlElementIntentionAction action = new AddCustomHtmlElementIntentionAction(TAG_KEY, name, XmlAnalysisBundle.message("add.custom.html.tag", name));
+        final AddCustomHtmlElementIntentionAction action = new AddCustomHtmlElementIntentionAction(TAG_KEY, name, XmlAnalysisBundle.message(
+          "html.quickfix.add.custom.html.tag", name));
 
         // todo: support "element is not allowed" message for html5
         // some tags in html5 cannot be found in xhtml5.xsd if they are located in incorrect context, so they get any-element descriptor (ex. "canvas: tag)
         final String message = isAbstractDescriptor(ownDescriptor)
-                               ? XmlAnalysisBundle.message("unknown.html.tag", name)
-                               : XmlAnalysisBundle.message("element.is.not.allowed.here", name);
+                               ? XmlAnalysisBundle.message("xml.inspections.unknown.html.tag", name)
+                               : XmlAnalysisBundle.message("xml.inspections.element.is.not.allowed.here", name);
 
         final PsiElement startTagName = XmlTagUtil.getStartTagNameElement(tag);
         assert startTagName != null;

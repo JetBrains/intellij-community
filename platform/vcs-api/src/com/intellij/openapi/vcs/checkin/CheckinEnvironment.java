@@ -1,6 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.checkin;
 
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.CheckinProjectPanel;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
@@ -49,7 +51,7 @@ public interface CheckinEnvironment {
   }
 
   @Nullable
-  default String getDefaultMessageFor(FilePath @NotNull [] filesToCheckin) {
+  default @NlsSafe String getDefaultMessageFor(FilePath @NotNull [] filesToCheckin) {
     return null;
   }
 
@@ -57,18 +59,19 @@ public interface CheckinEnvironment {
   @NonNls
   String getHelpId();
 
+  @NlsContexts.Button
   String getCheckinOperationName();
 
   @Nullable
-  default List<VcsException> commit(@NotNull List<Change> changes, @NotNull String preparedComment) {
+  default List<VcsException> commit(@NotNull List<? extends Change> changes, @NotNull @NlsSafe String preparedComment) {
     return commit(changes, preparedComment, new CommitContext(), new HashSet<>());
   }
 
   @Nullable
-  default List<VcsException> commit(@NotNull List<Change> changes,
-                                    @NotNull String commitMessage,
+  default List<VcsException> commit(@NotNull List<? extends Change> changes,
+                                    @NotNull @NlsSafe String commitMessage,
                                     @NotNull CommitContext commitContext,
-                                    @NotNull Set<String> feedback) {
+                                    @NotNull Set<? super @NonNls String> feedback) {
     //noinspection deprecation
     return commit(changes, commitMessage, commitContext.getAdditionalData(), feedback);
   }
@@ -79,18 +82,18 @@ public interface CheckinEnvironment {
   @SuppressWarnings("unused")
   @Deprecated
   @Nullable
-  default List<VcsException> commit(@NotNull List<Change> changes,
+  default List<VcsException> commit(@NotNull List<? extends Change> changes,
                                     @NotNull String preparedComment,
                                     @NotNull NullableFunction<Object, Object> parametersHolder,
-                                    Set<String> feedback) {
+                                    @NotNull Set<? super @NonNls String> feedback) {
     return null;
   }
 
   @Nullable
-  List<VcsException> scheduleMissingFileForDeletion(@NotNull List<FilePath> files);
+  List<VcsException> scheduleMissingFileForDeletion(@NotNull List<? extends FilePath> files);
 
   @Nullable
-  List<VcsException> scheduleUnversionedFilesForAddition(@NotNull List<VirtualFile> files);
+  List<VcsException> scheduleUnversionedFilesForAddition(@NotNull List<? extends VirtualFile> files);
 
   /**
    * @deprecated use {@link com.intellij.openapi.vcs.VcsConfiguration#REMOVE_EMPTY_INACTIVE_CHANGELISTS}

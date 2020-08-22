@@ -32,7 +32,7 @@ class GitLogIndexTest : GitSingleRepoTest() {
     super.setUp()
 
     disposable = Disposable { }
-    Disposer.register(myProject, disposable)
+    Disposer.register(testRootDisposable, disposable)
 
     index = setUpIndex(myProject, repo.root, logProvider, disposable)
   }

@@ -14,6 +14,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.PathMapper;
 import com.jetbrains.python.buildout.BuildoutFacet;
+import com.jetbrains.python.run.EnvironmentController;
+import com.jetbrains.python.run.PlainEnvironmentController;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.run.PythonRunConfiguration;
 import com.jetbrains.python.sdk.PythonEnvUtil;
@@ -53,6 +55,38 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
       mySettingsProvider = settingsProvider;
       myRerunAction = rerunAction;
       mySetupFragment = setupFragment;
+    }
+
+    public @NotNull Project getProject() {
+      return myProject;
+    }
+
+    public @Nullable Sdk getSdk() {
+      return mySdk;
+    }
+
+    public @Nullable String getWorkingDir() {
+      return myWorkingDir;
+    }
+
+    public @NotNull Map<String, String> getEnvs() {
+      return myEnvs;
+    }
+
+    public @NotNull PyConsoleType getConsoleType() {
+      return myConsoleType;
+    }
+
+    public PyConsoleOptions.@NotNull PyConsoleSettings getSettingsProvider() {
+      return mySettingsProvider;
+    }
+
+    public @NotNull Consumer<String> getRerunAction() {
+      return myRerunAction;
+    }
+
+    public String[] getSetupFragment() {
+      return mySetupFragment;
     }
   }
 
@@ -96,9 +130,13 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
                                consoleParameters.mySettingsProvider, consoleParameters.myRerunAction, consoleParameters.mySetupFragment);
   }
 
-  public static void putIPythonEnvFlag(@NotNull Project project, Map<String, String> envs) {
+  public static void putIPythonEnvFlag(@NotNull Project project, @NotNull Map<String, String> envs) {
+    putIPythonEnvFlag(project, new PlainEnvironmentController(envs));
+  }
+
+  public static void putIPythonEnvFlag(@NotNull Project project, @NotNull EnvironmentController environmentController) {
     String ipythonEnabled = PyConsoleOptions.getInstance(project).isIpythonEnabled() ? "True" : "False";
-    envs.put(PythonEnvUtil.IPYTHONENABLE, ipythonEnabled);
+    environmentController.putFixedValue(PythonEnvUtil.IPYTHONENABLE, ipythonEnabled);
   }
 
   @Nullable

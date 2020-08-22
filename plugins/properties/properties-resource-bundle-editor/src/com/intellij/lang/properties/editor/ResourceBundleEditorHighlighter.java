@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.editor;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
@@ -29,7 +27,6 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
-import com.intellij.util.containers.Queue;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -48,7 +45,7 @@ public class ResourceBundleEditorHighlighter implements BackgroundEditorHighligh
     return new HighlightingPass[]{new ResourceBundleEditorHighlightingPass(myEditor)};
   }
 
-  private static class ResourceBundleEditorHighlightingPass implements HighlightingPass {
+  private static final class ResourceBundleEditorHighlightingPass implements HighlightingPass {
     private final ResourceBundleEditor myEditor;
 
     private ResourceBundleEditorHighlightingPass(ResourceBundleEditor editor) {
@@ -82,10 +79,10 @@ public class ResourceBundleEditorHighlighter implements BackgroundEditorHighligh
       final Project project = rb.getProject();
 
       final StructureViewModel model = myEditor.getStructureViewComponent().getTreeModel();
-      final Queue<TreeElement> queue = new Queue<>(1);
+      final Deque<TreeElement> queue = new ArrayDeque<>(1);
       queue.addLast(model.getRoot());
       while (!queue.isEmpty()) {
-        final TreeElement treeElement = queue.pullFirst();
+        final TreeElement treeElement = queue.removeFirst();
         if (treeElement instanceof PropertyBundleEditorStructureViewElement) {
           IProperty property = ((PropertyBundleEditorStructureViewElement)treeElement).getProperty();
           if (property == null) continue;
@@ -129,7 +126,7 @@ public class ResourceBundleEditorHighlighter implements BackgroundEditorHighligh
     }
   }
 
-  private static class InspectionVisitorWrapper {
+  private static final class InspectionVisitorWrapper {
     private final Function<IProperty[], ResourceBundleEditorProblemDescriptor[]> myProblemVisitor;
     private final HighlightSeverity mySeverity;
     private final HighlightDisplayKey myKey;

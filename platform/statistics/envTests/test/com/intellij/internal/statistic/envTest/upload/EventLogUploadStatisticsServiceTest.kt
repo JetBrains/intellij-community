@@ -98,8 +98,8 @@ internal class EventLogUploadStatisticsServiceTest : StatisticsServiceBaseTest()
     TestCase.assertFalse(logFile.exists())
   }
 
-  fun testSendIfWhitelistUnreachable() {
-    val config = EventLogConfigBuilder(container, tmpLocalRoot).withWhitelistUrlPath("non-existent")
+  fun testSendIfMetadataUnreachable() {
+    val config = EventLogConfigBuilder(container, tmpLocalRoot).withMetadataUrlPath("non-existent")
     val logFile = newLogFile("testLogFile.log", "log1.txt")
     doTestSendWithError(config, logFile)
   }

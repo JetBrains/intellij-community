@@ -19,7 +19,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileEvent;
 import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFilePropertyEvent;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -236,7 +235,7 @@ class ResourceBundleEditorFileListener implements VirtualFileListener {
     CONTENT_CHANGED, PROPERTY_CHANGED
   }
 
-  private static class EventWithType {
+  private static final class EventWithType {
     @NotNull
     private final EventType myType;
     @NotNull

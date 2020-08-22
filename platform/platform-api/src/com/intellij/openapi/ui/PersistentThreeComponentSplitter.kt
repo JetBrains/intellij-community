@@ -5,6 +5,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import org.jetbrains.annotations.NonNls
 import javax.swing.SwingUtilities
 import kotlin.math.roundToInt
 
@@ -18,13 +19,8 @@ class PersistentThreeComponentSplitter(
   private val defaultLastProportion: Float = 0.5f
 ) : ThreeComponentsSplitter(vertical, onePixelDivider, disposable) {
 
-  companion object {
-    private const val firstSuffixKey = "_PTCS_FirstProportionKey"
-    private const val lastSuffixKey = "_PTCS_LastProportionKey"
-  }
-
-  private val firstProportionKey = "$proportionKey$firstSuffixKey"
-  private val lastProportionKey = "$proportionKey$lastSuffixKey"
+  @NonNls private val firstProportionKey = "${proportionKey}_PTCS_FirstProportionKey"
+  @NonNls private val lastProportionKey = "${proportionKey}_PTCS_LastProportionKey"
 
   private var firstProportion: Float
     get() = getProportion(firstProportionKey, defaultFirstProportion)
@@ -36,9 +32,9 @@ class PersistentThreeComponentSplitter(
 
   private val propertiesComponent get() = if (project != null)  PropertiesComponent.getInstance(project) else PropertiesComponent.getInstance()
 
-  private fun getProportion(key: String, defaultProportion: Float): Float = propertiesComponent.getFloat(key, defaultProportion)
+  private fun getProportion(@NonNls key: String, defaultProportion: Float): Float = propertiesComponent.getFloat(key, defaultProportion)
 
-  private fun setProportion(key: String, value: Float, defaultProportion: Float) {
+  private fun setProportion(@NonNls key: String, value: Float, defaultProportion: Float) {
     if (value < 0 || value > 1) return
 
     propertiesComponent.setValue(key, value, defaultProportion)

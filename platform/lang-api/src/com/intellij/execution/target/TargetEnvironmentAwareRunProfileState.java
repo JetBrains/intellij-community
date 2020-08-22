@@ -13,4 +13,8 @@ public interface TargetEnvironmentAwareRunProfileState extends RunProfileState {
   void prepareTargetEnvironmentRequest(@NotNull TargetEnvironmentRequest request,
                                        @Nullable TargetEnvironmentConfiguration configuration,
                                        @NotNull ProgressIndicator progressIndicator) throws ExecutionException;
+
+  void handleCreatedTargetEnvironment(@NotNull TargetEnvironment targetEnvironment,
+                                      @NotNull ProgressIndicator progressIndicator)
+    throws ExecutionException;
 }

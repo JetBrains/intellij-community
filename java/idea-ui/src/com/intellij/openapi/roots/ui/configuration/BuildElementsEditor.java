@@ -9,6 +9,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.roots.CompilerModuleExtension;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,8 +35,8 @@ public class BuildElementsEditor extends ModuleElementsEditor {
   private JRadioButton myInheritCompilerOutput;
   private JRadioButton myPerModuleCompilerOutput;
 
-  private CommitableFieldPanel myOutputPathPanel;
-  private CommitableFieldPanel myTestsOutputPathPanel;
+  private CommittableFieldPanel myOutputPathPanel;
+  private CommittableFieldPanel myTestsOutputPathPanel;
   private JCheckBox myCbExcludeOutput;
   private JLabel myOutputLabel;
   private JLabel myTestOutputLabel;
@@ -91,12 +92,14 @@ public class BuildElementsEditor extends ModuleElementsEditor {
     myOutputLabel = new JLabel(JavaUiBundle.message("module.paths.output.label"));
     outputPathsPanel.add(myOutputLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.EAST,
                                                                GridBagConstraints.NONE, JBUI.insets(6, 12, 0, 4), 0, 0));
+    myOutputLabel.setLabelFor(myOutputPathPanel.getTextField());
     outputPathsPanel.add(myOutputPathPanel, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0, GridBagConstraints.WEST,
                                                                    GridBagConstraints.HORIZONTAL, JBUI.insets(6, 4, 0, 0), 0, 0));
 
     myTestOutputLabel = new JLabel(JavaUiBundle.message("module.paths.test.output.label"));
     outputPathsPanel.add(myTestOutputLabel, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0.0, 0.0, GridBagConstraints.EAST,
                                                                    GridBagConstraints.NONE, JBUI.insets(6, 16, 0, 4), 0, 0));
+    myTestOutputLabel.setLabelFor(myTestsOutputPathPanel.getTextField());
     outputPathsPanel.add(myTestsOutputPathPanel, new GridBagConstraints(1, GridBagConstraints.RELATIVE, 2, 1, 1.0, 0.0,
                                                                         GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
                                                                         JBUI.insets(6, 4, 0, 0), 0, 0));
@@ -177,7 +180,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
     fireModuleConfigurationChanged();
   }
 
-  private CommitableFieldPanel createOutputPathPanel(final String title, final CommitPathRunnable commitPathRunnable) {
+  private CommittableFieldPanel createOutputPathPanel(final @NlsContexts.DialogTitle String title, final CommitPathRunnable commitPathRunnable) {
     final JTextField textField = new ExtendableTextField();
     final FileChooserDescriptor outputPathsChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
     outputPathsChooserDescriptor.putUserData(LangDataKeys.MODULE_CONTEXT, getModel().getModule());
@@ -220,7 +223,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
       }
     });
 
-    return new CommitableFieldPanel(textField, null, null, new BrowseFilesListener(textField, title, "", outputPathsChooserDescriptor) {
+    return new CommittableFieldPanel(textField, new BrowseFilesListener(textField, title, "", outputPathsChooserDescriptor) {
       @Override
       public void actionPerformed(ActionEvent e) {
         super.actionPerformed(e);
@@ -250,7 +253,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
 
   @Override
   public void moduleStateChanged() {
-    //if content enties tree was changed
+    //if content entries tree was changed
     myCbExcludeOutput.setSelected(getCompilerExtension().isExcludeOutput());
   }
 
@@ -278,16 +281,14 @@ public class BuildElementsEditor extends ModuleElementsEditor {
     void saveUrl(String url);
   }
 
-  private static class CommitableFieldPanel extends FieldPanel {
+  private static class CommittableFieldPanel extends FieldPanel {
     private final Runnable myCommitRunnable;
 
-    CommitableFieldPanel(final JTextField textField,
-                                String labelText,
-                                final String viewerDialogTitle,
-                                ActionListener browseButtonActionListener,
-                                final Runnable documentListener,
-                                final Runnable commitPathRunnable) {
-      super(textField, labelText, viewerDialogTitle, browseButtonActionListener, documentListener);
+    CommittableFieldPanel(final JTextField textField,
+                          ActionListener browseButtonActionListener,
+                          final Runnable documentListener,
+                          final Runnable commitPathRunnable) {
+      super(textField, null, null, browseButtonActionListener, documentListener);
       myCommitRunnable = commitPathRunnable;
     }
 

@@ -261,6 +261,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
     Node activeNode = findActiveNode();
     SMTestProxy activeProxy = activeNode.getProxy();
     activeProxy.addOutput(text, outputType);
+    myEventPublisher.onUncapturedOutput(activeProxy, text, outputType);
   }
 
   @Override
@@ -358,7 +359,9 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
       logProblem("Test wasn't started! But " + testOutputEvent + "!");
       return;
     }
-    node.getProxy().addOutput(testOutputEvent.getText(), testOutputEvent.getOutputType());
+    SMTestProxy proxy = node.getProxy();
+    proxy.addOutput(testOutputEvent.getText(), testOutputEvent.getOutputType());
+    myEventPublisher.onTestOutput(proxy, testOutputEvent);
   }
 
   @Override

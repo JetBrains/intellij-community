@@ -5,6 +5,7 @@ import com.intellij.ide.CliResult;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.util.ArrayUtilRt;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +28,7 @@ public interface ApplicationStarter {
    *
    * @return command-line selector.
    */
+  @NonNls
   String getCommandName();
 
   /**

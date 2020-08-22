@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.snapShooter;
 
@@ -281,7 +281,7 @@ public class CreateSnapShotAction extends AnAction {
     return snapshotConfiguration;
   }
 
-  private static class MyDialog extends DialogWrapper {
+  private static final class MyDialog extends DialogWrapper {
     private JPanel myRootPanel;
     private JTree myComponentTree;
     private JTextField myFormNameTextField;

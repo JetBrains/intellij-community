@@ -80,12 +80,13 @@ public class PluginXmlDynamicPluginInspection extends DevKitPluginXmlInspectionB
     final AnAction action = ActionManager.getInstance().getAction(actionId);
     assert action != null : actionId;
 
+    String name = action.getTemplateText() + " for '" + extensionPoint.getEffectiveQualifiedName() + "'";
     return new IntentionAndQuickFixAction() {
       @Nls(capitalization = Nls.Capitalization.Sentence)
       @NotNull
       @Override
       public String getName() {
-        return action.getTemplateText() + " for '" + extensionPoint.getEffectiveQualifiedName() + "'";
+        return name;
       }
 
       @Nls(capitalization = Nls.Capitalization.Sentence)

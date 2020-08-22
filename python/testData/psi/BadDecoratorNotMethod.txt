@@ -17,8 +17,6 @@ PyFile:BadDecoratorNotMethod.py
             PsiElement(Py:AT)('@')
             PyReferenceExpression: staticmethod
               PsiElement(Py:IDENTIFIER)('staticmethod')
-            PyArgumentList
-              <empty list>
         PsiErrorElement:'@' or 'def' expected
           <empty list>
         PsiWhiteSpace('\n            ')

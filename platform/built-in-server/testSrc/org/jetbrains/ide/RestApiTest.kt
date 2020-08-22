@@ -94,4 +94,3 @@ internal class RestApiTest : BuiltInServerTestCase() {
     assertThat(HttpResponseStatus.valueOf(connection.responseCode)).isEqualTo(expectedStatus)
   }
 }
-

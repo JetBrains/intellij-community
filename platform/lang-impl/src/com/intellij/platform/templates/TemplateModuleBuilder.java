@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.templates;
 
 import com.intellij.application.options.CodeStyle;
@@ -41,10 +41,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.platform.templates.github.ZipUtil;
-import com.intellij.util.*;
+import com.intellij.util.Consumer;
+import com.intellij.util.ExceptionUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.apache.velocity.exception.VelocityException;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
@@ -61,6 +64,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.Properties;
+import java.util.stream.Stream;
 import java.util.zip.ZipInputStream;
 
 /**
@@ -137,7 +141,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
 
   @NotNull
   @Override
-  public String getBuilderId() {
+  public @NonNls String getBuilderId() {
     return myTemplate.getName();
   }
 
@@ -226,7 +230,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
                      boolean reportFailuresWithDialog) {
     final WizardInputField<?> basePackage = getBasePackageField();
     try {
-      final File dir = new File(path);
+      Path dir = Paths.get(path);
       class ExceptionConsumer implements Consumer<VelocityException> {
         private String myPath;
         private String myText;
@@ -301,7 +305,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
             }
           }, true);
 
-          myTemplate.handleUnzippedDirectories(dir, filesToRefresh);
+          myTemplate.handleUnzippedDirectories(dir.toFile(), filesToRefresh);
           return null;
         }
       });
@@ -310,13 +314,12 @@ public class TemplateModuleBuilder extends ModuleBuilder {
         pI.setText(LangBundle.message("progress.title.refreshing"));
       }
 
-      String iml = ContainerUtil.find(ObjectUtils.chooseNotNull(dir.list(), ArrayUtilRt.EMPTY_STRING_ARRAY), s -> s.endsWith(".iml"));
       if (isModuleMode) {
-        File from = new File(path, Objects.requireNonNull(iml));
-        File to = new File(getModuleFilePath());
-        if (!from.renameTo(to)) {
-          throw new IOException("Can't rename " + from + " to " + to);
+        Path from;
+        try (Stream<Path> list = Files.list(dir)) {
+          from = list.filter(it -> it.toString().endsWith(".iml")).findFirst().orElse(null);
         }
+        Files.move(Objects.requireNonNull(from), Paths.get(getModuleFilePath()));
       }
 
       RefreshQueue refreshQueue = RefreshQueue.getInstance();

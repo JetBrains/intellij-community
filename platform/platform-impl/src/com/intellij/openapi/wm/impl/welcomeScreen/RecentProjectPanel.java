@@ -4,10 +4,6 @@ package com.intellij.openapi.wm.impl.welcomeScreen;
 import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -16,6 +12,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -26,10 +23,12 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.ListUtil;
+import com.intellij.ui.PopupHandler;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.ListWithFilter;
+import com.intellij.util.Function;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
@@ -72,6 +71,10 @@ public class RecentProjectPanel extends JPanel {
   private int myHoverIndex = -1;
 
   public RecentProjectPanel(@NotNull Disposable parentDisposable) {
+    this(parentDisposable, true);
+  }
+
+  public RecentProjectPanel(@NotNull Disposable parentDisposable, boolean withSpeedSearch) {
     super(new BorderLayout());
 
     List<AnAction> recentProjectActions = RecentProjectListActionProvider.getInstance().getActions(false, isUseGroups());
@@ -159,25 +162,11 @@ public class RecentProjectPanel extends JPanel {
 
     JBScrollPane scroll
       = new JBScrollPane(myList, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    scroll.setBorder(null);
+    scroll.setBorder(JBUI.Borders.empty());
 
-    JComponent list = recentProjectActions.isEmpty()
-                      ? myList
-                      : ListWithFilter.wrap(myList, scroll, o -> {
-                        if (o instanceof ReopenProjectAction) {
-                          ReopenProjectAction item = (ReopenProjectAction)o;
-                          String home = SystemProperties.getUserHome();
-                          String path = item.getProjectPath();
-                          if (FileUtil.startsWith(path, home)) {
-                            path = path.substring(home.length());
-                          }
-                          return item.getProjectName() + " " + path;
-                        } else if (o instanceof ProjectGroupActionGroup) {
-                          return ((ProjectGroupActionGroup)o).getGroup().getName();
-                        }
-                        return o.toString();
-                      });
-    add(list, BorderLayout.CENTER);
+    boolean wrapListWithFiltered = !recentProjectActions.isEmpty() && withSpeedSearch;
+    JComponent list = wrapListWithFiltered ? ListWithFilter.wrap(myList, scroll, createProjectNameFunction()) : myList;
+    add(wrapListWithFiltered ? list : scroll, BorderLayout.CENTER);
 
     JPanel title = createTitle();
 
@@ -186,6 +175,24 @@ public class RecentProjectPanel extends JPanel {
     }
 
     setBorder(new LineBorder(WelcomeScreenColors.BORDER_COLOR));
+  }
+
+  public static Function<? super AnAction, String> createProjectNameFunction() {
+    return o -> {
+      if (o instanceof ReopenProjectAction) {
+        ReopenProjectAction item = (ReopenProjectAction)o;
+        String home = SystemProperties.getUserHome();
+        String path = item.getProjectPath();
+        if (FileUtil.startsWith(path, home)) {
+          path = path.substring(home.length());
+        }
+        return item.getProjectName() + " " + path;
+      }
+      else if (o instanceof ProjectGroupActionGroup) {
+        return ((ProjectGroupActionGroup)o).getGroup().getName();
+      }
+      return o.toString();
+    };
   }
 
   @NotNull
@@ -312,7 +319,7 @@ public class RecentProjectPanel extends JPanel {
     return title;
   }
 
-  private class MyList extends JBList<AnAction> {
+  private final class MyList extends JBList<AnAction> {
     private final Dimension mySize;
     private Point myMousePoint;
 
@@ -323,14 +330,14 @@ public class RecentProjectPanel extends JPanel {
       setEmptyText(IdeBundle.message("empty.text.no.project.open.yet"));
       setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
       getAccessibleContext().setAccessibleName(RECENT_PROJECTS_LABEL);
-      final MouseHandler handler = new MouseHandler();
+      final PopupHandler handler = new MyPopupMouseHandler();
       addMouseListener(handler);
       addMouseMotionListener(handler);
     }
 
     public Rectangle getCloseIconRect(int index) {
       final Rectangle bounds = getCellBounds(index, index);
-      Icon icon = toSize(AllIcons.Welcome.Project.Remove);
+      Icon icon = toSize(AllIcons.Ide.Notification.Gear);
       return new Rectangle(bounds.width - icon.getIconWidth() - JBUIScale.scale(10),
                            bounds.y + (bounds.height - icon.getIconHeight()) / 2,
                            icon.getIconWidth(), icon.getIconHeight());
@@ -343,7 +350,7 @@ public class RecentProjectPanel extends JPanel {
         final int index = locationToIndex(myMousePoint);
         if (index != -1) {
           final Rectangle iconRect = getCloseIconRect(index);
-          Icon icon = toSize(iconRect.contains(myMousePoint) ? AllIcons.Welcome.Project.Remove_hover : AllIcons.Welcome.Project.Remove);
+          Icon icon = toSize(iconRect.contains(myMousePoint) ? AllIcons.Ide.Notification.GearHover : AllIcons.Ide.Notification.Gear);
           icon.paintIcon(this, g, iconRect.x, iconRect.y);
         }
       }
@@ -371,7 +378,7 @@ public class RecentProjectPanel extends JPanel {
       return mySize == null ? super.getPreferredScrollableViewportSize() : mySize;
     }
 
-    class MouseHandler extends MouseAdapter {
+    class MyPopupMouseHandler extends PopupHandler {
       @Override
       public void mouseEntered(MouseEvent e) {
         myMousePoint = e != null ? e.getPoint() : null;
@@ -389,47 +396,34 @@ public class RecentProjectPanel extends JPanel {
 
       @Override
       public void mouseReleased(MouseEvent e) {
-        Point point = e != null ? e.getPoint() : null;
-        int index = point != null ? locationToIndex(point) : -1;
-        if (index == -1 || !getCloseIconRect(index).contains(point)) {
-          return;
-        }
+        super.mouseReleased(e);
+        if (e.isConsumed()) return;
 
+        Point point = e.getPoint();
+        int index = locationToIndex(point);
+        if (index == -1 || !getCloseIconRect(index).contains(point)) return;
+
+        invokePopup(e.getComponent(), e.getX(), e.getY());
         e.consume();
-        Object element = getModel().getElementAt(index);
-        if (element instanceof ProjectGroupActionGroup) {
-          ProjectGroup group = ((ProjectGroupActionGroup)element).getGroup();
-          if (group.isTutorials()) {
-            removeTutorialChildren(group);
-          }
-        }
-        removeRecentProjectElement(element);
-        ListUtil.removeSelectedItems(MyList.this);
       }
 
-      private void removeTutorialChildren(ProjectGroup group) {
-        int currentIndex = MyList.this.getSelectedIndex();
-        List<String> projects = group.getProjects();
-        final int[] childIndices = new int[projects.size()];
-        for (int i = 0; i < projects.size(); i++) {
-          childIndices[i] = currentIndex + 1;
-          currentIndex++;
+      @Override
+      public void invokePopup(Component comp, int x, int y) {
+        final int index = locationToIndex(new Point(x, y));
+        if (index != -1 && Arrays.binarySearch(getSelectedIndices(), index) < 0) {
+          setSelectedIndex(index);
         }
-        ListUtil.removeIndices(MyList.this, childIndices);
-        ApplicationManager.getApplication().invokeLater(() -> {
-          String title = IdeBundle.message("notification.title.tutorials.have.been.removed.from.recent.list");
-          String content = IdeBundle.message("notification.content.you.can.still.find.them.in.help.menu");
-          Notifications.Bus.notify(
-            new Notification(NotificationGroup.createIdWithTitle("Tutorials", IdeBundle.message("notification.group.tutorials")), title,
-                             content, NotificationType.INFORMATION));
-        });
+        final ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction("WelcomeScreenRecentProjectActionGroup");
+        if (group != null) {
+          ActionManager.getInstance().createActionPopupMenu(ActionPlaces.WELCOME_SCREEN, group).getComponent().show(comp, x, y);
+        }
       }
     }
   }
 
   protected class RecentProjectItemRenderer extends JPanel implements ListCellRenderer<AnAction> {
     protected final JLabel myName = new JLabel();
-    protected final JLabel myPath = new JLabel();
+    protected final JLabel myPath = ComponentPanelBuilder.createNonWrappingCommentComponent("");
     protected boolean myHovered;
 
     /** @deprecated use the default constructor */
@@ -441,8 +435,6 @@ public class RecentProjectPanel extends JPanel {
 
     protected RecentProjectItemRenderer() {
       super(new VerticalFlowLayout());
-
-      myPath.setFont(JBUI.Fonts.label(SystemInfo.isMac ? 10f : 11f));
       setFocusable(true);
       layoutComponents();
     }
@@ -467,7 +459,7 @@ public class RecentProjectPanel extends JPanel {
       Color back = getListBackground(selected, list.hasFocus());
 
       myName.setForeground(fore);
-      myPath.setForeground(selected ? fore : UIUtil.getInactiveTextColor());
+      myPath.setForeground(UIUtil.getInactiveTextColor());
 
       setBackground(back);
 

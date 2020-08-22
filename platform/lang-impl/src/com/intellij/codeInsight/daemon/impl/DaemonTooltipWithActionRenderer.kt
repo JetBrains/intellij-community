@@ -24,6 +24,8 @@ import com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.GraphicsConfig
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.*
@@ -226,6 +228,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
     return wrapper
   }
 
+  @NlsSafe
   private fun getKeymap(key: String): String {
     val keymapManager = KeymapManager.getInstance()
     if (keymapManager != null) {
@@ -236,7 +239,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
     return ""
   }
 
-  private fun createKeymapHint(shortcutRunAction: String): JComponent {
+  private fun createKeymapHint(@NlsContexts.Label shortcutRunAction: String): JComponent {
     val fixHint = object : JBLabel(shortcutRunAction) {
       override fun getForeground(): Color {
         return getKeymapColor()
@@ -351,7 +354,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
 }
 
 
-fun createActionLabel(text: String, action: (InputEvent?) -> Unit, background: Color): HyperlinkLabel {
+fun createActionLabel(@NlsContexts.LinkLabel text: String, action: (InputEvent?) -> Unit, background: Color): HyperlinkLabel {
   val label = object : HyperlinkLabel(text, background) {
     override fun getTextOffset(): Int {
       return 0

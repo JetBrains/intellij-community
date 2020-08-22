@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -237,7 +237,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
       return super.create(elem);
     }
 
-    private static class MyBufferedImageView extends View {
+    private static final class MyBufferedImageView extends View {
       private static final int DEFAULT_BORDER = 0;
       private final BufferedImage myBufferedImage;
       private final int width;
@@ -361,7 +361,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
       }
     }
 
-    private static class MyIconView extends View {
+    private static final class MyIconView extends View {
       private final Icon myViewIcon;
 
       private MyIconView(Element elem, Icon viewIcon) {
@@ -423,7 +423,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
     }
   }
 
-  private static class HTMLDocumentNoLinkedCss extends HTMLDocument {
+  private static final class HTMLDocumentNoLinkedCss extends HTMLDocument {
     private HTMLDocumentNoLinkedCss(StyleSheet styles) {
       super(styles);
     }
@@ -438,7 +438,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
       return new CallbackWrapper(super.getReader(pos, popDepth, pushDepth, insertTag));
     }
 
-    private static class CallbackWrapper extends ParserCallback {
+    private static final class CallbackWrapper extends ParserCallback {
       private final ParserCallback delegate;
       private int depth;
 

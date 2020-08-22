@@ -13,13 +13,14 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Stack;
-import gnu.trove.TDoubleArrayList;
+import it.unimi.dsi.fastutil.doubles.DoubleArrayList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,21 +32,21 @@ import java.util.Set;
 public class AbstractProgressIndicatorBase extends UserDataHolderBase implements ProgressIndicator {
   private static final Logger LOG = Logger.getInstance(AbstractProgressIndicatorBase.class);
 
-  private volatile String myText;
+  private volatile @NlsContexts.ProgressText String myText;
   private volatile double myFraction;
-  private volatile String myText2;
+  private volatile @NlsContexts.ProgressDetails String myText2;
 
   private volatile boolean myCanceled;
   private volatile boolean myRunning;
-  private volatile boolean myFinished;
+  private volatile boolean myStopped;
 
   private volatile boolean myIndeterminate = Registry.is("ide.progress.indeterminate.by.default", true);
   private volatile MacUtil.Activity myMacActivity;
   private volatile boolean myShouldStartActivity = true;
 
-  private Stack<String> myTextStack; // guarded by this
-  private TDoubleArrayList myFractionStack; // guarded by this
-  private Stack<String> myText2Stack; // guarded by this
+  private Stack<@NlsContexts.ProgressText String> myTextStack; // guarded by this
+  private DoubleArrayList myFractionStack; // guarded by this
+  private Stack<@NlsContexts.ProgressDetails String> myText2Stack; // guarded by this
 
   private ProgressIndicator myModalityProgress;
   private volatile ModalityState myModalityState = ModalityState.NON_MODAL;
@@ -56,14 +57,14 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   public void start() {
     synchronized (getLock()) {
       LOG.assertTrue(!isRunning(), "Attempt to start ProgressIndicator which is already running");
-      if (myFinished) {
+      if (myStopped) {
         if (myCanceled && !isReuseable()) {
           if (ourReportedReuseExceptions.add(getClass())) {
             LOG.error("Attempt to start ProgressIndicator which is cancelled and already stopped:" + this + "," + getClass());
           }
         }
         myCanceled = false;
-        myFinished = false;
+        myStopped = false;
       }
 
       myText = "";
@@ -85,7 +86,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     synchronized (getLock()) {
       LOG.assertTrue(myRunning, "stop() should be called only if start() called before");
       myRunning = false;
-      myFinished = true;
+      myStopped = true;
       stopSystemActivity();
     }
   }
@@ -176,8 +177,8 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
       Optional<StackTraceElement> first = Arrays.stream(trace)
         .filter(element -> !element.getClassName().startsWith("com.intellij.openapi.progress.util"))
         .findFirst();
-      String message = "This progress indicator is indeterminate, this may lead to visual inconsistency. " +
-                       "Please call setIndeterminate(false) before you start progress.";
+      @NonNls String message = "This progress indicator is indeterminate, this may lead to visual inconsistency. " +
+                               "Please call setIndeterminate(false) before you start progress.";
       if (first.isPresent()) {
         message += "\n" + first.get();
       }
@@ -205,7 +206,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
       setText(oldText);
       setText2(oldText2);
 
-      double oldFraction = myFractionStack.remove(myFractionStack.size() - 1);
+      double oldFraction = myFractionStack.removeDouble(myFractionStack.size() - 1);
       if (!isIndeterminate()) {
         setFraction(oldFraction);
       }
@@ -300,12 +301,9 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
 
       if (indicator instanceof AbstractProgressIndicatorBase) {
         AbstractProgressIndicatorBase stacked = (AbstractProgressIndicatorBase)indicator;
-
         myTextStack = stacked.myTextStack == null ? null : new Stack<>(stacked.getTextStack());
-
         myText2Stack = stacked.myText2Stack == null ? null : new Stack<>(stacked.getText2Stack());
-
-        myFractionStack = stacked.myFractionStack == null ? null : new TDoubleArrayList(stacked.getFractionStack().toNativeArray());
+        myFractionStack = stacked.myFractionStack == null ? null : new DoubleArrayList(stacked.getFractionStack().toDoubleArray());
       }
       dontStartActivity();
     }
@@ -323,9 +321,12 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   }
 
   @NotNull
-  private TDoubleArrayList getFractionStack() {
-    TDoubleArrayList stack = myFractionStack;
-    if (stack == null) myFractionStack = stack = new TDoubleArrayList(2);
+  private DoubleArrayList getFractionStack() {
+    DoubleArrayList stack = myFractionStack;
+    if (stack == null) {
+      stack = new DoubleArrayList(2);
+      myFractionStack = stack;
+    }
     return stack;
   }
 

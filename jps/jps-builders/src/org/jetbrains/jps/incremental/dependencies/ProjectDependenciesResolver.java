@@ -18,6 +18,12 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Downloads missing Maven repository libraries from all modules in the project. The corresponding {@link ProjectDependenciesResolvingTarget target}
+ * isn't included into regular builds so this builder isn't used (and {@link DependencyResolvingBuilder} is used instead). However in build
+ * scripts we may need to download libraries without compiling project (e.g. if compiled class-files are provided by another build) and
+ * therefore may use this target to download the libraries (see org.jetbrains.intellij.build.impl.JpsCompilationRunner).
+ */
 public final class ProjectDependenciesResolver extends TargetBuilder<BuildRootDescriptor, ProjectDependenciesResolver.ProjectDependenciesResolvingTarget> {
   public static final String TARGET_TYPE_ID = "project-dependencies-resolving";
 

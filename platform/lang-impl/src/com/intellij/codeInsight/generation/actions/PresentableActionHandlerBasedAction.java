@@ -14,13 +14,14 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class PresentableActionHandlerBasedAction extends BaseCodeInsightAction {
-  private String myCurrentActionName = null;
+  private @NlsContexts.Command String myCurrentActionName = null;
 
   @Override
   protected String getCommandName() {

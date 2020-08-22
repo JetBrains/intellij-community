@@ -11,11 +11,12 @@ import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.stats.storage.factors.MutableLookupStorage
 import java.util.concurrent.TimeUnit
 
-class ContextFeaturesContributor : CompletionContributor() {
+class ContextFeaturesContributor : CompletionContributor(), DumbAware {
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
     val lookup = LookupManager.getActiveLookup(parameters.editor) as? LookupImpl
     if (lookup != null) {

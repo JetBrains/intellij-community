@@ -9,18 +9,17 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.ide.util.ElementsChooser;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.ui.InputValidator;
-import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.*;
 import com.intellij.openapi.ui.messages.MessagesService;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
@@ -56,7 +55,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 
-public class PythonUiServiceImpl extends PythonUiService {
+public final class PythonUiServiceImpl extends PythonUiService {
   @Override
   public void showBalloonInfo(Project project, @PopupContent String message) {
     PyUiUtil.showBalloon(project, message, MessageType.INFO);
@@ -74,6 +73,17 @@ public class PythonUiServiceImpl extends PythonUiService {
   }
 
   @Override
+  public FileEditor getSelectedEditor(@NotNull Project project, VirtualFile virtualFile) {
+    return FileEditorManager.getInstance(project).getSelectedEditor(virtualFile);
+  }
+
+  @Override
+  public Editor openTextEditor(@NotNull Project project, PsiElement anchor) {
+    PsiFile file = InjectedLanguageManager.getInstance(project).getTopLevelFile(anchor);
+    return openTextEditor(project, file.getVirtualFile());
+  }
+
+  @Override
   public Editor openTextEditor(@NotNull Project project, @NotNull VirtualFile virtualFile) {
     return FileEditorManager.getInstance(project).openTextEditor(
       new OpenFileDescriptor(project, virtualFile), true);
@@ -87,7 +97,7 @@ public class PythonUiServiceImpl extends PythonUiService {
 
   @Override
   public boolean showYesDialog(Project project, String message, String title) {
-    return Messages.showYesNoDialog(message, title, Messages.getQuestionIcon()) == Messages.YES;
+    return MessageDialogBuilder.yesNo(title, message).ask(project);
   }
 
   @Override
@@ -143,7 +153,7 @@ public class PythonUiServiceImpl extends PythonUiService {
   }
 
   @Override
-  public JComponent createSingleCheckboxOptionsPanel(String label, InspectionProfileEntry inspection, String property) {
+  public JComponent createSingleCheckboxOptionsPanel(@NlsContexts.Checkbox String label, InspectionProfileEntry inspection, String property) {
     return new SingleCheckboxOptionsPanel(label, inspection, property);
   }
 
@@ -218,7 +228,7 @@ public class PythonUiServiceImpl extends PythonUiService {
   }
 
   @Override
-  public JCheckBox createInspectionCheckBox(String message, InspectionProfileEntry inspection, String property) {
+  public JCheckBox createInspectionCheckBox(@NlsContexts.Checkbox String message, InspectionProfileEntry inspection, String property) {
     return new CheckBox(message, inspection, property);
   }
 
@@ -233,7 +243,7 @@ public class PythonUiServiceImpl extends PythonUiService {
   }
 
   @Override
-  public JComponent createListEditForm(String title, List<String> stringList) {
+  public JComponent createListEditForm(@NlsContexts.ColumnName String title, List<String> stringList) {
     final ListEditForm form = new ListEditForm(title, stringList);
     return form.getContentPanel();
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.json.JsonBundle;
@@ -24,7 +24,7 @@ import java.util.stream.Collectors;
 /**
  * @author Irina.Chernushina on 4/25/2017.
  */
-public class JsonSchemaAnnotatorChecker implements JsonValidationHost {
+public final class JsonSchemaAnnotatorChecker implements JsonValidationHost {
   private static final Set<JsonSchemaType> PRIMITIVE_TYPES =
     ContainerUtil.set(JsonSchemaType._integer, JsonSchemaType._number, JsonSchemaType._boolean, JsonSchemaType._string, JsonSchemaType._null);
   private final Map<PsiElement, JsonValidationError> myErrors;
@@ -488,8 +488,8 @@ public class JsonSchemaAnnotatorChecker implements JsonValidationHost {
 
     int minErrorCount = candidateErroneousCheckers.stream().map(c -> c.getErrors().size()).min(Integer::compareTo).orElse(Integer.MAX_VALUE);
 
-    MultiMap<PsiElement, JsonValidationError> errorsWithMinAverage = MultiMap.create();
-    MultiMap<PsiElement, JsonValidationError> allErrors = MultiMap.create();
+    MultiMap<PsiElement, JsonValidationError> errorsWithMinAverage = new MultiMap<>();
+    MultiMap<PsiElement, JsonValidationError> allErrors = new MultiMap<>();
     for (int i = 0; i < candidateErroneousCheckers.size(); i++) {
       JsonSchemaAnnotatorChecker checker = candidateErroneousCheckers.get(i);
       final boolean isMoreThanMinErrors = checker.getErrors().size() > minErrorCount;

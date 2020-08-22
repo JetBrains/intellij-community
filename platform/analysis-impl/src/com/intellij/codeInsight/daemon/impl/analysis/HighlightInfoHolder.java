@@ -70,7 +70,7 @@ public class HighlightInfoHolder {
 
   public boolean addAll(@NotNull Collection<? extends HighlightInfo> highlightInfos) {
     boolean added = false;
-    for (final HighlightInfo highlightInfo : highlightInfos) {
+    for (HighlightInfo highlightInfo : highlightInfos) {
       added |= add(highlightInfo);
     }
     return added;
@@ -81,7 +81,7 @@ public class HighlightInfoHolder {
   }
 
   @NotNull
-  public HighlightInfo get(final int i) {
+  public HighlightInfo get(int i) {
     return myInfos.get(i);
   }
 

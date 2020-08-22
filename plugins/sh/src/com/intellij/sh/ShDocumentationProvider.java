@@ -13,6 +13,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.AtomicNullableLazyValue;
 import com.intellij.openapi.util.NullableLazyValue;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -111,7 +112,7 @@ public class ShDocumentationProvider implements DocumentationProvider {
       while (m.find()) {
         if (m.groupCount() > 0) {
           String url = m.group(0);
-          m.appendReplacement(sb, "<a href='" + url + "'>" + url + "</a>");
+          m.appendReplacement(sb, HtmlChunk.link(url, url).toString());
         }
       }
       m.appendTail(sb);

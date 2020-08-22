@@ -18,20 +18,20 @@ package com.intellij.codeInsight.highlighting;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Predicate;
 
 class HighlightExceptionsHandler extends HighlightUsagesHandlerBase<PsiClass> {
   private final PsiElement myTarget;
   private final PsiClassType[] myClassTypes;
   private final PsiElement myPlace;
   private final PsiElement myOtherPlace;
-  private final Condition<? super PsiType> myTypeFilter;
+  private final Predicate<? super PsiType> myTypeFilter;
 
   HighlightExceptionsHandler(@NotNull Editor editor,
                              @NotNull PsiFile file,
@@ -39,7 +39,7 @@ class HighlightExceptionsHandler extends HighlightUsagesHandlerBase<PsiClass> {
                              PsiClassType @NotNull [] classTypes,
                              @NotNull PsiElement place,
                              PsiElement otherPlace,
-                             @NotNull Condition<? super PsiType> typeFilter) {
+                             @NotNull Predicate<? super PsiType> typeFilter) {
     super(editor, file);
     myTarget = target;
     myClassTypes = classTypes;
@@ -90,7 +90,7 @@ class HighlightExceptionsHandler extends HighlightUsagesHandlerBase<PsiClass> {
         super.visitThrowStatement(statement);
         List<PsiClassType> actualTypes = ExceptionUtil.getUnhandledExceptions(statement, place);
         for (PsiClassType actualType : actualTypes) {
-          if (actualType != null && type.isAssignableFrom(actualType) && myTypeFilter.value(actualType)) {
+          if (actualType != null && type.isAssignableFrom(actualType) && myTypeFilter.test(actualType)) {
             PsiExpression psiExpression = statement.getException();
             if (psiExpression instanceof PsiReferenceExpression) {
               addUsage(psiExpression);
@@ -118,7 +118,7 @@ class HighlightExceptionsHandler extends HighlightUsagesHandlerBase<PsiClass> {
         if (reference != null) {
           List<PsiClassType> exceptionTypes = ExceptionUtil.getUnhandledExceptions(expression, place);
           for (final PsiClassType actualType : exceptionTypes) {
-            if (type.isAssignableFrom(actualType) && myTypeFilter.value(actualType)) {
+            if (type.isAssignableFrom(actualType) && myTypeFilter.test(actualType)) {
               addUsage(expression.getMethodExpression());
               break;
             }
@@ -133,7 +133,7 @@ class HighlightExceptionsHandler extends HighlightUsagesHandlerBase<PsiClass> {
         if (classReference != null) {
           List<PsiClassType> exceptionTypes = ExceptionUtil.getUnhandledExceptions(expression, place);
           for (PsiClassType actualType : exceptionTypes) {
-            if (type.isAssignableFrom(actualType) && myTypeFilter.value(actualType)) {
+            if (type.isAssignableFrom(actualType) && myTypeFilter.test(actualType)) {
               addUsage(classReference);
               break;
             }
@@ -146,7 +146,7 @@ class HighlightExceptionsHandler extends HighlightUsagesHandlerBase<PsiClass> {
         super.visitResourceExpression(expression);
         List<PsiClassType> exceptionTypes = ExceptionUtil.getUnhandledCloserExceptions(expression, place);
         for (PsiClassType actualType : exceptionTypes) {
-          if (type.isAssignableFrom(actualType) && myTypeFilter.value(actualType)) {
+          if (type.isAssignableFrom(actualType) && myTypeFilter.test(actualType)) {
             addUsage(expression);
             break;
           }
@@ -158,7 +158,7 @@ class HighlightExceptionsHandler extends HighlightUsagesHandlerBase<PsiClass> {
         super.visitResourceVariable(variable);
         List<PsiClassType> exceptionTypes = ExceptionUtil.getUnhandledCloserExceptions(variable, place);
         for (PsiClassType actualType : exceptionTypes) {
-          if (type.isAssignableFrom(actualType) && myTypeFilter.value(actualType)) {
+          if (type.isAssignableFrom(actualType) && myTypeFilter.test(actualType)) {
             PsiIdentifier name = variable.getNameIdentifier();
             if (name != null) {
               addUsage(name);

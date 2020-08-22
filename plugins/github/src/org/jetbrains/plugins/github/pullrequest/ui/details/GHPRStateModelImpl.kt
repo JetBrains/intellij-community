@@ -14,6 +14,7 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRMergeabilityState
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRChangesDataProvider
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRStateDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
+import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.DelayedTaskScheduler
 import org.jetbrains.plugins.github.util.GithubAsyncUtil
 import org.jetbrains.plugins.github.util.GithubUtil.Delegates.observableField
@@ -24,7 +25,7 @@ import java.util.concurrent.CompletableFuture
 class GHPRStateModelImpl(private val project: Project,
                          private val stateData: GHPRStateDataProvider,
                          private val changesData: GHPRChangesDataProvider,
-                         override val details: GHPullRequestShort,
+                         private val detailsModel: SingleValueModel<GHPullRequestShort>,
                          disposable: Disposable) : GHPRStateModel {
 
   private val mergeabilityEventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
@@ -33,6 +34,22 @@ class GHPRStateModelImpl(private val project: Project,
 
   private val mergeabilityPoller = DelayedTaskScheduler(3, disposable) {
     reloadMergeabilityState()
+  }
+
+  private val details: GHPullRequestShort
+    get() = detailsModel.value
+
+  override val viewerDidAuthor = details.viewerDidAuthor
+  override val isDraft: Boolean
+    get() = details.isDraft
+
+  override fun addAndInvokeDraftStateListener(listener: () -> Unit) {
+    var lastIsDraft = isDraft
+    detailsModel.addValueChangedListener {
+      if (lastIsDraft != isDraft) listener()
+      lastIsDraft = isDraft
+    }
+    listener()
   }
 
   override var mergeabilityState: GHPRMergeabilityState? = null
@@ -68,6 +85,10 @@ class GHPRStateModelImpl(private val project: Project,
 
   override fun submitReopenTask() = submitTask {
     stateData.reopen(EmptyProgressIndicator())
+  }
+
+  override fun submitMarkReadyForReviewTask() {
+    stateData.markReadyForReview(EmptyProgressIndicator())
   }
 
   override fun submitMergeTask() = submitTask {

@@ -20,9 +20,12 @@ import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.testFramework.NeedsIndex;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
+
+import static com.intellij.java.codeInsight.completion.NormalCompletionTestCase.renderElement;
 
 @SuppressWarnings({"ALL"})
 public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCase {
@@ -57,11 +60,15 @@ public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCas
     assertStringItems("getBar().getGoo", "getBar().getGoo2");
   }
 
+  @NeedsIndex.ForStandardLibrary
   public void testSuggestArraysAsList() throws Throwable { doTest(); }
+  @NeedsIndex.ForStandardLibrary
   public void testSuggestArraysAsListWildcard() throws Throwable { doTest(); }
 
+  @NeedsIndex.ForStandardLibrary
   public void testSuggestToArrayWithNewEmptyArray() throws Throwable { doTest(); }
 
+  @NeedsIndex.ForStandardLibrary
   public void testSuggestToArrayWithExistingEmptyArray() throws Throwable {
     configure();
     assertStringItems("foos().toArray(EMPTY_ARRAY)", "foos().toArray(EMPTY_ARRAY2)");
@@ -71,11 +78,15 @@ public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCas
 
   public void testToArrayGenericArrayCreation() throws Throwable { doTest(); }
 
+  @NeedsIndex.ForStandardLibrary
   public void testToArrayFieldsQualifier() throws Throwable { doTest(); }
+  @NeedsIndex.ForStandardLibrary
   public void testToArrayMethodQualifier() throws Throwable { doTest(); }
 
+  @NeedsIndex.ForStandardLibrary
   public void testToListWithQualifier() throws Throwable { doTest(); }
 
+  @NeedsIndex.ForStandardLibrary
   public void testSuggestToArrayWithExistingEmptyArrayFromAnotherClass() throws Throwable {
     configure();
     assertStringItems("foos().toArray(Bar.EMPTY_ARRAY)", "foos().toArray(Bar.EMPTY_ARRAY2)");
@@ -86,12 +97,14 @@ public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCas
   public void testNonInitializedField() throws Throwable { doTest(); }
   public void testIgnoreToString() throws Throwable { doTest(); }
   public void testDontIgnoreToStringInsideIt() throws Throwable { doTest(); }
+  @NeedsIndex.ForStandardLibrary
   public void testDontIgnoreToStringInStringBuilders() throws Throwable {
     configure();
     myFixture.assertPreferredCompletionItems(0, "bar.substring", "bar.substring", "bar.toString");
   }
 
   public void testNoObjectMethodsAsFirstPart() throws Throwable { doTest(); }
+  @NeedsIndex.ForStandardLibrary
   public void testGetClassLoader() throws Throwable {
     configure();
     selectItem(myItems[0]);
@@ -125,12 +138,13 @@ public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCas
     configureByFile(getTestName(false) + ".java");
   }
 
+  @NeedsIndex.ForStandardLibrary
   public void testNoArraysAsListCommonPrefix() throws Throwable {
     configure();
     checkResultByFile(getTestName(false) + ".java");
     assertStringItems("bar()", "foo()");
-    assertEquals("Arrays.asList(f.bar())", LookupElementPresentation.renderElement(myItems[0]).getItemText());
-    assertEquals("Arrays.asList(f.foo())", LookupElementPresentation.renderElement(myItems[1]).getItemText());
+    assertEquals("Arrays.asList(f.bar())", renderElement(myItems[0]).getItemText());
+    assertEquals("Arrays.asList(f.foo())", renderElement(myItems[1]).getItemText());
     selectItem(myItems[1]);
     checkResult();
   }
@@ -144,6 +158,7 @@ public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCas
   }
 
   public void testDontChainStringMethodsOnString() throws Throwable { doTest(); }
+  @NeedsIndex.ForStandardLibrary
   public void testStringMethodsWhenNothingFound() throws Throwable { doTest(); }
 
   public void testDontSuggestTooGenericMethods() throws Throwable {
@@ -164,6 +179,7 @@ public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCas
     assertStringItems("o.gggg", "false", "true"); 
   }
 
+  @NeedsIndex.ForStandardLibrary
   public void testEmptyListInMethodCall() throws Throwable {
     configure();
     selectItem(myItems[0]);
@@ -174,12 +190,14 @@ public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCas
     checkResultByFile(getTestName(false) + "-out.java");
   }
 
+  @NeedsIndex.ForStandardLibrary
   public void testSingletonMap() throws Throwable {
     configure();
     selectItem(myItems[0]);
     checkResult();
   }
 
+  @NeedsIndex.ForStandardLibrary
   public void testChainDuplicationAfterInstanceof() {
     configure();
     assertStringItems("test.test", "toString");
@@ -202,11 +220,13 @@ public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCas
     checkResult();
   }
 
+  @NeedsIndex.Full
   public void testGlobalFactoryMethods() {
     configure();
     assertStringItems("createExpected", "Constants.SUBSTRING", "createSubGeneric", "createSubRaw", "createSubString");
   }
 
+  @NeedsIndex.ForStandardLibrary
   public void testEmptyMapPresentation() {
     configure();
     LookupElementPresentation presentation = new LookupElementPresentation();
@@ -214,6 +234,7 @@ public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCas
     assertEquals("Collections.<String, S...>emptyMap", presentation.getItemText());
   }
 
+  @NeedsIndex.ForStandardLibrary
   public void testEmptyMapPresentation2() {
     configure();
     LookupElementPresentation presentation = new LookupElementPresentation();
@@ -223,7 +244,7 @@ public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCas
 
   public void testNoThisFieldsInDelegatingConstructorCall() {
     configure();
-    assertOrderedEquals(myFixture.getLookupElementStrings(), "delegate.field", "x");
+    assertOrderedEquals(myFixture.getLookupElementStrings(), "x", "delegate.field");
   }
 
   public void testPreferChainFieldSuggestionByExpectedName() {
@@ -233,6 +254,6 @@ public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCas
 
   public void testNoAsListWhenSetExpected() {
     configure();
-    assertNull(ContainerUtil.find(myFixture.getLookupElements(), e -> LookupElementPresentation.renderElement(e).getItemText().contains("asList")));
+    assertNull(ContainerUtil.find(myFixture.getLookupElements(), e -> renderElement(e).getItemText().contains("asList")));
   }
 }

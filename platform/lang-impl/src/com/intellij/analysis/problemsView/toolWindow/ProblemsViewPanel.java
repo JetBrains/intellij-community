@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
@@ -23,7 +24,6 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.RestoreSelectionListener;
-import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
@@ -32,40 +32,52 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collection;
 import java.util.Comparator;
+import java.util.function.Supplier;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.application.ModalityState.stateForComponent;
-import static com.intellij.ui.AppUIUtil.invokeLaterIfProjectAlive;
 import static com.intellij.ui.ColorUtil.toHtmlColor;
 import static com.intellij.ui.ScrollPaneFactory.createScrollPane;
 import static com.intellij.ui.scale.JBUIScale.scale;
 import static com.intellij.util.OpenSourceUtil.navigate;
-import static java.util.Collections.emptyList;
 import static javax.swing.tree.TreeSelectionModel.SINGLE_TREE_SELECTION;
 
-abstract class ProblemsViewPanel extends OnePixelSplitter implements Disposable, DataProvider {
+class ProblemsViewPanel extends OnePixelSplitter implements Disposable, DataProvider {
   private static final Logger LOG = Logger.getInstance(ProblemsViewPanel.class);
   private final Project myProject;
   private final ProblemsViewState myState;
+  private final Supplier<@NlsContexts.TabTitle String> myName;
   private final ProblemsTreeModel myTreeModel = new ProblemsTreeModel(this);
   private final ProblemsViewPreview myPreview = new ProblemsViewPreview(this);
   private final JPanel myPanel;
   private final ActionToolbar myToolbar;
   private final Insets myToolbarInsets = JBUI.insetsRight(1);
-  private final JTree myTree;
+  private final Tree myTree;
   private final TreeExpander myTreeExpander;
   private final SingleAlarm mySelectionAlarm = new SingleAlarm(() -> {
     OpenFileDescriptor descriptor = getSelectedDescriptor();
     updateAutoscroll(descriptor);
     updatePreview(descriptor);
+  }, 50, stateForComponent(this), this);
+  private final SingleAlarm myUpdateAlarm = new SingleAlarm(() -> {
+    ToolWindow window = ProblemsView.getToolWindow(getProject());
+    if (window == null) return;
+    ContentManager manager = window.getContentManagerIfCreated();
+    if (manager == null) return;
+    Content content = manager.getContent(this);
+    if (content == null) return;
+
+    Root root = myTreeModel.getRoot();
+    int count = root == null ? 0 : root.getProblemCount();
+    content.setDisplayName(getName(count));
+    Icon icon = getToolWindowIcon(count);
+    if (icon != null) window.setIcon(icon);
   }, 50, stateForComponent(this), this);
 
   private final Option myAutoscrollToSource = new Option() {
@@ -103,6 +115,7 @@ abstract class ProblemsViewPanel extends OnePixelSplitter implements Disposable,
       updatePreview(getSelectedDescriptor());
     }
   };
+  @SuppressWarnings("unused")
   private final Option mySortFoldersFirst = new Option() {
     @Override
     public boolean isSelected() {
@@ -140,13 +153,13 @@ abstract class ProblemsViewPanel extends OnePixelSplitter implements Disposable,
     }
   };
 
-  ProblemsViewPanel(@NotNull Project project, @NotNull ProblemsViewState state) {
+  ProblemsViewPanel(@NotNull Project project, @NotNull ProblemsViewState state, @NotNull Supplier<String> name) {
     super(false, .5f, .1f, .9f);
     myProject = project;
     myState = state;
+    myName = name;
 
     myTreeModel.setComparator(createComparator());
-    myTreeModel.setFilter(new SeverityFilter(state));
     myTree = new Tree(new AsyncTreeModel(myTreeModel, this));
     myTree.setRootVisible(false);
     myTree.getSelectionModel().setSelectionMode(SINGLE_TREE_SELECTION);
@@ -181,6 +194,11 @@ abstract class ProblemsViewPanel extends OnePixelSplitter implements Disposable,
   public @Nullable Object getData(@NotNull String dataId) {
     if (CommonDataKeys.PROJECT.is(dataId)) return getProject();
     if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) return getTreeExpander();
+    if (PlatformDataKeys.FILE_EDITOR.is(dataId)) {
+      // this code allows to perform Editor's Undo action from the Problems View
+      VirtualFile file = CommonDataKeys.VIRTUAL_FILE.getData(this);
+      return file == null ? null : getPreview().findFileEditor(file, getProject());
+    }
     OpenFileDescriptor descriptor = getSelectedDescriptor();
     if (descriptor != null) {
       if (CommonDataKeys.NAVIGATABLE.is(dataId)) return descriptor;
@@ -191,31 +209,16 @@ abstract class ProblemsViewPanel extends OnePixelSplitter implements Disposable,
     return null;
   }
 
-  abstract @NotNull String getDisplayName();
-
   final void updateToolWindowContent() {
-    invokeLaterIfProjectAlive(getProject(), () -> {
-      ToolWindow window = ProblemsView.getToolWindow(getProject());
-      if (window == null) return;
-      ContentManager manager = window.getContentManagerIfCreated();
-      if (manager == null) return;
-      Content content = manager.getContent(this);
-      if (content == null) return;
-
-      Root root = myTreeModel.getRoot();
-      int count = root == null ? 0 : root.getProblemsCount();
-      content.setDisplayName(getContentDisplayName(count));
-      Icon icon = getToolWindowIcon(count);
-      if (icon != null) window.setIcon(icon);
-    });
+    myUpdateAlarm.cancelAndRequest();
   }
 
   @Nullable Icon getToolWindowIcon(int count) {
     return null;
   }
 
-  @NotNull String getContentDisplayName(int count) {
-    String name = getDisplayName();
+  @NotNull @NlsContexts.TabTitle String getName(int count) {
+    String name = myName.get();
     if (count <= 0) return name;
     return "<html><body>" + name + " <font color='" + toHtmlColor(UIUtil.getInactiveTextColor()) + "'>" + count + "</font></body></html>";
   }
@@ -242,7 +245,7 @@ abstract class ProblemsViewPanel extends OnePixelSplitter implements Disposable,
     return myTreeModel;
   }
 
-  final @NotNull JTree getTree() {
+  final @NotNull Tree getTree() {
     return myTree;
   }
 
@@ -289,7 +292,7 @@ abstract class ProblemsViewPanel extends OnePixelSplitter implements Disposable,
   }
 
   private @Nullable OpenFileDescriptor getDescriptor(@NotNull ProblemNode node) {
-    return getDescriptor(node.getFile(), node.getProblem().getOffset());
+    return getDescriptor(node.getFile(), node.getOffset());
   }
 
   private @Nullable OpenFileDescriptor getDescriptor(@NotNull VirtualFile file, int offset) {
@@ -323,23 +326,11 @@ abstract class ProblemsViewPanel extends OnePixelSplitter implements Disposable,
     getApplication().invokeLater(runnable, stateForComponent(this));
   }
 
-  void select(@NotNull Node node) {
-    TreeUtil.promiseSelect(getTree(), createVisitor(node));
-  }
-
-  @NotNull TreeVisitor createVisitor(@NotNull Node node) {
-    return new TreeVisitor.ByTreePath<>(node.getPath(), o -> o);
-  }
-
   @NotNull Comparator<Node> createComparator() {
     return new NodeComparator(
       isNullableOrSelected(getSortFoldersFirst()),
       isNullableOrSelected(getSortBySeverity()),
       isNotNullAndSelected(getSortByName()));
-  }
-
-  @NotNull Collection<Pair<String, Integer>> getSeverityFilters() {
-    return emptyList();
   }
 
   @Nullable Option getAutoscrollToSource() {
@@ -351,11 +342,11 @@ abstract class ProblemsViewPanel extends OnePixelSplitter implements Disposable,
   }
 
   @Nullable Option getSortFoldersFirst() {
-    return mySortFoldersFirst;
+    return null; // TODO:malenkov - support file hierarchy & mySortFoldersFirst;
   }
 
   @Nullable Option getSortBySeverity() {
-    return mySortBySeverity;
+    return this instanceof HighlightingPanel ? mySortBySeverity : null;
   }
 
   @Nullable Option getSortByName() {

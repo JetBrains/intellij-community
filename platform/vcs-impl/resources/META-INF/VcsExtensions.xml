@@ -9,8 +9,7 @@
     <applicationService serviceInterface="com.intellij.vfs.AsyncVfsEventsPostProcessor"
                         serviceImplementation="com.intellij.vfs.AsyncVfsEventsPostProcessorImpl"/>
     <applicationService serviceInterface="com.intellij.conversion.ConversionService"
-                        serviceImplementation="com.intellij.impl.ConversionServiceImpl"
-                        overrides="true"/>
+                        serviceImplementation="com.intellij.impl.ConversionServiceImpl"/>
 
     <projectService serviceInterface="com.intellij.openapi.vcs.changes.ChangeListManager"
                     serviceImplementation="com.intellij.openapi.vcs.changes.ChangeListManagerImpl" preload="notHeadless"/>
@@ -103,7 +102,17 @@
 
     <referenceProviderType key="commentsReferenceProvider"
                            implementationClass="com.intellij.psi.impl.source.resolve.reference.ArbitraryPlaceUrlReferenceProvider"/>
+    <psi.symbolReferenceProvider hostLanguage=""
+                                 hostElementClass="com.intellij.model.psi.UrlReferenceHost"
+                                 referenceClass="com.intellij.openapi.paths.UrlReference"
+                                 targetClass="com.intellij.openapi.paths.UrlSymbol"
+                                 implementationClass="com.intellij.psi.impl.source.resolve.reference.UrlReferenceProvider"/>
     <psi.referenceContributor implementation="com.intellij.psi.impl.source.resolve.reference.UrlReferenceContributor"/>
+    <psi.symbolReferenceProvider hostLanguage=""
+                                 hostElementClass="com.intellij.psi.PsiLiteralValue"
+                                 referenceClass="com.intellij.openapi.paths.UrlReference"
+                                 targetClass="com.intellij.openapi.paths.UrlSymbol"
+                                 implementationClass="com.intellij.psi.impl.source.resolve.reference.LiteralUrlReferenceProvider"/>
 
     <selectInTarget implementation="com.intellij.openapi.vcs.changes.SelectInChangesViewTarget"/>
 
@@ -141,6 +150,7 @@
     <changesViewContent tabName="Local Changes"
                         className="com.intellij.openapi.vcs.changes.ChangesViewManager$ContentProvider"
                         preloaderClassName="com.intellij.openapi.vcs.changes.ChangesViewManager$ContentPreloader"
+                        predicateClassName="com.intellij.openapi.vcs.changes.ChangesViewManager$ContentPredicate"
                         displayNameSupplierClassName="com.intellij.openapi.vcs.changes.ChangesViewManager$DisplayNameSupplier"/>
 
     <statusBarWidgetProvider implementation="com.intellij.openapi.vcs.changes.committed.IncomingChangesIndicatorProvider"/>
@@ -162,6 +172,7 @@
     <checkinHandlerFactory implementation="com.intellij.openapi.vcs.checkin.TodoCheckinHandlerFactory" id="todo"/>
     <checkinHandlerFactory implementation="com.intellij.openapi.vcs.checkin.CodeCleanupCheckinHandlerFactory" id="codeCleanup"/>
 
+    <completion.preselectionBehaviourProvider implementation="com.intellij.openapi.vcs.CommitCompletionPreselectionBehaviourProvider"/>
     <completion.contributor language="TEXT" implementationClass="com.intellij.openapi.vcs.CommitCompletionContributor" id="commitCompletion"
                             order="first, before liveTemplates"/>
     <completion.contributor language="TEXT" implementationClass="com.intellij.openapi.vcs.changes.ChangeListCompletionContributor"
@@ -240,9 +251,12 @@
     <vcsStartupActivity implementation="com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl$DetectRootsStartupActivity"/>
 
     <projectService serviceImplementation="com.intellij.openapi.vcs.impl.VcsDirectoryMappingStorage" preload="true"/>
-    <notificationWhitelist groupIds="Vcs Important Messages;Vcs Notifications;Vcs Silent Notifications;Vcs Messages;
-    Common Version Control Messages" notificationIds="ignored.to.exclude.synchronization.notification;externally.added.files.notification;
-    project.configuration.files.added.notification;manage.ignore.files.notification"/>
+    <notificationGroup id="Vcs Messages" displayType="TOOL_WINDOW" toolWindowId="Version Control"/>
+    <notificationGroup id="Common Version Control Messages" displayType="TOOL_WINDOW" toolWindowId="Version Control"/>
+    <notificationGroup id="Vcs Important Messages" displayType="STICKY_BALLOON" notificationIds="ignored.to.exclude.synchronization.notification;
+    externally.added.files.notification;project.configuration.files.added.notification;manage.ignore.files.notification"/>
+    <notificationGroup id="Vcs Notifications" displayType="BALLOON"/>
+    <notificationGroup id="Vcs Silent Notifications" displayType="NONE"/>
     <projectService serviceInterface="com.intellij.execution.configurations.RunConfigurationVcsSupport"
                     serviceImplementation="com.intellij.impl.RunConfigurationVcsSupportImpl"
                     overrides="true"/>

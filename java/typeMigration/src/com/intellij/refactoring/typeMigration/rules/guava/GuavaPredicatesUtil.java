@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.typeMigration.rules.guava;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -11,6 +12,7 @@ import com.intellij.refactoring.typeMigration.TypeConversionDescriptorBase;
 import com.intellij.refactoring.typeMigration.TypeEvaluator;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,7 +21,7 @@ import java.util.Set;
 /**
  * @author Dmitry Batkovich
  */
-public class GuavaPredicatesUtil {
+public final class GuavaPredicatesUtil {
   private static final Logger LOG = Logger.getInstance(GuavaPredicatesUtil.class);
 
   static final Set<String> PREDICATES_AND_OR = ContainerUtil.newHashSet("or", "and");
@@ -61,7 +63,7 @@ public class GuavaPredicatesUtil {
   private static class TypeConversionDescriptorWithLocalVariable extends TypeConversionDescriptor {
     private final String myReplaceByStringTemplate;
 
-    TypeConversionDescriptorWithLocalVariable(String methodName, String replaceByString) {
+    TypeConversionDescriptorWithLocalVariable(@NlsSafe String methodName, @NonNls String replaceByString) {
       super("'_Predicates?." + methodName + "(" + (methodName.equals("equalTo") ? "$v$" : "") + ")", null);
       myReplaceByStringTemplate = replaceByString;
     }
@@ -122,7 +124,7 @@ public class GuavaPredicatesUtil {
 
     @Override
     public PsiExpression replace(PsiExpression expression, @NotNull TypeEvaluator evaluator) throws IncorrectOperationException {
-      String newExpressionString =
+      @NonNls String newExpressionString =
         GuavaConversionUtil.adjustLambdaContainingExpression(((PsiMethodCallExpression)expression).getArgumentList().getExpressions()[0], true, myTargetType, evaluator).getText() + ".negate()";
 
       final PsiElement parent = expression.getParent();
@@ -164,7 +166,7 @@ public class GuavaPredicatesUtil {
         return (PsiExpression)expression.replace(GuavaConversionUtil.adjustLambdaContainingExpression(arguments[0], true, myTargetType, evaluator));
       }
       LOG.assertTrue(arguments.length != 0);
-      StringBuilder replaceBy = new StringBuilder();
+      @NonNls StringBuilder replaceBy = new StringBuilder();
       for (int i = 1; i < arguments.length; i++) {
         PsiExpression argument = arguments[i];
         replaceBy.append(".").append(methodName).append("(").append(GuavaConversionUtil.adjustLambdaContainingExpression(argument, false, myTargetType, evaluator).getText()).append(")");

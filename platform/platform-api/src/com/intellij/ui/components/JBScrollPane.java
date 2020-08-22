@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
 import com.intellij.ide.ui.UISettings;
@@ -51,9 +51,9 @@ public class JBScrollPane extends JScrollPane {
    * when insets for {@code JScrollPane's} content are being calculated.
    * <p>
    * Without this key scrollbar's width is included to content insets when content is {@code JList}. As a result list items cannot intersect with
-   * scrollbar
+   * scrollbar.
    * <p>
-   * Please use as a marker for scrollbars, that should be transparent and shown over content
+   * Please use as a marker for scrollbars, that should be transparent and shown over content.
    *
    * @see UIUtil#putClientProperty(JComponent, Key, Object)
    */
@@ -184,9 +184,8 @@ public class JBScrollPane extends JScrollPane {
   }
 
   /**
-   * Adds status component which's anchored to the top right corner above the right scrollbar.
-   * This component obeys the <code>Flip</code>
-   * @param statusComponent
+   * Adds status component which is anchored to the top right corner above the right scrollbar.
+   * This component obeys the {@link Flip}.
    */
   public void setStatusComponent(JComponent statusComponent) {
     JComponent old = getStatusComponent();
@@ -207,7 +206,7 @@ public class JBScrollPane extends JScrollPane {
     return statusComponent;
   }
 
-  private static class JBMouseWheelListener implements MouseWheelListener {
+  private static final class JBMouseWheelListener implements MouseWheelListener {
 
     private final MouseWheelListener myDelegate;
     private MouseWheelSmoothScroll mySmoothScroll;
@@ -641,7 +640,7 @@ public class JBScrollPane extends JScrollPane {
       colHeadBounds.x = bounds.x - insets.left;
       colHeadBounds.width = bounds.width + insets.left + insets.right;
       boolean fillUpperCorner = false;
-      boolean hasStatusComponent = statusComponent != null && statusComponent.isShowing(); 
+      boolean hasStatusComponent = statusComponent != null && statusComponent.isShowing();
       if (colHead != null) {
         if (vsbOpaque) {
           Component corner = vsbOnLeft ? (hsbOnTop ? lowerLeft : upperLeft) : (hsbOnTop ? lowerRight : upperRight);

@@ -1,30 +1,17 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.module;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.AreaInstance;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.SystemIndependent;
+import org.jetbrains.annotations.*;
+
+import java.io.File;
+import java.nio.file.Path;
 
 /**
  * Represents a module in an IDEA project.
@@ -42,19 +29,29 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
   @NonNls String ELEMENT_TYPE = "type";
 
   /**
-   * Returns the {@code VirtualFile} for the module .iml file.
-   *
-   * @return the virtual file instance.
+   * Returns the {@code VirtualFile} for the module .iml file. Note that location if .iml file may not be related to location of the module
+   * files, it may be stored in a different directory, under .idea/modules or doesn't exist at all if the module configuration is imported
+   * from external project system (e.g. Gradle). So only internal subsystems which deal with serialization are supposed to use this method.
+   * If you need to find a directory (directories) where source files for the module are located, get its {@link com.intellij.openapi.roots.ModuleRootModel#getContentRoots() content roots}.
+   * If you need to get just some directory near to module files (e.g. to select by default in a file chooser), use {@link com.intellij.openapi.module.ModuleUtil#suggestBaseDirectory}.
    */
-  @Nullable
-  VirtualFile getModuleFile();
+  @ApiStatus.Internal
+  @Nullable VirtualFile getModuleFile();
 
   /**
-   * System-independent path to the .iml file or empty string if module is not persistent.
+   * Returns path to the module .iml file. This method isn't supposed to be used from plugins, see {@link #getModuleFile()} details.
    */
-  @NotNull
+  @ApiStatus.Internal
   @SystemIndependent
-  String getModuleFilePath();
+  default @NotNull String getModuleFilePath() {
+    return getModuleNioFile().toString().replace(File.separatorChar, '/');
+  }
+
+  /**
+   * Returns path to the module .iml file. This method isn't supposed to be used from plugins, see {@link #getModuleFile()} details.
+   */
+  @ApiStatus.Internal
+  @NotNull Path getModuleNioFile();
 
   /**
    * Returns the project to which this module belongs.
@@ -68,7 +65,7 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
    *
    * @return the module name.
    */
-  @NotNull String getName();
+  @NotNull @NlsSafe String getName();
 
   /**
    * Checks if the module instance has been disposed and unloaded.
@@ -98,6 +95,7 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
    * @deprecated Please store options in your own {@link com.intellij.openapi.components.PersistentStateComponent}
    */
   @Deprecated
+  @NonNls
   @Nullable
   String getOptionValue(@NotNull String key);
 
@@ -164,13 +162,13 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
   @NotNull
   GlobalSearchScope getModuleRuntimeScope(boolean includeTests);
 
-  @Nullable
+  @Nullable @NonNls
   default String getModuleTypeName() {
     //noinspection deprecation
     return getOptionValue(ELEMENT_TYPE);
   }
 
-  default void setModuleType(@NotNull String name) {
+  default void setModuleType(@NotNull @NonNls String name) {
     //noinspection deprecation
     setOption(ELEMENT_TYPE, name);
   }

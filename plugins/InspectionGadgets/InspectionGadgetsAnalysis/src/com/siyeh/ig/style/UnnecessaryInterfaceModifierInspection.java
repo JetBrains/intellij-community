@@ -87,7 +87,7 @@ public class UnnecessaryInterfaceModifierInspection extends BaseInspection imple
     return new UnnecessaryInterfaceModifiersFix((String)infos[0]);
   }
 
-  private static class UnnecessaryInterfaceModifiersFix extends InspectionGadgetsFix {
+  private static final class UnnecessaryInterfaceModifiersFix extends InspectionGadgetsFix {
 
     private final String modifiersText;
 

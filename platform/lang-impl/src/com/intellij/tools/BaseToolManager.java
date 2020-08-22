@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tools;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.options.SchemeManager;
@@ -8,18 +9,20 @@ import com.intellij.openapi.options.SchemeManagerFactory;
 import com.intellij.openapi.options.SchemeProcessor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
-import gnu.trove.THashSet;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class BaseToolManager<T extends Tool> {
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+public abstract class BaseToolManager<T extends Tool> implements Disposable {
+  private final SchemeManagerFactory myFactory;
   private final SchemeManager<ToolsGroup<T>> mySchemeManager;
 
   public BaseToolManager(@NotNull SchemeManagerFactory factory, @NotNull String schemePath, @NotNull String presentableName) {
+    myFactory = factory;
     //noinspection AbstractMethodCallInConstructor
     mySchemeManager = factory.create(schemePath, createProcessor(), presentableName);
     mySchemeManager.loadSchemes();
@@ -74,7 +77,7 @@ public abstract class BaseToolManager<T extends Tool> {
 
     // register
     // to prevent exception if 2 or more targets have the same name
-    Set<String> registeredIds = new THashSet<>();
+    Set<String> registeredIds = new HashSet<>();
     for (T tool : getTools()) {
       String actionId = tool.getActionId();
       if (registeredIds.add(actionId)) {
@@ -90,13 +93,18 @@ public abstract class BaseToolManager<T extends Tool> {
 
   protected abstract String getActionIdPrefix();
 
-  private void unregisterActions(@Nullable ActionManager actionManager) {
+  protected void unregisterActions(@Nullable ActionManager actionManager) {
     if (actionManager == null) {
       return;
     }
 
-    for (String oldId : actionManager.getActionIds(getActionIdPrefix())) {
+    for (String oldId : actionManager.getActionIdList(getActionIdPrefix())) {
       actionManager.unregisterAction(oldId);
     }
+  }
+
+  @Override
+  public void dispose() {
+    myFactory.dispose(mySchemeManager);
   }
 }

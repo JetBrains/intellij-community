@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle.arrangement.engine;
 
 import com.intellij.application.options.CodeStyle;
@@ -482,7 +482,7 @@ public final class ArrangementEngine {
     }
   }
 
-  private static class Context<E extends ArrangementEntry> {
+  private static final class Context<E extends ArrangementEntry> {
 
     @NotNull public final List<ArrangementMoveInfo> moveInfos = new ArrayList<>();
 

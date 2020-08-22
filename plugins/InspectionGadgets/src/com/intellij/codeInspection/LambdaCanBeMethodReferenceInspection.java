@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
@@ -23,6 +24,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -86,7 +88,7 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
           element,
           getDisplayName(),
           type != ProblemHighlightType.INFORMATION,
-          type, true, new ReplaceWithMethodRefFix(methodRefCandidate.mySafeQualifier ? "" : " (may change semantics)")));
+          type, true, new ReplaceWithMethodRefFix(methodRefCandidate.mySafeQualifier)));
       }
     };
   }
@@ -369,8 +371,7 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
            parameters[0] == ((PsiReferenceExpression)expression).resolve();
   }
 
-  @Nullable
-  static String createMethodReferenceText(final PsiElement element,
+  static @Nullable @NonNls String createMethodReferenceText(final PsiElement element,
                                                  final PsiType functionalInterfaceType,
                                                  final PsiVariable[] parameters) {
     if (element instanceof PsiMethodCallExpression) {
@@ -473,12 +474,11 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
     return classOrPrimitiveName + StringUtil.repeat("[]", newExprType.getArrayDimensions());
   }
 
-  @Nullable
-  private static String getQualifierTextByMethodCall(final PsiMethodCallExpression methodCall,
-                                                     final PsiType functionalInterfaceType,
-                                                     final PsiVariable[] parameters,
-                                                     final PsiMethod psiMethod,
-                                                     final PsiSubstitutor substitutor) {
+  private static @Nullable @NlsSafe String getQualifierTextByMethodCall(final PsiMethodCallExpression methodCall,
+                                                                        final PsiType functionalInterfaceType,
+                                                                        final PsiVariable[] parameters,
+                                                                        final PsiMethod psiMethod,
+                                                                        final PsiSubstitutor substitutor) {
 
     final PsiExpression qualifierExpression = methodCall.getMethodExpression().getQualifierExpression();
 
@@ -579,17 +579,17 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
   }
 
   private static class ReplaceWithMethodRefFix implements LocalQuickFix {
-    private final String mySuffix;
+    private final boolean mySafeQualifier;
 
-    ReplaceWithMethodRefFix(String suffix) {
-      mySuffix = suffix;
+    ReplaceWithMethodRefFix(boolean mayChangeSemantics) {
+      mySafeQualifier = mayChangeSemantics;
     }
 
     @Nls
     @NotNull
     @Override
     public String getName() {
-      return getFamilyName() + mySuffix;
+      return mySafeQualifier ? getFamilyName() : InspectionGadgetsBundle.message("replace.with.method.ref.fix.name.may.change.semantics");
     }
 
     @NotNull

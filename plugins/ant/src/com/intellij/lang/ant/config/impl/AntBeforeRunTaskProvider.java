@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.ant.config.impl;
 
 import com.intellij.execution.BeforeRunTaskProvider;
@@ -8,7 +8,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.config.AntBuildTarget;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import icons.AntIcons;
@@ -20,13 +19,8 @@ import javax.swing.*;
 /**
  * @author Vladislav.Kaznacheev
  */
-public class AntBeforeRunTaskProvider extends BeforeRunTaskProvider<AntBeforeRunTask> {
+public final class AntBeforeRunTaskProvider extends BeforeRunTaskProvider<AntBeforeRunTask> {
   public static final Key<AntBeforeRunTask> ID = Key.create("AntTarget");
-  private final Project myProject;
-
-  public AntBeforeRunTaskProvider(Project project) {
-    myProject = project;
-  }
 
   @Override
   public Key<AntBeforeRunTask> getId() {
@@ -66,7 +60,7 @@ public class AntBeforeRunTaskProvider extends BeforeRunTaskProvider<AntBeforeRun
   @Override
   public boolean configureTask(@NotNull RunConfiguration runConfiguration, @NotNull AntBeforeRunTask task) {
     AntBuildTarget buildTarget = findTargetToExecute(task);
-    final TargetChooserDialog dlg = new TargetChooserDialog(myProject, buildTarget);
+    final TargetChooserDialog dlg = new TargetChooserDialog(task.getProject(), buildTarget);
     if (dlg.showAndGet()) {
       task.setTargetName(null);
       task.setAntFileUrl(null);
@@ -85,7 +79,7 @@ public class AntBeforeRunTaskProvider extends BeforeRunTaskProvider<AntBeforeRun
 
   @Override
   public AntBeforeRunTask createTask(@NotNull RunConfiguration runConfiguration) {
-    return new AntBeforeRunTask();
+    return new AntBeforeRunTask(runConfiguration.getProject());
   }
 
   @Override
@@ -95,15 +89,12 @@ public class AntBeforeRunTaskProvider extends BeforeRunTaskProvider<AntBeforeRun
 
   @Override
   public boolean executeTask(@NotNull DataContext context, @NotNull RunConfiguration configuration, @NotNull ExecutionEnvironment env, @NotNull AntBeforeRunTask task) {
-    final AntBuildTarget target = findTargetToExecute(task);
-    if (target != null) {
-      return AntConfigurationImpl.executeTargetSynchronously(context, target);
-    }
-    return true;
+    AntBuildTarget target = findTargetToExecute(task);
+    return target == null || AntConfigurationImpl.executeTargetSynchronously(context, target);
   }
 
   @Nullable
-  private AntBuildTarget findTargetToExecute(@NotNull AntBeforeRunTask task) {
-    return GlobalAntConfiguration.getInstance().findTarget(myProject, task.getAntFileUrl(), task.getTargetName());
+  private static AntBuildTarget findTargetToExecute(@NotNull AntBeforeRunTask task) {
+    return GlobalAntConfiguration.getInstance().findTarget(task.getProject(), task.getAntFileUrl(), task.getTargetName());
   }
 }

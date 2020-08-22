@@ -15,5 +15,7 @@ public class LanguageBundleListener implements ApplicationInitializedListener {
     ClassLoader pluginClassLoader = pd.getPluginClassLoader();
     UtilBundle.loadBundleFromPlugin(pluginClassLoader);
     UtilUiBundle.loadBundleFromPlugin(pluginClassLoader);
+
+    DynamicBundle.loadLocale(langBundle);
   }
 }

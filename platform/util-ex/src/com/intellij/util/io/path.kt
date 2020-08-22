@@ -1,9 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io
 
-import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.vfs.CharsetToolkit
-import com.intellij.util.containers.ContainerUtil
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
@@ -11,9 +10,12 @@ import java.io.OutputStream
 import java.nio.ByteBuffer
 import java.nio.CharBuffer
 import java.nio.channels.Channels
+import java.nio.charset.Charset
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
+import java.nio.file.attribute.DosFileAttributeView
 import java.nio.file.attribute.FileTime
+import java.util.function.Predicate
 import kotlin.math.min
 
 operator fun Path.div(x: String): Path = resolve(x)
@@ -92,9 +94,8 @@ fun Path.delete(recursively: Boolean = true) {
 }
 
 private fun doDelete(file: Path) {
-  val attributes: BasicFileAttributes
-  try {
-    attributes = Files.readAttributes(file, BasicFileAttributes::class.java, LinkOption.NOFOLLOW_LINKS)
+  val attributes = try {
+    Files.readAttributes(file, BasicFileAttributes::class.java, LinkOption.NOFOLLOW_LINKS)
   }
   catch (e: NoSuchFileException) {
     return
@@ -106,14 +107,16 @@ private fun doDelete(file: Path) {
   }
 
   Files.walkFileTree(file, object : SimpleFileVisitor<Path>() {
-    @Throws(IOException::class)
     override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
       deleteFile(file)
       return FileVisitResult.CONTINUE
     }
 
-    @Throws(IOException::class)
-    override fun postVisitDirectory(dir: Path, exc: IOException?): FileVisitResult {
+    override fun postVisitDirectory(dir: Path, exception: IOException?): FileVisitResult {
+      if (exception != null) {
+        throw exception
+      }
+
       Files.deleteIfExists(dir)
       return FileVisitResult.CONTINUE
     }
@@ -121,26 +124,33 @@ private fun doDelete(file: Path) {
 }
 
 private fun deleteFile(file: Path) {
-  try {
-    Files.deleteIfExists(file)
-  }
-  catch (e: IOException) {
-    // repeated delete is required for bad OS like Windows
-    FileUtilRt.doIOOperation(FileUtilRt.RepeatableIOOperation<Boolean, IOException> { lastAttempt ->
-      try {
-        Files.deleteIfExists(file)
+  // repeated delete is required for bad OS like Windows
+  val maxAttemptCount = 10
+  var attemptCount = 0
+  while (true) {
+    try {
+      Files.deleteIfExists(file)
+      return
+    }
+    catch (e: IOException) {
+      if (++attemptCount == maxAttemptCount) {
+        throw e
       }
-      catch (e: IOException) {
-        return@RepeatableIOOperation if (lastAttempt) {
-          false
-        }
-        else {
-          throw e
+
+      if (SystemInfoRt.isWindows && e is AccessDeniedException) {
+        val view = Files.getFileAttributeView(file, DosFileAttributeView::class.java)
+        if (view != null && view.readAttributes().isReadOnly) {
+          view.setReadOnly(false)
         }
       }
 
-      true
-    })
+      try {
+        Thread.sleep(10)
+      }
+      catch (ignored: InterruptedException) {
+        throw e
+      }
+    }
   }
 }
 
@@ -189,13 +199,12 @@ fun Path.readBytes(): ByteArray = Files.readAllBytes(this)
 @Throws(IOException::class)
 fun Path.readText(): String = readBytes().toString(Charsets.UTF_8)
 
-@Throws(IOException::class)
 fun Path.readChars(): CharSequence {
   // channel is used to avoid Files.size() call
   Files.newByteChannel(this).use { channel ->
     val size = channel.size().toInt()
     Channels.newReader(channel, Charsets.UTF_8.newDecoder(), size).use { reader ->
-      return reader.readCharSequence(channel.size().toInt())
+      return reader.readCharSequence(size)
     }
   }
 }
@@ -214,7 +223,6 @@ fun Path.write(data: ByteArray, offset: Int = 0, size: Int = data.size): Path {
 }
 
 @JvmOverloads
-@Throws(IOException::class)
 fun Path.write(data: CharSequence, createParentDirs: Boolean = true): Path {
   if (data is String) {
     if (createParentDirs) {
@@ -228,13 +236,18 @@ fun Path.write(data: CharSequence, createParentDirs: Boolean = true): Path {
   return this
 }
 
+fun Path.write(data: CharSequence, charset: Charset): Path {
+  write(charset.encode(CharBuffer.wrap(data)), createParentDirs = true)
+  return this
+}
+
 @Throws(IOException::class)
 fun Path.write(data: ByteBuffer, createParentDirs: Boolean = true): Path {
   if (createParentDirs) {
     parent?.createDirectories()
   }
 
-  Files.newByteChannel(this, setOf(StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING)).use {
+  Files.newByteChannel(this, HashSet(listOf(StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING))).use {
     it.write(data)
   }
   return this
@@ -269,9 +282,10 @@ fun Path.copy(target: Path): Path {
 /**
  * Opposite to Java, parent directories will be created
  */
-fun Path.createFile() {
+fun Path.createFile(): Path {
   parent?.createDirectories()
   Files.createFile(this)
+  return this
 }
 
 inline fun <R> Path.directoryStreamIfExists(task: (stream: DirectoryStream<Path>) -> R): R? {
@@ -292,16 +306,16 @@ inline fun <R> Path.directoryStreamIfExists(noinline filter: ((path: Path) -> Bo
   return null
 }
 
-private val illegalChars = ContainerUtil.set('/', '\\', '?', '<', '>', ':', '*', '|', '"', ':')
+private val illegalChars = HashSet(listOf('/', '\\', '?', '<', '>', ':', '*', '|', '"', ':'))
 
 // https://github.com/parshap/node-sanitize-filename/blob/master/index.js
-fun sanitizeFileName(name: String, replacement: String? = "_", isTruncate: Boolean = true): String {
+fun sanitizeFileName(name: String, replacement: String? = "_", truncateIfNeeded: Boolean = true, extraIllegalChars: Predicate<Char>? = null): String {
   var result: StringBuilder? = null
   var last = 0
   val length = name.length
   for (i in 0 until length) {
     val c = name[i]
-    if (!illegalChars.contains(c) && !c.isISOControl()) {
+    if (!illegalChars.contains(c) && !c.isISOControl() && (extraIllegalChars == null || !extraIllegalChars.test(c))) {
       continue
     }
 
@@ -318,17 +332,17 @@ fun sanitizeFileName(name: String, replacement: String? = "_", isTruncate: Boole
     last = i + 1
   }
 
-  fun String.truncateFileName() = if (isTruncate) substring(0, min(length, 255)) else this
+  fun truncateFileName(s: String) = if (truncateIfNeeded) s.substring(0, min(length, 255)) else s
 
   if (result == null) {
-    return name.truncateFileName()
+    return truncateFileName(name)
   }
 
   if (last < length) {
     result.append(name, last, length)
   }
 
-  return result.toString().truncateFileName()
+  return truncateFileName(result.toString())
 }
 
 val Path.isWritable: Boolean
@@ -341,3 +355,5 @@ fun isDirectory(attributes: BasicFileAttributes?): Boolean {
 fun isSymbolicLink(attributes: BasicFileAttributes?): Boolean {
   return attributes != null && attributes.isSymbolicLink
 }
+
+fun Path.isAncestor(child: Path) : Boolean = child.startsWith(this)

@@ -40,12 +40,17 @@ import com.intellij.psi.NavigatablePsiElement
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.statistics.StatisticsManager
+import com.intellij.psi.statistics.impl.StatisticsManagerImpl
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.testFramework.TestModeFlags
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.NotNull
+
+import static com.intellij.java.codeInsight.completion.NormalCompletionTestCase.renderElement
+
 /**
  * @author peter
  */
@@ -1416,7 +1421,7 @@ class Foo {{
     assert myFixture.lookupElementStrings as Set == ['Util.bar', 'Util.CONSTANT', 'Util.foo'] as Set
 
     def constant = myFixture.lookupElements.find { it.lookupString == 'Util.CONSTANT' }
-    LookupElementPresentation p = ApplicationManager.application.runReadAction ({ LookupElementPresentation.renderElement(constant) } as Computable<LookupElementPresentation>)
+    LookupElementPresentation p = renderElement(constant)
     assert p.itemText == 'Util.CONSTANT'
     assert p.tailText == ' ( = 2) foo'
     assert p.typeText == 'int'
@@ -1617,8 +1622,8 @@ class Foo {
 
   void "test typing during restart commit document"() {
     def longText = "\nfoo(); bar();" * 100
-    myFixture.configureByText "a.java", "class Foo { void foo(int ab, int abde) { <caret>; $longText }}"
-    myFixture.type('a')
+    myFixture.configureByText "a.java", "class Foo { void foo(int xb, int xbde) { <caret>; $longText }}"
+    myFixture.type('x')
     joinAutopopup()
     myFixture.type('b')
     myTester.joinCommit()
@@ -1723,7 +1728,7 @@ class Foo {
     type 'tpl'
     myFixture.assertPreferredCompletionItems 0, 'tpl', 'tplMn'
 
-    LookupElementPresentation p = LookupElementPresentation.renderElement(myFixture.lookupElements[0])
+    LookupElementPresentation p = renderElement(myFixture.lookupElements[0])
     assert p.itemText == 'tpl'
     assert !p.tailText && !p.typeText
   }
@@ -1733,7 +1738,7 @@ class Foo {
     myFixture.configureByText "a.java", "class Foo { { foo.<caret> } }"
     type 'b'
     assert myFixture.lookupElementStrings == ['bar']
-    assert LookupElementPresentation.renderElement(myFixture.lookupElements[0]).itemText == 'bar.'
+    assert renderElement(myFixture.lookupElements[0]).itemText == 'bar.'
     myFixture.type('\n')
     assert myFixture.editor.document.text.contains('foo.bar. ')
     joinAutopopup()
@@ -1807,6 +1812,31 @@ ita<caret>
     assert lookup
     def firstItems = myFixture.lookupElements[0..<4]
     assert firstItems.each { InheritanceUtil.isInheritor(it.object as PsiClass, List.name) }
+  }
+
+  void "test prefer previously selected despite many namesakes"() {
+    ((StatisticsManagerImpl)StatisticsManager.getInstance()).enableStatistics(myFixture.getTestRootDisposable())
+
+    def count = 400
+    def toSelect = 390
+    for (i in 0..<count) {
+      myFixture.addClass("package p$i; public class MyClass {}")
+    }
+    myFixture.configureByText "a.java", "class C extends <caret>"
+    type 'MyCla'
+    myFixture.assertPreferredCompletionItems 0, Collections.nCopies(count, 'MyClass') as String[]
+
+    edt {
+      assert renderElement(myFixture.lookup.items[toSelect]).tailText == " p$toSelect"
+      CompletionSortingTestCase.imitateItemSelection(myFixture.lookup, toSelect)
+      myFixture.lookup.hideLookup(true)
+    }
+
+    type 's'
+    myFixture.assertPreferredCompletionItems 0, Collections.nCopies(count, 'MyClass') as String[]
+    edt {
+      assert renderElement(myFixture.lookup.items[0]).tailText == " p$toSelect"
+    }
   }
 
 }

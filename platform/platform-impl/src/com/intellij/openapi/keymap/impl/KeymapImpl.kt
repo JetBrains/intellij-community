@@ -26,6 +26,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginsAdvertiser
 import com.intellij.openapi.util.InvalidDataException
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.KeyStrokeAdapter
 import com.intellij.util.ArrayUtilRt
@@ -33,7 +34,6 @@ import com.intellij.util.SmartList
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.mapSmart
 import com.intellij.util.containers.nullize
-import gnu.trove.THashMap
 import org.jdom.Element
 import java.util.*
 import javax.swing.KeyStroke
@@ -80,7 +80,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
 
   override fun getSchemeState(): SchemeState? = schemeState
 
-  private val actionIdToShortcuts = THashMap<String, MutableList<Shortcut>>()
+  private val actionIdToShortcuts = HashMap<String, MutableList<Shortcut>>()
     get() {
       val dataHolder = dataHolder
       if (dataHolder != null) {
@@ -118,7 +118,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
         return it
       }
 
-      val result = THashMap<KeyStroke, MutableList<String>>()
+      val result = HashMap<KeyStroke, MutableList<String>>()
 
       fun addKeystrokesMap(actionId: String) {
         for (shortcut in getOwnOrBoundShortcuts(actionId)) {
@@ -186,12 +186,9 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
     otherKeymap.cleanShortcutsCache()
 
     otherKeymap.actionIdToShortcuts.clear()
-    otherKeymap.actionIdToShortcuts.ensureCapacity(actionIdToShortcuts.size)
-    actionIdToShortcuts.forEachEntry { actionId, shortcuts ->
-      otherKeymap.actionIdToShortcuts.put(actionId, SmartList(shortcuts))
-      true
+    for (entry in actionIdToShortcuts.entries) {
+      otherKeymap.actionIdToShortcuts.put(entry.key, ContainerUtil.copyList(entry.value))
     }
-
     // after actionIdToShortcuts (on first access we lazily read itself)
     otherKeymap.parent = parent
     otherKeymap.name = name
@@ -295,7 +292,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
   private val gestureToListOfIds: Map<KeyboardModifierGestureShortcut, List<String>> by lazy { fillShortcutToListOfIds(KeyboardModifierGestureShortcut::class.java) }
 
   private fun <T : Shortcut> fillShortcutToListOfIds(shortcutClass: Class<T>): Map<T, MutableList<String>> {
-    val map = THashMap<T, MutableList<String>>()
+    val map = HashMap<T, MutableList<String>>()
 
     fun addActionToShortcutsMap(actionId: String) {
       for (shortcut in getOwnOrBoundShortcuts(actionId)) {
@@ -649,7 +646,7 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
   }
 
   override fun getConflicts(actionId: String, keyboardShortcut: KeyboardShortcut): Map<String, MutableList<KeyboardShortcut>> {
-    val result = THashMap<String, MutableList<KeyboardShortcut>>()
+    val result = HashMap<String, MutableList<KeyboardShortcut>>()
 
     for (id in getActionIds(keyboardShortcut.firstKeyStroke)) {
       if (id == actionId || (actionId.startsWith("Editor") && id == "$${actionId.substring(6)}")) {
@@ -746,7 +743,7 @@ private val visualAssistKeymap = "com.intellij.plugins.visualassistkeymap"
 private val riderKeymap = "com.intellij.plugins.riderkeymap"
 private val vsCodeKeymap = "com.intellij.plugins.vscodekeymap"
 
-internal fun notifyAboutMissingKeymap(keymapName: String, message: String, isParent: Boolean) {
+internal fun notifyAboutMissingKeymap(keymapName: String, @NlsContexts.NotificationContent message: String, isParent: Boolean) {
   val connection = ApplicationManager.getApplication().messageBus.connect()
   connection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
     override fun projectOpened(project: Project) {

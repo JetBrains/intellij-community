@@ -9,12 +9,13 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usages.*;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.usages.rules.SingleParentUsageGroupingRule;
+import com.intellij.usages.rules.UsageGroupingRuleEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class UsageTypeGroupingRule extends SingleParentUsageGroupingRule {
+public class UsageTypeGroupingRule extends SingleParentUsageGroupingRule implements UsageGroupingRuleEx {
   @Nullable
   @Override
   protected UsageGroup getParentGroupFor(@NotNull Usage usage, UsageTarget @NotNull [] targets) {
@@ -64,7 +65,12 @@ public class UsageTypeGroupingRule extends SingleParentUsageGroupingRule {
     return null;
   }
 
-  private static class UsageTypeGroup implements UsageGroup {
+  @Override
+  public @Nullable String getGroupingActionId() {
+    return "UsageGrouping.UsageType";
+  }
+
+  private static final class UsageTypeGroup implements UsageGroup {
     private final UsageType myUsageType;
 
     private UsageTypeGroup(@NotNull UsageType usageType) {

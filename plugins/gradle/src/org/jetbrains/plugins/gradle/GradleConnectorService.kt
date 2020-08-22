@@ -13,7 +13,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.PathUtil
 import com.intellij.util.ReflectionUtil.getDeclaredField
 import com.intellij.util.ReflectionUtil.getField
 import com.intellij.util.containers.ContainerUtil
@@ -52,8 +51,11 @@ class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Project) : D
 
   override fun dispose() {
     if (ApplicationManager.getApplication().isUnitTestMode) return
-    connectorsMap.values.forEach(GradleProjectConnection::disconnect)
+    disconnectGradleConnections()
+    stopIdleDaemonsOfOldVersions()
+  }
 
+  private fun stopIdleDaemonsOfOldVersions() {
     if (DISABLE_STOP_OLD_IDLE_DAEMONS) return
     try {
       if (ProjectUtil.getOpenProjects().isEmpty()) {
@@ -70,6 +72,11 @@ class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Project) : D
     catch (e: Exception) {
       LOG.warn("Failed to stop Gradle daemons during project close", e)
     }
+  }
+
+  private fun disconnectGradleConnections() {
+    connectorsMap.values.forEach(GradleProjectConnection::disconnect)
+    connectorsMap.clear()
   }
 
   private fun getConnection(
@@ -267,7 +274,7 @@ class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Project) : D
    * TODO should be removed when the issue will be fixed at the Gradle tooling api side
    */
   private class DistributionWrapper(private val myDistribution: Distribution) : Distribution {
-    private val myRtJarFile: File = File(PathUtil.getCanonicalPath(PathManager.getJarPathForClass(MarkerRt::class.java)))
+    private val myRtJarFile: File = File(FileUtil.toCanonicalPath(PathManager.getJarPathForClass(MarkerRt::class.java)))
 
     override fun getDisplayName(): String = myDistribution.displayName
 

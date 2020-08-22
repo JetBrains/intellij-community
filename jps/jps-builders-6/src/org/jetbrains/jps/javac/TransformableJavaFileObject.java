@@ -13,7 +13,7 @@ import java.util.Collection;
 /**
  * @author Eugene Zhuravlev
  */
-public class TransformableJavaFileObject implements JavaFileObject {
+public final class TransformableJavaFileObject implements JavaFileObject {
   private final JavaFileObject myOriginal;
   private final Collection<? extends JavaSourceTransformer> myTransformers;
 
@@ -101,6 +101,6 @@ public class TransformableJavaFileObject implements JavaFileObject {
   @Override
   public final String toString() {
     // must implement like this because toString() is called inside com.sun.tools.javac.jvm.ClassWriter instead of getName()
-    return getName();  
+    return getName();
   }
 }

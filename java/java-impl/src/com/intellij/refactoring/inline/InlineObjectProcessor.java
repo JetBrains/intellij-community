@@ -1,16 +1,17 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.BlockUtils;
 import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.codeInsight.editorActions.DeclarationJoinLinesHandler;
+import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
@@ -31,7 +32,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
  * Performs inlining of object construction together with a subsequent call.
  * E.g. {@code new Point(12, 34).getX()} could be inlined to {@code 12}.
  */
-public class InlineObjectProcessor extends BaseRefactoringProcessor {
+public final class InlineObjectProcessor extends BaseRefactoringProcessor {
   private final PsiMethod myMethod;
   private final PsiReference myReference;
   private final PsiNewExpression myNewExpression;
@@ -260,7 +261,7 @@ public class InlineObjectProcessor extends BaseRefactoringProcessor {
         final String containerDescription = RefactoringUIUtil.getDescription(container, true);
         String message = RefactoringBundle.message("0.that.is.used.in.inlined.method.is.not.accessible.from.call.site.s.in.1",
                                                    referencedDescription, containerDescription);
-        conflicts.putValue(container, CommonRefactoringUtil.capitalize(message));
+        conflicts.putValue(container, StringUtil.capitalize(message));
       }
     });
     return showConflicts(conflicts, usagesIn);
@@ -269,7 +270,7 @@ public class InlineObjectProcessor extends BaseRefactoringProcessor {
   @NotNull
   @Override
   protected String getCommandName() {
-    return "Inline Object";
+    return JavaRefactoringBundle.message("inline.object.command.name");
   }
 
   @Nullable

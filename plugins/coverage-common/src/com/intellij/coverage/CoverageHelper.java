@@ -9,7 +9,7 @@ import com.intellij.openapi.util.InvalidDataException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-public class CoverageHelper {
+public final class CoverageHelper {
   private CoverageHelper() {
   }
 

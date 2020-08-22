@@ -63,6 +63,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.platform.langInjection",
     "intellij.java.debugger.streams",
     "intellij.android.smali",
+    "intellij.mlCompletionModels",
     "intellij.statsCollector",
     "intellij.sh",
     "intellij.vcs.changeReminder",
@@ -72,7 +73,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.grazie"
   ]
   protected static final Map<String, String> CE_CLASS_VERSIONS = [
-    ""                                                          : "1.8",
+    ""                                                          : "11",
     "lib/idea_rt.jar"                                           : "1.6",
     "lib/forms_rt.jar"                                          : "1.6",
     "lib/annotations.jar"                                       : "1.6",
@@ -85,6 +86,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "plugins/Groovy/lib/groovy_rt.jar"                          : "1.6",
     "plugins/Groovy/lib/groovy-rt-constants.jar"                : "1.6",
     "plugins/coverage/lib/coverage_rt.jar"                      : "1.6",
+    "plugins/javaFX/lib/rt/sceneBuilderBridge.jar"              : "11",
     "plugins/junit/lib/junit-rt.jar"                            : "1.6",
     "plugins/junit/lib/junit5-rt.jar"                           : "1.8",
     "plugins/gradle/lib/gradle-tooling-extension-api.jar"       : "1.6",
@@ -100,7 +102,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "plugins/xpath/lib/rt/xslt-rt.jar"                          : "1.6",
     "plugins/xslt-debugger/lib/xslt-debugger-rt.jar"            : "1.6",
     "plugins/xslt-debugger/lib/rt/xslt-debugger-impl-rt.jar"    : "1.8",
-    "plugins/android/lib/layoutlib-jre11-26.6.0.3.jar"          : "9",
+    "plugins/android/lib/layoutlib-jre11-27.0.0.0.jar"          : "9",
     "plugins/android/lib/android-rt.jar"                        : "1.8",
   ]
 
@@ -111,8 +113,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     productLayout.additionalPlatformJars.
       putAll("javac2.jar",
              ["intellij.java.compiler.antTasks", "intellij.java.guiForms.compiler", "intellij.java.guiForms.rt",
-              "intellij.java.compiler.instrumentationUtil", "intellij.java.compiler.instrumentationUtil.java8",
-              "intellij.java.jps.javacRefScanner8"])
+              "intellij.java.compiler.instrumentationUtil", "intellij.java.compiler.instrumentationUtil.java8"])
 
     productLayout.additionalPlatformJars.put("resources.jar", "intellij.java.ide.resources")
 

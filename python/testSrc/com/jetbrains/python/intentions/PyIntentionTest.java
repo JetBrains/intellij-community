@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.intentions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.openapi.ui.TestDialogManager;
+import com.intellij.openapi.ui.TestInputDialog;
 import com.intellij.psi.PsiFile;
-import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
@@ -32,6 +33,7 @@ public class PyIntentionTest extends PyTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
+      TestDialogManager.setTestInputDialog(TestInputDialog.DEFAULT);
       if (myDocumentationSettings != null) {
         myDocumentationSettings.setFormat(DocStringFormat.PLAIN);
       }
@@ -58,6 +60,16 @@ public class PyIntentionTest extends PyTestCase {
     assertSdkRootsNotParsed(file);
     myFixture.launchAction(action);
     myFixture.checkResultByFile("intentions/" + getTestName(true) + "_after.py", ignoreWhiteSpaces);
+  }
+
+  private void doMultiFileTest(@NotNull String hint) {
+    final String directoryPath = "intentions/" + getTestName(false);
+    final String filesPathPrefix = directoryPath + "/" + getTestName(true);
+    myFixture.copyDirectoryToProject(directoryPath, "");
+    myFixture.configureByFile(filesPathPrefix + ".py");
+    final IntentionAction action = myFixture.findSingleIntention(hint);
+    myFixture.launchAction(action);
+    myFixture.checkResultByFile(filesPathPrefix + ".py", filesPathPrefix + "_after.py", false);
   }
 
   /**
@@ -167,7 +179,7 @@ public class PyIntentionTest extends PyTestCase {
     doTest(PyPsiBundle.message("INTN.convert.dict.literal.to.dict.constructor"));
   }
 
-  public void testDictLiteralFormToConstructor1() {      
+  public void testDictLiteralFormToConstructor1() {
     doNegativeTest(PyPsiBundle.message("INTN.convert.dict.literal.to.dict.constructor"));
   }
 
@@ -459,12 +471,12 @@ public class PyIntentionTest extends PyTestCase {
   public void testReturnTypeInPy3Annotation2() {      //PY-8783
     doTest(PyPsiBundle.message("INTN.specify.return.type.in.annotation"), LanguageLevel.PYTHON34);
   }
-  
+
   // PY-17094
   public void testReturnTypeInPy3AnnotationLocalFunction() {
     doTest(PyPsiBundle.message("INTN.specify.return.type.in.annotation"), LanguageLevel.PYTHON34);
   }
-  
+
   public void testReturnTypeInPy3AnnotationNoColon() {
     doTest(PyPsiBundle.message("INTN.specify.return.type.in.annotation"), LanguageLevel.PYTHON34);
   }
@@ -556,24 +568,24 @@ public class PyIntentionTest extends PyTestCase {
 
   // PY-9795
   public void testParamTypeInEmptyGoogleDocString() {
-    doDocParamTypeTest(DocStringFormat.GOOGLE);  
+    doDocParamTypeTest(DocStringFormat.GOOGLE);
   }
-  
+
   // PY-9795
   public void testParamTypeInGoogleDocStringOnlySummaryOneLine() {
-    doDocParamTypeTest(DocStringFormat.GOOGLE);  
+    doDocParamTypeTest(DocStringFormat.GOOGLE);
   }
 
   // PY-9795
   public void testParamTypeInGoogleDocStringOnlySummary() {
     doDocParamTypeTest(DocStringFormat.GOOGLE);
   }
-  
+
   // PY-9795
   public void testParamTypeInGoogleDocStringEmptyParamSection() {
     doDocParamTypeTest(DocStringFormat.GOOGLE);
   }
-  
+
   // PY-9795
   public void testParamTypeInGoogleDocStringParamDeclaredNoParenthesis() {
     doDocParamTypeTest(DocStringFormat.GOOGLE);
@@ -583,22 +595,22 @@ public class PyIntentionTest extends PyTestCase {
   public void testParamTypeInGoogleDocStringParamDeclaredEmptyParenthesis() {
     doDocParamTypeTest(DocStringFormat.GOOGLE);
   }
-  
+
   // PY-9795
   public void testParamTypeInGoogleDocStringOtherParamDeclared() {
     doDocParamTypeTest(DocStringFormat.GOOGLE);
   }
-  
+
   // PY-9795
   public void testParamTypeInGoogleDocStringOtherSectionExists() {
     doDocParamTypeTest(DocStringFormat.GOOGLE);
   }
-  
+
   // PY-9795
   public void testReturnTypeInEmptyGoogleDocString() {
     doDocReturnTypeTest(DocStringFormat.GOOGLE);
   }
-  
+
   // PY-9795
   public void testReturnTypeInGoogleDocStringEmptyReturnSection() {
     doDocReturnTypeTest(DocStringFormat.GOOGLE);
@@ -608,7 +620,7 @@ public class PyIntentionTest extends PyTestCase {
   public void testGoogleReturnSectionAfterKeywords() {
     doDocReturnTypeTest(DocStringFormat.GOOGLE);
   }
-  
+
   // PY-16758
   public void testGoogleReturnSectionAfterYields() {
     doDocReturnTypeTest(DocStringFormat.GOOGLE);
@@ -659,7 +671,7 @@ public class PyIntentionTest extends PyTestCase {
   public void testGoogleNoReturnSectionForInit() {
     doDocStubTest(DocStringFormat.GOOGLE);
   }
-  
+
   // PY-15332
   public void testRestNoReturnTagForInit() {
     doDocStubTest(DocStringFormat.REST);
@@ -679,18 +691,18 @@ public class PyIntentionTest extends PyTestCase {
   public void testAddMissingParamsInGoogleDocStringNoParamSection() {
     doDocAddMissingParamsTest(DocStringFormat.GOOGLE);
   }
-  
+
   // PY-16765
   public void testAddMissingParamsInGoogleDocStringNoParamSectionCustomCodeIndent() {
     getIndentOptions().INDENT_SIZE = 2;
     doDocAddMissingParamsTest(DocStringFormat.GOOGLE);
   }
-  
+
   // PY-9795
   public void testAddMissingParamsInGoogleDocStringEmptyParamSection() {
     doDocAddMissingParamsTest(DocStringFormat.GOOGLE);
   }
-  
+
   // PY-16765
   public void testAddMissingParamsInGoogleDocStringEmptyParamSectionCustomCodeIndent() {
     getIndentOptions().INDENT_SIZE = 2;
@@ -706,27 +718,27 @@ public class PyIntentionTest extends PyTestCase {
   public void testParamTypeInNewNumpyDocString() {
     doDocParamTypeTest(DocStringFormat.NUMPY);
   }
-  
+
    // PY-4717
   public void testParamTypeInEmptyNumpyDocString() {
-    doDocParamTypeTest(DocStringFormat.NUMPY);  
+    doDocParamTypeTest(DocStringFormat.NUMPY);
   }
-  
+
   // PY-4717
   public void testParamTypeInNumpyDocStringOnlySummaryOneLine() {
-    doDocParamTypeTest(DocStringFormat.NUMPY);  
+    doDocParamTypeTest(DocStringFormat.NUMPY);
   }
 
   // PY-4717
   public void testParamTypeInNumpyDocStringOnlySummary() {
     doDocParamTypeTest(DocStringFormat.NUMPY);
   }
-  
+
   // PY-4717
   public void testParamTypeInNumpyDocStringEmptyParamSection() {
     doDocParamTypeTest(DocStringFormat.NUMPY);
   }
-  
+
   // PY-4717
   public void testParamTypeInNumpyDocStringParamDeclaredNoColon() {
     doDocParamTypeTest(DocStringFormat.NUMPY);
@@ -736,12 +748,12 @@ public class PyIntentionTest extends PyTestCase {
   public void testParamTypeInNumpyDocStringParamDeclaredColon() {
     doDocParamTypeTest(DocStringFormat.NUMPY);
   }
-  
+
   // PY-4717
   public void testParamTypeInNumpyDocStringOtherParamDeclared() {
     doDocParamTypeTest(DocStringFormat.NUMPY);
   }
-  
+
   // PY-4717
   public void testParamTypeInNumpyDocStringOtherSectionExists() {
     doDocParamTypeTest(DocStringFormat.NUMPY);
@@ -761,7 +773,7 @@ public class PyIntentionTest extends PyTestCase {
   public void testReturnTypeInEmptyNumpyDocString() {
     doDocReturnTypeTest(DocStringFormat.NUMPY);
   }
-  
+
   // PY-4717
   public void testReturnTypeInNumpyDocStringEmptyReturnSection() {
     doDocReturnTypeTest(DocStringFormat.NUMPY);
@@ -793,6 +805,17 @@ public class PyIntentionTest extends PyTestCase {
 
   public void testConvertStaticMethodToFunctionUsage() {
     doTest(PyPsiBundle.message("INTN.convert.static.method.to.function"));
+  }
+
+  // PY-24482
+  public void testImportToggleAlias() {
+    TestDialogManager.setTestInputDialog(new TestInputDialog() {
+      @Override
+      public String show(String message) {
+        return "mc";
+      }
+    });
+    doMultiFileTest(PyPsiBundle.message("INTN.add.alias.for.import.$0", "MyClass"));
   }
 
   private void doDocStubTest(@NotNull DocStringFormat format) {

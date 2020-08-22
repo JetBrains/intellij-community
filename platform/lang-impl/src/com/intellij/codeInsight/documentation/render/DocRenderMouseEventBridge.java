@@ -13,7 +13,6 @@ import org.jetbrains.annotations.Nullable;
 import sun.awt.AWTAccessor;
 
 import java.awt.*;
-import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
 
 class DocRenderMouseEventBridge implements EditorMouseListener, EditorMouseMotionListener {
@@ -114,10 +113,10 @@ class DocRenderMouseEventBridge implements EditorMouseListener, EditorMouseMotio
         int y = mousePoint.y - inlayBounds.y - relativeBounds.y;
         if (x >= 0 && x < relativeBounds.width && y >= 0 && y < relativeBounds.height) {
           DocRenderer.EditorPane editorPane = ((DocRenderer)renderer).getRendererComponent(inlay, relativeBounds.width);
-          if (targetPane == null || targetPane == editorPane) {
+          if (eventId != MouseEvent.MOUSE_DRAGGED || targetPane == editorPane) {
             int button = mouseEvent.getButton();
-            int modifiers = eventId == MouseEvent.MOUSE_DRAGGED && button == MouseEvent.BUTTON1 ? InputEvent.BUTTON1_DOWN_MASK : 0;
-            dispatchEvent(editorPane, new MouseEvent(editorPane, eventId, 0, modifiers, x, y, mouseEvent.getClickCount(), false,
+            dispatchEvent(editorPane, new MouseEvent(editorPane, eventId, 0, mouseEvent.getModifiersEx(), x, y,
+                                                     mouseEvent.getClickCount(), false,
                                                      // hack to process middle-button clicks (JEditorPane ignores them)
                                                      button == MouseEvent.BUTTON2 ? MouseEvent.BUTTON1 : button));
             return editorPane;

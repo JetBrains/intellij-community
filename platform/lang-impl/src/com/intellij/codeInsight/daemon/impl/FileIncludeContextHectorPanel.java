@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.HectorComponentPanel;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -85,7 +86,7 @@ public class FileIncludeContextHectorPanel extends HectorComponentPanel {
     }
 
     @Nullable
-    protected String getPath(final Object value) {
+    protected @NlsSafe String getPath(final Object value) {
       final VirtualFile file = (VirtualFile)value;
       final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(myFile.getProject()).getFileIndex();
       if (file != null) {
@@ -100,7 +101,7 @@ public class FileIncludeContextHectorPanel extends HectorComponentPanel {
       return null;
     }
 
-    private String trimPath(String path, Component component, String separator, int length) {
+    private @NlsSafe String trimPath(String path, Component component, String separator, int length) {
 
       final FontMetrics fontMetrics = component.getFontMetrics(component.getFont());
       final int maxWidth = fontMetrics.stringWidth(path);

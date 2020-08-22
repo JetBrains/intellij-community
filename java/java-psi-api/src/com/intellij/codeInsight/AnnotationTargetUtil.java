@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -18,7 +18,7 @@ import java.util.Set;
 /**
  * @author peter
  */
-public class AnnotationTargetUtil {
+public final class AnnotationTargetUtil {
   private static final Logger LOG = Logger.getInstance(AnnotationTargetUtil.class);
 
   public static final Set<TargetType> DEFAULT_TARGETS = ContainerUtil.immutableSet(
@@ -33,7 +33,7 @@ public class AnnotationTargetUtil {
   private static final TargetType[] CONSTRUCTOR_TARGETS = {TargetType.CONSTRUCTOR, TargetType.TYPE_USE};
   private static final TargetType[] METHOD_TARGETS = {TargetType.METHOD, TargetType.TYPE_USE};
   private static final TargetType[] FIELD_TARGETS = {TargetType.FIELD, TargetType.TYPE_USE};
-  private static final TargetType[] RECORD_COMPONENT_TARGETS = {TargetType.RECORD_COMPONENT, TargetType.FIELD, TargetType.METHOD, 
+  private static final TargetType[] RECORD_COMPONENT_TARGETS = {TargetType.RECORD_COMPONENT, TargetType.FIELD, TargetType.METHOD,
     TargetType.PARAMETER, TargetType.TYPE_USE};
   private static final TargetType[] PARAMETER_TARGETS = {TargetType.PARAMETER, TargetType.TYPE_USE};
   private static final TargetType[] LOCAL_VARIABLE_TARGETS = {TargetType.LOCAL_VARIABLE, TargetType.TYPE_USE};
@@ -171,12 +171,9 @@ public class AnnotationTargetUtil {
    */
   public static @Nullable TargetType findAnnotationTarget(@NotNull PsiAnnotation annotation, TargetType @NotNull ... types) {
     if (types.length != 0) {
-      PsiJavaCodeReferenceElement ref = annotation.getNameReferenceElement();
-      if (ref != null) {
-        PsiElement annotationType = ref.resolve();
-        if (annotationType instanceof PsiClass) {
-          return findAnnotationTarget((PsiClass)annotationType, types);
-        }
+      PsiClass annotationType = annotation.resolveAnnotationType();
+      if (annotationType != null) {
+        return findAnnotationTarget(annotationType, types);
       }
     }
 
@@ -236,7 +233,9 @@ public class AnnotationTargetUtil {
     if (list == null) return null;
     PsiClass annotationClass = JavaPsiFacade.getInstance(modifierListOwner.getProject())
       .findClass(annotation, modifierListOwner.getResolveScope());
-    if (annotationClass != null && findAnnotationTarget(annotationClass, TargetType.TYPE_USE) != null) {
+    if (annotationClass != null && findAnnotationTarget(annotationClass, TargetType.TYPE_USE) != null &&
+        // External annotations for types are not supported
+        !(modifierListOwner instanceof PsiCompiledElement)) {
       PsiElement parent = list.getParent();
       PsiTypeElement type = null;
       if (parent instanceof PsiMethod) {

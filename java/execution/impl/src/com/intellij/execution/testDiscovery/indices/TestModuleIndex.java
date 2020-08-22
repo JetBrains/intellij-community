@@ -1,24 +1,28 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery.indices;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.io.*;
-import gnu.trove.TIntArrayList;
-import gnu.trove.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.*;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-public class TestModuleIndex {
+public final class TestModuleIndex {
   private static final Logger LOG = Logger.getInstance(TestModuleIndex.class);
 
-  private final PersistentHashMap<Integer, TIntArrayList> myTestNameToRunModule;
+  private final PersistentHashMap<Integer, IntList> myTestNameToRunModule;
   private final PersistentEnumeratorDelegate<String> myModuleNameEnumerator;
 
   public TestModuleIndex(@NotNull Path basePath, @NotNull PersistentObjectSeq persistentObjectSeq) throws IOException {
@@ -34,7 +38,7 @@ public class TestModuleIndex {
   void appendModuleData(int testId, @Nullable String moduleName) throws IOException {
     if (moduleName != null) {
       int moduleId = myModuleNameEnumerator.enumerate(moduleName);
-      TIntArrayList previousRunModules = myTestNameToRunModule.get(moduleId);
+      IntList previousRunModules = myTestNameToRunModule.get(moduleId);
       if (previousRunModules != null && previousRunModules.contains(moduleId)) {
         return;
       }
@@ -44,11 +48,13 @@ public class TestModuleIndex {
 
   @NotNull
   Collection<String> getTestRunModules(int testId) throws IOException {
-    TIntArrayList moduleIds = myTestNameToRunModule.get(testId);
-    if (moduleIds == null) return Collections.emptySet();
+    IntList moduleIds = myTestNameToRunModule.get(testId);
+    if (moduleIds == null) {
+      return Collections.emptySet();
+    }
     List<String> result = new ArrayList<>(moduleIds.size());
     for (int i = 0; i < moduleIds.size(); i++) {
-      int moduleId = moduleIds.get(i);
+      int moduleId = moduleIds.getInt(i);
       String moduleName = myModuleNameEnumerator.valueOf(moduleId);
       if (LOG.assertTrue(moduleName != null)) {
         result.add(moduleName);
@@ -61,22 +67,21 @@ public class TestModuleIndex {
     myTestNameToRunModule.remove(testId);
   }
 
-  private static class IntSeqExternalizer implements DataExternalizer<TIntArrayList> {
+  private static final class IntSeqExternalizer implements DataExternalizer<IntList> {
     @Override
-    public void save(@NotNull DataOutput dataOutput, TIntArrayList testNameIds) throws IOException {
-      for (int testNameId : testNameIds.toNativeArray()) DataInputOutputUtil.writeINT(dataOutput, testNameId);
+    public void save(@NotNull DataOutput dataOutput, IntList testNameIds) throws IOException {
+      for (int testNameId : testNameIds) {
+        DataInputOutputUtil.writeINT(dataOutput, testNameId);
+      }
     }
 
     @Override
-    public TIntArrayList read(@NotNull DataInput dataInput) throws IOException {
-      TIntHashSet result = new TIntHashSet();
-
+    public IntList read(@NotNull DataInput dataInput) throws IOException {
+      IntOpenHashSet result = new IntOpenHashSet();
       while (((InputStream)dataInput).available() > 0) {
-        int id = DataInputOutputUtil.readINT(dataInput);
-        result.add(id);
+        result.add(DataInputOutputUtil.readINT(dataInput));
       }
-
-      return new TIntArrayList(result.toArray());
+      return new IntArrayList(result);
     }
   }
 }

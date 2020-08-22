@@ -18,6 +18,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceRegistrarImpl
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.javadoc.PsiDocTag
+import com.intellij.testFramework.NeedsIndex
 import com.intellij.util.ProcessingContext
 import com.intellij.util.SystemProperties
 import org.jetbrains.annotations.NotNull
@@ -82,16 +83,19 @@ class JavadocCompletionTest extends LightFixtureCompletionTestCase {
     assertStringItems("a2", "a3")
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testSee0() {
     configureByFile("See0.java")
     myFixture.assertPreferredCompletionItems(0, "foo", "clone", "equals", "hashCode")
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testSee1() {
     configureByFile("See1.java")
     assertStringItems("notify", "notifyAll")
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testSee2() {
     configureByFile("See2.java")
     assertStringItems("notify", "notifyAll")
@@ -120,6 +124,7 @@ class JavadocCompletionTest extends LightFixtureCompletionTestCase {
     assertTrue(getLookupElementStrings().containsAll(Arrays.asList("foo", "myName")))
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testIDEADEV10620() {
     configureByFile("IDEADEV10620.java")
 
@@ -136,6 +141,7 @@ class JavadocCompletionTest extends LightFixtureCompletionTestCase {
     assertTrue(myItems.length > 18)
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testException2() {
     myFixture.configureByFile("Exception2.java")
     myFixture.complete(CompletionType.SMART)
@@ -181,19 +187,23 @@ class JavadocCompletionTest extends LightFixtureCompletionTestCase {
     doTest()
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testShortenClassReference() throws Throwable {
     javaSettings.CLASS_NAMES_IN_JAVADOC = JavaCodeStyleSettings.SHORTEN_NAMES_ALWAYS_AND_ADD_IMPORT
     doTest()
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testQualifiedClassReference() throws Throwable {
     configureByFile(getTestName(false) + ".java")
     myFixture.complete(CompletionType.BASIC, 2)
     checkResultByFile(getTestName(false) + "_after.java")
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testQualifiedImportedClassReference() throws Throwable { doTest() }
 
+  @NeedsIndex.ForStandardLibrary
   void testThrowsNonImported() throws Throwable {
     configureByFile(getTestName(false) + ".java")
     myFixture.complete(CompletionType.BASIC, 2)
@@ -210,6 +220,7 @@ class JavadocCompletionTest extends LightFixtureCompletionTestCase {
     assertTrue(getLookupElementStrings().containsAll(Arrays.asList("io", "lang", "util")))
   }
 
+  @NeedsIndex.Full
   void testQualifyClassReferenceInPackageStatement() {
     configureByFile(getTestName(false) + ".java")
     myFixture.type('\n')
@@ -247,6 +258,7 @@ class Foo<T,V>{}
     myFixture.assertPreferredCompletionItems 0, 'param', 'param <V>'
   }
 
+  @NeedsIndex.ForStandardLibrary
   void "test fqns in package info"() {
     myFixture.configureByText "package-info.java", '''
 /**
@@ -314,6 +326,7 @@ class Foo {
     myFixture.assertPreferredCompletionItems 0, 'some integer param'
   }
 
+  @NeedsIndex.Full
   void "test see super class"() {
     myFixture.addClass("package foo; public interface Foo {}")
     myFixture.addClass("package bar; public class Bar {} ")
@@ -359,6 +372,7 @@ class Goo { void goo(Foo foo, Bar bar) {} }
     myFixture.checkResult(text)
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testShortNameInJavadocIfWasImported() {
     javaSettings.CLASS_NAMES_IN_JAVADOC = JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED
     def text = '''
@@ -384,6 +398,7 @@ class Test {
 '''
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testFqnInJavadocIfWasNotImported() {
     javaSettings.CLASS_NAMES_IN_JAVADOC = JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED
     def text = '''
@@ -409,7 +424,7 @@ class Test {
 '''
   }
 
-
+  @NeedsIndex.ForStandardLibrary
   void testFqnNameInJavadocIfWasImported() {
     javaSettings.CLASS_NAMES_IN_JAVADOC = JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_ALWAYS
     def text = '''
@@ -435,6 +450,7 @@ class Test {
 '''
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testShortNameInJavadoc() {
     javaSettings.CLASS_NAMES_IN_JAVADOC = JavaCodeStyleSettings.SHORTEN_NAMES_ALWAYS_AND_ADD_IMPORT
     def text = '''
@@ -460,6 +476,7 @@ class Test {
 '''
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testShortNameInJavadocIfWasImportOnDemand() {
     javaSettings.CLASS_NAMES_IN_JAVADOC = JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED
     def text = '''
@@ -522,6 +539,7 @@ public class Test {
 
   }
 
+  @NeedsIndex.ForStandardLibrary
   void testShortNameIfImplicitlyImported() {
     javaSettings.CLASS_NAMES_IN_JAVADOC = JavaCodeStyleSettings.FULLY_QUALIFY_NAMES_IF_NOT_IMPORTED
     def text = '''
@@ -620,12 +638,14 @@ class Foo {
     myFixture.checkResult "/** @author $userName<caret> */"
   }
 
+  @NeedsIndex.ForStandardLibrary
   void "test insert link to class"() {
     myFixture.configureByText 'a.java', "/** FileNotFoEx<caret> */"
     myFixture.completeBasic()
     myFixture.checkResult "/** {@link java.io.FileNotFoundException<caret>} */"
   }
 
+  @NeedsIndex.Full
   void "test insert link to inner class"() {
     myFixture.addClass('package zoo; public class Outer { public static class FooBarGoo{}}')
     myFixture.configureByText 'a.java', "/** FooBarGo<caret> */"
@@ -633,6 +653,7 @@ class Foo {
     myFixture.checkResult "/** {@link zoo.Outer.FooBarGoo<caret>} */"
   }
 
+  @NeedsIndex.ForStandardLibrary
   void "test insert link to imported class"() {
     myFixture.configureByText 'a.java', "import java.io.*; /** FileNotFoEx<caret> */ class A{}"
     myFixture.completeBasic()
@@ -653,6 +674,7 @@ class Foo {
     assert !TemplateManagerImpl.getTemplateState(myFixture.editor)
   }
 
+  @NeedsIndex.ForStandardLibrary
   void "test insert link to method in a q-named class"() {
     myFixture.configureByText 'a.java', "/** a. java.io.File#liFi<caret> */ interface Foo {}"
     myFixture.completeBasic()
@@ -693,6 +715,7 @@ class Foo {
     myFixture.checkResult "/** @see java.io.IOException<caret> */"
   }
 
+  @NeedsIndex.ForStandardLibrary
   void "test no hierarchical generic method duplicates"() {
     myFixture.configureByText 'a.java', """
 interface Foo<T> {

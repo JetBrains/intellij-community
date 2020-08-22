@@ -14,7 +14,7 @@ import org.jetbrains.jps.util.JpsPathUtil
 internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
                                                        fileUrl: VirtualFileUrl,
                                                        internalEntitySource: JpsFileEntitySource)
-  : ModuleImlFileEntitiesSerializer(modulePath, fileUrl, internalEntitySource, null) {
+  : ModuleImlFileEntitiesSerializer(modulePath, fileUrl, internalEntitySource) {
   override val skipLoadingIfFileDoesNotExist: Boolean
     get() = true
 
@@ -63,11 +63,11 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
         }
       }
       saveOption("externalSystem", externalSystemOptions.externalSystem)
-      saveOption("externalSystemModuleVersion", externalSystemOptions.externalSystemModuleVersion)
       saveOption("externalSystemModuleGroup", externalSystemOptions.externalSystemModuleGroup)
       saveOption("externalSystemModuleType", externalSystemOptions.externalSystemModuleType)
-      saveOption("linkedProjectPath", externalSystemOptions.linkedProjectPath)
+      saveOption("externalSystemModuleVersion", externalSystemOptions.externalSystemModuleVersion)
       saveOption("linkedProjectId", externalSystemOptions.linkedProjectId)
+      saveOption("linkedProjectPath", externalSystemOptions.linkedProjectPath)
       saveOption("rootProjectPath", externalSystemOptions.rootProjectPath)
       writer.saveComponent(fileUrl.url, "ExternalSystem", componentTag)
     }
@@ -91,7 +91,7 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
 }
 
 internal class ExternalModuleListSerializer(private val externalStorageRoot: VirtualFileUrl) :
-  ModuleListSerializerImpl(externalStorageRoot.append("project/modules.xml").url, null) {
+  ModuleListSerializerImpl(externalStorageRoot.append("project/modules.xml").url) {
   override val isExternalStorage: Boolean
     get() = true
 

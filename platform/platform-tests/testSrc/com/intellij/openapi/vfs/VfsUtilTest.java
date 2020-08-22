@@ -387,16 +387,16 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
   }
 
   @Test(timeout = 20_000)
-  public void olderRefreshWithLessSpecificModalityDoesNotBlockNewerRefresh_NoWaiting() {
+  public void olderRefreshWithLessSpecificModalityDoesNotBlockNewerRefresh_NoWaiting() throws IOException {
     checkNonModalThenModalRefresh(false);
   }
 
   @Test(timeout = 20_000)
-  public void olderRefreshWithLessSpecificModalityDoesNotBlockNewerRefresh_WithWaiting() {
+  public void olderRefreshWithLessSpecificModalityDoesNotBlockNewerRefresh_WithWaiting() throws IOException {
     checkNonModalThenModalRefresh(true);
   }
 
-  private void checkNonModalThenModalRefresh(boolean waitForDiskRefreshCompletionBeforeStartingModality) {
+  private void checkNonModalThenModalRefresh(boolean waitForDiskRefreshCompletionBeforeStartingModality) throws IOException {
     EdtTestUtil.runInEdtAndWait(() -> {
       File dir1 = myTempDir.newDirectory("dir1");
       File dir2 = myTempDir.newDirectory("dir2");

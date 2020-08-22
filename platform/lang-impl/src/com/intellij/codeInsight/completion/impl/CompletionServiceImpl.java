@@ -5,6 +5,7 @@ import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.Classifier;
 import com.intellij.codeInsight.lookup.ClassifierFactory;
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
@@ -20,6 +21,8 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.codeWithMe.ClientIdKt.isForeignClientOnServer;
 
 /**
  * @author peter
@@ -192,7 +195,6 @@ public final class CompletionServiceImpl extends BaseCompletionService {
     return phase != CompletionPhase.NoCompletion && !(phase instanceof CompletionPhase.ZombiePhase) &&
            !(phase instanceof CompletionPhase.ItemsCalculated);
   }
-
 
   public static CompletionPhase getCompletionPhase() {
     return ourPhase;

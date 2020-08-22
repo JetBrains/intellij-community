@@ -10,11 +10,11 @@
         <li>Supports over 15 languages, including English, German, Russian, Chinese, and others.</li>
         <li>Recognizes natural language constructs in programming languages (Python, Java and others),
             markup languages (Latex, Markdown, XML, HTML), comments, commits messages, and more.</li>
-        <li>Uses LanguageTool as its proofreading engine.</li>
+      <li>Uses <a href="https://www.languagetool.org/">LanguageTool</a> as its proofreading engine.</li>
     </ul>
 
     <p>English is enabled by default when you install the plugin. To enable other languages, open <strong>Settings/Preferences</strong>
-       and select <strong>Tools</strong> > <strong>Grazie</strong> (or <strong>Editor</strong> > <strong>Proofreading</strong> for 2020.1 EAP).</p>
+       and select <strong>Editor</strong> > <strong>Proofreading</strong>.</p>
 
     <p><strong>NOTE:</strong> All verification is performed locally, inside your IDE.</p>
     ]]></description>
@@ -49,12 +49,12 @@
     <search.optionContributor implementation="com.intellij.grazie.ide.ui.search.GrazieSearchableOptionContributor"/>
 
     <statistics.applicationUsagesCollector implementation="com.intellij.grazie.ide.fus.GrazieFUSState"/>
-    <statistics.validation.customWhiteListRule implementation="com.intellij.grazie.ide.fus.GrazieFUSRuleIDRule"/>
-    <statistics.validation.customWhiteListRule implementation="com.intellij.grazie.ide.fus.GrazieFUSStrategyIDRule"/>
-    <statistics.counterUsagesCollector groupId="grazie.count" version="1"/>
+    <statistics.validation.customValidationRule implementation="com.intellij.grazie.ide.fus.GrazieFUSRuleIDRule"/>
+    <statistics.validation.customValidationRule implementation="com.intellij.grazie.ide.fus.GrazieFUSStrategyIDRule"/>
+    <statistics.counterUsagesCollector groupId="grazie.count" version="2"/>
 
     <spellchecker.dictionary.runtimeDictionaryProvider implementation="com.intellij.grazie.spellcheck.GrazieDictionaryProvider"/>
-    <notificationWhitelist groupIds="Proofreading missing languages information"/>
+    <notificationGroup id="Proofreading missing languages information" displayType="STICKY_BALLOON" bundle="messages.GrazieBundle" key="grazie.notification.missing-languages.group"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.grazie">

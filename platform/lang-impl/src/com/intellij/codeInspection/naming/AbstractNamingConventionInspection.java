@@ -1,14 +1,15 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.naming;
 
+import com.intellij.codeInspection.LocalInspectionEP;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.ExtensionPointUtil;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.psi.PsiElement;
@@ -79,9 +80,8 @@ public abstract class AbstractNamingConventionInspection<T extends PsiNameIdenti
     myDisabledShortNames.remove(shortName);
   }
 
-  protected void registerConventionsListener(ExtensionPointName<NamingConvention<T>> epName) {
-    Application application = ApplicationManager.getApplication();
-    epName.getPoint(application).addExtensionPointListener(new ExtensionPointListener<NamingConvention<T>>() {
+  protected void registerConventionsListener(@NotNull ExtensionPointName<NamingConvention<T>> epName) {
+    epName.addExtensionPointListener(new ExtensionPointListener<NamingConvention<T>>() {
       @Override
       public void extensionAdded(@NotNull NamingConvention<T> extension, @NotNull PluginDescriptor pluginDescriptor) {
         registerConvention(extension);
@@ -91,7 +91,7 @@ public abstract class AbstractNamingConventionInspection<T extends PsiNameIdenti
       public void extensionRemoved(@NotNull NamingConvention<T> extension, @NotNull PluginDescriptor pluginDescriptor) {
         unregisterConvention(extension);
       }
-    }, false, application);
+    }, ExtensionPointUtil.createExtensionDisposable(this, (ExtensionPointName) LocalInspectionEP.LOCAL_INSPECTION));
   }
 
   @Nullable
@@ -115,7 +115,7 @@ public abstract class AbstractNamingConventionInspection<T extends PsiNameIdenti
   }
 
   @NotNull
-  protected String createErrorMessage(String name, String shortName) {
+  protected @InspectionMessage String createErrorMessage(String name, String shortName) {
     return myNamingConventions.get(shortName).createErrorMessage(name, myNamingConventionBeans.get(shortName));
   }
 

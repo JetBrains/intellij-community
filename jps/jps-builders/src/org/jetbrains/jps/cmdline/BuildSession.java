@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.cmdline;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -70,6 +70,10 @@ final class BuildSession implements Runnable, CanceledStatus {
                @Nullable CmdlineRemoteProto.Message.ControllerMessage.FSEvent delta, @Nullable PreloadedData preloaded) {
     mySessionId = sessionId;
     myChannel = channel;
+
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Starting build with ordinal " + (delta == null ? null : delta.getOrdinal()));
+    }
 
     final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals = params.getGlobalSettings();
     myProjectPath = FileUtil.toCanonicalPath(params.getProjectId());
@@ -361,6 +365,10 @@ final class BuildSession implements Runnable, CanceledStatus {
       return;
     }
 
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("applyFSEvent ordinal=" + event.getOrdinal());
+    }
+
     final StampsStorage<? extends StampsStorage.Stamp> stampsStorage = pd.getProjectStamps().getStampStorage();
     boolean cacheCleared = false;
     for (String deleted : event.getDeletedPathsList()) {
@@ -416,6 +424,9 @@ final class BuildSession implements Runnable, CanceledStatus {
   }
 
   private static void updateFsStateOnDisk(File dataStorageRoot, DataInputStream original, final long ordinal) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("updateFsStateOnDisk, ordinal=" + ordinal);
+    }
     final File file = new File(dataStorageRoot, FS_STATE_FILE);
     try {
       final BufferExposingByteArrayOutputStream bytes = new BufferExposingByteArrayOutputStream();
@@ -510,6 +521,9 @@ final class BuildSession implements Runnable, CanceledStatus {
       }
       final long savedOrdinal = in.readLong();
       if (savedOrdinal + 1L != currentEventOrdinal) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Discarding FS data: savedOrdinal=" + savedOrdinal + "; currentEventOrdinal=" + currentEventOrdinal);
+        }
         return null;
       }
       return in;
@@ -600,7 +614,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     return BuildType.BUILD;
   }
 
-  private static class EventsProcessor {
+  private static final class EventsProcessor {
     private final Semaphore myProcessingEnabled = new Semaphore();
     private final Executor myExecutorService = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("BuildSession.EventsProcessor.EventsProcessor Pool", SharedThreadPool.getInstance());
 

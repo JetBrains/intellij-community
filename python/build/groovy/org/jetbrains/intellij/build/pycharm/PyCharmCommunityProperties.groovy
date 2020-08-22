@@ -30,7 +30,6 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
         directoryName = "pythonIDE"
         mainJarName = "python-ide.jar"
         withModule("intellij.pycharm.community.customization.impl", mainJarName)
-        withProjectLibraryUnpackedIntoJar("tips-pycharm-community", mainJarName)
       }
     ]
     productLayout.pluginModulesToPublish = ["intellij.python.community.plugin"]
@@ -46,7 +45,7 @@ class PyCharmCommunityProperties extends PyCharmPropertiesBase {
   }
 
   @Override
-  String getSystemSelector(ApplicationInfoProperties applicationInfo) {
+  String getSystemSelector(ApplicationInfoProperties applicationInfo, String buildNumber) {
     "PyCharmCE${applicationInfo.majorVersion}.${applicationInfo.minorVersionMainPart}"
   }
 

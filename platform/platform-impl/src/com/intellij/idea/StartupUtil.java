@@ -19,6 +19,7 @@ import com.intellij.ide.gdpr.ConsentOptions;
 import com.intellij.ide.gdpr.EndUserAgreement;
 import com.intellij.ide.instrument.WriteIntentLockInstrumenter;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.StartupAbortedException;
 import com.intellij.ide.ui.laf.IntelliJLaf;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -45,6 +46,7 @@ import com.intellij.util.ui.StartupUiUtil;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
 import org.apache.log4j.PatternLayout;
+import org.apache.log4j.helpers.LogLog;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -186,7 +188,11 @@ public final class StartupUtil {
     activity = activity.endAndStart("LaF init scheduling");
     // EndUserAgreement.Document type is not specified to avoid class loading
     Future<Object> euaDocument = loadEuaDocument(executorService);
-    CompletableFuture<?> initUiTask = scheduleInitUi(args, executorService, euaDocument);
+    CompletableFuture<?> initUiTask = scheduleInitUi(args, executorService, euaDocument)
+      .exceptionally(e -> {
+        StartupAbortedException.processException(new StartupAbortedException("UI initialization failed", e));
+        return null;
+      });
     activity.end();
 
     if (!checkJdkVersion()) {
@@ -226,9 +232,8 @@ public final class StartupUtil {
       loadSystemLibraries(log);
     });
 
-    Activity subActivity = StartUpMeasurer.startActivity("process env fixing");
-    EnvironmentUtil.loadEnvironment(true)
-      .thenRun(subActivity::end);
+    Activity subActivity = StartUpMeasurer.startActivity("environment loading");
+    EnvironmentUtil.loadEnvironment(subActivity::end);
 
     if (!configImportNeeded) {
       runPreAppClass(log);
@@ -268,7 +273,7 @@ public final class StartupUtil {
         AppStarter appStarter = getAppStarter(appStarterFuture);
         appStarter.beforeImportConfigs();
         Path newConfigDir = PathManager.getConfigDir();
-        runInEdtAndWait(log, () -> ConfigImportHelper.importConfigsTo(agreementDialogWasShown, newConfigDir, log), initUiTask);
+        runInEdtAndWait(log, () -> ConfigImportHelper.importConfigsTo(agreementDialogWasShown, newConfigDir, Arrays.asList(args), log), initUiTask);
         appStarter.importFinished(newConfigDir);
 
         if (!ConfigImportHelper.isConfigImported()) {
@@ -593,6 +598,10 @@ public final class StartupUtil {
     if (Boolean.parseBoolean(System.getProperty("intellij.log.stdout", "true"))) {
       System.setOut(new PrintStreamLogger("STDOUT", System.out));
       System.setErr(new PrintStreamLogger("STDERR", System.err));
+      // Disabling output to System.err seems to be the only way to avoid deadlock (https://youtrack.jetbrains.com/issue/IDEA-243708)
+      // with Log4j 1.x if an internal error happens during logging (e.g. a disk space issue).
+      // Should be revisited in case of migration to Log4j 2.
+      LogLog.setQuietMode(true);
     }
     return log;
   }
@@ -656,6 +665,9 @@ public final class StartupUtil {
       }
     }
 
+    log.info("library path: " + System.getProperty("java.library.path"));
+    log.info("boot library path: " + System.getProperty("sun.boot.library.path"));
+
     logEnvVar(log, "_JAVA_OPTIONS");
     logEnvVar(log, "JDK_JAVA_OPTIONS");
     logEnvVar(log, "JAVA_TOOL_OPTIONS");
@@ -678,13 +690,12 @@ public final class StartupUtil {
     if (value != null) log.info(var + '=' + value);
   }
 
-  public static String logPath(String path) {
+  private static String logPath(String path) {
     try {
       Path configured = Paths.get(path), real = configured.toRealPath();
       if (!configured.equals(real)) return path + " -> " + real;
     }
-    catch (IOException | InvalidPathException ignored) {
-    }
+    catch (IOException | InvalidPathException ignored) { }
     return path;
   }
 
@@ -774,9 +785,10 @@ public final class StartupUtil {
       // todo: does not seem to request focus when shown
       runInEdtAndWait(log, () -> Agreements.INSTANCE.showEndUserAndDataSharingAgreements(agreement), initUiTask);
       dialogWasShown = true;
-    }
-    if (ConsentOptions.getInstance().getConsents().second) {
-      runInEdtAndWait(log, Agreements.INSTANCE::showDataSharingAgreement, initUiTask);
+    } else {
+      if (ConsentOptions.getInstance().getConsents().second) {
+        runInEdtAndWait(log, Agreements.INSTANCE::showDataSharingAgreement, initUiTask);
+      }
     }
     return dialogWasShown;
   }

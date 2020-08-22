@@ -1,7 +1,6 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.test
 
-import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
@@ -19,9 +18,9 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl
 import com.intellij.openapi.vcs.impl.VcsInitialization
 import com.intellij.openapi.vcs.impl.projectlevelman.NewMappings
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.project.stateStore
 import com.intellij.testFramework.*
 import com.intellij.util.ArrayUtil
 import com.intellij.util.ThrowableRunnable
@@ -33,10 +32,21 @@ import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 
 abstract class VcsPlatformTest : HeavyPlatformTestCase() {
-  protected lateinit var testRoot: File
-  protected lateinit var testRootFile: VirtualFile
-  protected lateinit var projectRoot: VirtualFile
-  protected lateinit var projectPath: String
+  protected val testNioRoot: Path
+    get() = testRoot.toNioPath()
+
+  protected val testRoot by lazy {
+    tempDir.createVirtualDir("test_root")
+  }
+
+  protected val projectRoot: VirtualFile
+    get() = getOrCreateProjectBaseDir()
+
+  protected val projectPath: String
+    get() = FileUtil.toSystemIndependentName(projectNioRoot.toString())
+
+  protected val projectNioRoot: Path
+    get() = project.stateStore.getProjectBasePath()
 
   private lateinit var testStartedIndicator: String
   private val asyncTasks = mutableSetOf<AsyncTask>()
@@ -47,17 +57,13 @@ abstract class VcsPlatformTest : HeavyPlatformTestCase() {
 
   @Throws(Exception::class)
   override fun setUp() {
-    testRoot = createTempDir("root-${Integer.toHexString(Random().nextInt())}", false)
-    checkTestRootIsEmpty(testRoot)
+    runInEdtAndWait {
+      super.setUp()
+    }
 
-    runInEdtAndWait { super@VcsPlatformTest.setUp() }
-    testRootFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(testRoot)!!
-    refresh()
+    VfsUtil.markDirtyAndRefresh(false, true, false, testRoot)
 
     testStartedIndicator = enableDebugLogging()
-
-    projectRoot = project.baseDir
-    projectPath = projectRoot.path
 
     changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
     vcsManager = ProjectLevelVcsManager.getInstance(project) as ProjectLevelVcsManagerImpl
@@ -65,17 +71,15 @@ abstract class VcsPlatformTest : HeavyPlatformTestCase() {
 
     vcsNotifier = TestVcsNotifier(myProject)
     project.replaceService(VcsNotifier::class.java, vcsNotifier, testRootDisposable)
-    cd(testRoot)
+    cd(testNioRoot)
   }
 
-  @Throws(Exception::class)
   override fun tearDown() {
     RunAll()
       .append(ThrowableRunnable { selfTearDownRunnable() })
       .append(ThrowableRunnable { clearFields(this) })
       .append(ThrowableRunnable { runInEdtAndWait { super@VcsPlatformTest.tearDown() } })
       .run()
-
   }
 
   private fun selfTearDownRunnable() {
@@ -105,24 +109,23 @@ abstract class VcsPlatformTest : HeavyPlatformTestCase() {
    * not to erase log categories from the super class.
    * (e.g. by calling `super.getDebugLogCategories().plus(additionalCategories)`.
    */
-  protected open fun getDebugLogCategories(): Collection<String> = mutableListOf(
-    "#" + UsefulTestCase::class.java.name,
-    "#" + NewMappings::class.java.name,
-    "#" + VcsInitialization::class.java.name)
+  protected open fun getDebugLogCategories(): Collection<String> {
+    return mutableListOf(
+      "#" + UsefulTestCase::class.java.name,
+      "#" + NewMappings::class.java.name,
+      "#" + VcsInitialization::class.java.name
+    )
+  }
 
-  override fun getProjectDirOrFile(): Path {
-    val projectRoot = File(testRoot, "project")
-    val file: File = FileUtil.createTempFile(projectRoot, name + "_", ProjectFileType.DOT_DEFAULT_EXTENSION)
-    return file.toPath()
+  override fun getProjectDirOrFile(isDirectoryBasedProject: Boolean): Path {
+    return testNioRoot.resolve("project")
   }
 
   override fun setUpModule() {
     // we don't need a module in Git tests
   }
 
-  override fun runInDispatchThread(): Boolean {
-    return false
-  }
+  override fun runInDispatchThread() = false
 
   override fun getTestName(lowercaseFirstLetter: Boolean): String {
     var name = super.getTestName(lowercaseFirstLetter)
@@ -134,7 +137,7 @@ abstract class VcsPlatformTest : HeavyPlatformTestCase() {
   }
 
   @JvmOverloads
-  protected open fun refresh(dir: VirtualFile = testRootFile) {
+  protected open fun refresh(dir: VirtualFile = testRoot) {
     VfsUtil.markDirtyAndRefresh(false, true, false, dir)
   }
 

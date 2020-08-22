@@ -23,7 +23,7 @@ import com.intellij.openapi.util.Key;
 
 import java.util.*;
 
-class InitializationDependencyUtils {
+final class InitializationDependencyUtils {
 
   private static final Key<Set<RefClass>> INITIALIZATION_DEPENDENT_CLASSES_KEY =
     new Key<>("INITIALIZATION_DEPENDENT_CLASSES");

@@ -18,6 +18,7 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.stats.PerformanceTracker
 import com.intellij.stats.completion.idString
+import com.intellij.stats.experiment.ExperimentStatus
 import com.intellij.stats.personalization.UserFactorStorage
 import com.intellij.stats.personalization.UserFactorsManager
 import com.intellij.stats.personalization.session.LookupSessionFactorsStorage
@@ -85,7 +86,9 @@ class MutableLookupStorage(
     performanceTracker.reorderedByML()
   }
 
-  override fun shouldComputeFeatures(): Boolean = model != null || _loggingEnabled || (ApplicationManager.getApplication().isUnitTestMode && alwaysComputeFeaturesInTests)
+  override fun shouldComputeFeatures(): Boolean = model != null ||
+                                                  (ApplicationManager.getApplication().isUnitTestMode && alwaysComputeFeaturesInTests) ||
+                                                  (_loggingEnabled && !experimentWithoutComputingFeatures())
 
   fun isContextFactorsInitialized(): Boolean = contextFeaturesStorage != null
 
@@ -120,6 +123,14 @@ class MutableLookupStorage(
       environment.copyUserDataTo(features)
       contextFeaturesStorage = features
     }
+  }
+
+  private fun experimentWithoutComputingFeatures(): Boolean {
+    val experimentInfo = ExperimentStatus.getInstance().forLanguage(language)
+    if (experimentInfo.inExperiment) {
+      return !experimentInfo.shouldCalculateFeatures
+    }
+    return false
   }
 
   fun markLoggingEnabled() {

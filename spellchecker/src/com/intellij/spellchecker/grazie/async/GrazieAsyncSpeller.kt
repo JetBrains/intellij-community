@@ -27,8 +27,7 @@ internal class GrazieAsyncSpeller(project: Project, private val create: () -> Sp
     return speller?.isMisspelled(word) ?: false
   }
 
-  override fun suggestAndRank(word: String): Map<String, Double> {
-    return speller?.suggestAndRank(word) ?: emptyMap()
+  override fun suggestAndRank(word: String, max: Int): Map<String, Double> {
+    return speller?.suggestAndRank(word, max) ?: emptyMap()
   }
-
 }

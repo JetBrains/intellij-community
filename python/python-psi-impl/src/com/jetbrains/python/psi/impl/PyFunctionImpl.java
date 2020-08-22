@@ -510,7 +510,7 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
     return false;
   }
 
-  private static class ReturnVisitor extends PyRecursiveElementVisitor {
+  private static final class ReturnVisitor extends PyRecursiveElementVisitor {
     private final PyFunction myFunction;
     private final TypeEvalContext myContext;
     private PyType myResult = null;

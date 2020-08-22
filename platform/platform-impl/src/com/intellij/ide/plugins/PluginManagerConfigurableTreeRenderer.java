@@ -40,7 +40,7 @@ public class PluginManagerConfigurableTreeRenderer extends AncestorListenerAdapt
 
   @Nullable
   private static Icon getExtraIcon() {
-    return DynamicBundle.LanguageBundleEP.EP_NAME.hasAnyExtensions() ? AllIcons.Plugins.Hieroglyph : null;
+    return DynamicBundle.LanguageBundleEP.EP_NAME.hasAnyExtensions() ? AllIcons.General.LocalizationSettings : null;
   }
 
   @Nullable

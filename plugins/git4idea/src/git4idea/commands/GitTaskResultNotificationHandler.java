@@ -16,15 +16,19 @@
 package git4idea.commands;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts.NotificationContent;
 import com.intellij.openapi.vcs.VcsNotifier;
 
 public class GitTaskResultNotificationHandler extends GitTaskResultHandlerAdapter {
   private final Project myProject;
-  private final String mySuccessMessage;
-  private final String myCancelMessage;
-  private final String myErrorMessage;
+  private final @NotificationContent String mySuccessMessage;
+  private final @NotificationContent String myCancelMessage;
+  private final @NotificationContent String myErrorMessage;
 
-  public GitTaskResultNotificationHandler(Project project, String successMessage, String cancelMessage, String errorMessage) {
+  public GitTaskResultNotificationHandler(Project project,
+                                          @NotificationContent String successMessage,
+                                          @NotificationContent String cancelMessage,
+                                          @NotificationContent String errorMessage) {
     myProject = project;
     mySuccessMessage = successMessage;
     myCancelMessage = cancelMessage;

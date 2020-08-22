@@ -32,6 +32,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -40,6 +41,7 @@ import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 import java.util.*;
@@ -60,7 +62,7 @@ public class ImplementAbstractMethodHandler {
   public void invoke() {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-    Ref<String> problemDetected = new Ref<>();
+    Ref<@Nls String> problemDetected = new Ref<>();
     final PsiElement[][] result = new PsiElement[1][];
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> ApplicationManager.getApplication().runReadAction(() -> {
       final PsiClass psiClass = myMethod.getContainingClass();
@@ -154,7 +156,7 @@ public class ImplementAbstractMethodHandler {
     }, JavaBundle.message("intention.implement.abstract.method.command.name"), null);
   }
 
-  private PsiClass[] getClassImplementations(final PsiClass psiClass, Ref<? super String> problemDetected) {
+  private PsiClass[] getClassImplementations(final PsiClass psiClass, Ref<@Nls String> problemDetected) {
     ArrayList<PsiClass> list = new ArrayList<>();
     Set<String> classNamesWithPotentialImplementations = new LinkedHashSet<>();
     for (PsiClass inheritor : ClassInheritorsSearch.search(psiClass)) {
@@ -175,7 +177,8 @@ public class ImplementAbstractMethodHandler {
     }
 
     if (!classNamesWithPotentialImplementations.isEmpty()) {
-      problemDetected.set("Potential implementations with weaker access privileges are found: " + StringUtil.join(classNamesWithPotentialImplementations, ", "));
+      @NlsSafe String classNames = StringUtil.join(classNamesWithPotentialImplementations, ", ");
+      problemDetected.set(JavaBundle.message("implement.abstract.method.potential.implementations.with.weaker.access", classNames));
     }
     return list.toArray(PsiClass.EMPTY_ARRAY);
   }

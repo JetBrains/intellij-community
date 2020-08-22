@@ -30,7 +30,6 @@ import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.XmlNSDescriptorEx;
 import com.intellij.xml.impl.ExternalDocumentValidator;
 import com.intellij.xml.util.XmlUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -166,7 +165,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
   }
 
   @Override
-  public boolean processTagsInNamespace(String[] tagNames, PsiElementProcessor<? super XmlTag> processor) {
+  public final boolean processTagsInNamespace(String[] tagNames, PsiElementProcessor<? super XmlTag> processor) {
     return processTagsInNamespaceInner(myTag, tagNames, processor, null);
   }
 
@@ -462,7 +461,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
 
         if (name != null) {
           if (checkElementNameEquivalence(localName, namespace, name, tag)) {
-            return createAttributeDescriptor(tag);
+            return new XmlAttributeDescriptorImpl(tag);
           }
         }
       } else if (equalsToSchemaName(tag, INCLUDE_TAG_NAME) ||
@@ -505,10 +504,6 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
     }
 
     return null;
-  }
-
-  protected XmlAttributeDescriptorImpl createAttributeDescriptor(final XmlTag tag) {
-    return new XmlAttributeDescriptorImpl(tag);
   }
 
   @Override
@@ -821,20 +816,16 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
   }
 
   public XmlAttributeDescriptor[] getRootAttributeDescriptors(final XmlTag context) {
-    class CollectAttributesProcessor implements PsiElementProcessor<XmlTag> {
-      final List<XmlAttributeDescriptor> result = new ArrayList<>();
+    return CachedValuesManager.getProjectPsiDependentCache(myTag, XmlNSDescriptorImpl::computeAttributeDescriptors)
+      .toArray(XmlAttributeDescriptor.EMPTY);
+  }
 
-      @Override
-      public boolean execute(@NotNull final XmlTag element) {
-        result.add(createAttributeDescriptor(element));
-        return true;
-      }
-    }
-
-    CollectAttributesProcessor processor = new CollectAttributesProcessor();
-    processTagsInNamespace(new String[] {ATTRIBUTE_TAG_NAME}, processor);
-
-    return processor.result.toArray(XmlAttributeDescriptor.EMPTY);
+  private static List<XmlAttributeDescriptor> computeAttributeDescriptors(XmlTag tag) {
+    List<XmlAttributeDescriptor> result = new ArrayList<>();
+    processTagsInNamespaceInner(tag, new String[] {ATTRIBUTE_TAG_NAME},
+                                element -> result.add(new XmlAttributeDescriptorImpl(element)),
+                                null);
+    return result;
   }
 
   @Override
@@ -920,7 +911,7 @@ public class XmlNSDescriptorImpl implements XmlNSDescriptorEx,Validator<XmlDocum
       myTargetNamespace = myTag.getAttributeValue("targetNamespace");
     }
 
-    final THashSet<PsiFile> dependenciesSet = new THashSet<>();
+    Set<PsiFile> dependenciesSet = new HashSet<>();
     collectDependencies(myTag, myFile, dependenciesSet);
     dependencies = ArrayUtil.toObjectArray(dependenciesSet);
   }

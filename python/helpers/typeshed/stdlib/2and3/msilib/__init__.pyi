@@ -1,12 +1,7 @@
-
 import sys
 from typing import List, Tuple, Union, Set, Optional, Dict, Container, Any, Type, Iterable, Sequence
 from types import ModuleType
-
-if sys.version_info >= (3, 8):
-    from typing import Literal
-else:
-    from typing_extensions import Literal
+from typing_extensions import Literal
 
 if sys.platform == 'win32':
     from _msi import _Database

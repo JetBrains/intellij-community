@@ -11,7 +11,7 @@ import com.intellij.psi.tree.ICompositeElementType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-public abstract class JavaStubElementType<StubT extends StubElement, PsiT extends PsiElement>
+public abstract class JavaStubElementType<StubT extends StubElement<?>, PsiT extends PsiElement>
     extends ILightStubElementType<StubT, PsiT> implements ICompositeElementType {
   private final boolean myLeftBound;
 
@@ -39,7 +39,7 @@ public abstract class JavaStubElementType<StubT extends StubElement, PsiT extend
   }
 
   private PsiJavaFileStub getFileStub(StubT stub) {
-    StubElement parent = stub;
+    StubElement<?> parent = stub;
     while (!(parent instanceof PsiFileStub)) {
       parent = parent.getParentStub();
     }
@@ -49,9 +49,8 @@ public abstract class JavaStubElementType<StubT extends StubElement, PsiT extend
 
   public abstract PsiT createPsi(@NotNull ASTNode node);
 
-  @NotNull
   @Override
-  public final StubT createStub(@NotNull final PsiT psi, final StubElement parentStub) {
+  public final @NotNull StubT createStub(@NotNull PsiT psi, StubElement<?> parentStub) {
     final String message = "Should not be called. Element=" + psi + "; class" + psi.getClass() + "; file=" + (psi.isValid() ? psi.getContainingFile() : "-");
     throw new UnsupportedOperationException(message);
   }

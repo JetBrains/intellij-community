@@ -78,14 +78,5 @@ fun Credentials?.isEmpty() = this == null || (userName == null && password.isNul
  * i.e. removes `oldAttributes` from the credentials store, and adds `newAttributes` instead.
  */
 fun getAndMigrateCredentials(oldAttributes: CredentialAttributes, newAttributes: CredentialAttributes): Credentials? {
-  val safe = PasswordSafe.instance
-  var credentials = safe.get(newAttributes)
-  if (credentials == null) {
-    credentials = safe.get(oldAttributes)
-    if (credentials != null) {
-      safe.set(oldAttributes, null)
-      safe.set(newAttributes, credentials)
-    }
-  }
-  return credentials
+  return PasswordSafe.instance.get(newAttributes)
 }

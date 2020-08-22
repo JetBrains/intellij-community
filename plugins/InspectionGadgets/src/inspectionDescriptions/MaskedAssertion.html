@@ -1,0 +1,35 @@
+<html>
+<body>
+Reports assert statements and test framework assertions that are masked via catch blocks.
+Such assertions will never fail, as the thrown AssertionError will be caught and silently ignored.
+Examples:<br>
+<code><pre>
+void javaAssertion() {
+  try {
+    ...
+    assert 1 == 2; // the assertion is silently ignored
+  } catch (AssertionError e) {}
+}
+</pre></code>
+<code><pre>
+@Test
+void testWithAssertJ() {
+  try {
+    ...
+    assertThat(1).as("test").isEqualTo(2); // the assertion is silently ignored
+  } catch (AssertionError e) {}
+}
+</pre></code>
+<code><pre>
+@Test
+void testWithJunit() {
+  try {
+    ...
+    assertEquals(1, 2); // the assertion is silently ignored
+  } catch (AssertionError e) {}
+}
+</pre></code>
+<!-- tooltip end -->
+<p><small>New in 2020.3</small></p>
+</body>
+</html>

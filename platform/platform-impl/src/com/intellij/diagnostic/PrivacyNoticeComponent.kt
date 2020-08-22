@@ -2,6 +2,7 @@
 package com.intellij.diagnostic
 
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.ui.ColorUtil
@@ -15,7 +16,7 @@ import javax.swing.JEditorPane
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-class PrivacyNoticeComponent(private val label: String, private val expandedLabel: String) : JPanel(GridBagLayout()) {
+class PrivacyNoticeComponent(@NlsContexts.Label private val label: String, @NlsContexts.Label private val expandedLabel: String) : JPanel(GridBagLayout()) {
 
   private val iconLabel: JLabel = JLabel()
   private val titleLabel = JLabel()

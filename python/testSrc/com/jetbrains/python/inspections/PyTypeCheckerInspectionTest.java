@@ -1,6 +1,10 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.inspections;
 
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.source.PsiFileImpl;
 import com.jetbrains.python.fixtures.PyInspectionTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
@@ -564,6 +568,34 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
     );
   }
 
+  // PY-43133
+  public void testHierarchyAgainstProtocol() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText(
+        "from typing import Protocol\n" +
+        "\n" +
+        "class A:\n" +
+        "    def f1(self, x: str):\n" +
+        "        pass\n" +
+        "\n" +
+        "class B(A):\n" +
+        "    def f2(self, y: str):\n" +
+        "        pass\n" +
+        "\n" +
+        "class P(Protocol):\n" +
+        "    def f1(self, x: str): ...\n" +
+        "    def f2(self, y: str): ...\n" +
+        "\n" +
+        "def test(p: P):\n" +
+        "    pass\n" +
+        "\n" +
+        "b = B()\n" +
+        "test(b)"
+      )
+    );
+  }
+
   // PY-23161
   public void testGenericWithTypeVarBounds() {
     runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
@@ -951,7 +983,7 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                          "    year: int\n" +
                          "def record_movie(movie: Movie) -> None: ...\n" +
                          "record_movie({'name': 'Blade Runner', 'year': 1982})\n" +
-                         "record_movie(<warning descr=\"Expected type 'Movie', got 'Dict[str, int]' instead\">{'name': 1984}</warning>)")
+                         "record_movie(<warning descr=\"Expected type 'Movie', got 'dict[str, int]' instead\">{'name': 1984}</warning>)")
     );
   }
 
@@ -982,9 +1014,9 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                          "    name: str\n" +
                          "    year: int\n" +
                          "m1: Movie = dict(name='Alien', year=1979)\n" +
-                         "m2: Movie = <warning descr=\"Expected type 'Movie', got 'Dict[str, str]' instead\">dict(name='Alien', year='1979')</warning>\n" +
+                         "m2: Movie = <warning descr=\"Expected type 'Movie', got 'dict[str, str]' instead\">dict(name='Alien', year='1979')</warning>\n" +
                          "m3: Movie = typing.cast(Movie, dict(zip(['name', 'year'], ['Alien', 1979])))\n" +
-                         "m4: Movie = <warning descr=\"Expected type 'Movie', got 'Dict[str, str]' instead\">{'name': 'Alien', 'year': '1979'}</warning>\n" +
+                         "m4: Movie = <warning descr=\"Expected type 'Movie', got 'dict[str, str]' instead\">{'name': 'Alien', 'year': '1979'}</warning>\n" +
                          "m5 = Movie(name='Garden State', year=2004)"));
   }
 
@@ -995,9 +1027,9 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
       () -> doTestByText("from typing import TypedDict\n" +
                          "Movie = TypedDict('Movie', {'name': str, 'year': int})\n" +
                          "m1: Movie = dict(name='Alien', year=1979)\n" +
-                         "m2: Movie = <warning descr=\"Expected type 'Movie', got 'Dict[str, str]' instead\">dict(name='Alien', year='1979')</warning>\n" +
+                         "m2: Movie = <warning descr=\"Expected type 'Movie', got 'dict[str, str]' instead\">dict(name='Alien', year='1979')</warning>\n" +
                          "m3: Movie = typing.cast(Movie, dict(zip(['name', 'year'], ['Alien', 1979])))\n" +
-                         "m4: Movie = <warning descr=\"Expected type 'Movie', got 'Dict[str, str]' instead\">{'name': 'Alien', 'year': '1979'}</warning>\n" +
+                         "m4: Movie = <warning descr=\"Expected type 'Movie', got 'dict[str, str]' instead\">{'name': 'Alien', 'year': '1979'}</warning>\n" +
                          "m5 = Movie(name='Garden State', year=2004)"));
   }
 
@@ -1126,6 +1158,33 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
                          "\n" +
                          "foo(MyCls())\n" +
                          "foo(<warning descr=\"Expected type 'MyCls', got 'DifferentCls' instead\">DifferentCls()</warning>)")
+    );
+  }
+
+  public void testNewTypeInForeignUnstubbedFile() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
+      myFixture.copyDirectoryToProject(getTestDirectoryPath(), "");
+      myFixture.configureFromTempProjectFile("a.py");
+      VirtualFile foreignVFile = myFixture.findFileInTempDir("b.py");
+      assertNotNull(foreignVFile);
+      PsiFile foreignFilePsi = PsiManager.getInstance(myFixture.getProject()).findFile(foreignVFile);
+      assertNotNull(foreignFilePsi);
+      assertNotParsed(foreignFilePsi);
+      //noinspection ResultOfMethodCallIgnored
+      foreignFilePsi.getNode();
+      assertNotNull(((PsiFileImpl)foreignFilePsi).getTreeElement());
+      configureInspection();
+    });
+  }
+
+  // PY-42205
+  public void testNonReferenceCallee() {
+    runWithLanguageLevel(
+      LanguageLevel.getLatest(),
+      () -> doTestByText("class CallableTest:\n" +
+                         "    def __call__(self, arg=None):\n" +
+                         "        pass\n" +
+                         "CallableTest()(\"bad 1\")")
     );
   }
 }

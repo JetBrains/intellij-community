@@ -10,6 +10,7 @@ import com.jetbrains.python.psi.PyTryExceptStatement;
 public class PyWithTryFinallySurrounder extends PyWithTryExceptSurrounder {
   @Override
   public String getTemplateDescription() {
+    //noinspection DialogTitleCapitalization
     return CodeInsightBundle.message("surround.with.try.finally.template");
   }
 

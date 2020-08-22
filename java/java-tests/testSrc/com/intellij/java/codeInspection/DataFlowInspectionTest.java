@@ -624,6 +624,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testNewBoxedNumberEquality() { doTest(); }
   public void testBoxingIncorrectLiteral() { doTest(); }
   public void testImplicitUnboxingOnCast() { doTest(); }
+  public void testImplicitUnboxingExtendsInteger() { doTest(); }
 
   public void testIncompleteArrayAccessInLoop() { doTest(); }
   public void testSameArguments() { doTest(); }
@@ -673,4 +674,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testMutationContractFromSource() { doTest(); }
   public void testDefaultConstructor() { doTest(); }
   public void testInstanceOfUnresolved() { doTest(); }
+  public void testProtobufNotNullGetters() { doTest(); }
+  public void testAIOOBETransfer() { doTest(); }
+  public void testBoxingShortByte() { doTest(); }
 }

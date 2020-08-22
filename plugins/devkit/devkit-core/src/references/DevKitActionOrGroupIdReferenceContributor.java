@@ -73,7 +73,7 @@ public class DevKitActionOrGroupIdReferenceContributor extends PsiReferenceContr
     return virtualFile().ofType(PropertiesFileType.INSTANCE).withName(StandardPatterns.string().endsWith(BUNDLE_PROPERTIES));
   }
 
-  private static class DevKitActionReference extends PsiPolyVariantReferenceBase<PsiElement> {
+  private static final class DevKitActionReference extends PsiPolyVariantReferenceBase<PsiElement> {
     private final String myId;
     private final boolean myIsAction;
 

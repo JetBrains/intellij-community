@@ -34,6 +34,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -154,7 +155,7 @@ public class LambdaCanBeReplacedWithAnonymousInspection extends BaseInspection {
   }
 
   private static String getBodyText(PsiLambdaExpression lambdaExpression) {
-    String blockText;
+    @NonNls String blockText;
     final PsiElement body = lambdaExpression.getBody();
     if (body instanceof PsiExpression) {
       final PsiType returnType = LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression);

@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ex.ApplicationManagerEx
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
+import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.components.ComponentManager
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.IComponentStore
@@ -32,7 +33,6 @@ import com.intellij.openapi.vfs.VirtualFileManagerListener
 import com.intellij.ui.AppUIUtil
 import com.intellij.util.ExceptionUtil
 import com.intellij.util.SingleAlarm
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Paths
@@ -59,7 +59,7 @@ open class StoreReloadManagerImpl : StoreReloadManager, Disposable {
       return@Runnable
     }
 
-    val projectsToReload = ObjectOpenHashSet<Project>()
+    val projectsToReload = HashSet<Project>()
     processOpenedProjects { project ->
       val changedSchemes = CHANGED_SCHEMES_KEY.getAndClear(project as UserDataHolderEx)
       val changedStorages = CHANGED_FILES_KEY.getAndClear(project as UserDataHolderEx)
@@ -68,7 +68,7 @@ open class StoreReloadManagerImpl : StoreReloadManager, Disposable {
         return@processOpenedProjects
       }
 
-      runBatchUpdate(project.messageBus) {
+      runBatchUpdate(project) {
         // reload schemes first because project file can refer to scheme (e.g. inspection profile)
         if (changedSchemes != null) {
           for ((tracker, files) in changedSchemes) {
@@ -125,7 +125,7 @@ open class StoreReloadManagerImpl : StoreReloadManager, Disposable {
 
   override fun saveChangedProjectFile(file: VirtualFile, project: Project) {
     val storageManager = (project.stateStore as ComponentStoreImpl).storageManager as? StateStorageManagerImpl ?: return
-    storageManager.getCachedFileStorages(listOf(storageManager.collapseMacros(file.path))).firstOrNull()?.let {
+    storageManager.getCachedFileStorages(listOf(storageManager.collapseMacro(file.path))).firstOrNull()?.let {
       // if empty, so, storage is not yet loaded, so, we don't have to reload
       storageFilesChanged(mapOf(project to listOf(it)))
     }
@@ -160,7 +160,7 @@ open class StoreReloadManagerImpl : StoreReloadManager, Disposable {
 
   override suspend fun reloadChangedStorageFiles() {
     val unfinishedRequest = changedFilesAlarm.getUnfinishedRequest() ?: return
-    withContext(storeEdtCoroutineDispatcher) {
+    withContext(AppUIExecutor.onUiThread().expireWith(this).coroutineDispatchingContext()) {
       unfinishedRequest.run()
       // just to be sure
       changedFilesAlarm.getUnfinishedRequest()?.run()
@@ -197,7 +197,7 @@ open class StoreReloadManagerImpl : StoreReloadManager, Disposable {
       else {
         val changes = CHANGED_FILES_KEY.get(project) ?: (project as UserDataHolderEx).putUserDataIfAbsent(CHANGED_FILES_KEY, linkedMapOf())
         synchronized(changes) {
-          changes.getOrPut(componentManager.stateStore as ComponentStoreImpl) { LinkedHashSet() }.addAll(storages)
+          changes.computeIfAbsent(componentManager.stateStore as ComponentStoreImpl) { LinkedHashSet() }.addAll(storages)
         }
       }
 
@@ -218,7 +218,7 @@ open class StoreReloadManagerImpl : StoreReloadManager, Disposable {
 
     val changes = CHANGED_SCHEMES_KEY.get(project) ?: (project as UserDataHolderEx).putUserDataIfAbsent(CHANGED_SCHEMES_KEY, linkedMapOf())
     synchronized(changes) {
-      changes.getOrPut(schemeFileTracker) { LinkedHashSet() }.addAll(events)
+      changes.computeIfAbsent(schemeFileTracker) { LinkedHashSet() }.addAll(events)
     }
 
     scheduleProcessingChangedFiles()

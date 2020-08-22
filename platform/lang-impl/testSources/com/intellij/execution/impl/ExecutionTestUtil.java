@@ -14,7 +14,7 @@ import org.junit.Assert;
 import java.util.List;
 import java.util.Objects;
 
-public class ExecutionTestUtil {
+public final class ExecutionTestUtil {
   private ExecutionTestUtil() {
   }
 

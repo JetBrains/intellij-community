@@ -10,15 +10,20 @@ import com.intellij.ui.popup.util.PopupState;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.plaf.metal.MetalLabelUI;
 import java.awt.*;
 import java.util.List;
 import java.util.function.Function;
 
+/**
+ * @deprecated use {@link com.intellij.ui.components.DropDownLink} instead
+ */
+@Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
 public class DropDownLink<T> extends LinkLabel<Object> {
   private final PopupState myPopupState = new PopupState();
   private T chosenItem;
@@ -53,7 +58,7 @@ public class DropDownLink<T> extends LinkLabel<Object> {
             linkLabel.setText(t.toString());
           }
 
-          if (itemChosenAction != null && !linkLabel.chosenItem.equals(t)) {
+          if (itemChosenAction != null && (!linkLabel.chosenItem.equals(t) || !updateLabel)) {
             itemChosenAction.consume(t);
           }
           linkLabel.chosenItem = t;
@@ -66,23 +71,17 @@ public class DropDownLink<T> extends LinkLabel<Object> {
     setIconTextGap(JBUIScale.scale(1));
     setHorizontalAlignment(SwingConstants.LEADING);
     setHorizontalTextPosition(SwingConstants.LEADING);
-
-    setUI(new MetalLabelUI() {
-      @Override
-      protected String layoutCL(JLabel label, FontMetrics fontMetrics, String text, Icon icon,
-                                Rectangle viewR, Rectangle iconR, Rectangle textR) {
-        String result = super.layoutCL(label, fontMetrics, text, icon, viewR, iconR, textR);
-        iconR.y += JBUIScale.scale(1);
-        return result;
-      }
-    });
   }
 
   public T getChosenItem() {
     return chosenItem;
   }
 
-  private static class LinkCellRenderer<T> extends JLabel implements ListCellRenderer<T> {
+  public PopupState getPopupState() {
+    return myPopupState;
+  }
+
+  private static final class LinkCellRenderer<T> extends JLabel implements ListCellRenderer<T> {
     private final JComponent owner;
 
     private LinkCellRenderer(JComponent owner) {

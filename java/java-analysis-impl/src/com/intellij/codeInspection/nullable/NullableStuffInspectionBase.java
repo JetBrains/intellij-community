@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.nullable;
 
 import com.intellij.codeInsight.*;
@@ -7,6 +7,7 @@ import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -24,6 +25,7 @@ import com.intellij.psi.impl.search.JavaOverridingMethodsSearcher;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.*;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ObjectUtils;
@@ -319,7 +321,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   }
 
   @Nullable
-  private String checkIndirectInheritance(PsiElement psiClass, PsiClass intf) {
+  private @InspectionMessage String checkIndirectInheritance(PsiElement psiClass, PsiClass intf) {
     for (PsiMethod intfMethod : intf.getAllMethods()) {
       PsiClass intfMethodClass = intfMethod.getContainingClass();
       PsiMethod overridingMethod = intfMethodClass == null ? null :
@@ -334,19 +336,17 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   }
 
   @Nullable
-  private String checkIndirectInheritance(PsiMethod intfMethod,
-                                          PsiClass intfMethodClass,
-                                          PsiMethod overridingMethod,
-                                          PsiClass overridingMethodClass) {
+  private @InspectionMessage String checkIndirectInheritance(PsiMethod intfMethod,
+                                                             PsiClass intfMethodClass,
+                                                             PsiMethod overridingMethod,
+                                                             PsiClass overridingMethodClass) {
     if (isNullableOverridingNotNull(Annotated.from(overridingMethod), intfMethod)) {
-      return "Nullable method '" + overridingMethod.getName() +
-             "' from '" + overridingMethodClass.getName() +
-             "' implements non-null method from '" + intfMethodClass.getName() + "'";
+      return JavaAnalysisBundle.message("inspection.message.nullable.method.implements.non.null.method", 
+                                        overridingMethod.getName(), overridingMethodClass.getName(), intfMethodClass.getName());
     }
     if (isNonAnnotatedOverridingNotNull(overridingMethod, intfMethod)) {
-      return "Non-annotated method '" + overridingMethod.getName() +
-             "' from '" + overridingMethodClass.getName() +
-             "' implements non-null method from '" + intfMethodClass.getName() + "'";
+      return JavaAnalysisBundle.message("inspection.message.non.annotated.method.implements.non.null.method", 
+                                        overridingMethod.getName(), overridingMethodClass.getName(), intfMethodClass.getName());
     }
 
     PsiParameter[] overridingParameters = overridingMethod.getParameterList().getParameters();
@@ -357,22 +357,16 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
         PsiParameter parameter = overridingParameters[i];
         List<PsiParameter> supers = Collections.singletonList(superParameters[i]);
         if (findNullableSuperForNotNullParameter(parameter, supers) != null) {
-          return "Non-null parameter '" + parameter.getName() +
-                 "' in method '" + overridingMethod.getName() +
-                 "' from '" + overridingMethodClass.getName() +
-                 "' should not override nullable parameter from '" + intfMethodClass.getName() + "'";
+          return JavaAnalysisBundle.message("inspection.message.non.null.parameter.should.not.override.nullable.parameter", 
+                                            parameter.getName(), overridingMethod.getName(), overridingMethodClass.getName(), intfMethodClass.getName());
         }
         if (findNotNullSuperForNonAnnotatedParameter(manager, parameter, supers) != null) {
-          return "Non-annotated parameter '" + parameter.getName() +
-                 "' in method '" + overridingMethod.getName() +
-                 "' from '" + overridingMethodClass.getName() +
-                 "' should not override non-null parameter from '" + intfMethodClass.getName() + "'";
+          return JavaAnalysisBundle.message("inspection.message.non.annotated.parameter.should.not.override.non.null.parameter", 
+                                            parameter.getName(), overridingMethod.getName(), overridingMethodClass.getName(), intfMethodClass.getName());
         }
         if (isNotNullParameterOverridingNonAnnotated(manager, parameter, supers)) {
-          return "Non-null parameter '" + parameter.getName() +
-                 "' in method '" + overridingMethod.getName() +
-                 "' from '" + overridingMethodClass.getName() +
-                 "' should not override non-annotated parameter from '" + intfMethodClass.getName() + "'";
+          return JavaAnalysisBundle.message("inspection.message.non.null.parameter.should.not.override.non.annotated.parameter", 
+                                            parameter.getName(), overridingMethod.getName(), overridingMethodClass.getName(), intfMethodClass.getName());
         }
       }
     }
@@ -417,10 +411,9 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
                                                      Annotated annotated,
                                                      NullableNotNullManager manager, String anno, @NotNull ProblemsHolder holder) {
     if (!AnnotationUtil.isAnnotatingApplicable(field, anno)) {
-      String message = "Not '";
       PsiAnnotation annotation = Objects.requireNonNull(annotated.isDeclaredNullable ? annotated.nullable : annotated.notNull);
-      message += annotation.getQualifiedName();
-      message += "' but '" + anno + "' would be used for code generation.";
+      String message = JavaAnalysisBundle.message("inspection.message.code.generation.different.nullability.annotation.will.be.used", 
+                                                  annotation.getQualifiedName(), anno);
       final PsiJavaCodeReferenceElement annotationNameReferenceElement = annotation.getNameReferenceElement();
       holder.registerProblem(annotationNameReferenceElement != null && annotationNameReferenceElement.isPhysical() ? annotationNameReferenceElement : field.getNameIdentifier(),
                              message,
@@ -441,7 +434,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
     final PsiIdentifier nameIdentifier = getter == null ? null : getter.getNameIdentifier();
     if (nameIdentifier != null && nameIdentifier.isPhysical()) {
       if (PropertyUtil.getFieldOfGetter(getter) == field) {
-        AnnotateMethodFix getterAnnoFix = new AnnotateMethodFix(anno, ArrayUtilRt.toStringArray(annoToRemove));
+        LocalQuickFix getterAnnoFix = new AddAnnotationPsiFix(anno, getter, ArrayUtilRt.toStringArray(annoToRemove));
         if (REPORT_NOT_ANNOTATED_GETTER) {
           if (!manager.hasNullability(getter) && !TypeConversionUtil.isPrimitiveAndNotNull(getter.getReturnType())) {
             holder.registerProblem(nameIdentifier, JavaAnalysisBundle
@@ -491,7 +484,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
 
   @NotNull
   private static AddAnnotationPsiFix createAddAnnotationFix(String anno, List<String> annoToRemove, PsiParameter parameter) {
-    return new AddAnnotationPsiFix(anno, parameter, PsiNameValuePair.EMPTY_ARRAY, ArrayUtilRt.toStringArray(annoToRemove));
+    return new AddAnnotationPsiFix(anno, parameter, ArrayUtilRt.toStringArray(annoToRemove));
   }
 
   @Contract("_,_,null -> fail")
@@ -569,7 +562,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
     return StringUtil.getShortName(StringUtil.notNullize(annotation.getQualifiedName(), "???"));
   }
 
-  private static class Annotated {
+  private static final class Annotated {
     private final boolean isDeclaredNotNull;
     private final boolean isDeclaredNullable;
     @Nullable private final PsiAnnotation notNull;
@@ -1012,10 +1005,10 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
       super(defaultNotNull, annotationsToRemove);
     }
 
-    @NotNull
     @Override
-    protected String getPreposition() {
-      return "as";
+    public @NotNull String getName() {
+      return JavaAnalysisBundle.message("inspection.annotate.overridden.method.nullable.quickfix.name",
+                                        ClassUtil.extractClassName(myAnnotation));
     }
 
     @Override

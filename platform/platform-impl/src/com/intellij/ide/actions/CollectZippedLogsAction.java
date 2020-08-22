@@ -10,10 +10,12 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -32,6 +34,7 @@ import java.util.Date;
 import java.util.function.Consumer;
 
 public class CollectZippedLogsAction extends AnAction implements DumbAware {
+
   private static final String CONFIRMATION_DIALOG = "zipped.logs.action.show.confirmation.dialog";
   private static class Holder {
     private static final NotificationGroup NOTIFICATION_GROUP =
@@ -45,18 +48,20 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
     final boolean doNotShowDialog = PropertiesComponent.getInstance().getBoolean(CONFIRMATION_DIALOG);
 
     if (!doNotShowDialog) {
-      int result = Messages.showOkCancelDialog(
-        project, IdeBundle.message("message.included.logs.and.settings.may.contain.sensitive.data"),
-        IdeBundle.message("dialog.title.sensitive.data"),
-        "Show in " + RevealFileAction.getFileManagerName(), "Cancel", Messages.getWarningIcon(),
-        new DialogWrapper.DoNotAskOption.Adapter() {
+      if (!MessageDialogBuilder.okCancel(IdeBundle.message("dialog.title.sensitive.data"),
+                                         IdeBundle.message("message.included.logs.and.settings.may.contain.sensitive.data"))
+        .yesText("Show in " + RevealFileAction.getFileManagerName())
+        .noText("Cancel")
+        .icon(Messages.getWarningIcon())
+        .doNotAsk(new DialogWrapper.DoNotAskOption.Adapter() {
           @Override
           public void rememberChoice(final boolean selected, final int exitCode) {
             PropertiesComponent.getInstance().setValue(CONFIRMATION_DIALOG, selected);
           }
-        }
-      );
-      if (result == Messages.CANCEL) return;
+        })
+        .ask(project)) {
+        return;
+      }
     }
     ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       try {
@@ -74,6 +79,8 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
         }
       }
       catch (final IOException exception) {
+        Logger.getInstance(getClass()).warn(exception);
+
         final Notification errorNotification = new Notification(Holder.NOTIFICATION_GROUP.getDisplayId(),
                                                                 "",
                                                                 IdeBundle.message("notification.content.can.t.create.zip.file.with.logs.0",

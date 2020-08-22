@@ -29,12 +29,12 @@ class Retry {
       }
       catch (Exception e) {
         if (i == retries) {
-          log.error("Failed all $retries attempts, see nested exception for details", e)
+          throw new RuntimeException("Failed all $retries attempts, see nested exception for details", e)
         }
         if (i > 1) delayMs = backOff(delayMs, i, e)
       }
     }
-    log.error("Should not be reached") as T
+    throw new RuntimeException("Should not be reached")
   }
 
   private static long backOffLimitMs = TimeUnit.MINUTES.toMillis(15)

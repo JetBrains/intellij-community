@@ -26,7 +26,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
 
-public class JUnit3IdeaTestRunner extends TestRunner implements IdeaTestRunner {
+public class JUnit3IdeaTestRunner extends TestRunner implements IdeaTestRunner<Test> {
   private SMTestListener myTestsListener;
   private ArrayList<String> myListeners;
 
@@ -65,27 +65,26 @@ public class JUnit3IdeaTestRunner extends TestRunner implements IdeaTestRunner {
   }
 
   @Override
-  public Object getTestToStart(String[] args, String name) {
+  public Test getTestToStart(String[] args, String name) {
     return TestRunnerUtil.getTestSuite(this, args);
   }
 
   @Override
-  public List<?> getChildTests(Object description) {
-    return getTestCasesOf((Test)description);
+  public List<Test> getChildTests(Test description) {
+    return getTestCasesOf(description);
   }
 
   @Override
-  public String getTestClassName(Object child) {
+  public String getTestClassName(Test child) {
     return child instanceof TestSuite ? ((TestSuite)child).getName() : child.getClass().getName();
   }
 
   @Override
-  public String getStartDescription(Object child) {
-    final Test test = (Test)child;
-    if (test instanceof TestCase) {
-      return test.getClass().getName() + "," + ((TestCase)test).getName();
+  public String getStartDescription(Test child) {
+    if (child instanceof TestCase) {
+      return child.getClass().getName() + "," + ((TestCase)child).getName();
     }
-    return test.toString();
+    return child.toString();
   }
 
   @Override

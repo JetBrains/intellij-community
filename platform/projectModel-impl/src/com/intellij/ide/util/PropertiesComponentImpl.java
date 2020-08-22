@@ -3,6 +3,7 @@ package com.intellij.ide.util;
 
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jdom.Verifier;
@@ -65,7 +66,7 @@ public class PropertiesComponentImpl extends PropertiesComponent implements Pers
   }
 
   @Override
-  public String getValue(@NotNull String name) {
+  public @NlsSafe String getValue(@NotNull String name) {
     return myMap.get(name);
   }
 

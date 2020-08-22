@@ -1,7 +1,7 @@
 # Stubs for distutils.dist
 from distutils.cmd import Command
 
-from typing import Any, Dict, Mapping, Optional, Dict, Tuple, Iterable, Text, Type
+from typing import Any, Dict, Iterable, Mapping, Optional, Text, Tuple, Type
 
 
 class Distribution:

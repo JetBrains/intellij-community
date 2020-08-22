@@ -6,17 +6,16 @@ import com.intellij.openapi.util.io.IoTestUtil;
 import org.junit.Test;
 
 import java.io.File;
-import java.nio.file.Files;
 import java.nio.file.Paths;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class SymlinkPatchTest extends PatchTestCase {
   @Override
-  public void setUp() throws Exception {
+  public void before() throws Exception {
     IoTestUtil.assumeSymLinkCreationIsSupported();
 
-    super.setUp();
+    super.before();
 
     FileUtil.writeToFile(new File(myOlderDir, "Readme.txt"), "hello");
     resetNewerDir();
@@ -24,14 +23,14 @@ public class SymlinkPatchTest extends PatchTestCase {
 
   @Test
   public void same() throws Exception {
-    Utils.createLink("Readme.txt", new File(myOlderDir, "Readme.link"));
-    Utils.createLink("Readme.txt", new File(myNewerDir, "Readme.link"));
+    IoTestUtil.createSymbolicLink(new File(myOlderDir, "Readme.link").toPath(), Paths.get("Readme.txt"));
+    IoTestUtil.createSymbolicLink(new File(myNewerDir, "Readme.link").toPath(), Paths.get("Readme.txt"));
     assertThat(createPatch().getActions()).containsExactly();
   }
 
   @Test
   public void create() throws Exception {
-    Utils.createLink("Readme.txt", new File(myNewerDir, "Readme.link"));
+    IoTestUtil.createSymbolicLink(new File(myNewerDir, "Readme.link").toPath(), Paths.get("Readme.txt"));
 
     Patch patch = createPatch();
     assertThat(sortActions(patch.getActions())).containsExactly(
@@ -40,7 +39,7 @@ public class SymlinkPatchTest extends PatchTestCase {
 
   @Test
   public void delete() throws Exception {
-    Utils.createLink("Readme.txt", new File(myOlderDir, "Readme.link"));
+    IoTestUtil.createSymbolicLink(new File(myOlderDir, "Readme.link").toPath(), Paths.get("Readme.txt"));
 
     Patch patch = createPatch();
     assertThat(sortActions(patch.getActions())).containsExactly(
@@ -49,8 +48,8 @@ public class SymlinkPatchTest extends PatchTestCase {
 
   @Test
   public void rename() throws Exception {
-    Utils.createLink("Readme.txt", new File(myOlderDir, "Readme.lnk"));
-    Utils.createLink("Readme.txt", new File(myNewerDir, "Readme.link"));
+    IoTestUtil.createSymbolicLink(new File(myOlderDir, "Readme.lnk").toPath(), Paths.get("Readme.txt"));
+    IoTestUtil.createSymbolicLink(new File(myNewerDir, "Readme.link").toPath(), Paths.get("Readme.txt"));
 
     Patch patch = createPatch();
     assertThat(sortActions(patch.getActions())).containsExactly(
@@ -60,8 +59,8 @@ public class SymlinkPatchTest extends PatchTestCase {
 
   @Test
   public void retarget() throws Exception {
-    Utils.createLink("Readme.txt", new File(myOlderDir, "Readme.link"));
-    Utils.createLink("./Readme.txt", new File(myNewerDir, "Readme.link"));
+    IoTestUtil.createSymbolicLink(new File(myOlderDir, "Readme.link").toPath(), Paths.get("Readme.txt"));
+    IoTestUtil.createSymbolicLink(new File(myNewerDir, "Readme.link").toPath(), Paths.get("./Readme.txt"));
 
     Patch patch = createPatch();
     assertThat(sortActions(patch.getActions())).containsExactly(
@@ -71,8 +70,8 @@ public class SymlinkPatchTest extends PatchTestCase {
 
   @Test
   public void renameAndRetarget() throws Exception {
-    Utils.createLink("./Readme.txt", new File(myOlderDir, "Readme.lnk"));
-    Utils.createLink("Readme.txt", new File(myNewerDir, "Readme.link"));
+    IoTestUtil.createSymbolicLink(new File(myOlderDir, "Readme.lnk").toPath(), Paths.get("./Readme.txt"));
+    IoTestUtil.createSymbolicLink(new File(myNewerDir, "Readme.link").toPath(), Paths.get("Readme.txt"));
 
     Patch patch = createPatch();
     assertThat(sortActions(patch.getActions())).containsExactly(
@@ -86,9 +85,9 @@ public class SymlinkPatchTest extends PatchTestCase {
     long l2 = randomFile(myOlderDir.toPath().resolve("A.framework/Versions/A/Libraries/lib2.dylib"));
     long r1 = randomFile(myOlderDir.toPath().resolve("A.framework/Versions/A/Resources/r1.bin"));
     long r2 = randomFile(myOlderDir.toPath().resolve("A.framework/Versions/A/Resources/r2.bin"));
-    Files.createSymbolicLink(myOlderDir.toPath().resolve("A.framework/Versions/Current"), Paths.get("A"));
-    Files.createSymbolicLink(myOlderDir.toPath().resolve("A.framework/Libraries"), Paths.get("Versions/Current/Libraries"));
-    Files.createSymbolicLink(myOlderDir.toPath().resolve("A.framework/Resources"), Paths.get("Versions/Current/Resources"));
+    IoTestUtil.createSymbolicLink(myOlderDir.toPath().resolve("A.framework/Versions/Current"), Paths.get("A"));
+    IoTestUtil.createSymbolicLink(myOlderDir.toPath().resolve("A.framework/Libraries"), Paths.get("Versions/Current/Libraries"));
+    IoTestUtil.createSymbolicLink(myOlderDir.toPath().resolve("A.framework/Resources"), Paths.get("Versions/Current/Resources"));
 
     randomFile(myNewerDir.toPath().resolve("A.framework/Versions/A/Libraries/lib1.dylib"));
     randomFile(myNewerDir.toPath().resolve("A.framework/Versions/A/Libraries/lib2.dylib"));
@@ -98,10 +97,10 @@ public class SymlinkPatchTest extends PatchTestCase {
     randomFile(myNewerDir.toPath().resolve("A.framework/Versions/B/Libraries/lib2.dylib"));
     randomFile(myNewerDir.toPath().resolve("A.framework/Versions/B/Resources/r1.bin"));
     randomFile(myNewerDir.toPath().resolve("A.framework/Versions/B/Resources/r2.bin"));
-    Files.createSymbolicLink(myNewerDir.toPath().resolve("A.framework/Versions/Previous"), Paths.get("A"));
-    Files.createSymbolicLink(myNewerDir.toPath().resolve("A.framework/Versions/Current"), Paths.get("B"));
-    Files.createSymbolicLink(myNewerDir.toPath().resolve("A.framework/Libraries"), Paths.get("Versions/Current/Libraries"));
-    Files.createSymbolicLink(myNewerDir.toPath().resolve("A.framework/Resources"), Paths.get("Versions/Current/Resources"));
+    IoTestUtil.createSymbolicLink(myNewerDir.toPath().resolve("A.framework/Versions/Previous"), Paths.get("A"));
+    IoTestUtil.createSymbolicLink(myNewerDir.toPath().resolve("A.framework/Versions/Current"), Paths.get("B"));
+    IoTestUtil.createSymbolicLink(myNewerDir.toPath().resolve("A.framework/Libraries"), Paths.get("Versions/Current/Libraries"));
+    IoTestUtil.createSymbolicLink(myNewerDir.toPath().resolve("A.framework/Resources"), Paths.get("Versions/Current/Resources"));
 
     Patch patch = createPatch();
     assertThat(sortActions(patch.getActions())).containsExactly(

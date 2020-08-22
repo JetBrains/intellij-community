@@ -99,18 +99,21 @@ abstract class PyCharmPropertiesBase extends JetBrainsProductProperties {
     CompilationTasks.create(context).compileModules(["intellij.python.tools"])
     List<String> buildClasspath = context.getModuleRuntimeClasspath(context.findModule("intellij.python.tools"), false)
 
+    File outputFile = File.createTempFile("GetPyStubsVersionKt_output", "txt")
     context.ant.java(classname: "com.jetbrains.python.tools.GetPyStubsVersionKt",
                      fork: true,
                      failonerror: !context.options.isInDevelopmentMode,
-                     outputproperty: "stubsVersion") {
+                     output: outputFile) {
       classpath {
         buildClasspath.each {
           pathelement(location: it)
         }
       }
     }
-    List<String> stubsVersion = (context.ant.project.properties.stubsVersion as String).split('\n')
-    return [stubsVersion[0].toInteger(), stubsVersion[1].toInteger()]
+
+    List<String> stubsVersion = outputFile.readLines().takeRight(2)
+    outputFile.deleteOnExit()
+    return [stubsVersion[0].trim().toInteger(), stubsVersion[1].trim().toInteger()]
   }
 
   protected void generateUniversalStubs(BuildContext context, File from, File to) {

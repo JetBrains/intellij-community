@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class XsltIncludeIndex {
+public final class XsltIncludeIndex {
 
   private XsltIncludeIndex() {
   }

@@ -2,24 +2,25 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.extensions.PluginId;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 final class PluginError {
   final IdeaPluginDescriptorImpl plugin;
-  private final String message;
-  private final String incompatibleReason;
-  private boolean myNotifyUser;
+  private final @Nls String message;
+  private final @Nls String incompatibleReason;
+  private final boolean myNotifyUser;
   private PluginId myDisabledDependency;
 
-  public PluginError(@Nullable IdeaPluginDescriptorImpl plugin, @NotNull String message, @Nullable String incompatibleReason) {
+  PluginError(@Nullable IdeaPluginDescriptorImpl plugin, @NotNull @Nls String message, @Nullable @Nls String incompatibleReason) {
     this(plugin, message, incompatibleReason, true);
   }
 
-  public PluginError(@Nullable IdeaPluginDescriptorImpl plugin,
-                     @NotNull String message,
-                     @Nullable String incompatibleReason,
-                     boolean notifyUser) {
+  PluginError(@Nullable IdeaPluginDescriptorImpl plugin,
+              @Nls @NotNull String message,
+              @Nls @Nullable String incompatibleReason,
+              boolean notifyUser) {
     this.plugin = plugin;
     this.message = message;
     this.incompatibleReason = incompatibleReason;
@@ -30,7 +31,7 @@ final class PluginError {
     myDisabledDependency = disabledDependency;
   }
 
-  @NotNull String toUserError() {
+  @NotNull @Nls String toUserError() {
     if (plugin == null) {
       return message;
     }

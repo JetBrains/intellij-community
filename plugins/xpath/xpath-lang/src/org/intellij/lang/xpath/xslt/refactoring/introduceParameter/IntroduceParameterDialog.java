@@ -19,6 +19,7 @@ import com.intellij.lang.LanguageNamesValidation;
 import org.intellij.lang.xpath.psi.XPathExpression;
 import org.intellij.lang.xpath.xslt.refactoring.BaseIntroduceDialog;
 import org.intellij.lang.xpath.xslt.refactoring.BaseIntroduceForm;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -29,7 +30,6 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
 public class IntroduceParameterDialog extends BaseIntroduceDialog implements IntroduceParameterOptions {
-    private static final String TITLE = "XSLT - Introduce Parameter";
 
     private JPanel myContentPane;
     private JCheckBox myCreateWithDefault;
@@ -42,7 +42,7 @@ public class IntroduceParameterDialog extends BaseIntroduceDialog implements Int
     public IntroduceParameterDialog(XPathExpression expression, int numberOfExpressions, boolean forceDefault) {
         super(expression.getProject(), LanguageNamesValidation.INSTANCE.forLanguage(expression.getLanguage()));
         myForceDefault = forceDefault;
-        init(expression, numberOfExpressions, TITLE);
+        init(expression, numberOfExpressions, XPathBundle.message("dialog.title.xslt.introduce.parameter"));
 
         getOKAction().addPropertyChangeListener(new PropertyChangeListener() {
             @Override
@@ -103,7 +103,7 @@ public class IntroduceParameterDialog extends BaseIntroduceDialog implements Int
 
     private class MyPreviewAction extends AbstractAction {
         MyPreviewAction() {
-            super("&Preview");
+            super(XPathBundle.message("action.preview.text"));
         }
 
         @Override

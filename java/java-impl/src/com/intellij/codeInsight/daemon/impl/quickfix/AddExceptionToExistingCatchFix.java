@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.google.common.collect.Lists;
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -126,7 +127,7 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
     return QuickFixBundle.message("add.exception.to.existing.catch.family");
   }
 
-  private static class Context {
+  private static final class Context {
     private final List<? extends PsiCatchSection> myCatches;
     private final List<? extends PsiClassType> myExceptions;
 
@@ -175,7 +176,7 @@ public class AddExceptionToExistingCatchFix extends PsiElementBaseIntentionActio
       return parents;
     }
 
-    private String getMessage() {
+    private @IntentionName String getMessage() {
       if (myCatches.size() == 1 && myExceptions.size() == 1) {
         PsiClassType exceptionType = myExceptions.get(0);
         PsiCatchSection catchSection = myCatches.get(0);

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.committed
 
 import com.intellij.openapi.application.ApplicationManager
@@ -61,7 +61,7 @@ class VcsDirtyScopeManagerTest : VcsPlatformTest() {
   }
 
   fun `test dirty files from different roots`() {
-    val otherRoot = createSubRoot(testRootFile, "otherRoot")
+    val otherRoot = createSubRoot(testRoot, "otherRoot")
     val file = createFile(projectRoot, "file.txt")
     val subFile = createFile(otherRoot, "other.txt")
 
@@ -87,7 +87,7 @@ class VcsDirtyScopeManagerTest : VcsPlatformTest() {
 
   // this is already implicitly checked in several other tests, but better to have it explicit
   fun `test all roots from a single vcs belong to a single scope`() {
-    val otherRoot = createSubRoot(testRootFile, "otherRoot")
+    val otherRoot = createSubRoot(testRoot, "otherRoot")
     val file = createFile(projectRoot, "file.txt")
     val subFile = createFile(otherRoot, "other.txt")
 
@@ -101,7 +101,7 @@ class VcsDirtyScopeManagerTest : VcsPlatformTest() {
   }
 
   fun `test marking file outside of any VCS root dirty has no effect`() {
-    val file = createFile(testRootFile, "outside.txt")
+    val file = createFile(testRoot, "outside.txt")
 
     dirtyScopeManager.fileDirty(file)
 

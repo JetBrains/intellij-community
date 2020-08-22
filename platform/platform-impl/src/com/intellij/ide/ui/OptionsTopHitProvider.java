@@ -19,6 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.WordPrefixMatcher;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.text.Matcher;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -77,7 +78,7 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
                                        @Nullable Project project) {
     if (provider.getId().startsWith(id) || pattern.startsWith(" ")) {
       pattern = pattern.startsWith(" ") ? pattern.trim() : pattern.substring(id.length()).trim();
-      consumeTopHitsForApplicableProvider(provider, new WordPrefixMatcher(pattern), collector, project);
+      consumeTopHitsForApplicableProvider(provider, buildMatcher(pattern), collector, project);
     }
   }
 
@@ -92,6 +93,11 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
     }
   }
 
+  @NotNull
+  private static Matcher buildMatcher(String pattern) {
+    return new WordPrefixMatcher(pattern);
+  }
+
   private static @Nullable String checkPattern(@NotNull String pattern) {
     if (!pattern.startsWith(SearchTopHitProvider.getTopHitAccelerator())) {
       return null;
@@ -104,11 +110,11 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
   @Override
   public abstract @NotNull String getId();
 
-  public static String messageApp(@PropertyKey(resourceBundle = ApplicationBundle.BUNDLE) String property) {
+  public static @Nls String messageApp(@PropertyKey(resourceBundle = ApplicationBundle.BUNDLE) String property) {
     return StringUtil.stripHtml(ApplicationBundle.message(property), false);
   }
 
-  public static String messageIde(@PropertyKey(resourceBundle = IdeBundle.BUNDLE) String property) {
+  public static @Nls String messageIde(@PropertyKey(resourceBundle = IdeBundle.BUNDLE) String property) {
     return StringUtil.stripHtml(IdeBundle.message(property), false);
   }
 
@@ -147,7 +153,7 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
     }
 
     public void consumeAllTopHits(@NotNull String pattern, @NotNull Consumer<Object> collector, @Nullable Project project) {
-      Matcher matcher = new WordPrefixMatcher(pattern);
+      Matcher matcher = buildMatcher(pattern);
       for (OptionsSearchTopHitProvider.ProjectLevelProvider provider : PROJECT_LEVEL_EP.getExtensionList()) {
         consumeTopHitsForApplicableProvider(provider, matcher, collector, project);
       }

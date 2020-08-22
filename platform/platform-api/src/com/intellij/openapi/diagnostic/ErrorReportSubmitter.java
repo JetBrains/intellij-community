@@ -3,6 +3,7 @@ package com.intellij.openapi.diagnostic;
 
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -36,7 +37,7 @@ public abstract class ErrorReportSubmitter implements PluginAware {
    * @return an action text to be used in Error Reporter user interface, e.g. "Report to JetBrains".
    */
   @NotNull
-  public abstract String getReportActionText();
+  public abstract @NlsActions.ActionText String getReportActionText();
 
   /**
    * @return a text of a privacy notice to be shown in the dialog (in HTML; links are allowed).

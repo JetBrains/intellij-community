@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.javac;
 
+import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.incremental.BinaryContent;
@@ -46,7 +47,7 @@ public final class OutputFileObject extends JpsFileObject {
                           @Nullable final URI srcUri,
                           @Nullable final String encodingName,
                           @Nullable BinaryContent content, final JavaFileManager.Location location) {
-    super(file.toURI(), kind, location);
+    super(FileUtilRt.fileToUri(file), kind, location);
     myContext = context;
     mySourceUri = srcUri;
     myContent = content;
@@ -54,7 +55,7 @@ public final class OutputFileObject extends JpsFileObject {
     myRelativePath = relativePath;
     myFile = file;
     myClassName = className != null? className.replace('/', '.') : null;
-    mySourceFile = srcUri != null ? new File(srcUri) : null;
+    mySourceFile = srcUri != null && "file".equalsIgnoreCase(srcUri.getScheme())? new File(srcUri) : null;
     myEncodingName = encodingName;
   }
 

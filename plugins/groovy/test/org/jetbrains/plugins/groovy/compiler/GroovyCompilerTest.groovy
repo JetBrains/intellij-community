@@ -19,7 +19,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
-import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.pom.java.LanguageLevel
@@ -28,6 +28,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestLoggerFactory
+import com.intellij.util.ThrowableRunnable
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.jps.incremental.groovy.JpsGroovycRunner
@@ -35,13 +36,13 @@ import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile
 import org.jetbrains.org.objectweb.asm.ClassReader
 import org.jetbrains.org.objectweb.asm.ClassVisitor
 import org.jetbrains.org.objectweb.asm.Opcodes
-
 /**
  * @author peter
  */
 @CompileStatic
 abstract class GroovyCompilerTest extends GroovyCompilerTestCase {
   @Override protected void setUp() {
+    new File(TestLoggerFactory.testLogDir, "../log/build-log/build.log").delete()
     super.setUp()
     Logger.getInstance("#org.jetbrains.plugins.groovy.compiler.GroovyCompilerTest").info(testStartMessage)
     addGroovyLibrary(module)
@@ -216,18 +217,12 @@ class Bar extends Foo {
     assertOutput("Bar", "239")
   }
 
-  @Override
-  void runBare() {
-    new File(TestLoggerFactory.testLogDir, "../log/build-log/build.log").delete()
-    super.runBare()
-  }
-
   String getTestStartMessage() { "Starting " + getClass().name + " " + getName() }
 
   @Override
-  void runTest() {
+  protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     try {
-      super.runTest()
+      super.runTestRunnable(testRunnable)
     }
     catch (Throwable e) {
       printLogs()
@@ -553,14 +548,14 @@ class Indirect {
     myFixture.addFileToProject('Bar.groovy', 'class Bar extends Foo { }')
     def main = myFixture.addFileToProject('Main.groovy', 'class Main extends Bar { }').virtualFile
     assertEmpty make()
-    long oldBaseStamp = findClassFile("Base").timeStamp
-    long oldMainStamp = findClassFile("Main").timeStamp
+    long oldBaseStamp = findClassFile("Base").lastModified()
+    long oldMainStamp = findClassFile("Main").lastModified()
 
     touch(main)
     touch(foo)
     assertEmpty make()
-    assert oldMainStamp != findClassFile("Main").timeStamp
-    assert oldBaseStamp == findClassFile("Base").timeStamp
+    assert oldMainStamp != findClassFile("Main").lastModified()
+    assert oldBaseStamp == findClassFile("Base").lastModified()
   }
 
   void 'test changed groovy refers to java which refers to changed groovy and fails in stub generator'() {
@@ -668,7 +663,7 @@ class Main {
     myFixture.addFileToProject("Bar.groovy", "class Bar {}")
     assertEmpty make()
 
-    def barCompiled = VfsUtil.virtualToIoFile(findClassFile('Bar'))
+    def barCompiled = findClassFile('Bar')
     def barStamp = barCompiled.lastModified()
 
     setFileText(fooFile, 'class Foo ext { }')
@@ -1035,7 +1030,7 @@ class BuildContextImpl extends BuildContext {
   private int getClassFileVersion(String className) {
     def classFile = findClassFile(className)
     int version = -1
-    new ClassReader(classFile.contentsToByteArray()).accept(new ClassVisitor(Opcodes.ASM6) {
+    new ClassReader(FileUtil.loadFileBytes(classFile)).accept(new ClassVisitor(Opcodes.ASM6) {
       @Override
       void visit(int v, int access, String name, String signature, String superName, String[] interfaces) {
         version = v

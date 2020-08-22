@@ -38,7 +38,7 @@ import static org.jetbrains.idea.svn.SvnUtil.*;
 import static org.jetbrains.idea.svn.SvnUtilKtKt.putWcDbFilesToVfs;
 
 @State(name = "SvnFileUrlMappingImpl", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
-public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentStateComponent<SvnMappingSavedPart>, Disposable {
+public final class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentStateComponent<SvnMappingSavedPart>, Disposable {
   private static final Logger LOG = Logger.getInstance(SvnFileUrlMappingImpl.class);
 
   @NotNull private final Object myMonitor = new Object();
@@ -56,7 +56,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
   private final @NotNull MergingUpdateQueue myRefreshQueue =
     new MergingUpdateQueue("Refresh Working Copies", 100, true, null, this, null, POOLED_THREAD);
 
-  private static class MyRootsHelper {
+  private static final class MyRootsHelper {
     @NotNull private final static ThreadLocal<Boolean> ourInProgress = ThreadLocal.withInitial(() -> Boolean.FALSE);
     @NotNull private final Project myProject;
     @NotNull private final ProjectLevelVcsManager myVcsManager;
@@ -219,7 +219,7 @@ public class SvnFileUrlMappingImpl implements SvnFileUrlMapping, PersistentState
     }
   }
 
-  private class NewRootsApplier {
+  private final class NewRootsApplier {
 
     @NotNull private final SvnRootsDetector.Result myResult;
     @NotNull private final SvnMapping myNewMapping = new SvnMapping();

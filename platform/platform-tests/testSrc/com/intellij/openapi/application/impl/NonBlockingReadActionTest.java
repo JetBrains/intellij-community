@@ -14,11 +14,15 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.testFramework.*;
+import com.intellij.testFramework.LeakHunter;
+import com.intellij.testFramework.LightPlatformTestCase;
+import com.intellij.testFramework.LoggedErrorProcessor;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -26,6 +30,7 @@ import com.intellij.util.concurrency.BoundedTaskExecutor;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.ui.UIUtil;
+import one.util.streamex.IntStreamEx;
 import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.CancellablePromise;
@@ -457,5 +462,50 @@ public class NonBlockingReadActionTest extends LightPlatformTestCase {
         }
       });
     });
+  }
+
+  public void test_honor_all_disposables() throws Exception {
+    for (int i = 0; i < 2; i++) {
+      Disposable[] parents = {Disposer.newDisposable("1"), Disposer.newDisposable("2")};
+      Disposer.dispose(parents[i]);
+      try {
+        NonBlockingReadAction<String> nbra = ReadAction
+          .nonBlocking(() -> {
+            fail();
+            return "a";
+          });
+        for (Disposable parent : parents) {
+          nbra = nbra.expireWith(parent);
+        }
+        CancellablePromise<String> promise = nbra.submit(AppExecutorUtil.getAppExecutorService());
+        assertTrue(promise.isCancelled());
+        assertNull(promise.get());
+      }
+      finally {
+        Disposer.dispose(parents[1 - i]);
+      }
+    }
+  }
+
+  public void test_submit_doesNot_fail_without_readAction_when_parent_isDisposed() {
+    ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor(StringUtil.capitalize(getName()), 10);
+
+    for (int i = 0; i < 50; i++) {
+      List<Disposable> parents = IntStreamEx.range(100).mapToObj(__ -> Disposer.newDisposable()).toList();
+      List<Future<?>> futures = new ArrayList<>();
+      for (Disposable parent : parents) {
+        futures.add(executor.submit(() -> ReadAction.nonBlocking(() -> {}).expireWith(parent).submit(executor).get()));
+        futures.add(executor.submit(() -> {
+          try {
+            ReadAction.nonBlocking(() -> {}).expireWith(parent).executeSynchronously();
+          }
+          catch (ProcessCanceledException ignore) {
+          }
+        }));
+      }
+      parents.forEach(Disposer::dispose);
+
+      futures.forEach(f -> PlatformTestUtil.waitForFuture(f, 50_000));
+    }
   }
 }

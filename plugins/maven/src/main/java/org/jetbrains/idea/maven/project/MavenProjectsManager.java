@@ -1,14 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project;
 
-import com.intellij.CommonBundle;
 import com.intellij.build.BuildProgressListener;
 import com.intellij.build.SyncViewManager;
 import com.intellij.configurationStore.SettingsSavingComponentJavaAdapter;
 import com.intellij.ide.startup.StartupManagerEx;
-import com.intellij.notification.*;
-import com.intellij.notification.impl.NotificationSettings;
-import com.intellij.notification.impl.NotificationsConfigurationImpl;
+import com.intellij.notification.EventLog;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -32,7 +31,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.startup.StartupManager;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -57,6 +55,7 @@ import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
+import org.jetbrains.idea.maven.execution.SyncBundle;
 import org.jetbrains.idea.maven.importing.MavenFoldersImporter;
 import org.jetbrains.idea.maven.importing.MavenPomPathModuleService;
 import org.jetbrains.idea.maven.importing.MavenProjectImporter;
@@ -68,7 +67,6 @@ import org.jetbrains.idea.maven.server.MavenServerProgressIndicator;
 import org.jetbrains.idea.maven.server.NativeMavenProjectHolder;
 import org.jetbrains.idea.maven.utils.*;
 
-import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -202,9 +200,6 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     });
 
     startupManager.runAfterOpened(() -> {
-      if (!isMavenizedProject()) {
-        showNotificationOrphanMavenProject(myProject);
-      }
       CompilerManager.getInstance(myProject).addBeforeTask(new CompileTask() {
         @Override
         public boolean execute(@NotNull CompileContext context) {
@@ -213,54 +208,6 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
         }
       });
     });
-  }
-
-  private void showNotificationOrphanMavenProject(final Project project) {
-    final NotificationSettings notificationSettings = NotificationsConfigurationImpl.getSettings(NON_MANAGED_POM_NOTIFICATION_GROUP_ID);
-    if (!notificationSettings.isShouldLog() && notificationSettings.getDisplayType().equals(NotificationDisplayType.NONE)) {
-      return;
-    }
-
-    List<VirtualFile> pomFiles = MavenUtil.streamPomFiles(project, project.getBaseDir()).collect(Collectors.toList());
-
-    for (VirtualFile file : pomFiles) {
-      showBalloon(
-        MavenProjectBundle.message("maven.orphan.notification.title"),
-        MavenProjectBundle.message("maven.orphan.notification.msg", file.getPresentableUrl()),
-        NON_MANAGED_POM_NOTIFICATION_GROUP, NotificationType.INFORMATION, new NotificationListener.Adapter() {
-          @Override
-          protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
-            if ("#add".equals(e.getDescription())) {
-              addManagedFilesOrUnignore(Collections.singletonList(file));
-              notification.expire();
-            }
-            else if ("#disable".equals(e.getDescription())) {
-              final int result = Messages.showYesNoDialog(
-                myProject,
-                MavenProjectBundle.message("maven.notification.nonmanaged.pom.will.be.disabled.message", NON_MANAGED_POM_NOTIFICATION_GROUP_ID),
-                MavenProjectBundle.message("maven.notification.nonmanaged.pom.disable.title"),
-                MavenProjectBundle.message("maven.notification.disable"), CommonBundle.getCancelButtonText(), Messages.getWarningIcon());
-              if (result == Messages.YES) {
-                NotificationsConfigurationImpl.getInstanceImpl().changeSettings(
-                  NON_MANAGED_POM_NOTIFICATION_GROUP_ID, NotificationDisplayType.NONE, false, false);
-                notification.expire();
-              }
-              else {
-                notification.hideBalloon();
-              }
-            }
-          }
-        }
-      );
-    }
-  }
-
-  public void showBalloon(@NotNull final String title,
-                          @NotNull final String message,
-                          @NotNull final NotificationGroup group,
-                          @NotNull final NotificationType type,
-                          @Nullable final NotificationListener listener) {
-    group.createNotification(title, message, type, listener).notify(myProject);
   }
 
   private void initMavenized() {
@@ -564,12 +511,12 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
 
       myWatcher.stop();
 
-      myReadingProcessor.stop();
-      myResolvingProcessor.stop();
-      myPluginsResolvingProcessor.stop();
-      myFoldersResolvingProcessor.stop();
-      myArtifactsDownloadingProcessor.stop();
-      myPostProcessor.stop();
+    myReadingProcessor.stop();
+    myResolvingProcessor.stop();
+    myPluginsResolvingProcessor.stop();
+    myFoldersResolvingProcessor.stop();
+    myArtifactsDownloadingProcessor.stop();
+    myPostProcessor.stop();
       mySaveQueue.flush();
 
       if (isUnitTestMode()) {
@@ -711,6 +658,13 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     if (!isInitialized()) return null;
     return myProjectsTree.findProject(f);
   }
+
+
+  public MavenProject findSingleProjectInReactor(@NotNull MavenId id) {
+    if (!isInitialized()) return null;
+    return myProjectsTree.findSingleProjectInReactor(id);
+  }
+
 
   @Nullable
   public MavenProject findProject(@NotNull MavenId id) {
@@ -932,7 +886,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   private void completeMavenSyncOnImportCompletion(MavenSyncConsole console) {
-    MavenUtil.runInBackground(myProject, "waiting for maven import completion", false,
+    MavenUtil.runInBackground(myProject, SyncBundle.message("maven.sync.waiting.for.completion"), false,
                               indicator -> {
                                 if (myReadingProcessor != null) {
                                   myReadingProcessor.waitForCompletion();
@@ -1007,7 +961,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
                           MavenProgressIndicator indicator)
         throws MavenProcessCanceledException {
 
-        indicator.setText("Evaluating effective POM");
+        indicator.setText(MavenProjectBundle.message("maven.project.importing.evaluating.effective.pom"));
 
         myMavenProjectResolver.executeWithEmbedder(mavenProject,
                                                    getEmbeddersManager(),
@@ -1328,7 +1282,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
       fm.asyncRefresh(null);
     }
     else {
-      fm.syncRefresh();
+      ApplicationManager.getApplication().invokeAndWait(()->fm.syncRefresh());
     }
 
     if (postTasks.get() != null /*may be null if importing is cancelled*/) {
@@ -1367,6 +1321,10 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
 
   public void addProjectsTreeListener(MavenProjectsTree.Listener listener) {
     myProjectsTreeDispatcher.addListener(listener);
+  }
+
+  public void addProjectsTreeListener(@NotNull MavenProjectsTree.Listener listener, @NotNull Disposable parentDisposable) {
+    myProjectsTreeDispatcher.addListener(listener, parentDisposable);
   }
 
   @TestOnly

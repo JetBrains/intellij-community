@@ -11,8 +11,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.ValueKey;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -177,10 +180,11 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     getEmptyText().setText(VcsLogBundle.message("vcs.log.default.status"));
   }
 
-  protected void setErrorEmptyText(@NotNull Throwable error, @Nls @NotNull String defaultText) {
-    String message = ObjectUtils.chooseNotNull(error.getMessage(), defaultText);
-    message = StringUtil.shortenTextWithEllipsis(message, 150, 0, true).replace('\n', ' ');
-    getEmptyText().setText(message);
+  protected void setErrorEmptyText(@NotNull Throwable error, @NlsContexts.StatusText @NotNull String defaultText) {
+    String message = ObjectUtils.chooseNotNull(error.getLocalizedMessage(), defaultText);
+    String shortenedMessage = StringUtil.shortenTextWithEllipsis(message, 150, 0, true);
+    //noinspection HardCodedStringLiteral
+    getEmptyText().setText(shortenedMessage.replace('\n', ' '));
   }
 
   protected void appendActionToEmptyText(@Nls @NotNull String text, @NotNull Runnable action) {
@@ -457,7 +461,10 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
         String clickMessage = isShowRootNames()
                               ? VcsLogBundle.message("vcs.log.click.to.collapse.paths.column.tooltip")
                               : VcsLogBundle.message("vcs.log.click.to.expand.paths.column.tooltip");
-        return "<html><b>" + myColorManager.getLongName((FilePath)path) + "</b><br/>" + clickMessage + "</html>"; // NON-NLS
+        return new HtmlBuilder().append(HtmlChunk.text(myColorManager.getLongName((FilePath)path)).bold())
+          .append(HtmlChunk.br())
+          .append(clickMessage)
+          .wrapWith(HtmlChunk.html()).toString();
       }
     }
     return null;
@@ -750,16 +757,17 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     }
   }
 
-  private class StringCellRenderer extends ColoredTableCellRenderer {
+  private final class StringCellRenderer extends ColoredTableCellRenderer {
     private StringCellRenderer() {
       setCellState(new GraphCommitCellRenderer.BorderlessTableCellState());
     }
 
     @Override
-    protected void customizeCellRenderer(JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
+    protected void customizeCellRenderer(@NotNull JTable table, Object value, boolean selected, boolean hasFocus, int row, int column) {
       if (value == null) {
         return;
       }
+      //noinspection HardCodedStringLiteral
       append(value.toString(), applyHighlighters(this, row, column, hasFocus, selected));
       if (column == getColumnViewIndex(VcsLogColumn.COMMIT) || column == getColumnViewIndex(VcsLogColumn.AUTHOR)) {
         SpeedSearchUtil.applySpeedSearchHighlighting(table, this, false, selected);
@@ -998,7 +1006,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     }
   }
 
-  private class MyTopBottomBorder implements Border {
+  private final class MyTopBottomBorder implements Border {
     @NotNull private final JBInsets myInsets;
 
     private MyTopBottomBorder(int top, int bottom) {

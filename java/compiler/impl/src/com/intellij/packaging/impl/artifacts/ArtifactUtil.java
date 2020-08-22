@@ -1,31 +1,17 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packaging.impl.artifacts;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.CompilerProjectExtension;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.packaging.artifacts.*;
 import com.intellij.packaging.elements.*;
 import com.intellij.packaging.impl.elements.*;
@@ -34,14 +20,16 @@ import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
+import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.UniqueNameGenerator;
-import gnu.trove.THashSet;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Predicate;
 
-public class ArtifactUtil {
+public final class ArtifactUtil {
   private ArtifactUtil() {
   }
 
@@ -210,33 +198,37 @@ public class ArtifactUtil {
     to.loadState((S)from.getState());
   }
 
-  @Nullable
-  public static String getDefaultArtifactOutputPath(@NotNull String artifactName, final @NotNull Project project) {
-    final CompilerProjectExtension extension = CompilerProjectExtension.getInstance(project);
-    if (extension == null) return null;
+  public static @Nullable String getDefaultArtifactOutputPath(@NotNull String artifactName, @NotNull Project project) {
+    CompilerProjectExtension extension = CompilerProjectExtension.getInstance(project);
+    if (extension == null) {
+      return null;
+    }
+
     String outputUrl = extension.getCompilerOutputUrl();
     if (outputUrl == null || outputUrl.length() == 0) {
-      final VirtualFile baseDir = project.getBaseDir();
-      if (baseDir == null) return null;
-      outputUrl = baseDir.getUrl() + "/out";
+      String baseDir = project.getBasePath();
+      if (baseDir == null) {
+        return null;
+      }
+      outputUrl = VirtualFileManager.constructUrl(URLUtil.FILE_PROTOCOL, baseDir) + "/out";
     }
     return VfsUtilCore.urlToPath(outputUrl) + "/artifacts/" + FileUtil.sanitizeFileName(artifactName);
   }
 
   public static <E extends PackagingElement<?>> boolean processElementsWithSubstitutions(@NotNull List<? extends PackagingElement<?>> elements,
-                                        @NotNull PackagingElementResolvingContext context,
-                                        @NotNull ArtifactType artifactType,
-                                        @NotNull PackagingElementPath parentPath,
-                                        @NotNull PackagingElementProcessor<E> processor) {
-    return processElementsWithSubstitutions(elements, context, artifactType, parentPath, processor, new THashSet<>());
-  }
-
-  private static <E extends PackagingElement<?>> boolean processElementsWithSubstitutions(@NotNull List<? extends PackagingElement<?>> elements,
                                                                                          @NotNull PackagingElementResolvingContext context,
                                                                                          @NotNull ArtifactType artifactType,
                                                                                          @NotNull PackagingElementPath parentPath,
-                                                                                         @NotNull PackagingElementProcessor<E> processor,
-                                                                                         final Set<? super PackagingElement<?>> processed) {
+                                                                                         @NotNull PackagingElementProcessor<E> processor) {
+    return processElementsWithSubstitutions(elements, context, artifactType, parentPath, processor, new HashSet<>());
+  }
+
+  private static <E extends PackagingElement<?>> boolean processElementsWithSubstitutions(@NotNull List<? extends PackagingElement<?>> elements,
+                                                                                          @NotNull PackagingElementResolvingContext context,
+                                                                                          @NotNull ArtifactType artifactType,
+                                                                                          @NotNull PackagingElementPath parentPath,
+                                                                                          @NotNull PackagingElementProcessor<E> processor,
+                                                                                          @NotNull Set<? super PackagingElement<?>> processed) {
     for (PackagingElement<?> element : elements) {
       if (!processed.add(element)) {
         continue;
@@ -312,7 +304,7 @@ public class ArtifactUtil {
 
   public static boolean processDirectoryChildren(@NotNull CompositePackagingElement<?> parent,
                                                  @NotNull PackagingElementPath pathToParent,
-                                                 @NotNull String relativePath,
+                                                 @NotNull @NonNls String relativePath,
                                                  @NotNull final PackagingElementResolvingContext context,
                                                  @NotNull final ArtifactType artifactType,
                                                  @NotNull final PackagingElementProcessor<PackagingElement<?>> processor) {
@@ -455,8 +447,7 @@ public class ArtifactUtil {
                                        @NotNull PackagingElementResolvingContext context,
                                        @NotNull ParentElementProcessor processor,
                                        int maxLevel) {
-    return processParents(artifact, context, processor, FList.emptyList(), maxLevel,
-                          new THashSet<>());
+    return processParents(artifact, context, processor, FList.emptyList(), maxLevel, new HashSet<>());
   }
 
   private static boolean processParents(@NotNull final Artifact artifact, @NotNull final PackagingElementResolvingContext context,
@@ -521,7 +512,7 @@ public class ArtifactUtil {
     return true;
   }
 
-  public static void removeChildrenRecursively(@NotNull CompositePackagingElement<?> element, @NotNull Condition<? super PackagingElement<?>> condition) {
+  public static void removeChildrenRecursively(@NotNull CompositePackagingElement<?> element, @NotNull Predicate<? super PackagingElement<?>> condition) {
     List<PackagingElement<?>> toRemove = new ArrayList<>();
     for (PackagingElement<?> child : element.getChildren()) {
       if (child instanceof CompositePackagingElement<?>) {
@@ -531,7 +522,7 @@ public class ArtifactUtil {
           toRemove.add(child);
         }
       }
-      else if (condition.value(child)) {
+      else if (condition.test(child)) {
         toRemove.add(child);
       }
     }
@@ -545,7 +536,7 @@ public class ArtifactUtil {
   }
 
   public static Set<Module> getModulesIncludedInArtifacts(final @NotNull Collection<? extends Artifact> artifacts, final @NotNull Project project) {
-    final Set<Module> modules = new THashSet<>();
+    final Set<Module> modules = new HashSet<>();
     final PackagingElementResolvingContext resolvingContext = ArtifactManager.getInstance(project).getResolvingContext();
     for (Artifact artifact : artifacts) {
       processPackagingElements(artifact, null, element -> {

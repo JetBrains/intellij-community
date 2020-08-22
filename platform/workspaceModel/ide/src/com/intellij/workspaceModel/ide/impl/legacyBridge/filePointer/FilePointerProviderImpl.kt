@@ -15,7 +15,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.util.containers.MultiMap
 import com.intellij.workspaceModel.storage.EntityChange
-import com.intellij.workspaceModel.storage.VersionedStorageChanged
+import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.VirtualFileUrl
 import com.intellij.workspaceModel.storage.VirtualFileUrlManager
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
@@ -76,7 +76,7 @@ internal class FilePointerProviderImpl(project: Project) : FilePointerProvider, 
     }, this)
 
     WorkspaceModelTopics.getInstance(project).subscribeImmediately(project.messageBus.connect(), object : WorkspaceModelChangeListener {
-      override fun changed(event: VersionedStorageChanged) {
+      override fun changed(event: VersionedStorageChange) {
         synchronized(this@FilePointerProviderImpl) {
           event.getAllChanges().filterIsInstance<EntityChange.Removed<*>>().forEach { change ->
             val toRemove = ArrayList<Pair<VirtualFileUrl, Disposable>>()
@@ -106,13 +106,18 @@ internal class FilePointerProviderImpl(project: Project) : FilePointerProvider, 
   }
 
   @Synchronized
-  override fun getAndCacheFileContainer(description: FileContainerDescription): VirtualFilePointerContainer {
+  override fun getAndCacheFileContainer(description: FileContainerDescription, scope: Disposable): VirtualFilePointerContainer {
     val existingContainer = fileContainers[description]
     if (existingContainer != null) return existingContainer.first
 
-    val disposable = nextDisposable()
+    val disposable = object : Disposable {
+      override fun dispose() {
+        unregisterContainer(description, this)
+      }
+    }
+    Disposer.register(scope, disposable)
     val container = VirtualFilePointerManager.getInstance().createContainer(disposable, object : VirtualFilePointerListener {
-      override fun validityChanged(pointers: Array<out VirtualFilePointer>) {  }
+      override fun validityChanged(pointers: Array<out VirtualFilePointer>) {}
     })
 
     for (url in description.urls) {
@@ -128,11 +133,22 @@ internal class FilePointerProviderImpl(project: Project) : FilePointerProvider, 
   }
 
   @Synchronized
+  private fun unregisterContainer(description: FileContainerDescription, disposable: Disposable) {
+    val entry = fileContainers[description]
+    if (disposable != entry?.second) return
+    fileContainers.remove(description)
+    fileContainerUrlsLock.withLock {
+      description.urls.forEach { fileContainerUrls.remove(it, description) }
+      description.jarDirectories.forEach { fileContainerUrls.remove(it.directoryUrl, description) }
+    }
+  }
+
+  @Synchronized
   fun clearCaches() {
 
     fileContainerUrlsLock.withLock { fileContainerUrls.clear() }
     filePointers.forEach { (_, v) -> Disposer.dispose(v.second) }
-    fileContainers.forEach { (_, v) -> Disposer.dispose(v.second) }
+    fileContainers.map { it.value.second }.forEach { Disposer.dispose(it) }
 
     filePointers.clear()
     fileContainers.clear()

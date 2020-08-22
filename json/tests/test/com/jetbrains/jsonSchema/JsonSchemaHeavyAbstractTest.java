@@ -64,6 +64,18 @@ public abstract class JsonSchemaHeavyAbstractTest extends BasePlatformTestCase {
     return PathManager.getHomePath() + "/community/json" + getBasePath() + "/";
   }
 
+  public static @NotNull String getJsonSchemaTestDataFilePath(@NotNull String jsonSchemaRelativePath) {
+    PathManagerEx.TestDataLookupStrategy strategy = PathManagerEx.guessTestDataLookupStrategy();
+    String prefix;
+    if (strategy.equals(PathManagerEx.TestDataLookupStrategy.COMMUNITY)) {
+      prefix = PathManager.getHomePath() + "/json/";
+    }
+    else {
+      prefix = PathManager.getHomePath() + "/community/json/";
+    }
+    return prefix + "/tests/testData/jsonSchema/" + jsonSchemaRelativePath;
+  }
+
   @Override
   protected abstract String getBasePath();
 

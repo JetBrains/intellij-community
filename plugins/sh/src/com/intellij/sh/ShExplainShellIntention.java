@@ -3,14 +3,12 @@ package com.intellij.sh;
 
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.ide.BrowserUtil;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pass;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
@@ -27,15 +25,14 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 public class ShExplainShellIntention extends BaseIntentionAction {
-  private final static Logger LOG = Logger.getInstance(ShExplainShellIntention.class);
   @NonNls private static final String FEATURE_ACTION_ID = "ExplainShellUsed";
 
   @NotNull
@@ -112,13 +109,7 @@ public class ShExplainShellIntention extends BaseIntentionAction {
   }
 
   private static void explain(@NotNull String text) {
-    String encodedText = text;
-    try {
-      encodedText = URLEncoder.encode(text, CharsetToolkit.UTF8);
-    }
-    catch (UnsupportedEncodingException e) {
-      LOG.warn("Couldn't encode " + text + " for explainshell URL", e);
-    }
+    String encodedText = URLEncoder.encode(text, StandardCharsets.UTF_8);
     BrowserUtil.browse("https://explainshell.com/explain?cmd=" + encodedText);
   }
 }

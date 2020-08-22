@@ -1,4 +1,4 @@
-skip: diff_frame*
+skip: vcs/diff_frame*.png
 deprecated: icon.png; use ProductIcons.getInstance().getProductIcon() instead
 deprecated: icon_small.png; use ProductIcons.getInstance().getProductIcon() instead
 deprecated: icon_CEsmall.png; use ProductIcons.getInstance().getProductIcon() instead

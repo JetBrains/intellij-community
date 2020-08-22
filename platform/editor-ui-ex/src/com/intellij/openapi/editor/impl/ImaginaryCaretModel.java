@@ -54,6 +54,11 @@ class ImaginaryCaretModel implements CaretModel {
     throw notImplemented();
   }
 
+  @Override
+  public int getMaxCaretCount() {
+    throw notImplemented();
+  }
+
   @NotNull
   @Override
   public Caret getPrimaryCaret() {

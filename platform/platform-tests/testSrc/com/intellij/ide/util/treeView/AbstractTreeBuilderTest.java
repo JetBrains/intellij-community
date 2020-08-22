@@ -5,6 +5,7 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.ui.tree.TreeTestUtil;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.WaitFor;
 import org.jetbrains.annotations.NotNull;
@@ -16,8 +17,6 @@ import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.*;
-
-import static com.intellij.testFramework.PlatformTestUtil.notNull;
 
 abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase.NodeElement> {
   protected MyStructure myStructure;
@@ -92,6 +91,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
 
 
     myTree = new Tree(myTreeModel);
+    TreeTestUtil.assertTreeUI(myTree);
     myStructure = new MyStructure();
     myRoot = new Node(null, "/");
 
@@ -522,7 +522,7 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
     void onElementAction(String action, Object element);
   }
 
-  private class ElementEntry {
+  private final class ElementEntry {
     NodeElement myElement;
 
     int myUpdateCount;
@@ -568,6 +568,6 @@ abstract class AbstractTreeBuilderTest extends BaseTreeTestCase<BaseTreeTestCase
   }
 
   TreePath getPath(String s) {
-    return new TreePath(notNull(findNode(s, false)).getPath());
+    return new TreePath(Objects.requireNonNull(findNode(s, false)).getPath());
   }
 }

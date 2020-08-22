@@ -3,12 +3,14 @@ package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
+import java.util.function.Function;
 
 public abstract class ManagingFS implements FileSystemInterface {
   private static class ManagingFSHolder {
@@ -70,4 +72,8 @@ public abstract class ManagingFS implements FileSystemInterface {
 
   @Nullable
   public abstract VirtualFile findFileById(int id);
+
+  @ApiStatus.Internal
+  @NotNull
+  protected abstract <P, R> Function<P, R> accessDiskWithCheckCanceled(Function<? super P, ? extends R> function);
 }

@@ -24,7 +24,7 @@ public class TextMateSelectorCachingWeigher implements TextMateSelectorWeigher {
     return myOriginalWeigher.weigh(pair.selector, pair.scope);
   }
 
-  private static class CacheKey {
+  private static final class CacheKey {
     final CharSequence selector;
     final CharSequence scope;
 

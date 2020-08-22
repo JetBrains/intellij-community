@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.treeStructure;
 
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
@@ -505,15 +505,6 @@ public class SimpleTree extends Tree implements CellEditorListener {
 
     double rowHeight = getRowBounds(0).getHeight();
     return new Dimension(superSize.width, (int)(rowHeight * myMinHeightInRows));
-  }
-
-  @Override
-  public final int getToggleClickCount() {
-    SimpleNode node = getSelectedNode();
-    if (node != null) {
-      if (!node.expandOnDoubleClick()) return -1;
-    }
-    return super.getToggleClickCount();
   }
 
   @Override

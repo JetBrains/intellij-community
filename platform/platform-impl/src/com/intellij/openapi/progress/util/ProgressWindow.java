@@ -19,6 +19,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.ProgressDetails;
 import com.intellij.openapi.util.NlsContexts.ProgressText;
 import com.intellij.openapi.util.NlsContexts.ProgressTitle;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
@@ -53,9 +54,9 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
 
   @Nullable protected final Project myProject;
   final boolean myShouldShowCancel;
-  String myCancelText;
+  @NlsContexts.Button String myCancelText;
 
-  private String myTitle;
+  @ProgressTitle private String myTitle;
 
   private boolean myStoppedAlready;
   protected boolean myBackgrounded;
@@ -243,6 +244,10 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
       return;
     }
 
+    if (ApplicationManagerEx.getApplicationEx().isExitInProgress() && Registry.is("ide.instant.shutdown")) {
+      return;
+    }
+
     initializeOnEdtIfNeeded();
     myDialog.show();
     if (myDialog != null) {
@@ -334,11 +339,12 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
     }
   }
 
+  @ProgressTitle
   public String getTitle() {
     return myTitle;
   }
 
-  public void setCancelButtonText(@NotNull String text) {
+  public void setCancelButtonText(@NlsContexts.Button @NotNull String text) {
     if (myDialog != null) {
       myDialog.changeCancelButtonText(text);
     }

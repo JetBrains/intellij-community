@@ -1,10 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.documentation.render;
 
+import com.intellij.codeInsight.folding.CodeFoldingManager;
+import com.intellij.codeInsight.folding.CodeFoldingSettings;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.AbstractEditorTest;
+import com.intellij.psi.PsiDocumentManager;
 import com.intellij.testFramework.TestFileType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -137,6 +140,47 @@ public class JavaDocRenderTest extends AbstractEditorTest {
     verifyFoldingState("[FoldRegion +(27:51), placeholder='']");
   }
 
+  public void testExpandAll() {
+    boolean savedValue = CodeFoldingSettings.getInstance().COLLAPSE_METHODS;
+    try {
+      CodeFoldingSettings.getInstance().COLLAPSE_METHODS = true;
+      configure("/** class */\n" +
+              "class C {\n" +
+              "  void m() {\n" +
+              "  }\n" +
+              "}", true);
+      int methodBodyPos = getEditor().getDocument().getText().indexOf("{\n  }");
+      CodeFoldingManager.getInstance(getProject()).buildInitialFoldings(getEditor());
+      executeAction(IdeActions.ACTION_COLLAPSE_ALL_REGIONS);
+      assertNotNull(getEditor().getFoldingModel().getCollapsedRegionAtOffset(methodBodyPos));
+      executeAction(IdeActions.ACTION_EXPAND_ALL_REGIONS);
+      assertNull(getEditor().getFoldingModel().getCollapsedRegionAtOffset(methodBodyPos));
+    }
+    finally {
+      CodeFoldingSettings.getInstance().COLLAPSE_METHODS = savedValue;
+    }
+  }
+
+  public void testTypingAfterCollapse() {
+    configure("/**\n" +
+              " * doc<caret>\n" +
+              " */\n" +
+              "class C {}", false);
+    toggleItem();
+    type("  ");
+    checkResultByText("/**\n" +
+                      " * doc\n" +
+                      " */\n" +
+                      "  <caret>class C {}");
+  }
+
+  public void testAddedCommentIsNotCollapsed() {
+    configure("class C {}", true);
+    runWriteCommand(() -> getEditor().getDocument().insertString(0, "/**\n * comment\n */\n"));
+    updateRenderedItems(false);
+    verifyFoldingState("[]");
+  }
+
   private void configure(@NotNull String text, boolean enableRendering) {
     EditorSettingsExternalizable.getInstance().setDocCommentRenderingEnabled(enableRendering);
     init(text, TestFileType.JAVA);
@@ -144,6 +188,7 @@ public class JavaDocRenderTest extends AbstractEditorTest {
   }
 
   private void updateRenderedItems(boolean collapseNewRegions) {
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
     DocRenderPassFactory.Items items = DocRenderPassFactory.calculateItemsToRender(getEditor(), getFile());
     DocRenderPassFactory.applyItemsToRender(getEditor(), getProject(), items, collapseNewRegions);
   }

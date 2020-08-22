@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
-import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.ide.highlighter.HtmlFileType;
 
 /**
  * @author Bas Leijdekkers
@@ -37,6 +37,6 @@ public class XmlOptimizedSearchScanTest extends StructuralSearchTestCase {
   }
 
   private void doTest(String query, String plan) {
-    assertEquals(plan, getSearchPlan(query, StdFileTypes.HTML));
+    assertEquals(plan, getSearchPlan(query, HtmlFileType.INSTANCE));
   }
 }

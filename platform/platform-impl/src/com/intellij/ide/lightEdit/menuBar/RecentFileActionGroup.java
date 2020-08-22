@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -40,11 +41,13 @@ class RecentFileActionGroup extends ActionGroup implements DumbAware, AlwaysVisi
       return AnAction.EMPTY_ARRAY;
     }
     List<VirtualFile> recentFiles = getRecentFiles(project);
-    List<AnAction> actions = ContainerUtil.map(recentFiles, file -> new OpenFileAction(file));
+    final List<AnAction> actions = new ArrayList<>();
+    actions.addAll(ContainerUtil.map(recentFiles, file -> new OpenFileAction(file)));
     List<AnAction> recentProjectsActions = RecentProjectListActionProvider.getInstance().getActions(false);
-    actions.add(Separator.create());
     if (!recentProjectsActions.isEmpty()) {
-      actions.add(Separator.create());
+      if (!actions.isEmpty()) {
+        actions.add(Separator.create());
+      }
       actions.addAll(recentProjectsActions);
     }
     return actions.toArray(AnAction.EMPTY_ARRAY);
@@ -55,10 +58,10 @@ class RecentFileActionGroup extends ActionGroup implements DumbAware, AlwaysVisi
     List<VirtualFile> historyFiles = EditorHistoryManager.getInstance(project).getFileList();
     LinkedHashSet<VirtualFile> result = new LinkedHashSet<>(historyFiles);
     result.removeAll(Arrays.asList(FileEditorManager.getInstance(project).getOpenFiles()));
-    return new ArrayList<>(result);
+    return ContainerUtil.reverse(new ArrayList<>(result));
   }
 
-  private static class OpenFileAction extends DumbAwareAction implements LightEditCompatible {
+  private static final class OpenFileAction extends DumbAwareAction implements LightEditCompatible {
     private final VirtualFile myFile;
 
     private OpenFileAction(@NotNull VirtualFile file) {
@@ -68,8 +71,13 @@ class RecentFileActionGroup extends ActionGroup implements DumbAware, AlwaysVisi
     @Override
     public void update(@NotNull AnActionEvent e) {
       Presentation presentation = e.getPresentation();
-      presentation.setText(myFile.getName());
-      presentation.setIcon(IconUtil.getIcon(myFile, Iconable.ICON_FLAG_READ_STATUS, e.getProject()));
+      Project project = e.getProject();
+      if (project == null) {
+        presentation.setEnabled(false);
+        return;
+      }
+      presentation.setText(UniqueVFilePathBuilder.getInstance().getUniqueVirtualFilePath(project, myFile));
+      presentation.setIcon(IconUtil.getIcon(myFile, Iconable.ICON_FLAG_READ_STATUS, project));
     }
 
     @Override

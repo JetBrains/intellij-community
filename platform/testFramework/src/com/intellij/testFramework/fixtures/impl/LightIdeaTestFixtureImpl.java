@@ -76,7 +76,7 @@ public final class LightIdeaTestFixtureImpl extends BaseFixture implements Light
         myProject = null;
         myModule = null;
         if (project != null) {
-          LightPlatformTestCase.doTearDown(project, LightPlatformTestCase.getApplication());
+          TestApplicationManagerKt.tearDownProjectAndApp(project);
         }
       })
       .append(() -> LightPlatformTestCase.checkEditorsReleased())

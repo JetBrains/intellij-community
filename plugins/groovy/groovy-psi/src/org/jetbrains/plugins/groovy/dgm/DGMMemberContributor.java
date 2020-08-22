@@ -5,6 +5,7 @@ import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -92,7 +93,7 @@ public final class DGMMemberContributor {
                                           @NotNull GlobalSearchScope resolveScope,
                                           @NotNull List<String> instanceClasses,
                                           @NotNull List<String> staticClasses,
-                                          @NotNull String packageName) {
+                                          @NlsSafe @NotNull String packageName) {
     PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage(packageName);
     if (aPackage == null) return;
 

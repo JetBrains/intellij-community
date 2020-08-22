@@ -350,7 +350,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
     return null;
   }
 
-  private static class ComplexPushAction extends AbstractAction implements OptionAction {
+  private static final class ComplexPushAction extends AbstractAction implements OptionAction {
     private final ActionWrapper myDefaultAction;
     private final List<? extends ActionWrapper> myOptions;
 
@@ -425,6 +425,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
       putValue(Action.SHORT_DESCRIPTION, myRealAction.getDescription(myDialog, enabled));
     }
 
+    @Nls
     @NotNull
     public String getName() {
       return requireNonNull(myRealAction.getTemplatePresentation().getTextWithMnemonic());

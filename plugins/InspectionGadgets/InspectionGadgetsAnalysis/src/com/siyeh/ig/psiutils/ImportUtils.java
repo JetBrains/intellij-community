@@ -23,7 +23,6 @@ import com.intellij.psi.util.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.HardcodedMethodConstants;
-import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,7 +46,7 @@ public final class ImportUtils {
       }
     }
     else {
-      if (PsiTreeUtil.isAncestor(outerClass, context, true) && isInsideClassBody(context, outerClass)) return;
+      if (PsiTreeUtil.isAncestor(outerClass, context, true) && ClassUtils.isInsideClassBody(context, outerClass)) return;
     }
     final String qualifiedName = aClass.getQualifiedName();
     if (qualifiedName == null) {
@@ -73,12 +72,6 @@ public final class ImportUtils {
     }
     final PsiImportStatement importStatement = JavaPsiFacade.getElementFactory(importList.getProject()).createImportStatement(aClass);
     importList.add(importStatement);
-  }
-
-  @Contract("_, null -> false")
-  public static boolean isInsideClassBody(@NotNull PsiElement element, @Nullable PsiClass outerClass) {
-    PsiElement brace = outerClass != null ? outerClass.getLBrace() : null;
-    return brace != null && brace.getTextOffset() < element.getTextOffset();
   }
 
   private static boolean hasAccessibleMemberWithName(@NotNull PsiClass containingClass,
@@ -328,7 +321,7 @@ public final class ImportUtils {
    */
   public static boolean addStaticImport(@NotNull String qualifierClass, @NonNls @NotNull String memberName, @NotNull PsiElement context) {
     final PsiClass containingClass = PsiTreeUtil.getParentOfType(context, PsiClass.class);
-    if (isInsideClassBody(context, containingClass)) {
+    if (ClassUtils.isInsideClassBody(context, containingClass)) {
       if (InheritanceUtil.isInheritor(containingClass, qualifierClass)) {
         return true;
       }

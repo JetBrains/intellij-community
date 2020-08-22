@@ -2,6 +2,7 @@
 package com.intellij.util.indexing.snapshot
 
 import com.intellij.util.indexing.ValueContainer
+import com.intellij.util.indexing.impl.InvertedIndexValueIterator
 
 class OneRecordValueContainer<V>(private val inputId: Int, private val value: V?): ValueContainer<V>() {
   override fun getValueIterator(): ValueIterator<V> = OneRecordValueIterator(inputId, value)
@@ -47,16 +48,18 @@ private class OneRecordIntIterator(private val inputId: Int): ValueContainer.Int
   override fun size() = 1
 }
 
-private object EmptyValueIterator: ValueContainer.ValueIterator<Nothing> {
+private object EmptyValueIterator: InvertedIndexValueIterator<Nothing> {
   override fun next() = throw IllegalStateException()
 
   override fun getInputIdsIterator() = EmptyIntIterator
 
   override fun remove() = throw IllegalStateException()
 
-  override fun getValueAssociationPredicate(): ValueContainer.IntPredicate? = null
+  override fun getValueAssociationPredicate(): ValueContainer.IntPredicate = ValueContainer.IntPredicate { false }
 
   override fun hasNext() = false
+
+  override fun getFileSetObject(): Any? = null
 }
 
 private object EmptyIntIterator: ValueContainer.IntIterator {

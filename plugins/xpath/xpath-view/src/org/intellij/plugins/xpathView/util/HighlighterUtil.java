@@ -34,7 +34,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class HighlighterUtil {
+public final class HighlighterUtil {
     private static final Key<List<RangeHighlighter>> HIGHLIGHTERS_KEY = Key.create("XPATH_HIGHLIGHTERS");
 
     private HighlighterUtil() {

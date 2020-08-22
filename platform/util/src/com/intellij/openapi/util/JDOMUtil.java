@@ -13,10 +13,7 @@ import org.jdom.*;
 import org.jdom.filter.Filter;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamException;
@@ -33,10 +30,10 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 public final class JDOMUtil {
-  private static final String X = "x";
-  private static final String Y = "y";
-  private static final String WIDTH = "width";
-  private static final String HEIGHT = "height";
+  private static final @NonNls String X = "x";
+  private static final @NonNls String Y = "y";
+  private static final @NonNls String WIDTH = "width";
+  private static final @NonNls String HEIGHT = "height";
 
   //xpointer($1)
   public static final Pattern XPOINTER_PATTERN = Pattern.compile("xpointer\\((.*)\\)");
@@ -178,7 +175,7 @@ public final class JDOMUtil {
     return result;
   }
 
-  private static void appendLegalized(@NotNull StringBuilder sb, char each) {
+  private static void appendLegalized(@NotNull @NonNls StringBuilder sb, char each) {
     if (each == '<' || each == '>') {
       sb.append(each == '<' ? "&lt;" : "&gt;");
     }
@@ -600,14 +597,17 @@ public final class JDOMUtil {
     return null;
   }
 
+  @Contract(pure = true)
   public static @NotNull String escapeText(@NotNull String text) {
     return escapeText(text, false, false);
   }
 
+  @Contract(pure = true)
   public static @NotNull String escapeText(@NotNull String text, boolean escapeSpaces, boolean escapeLineEnds) {
     return escapeText(text, false, escapeSpaces, escapeLineEnds);
   }
 
+  @Contract(pure = true)
   public static @NotNull String escapeText(@NotNull String text, boolean escapeApostrophes, boolean escapeSpaces, boolean escapeLineEnds) {
     StringBuilder buffer = null;
     for (int i = 0; i < text.length(); i++) {
@@ -723,7 +723,7 @@ public final class JDOMUtil {
     }
   }
 
-  private static class ElementInfo {
+  private static final class ElementInfo {
     final @NotNull CharSequence name;
     final boolean hasNullAttributes;
 

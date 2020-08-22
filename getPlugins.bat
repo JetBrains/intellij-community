@@ -1,1 +1,1 @@
-call git clone git@github.com:JetBrains/android.git android
+call git clone https://github.com/JetBrains/android.git android

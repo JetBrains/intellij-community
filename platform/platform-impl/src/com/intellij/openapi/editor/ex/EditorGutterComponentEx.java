@@ -1,13 +1,14 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.ex;
 
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.impl.LineNumberConverterAdapter;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorGutter;
+import com.intellij.openapi.editor.FoldRegion;
+import com.intellij.openapi.editor.TextAnnotationGutterProvider;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import gnu.trove.TIntFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,9 +42,9 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
   public abstract void revalidateMarkup();
 
   public abstract int getLineMarkerAreaOffset();
-  
+
   public abstract int getIconAreaOffset();
-  
+
   public abstract int getLineMarkerFreePaintersAreaOffset();
 
   public abstract int getIconsAreaWidth();
@@ -55,32 +56,13 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
   @Nullable
   public abstract Point getCenterPoint(GutterIconRenderer renderer);
 
-  /**
-   * @deprecated Use {@link #setLineNumberConverter(LineNumberConverter)} instead.
-   * @see LineNumberConverterAdapter
-   */
-  @Deprecated
-  public void setLineNumberConvertor(@Nullable TIntFunction lineNumberConvertor) {
-    setLineNumberConvertor(lineNumberConvertor, null);
-  }
-
-  /**
-   * @deprecated Use {@link #setLineNumberConverter(LineNumberConverter, LineNumberConverter)} instead.
-   * @see LineNumberConverterAdapter
-   */
-  @Deprecated
-  public void setLineNumberConvertor(@Nullable TIntFunction convertor1, @Nullable TIntFunction convertor2) {
-    setLineNumberConverter(convertor1 == null ? LineNumberConverter.DEFAULT : new LineNumberConverterAdapter(convertor1),
-                           convertor2 == null ? null : new LineNumberConverterAdapter(convertor2));
-  }
-
   public abstract void setShowDefaultGutterPopup(boolean show);
 
   /** When set to false, makes {@link #closeAllAnnotations()} a no-op and hides the corresponding context menu action. */
   public abstract void setCanCloseAnnotations(boolean canCloseAnnotations);
 
   public abstract void setGutterPopupGroup(@Nullable ActionGroup group);
-  
+
   public abstract void setPaintBackground(boolean value);
 
   public abstract void setForceShowLeftFreePaintersArea(boolean value);

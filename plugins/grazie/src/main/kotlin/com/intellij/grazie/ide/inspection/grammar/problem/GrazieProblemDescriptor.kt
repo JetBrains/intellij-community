@@ -12,6 +12,7 @@ import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieReplaceTypoQuic
 import com.intellij.grazie.ide.ui.components.dsl.msg
 import com.intellij.grazie.utils.*
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.containers.Interner
 import com.intellij.util.containers.toArray
 import kotlinx.html.*
@@ -37,7 +38,7 @@ class GrazieProblemDescriptor(fix: Typo, isOnTheFly: Boolean) : ProblemDescripto
       if (isOnTheFly && !ApplicationManager.getApplication().isUnitTestMode) {
         if (this.fixes.isNotEmpty()) {
           GrazieFUSCounter.typoFound(this@toFixes)
-          fixes.add(GrazieReplaceTypoQuickFix(this@toFixes))
+          fixes.addAll(GrazieReplaceTypoQuickFix(this@toFixes).getAllAsFixes())
         }
         fixes.add(GrazieAddExceptionQuickFix(this))
         fixes.add(GrazieDisableRuleQuickFix(this))
@@ -46,6 +47,7 @@ class GrazieProblemDescriptor(fix: Typo, isOnTheFly: Boolean) : ProblemDescripto
       return fixes
     }
 
+    @NlsSafe
     private fun Typo.toDescriptionTemplate(isOnTheFly: Boolean): String {
       if (ApplicationManager.getApplication().isUnitTestMode) return info.rule.id
       val html = html {
@@ -67,7 +69,9 @@ class GrazieProblemDescriptor(fix: Typo, isOnTheFly: Boolean) : ProblemDescripto
               td {
                 valign = "top"
                 style = "padding-right: 5px; color: gray; vertical-align: top;"
+                +" "
                 +msg("grazie.settings.grammar.rule.incorrect")
+                +" "
                 if (!isOnTheFly) nbsp()
               }
               td {
@@ -82,7 +86,9 @@ class GrazieProblemDescriptor(fix: Typo, isOnTheFly: Boolean) : ProblemDescripto
                 td {
                   valign = "top"
                   style = "padding-top: 5px; padding-right: 5px; color: gray; vertical-align: top;"
+                  +" "
                   +msg("grazie.settings.grammar.rule.correct")
+                  +" "
                   if (!isOnTheFly) nbsp()
                 }
                 td {
@@ -97,6 +103,7 @@ class GrazieProblemDescriptor(fix: Typo, isOnTheFly: Boolean) : ProblemDescripto
 
         p {
           style = "text-align: left; font-size: x-small; color: gray; padding-top: 10px; padding-bottom: 0px;"
+          +" "
           +msg("grazie.tooltip.powered-by-language-tool")
         }
       }

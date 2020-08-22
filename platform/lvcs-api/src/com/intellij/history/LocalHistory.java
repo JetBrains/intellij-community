@@ -3,6 +3,7 @@ package com.intellij.history;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -19,17 +20,17 @@ public abstract class LocalHistory {
     return LocalHistoryHolder.ourInstance;
   }
 
-  public abstract LocalHistoryAction startAction(@Nullable String name);
+  public abstract LocalHistoryAction startAction(@Nullable @NlsContexts.Label String name);
 
-  public abstract Label putSystemLabel(Project p, @NotNull String name, int color);
+  public abstract Label putSystemLabel(@NotNull Project p, @NotNull @NlsContexts.Label String name, int color);
 
-  public Label putSystemLabel(Project p, @NotNull String name) {
+  public Label putSystemLabel(@NotNull Project p, @NotNull @NlsContexts.Label String name) {
     return putSystemLabel(p, name, -1);
   }
 
-  public abstract Label putUserLabel(Project p, @NotNull String name);
+  public abstract Label putUserLabel(@NotNull Project p, @NotNull @NlsContexts.Label String name);
 
-  public abstract byte @Nullable [] getByteContent(VirtualFile f, FileRevisionTimestampComparator c);
+  public abstract byte @Nullable [] getByteContent(@NotNull VirtualFile f, @NotNull FileRevisionTimestampComparator c);
 
   public abstract boolean isUnderControl(@NotNull VirtualFile f);
 }

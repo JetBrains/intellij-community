@@ -30,7 +30,7 @@ public final class TrackRunningTestUtil {
     final ClickListener userSelectionListener = new ClickListener() {
       @Override
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
-        setSelection.accept(setUserSelection(tree.getPathForLocation(e.getX(), e.getY())));
+        setSelection.accept(getUserSelection(tree));
         return true;
       }
     };
@@ -42,7 +42,7 @@ public final class TrackRunningTestUtil {
         if (keyCode == KeyEvent.VK_DOWN || keyCode == KeyEvent.VK_UP ||
             keyCode == KeyEvent.VK_LEFT || keyCode == KeyEvent.VK_RIGHT ||
             keyCode == KeyEvent.VK_PAGE_DOWN || keyCode == KeyEvent.VK_PAGE_UP) {
-          setSelection.accept(setUserSelection(tree.getSelectionPath()));
+          setSelection.accept(getUserSelection(tree));
         }
       }
     };
@@ -57,7 +57,8 @@ public final class TrackRunningTestUtil {
   }
 
   @Nullable
-  private static AbstractTestProxy setUserSelection(TreePath treePath) {
+  private static AbstractTestProxy getUserSelection(JTree tree) {
+    TreePath treePath = tree.getSelectionPath();
     if (treePath != null) {
       final Object component = treePath.getLastPathComponent();
       if (component instanceof DefaultMutableTreeNode) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.ui.AntialiasingType;
@@ -41,10 +41,11 @@ public class ImmediatePainterTest extends AbstractEditorTest {
   protected void setUp() throws Exception {
     super.setUp();
 
-    myDefaultFontName = getDefaultColorScheme().getEditorFontName();
-    myDefaultFontSize = getDefaultColorScheme().getEditorFontSize();
-    myDefaultLineSpacing = getDefaultColorScheme().getLineSpacing();
-    myDefaultCaretColor = getDefaultColorScheme().getColor(EditorColors.CARET_COLOR);
+    EditorColorsScheme defaultColorScheme = getDefaultColorScheme();
+    myDefaultFontName = defaultColorScheme.getEditorFontName();
+    myDefaultFontSize = defaultColorScheme.getEditorFontSize();
+    myDefaultLineSpacing = defaultColorScheme.getLineSpacing();
+    myDefaultCaretColor = defaultColorScheme.getColor(EditorColors.CARET_COLOR);
     myDefaultFocusManager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
     myDefaultAntiAliasing = UISettings.getInstance().getEditorAAType();
 
@@ -271,11 +272,9 @@ public class ImmediatePainterTest extends AbstractEditorTest {
                     @NotNull BufferedImage actualImage) throws IOException {
 
     File expectedImageFile = FileUtil.createTempFile(getName() + "-expected", ".png", false);
-    addTmpFileToKeep(expectedImageFile);
     ImageIO.write(expectedImage, "png", expectedImageFile);
 
     File actualImageFile = FileUtil.createTempFile(getName() + "-actual", ".png", false);
-    addTmpFileToKeep(actualImageFile);
     ImageIO.write(actualImage, "png", actualImageFile);
 
     throw new FileComparisonFailure(message,

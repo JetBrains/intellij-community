@@ -358,7 +358,7 @@ public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<Funct
 
   @Override
   public int getVersion() {
-    return 5;
+    return 6;
   }
 
   @NotNull
@@ -404,8 +404,6 @@ public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<Funct
               list.add(new IndexEntry(element.getStartOffset(), index,
                                       context.getStartOffset(), context.getEndOffset(),
                                       createOccurrence(element, resolver)));
-            } else {
-              LOG.error("Functional expression outside of a member in " + inputData.getFile());
             }
             index++;
           }
@@ -462,11 +460,6 @@ public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<Funct
   }
 
   @Override
-  public boolean needsForwardIndexWhenSharing() {
-    return false;
-  }
-
-  @Override
   public boolean dependsOnFileContent() {
     return true;
   }
@@ -496,6 +489,16 @@ public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<Funct
              contextStart == entry.contextStart &&
              contextEnd == entry.contextEnd &&
              occurrence.equals(entry.occurrence);
+    }
+
+    @Override
+    public String toString() {
+      return "IndexEntry{" +
+             "exprStart=" + exprStart +
+             ", exprIndex=" + exprIndex +
+             ", contextStart=" + contextStart +
+             ", contextEnd=" + contextEnd +
+             '}';
     }
 
     @Override

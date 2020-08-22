@@ -54,9 +54,9 @@ public final class EncodingUtil {
 
   // the result of wild guess
   public enum Magic8 {
-    ABSOLUTELY,
-    WELL_IF_YOU_INSIST,
-    NO_WAY
+    ABSOLUTELY,  // bytes on disk/editor text stay the same after the change
+    WELL_IF_YOU_INSIST,  // bytes on disk after convert/editor text after reload are changed, but the change is reversible
+    NO_WAY // the change will cause information loss
   }
 
   // check if file can be loaded in the encoding correctly:
@@ -150,9 +150,7 @@ public final class EncodingUtil {
   static void reloadIn(@NotNull VirtualFile virtualFile,
                        @NotNull Charset charset,
                        @NotNull Project project) {
-    Consumer<VirtualFile> setEncoding = file -> {
-      EncodingProjectManager.getInstance(project).setEncoding(file, charset);
-    };
+    Consumer<VirtualFile> setEncoding = file -> EncodingProjectManager.getInstance(project).setEncoding(file, charset);
 
     FileDocumentManager documentManager = FileDocumentManager.getInstance();
     if (documentManager.getCachedDocument(virtualFile) == null) {
@@ -177,9 +175,9 @@ public final class EncodingUtil {
 
     // if file was modified, the user will be asked here
     try {
-      EncodingProjectManagerImpl.suppressReloadDuring(() -> {
-        ((FileDocumentManagerImpl)documentManager).contentsChanged(new VFileContentChangeEvent(null, virtualFile, 0, 0, false));
-      });
+      VFileContentChangeEvent event =
+        new VFileContentChangeEvent(null, virtualFile, 0, 0, false);
+      EncodingProjectManagerImpl.suppressReloadDuring(() -> ((FileDocumentManagerImpl)documentManager).contentsChanged(event));
     }
     finally {
       Disposer.dispose(disposable);
@@ -219,7 +217,7 @@ public final class EncodingUtil {
     FileDocumentManager documentManager = FileDocumentManager.getInstance();
     Document document = documentManager.getDocument(virtualFile);
     if (document == null) return FailReason.IS_BINARY;
-    Charset charsetFromContent = ((EncodingManagerImpl)EncodingManager.getInstance()).computeCharsetFromContent(virtualFile);
+    Charset charsetFromContent = EncodingManagerImpl.computeCharsetFromContent(virtualFile);
     Charset existing = virtualFile.getCharset();
     LoadTextUtil.AutoDetectionReason autoDetectedFrom = LoadTextUtil.getCharsetAutoDetectionReason(virtualFile);
     FailReason result;
@@ -252,7 +250,7 @@ public final class EncodingUtil {
       return FailReason.IS_DIRECTORY;
     }
 
-    Charset charsetFromContent = ((EncodingManagerImpl)EncodingManager.getInstance()).computeCharsetFromContent(virtualFile);
+    Charset charsetFromContent = EncodingManagerImpl.computeCharsetFromContent(virtualFile);
     return charsetFromContent != null ? FailReason.BY_FILE : fileTypeDescriptionError(virtualFile);
   }
 
@@ -274,7 +272,8 @@ public final class EncodingUtil {
     return Pair.create(current.get(), errorDescription);
   }
 
-  static String reasonToString(@NotNull FailReason reason, VirtualFile file) {
+  @NotNull
+  static String reasonToString(@NotNull FailReason reason, @NotNull VirtualFile file) {
     switch (reason) {
       case IS_DIRECTORY: return "disabled for a directory";
       case IS_BINARY: return "disabled for a binary file";

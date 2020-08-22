@@ -14,6 +14,9 @@ package org.zmlx.hg4idea.command;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsNotifier;
@@ -23,18 +26,14 @@ import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.zmlx.hg4idea.HgBundle;
-import org.zmlx.hg4idea.HgChange;
-import org.zmlx.hg4idea.HgFile;
-import org.zmlx.hg4idea.HgFileStatusEnum;
-import org.zmlx.hg4idea.HgRevisionNumber;
+import org.zmlx.hg4idea.*;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 
 import java.io.File;
 import java.util.*;
 
-public class HgStatusCommand {
+public final class HgStatusCommand {
 
   private static final Logger LOG = Logger.getInstance(HgStatusCommand.class.getName());
 
@@ -203,12 +202,13 @@ public class HgStatusCommand {
     if (result == null) {
       return changes;
     }
-    List<String> errors = result.getErrorLines();
+    List<@NlsSafe String> errors = result.getErrorLines();
     if (!errors.isEmpty()) {
       if (result.getExitValue() != 0 && !myProject.isDisposed()) {
         String title = HgBundle.message("action.hg4idea.status.error");
         LOG.warn(title + errors.toString());
-        VcsNotifier.getInstance(myProject).logInfo(title, errors.toString());
+        String message = new HtmlBuilder().appendWithSeparators(HtmlChunk.br(), ContainerUtil.map(errors, HtmlChunk::text)).toString();
+        VcsNotifier.getInstance(myProject).logInfo(title, message);
         return changes;
       }
       LOG.debug(errors.toString());

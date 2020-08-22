@@ -129,7 +129,10 @@ class ColorPickerBuilder(private val showAlpha: Boolean = false) {
     val width: Int = componentsToBuild.map { it.preferredSize.width }.max()!!
     val height = componentsToBuild.map { it.preferredSize.height }.sum()
 
-    val defaultFocusComponent = componentsToBuild.getOrNull(focusedComponentIndex)
+    var defaultFocusComponent = componentsToBuild.getOrNull(focusedComponentIndex)
+    if (defaultFocusComponent is ColorValuePanel) {
+      defaultFocusComponent = defaultFocusComponent.hexField
+    }
 
     val panel = object : JPanel() {
       override fun requestFocusInWindow() = defaultFocusComponent?.requestFocusInWindow() ?: false

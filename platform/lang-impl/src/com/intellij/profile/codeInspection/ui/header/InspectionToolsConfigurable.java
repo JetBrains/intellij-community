@@ -11,6 +11,7 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.profile.codeInspection.BaseInspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager;
@@ -256,7 +257,7 @@ public abstract class InspectionToolsConfigurable implements ErrorsConfigurable,
   }
 
   @NotNull
-  public static String getInspectionsDisplayName() {
+  public static @NlsContexts.ConfigurableName String getInspectionsDisplayName() {
     return CodeInsightBundle.message("configurable.InspectionToolsConfigurable.display.name");
   }
 }

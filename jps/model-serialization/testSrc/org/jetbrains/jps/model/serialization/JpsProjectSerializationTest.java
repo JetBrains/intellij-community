@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
@@ -237,13 +238,15 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
     //tod[nik] remember that test output root wasn't specified and doesn't save it to avoid unnecessary modifications of iml files
     //doTestSaveModule(modules.get(2), "xxx/xxx.iml");
 
-    List<Path> libs = Files.list(getFileInSampleProject(".idea/libraries")).collect(Collectors.toList());
-    assertNotNull(libs);
-    for (Path libFile : libs) {
-      String libName = FileUtilRt.getNameWithoutExtension(libFile.getFileName().toString());
-      JpsLibrary library = myProject.getLibraryCollection().findLibrary(libName);
-      assertNotNull(libName, library);
-      doTestSaveLibrary(libFile, libName, library);
+    try (Stream<Path> libraries = Files.list(getFileInSampleProject(".idea/libraries"))) {
+      List<Path> libs = libraries.collect(Collectors.toList());
+      assertNotNull(libs);
+      for (Path libFile : libs) {
+        String libName = FileUtilRt.getNameWithoutExtension(libFile.getFileName().toString());
+        JpsLibrary library = myProject.getLibraryCollection().findLibrary(libName);
+        assertNotNull(libName, library);
+        doTestSaveLibrary(libFile, libName, library);
+      }
     }
   }
 

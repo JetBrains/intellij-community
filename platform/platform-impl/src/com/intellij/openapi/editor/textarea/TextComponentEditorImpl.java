@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.event.EditorMouseEventArea;
 import com.intellij.openapi.editor.event.EditorMouseListener;
 import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.editor.impl.EmptyIndentsModel;
+import com.intellij.openapi.editor.impl.EmptySoftWrapModel;
 import com.intellij.openapi.editor.impl.SettingsImpl;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.project.Project;
@@ -46,7 +47,7 @@ public class TextComponentEditorImpl extends UserDataHolderBase implements TextC
   private final TextComponentCaretModel myCaretModel;
   private final TextComponentSelectionModel mySelectionModel;
   private final TextComponentScrollingModel myScrollingModel;
-  private final TextComponentSoftWrapModel mySoftWrapModel;
+  private final EmptySoftWrapModel mySoftWrapModel;
   private final TextComponentFoldingModel myFoldingModel;
   private EditorSettings mySettings;
 
@@ -62,7 +63,7 @@ public class TextComponentEditorImpl extends UserDataHolderBase implements TextC
     myCaretModel = new TextComponentCaretModel(this);
     mySelectionModel = new TextComponentSelectionModel(this);
     myScrollingModel = new TextComponentScrollingModel(textComponent);
-    mySoftWrapModel = new TextComponentSoftWrapModel();
+    mySoftWrapModel = new EmptySoftWrapModel();
     myFoldingModel = new TextComponentFoldingModel();
   }
 

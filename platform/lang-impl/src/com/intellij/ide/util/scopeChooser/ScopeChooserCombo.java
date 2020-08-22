@@ -26,6 +26,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -139,7 +140,6 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     }
   }
 
-  /** @noinspection unused*/
   private void handleScopeChooserAction(ActionEvent ignore) {
     String selection = getSelectedScopeName();
     if (myBrowseListener != null) myBrowseListener.onBeforeBrowseStarted();
@@ -231,16 +231,20 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     return item == null ? null : item.getScope();
   }
 
-  @Nullable
-  public String getSelectedScopeName() {
+  public @Nullable @Nls String getSelectedScopeName() {
     ScopeDescriptor item = (ScopeDescriptor)getComboBox().getSelectedItem();
     return item == null ? null : item.getDisplayName();
   }
 
-  private static class ScopeSeparator extends ScopeDescriptor {
-    final String text;
+  public @Nullable @Nls String getSelectedScopeId() {
+    ScopeDescriptor item = (ScopeDescriptor)getComboBox().getSelectedItem();
+    return item == null ? null : ScopePresentableNameToSerializationIdMapper.getScopeSerializationId(item.getDisplayName());
+  }
 
-    ScopeSeparator(@NotNull String text) {
+  private static class ScopeSeparator extends ScopeDescriptor {
+    final @Nls String text;
+
+    ScopeSeparator(@NotNull @Nls String text) {
       super(null);
       this.text = text;
     }
@@ -278,6 +282,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
 
   public interface BrowseListener {
     void onBeforeBrowseStarted();
+
     void onAfterBrowseFinished();
   }
 

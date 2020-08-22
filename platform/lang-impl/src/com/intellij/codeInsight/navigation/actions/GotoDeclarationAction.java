@@ -13,8 +13,13 @@ import com.intellij.find.actions.ShowUsagesAction;
 import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.ide.util.EditSourceUtil;
 import com.intellij.injected.editor.EditorWindow;
+import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.internal.statistic.eventLog.events.EventPair;
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -29,6 +34,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
@@ -39,6 +45,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -53,6 +60,35 @@ import static com.intellij.codeInsight.navigation.actions.UiKt.notifyNowhereToGo
 public class GotoDeclarationAction extends BaseCodeInsightAction implements CodeInsightActionHandler, DumbAware, CtrlMouseAction {
 
   private static final Logger LOG = Logger.getInstance(GotoDeclarationAction.class);
+  private static List<EventPair<?>> ourCurrentActionData; // accessed from EDT only
+
+  @SuppressWarnings("AssignmentToStaticFieldFromInstanceMethod")
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
+    Language language = file != null ? file.getLanguage() : null;
+    List<EventPair<?>> currentActionData = ContainerUtil.append(
+      ActionsCollectorImpl.actionEventData(e),
+      EventFields.CurrentFile.with(language)
+    );
+    try {
+      ourCurrentActionData = currentActionData;
+      super.actionPerformed(e);
+    }
+    finally {
+      ourCurrentActionData = null;
+    }
+  }
+
+  static void recordGTD() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    GTDUCollector.record(ourCurrentActionData, GTDUCollector.GTDUChoice.GTD);
+  }
+
+  static void recordSU() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    GTDUCollector.record(ourCurrentActionData, GTDUCollector.GTDUChoice.SU);
+  }
 
   @NotNull
   @Override
@@ -217,7 +253,7 @@ public class GotoDeclarationAction extends BaseCodeInsightAction implements Code
                                               @NotNull Editor editor,
                                               int offset,
                                               @NotNull PsiElementProcessor<? super PsiElement> processor,
-                                              @NotNull String titlePattern,
+                                              @NotNull @NlsContexts.PopupTitle String titlePattern,
                                               PsiElement @Nullable [] elements) {
     if (TargetElementUtil.inVirtualSpace(editor, offset)) {
       return false;

@@ -1,11 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.module;
 
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -181,8 +181,8 @@ public class ModuleUtilCore {
 
   @NotNull
   public static List<Module> getAllDependentModules(@NotNull Module module) {
-    final ArrayList<Module> list = new ArrayList<>();
-    final Graph<Module> graph = ModuleManager.getInstance(module.getProject()).moduleGraph();
+    List<Module> list = new ArrayList<>();
+    Graph<Module> graph = ModuleManager.getInstance(module.getProject()).moduleGraph();
     for (Iterator<Module> i = graph.getOut(module); i.hasNext();) {
       list.add(i.next());
     }
@@ -214,11 +214,11 @@ public class ModuleUtilCore {
   }
 
   public static boolean isModuleFile(@NotNull Module module, @NotNull VirtualFile file) {
-    return FileUtil.namesEqual(file.getPath(), module.getModuleFilePath());
+    return StringUtil.equal(file.getPath(), module.getModuleFilePath(), file.isCaseSensitive());
   }
 
   public static boolean isModuleDir(@NotNull Module module, @NotNull VirtualFile dir) {
-    return FileUtil.namesEqual(dir.getPath(), getModuleDirPath(module));
+    return StringUtil.equal(dir.getPath(), getModuleDirPath(module), dir.isCaseSensitive());
   }
 
   @NotNull

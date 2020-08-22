@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.history.LocalHistory;
@@ -87,7 +87,7 @@ public class RollbackWorker {
           if (afterVcsRefreshInAwt != null) {
             afterVcsRefreshInAwt.run();
           }
-        }, updateMode, "Refresh changelists after update", ModalityState.current());
+        }, updateMode, VcsBundle.message("changes.refresh.changelists.after.update"), ModalityState.current());
       };
 
       List<Change> otherChanges = revertPartialChanges(changes, honorExcludedFromCommit);
@@ -140,7 +140,7 @@ public class RollbackWorker {
     );
   }
 
-  private class MyRollbackRunnable implements Runnable {
+  private final class MyRollbackRunnable implements Runnable {
     private final Collection<? extends Change> myChanges;
     private final boolean myDeleteLocallyAddedFiles;
     private final Runnable myAfterRefresh;
@@ -176,7 +176,7 @@ public class RollbackWorker {
             changesToRefresh.addAll(changes);
 
             if (myIndicator != null) {
-              myIndicator.setText(vcs.getDisplayName() + ": performing " + StringUtil.toLowerCase(myOperationName) + "...");
+              myIndicator.setText(VcsBundle.message("changes.progress.text.vcs.name.performing.operation.name", vcs.getDisplayName(), StringUtil.toLowerCase(myOperationName)));
               myIndicator.setIndeterminate(false);
               myIndicator.checkCanceled();
             }
@@ -253,7 +253,7 @@ public class RollbackWorker {
 
     private void deleteAddedFilesLocally(final List<? extends Change> changes) {
       if (myIndicator != null) {
-        myIndicator.setText("Deleting added files locally...");
+        myIndicator.setText(VcsBundle.message("changes.deleting.added.files.locally"));
         myIndicator.setFraction(0);
       }
       final int changesSize = changes.size();

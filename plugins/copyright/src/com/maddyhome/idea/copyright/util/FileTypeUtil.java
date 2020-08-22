@@ -20,6 +20,7 @@ import com.intellij.psi.PsiFile;
 import com.maddyhome.idea.copyright.CopyrightUpdaters;
 import com.maddyhome.idea.copyright.options.LanguageOptions;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
 import java.util.HashSet;
@@ -194,7 +195,7 @@ public class FileTypeUtil implements Disposable {
     return isSupportedType(file.getFileType());
   }
 
-  public static boolean isSupportedFile(PsiFile file) {
+  public static boolean isSupportedFile(@Nullable PsiFile file) {
     if (file == null || file instanceof PsiDirectory || file instanceof PsiCodeFragment) {
       return false;
     }

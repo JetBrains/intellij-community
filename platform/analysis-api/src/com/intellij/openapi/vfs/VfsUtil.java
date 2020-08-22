@@ -194,11 +194,11 @@ public final class VfsUtil extends VfsUtilCore {
   }
 
   public static @Nullable VirtualFile findFile(@NotNull Path file, boolean refreshIfNeeded) {
-    return findFile(FileUtil.toSystemIndependentName(file.toAbsolutePath().toString()), refreshIfNeeded);
+    return findFile(file.toAbsolutePath().toString().replace(File.separatorChar, '/'), refreshIfNeeded);
   }
 
   public static @Nullable VirtualFile findFileByIoFile(@NotNull File file, boolean refreshIfNeeded) {
-    return findFile(FileUtil.toSystemIndependentName(file.getAbsolutePath()), refreshIfNeeded);
+    return findFile(file.getAbsolutePath().replace(File.separatorChar, '/'), refreshIfNeeded);
   }
 
   private static @Nullable VirtualFile findFile(@NotNull String filePath, boolean refreshIfNeeded) {
@@ -329,9 +329,9 @@ public final class VfsUtil extends VfsUtilCore {
     return WriteAction.computeAndWait(() -> createDirectoryIfMissing(directoryPath));
   }
 
-  public static VirtualFile createDirectoryIfMissing(@Nullable VirtualFile parent, String relativePath) throws IOException {
+  public static VirtualFile createDirectoryIfMissing(@Nullable VirtualFile parent, @NotNull String relativePath) throws IOException {
     if (parent == null) {
-      return createDirectoryIfMissing(relativePath);
+      return createDirectoryIfMissing(LocalFileSystem.getInstance(), relativePath);
     }
 
     for (String each : StringUtil.split(relativePath, "/")) {
@@ -347,8 +347,8 @@ public final class VfsUtil extends VfsUtilCore {
   public static @Nullable VirtualFile createDirectoryIfMissing(@NotNull String directoryPath) throws IOException {
     return createDirectoryIfMissing(LocalFileSystem.getInstance(), directoryPath);
   }
-  
-  public static @Nullable VirtualFile createDirectoryIfMissing(@NotNull VirtualFileSystem fileSystem, 
+
+  public static @Nullable VirtualFile createDirectoryIfMissing(@NotNull VirtualFileSystem fileSystem,
                                                                @NotNull String directoryPath) throws IOException {
     String path = FileUtil.toSystemIndependentName(directoryPath);
     VirtualFile file = fileSystem.refreshAndFindFileByPath(path);
@@ -409,7 +409,7 @@ public final class VfsUtil extends VfsUtilCore {
   }
 
   public static @Nullable VirtualFile getUserHomeDir() {
-    final String path = SystemProperties.getUserHome();
+    String path = SystemProperties.getUserHome();
     return LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(path));
   }
 

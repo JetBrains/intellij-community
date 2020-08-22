@@ -1,9 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packageDependencies.ui;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.ui.tree.TreeUtil;
-import gnu.trove.Equality;
 
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
@@ -13,16 +12,16 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.util.*;
+import java.util.function.BiPredicate;
 
 import static com.intellij.ui.tree.TreePathUtil.toTreePathArray;
 
 public abstract class TreeExpansionMonitor<T> {
-
   public static TreeExpansionMonitor<DefaultMutableTreeNode> install(final JTree tree) {
     return install(tree, (o1, o2) -> Comparing.equal(o1.getUserObject(), o2.getUserObject()));
   }
 
-  public static TreeExpansionMonitor<DefaultMutableTreeNode> install(final JTree tree, final Equality<? super DefaultMutableTreeNode> equality) {
+  public static TreeExpansionMonitor<DefaultMutableTreeNode> install(final JTree tree, final BiPredicate<? super DefaultMutableTreeNode, ? super DefaultMutableTreeNode> equality) {
     return new TreeExpansionMonitor<DefaultMutableTreeNode>(tree) {
       @Override
       protected TreePath findPathByNode(final DefaultMutableTreeNode node) {
@@ -31,7 +30,7 @@ public abstract class TreeExpansionMonitor<T> {
           final Object nextElement = enumeration.nextElement();
           if (nextElement instanceof DefaultMutableTreeNode) {
             DefaultMutableTreeNode child = (DefaultMutableTreeNode)nextElement;
-            if (equality.equals(child, node)) {
+            if (equality.test(child, node)) {
               return new TreePath(child.getPath());
             }
           }

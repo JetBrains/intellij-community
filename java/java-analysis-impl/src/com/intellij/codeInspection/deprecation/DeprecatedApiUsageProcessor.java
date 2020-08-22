@@ -54,6 +54,7 @@ public final class DeprecatedApiUsageProcessor implements ApiUsageProcessor {
 
   @Override
   public void processReference(@NotNull UElement sourceNode, @NotNull PsiModifierListOwner target, @Nullable UExpression qualifier) {
+    if (sourceNode instanceof ULambdaExpression) return;
     checkTargetDeprecated(sourceNode, target);
   }
 

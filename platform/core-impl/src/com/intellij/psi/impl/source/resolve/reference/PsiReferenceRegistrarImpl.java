@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.resolve.reference;
 
 import com.intellij.openapi.Disposable;
@@ -14,7 +14,6 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,8 +25,8 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
   private static final Logger LOG = Logger.getInstance(PsiReferenceRegistrarImpl.class);
-  private final Map<Class<?>, SimpleProviderBinding> myBindingsMap = new THashMap<>();
-  private final Map<Class<?>, NamedObjectProviderBinding> myNamedBindingsMap = new THashMap<>();
+  private final Map<Class<?>, SimpleProviderBinding> myBindingsMap = new HashMap<>();
+  private final Map<Class<?>, NamedObjectProviderBinding> myNamedBindingsMap = new HashMap<>();
   private final ConcurrentMap<Class<?>, ProviderBinding[]> myBindingCache;
   private boolean myInitialized;
   private final List<Disposable> myCleanupDisposables = new ArrayList<>();
@@ -55,7 +54,7 @@ public class PsiReferenceRegistrarImpl extends PsiReferenceRegistrar {
   }
 
   void cleanup() {
-    for (Disposable disposable : myCleanupDisposables) {
+    for (Disposable disposable : new ArrayList<>(myCleanupDisposables)) {
       Disposer.dispose(disposable);
     }
     myCleanupDisposables.clear();

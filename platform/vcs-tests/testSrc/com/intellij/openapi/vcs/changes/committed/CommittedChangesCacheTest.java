@@ -67,7 +67,7 @@ public class CommittedChangesCacheTest extends HeavyPlatformTestCase {
 
     myCache = CommittedChangesCache.getInstance(getProject());
     assertEquals(1, myCache.getCachesHolder().getAllCaches().size());
-    myFilesToDelete.add(myCache.getCachesHolder().getCacheBasePath());
+    getTempDir().scheduleDelete(myCache.getCachesHolder().getCacheBasePath());
   }
 
   @Override

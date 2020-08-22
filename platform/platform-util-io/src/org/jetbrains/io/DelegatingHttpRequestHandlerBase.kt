@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.io
 
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import io.netty.channel.ChannelHandlerContext
@@ -23,6 +22,6 @@ abstract class DelegatingHttpRequestHandlerBase : SimpleChannelInboundHandlerAda
                                  urlDecoder: QueryStringDecoder): Boolean
 
   override fun exceptionCaught(context: ChannelHandlerContext, cause: Throwable) {
-    NettyUtil.logAndClose(cause, Logger.getInstance(BuiltInServer::class.java), context.channel())
+    NettyUtil.logAndClose(cause, logger<BuiltInServer>(), context.channel())
   }
 }

@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static com.jetbrains.python.PythonHelpersLocator.getHelperFile;
 import static com.jetbrains.python.PythonHelpersLocator.getHelpersRoot;
@@ -51,7 +52,6 @@ public enum PythonHelper implements HelperPackage {
   NOSE("pycharm", "_jb_nosetest_runner"),
 
   BEHAVE("pycharm", "behave_runner"),
-  LETTUCE("pycharm", "lettuce_runner"),
 
   DJANGO_TEST_MANAGE("pycharm", "django_test_manage"),
   DJANGO_MANAGE("pycharm", "django_manage"),
@@ -122,6 +122,17 @@ public enum PythonHelper implements HelperPackage {
       myDependencies.forEach(dependency -> dependency.addToPythonPath(environment));
       // then add helper script
       PythonEnvUtil.addToPythonPath(environment, getPythonPathEntry());
+    }
+
+    @Override
+    public @NotNull List<String> getPythonPathEntries() {
+      // at first add dependencies
+      ArrayList<String> entries = myDependencies.stream()
+        .flatMap(dependency -> dependency.getPythonPathEntries().stream())
+        .collect(Collectors.toCollection(ArrayList::new));
+      // then add helper script
+      entries.add(getPythonPathEntry());
+      return entries;
     }
 
     @Override
@@ -213,7 +224,7 @@ public enum PythonHelper implements HelperPackage {
     }
   }
 
-  private static class HelperDependency {
+  private static final class HelperDependency {
     private static final String THRIFTPY = "thriftpy";
 
     @NotNull
@@ -223,6 +234,11 @@ public enum PythonHelper implements HelperPackage {
 
     public void addToPythonPath(@NotNull Map<String, String> environment) {
       PythonEnvUtil.addToPythonPath(environment, myPythonPath);
+    }
+
+    @NotNull
+    public List<String> getPythonPathEntries() {
+      return Collections.singletonList(myPythonPath);
     }
 
     @NotNull
@@ -249,6 +265,11 @@ public enum PythonHelper implements HelperPackage {
   @Override
   public String getPythonPathEntry() {
     return myModule.getPythonPathEntry();
+  }
+
+  @Override
+  public @NotNull List<String> getPythonPathEntries() {
+    return myModule.getPythonPathEntries();
   }
 
   @Override

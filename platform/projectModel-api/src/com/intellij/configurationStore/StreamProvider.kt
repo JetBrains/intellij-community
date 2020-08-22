@@ -20,8 +20,9 @@ interface StreamProvider {
    */
   val isExclusive: Boolean
 
+  @Deprecated("Export action is not disabled by StreamProviders anymore", ReplaceWith("false"))
   val isDisableExportAction: Boolean
-    get() = enabled && isExclusive
+    get() = false
 
   /**
    * Called only on `write`

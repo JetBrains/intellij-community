@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.actions;
 
@@ -12,6 +12,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl;
@@ -20,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.FutureTask;
@@ -60,7 +62,7 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
     this(project, files, getCommandName(), postRunnable);
   }
 
-  public OptimizeImportsProcessor(@NotNull Project project, PsiFile @NotNull [] files, @NotNull String commandName, Runnable postRunnable) {
+  public OptimizeImportsProcessor(@NotNull Project project, PsiFile @NotNull [] files, @NotNull @NlsContexts.Command String commandName, Runnable postRunnable) {
     super(project, files, getProgressText(), commandName, postRunnable, false);
   }
 
@@ -72,11 +74,42 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
   @NotNull
   protected FutureTask<Boolean> prepareTask(@NotNull PsiFile file, boolean processChangedTextOnly) {
     if (DumbService.isDumb(file.getProject())) {
-      return new FutureTask<>(EmptyRunnable.INSTANCE, true);
+      return emptyTask();
     }
 
-    final Set<ImportOptimizer> optimizers = LanguageImportStatements.INSTANCE.forFile(file);
-    final List<Runnable> runnables = new ArrayList<>();
+    List<Runnable> runnables = collectOptimizers(file);
+
+    if (runnables.isEmpty()) {
+      return emptyTask();
+    }
+
+    List<HintAction> hints = ApplicationManager.getApplication().isDispatchThread() ?
+                             Collections.emptyList() : ShowAutoImportPass.getImportHints(file);
+
+    return new FutureTask<>(() -> {
+      ApplicationManager.getApplication().assertIsDispatchThread();
+      CodeStyleManagerImpl.setSequentialProcessingAllowed(false);
+      try {
+        for (Runnable runnable : runnables) {
+          runnable.run();
+          myOptimizerNotifications.add(getNotificationInfo(runnable));
+        }
+        putNotificationInfoIntoCollector();
+        ShowAutoImportPass.fixAllImportsSilently(file, hints);
+      }
+      finally {
+        CodeStyleManagerImpl.setSequentialProcessingAllowed(true);
+      }
+    }, true);
+  }
+
+  private static @NotNull FutureTask<Boolean> emptyTask() {
+    return new FutureTask<>(EmptyRunnable.INSTANCE, true);
+  }
+
+  static @NotNull List<Runnable> collectOptimizers(@NotNull PsiFile file) {
+    Set<ImportOptimizer> optimizers = LanguageImportStatements.INSTANCE.forFile(file);
+    List<Runnable> runnables = new ArrayList<>();
     List<PsiFile> files = file.getViewProvider().getAllFiles();
     for (ImportOptimizer optimizer : optimizers) {
       for (PsiFile psiFile : files) {
@@ -85,26 +118,7 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
         }
       }
     }
-
-    List<HintAction> hints = ShowAutoImportPass.getImportHints(file);
-
-    Runnable writeTask = runnables.isEmpty() ? EmptyRunnable.getInstance() : () -> {
-      ApplicationManager.getApplication().assertIsDispatchThread();
-      CodeStyleManagerImpl.setSequentialProcessingAllowed(false);
-      try {
-        for (Runnable runnable1 : runnables) {
-          runnable1.run();
-          myOptimizerNotifications.add(getNotificationInfo(runnable1));
-        }
-        putNotificationInfoIntoCollector();
-        ShowAutoImportPass.fixAllImportsSilently(file, hints);
-      }
-      finally {
-        CodeStyleManagerImpl.setSequentialProcessingAllowed(true);
-      }
-    };
-
-    return new FutureTask<>(writeTask, true);
+    return runnables;
   }
 
   @NotNull
@@ -162,11 +176,11 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
     }
   }
 
-  private static @NotNull String getProgressText() {
+  private static @NotNull @NlsContexts.ProgressText String getProgressText() {
     return CodeInsightBundle.message("progress.text.optimizing.imports");
   }
 
-  public static @NotNull String getCommandName() {
+  public static @NotNull @NlsContexts.Command String getCommandName() {
     return CodeInsightBundle.message("process.optimize.imports");
   }
 }

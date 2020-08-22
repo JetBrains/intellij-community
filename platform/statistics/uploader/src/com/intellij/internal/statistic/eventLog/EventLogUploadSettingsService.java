@@ -4,6 +4,7 @@ package com.intellij.internal.statistic.eventLog;
 import com.intellij.internal.statistic.config.EventLogExternalSendSettings;
 import com.intellij.internal.statistic.config.bean.EventLogSendConfiguration;
 import com.intellij.internal.statistic.connect.SettingsConnectionService;
+import com.intellij.internal.statistic.eventLog.filters.*;
 import com.intellij.internal.statistic.service.fus.StatisticsWhitelistConditions;
 import com.intellij.internal.statistic.service.fus.StatisticsWhitelistLoader;
 import org.jetbrains.annotations.ApiStatus;
@@ -11,25 +12,28 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.TimeUnit;
+
 @ApiStatus.Internal
 public class EventLogUploadSettingsService extends SettingsConnectionService implements EventLogSettingsService {
   private static final String SEND = "send";
-  private static final String WHITELIST = "whitelist";
+  private static final String METADATA = "metadata";
   private static final String DICTIONARY = "dictionary";
 
   @NotNull
   private final EventLogApplicationInfo myApplicationInfo;
 
   public EventLogUploadSettingsService(@NotNull String recorderId, @NotNull EventLogApplicationInfo appInfo) {
-    super(getConfigUrl(recorderId, appInfo.getProductCode(), appInfo.getTemplateUrl(), appInfo.isTest()), appInfo);
+    this(recorderId, appInfo, TimeUnit.MINUTES.toMillis(10));
+  }
+
+  public EventLogUploadSettingsService(@NotNull String recorderId, @NotNull EventLogApplicationInfo appInfo, long settingsCacheTimeoutMs) {
+    super(getConfigUrl(recorderId, appInfo.getProductCode(), appInfo.getTemplateUrl(), appInfo.isTest()), appInfo, settingsCacheTimeoutMs);
     myApplicationInfo = appInfo;
   }
 
   @NotNull
   private static String getConfigUrl(@NotNull String recorderId, @NotNull String productCode, @NotNull String templateUrl, boolean isTest) {
-    if (isTest) {
-      return String.format(templateUrl, "test/" + recorderId, productCode);
-    }
     return String.format(templateUrl, recorderId, productCode);
   }
 
@@ -93,14 +97,14 @@ public class EventLogUploadSettingsService extends SettingsConnectionService imp
   protected StatisticsWhitelistConditions getWhitelistedGroups() {
     final String productUrl = getWhiteListProductUrl();
     if (productUrl == null) return null;
-    String userAgent = myApplicationInfo.getUserAgent();
-    return StatisticsWhitelistLoader.getApprovedGroups(productUrl, userAgent);
+    EventLogConnectionSettings settings = myApplicationInfo.getConnectionSettings();
+    return StatisticsWhitelistLoader.getApprovedGroups(productUrl, settings);
   }
 
   @NonNls
   @Nullable
   public String getWhiteListProductUrl() {
-    String baseWhitelistUrl = getEndpointValue(WHITELIST);
+    String baseWhitelistUrl = getEndpointValue(METADATA);
     if (baseWhitelistUrl == null) return null;
     return baseWhitelistUrl + myApplicationInfo.getProductCode() + ".json";
   }

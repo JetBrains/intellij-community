@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide;
 
@@ -21,7 +21,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
-import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author yole
@@ -121,7 +124,7 @@ public class NativeIconProvider extends IconProvider implements DumbAware {
     return type instanceof UnknownFileType && !file.isDirectory();
   }
 
-  private static class Ext extends ComparableObject.Impl {
+  private static final class Ext extends ComparableObject.Impl {
     private final Object[] myText;
 
     private Ext(@Nullable String text) {

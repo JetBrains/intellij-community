@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh.parser;
 
 import com.intellij.lang.ASTNode;
@@ -19,7 +19,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 
-public class ShShebangParserUtil {
+public final class ShShebangParserUtil {
   @NonNls private static final List<String> KNOWN_EXTENSIONS = Arrays.asList("exe", "bat", "cmd");
   private static final String PREFIX = "#!";
 
@@ -52,7 +52,7 @@ public class ShShebangParserUtil {
   }
 
   @Nullable
-  private static String detectInterpreter(@Nullable String shebang) {
+  public static String detectInterpreter(@Nullable String shebang) {
     if (shebang == null || !shebang.startsWith(PREFIX)) return null;
 
     String interpreterPath = getInterpreterPath(shebang.substring(PREFIX.length()).trim());
@@ -76,10 +76,5 @@ public class ShShebangParserUtil {
   private static String trimKnownExt(@NotNull String name) {
     String ext = PathUtil.getFileExtension(name);
     return ext != null && KNOWN_EXTENSIONS.contains(ext) ? name.substring(0, name.length() - ext.length() - 1) : name;
-  }
-
-  @TestOnly
-  static String getInterpreter(@Nullable String shebang) {
-    return detectInterpreter(shebang);
   }
 }

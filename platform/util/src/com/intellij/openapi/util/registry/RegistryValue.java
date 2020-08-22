@@ -4,7 +4,11 @@ package com.intellij.openapi.util.registry;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.ColorHexUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -40,13 +44,13 @@ public class RegistryValue {
   }
 
   @NotNull
-  public String getKey() {
+  public @NlsSafe String getKey() {
     return myKey;
   }
 
 
   @NotNull
-  public String asString() {
+  public @NlsSafe String asString() {
     final String value = get(myKey, null, true);
     assert value != null : myKey;
     return value;
@@ -84,6 +88,46 @@ public class RegistryValue {
       assert bundleValue != null;
       return Integer.valueOf(bundleValue);
     }
+  }
+
+  public boolean isMultiValue() {
+    return getSelectedOption() != null;
+  }
+
+  public String[] getOptions() {
+    return getOptions(Registry.getInstance().getBundleValue(myKey, true));
+  }
+
+  private static String[] getOptions(String value) {
+    if (value != null && value.startsWith("[") && value.endsWith("]")) {
+      return value.substring(1, value.length() - 1).split("\\|");
+    }
+    return ArrayUtil.EMPTY_STRING_ARRAY;
+  }
+
+  @Nullable
+  public @NlsSafe String getSelectedOption() {
+    for (String option : getOptions(asString())) {
+      if (option.endsWith("*")) {
+        return StringUtil.trimEnd(option, "*");
+      }
+    }
+    return null;
+  }
+
+  public boolean isOptionEnabled(@NotNull String option) {
+    return StringUtil.equals(getSelectedOption(), option);
+  }
+
+  public void setSelectedOption(String selected) {
+    String[] options = getOptions();
+    for (int i = 0; i < options.length; i++) {
+      options[i] = Strings.trimEnd(options[i], "*");
+      if (options[i].equals(selected)) {
+        options[i] += "*";
+      }
+    }
+    setValue("[" + StringUtil.join(options,"|") + "]");
   }
 
   public double asDouble() {

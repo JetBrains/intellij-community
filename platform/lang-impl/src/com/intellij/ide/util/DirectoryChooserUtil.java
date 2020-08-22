@@ -1,5 +1,4 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package com.intellij.ide.util;
 
 import com.intellij.ide.IdeView;
@@ -11,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import static com.intellij.ide.IdeBundle.message;
@@ -41,12 +41,11 @@ public final class DirectoryChooserUtil {
                                              @Nullable String postfixToShow) {
     ProjectFileIndex projectFileIndex = getInstance(project).getFileIndex();
 
-    ArrayList<PsiDirectory> possibleDirs = new ArrayList<>();
+    List<PsiDirectory> possibleDirs = new ArrayList<>();
     for (PsiDirectory dir : packageDirectories) {
-      if (!dir.isValid()) continue;
-      if (!dir.isWritable()) continue;
-      if (possibleDirs.contains(dir)) continue;
-      if (!projectFileIndex.isInContent(dir.getVirtualFile())) continue;
+      if (!dir.isValid() || !dir.isWritable() || possibleDirs.contains(dir) || !projectFileIndex.isInContent(dir.getVirtualFile())) {
+        continue;
+      }
       possibleDirs.add(dir);
     }
 

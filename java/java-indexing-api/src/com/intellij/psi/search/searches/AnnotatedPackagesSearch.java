@@ -9,7 +9,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Query;
 import org.jetbrains.annotations.NotNull;
 
-public class AnnotatedPackagesSearch extends ExtensibleQueryFactory<PsiPackage, AnnotatedPackagesSearch.Parameters> {
+public final class AnnotatedPackagesSearch extends ExtensibleQueryFactory<PsiPackage, AnnotatedPackagesSearch.Parameters> {
   public static final AnnotatedPackagesSearch INSTANCE = new AnnotatedPackagesSearch();
 
   public static class Parameters {

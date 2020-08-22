@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.changes.ui;
 
@@ -77,7 +77,7 @@ public abstract class AbstractSelectFilesDialog extends DialogWrapper {
     return new DefaultActionGroup();
   }
 
-  private static class MyDoNotAskOption extends DoNotAskOption.Adapter {
+  private static final class MyDoNotAskOption extends DoNotAskOption.Adapter {
     private final VcsShowConfirmationOption myConfirmationOption;
 
     private MyDoNotAskOption(@NotNull VcsShowConfirmationOption confirmationOption) {

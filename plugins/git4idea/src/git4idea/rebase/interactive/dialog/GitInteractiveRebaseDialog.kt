@@ -50,7 +50,7 @@ internal class GitInteractiveRebaseDialog<T : GitRebaseEntryWithDetails>(
   }
 
   private val commitsTableModel = GitRebaseCommitsTableModel(entries)
-  private val resetEntriesLabel = LinkLabel<Any?>(GitBundle.getString("rebase.interactive.dialog.reset.link.text"), null).apply {
+  private val resetEntriesLabel = LinkLabel<Any?>(GitBundle.message("rebase.interactive.dialog.reset.link.text"), null).apply {
     isVisible = false
     setListener(
       LinkListener { _, _ ->
@@ -115,8 +115,8 @@ internal class GitInteractiveRebaseDialog<T : GitRebaseEntryWithDetails>(
       ActionManager.getInstance()
     )
 
-    title = GitBundle.getString("rebase.interactive.dialog.title")
-    setOKButtonText(GitBundle.getString("rebase.interactive.dialog.start.rebase"))
+    title = GitBundle.message("rebase.interactive.dialog.title")
+    setOKButtonText(GitBundle.message("rebase.interactive.dialog.start.rebase"))
     init()
   }
 
@@ -161,11 +161,11 @@ internal class GitInteractiveRebaseDialog<T : GitRebaseEntryWithDetails>(
     if (modified) {
       val result = Messages.showDialog(
         rootPane,
-        GitBundle.getString("rebase.interactive.dialog.discard.modifications.message"),
-        GitBundle.getString("rebase.interactive.dialog.discard.modifications.cancel"),
+        GitBundle.message("rebase.interactive.dialog.discard.modifications.message"),
+        GitBundle.message("rebase.interactive.dialog.discard.modifications.cancel"),
         arrayOf(
-          GitBundle.getString("rebase.interactive.dialog.discard.modifications.discard"),
-          GitBundle.getString("rebase.interactive.dialog.discard.modifications.continue")
+          GitBundle.message("rebase.interactive.dialog.discard.modifications.discard"),
+          GitBundle.message("rebase.interactive.dialog.discard.modifications.continue")
         ),
         0,
         Messages.getQuestionIcon()

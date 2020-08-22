@@ -7,7 +7,7 @@ import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
-import com.intellij.codeInsight.lookup.LookupValueWithPriority;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorModificationUtil;
@@ -38,7 +38,7 @@ public class UserColorLookup extends LookupElementDecorator<LookupElement> {
   }
 
   public UserColorLookup(final Function<? super Color, String> colorToStringConverter) {
-    this(colorToStringConverter, LookupValueWithPriority.HIGH);
+    this(colorToStringConverter, ColorSampleLookupValue.HIGH_PRIORITY);
   }
 
   public UserColorLookup(final Function<? super Color, String> colorToStringConverter, int priority) {
@@ -64,7 +64,7 @@ public class UserColorLookup extends LookupElementDecorator<LookupElement> {
       if (editor.isDisposed() || project.isDisposed()) return;
       List<ColorPickerListener> listeners = ColorPickerListenerFactory.createListenersFor(element);
       Color color = ColorChooser.chooseColor(project, WindowManager.getInstance().suggestParentWindow(project),
-                                             XmlBundle.message("choose.color.dialog.title"), myColorAtCaret, true, listeners, true);
+                                             IdeBundle.message("dialog.title.choose.color"), myColorAtCaret, true, listeners, true);
       if (color != null) {
         WriteCommandAction.runWriteCommandAction(project, () -> {
           editor.getCaretModel().moveToOffset(startOffset);
@@ -82,6 +82,6 @@ public class UserColorLookup extends LookupElementDecorator<LookupElement> {
   }
 
   private static String getColorString() {
-    return XmlBundle.message("choose.color.in.color.lookup");
+    return XmlBundle.message("xml.lookup.choose.color");
   }
 }

@@ -1,6 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python
 
+import com.intellij.codeInsight.navigation.actions.GotoDeclarationOrUsageHandler2
+import com.intellij.codeInsight.navigation.actions.GotoDeclarationOrUsageHandler2.GTDUOutcome
 import com.intellij.ide.util.gotoByName.GotoSymbolModel2
 import com.intellij.psi.PsiElement
 import com.intellij.testFramework.LightProjectDescriptor
@@ -49,6 +51,35 @@ class PyNavigationTest : PyTestCase() {
     assertEquals("MyClass", expression.containingClass?.name)
   }
 
+  // PY-42823
+  fun testGotoDeclarationOrUsagesOnVariableDefinitionShowsUsages() {
+    doTestGotoDeclarationOrUsagesOutcome(GTDUOutcome.SU,
+                                         "v<caret>ar = 42\n" +
+                                         "var = 'spam'\n" +
+                                         "print(var)")
+  }
+
+  // PY-42823
+  fun testGotoDeclarationOrUsagesOnVariableReassignmentNavigatesToDefinition() {
+    doTestGotoDeclarationOrUsagesOutcome(GTDUOutcome.GTD,
+                                         "var = 42\n" +
+                                         "va<caret>r = 'spam'\n" +
+                                         "print(var)")
+  }
+
+  // PY-42823
+  fun testGotoDeclarationOrUsagesOnVariableUsageNavigatesToDefinition() {
+    doTestGotoDeclarationOrUsagesOutcome(GTDUOutcome.GTD,
+                                         "var = 42\n" +
+                                         "var = 'spam'\n" +
+                                         "print(va<caret>r)")
+  }
+
+  private fun doTestGotoDeclarationOrUsagesOutcome(expectedOutcome: GTDUOutcome, text: String) {
+    myFixture.configureByText("a.py", text)
+    val actualOutcome = GotoDeclarationOrUsageHandler2.testGTDUOutcome(myFixture.editor, myFixture.file, myFixture.caretOffset)
+    assertEquals(expectedOutcome, actualOutcome)
+  }
 
   private fun configureByDir(dirName: String) {
     myFixture.copyDirectoryToProject(dirName, "")

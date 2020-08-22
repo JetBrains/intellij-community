@@ -28,6 +28,7 @@ import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.util.SmartList;
 import org.intellij.lang.xpath.XPathFile;
 import org.intellij.lang.xpath.xslt.XsltSupport;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -61,7 +62,7 @@ public class XsltXmlAnnotator extends XmlElementVisitor implements Annotator {
           InjectedLanguageManager.getInstance(value.getProject()).enumerate(value, (injectedPsi, places) -> {
             if (injectedPsi instanceof XPathFile) {
               if (injectedPsi.getTextLength() == 0) {
-                myHolder.newAnnotation(HighlightSeverity.ERROR, "Empty XPath expression").range(value).create();
+                myHolder.newAnnotation(HighlightSeverity.ERROR, XPathBundle.message("annotator.error.empty.xpath.expression")).range(value).create();
               }
             }
           });
@@ -81,8 +82,9 @@ public class XsltXmlAnnotator extends XmlElementVisitor implements Annotator {
             }
           });
 
+          final String message = XPathBundle.message("annotator.error.invalid.single.closing.brace.escape.as.double.closing.brace");
           for (Integer brace : singleBraces) {
-            myHolder.newAnnotation(HighlightSeverity.ERROR, "Invalid single closing brace. Escape as '}}'").range(TextRange.from(value.getTextOffset() + brace, 1)).create();
+            myHolder.newAnnotation(HighlightSeverity.ERROR, message).range(TextRange.from(value.getTextOffset() + brace, 1)).create();
           }
         }
       }

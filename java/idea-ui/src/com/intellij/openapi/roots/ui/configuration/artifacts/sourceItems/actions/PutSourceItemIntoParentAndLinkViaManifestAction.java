@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.actions;
 
 import com.intellij.ide.JavaUiBundle;
@@ -53,7 +53,7 @@ public class PutSourceItemIntoParentAndLinkViaManifestAction extends PutIntoDefa
     presentation.setEnabledAndVisible(enable);
   }
 
-  @Nullable 
+  @Nullable
   private ParentElementsInfo findParentAndGrandParent(Artifact artifact) {
     final Ref<ParentElementsInfo> result = Ref.create(null);
     ArtifactUtil.processParents(artifact, myArtifactEditor.getContext(), new ParentElementProcessor() {
@@ -107,7 +107,7 @@ public class PutSourceItemIntoParentAndLinkViaManifestAction extends PutIntoDefa
     ((ArtifactEditorImpl)context.getOrCreateEditor(parentsInfo.getGrandparentArtifact())).rebuildTries();
   }
 
-  private static class ParentElementsInfo {
+  private static final class ParentElementsInfo {
     private final Artifact myParentArtifact;
     private final CompositePackagingElement<?> myParentElement;
     private final Artifact myGrandparentArtifact;

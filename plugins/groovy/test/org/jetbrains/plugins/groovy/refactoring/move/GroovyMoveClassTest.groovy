@@ -17,6 +17,7 @@
 package org.jetbrains.plugins.groovy.refactoring.move
 
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
@@ -101,4 +102,13 @@ class GroovyMoveClassTest extends GroovyMoveTestBase {
 
     return true
   }
+
+  static class BranchTest extends GroovyMoveClassTest {
+    @Override
+    protected void setUp() throws Exception {
+      super.setUp();
+      Registry.get("run.refactorings.in.model.branch").setValue(true, getTestRootDisposable());
+    }
+  }
+
 }

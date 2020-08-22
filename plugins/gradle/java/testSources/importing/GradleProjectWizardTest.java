@@ -19,8 +19,8 @@ import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
+import com.intellij.openapi.ui.TestDialogManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -34,6 +34,7 @@ import com.intellij.testFramework.RunAll;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -134,7 +135,7 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
   protected Project createProject(Consumer adjuster) throws IOException {
     @SuppressWarnings("unchecked")
     Project project = super.createProject(adjuster);
-    myFilesToDelete.add(ProjectUtil.getExternalConfigurationDir(project).toFile());
+    Disposer.register(getTestRootDisposable(), () -> PathKt.delete(ProjectUtil.getExternalConfigurationDir(project)));
     return project;
   }
 
@@ -149,11 +150,11 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
     if (settings instanceof ExternalProjectSettings) {
       directory = new File(((ExternalProjectSettings)settings).getExternalProjectPath());
       FileUtil.createDirectory(directory);
+      Disposer.register(getTestRootDisposable(), () -> FileUtil.delete(directory));
     }
     else {
-      directory = FileUtil.createTempDirectory(getName(), "new", false);
+      directory = createTempDirectoryWithSuffix("new").toFile();
     }
-    myFilesToDelete.add(directory);
     if (myWizard != null) {
       Disposer.dispose(myWizard.getDisposable());
       myWizard = null;
@@ -212,7 +213,7 @@ public class GradleProjectWizardTest extends NewProjectWizardTestCase {
         });
       },
       () -> {
-        Messages.setTestDialog(TestDialog.DEFAULT);
+        TestDialogManager.setTestDialog(TestDialog.DEFAULT);
       },
       super::tearDown
     ).run();

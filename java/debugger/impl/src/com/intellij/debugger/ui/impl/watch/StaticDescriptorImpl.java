@@ -15,6 +15,7 @@ import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.tree.StaticDescriptor;
 import com.intellij.debugger.ui.tree.render.ClassRenderer;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
+import com.intellij.openapi.util.NlsSafe;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.TypeComponent;
 
@@ -52,6 +53,7 @@ public class StaticDescriptorImpl extends NodeDescriptorImpl implements StaticDe
   protected String calcRepresentation(EvaluationContextImpl context, DescriptorLabelListener descriptorLabelListener) throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     final ClassRenderer classRenderer = NodeRendererSettings.getInstance().getClassRenderer();
-    return getName() + " = " + classRenderer.renderTypeName(myType.name());
+    @NlsSafe String representation = getName() + " = " + classRenderer.renderTypeName(myType.name());
+    return representation;
   }
 }

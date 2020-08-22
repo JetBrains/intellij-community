@@ -32,6 +32,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.intellij.lang.xpath.psi.XPathVariableReference;
 import org.intellij.lang.xpath.xslt.XsltSupport;
 import org.intellij.lang.xpath.xslt.util.XsltCodeInsightUtil;
+import org.intellij.plugins.xpathView.XPathBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,7 +46,12 @@ public class CreateVariableFix extends AbstractFix {
     @Override
     @NotNull
     public String getText() {
-        return "Create Variable '" + myReference.getReferencedName() + "'";
+        return XPathBundle.message("intention.name.create.variable", myReference.getReferencedName());
+    }
+
+    @Override
+    public String getFamilyName() {
+        return XPathBundle.message("intention.family.name.create.variable");
     }
 
     @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.code.cfg;
 
 import org.jetbrains.java.decompiler.code.*;
@@ -432,7 +432,7 @@ public class ControlFlowGraph implements CodeConstants {
     }
   }
 
-  private static class JsrRecord {
+  private static final class JsrRecord {
     private final BasicBlock jsr;
     private final Set<BasicBlock> range;
     private final BasicBlock ret;

@@ -7,7 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.List;
 
-public class FilterDescendantVirtualFiles extends AbstractFilterChildren<VirtualFile> {
+public final class FilterDescendantVirtualFiles extends AbstractFilterChildren<VirtualFile> {
   private final static FilterDescendantVirtualFiles ourInstance = new FilterDescendantVirtualFiles();
 
   private FilterDescendantVirtualFiles() {

@@ -13,7 +13,7 @@ import com.intellij.psi.xml.XmlToken;
 import com.intellij.psi.xml.XmlTokenType;
 import org.jetbrains.annotations.NotNull;
 
-public class XmlTokenImpl extends LeafPsiElement implements XmlToken, Navigatable {
+public class XmlTokenImpl extends LeafPsiElement implements XmlToken, Navigatable, HintedReferenceHost {
   public XmlTokenImpl(@NotNull IElementType type, CharSequence text) {
     super(type, text);
   }
@@ -51,11 +51,16 @@ public class XmlTokenImpl extends LeafPsiElement implements XmlToken, Navigatabl
 
   @Override
   public PsiReference @NotNull [] getReferences() {
+    return getReferences(PsiReferenceService.Hints.NO_HINTS);
+  }
+
+  @Override
+  public PsiReference @NotNull [] getReferences(PsiReferenceService.@NotNull Hints hints) {
     final IElementType elementType = getElementType();
 
     if (elementType == XmlTokenType.XML_DATA_CHARACTERS ||
         elementType == XmlTokenType.XML_CHAR_ENTITY_REF) {
-      return ReferenceProvidersRegistry.getReferencesFromProviders(this);
+      return ReferenceProvidersRegistry.getReferencesFromProviders(this, hints);
     } else if (elementType == XmlTokenType.XML_NAME && getParent() instanceof PsiErrorElement) {
       final PsiElement element = getPrevSibling();
 
@@ -65,6 +70,11 @@ public class XmlTokenImpl extends LeafPsiElement implements XmlToken, Navigatabl
     }
 
     return super.getReferences();
+  }
+
+  @Override
+  public boolean shouldAskParentForReferences(PsiReferenceService.@NotNull Hints hints) {
+    return true;
   }
 
   @Override

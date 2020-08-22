@@ -10,12 +10,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -30,11 +32,11 @@ import java.util.List;
  * @author Dmitry Krasilschikov
  */
 public class AbstractFolderNode extends AbstractMvcPsiNodeDescriptor {
-  private final String myPresentableText;
+  private final @Nls String myPresentableText;
 
   protected AbstractFolderNode(@NotNull final Module module,
                                @NotNull final PsiDirectory directory,
-                               @NotNull String presentableText,
+                               @Nls @NotNull String presentableText,
                                final ViewSettings viewSettings, int weight) {
     super(module, viewSettings, directory, weight);
     myPresentableText = presentableText;
@@ -75,7 +77,7 @@ public class AbstractFolderNode extends AbstractMvcPsiNodeDescriptor {
   private AbstractFolderNode createFolderNode(PsiDirectory directory) {
     PsiDirectory realDirectory = directory;
 
-    StringBuilder textBuilder = null;
+    @NlsSafe StringBuilder textBuilder = null;
 
     if (getSettings().isHideEmptyMiddlePackages()) {
       do {

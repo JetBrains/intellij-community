@@ -10,6 +10,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts.Label;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
@@ -19,6 +21,7 @@ import com.intellij.util.TextFieldCompletionProvider;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.frame.XNamedValue;
 import com.intellij.xdebugger.frame.XValueChildrenList;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.debugger.ArrayChunk;
 import com.jetbrains.python.debugger.PyDebugValue;
@@ -155,7 +158,7 @@ public class PyDataViewerPanel extends JPanel {
     String type = debugValue.getType();
     DataViewStrategy strategy = DataViewStrategy.getStrategy(type);
     if (strategy == null) {
-      setError(type + " is not supported");
+      setError(PyBundle.message("debugger.data.view.type.is.not.supported", type));
       return;
     }
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
@@ -164,7 +167,7 @@ public class PyDataViewerPanel extends JPanel {
         ApplicationManager.getApplication().invokeLater(() -> updateUI(arrayChunk, debugValue, strategy));
       }
       catch (IllegalArgumentException e) {
-        setError(e.getLocalizedMessage());
+        setError(e.getLocalizedMessage()); //NON-NLS
       }
       catch (PyDebuggerException e) {
         LOG.error(e);
@@ -206,22 +209,22 @@ public class PyDataViewerPanel extends JPanel {
     });
   }
 
-  private PyDebugValue getDebugValue(String expression) {
+  private PyDebugValue getDebugValue(@NlsSafe String expression) {
     try {
       PyDebugValue value = myFrameAccessor.evaluate(expression, false, true);
       if (value == null || value.isErrorOnEval()) {
-        setError(value != null ? value.getValue() : "Failed to evaluate expression " + expression);
+        setError(value != null ? value.getValue() : PyBundle.message("debugger.data.view.failed.to.evaluate.expression", expression)); //NON-NLS
         return null;
       }
       return value;
     }
     catch (PyDebuggerException e) {
-      setError(e.getTracebackError());
+      setError(e.getTracebackError()); //NON-NLS
       return null;
     }
   }
 
-  private void setError(String text) {
+  private void setError(@Label String text) {
     myErrorLabel.setVisible(true);
     myErrorLabel.setText(text);
     myTable.setEmpty();

@@ -22,7 +22,7 @@ import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class CloneUtils {
+public final class CloneUtils {
 
   private CloneUtils() {}
 

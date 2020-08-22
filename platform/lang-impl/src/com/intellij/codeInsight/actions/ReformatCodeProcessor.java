@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -75,7 +76,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
 
   public ReformatCodeProcessor(Project project,
                                PsiFile[] files,
-                               String commandName,
+                               @NlsContexts.Command String commandName,
                                @Nullable Runnable postRunnable,
                                boolean processChangedTextOnly)
   {
@@ -171,11 +172,11 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
     return !myRanges.isEmpty() ? myRanges : ContainerUtil.newArrayList(file.getTextRange());
   }
 
-  private static String getProgressText() {
+  private static @NlsContexts.ProgressText String getProgressText() {
     return CodeInsightBundle.message("reformat.progress.common.text");
   }
 
-  public static String getCommandName() {
+  public static @NlsContexts.Command String getCommandName() {
     return CodeInsightBundle.message("process.reformat.code");
   }
 }

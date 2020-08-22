@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.refactoring.memberPullUp;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
@@ -26,7 +13,6 @@ import com.intellij.psi.search.searches.FunctionalExpressionSearch;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.classMembers.MemberInfoBase;
-import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringConflictsUtil;
 import com.intellij.refactoring.util.RefactoringHierarchyUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
@@ -44,7 +30,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class PullUpConflictsUtil {
+public final class PullUpConflictsUtil {
   private PullUpConflictsUtil() {}
 
   public static MultiMap<PsiElement, String> checkConflicts(MemberInfoBase<? extends PsiMember>[] infos,
@@ -114,7 +100,8 @@ public class PullUpConflictsUtil {
             if (!sClass.isInheritor(subclass, true) && !sClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
               for (PsiMethod aMethod : newAbstractMethods) {
                 if (MethodSignatureUtil.findMethodBySignature(sClass, aMethod, true) == null) {
-                  conflicts.putValue(sClass, "Concrete '" + RefactoringUIUtil.getDescription(sClass, true) + "' would inherit a new abstract method");
+                  conflicts.putValue(sClass, JavaBundle
+                    .message("pull.up.concrete.inherit.abstract.method.conflict", RefactoringUIUtil.getDescription(sClass, true)));
                   return false;
                 }
               }
@@ -136,7 +123,9 @@ public class PullUpConflictsUtil {
         assert qualifiedName != null;
         if (superClass.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
           if (!Comparing.strEqual(StringUtil.getPackageName(qualifiedName), targetPackage.getQualifiedName())) {
-            conflicts.putValue(superClass, RefactoringUIUtil.getDescription(superClass, true) + " won't be accessible from " +RefactoringUIUtil.getDescription(targetPackage, true));
+            conflicts.putValue(superClass, JavaBundle
+              .message("pull.up.accessible.conflict.1", RefactoringUIUtil.getDescription(superClass, true),
+                       RefactoringUIUtil.getDescription(targetPackage, true)));
           }
         }
       }
@@ -178,11 +167,10 @@ public class PullUpConflictsUtil {
               isAccessible = true;
             }
             if (isAccessible) {
-              String message = RefactoringUIUtil.getDescription(abstractMethod, false) +
-                               " uses " +
-                               RefactoringUIUtil.getDescription(classMember, true) +
-                               " which won't be accessible from the subclass.";
-              message = CommonRefactoringUtil.capitalize(message);
+              String message = JavaRefactoringBundle
+                .message("push.up.abstract.accessibility.in.subclass.conflict", RefactoringUIUtil.getDescription(abstractMethod, false),
+                         RefactoringUIUtil.getDescription(classMember, true));
+              message = StringUtil.capitalize(message);
               conflicts.putValue(classMember, message);
             }
           }
@@ -190,9 +178,9 @@ public class PullUpConflictsUtil {
       });
       if (abstractMethod.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) && toDifferentPackage) {
         if (!isInterfaceTarget) {
-          String message = "Can't make " + RefactoringUIUtil.getDescription(abstractMethod, false) +
-                           " abstract as it won't be accessible from the subclass.";
-          message = CommonRefactoringUtil.capitalize(message);
+          String message = JavaRefactoringBundle
+            .message("push.up.abstract.accessible.from.the.subclass.conflict", RefactoringUIUtil.getDescription(abstractMethod, false));
+          message = StringUtil.capitalize(message);
           conflicts.putValue(abstractMethod, message);
         }
       }
@@ -223,7 +211,7 @@ public class PullUpConflictsUtil {
             && !(member instanceof PsiClass && ((PsiClass)member).isInterface())) {
           String message =
             JavaRefactoringBundle.message("0.is.not.static.it.cannot.be.moved.to.the.interface", RefactoringUIUtil.getDescription(member, false));
-          message = CommonRefactoringUtil.capitalize(message);
+          message = StringUtil.capitalize(message);
           conflictsList.putValue(member, message);
         }
       }
@@ -231,7 +219,7 @@ public class PullUpConflictsUtil {
       if (member instanceof PsiField && ((PsiField)member).getInitializer() == null) {
         String message = JavaRefactoringBundle.message("0.is.not.initialized.in.declaration.such.fields.are.not.allowed.in.interfaces",
                                                    RefactoringUIUtil.getDescription(member, false));
-        conflictsList.putValue(member, CommonRefactoringUtil.capitalize(message));
+        conflictsList.putValue(member, StringUtil.capitalize(message));
       }
     }
   }
@@ -258,7 +246,7 @@ public class PullUpConflictsUtil {
         String message = RefactoringBundle.message("0.already.contains.a.1",
                                                    RefactoringUIUtil.getDescription(superClass, false),
                                                    RefactoringUIUtil.getDescription(member, false));
-        message = CommonRefactoringUtil.capitalize(message);
+        message = StringUtil.capitalize(message);
         conflictsList.putValue(superClass, message);
       }
 
@@ -272,7 +260,10 @@ public class PullUpConflictsUtil {
               final PsiMethod wouldBeOverriden = MethodSignatureUtil.findMethodBySignature(subClass, signature, false);
               if (wouldBeOverriden != null && VisibilityUtil.compare(VisibilityUtil.getVisibilityModifier(wouldBeOverriden.getModifierList()),
                                                                      VisibilityUtil.getVisibilityModifier(modifierList)) > 0) {
-                conflictsList.putValue(wouldBeOverriden, CommonRefactoringUtil.capitalize(RefactoringUIUtil.getDescription(method, true) + " in super class would clash with local method from " + RefactoringUIUtil.getDescription(subClass, true)));
+                conflictsList.putValue(wouldBeOverriden, StringUtil.capitalize(JavaRefactoringBundle
+                                                                                 .message("push.up.super.class.signature.conflict",
+                                                                                          RefactoringUIUtil.getDescription(method, true),
+                                                                                          RefactoringUIUtil.getDescription(subClass, true))));
               }
             }
           }
@@ -318,10 +309,10 @@ public class PullUpConflictsUtil {
         if (containingClass != null) {
           if (!PsiUtil.isAccessibleFromPackage(classMember, myTargetPackage)) {
             if (classMember.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
-              myConflicts.putValue(myMember, RefactoringUIUtil.getDescription(classMember, true) + " won't be accessible");
+              myConflicts.putValue(myMember, JavaBundle.message("pull.up.accessible.conflict", RefactoringUIUtil.getDescription(classMember, true)));
             }
             else if (classMember.hasModifierProperty(PsiModifier.PROTECTED) && !mySubClass.isInheritor(containingClass, true)) {
-              myConflicts.putValue(myMember, RefactoringUIUtil.getDescription(classMember, true) + " won't be accessible");
+              myConflicts.putValue(myMember, JavaBundle.message("pull.up.accessible.conflict", RefactoringUIUtil.getDescription(classMember, true)));
             }
           }
         }
@@ -376,7 +367,7 @@ public class PullUpConflictsUtil {
             String message = RefactoringBundle.message("0.uses.1.which.is.not.accessible.from.the.superclass",
                                                        RefactoringUIUtil.getDescription(myScope, false),
                                                        RefactoringUIUtil.getDescription(classMember, true));
-            message = CommonRefactoringUtil.capitalize(message);
+            message = StringUtil.capitalize(message);
             myConflictsList.putValue(classMember, message);
 
           }
@@ -387,7 +378,7 @@ public class PullUpConflictsUtil {
             String message = RefactoringBundle.message("0.uses.1.which.is.not.moved.to.the.superclass",
                                                        RefactoringUIUtil.getDescription(myScope, false),
                                                        RefactoringUIUtil.getDescription(classMember, true));
-            message = CommonRefactoringUtil.capitalize(message);
+            message = StringUtil.capitalize(message);
             myConflictsList.putValue(classMember, message);
           }
         }

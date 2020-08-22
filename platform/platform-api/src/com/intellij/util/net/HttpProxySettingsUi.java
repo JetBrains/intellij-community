@@ -10,6 +10,7 @@ import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.PortField;
 import com.intellij.ui.RawCommandLineEditor;
@@ -215,12 +216,12 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
   }
 
   @NotNull
-  private static String errorText(@NotNull String s) {
+  private static @NlsContexts.DialogMessage String errorText(@NotNull String s) {
     return "Problem with connection: " + s;
   }
 
   @Nullable
-  private String isValid() {
+  private @NlsContexts.DialogMessage String isValid() {
     if (myUseHTTPProxyRb.isSelected()) {
       String host = getText(myProxyHostTextField);
       if (host == null) {

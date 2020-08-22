@@ -55,7 +55,7 @@ public class PlatformUndoTest extends LightPlatformTestCase {
     return (UndoManagerImpl)UndoManager.getInstance(getProject());
   }
 
-  private static class IncorrectFileEditor extends UserDataHolderBase implements DocumentsEditor {
+  private static final class IncorrectFileEditor extends UserDataHolderBase implements DocumentsEditor {
     private final JComponent myComponent = new JPanel();
     private final Document[] myDocuments;
 

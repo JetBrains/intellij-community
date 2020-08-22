@@ -74,7 +74,8 @@ public class MavenGeneralSettingsEditor extends SettingsEditor<MavenRunConfigura
   @NotNull
   @Override
   protected JComponent createEditor() {
-    Pair<JPanel,JCheckBox> pair = MavenDisablePanelCheckbox.createPanel(myPanel.createComponent(), "Use project settings");
+    Pair<JPanel,JCheckBox> pair = MavenDisablePanelCheckbox.createPanel(myPanel.createComponent(),
+                                                                        MavenProjectBundle.message("label.use.project.settings"));
 
     myUseProjectSettings = pair.second;
     return pair.first;

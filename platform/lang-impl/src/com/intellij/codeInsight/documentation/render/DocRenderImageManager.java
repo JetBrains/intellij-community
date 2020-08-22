@@ -36,7 +36,7 @@ class DocRenderImageManager extends AbstractDocRenderMemoryManager<Image> {
     image.flush();
   }
 
-  private class ManagedImage extends ToolkitImage implements ImageConsumer {
+  private final class ManagedImage extends ToolkitImage implements ImageConsumer {
     private int myWidth;
     private int myHeight;
     private volatile Runnable completionRunnable;
@@ -91,7 +91,7 @@ class DocRenderImageManager extends AbstractDocRenderMemoryManager<Image> {
     public void setPixels(int x, int y, int w, int h, ColorModel model, int[] pixels, int off, int scansize) {}
   }
 
-  private static class CachingImageSource extends FileImageSource {
+  private static final class CachingImageSource extends FileImageSource {
     private final URL myURL;
     private ImageConsumer myPermanentConsumer;
 

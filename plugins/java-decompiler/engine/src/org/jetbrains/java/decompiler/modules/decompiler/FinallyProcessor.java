@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -110,7 +110,7 @@ public class FinallyProcessor {
     return false;
   }
 
-  private static class Record {
+  private static final class Record {
     private final int firstCode;
     private final Map<BasicBlock, Boolean> mapLast;
 
@@ -527,7 +527,7 @@ public class FinallyProcessor {
     return true;
   }
 
-  private static class Area {
+  private static final class Area {
     private final BasicBlock start;
     private final Set<BasicBlock> sample;
     private final BasicBlock next;

@@ -11,16 +11,14 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectNameProvider
-import com.intellij.openapi.project.impl.ProjectImpl
 import com.intellij.openapi.project.impl.ProjectStoreFactory
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.ReadonlyStatusHandler
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.PathUtilRt
+import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.util.SmartList
 import com.intellij.util.io.delete
 import com.intellij.util.io.isDirectory
-import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.io.write
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
@@ -29,44 +27,51 @@ import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.AccessDeniedException
 import java.nio.file.Path
-import java.nio.file.Paths
 
 internal val IProjectStore.nameFile: Path
-  get() = Paths.get(directoryStorePath, ProjectImpl.NAME_FILE)
+  get() = directoryStorePath!!.resolve(ProjectEx.NAME_FILE)
 
 @ApiStatus.Internal
 open class ProjectStoreImpl(project: Project) : ProjectStoreBase(project) {
   private var lastSavedProjectName: String? = null
 
+  /**
+   * This property is temporary added to support saving of modules for workspace model; it can be removed when we move workspaceModel module
+   * near projectModel in the dependency graph and will be able to use it directly from this class
+   */
+  var moduleSavingCustomizer: ModuleSavingCustomizer? = null
+
   init {
     assert(!project.isDefault)
   }
+
+  override val serviceContainer: ComponentManagerImpl
+    get() = project as ComponentManagerImpl
 
   final override fun getPathMacroManagerForDefaults() = PathMacroManager.getInstance(project)
 
   override val storageManager = ProjectStateStorageManager(TrackingPathMacroSubstitutorImpl(PathMacroManager.getInstance(project)), project)
 
-  override fun setPath(path: String) {
-    setPath(Paths.get(path), true, null)
+  override fun setPath(path: Path) {
+    setPath(path, true, null)
   }
 
   override fun getProjectName(): String {
     if (!isDirectoryBased) {
-      return PathUtilRt.getFileName(projectFilePath).removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)
+      return storageManager.expandMacro(PROJECT_FILE).fileName.toString().removeSuffix(ProjectFileType.DOT_DEFAULT_EXTENSION)
     }
 
-    val projectDir = nameFile.parent
+    val projectDir = directoryStorePath!!
     val storedName = JpsPathUtil.readProjectName(projectDir)
     if (storedName != null) {
       lastSavedProjectName = storedName
       return storedName
     }
 
-    val computedName = ProjectNameProvider.EP_NAME.iterable.asSequence()
-      .map { LOG.runAndLogException { it.getDefaultName(project) } }
-      .find { it != null }
-
-    return computedName ?: JpsPathUtil.getDefaultProjectName(projectDir)
+    for (projectNameProvider in ProjectNameProvider.EP_NAME.iterable) {
+      LOG.runAndLogException { projectNameProvider.getDefaultName(project)?.let { return it } }
+    }
+    return JpsPathUtil.getDefaultProjectName(projectDir)
   }
 
   private suspend fun saveProjectName() {
@@ -84,11 +89,11 @@ open class ProjectStoreImpl(project: Project) : ProjectStoreBase(project) {
     val basePath = projectBasePath
 
     fun doSave() {
-      if (currentProjectName == PathUtilRt.getFileName(basePath)) {
+      if (currentProjectName == basePath.fileName.toString()) {
         // name equals to base path name - just remove name
         nameFile.delete()
       }
-      else if (Paths.get(basePath).isDirectory()) {
+      else if (basePath.isDirectory()) {
         nameFile.write(currentProjectName.toByteArray())
       }
     }
@@ -97,7 +102,7 @@ open class ProjectStoreImpl(project: Project) : ProjectStoreBase(project) {
       doSave()
     }
     catch (e: AccessDeniedException) {
-      val status = ensureFilesWritable(project, listOf(LocalFileSystem.getInstance().refreshAndFindFileByPath(nameFile.systemIndependentPath)!!))
+      val status = ensureFilesWritable(project, listOf(LocalFileSystem.getInstance().refreshAndFindFileByNioFile(nameFile)!!))
       if (status.hasReadonlyFiles()) {
         throw e
       }
@@ -121,7 +126,6 @@ open class ProjectStoreImpl(project: Project) : ProjectStoreBase(project) {
           .appendTo(result)
       }
 
-      val projectSaved = project.messageBus.syncPublisher(ProjectEx.ProjectSaved.TOPIC)
       launch {
         try {
           saveProjectName()
@@ -130,7 +134,7 @@ open class ProjectStoreImpl(project: Project) : ProjectStoreBase(project) {
           LOG.error("Unable to store project name", e)
         }
 
-        projectSaved.duringSave(project)
+        project.messageBus.syncPublisher(ProjectEx.ProjectSaved.TOPIC).duringSave(project)
       }
     }
   }
@@ -141,7 +145,9 @@ open class ProjectStoreImpl(project: Project) : ProjectStoreBase(project) {
     return emptyList()
   }
 
-  override fun createSaveSessionProducerManager() = ProjectSaveSessionProducerManager(project)
+  final override fun createSaveSessionProducerManager(): ProjectSaveSessionProducerManager {
+    return moduleSavingCustomizer?.createSaveSessionProducerManager() ?: ProjectSaveSessionProducerManager(project)
+  }
 
   final override fun commitObsoleteComponents(session: SaveSessionProducerManager, isProjectLevel: Boolean) {
     if (isDirectoryBased) {
@@ -151,10 +157,20 @@ open class ProjectStoreImpl(project: Project) : ProjectStoreBase(project) {
 }
 
 @ApiStatus.Internal
+interface ModuleSavingCustomizer {
+  fun createSaveSessionProducerManager(): ProjectSaveSessionProducerManager
+  fun saveModules(projectSaveSessionManager: SaveSessionProducerManager, store: IProjectStore)
+  fun commitModuleComponents(projectSaveSessionManager: SaveSessionProducerManager,
+                             moduleStore: ComponentStoreImpl,
+                             moduleSaveSessionManager: SaveSessionProducerManager)
+}
+
+@ApiStatus.Internal
 open class ProjectWithModulesStoreImpl(project: Project) : ProjectStoreImpl(project) {
-  override suspend fun saveModules(errors: MutableList<Throwable>,
-                                   isForceSavingAllSettings: Boolean,
-                                   projectSaveSessionManager: SaveSessionProducerManager): List<SaveSession> {
+  final override suspend fun saveModules(errors: MutableList<Throwable>,
+                                         isForceSavingAllSettings: Boolean,
+                                         projectSaveSessionManager: SaveSessionProducerManager): List<SaveSession> {
+    moduleSavingCustomizer?.saveModules(projectSaveSessionManager, this)
     val modules = ModuleManager.getInstance(project)?.modules ?: Module.EMPTY_ARRAY
     if (modules.isEmpty()) {
       return emptyList()
@@ -175,22 +191,29 @@ open class ProjectWithModulesStoreImpl(project: Project) : ProjectStoreImpl(proj
     }
   }
 
-  protected open fun commitModuleComponents(moduleStore: ComponentStoreImpl, moduleSaveSessionManager: SaveSessionProducerManager,
-                                            projectSaveSessionManager: SaveSessionProducerManager, isForceSavingAllSettings: Boolean,
-                                            errors: MutableList<Throwable>) {
+  private fun commitModuleComponents(moduleStore: ComponentStoreImpl, moduleSaveSessionManager: SaveSessionProducerManager,
+                                     projectSaveSessionManager: SaveSessionProducerManager, isForceSavingAllSettings: Boolean,
+                                     errors: MutableList<Throwable>) {
     moduleStore.commitComponents(isForceSavingAllSettings, moduleSaveSessionManager, errors)
+    moduleSavingCustomizer?.commitModuleComponents(projectSaveSessionManager, moduleStore, moduleSaveSessionManager)
   }
 }
 
-internal class PlatformLangProjectStoreFactory : ProjectStoreFactory {
-  override fun createStore(project: Project): IComponentStore {
-    return if (project.isDefault) DefaultProjectStoreImpl(project) else ProjectWithModulesStoreImpl(project)
+abstract class ProjectStoreFactoryImpl : ProjectStoreFactory {
+  final override fun createDefaultProjectStore(project: Project) = DefaultProjectStoreImpl(project)
+}
+
+internal class PlatformLangProjectStoreFactory : ProjectStoreFactoryImpl() {
+  override fun createStore(project: Project): IProjectStore {
+    LOG.assertTrue(!project.isDefault)
+    return ProjectWithModulesStoreImpl(project)
   }
 }
 
-internal class PlatformProjectStoreFactory : ProjectStoreFactory {
-  override fun createStore(project: Project): IComponentStore {
-    return if (project.isDefault) DefaultProjectStoreImpl(project) else ProjectStoreImpl(project)
+internal class PlatformProjectStoreFactory : ProjectStoreFactoryImpl() {
+  override fun createStore(project: Project): IProjectStore {
+    LOG.assertTrue(!project.isDefault)
+    return ProjectStoreImpl(project)
   }
 }
 

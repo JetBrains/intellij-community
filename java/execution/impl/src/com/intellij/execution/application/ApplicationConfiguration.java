@@ -5,6 +5,7 @@ import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
+import com.intellij.execution.impl.statistics.FusAwareRunConfiguration;
 import com.intellij.execution.junit.RefactoringListeners;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.target.LanguageRuntimeType;
@@ -14,8 +15,11 @@ import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
 import com.intellij.execution.target.java.JavaLanguageRuntimeType;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.openapi.components.BaseState;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
@@ -32,13 +36,11 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 
-public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule, Element>
-  implements CommonJavaRunConfigurationParameters, ConfigurationWithCommandLineShortener, SingleClassConfiguration,
-             RefactoringListenerProvider, InputRedirectAware, TargetEnvironmentAwareRunProfile {
+public class ApplicationConfiguration extends JavaRunConfigurationBase
+  implements SingleClassConfiguration, RefactoringListenerProvider, InputRedirectAware, TargetEnvironmentAwareRunProfile,
+             FusAwareRunConfiguration {
   /* deprecated, but 3rd-party used variables */
   @SuppressWarnings({"DeprecatedIsStillUsed", "MissingDeprecatedAnnotation"})
   @Deprecated public String MAIN_CLASS_NAME;
@@ -99,7 +101,7 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   @Override
   @NotNull
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
-    if (Registry.is("ide.new.run.config", false)) {
+    if (Registry.is("ide.new.run.config", true)) {
       return new JavaApplicationSettingsEditor(this);
     }
     SettingsEditorGroup<ApplicationConfiguration> group = new SettingsEditorGroup<>();
@@ -154,7 +156,8 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
   public void checkConfiguration() throws RuntimeConfigurationException {
     JavaParametersUtil.checkAlternativeJRE(this);
     final JavaRunConfigurationModule configurationModule = getConfigurationModule();
-    final PsiClass psiClass = configurationModule.checkModuleAndClassName(getMainClassName(), ExecutionBundle.message("no.main.class.specified.error.text"));
+    final PsiClass psiClass =
+      configurationModule.checkModuleAndClassName(getMainClassName(), ExecutionBundle.message("no.main.class.specified.error.text"));
     if (!PsiMethodUtil.hasMainMethod(psiClass)) {
       throw new RuntimeConfigurationWarning(ExecutionBundle.message("main.method.not.found.in.class.error.message", getMainClassName()));
     }
@@ -279,6 +282,15 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     getOptions().setRemoteTarget(targetName);
   }
 
+  @Override
+  public @NotNull List<EventPair> getAdditionalUsageData() {
+    PsiClass mainClass = getMainClass();
+    if (mainClass == null) {
+      return Collections.emptyList();
+    }
+    return Collections.singletonList(EventFields.Language.with(mainClass.getLanguage()));
+  }
+
   public static void onAlternativeJreChanged(boolean changed, Project project) {
     if (changed) {
       AlternativeSdkRootsProvider.reindexIfNeeded(project);
@@ -361,6 +373,16 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
 
   public void setSwingInspectorEnabled(boolean value) {
     getOptions().setSwingInspectorEnabled(value);
+  }
+
+  @Override
+  public Module getDefaultModule() {
+    PsiClass mainClass = getMainClass();
+    if (mainClass != null) {
+      Module module = ModuleUtilCore.findModuleForPsiElement(mainClass);
+      if (module != null) return module;
+    }
+    return super.getDefaultModule();
   }
 
   public static class JavaApplicationCommandLineState<T extends ApplicationConfiguration> extends ApplicationCommandLineState<T> {

@@ -95,7 +95,7 @@ public class InstalledPluginsTableModel {
           }
 
           Boolean enabled1 = myEnabled.get(depId);
-          if ((enabled1 == null && !ourState.wasUpdated(depId)) || (enabled1 != null && !enabled1)) {
+          if ((enabled1 == null && !ourState.wasInstalled(depId) && !ourState.wasUpdated(depId) && !ourState.wasInstalledWithoutRestart(depId)) || (enabled1 != null && !enabled1)) {
             Set<PluginId> required = myDependentToRequiredListMap.get(pluginId);
             if (required == null) {
               required = new HashSet<>();

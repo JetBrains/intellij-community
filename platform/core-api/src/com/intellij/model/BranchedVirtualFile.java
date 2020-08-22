@@ -4,14 +4,16 @@ package com.intellij.model;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-class BranchedVirtualFile extends LightVirtualFile {
-  @NotNull final VirtualFile original;
-  @NotNull final ModelBranch branch;
+abstract class BranchedVirtualFile extends LightVirtualFile {
 
-  BranchedVirtualFile(@NotNull VirtualFile original, @NotNull CharSequence contents, @NotNull ModelBranch branch) {
-    super(original.getName(), original.getFileType(), contents, original.getCharset(), original.getModificationStamp());
-    this.original = original;
-    this.branch = branch;
+  BranchedVirtualFile(@Nullable VirtualFile original, @NotNull String name) {
+    super(name, null, "", original == null ? 0 : original.getModificationStamp());
   }
+
+  @NotNull
+  protected abstract ModelBranch getBranch();
+
+
 }

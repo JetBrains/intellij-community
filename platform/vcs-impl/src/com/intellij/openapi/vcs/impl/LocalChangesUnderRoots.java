@@ -1,27 +1,11 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ChangesUtil;
-import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -37,20 +21,12 @@ import java.util.Map;
  * @author irengrig
  * @author Kirill Likhodedov
  */
-public class LocalChangesUnderRoots {
-  private final ChangeListManager myChangeManager;
-  private final ProjectLevelVcsManager myVcsManager;
-
-  public LocalChangesUnderRoots(@NotNull ChangeListManager changeListManager, @NotNull ProjectLevelVcsManager projectLevelVcsManager) {
-    myChangeManager = changeListManager;
-    myVcsManager = projectLevelVcsManager;
-  }
-
-  @NotNull
-  public Map<String, Map<VirtualFile, Collection<Change>>> getChangesByLists(@NotNull Collection<? extends VirtualFile> rootsToSave) {
+public final class LocalChangesUnderRoots {
+  public static @NotNull Map<String, Map<VirtualFile, Collection<Change>>> getChangesByLists(@NotNull Collection<? extends VirtualFile> rootsToSave, @NotNull Project project) {
     Map<String, Map<VirtualFile, Collection<Change>>> result = new HashMap<>();
-    for (LocalChangeList list : myChangeManager.getChangeListsCopy()) {
-      result.put(list.getName(), groupChanges(rootsToSave, list.getChanges()));
+    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+    for (LocalChangeList list : ChangeListManagerImpl.getInstanceImpl(project).getChangeListsCopy()) {
+      result.put(list.getName(), groupChanges(rootsToSave, list.getChanges(), vcsManager));
     }
     return result;
   }
@@ -62,17 +38,22 @@ public class LocalChangesUnderRoots {
    * @param rootsToSave roots to search for changes only in them.
    * @return a map, whose keys are VCS roots (from the specified list) and values are {@link Change changes} from these roots.
    */
-  @NotNull
-  public Map<VirtualFile, Collection<Change>> getChangesUnderRoots(@NotNull Collection<? extends VirtualFile> rootsToSave) {
-    return groupChanges(rootsToSave, myChangeManager.getAllChanges());
+  public static @NotNull Map<VirtualFile, Collection<Change>> getChangesUnderRoots(@NotNull Collection<? extends VirtualFile> rootsToSave, @NotNull Project project) {
+    return getChangesUnderRoots(rootsToSave, ChangeListManager.getInstance(project), project);
   }
 
-  @NotNull
-  private Map<VirtualFile, Collection<Change>> groupChanges(@NotNull Collection<? extends VirtualFile> rootsToSave,
-                                                            @NotNull Collection<? extends Change> allChanges) {
+  public static @NotNull Map<VirtualFile, Collection<Change>> getChangesUnderRoots(@NotNull Collection<? extends VirtualFile> rootsToSave,
+                                                                                   @NotNull ChangeListManager changeListManager,
+                                                                                   @NotNull Project project) {
+    return groupChanges(rootsToSave, changeListManager.getAllChanges(), ProjectLevelVcsManager.getInstance(project));
+  }
+
+  private @NotNull static Map<VirtualFile, Collection<Change>> groupChanges(@NotNull Collection<? extends VirtualFile> rootsToSave,
+                                                                           @NotNull Collection<? extends Change> allChanges,
+                                                                           @NotNull ProjectLevelVcsManager vcsManager) {
     Map<VirtualFile, Collection<Change>> result = new HashMap<>();
     for (Change change : allChanges) {
-      VirtualFile root = getRootForChange(change);
+      VirtualFile root = getRootForChange(change, vcsManager);
       if (root != null && rootsToSave.contains(root)) {
         Collection<Change> changes = result.computeIfAbsent(root, key -> new HashSet<>());
         changes.add(change);
@@ -81,21 +62,18 @@ public class LocalChangesUnderRoots {
     return result;
   }
 
-  @Nullable
-  private VirtualFile getRootForChange(@NotNull Change change) {
+  private static @Nullable VirtualFile getRootForChange(@NotNull Change change, @NotNull ProjectLevelVcsManager vcsManager) {
     FilePath bPath = ChangesUtil.getBeforePath(change);
     FilePath aPath = ChangesUtil.getAfterPath(change);
 
-    VirtualFile root = getRootForPath(aPath);
+    VirtualFile root = getRootForPath(aPath, vcsManager);
     if (root == null && !Comparing.equal(bPath, aPath)) {
-      root = getRootForPath(bPath);
+      root = getRootForPath(bPath, vcsManager);
     }
     return root;
   }
 
-  @Nullable
-  private VirtualFile getRootForPath(@Nullable FilePath file) {
-    if (file == null) return null;
-    return myVcsManager.getVcsRootFor(file);
+  private static @Nullable VirtualFile getRootForPath(@Nullable FilePath file, @NotNull ProjectLevelVcsManager vcsManager) {
+    return file == null ? null : vcsManager.getVcsRootFor(file);
   }
 }

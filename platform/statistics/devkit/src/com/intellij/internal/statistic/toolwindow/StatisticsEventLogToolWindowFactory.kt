@@ -32,8 +32,8 @@ private class StatisticsEventLogToolWindowFactory : ToolWindowFactory, DumbAware
     }
 
     project.messageBus.connect().subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
-      override fun toolWindowShown(id: String, toolWindow: ToolWindow) {
-        if (eventLogToolWindowsId == id && toolWindow.isVisible && toolWindow.contentManager.contentCount == 0) {
+      override fun toolWindowShown(toolWindow: ToolWindow) {
+        if (eventLogToolWindowsId == toolWindow.id && toolWindow.isVisible && toolWindow.contentManager.contentCount == 0) {
           // open a new session if all tabs were closed manually
           createNewTab(project, toolWindow, DEFAULT_RECORDER)
         }

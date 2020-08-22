@@ -2,6 +2,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.application.ApplicationInfo;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,27 +23,27 @@ public final class PlatformUtils {
   public static final String PLATFORM_PREFIX_KEY = "idea.platform.prefix";
 
   // NOTE: If you add any new prefixes to this list, please update the IntelliJPlatformProduct class in DevKit plugin
-  public static final String IDEA_PREFIX = "idea";
-  public static final String IDEA_CE_PREFIX = "Idea";
+  public static final @NonNls String IDEA_PREFIX = "idea";
+  public static final @NonNls String IDEA_CE_PREFIX = "Idea";
   public static final String IDEA_EDU_PREFIX = "IdeaEdu";
   public static final String APPCODE_PREFIX = "AppCode";
   public static final String CLION_PREFIX = "CLion";
-  public static final String PYCHARM_PREFIX = "Python";
+  public static final @NonNls String PYCHARM_PREFIX = "Python";
   public static final String PYCHARM_CE_PREFIX = "PyCharmCore";
   public static final String PYCHARM_DS_PREFIX = "PyCharmDS";
   public static final String PYCHARM_EDU_PREFIX = "PyCharmEdu";
-  public static final String RUBY_PREFIX = "Ruby";
+  public static final @NonNls String RUBY_PREFIX = "Ruby";
   public static final String PHP_PREFIX = "PhpStorm";
   public static final String WEB_PREFIX = "WebStorm";
   public static final String DBE_PREFIX = "DataGrip";
-  public static final String RIDER_PREFIX = "Rider";
+  public static final @NonNls String RIDER_PREFIX = "Rider";
   public static final String GOIDE_PREFIX = "GoLand";
+  public static final String FLEET_PREFIX = "FleetBackend";
   public static final String INTELLIJ_CLIENT_PREFIX = "IntelliJClient";
 
-  private static final Set<String> COMMERCIAL_EDITIONS = new HashSet<>(Arrays.asList(IDEA_PREFIX, APPCODE_PREFIX, CLION_PREFIX,
-                                                                                     PYCHARM_PREFIX, RUBY_PREFIX, PHP_PREFIX,
-                                                                                     WEB_PREFIX, DBE_PREFIX, RIDER_PREFIX,
-                                                                                     GOIDE_PREFIX));
+  @SuppressWarnings("SSBasedInspection") private static final Set<String> COMMERCIAL_EDITIONS = new HashSet<>(Arrays.asList(
+    IDEA_PREFIX, APPCODE_PREFIX, CLION_PREFIX, PYCHARM_PREFIX, RUBY_PREFIX, PHP_PREFIX, WEB_PREFIX, DBE_PREFIX, RIDER_PREFIX, GOIDE_PREFIX));
+
   public static @NotNull String getPlatformPrefix() {
     return getPlatformPrefix(IDEA_PREFIX);
   }
@@ -144,6 +145,10 @@ public final class PlatformUtils {
 
   public static boolean isCommercialEdition() {
     return COMMERCIAL_EDITIONS.contains(getPlatformPrefix());
+  }
+
+  public static boolean isFleetBackend() {
+    return is(FLEET_PREFIX);
   }
 
   private static boolean is(@NotNull String idePrefix) {

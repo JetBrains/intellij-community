@@ -9,6 +9,6 @@ class Bar {
 
 class Test88 {
   void foo(Foo9 foo) {
-    foo(Bar::new<caret>);
+    foo(Bar::new);<caret>
   }
 }

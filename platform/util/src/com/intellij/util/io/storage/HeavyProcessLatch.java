@@ -6,6 +6,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.EventDispatcher;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,11 +48,11 @@ public final class HeavyProcessLatch {
     }
   }
 
-  public @NotNull AccessToken processStarted(@NotNull String operationName) {
+  public @NotNull AccessToken processStarted(@NotNull @Nls String operationName) {
     return processStarted(operationName, Type.Processing);
   }
 
-  public AccessToken processStarted(@NotNull String operationName, @NotNull Type type) {
+  public AccessToken processStarted(@NotNull @Nls String operationName, @NotNull Type type) {
     myHeavyProcesses.put(operationName, type);
     myEventDispatcher.getMulticaster().processStarted();
     return new AccessToken() {

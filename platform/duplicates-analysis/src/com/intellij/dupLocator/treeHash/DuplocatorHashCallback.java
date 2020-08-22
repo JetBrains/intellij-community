@@ -1,23 +1,29 @@
 package com.intellij.dupLocator.treeHash;
 
-import com.intellij.dupLocator.*;
+import com.intellij.dupLocator.DupInfo;
+import com.intellij.dupLocator.DuplicatesProfile;
+import com.intellij.dupLocator.DuplocatorState;
+import com.intellij.dupLocator.NodeSpecificHasher;
 import com.intellij.dupLocator.util.DuplocatorUtil;
 import com.intellij.dupLocator.util.PsiFragment;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.usageView.UsageInfo;
+import com.thoughtworks.xstream.io.HierarchicalStreamWriter;
 import com.thoughtworks.xstream.io.xml.PrettyPrintWriter;
-import gnu.trove.TIntObjectHashMap;
-import gnu.trove.TIntObjectProcedure;
-import gnu.trove.TObjectIntHashMap;
-import gnu.trove.TObjectIntIterator;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import it.unimi.dsi.fastutil.objects.ObjectIterator;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,21 +33,22 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
+// used by TeamCity plugin
+@ApiStatus.NonExtendable
 public class DuplocatorHashCallback implements FragmentsCollector {
   private static final Logger LOG = Logger.getInstance(DuplocatorHashCallback.class);
 
-  private TIntObjectHashMap<List<List<PsiFragment>>> myDuplicates;
+  private Int2ObjectOpenHashMap<List<List<PsiFragment>>> myDuplicates = new Int2ObjectOpenHashMap<>();
   private final int myBound;
   private boolean myReadOnly = false;
   private final int myDiscardCost;
 
   public DuplocatorHashCallback(int bound, int discardCost) {
-    myDuplicates = new TIntObjectHashMap<>();
     myBound = bound;
     myDiscardCost = discardCost;
   }
 
-  @SuppressWarnings({"UnusedDeclaration"})
+  @SuppressWarnings("UnusedDeclaration")
   public DuplocatorHashCallback(final int bound, final int discardCost, final boolean readOnly) {
     this(bound, discardCost);
     myReadOnly = readOnly;
@@ -51,7 +58,7 @@ public class DuplocatorHashCallback implements FragmentsCollector {
     this(lowerBound, 0);
   }
 
-  @SuppressWarnings({"UnusedDeclaration"})
+  @SuppressWarnings("UnusedDeclaration")
   public void setReadOnly(final boolean readOnly) {
     myReadOnly = readOnly;
   }
@@ -73,14 +80,12 @@ public class DuplocatorHashCallback implements FragmentsCollector {
     List<List<PsiFragment>> fragments = myDuplicates.get(hash);
 
     if (fragments == null) {
-      //do not add new hashcodes
+      // do not add new hash codes
       if (!myReadOnly) {
         List<List<PsiFragment>> list = new ArrayList<>();
-        List<PsiFragment> listf = new ArrayList<>();
-
-        listf.add(frag);
-        list.add(listf);
-
+        List<PsiFragment> listF = new ArrayList<>();
+        listF.add(frag);
+        list.add(listF);
         myDuplicates.put(hash, list);
       }
 
@@ -156,33 +161,28 @@ public class DuplocatorHashCallback implements FragmentsCollector {
   }
 
   public DupInfo getInfo() {
-    final TObjectIntHashMap<PsiFragment[]> duplicateList = new TObjectIntHashMap<>();
-
-    myDuplicates.forEachEntry(new TIntObjectProcedure<List<List<PsiFragment>>>() {
-      @Override
-      public boolean execute(final int hash, final List<List<PsiFragment>> listList) {
-        for (List<PsiFragment> list : listList) {
-          final int len = list.size();
-          if (len > 1) {
-            PsiFragment[] filtered = new PsiFragment[len];
-            int idx = 0;
-            for (final PsiFragment fragment : list) {
-              fragment.markDuplicate();
-              filtered[idx++] = fragment;
-            }
-            duplicateList.put(filtered, hash);
+    Object2IntOpenHashMap<PsiFragment[]> duplicateList = new Object2IntOpenHashMap<>();
+    for (ObjectIterator<Int2ObjectMap.Entry<List<List<PsiFragment>>>> iterator = myDuplicates.int2ObjectEntrySet().fastIterator(); iterator.hasNext(); ) {
+      Int2ObjectMap.Entry<List<List<PsiFragment>>> entry = iterator.next();
+      for (List<PsiFragment> list : entry.getValue()) {
+        int len = list.size();
+        if (len > 1) {
+          PsiFragment[] filtered = new PsiFragment[len];
+          int idx = 0;
+          for (PsiFragment fragment : list) {
+            fragment.markDuplicate();
+            filtered[idx++] = fragment;
           }
+          duplicateList.put(filtered, entry.getIntKey());
         }
-
-        return true;
       }
-    });
+    }
 
     myDuplicates = null;
 
-    for (TObjectIntIterator<PsiFragment[]> dups = duplicateList.iterator(); dups.hasNext(); ) {
-      dups.advance();
-      PsiFragment[] fragments = dups.key();
+    for (ObjectIterator<Object2IntMap.Entry<PsiFragment[]>> iterator = duplicateList.object2IntEntrySet().fastIterator(); iterator.hasNext(); ) {
+      Object2IntMap.Entry<PsiFragment[]> entry = iterator.next();
+      PsiFragment[] fragments = entry.getKey();
       LOG.assertTrue(fragments.length > 1);
       boolean nested = false;
       for (PsiFragment fragment : fragments) {
@@ -193,16 +193,15 @@ public class DuplocatorHashCallback implements FragmentsCollector {
       }
 
       if (nested) {
-        dups.remove();
+        iterator.remove();
       }
     }
 
-    final Object[] duplicates = duplicateList.keys();
-
-    Arrays.sort(duplicates, (x, y) -> ((PsiFragment[])y)[0].getCost() - ((PsiFragment[])x)[0].getCost());
+    PsiFragment[][] duplicates = duplicateList.keySet().toArray(new PsiFragment[][]{});
+    Arrays.sort(duplicates, (x, y) -> y[0].getCost() - x[0].getCost());
 
     return new DupInfo() {
-      private final TIntObjectHashMap<GroupNodeDescription> myPattern2Description = new TIntObjectHashMap<>();
+      private final Int2ObjectOpenHashMap<GroupNodeDescription> myPattern2Description = new Int2ObjectOpenHashMap<>();
 
       @Override
       public int getPatterns() {
@@ -216,23 +215,21 @@ public class DuplocatorHashCallback implements FragmentsCollector {
 
       @Override
       public int getPatternDensity(int number) {
-        return ((PsiFragment[])duplicates[number]).length;
+        return duplicates[number].length;
       }
 
       @Override
       public PsiFragment[] getFragmentOccurences(int pattern) {
-        return (PsiFragment[])duplicates[pattern];
+        return duplicates[pattern];
       }
 
       @Override
       public UsageInfo[] getUsageOccurences(int pattern) {
-        PsiFragment[] occs = getFragmentOccurences(pattern);
-        UsageInfo[] infos = new UsageInfo[occs.length];
-
+        PsiFragment[] occurrences = getFragmentOccurences(pattern);
+        UsageInfo[] infos = new UsageInfo[occurrences.length];
         for (int i = 0; i < infos.length; i++) {
-          infos[i] = occs[i].getUsageInfo();
+          infos[i] = occurrences[i].getUsageInfo();
         }
-
         return infos;
       }
 
@@ -246,15 +243,15 @@ public class DuplocatorHashCallback implements FragmentsCollector {
 
       private GroupNodeDescription cacheGroupNodeDescription(final int pattern) {
         final Set<PsiFile> files = new HashSet<>();
-        final PsiFragment[] occurencies = getFragmentOccurences(pattern);
-        for (PsiFragment occurency : occurencies) {
-          final PsiFile file = occurency.getFile();
+        final PsiFragment[] occurrences = getFragmentOccurences(pattern);
+        for (PsiFragment occurrence : occurrences) {
+          final PsiFile file = occurrence.getFile();
           if (file != null) {
             files.add(file);
           }
         }
         final int fileCount = files.size();
-        final PsiFile psiFile = occurencies[0].getFile();
+        final PsiFile psiFile = occurrences[0].getFile();
         DuplicatesProfile profile = DuplicatesProfile.findProfileForDuplicate(this, pattern);
         String comment = profile != null ? profile.getComment(this, pattern) : "";
         final GroupNodeDescription description = new GroupNodeDescription(fileCount, psiFile != null ? psiFile.getName() : "unknown", comment);
@@ -274,7 +271,6 @@ public class DuplocatorHashCallback implements FragmentsCollector {
         return null;
       }
 
-
       @Override
       @Nullable
       public String getComment(int pattern) {
@@ -289,16 +285,16 @@ public class DuplocatorHashCallback implements FragmentsCollector {
 
       @Override
       public int getHash(final int i) {
-        return duplicateList.get((PsiFragment[])duplicates[i]);
+        return duplicateList.getInt(duplicates[i]);
       }
     };
   }
 
   public void report(@NotNull Path dir, @NotNull Project project) throws IOException {
-    int[] hashCodes = myDuplicates.keys();
+    int[] hashCodes = myDuplicates.keySet().toIntArray();
     //fragments
     try (BufferedWriter fileWriter = Files.newBufferedWriter(dir.resolve("fragments.xml"))) {
-      PrettyPrintWriter writer = new PrettyPrintWriter(fileWriter);
+      HierarchicalStreamWriter writer = new PrettyPrintWriter(fileWriter);
       writer.startNode("root");
       for (int hash : hashCodes) {
         List<List<PsiFragment>> dupList = myDuplicates.get(hash);
@@ -319,7 +315,7 @@ public class DuplocatorHashCallback implements FragmentsCollector {
   //duplicates
   public static void writeDuplicates(@NotNull Path dir, @NotNull Project project, DupInfo info) throws IOException {
     try (BufferedWriter fileWriter = Files.newBufferedWriter(dir.resolve("duplicates.xml"))) {
-      PrettyPrintWriter writer = new PrettyPrintWriter(fileWriter);
+      HierarchicalStreamWriter writer = new PrettyPrintWriter(fileWriter);
       writer.startNode("root");
       final int patterns = info.getPatterns();
       for (int i = 0; i < patterns; i++) {
@@ -335,7 +331,7 @@ public class DuplocatorHashCallback implements FragmentsCollector {
   }
 
   private static void writeFragments(List<? extends PsiFragment> psiFragments,
-                                     PrettyPrintWriter writer,
+                                     HierarchicalStreamWriter writer,
                                      @NotNull Project project,
                                      boolean shouldWriteOffsets) {
     final PathMacroManager macroManager = PathMacroManager.getInstance(project);
@@ -354,7 +350,7 @@ public class DuplocatorHashCallback implements FragmentsCollector {
           final int line = document.getLineNumber(startOffset);
           writer.addAttribute("line", String.valueOf(line));
           final int lineStartOffset = document.getLineStartOffset(line);
-          if (StringUtil.isEmptyOrSpaces(document.getText().substring(lineStartOffset, startOffset))) {
+          if (Strings.isEmptyOrSpaces(document.getText().substring(lineStartOffset, startOffset))) {
             startOffset = lineStartOffset;
           }
           writer.addAttribute("start", String.valueOf(startOffset));

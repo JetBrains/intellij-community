@@ -9,6 +9,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts.DialogTitle;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -21,10 +22,10 @@ import java.util.function.Supplier;
 public abstract class BaseAnalysisAction extends AnAction {
   private static final String DIMENSION_KEY_PREFIX = "ANALYSIS_DLG_";
 
-  private final Supplier<String> myTitle;
+  private final Supplier<@DialogTitle String> myTitle;
   private final Supplier<String> myAnalysisNoon;
 
-  protected BaseAnalysisAction(@Nls(capitalization = Nls.Capitalization.Title) String title,
+  protected BaseAnalysisAction(@DialogTitle String title,
                                @Nls(capitalization = Nls.Capitalization.Title) String analysisNoon) {
     myTitle = () -> title;
     myAnalysisNoon = () -> analysisNoon;
@@ -88,7 +89,7 @@ public abstract class BaseAnalysisAction extends AnAction {
     analyze(project, scope);
   }
 
-  protected @NotNull String getDialogTitle() {
+  protected @NotNull @DialogTitle String getDialogTitle() {
     return CodeInsightBundle.message("specify.analysis.scope", myTitle.get());
   }
 

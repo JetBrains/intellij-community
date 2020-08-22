@@ -7,27 +7,39 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.util.NlsContexts.*
+import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.NonNls
 import java.util.concurrent.ConcurrentHashMap
 import javax.swing.Icon
 
 private val LOG = logger<NotificationGroup>()
 private val registeredGroups: MutableMap<String, NotificationGroup> = ConcurrentHashMap()
-private val registeredTitles: MutableMap<String, String> = ConcurrentHashMap()
+private val registeredTitles: MutableMap<@NonNls String, @NotificationTitle String> = ConcurrentHashMap()
 
 /**
  * Groups notifications and allows controlling display options in Settings.
  */
-class NotificationGroup(@param:NonNls val displayId: String,
-                        val displayType: NotificationDisplayType,
-                        val isLogByDefault: Boolean = true,
-                        @param:NonNls val toolWindowId: String? = null,
-                        val icon: Icon? = null,
-                        var title: @NotificationTitle String? = null,
-                        pluginId: PluginId? = null) {
+class NotificationGroup private constructor(@param:NonNls val displayId: String,
+                                            val displayType: NotificationDisplayType,
+                                            val isLogByDefault: Boolean = true,
+                                            @param:NonNls val toolWindowId: String? = null,
+                                            val icon: Icon? = null,
+                                            @NotificationTitle var title: String? = null,
+                                            pluginId: PluginId? = null,
+                                            registerGroup: Boolean = false) {
+
+  @Deprecated("Use com.intellij.notification.impl.NotificationGroupEP and com.intellij.notification.NotificationGroupManager")
+  constructor(@NonNls displayId: String,
+              displayType: NotificationDisplayType,
+              isLogByDefault: Boolean = true,
+              @NonNls toolWindowId: String? = null,
+              icon: Icon? = null,
+              @NotificationTitle title: String? = null,
+              pluginId: PluginId? = null) : this(displayId, displayType, isLogByDefault, toolWindowId, icon, title, pluginId, true)
 
   // Don't use @JvmOverloads for primary constructor to maintain binary API compatibility with plugins written in Kotlin
   @JvmOverloads
+  @Deprecated("Use com.intellij.notification.impl.NotificationGroupEP and com.intellij.notification.NotificationGroupManager")
   constructor(@NonNls displayId: String,
               displayType: NotificationDisplayType,
               isLogByDefault: Boolean = true,
@@ -42,70 +54,137 @@ class NotificationGroup(@param:NonNls val displayId: String,
   }
 
   init {
-    if (registeredGroups.containsKey(displayId)) {
-      LOG.info("Notification group $displayId is already registered", Throwable())
-    }
-    registeredGroups.put(displayId, this)
+    if (registerGroup) {
+      if (registeredGroups.containsKey(displayId)) {
+        LOG.info("Notification group $displayId is already registered", Throwable())
+      }
+      registeredGroups.put(displayId, this)
 
-    if (title == null) {
-      title = registeredTitles[displayId]
+      if (title == null) {
+        title = registeredTitles[displayId]
+      }
     }
   }
 
   companion object {
     @JvmStatic
+    fun create(@NonNls displayId: String,
+               displayType: NotificationDisplayType,
+               isLogByDefault: Boolean,
+               @NonNls toolWindowId: String?,
+               icon: Icon?,
+               @NotificationTitle title: String?,
+               pluginId: PluginId?): NotificationGroup {
+      return NotificationGroup(displayId, displayType, isLogByDefault, toolWindowId, icon, title, pluginId, false)
+    }
+
+    @JvmStatic
+    @Deprecated("Use com.intellij.notification.impl.NotificationGroupEP and com.intellij.notification.NotificationGroupManager")
     fun balloonGroup(@NonNls displayId: String): NotificationGroup {
+      val notificationGroup = findRegisteredNotificationGroup(displayId)
+      if (notificationGroup != null) {
+        return notificationGroup
+      }
       return NotificationGroup(displayId, NotificationDisplayType.BALLOON)
     }
 
     @JvmStatic
-    fun balloonGroup(@NonNls displayId: String, title: @NotificationTitle String?): NotificationGroup {
+    @Deprecated("Use com.intellij.notification.impl.NotificationGroupEP and com.intellij.notification.NotificationGroupManager")
+    fun balloonGroup(@NonNls displayId: String, @NotificationTitle title: String?): NotificationGroup {
+      val notificationGroup = findRegisteredNotificationGroup(displayId)
+      if (notificationGroup != null) {
+        return notificationGroup
+      }
       return NotificationGroup(displayId, NotificationDisplayType.BALLOON, title = title)
     }
 
     @JvmStatic
+    @Deprecated("Use com.intellij.notification.impl.NotificationGroupEP and com.intellij.notification.NotificationGroupManager")
     fun balloonGroup(@NonNls displayId: String, pluginId: PluginId): NotificationGroup {
+      val notificationGroup = findRegisteredNotificationGroup(displayId)
+      if (notificationGroup != null) {
+        return notificationGroup
+      }
       return NotificationGroup(displayId, NotificationDisplayType.BALLOON, pluginId = pluginId)
     }
 
     @JvmStatic
+    @Deprecated("Use com.intellij.notification.impl.NotificationGroupEP and com.intellij.notification.NotificationGroupManager")
     fun logOnlyGroup(@NonNls displayId: String): NotificationGroup {
+      val notificationGroup = findRegisteredNotificationGroup(displayId)
+      if (notificationGroup != null) {
+        return notificationGroup
+      }
       return NotificationGroup(displayId, NotificationDisplayType.NONE)
     }
 
     @JvmStatic
-    fun logOnlyGroup(@NonNls displayId: String, title: @NotificationTitle String?): NotificationGroup {
+    @Deprecated("Use com.intellij.notification.impl.NotificationGroupEP and com.intellij.notification.NotificationGroupManager")
+    fun logOnlyGroup(@NonNls displayId: String, @NotificationTitle title: String?): NotificationGroup {
+      val notificationGroup = findRegisteredNotificationGroup(displayId)
+      if (notificationGroup != null) {
+        return notificationGroup
+      }
       return NotificationGroup(displayId, NotificationDisplayType.NONE, title = title)
     }
 
     @JvmStatic
+    @Deprecated("Use com.intellij.notification.impl.NotificationGroupEP and com.intellij.notification.NotificationGroupManager")
     fun logOnlyGroup(@NonNls displayId: String, pluginId: PluginId): NotificationGroup {
+      val notificationGroup = findRegisteredNotificationGroup(displayId)
+      if (notificationGroup != null) {
+        return notificationGroup
+      }
       return NotificationGroup(displayId, NotificationDisplayType.NONE, pluginId = pluginId)
     }
 
     @JvmOverloads
     @JvmStatic
+    @Deprecated("Use com.intellij.notification.impl.NotificationGroupEP and com.intellij.notification.NotificationGroupManager")
     fun toolWindowGroup(@NonNls displayId: String, @NonNls toolWindowId: String, logByDefault: Boolean = true): NotificationGroup {
+      val notificationGroup = findRegisteredNotificationGroup(displayId)
+      if (notificationGroup != null) {
+        return notificationGroup
+      }
       return NotificationGroup(displayId, NotificationDisplayType.TOOL_WINDOW, logByDefault, toolWindowId)
     }
 
     @JvmOverloads
     @JvmStatic
+    @Deprecated("Use com.intellij.notification.impl.NotificationGroupEP and com.intellij.notification.NotificationGroupManager")
     fun toolWindowGroup(@NonNls displayId: String,
                         @NonNls toolWindowId: String,
                         logByDefault: Boolean = true,
-                        title: @NotificationTitle String?): NotificationGroup {
+                        @NotificationTitle title: String?): NotificationGroup {
+      val notificationGroup = findRegisteredNotificationGroup(displayId)
+      if (notificationGroup != null) {
+        return notificationGroup
+      }
       return NotificationGroup(displayId, NotificationDisplayType.TOOL_WINDOW, logByDefault, toolWindowId, title = title)
     }
 
     @JvmStatic
+    @Deprecated("Use com.intellij.notification.impl.NotificationGroupEP and com.intellij.notification.NotificationGroupManager")
     fun toolWindowGroup(@NonNls displayId: String, @NonNls toolWindowId: String, logByDefault: Boolean, pluginId: PluginId): NotificationGroup {
+      val notificationGroup = findRegisteredNotificationGroup(displayId)
+      if (notificationGroup != null) {
+        return notificationGroup
+      }
       return NotificationGroup(displayId, NotificationDisplayType.TOOL_WINDOW, logByDefault, toolWindowId, pluginId = pluginId)
     }
 
     @JvmStatic
     fun findRegisteredGroup(displayId: String): NotificationGroup? {
-      return registeredGroups.get(displayId)
+      var notificationGroup = findRegisteredNotificationGroup(displayId)
+      if (notificationGroup == null) {
+        notificationGroup = registeredGroups.get(displayId)
+      }
+      return notificationGroup
+    }
+
+    private fun findRegisteredNotificationGroup(displayId: String): NotificationGroup? {
+      if (ApplicationManager.getApplication() == null) return null
+      return NotificationGroupManager.getInstance().getNotificationGroup(displayId)
     }
 
     @JvmStatic
@@ -118,7 +197,7 @@ class NotificationGroup(@param:NonNls val displayId: String,
     }
 
     @JvmStatic
-    fun createIdWithTitle(@NonNls displayId: String, title: @NotificationTitle String): String {
+    fun createIdWithTitle(@NonNls displayId: String, @NotificationTitle title: String): String {
       val oldTitle = registeredTitles.put(displayId, title)
       LOG.assertTrue(oldTitle == null || oldTitle == title, "New title \"$title\" for NotificationGroup($displayId,$oldTitle)")
       return displayId
@@ -126,20 +205,20 @@ class NotificationGroup(@param:NonNls val displayId: String,
 
     @JvmStatic
     val allRegisteredGroups: Iterable<NotificationGroup>
-      get() = registeredGroups.values
+      get() = ContainerUtil.concat(NotificationGroupManager.getInstance().registeredNotificationGroups, registeredGroups.values)
   }
 
-  fun createNotification(content: @NotificationContent String, type: MessageType): Notification {
+  fun createNotification(@NotificationContent content: String, type: MessageType): Notification {
     return createNotification(content, type.toNotificationType())
   }
 
-  fun createNotification(content: @NotificationContent String, type: NotificationType): Notification {
+  fun createNotification(@NotificationContent content: String, type: NotificationType): Notification {
     return createNotification("", content, type)
   }
 
   fun createNotification(
-    title: @NotificationTitle String,
-    content: @NotificationContent String,
+    @NotificationTitle title: String,
+    @NotificationContent content: String,
     type: NotificationType = NotificationType.INFORMATION,
     listener: NotificationListener? = null,
     notificationDisplayId: String? = null
@@ -148,8 +227,8 @@ class NotificationGroup(@param:NonNls val displayId: String,
   }
 
   fun createNotification(
-    title: @NotificationTitle String,
-    content: @NotificationContent String,
+    @NotificationTitle title: String,
+    @NotificationContent content: String,
     type: NotificationType = NotificationType.INFORMATION,
     listener: NotificationListener? = null
   ): Notification {
@@ -163,9 +242,9 @@ class NotificationGroup(@param:NonNls val displayId: String,
 
   @JvmOverloads
   fun createNotification(
-    title: @NotificationTitle String?,
-    subtitle: @NotificationSubtitle String?,
-    content: @NotificationContent String?,
+    @NotificationTitle title: String?,
+    @NotificationSubtitle subtitle: String?,
+    @NotificationContent content: String?,
     type: NotificationType = NotificationType.INFORMATION,
     listener: NotificationListener? = null
   ): Notification {

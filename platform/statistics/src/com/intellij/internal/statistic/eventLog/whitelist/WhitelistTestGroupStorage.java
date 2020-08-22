@@ -9,7 +9,7 @@ import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerKt;
 import com.intellij.internal.statistic.eventLog.validator.SensitiveDataValidator;
 import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogTestWhitelistPersistence;
 import com.intellij.internal.statistic.eventLog.validator.persistence.EventLogWhitelistPersistence;
-import com.intellij.internal.statistic.eventLog.validator.rules.beans.WhiteListGroupRules;
+import com.intellij.internal.statistic.eventLog.validator.rules.beans.EventGroupRules;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService.WLGroups;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService.WLRule;
@@ -24,7 +24,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
 public class WhitelistTestGroupStorage extends BaseWhitelistStorage {
-  protected final ConcurrentMap<String, WhiteListGroupRules> eventsValidators = new ConcurrentHashMap<>();
+  protected final ConcurrentMap<String, EventGroupRules> eventsValidators = new ConcurrentHashMap<>();
   private final Object myLock = new Object();
   private final @NotNull EventLogTestWhitelistPersistence myTestWhitelistPersistence;
   private final @NotNull EventLogWhitelistPersistence myWhitelistPersistence;
@@ -38,7 +38,7 @@ public class WhitelistTestGroupStorage extends BaseWhitelistStorage {
   }
 
   @Override
-  public @Nullable WhiteListGroupRules getGroupRules(@NotNull String groupId) {
+  public @Nullable EventGroupRules getGroupRules(@NotNull String groupId) {
     return eventsValidators.get(groupId);
   }
 
@@ -58,7 +58,7 @@ public class WhitelistTestGroupStorage extends BaseWhitelistStorage {
       isWhiteListInitialized.set(false);
       WLGroups productionGroups = EventLogTestWhitelistPersistence.loadTestWhitelist(myWhitelistPersistence);
       WLGroups testGroups = EventLogTestWhitelistPersistence.loadTestWhitelist(myTestWhitelistPersistence);
-      final Map<String, WhiteListGroupRules> result = createValidators(testGroups, productionGroups.rules);
+      final Map<String, EventGroupRules> result = createValidators(testGroups, productionGroups.rules);
 
       eventsValidators.putAll(result);
       isWhiteListInitialized.set(true);
@@ -69,8 +69,8 @@ public class WhitelistTestGroupStorage extends BaseWhitelistStorage {
     return EventLogTestWhitelistPersistence.loadTestWhitelist(myWhitelistPersistence);
   }
 
-  protected @NotNull Map<String, WhiteListGroupRules> createValidators(@NotNull WLGroups groups,
-                                                                       @Nullable WLRule productionRules) {
+  protected @NotNull Map<String, EventGroupRules> createValidators(@NotNull WLGroups groups,
+                                                                   @Nullable WLRule productionRules) {
     final WLRule rules = merge(groups.rules, productionRules);
     final EventLogBuild build = EventLogBuild.fromString(EventLogConfiguration.INSTANCE.getBuild());
     return groups.groups.stream().

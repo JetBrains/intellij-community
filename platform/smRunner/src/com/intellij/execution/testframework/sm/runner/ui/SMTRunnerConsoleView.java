@@ -90,7 +90,7 @@ public class SMTRunnerConsoleView extends BaseTestsOutputConsoleView {
   }
 
   @Override
-  public void attachToProcess(ProcessHandler processHandler) {
+  public void attachToProcess(@NotNull ProcessHandler processHandler) {
     super.attachToProcess(processHandler);
     for (AttachToProcessListener listener : myAttachToProcessListeners) {
       listener.onAttachToProcess(processHandler);

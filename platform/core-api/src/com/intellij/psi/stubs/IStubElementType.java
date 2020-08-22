@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -10,19 +10,18 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-public abstract class IStubElementType<StubT extends StubElement, PsiT extends PsiElement> extends IElementType implements StubSerializer<StubT> {
+public abstract class IStubElementType<StubT extends StubElement<?>, PsiT extends PsiElement> extends IElementType implements StubSerializer<StubT> {
   private static volatile boolean ourInitializedStubs;
   private static volatile Set<String> ourLazyExternalIds = Collections.emptySet();
   private static final Logger LOG = Logger.getInstance(IStubElementType.class);
 
-  public IStubElementType(@NotNull @NonNls final String debugName, @Nullable final Language language) {
+  public IStubElementType(@NotNull @NonNls String debugName, @Nullable Language language) {
     super(debugName, language);
     if (!isLazilyRegistered()) {
       checkNotInstantiatedTooLate();
@@ -53,28 +52,26 @@ public abstract class IStubElementType<StubT extends StubElement, PsiT extends P
     ourInitializedStubs = false;
   }
 
-  static List<StubFieldAccessor> loadRegisteredStubElementTypes() {
+  static @NotNull List<StubFieldAccessor> loadRegisteredStubElementTypes() {
     List<StubFieldAccessor> result = new ArrayList<>();
     for (StubElementTypeHolderEP bean : StubElementTypeHolderEP.EP_NAME.getExtensionList()) {
       result.addAll(bean.initializeOptimized());
     }
 
-    Set<String> lazyIds = new THashSet<>();
+    Set<String> lazyIds = new HashSet<>();
     for (StubFieldAccessor accessor : result) {
       lazyIds.add(accessor.externalId);
     }
-    ourLazyExternalIds = lazyIds;
     ourInitializedStubs = true;
+    ourLazyExternalIds = lazyIds;
     return result;
   }
 
   public abstract PsiT createPsi(@NotNull StubT stub);
 
-  @NotNull
-  public abstract StubT createStub(@NotNull PsiT psi, final StubElement parentStub);
+  public abstract @NotNull StubT createStub(@NotNull PsiT psi, StubElement<?> parentStub);
 
   public boolean shouldCreateStub(ASTNode node) {
     return true;
   }
-
 }

@@ -23,11 +23,11 @@ public class Reverter {
 
   @NotNull private final SvnVcs myVcs;
   private final ProgressTracker myHandler;
-  private final List<VcsException> myExceptions;
+  private final @NotNull List<? super VcsException> myExceptions;
   private final List<CopiedAsideInfo> myFromToModified;
   private final Map<File, PropertiesMap> myProperties;
 
-  Reverter(@NotNull SvnVcs vcs, @NotNull RollbackProgressListener listener, @NotNull List<VcsException> exceptions) {
+  Reverter(@NotNull SvnVcs vcs, @NotNull RollbackProgressListener listener, @NotNull List<? super VcsException> exceptions) {
     myVcs = vcs;
     myHandler = createRevertHandler(exceptions, listener);
     myExceptions = exceptions;
@@ -156,7 +156,7 @@ public class Reverter {
   }
 
   @NotNull
-  private static ProgressTracker createRevertHandler(@NotNull final List<VcsException> exceptions,
+  private static ProgressTracker createRevertHandler(final @NotNull List<? super VcsException> exceptions,
                                                      @NotNull final RollbackProgressListener listener) {
     return new ProgressTracker() {
       @Override

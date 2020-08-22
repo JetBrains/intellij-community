@@ -17,12 +17,12 @@ import com.intellij.openapi.editor.EditorActivityManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.LightweightHint;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,7 +77,7 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
   public static void invoke(final Project project, final Editor editor, PsiFile file,
                             int lbraceOffset, PsiElement highlightedElement,
                             boolean requestFocus, boolean singleParameterHint,
-                            @Nullable String progressTitle,
+                            @Nullable @NlsContexts.ProgressTitle String progressTitle,
                             Consumer<IndexNotReadyException> indexNotReadyExceptionConsumer) {
     final DumbService dumbService = DumbService.getInstance(project);
 
@@ -110,7 +110,7 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
               context.setRequestFocus(requestFocus);
 
               final ParameterInfoHandler<PsiElement, Object>[] handlers =
-                ObjectUtils.notNull(getHandlers(project, language, file.getViewProvider().getBaseLanguage()), EMPTY_HANDLERS);
+                getHandlers(project, language, file.getViewProvider().getBaseLanguage());
 
               if (lookup != null) {
                 if (lookupElement != null) {
@@ -131,8 +131,7 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
 
               return dumbService.computeWithAlternativeResolveEnabled(() -> {
                 try {
-                  for (int i = 0; i < handlers.length; i++) {
-                    ParameterInfoHandler<PsiElement, Object> handler = handlers[i];
+                  for (ParameterInfoHandler<PsiElement, Object> handler : handlers) {
                     PsiElement element = handler.findElementForParameterInfo(context);
                     if (element != null) {
                       return () -> {
@@ -180,15 +179,13 @@ public class ShowParameterInfoHandler implements CodeInsightActionHandler {
     });
   }
 
-  @Nullable
-  public static ParameterInfoHandler[] getHandlers(Project project, final Language... languages) {
+  public static ParameterInfoHandler @NotNull [] getHandlers(Project project, final Language... languages) {
     Set<ParameterInfoHandler> handlers = new LinkedHashSet<>();
     DumbService dumbService = DumbService.getInstance(project);
     for (final Language language : languages) {
       handlers.addAll(dumbService.filterByDumbAwareness(LanguageParameterInfo.INSTANCE.allForLanguage(language)));
     }
-    if (handlers.isEmpty()) return null;
-    return handlers.toArray(new ParameterInfoHandler[0]);
+    return handlers.isEmpty() ? EMPTY_HANDLERS : handlers.toArray(new ParameterInfoHandler[0]);
   }
 }
 

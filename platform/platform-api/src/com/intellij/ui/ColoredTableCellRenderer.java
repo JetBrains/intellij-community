@@ -17,6 +17,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -45,7 +46,7 @@ public abstract class ColoredTableCellRenderer extends SimpleColoredRenderer imp
     return this;
   }
 
-  private void rendererComponentInner(JTable table,
+  private void rendererComponentInner(@NotNull JTable table,
                                       @Nullable Object value,
                                       boolean isSelected,
                                       boolean hasFocus,
@@ -57,7 +58,7 @@ public abstract class ColoredTableCellRenderer extends SimpleColoredRenderer imp
     customizeCellRenderer(table, value, isSelected, hasFocus, row, col);
   }
 
-  protected abstract void customizeCellRenderer(JTable table,
+  protected abstract void customizeCellRenderer(@NotNull JTable table,
                                                 @Nullable Object value,
                                                 boolean selected,
                                                 boolean hasFocus,

@@ -1,24 +1,9 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.model;
 
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ExceptionUtilRt;
-import gnu.trove.THashSet;
 import org.gradle.api.Action;
 import org.gradle.tooling.BuildAction;
 import org.gradle.tooling.BuildController;
@@ -53,10 +38,10 @@ import java.util.*;
 /**
  * @author Vladislav.Soroka
  */
-public class ProjectImportAction implements BuildAction<ProjectImportAction.AllModels>, Serializable {
-  private final Set<ProjectImportModelProvider> myProjectsLoadedModelProviders = new THashSet<ProjectImportModelProvider>();
-  private final Set<ProjectImportModelProvider> myBuildFinishedModelProviders = new THashSet<ProjectImportModelProvider>();
-  private final Set<Class<?>> myTargetTypes = new THashSet<Class<?>>();
+public final class ProjectImportAction implements BuildAction<ProjectImportAction.AllModels>, Serializable {
+  private final Set<ProjectImportModelProvider> myProjectsLoadedModelProviders = new HashSet<ProjectImportModelProvider>();
+  private final Set<ProjectImportModelProvider> myBuildFinishedModelProviders = new HashSet<ProjectImportModelProvider>();
+  private final Set<Class<?>> myTargetTypes = new HashSet<Class<?>>();
   private final boolean myIsPreviewMode;
   private final boolean myIsCompositeBuildsSupported;
   private final boolean myUseCustomSerialization;
@@ -200,7 +185,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     try {
       Set<ProjectImportModelProvider> modelProviders = getModelProviders(isProjectsLoadedAction);
       for (ProjectImportModelProvider extension : modelProviders) {
-        final Set<String> obtainedModels = new THashSet<String>();
+        final Set<String> obtainedModels = new HashSet<String>();
         long startTime = System.currentTimeMillis();
         ProjectModelConsumer modelConsumer = new ProjectModelConsumer() {
           @Override
@@ -353,7 +338,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     }
   }
 
-  private static class ToolingSerializerAdapter {
+  private static final class ToolingSerializerAdapter {
     private final Object mySerializer;
     private final Method mySerializerWriteMethod;
     private final ClassLoader myModelBuildersClassLoader;
@@ -491,6 +476,14 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
       @Override
       public ProjectIdentifier getProjectIdentifier() {
         return myProjectIdentifier;
+      }
+
+      @Override
+      public String toString() {
+        return "ProjectModel{" +
+               "name='" + myName + '\'' +
+               ", id=" + myProjectIdentifier +
+               '}';
       }
     }
   }

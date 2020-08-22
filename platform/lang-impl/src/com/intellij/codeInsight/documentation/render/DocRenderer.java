@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.documentation.render;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -6,6 +6,7 @@ import com.intellij.codeInsight.documentation.DocumentationComponent;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.documentation.QuickDocUtil;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
@@ -166,6 +167,10 @@ class DocRenderer implements EditorCustomElementRenderer {
     group.add(new CopySelection());
     group.addSeparator();
     group.add(myItem.createToggleAction());
+    AnAction toggleRenderAllAction = ActionManager.getInstance().getAction(IdeActions.ACTION_TOGGLE_RENDERED_DOC_FOR_ALL);
+    if (toggleRenderAllAction != null) {
+      group.add(toggleRenderAllAction);
+    }
     group.add(new DocRenderItem.ChangeFontSize());
     return group;
   }
@@ -185,12 +190,18 @@ class DocRenderer implements EditorCustomElementRenderer {
   }
 
   private int calcInlayStartX() {
+    Editor editor = myItem.editor;
     RangeHighlighter highlighter = myItem.highlighter;
-    if (!highlighter.isValid()) return 0;
-    Document document = myItem.editor.getDocument();
-    int lineStartOffset = document.getLineStartOffset(document.getLineNumber(highlighter.getEndOffset()) + 1);
-    int contentStartOffset = CharArrayUtil.shiftForward(document.getImmutableCharSequence(), lineStartOffset, " \t\n");
-    return myItem.editor.offsetToXY(contentStartOffset, false, true).x;
+    if (highlighter.isValid()) {
+      Document document = editor.getDocument();
+      int nextLineNumber = document.getLineNumber(highlighter.getEndOffset()) + 1;
+      if (nextLineNumber < document.getLineCount()) {
+        int lineStartOffset = document.getLineStartOffset(nextLineNumber);
+        int contentStartOffset = CharArrayUtil.shiftForward(document.getImmutableCharSequence(), lineStartOffset, " \t\n");
+        return editor.offsetToXY(contentStartOffset, false, true).x;
+      }
+    }
+    return editor.getInsets().left;
   }
 
   Rectangle getEditorPaneBoundsWithinInlay(Inlay inlay) {
@@ -306,6 +317,10 @@ class DocRenderer implements EditorCustomElementRenderer {
                                  @NotNull PsiElement context,
                                  @NotNull String linkUrl,
                                  @NotNull Rectangle linkLocationWithinInlay) {
+    if (isExternalLink(linkUrl)) {
+      BrowserUtil.open(linkUrl);
+      return;
+    }
     Project project = context.getProject();
     DocumentationManager documentationManager = DocumentationManager.getInstance(project);
     if (QuickDocUtil.getActiveDocComponent(project) == null) {
@@ -324,22 +339,26 @@ class DocRenderer implements EditorCustomElementRenderer {
       if (!documentationManager.hasActiveDockedDocWindow()) {
         component.startWait();
       }
-      documentationManager.navigateByLink(component, linkUrl);
+      documentationManager.navigateByLink(component, context, linkUrl);
     }
     if (documentationManager.getDocInfoHint() == null) {
       editor.putUserData(PopupFactoryImpl.ANCHOR_POPUP_POINT, null);
     }
     if (documentationManager.hasActiveDockedDocWindow()) {
-      documentationManager.setAllowContentUpdateFromContext(false);
       Disposable disposable = Disposer.newDisposable();
       editor.getCaretModel().addCaretListener(new CaretListener() {
         @Override
         public void caretPositionChanged(@NotNull CaretEvent e) {
-          documentationManager.resetAutoUpdateState();
           Disposer.dispose(disposable);
         }
       }, disposable);
+      documentationManager.muteAutoUpdateTill(disposable);
     }
+  }
+
+  private static boolean isExternalLink(@NotNull String linkUrl) {
+    String l = linkUrl.toLowerCase(Locale.ROOT);
+    return l.startsWith("http://") || l.startsWith("https://");
   }
 
   private static EditorKit createEditorKit(@NotNull Editor editor) {
@@ -533,7 +552,7 @@ class DocRenderer implements EditorCustomElementRenderer {
     }
   }
 
-  private static class MyScalingImageView extends ImageView {
+  private static final class MyScalingImageView extends ImageView {
     private int myAvailableWidth;
 
     private MyScalingImageView(Element element) {

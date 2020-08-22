@@ -52,10 +52,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.function.BiConsumer;
 
-@State(name = "NodeRendererSettings", storages = {
-  @Storage("debugger.xml"),
-  @Storage(value = "debugger.renderers.xml", deprecated = true),
-})
+@State(name = "NodeRendererSettings", storages = @Storage("debugger.xml"))
 public class NodeRendererSettings implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(NodeRendererSettings.class);
 
@@ -428,7 +425,7 @@ public class NodeRendererSettings implements PersistentStateComponent<Element> {
     return labelRenderer;
   }
 
-  private static class MapEntryLabelRenderer extends ReferenceRenderer
+  private static final class MapEntryLabelRenderer extends ReferenceRenderer
     implements ValueLabelRenderer, XValuePresentationProvider, OnDemandRenderer {
     private static final Key<ValueDescriptorImpl> KEY_DESCRIPTOR = Key.create("KEY_DESCRIPTOR");
     private static final Key<ValueDescriptorImpl> VALUE_DESCRIPTOR = Key.create("VALUE_DESCRIPTOR");

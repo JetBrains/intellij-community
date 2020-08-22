@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.junit;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -29,6 +29,7 @@ import com.siyeh.ig.fixes.RenameFix;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.TestUtils;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -252,21 +253,21 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends BaseInspect
         }
         final String className = aClass.getQualifiedName();
         if ("junit.framework.Assert".equals(className) || "junit.framework.TestCase".equals(className)) {
-          final String methodName = method.getName();
+          @NonNls final String methodName = method.getName();
           if ("setUp".equals(methodName) || "tearDown".equals(methodName)) {
             return;
           }
         }
         final PsiMethod[] superMethods = method.findSuperMethods(objectClass);
+        final String expressionText = CommonRefactoringUtil.htmlEmphasize(expression.getText());
+        final String classText = RefactoringUIUtil.getDescription(junit3Class, false);
         if (superMethods.length > 0) {
-          conflicts.putValue(expression, "Method call " + CommonRefactoringUtil.htmlEmphasize(expression.getText()) +
-                                         " may change semantics when " + RefactoringUIUtil.getDescription(junit3Class, false) +
-                                         " is converted to JUnit 4");
+          final @Nls String problem = InspectionGadgetsBundle.message("convert.junit3.test.fix.conflict.semantics", expressionText, classText);
+          conflicts.putValue(expression, problem);
         }
         else {
-          conflicts.putValue(expression, "Method call " + CommonRefactoringUtil.htmlEmphasize(expression.getText()) +
-                                         " will not compile when " + RefactoringUIUtil.getDescription(junit3Class, false) +
-                                         " is converted to JUnit 4");
+          final @Nls String problem = InspectionGadgetsBundle.message("convert.junit3.test.fix.conflict.compile", expressionText, classText);
+          conflicts.putValue(expression, problem);
         }
       }
     });
@@ -281,8 +282,10 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends BaseInspect
           final PsiType expectedType = ExpectedTypeUtils.findExpectedType((PsiExpression)element, false);
           if (InheritanceUtil.isInheritor(expectedType, "junit.framework.Test") &&
               PsiUtil.resolveClassInClassTypeOnly(expectedType) != junit3Class) {
-            conflicts.putValue(element, "Reference " + CommonRefactoringUtil.htmlEmphasize(element.getText()) + " will not compile when " +
-                                        RefactoringUIUtil.getDescription(junit3Class, false) + " is converted to JUnit 4");
+            final String elementText = CommonRefactoringUtil.htmlEmphasize(element.getText());
+            final String classText = RefactoringUIUtil.getDescription(junit3Class, false);
+            final @Nls String problem = InspectionGadgetsBundle.message("convert.junit3.test.fix.conflict.compile.2", elementText, classText);
+            conflicts.putValue(element, problem);
           }
           return true;
         });
@@ -318,7 +321,7 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends BaseInspect
     method.accept(new SuperLifeCycleCallRemover(method.getName()));
   }
 
-  private static class SuperLifeCycleCallRemover extends JavaRecursiveElementVisitor {
+  private static final class SuperLifeCycleCallRemover extends JavaRecursiveElementVisitor {
 
     @NotNull private final String myLifeCycleMethodName;
 
@@ -390,8 +393,7 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends BaseInspect
     }
 
     @Override
-    @NotNull
-    public String getName() {
+    public @NotNull String getName() {
       return myNewName == null ? getFamilyName()
                                : InspectionGadgetsBundle.message("remove.junit4.test.annotation.and.rename.quickfix", myNewName);
     }

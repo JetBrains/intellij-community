@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.dataFlow;
 
@@ -209,7 +209,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
     DfType dfType = filterDfTypeOnAssignment(var, getDfType(value)).meet(var.getDfType());
     if (dfType == DfTypes.BOTTOM) return; // likely uncompilable code or bad CFG
-    if (value instanceof DfaVariableValue && !ControlFlowAnalyzer.isTempVariable(var) && 
+    if (value instanceof DfaVariableValue && !ControlFlowAnalyzer.isTempVariable(var) &&
         !ControlFlowAnalyzer.isTempVariable((DfaVariableValue)value) &&
         (var.getQualifier() == null || !ControlFlowAnalyzer.isTempVariable(var.getQualifier()))) {
       // assigning a = b when b is known to be null: could be ephemeral
@@ -566,7 +566,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
       recordVariableType(var, dfType);
     }
   }
-  
+
   private static @NotNull DfType sanitizeNullability(@NotNull DfType dfType) {
     if (!(dfType instanceof DfReferenceType)) return dfType;
     DfaNullability nullability = ((DfReferenceType)dfType).getNullability();
@@ -1248,7 +1248,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   public void flushFields() {
     flushFields(new QualifierStatusMap(null));
   }
-  
+
   public void flushFields(@NotNull DfaMemoryStateImpl.QualifierStatusMap qualifierStatusMap) {
     Set<DfaVariableValue> vars = new LinkedHashSet<>();
     for (DfaVariableValue value : myVariableTypes.keySet()) {
@@ -1587,7 +1587,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     SHOULD_FLUSH_ALWAYS, SHOULD_FLUSH_CALLS, SHOULD_NOT_FLUSH
   }
 
-  private class QualifierStatusMap {
+  private final class QualifierStatusMap {
     private final TIntObjectHashMap<QualifierStatus> myMap = new TIntObjectHashMap<>();
     private final @Nullable Set<DfaValue> myQualifiersToFlush;
 

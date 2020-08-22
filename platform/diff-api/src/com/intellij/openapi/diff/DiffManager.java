@@ -16,7 +16,6 @@
 package com.intellij.openapi.diff;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.editor.markup.MarkupEditorFilter;
 
 /**
  * @deprecated use {@link com.intellij.diff.DiffManager} instead
@@ -39,6 +38,4 @@ public abstract class DiffManager {
    * {@link DiffTool#HINT_SHOW_NOT_MODAL_DIALOG} Show diff in not modal dialog<br>
    */
   public abstract DiffTool getIdeaDiffTool();
-
-  public abstract MarkupEditorFilter getDiffEditorFilter();
 }

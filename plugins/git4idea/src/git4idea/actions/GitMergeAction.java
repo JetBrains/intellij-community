@@ -12,6 +12,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -46,6 +48,7 @@ import git4idea.update.HashRange;
 import git4idea.util.GitUIUtil;
 import git4idea.util.GitUntrackedFilesHelper;
 import git4idea.util.LocalChangesWouldBeOverwrittenHelper;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,23 +65,27 @@ import static java.util.Collections.singletonMap;
 
 abstract class GitMergeAction extends GitRepositoryAction {
   private static final Logger LOG = Logger.getInstance(GitMergeAction.class);
+  @NonNls private static final String REMOTES_PREFIX = "remotes/";
 
   protected static class DialogState {
     final VirtualFile selectedRoot;
-    final String progressTitle;
+    @NlsContexts.ProgressTitle final String progressTitle;
     final Supplier<GitLineHandler> handlerProvider;
-    @NotNull private final List<String> selectedBranches;
+    @NotNull final List<String> selectedBranches;
     final boolean commitAfterMerge;
+    @NotNull final List<String> selectedOptions;
 
     DialogState(@NotNull VirtualFile root,
-                @NotNull String title,
+                @NlsContexts.ProgressTitle @NotNull String title,
                 @NotNull Supplier<GitLineHandler> provider,
                 @NotNull List<String> selectedBranches,
-                boolean commitAfterMerge) {
+                boolean commitAfterMerge,
+                @NotNull List<String> selectedOptions) {
       selectedRoot = root;
       progressTitle = title;
       handlerProvider = provider;
       this.selectedBranches = selectedBranches;
+      this.selectedOptions = selectedOptions;
       this.commitAfterMerge = commitAfterMerge;
     }
   }
@@ -88,14 +95,18 @@ abstract class GitMergeAction extends GitRepositoryAction {
                                                @NotNull VirtualFile defaultRoot);
 
   @Override
-  protected void perform(@NotNull Project project, @NotNull List<VirtualFile> gitRoots, @NotNull VirtualFile defaultRoot) {
+  protected final void perform(@NotNull Project project, @NotNull List<VirtualFile> gitRoots, @NotNull VirtualFile defaultRoot) {
     DialogState dialogState = displayDialog(project, gitRoots, defaultRoot);
     if (dialogState == null) {
       return;
     }
+    perform(dialogState, project);
+  }
+
+  protected void perform(@NotNull DialogState dialogState, @NotNull Project project) {
     VirtualFile selectedRoot = dialogState.selectedRoot;
     Supplier<GitLineHandler> handlerProvider = dialogState.handlerProvider;
-    Label beforeLabel = LocalHistory.getInstance().putSystemLabel(project, "Before update");
+    Label beforeLabel = LocalHistory.getInstance().putSystemLabel(project, GitBundle.message("merge.action.before.update.label"));
 
     new Task.Backgroundable(project, dialogState.progressTitle, true) {
       @Override
@@ -112,7 +123,7 @@ abstract class GitMergeAction extends GitRepositoryAction {
 
         GitUpdatedRanges updatedRanges = null;
         if (repository.getCurrentBranch() != null && dialogState.selectedBranches.size() == 1) {
-          String selectedBranch = StringUtil.trimStart(dialogState.selectedBranches.get(0), "remotes/");
+          String selectedBranch = StringUtil.trimStart(dialogState.selectedBranches.get(0), REMOTES_PREFIX);
           GitBranch targetBranch = repository.getBranches().findBranchByName(selectedBranch);
           if (targetBranch != null) {
             GitBranchPair refPair = new GitBranchPair(repository.getCurrentBranch(), targetBranch);
@@ -226,7 +237,7 @@ abstract class GitMergeAction extends GitRepositoryAction {
                                                                 getActionName(), null);
     }
     else {
-      GitUIUtil.notifyError(project, "Git " + getActionName() + " Failed", result.getErrorOutputAsJoinedString(), true, null);
+      GitUIUtil.notifyError(project, GitBundle.message("merge.action.operation.failed", getActionName()), result.getErrorOutputAsJoinedString(), true, null);
       repository.update();
     }
   }
@@ -235,7 +246,7 @@ abstract class GitMergeAction extends GitRepositoryAction {
                                   @NotNull GitRepository repository,
                                   @NotNull GitRevisionNumber currentRev,
                                   @NotNull Label beforeLabel,
-                                  @NotNull String actionName) {
+                                  @NlsActions.ActionText @NotNull String actionName) {
     try {
       UpdatedFiles files = UpdatedFiles.create();
       MergeChangeCollector collector = new MergeChangeCollector(project, repository, currentRev);
@@ -246,7 +257,7 @@ abstract class GitMergeAction extends GitRepositoryAction {
         UpdateInfoTree tree = manager.showUpdateProjectInfo(files, actionName, ActionInfo.UPDATE, false);
         if (tree != null) {
           tree.setBefore(beforeLabel);
-          tree.setAfter(LocalHistory.getInstance().putSystemLabel(project, "After update"));
+          tree.setAfter(LocalHistory.getInstance().putSystemLabel(project, GitBundle.message("merge.action.after.update.label")));
           ViewUpdateInfoNotification.focusUpdateInfoTree(project, tree);
         }
       }, ModalityState.defaultModalityState());

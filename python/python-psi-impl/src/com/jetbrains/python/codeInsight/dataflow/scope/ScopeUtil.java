@@ -37,7 +37,7 @@ import java.util.List;
 import static com.intellij.psi.util.PsiTreeUtil.getParentOfType;
 import static com.intellij.psi.util.PsiTreeUtil.isAncestor;
 
-public class ScopeUtil {
+public final class ScopeUtil {
   private ScopeUtil() {
   }
 

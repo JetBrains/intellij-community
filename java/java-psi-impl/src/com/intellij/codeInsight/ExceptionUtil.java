@@ -26,7 +26,7 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-public class ExceptionUtil {
+public final class ExceptionUtil {
   @NonNls private static final String CLONE_METHOD_NAME = "clone";
 
   private ExceptionUtil() {}

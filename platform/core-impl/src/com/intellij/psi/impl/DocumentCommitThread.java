@@ -35,7 +35,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.util.List;
 import java.util.Objects;
@@ -46,9 +45,9 @@ import java.util.concurrent.TimeoutException;
 
 public final class DocumentCommitThread implements Disposable, DocumentCommitProcessor {
   private static final Logger LOG = Logger.getInstance(DocumentCommitThread.class);
-  private static final String SYNC_COMMIT_REASON = "Sync commit";
+  private static final @NonNls String SYNC_COMMIT_REASON = "Sync commit";
 
-  private final ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Document Committing Pool", PooledThreadExecutor.INSTANCE, 1, this);
+  private final ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Document Committing Pool", AppExecutorUtil.getAppExecutorService(), 1, this);
   private volatile boolean isDisposed;
 
   static DocumentCommitThread getInstance() {
@@ -129,6 +128,9 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
     } else {
       for (PsiFile file : viewProvider.getAllFiles()) {
         FileASTNode oldFileNode = file.getNode();
+        if (oldFileNode == null) {
+          throw new AssertionError("No node for " + file.getClass() + " in " + file.getViewProvider().getClass());
+        }
         ProperTextRange changedPsiRange = ChangedPsiRangeUtil
           .getChangedPsiRange(file, task.document, task.myLastCommittedText, document.getImmutableCharSequence());
         if (changedPsiRange != null) {

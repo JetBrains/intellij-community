@@ -37,7 +37,7 @@ public class PsiFieldStubImpl extends StubBase<PsiField> implements PsiFieldStub
   @Override
   @NotNull
   public TypeInfo getType(boolean doResolve) {
-    return doResolve ? myType.applyAnnotations(this) : myType;
+    return myType;
   }
 
   @Override

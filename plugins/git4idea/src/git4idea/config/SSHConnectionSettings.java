@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.config;
 
 import com.intellij.openapi.components.*;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.XMap;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Map;
@@ -15,7 +16,8 @@ import java.util.TreeMap;
  */
 @State(
   name = "SSHConnectionSettings",
-  storages = @Storage(value = "security.xml", roamingType = RoamingType.DISABLED)
+  storages = @Storage(value = "security.xml", roamingType = RoamingType.DISABLED),
+  reportStatistic = false
 )
 public class SSHConnectionSettings implements PersistentStateComponent<SSHConnectionSettings.State> {
   /**
@@ -48,7 +50,8 @@ public class SSHConnectionSettings implements PersistentStateComponent<SSHConnec
    * @param userName the key in format user@host
    * @return the last successful stored authentication method or null
    */
-  public String getLastSuccessful(String userName) {
+  @NonNls
+  public String getLastSuccessful(@NonNls String userName) {
     return myLastSuccessful.get(userName);
   }
 
@@ -58,7 +61,7 @@ public class SSHConnectionSettings implements PersistentStateComponent<SSHConnec
    * @param userName the key in format user@host
    * @param method   the last successful stored authentication method (null or empty string if entry should be dropped)
    */
-  public void setLastSuccessful(String userName, String method) {
+  public void setLastSuccessful(@NonNls String userName, @NonNls String method) {
     if (null == method || method.length() == 0) {
       myLastSuccessful.remove(userName);
     }

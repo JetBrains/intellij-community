@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.cvsSupport2.annotate;
 
 import com.intellij.CvsBundle;
@@ -157,7 +157,7 @@ public class CvsAnnotationProvider implements AnnotationProvider{
     }
   }
 
-  private static class RevisionPresentation implements VcsFileRevision {
+  private static final class RevisionPresentation implements VcsFileRevision {
     private final VcsRevisionNumber myNumber;
     private final String myAuthor;
     private final Date myDate;

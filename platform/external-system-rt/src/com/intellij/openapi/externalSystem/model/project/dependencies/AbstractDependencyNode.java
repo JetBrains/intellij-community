@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.model.project.dependencies;
 
 import com.intellij.openapi.externalSystem.util.BooleanBiFunction;
@@ -86,7 +86,7 @@ public abstract class AbstractDependencyNode implements DependencyNode, Serializ
                  });
   }
 
-  private static class DependenciesIterator extends IteratorUtils.AbstractObjectGraphIterator<DependencyNode> {
+  private static final class DependenciesIterator extends IteratorUtils.AbstractObjectGraphIterator<DependencyNode> {
     private DependenciesIterator(Collection<DependencyNode> dependencies) {
       super(dependencies);
     }

@@ -1,7 +1,7 @@
 from .buffers import ReadOnlyFileBasedBuffer
 from .channel import HTTPChannel
 from .compat import reraise, tobytes
-from .utilities import Error, build_http_date, logger, queue_logger
+from .utilities import Error
 from logging import Logger
 from threading import Condition, Lock
 from typing import Any, Deque, Mapping, Sequence, Optional, Set, Tuple

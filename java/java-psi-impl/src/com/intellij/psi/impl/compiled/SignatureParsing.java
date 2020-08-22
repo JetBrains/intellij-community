@@ -1,43 +1,104 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.CommonClassNames;
-import com.intellij.util.ArrayUtilRt;
+import com.intellij.psi.impl.cache.TypeInfo;
+import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
+import com.intellij.psi.impl.java.stubs.PsiTypeParameterListStub;
+import com.intellij.psi.impl.java.stubs.PsiTypeParameterStub;
+import com.intellij.psi.impl.java.stubs.impl.PsiClassReferenceListStubImpl;
+import com.intellij.psi.impl.java.stubs.impl.PsiTypeParameterStubImpl;
+import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.cls.ClsFormatException;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.org.objectweb.asm.TypeReference;
 
 import java.text.CharacterIterator;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.openapi.util.Pair.pair;
-
-public class SignatureParsing {
+public final class SignatureParsing {
   private SignatureParsing() { }
+  
+  static class TypeParametersDeclaration {
+    static final TypeParametersDeclaration EMPTY = new TypeParametersDeclaration(Collections.emptyList());
+    
+    private final List<TypeParameterDeclaration> myDeclarations;
 
-  @NotNull
-  public static List<Pair<String, String[]>> parseTypeParametersDeclaration(CharacterIterator signature, Function<String, String> mapping) throws ClsFormatException {
-    if (signature.current() != '<') {
-      return Collections.emptyList();
+    private TypeParametersDeclaration(List<TypeParameterDeclaration> declarations) {
+      myDeclarations = declarations;
     }
 
-    List<Pair<String, String[]>> typeParameters = new ArrayList<>();
+    TypeInfo getBoundType(TypeReference ref) {
+      int typeParameterIndex = ref.getTypeParameterIndex();
+      int boundIndex = ref.getTypeParameterBoundIndex();
+      if (typeParameterIndex < myDeclarations.size()) {
+        TypeParameterDeclaration typeParam = myDeclarations.get(typeParameterIndex);
+        if (boundIndex < typeParam.myBounds.length) {
+          return typeParam.myBounds[boundIndex];
+        }
+      }
+      return null;
+    }
+
+    TypeInfo getParameterType(TypeReference ref) {
+      int typeParameterIndex = ref.getTypeParameterIndex();
+      if (typeParameterIndex < myDeclarations.size()) {
+        return myDeclarations.get(typeParameterIndex).myTypeParameter;
+      }
+      return null;
+    }
+
+    void fillInTypeParameterList(StubElement<?> parent) {
+      PsiTypeParameterListStub listStub = parent.findChildStubByType(JavaStubElementTypes.TYPE_PARAMETER_LIST);
+      if (listStub == null) return;
+      for (TypeParameterDeclaration parameter : this.myDeclarations) {
+        parameter.createTypeParameter(listStub);
+      }
+    }
+  }
+
+  private static class TypeParameterDeclaration {
+    private final TypeInfo myTypeParameter;
+    private final TypeInfo[] myBounds;
+
+    private TypeParameterDeclaration(String parameter, TypeInfo[] bounds) {
+      myTypeParameter = new TypeInfo(parameter);
+      myBounds = bounds;
+    }
+
+    private void createTypeParameter(PsiTypeParameterListStub listStub) {
+      PsiTypeParameterStub stub = new PsiTypeParameterStubImpl(listStub, this.myTypeParameter.text);
+      myTypeParameter.getTypeAnnotations().createAnnotationStubs(stub);
+      TypeInfo[] info = this.myBounds;
+      if (info.length > 0 && info[0].text == null) {
+        info = Arrays.copyOfRange(info, 1, info.length);
+      }
+      new PsiClassReferenceListStubImpl(JavaStubElementTypes.EXTENDS_BOUND_LIST, stub, info);
+    }
+  }
+
+  @NotNull
+  static TypeParametersDeclaration parseTypeParametersDeclaration(CharacterIterator signature, Function<String, String> mapping) throws ClsFormatException {
+    if (signature.current() != '<') {
+      return TypeParametersDeclaration.EMPTY;
+    }
+
+    List<TypeParameterDeclaration> typeParameters = new ArrayList<>();
     signature.next();
     while (signature.current() != '>') {
       typeParameters.add(parseTypeParameter(signature, mapping));
     }
     signature.next();
-    return typeParameters;
+    return new TypeParametersDeclaration(typeParameters);
   }
 
-  private static Pair<String, String[]> parseTypeParameter(CharacterIterator signature, Function<String, String> mapping) throws ClsFormatException {
+  private static TypeParameterDeclaration parseTypeParameter(CharacterIterator signature, Function<String, String> mapping) throws ClsFormatException {
     StringBuilder name = new StringBuilder();
     while (signature.current() != ':' && signature.current() != CharacterIterator.DONE) {
       name.append(signature.current());
@@ -48,27 +109,15 @@ public class SignatureParsing {
     }
     String parameterName = mapping.fun(name.toString());
 
-    // postpone list allocation till a second bound is seen; ignore sole Object bound
-    List<String> bounds = null;
-    boolean jlo = false;
+    List<TypeInfo> bounds = new SmartList<>();
     while (signature.current() == ':') {
       signature.next();
       String bound = parseTopLevelClassRefSignature(signature, mapping);
-      if (bound == null) continue;
-      if (bounds == null) {
-        if (CommonClassNames.JAVA_LANG_OBJECT.equals(bound)) {
-          jlo = true;
-          continue;
-        }
-        bounds = new SmartList<>();
-        if (jlo) {
-          bounds.add(CommonClassNames.JAVA_LANG_OBJECT);
-        }
-      }
-      bounds.add(bound);
+      if (!bounds.isEmpty() && bound == null) continue;
+      bounds.add(new TypeInfo(bound));
     }
 
-    return pair(parameterName, ArrayUtilRt.toStringArray(bounds));
+    return new TypeParameterDeclaration(parameterName, bounds.toArray(TypeInfo.EMPTY_ARRAY));
   }
 
   @Nullable
