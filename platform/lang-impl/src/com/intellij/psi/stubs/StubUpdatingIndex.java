@@ -399,8 +399,9 @@ public final class StubUpdatingIndex extends SingleEntryFileBasedIndexExtension<
 
   private void checkNameStorage() throws StorageException {
     if (mySerializationManager.isNameStorageCorrupted()) {
-      mySerializationManager.repairNameStorage();
-      throw new StorageException("NameStorage for stubs serialization has been corrupted");
+      StorageException exception = new StorageException("NameStorage for stubs serialization has been corrupted");
+      mySerializationManager.repairNameStorage(exception);
+      throw exception;
     }
   }
 

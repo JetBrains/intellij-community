@@ -51,7 +51,7 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
     catch (IOException e) {
       nameStorageCrashed();
       LOG.info(e);
-      repairNameStorage(); // need this in order for myNameStorage not to be null
+      repairNameStorage(e); // need this in order for myNameStorage not to be null
       nameStorageCrashed();
     }
     finally {
@@ -86,7 +86,7 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
   }
 
   @Override
-  public void repairNameStorage() {
+  public void repairNameStorage(@NotNull Exception corruptionCause) {
     if (myNameStorageCrashed.getAndSet(false)) {
       try {
         LOG.info("Name storage is repaired");
@@ -128,7 +128,7 @@ public final class SerializationManagerImpl extends SerializationManagerEx imple
   @Override
   public void reinitializeNameStorage() {
     nameStorageCrashed();
-    repairNameStorage();
+    repairNameStorage(new Exception("Indexes are requested to rebuild"));
   }
 
   private void nameStorageCrashed() {
