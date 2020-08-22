@@ -16,8 +16,11 @@ import org.jetbrains.annotations.NotNull;
  * Provides files to be indexed for a project structure entity (module, library, SDK, etc.)
  * Allows the indexing infrastructure to prioritize indexing by some predicate.
  *
- * @see [ModuleIndexableFilesProvider]
- * @see [LibraryIndexableFilesProvider]
+ * @see ModuleIndexableFilesProvider
+ * @see LibraryIndexableFilesProvider
+ * @see SyntheticLibraryIndexableFilesProvider
+ * @see SdkIndexableFilesProvider
+ * @see IndexableSetContributorFilesProvider
  */
 @Debug.Renderer(text = "getClass().getName() + \":\" + getDebugName()")
 @ApiStatus.Internal
