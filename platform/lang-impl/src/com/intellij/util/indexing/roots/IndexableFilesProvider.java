@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.util.containers.ConcurrentBitSet;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Debug;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -18,6 +19,7 @@ import org.jetbrains.annotations.NotNull;
  * @see [ModuleIndexableFilesProvider]
  * @see [LibraryIndexableFilesProvider]
  */
+@Debug.Renderer(text = "getClass().getName() + \":\" + getDebugName()")
 @ApiStatus.Internal
 public interface IndexableFilesProvider {
 
