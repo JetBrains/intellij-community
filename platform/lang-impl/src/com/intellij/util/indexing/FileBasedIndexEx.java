@@ -366,7 +366,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
         set.retainAll(queryResult);
       }
     }
-    return set == null || processVirtualFiles(set, filter, processor);
+    return set != null && processVirtualFiles(set, filter, processor);
   }
 
   @Override
