@@ -48,12 +48,13 @@ internal fun createReadOnlySourcesEditor(): ConfigurableUi<IcsSettings> {
     override fun edit(item: ReadonlySource, mutator: Function<ReadonlySource, ReadonlySource>, isAdd: Boolean) {
       var urlField: TextFieldWithBrowseButton by notNull()
       val panel = panel {
-        row("URL:") {
-          urlField = textFieldWithBrowseButton("Choose Local Git Repository", fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()).component
+        row(IcsBundle.message("readonly.sources.configuration.url.label")) {
+          urlField = textFieldWithBrowseButton(IcsBundle.message("readonly.sources.configuration.repository.chooser"),
+                                               fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()).component
         }
       }
 
-      dialog(title = "Add read-only source", panel = panel, focusedComponent = urlField) {
+      dialog(title = IcsBundle.message("readonly.sources.configuration.add.source"), panel = panel, focusedComponent = urlField) {
         val url = urlField.text.nullize(true)
         validateUrl(url, null)?.let {
           return@dialog listOf(ValidationInfo(it))
@@ -72,7 +73,7 @@ internal fun createReadOnlySourcesEditor(): ConfigurableUi<IcsSettings> {
     override fun isUseDialogToAdd() = true
   }
 
-  val editor = TableModelEditor(COLUMNS, itemEditor, "No sources configured")
+  val editor = TableModelEditor(COLUMNS, itemEditor, IcsBundle.message("readonly.sources.configuration.no.sources.configured"))
   editor.reset(if (ApplicationManager.getApplication().isUnitTestMode) emptyList() else icsManager.settings.readOnlySources)
   return object : ConfigurableUi<IcsSettings> {
     override fun isModified(settings: IcsSettings) = editor.isModified
@@ -104,7 +105,7 @@ internal fun createReadOnlySourcesEditor(): ConfigurableUi<IcsSettings> {
         val root = icsManager.readOnlySourcesManager.rootDir
 
         if (toDelete.isNotEmpty()) {
-          indicator.text = "Deleting old repositories"
+          indicator.text = icsMessage("progress.deleting.old.repositories")
           for (path in toDelete) {
             indicator.checkCanceled()
             LOG.runAndLogException {
@@ -118,7 +119,7 @@ internal fun createReadOnlySourcesEditor(): ConfigurableUi<IcsSettings> {
           for (source in toCheckout) {
             indicator.checkCanceled()
             LOG.runAndLogException {
-              indicator.text = "Cloning ${source.url!!.trimMiddle(255)}"
+              indicator.text = icsMessage("progress.cloning.repository", source.url!!.trimMiddle(255))
               val dir = root.resolve(source.path!!)
               if (dir.exists()) {
                 dir.delete()

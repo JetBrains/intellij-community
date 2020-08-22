@@ -28,8 +28,6 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.properties.Delegates
 
-internal const val PLUGIN_NAME = "Settings Repository"
-
 internal val LOG = logger<IcsManager>()
 
 internal val icsManager by lazy(LazyThreadSafetyMode.NONE) {

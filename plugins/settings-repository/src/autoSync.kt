@@ -32,7 +32,7 @@ internal class AutoSyncManager(private val icsManager: IcsManager) {
       }
       else if (autoSyncFuture != null) {
         LOG.info("Wait for auto sync future")
-        indicator.text = "Wait for auto sync completion"
+        indicator.text = IcsBundle.message("autosync.progress.text")
         while (!autoFuture.isCompleted) {
           if (indicator.isCanceled) {
             return

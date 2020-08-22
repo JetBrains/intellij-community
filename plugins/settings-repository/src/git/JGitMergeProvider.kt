@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -9,6 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.ui.ColumnInfo
 import org.eclipse.jgit.lib.Repository
+import org.jetbrains.settingsRepository.IcsBundle
 import org.jetbrains.settingsRepository.RepositoryVirtualFile
 import java.nio.CharBuffer
 import java.util.*
@@ -85,8 +86,11 @@ class JGitMergeProvider<T>(private val repository: Repository, private val confl
 
     private fun getContent(file: VirtualFile, isTheirs: Boolean) = conflicts.pathToContent(file.path, if (isTheirs) 2 else 1)
 
-    inner class StatusColumn(private val isTheirs: Boolean) : ColumnInfo<VirtualFile, String>(if (isTheirs) "Theirs" else "Yours") {
-      override fun valueOf(file: VirtualFile?) = if (getContent(file!!, isTheirs) == null) "Deleted" else "Modified"
+    inner class StatusColumn(private val isTheirs: Boolean) : ColumnInfo<VirtualFile, String>(
+      if (isTheirs) IcsBundle.message("merge.settings.column.name.theirs") else IcsBundle.message("merge.settings.column.name.yours"))
+    {
+      override fun valueOf(file: VirtualFile?) = if (getContent(file!!, isTheirs) == null)
+        IcsBundle.message("merge.settings.file.deleted") else IcsBundle.message("merge.settings.file.modified")
 
       override fun getMaxStringValue() = "Modified"
 

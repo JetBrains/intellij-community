@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.components.DialogManager
 import com.intellij.util.text.nullize
@@ -16,8 +17,9 @@ import javax.swing.AbstractAction
 import javax.swing.Action
 import javax.swing.JTextField
 
+@NlsContexts.DialogMessage
 fun validateUrl(url: String?, project: Project?): String? {
-  return if (url == null) "URL is empty" else icsManager.repositoryService.checkUrl(url, project)
+  return if (url == null) IcsBundle.message("dialog.error.message.url.empty") else icsManager.repositoryService.checkUrl(url, project)
 }
 
 internal fun createMergeActions(project: Project?, urlTextField: TextFieldWithBrowseButton, dialogManager: DialogManager): List<Action> {
@@ -32,7 +34,8 @@ internal fun createMergeActions(project: Project?, urlTextField: TextFieldWithBr
 private class SyncAction(private val syncType: SyncType,
                          private val urlTextField: JTextField,
                          private val project: Project?,
-                         private val dialogManager: DialogManager) : AbstractAction(icsMessage("action.${syncType.messageKey}Settings.text")) {
+                         private val dialogManager: DialogManager) : AbstractAction(
+  icsMessage("action.${syncType.messageKey}Settings.text")) {
   private fun saveRemoteRepositoryUrl(): ValidationInfo? {
     val url = urlTextField.text.nullize(true)
     validateUrl(url, project)?.let {
@@ -45,7 +48,7 @@ private class SyncAction(private val syncType: SyncType,
     return null
   }
 
-  private fun createError(message: String) = ValidationInfo(message, urlTextField)
+  private fun createError(@NlsContexts.DialogMessage message: String) = ValidationInfo(message, urlTextField)
 
   override fun actionPerformed(event: ActionEvent) {
     dialogManager.performAction {
@@ -97,7 +100,7 @@ private class SyncAction(private val syncType: SyncType,
         return listOf(createError(message))
       }
       else {
-        return listOf(createError(e.message ?: "Internal error"))
+        return listOf(createError(e.message ?: IcsBundle.message("sync.internal.error")))
       }
     }
 

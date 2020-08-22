@@ -1,16 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository.git
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.util.NlsSafe
 import org.eclipse.jgit.lib.Ref
 import org.eclipse.jgit.merge.MergeMessageFormatter
 import org.jetbrains.settingsRepository.icsManager
 import java.net.InetAddress
 
 interface CommitMessageFormatter {
-  fun message(text: String): String = text
+  @NlsSafe
+  fun message(@NlsSafe text: String): String = text
 
   fun prependMessage(builder: StringBuilder = StringBuilder()): StringBuilder = builder
 

@@ -17,6 +17,7 @@ import com.intellij.util.containers.CollectionFactory
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.eclipse.jgit.errors.NoRemoteRepositoryException
+import org.jetbrains.annotations.NonNls
 import java.util.*
 
 internal class SyncManager(private val icsManager: IcsManager, private val autoSyncManager: AutoSyncManager) {
@@ -237,7 +238,7 @@ private fun updateStateStorage(changedComponentNames: MutableSet<String>, stateS
   }
 }
 
-enum class SyncType(val messageKey: String) {
+enum class SyncType(@NonNls val messageKey: String) {
   MERGE("Merge"),
   OVERWRITE_LOCAL("ResetToTheirs"),
   OVERWRITE_REMOTE("ResetToMy")
