@@ -590,8 +590,9 @@ object UpdateChecker {
                 PluginUpdateDialog.runUpdateAll(updatedPlugins, e.getData(PlatformDataKeys.CONTEXT_COMPONENT) as JComponent?)
               }
             })
-            notification.addAction(object : NotificationAction(
-              IdeBundle.message(if (updatedPlugins.size == 1) "updates.ignore.update.link" else "updates.ignore.updates.link")) {
+            val linkMessage = if (updatedPlugins.size == 1) IdeBundle.message("updates.ignore.update.link")
+            else IdeBundle.message("updates.ignore.updates.link")
+            notification.addAction(object : NotificationAction(linkMessage) {
               override fun actionPerformed(e: AnActionEvent, notification: Notification) {
                 notification.expire()
                 PluginUpdateDialog.ignorePlugins(updatedPlugins.map { downloader -> downloader.descriptor })
