@@ -4,6 +4,7 @@ package com.intellij.execution.junit2.configuration;
 import com.intellij.execution.JUnitBundle;
 import com.intellij.execution.application.JavaSettingsEditorBase;
 import com.intellij.execution.junit.JUnitConfiguration;
+import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.ui.*;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.rt.execution.junit.RepeatCount;
@@ -41,6 +42,19 @@ public class JUnitSettingsEditor extends JavaSettingsEditorBase<JUnitConfigurati
     fragments.add(testKind);
 
     String group = JUnitBundle.message("test.group");
+    VariantTagFragment<JUnitConfiguration, TestSearchScope> scopeFragment =
+      VariantTagFragment.createFragment("testScope", JUnitBundle.message("search.scope.name"), group,
+                                        () -> new TestSearchScope[] { TestSearchScope.WHOLE_PROJECT, TestSearchScope.SINGLE_MODULE, TestSearchScope.MODULE_WITH_DEPENDENCIES},
+                                        configuration -> configuration.getTestSearchScope(),
+                                        (configuration, scope) -> configuration.setSearchScope(scope),
+                                        configuration -> configuration.getTestSearchScope() != TestSearchScope.WHOLE_PROJECT);
+    scopeFragment.setVariantNameProvider(scope -> scope == TestSearchScope.WHOLE_PROJECT
+                                                  ? JUnitBundle.message("search.scope.project")
+                                                  : scope == TestSearchScope.SINGLE_MODULE
+                                                    ? JUnitBundle.message("search.scope.module.deps")
+                                                    : JUnitBundle.message("search.scope.module"));
+    fragments.add(scopeFragment);
+
     VariantTagFragment<JUnitConfiguration, String> repeat =
       VariantTagFragment.createFragment("repeat", JUnitBundle.message("repeat.name"), group,
                                         () -> RepeatCount.REPEAT_TYPES,

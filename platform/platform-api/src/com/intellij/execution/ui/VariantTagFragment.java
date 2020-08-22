@@ -57,6 +57,7 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
     mySetter = setter;
   }
 
+
   public V getSelectedVariant() {
     return mySelectedVariant;
   }
