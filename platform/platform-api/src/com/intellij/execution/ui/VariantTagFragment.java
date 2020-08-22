@@ -11,15 +11,16 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.function.BiConsumer;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
+import java.util.function.*;
 
 public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButton> {
 
   public void setVariantNameProvider(Function<? super V, String> variantNameProvider) {
     myVariantNameProvider = variantNameProvider;
+  }
+
+  public void setToggleListener(Consumer<V> toggleListener) {
+    myToggleListener = toggleListener;
   }
 
   public static <T, V> VariantTagFragment<T, V> createFragment(String id,
@@ -39,9 +40,10 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
 
   private V mySelectedVariant;
   private final Supplier<? extends V[]> myVariantsProvider;
-  private Function<? super V, String> myVariantNameProvider;
   private final Function<? super T, ? extends V> myGetter;
   private final BiConsumer<? super T, ? super V> mySetter;
+  private Function<? super V, String> myVariantNameProvider;
+  private Consumer<V> myToggleListener;
 
   public VariantTagFragment(String id,
                             @Nls(capitalization = Nls.Capitalization.Sentence) String name,
@@ -113,6 +115,9 @@ public class VariantTagFragment<T, V> extends SettingsEditorFragment<T, TagButto
       public void setSelected(@NotNull AnActionEvent e, boolean state) {
         setSelectedVariant(s);
         fireEditorStateChanged();
+        if (myToggleListener != null) {
+          myToggleListener.accept(s);
+        }
       }
     })) {
       @Override
