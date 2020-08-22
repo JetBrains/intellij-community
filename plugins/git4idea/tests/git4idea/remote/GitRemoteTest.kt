@@ -2,8 +2,10 @@
 package git4idea.remote
 
 import com.intellij.openapi.components.service
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.UriUtil
 import com.intellij.util.io.URLUtil
+import com.intellij.xml.util.XmlStringUtil
 import git4idea.checkout.GitCheckoutProvider
 import git4idea.commands.GitHttpAuthService
 import git4idea.commands.GitHttpAuthenticator
@@ -90,10 +92,10 @@ class GitRemoteTest : GitPlatformTest() {
     val gitVersion = vcs.version
     val expectedAuthFailureMessage = when {
       gitVersion.isLaterOrEqual(GitVersion(2, 22, 0, 0)) -> {
-        "Authentication failed for '${makeUrl()}/'"
+        StringUtil.escapeXmlEntities("Authentication failed for '${makeUrl()}/'")
       }
       gitVersion.isLaterOrEqual(GitVersion(1, 8, 3, 0)) -> {
-        "Authentication failed for '$url/'"
+        StringUtil.escapeXmlEntities("Authentication failed for '$url/'")
       }
       else -> {
         "Authentication failed"
