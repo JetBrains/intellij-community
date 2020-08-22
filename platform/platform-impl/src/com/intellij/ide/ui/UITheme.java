@@ -21,9 +21,6 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
 import javax.swing.*;
 import javax.swing.plaf.BorderUIResource;
@@ -200,65 +197,13 @@ public final class UITheme {
             byte[] digest = scope.digest();
             Map<String, String> newPalette = scope.newPalette;
             Map<String, Integer> alphas = scope.alphas;
-            return newPatcher(digest, newPalette, alphas);
-          }
-
-          @Nullable
-          private SVGLoader.SvgElementColorPatcher newPatcher(byte @Nullable [] digest,
-                                                              @NotNull Map<String, String> newPalette,
-                                                              @NotNull Map<String, Integer> alphas) {
-            if (newPalette.isEmpty()) {
-              return null;
-            }
-
-            return new SVGLoader.SvgElementColorPatcher() {
-              @Override
-              public byte[] digest() {
-                return digest;
-              }
-
-              @Override
-              public void patchColors(@NotNull Element svg) {
-                patchColorAttribute(svg, "fill");
-                patchColorAttribute(svg, "stroke");
-                NodeList nodes = svg.getChildNodes();
-                int length = nodes.getLength();
-                for (int i = 0; i < length; i++) {
-                  Node item = nodes.item(i);
-                  if (item instanceof Element) {
-                    patchColors((Element)item);
-                  }
-                }
-              }
-
-              private void patchColorAttribute(@NotNull Element svg, String attrName) {
-                String color = svg.getAttribute(attrName);
-                if (!StringUtil.isEmpty(color)) {
-                  String newColor = newPalette.get(toCanonicalColor(color));
-                  if (newColor != null) {
-                    svg.setAttribute(attrName, newColor);
-                    if (alphas.get(newColor) != null) {
-                      svg.setAttribute(attrName + "-opacity", String.valueOf((Float.valueOf(alphas.get(newColor)) / 255f)));
-                    }
-                  }
-                }
-              }
-            };
+            return SVGLoader.newPatcher(digest, newPalette, alphas);
           }
         };
       }
     }
 
     return theme;
-  }
-
-  private static String toCanonicalColor(String color) {
-    String s = StringUtil.toLowerCase(color);
-    //todo[kb]: add support for red, white, black, and other named colors
-    if (s.startsWith("#") && s.length() < 7) {
-      s = "#" + ColorUtil.toHex(ColorUtil.fromHex(s));
-    }
-    return s;
   }
 
   private static String toColorString(String key, boolean darkTheme) {

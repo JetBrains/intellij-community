@@ -5,6 +5,8 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.scale.DerivedScaleType;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.ui.svg.MyTranscoder;
@@ -22,6 +24,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import java.awt.*;
 import java.awt.geom.Dimension2D;
@@ -33,6 +37,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Map;
 
 /**
  * @author tav
@@ -234,6 +239,58 @@ public final class SVGLoader {
         patcher.patchColors(document.getDocumentElement());
       }
     }
+  }
+
+  @Nullable
+  public static SVGLoader.SvgElementColorPatcher newPatcher(byte @Nullable [] digest,
+                                                      @NotNull Map<String, String> newPalette,
+                                                      @NotNull Map<String, Integer> alphas) {
+    if (newPalette.isEmpty()) {
+      return null;
+    }
+
+    return new SVGLoader.SvgElementColorPatcher() {
+      @Override
+      public byte[] digest() {
+        return digest;
+      }
+
+      @Override
+      public void patchColors(@NotNull Element svg) {
+        patchColorAttribute(svg, "fill");
+        patchColorAttribute(svg, "stroke");
+        NodeList nodes = svg.getChildNodes();
+        int length = nodes.getLength();
+        for (int i = 0; i < length; i++) {
+          Node item = nodes.item(i);
+          if (item instanceof Element) {
+            patchColors((Element)item);
+          }
+        }
+      }
+
+      private void patchColorAttribute(@NotNull Element svg, String attrName) {
+        String color = svg.getAttribute(attrName);
+        if (!StringUtil.isEmpty(color)) {
+          String newColor = newPalette.get(toCanonicalColor(color));
+          if (newColor != null) {
+            svg.setAttribute(attrName, newColor);
+            if (alphas.get(newColor) != null) {
+              svg.setAttribute(attrName + "-opacity", String.valueOf((Float.valueOf(alphas.get(newColor)) / 255f)));
+            }
+          }
+        }
+      }
+    };
+  }
+
+  private static String toCanonicalColor(String color) {
+    String s = StringUtil.toLowerCase(color);
+    //todo[kb]: add support for red, white, black, and other named colors
+    if (s.startsWith("#") && s.length() < 7) {
+      s = "#" + ColorUtil.toHex(ColorUtil.fromHex(s));
+    }
+    return s;
   }
 
   /**
