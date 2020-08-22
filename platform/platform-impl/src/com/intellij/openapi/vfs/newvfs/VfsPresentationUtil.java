@@ -3,6 +3,7 @@ package com.intellij.openapi.vfs.newvfs;
 
 import com.intellij.openapi.fileEditor.impl.EditorTabPresentationUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,7 +24,7 @@ public final class VfsPresentationUtil {
   }
 
   @NotNull
-  public static String getPresentableNameForUI(@NotNull Project project, @NotNull VirtualFile file) {
+  public static @NlsContexts.TabTitle String getPresentableNameForUI(@NotNull Project project, @NotNull VirtualFile file) {
     return EditorTabPresentationUtil.getEditorTabTitle(project, file, null);
   }
 
