@@ -44,11 +44,13 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
@@ -75,6 +77,7 @@ import org.jetbrains.idea.maven.server.MavenServerEmbedder;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.jetbrains.idea.maven.server.MavenServerProgressIndicator;
 import org.jetbrains.idea.maven.server.MavenServerUtil;
+import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
@@ -150,7 +153,6 @@ public class MavenUtil {
 
     return res;
   }
-
 
   public static void invokeLater(Project p, Runnable r) {
     invokeLater(p, ModalityState.defaultModalityState(), r);
@@ -333,8 +335,9 @@ public class MavenUtil {
   public static void runOrApplyMavenProjectFileTemplate(Project project,
                                                         VirtualFile file,
                                                         @NotNull MavenId projectId,
-                                                        boolean interactive) throws IOException {
-    runOrApplyMavenProjectFileTemplate(project, file, projectId, null, null, interactive);
+                                                        boolean interactive,
+                                                        Sdk moduleSdk) throws IOException {
+    runOrApplyMavenProjectFileTemplate(project, file, projectId, null, null, interactive, moduleSdk);
   }
 
   public static void runOrApplyMavenProjectFileTemplate(Project project,
@@ -342,7 +345,8 @@ public class MavenUtil {
                                                         @NotNull MavenId projectId,
                                                         MavenId parentId,
                                                         @Nullable VirtualFile parentFile,
-                                                        boolean interactive) throws IOException {
+                                                        boolean interactive,
+                                                        Sdk moduleSdk) throws IOException {
     Properties properties = new Properties();
     Properties conditions = new Properties();
     properties.setProperty("GROUP_ID", projectId.getGroupId());
@@ -368,6 +372,19 @@ public class MavenUtil {
         }
       }
     }
+
+    if (moduleSdk != null) {
+      LanguageLevel languageLevel = LanguageLevel.parse(moduleSdk.getVersionString());
+      if (languageLevel != null) {
+        JavaVersion javaVersion = languageLevel.toJavaVersion();
+
+        String propertyName = javaVersion.feature < 9 ? "JAVA_LEVEL" : "JAVA_RELEASE";
+        String javaRelease = JpsJavaSdkType.complianceOption(javaVersion);
+
+        properties.setProperty(propertyName, javaRelease);
+      }
+    }
+
     runOrApplyFileTemplate(project, file, MavenFileTemplateGroupFactory.MAVEN_PROJECT_XML_TEMPLATE, properties, conditions, interactive);
   }
 

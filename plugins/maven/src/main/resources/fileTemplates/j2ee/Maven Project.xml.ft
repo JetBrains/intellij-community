@@ -19,5 +19,15 @@
     <artifactId>${ARTIFACT_ID}</artifactId>
     <version>${VERSION}</version>
 
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+#if (${JAVA_RELEASE})
+        <maven.compiler.release>${JAVA_RELEASE}</maven.compiler.release>
+#end
+#if (${JAVA_LEVEL})
+        <maven.compiler.source>${JAVA_LEVEL}</maven.compiler.source>
+        <maven.compiler.target>${JAVA_LEVEL}</maven.compiler.target>
+#end
+    </properties>
     ${END}
 </project>

@@ -7,6 +7,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -52,6 +53,8 @@ public class MavenModuleBuilderHelper {
   private final MavenArchetype myArchetype;
   private final Map<String, String> myPropertiesToCreateByArtifact;
 
+  private final Sdk mySdk;
+
   @NlsContexts.Command private final String myCommandName;
 
   public MavenModuleBuilderHelper(@NotNull MavenId projectId,
@@ -61,6 +64,7 @@ public class MavenModuleBuilderHelper {
                                   boolean inheritVersion,
                                   MavenArchetype archetype,
                                   Map<String, String> propertiesToCreateByArtifact,
+                                  Sdk sdk,
                                   @NlsContexts.Command String commandName) {
     myProjectId = projectId;
     myAggregatorProject = aggregatorProject;
@@ -69,6 +73,7 @@ public class MavenModuleBuilderHelper {
     myInheritVersion = inheritVersion;
     myArchetype = archetype;
     myPropertiesToCreateByArtifact = propertiesToCreateByArtifact;
+    mySdk = sdk;
     myCommandName = commandName;
   }
 
@@ -82,7 +87,7 @@ public class MavenModuleBuilderHelper {
           file = root.findChild(MavenConstants.POM_XML);
           if (file != null) file.delete(this);
           file = root.createChildData(this, MavenConstants.POM_XML);
-          MavenUtil.runOrApplyMavenProjectFileTemplate(project, file, myProjectId, isInteractive);
+          MavenUtil.runOrApplyMavenProjectFileTemplate(project, file, myProjectId, isInteractive, mySdk);
         }
         catch (IOException e) {
           showError(project, e);

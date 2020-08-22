@@ -37,7 +37,6 @@ import java.util.List;
 import java.util.Map;
 
 import static icons.OpenapiIcons.RepositoryLibraryLogo;
-import static org.jetbrains.idea.maven.utils.MavenUtil.MAVEN_NAME;
 
 public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implements SourcePathsBuilder {
   private MavenProject myAggregatorProject;
@@ -73,7 +72,7 @@ public abstract class AbstractMavenModuleBuilder extends ModuleBuilder implement
       }
 
       new MavenModuleBuilderHelper(myProjectId, myAggregatorProject, myParentProject, myInheritGroupId,
-                                   myInheritVersion, myArchetype, myPropertiesToCreateByArtifact,
+                                   myInheritVersion, myArchetype, myPropertiesToCreateByArtifact, rootModel.getSdk(),
                                    MavenProjectBundle.message("command.name.create.new.maven.module")).configure(project, root, false);
     });
   }
