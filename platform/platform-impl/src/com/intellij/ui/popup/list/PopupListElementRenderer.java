@@ -24,7 +24,7 @@ import java.awt.*;
 public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
   protected final ListPopupImpl myPopup;
   private JLabel myShortcutLabel;
-  private JLabel myValueLabel;
+  private @Nullable JLabel myValueLabel;
 
   public PopupListElementRenderer(final ListPopupImpl aPopup) {
     super(new ListItemDescriptorAdapter<E>() {
@@ -89,7 +89,6 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
 
     setSelected(myComponent, isSelected && isSelectable);
     setSelected(myTextLabel, isSelected && isSelectable);
-    setSelected(myValueLabel, isSelected && isSelectable);
     setSelected(myNextStepLabel, isSelected && isSelectable);
 
     if (step instanceof BaseListPopupStep) {
