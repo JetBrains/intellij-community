@@ -99,10 +99,10 @@ internal class GitNewBranchDialog @JvmOverloads constructor(project: Project,
 
       if (localBranchConflict == null || overwriteCheckbox?.isSelected == true) null // no conflicts or ask to reset
       else if (localBranchConflict.warning && localConflictsAllowed) {
-        warning(HtmlBuilder().append(localBranchConflict.message).append(HtmlChunk.br()).append(operation.description).toString())
+        warning(HtmlBuilder().append(localBranchConflict.message + ".").append(HtmlChunk.br()).append(operation.description).toString())
       }
       else if (showResetOption) {
-        error(HtmlBuilder().append(localBranchConflict.message).append(HtmlChunk.br())
+        error(HtmlBuilder().append(localBranchConflict.message + ".").append(HtmlChunk.br())
                 .append(GitBundle.message("new.branch.dialog.overwrite.existing.branch.warning")))
       }
       else error(localBranchConflict.message)
