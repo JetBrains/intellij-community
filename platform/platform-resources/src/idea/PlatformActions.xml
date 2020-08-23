@@ -867,6 +867,16 @@
       <action id="WelcomeScreen.Update" class="com.intellij.openapi.updateSettings.impl.CheckForUpdateAction"/>
     </group>
 
+    <group id="WelcomeScreen.Help">
+      <reference ref="WelcomeScreen.Documentation"/>
+      <separator/>
+      <reference ref="WelcomeScreen.Configure.Properties"/>
+      <reference ref="WelcomeScreen.Configure.VMOptions"/>
+      <reference ref="WelcomeScreen.Configure.CollectZippedLogs"/>
+      <separator/>
+      <reference ref="WelcomeScreen.Update"/>
+    </group>
+
     <group id="WelcomeScreenRecentProjectActionGroup">
       <action id="WelcomeScreen.OpenSelected" class="com.intellij.openapi.wm.impl.welcomeScreen.OpenSelectedProjectsAction"/>
       <action id="WelcomeScreen.NewGroup" class="com.intellij.openapi.wm.impl.welcomeScreen.CreateNewProjectGroupAction"/>

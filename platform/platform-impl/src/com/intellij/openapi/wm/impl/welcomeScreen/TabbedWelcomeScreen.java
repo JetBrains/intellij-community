@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
+import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WelcomeScreenTab;
 import com.intellij.openapi.wm.WelcomeTabFactory;
@@ -12,6 +14,7 @@ import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.table.ComponentsListFocusTraversalPolicy;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +22,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Arrays;
+import java.util.List;
 
+import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.createActionLink;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenComponentFactory.createSmallLogo;
 import static com.intellij.openapi.wm.impl.welcomeScreen.WelcomeScreenUIManager.getMainTabListBackground;
 
@@ -37,11 +43,17 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
     tabList.addListSelectionListener(e -> centralPanel.select(tabList.getSelectedValue(), true));
 
     JComponent logoComponent = createSmallLogo();
+    logoComponent.setFocusable(false);
     logoComponent.setBorder(JBUI.Borders.emptyLeft(16));
 
     JPanel leftPanel = new NonOpaquePanel();
     leftPanel.add(logoComponent, BorderLayout.NORTH);
     leftPanel.add(tabList, BorderLayout.CENTER);
+
+    JComponent helpLink =
+      createActionLink(this, IdeBundle.message("action.help"), IdeActions.GROUP_WELCOME_SCREEN_HELP, null, centralPanel);
+    leftPanel.add(JBUI.Panels.simplePanel().andTransparent().addToLeft(helpLink).withBorder(JBUI.Borders.empty(5, 10)), BorderLayout.SOUTH);
+
     leftPanel.setPreferredSize(new Dimension(JBUI.scale(196), leftPanel.getPreferredSize().height));
 
     add(leftPanel, BorderLayout.WEST);
@@ -54,6 +66,14 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
       UiNotifyConnector.doWhenFirstShown(firstShownPanel, () -> IdeFocusManager.getGlobalInstance()
         .requestFocus(IdeFocusTraversalPolicy.getPreferredFocusedComponent(firstShownPanel), true));
     }
+    setFocusTraversalPolicyProvider(true);
+    setFocusTraversalPolicy(new ComponentsListFocusTraversalPolicy() {
+
+      @Override
+      protected @NotNull List<Component> getOrderedComponents() {
+        return Arrays.asList(helpLink, tabList, centralPanel);
+      }
+    });
   }
 
   @NotNull
