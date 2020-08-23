@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.util.ArrayUtil;
@@ -40,44 +41,56 @@ public class FragmentHintManager {
 
   public void registerFragment(SettingsEditorFragment<?, ?> fragment) {
     myFragments.add(fragment);
-    JComponent component = fragment.component();
-    if (component instanceof RawCommandLineEditor) {
-      component = ((RawCommandLineEditor)component).getEditorField();
+    for (JComponent jComponent : fragment.getAllComponents()) {
+      registerComponent(fragment, getComponent(jComponent));
     }
+  }
+
+  private void registerComponent(SettingsEditorFragment<?, ?> fragment, JComponent component) {
     component.addMouseListener(new MouseAdapter() {
       @Override
       public void mouseEntered(MouseEvent e) {
-        showHint(fragment);
+        showHint(fragment, component);
       }
 
       @Override
       public void mouseExited(MouseEvent e) {
-        showHint(null);
+        showHint(null, component);
       }
     });
 
     component.addFocusListener(new FocusAdapter() {
       @Override
       public void focusGained(FocusEvent e) {
-        showHint(fragment);
+        showHint(fragment, component);
       }
 
       @Override
       public void focusLost(FocusEvent e) {
-        showHint(null);
+        showHint(null, component);
       }
     });
   }
 
-  private void showHint(@Nullable SettingsEditorFragment<?, ?> fragment) {
+  private static JComponent getComponent(JComponent component) {
+    if (component instanceof RawCommandLineEditor) {
+      component = ((RawCommandLineEditor)component).getEditorField();
+    }
+    if (component instanceof ComponentWithBrowseButton) {
+      component = ((ComponentWithBrowseButton<?>)component).getChildComponent();
+    }
+    return component;
+  }
+
+  private void showHint(@Nullable SettingsEditorFragment<?, ?> fragment, @Nullable JComponent component) {
     String hint = myDefaultHint;
     if (fragment != null) {
-      hint = fragment.getHint();
+      hint = fragment.getHint(component);
     }
     else {
       fragment = ContainerUtil.find(myFragments, f -> f.getEditorComponent().hasFocus());
       if (fragment != null) {
-        hint = fragment.getHint();
+        hint = fragment.getHint(component);
       }
     }
     if (fragment != null) {

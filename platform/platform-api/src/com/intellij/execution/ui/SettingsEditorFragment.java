@@ -118,6 +118,10 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
     return myComponent;
   }
 
+  public JComponent[] getAllComponents() {
+    return new JComponent[] { component() };
+  }
+
   public boolean isTag() { return false; }
 
   @Nullable
@@ -203,7 +207,7 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
     return null;
   }
 
-  public @Nullable String getHint() {
+  public @Nullable String getHint(@Nullable JComponent component) {
     return myHint;
   }
 
