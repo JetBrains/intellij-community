@@ -142,7 +142,7 @@ public class NavigationGutterIconBuilder<T> {
   }
 
   @NotNull
-  public NavigationGutterIconBuilder<T> setPopupTitle(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String popupTitle) {
+  public NavigationGutterIconBuilder<T> setPopupTitle(@NotNull @PopupTitle String popupTitle) {
     myPopupTitle = popupTitle;
     return this;
   }
