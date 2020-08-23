@@ -46,6 +46,9 @@ public final class SVGLoader {
   private static final byte[] DEFAULT_THEME = new byte[0];
 
   private static SvgElementColorPatcherProvider ourColorPatcher = null;
+  private static SvgElementColorPatcherProvider ourColorPatcherForSelection = null;
+
+  private static boolean ourIsSelectionContext = false;
 
   private static final SVGLoaderCache ourCache = new SVGLoaderCache() {
     @NotNull
@@ -87,7 +90,7 @@ public final class SVGLoader {
     byte[] svgBytes = null;
     BufferedImage image;
 
-    if (SystemProperties.getBooleanProperty("idea.ui.icons.svg.disk.cache", true)) {
+    if (SystemProperties.getBooleanProperty("idea.ui.icons.svg.disk.cache", true) && !isSelectionContext()) {
       theme = DEFAULT_THEME;
       SvgElementColorPatcherProvider colorPatcher = ourColorPatcher;
       if (colorPatcher != null) {
@@ -115,7 +118,7 @@ public final class SVGLoader {
     }
 
     image = loadWithoutCache(url, stream, scale, docSize);
-    if (image != null && theme != null) {
+    if (image != null && theme != null && !isSelectionContext()) {
       ourCache.storeLoadedImage(theme, svgBytes, scale, image, docSize);
     }
     return image;
@@ -239,6 +242,22 @@ public final class SVGLoader {
         patcher.patchColors(document.getDocumentElement());
       }
     }
+    if (isSelectionContext()) {
+      SvgElementColorPatcher selectionPatcher = getSelectionPatcher();
+      if (selectionPatcher != null) {
+        selectionPatcher.patchColors(document.getDocumentElement());
+      }
+    }
+  }
+
+  private static SvgElementColorPatcher getSelectionPatcher() {
+    //HashMap<String, String> map = new HashMap<>();
+    //map.put("#f26522", "#e2987c");
+    //HashMap<String, Integer> alpha = new HashMap<>();
+    //alpha.put("#e2987c", 255);
+    //
+    //return newPatcher(null, map, alpha);
+    return null;
   }
 
   @Nullable
@@ -332,6 +351,14 @@ public final class SVGLoader {
     new GVTBuilder().build(ctx, document);
     Dimension2D size = ctx.getDocumentSize();
     return new ImageLoader.Dimension2DDouble(size.getWidth() * scale, size.getHeight() * scale);
+  }
+
+  public static void setIsSelectionContext(boolean isSelectionContext) {
+    ourIsSelectionContext = isSelectionContext;
+  }
+
+  public static boolean isSelectionContext() {
+    return ourIsSelectionContext;
   }
 
   public interface SvgElementColorPatcher {

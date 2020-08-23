@@ -96,7 +96,7 @@ public final class ImageDescriptor {
 
     String cacheKey = null;
     URL url;
-    if (useCache) {
+    if (useCache && !SVGLoader.isSelectionContext()) {
       cacheKey = path + (type == ImageType.SVG ? "_@" + scale + "x" : "");
       Pair<Image, ImageLoader.Dimension2DDouble> pair = ourCache.get(cacheKey);
       if (pair != null) {

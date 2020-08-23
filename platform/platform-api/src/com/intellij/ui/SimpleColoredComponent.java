@@ -10,6 +10,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.icons.LazyImageIcon;
 import com.intellij.ui.paint.EffectPainter;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
@@ -1035,7 +1036,20 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
   protected void paintIcon(@NotNull Graphics g, @NotNull Icon icon, int offset) {
     Rectangle area = computePaintArea();
-    icon.paintIcon(this, g, offset, area.y + (area.height - icon.getIconHeight() + 1) / 2);
+    int x = offset;
+    int y = area.y + (area.height - icon.getIconHeight() + 1) / 2;
+    if (isSelection()) {
+      LazyImageIcon.paintIconWithSelection(icon,this, g, x, y);
+    } else {
+      icon.paintIcon(this, g, x, y);
+    }
+  }
+
+  private boolean isSelection() {
+    Color bg = getBackground();
+    return bg != null
+           && Comparing.equal(UIUtil.getTreeSelectionBackground(true), bg)
+           || Comparing.equal(UIUtil.getListSelectionBackground(true), bg) ;
   }
 
   protected void applyAdditionalHints(@NotNull Graphics2D g) {

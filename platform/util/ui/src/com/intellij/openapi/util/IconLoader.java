@@ -606,6 +606,7 @@ public final class IconLoader {
 
     @Nullable private final Supplier<? extends RGBImageFilter> myLocalFilterSupplier;
     private final MyScaledIconsCache myScaledIconsCache = new MyScaledIconsCache();
+    private final MyScaledIconsCache mySelectedIconsCache = new MyScaledIconsCache();
 
     public CachedImageIcon(@NotNull URL url) {
       this(url, true);
@@ -665,6 +666,17 @@ public final class IconLoader {
         ImageIcon icon = myScaledIconsCache.getOrScaleIcon(1f);
         if (icon != null) {
           myRealIcon = icon.getIconWidth() < 50 && icon.getIconHeight() < 50 ? icon : new SoftReference<>(icon);
+          return icon;
+        }
+      }
+      return EMPTY_ICON;
+    }
+
+    @Override
+    protected ImageIcon getRealIconForSelection(@Nullable ScaleContext ctx) {
+      synchronized (myLock) {
+        ImageIcon icon = mySelectedIconsCache.getOrScaleIcon(1f);
+        if (icon != null) {
           return icon;
         }
       }
@@ -814,7 +826,7 @@ public final class IconLoader {
         }
 
         ImageIcon icon = SoftReference.dereference(scaledIconsCache.get(key(ctx)));
-        if (icon != null) {
+        if (icon != null && !SVGLoader.isSelectionContext()) {
           return icon;
         }
         Image image = loadFromUrl(ctx, isDark());

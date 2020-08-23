@@ -5,6 +5,7 @@ import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.ui.scale.ScaleContextSupport;
 import com.intellij.ui.scale.UserScaleContext;
+import com.intellij.util.SVGLoader;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,6 +44,15 @@ public abstract class LazyImageIcon extends ScaleContextSupport /* do not modify
     return icon instanceof ImageIcon ? (ImageIcon)icon : null;
   }
 
+  public static void paintIconWithSelection(Icon icon, Component c, Graphics g, int x, int y) {
+    try {
+      SVGLoader.setIsSelectionContext(true);
+      icon.paintIcon(c, g, x, y);
+    } finally {
+      SVGLoader.setIsSelectionContext(false);
+    }
+  }
+
   @Nullable
   @TestOnly
   public final ImageIcon doGetRealIcon() {
@@ -52,7 +62,12 @@ public abstract class LazyImageIcon extends ScaleContextSupport /* do not modify
   @Override
   public final void paintIcon(Component c, Graphics g, int x, int y) {
     Graphics2D g2d = g instanceof Graphics2D ? (Graphics2D)g : null;
-    getRealIcon(ScaleContext.create(g2d)).paintIcon(c, g, x, y);
+    ScaleContext ctx = ScaleContext.create(g2d);
+    if (SVGLoader.isSelectionContext()) {
+      getRealIconForSelection(ctx).paintIcon(c, g, x, y);
+    } else {
+      getRealIcon(ctx).paintIcon(c, g, x, y);
+    }
   }
 
   @Override
@@ -78,4 +93,8 @@ public abstract class LazyImageIcon extends ScaleContextSupport /* do not modify
 
   @NotNull
   protected abstract ImageIcon getRealIcon(@Nullable ScaleContext ctx);
+
+  protected ImageIcon getRealIconForSelection(@Nullable ScaleContext ctx) {
+    return getRealIcon(ctx);
+  }
 }
