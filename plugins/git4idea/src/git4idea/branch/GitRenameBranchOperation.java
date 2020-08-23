@@ -96,9 +96,9 @@ class GitRenameBranchOperation extends GitBranchOperation {
   protected String getRollbackProposal() {
     return new HtmlBuilder().append(GitBundle.message("git.rename.branch.has.succeeded.for.the.following.repositories",
                                                       getSuccessfulRepositories().size()))
-      .append(HtmlChunk.br())
+      .br()
       .appendRaw(successfulRepositoriesJoined())
-      .append(HtmlChunk.br())
+      .br()
       .append(GitBundle.message("git.rename.branch.you.may.rename.branch.back", myCurrentName)).toString();
   }
 

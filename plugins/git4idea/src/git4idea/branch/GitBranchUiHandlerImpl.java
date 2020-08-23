@@ -170,8 +170,7 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
                .showOkCancelDialog(myProject, message, title, deleteButtonText, getCancelButtonText(), getQuestionIcon()) ? DELETE : CANCEL;
     }
     String forBranch = GitBundle.message("branch.ui.handler.delete.tracking.local.branch.as.well", trackingBranches.iterator().next());
-    String forBranches = new HtmlBuilder().append(GitBundle.message("branch.ui.handler.delete.tracking.local.branches"))
-      .append(HtmlChunk.br())
+    String forBranches = new HtmlBuilder().append(GitBundle.message("branch.ui.handler.delete.tracking.local.branches")).br()
       .appendWithSeparators(HtmlChunk.raw(", " + HtmlChunk.br()), ContainerUtil.map(trackingBranches, it -> HtmlChunk.text(it)))
       .wrapWith(HtmlChunk.html()).toString();
     String checkboxMessage = trackingBranches.size() == 1 ? forBranch : forBranches;

@@ -216,9 +216,9 @@ class GitCheckoutOperation extends GitBranchOperation {
     String rollBackProposal = GitBundle.message("checkout.operation.you.may.rollback.not.to.let.branches.diverge", previousBranch);
     return new HtmlBuilder()
       .append(GitBundle.message("checkout.operation.however.checkout.has.succeeded.for.the.following", repositories.size()))
-      .append(HtmlChunk.br())
+      .br()
       .appendRaw(successfulRepositoriesJoined())
-      .append(HtmlChunk.br())
+      .br()
       .append(rollBackProposal)
       .toString();
   }

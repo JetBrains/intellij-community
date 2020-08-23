@@ -56,7 +56,7 @@ fun <T> runProcess(project: Project, @NlsContexts.ProgressTitle title: String, c
 
 private fun showErrorMessage(project: Project, messageTitle: String, exceptions: Collection<Exception>) {
   val message = HtmlBuilder().append(HtmlChunk.text("$messageTitle:").bold())
-    .append(HtmlChunk.br())
+    .br()
     .appendWithSeparators(HtmlChunk.br(), exceptions.map { HtmlChunk.text(it.localizedMessage) })
 
   VcsBalloonProblemNotifier.showOverVersionControlView(project, message.toString(), MessageType.ERROR)

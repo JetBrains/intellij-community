@@ -155,9 +155,9 @@ class GitDeleteTagOperation extends GitBranchOperation {
   protected String getRollbackProposal() {
     return new HtmlBuilder().append(GitBundle.message("delete.tag.operation.however.tag.deletion.has.succeeded.for.the.following",
                                                       getSkippedRepositories().size()))
-      .append(HtmlChunk.br())
+      .br()
       .appendRaw(successfulRepositoriesJoined())
-      .append(HtmlChunk.br())
+      .br()
       .append(GitBundle.message("delete.tag.operation.you.may.rollback.not.to.let.tags.diverge", myTagName))
       .toString();
   }

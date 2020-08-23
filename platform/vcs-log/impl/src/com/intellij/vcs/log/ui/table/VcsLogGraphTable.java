@@ -464,7 +464,7 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
                               ? VcsLogBundle.message("vcs.log.click.to.collapse.paths.column.tooltip")
                               : VcsLogBundle.message("vcs.log.click.to.expand.paths.column.tooltip");
         return new HtmlBuilder().append(HtmlChunk.text(myColorManager.getLongName((FilePath)path)).bold())
-          .append(HtmlChunk.br())
+          .br()
           .append(clickMessage)
           .wrapWith(HtmlChunk.html()).toString();
       }

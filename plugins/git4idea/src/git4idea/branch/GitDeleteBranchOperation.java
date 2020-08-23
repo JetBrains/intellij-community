@@ -133,7 +133,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
     boolean unmergedCommits = !myUnmergedToBranches.isEmpty();
     HtmlBuilder message = new HtmlBuilder().appendRaw(GitBundle.message("delete.branch.operation.deleted.branch.bold", myBranchName));
     if (unmergedCommits) {
-      message.append(HtmlChunk.br()).append(GitBundle.message("delete.branch.operation.unmerged.commits.were.discarded"));
+      message.br().append(GitBundle.message("delete.branch.operation.unmerged.commits.were.discarded"));
     }
 
     Notification notification = STANDARD_NOTIFICATION.createNotification("", message.toString(), NotificationType.INFORMATION, null);
@@ -226,9 +226,9 @@ class GitDeleteBranchOperation extends GitBranchOperation {
   protected String getRollbackProposal() {
     return new HtmlBuilder().append(GitBundle.message("delete.branch.operation.however.branch.deletion.has.succeeded.for.the.following",
                                                       getSuccessfulRepositories().size()))
-      .append(HtmlChunk.br())
+      .br()
       .appendRaw(successfulRepositoriesJoined())
-      .append(HtmlChunk.br())
+      .br()
       .append(GitBundle.message("delete.branch.operation.you.may.rollback.not.to.let.branches.diverge", myBranchName))
       .toString();
   }

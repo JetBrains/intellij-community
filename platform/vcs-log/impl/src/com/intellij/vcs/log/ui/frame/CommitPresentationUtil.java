@@ -194,10 +194,10 @@ public final class CommitPresentationUtil {
 
     HtmlBuilder builder = new HtmlBuilder().appendRaw(authorText);
     if (!VcsUserUtil.isSamePerson(author, committer)) {
-      builder.append(HtmlChunk.br()).append(getCommitterHtml(committer, commitTime != authorTime ? commitTime : null));
+      builder.br().append(getCommitterHtml(committer, commitTime != authorTime ? commitTime : null));
     }
     else if (authorTime != commitTime) {
-      builder.append(HtmlChunk.br()).append(getCommitterHtml(null, commitTime));
+      builder.br().append(getCommitterHtml(null, commitTime));
     }
 
     return builder.toString();
@@ -274,7 +274,7 @@ public final class CommitPresentationUtil {
     if (expanded) {
       return new HtmlBuilder().append(head)
         .append(HtmlChunk.link(SHOW_HIDE_BRANCHES, VcsLogBundle.message("vcs.log.details.in.branches.hide")))
-        .append(HtmlChunk.br())
+        .br()
         .appendWithSeparators(HtmlChunk.br(), ContainerUtil.map(branches, s -> HtmlChunk.text(s))).toString();
     }
 
