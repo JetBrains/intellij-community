@@ -8,6 +8,7 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.Key
 import com.intellij.patterns.ElementPattern
+import com.intellij.patterns.uast.UExpressionPattern
 import com.intellij.patterns.uast.injectionHostUExpression
 import com.intellij.psi.impl.cache.CacheManager
 import com.intellij.psi.search.GlobalSearchScope
@@ -58,12 +59,12 @@ internal class UastReferenceByUsageAdapter(private val usagePattern: ElementPatt
 }
 
 @ApiStatus.Experimental
-fun uInjectionHostInVariable() = injectionHostUExpression().filter {
+fun uInjectionHostInVariable(): UExpressionPattern<*, *> = injectionHostUExpression().filter {
   it.uastParent is UVariable
 }
 
 @ApiStatus.Experimental
-fun uExpressionInVariable() = injectionHostUExpression().filter {
+fun uExpressionInVariable(): UExpressionPattern<*, *> = injectionHostUExpression().filter {
   val parent = it.uastParent
   parent is UVariable || (parent is UPolyadicExpression && parent.uastParent is UVariable)
 }
