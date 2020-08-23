@@ -65,6 +65,7 @@ class TargetsRunner(val application: InspectionApplication,
 
   fun executeTarget(target: TargetDefinition) {
     application.reportMessage(1, "Target ${target.id} (${target.description}) started")
+    println("##teamcity[blockOpened name='Target ${target.id}' description='${target.description}']")
 
     val targetPath = Paths.get(application.myOutPath).resolve(target.id)
     if (!targetPath.exists()) Files.createDirectory(targetPath)
@@ -83,6 +84,7 @@ class TargetsRunner(val application: InspectionApplication,
     val syncResults = launchTarget(targetPath, context)
     converter.convert(targetPath.toString(), targetPath.toString(), emptyMap(), syncResults.map { it.toFile() })
     currentTarget = null
+    println("##teamcity[blockClosed name='Target ${target.id}']")
     application.reportMessage(1, "Target ${target.id} (${target.description}) finished")
   }
 
@@ -120,7 +122,7 @@ class TargetsRunner(val application: InspectionApplication,
           myLastPercent = percent
           val msg = (prefix ?: InspectionsBundle.message("inspection.display.name")) + " " + percent + "%"
           application.reportMessage(2, msg)
-          println("##teamcity[progressMessage '${status(percent)}']\n")
+          println("##teamcity[buildStatus status='SUCCESS' text='${status(percent)}']\n")
         }
         return
       }
@@ -134,9 +136,9 @@ class TargetsRunner(val application: InspectionApplication,
   fun status(percent: Int): String {
     return inspectionCounter.toList().joinToString { (target, count) ->
       if (target == currentTarget) {
-        "Running '${target.id}'(${count.get()} problems) - $percent% done"
+        "Running \"${target.description}\" - (${count.get()} problems) - $percent% done"
       } else {
-        "'${target.description}'($count problems)"
+        "\"${target.description}\" - ($count problems)"
       }
     }
   }
