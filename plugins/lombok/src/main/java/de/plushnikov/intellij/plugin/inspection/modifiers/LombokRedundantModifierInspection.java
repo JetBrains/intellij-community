@@ -12,8 +12,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.Optional;
 
-import static de.plushnikov.intellij.plugin.inspection.modifiers.RedundantModifiersInfoType.INNER_CLASS;
-
 public abstract class LombokRedundantModifierInspection extends AbstractBaseJavaLocalInspectionTool {
 
   private final Class<?> supportedAnnotation;
@@ -77,12 +75,12 @@ public abstract class LombokRedundantModifierInspection extends AbstractBaseJava
       for (RedundantModifiersInfo redundantModifiersInfo : redundantModifiersInfo) {
         RedundantModifiersInfoType infoType = redundantModifiersInfo.getType();
         PsiModifierListOwner parentModifierListOwner = PsiTreeUtil.getParentOfType(psiModifierListOwner,
-          PsiModifierListOwner.class, infoType != CLASS && infoType != VARIABLE);
+          PsiModifierListOwner.class, infoType != RedundantModifiersInfoType.CLASS && infoType != RedundantModifiersInfoType.VARIABLE);
         if (parentModifierListOwner == null) {
           continue;
         }
-        if (infoType == VARIABLE && !(parentModifierListOwner instanceof PsiLocalVariable || parentModifierListOwner instanceof PsiParameter)
-        || (infoType != VARIABLE && !(parentModifierListOwner instanceof PsiClass))) {
+        if (infoType == RedundantModifiersInfoType.VARIABLE && !(parentModifierListOwner instanceof PsiLocalVariable || parentModifierListOwner instanceof PsiParameter)
+          || (infoType != RedundantModifiersInfoType.VARIABLE && !(parentModifierListOwner instanceof PsiClass))) {
           continue;
         }
         if ((supportedAnnotation == null || parentModifierListOwner.hasAnnotation(supportedAnnotation.getName())) &&
