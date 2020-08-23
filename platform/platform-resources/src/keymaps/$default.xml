@@ -1203,9 +1203,6 @@
     <keyboard-shortcut first-keystroke="control alt P"/>
   </action>
 
-  <action id="ViewInplaceComments">
-    <keyboard-shortcut first-keystroke="alt shift BACK_SLASH"/>
-  </action>
   <action id="ToggleFindInSelection">
     <keyboard-shortcut first-keystroke="control alt E"/>
   </action>
