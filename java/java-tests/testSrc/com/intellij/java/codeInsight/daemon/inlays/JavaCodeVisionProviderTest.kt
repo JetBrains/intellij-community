@@ -1,11 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon.inlays
 
-import com.intellij.codeInsight.daemon.impl.JavaLensProvider
-import com.intellij.codeInsight.daemon.impl.analysis.JavaLensSettings
+import com.intellij.codeInsight.daemon.impl.JavaCodeVisionProvider
+import com.intellij.codeInsight.daemon.impl.analysis.JavaCodeVisionSettings
 import com.intellij.testFramework.utils.inlays.InlayHintsProviderTestCase
 
-class JavaLensProviderTest : InlayHintsProviderTestCase() {
+class JavaCodeVisionProviderTest : InlayHintsProviderTestCase() {
   fun testMethodUsages() {
     doTest("""
 class A {
@@ -23,11 +23,21 @@ class A {
   fun testClassInheritors() {
     doTest("""
 class A {
-<# block [   2 usages   2 implementations  ] #>
+<# block [   2 usages   2 inheritors  ] #>
   class B {}
   
   class B1 extends B {}
   class B2 extends B {}
+}
+    """.trimIndent())
+  }
+  fun testInterfaceInheritors() {
+    doTest("""
+class A {
+<# block [   1 usage   1 implementation  ] #>
+  interface B {}
+  
+  class B1 implements B {}
 }
     """.trimIndent())
   }
@@ -52,12 +62,13 @@ class A {
 
   private fun doTest(
     text: String,
-    settings: JavaLensSettings = JavaLensSettings(true, true)
+    settings: JavaCodeVisionSettings = JavaCodeVisionSettings(
+      true, true)
   ) {
     testProvider(
       "test.java",
       text,
-      JavaLensProvider(),
+      JavaCodeVisionProvider(),
       settings
     )
   }

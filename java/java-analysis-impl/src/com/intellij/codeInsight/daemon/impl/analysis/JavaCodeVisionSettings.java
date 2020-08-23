@@ -1,16 +1,16 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-public class JavaLensSettings {
+public class JavaCodeVisionSettings {
   private boolean showUsages;
   private boolean showImplementations;
 
-  public JavaLensSettings(boolean showUsages, boolean showImplementations) {
+  public JavaCodeVisionSettings(boolean showUsages, boolean showImplementations) {
     this.showUsages = showUsages;
     this.showImplementations = showImplementations;
   }
 
-  public JavaLensSettings() {
+  public JavaCodeVisionSettings() {
   }
 
   public boolean isShowUsages() {
@@ -34,7 +34,7 @@ public class JavaLensSettings {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    JavaLensSettings settings = (JavaLensSettings)o;
+    JavaCodeVisionSettings settings = (JavaCodeVisionSettings)o;
 
     if (showUsages != settings.showUsages) return false;
     return showImplementations == settings.showImplementations;

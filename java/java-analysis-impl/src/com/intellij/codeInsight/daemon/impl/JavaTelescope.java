@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.codeInsight.daemon.impl.analysis;
+package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -21,10 +20,13 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
-public final class JavaTelescope {
+/**
+ * Utility class to support Code Vision for java
+ */
+final class JavaTelescope {
   private static final int TOO_MANY_USAGES = -1;
 
-  public static String usagesHint(@NotNull PsiMember member, @NotNull PsiFile file) {
+  static String usagesHint(@NotNull PsiMember member, @NotNull PsiFile file) {
     Project project = file.getProject();
 
     AtomicInteger totalUsageCount = new AtomicInteger();
@@ -65,7 +67,7 @@ public final class JavaTelescope {
     return count.get();
   }
 
-  public static int collectInheritingClasses(@NotNull PsiClass aClass) {
+  static int collectInheritingClasses(@NotNull PsiClass aClass) {
     if (aClass.hasModifierProperty(PsiModifier.FINAL)) {
       return 0;
     }
@@ -80,8 +82,7 @@ public final class JavaTelescope {
     return count.get();
   }
 
-  public static int collectOverridingMethods(@NotNull final PsiMethod method) {
-
+  static int collectOverridingMethods(@NotNull PsiMethod method) {
     AtomicInteger count = new AtomicInteger();
     OverridingMethodsSearch.search(method).forEach((Consumer<? super PsiMethod>)__ -> count.incrementAndGet());
 

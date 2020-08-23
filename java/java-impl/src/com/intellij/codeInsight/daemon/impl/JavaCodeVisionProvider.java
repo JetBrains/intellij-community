@@ -2,8 +2,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
-import com.intellij.codeInsight.daemon.impl.analysis.JavaLensSettings;
-import com.intellij.codeInsight.daemon.impl.analysis.JavaTelescope;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaCodeVisionSettings;
 import com.intellij.codeInsight.hints.*;
 import com.intellij.codeInsight.hints.presentation.InlayPresentation;
 import com.intellij.codeInsight.hints.presentation.MouseButton;
@@ -33,16 +32,16 @@ import java.awt.event.MouseEvent;
 import java.text.MessageFormat;
 import java.util.List;
 
-public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
+public class JavaCodeVisionProvider implements InlayHintsProvider<JavaCodeVisionSettings> {
   private static final String CODE_LENS_ID = "JavaLens";
   public static final String FUS_GROUP_ID = "java.lens";
   private static final String USAGES_CLICKED_EVENT_ID = "usages.clicked";
   private static final String IMPLEMENTATIONS_CLICKED_EVENT_ID = "implementations.clicked";
   private static final String SETTING_CLICKED_EVENT_ID = "setting.clicked";
-  private static final SettingsKey<JavaLensSettings> KEY = new SettingsKey<>(CODE_LENS_ID);
+  private static final SettingsKey<JavaCodeVisionSettings> KEY = new SettingsKey<>(CODE_LENS_ID);
 
-  public interface InlResult {
-    void onClick(@NotNull Editor editor, @NotNull PsiElement element, MouseEvent event);
+  interface InlResult {
+    void onClick(@NotNull Editor editor, @NotNull PsiElement element, @NotNull MouseEvent event);
 
     @NotNull
     String getRegularText();
@@ -52,7 +51,7 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
   @Override
   public InlayHintsCollector getCollectorFor(@NotNull PsiFile file,
                                              @NotNull Editor editor,
-                                             @NotNull JavaLensSettings settings,
+                                             @NotNull JavaCodeVisionSettings settings,
                                              @NotNull InlayHintsSink __) {
     return new FactoryInlayHintsCollector(editor) {
       @Override
@@ -69,7 +68,7 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
           if (usagesHint != null) {
             hints.add(new InlResult() {
               @Override
-              public void onClick(@NotNull Editor editor, @NotNull PsiElement element, MouseEvent event) {
+              public void onClick(@NotNull Editor editor, @NotNull PsiElement element, @NotNull MouseEvent event) {
                 FUCounterUsageLogger.getInstance().logEvent(file.getProject(), FUS_GROUP_ID, USAGES_CLICKED_EVENT_ID);
                 GotoDeclarationAction.startFindUsages(editor, file.getProject(), element, new RelativePoint(event));
               }
@@ -84,11 +83,13 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
         }
         if (settings.isShowImplementations()) {
           if (element instanceof PsiClass) {
-            int inheritors = JavaTelescope.collectInheritingClasses((PsiClass)element);
+            PsiClass aClass = (PsiClass)element;
+            int inheritors = JavaTelescope.collectInheritingClasses(aClass);
             if (inheritors != 0) {
+              boolean isInterface = aClass.isInterface();
               hints.add(new InlResult() {
                 @Override
-                public void onClick(@NotNull Editor editor, @NotNull PsiElement element, MouseEvent event) {
+                public void onClick(@NotNull Editor editor, @NotNull PsiElement element, @NotNull MouseEvent event) {
                   FeatureUsageData data = new FeatureUsageData().addData("location", "class");
                   FUCounterUsageLogger.getInstance()
                     .logEvent(file.getProject(), FUS_GROUP_ID, IMPLEMENTATIONS_CLICKED_EVENT_ID, data);
@@ -99,7 +100,8 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
                 @NotNull
                 @Override
                 public String getRegularText() {
-                  String prop = "{0, choice, 1#1 implementation|2#{0,number} implementations}";
+                  String prop = isInterface ? "{0, choice, 1#1 implementation|2#{0,number} implementations}" :
+                                "{0, choice, 1#1 inheritor|2#{0,number} inheritors}";
                   return MessageFormat.format(prop, inheritors);
                 }
               });
@@ -110,7 +112,7 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
             if (overridings != 0) {
               hints.add(new InlResult() {
                 @Override
-                public void onClick(@NotNull Editor editor, @NotNull PsiElement element, MouseEvent event) {
+                public void onClick(@NotNull Editor editor, @NotNull PsiElement element, @NotNull MouseEvent event) {
                   FeatureUsageData data = new FeatureUsageData().addData("location", "method");
                   FUCounterUsageLogger.getInstance()
                     .logEvent(file.getProject(), FUS_GROUP_ID, IMPLEMENTATIONS_CLICKED_EVENT_ID, data);
@@ -151,7 +153,7 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
     };
   }
 
-  private static int getAnchorOffset(PsiElement element) {
+  private static int getAnchorOffset(@NotNull PsiElement element) {
     for (PsiElement child : element.getChildren()) {
       if (!(child instanceof PsiComment) && !(child instanceof PsiWhiteSpace)) {
         return child.getTextRange().getStartOffset();
@@ -165,19 +167,14 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
                                                       @NotNull PsiElement element,
                                                       @NotNull Editor editor,
                                                       @NotNull InlResult result) {
-    //Icon icon = AllIcons.Toolwindows.ToolWindowFind;
-    //Icon icon = IconLoader.getIcon("/toolwindows/toolWindowFind_dark.svg", AllIcons.class);
-
     InlayPresentation text = factory.smallText(result.getRegularText());
 
-    return factory.referenceOnHover(text, (event, translated) -> {
-      result.onClick(editor, element, event);
-    });
+    return factory.referenceOnHover(text, (event, translated) -> result.onClick(editor, element, event));
   }
 
-  private static InlayPresentation addSettings(@NotNull Project project,
-                                               @NotNull PresentationFactory factory,
-                                               @NotNull InlayPresentation presentation) {
+  private static @NotNull InlayPresentation addSettings(@NotNull Project project,
+                                                        @NotNull PresentationFactory factory,
+                                                        @NotNull InlayPresentation presentation) {
     JPopupMenu popupMenu = new JPopupMenu();
     JMenuItem item = new JMenuItem(JavaBundle.message("button.text.settings"));
     item.addActionListener(e -> {
@@ -194,8 +191,8 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
 
   @NotNull
   @Override
-  public JavaLensSettings createSettings() {
-    return new JavaLensSettings();
+  public JavaCodeVisionSettings createSettings() {
+    return new JavaCodeVisionSettings();
   }
 
   @Nls(capitalization = Nls.Capitalization.Sentence)
@@ -207,12 +204,12 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
 
   @NotNull
   @Override
-  public SettingsKey<JavaLensSettings> getKey() {
+  public SettingsKey<JavaCodeVisionSettings> getKey() {
     return KEY;
   }
 
   @NotNull
-  public static SettingsKey<JavaLensSettings> getSettingsKey() {
+  public static SettingsKey<JavaCodeVisionSettings> getSettingsKey() {
     return KEY;
   }
   @Override
@@ -222,8 +219,8 @@ public class JavaLensProvider implements InlayHintsProvider<JavaLensSettings> {
 
   @NotNull
   @Override
-  public ImmediateConfigurable createConfigurable(@NotNull JavaLensSettings settings) {
-    return new JavaLensConfigurable(settings);
+  public ImmediateConfigurable createConfigurable(@NotNull JavaCodeVisionSettings settings) {
+    return new JavaCodeVisionConfigurable(settings);
   }
 
   @Override
