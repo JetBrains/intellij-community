@@ -42,6 +42,48 @@ class A {
     """.trimIndent())
   }
 
+  fun testMethodOverrides() {
+    doTest("""
+class A {
+<# block [   1 override  ] #>
+  void foo(){}
+}
+class B extends A {
+  void foo(){}
+}
+    """.trimIndent())
+  }
+
+  fun testDefaultMethodOverrides() {
+    doTest("""
+interface A {
+<# block [   2 overrides  ] #>
+  default void foo(){}
+}
+class B implements A {
+  public void foo(){}
+}
+class B2 implements A {
+  public void foo(){}
+}
+    """.trimIndent())
+  }
+
+  fun testAbstractMethodImplementations() {
+    doTest("""
+interface A {
+<# block [   2 implementations  ] #>
+  void foo();
+}
+class B implements A {
+  public void foo(){}
+}
+class B2 implements A {
+  public void foo(){}
+}
+    """.trimIndent())
+  }
+
   fun testEnumMembers() {
     doTest("""
 class A {

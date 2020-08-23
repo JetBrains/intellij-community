@@ -19,7 +19,9 @@ import com.intellij.openapi.editor.BlockInlayPriority;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.SmartList;
 import kotlin.Unit;
@@ -29,7 +31,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
-import java.text.MessageFormat;
 import java.util.List;
 
 public class JavaCodeVisionProvider implements InlayHintsProvider<JavaCodeVisionSettings> {
@@ -100,16 +101,17 @@ public class JavaCodeVisionProvider implements InlayHintsProvider<JavaCodeVision
                 @NotNull
                 @Override
                 public String getRegularText() {
-                  String prop = isInterface ? "{0, choice, 1#1 implementation|2#{0,number} implementations}" :
-                                "{0, choice, 1#1 inheritor|2#{0,number} inheritors}";
-                  return MessageFormat.format(prop, inheritors);
+                  return isInterface ? JavaBundle.message("code.vision.implementations.hint", inheritors) :
+                         JavaBundle.message("code.vision.inheritors.hint", inheritors);
                 }
               });
             }
           }
           if (element instanceof PsiMethod) {
-            int overridings = JavaTelescope.collectOverridingMethods((PsiMethod)element);
+            PsiMethod method = (PsiMethod)element;
+            int overridings = JavaTelescope.collectOverridingMethods(method);
             if (overridings != 0) {
+              boolean isAbstractMethod = isAbstractMethod(method);
               hints.add(new InlResult() {
                 @Override
                 public void onClick(@NotNull Editor editor, @NotNull PsiElement element, @NotNull MouseEvent event) {
@@ -123,8 +125,8 @@ public class JavaCodeVisionProvider implements InlayHintsProvider<JavaCodeVision
                 @NotNull
                 @Override
                 public String getRegularText() {
-                  String prop = "{0, choice, 1#1 implementation|2#{0,number} implementations}";
-                  return MessageFormat.format(prop, overridings);
+                  return isAbstractMethod ? JavaBundle.message("code.vision.implementations.hint", overridings) :
+                         JavaBundle.message("code.vision.overrides.hint", overridings);
                 }
               });
             }
@@ -152,6 +154,21 @@ public class JavaCodeVisionProvider implements InlayHintsProvider<JavaCodeVision
       }
     };
   }
+
+  private static boolean isAbstractMethod(@NotNull PsiMethod method) {
+    if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      return true;
+    }
+
+    PsiClass aClass = method.getContainingClass();
+    return aClass != null && aClass.isInterface() && !isDefaultMethod(aClass, method);
+  }
+
+  private static boolean isDefaultMethod(@NotNull PsiClass aClass, @NotNull PsiMethod method) {
+    return method.hasModifierProperty(PsiModifier.DEFAULT) &&
+           PsiUtil.getLanguageLevel(aClass).isAtLeast(LanguageLevel.JDK_1_8);
+  }
+
 
   private static int getAnchorOffset(@NotNull PsiElement element) {
     for (PsiElement child : element.getChildren()) {
@@ -199,7 +216,7 @@ public class JavaCodeVisionProvider implements InlayHintsProvider<JavaCodeVision
   @NotNull
   @Override
   public String getName() {
-    return JavaBundle.message("title.lenses");
+    return JavaBundle.message("title.code.vision");
   }
 
   @NotNull
