@@ -5,6 +5,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.scale.DerivedScaleType;
@@ -358,7 +359,7 @@ public final class SVGLoader {
   }
 
   public static boolean isSelectionContext() {
-    return ourIsSelectionContext;
+    return ourIsSelectionContext && Registry.is("ide.patch.icons.on.selection");
   }
 
   public interface SvgElementColorPatcher {
