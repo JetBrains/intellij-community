@@ -86,7 +86,7 @@ class NavBarModificator(onChange: () -> Unit, disposable: Disposable) {
   }
 
   fun getNewVcsGroup(): AnAction? {
-    return null
+    return CustomActionsSchema.getInstance().getCorrectedAction("VcsNavBarToolbarActionsLight");
   }
 
 }

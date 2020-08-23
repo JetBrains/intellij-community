@@ -774,6 +774,7 @@
     </group>
 
     <group id="NavBarVcsGroup"/>
+    <group id="NavBarVcsGroupLight"/>
 
     <group id="EditorPopupMenu">
       <reference ref="$Cut"/>

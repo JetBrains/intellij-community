@@ -7,15 +7,18 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener;
 import com.intellij.dvcs.ui.DvcsStatusWidget;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.StatusBarWidgetFactory;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.util.Consumer;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.branch.GitBranchIncomingOutgoingManager;
@@ -28,6 +31,7 @@ import icons.DvcsImplIcons;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
+import java.awt.event.MouseEvent;
 
 /**
  * Status bar widget which displays the current branch for the file currently open in the editor.
@@ -38,6 +42,7 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
   private static final Icon OUTGOING_LAYERED = new LayeredIcon(AllIcons.Vcs.Branch, DvcsImplIcons.OutgoingLayer);
   private static final @NonNls String ID = "git";
   private final GitVcsSettings mySettings;
+  private static final boolean showNewNavbarVCSGroup = UISettings.getInstance().getShowNewNavbarVCSGroup();
 
   public GitBranchWidget(@NotNull Project project) {
     super(project, GitVcs.NAME);
@@ -136,7 +141,50 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
 
     @Override
     public @NotNull StatusBarWidget createWidget(@NotNull Project project) {
+      if(showNewNavbarVCSGroup){
+        return createMockVCSWidget();
+      }
       return new GitBranchWidget(project);
+    }
+
+    private StatusBarWidget createMockVCSWidget() {
+      return new StatusBarWidget(){
+
+        @Override
+        public @Nullable WidgetPresentation getPresentation() {
+          return new StatusBarWidget.TextPresentation(){
+            @Override
+            public @NotNull @NlsContexts.Label String getText() {
+              return "";
+            }
+            @Override
+            public float getAlignment() {
+              return 0;
+            }
+            @Override
+            public @Nullable @NlsContexts.Tooltip String getTooltipText() {
+              return null;
+            }
+            @Override
+            public @Nullable Consumer<MouseEvent> getClickConsumer() {
+              return null;
+            }
+          };
+        }
+
+        @Override
+        public void dispose() {
+        }
+
+        @Override
+        public @NonNls @NotNull String ID() {
+          return "";
+        }
+
+        @Override
+        public void install(@NotNull StatusBar statusBar) {
+        }
+      };
     }
 
     @Override

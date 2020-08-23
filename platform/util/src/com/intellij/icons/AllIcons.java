@@ -154,6 +154,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon RestartFrame = load("/actions/restartFrame.svg");
     /** 16x16 */ public static final @NotNull Icon Resume = load("/actions/resume.svg");
     /** 16x16 */ public static final @NotNull Icon Rollback = load("/actions/rollback.svg");
+    /** 16x16 */ public static final @NotNull Icon VcsMoreActions = load("/actions/vcsMoreActions.svg");
     /** 16x16 */ public static final @NotNull Icon Run_anything = load("/actions/run_anything.svg");
     /** 16x16 */ public static final @NotNull Icon RunAll = load("/actions/runAll.svg");
     /** 16x16 */ public static final @NotNull Icon RunToCursor = load("/actions/runToCursor.svg");

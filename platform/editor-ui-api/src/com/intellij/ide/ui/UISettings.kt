@@ -426,6 +426,9 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.mergeMainMenuWithWindowTitle = value
     }
 
+  val showNewNavbarVCSGroup: Boolean
+    get() = Registry.`is`("ide.new.navbar.vcs.group", false)
+
   init {
     // TODO Remove the registry keys and migration code in 2019.3
     if (SystemProperties.`is`("tabs.alphabetical")) {
