@@ -3053,17 +3053,15 @@ public class ContainerUtil {
    * Create an immutable copy of the {@code list}.
    * Modifications of the {@code list} have no effect on the returned copy.
    */
-  @SuppressWarnings("unchecked")
   @Contract(value = "_ -> new", pure = true)
   public static @NotNull <T> List<T> freeze(@NotNull List<? extends T> list) {
     if (list.isEmpty()) {
       return Collections.emptyList();
     }
-    else if (list.size() == 1) {
+    if (list.size() == 1) {
       return immutableSingletonList(list.get(0));
     }
-    else {
-      return immutableList((T[])list.toArray());
-    }
+    //noinspection unchecked
+    return immutableList((T[])list.toArray());
   }
 }
