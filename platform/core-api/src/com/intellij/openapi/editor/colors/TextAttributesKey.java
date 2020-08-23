@@ -15,6 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -43,6 +44,7 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
       }
     };
 
+  @NotNull
   private final String myExternalName;
   private final TextAttributes myDefaultAttributes;
   private final TextAttributesKey myFallbackAttributeKey;
@@ -67,7 +69,7 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
 
     Element myDefaultAttributesElement = JDOMExternalizerUtil.readOption(element, "myDefaultAttributes");
     TextAttributes defaultAttributes = myDefaultAttributesElement == null ? null : new TextAttributes(myDefaultAttributesElement);
-    myExternalName = name;
+    myExternalName = Objects.requireNonNull(name);
     myDefaultAttributes = defaultAttributes;
     myFallbackAttributeKey = null;
   }
