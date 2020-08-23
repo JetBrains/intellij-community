@@ -95,20 +95,14 @@ private fun getDirectVariableUsages(uVar: UVariable): Sequence<PsiElement> {
   if (DumbService.isDumb(project)) return emptySequence() // do not try to search in dumb mode
 
   val cachedValue = CachedValuesManager.getManager(project).getCachedValue(variablePsi, CachedValueProvider {
-    val dumbService = DumbService.getInstance(variablePsi.project)
-    if (dumbService.isDumb) {
-      Result.createSingleDependency(emptyList(), dumbService.modificationTracker)
-    }
-    else {
-      val anchors = findDirectVariableUsages(variablePsi).map(PsiAnchor::create)
-      Result.createSingleDependency(anchors, PsiModificationTracker.MODIFICATION_COUNT)
-    }
+    val anchors = findDirectVariableUsages(variablePsi).map(PsiAnchor::create)
+    Result.createSingleDependency(anchors, PsiModificationTracker.MODIFICATION_COUNT)
   })
   return cachedValue.asSequence().mapNotNull(PsiAnchor::retrieve)
 }
 
-private const val MAX_FILES_TO_FIND_USAGES = 5
-private val STRICT_CONSTANT_NAME_PATTERN = Regex("[\\p{Upper}_0-9]+")
+private const val MAX_FILES_TO_FIND_USAGES: Int = 5
+private val STRICT_CONSTANT_NAME_PATTERN: Regex = Regex("[\\p{Upper}_0-9]+")
 
 private fun findDirectVariableUsages(variablePsi: PsiElement): Iterable<PsiElement> {
   val uVariable = variablePsi.toUElementOfType<UVariable>()
