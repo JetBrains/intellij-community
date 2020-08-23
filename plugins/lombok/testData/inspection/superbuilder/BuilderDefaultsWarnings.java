@@ -1,4 +1,4 @@
-<error descr="@Builder.Default and @Singular cannot be mixed.">@lombok.experimental.SuperBuilder</error>
+<error descr="@Builder.Default and @Singular cannot be mixed."><error descr="@Builder.Default requires an initializing expression (' = something;').">@lombok.experimental.SuperBuilder</error></error>
 public class BuilderDefaultsWarnings {
 	long x = System.currentTimeMillis();
 	final int y = 5;

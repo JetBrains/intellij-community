@@ -15,11 +15,7 @@ public interface BuilderElementHandler {
 
   String createSingularName(PsiAnnotation singularAnnotation, String psiFieldName);
 
-  default String renderBuildPrepare(@NotNull PsiVariable psiVariable, @NotNull String fieldName) {
-    return "";
-  }
-
-  default String renderBuildCode(@NotNull PsiVariable psiVariable, @NotNull String fieldName, @NotNull String builderVariable) {
+  default String renderBuildPrepare(@NotNull BuilderInfo info) {
     return "";
   }
 

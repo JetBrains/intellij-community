@@ -75,7 +75,7 @@ class SingularGuavaMapHandler extends SingularMapHandler {
   }
 
   @Override
-  public String renderBuildCode(@NotNull PsiVariable psiVariable, @NotNull String fieldName, @NotNull String builderVariable) {
+  protected String renderBuildCode(@NotNull PsiVariable psiVariable, @NotNull String fieldName, @NotNull String builderVariable) {
     final PsiManager psiManager = psiVariable.getManager();
     final PsiType psiFieldType = psiVariable.getType();
 

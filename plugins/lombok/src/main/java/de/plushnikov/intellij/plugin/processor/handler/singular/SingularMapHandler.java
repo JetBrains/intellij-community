@@ -122,12 +122,11 @@ class SingularMapHandler extends AbstractSingularHandler {
   }
 
   @Override
-  public String renderBuildPrepare(@NotNull PsiVariable psiVariable, @NotNull String fieldName) {
-    return renderBuildCode(psiVariable, fieldName, "this");
+  public String renderBuildPrepare(@NotNull BuilderInfo info) {
+    return renderBuildCode(info.getVariable(), info.getFieldName(), "this");
   }
 
-  @Override
-  public String renderBuildCode(@NotNull PsiVariable psiVariable, @NotNull String fieldName, @NotNull String builderVariable) {
+  String renderBuildCode(@NotNull PsiVariable psiVariable, @NotNull String fieldName, @NotNull String builderVariable) {
     final PsiManager psiManager = psiVariable.getManager();
     final PsiType psiFieldType = psiVariable.getType();
     final PsiType keyType = getKeyType(psiManager, psiFieldType);

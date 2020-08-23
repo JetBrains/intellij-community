@@ -56,8 +56,8 @@ class SingularCollectionHandler extends AbstractSingularHandler {
   }
 
   @Override
-  public String renderBuildPrepare(@NotNull PsiVariable psiVariable, @NotNull String fieldName) {
-    return renderBuildCode(psiVariable, fieldName, "this");
+  public String renderBuildPrepare(@NotNull BuilderInfo info) {
+    return renderBuildCode(info.getVariable(), info.getFieldName(), "this");
   }
 
   @Override
@@ -65,8 +65,7 @@ class SingularCollectionHandler extends AbstractSingularHandler {
     return renderBuildCode(psiVariable, fieldName, "b") + "this." + psiVariable.getName() + "=" + fieldName + ";\n";
   }
 
-  @Override
-  public String renderBuildCode(@NotNull PsiVariable psiVariable, @NotNull String fieldName, @NotNull String builderVariable) {
+  String renderBuildCode(@NotNull PsiVariable psiVariable, @NotNull String fieldName, @NotNull String builderVariable) {
     final PsiManager psiManager = psiVariable.getManager();
     final PsiType elementType = PsiTypeUtil.extractOneElementType(psiVariable.getType(), psiManager);
     String result;

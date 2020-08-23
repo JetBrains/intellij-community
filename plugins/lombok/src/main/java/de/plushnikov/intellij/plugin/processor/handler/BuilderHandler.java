@@ -79,8 +79,8 @@ public class BuilderHandler {
         validateExistingBuilderClass(builderClassName, psiClass, problemBuilder);
       if (result) {
         final Collection<BuilderInfo> builderInfos = createBuilderInfos(psiClass, null).collect(Collectors.toList());
-        result = validateSingular(builderInfos, problemBuilder) &&
-          validateBuilderDefault(builderInfos, problemBuilder) &&
+        result = validateBuilderDefault(builderInfos, problemBuilder) &&
+          validateSingular(builderInfos, problemBuilder) &&
           validateObtainViaAnnotations(builderInfos.stream(), problemBuilder);
       }
     }
@@ -96,7 +96,15 @@ public class BuilderHandler {
       }
     );
 
-    return !anyBuilderDefaultAndSingulars.isPresent();
+    final Optional<BuilderInfo> anyBuilderDefaultWithoutInitializer = builderInfos.stream()
+      .filter(BuilderInfo::hasBuilderDefaultAnnotation)
+      .filter(BuilderInfo::hasNoInitializer).findAny();
+    anyBuilderDefaultWithoutInitializer.ifPresent(builderInfo -> {
+        problemBuilder.addError("@Builder.Default requires an initializing expression (' = something;').");
+      }
+    );
+
+    return !anyBuilderDefaultAndSingulars.isPresent() || !anyBuilderDefaultWithoutInitializer.isPresent();
   }
 
   public boolean validate(@NotNull PsiMethod psiMethod, @NotNull PsiAnnotation psiAnnotation, @NotNull ProblemBuilder problemBuilder) {
@@ -271,6 +279,29 @@ public class BuilderHandler {
     return existingMethods.stream().map(PsiMethod::getName).anyMatch(builderMethodName::equals);
   }
 
+  public Collection<PsiMethod> createBuilderDefaultProviderMethodsIfNecessary(@NotNull PsiClass containingClass, @Nullable PsiMethod psiMethod, @NotNull PsiClass builderPsiClass, @NotNull PsiAnnotation psiAnnotation) {
+    final List<BuilderInfo> builderInfos = createBuilderInfos(psiAnnotation, containingClass, psiMethod, builderPsiClass);
+    return builderInfos.stream()
+      .filter(BuilderInfo::hasBuilderDefaultAnnotation)
+      .filter(b -> !b.hasSingularAnnotation())
+      .filter(b -> !b.hasNoInitializer())
+      .map(this::createBuilderDefaultProviderMethod)
+      .collect(Collectors.toList());
+  }
+
+  private PsiMethod createBuilderDefaultProviderMethod(@NotNull BuilderInfo info) {
+    final PsiClass containingClass = info.getBuilderClass().getContainingClass();
+    final String blockText = String.format("return %s;", info.getFieldInitializer().getText());
+
+    final LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(containingClass.getManager(), info.renderFieldDefaultProviderName())
+      .withMethodReturnType(info.getFieldType())
+      .withContainingClass(containingClass)
+      .withNavigationElement(info.getVariable())
+      .withModifier(PsiModifier.PRIVATE)
+      .withModifier(PsiModifier.STATIC);
+    return methodBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(blockText, methodBuilder));
+  }
+
   public Optional<PsiMethod> createBuilderMethodIfNecessary(@NotNull PsiClass containingClass, @Nullable PsiMethod psiMethod, @NotNull PsiClass builderPsiClass, @NotNull PsiAnnotation psiAnnotation) {
     final String builderMethodName = getBuilderMethodName(psiAnnotation);
     if (!builderMethodName.isEmpty() && !hasMethod(containingClass, builderMethodName)) {
@@ -420,8 +451,20 @@ public class BuilderHandler {
   @NotNull
   PsiMethod createToStringMethod(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass builderClass, boolean forceCallSuper) {
     final List<EqualsAndHashCodeToStringHandler.MemberInfo> memberInfos = Arrays.stream(builderClass.getFields())
+      .filter(this::isNotBuilderDefaultSetterFields)
       .map(EqualsAndHashCodeToStringHandler.MemberInfo::new).collect(Collectors.toList());
     return getToStringProcessor().createToStringMethod(builderClass, memberInfos, psiAnnotation, forceCallSuper);
+  }
+
+  private boolean isNotBuilderDefaultSetterFields(@NotNull PsiField psiField) {
+    boolean isBuilderDefaultSetter = false;
+    if (psiField.getName().endsWith("$set") && PsiPrimitiveType.BOOLEAN.equals(psiField.getType())) {
+      PsiElement navigationElement = psiField.getNavigationElement();
+      if (navigationElement instanceof PsiField) {
+        isBuilderDefaultSetter = PsiAnnotationSearchUtil.isAnnotatedWith((PsiField) navigationElement, Builder.Default.class.getCanonicalName());
+      }
+    }
+    return !isBuilderDefaultSetter;
   }
 
   @NotNull

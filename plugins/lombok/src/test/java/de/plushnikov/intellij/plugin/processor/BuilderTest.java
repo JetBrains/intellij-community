@@ -155,4 +155,9 @@ public class BuilderTest extends AbstractLombokParsingTestCase {
   public void testBuilder$MultipleMethodBuilderWithExistedClass() {
     doTest(true);
   }
+
+  public void testBuilder$BuilderWithDefaultInnerFields() {
+    // Initializer should be removed
+    doTest(true);
+  }
 }
