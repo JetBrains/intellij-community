@@ -9,7 +9,6 @@ import de.plushnikov.intellij.plugin.processor.clazz.constructor.NoArgsConstruct
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.RequiredArgsConstructorProcessor;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
-import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.jetbrains.annotations.NotNull;
@@ -66,7 +65,6 @@ public class DataProcessor extends AbstractClassProcessor {
     return validateAnnotationOnRightType(psiClass, builder);
   }
 
-
   private boolean validateAnnotationOnRightType(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
     boolean result = true;
     if (psiClass.isAnnotationType() || psiClass.isInterface() || psiClass.isEnum()) {
@@ -93,14 +91,14 @@ public class DataProcessor extends AbstractClassProcessor {
     final boolean hasConstructorWithoutParamaters;
     final String staticName = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "staticConstructor");
     if (shouldGenerateRequiredArgsConstructor(psiClass, staticName)) {
-      target.addAll(getRequiredArgsConstructorProcessor().createRequiredArgsConstructor(psiClass, PsiModifier.PUBLIC, psiAnnotation, staticName));
+      target.addAll(getRequiredArgsConstructorProcessor().createRequiredArgsConstructor(psiClass, PsiModifier.PUBLIC, psiAnnotation, staticName, true));
       // if there are no required field, it will already have a default constructor without parameters
       hasConstructorWithoutParamaters = getRequiredArgsConstructorProcessor().getRequiredFields(psiClass).isEmpty();
     } else {
       hasConstructorWithoutParamaters = false;
     }
 
-    if (!hasConstructorWithoutParamaters && shouldGenerateNoArgsConstructor(psiClass, getRequiredArgsConstructorProcessor())) {
+    if (!hasConstructorWithoutParamaters && shouldGenerateExtraNoArgsConstructor(psiClass)) {
       target.addAll(getNoArgsConstructorProcessor().createNoArgsConstructor(psiClass, PsiModifier.PRIVATE, psiAnnotation, true));
     }
   }
@@ -108,15 +106,13 @@ public class DataProcessor extends AbstractClassProcessor {
   private boolean shouldGenerateRequiredArgsConstructor(@NotNull PsiClass psiClass, @Nullable String staticName) {
     boolean result = false;
     // create required constructor only if there are no other constructor annotations
-    @SuppressWarnings("unchecked") final boolean notAnnotatedWith = PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, NoArgsConstructor.class,
-      RequiredArgsConstructor.class, AllArgsConstructor.class, Builder.class, SuperBuilder.class);
+    @SuppressWarnings("unchecked") final boolean notAnnotatedWith = PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass,
+      NoArgsConstructor.class, RequiredArgsConstructor.class, AllArgsConstructor.class, Builder.class, SuperBuilder.class);
     if (notAnnotatedWith) {
-      final Collection<PsiMethod> definedConstructors = PsiClassUtil.collectClassConstructorIntern(psiClass);
-      filterToleratedElements(definedConstructors);
+      final RequiredArgsConstructorProcessor requiredArgsConstructorProcessor = getRequiredArgsConstructorProcessor();
+      final Collection<PsiField> requiredFields = requiredArgsConstructorProcessor.getRequiredFields(psiClass);
 
-      final Collection<PsiField> requiredFields = getRequiredArgsConstructorProcessor().getRequiredFields(psiClass);
-
-      result = getRequiredArgsConstructorProcessor().validateIsConstructorNotDefined(
+      result = requiredArgsConstructorProcessor.validateIsConstructorNotDefined(
         psiClass, staticName, requiredFields, ProblemEmptyBuilder.getInstance());
     }
     return result;

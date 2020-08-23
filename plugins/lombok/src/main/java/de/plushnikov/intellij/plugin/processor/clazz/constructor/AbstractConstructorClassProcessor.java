@@ -19,6 +19,7 @@ import de.plushnikov.intellij.plugin.util.*;
 import lombok.Builder;
 import lombok.Value;
 import lombok.experimental.NonFinal;
+import lombok.experimental.Tolerate;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -122,19 +123,18 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
     return result;
   }
 
-  public boolean validateIsConstructorNotDefined(@NotNull PsiClass psiClass, @Nullable String staticConstructorName, @NotNull Collection<PsiField> params, @NotNull ProblemBuilder builder) {
+  public boolean validateIsConstructorNotDefined(@NotNull PsiClass psiClass, @Nullable String staticConstructorName,
+                                                 @NotNull Collection<PsiField> params, @NotNull ProblemBuilder builder) {
     // Constructor not defined or static constructor not defined
-    return validateIsConstructorNotDefined(psiClass, params,builder) || validateIsStaticConstructorNotDefined(psiClass, staticConstructorName, params, builder);
+    return validateIsConstructorNotDefined(psiClass, params, builder) ||
+      validateIsStaticConstructorNotDefined(psiClass, staticConstructorName, params, builder);
   }
 
-  private boolean validateIsConstructorNotDefined(@NotNull PsiClass psiClass, @NotNull Collection<PsiField> params, @NotNull ProblemBuilder builder) {
+  private boolean validateIsConstructorNotDefined(@NotNull PsiClass psiClass, @NotNull Collection<PsiField> params,
+                                                  @NotNull ProblemBuilder builder) {
     boolean result = true;
 
-    final List<PsiType> paramTypes = new ArrayList<>(params.size());
-    for (PsiField param : params) {
-      paramTypes.add(param.getType());
-    }
-
+    final List<PsiType> paramTypes = params.stream().map(PsiField::getType).collect(Collectors.toList());
     final Collection<PsiMethod> definedConstructors = PsiClassUtil.collectClassConstructorIntern(psiClass);
     final String constructorName = getConstructorName(psiClass);
 
@@ -228,7 +228,7 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
   protected Collection<PsiMethod> createConstructorMethod(@NotNull PsiClass psiClass, @PsiModifier.ModifierConstant @NotNull String methodModifier, @NotNull PsiAnnotation psiAnnotation, boolean useJavaDefaults, @NotNull Collection<PsiField> params) {
     final String staticName = getStaticConstructorName(psiAnnotation);
 
-    return createConstructorMethod(psiClass, methodModifier, psiAnnotation, useJavaDefaults, params, staticName);
+    return createConstructorMethod(psiClass, methodModifier, psiAnnotation, useJavaDefaults, params, staticName, false);
   }
 
   protected String getStaticConstructorName(@NotNull PsiAnnotation psiAnnotation) {
@@ -240,19 +240,25 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
   }
 
   @NotNull
-  protected Collection<PsiMethod> createConstructorMethod(@NotNull PsiClass psiClass, @PsiModifier.ModifierConstant @NotNull String methodModifier, @NotNull PsiAnnotation psiAnnotation, boolean useJavaDefaults, @NotNull Collection<PsiField> params, @Nullable String staticName) {
+  protected Collection<PsiMethod> createConstructorMethod(@NotNull PsiClass psiClass,
+                                                          @PsiModifier.ModifierConstant @NotNull String methodModifier,
+                                                          @NotNull PsiAnnotation psiAnnotation, boolean useJavaDefaults,
+                                                          @NotNull Collection<PsiField> params, @Nullable String staticName,
+                                                          boolean skipConstructorIfAnyConstructorExists) {
     List<PsiMethod> methods = new ArrayList<>();
 
     boolean hasStaticConstructor = !validateIsStaticConstructorNotDefined(psiClass, staticName, params, ProblemEmptyBuilder.getInstance());
-    boolean hasConstructor = !validateIsConstructorNotDefined(psiClass, params, ProblemEmptyBuilder.getInstance());
 
     final boolean staticConstructorRequired = isStaticConstructor(staticName);
 
     final String constructorVisibility = staticConstructorRequired || psiClass.isEnum() ? PsiModifier.PRIVATE : methodModifier;
 
-    if (!hasConstructor) {
-      final PsiMethod constructor = createConstructor(psiClass, constructorVisibility, useJavaDefaults, params, psiAnnotation);
-      methods.add(constructor);
+    if (!skipConstructorIfAnyConstructorExists || !isAnyConstructorDefined(psiClass)) {
+      boolean hasConstructor = !validateIsConstructorNotDefined(psiClass, params, ProblemEmptyBuilder.getInstance());
+      if (!hasConstructor) {
+        final PsiMethod constructor = createConstructor(psiClass, constructorVisibility, useJavaDefaults, params, psiAnnotation);
+        methods.add(constructor);
+      }
     }
 
     if (staticConstructorRequired && !hasStaticConstructor) {
@@ -261,6 +267,11 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
     }
 
     return methods;
+  }
+
+  private boolean isAnyConstructorDefined(@NotNull PsiClass psiClass) {
+    Collection<PsiMethod> constructors = PsiClassUtil.collectClassConstructorIntern(psiClass);
+    return constructors.stream().anyMatch(psiMethod -> PsiAnnotationSearchUtil.isNotAnnotatedWith(psiMethod, Tolerate.class));
   }
 
   private PsiMethod createConstructor(@NotNull PsiClass psiClass, @PsiModifier.ModifierConstant @NotNull String modifier,

@@ -9,7 +9,6 @@ import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.problem.ProblemEmptyBuilder;
 import de.plushnikov.intellij.plugin.problem.ProblemNewBuilder;
 import de.plushnikov.intellij.plugin.processor.AbstractProcessor;
-import de.plushnikov.intellij.plugin.processor.clazz.constructor.AbstractConstructorClassProcessor;
 import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
 import de.plushnikov.intellij.plugin.quickfix.PsiQuickFixFactory;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
@@ -160,19 +159,14 @@ public abstract class AbstractClassProcessor extends AbstractProcessor implement
     return result;
   }
 
-  boolean shouldGenerateNoArgsConstructor(@NotNull PsiClass psiClass, @NotNull AbstractConstructorClassProcessor argsConstructorProcessor) {
-    boolean result = configDiscovery.getBooleanLombokConfigProperty(ConfigKey.NO_ARGS_CONSTRUCTOR_EXTRA_PRIVATE, psiClass);
+  boolean shouldGenerateExtraNoArgsConstructor(@NotNull PsiClass psiClass) {
+    boolean result = !PsiClassUtil.hasSuperClass(psiClass);
     if (result) {
-      result = !PsiClassUtil.hasSuperClass(psiClass);
+      result = configDiscovery.getBooleanLombokConfigProperty(ConfigKey.NO_ARGS_CONSTRUCTOR_EXTRA_PRIVATE, psiClass);
     }
     if (result) {
-      result = PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, NoArgsConstructor.class);
-    }
-    if (result && PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, AllArgsConstructor.class)) {
-      result = argsConstructorProcessor.getAllFields(psiClass).isEmpty();
-    }
-    if (result && PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, RequiredArgsConstructor.class)) {
-      result = argsConstructorProcessor.getRequiredFields(psiClass).isEmpty();
+      result = PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, NoArgsConstructor.class, AllArgsConstructor.class,
+        RequiredArgsConstructor.class);
     }
     return result;
   }

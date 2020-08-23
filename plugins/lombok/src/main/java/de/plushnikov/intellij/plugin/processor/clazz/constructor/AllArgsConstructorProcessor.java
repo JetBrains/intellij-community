@@ -55,7 +55,12 @@ public class AllArgsConstructorProcessor extends AbstractConstructorClassProcess
 
   @NotNull
   public Collection<PsiMethod> createAllArgsConstructor(@NotNull PsiClass psiClass, @PsiModifier.ModifierConstant @NotNull String methodModifier, @NotNull PsiAnnotation psiAnnotation, String staticName, Collection<PsiField> allNotInitializedNotStaticFields) {
-    return createConstructorMethod(psiClass, methodModifier, psiAnnotation, false, allNotInitializedNotStaticFields, staticName);
+    return createAllArgsConstructor(psiClass, methodModifier, psiAnnotation, staticName, allNotInitializedNotStaticFields, false);
+  }
+
+  @NotNull
+  public Collection<PsiMethod> createAllArgsConstructor(@NotNull PsiClass psiClass, @PsiModifier.ModifierConstant @NotNull String methodModifier, @NotNull PsiAnnotation psiAnnotation, String staticName, Collection<PsiField> allNotInitializedNotStaticFields, boolean skipConstructorIfAnyConstructorExists) {
+    return createConstructorMethod(psiClass, methodModifier, psiAnnotation, false, allNotInitializedNotStaticFields, staticName, skipConstructorIfAnyConstructorExists);
   }
 
   @Override

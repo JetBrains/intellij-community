@@ -86,11 +86,11 @@ public class ValueProcessor extends AbstractClassProcessor {
       final Collection<PsiField> requiredFields = getAllArgsConstructorProcessor().getAllFields(psiClass);
 
       if (getAllArgsConstructorProcessor().validateIsConstructorNotDefined(psiClass, staticName, requiredFields, ProblemEmptyBuilder.getInstance())) {
-        target.addAll(getAllArgsConstructorProcessor().createAllArgsConstructor(psiClass, PsiModifier.PUBLIC, psiAnnotation, staticName, requiredFields));
+        target.addAll(getAllArgsConstructorProcessor().createAllArgsConstructor(psiClass, PsiModifier.PUBLIC, psiAnnotation, staticName, requiredFields, true));
       }
     }
 
-    if (shouldGenerateNoArgsConstructor(psiClass, getAllArgsConstructorProcessor())) {
+    if (shouldGenerateExtraNoArgsConstructor(psiClass)) {
       target.addAll(getNoArgsConstructorProcessor().createNoArgsConstructor(psiClass, PsiModifier.PRIVATE, psiAnnotation, true));
     }
   }
