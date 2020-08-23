@@ -2,10 +2,7 @@ package de.plushnikov.intellij.plugin.psi;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiIdentifier;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightModifierList;
 import com.intellij.psi.impl.light.LightParameter;
 import com.intellij.psi.impl.light.LightVariableBuilder;
@@ -17,7 +14,7 @@ import java.util.Collections;
 /**
  * @author Plushnikov Michail
  */
-public class LombokLightParameter extends LightParameter {
+public class LombokLightParameter extends LightParameter implements SyntheticElement {
   private String myName;
   private final LombokLightIdentifier myNameIdentifier;
 

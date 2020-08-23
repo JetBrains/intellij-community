@@ -3,12 +3,15 @@ package de.plushnikov.intellij.plugin.psi;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.SyntheticElement;
 import com.intellij.psi.impl.light.LightIdentifier;
+
+import java.util.Objects;
 
 /**
  * Date: 12.10.13 Time: 23:27
  */
-public class LombokLightIdentifier extends LightIdentifier {
+public class LombokLightIdentifier extends LightIdentifier implements SyntheticElement {
   private String myText;
 
   public LombokLightIdentifier(PsiManager manager, String text) {
@@ -47,12 +50,11 @@ public class LombokLightIdentifier extends LightIdentifier {
 
     LombokLightIdentifier that = (LombokLightIdentifier) o;
 
-    return !(myText != null ? !myText.equals(that.myText) : that.myText != null);
-
+    return Objects.equals(myText, that.myText);
   }
 
   @Override
   public int hashCode() {
-    return myText != null ? myText.hashCode() : 0;
+    return Objects.hash(myText);
   }
 }

@@ -1,11 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.clazz.constructor;
 
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
+import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
@@ -48,9 +43,14 @@ public class RequiredArgsConstructorProcessor extends AbstractConstructorClassPr
 
   @NotNull
   public Collection<PsiMethod> createRequiredArgsConstructor(@NotNull PsiClass psiClass, @PsiModifier.ModifierConstant @NotNull String methodModifier, @NotNull PsiAnnotation psiAnnotation, @Nullable String staticName) {
+    return createRequiredArgsConstructor(psiClass, methodModifier, psiAnnotation, staticName, false);
+  }
+
+  @NotNull
+  public Collection<PsiMethod> createRequiredArgsConstructor(@NotNull PsiClass psiClass, @PsiModifier.ModifierConstant @NotNull String methodModifier, @NotNull PsiAnnotation psiAnnotation, @Nullable String staticName, boolean skipConstructorIfAnyConstructorExists) {
     final Collection<PsiField> allReqFields = getRequiredFields(psiClass);
 
-    return createConstructorMethod(psiClass, methodModifier, psiAnnotation, false, allReqFields, staticName);
+    return createConstructorMethod(psiClass, methodModifier, psiAnnotation, false, allReqFields, staticName, skipConstructorIfAnyConstructorExists);
   }
 
   @Override

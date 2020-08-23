@@ -48,10 +48,14 @@ public class ConfigDiscoveryTest {
 
   @Before
   public void setUp() {
-    discovery = new ConfigDiscovery(fileBasedIndex);
+    discovery = new ConfigDiscovery(){
+      @Override
+      protected FileBasedIndex getFileBasedIndex() {
+        return fileBasedIndex;
+      }
+    };
 
     when(project.getUserData(any(Key.class))).thenReturn(globalSearchScope);
-
     when(psiClass.getProject()).thenReturn(project);
     when(psiClass.getContainingFile()).thenReturn(psiFile);
     when(psiFile.getVirtualFile()).thenReturn(virtualFile);

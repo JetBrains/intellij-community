@@ -1,23 +1,13 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiModifierList;
-import com.intellij.psi.PsiType;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.field.AccessorsInfo;
 import de.plushnikov.intellij.plugin.processor.field.GetterFieldProcessor;
 import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
-import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
-import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
-import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
-import de.plushnikov.intellij.plugin.util.PsiClassUtil;
-import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
+import de.plushnikov.intellij.plugin.util.*;
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,11 +23,12 @@ import java.util.List;
  */
 public class GetterProcessor extends AbstractClassProcessor {
 
-  private final GetterFieldProcessor fieldProcessor;
-
-  public GetterProcessor(@NotNull GetterFieldProcessor getterFieldProcessor) {
+  public GetterProcessor() {
     super(PsiMethod.class, Getter.class);
-    this.fieldProcessor = getterFieldProcessor;
+  }
+
+  private GetterFieldProcessor getGetterFieldProcessor() {
+    return ServiceManager.getService(GetterFieldProcessor.class);
   }
 
   @Override
@@ -76,6 +67,7 @@ public class GetterProcessor extends AbstractClassProcessor {
   public Collection<PsiMethod> createFieldGetters(@NotNull PsiClass psiClass, @NotNull String methodModifier) {
     Collection<PsiMethod> result = new ArrayList<>();
     final Collection<PsiField> getterFields = filterGetterFields(psiClass);
+    GetterFieldProcessor fieldProcessor = getGetterFieldProcessor();
     for (PsiField getterField : getterFields) {
       result.add(fieldProcessor.createGetterMethod(getterField, psiClass, methodModifier));
     }
@@ -89,6 +81,7 @@ public class GetterProcessor extends AbstractClassProcessor {
     final Collection<PsiMethod> classMethods = PsiClassUtil.collectClassMethodsIntern(psiClass);
     filterToleratedElements(classMethods);
 
+    GetterFieldProcessor fieldProcessor = getGetterFieldProcessor();
     for (PsiField psiField : psiClass.getFields()) {
       boolean createGetter = true;
       PsiModifierList modifierList = psiField.getModifierList();

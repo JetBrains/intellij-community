@@ -1,10 +1,7 @@
 package de.plushnikov.intellij.plugin.processor.field;
 
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiType;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.handler.DelegateHandler;
@@ -20,22 +17,24 @@ import java.util.List;
  * @author Plushnikov Michail
  */
 public class DelegateFieldProcessor extends AbstractFieldProcessor {
-  private final DelegateHandler delegateHandler;
 
   @SuppressWarnings({"deprecation"})
-  public DelegateFieldProcessor(@NotNull DelegateHandler delegateHandler) {
+  public DelegateFieldProcessor() {
     super(PsiMethod.class, Delegate.class, lombok.experimental.Delegate.class);
-    this.delegateHandler = delegateHandler;
+  }
+
+  private DelegateHandler getDelegateHandler() {
+    return ServiceManager.getService(DelegateHandler.class);
   }
 
   @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiField psiField, @NotNull ProblemBuilder builder) {
     final PsiType psiFieldType = psiField.getType();
-    return delegateHandler.validate(psiField, psiFieldType, psiAnnotation, builder);
+    return getDelegateHandler().validate(psiField, psiFieldType, psiAnnotation, builder);
   }
 
   protected void generatePsiElements(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
-    delegateHandler.generateElements(psiField, psiField.getType(), psiAnnotation, target);
+    getDelegateHandler().generateElements(psiField, psiField.getType(), psiAnnotation, target);
   }
 
   @Override

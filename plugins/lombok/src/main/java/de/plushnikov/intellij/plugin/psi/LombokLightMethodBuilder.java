@@ -22,7 +22,7 @@ import java.util.Objects;
 /**
  * @author Plushnikov Michail
  */
-public class LombokLightMethodBuilder extends LightMethodBuilder {
+public class LombokLightMethodBuilder extends LightMethodBuilder implements SyntheticElement {
   private PsiMethod myMethod;
   private ASTNode myASTNode;
   private PsiCodeBlock myBodyCodeBlock;
@@ -287,6 +287,7 @@ public class LombokLightMethodBuilder extends LightMethodBuilder {
     if (!getParameterList().equals(that.getParameterList())) {
       return false;
     }
+
     return Objects.equals(myReturnTypeAsText, that.myReturnTypeAsText);
   }
 

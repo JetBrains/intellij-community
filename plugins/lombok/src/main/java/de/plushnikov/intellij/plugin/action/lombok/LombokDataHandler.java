@@ -1,11 +1,7 @@
 package de.plushnikov.intellij.plugin.action.lombok;
 
 import com.intellij.psi.PsiClass;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 import org.jetbrains.annotations.NotNull;
 
 public class LombokDataHandler extends BaseLombokHandler {

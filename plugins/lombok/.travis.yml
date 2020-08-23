@@ -6,7 +6,7 @@ git:
 
 # Cache settings
 cache:
-  timeout: 600
+  timeout: 900
   directories:
     - $HOME/.gradle/caches/
     - $HOME/.gradle/wrapper/
@@ -15,9 +15,8 @@ before_cache:
   - rm -fr $HOME/.gradle/caches/*/plugin-resolution/
 
 env:
-#  - IDEA_VERSION=201.5985-EAP-CANDIDATE-SNAPSHOT
   - IDEA_VERSION=LATEST-EAP-SNAPSHOT
-#  - IDEA_VERSION=2020.1
+  - IDEA_VERSION=2020.1
 
 before_install:
   - chmod +x gradlew

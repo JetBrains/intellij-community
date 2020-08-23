@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.handler;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -49,14 +50,6 @@ public class BuilderHandler {
     ToString.class.getSimpleName(), EqualsAndHashCode.class.getSimpleName(),
     RequiredArgsConstructor.class.getSimpleName(), AllArgsConstructor.class.getSimpleName(), NoArgsConstructor.class.getSimpleName(),
     Data.class.getSimpleName(), Value.class.getSimpleName(), FieldDefaults.class.getSimpleName())));
-
-  private final ToStringProcessor toStringProcessor;
-  private final NoArgsConstructorProcessor noArgsConstructorProcessor;
-
-  public BuilderHandler(@NotNull ToStringProcessor toStringProcessor, @NotNull NoArgsConstructorProcessor noArgsConstructorProcessor) {
-    this.toStringProcessor = toStringProcessor;
-    this.noArgsConstructorProcessor = noArgsConstructorProcessor;
-  }
 
   PsiSubstitutor getBuilderSubstitutor(@NotNull PsiTypeParameterListOwner classOrMethodToBuild, @NotNull PsiClass innerClass) {
     PsiSubstitutor substitutor = PsiSubstitutor.EMPTY;
@@ -428,7 +421,7 @@ public class BuilderHandler {
   PsiMethod createToStringMethod(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass builderClass, boolean forceCallSuper) {
     final List<EqualsAndHashCodeToStringHandler.MemberInfo> memberInfos = Arrays.stream(builderClass.getFields())
       .map(EqualsAndHashCodeToStringHandler.MemberInfo::new).collect(Collectors.toList());
-    return toStringProcessor.createToStringMethod(builderClass, memberInfos, psiAnnotation, forceCallSuper);
+    return getToStringProcessor().createToStringMethod(builderClass, memberInfos, psiAnnotation, forceCallSuper);
   }
 
   @NotNull
@@ -455,7 +448,7 @@ public class BuilderHandler {
   @NotNull
   public Collection<PsiMethod> createConstructors(@NotNull PsiClass psiClass, @NotNull PsiAnnotation psiAnnotation) {
     final Collection<PsiMethod> methodsIntern = PsiClassUtil.collectClassConstructorIntern(psiClass);
-
+    final NoArgsConstructorProcessor noArgsConstructorProcessor = getNoArgsConstructorProcessor();
     final String constructorName = noArgsConstructorProcessor.getConstructorName(psiClass);
     for (PsiMethod existedConstructor : methodsIntern) {
       if (constructorName.equals(existedConstructor.getName()) && existedConstructor.getParameterList().getParametersCount() == 0) {
@@ -566,5 +559,14 @@ public class BuilderHandler {
     for (PsiTypeParameter psiTypeParameter : psiTypeParameters) {
       methodBuilder.withTypeParameter(psiTypeParameter);
     }
+  }
+
+  private NoArgsConstructorProcessor getNoArgsConstructorProcessor() {
+    return ServiceManager.getService(NoArgsConstructorProcessor.class);
+  }
+
+
+  private ToStringProcessor getToStringProcessor() {
+    return ServiceManager.getService(ToStringProcessor.class);
   }
 }

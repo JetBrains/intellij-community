@@ -2,11 +2,13 @@ package de.plushnikov.intellij.plugin.psi;
 
 import com.intellij.lang.Language;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.SyntheticElement;
 import com.intellij.psi.impl.light.LightParameterListBuilder;
 
 import java.util.Arrays;
 
-public class LombokLightParameterListBuilder extends LightParameterListBuilder {
+public class LombokLightParameterListBuilder extends LightParameterListBuilder implements SyntheticElement {
+
   public LombokLightParameterListBuilder(PsiManager manager, Language language) {
     super(manager, language);
   }

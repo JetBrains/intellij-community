@@ -1,5 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -36,11 +37,12 @@ public class ToStringProcessor extends AbstractClassProcessor {
   private static final String TOSTRING_INCLUDE = ToString.Include.class.getCanonicalName();
   private static final String TOSTRING_EXCLUDE = ToString.Exclude.class.getCanonicalName();
 
-  private final EqualsAndHashCodeToStringHandler handler;
-
-  public ToStringProcessor(@NotNull EqualsAndHashCodeToStringHandler equalsAndHashCodeToStringHandler) {
+  public ToStringProcessor() {
     super(PsiMethod.class, ToString.class);
-    handler = equalsAndHashCodeToStringHandler;
+  }
+
+  private EqualsAndHashCodeToStringHandler getEqualsAndHashCodeToStringHandler() {
+    return ServiceManager.getService(EqualsAndHashCodeToStringHandler.class);
   }
 
   @Override
@@ -96,7 +98,7 @@ public class ToStringProcessor extends AbstractClassProcessor {
       return Collections.emptyList();
     }
 
-    final Collection<MemberInfo> memberInfos = handler.filterFields(psiClass, psiAnnotation, false, INCLUDE_ANNOTATION_METHOD);
+    final Collection<MemberInfo> memberInfos = getEqualsAndHashCodeToStringHandler().filterFields(psiClass, psiAnnotation, false, INCLUDE_ANNOTATION_METHOD);
     final PsiMethod stringMethod = createToStringMethod(psiClass, memberInfos, psiAnnotation, false);
     return Collections.singletonList(stringMethod);
   }
@@ -159,7 +161,7 @@ public class ToStringProcessor extends AbstractClassProcessor {
         }
       }
 
-      final String memberAccessor = handler.getMemberAccessorName(memberInfo, doNotUseGetters, psiClass);
+      final String memberAccessor = getEqualsAndHashCodeToStringHandler().getMemberAccessorName(memberInfo, doNotUseGetters, psiClass);
       paramString.append("this.").append(memberAccessor);
 
       if (classFieldType instanceof PsiArrayType) {
@@ -187,7 +189,7 @@ public class ToStringProcessor extends AbstractClassProcessor {
     final PsiClass containingClass = psiField.getContainingClass();
     if (null != containingClass) {
       final String psiFieldName = StringUtil.notNullize(psiField.getName());
-      if (handler.filterFields(containingClass, psiAnnotation, false, INCLUDE_ANNOTATION_METHOD).stream()
+      if (getEqualsAndHashCodeToStringHandler().filterFields(containingClass, psiAnnotation, false, INCLUDE_ANNOTATION_METHOD).stream()
         .map(MemberInfo::getName).anyMatch(psiFieldName::equals)) {
         return LombokPsiElementUsage.READ;
       }

@@ -1,6 +1,7 @@
 package de.plushnikov.intellij.plugin.processor.clazz;
 
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -41,11 +42,12 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
   private static final String EQUALSANDHASHCODE_INCLUDE = EqualsAndHashCode.Include.class.getCanonicalName();
   private static final String EQUALSANDHASHCODE_EXCLUDE = EqualsAndHashCode.Exclude.class.getCanonicalName();
 
-  private final EqualsAndHashCodeToStringHandler handler;
-
-  public EqualsAndHashCodeProcessor(@NotNull EqualsAndHashCodeToStringHandler equalsAndHashCodeToStringHandler) {
+  public EqualsAndHashCodeProcessor() {
     super(PsiMethod.class, EqualsAndHashCode.class);
-    handler = equalsAndHashCodeToStringHandler;
+  }
+
+  private EqualsAndHashCodeToStringHandler getEqualsAndHashCodeToStringHandler() {
+    return ServiceManager.getService(EqualsAndHashCodeToStringHandler.class);
   }
 
   @Override
@@ -134,7 +136,8 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
       return Collections.emptyList();
     }
 
-    final Collection<MemberInfo> memberInfos = handler.filterFields(psiClass, psiAnnotation, true, INCLUDE_ANNOTATION_METHOD);
+    final Collection<MemberInfo> memberInfos = getEqualsAndHashCodeToStringHandler()
+      .filterFields(psiClass, psiAnnotation, true, INCLUDE_ANNOTATION_METHOD);
 
     final boolean shouldGenerateCanEqual = shouldGenerateCanEqual(psiClass);
 
@@ -225,6 +228,7 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
       builder.append("if (!super.equals(o)) return false;\n");
     }
 
+    EqualsAndHashCodeToStringHandler handler = getEqualsAndHashCodeToStringHandler();
     for (MemberInfo memberInfo : memberInfos) {
       final String memberAccessor = handler.getMemberAccessorName(memberInfo, doNotUseGetters, psiClass);
 
@@ -278,6 +282,7 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
       builder.append("1;\n");
     }
 
+    EqualsAndHashCodeToStringHandler handler = getEqualsAndHashCodeToStringHandler();
     for (MemberInfo memberInfo : memberInfos) {
       final String memberAccessor = handler.getMemberAccessorName(memberInfo, doNotUseGetters, psiClass);
       final String memberName = memberInfo.getMethod() == null ? memberInfo.getName() : "$" + memberInfo.getName();
@@ -326,7 +331,7 @@ public class EqualsAndHashCodeProcessor extends AbstractClassProcessor {
     final PsiClass containingClass = psiField.getContainingClass();
     if (null != containingClass) {
       final String psiFieldName = StringUtil.notNullize(psiField.getName());
-      if (handler.filterFields(containingClass, psiAnnotation, true, INCLUDE_ANNOTATION_METHOD).stream()
+      if (getEqualsAndHashCodeToStringHandler().filterFields(containingClass, psiAnnotation, true, INCLUDE_ANNOTATION_METHOD).stream()
         .map(MemberInfo::getName).anyMatch(psiFieldName::equals)) {
         return LombokPsiElementUsage.READ;
       }

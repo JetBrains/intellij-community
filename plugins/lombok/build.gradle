@@ -1,19 +1,15 @@
 plugins {
-  id "org.jetbrains.intellij" version "0.4.16"
-  id "org.jetbrains.grammarkit" version "2020.1"
+  id "org.jetbrains.intellij" version "0.4.21"
+  id "org.jetbrains.grammarkit" version "2020.2.1"
   id "com.github.ManifestClasspath" version "0.1.0-RELEASE"
 }
 
-repositories {
-  jcenter()
-  mavenCentral()
-  maven { url "https://www.jitpack.io" }
+allprojects {
+  repositories {
+    jcenter()
+    maven { url "https://www.jitpack.io" }
+  }
 }
-// Fix Bug https://github.com/jitpack/jitpack.io/issues/3973
-project.repositories.removeAll {
-  it instanceof MavenArtifactRepository && it.url.toString() == 'https://jitpack.io'
-}
-
 
 apply plugin: 'java'
 apply plugin: 'idea'
@@ -88,8 +84,8 @@ dependencies {
   lombok group: 'org.projectlombok', name: 'lombok', version: '1.18.12', classifier: 'sources', ext: 'jar'
 
   testImplementation("junit:junit:4.13")
-  testImplementation("org.mockito:mockito-core:3.3.1")
-  testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.6.0")
+  testImplementation("org.mockito:mockito-core:3.5.2")
+  testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.6.2")
 }
 
 // Tasks
@@ -161,7 +157,7 @@ test {
     exceptionFormat = 'full'
     showStandardStreams = true
   }
-  if( isCI ){
+  if (isCI) {
     testLogging {
       events 'passed', 'skipped', 'failed', 'standardOut', 'standardError'
       exceptionFormat "full"

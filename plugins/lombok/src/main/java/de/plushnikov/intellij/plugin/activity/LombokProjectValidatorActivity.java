@@ -2,7 +2,6 @@ package de.plushnikov.intellij.plugin.activity;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
-import com.intellij.compiler.options.AnnotationProcessorsConfigurable;
 import com.intellij.notification.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;

@@ -1,11 +1,6 @@
 package de.plushnikov.intellij.plugin.action.lombok;
 
-import com.intellij.psi.CommonClassNames;
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiElementFactory;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
 import lombok.ToString;
 import org.jetbrains.annotations.NotNull;
 

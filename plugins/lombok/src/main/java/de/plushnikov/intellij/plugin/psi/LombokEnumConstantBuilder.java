@@ -1,14 +1,6 @@
 package de.plushnikov.intellij.plugin.psi;
 
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.JavaResolveResult;
-import com.intellij.psi.PsiElementFactory;
-import com.intellij.psi.PsiEnumConstant;
-import com.intellij.psi.PsiEnumConstantInitializer;
-import com.intellij.psi.PsiExpressionList;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

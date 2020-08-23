@@ -2,23 +2,13 @@ package de.plushnikov.intellij.plugin.handler;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiAnnotation;
-import com.intellij.psi.PsiAnnotationParameterList;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiNameValuePair;
+import com.intellij.psi.*;
+import lombok.*;
+import lombok.experimental.Wither;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.regex.Pattern;
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
-import lombok.With;
-import lombok.experimental.Wither;
 
 
 public class OnXAnnotationHandler {

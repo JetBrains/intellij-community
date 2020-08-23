@@ -1,10 +1,6 @@
 package de.plushnikov.intellij.plugin.util;
 
-import com.intellij.psi.JavaPsiFacade;
-import com.intellij.psi.PsiCodeBlock;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiElementFactory;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;

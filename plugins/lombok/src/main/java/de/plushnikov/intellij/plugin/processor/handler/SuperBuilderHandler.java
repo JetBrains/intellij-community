@@ -5,7 +5,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightTypeParameterBuilder;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.processor.clazz.ToStringProcessor;
-import de.plushnikov.intellij.plugin.processor.clazz.constructor.NoArgsConstructorProcessor;
 import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
@@ -30,10 +29,6 @@ public class SuperBuilderHandler extends BuilderHandler {
   private static final String STATIC_FILL_VALUES_METHOD_NAME = "$fillValuesFromInstanceIntoBuilder";
   private static final String INSTANCE_VARIABLE_NAME = "instance";
   private static final String BUILDER_VARIABLE_NAME = "b";
-
-  public SuperBuilderHandler(@NotNull ToStringProcessor toStringProcessor, @NotNull NoArgsConstructorProcessor noArgsConstructorProcessor) {
-    super(toStringProcessor, noArgsConstructorProcessor);
-  }
 
   @Override
   public boolean validateExistingBuilderClass(@NotNull String builderClassName, @NotNull PsiClass psiClass, @NotNull ProblemBuilder problemBuilder) {

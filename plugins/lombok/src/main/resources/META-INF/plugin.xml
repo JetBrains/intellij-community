@@ -7,7 +7,7 @@
   </vendor>
   <version>XXX</version>
 
-  <idea-version since-build="190.00"/>
+  <idea-version since-build="201.00"/>
 
   <description><![CDATA[ Description will be added by gradle build]]></description>
   <category>Tools Integration</category>
@@ -187,9 +187,17 @@
       groupPath="Lombok"
       groupName="Redundant modifiers"
       shortName="RedundantModifiersUtilityClassLombok"
-      enabledByDefault="true"
+      enabledByDefault="false"
       implementationClass="de.plushnikov.intellij.plugin.inspection.modifiers.RedundantModifiersOnUtilityClassLombokAnnotationInspection"/>
 
+    <localInspection
+      displayName="@Slf4j"
+      groupPath="Lombok"
+      groupName="Redundant definitions"
+      shortName="RedundantSlf4jDefinition"
+      enabledByDefault="true"
+      implementationClass="de.plushnikov.intellij.plugin.inspection.RedundantSlf4jDefinitionInspection"/>
+    
     <localInspection
       displayName="Unnecessary final before 'val'"
       groupPath="Lombok"
@@ -220,10 +228,6 @@
   </extensions>
 
   <actions>
-    <!--Override existing action from jetbrains by customized, to support constructor generation for classes with lombok defined constructors-->
-    <action id="GenerateConstructor" text="Constructor" overrides="true"
-            class="de.plushnikov.intellij.plugin.action.generate.LombokGenerateConstructorAction"/>
-
     <group id="LombokActionGroup" text="Lombok" description="Refactor code with lombok annotations"
            icon="/icons/lombok.png" popup="true">
 

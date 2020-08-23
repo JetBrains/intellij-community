@@ -1,6 +1,7 @@
 package de.plushnikov.intellij.plugin.processor.method;
 
-import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -14,17 +15,18 @@ import java.util.List;
 
 public class DelegateMethodProcessor extends AbstractMethodProcessor {
 
-  private final DelegateHandler handler;
-
   @SuppressWarnings({"deprecation"})
-  public DelegateMethodProcessor(@NotNull DelegateHandler delegateHandler) {
+  public DelegateMethodProcessor() {
     super(PsiMethod.class, lombok.Delegate.class, lombok.experimental.Delegate.class);
-    handler = delegateHandler;
+  }
+
+  private DelegateHandler getDelegateHandler() {
+    return ServiceManager.getService(DelegateHandler.class);
   }
 
   @Override
-  public boolean isEnabled(@NotNull PropertiesComponent propertiesComponent) {
-    return ProjectSettings.isEnabled(propertiesComponent, ProjectSettings.IS_DELEGATE_ENABLED);
+  public boolean isEnabled(@NotNull Project project) {
+    return ProjectSettings.isEnabled(project, ProjectSettings.IS_DELEGATE_ENABLED);
   }
 
   @Override
@@ -36,6 +38,7 @@ public class DelegateMethodProcessor extends AbstractMethodProcessor {
     }
 
     final PsiType returnType = psiMethod.getReturnType();
+    final DelegateHandler handler = getDelegateHandler();
     result &= null != returnType && handler.validate(psiMethod, returnType, psiAnnotation, builder);
 
     return result;
@@ -45,6 +48,7 @@ public class DelegateMethodProcessor extends AbstractMethodProcessor {
   protected void processIntern(@NotNull PsiMethod psiMethod, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final PsiType returnType = psiMethod.getReturnType();
     if (null != returnType) {
+      final DelegateHandler handler = getDelegateHandler();
       handler.generateElements(psiMethod, returnType, psiAnnotation, target);
     }
   }

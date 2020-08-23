@@ -1,6 +1,6 @@
 package de.plushnikov.intellij.plugin.processor.clazz.builder;
 
-import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -17,26 +17,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.annotation.Annotation;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public abstract class AbstractBuilderPreDefinedInnerClassProcessor extends AbstractClassProcessor {
 
-  final BuilderHandler builderHandler;
-
-  AbstractBuilderPreDefinedInnerClassProcessor(@NotNull BuilderHandler builderHandler,
-                                               @NotNull Class<? extends PsiElement> supportedClass,
+  AbstractBuilderPreDefinedInnerClassProcessor(@NotNull Class<? extends PsiElement> supportedClass,
                                                @NotNull Class<? extends Annotation> supportedAnnotationClass) {
     super(supportedClass, supportedAnnotationClass);
-    this.builderHandler = builderHandler;
   }
 
   @Override
-  public boolean isEnabled(@NotNull PropertiesComponent propertiesComponent) {
-    return ProjectSettings.isEnabled(propertiesComponent, ProjectSettings.IS_BUILDER_ENABLED);
+  public boolean isEnabled(@NotNull Project project) {
+    return ProjectSettings.isEnabled(project, ProjectSettings.IS_BUILDER_ENABLED);
   }
 
   @NotNull
@@ -67,7 +59,7 @@ public abstract class AbstractBuilderPreDefinedInnerClassProcessor extends Abstr
   private List<? super PsiElement> processAnnotation(@NotNull PsiClass psiParentClass, @Nullable PsiMethod psiParentMethod,
                                                      @NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass) {
     // use parent class as source!
-    final String builderClassName = builderHandler.getBuilderClassName(psiParentClass, psiAnnotation, psiParentMethod);
+    final String builderClassName = getBuilderHandler().getBuilderClassName(psiParentClass, psiAnnotation, psiParentMethod);
 
     List<? super PsiElement> result = new ArrayList<>();
     // apply only to inner BuilderClass
@@ -76,6 +68,8 @@ public abstract class AbstractBuilderPreDefinedInnerClassProcessor extends Abstr
     }
     return result;
   }
+
+  protected abstract BuilderHandler getBuilderHandler();
 
   protected abstract Collection<? extends PsiElement> generatePsiElements(@NotNull PsiClass psiParentClass, @Nullable PsiMethod psiParentMethod, @NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiBuilderClass);
 
@@ -88,7 +82,7 @@ public abstract class AbstractBuilderPreDefinedInnerClassProcessor extends Abstr
 
   @Override
   protected boolean validate(@NotNull PsiAnnotation psiAnnotation, @NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
-    return builderHandler.validate(psiClass, psiAnnotation, builder);
+    return getBuilderHandler().validate(psiClass, psiAnnotation, builder);
   }
 
   @Override

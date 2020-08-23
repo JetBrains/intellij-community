@@ -9,13 +9,18 @@ lombok-intellij-plugin [![Donate](https://www.paypal.com/en_US/i/btn/btn_donateC
 [![Gitter][badge-gitter-img]][badge-gitter] [![Donate][badge-paypal-img]][badge-paypal]
 
 
-## Plugin for [IntelliJ IDEA](http://plugins.jetbrains.com/plugin/6317-lombok-plugin) to support [Lombok](https://projectlombok.org) annotations. ##
+## Plugin for [IntelliJ IDEA](http://plugins.jetbrains.com/plugin/6317-lombok-plugin) to support [Lombok](https://projectlombok.org) annotations.
 
 Provides support for lombok annotations to write great Java code with IntelliJ IDEA.
 
 **Last version (0.29) released on 01.03.2020**
 
-34nd version of plugin released.
+---
+## Unfortunately the current IntelliJ 2020.2 version has a bug and lombok plugin can't be used normally.
+## Use previous IntelliJ version 2020.1 or update to IntelliJ IDEA 2020.2.1 RC.
+---
+
+34th version of plugin released.
 
 Install it automatically from IntelliJ Idea plugin repository.
 
@@ -45,7 +50,7 @@ Features / Supports
 - [@Delegate](https://projectlombok.org/features/Delegate.html)
 - [@Value](https://projectlombok.org/features/Value.html)
 - [@Accessors](https://projectlombok.org/features/experimental/Accessors.html)
-- [@Wither](https://projectlombok.org/features/experimental/Wither.html)
+- [@With](https://projectlombok.org/features/With.html)
 - [@SneakyThrows](https://projectlombok.org/features/SneakyThrows.html)
 - [@val](https://projectlombok.org/features/val.html) available from IntelliJ 14.1 (improved in 2016.2)
 - [@UtilityClass](https://projectlombok.org/features/experimental/UtilityClass.html) available from IntelliJ 2016.2
@@ -135,9 +140,11 @@ Developed By
 - [**@alanachtenberg** Alan Achtenberg](https://github.com/alanachtenberg)
 - [**@AlexejK** Alexej Kubarev](https://github.com/AlexejK)
 - [**@bulgakovalexander** Alexander Bulgakov](https://github.com/bulgakovalexander)
+- [**@GingerGeek** Zed Spencer-Milnes](https://github.com/GingerGeek)
 - [**@jeromewaibel** Jérôme Waibel](https://github.com/jeromewaibel)
 - [**@Jessevanbekkum** Jesse van Bekkum](https://github.com/Jessevanbekkum)
 - [**@juriad** Adam Juraszek](https://github.com/juriad)
+- [**@kuil09** Hwang, Geon Gu](https://github.com/kuil09)
 - [**@krzyk** Krzysztof Krasoń](https://github.com/krzyk)
 - [**@Lekanich** Aleksandr Zhelezniak](https://github.com/Lekanich)
 - [**@mg6maciej** Maciej Górski](https://github.com/mg6maciej)
@@ -157,6 +164,7 @@ Developed By
 - [**@tagae** Sebastián González](https://github.com/tagae)
 - [**@wyhasany** Michał Rowicki](https://github.com/wyhasany)
 - [**@ocadaruma** Haruki Okada](https://github.com/ocadaruma)
+- [**@mackatozis** Alexandros Efthymiadis](https://github.com/mackatozis)
 
 Supporters
 --------

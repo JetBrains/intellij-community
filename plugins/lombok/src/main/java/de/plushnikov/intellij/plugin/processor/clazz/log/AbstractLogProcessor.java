@@ -1,6 +1,5 @@
 package de.plushnikov.intellij.plugin.processor.clazz.log;
 
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
@@ -54,8 +53,8 @@ public abstract class AbstractLogProcessor extends AbstractClassProcessor {
   }
 
   @Override
-  public boolean isEnabled(@NotNull PropertiesComponent propertiesComponent) {
-    return ProjectSettings.isEnabled(propertiesComponent, ProjectSettings.IS_LOG_ENABLED);
+  public boolean isEnabled(@NotNull Project project) {
+    return ProjectSettings.isEnabled(project, ProjectSettings.IS_LOG_ENABLED);
   }
 
   @NotNull
