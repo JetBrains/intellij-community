@@ -77,8 +77,8 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
   }
 
   @NotNull
-  private static JBList<WelcomeScreenTab> createListWithTabs(@Nullable DefaultListModel<WelcomeScreenTab> mainListModel) {
-    JBList<WelcomeScreenTab> tabList = new JBList<WelcomeScreenTab>(mainListModel) {
+  private static JBList<WelcomeScreenTab> createListWithTabs(@NotNull DefaultListModel<WelcomeScreenTab> mainListModel) {
+    JBList<WelcomeScreenTab> tabList = new JBList<>(mainListModel) {
       @Override
       public int locationToIndex(Point location) {
         int i = super.locationToIndex(location);
@@ -93,7 +93,7 @@ public class TabbedWelcomeScreen extends AbstractWelcomeScreen {
 
   @NotNull
   private static CardLayoutPanel<WelcomeScreenTab, WelcomeScreenTab, JPanel> createCardPanel() {
-    return new CardLayoutPanel<WelcomeScreenTab, WelcomeScreenTab, JPanel>() {
+    return new CardLayoutPanel<>() {
       @Override
       protected WelcomeScreenTab prepare(WelcomeScreenTab key) {
         return key;
