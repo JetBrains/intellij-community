@@ -97,7 +97,7 @@ class GitRenameBranchOperation extends GitBranchOperation {
     return new HtmlBuilder().append(GitBundle.message("git.rename.branch.has.succeeded.for.the.following.repositories",
                                                       getSuccessfulRepositories().size()))
       .append(HtmlChunk.br())
-      .append(successfulRepositoriesJoined())
+      .appendRaw(successfulRepositoriesJoined())
       .append(HtmlChunk.br())
       .append(GitBundle.message("git.rename.branch.you.may.rename.branch.back", myCurrentName)).toString();
   }

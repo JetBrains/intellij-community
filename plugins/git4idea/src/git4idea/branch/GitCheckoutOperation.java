@@ -217,7 +217,7 @@ class GitCheckoutOperation extends GitBranchOperation {
     return new HtmlBuilder()
       .append(GitBundle.message("checkout.operation.however.checkout.has.succeeded.for.the.following", repositories.size()))
       .append(HtmlChunk.br())
-      .append(successfulRepositoriesJoined())
+      .appendRaw(successfulRepositoriesJoined())
       .append(HtmlChunk.br())
       .append(rollBackProposal)
       .toString();

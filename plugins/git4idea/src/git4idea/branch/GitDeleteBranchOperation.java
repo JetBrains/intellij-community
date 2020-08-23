@@ -227,7 +227,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
     return new HtmlBuilder().append(GitBundle.message("delete.branch.operation.however.branch.deletion.has.succeeded.for.the.following",
                                                       getSuccessfulRepositories().size()))
       .append(HtmlChunk.br())
-      .append(successfulRepositoriesJoined())
+      .appendRaw(successfulRepositoriesJoined())
       .append(HtmlChunk.br())
       .append(GitBundle.message("delete.branch.operation.you.may.rollback.not.to.let.branches.diverge", myBranchName))
       .toString();

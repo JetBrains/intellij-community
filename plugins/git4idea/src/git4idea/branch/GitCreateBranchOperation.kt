@@ -85,7 +85,7 @@ internal class GitCreateBranchOperation(
       .append(GitBundle.message("create.branch.operation.however.the.branch.was.created.in.the.following.repositories",
                                 successfulRepositories.size))
       .append(HtmlChunk.br())
-      .append(successfulRepositoriesJoined())
+      .appendRaw(successfulRepositoriesJoined())
       .append(HtmlChunk.br())
       .append(GitBundle.message("create.branch.operation.you.may.rollback.not.to.let.branches.diverge", branchName))
       .toString()
