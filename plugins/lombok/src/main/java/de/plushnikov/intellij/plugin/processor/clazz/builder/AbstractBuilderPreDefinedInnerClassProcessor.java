@@ -49,7 +49,11 @@ public abstract class AbstractBuilderPreDefinedInnerClassProcessor extends Abstr
       for (PsiMethod psiMethod : psiMethods) {
         final PsiAnnotation psiBuilderAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiMethod, getSupportedAnnotationClasses());
         if (null != psiBuilderAnnotation) {
-          return processAnnotation(psiParentClass, psiMethod, psiBuilderAnnotation, psiClass);
+          final String builderClassNameOfThisMethod = getBuilderHandler().getBuilderClassName(psiParentClass, psiBuilderAnnotation, psiMethod);
+          // check we found right method for this existing builder class
+          if (Objects.equals(builderClassNameOfThisMethod, psiClass.getName())) {
+            return processAnnotation(psiParentClass, psiMethod, psiBuilderAnnotation, psiClass);
+          }
         }
       }
     }

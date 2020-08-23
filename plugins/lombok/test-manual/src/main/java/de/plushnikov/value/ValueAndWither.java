@@ -1,9 +1,9 @@
 package de.plushnikov.value;
 
 import lombok.Value;
-import lombok.experimental.Wither;
+import lombok.With;
 
-@Wither
+@With
 @Value
 public class ValueAndWither {
   private String myField;

@@ -40,7 +40,8 @@ public class BuilderClassMethodProcessor extends AbstractMethodProcessor {
   protected void processIntern(@NotNull PsiMethod psiMethod, @NotNull PsiAnnotation psiAnnotation, @NotNull List<? super PsiElement> target) {
     final PsiClass psiClass = psiMethod.getContainingClass();
     if (null != psiClass) {
-      ServiceManager.getService(BuilderHandler.class).createBuilderClassIfNotExist(psiClass, psiMethod, psiAnnotation).ifPresent(target::add);
+      final BuilderHandler builderHandler = ServiceManager.getService(BuilderHandler.class);
+      builderHandler.createBuilderClassIfNotExist(psiClass, psiMethod, psiAnnotation).ifPresent(target::add);
     }
   }
 }

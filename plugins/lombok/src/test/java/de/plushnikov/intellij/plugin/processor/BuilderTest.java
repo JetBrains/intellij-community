@@ -151,4 +151,8 @@ public class BuilderTest extends AbstractLombokParsingTestCase {
   public void testBuilder$BuilderWithTolerate() {
     doTest(true);
   }
+
+  public void testBuilder$MultipleMethodBuilderWithExistedClass() {
+    doTest(true);
+  }
 }
