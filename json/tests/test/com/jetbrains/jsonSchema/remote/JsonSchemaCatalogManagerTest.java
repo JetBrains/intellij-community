@@ -49,6 +49,7 @@ public class JsonSchemaCatalogManagerTest extends BasePlatformTestCase {
     doTest("jenkins-y.yml", null);
     doTest("my.schema.json", "https://jsonapi.org/schema");
     doTest("schema.json", null);
+    doTest("<hello>.json", null);
   }
 
   public void testPerformance() {
