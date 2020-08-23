@@ -44,7 +44,7 @@ public final class JavaI18nUtil extends I18nUtil {
   }
 
   @Nullable
-  public static TextRange getSelectedRange(Editor editor, final PsiFile psiFile) {
+  public static TextRange getSelectedRange(Editor editor, @NotNull PsiFile psiFile) {
     if (editor == null) return null;
     String selectedText = editor.getSelectionModel().getSelectedText();
     if (selectedText != null) {
@@ -100,8 +100,8 @@ public final class JavaI18nUtil extends I18nUtil {
     return isAnnotated;
   }
 
-  static boolean isPassedToResourceParam(@NotNull PsiExpression expression,
-                                         @Nullable Ref<? super PsiAnnotationMemberValue> resourceBundleRef) {
+  private static boolean isPassedToResourceParam(@NotNull PsiExpression expression,
+                                                 @Nullable Ref<? super PsiAnnotationMemberValue> resourceBundleRef) {
     expression = getTopLevelExpression(expression);
     final PsiElement parent = expression.getParent();
     if (!(parent instanceof PsiExpressionList)) return false;
@@ -123,7 +123,7 @@ public final class JavaI18nUtil extends I18nUtil {
   }
 
   @NotNull
-  static PsiExpression getTopLevelExpression(@NotNull PsiExpression expression) {
+  private static PsiExpression getTopLevelExpression(@NotNull PsiExpression expression) {
     while (expression.getParent() instanceof PsiExpression) {
       final PsiExpression parent = (PsiExpression)expression.getParent();
       if (parent instanceof PsiConditionalExpression &&
@@ -162,10 +162,10 @@ public final class JavaI18nUtil extends I18nUtil {
     return expression;
   }
 
-  static boolean isPropertyKeyParameter(final PsiMethod method,
-                                        final int idx,
-                                        @Nullable Collection<? super PsiMethod> processed,
-                                        @Nullable Ref<? super PsiAnnotationMemberValue> resourceBundleRef) {
+  private static boolean isPropertyKeyParameter(@NotNull PsiMethod method,
+                                                final int idx,
+                                                @Nullable Collection<? super PsiMethod> processed,
+                                                @Nullable Ref<? super PsiAnnotationMemberValue> resourceBundleRef) {
     if (processed != null) {
       if (processed.contains(method)) return false;
     }
@@ -284,21 +284,19 @@ public final class JavaI18nUtil extends I18nUtil {
     return r ? bundleRef.get() : null;
   }
 
-  static boolean isPropertyRef(final PsiExpression expression, final String key, final String resourceBundleName) {
+  private static boolean isPropertyRef(@NotNull PsiExpression expression, @NotNull String key, @Nullable String resourceBundleName) {
     if (resourceBundleName == null) {
       return !PropertiesImplUtil.findPropertiesByKey(expression.getProject(), key).isEmpty();
     }
-    else {
-      final List<PropertiesFile> propertiesFiles = propertiesFilesByBundleName(resourceBundleName, expression);
-      boolean containedInPropertiesFile = false;
-      for (PropertiesFile propertiesFile : propertiesFiles) {
-        containedInPropertiesFile |= propertiesFile.findPropertyByKey(key) != null;
-      }
-      return containedInPropertiesFile;
+    List<PropertiesFile> propertiesFiles = propertiesFilesByBundleName(resourceBundleName, expression);
+    boolean containedInPropertiesFile = false;
+    for (PropertiesFile propertiesFile : propertiesFiles) {
+      containedInPropertiesFile |= propertiesFile.findPropertyByKey(key) != null;
     }
+    return containedInPropertiesFile;
   }
 
-  public static Set<String> suggestExpressionOfType(final PsiClassType type, final PsiElement context) {
+  public static @NotNull Set<String> suggestExpressionOfType(final PsiClassType type, final PsiElement context) {
     PsiVariable[] variables = MacroUtil.getVariablesVisibleAt(context, "");
     Set<String> result = new LinkedHashSet<>();
     for (PsiVariable var : variables) {
@@ -319,9 +317,9 @@ public final class JavaI18nUtil extends I18nUtil {
     return result;
   }
 
-  private static void addAvailableMethodsOfType(final PsiClassType type,
-                                                final PsiElement context,
-                                                final Collection<? super String> result) {
+  private static void addAvailableMethodsOfType(@NotNull PsiClassType type,
+                                                @NotNull PsiElement context,
+                                                @NotNull Collection<? super String> result) {
     PsiScopesUtil.treeWalkUp((element, state) -> {
       if (element instanceof PsiMethod) {
         PsiMethod method = (PsiMethod)element;
@@ -352,7 +350,7 @@ public final class JavaI18nUtil extends I18nUtil {
     }
   }
 
-  private static int countFormatParameters(MessageFormat mf) {
+  private static int countFormatParameters(@NotNull MessageFormat mf) {
     Format[] formats = mf.getFormatsByArgumentIndex();
     int maxLength = formats.length;
     for (Format format : formats) {
@@ -441,16 +439,16 @@ public final class JavaI18nUtil extends I18nUtil {
     return paramsCount;
   }
 
-  public static String buildUnescapedFormatString(UStringConcatenationsFacade cf,
-                                                List<? super UExpression> formatParameters,
-                                                @NotNull Project project) {
+  public static @NotNull String buildUnescapedFormatString(@NotNull UStringConcatenationsFacade cf,
+                                                           @NotNull List<? super UExpression> formatParameters,
+                                                           @NotNull Project project) {
     return buildUnescapedFormatString(cf, formatParameters, project, false);
   }
 
-  private static String buildUnescapedFormatString(UStringConcatenationsFacade cf,
-                                                   List<? super UExpression> formatParameters,
-                                                   @NotNull Project project,
-                                                   boolean nested) {
+  private static @NotNull String buildUnescapedFormatString(@NotNull UStringConcatenationsFacade cf,
+                                                            @NotNull List<? super UExpression> formatParameters,
+                                                            @NotNull Project project,
+                                                            boolean nested) {
     StringBuilder result = new StringBuilder();
     boolean noEscapingRequired = !nested && SequencesKt.all(cf.getUastOperands(), expression -> expression instanceof ULiteralExpression);
     for (UExpression expression : SequencesKt.asIterable(cf.getUastOperands())) {
@@ -461,7 +459,7 @@ public final class JavaI18nUtil extends I18nUtil {
         Object value = ((ULiteralExpression)expression).getValue();
         if (value != null) {
           if (noEscapingRequired) {
-            result.append(value.toString());
+            result.append(value);
           }
           else {
             String formatString = PsiConcatenationUtil.formatString(value.toString(), false);
@@ -477,10 +475,10 @@ public final class JavaI18nUtil extends I18nUtil {
     return result.toString();
   }
 
-  private static boolean addChoicePattern(UExpression expression,
-                                          List<? super UExpression> formatParameters,
+  private static boolean addChoicePattern(@NotNull UExpression expression,
+                                          @NotNull List<? super UExpression> formatParameters,
                                           @NotNull Project project,
-                                          StringBuilder result) {
+                                          @NotNull StringBuilder result) {
     if (!(expression instanceof UIfExpression)) return false;
     PsiElement sourcePsi = expression.getSourcePsi();
     if (sourcePsi == null) return false;
@@ -519,7 +517,7 @@ public final class JavaI18nUtil extends I18nUtil {
   }
 
   @NotNull
-  private static String getSideText(List<? super UExpression> formatParameters,
+  private static String getSideText(@NotNull List<? super UExpression> formatParameters,
                                     @NotNull Project project,
                                     UExpression expression,
                                     boolean nested) {
@@ -547,7 +545,8 @@ public final class JavaI18nUtil extends I18nUtil {
     return elseStr;
   }
 
-  static String composeParametersText(final List<UExpression> args) {
+  @NotNull
+  static String composeParametersText(@NotNull List<? extends UExpression> args) {
     return args.stream().map(UExpression::getSourcePsi).filter(Objects::nonNull).map(psi -> psi.getText()).collect(Collectors.joining(","));
   }
 }

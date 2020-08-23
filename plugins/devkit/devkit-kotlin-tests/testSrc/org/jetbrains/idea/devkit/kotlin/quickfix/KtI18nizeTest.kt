@@ -125,7 +125,7 @@ class KtI18nizeTest : LightJavaCodeInsightFixtureTestCase() {
     assertNotNull(concatenation)
     val args = ArrayList<UExpression?>()
     Assert.assertEquals("Not a valid java identifier part in {0, choice, 0#prefix|1#suffix}",
-                        JavaI18nUtil.buildUnescapedFormatString(concatenation, args, project))
+                        JavaI18nUtil.buildUnescapedFormatString(concatenation!!, args, project))
     assertSize(1, args)
     assertEquals("if (prefix) 0 else 1", args[0]!!.sourcePsi!!.text)
   }
@@ -143,7 +143,7 @@ class KtI18nizeTest : LightJavaCodeInsightFixtureTestCase() {
     assertNotNull(concatenation)
     val args = ArrayList<UExpression?>()
     Assert.assertEquals("Not a valid java identifier part in {1, choice, 0#{0} prefix''''s|1#suffix''''s}",
-                        JavaI18nUtil.buildUnescapedFormatString(concatenation, args, project))
+                        JavaI18nUtil.buildUnescapedFormatString(concatenation!!, args, project))
     assertSize(2, args)
     assertEquals("list.get(0)", args[0]!!.sourcePsi!!.text)
     assertEquals("if (list.size() == 1) 0 else 1", args[1]!!.sourcePsi!!.text)
@@ -163,7 +163,7 @@ class KtI18nizeTest : LightJavaCodeInsightFixtureTestCase() {
     assertNotNull(concatenation)
     val args = ArrayList<UExpression?>()
     Assert.assertEquals("Not a valid java identifier part in {1, choice, 0#{0} prefix''''s|1#suffix''''s}",
-                        JavaI18nUtil.buildUnescapedFormatString(concatenation, args, project))
+                        JavaI18nUtil.buildUnescapedFormatString(concatenation!!, args, project))
     assertSize(2, args)
     assertEquals("list.get(0)", args[0]!!.sourcePsi!!.text)
     assertEquals("if (list.size() == 1) 0 else 1", args[1]!!.sourcePsi!!.text)
@@ -182,6 +182,6 @@ class KtI18nizeTest : LightJavaCodeInsightFixtureTestCase() {
     assertNotNull(concatenation)
     val args = ArrayList<UExpression?>()
     Assert.assertEquals("part in suffix {0} and prefix '{1}'",
-                        JavaI18nUtil.buildUnescapedFormatString(concatenation, args, project))
+                        JavaI18nUtil.buildUnescapedFormatString(concatenation!!, args, project))
   }
 }
