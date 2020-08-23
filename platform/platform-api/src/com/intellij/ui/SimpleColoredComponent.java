@@ -10,10 +10,10 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.icons.LazyImageIcon;
 import com.intellij.ui.paint.EffectPainter;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SVGLoader;
 import com.intellij.util.ui.*;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.Nls;
@@ -1036,10 +1036,11 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
   protected void paintIcon(@NotNull Graphics g, @NotNull Icon icon, int offset) {
     Rectangle area = computePaintArea();
+    //noinspection UnnecessaryLocalVariable
     int x = offset;
     int y = area.y + (area.height - icon.getIconHeight() + 1) / 2;
     if (isSelection()) {
-      LazyImageIcon.paintIconWithSelection(icon,this, g, x, y);
+      SVGLoader.paintIconWithSelection(icon, this, g, x, y);
     } else {
       icon.paintIcon(this, g, x, y);
     }

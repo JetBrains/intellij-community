@@ -28,6 +28,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Dimension2D;
 import java.awt.image.BufferedImage;
@@ -252,6 +253,7 @@ public final class SVGLoader {
   }
 
   private static SvgElementColorPatcher getSelectionPatcher() {
+    //todo[kb] move this code to a common place for LaFs and themes.
     //HashMap<String, String> map = new HashMap<>();
     //map.put("#f26522", "#e2987c");
     //HashMap<String, Integer> alpha = new HashMap<>();
@@ -360,6 +362,15 @@ public final class SVGLoader {
 
   public static boolean isSelectionContext() {
     return ourIsSelectionContext && Registry.is("ide.patch.icons.on.selection");
+  }
+
+  public static void paintIconWithSelection(Icon icon, Component c, Graphics g, int x, int y) {
+    try {
+      setIsSelectionContext(true);
+      icon.paintIcon(c, g, x, y);
+    } finally {
+      setIsSelectionContext(false);
+    }
   }
 
   public interface SvgElementColorPatcher {

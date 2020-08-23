@@ -44,15 +44,6 @@ public abstract class LazyImageIcon extends ScaleContextSupport /* do not modify
     return icon instanceof ImageIcon ? (ImageIcon)icon : null;
   }
 
-  public static void paintIconWithSelection(Icon icon, Component c, Graphics g, int x, int y) {
-    try {
-      SVGLoader.setIsSelectionContext(true);
-      icon.paintIcon(c, g, x, y);
-    } finally {
-      SVGLoader.setIsSelectionContext(false);
-    }
-  }
-
   @Nullable
   @TestOnly
   public final ImageIcon doGetRealIcon() {
