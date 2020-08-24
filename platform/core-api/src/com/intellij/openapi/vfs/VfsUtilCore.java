@@ -389,7 +389,7 @@ public class VfsUtilCore {
     return files.isEmpty() ? VirtualFile.EMPTY_ARRAY : files.toArray(VirtualFile.EMPTY_ARRAY);
   }
 
-  public static @NotNull String urlToPath(@Nullable String url) {
+  public static @NotNull @NlsSafe String urlToPath(@Nullable String url) {
     return url == null ? "" : VirtualFileManager.extractPath(url);
   }
 

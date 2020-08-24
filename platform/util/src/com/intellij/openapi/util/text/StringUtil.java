@@ -1989,7 +1989,7 @@ public class StringUtil extends StringUtilRt {
    * @return {@code text} with some characters replaced with standard XML entities, e.g. '<' replaced with '{@code &lt;}'
    */
   @Contract(pure = true)
-  public static @NotNull @Nls String escapeXmlEntities(@NotNull @Nls String text) {
+  public static @NotNull String escapeXmlEntities(@NotNull String text) {
     return replace(text, REPLACES_DISP, REPLACES_REFS);
   }
 
