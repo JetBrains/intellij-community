@@ -60,8 +60,8 @@ data class BeforeDebugSessionResumedAction(
 abstract class BreakpointAction : DebugAction() {
     abstract val breakpoint: XBreakpoint<*>
 
-    val line: Int?
-        get() = breakpoint.sourcePosition?.line
+    val position: XSourcePosition?
+        get() = breakpoint.sourcePosition
 }
 
 data class BreakpointAddedAction(

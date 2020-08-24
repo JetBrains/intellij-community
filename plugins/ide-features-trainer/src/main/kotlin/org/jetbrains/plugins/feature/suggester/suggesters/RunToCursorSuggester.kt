@@ -1,5 +1,7 @@
 package org.jetbrains.plugins.feature.suggester.suggesters
 
+import com.intellij.xdebugger.XSourcePosition
+import com.intellij.xdebugger.XSourcePosition.isOnTheSameLine
 import org.jetbrains.plugins.feature.suggester.NoSuggestion
 import org.jetbrains.plugins.feature.suggester.Suggestion
 import org.jetbrains.plugins.feature.suggester.actions.BreakpointAddedAction
@@ -22,11 +24,11 @@ class RunToCursorSuggester : FeatureSuggester {
     }
 
     private class DebuggingData {
-        var addedBreakpointLine: Int = -1
+        var addedBreakpointPosition: XSourcePosition? = null
         var isPausedOnBreakpoint: Boolean = false
 
         val isBreakpointAdded: Boolean
-            get() = addedBreakpointLine != -1
+            get() = addedBreakpointPosition != null
     }
 
     private val actionsSummary = actionsLocalSummary()
@@ -40,32 +42,29 @@ class RunToCursorSuggester : FeatureSuggester {
             is DebugSessionPausedAction -> {
                 if (debuggingData == null || !debuggingData!!.isBreakpointAdded) {
                     debuggingData = DebuggingData()
-                } else if (action.curLine == debuggingData!!.addedBreakpointLine) {
+                } else if (isOnTheSameLine(action.position, debuggingData!!.addedBreakpointPosition)) {
                     debuggingData!!.isPausedOnBreakpoint = true
                 } else {
                     reset()
                 }
             }
             is BreakpointAddedAction -> {
-                if (debuggingData == null) return NoSuggestion
-                if (!debuggingData!!.isBreakpointAdded) {
-                    val line = action.line ?: return NoSuggestion
-                    debuggingData!!.addedBreakpointLine = line
+                if (debuggingData?.isBreakpointAdded == false) {
+                    debuggingData!!.addedBreakpointPosition = action.position
                 } else {
                     reset()
                 }
             }
             is BreakpointRemovedAction -> {
-                if (debuggingData?.isPausedOnBreakpoint == true) {
-                    val line = action.line ?: return NoSuggestion
-                    if (line == debuggingData!!.addedBreakpointLine) {
-                        reset()
-                        return createDocumentationSuggestion(
-                            createMessageWithShortcut(SUGGESTING_ACTION_ID, POPUP_MESSAGE),
-                            suggestingActionDisplayName,
-                            SUGGESTING_DOC_URL
-                        )
-                    }
+                if (debuggingData?.isPausedOnBreakpoint == true
+                    && isOnTheSameLine(action.position, debuggingData!!.addedBreakpointPosition)
+                ) {
+                    reset()
+                    return createDocumentationSuggestion(
+                        createMessageWithShortcut(SUGGESTING_ACTION_ID, POPUP_MESSAGE),
+                        suggestingActionDisplayName,
+                        SUGGESTING_DOC_URL
+                    )
                 }
                 reset()
             }
