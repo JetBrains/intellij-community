@@ -10,6 +10,8 @@ import org.jetbrains.plugins.feature.suggester.actions.Action
 import org.jetbrains.plugins.feature.suggester.actions.EditorFocusGainedAction
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
 import org.jetbrains.plugins.feature.suggester.settings.FeatureSuggesterSettings
+import org.jetbrains.plugins.feature.suggester.statistics.FeatureSuggestersStatisticsCollector
+import org.jetbrains.plugins.feature.suggester.statistics.FeatureSuggestersStatisticsCollector.Companion.SUGGESTION_FOUND
 import org.jetbrains.plugins.feature.suggester.suggesters.FeatureSuggester
 import org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport
 import org.jetbrains.plugins.feature.suggester.ui.NotificationSuggestionPresenter
@@ -25,6 +27,7 @@ class FeatureSuggestersManager(val project: Project) : Disposable {
     private val suggestionPresenter: SuggestionPresenter =
         NotificationSuggestionPresenter()
     private val settings = FeatureSuggesterSettings.instance()
+    private val statisticsCollector = FeatureSuggestersStatisticsCollector()
 
     init {
         initFocusListener()
@@ -50,7 +53,7 @@ class FeatureSuggestersManager(val project: Project) : Disposable {
 
     private fun processSuggesters(langSupport: LanguageSupport) {
         for (suggester in FeatureSuggester.suggesters) {
-            if (suggester.isEnabled() && suggester.isSuggestionNeeded(settings.suggestingIntervalDays)) {
+            if (suggester.isEnabled()) {
                 suggester.langSupport = langSupportprocessSuggester(suggester)
             }
         }
@@ -59,8 +62,11 @@ class FeatureSuggestersManager(val project: Project) : Disposable {
     private fun processSuggester(suggester: FeatureSuggester) {
         val suggestion = suggester.getSuggestion(actionsHistory)
         if (suggestion is PopupSuggestion) {
-            suggestionPresenter.showSuggestion(project, suggestion)
-            fireSuggestionFound(suggestion)
+            statisticsCollector.sendStatistics(SUGGESTION_FOUND, suggester.id)
+            if (suggester.isSuggestionNeeded(settings.suggestingIntervalDays)) {
+                suggestionPresenter.showSuggestion(project, suggestion)
+                fireSuggestionFound(suggestion)
+            }
         }
     }
 
