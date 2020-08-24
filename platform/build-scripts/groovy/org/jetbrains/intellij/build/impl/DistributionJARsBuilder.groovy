@@ -799,8 +799,8 @@ class DistributionJARsBuilder {
       .filter({ it -> it.toString().endsWith(".zip") })
       .collect(Collectors.toList())
       .each { it ->
-        def blockMapFileName = it.toString().replace(".zip", "-blockmap.zip")
-        def hashFileName = it.toString().replace(".zip", "-hash.json")
+        def blockMapFileName = "${it.toString()}.blockmap.zip"
+        def hashFileName = "${it.toString()}.hash.json"
         def blockMapJson = "blockmap.json"
         def algorithm = "SHA-256"
         def file = it.toFile()
@@ -1248,7 +1248,7 @@ class DistributionJARsBuilder {
       sinceBuild = buildNumber
       untilBuild = buildNumber
     }
-    Pair.create(sinceBuild, untilBuild);
+    Pair.create(sinceBuild, untilBuild)
   }
 
   private File createKeyMapWithAltClickReassignedToMultipleCarets() {
