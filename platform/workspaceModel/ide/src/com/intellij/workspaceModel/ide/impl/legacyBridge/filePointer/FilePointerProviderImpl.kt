@@ -14,21 +14,27 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.util.containers.MultiMap
-import com.intellij.workspaceModel.storage.EntityChange
-import com.intellij.workspaceModel.storage.VersionedStorageChange
-import com.intellij.workspaceModel.storage.VirtualFileUrl
-import com.intellij.workspaceModel.storage.VirtualFileUrlManager
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
+import com.intellij.workspaceModel.storage.EntityChange
+import com.intellij.workspaceModel.storage.VersionedStorageChange
+import com.intellij.workspaceModel.storage.VirtualFileUrl
+import com.intellij.workspaceModel.storage.VirtualFileUrlManager
+import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity
 import org.jdom.Element
 import org.jetbrains.annotations.TestOnly
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 
 internal class FilePointerProviderImpl(project: Project) : FilePointerProvider, Disposable {
-  private val filePointers = mutableMapOf<VirtualFileUrl, Triple<VirtualFilePointer, Disposable, FilePointerScope>>()
+  private val sourceRootPointers = mutableMapOf<VirtualFileUrl, Pair<VirtualFilePointer, Disposable>>()
+  private val contentRootPointers = mutableMapOf<VirtualFileUrl, Pair<VirtualFilePointer, Disposable>>()
+  private val excludedRootsPointers = mutableMapOf<VirtualFileUrl, Pair<VirtualFilePointer, Disposable>>()
+  private val modulePointers = mutableMapOf<String, HashMap<VirtualFileUrl, Pair<VirtualFilePointer, Disposable>>>()
 
   private val fileContainers = mutableMapOf<FileContainerDescription, Pair<VirtualFilePointerContainer, Disposable>>()
 
@@ -63,8 +69,20 @@ internal class FilePointerProviderImpl(project: Project) : FilePointerProvider, 
         override fun beforeVfsChange() {
           synchronized(this@FilePointerProviderImpl) {
             pointersToProcess.forEach {
-              val removed = filePointers.remove(it)
-              removed?.second?.let { disposable -> Disposer.dispose(disposable) }
+              val removedSourceRoot = sourceRootPointers.remove(it)
+              removedSourceRoot?.second?.let { disposable ->  Disposer.dispose(disposable) }
+
+              val removedContentRoot = contentRootPointers.remove(it)
+              removedContentRoot?.second?.let { disposable ->  Disposer.dispose(disposable) }
+
+              val removedExcludedRoot = excludedRootsPointers.remove(it)
+              removedExcludedRoot?.second?.let { disposable ->  Disposer.dispose(disposable) }
+
+              modulePointers.entries.removeIf { (_, value) ->
+                val removed = value.remove(it)
+                removed?.second?.let { disposable -> Disposer.dispose(disposable) }
+                return@removeIf value.isEmpty()
+              }
             }
             containersToProcess.forEach {
               val removed = fileContainers.remove(it)
@@ -79,15 +97,37 @@ internal class FilePointerProviderImpl(project: Project) : FilePointerProvider, 
       override fun changed(event: VersionedStorageChange) {
         synchronized(this@FilePointerProviderImpl) {
           event.getAllChanges().filterIsInstance<EntityChange.Removed<*>>().forEach { change ->
-            val toRemove = ArrayList<Pair<VirtualFileUrl, Disposable>>()
-            filePointers.forEach { (key, value) ->
-              if (value.third.checkUrl(change.entity, key)) {
-                toRemove += key to value.second
+            val entity = change.entity
+            when (entity) {
+              is SourceRootEntity -> {
+                val pointer = sourceRootPointers[entity.url]
+                if (pointer != null) {
+                  sourceRootPointers.remove(entity.url)
+                  Disposer.dispose(pointer.second)
+                }
               }
-            }
-            toRemove.forEach {
-              Disposer.dispose(it.second)
-              filePointers.remove(it.first)
+              is ContentRootEntity -> {
+                val pointer = contentRootPointers[entity.url]
+                if (pointer != null) {
+                  contentRootPointers.remove(entity.url)
+                  Disposer.dispose(pointer.second)
+                }
+
+                entity.excludedUrls.forEach {
+                  val excludedUrl = excludedRootsPointers[it]
+                  if (excludedUrl != null) {
+                    excludedRootsPointers.remove(it)
+                    Disposer.dispose(excludedUrl.second)
+                  }
+                }
+              }
+              is ModuleEntity -> {
+                val removedModuleRoots = modulePointers[entity.name]
+                if (removedModuleRoots != null) {
+                  removedModuleRoots.values.forEach { Disposer.dispose(it.second) }
+                  modulePointers.remove(entity.name)
+                }
+              }
             }
           }
         }
@@ -98,10 +138,35 @@ internal class FilePointerProviderImpl(project: Project) : FilePointerProvider, 
   override fun dispose() = Unit
 
   @Synchronized
-  override fun getAndCacheFilePointer(url: VirtualFileUrl, scope: FilePointerScope): VirtualFilePointer {
-    return filePointers.getOrPut(url) {
+  override fun getAndCacheSourceRoot(url: VirtualFileUrl): VirtualFilePointer {
+    return sourceRootPointers.getOrPut(url) {
       val disposable = nextDisposable()
-      Triple(VirtualFilePointerManager.getInstance().create(url.url, disposable, null), disposable, scope)
+      Pair(VirtualFilePointerManager.getInstance().create(url.url, disposable, null), disposable)
+    }.first
+  }
+
+  @Synchronized
+  override fun getAndCacheContentRoot(url: VirtualFileUrl): VirtualFilePointer {
+    return contentRootPointers.getOrPut(url) {
+      val disposable = nextDisposable()
+      Pair(VirtualFilePointerManager.getInstance().create(url.url, disposable, null), disposable)
+    }.first
+  }
+
+  @Synchronized
+  override fun getAndCacheExcludedRoot(url: VirtualFileUrl): VirtualFilePointer {
+    return excludedRootsPointers.getOrPut(url) {
+      val disposable = nextDisposable()
+      Pair(VirtualFilePointerManager.getInstance().create(url.url, disposable, null), disposable)
+    }.first
+  }
+
+  @Synchronized
+  override fun getAndCacheModuleRoot(name: String, url: VirtualFileUrl): VirtualFilePointer {
+    val map = modulePointers.getOrPut(name) { HashMap() }
+    return map.getOrPut(url) {
+      val disposable = nextDisposable()
+      Pair(VirtualFilePointerManager.getInstance().create(url.url, disposable, null), disposable)
     }.first
   }
 
@@ -147,10 +212,18 @@ internal class FilePointerProviderImpl(project: Project) : FilePointerProvider, 
   fun clearCaches() {
 
     fileContainerUrlsLock.withLock { fileContainerUrls.clear() }
-    filePointers.forEach { (_, v) -> Disposer.dispose(v.second) }
+    sourceRootPointers.forEach { (_, v) -> Disposer.dispose(v.second) }
+    contentRootPointers.forEach { (_, v) -> Disposer.dispose(v.second) }
+    excludedRootsPointers.forEach { (_, v) -> Disposer.dispose(v.second) }
+    modulePointers.forEach { (_, v) ->
+      v.forEach { (_, o) -> Disposer.dispose(o.second) }
+    }
     fileContainers.map { it.value.second }.forEach { Disposer.dispose(it) }
 
-    filePointers.clear()
+    sourceRootPointers.clear()
+    contentRootPointers.clear()
+    excludedRootsPointers.clear()
+    modulePointers.clear()
     fileContainers.clear()
   }
 
@@ -170,7 +243,7 @@ internal class FilePointerProviderImpl(project: Project) : FilePointerProvider, 
   }
 
   @TestOnly
-  internal fun getFilePointers() = filePointers
+  internal fun getContentRootPointers() = contentRootPointers
 
   private class ReadonlyFilePointerContainer(val container: VirtualFilePointerContainer) : VirtualFilePointerContainer {
     private fun throwReadonly(): Nothing = throw NotImplementedError("Read-Only File Pointer Container")
