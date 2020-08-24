@@ -1,4 +1,4 @@
-<error descr="starred assignment target must be in a list or tuple">*hi</error> = [1, 2]
+<error descr="Starred assignment target must be in a list or tuple">*hi</error> = [1, 2]
 *a, = range(5)
 for a, *b in [(1, 2, 3), (4, 5, 6, 7)]:
     print(b)

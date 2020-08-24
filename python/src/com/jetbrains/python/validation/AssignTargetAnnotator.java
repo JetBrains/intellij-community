@@ -235,7 +235,7 @@ public class AssignTargetAnnotator extends PyAnnotator {
     public void visitPyStarExpression(PyStarExpression node) {
       super.visitPyStarExpression(node);
       if (!(node.getParent() instanceof PySequenceExpression)) {
-        markError(node, "starred assignment target must be in a list or tuple");
+        markError(node, message("ANN.cant.aug.assign.starred.assignment.target.must.be.in.list.or.tuple"));
       }
     }
 

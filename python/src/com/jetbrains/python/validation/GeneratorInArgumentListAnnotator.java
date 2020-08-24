@@ -16,6 +16,7 @@
 package com.jetbrains.python.validation;
 
 import com.intellij.lang.ASTNode;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.PyArgumentList;
 import com.jetbrains.python.psi.PyExpression;
@@ -32,7 +33,7 @@ public class GeneratorInArgumentListAnnotator extends PyAnnotator {
         if (expression instanceof PyGeneratorExpression) {
           ASTNode firstChildNode = expression.getNode().getFirstChildNode();
           if (firstChildNode.getElementType() != PyTokenTypes.LPAR) {
-            markError(expression, "Generator expression must be parenthesized if not sole argument");
+            markError(expression, PyBundle.message("ANN.generator.expression.must.be.parenthesized.if.not.sole.argument"));
           }
         }
       }
