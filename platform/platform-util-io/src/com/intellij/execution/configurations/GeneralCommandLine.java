@@ -180,7 +180,7 @@ public class GeneralCommandLine implements UserDataHolder {
   }
 
   @NotNull
-  public GeneralCommandLine withEnvironment(@NotNull String key, @NotNull String value) {
+  public GeneralCommandLine withEnvironment(@NonNls @NotNull String key, @NonNls @NotNull String value) {
     getEnvironment().put(key, value);
     return this;
   }
