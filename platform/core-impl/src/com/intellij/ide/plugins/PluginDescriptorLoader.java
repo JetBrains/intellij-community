@@ -96,7 +96,7 @@ public final class PluginDescriptorLoader {
       }
       return descriptor;
     }
-    catch (SerializationException | InvalidDataException e) {
+    catch (SerializationException | InvalidDataException | JDOMException e) {
       if (context.isEssential) {
         ExceptionUtil.rethrow(e);
       }
