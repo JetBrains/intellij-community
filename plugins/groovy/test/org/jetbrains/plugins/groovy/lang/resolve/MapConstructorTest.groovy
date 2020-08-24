@@ -29,4 +29,23 @@ static void main(String[] args) {
 """
   }
 
+  @Test
+  void 'no explicit map constructor'() {
+
+    highlightingTest """
+class Rr {
+    String actionType = ""
+    long referrerCode
+    boolean referrerUrl
+    
+    Rr(String s) { int x = 1; }
+}
+
+@groovy.transform.CompileStatic
+static void main(String[] args) {
+    new Rr<error>(actionType: "a", referrerCode: 10, referrerUrl: true)</error>
+}
+"""
+    getFixture().checkHighlighting(true, true, true)
+  }
 }
