@@ -15,6 +15,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.SmartList
+import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.util.processExtensionsByClassName
 
@@ -86,6 +87,7 @@ private fun isProjectFieldAllowed(field: JvmField, clazz: JvmClass, targets: Col
   } || isInheritor(clazz, projectComponentFqn)
 }
 
+@Nls(capitalization = Nls.Capitalization.Sentence)
 private fun message(what: String, quickFix: Boolean): String {
   if (quickFix) {
     return DevKitBundle.message("inspections.stateful.extension.point.do.not.use.in.quick.fix", what)
