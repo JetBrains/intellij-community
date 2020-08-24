@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.intentions;
 
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.WriteAction;
@@ -79,12 +80,13 @@ public class ImportToggleAliasIntention extends PyBaseIntentionAction {
       return true;
     }
 
-    public String getText() {
-      String add_name = "Add alias";
+    @NotNull
+    public @IntentionName String getText() {
+      String add_name = PyPsiBundle.message("INTN.add.import.alias");
       if (myImportElement != null) {
         PyReferenceExpression refex = myImportElement.getImportReferenceExpression();
         if (refex != null) {
-          add_name = PyPsiBundle.message("INTN.add.import.alias", refex.getText());
+          add_name = PyPsiBundle.message("INTN.add.import.alias.to.name", refex.getText());
         }
       }
       return myAlias == null? add_name : PyPsiBundle.message("INTN.remove.import.alias", myAlias);

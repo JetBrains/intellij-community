@@ -403,7 +403,7 @@ public class PyIntentionTest extends PyTestCase {
   }
 
   public void testTypeInDocstring6() {         //PY-7973
-    doNegativeTest(PyPsiBundle.message("INTN.specify.return.type"));
+    doNegativeTest(PyPsiBundle.message("INTN.specify.return.type.in.docstring"));
   }
 
   public void testTypeInDocstring7() {         //PY-8930
@@ -416,7 +416,7 @@ public class PyIntentionTest extends PyTestCase {
   }
 
   public void testParamTypeInDocstringNotSuggestedForSelf() {
-    doNegativeTest(PyPsiBundle.message("INTN.specify.type"));
+    doNegativeTest(PyPsiBundle.message("INTN.specify.type.in.docstring"));
   }
 
   public void testParamTypeInAnnotationNotSuggestedForSelf() {
@@ -424,7 +424,7 @@ public class PyIntentionTest extends PyTestCase {
   }
 
   public void testParamTypeInDocstringNotSuggestedForLambda() {
-    doNegativeTest(PyPsiBundle.message("INTN.specify.type"));
+    doNegativeTest(PyPsiBundle.message("INTN.specify.type.in.docstring"));
   }
 
   public void testParamTypeInAnnotationNotSuggestedForLambda() {
@@ -809,22 +809,22 @@ public class PyIntentionTest extends PyTestCase {
         return "mc";
       }
     });
-    doMultiFileTest(PyPsiBundle.message("INTN.add.import.alias", "MyClass"));
+    doMultiFileTest(PyPsiBundle.message("INTN.add.import.alias.to.name", "MyClass"));
   }
 
   private void doDocStubTest(@NotNull DocStringFormat format) {
     runWithDocStringFormat(format, () -> {
       CodeInsightSettings.getInstance().JAVADOC_STUB_ON_ENTER = true;
-      doTest(PyPsiBundle.message("INTN.doc.string.stub"), true);
+      doTest(PyPsiBundle.message("INTN.insert.docstring.stub"), true);
     });
   }
 
   private void doDocParamTypeTest(@NotNull DocStringFormat format) {
-    runWithDocStringFormat(format, () -> doTest(PyPsiBundle.message("INTN.specify.type")));
+    runWithDocStringFormat(format, () -> doTest(PyPsiBundle.message("INTN.specify.type.in.docstring")));
   }
 
   private void doDocReturnTypeTest(@NotNull DocStringFormat format) {
-    runWithDocStringFormat(format, () -> doTest(PyPsiBundle.message("INTN.specify.return.type")));
+    runWithDocStringFormat(format, () -> doTest(PyPsiBundle.message("INTN.specify.return.type.in.docstring")));
 
   }
 

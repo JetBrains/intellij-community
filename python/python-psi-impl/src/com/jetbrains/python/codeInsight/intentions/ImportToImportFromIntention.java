@@ -2,6 +2,7 @@
 package com.jetbrains.python.codeInsight.intentions;
 
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -185,7 +186,7 @@ public class ImportToImportFromIntention extends PyBaseIntentionAction {
 
 
     @NotNull
-    public String getText() {
+    public @IntentionName String getText() {
       String moduleName = "?";
       if (myImportElement != null) {
         final PyReferenceExpression reference = myImportElement.getImportReferenceExpression();
