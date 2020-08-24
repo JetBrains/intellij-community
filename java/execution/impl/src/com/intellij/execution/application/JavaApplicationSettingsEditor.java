@@ -6,7 +6,6 @@ import com.intellij.execution.ui.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.JavaCodeFragment;
 import com.intellij.ui.EditorTextField;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -50,7 +49,7 @@ public final class JavaApplicationSettingsEditor extends JavaSettingsEditorBase<
     EditorTextField mainClass = ClassEditorField.createClassField(getProject(), () -> classpathCombo.getSelectedModule(),
                                                                   JavaCodeFragment.VisibilityChecker.PROJECT_SCOPE_VISIBLE, null);
     mainClass.setShowPlaceholderWhenFocused(true);
-    UIUtil.setMonospaced(mainClass);
+    CommonParameterFragments.setMonospaced(mainClass);
     String placeholder = ExecutionBundle.message("application.configuration.main.class.placeholder");
     mainClass.setPlaceholder(placeholder);
     mainClass.getAccessibleContext().setAccessibleName(placeholder);

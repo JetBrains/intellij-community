@@ -15,7 +15,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -98,7 +97,7 @@ public final class CommonJavaFragments {
     String name = ExecutionBundle.message("application.configuration.use.classpath.and.jdk.of.module");
     comboBox.getAccessibleContext().setAccessibleName(name);
     setMinimumWidth(comboBox, 400);
-    UIUtil.setMonospaced(comboBox);
+    CommonParameterFragments.setMonospaced(comboBox);
     SettingsEditorFragment<S, ModuleClasspathCombo> fragment =
       new SettingsEditorFragment<>("module.classpath", name, ExecutionBundle.message("group.java.options"), comboBox, 10,
                                    (s, c) -> {
@@ -133,7 +132,7 @@ public final class CommonJavaFragments {
     jrePathEditor.setDefaultJreSelector(defaultJreSelector);
     //noinspection unchecked
     ComboBox<JrePathEditor.JreComboBoxItem> comboBox = jrePathEditor.getComponent();
-    comboBox.setRenderer(new ColoredListCellRenderer<JrePathEditor.JreComboBoxItem>() {
+    comboBox.setRenderer(new ColoredListCellRenderer<>() {
       @Override
       protected void customizeCellRenderer(@NotNull JList<? extends JrePathEditor.JreComboBoxItem> list,
                                            JrePathEditor.JreComboBoxItem value,
@@ -161,7 +160,9 @@ public final class CommonJavaFragments {
           if (value.getPathOrName() != null) {
             append(value.getPathOrName() + " ");
           }
-          else appendShortVersion(value);
+          else {
+            appendShortVersion(value);
+          }
           if (value.getDescription() != null) {
             append(value.getDescription() + " ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
           }
@@ -179,7 +180,7 @@ public final class CommonJavaFragments {
         return null;
       }
     });
-    UIUtil.setMonospaced(comboBox);
+    CommonParameterFragments.setMonospaced(comboBox);
 
     setMinimumWidth(jrePathEditor, 200);
     jrePathEditor.getLabel().setVisible(false);
