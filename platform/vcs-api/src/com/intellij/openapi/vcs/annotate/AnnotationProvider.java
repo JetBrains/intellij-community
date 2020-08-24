@@ -15,7 +15,7 @@ public interface AnnotationProvider {
   @NotNull
   FileAnnotation annotate(@NotNull VirtualFile file, VcsFileRevision revision) throws VcsException;
 
-  default @Nls(capitalization = Nls.Capitalization.Sentence) String getActionName() {
+  default @Nls(capitalization = Nls.Capitalization.Title) String getActionName() {
     return ActionsBundle.message("action.Annotate.text");
   }
 

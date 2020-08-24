@@ -212,7 +212,7 @@ public abstract class ChangeListManager implements ChangeListModification {
   @Nullable
   public abstract @Nls(capitalization = Nls.Capitalization.Sentence) String isFreezed();
 
-  public abstract boolean isFreezedWithNotification(@NlsContexts.ProgressTitle @Nullable String modalTitle);
+  public abstract boolean isFreezedWithNotification(@NlsContexts.DialogTitle @Nullable String modalTitle);
 
   @Deprecated // used in TeamCity
   public abstract void reopenFiles(@NotNull List<? extends FilePath> paths);
