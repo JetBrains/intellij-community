@@ -8,10 +8,7 @@ import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.lang.LangBundle
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionPlaces
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.*
 import com.intellij.openapi.editor.Editor
@@ -19,6 +16,7 @@ import com.intellij.openapi.editor.Inlay
 import com.intellij.openapi.editor.colors.ColorKey
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.JBPopupListener
@@ -178,6 +176,7 @@ object TemplateInlayUtil {
                           searchForTextOccurrencesPresentation: IconPresentation?,
                           restart: Runnable): DialogPanel {
     val processor = RenamePsiElementProcessor.forElement(elementToRename)
+    val renameAction = ActionManager.getInstance().getAction(IdeActions.ACTION_RENAME)
     val panel = panel {
       row(LangBundle.message("inlay.rename.also.rename.options.title")) {
         row {
@@ -206,22 +205,28 @@ object TemplateInlayUtil {
       }
       row {
         cell {
-          val renameAction = ActionManager.getInstance().getAction(IdeActions.ACTION_RENAME)
           link(LangBundle.message("inlay.rename.link.label.more.options"), null) {
-            val event = AnActionEvent(null,
-                                      DataManager.getInstance().getDataContext(editor.component),
-                                      ActionPlaces.UNKNOWN, renameAction.templatePresentation.clone(),
-                                      ActionManager.getInstance(), 0)
-            if (ActionUtil.lastUpdateAndCheckDumb(renameAction, event, true)) {
-              ActionUtil.performActionDumbAware(renameAction, event)
-            }
-          }
+            doRename(editor, renameAction)
+          }.component.isFocusable = true
           comment(KeymapUtil.getFirstKeyboardShortcutText(renameAction))
         }
       }
     }
+    DumbAwareAction.create {
+      doRename(editor, renameAction)
+    }.registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_RENAME), panel)
     panel.isFocusCycleRoot = true
     panel.focusTraversalPolicy = LayoutFocusTraversalPolicy()
     return panel
+  }
+
+  private fun doRename(editor: Editor, renameAction: AnAction) {
+    val event = AnActionEvent(null,
+                              DataManager.getInstance().getDataContext(editor.component),
+                              ActionPlaces.UNKNOWN, renameAction.templatePresentation.clone(),
+                              ActionManager.getInstance(), 0)
+    if (ActionUtil.lastUpdateAndCheckDumb(renameAction, event, true)) {
+      ActionUtil.performActionDumbAware(renameAction, event)
+    }
   }
 }
