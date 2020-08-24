@@ -51,6 +51,8 @@
         <!--    TODO: uncomment when RunToCursor action statistics will be fixed                                                    -->
         <!--        <featureSuggester.featureSuggester-->
         <!--                implementation="org.jetbrains.plugins.feature.suggester.suggesters.RunToCursorSuggester"/>-->
+        <featureSuggester.featureSuggester
+                implementation="org.jetbrains.plugins.feature.suggester.suggesters.EditBreakpointSuggester"/>
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">
