@@ -521,11 +521,11 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     }
   }
 
-  protected static <T, U> void assertOrderedElementsAreEqual(Collection<U> actual, Collection<T> expected) {
+  protected static <T, U> void assertOrderedElementsAreEqual(Collection<? extends U> actual, Collection<? extends T> expected) {
     assertOrderedElementsAreEqual(actual, expected.toArray());
   }
 
-  protected static <T> void assertUnorderedElementsAreEqual(Collection<T> actual, Collection<T> expected) {
+  protected static <T> void assertUnorderedElementsAreEqual(Collection<? extends T> actual, Collection<? extends T> expected) {
     assertEquals(new HashSet<>(expected), new HashSet<>(actual));
   }
 
@@ -538,7 +538,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     assertUnorderedElementsAreEqual(Arrays.asList(actual), expected);
   }
 
-  protected static <T> void assertUnorderedElementsAreEqual(Collection<T> actual, T... expected) {
+  protected static <T> void assertUnorderedElementsAreEqual(Collection<? extends T> actual, T... expected) {
     assertUnorderedElementsAreEqual(actual, Arrays.asList(expected));
   }
 
