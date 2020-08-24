@@ -125,7 +125,7 @@ public final class Main {
         "The IDE failed to install some plugins.\n\n" +
         "Most probably, this happened because of a change in a serialization format.\n" +
         "Please try again, and if the problem persists, please report it\n" +
-        "to http://jb.gg/ide/critical-startup-errors" +
+        "to https://jb.gg/ide/critical-startup-errors" +
         "\n\nThe cause: " + e.getMessage();
       showMessage("Plugin Installation Error", message, false);
     }
@@ -212,7 +212,7 @@ public final class Main {
     else {
       message.append("Internal error. Please refer to ");
       boolean studio = "AndroidStudio".equalsIgnoreCase(System.getProperty(PLATFORM_PREFIX_PROPERTY));
-      message.append(studio ? "https://code.google.com/p/android/issues" : "http://jb.gg/ide/critical-startup-errors");
+      message.append(studio ? "https://code.google.com/p/android/issues" : "https://jb.gg/ide/critical-startup-errors");
       message.append("\n\n");
     }
 
