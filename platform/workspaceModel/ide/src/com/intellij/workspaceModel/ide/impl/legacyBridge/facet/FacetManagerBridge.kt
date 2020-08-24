@@ -5,7 +5,6 @@ import com.google.common.collect.HashBiMap
 import com.intellij.facet.*
 import com.intellij.facet.impl.FacetModelBase
 import com.intellij.facet.impl.FacetUtil
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.ProjectBundle
@@ -167,15 +166,9 @@ internal open class FacetModelBridge(protected val moduleBridge: ModuleBridge) :
       diff.mutableFacetMapping().updater()
     }
     else {
-      var res: R? = null
-      ApplicationManager.getApplication().invokeAndWait {
-        runWriteAction {
-          WorkspaceModel.getInstance(moduleBridge.project).updateProjectModelSilent {
-            res = it.mutableFacetMapping().updater()
-          }
-        }
+      WorkspaceModel.getInstance(moduleBridge.project).updateProjectModelSilent(true) {
+        it.mutableFacetMapping().updater()
       }
-      res!!
     }
   }
 
