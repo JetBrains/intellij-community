@@ -336,7 +336,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
   @Override
   public void afterTemplateStart() {
     super.afterTemplateStart();
-    if (Registry.is("enable.rename.options.inplace", false)) {
+    if (Registry.is("enable.rename.options.inplace", true)) {
       TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
       PsiNamedElement variable = getVariable();
       if (templateState == null || variable == null) return;
