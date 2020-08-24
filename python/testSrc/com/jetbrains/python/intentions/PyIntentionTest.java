@@ -125,12 +125,6 @@ public class PyIntentionTest extends PyTestCase {
     doTest(PyPsiBundle.message("INTN.replace.backquote.expression"), LanguageLevel.PYTHON34);
   }
 
-  /*
-  public void testReplaceMethod() {
-    doTest(PyBundle.message("INTN.replace.method"), LanguageLevel.PYTHON30);
-  }
-  */
-
   public void testSplitIf() {
     doTest(PyPsiBundle.message("INTN.split.if.text"));
   }
