@@ -21,9 +21,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.util.RefactoringDescriptionLocation;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.regex.Pattern;
@@ -33,6 +32,7 @@ public final class SliceManager implements PersistentStateComponent<SliceManager
   private final Project myProject;
   private ContentManager myBackContentManager;
   private ContentManager myForthContentManager;
+  @NotNull
   private final StoredSettingsBean myStoredSettings = new StoredSettingsBean();
   private static final @NonNls String BACK_TOOLWINDOW_ID = "Analyze Dataflow to";
   private static final @NonNls String FORTH_TOOLWINDOW_ID = "Analyze Dataflow from";
@@ -70,8 +70,8 @@ public final class SliceManager implements PersistentStateComponent<SliceManager
 
   public void slice(@NotNull PsiElement element, boolean dataFlowToThis, @NotNull SliceHandler handler) {
     @SuppressWarnings("UnresolvedPropertyKey") 
-    String dialogTitle = getElementDescription((dataFlowToThis ? LangBundle.message("tab.title.analyze.dataflow.to.here")
-                                                               : LangBundle.message("tab.title.analyze.dataflow.from")), element, null);
+    String dialogTitle = getElementDescription(dataFlowToThis ? LangBundle.message("tab.title.analyze.dataflow.to.here")
+                                                              : LangBundle.message("tab.title.analyze.dataflow.from"), element, null);
 
     dialogTitle = filterStyle(dialogTitle);
     SliceAnalysisParams params = handler.askForParams(element, myStoredSettings, StringUtil.unescapeXmlEntities(dialogTitle));

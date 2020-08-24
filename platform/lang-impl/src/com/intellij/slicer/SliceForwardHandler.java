@@ -23,6 +23,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.List;
@@ -33,9 +34,9 @@ class SliceForwardHandler extends SliceHandler {
   }
 
   @Override
-  public SliceAnalysisParams askForParams(PsiElement element,
-                                          SliceManager.StoredSettingsBean storedSettingsBean,
-                                          String dialogTitle) {
+  public SliceAnalysisParams askForParams(@NotNull PsiElement element,
+                                          SliceManager.@NotNull StoredSettingsBean storedSettingsBean,
+                                          @NotNull String dialogTitle) {
     AnalysisScope analysisScope = new AnalysisScope(element.getContainingFile());
     Module module = ModuleUtilCore.findModuleForPsiElement(element);
 
@@ -47,7 +48,7 @@ class SliceForwardHandler extends SliceHandler {
     analysisUIOptions.loadState(storedSettingsBean.analysisUIOptions);
 
     List<ModelScopeItem> items = BaseAnalysisActionDialog.standardItems(myProject, analysisScope, module, element);
-    BaseAnalysisActionDialog dialog = new BaseAnalysisActionDialog(dialogTitle, "Analyze scope", myProject,
+    BaseAnalysisActionDialog dialog = new BaseAnalysisActionDialog(dialogTitle, "Analyze Scope", myProject,
                                                                    items, analysisUIOptions, true) {
       @Override
       protected JComponent getAdditionalActionSettings(Project project) {
