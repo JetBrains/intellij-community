@@ -40,7 +40,6 @@ import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistryImpl;
 import com.intellij.psi.impl.source.tree.ForeignLeafPsiElement;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.CachedValuesManagerImpl;
 import com.intellij.util.KeyedLazyInstance;
@@ -53,8 +52,6 @@ import org.picocontainer.MutablePicoContainer;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.*;
 
 /** @noinspection JUnitTestCaseWithNonTrivialConstructors*/
@@ -411,31 +408,6 @@ public abstract class ParsingTestCase extends UsefulTestCase {
 
   protected void checkResult(@NotNull @TestDataFile String targetDataName, @NotNull PsiFile file) throws IOException {
     doCheckResult(myFullDataPath, file, checkAllPsiRoots(), targetDataName, skipSpaces(), includeRanges(), allTreesInSingleFile());
-    printTree(targetDataName, file);
-  }
-
-
-  private void printTree(@NotNull @TestDataFile String targetDataName, @NotNull PsiFile file) {
-    StringBuffer buffer = new StringBuffer();
-    Arrays.stream(file.getNode().getChildren(TokenSet.ANY)).forEach(it -> printTree(it, buffer, 0));
-    try {
-      Files.writeString(Paths.get(myFullDataPath, targetDataName + ".new.txt"), buffer);
-    }
-    catch (IOException e) {
-      e.printStackTrace();
-    }
-  }
-
-  private void printTree(ASTNode node, StringBuffer buffer, int indent) {
-    buffer.append(" ".repeat(indent));
-    buffer.append(node.getElementType().toString()).append("\n");
-    indent += 2;
-    ASTNode childNode = node.getFirstChildNode();
-
-    while (childNode != null) {
-        printTree(childNode, buffer, indent);
-        childNode = childNode.getTreeNext();
-    }
   }
 
   protected boolean allTreesInSingleFile() {
