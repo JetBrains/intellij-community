@@ -139,7 +139,9 @@ public class I18nizeQuickFixDialog extends DialogWrapper implements I18nizeQuick
         fileChooser.showDialog();
         PsiFile selectedFile = fileChooser.getSelectedFile();
         if (selectedFile == null) return;
-        myPropertiesFile.setText(FileUtil.toSystemDependentName(selectedFile.getVirtualFile().getPath()));
+        String selectedPath = selectedFile.getVirtualFile().getPath();
+        myPropertiesFile.setText(FileUtil.toSystemDependentName(selectedPath));
+        myPropertiesFile.setSelectedItem(FileUtil.toSystemDependentName(selectedPath));
       }
     }), BorderLayout.CENTER);
 
