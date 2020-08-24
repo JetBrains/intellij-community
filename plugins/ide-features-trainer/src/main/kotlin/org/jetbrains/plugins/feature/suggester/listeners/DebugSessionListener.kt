@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.feature.suggester.listeners
 
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.project.Project
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.XDebugSessionListener
@@ -12,15 +13,15 @@ import org.jetbrains.plugins.feature.suggester.handleAction
 
 class DebugSessionListener(private val session: XDebugSession) : XDebugSessionListener {
 
-    override fun sessionPaused() {
+    override fun sessionPaused() = runInEdt {
         handleDebugSessionAction(::DebugSessionPausedAction)
     }
 
-    override fun sessionResumed() {
+    override fun sessionResumed() = runInEdt {
         handleDebugSessionAction(::DebugSessionResumedAction)
     }
 
-    override fun beforeSessionResume() {
+    override fun beforeSessionResume() = runInEdt {
         handleDebugSessionAction(::BeforeDebugSessionResumedAction)
     }
 
