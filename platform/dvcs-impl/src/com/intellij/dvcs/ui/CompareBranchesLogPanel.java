@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
 import com.intellij.ui.components.JBLabel;
@@ -166,9 +167,11 @@ class CompareBranchesLogPanel extends JPanel {
   private String makeDescription(boolean forward) {
     String firstBranch = forward ? myCurrentBranchName : myBranchName;
     String secondBranch = forward ? myBranchName : myCurrentBranchName;
-    return DvcsBundle.message("compare.branches.commits.that.exist.in.branch.but.not.in.branch.vcs.command",
-                              HtmlChunk.text(secondBranch).bold().code(),
-                              HtmlChunk.text(firstBranch).bold().code(),
-                              HtmlChunk.text(myHelper.formatLogCommand(firstBranch, secondBranch)).bold().code());
+    return new HtmlBuilder().appendRaw(
+      DvcsBundle.message("compare.branches.commits.that.exist.in.branch.but.not.in.branch.vcs.command",
+                         HtmlChunk.text(secondBranch).bold().code(),
+                         HtmlChunk.text(firstBranch).bold().code(),
+                         HtmlChunk.text(myHelper.formatLogCommand(firstBranch, secondBranch)).bold().code()))
+      .wrapWithHtmlBody().toString();
   }
 }

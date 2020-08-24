@@ -97,7 +97,7 @@ public class VcsCherryPickAction extends DumbAwareAction {
   @Nls
   @NotNull
   private static String concatActionNamesForAllAvailable(@NotNull final List<VcsCherryPicker> pickers) {
-    return StringUtil.join(pickers, VcsCherryPicker::getActionTitle, "/"); //NON-NLS
+    return StringUtil.join(pickers, VcsCherryPicker::getActionTitle, "/");
   }
 
   @NotNull
