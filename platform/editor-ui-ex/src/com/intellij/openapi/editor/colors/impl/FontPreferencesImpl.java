@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.colors.ModifiableFontPreferences;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -121,7 +122,7 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
   }
 
   @Override
-  public void register(@NotNull String fontFamily, int size) {
+  public void register(@NotNull @NonNls String fontFamily, int size) {
     String fallbackFontFamily = FontPreferences.getFallbackName(fontFamily, size, null);
     if (!myRealFontFamilies.contains(fontFamily)) {
       myRealFontFamilies.add(fontFamily);

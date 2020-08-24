@@ -243,13 +243,13 @@ public class GeneralCommandLine implements UserDataHolder {
   }
 
   @NotNull
-  public GeneralCommandLine withParameters(String @NotNull ... parameters) {
+  public GeneralCommandLine withParameters(@NotNull @NonNls String @NotNull ... parameters) {
     for (String parameter : parameters) addParameter(parameter);
     return this;
   }
 
   @NotNull
-  public GeneralCommandLine withParameters(@NotNull List<String> parameters) {
+  public GeneralCommandLine withParameters(@NotNull List<@NonNls String> parameters) {
     for (String parameter : parameters) addParameter(parameter);
     return this;
   }
