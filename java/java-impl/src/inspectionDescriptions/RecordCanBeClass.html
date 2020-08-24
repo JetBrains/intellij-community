@@ -11,8 +11,8 @@ to codebases that use earlier Java versions.
     so <code>instanceof Record</code> returns false.</li>
   <li>reflection methods like <code>Class.isRecord()</code> and
     <code>Class.getRecordComponents()</code> produce different results.</li>
-  <li>the generated <code>hashCode()</code> implementation is deliberately not specified
-    and may produce different results.</li>
+  <li>the generated <code>hashCode()</code> implementation may produce a different result
+    because the formula to calculate record hashCode is deliberately not specified.</li>
   <li>record serialization mechanism differs from that of ordinary classes.
     Refer to Java Object Serialization Specification for details.</li>
 </ul>
