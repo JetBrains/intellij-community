@@ -94,6 +94,7 @@ public class I18nizeTest extends LightJavaCodeInsightTestCase {
   public void testLongConcat() {doTest();}
   public void testCharacterLiteral() {doTest();}
   public void testNestedConcatenation() {doTest();}
+  public void testAssignment() {doTest();}
 
   public void testShortenClassReferences() {
     doTest("p.MyBundle.message(\"key\")");

@@ -17,6 +17,7 @@ import org.jetbrains.uast.*;
 import org.jetbrains.uast.expressions.UInjectionHost;
 import org.jetbrains.uast.expressions.UStringConcatenationsFacade;
 import org.jetbrains.uast.generate.UastCodeGenerationPlugin;
+import org.jetbrains.uast.util.UastExpressionUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -108,7 +109,7 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix {
       UElement parent = topExpression.getUastParent();
       if (parent instanceof UParenthesizedExpression || 
           parent instanceof UIfExpression || 
-          parent instanceof UPolyadicExpression) {
+          parent instanceof UPolyadicExpression && !UastExpressionUtils.isAssignment(parent)) {
         topExpression = (UExpression)parent;
       }
       else {
