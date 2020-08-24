@@ -47,10 +47,7 @@ import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -126,7 +123,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   public static final @NonNls String PYDEV_PYDEVCONSOLE_PY = "pydev/pydevconsole.py";
   public static final int PORTS_WAITING_TIMEOUT = 20000;
   private final Project myProject;
-  private final String myTitle;
+  private final @NlsContexts.TabTitle String myTitle;
   @Nullable private final String myWorkingDir;
   private final Consumer<? super String> myRerunAction;
   @Nullable private final Sdk mySdk;
@@ -144,13 +141,13 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   /*
    Console title used during initialization, it can be changed with Rename action
    */
-  @Nullable private String myConsoleInitTitle = null;
+  @Nullable @NlsContexts.TabTitle private String myConsoleInitTitle = null;
   private PythonConsoleView myConsoleView;
 
   public PydevConsoleRunnerImpl(@NotNull final Project project,
                                 @Nullable Sdk sdk,
                                 @NotNull final PyConsoleType consoleType,
-                                @NotNull final String title,
+                                @NotNull final @NlsContexts.TabTitle String title,
                                 @Nullable final String workingDir,
                                 @NotNull Map<String, String> environmentVariables,
                                 @NotNull PyConsoleOptions.PyConsoleSettings settingsProvider,
@@ -177,7 +174,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
          statementsToExecute);
   }
 
-  public void setConsoleTitle(String consoleTitle) {
+  public void setConsoleTitle(@NlsContexts.TabTitle String consoleTitle) {
     myConsoleInitTitle = consoleTitle;
   }
 
@@ -764,7 +761,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     outputActionsToolbar.setTargetComponent(mainPanel);
 
     if (myConsoleInitTitle == null) {
-      myConsoleInitTitle = new ConsoleTitleGen(myProject, myTitle) {
+      ConsoleTitleGen consoleTitleGen = new ConsoleTitleGen(myProject, myTitle) {
         @NotNull
         @Override
         protected List<String> getActiveConsoles(@NotNull String consoleTitle) {
@@ -777,7 +774,8 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
             return super.getActiveConsoles(consoleTitle);
           }
         }
-      }.makeTitle();
+      };
+      myConsoleInitTitle = consoleTitleGen.makeTitle();
     }
 
     final RunContentDescriptor contentDescriptor =
