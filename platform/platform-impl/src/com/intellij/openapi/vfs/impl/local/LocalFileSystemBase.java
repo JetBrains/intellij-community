@@ -677,6 +677,9 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
     try (DirectoryStream<Path> stream = Files.newDirectoryStream(Paths.get(file.getPath()))) {
       return stream.iterator().hasNext();  // make sure to not load all children
     }
+    catch (DirectoryIteratorException e) {
+      return false;  // a directory can't be iterated over
+    }
     catch (InvalidPathException | IOException | SecurityException e) {
       return true;
     }
