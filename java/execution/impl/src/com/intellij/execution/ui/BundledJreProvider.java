@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Konstantin Bulenkov
  */
 public class BundledJreProvider implements JreProvider {
+  public static final String BUNDLED = "Bundled";
   private final JdkBundle myBundle = JdkBundle.createBundled();
 
   @NotNull
@@ -29,7 +30,7 @@ public class BundledJreProvider implements JreProvider {
 
   @Override
   public String getPresentableName() {
-    return "Bundled";
+    return BUNDLED;
   }
 
   @Override

@@ -312,7 +312,7 @@ public class JrePathEditor extends LabeledComponent<ComboBox> implements PanelWi
 
     @Override
     public @NlsContexts.Label String getPresentableText() {
-      return myName != null && !myPath.equals(myName) ? myName : FileUtil.toSystemDependentName(myPath);
+      return myName != null && !myName.equals(myPath) ? myName : FileUtil.toSystemDependentName(myPath);
     }
 
     @Override

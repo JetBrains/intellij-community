@@ -142,6 +142,13 @@ public final class CommonJavaFragments {
         if (value == null) {
           return;
         }
+
+        if (BundledJreProvider.BUNDLED.equals(value.getPresentableText())) {
+          if (index == -1) append("java ");
+          append(value.getPresentableText(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          return;
+        }
+
         if (value.getPathOrName() == null && value.getVersion() == null) {
           append(StringUtil.notNullize(value.getDescription()));
           return;
