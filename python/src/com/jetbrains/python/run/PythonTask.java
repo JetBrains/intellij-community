@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts.TabTitle;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -84,7 +85,7 @@ public class PythonTask {
     }
   }
 
-  public PythonTask(final Module module, final String runTabTitle, @Nullable final Sdk sdk) throws ExecutionException {
+  public PythonTask(final Module module, @TabTitle String runTabTitle, @Nullable final Sdk sdk) throws ExecutionException {
     myModule = module;
     myRunTabTitle = runTabTitle;
     mySdk = sdk;
