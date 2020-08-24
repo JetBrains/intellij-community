@@ -50,9 +50,9 @@ public class CleanPycAction extends AnAction {
         collectPycFiles(new File(dir.getVirtualFile().getPath()), pycFiles);
       }
       FileUtil.asyncDelete(pycFiles);
-    }, PyBundle.message("action.cleaning.up.pyc.files"), false, e.getProject());
+    }, PyBundle.message("action.CleanPyc.progress.title.cleaning.up.pyc.files"), false, e.getProject());
     final StatusBar statusBar = WindowManager.getInstance().getIdeFrame(e.getProject()).getStatusBar();
-    statusBar.setInfo("Deleted " + pycFiles.size() + " bytecode file" + (pycFiles.size() != 1 ? "s" : ""));
+    statusBar.setInfo(PyBundle.message("action.CleanPyc.status.bar.text.deleted.bytecode.files", pycFiles.size()));
   }
 
   private static void collectPycFiles(File directory, final List<File> pycFiles) {
