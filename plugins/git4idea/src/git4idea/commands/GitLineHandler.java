@@ -133,16 +133,12 @@ public class GitLineHandler extends GitTextHandler {
   }
 
   private void logOutput(@NotNull String line, @NotNull Key outputType) {
-    String trimmedLine = line.trim();
-    if (!StringUtil.isEmptyOrSpaces(trimmedLine) &&
-        !mySilent &&
-        ((outputType == ProcessOutputTypes.STDOUT && !isStdoutSuppressed()) ||
-         outputType == ProcessOutputTypes.STDERR && !isStderrSuppressed())) {
-      LOG.info(trimmedLine);
-    }
-    else {
-      OUTPUT_LOG.debug(trimmedLine);
-    }
+    if (mySilent) return;
+    boolean shouldLogOutput = outputType == ProcessOutputTypes.STDOUT && !isStdoutSuppressed() ||
+                              outputType == ProcessOutputTypes.STDERR && !isStderrSuppressed();
+    if (!shouldLogOutput) return;
+    if (StringUtil.isEmptyOrSpaces(line)) return;
+    LOG.info(line.trim());
   }
 
   @Override

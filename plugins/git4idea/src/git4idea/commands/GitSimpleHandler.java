@@ -89,7 +89,6 @@ public class GitSimpleHandler extends GitTextHandler {
     }
     else {
       LOG.debug(stderr.trim());
-      OUTPUT_LOG.debug(stdout.trim());
     }
   }
 
