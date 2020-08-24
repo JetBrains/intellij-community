@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.packageDependencies.DependencyValidationManager
 import com.intellij.psi.search.scope.packageSet.NamedScope
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager
+import com.intellij.psi.search.scope.packageSet.NamedScopesHolder
 import com.intellij.ui.ColorChooser.chooseColor
 import com.intellij.ui.ColorUtil.toHex
 import com.intellij.ui.CommonActionsPanel
@@ -425,9 +426,10 @@ private class TableScopeRenderer(val manager: FileColorManagerImpl) : DefaultTab
   override fun getTableCellRendererComponent(table: JTable?, value: Any?,
                                              selected: Boolean, focused: Boolean, row: Int, column: Int): Component {
     val component = super.getTableCellRendererComponent(table, value, selected, focused, row, column)
-    val unknown = null == value?.toString()?.let { findScope(it, manager.project) }
-    toolTipText = if (unknown) message("settings.file.colors.scope.unknown") else null
-    icon = if (unknown) AllIcons.General.Error else null
+    val namedScope = value?.toString()?.let { findScope(it, manager.project) }
+    toolTipText = if (namedScope == null) message("settings.file.colors.scope.unknown") else null
+    icon = if (namedScope == null) AllIcons.General.Error else null
+    text = if (namedScope != null) namedScope.presentableName else value?.toString()
     return component
   }
 }
@@ -439,9 +441,7 @@ private fun getScopes(project: Project): List<NamedScope> {
   return list.filter { it.value != null }
 }
 
-private fun findScope(scopeName: String, project: Project) =
-  DependencyValidationManager.getInstance(project).scopes.find { it.name == scopeName }
-  ?: NamedScopeManager.getInstance(project).scopes.find { it.name == scopeName }
+private fun findScope(scopeName: String, project: Project) = NamedScopesHolder.getScope(project, scopeName)
 
 // popup steps
 

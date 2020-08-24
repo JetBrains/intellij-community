@@ -622,7 +622,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
       PackageSet value = namedScope.getValue();
       String toolTip = holder.getDisplayName() + (value==null ? "" : ": "+ value.getText());
-      descriptions.add(new SchemeTextAttributesDescription(name, getScopesGroup(), textAttributesKey, scheme, holder.getIcon(), toolTip));
+      descriptions.add(new SchemeTextAttributesDescription(namedScope.getPresentableName(), getScopesGroup(), textAttributesKey, scheme, holder.getIcon(), toolTip));
     }
   }
 
