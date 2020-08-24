@@ -122,6 +122,8 @@
 
     <lang.inspectionSuppressor language="Properties" implementationClass="com.intellij.codeInspection.PropertiesInspectionSuppressor"/>
     <qualifiedNameProvider implementation="com.intellij.ide.actions.PropertiesQualifiedNameProvider"/>
+    <applicationService serviceImplementation="com.intellij.lang.properties.PropertiesFoldingSettings"/>
+    <codeFoldingOptionsProvider instance="com.intellij.lang.properties.PropertiesFoldingOptionsProvider"/>
   </extensions>
   <projectListeners>
     <listener class="com.intellij.lang.properties.Native2AsciiListener" topic="com.intellij.openapi.vfs.encoding.EncodingManagerListener"/>
