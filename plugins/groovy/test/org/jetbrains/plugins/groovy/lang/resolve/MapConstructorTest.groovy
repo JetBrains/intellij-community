@@ -31,7 +31,6 @@ static void main(String[] args) {
 
   @Test
   void 'no explicit map constructor'() {
-
     highlightingTest """
 class Rr {
     String actionType = ""
@@ -46,6 +45,27 @@ static void main(String[] args) {
     new Rr<error>(actionType: "a", referrerCode: 10, referrerUrl: true)</error>
 }
 """
-    getFixture().checkHighlighting(true, true, true)
+  }
+
+  @Test
+  void 'pre and post resolving'() {
+    highlightingTest """
+class NN {}
+
+@groovy.transform.CompileStatic
+@groovy.transform.MapConstructor(pre = { super(); }, post = { assert referrerUrl = true })
+class Rr extends NN {
+    String actionType = ""
+    long referrerCode
+    boolean referrerUrl
+    
+    Rr(String s) { int x = 1; }
+}
+
+@groovy.transform.CompileStatic
+static void main(String[] args) {
+    new Rr(actionType: "a", referrerCode: 10, referrerUrl: true)
+}
+"""
   }
 }

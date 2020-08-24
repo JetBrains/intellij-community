@@ -293,7 +293,7 @@
     <customAnnotationChecker implementation="org.jetbrains.plugins.groovy.annotator.checkers.BuilderAnnotationChecker"/>
     <customAnnotationChecker implementation="org.jetbrains.plugins.groovy.annotator.checkers.BaseScriptAnnotationChecker"/>
     <customAnnotationChecker implementation="org.jetbrains.plugins.groovy.annotator.checkers.NamedParamAnnotationChecker"/>
-    <customAnnotationChecker implementation="org.jetbrains.plugins.groovy.annotator.checkers.TupleConstructorAnnotationChecker"/>
+    <customAnnotationChecker implementation="org.jetbrains.plugins.groovy.annotator.checkers.GeneratedConstructorAnnotationChecker"/>
     <customAnnotationChecker implementation="org.jetbrains.plugins.groovy.annotator.checkers.ImmutableOptionsAnnotationChecker"/>
 
     <convertToJava.customMethodInvocator

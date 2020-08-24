@@ -42,7 +42,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.annotator.checkers.AnnotationChecker;
 import org.jetbrains.plugins.groovy.annotator.checkers.CustomAnnotationChecker;
-import org.jetbrains.plugins.groovy.annotator.checkers.TupleConstructorAnnotationChecker;
+import org.jetbrains.plugins.groovy.annotator.checkers.GeneratedConstructorAnnotationChecker;
 import org.jetbrains.plugins.groovy.annotator.intentions.*;
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GrModifierFix;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
@@ -91,7 +91,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.*;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorReference;
-import org.jetbrains.plugins.groovy.lang.resolve.ast.GrTupleConstructorUtils;
+import org.jetbrains.plugins.groovy.lang.resolve.ast.GrAstGeneratedConstructorUtils;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.InheritConstructorContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.TupleConstructorAttributes;
 import org.jetbrains.plugins.groovy.transformations.immutable.GrImmutableUtils;
@@ -493,7 +493,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     PsiAnnotation anno = typeDefinition.getAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR);
     if (anno != null) {
       PsiNameValuePair preAttribute = AnnotationUtil.findDeclaredAttribute(anno, "pre");
-      if (preAttribute != null && !TupleConstructorAnnotationChecker.isSuperCalledInPre(anno)) {
+      if (preAttribute != null && !GeneratedConstructorAnnotationChecker.isSuperCalledInPre(anno)) {
         holder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("there.is.no.default.constructor.available.in.class.0", qName))
           .range(preAttribute).create();
       }
@@ -608,7 +608,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     PsiAnnotation tupleConstructor = containingClass.getAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR);
     if (tupleConstructor == null) return;
     if (!Boolean.FALSE.equals(GrAnnotationUtil.inferBooleanAttribute(tupleConstructor, TupleConstructorAttributes.DEFAULTS))) return;
-    if (GrTupleConstructorUtils.isFieldAccepted(tupleConstructor, field)) {
+    if (GrAstGeneratedConstructorUtils.isFieldAccepted(tupleConstructor, field)) {
       myHolder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("initializers.are.forbidden.with.defaults"))
         .range(initializer)
         .create();

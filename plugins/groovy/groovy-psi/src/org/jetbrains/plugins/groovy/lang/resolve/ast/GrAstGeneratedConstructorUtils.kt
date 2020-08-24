@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-@file:JvmName("GrTupleConstructorUtils")
+@file:JvmName("GrAstGeneratedConstructorUtils")
 
 package org.jetbrains.plugins.groovy.lang.resolve.ast
 
@@ -11,9 +11,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 
+internal val constructorGeneratingAnnotations: List<String> = listOf(
+  GroovyCommonClassNames.GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR,
+  GroovyCommonClassNames.GROOVY_TRANSFORM_MAP_CONSTRUCTOR)
 
-interface TupleConstructorAttributes {
-  companion object {
+object TupleConstructorAttributes {
     @NlsSafe
     const val EXCLUDES = "excludes"
     @NlsSafe
@@ -34,7 +36,6 @@ interface TupleConstructorAttributes {
     const val FORCE = "force"
     @NlsSafe
     const val DEFAULTS = "defaults"
-  }
 }
 
 fun getIdentifierList(annotation: PsiAnnotation, @NlsSafe attributeName: String): List<String>? {

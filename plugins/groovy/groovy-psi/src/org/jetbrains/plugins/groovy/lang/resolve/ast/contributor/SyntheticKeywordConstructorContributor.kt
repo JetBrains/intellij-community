@@ -15,10 +15,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR
 import org.jetbrains.plugins.groovy.lang.resolve.ClosureMemberContributor
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
 import org.jetbrains.plugins.groovy.lang.resolve.ast.TupleConstructorAttributes
+import org.jetbrains.plugins.groovy.lang.resolve.ast.constructorGeneratingAnnotations
 
 class SyntheticKeywordConstructorContributor : ClosureMemberContributor() {
 
@@ -28,7 +28,7 @@ class SyntheticKeywordConstructorContributor : ClosureMemberContributor() {
     if (nameHint != null && nameHint != SUPER) return
 
     if (closure != place.parentOfType<GrClosableBlock>()) return
-    val anno = closure.parentOfType<PsiAnnotation>()?.takeIf { it.qualifiedName == GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR } ?: return
+    val anno = closure.parentOfType<PsiAnnotation>()?.takeIf { it.qualifiedName in constructorGeneratingAnnotations } ?: return
     if (GrAnnotationUtil.inferClosureAttribute(anno, TupleConstructorAttributes.PRE) != closure) return
 
 

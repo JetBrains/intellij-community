@@ -12,21 +12,21 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil.inferClosureAttribute
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
-import org.jetbrains.plugins.groovy.lang.resolve.ast.TupleConstructorAttributes.Companion.CALL_SUPER
-import org.jetbrains.plugins.groovy.lang.resolve.ast.TupleConstructorAttributes.Companion.EXCLUDES
-import org.jetbrains.plugins.groovy.lang.resolve.ast.TupleConstructorAttributes.Companion.INCLUDES
-import org.jetbrains.plugins.groovy.lang.resolve.ast.TupleConstructorAttributes.Companion.POST
-import org.jetbrains.plugins.groovy.lang.resolve.ast.TupleConstructorAttributes.Companion.PRE
+import org.jetbrains.plugins.groovy.lang.resolve.ast.TupleConstructorAttributes.CALL_SUPER
+import org.jetbrains.plugins.groovy.lang.resolve.ast.TupleConstructorAttributes.EXCLUDES
+import org.jetbrains.plugins.groovy.lang.resolve.ast.TupleConstructorAttributes.INCLUDES
+import org.jetbrains.plugins.groovy.lang.resolve.ast.TupleConstructorAttributes.POST
+import org.jetbrains.plugins.groovy.lang.resolve.ast.TupleConstructorAttributes.PRE
+import org.jetbrains.plugins.groovy.lang.resolve.ast.constructorGeneratingAnnotations
 import org.jetbrains.plugins.groovy.lang.resolve.ast.contributor.SyntheticKeywordConstructorContributor.Companion.isSyntheticConstructorCall
 import org.jetbrains.plugins.groovy.lang.resolve.ast.getIdentifierList
 
-class TupleConstructorAnnotationChecker : CustomAnnotationChecker() {
+class GeneratedConstructorAnnotationChecker : CustomAnnotationChecker() {
 
   companion object {
     @JvmStatic
     fun isSuperCalledInPre(annotation: PsiAnnotation): Boolean =
-      (inferClosureAttribute(annotation, "pre")?.statements?.firstOrNull() as? GrMethodCall)
+      (inferClosureAttribute(annotation, PRE)?.statements?.firstOrNull() as? GrMethodCall)
         .run(::isSyntheticConstructorCall)
 
     private fun registerIdentifierListError(holder: AnnotationHolder, element: PsiElement) =
@@ -46,7 +46,7 @@ class TupleConstructorAnnotationChecker : CustomAnnotationChecker() {
   }
 
   override fun checkArgumentList(holder: AnnotationHolder, annotation: GrAnnotation): Boolean {
-    if (annotation.qualifiedName != GroovyCommonClassNames.GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR) {
+    if (annotation.qualifiedName !in constructorGeneratingAnnotations) {
       return false
     }
     val excludes = getIdentifierList(annotation, EXCLUDES)
