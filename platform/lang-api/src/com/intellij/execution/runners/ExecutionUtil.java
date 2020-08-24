@@ -72,9 +72,7 @@ public final class ExecutionUtil {
     String description = e.getMessage();
     HyperlinkListener listener = null;
     if (isProcessNotCreated(e) && !PropertiesComponent.getInstance(project).isTrueValue("dynamic.classpath")) {
-      description = "Command line is too long. In order to reduce its length classpath file can be used.<br>" +
-                    "Would you like to enable classpath file mode for all run configurations of your project?<br>" +
-                    "<a href=\"\">Enable</a>";
+      description = ExecutionBundle.message("dialog.message.command.line.too.long.notification");
       listener = event -> PropertiesComponent.getInstance(project).setValue("dynamic.classpath", "true");
     }
 

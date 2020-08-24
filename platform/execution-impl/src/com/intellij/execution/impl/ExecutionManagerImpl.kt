@@ -336,7 +336,8 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
           if (!RunManagerImpl.canRunConfiguration(settings, executor)) {
             // we should stop here as before run task cannot be executed at all (possibly it's invalid)
             onCancelRunnable?.run()
-            ExecutionUtil.handleExecutionError(environment, ExecutionException("cannot start before run task '$settings'."))
+            ExecutionUtil.handleExecutionError(environment, ExecutionException(
+              ExecutionBundle.message("dialog.message.cannot.start.before.run.task", settings)))
             return
           }
         }
@@ -402,7 +403,8 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
           startRunnable.run()
         }
         catch (ignored: IndexNotReadyException) {
-          ExecutionUtil.handleExecutionError(environment, ExecutionException("cannot start while indexing is in progress."))
+          ExecutionUtil.handleExecutionError(environment, ExecutionException(
+            ExecutionBundle.message("dialog.message.cannot.start.while.indexing.in.progress")))
         }
       }
     }
@@ -541,7 +543,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
     val executionResult = DefaultExecutionResult(consoleView, processHandler)
     val descriptor = RunContentDescriptor(executionResult.executionConsole, executionResult.processHandler,
                                           executionResult.executionConsole.component,
-                                          "Prepare " + environment.executionTarget.displayName)
+                                          ExecutionBundle.message("tab.title.prepare.environment", environment.executionTarget.displayName))
     val promise = AsyncPromise<Any?>()
     ApplicationManager.getApplication().executeOnPooledThread {
       try {
@@ -583,24 +585,24 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
       }
 
       if (((showSettings && runnerAndConfigurationSettings.isEditBeforeRun) || !RunManagerImpl.canRunConfiguration(environment)) && !DumbService.isDumb(project)) {
-        if (!RunDialog.editConfiguration(environment, "Edit configuration")) {
+        if (!RunDialog.editConfiguration(environment, ExecutionBundle.message("dialog.title.edit.configuration", 0))) {
           return
         }
 
         while (!RunManagerImpl.canRunConfiguration(environment)) {
-          val message = "Configuration is still incorrect. Do you want to edit it again?"
-          val title = "Change Configuration Settings"
+          val message = ExecutionBundle.message("dialog.message.configuration.still.incorrect.do.you.want.to.edit.it.again")
+          val title = ExecutionBundle.message("dialog.title.change.configuration.settings")
           if (Messages.showYesNoDialog(project, message, title, CommonBundle.message("button.edit"), ExecutionBundle.message("run.continue.anyway"), Messages.getErrorIcon()) != Messages.YES) {
             break
           }
-          if (!RunDialog.editConfiguration(environment, "Edit configuration")) {
+          if (!RunDialog.editConfiguration(environment, ExecutionBundle.message("dialog.title.edit.configuration", 0))) {
             return
           }
         }
 
         // corresponding runner can be changed after configuration edit
         runner = ProgramRunner.getRunner(environment.executor.id, runnerAndConfigurationSettings.configuration)
-                 ?: throw ExecutionException("Cannot find runner for ${environment.runProfile.name}")
+                 ?: throw ExecutionException(ExecutionBundle.message("dialog.message.cannot.find.runner.for", environment.runProfile.name))
       }
     }
 
