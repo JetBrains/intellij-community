@@ -32,7 +32,7 @@ final class PluginLoadingResult {
 
   @Nullable Map<PluginId, List<IdeaPluginDescriptorImpl>> duplicateModuleMap;
 
-  private final Map<PluginId, PluginError> pluginErrors = new ConcurrentHashMap<>();
+  private final Map<PluginId, PluginLoadingError> pluginErrors = new ConcurrentHashMap<>();
   private final List<@NlsContexts.DetailedDescription String> globalErrors = Collections.synchronizedList(new ArrayList<>());
 
   private final Set<PluginId> shadowedBundledIds = new HashSet<>();
@@ -81,7 +81,7 @@ final class PluginLoadingResult {
     return descriptor != null && set.contains(descriptor.getVersion());
   }
 
-  @NotNull Map<PluginId, PluginError> getPluginErrors() {
+  @NotNull Map<PluginId, PluginLoadingError> getPluginErrors() {
     return Collections.unmodifiableMap(pluginErrors);
   }
 
@@ -91,7 +91,7 @@ final class PluginLoadingResult {
     }
   }
 
-  void addIncompletePlugin(@NotNull IdeaPluginDescriptorImpl plugin, @Nullable PluginError error) {
+  void addIncompletePlugin(@NotNull IdeaPluginDescriptorImpl plugin, @Nullable PluginLoadingError error) {
     if (!idMap.containsKey(plugin.getPluginId())) {
       incompletePlugins.put(plugin.getPluginId(), plugin);
     }
@@ -118,7 +118,7 @@ final class PluginLoadingResult {
     String message = "is incompatible (reason: " + reason + ", target build " +
                      (since.equals(until) ? ("is " + since) : ("range is " + since + " to " + until)) +
                      ")";
-    new PluginError(plugin, message, reason).register(pluginErrors);
+    new PluginLoadingError(plugin, message, reason).register(pluginErrors);
   }
 
   void reportCannotLoad(@NotNull Path file, Exception e) {
@@ -141,7 +141,7 @@ final class PluginLoadingResult {
     if (!descriptor.isBundled()) {
       if (checkModuleDependencies && !PluginManagerCore.hasModuleDependencies(descriptor)) {
         String message = "defines no module dependencies (supported only in IntelliJ IDEA)";
-        new PluginError(descriptor, message, "supported only in IntelliJ IDEA").register(pluginErrors);
+        new PluginLoadingError(descriptor, message, "supported only in IntelliJ IDEA").register(pluginErrors);
         return false;
       }
     }

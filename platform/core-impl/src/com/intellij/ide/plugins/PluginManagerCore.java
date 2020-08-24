@@ -81,7 +81,7 @@ public final class PluginManagerCore {
   private static Reference<Map<PluginId, Set<String>>> ourBrokenPluginVersions;
   private static volatile IdeaPluginDescriptorImpl[] ourPlugins;
   static volatile List<IdeaPluginDescriptorImpl> ourLoadedPlugins;
-  private static Map<PluginId, PluginError> ourPluginLoadingErrors;
+  private static Map<PluginId, PluginLoadingError> ourPluginLoadingErrors;
 
   private static Map<String, String[]> ourAdditionalLayoutMap = Collections.emptyMap();
 
@@ -559,7 +559,7 @@ public final class PluginManagerCore {
     return result;
   }
 
-  private static void prepareLoadingPluginsErrorMessage(@NotNull Map<PluginId, PluginError> pluginErrors,
+  private static void prepareLoadingPluginsErrorMessage(@NotNull Map<PluginId, PluginLoadingError> pluginErrors,
                                                         @NotNull List<@NlsContexts.DetailedDescription String> globalErrors,
                                                         @NotNull List<String> actions) {
     ourPluginLoadingErrors = pluginErrors;
@@ -583,7 +583,7 @@ public final class PluginManagerCore {
         globalErrors,
         pluginErrors.entrySet().stream()
         .sorted(Map.Entry.comparingByKey()).map(Map.Entry::getValue)
-        .filter(PluginError::isNotifyUser)
+        .filter(PluginLoadingError::isNotifyUser)
         .map(error -> StringUtil.escapeXmlEntities(error.toUserError()) + ".")
         .collect(Collectors.toList())
       );
@@ -609,7 +609,7 @@ public final class PluginManagerCore {
   }
 
   public static @Nullable String getLoadingError(@NotNull IdeaPluginDescriptor pluginDescriptor) {
-    PluginError error = ourPluginLoadingErrors.get(pluginDescriptor.getPluginId());
+    PluginLoadingError error = ourPluginLoadingErrors.get(pluginDescriptor.getPluginId());
     if (error != null) {
       String reason = error.getIncompatibleReason();
       if (reason != null) {
@@ -621,7 +621,7 @@ public final class PluginManagerCore {
   }
 
   public static @Nullable PluginId getFirstDisabledDependency(@NotNull IdeaPluginDescriptor pluginDescriptor) {
-    PluginError error = ourPluginLoadingErrors.get(pluginDescriptor.getPluginId());
+    PluginLoadingError error = ourPluginLoadingErrors.get(pluginDescriptor.getPluginId());
     if (error != null) {
       return error.getDisabledDependency();
     }
@@ -780,7 +780,7 @@ public final class PluginManagerCore {
   private static void prepareLoadingPluginsErrorMessage(@NotNull Map<PluginId, String> disabledIds,
                                                         @NotNull Set<PluginId> disabledRequiredIds,
                                                         @NotNull Map<PluginId, ? extends IdeaPluginDescriptor> idMap,
-                                                        @NotNull Map<PluginId, PluginError> pluginErrors,
+                                                        @NotNull Map<PluginId, PluginLoadingError> pluginErrors,
                                                         @NotNull List<@NlsContexts.DetailedDescription String> globalErrors) {
     List<String> actions = new ArrayList<>();
     if (!disabledIds.isEmpty()) {
@@ -1020,7 +1020,7 @@ public final class PluginManagerCore {
 
   private static void disableIncompatiblePlugins(@NotNull List<IdeaPluginDescriptorImpl> descriptors,
                                                  @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap,
-                                                 @NotNull Map<PluginId, PluginError> errors) {
+                                                 @NotNull Map<PluginId, PluginLoadingError> errors) {
     boolean isNonBundledPluginDisabled = ourDisableNonBundledPlugins;
     if (isNonBundledPluginDisabled) {
       getLogger().info("Running with disableThirdPartyPlugins argument, third-party plugins will be disabled");
@@ -1077,7 +1077,7 @@ public final class PluginManagerCore {
       Set<String> set = brokenPluginVersions.get(descriptor.getPluginId());
       if (set != null && set.contains(descriptor.getVersion())) {
         descriptor.setEnabled(false);
-        new PluginError(descriptor, "was marked as broken", "marked as broken").register(errors);
+        new PluginLoadingError(descriptor, "was marked as broken", "marked as broken").register(errors);
       }
       else if (explicitlyEnabled != null) {
         if (!explicitlyEnabled.contains(descriptor)) {
@@ -1090,11 +1090,11 @@ public final class PluginManagerCore {
       }
       else if (!shouldLoadPlugins) {
         descriptor.setEnabled(false);
-        new PluginError(descriptor, "is skipped (plugins loading disabled)", null).register(errors);
+        new PluginLoadingError(descriptor, "is skipped (plugins loading disabled)", null).register(errors);
       }
       else if (isNonBundledPluginDisabled && !descriptor.isBundled()) {
         descriptor.setEnabled(false);
-        new PluginError(descriptor, "is skipped (third-party plugins loading disabled)", null, false).register(errors);
+        new PluginLoadingError(descriptor, "is skipped (third-party plugins loading disabled)", null, false).register(errors);
       }
     }
   }
@@ -1165,7 +1165,7 @@ public final class PluginManagerCore {
 
   static @NotNull PluginManagerState initializePlugins(@NotNull DescriptorListLoadingContext context, @NotNull ClassLoader coreLoader, boolean checkEssentialPlugins) {
     PluginLoadingResult loadingResult = context.result;
-    Map<PluginId, PluginError> pluginErrors = new HashMap<>(loadingResult.getPluginErrors());
+    Map<PluginId, PluginLoadingError> pluginErrors = new HashMap<>(loadingResult.getPluginErrors());
     List<@NlsContexts.DetailedDescription String> globalErrors = loadingResult.getGlobalErrors();
 
     if (loadingResult.duplicateModuleMap != null) {
@@ -1361,7 +1361,7 @@ public final class PluginManagerCore {
                                               @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap,
                                               @NotNull Set<? super PluginId> disabledRequiredIds,
                                               @NotNull Set<PluginId> disabledPlugins,
-                                              @NotNull Map<PluginId, PluginError> errors) {
+                                              @NotNull Map<PluginId, PluginLoadingError> errors) {
     if (descriptor.getPluginId() == CORE_ID) {
       return true;
     }
@@ -1374,7 +1374,7 @@ public final class PluginManagerCore {
 
       result = false;
       String presentableName = toPresentableName(incompatibleId.getIdString());
-      new PluginError(descriptor, "is incompatible with the IDE containing module " + presentableName,
+      new PluginLoadingError(descriptor, "is incompatible with the IDE containing module " + presentableName,
                                  "IDE contains module " + presentableName, notifyUser).register(errors);
     }
 
@@ -1399,14 +1399,15 @@ public final class PluginManagerCore {
       String depName = dep == null ? null : dep.getName();
       if (depName == null) {
         if (errors.containsKey(depId)) {
-          new PluginError(descriptor, "depends on plugin " + toPresentableName(depId.getIdString()) + " that failed to load", null, notifyUser).register(errors);
+          new PluginLoadingError(descriptor, "depends on plugin " + toPresentableName(depId.getIdString()) + " that failed to load", null, notifyUser).register(errors);
         }
         else {
-          new PluginError(descriptor, "requires " + toPresentableName(depId.getIdString()) + " plugin to be installed", null, notifyUser).register(errors);
+          new PluginLoadingError(descriptor, "requires " + toPresentableName(depId.getIdString()) + " plugin to be installed", null, notifyUser).register(errors);
         }
       }
       else {
-        PluginError error = new PluginError(descriptor, "requires " + toPresentableName(depName) + " plugin to be enabled", null, notifyUser);
+        PluginLoadingError
+          error = new PluginLoadingError(descriptor, "requires " + toPresentableName(depName) + " plugin to be enabled", null, notifyUser);
         error.setDisabledDependency(dep.getPluginId());
         error.register(errors);
       }

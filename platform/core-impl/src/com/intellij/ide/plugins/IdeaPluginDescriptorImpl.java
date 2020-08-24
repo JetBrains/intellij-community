@@ -439,7 +439,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     incomplete = true;
     setEnabled(false);
     if (myId != null && !wasIncomplete) {
-      PluginError pluginError = errorMessage == null ? null : new PluginError(this, errorMessage, null, false);
+      PluginLoadingError pluginError = errorMessage == null ? null : new PluginLoadingError(this, errorMessage, null, false);
       if (pluginError != null && disabledDependency != null) {
         pluginError.setDisabledDependency(disabledDependency);
       }

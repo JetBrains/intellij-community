@@ -8,21 +8,21 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-final class PluginError {
+final class PluginLoadingError {
   final @NotNull IdeaPluginDescriptorImpl plugin;
   private final @Nls String message;
   private final @Nls String incompatibleReason;
   private final boolean myNotifyUser;
   private PluginId myDisabledDependency;
 
-  PluginError(@NotNull IdeaPluginDescriptorImpl plugin, @NotNull @Nls String message, @Nullable @Nls String incompatibleReason) {
+  PluginLoadingError(@NotNull IdeaPluginDescriptorImpl plugin, @NotNull @Nls String message, @Nullable @Nls String incompatibleReason) {
     this(plugin, message, incompatibleReason, true);
   }
 
-  PluginError(@NotNull IdeaPluginDescriptorImpl plugin,
-              @Nls @NotNull String message,
-              @Nls @Nullable String incompatibleReason,
-              boolean notifyUser) {
+  PluginLoadingError(@NotNull IdeaPluginDescriptorImpl plugin,
+                     @Nls @NotNull String message,
+                     @Nls @Nullable String incompatibleReason,
+                     boolean notifyUser) {
     this.plugin = plugin;
     this.message = message;
     this.incompatibleReason = incompatibleReason;
@@ -58,7 +58,7 @@ final class PluginError {
     return myNotifyUser;
   }
 
-  void register(Map<PluginId, PluginError> errorsMap) {
+  void register(Map<PluginId, PluginLoadingError> errorsMap) {
     errorsMap.put(plugin.getPluginId(), this);
   }
 
