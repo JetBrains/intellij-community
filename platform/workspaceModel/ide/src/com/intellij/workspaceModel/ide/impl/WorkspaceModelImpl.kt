@@ -52,10 +52,7 @@ class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposa
     return result
   }
 
-  override fun <R> updateProjectModelSilent(skipWriteCheck: Boolean, updater: (WorkspaceEntityStorageBuilder) -> R): R {
-    if (!skipWriteCheck) {
-      ApplicationManager.getApplication().assertWriteAccessAllowed()
-    }
+  override fun <R> updateProjectModelSilent(updater: (WorkspaceEntityStorageBuilder) -> R): R {
     val result = updater(projectEntities)
     entityStorage.replaceSilently(projectEntities.toStorage())
     return result

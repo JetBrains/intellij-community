@@ -167,7 +167,7 @@ internal open class FacetModelBridge(protected val moduleBridge: ModuleBridge) :
     }
     else {
       synchronized(obj) {
-        WorkspaceModel.getInstance(moduleBridge.project).updateProjectModelSilent(true) {
+        WorkspaceModel.getInstance(moduleBridge.project).updateProjectModelSilent {
           it.mutableFacetMapping().updater()
         }
       }
