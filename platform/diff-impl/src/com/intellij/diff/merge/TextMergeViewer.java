@@ -76,6 +76,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.util.List;
 import java.util.*;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 import static com.intellij.util.containers.ContainerUtil.ar;
@@ -424,7 +426,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       myLoadingPanel.startLoading();
       myAcceptResolveAction.setEnabled(false);
 
-      BackgroundTaskUtil.executeAndTryWait(indicator -> BackgroundTaskUtil.runUnderDisposeAwareIndicator(this, () -> {
+      BackgroundTaskUtil.executeAndTryWait(indicator -> BackgroundTaskUtil.<Runnable>runUnderDisposeAwareIndicator(this, () -> {
         try {
           return doPerformRediff(indicator);
         }
