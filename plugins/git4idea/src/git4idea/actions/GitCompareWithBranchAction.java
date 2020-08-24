@@ -14,7 +14,6 @@ import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.changes.GitChangeUtils;
 import git4idea.history.GitHistoryUtils;
-import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
@@ -70,10 +69,7 @@ public class GitCompareWithBranchAction extends DvcsCompareWithBranchAction<GitR
   protected Collection<Change> getDiffChanges(@NotNull Project project, @NotNull VirtualFile file,
                                               @NotNull String branchToCompare) throws VcsException {
     FilePath filePath = VcsUtil.getFilePath(file);
-    final GitRepository gitRepository = GitUtil.getRepositoryManager(project).getRepositoryForFile(file);
-    if (gitRepository == null) {
-      throw new VcsException(GitBundle.message("action.Git.CompareWithBranch.could.not.find.repo.error", file.getName()));
-    }
+    final GitRepository gitRepository = GitUtil.getRepositoryForFile(project, file);
     final VirtualFile gitRepositoryRoot = gitRepository.getRoot();
     GitRevisionNumber compareRevisionNumber = new GitRevisionNumber(branchToCompare);
     Collection<Change> changes =
