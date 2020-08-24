@@ -79,7 +79,10 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
   }
 
   public UnindexedFilesUpdater(@NotNull Project project) {
-    this(project, false, false);
+    // If we haven't succeeded to fully scan the project content yet, then we must keep trying to run
+    // file based index extensions for all project files until at least one of UnindexedFilesUpdater-s finishes without cancellation.
+    // This is important, for example, for shared indexes: all files must be associated with their locally available shared index chunks.
+    this(project, false, !isProjectContentFullyScanned(project));
   }
 
   private void updateUnindexedFiles(@NotNull ProjectIndexingHistory projectIndexingHistory, @NotNull ProgressIndicator indicator) {
