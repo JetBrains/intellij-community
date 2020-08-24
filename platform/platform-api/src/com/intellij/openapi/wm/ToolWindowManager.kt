@@ -137,7 +137,11 @@ abstract class ToolWindowManager {
 
   abstract fun notifyByBalloon(toolWindowId: String, type: MessageType, htmlBody: String)
 
-  fun notifyByBalloon(toolWindowId: String, type: MessageType, htmlBody: String, icon: Icon?, listener: HyperlinkListener?) {
+  fun notifyByBalloon(toolWindowId: String,
+                      type: MessageType,
+                      @NlsContexts.PopupContent htmlBody: String,
+                      icon: Icon?,
+                      listener: HyperlinkListener?) {
     notifyByBalloon(ToolWindowBalloonShowOptions(toolWindowId = toolWindowId, type = type, htmlBody = htmlBody, icon = icon, listener = listener))
   }
 
