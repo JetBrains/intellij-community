@@ -6,18 +6,20 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
+
 final class PluginError {
-  final IdeaPluginDescriptorImpl plugin;
+  final @NotNull IdeaPluginDescriptorImpl plugin;
   private final @Nls String message;
   private final @Nls String incompatibleReason;
   private final boolean myNotifyUser;
   private PluginId myDisabledDependency;
 
-  PluginError(@Nullable IdeaPluginDescriptorImpl plugin, @NotNull @Nls String message, @Nullable @Nls String incompatibleReason) {
+  PluginError(@NotNull IdeaPluginDescriptorImpl plugin, @NotNull @Nls String message, @Nullable @Nls String incompatibleReason) {
     this(plugin, message, incompatibleReason, true);
   }
 
-  PluginError(@Nullable IdeaPluginDescriptorImpl plugin,
+  PluginError(@NotNull IdeaPluginDescriptorImpl plugin,
               @Nls @NotNull String message,
               @Nls @Nullable String incompatibleReason,
               boolean notifyUser) {
@@ -32,10 +34,7 @@ final class PluginError {
   }
 
   @NotNull @Nls String toUserError() {
-    if (plugin == null) {
-      return message;
-    }
-    else if (incompatibleReason != null) {
+    if (incompatibleReason != null) {
       return "Plugin \"" + plugin.getName() + "\" is incompatible (" + incompatibleReason + ")";
     }
     else {
@@ -59,8 +58,12 @@ final class PluginError {
     return myNotifyUser;
   }
 
+  void register(Map<PluginId, PluginError> errorsMap) {
+    errorsMap.put(plugin.getPluginId(), this);
+  }
+
   @Override
   public @NotNull String toString() {
-    return plugin == null ? message : plugin.formatErrorMessage(message);
+    return plugin.formatErrorMessage(message);
   }
 }

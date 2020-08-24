@@ -3,11 +3,15 @@ package com.intellij.ide.plugins;
 
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.BuildNumber;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.text.VersionComparatorUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.*;
@@ -28,7 +32,8 @@ final class PluginLoadingResult {
 
   @Nullable Map<PluginId, List<IdeaPluginDescriptorImpl>> duplicateModuleMap;
 
-  private final Map<PluginId, PluginError> errors = new ConcurrentHashMap<>();
+  private final Map<PluginId, PluginError> pluginErrors = new ConcurrentHashMap<>();
+  private final List<@NlsContexts.DetailedDescription String> globalErrors = Collections.synchronizedList(new ArrayList<>());
 
   private final Set<PluginId> shadowedBundledIds = new HashSet<>();
 
@@ -76,18 +81,14 @@ final class PluginLoadingResult {
     return descriptor != null && set.contains(descriptor.getVersion());
   }
 
-  @NotNull List<PluginError> getErrors() {
-    if (errors.isEmpty()) {
-      return Collections.emptyList();
-    }
+  @NotNull Map<PluginId, PluginError> getPluginErrors() {
+    return Collections.unmodifiableMap(pluginErrors);
+  }
 
-    PluginId[] ids = errors.keySet().toArray(PluginId.EMPTY_ARRAY);
-    Arrays.sort(ids, null);
-    List<PluginError> result = new ArrayList<>(ids.length);
-    for (PluginId id : ids) {
-      result.add(errors.get(id));
+  List<@NlsContexts.DetailedDescription String> getGlobalErrors() {
+    synchronized (globalErrors) {
+      return new ArrayList<>(globalErrors);
     }
-    return result;
   }
 
   void addIncompletePlugin(@NotNull IdeaPluginDescriptorImpl plugin, @Nullable PluginError error) {
@@ -95,7 +96,7 @@ final class PluginLoadingResult {
       incompletePlugins.put(plugin.getPluginId(), plugin);
     }
     if (error != null) {
-      errors.put(plugin.getPluginId(), error);
+      pluginErrors.put(plugin.getPluginId(), error);
     }
   }
 
@@ -117,12 +118,12 @@ final class PluginLoadingResult {
     String message = "is incompatible (reason: " + reason + ", target build " +
                      (since.equals(until) ? ("is " + since) : ("range is " + since + " to " + until)) +
                      ")";
-    errors.put(plugin.getPluginId(), new PluginError(plugin, message, reason));
+    new PluginError(plugin, message, reason).register(pluginErrors);
   }
 
   void reportCannotLoad(@NotNull Path file, Exception e) {
     DescriptorListLoadingContext.LOG.warn("Cannot load " + file, e);
-    errors.put(PluginId.getId("__cannot load__"), new PluginError(null, "File \"" + FileUtil.getLocationRelativeToUserHome(file.toString(), false) + "\" contains invalid plugin descriptor", null));
+    globalErrors.add("File \"" + FileUtil.getLocationRelativeToUserHome(file.toString(), false) + "\" contains invalid plugin descriptor");
   }
 
   @SuppressWarnings("UnusedReturnValue")
@@ -140,13 +141,13 @@ final class PluginLoadingResult {
     if (!descriptor.isBundled()) {
       if (checkModuleDependencies && !PluginManagerCore.hasModuleDependencies(descriptor)) {
         String message = "defines no module dependencies (supported only in IntelliJ IDEA)";
-        errors.put(pluginId, new PluginError(descriptor, message, "supported only in IntelliJ IDEA"));
+        new PluginError(descriptor, message, "supported only in IntelliJ IDEA").register(pluginErrors);
         return false;
       }
     }
 
     // remove any error that occurred for plugin with the same id
-    errors.remove(pluginId);
+    pluginErrors.remove(pluginId);
     incompletePlugins.remove(pluginId);
 
     IdeaPluginDescriptorImpl prevDescriptor = plugins.put(pluginId, descriptor);
