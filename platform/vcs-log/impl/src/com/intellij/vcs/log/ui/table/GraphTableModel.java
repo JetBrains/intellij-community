@@ -70,7 +70,7 @@ public final class GraphTableModel extends AbstractTableModel {
 
   @Override
   public String getColumnName(int column) {
-    return getColumn(column).getId();
+    return getColumn(column).getLocalizedName();
   }
 
   public int getRowOfCommit(@NotNull Hash hash, @NotNull VirtualFile root) {
