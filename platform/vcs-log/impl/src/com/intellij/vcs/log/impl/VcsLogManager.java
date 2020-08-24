@@ -264,6 +264,7 @@ public class VcsLogManager implements Disposable {
 
   @FunctionalInterface
   public interface VcsLogUiFactory<T extends VcsLogUiEx> {
+    @ApiStatus.OverrideOnly
     T createLogUi(@NotNull Project project, @NotNull VcsLogData logData);
   }
 
