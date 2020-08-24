@@ -48,6 +48,9 @@
                 implementation="org.jetbrains.plugins.feature.suggester.suggesters.CompletionPopupSuggester"/>
         <featureSuggester.featureSuggester
                 implementation="org.jetbrains.plugins.feature.suggester.suggesters.ReplaceCompletionSuggester"/>
+        <!--    TODO: uncomment when RunToCursor action statistics will be fixed                                                    -->
+        <!--        <featureSuggester.featureSuggester-->
+        <!--                implementation="org.jetbrains.plugins.feature.suggester.suggesters.RunToCursorSuggester"/>-->
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">

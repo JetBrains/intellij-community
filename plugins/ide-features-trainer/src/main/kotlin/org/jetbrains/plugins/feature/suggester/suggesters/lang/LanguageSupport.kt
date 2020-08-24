@@ -14,7 +14,11 @@ interface LanguageSupport {
             get() = EP_NAME.extensionList
 
         fun getForLanguage(language: Language): LanguageSupport? {
-            return extensions.find { it.language == language.id }?.instance
+            return if (language == Language.ANY) {
+                extensions.firstOrNull()?.instance
+            } else {
+                extensions.find { it.language == language.id }?.instance
+            }
         }
     }
 
