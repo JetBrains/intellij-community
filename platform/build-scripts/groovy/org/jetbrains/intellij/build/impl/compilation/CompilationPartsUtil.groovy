@@ -404,25 +404,30 @@ class CompilationPartsUtil {
       long start = System.nanoTime()
       int count = 0
       long bytes = 0
-      def preserve = new HashSet<Path>(contexts.collect { it.jar.toPath() })
-      def epoch = FileTime.fromMillis(0)
-      def daysAgo = FileTime.fromMillis(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(4))
-
-      // We need to traverse with depth 3 since first level is [production, test], second level is module name, third is file.
-      Files
-        .walk(tempDownloadsStorage.toPath(), 3, FileVisitOption.FOLLOW_LINKS)
-        .filter({ !preserve.contains(it) } as Predicate<Path>)
-        .forEach({ Path file ->
-          BasicFileAttributes attr = Files.readAttributes(file, BasicFileAttributes.class)
-          if (attr.isRegularFile()) {
-            def lastAccessTime = attr.lastAccessTime()
-            if (lastAccessTime > epoch && lastAccessTime < daysAgo) {
-              count++
-              bytes += attr.size()
-              FileUtil.delete(file)
+      try {
+        def preserve = new HashSet<Path>(contexts.collect { it.jar.toPath() })
+        def epoch = FileTime.fromMillis(0)
+        def daysAgo = FileTime.fromMillis(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(4))
+        FileUtil.ensureExists(tempDownloadsStorage)
+        // We need to traverse with depth 3 since first level is [production, test], second level is module name, third is file.
+        Files
+          .walk(tempDownloadsStorage.toPath(), 3, FileVisitOption.FOLLOW_LINKS)
+          .filter({ !preserve.contains(it) } as Predicate<Path>)
+          .forEach({ Path file ->
+            BasicFileAttributes attr = Files.readAttributes(file, BasicFileAttributes.class)
+            if (attr.isRegularFile()) {
+              def lastAccessTime = attr.lastAccessTime()
+              if (lastAccessTime > epoch && lastAccessTime < daysAgo) {
+                count++
+                bytes += attr.size()
+                FileUtil.delete(file)
+              }
             }
-          }
-                 } as Consumer<Path>)
+                   } as Consumer<Path>)
+      }
+      catch (Throwable e) {
+        messages.warning("Failed to cleanup outdated archives: $e.message")
+      }
 
       messages.reportStatisticValue('compile-parts:cleanup:time',
                                     TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start)).toString())
