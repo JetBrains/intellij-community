@@ -281,11 +281,18 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
 
   protected abstract @NlsContexts.BorderTitle String getDependenciesTitle();
 
-  protected abstract @Nls String getElementTypeName();
+  enum ElementType {
+    LIBRARY(0), MODULE(1);
+    private final int id;
 
-  protected abstract @Nls(capitalization = Nls.Capitalization.Title) String getElementTypeNameTitle();
+    ElementType(int id) {
+      this.id = id;
+    }
+  }
 
-  protected abstract @Nls(capitalization = Nls.Capitalization.Title) String getElementTypeNamePlural();
+  protected @NlsContexts.BorderTitle abstract String getElementTypeNamePlural();
+
+  protected abstract ElementType getElementType();
 
   private boolean isNameAlreadyUsed(String entryName) {
     final Set<T> itemsToIgnore = new HashSet<>(myEntriesChooser.getSelectedElements());
@@ -403,8 +410,8 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
       if (elements.size() == 1) {
         final T element = elements.get(0);
         final String newName = Messages.showInputDialog(ProjectLayoutPanel.this,
-                                                        JavaUiBundle.message("label.new.name.for.0.1", getElementTypeName(), getElementName(element)),
-                                                        JavaUiBundle.message("dialog.title.rename.module.or.library.0", getElementTypeNameTitle()),
+                                                        JavaUiBundle.message("label.new.name.for.0.1", getElementType().id, getElementName(element)),
+                                                        JavaUiBundle.message("dialog.title.rename.module.or.library.0", getElementType().id),
                                                         Messages.getQuestionIcon(),
                                                         getElementName(element),
                                                         getValidator()
@@ -439,10 +446,10 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
 
     private SplitDialog(final Collection<File> files) {
       super(myEntriesChooser, true);
-      setTitle(JavaUiBundle.message("dialog.title.split.module.or.library.0", getElementTypeNameTitle()));
+      setTitle(JavaUiBundle.message("dialog.title.split.module.or.library.0", getElementType().id));
 
       myNameField = new JTextField();
-      myChooser = new ElementsChooser<File>(true) {
+      myChooser = new ElementsChooser<>(true) {
         @Override
         protected String getItemText(@NotNull final File value) {
           return getElementText(value);
@@ -457,7 +464,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
         });
       }
       myChooser.selectElements(ContainerUtil.createMaybeSingletonList(ContainerUtil.getFirstItem(files)));
-      myChooser.addElementsMarkListener(new ElementsChooser.ElementsMarkListener<File>() {
+      myChooser.addElementsMarkListener(new ElementsChooser.ElementsMarkListener<>() {
         @Override
         public void elementMarkChanged(File element, boolean isMarked) {
           updateOkButton();
