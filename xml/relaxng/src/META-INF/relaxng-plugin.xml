@@ -54,10 +54,9 @@
     <metaDataContributor implementation="org.intellij.plugins.relaxNG.RelaxNgMetaDataContributor" order="first"/>
   </extensions>
 
-  <actions>
+  <actions resource-bundle="messages.RelaxngBundle">
     <action id="ConvertSchemaAction" class="org.intellij.plugins.relaxNG.convert.ConvertSchemaAction">
       <add-to-group group-id="ToolsXmlGroup" anchor="after" relative-to-action="GenerateDTD" />
     </action>
   </actions>
-  <resource-bundle>messages.RelaxngBundle</resource-bundle>
 </idea-plugin>
