@@ -311,9 +311,9 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
     errorViewPanel.addMessage(MessageCategory.ERROR, messages, null, -1, -1, null);
     panel.add(errorViewPanel, BorderLayout.CENTER);
 
-
-    final RunContentDescriptor contentDescriptor =
-      new RunContentDescriptor(null, myProcessHandler, panel, PyBundle.message("pydev.console.runner.error.running.console"));
+    //noinspection DialogTitleCapitalization
+    final RunContentDescriptor contentDescriptor = new RunContentDescriptor(
+      null, myProcessHandler, panel, PyBundle.message("pydev.console.runner.error.running.console"));
 
     showContentDescriptor(contentDescriptor);
   }
@@ -847,6 +847,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
   }
 
   private AnAction createStopAction() {
+    //noinspection DialogTitleCapitalization
     return new DumbAwareAction(PyBundle.messagePointer("action.DumbAware.PydevConsoleRunnerImpl.text.stop.console"),
                                PyBundle.messagePointer("action.DumbAware.PydevConsoleRunnerImpl.description.stop.python.console"),
                                AllIcons.Actions.Suspend) {
