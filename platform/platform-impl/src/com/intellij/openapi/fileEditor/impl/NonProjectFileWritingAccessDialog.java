@@ -51,8 +51,8 @@ public class NonProjectFileWritingAccessDialog extends DialogWrapper {
 
     myUnlockOneButton.setSelected(true);
     String text = dirsOnly
-                  ? IdeBundle.message("button.i.want.to.edit.choice.this.file.anyway", size)
-                  : IdeBundle.message("button.i.want.to.edit.choice.this.directory.anyway", size);
+                  ? IdeBundle.message("button.i.want.to.edit.choice.this.directory.anyway", size)
+                  : IdeBundle.message("button.i.want.to.edit.choice.this.file.anyway", size);
     setTextAndMnemonicAndListeners(myUnlockOneButton, text, "edit");
 
     int dirsSize = ContainerUtil.map2Set(nonProjectFiles, VirtualFile::getParent).size();
