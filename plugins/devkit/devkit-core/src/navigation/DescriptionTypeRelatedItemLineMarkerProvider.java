@@ -107,7 +107,7 @@ public class DescriptionTypeRelatedItemLineMarkerProvider extends DevkitRelatedC
     final RelatedItemLineMarkerInfo<PsiElement> info = NavigationGutterIconBuilder
       .create(DevkitIcons.Gutter.DescriptionFile, CONVERTER, RELATED_ITEM_PROVIDER)
       .setTarget(descriptionFile)
-      .setTooltipText("Description")
+      .setTooltipText(DevKitBundle.message("gutter.related.navigation.popup.description.tooltip"))
       .setAlignment(GutterIconRenderer.Alignment.RIGHT)
       .createLineMarkerInfo(highlightingElement);
     result.add(info);
@@ -128,11 +128,12 @@ public class DescriptionTypeRelatedItemLineMarkerProvider extends DevkitRelatedC
     }
     if (templateFiles.isEmpty()) return;
 
+    //noinspection DialogTitleCapitalization
     final RelatedItemLineMarkerInfo<PsiElement> info = NavigationGutterIconBuilder
       .create(DevkitIcons.Gutter.Diff, CONVERTER, RELATED_ITEM_PROVIDER)
       .setTargets(templateFiles)
-      .setPopupTitle(DevKitBundle.message("gutter.related.navigation.popup.select.template"))
-      .setTooltipText("Before/After Templates")
+      .setPopupTitle(DevKitBundle.message("gutter.related.navigation.popup.template.title"))
+      .setTooltipText(DevKitBundle.message("gutter.related.navigation.popup.template.tooltip"))
       .setAlignment(GutterIconRenderer.Alignment.RIGHT)
       .createLineMarkerInfo(highlightingElement);
     result.add(info);
