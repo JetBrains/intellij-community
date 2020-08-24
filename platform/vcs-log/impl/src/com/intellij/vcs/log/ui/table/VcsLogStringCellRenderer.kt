@@ -25,7 +25,7 @@ class VcsLogStringCellRenderer(
     if (value == null || table !is VcsLogGraphTable) {
       return
     }
-    //noinspection HardCodedStringLiteral
+    @Suppress("HardCodedStringLiteral")
     append(value.toString(), table.applyHighlighters(this, row, column, hasFocus, selected))
     if (withSpeedSearchHighlighting) {
       SpeedSearchUtil.applySpeedSearchHighlighting(table, this, false, selected)
