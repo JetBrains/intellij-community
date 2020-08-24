@@ -2,7 +2,6 @@
 package com.intellij.refactoring.rename.inplace
 
 import com.intellij.codeInsight.hints.InlayPresentationFactory
-import com.intellij.codeInsight.hints.fireContentChanged
 import com.intellij.codeInsight.hints.presentation.*
 import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.icons.AllIcons
@@ -196,8 +195,7 @@ object TemplateInlayUtil {
               checkBox(RefactoringBundle.message("text.occurrences"),
                        processor.isToSearchForTextOccurrences(elementToRename),
                        actionListener = { _, cb -> processor.setToSearchForTextOccurrences(elementToRename, cb.isSelected)
-                                                   searchForTextOccurrencesPresentation?.icon = if (cb.isSelected) AllIcons.Actions.InlayRenameInNoCodeFilesActive else AllIcons.Actions.InlayRenameInNoCodeFiles
-                                                   searchForTextOccurrencesPresentation?.fireContentChanged()})
+                                                   restart.run()})
               component(JLabel(AllIcons.Actions.InlayRenameInNoCodeFiles))
             }
           }
