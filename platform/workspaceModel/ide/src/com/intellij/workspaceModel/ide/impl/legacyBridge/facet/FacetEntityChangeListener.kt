@@ -39,7 +39,7 @@ internal class FacetEntityChangeListener(private val project: Project) {
   private val publisher
     get() = FacetEventsPublisher.getInstance(project)
 
-  fun processChange(change: EntityChange<FacetEntity>, storageBefore: WorkspaceEntityStorage) {
+  fun processChange(change: EntityChange<FacetEntity>, storageBefore: WorkspaceEntityStorage, addedModulesNames: Set<String>) {
     when (change) {
       is EntityChange.Added -> {
         val manager = getFacetManager(change.entity.module) ?: return
@@ -47,7 +47,10 @@ internal class FacetEntityChangeListener(private val project: Project) {
         manager.model.updateEntity(change.entity, change.entity)
         FacetManagerBase.setFacetName(facet, change.entity.name)
         facet.initFacet()
-        publisher.fireFacetAdded(facet)
+
+        // We should not send an event if the associated module was added in the same transaction
+        // Event will be sent with "moduleAdded" event.
+        if (facet.module.name !in addedModulesNames) publisher.fireFacetAdded(facet)
       }
       is EntityChange.Removed -> {
         val manager = getFacetManager(change.entity.module) ?: return

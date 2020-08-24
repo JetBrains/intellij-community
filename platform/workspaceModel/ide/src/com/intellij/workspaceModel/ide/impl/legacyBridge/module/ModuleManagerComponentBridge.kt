@@ -48,6 +48,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.Callable
+import kotlin.collections.HashSet
 
 @Suppress("ComponentNotRegistered")
 class ModuleManagerComponentBridge(private val project: Project) : ModuleManagerEx(), Disposable {
@@ -142,6 +143,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
           val moduleLibraryChanges = event.getChanges(LibraryEntity::class.java).filterModuleLibraryChanges()
           val changes = event.getChanges(ModuleEntity::class.java)
           val facetChanges = event.getChanges(FacetEntity::class.java)
+          val addedModulesNames = changes.filterIsInstance<EntityChange.Added<ModuleEntity>>().mapTo(HashSet()) { it.entity.name }
           if (changes.isNotEmpty() || moduleLibraryChanges.isNotEmpty() || facetChanges.isNotEmpty()) {
             executeOrQueueOnDispatchThread {
               LOG.debug("Process changed modules and facets")
@@ -158,8 +160,8 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
               }
 
               for (change in facetChanges) when (change) {
-                is EntityChange.Removed -> FacetEntityChangeListener.getInstance(project).processChange(change, event.storageBefore)
-                is EntityChange.Replaced -> FacetEntityChangeListener.getInstance(project).processChange(change, event.storageBefore)
+                is EntityChange.Removed -> FacetEntityChangeListener.getInstance(project).processChange(change, event.storageBefore, addedModulesNames)
+                is EntityChange.Replaced -> FacetEntityChangeListener.getInstance(project).processChange(change, event.storageBefore, addedModulesNames)
                 is EntityChange.Added -> Unit
               }
 
@@ -174,7 +176,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
               for (change in facetChanges) when (change) {
                 is EntityChange.Removed -> Unit
                 is EntityChange.Replaced -> Unit
-                is EntityChange.Added -> FacetEntityChangeListener.getInstance(project).processChange(change, event.storageBefore)
+                is EntityChange.Added -> FacetEntityChangeListener.getInstance(project).processChange(change, event.storageBefore, addedModulesNames)
               }
 
               // After every change processed
