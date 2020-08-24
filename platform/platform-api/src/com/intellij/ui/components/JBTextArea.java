@@ -10,7 +10,6 @@ import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -44,7 +43,7 @@ public class JBTextArea extends JTextArea implements ComponentWithEmptyText {
     this(doc, null, 0, 0);
   }
 
-  public JBTextArea(Document doc, @Nls String text, int rows, int columns) {
+  public JBTextArea(Document doc, @NlsContexts.DetailedDescription String text, int rows, int columns) {
     super(doc, text, rows, columns);
 
     myEmptyText = new TextComponentEmptyText(this) {
