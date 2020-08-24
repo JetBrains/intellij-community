@@ -94,7 +94,7 @@ public class ImportToggleAliasIntention extends PyBaseIntentionAction {
   @Override
   @NotNull
   public String getFamilyName() {
-    return PyPsiBundle.message("INTN.Family.toggle.import.alias");
+    return PyPsiBundle.message("INTN.NAME.toggle.import.alias");
   }
 
   @Override

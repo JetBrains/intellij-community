@@ -126,7 +126,7 @@ public class PyIntentionTest extends PyTestCase {
   }
 
   public void testSplitIf() {
-    doTest(PyPsiBundle.message("INTN.split.if.text"));
+    doTest(PyPsiBundle.message("INTN.split.if"));
   }
 
   public void testNegateComparison() {
@@ -150,19 +150,19 @@ public class PyIntentionTest extends PyTestCase {
   }
 
   public void testJoinIf() {
-    doTest(PyPsiBundle.message("INTN.join.if.text"));
+    doTest(PyPsiBundle.message("INTN.join.if"));
   }
 
   public void testJoinIfElse() {
-    doNegativeTest(PyPsiBundle.message("INTN.join.if.text"));
+    doNegativeTest(PyPsiBundle.message("INTN.join.if"));
   }
 
   public void testJoinIfBinary() {              //PY-4697
-    doTest(PyPsiBundle.message("INTN.join.if.text"));
+    doTest(PyPsiBundle.message("INTN.join.if"));
   }
 
   public void testJoinIfMultiStatements() {           //PY-2970
-    doNegativeTest(PyPsiBundle.message("INTN.join.if.text"));
+    doNegativeTest(PyPsiBundle.message("INTN.join.if"));
   }
 
   public void testDictConstructorToLiteralForm() {

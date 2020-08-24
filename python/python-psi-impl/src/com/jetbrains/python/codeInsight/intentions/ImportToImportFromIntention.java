@@ -209,7 +209,7 @@ public class ImportToImportFromIntention extends PyBaseIntentionAction {
   @Override
   @NotNull
   public String getFamilyName() {
-    return PyPsiBundle.message("INTN.Family.convert.import.unqualify");
+    return PyPsiBundle.message("INTN.NAME.convert.import.unqualify");
   }
 
   @Nullable

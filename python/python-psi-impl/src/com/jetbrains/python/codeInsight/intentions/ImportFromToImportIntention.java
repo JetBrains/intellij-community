@@ -115,7 +115,7 @@ public class ImportFromToImportIntention extends PyBaseIntentionAction {
   @Override
   @NotNull
   public String getFamilyName() {
-    return PyPsiBundle.message("INTN.Family.convert.import.qualify");
+    return PyPsiBundle.message("INTN.NAME.convert.import.qualify");
   }
 
   @Override

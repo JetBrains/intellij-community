@@ -83,7 +83,7 @@ public class PyShadowingBuiltinsInspection extends PyInspection {
     @NotNull
     @Override
     public String getName() {
-      return PyPsiBundle.message("QFIX.NAME.ignore.shadowed.built.in.name", myName);
+      return PyPsiBundle.message("QFIX.ignore.shadowed.built.in.name", myName);
     }
 
     @Override
@@ -94,7 +94,7 @@ public class PyShadowingBuiltinsInspection extends PyInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return PyPsiBundle.message("QFIX.FAMILY.NAME.ignore.shadowed.built.in.name");
+      return PyPsiBundle.message("QFIX.NAME.ignore.shadowed.built.in.name");
     }
 
     @Override

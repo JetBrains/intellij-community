@@ -558,8 +558,8 @@ public class PyPackageRequirementsInspection extends PyInspection {
     }
 
     @Override
-    public @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String getFamilyName() {
-      return PyPsiBundle.message("INSP.package.requirements.quickfix.family.name");
+    public @IntentionFamilyName @NotNull String getFamilyName() {
+      return PyPsiBundle.message("QFIX.add.imported.packages.to.requirements");
     }
 
     @Override

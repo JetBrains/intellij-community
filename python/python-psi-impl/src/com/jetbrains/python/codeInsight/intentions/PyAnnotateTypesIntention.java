@@ -30,7 +30,7 @@ public class PyAnnotateTypesIntention extends PyBaseIntentionAction {
   @Override
   @NotNull
   public String getFamilyName() {
-    return PyPsiBundle.message("INTN.add.type.hints.for.function.family");
+    return PyPsiBundle.message("INTN.NAME.add.type.hints.for.function");
   }
 
   @Override
