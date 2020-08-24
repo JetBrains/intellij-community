@@ -9,6 +9,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 /**
  * An immutable representation of HTML node. Could be used as a DSL to quickly generate HTML strings.
@@ -396,6 +398,33 @@ public abstract class HtmlChunk {
   public @NlsSafe @NotNull String toString() {
     StringBuilder builder = new StringBuilder();
     appendTo(builder);
-    return builder.toString(); 
+    return builder.toString();
+  }
+
+  /**
+   * @return the collector that collects a stream of HtmlChunks to the fragment chunk.
+   */
+  @Contract(pure = true)
+  public static @NotNull Collector<HtmlChunk, ?, HtmlChunk> toFragment() {
+    return Collector.of(HtmlBuilder::new, HtmlBuilder::append, HtmlBuilder::append, HtmlBuilder::toFragment);
+  }
+
+  /**
+   * @param separator a chunk that should be used as a delimiter
+   * @return the collector that collects a stream of HtmlChunks to the fragment chunk.
+   */
+  @Contract(pure = true)
+  public static @NotNull Collector<HtmlChunk, ?, HtmlChunk> toFragment(HtmlChunk separator) {
+    return Collector.of(HtmlBuilder::new, (hb, c) -> {
+      if (!hb.isEmpty()) {
+        hb.append(separator);
+      }
+      hb.append(c);
+    }, (hb1, hb2) -> {
+      if (!hb1.isEmpty()) {
+        hb1.append(separator);
+      }
+      return hb1.append(hb2);
+    }, HtmlBuilder::toFragment);
   }
 }

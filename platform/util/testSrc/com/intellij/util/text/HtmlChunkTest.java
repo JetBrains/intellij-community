@@ -4,6 +4,8 @@ package com.intellij.util.text;
 import com.intellij.openapi.util.text.HtmlChunk;
 import org.junit.Test;
 
+import java.util.stream.Stream;
+
 import static org.junit.Assert.assertEquals;
 
 public class HtmlChunkTest {
@@ -61,5 +63,13 @@ public class HtmlChunkTest {
     assertEquals("<p>hello</p>", HtmlChunk.text("hello").wrapWith("p").toString());
     assertEquals("<b>hello</b>", HtmlChunk.text("hello").bold().toString());
     assertEquals("<i>hello</i>", HtmlChunk.text("hello").italic().toString());
+  }
+  
+  @Test
+  public void toFragment() {
+    HtmlChunk fragment = Stream.of("foo", "bar", "baz").map(t -> HtmlChunk.link(t, t)).collect(HtmlChunk.toFragment());
+    assertEquals("<a href=\"foo\">foo</a><a href=\"bar\">bar</a><a href=\"baz\">baz</a>", fragment.toString());
+    fragment = Stream.of("foo", "bar", "baz").map(HtmlChunk::text).collect(HtmlChunk.toFragment(HtmlChunk.br()));
+    assertEquals("foo<br/>bar<br/>baz", fragment.toString());
   }
 }
