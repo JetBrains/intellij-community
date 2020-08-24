@@ -358,7 +358,15 @@ public abstract class NlsInfo {
   static @NotNull UExpression goUp(@NotNull UExpression expression) {
     UExpression parent = expression;
     while (true) {
-      UExpression next = ObjectUtils.tryCast(parent.getUastParent(), UExpression.class);
+      UElement parentElement = parent.getUastParent();
+      if (parentElement instanceof ULocalVariable && parentElement.getUastParent() instanceof UDeclarationsExpression) {
+        // Kotlin has strange hierarchy for elvis operator
+        UExpressionList elvis = ObjectUtils.tryCast(parentElement.getUastParent().getUastParent(), UExpressionList.class);
+        if (elvis != null) {
+          parentElement = elvis;
+        }
+      }
+      UExpression next = ObjectUtils.tryCast(parentElement, UExpression.class);
       if (next == null ||
           next instanceof UReturnExpression ||
           next instanceof USwitchClauseExpression ||

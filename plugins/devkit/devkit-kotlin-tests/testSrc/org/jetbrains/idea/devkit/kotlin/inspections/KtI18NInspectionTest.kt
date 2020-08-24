@@ -66,6 +66,20 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
   
+  fun testPropagateThroughElvisNls() {
+    val inspection = I18nInspection()
+    inspection.setIgnoreForAllButNls(true)
+    inspection.setReportUnannotatedReferences(true)
+    myFixture.enableInspections(inspection)
+    myFixture.configureByText("Foo.kt", """
+        @org.jetbrains.annotations.Nls
+        fun bar(param: String?): String {
+          return <warning descr="Reference to non-localized string is used where localized string is expected">param</warning> ?: ""
+        }
+    """.trimIndent())
+    myFixture.testHighlighting()
+  }
+  
   fun testPropertyAssignment() {
     val inspection = I18nInspection()
     inspection.setIgnoreForAllButNls(true)
