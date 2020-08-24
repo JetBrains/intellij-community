@@ -23,11 +23,11 @@ import java.util.zip.ZipInputStream
 object MarketplacePluginDownloadService {
   private val LOG = Logger.getInstance(MarketplacePluginDownloadService::class.java)
 
-  private const val BLOCKMAP_ZIP_SUFFIX = "-blockmap.zip"
+  private const val BLOCKMAP_ZIP_SUFFIX = ".blockmap.zip"
 
   private const val BLOCKMAP_FILENAME = "blockmap.json"
 
-  private const val HASH_FILENAME_SUFFIX = "-hash.json"
+  private const val HASH_FILENAME_SUFFIX = ".hash.json"
 
   private const val FILENAME = "filename="
 
@@ -62,9 +62,8 @@ object MarketplacePluginDownloadService {
     }
 
     val (pluginFileUrl, guessFileParameters) = getPluginFileUrlAndGuessFileParameters(pluginUrl)
-    val suffix = if (pluginFileUrl.endsWith(".zip")) ".zip" else ".jar"
-    val blockMapFileUrl = pluginFileUrl.replace(suffix, BLOCKMAP_ZIP_SUFFIX)
-    val pluginHashFileUrl = pluginFileUrl.replace(suffix, HASH_FILENAME_SUFFIX)
+    val blockMapFileUrl = "$pluginFileUrl$BLOCKMAP_ZIP_SUFFIX"
+    val pluginHashFileUrl = "$pluginFileUrl$HASH_FILENAME_SUFFIX"
     try {
       val newBlockMap = HttpRequests.request(blockMapFileUrl).productNameAsUserAgent().connect { request ->
         request.inputStream.use { input ->
