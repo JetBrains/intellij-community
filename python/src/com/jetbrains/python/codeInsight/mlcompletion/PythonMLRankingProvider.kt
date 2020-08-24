@@ -7,8 +7,10 @@ import com.intellij.internal.ml.ModelMetadata
 import com.intellij.internal.ml.completion.CompletionRankingModelBase
 import com.intellij.internal.ml.completion.JarCompletionModelProvider
 import com.intellij.lang.Language
+import com.jetbrains.python.PyBundle
 
-class PythonMLRankingProvider : JarCompletionModelProvider("Python", "python_features") {
+class PythonMLRankingProvider :
+  JarCompletionModelProvider(PyBundle.message("settings.completion.ml.python.display.name"), "python_features") {
   override fun createModel(metadata: ModelMetadata): DecisionFunction {
     return object : CompletionRankingModelBase(metadata) {
       override fun predict(features: DoubleArray?): Double = MLCompletionModel.makePredict(features)
