@@ -609,7 +609,7 @@ public final class DiffUtil {
   }
 
   @NotNull
-  public static JComponent createTitle(@NotNull @NlsContexts.Label String title,
+  public static JComponent createTitle(@Nullable @NlsContexts.Label String title,
                                        @Nullable LineSeparator separator,
                                        @Nullable Charset charset,
                                        @Nullable Boolean bom,
@@ -618,7 +618,8 @@ public final class DiffUtil {
     JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(JBUI.Borders.empty(0, 4));
     BorderLayoutPanel labelWithIcon = new BorderLayoutPanel();
-    JComponent titleLabel = titleCustomizer == null ? new JBLabel(title).setCopyable(true) : titleCustomizer.getLabel();
+    JComponent titleLabel = titleCustomizer != null ? titleCustomizer.getLabel()
+                                                    : new JBLabel(StringUtil.notNullize(title)).setCopyable(true);
     labelWithIcon.addToCenter(titleLabel);
     if (readOnly) {
       labelWithIcon.addToLeft(new JBLabel(AllIcons.Ide.Readonly));
