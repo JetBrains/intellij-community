@@ -137,8 +137,7 @@ private fun createManagerAndContent(project: Project,
                               roots.map { VcsRoot(vcs, it) })
   Disposer.register(disposable, Disposable { manager.dispose { roots.forEach { repositoryManager.removeExternalRepository(it) } } })
   val ui = manager.createLogUi(calcLogId(roots),
-                               if (isToolWindowTab) VcsLogManager.LogWindowKind.TOOL_WINDOW else VcsLogManager.LogWindowKind.STANDALONE,
-                               true)
+                               if (isToolWindowTab) VcsLogManager.LogWindowKind.TOOL_WINDOW else VcsLogManager.LogWindowKind.STANDALONE)
   Disposer.register(disposable, ui)
   return MyContentComponent(VcsLogPanel(manager, ui), roots, disposable)
 }
