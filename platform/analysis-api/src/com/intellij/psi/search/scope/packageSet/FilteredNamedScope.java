@@ -4,12 +4,18 @@ package com.intellij.psi.search.scope.packageSet;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public class FilteredNamedScope extends NamedScope {
-  public FilteredNamedScope(@NotNull String name, String presentableName, @NotNull Icon icon, int priority, @NotNull VirtualFileFilter filter) {
+  public FilteredNamedScope(@NotNull @NonNls String name,
+                            @Nls String presentableName,
+                            @NotNull Icon icon,
+                            int priority,
+                            @NotNull VirtualFileFilter filter) {
     super(name, presentableName, icon, new FilteredPackageSet(name, priority) {
       @Override
       public boolean contains(@NotNull VirtualFile file, @NotNull Project project) {
