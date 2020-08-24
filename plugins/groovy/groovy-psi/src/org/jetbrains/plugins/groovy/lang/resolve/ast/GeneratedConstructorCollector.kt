@@ -6,10 +6,10 @@ import com.intellij.psi.util.PropertyUtilBase
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
-import org.jetbrains.plugins.groovy.lang.resolve.CollectClassMembersUtil
 import java.util.*
 
 class GeneratedConstructorCollector(tupleConstructor: PsiAnnotation?,
@@ -82,12 +82,12 @@ class GeneratedConstructorCollector(tupleConstructor: PsiAnnotation?,
     private fun getGroupedClassMembers(psiClass: PsiClass): Triple<List<PsiField>, List<PsiMethod>, List<PsiField>> {
       val fields: MutableList<PsiField> = ArrayList()
       val properties: MutableList<PsiField> = ArrayList()
-      val allFields = CollectClassMembersUtil.getFields(psiClass, false)
+      val allFields = if (psiClass is GrTypeDefinition) psiClass.codeFields else psiClass.fields
       for (field: PsiField in allFields) {
         if (field is GrField && field.isProperty) properties.add(field) else fields.add(field)
       }
 
-      val methods: Array<PsiMethod> = CollectClassMembersUtil.getMethods(psiClass, false)
+      val methods: Array<out PsiMethod> = if (psiClass is GrTypeDefinition) psiClass.codeMethods else psiClass.methods
       val propertySetters = PropertyUtilBase.getAllProperties(true, false, methods)
       val fieldNames = allFields.map(PsiField::getName)
       val setters: List<PsiMethod> = propertySetters.filterKeys { !fieldNames.contains(it) }.values.toList()

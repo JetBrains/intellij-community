@@ -35,9 +35,10 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
     if (modifierList == null) return;
 
     final PsiAnnotation tupleConstructor = modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR);
+    final PsiAnnotation mapConstructorAnno = modifierList.findAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_MAP_CONSTRUCTOR);
     final boolean immutable = GrImmutableUtils.hasImmutableAnnotation(typeDefinition);
     final boolean canonical = modifierList.hasAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_CANONICAL);
-    if (!immutable && !canonical && tupleConstructor == null) {
+    if (!immutable && !canonical && tupleConstructor == null && mapConstructorAnno == null) {
       return;
     }
 
