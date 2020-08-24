@@ -81,6 +81,7 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
            && !field.hasModifierProperty(PsiModifier.STATIC)
            && containingClass != null
            && !(containingClass instanceof PsiSyntheticClass)
+           && !containingClass.isRecord()
            && containingClass.getName() != null;
   }
 
