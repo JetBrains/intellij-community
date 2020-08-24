@@ -310,7 +310,9 @@ fun PsiFile.leavesAroundOffset(offsetInFile: Int): Iterable<ElementAndOffset> {
   return listOf(ElementAndOffset(leaf, offsetInLeaf))
 }
 
-inline fun <reified T : PsiElement> PsiElement.contextOfType(): T? = contextOfType(T::class)
+inline fun <reified T : PsiElement> PsiElement.contextOfType(withSelf: Boolean = false): T? {
+  return PsiTreeUtil.getContextOfType(this, T::class.java, !withSelf)
+}
 
 fun <T : PsiElement> PsiElement.contextOfType(vararg classes: KClass<out T>): T? {
   return PsiTreeUtil.getContextOfType(this, *classes.map { it.java }.toTypedArray())
