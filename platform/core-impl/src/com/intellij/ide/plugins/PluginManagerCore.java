@@ -571,7 +571,7 @@ public final class PluginManagerCore {
                    Stream.concat(globalErrors.stream(),
                                  pluginErrors.entrySet().stream()
                                    .sorted(Map.Entry.comparingByKey())
-                                   .map(e -> e.getValue().toString())).collect(Collectors.joining("\n  "));
+                                   .map(e -> e.getValue().getInternalMessage())).collect(Collectors.joining("\n  "));
     }
     else {
       logMessage = null;
@@ -584,7 +584,7 @@ public final class PluginManagerCore {
         pluginErrors.entrySet().stream()
         .sorted(Map.Entry.comparingByKey()).map(Map.Entry::getValue)
         .filter(PluginLoadingError::isNotifyUser)
-        .map(error -> StringUtil.escapeXmlEntities(error.toUserError()) + ".")
+        .map(error -> StringUtil.escapeXmlEntities(error.getDetailedMessage()) + ".")
         .collect(Collectors.toList())
       );
 
@@ -608,14 +608,10 @@ public final class PluginManagerCore {
     }
   }
 
-  public static @Nullable String getLoadingError(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+  public static @Nullable String getShortLoadingErrorMessage(@NotNull IdeaPluginDescriptor pluginDescriptor) {
     PluginLoadingError error = ourPluginLoadingErrors.get(pluginDescriptor.getPluginId());
     if (error != null) {
-      String reason = error.getIncompatibleReason();
-      if (reason != null) {
-        return "Incompatible (" + reason + ")";
-      }
-      return error.getMessage();
+      return error.getShortMessage();
     }
     return null;
   }

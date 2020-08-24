@@ -34,7 +34,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
-import java.nio.file.Path;
 import java.util.List;
 import java.util.*;
 import java.util.Map.Entry;
@@ -1024,7 +1023,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
       return null;
     }
 
-    String message = PluginManagerCore.getLoadingError(pluginDescriptor);
+    String message = PluginManagerCore.getShortLoadingErrorMessage(pluginDescriptor);
 
     PluginId disabledDependency = PluginManagerCore.getFirstDisabledDependency(pluginDescriptor);
     if (disabledDependency != null) {

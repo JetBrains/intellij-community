@@ -3,6 +3,7 @@ package com.intellij.ide.plugins;
 
 import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,21 +34,13 @@ final class PluginLoadingError {
     myDisabledDependency = disabledDependency;
   }
 
-  @NotNull @Nls String toUserError() {
+  @NotNull @Nls String getDetailedMessage() {
     if (incompatibleReason != null) {
       return "Plugin \"" + plugin.getName() + "\" is incompatible (" + incompatibleReason + ")";
     }
     else {
       return "Plugin \"" + plugin.getName() + "\" " + message;
     }
-  }
-
-  String getMessage() {
-    return message;
-  }
-
-  String getIncompatibleReason() {
-    return incompatibleReason;
   }
 
   PluginId getDisabledDependency() {
@@ -64,6 +57,19 @@ final class PluginLoadingError {
 
   @Override
   public @NotNull String toString() {
+    return getInternalMessage();
+  }
+
+  @NotNull
+  public @NonNls String getInternalMessage() {
     return plugin.formatErrorMessage(message);
+  }
+
+  public String getShortMessage() {
+    String reason = incompatibleReason;
+    if (reason != null) {
+      return "Incompatible (" + reason + ")";
+    }
+    return message;
   }
 }

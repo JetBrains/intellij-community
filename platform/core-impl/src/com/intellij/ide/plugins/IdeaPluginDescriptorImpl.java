@@ -422,7 +422,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return false;
   }
 
-  @NotNull String formatErrorMessage(@NotNull String message) {
+  @NonNls @NotNull String formatErrorMessage(@NotNull String message) {
     String path = this.path.toString();
     StringBuilder builder = new StringBuilder();
     builder.append("The ").append(myName).append(" (id=").append(myId).append(", path=");
