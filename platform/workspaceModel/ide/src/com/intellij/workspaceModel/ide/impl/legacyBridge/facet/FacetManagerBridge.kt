@@ -166,8 +166,10 @@ internal open class FacetModelBridge(protected val moduleBridge: ModuleBridge) :
       diff.mutableFacetMapping().updater()
     }
     else {
-      WorkspaceModel.getInstance(moduleBridge.project).updateProjectModelSilent(true) {
-        it.mutableFacetMapping().updater()
+      synchronized(obj) {
+        WorkspaceModel.getInstance(moduleBridge.project).updateProjectModelSilent(true) {
+          it.mutableFacetMapping().updater()
+        }
       }
     }
   }
@@ -186,5 +188,7 @@ internal open class FacetModelBridge(protected val moduleBridge: ModuleBridge) :
     internal fun WorkspaceEntityStorageDiffBuilder.mutableFacetMapping(): MutableExternalEntityMapping<Facet<*>> {
       return this.getMutableExternalMapping(FACET_EXTERNAL_MAPPING_ID)
     }
+
+    private val obj = Any()
   }
 }
