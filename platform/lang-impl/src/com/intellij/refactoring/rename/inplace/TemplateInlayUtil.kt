@@ -142,14 +142,12 @@ object TemplateInlayUtil {
     val commentsStatusIcon = if (processor.isToSearchInComments(elementToRename)) AllIcons.Actions.InlayRenameInCommentsActive else AllIcons.Actions.InlayRenameInComments
 
     var buttonsPresentation = button(factory.icon(commentsStatusIcon))
-    var inTextOccurrencesIconPresentation: IconPresentation? = null
     if (TextOccurrencesUtil.isSearchTextOccurrencesEnabled(elementToRename)) {
       val textOccurrencesStatusIcon = if (processor.isToSearchForTextOccurrences(elementToRename))
                                                 AllIcons.Actions.InlayRenameInNoCodeFilesActive 
                                             else 
                                                 AllIcons.Actions.InlayRenameInNoCodeFiles
-
-      inTextOccurrencesIconPresentation = factory.icon(textOccurrencesStatusIcon)
+      val inTextOccurrencesIconPresentation = factory.icon(textOccurrencesStatusIcon)
       buttonsPresentation = factory.seq(buttonsPresentation, button(inTextOccurrencesIconPresentation, true))
       tooltip += LangBundle.message("inlay.rename.tooltip.non.code")
     }
@@ -166,13 +164,12 @@ object TemplateInlayUtil {
                                              withBackground(INLINE_REFACTORING_SETTINGS_DEFAULT),
                                              withBackground(INLINE_REFACTORING_SETTINGS_FOCUSED),
                                              factory.withTooltip(tooltip, withBackground(INLINE_REFACTORING_SETTINGS_HOVERED)))
-    val panel = renamePanel(elementToRename, editor, inTextOccurrencesIconPresentation, restart)
+    val panel = renamePanel(elementToRename, editor, restart)
     return createNavigatableButtonWithPopup(templateState, offset, presentation, panel)
   }
 
   private fun renamePanel(elementToRename: PsiElement,
                           editor: Editor,
-                          searchForTextOccurrencesPresentation: IconPresentation?,
                           restart: Runnable): DialogPanel {
     val processor = RenamePsiElementProcessor.forElement(elementToRename)
     val renameAction = ActionManager.getInstance().getAction(IdeActions.ACTION_RENAME)
