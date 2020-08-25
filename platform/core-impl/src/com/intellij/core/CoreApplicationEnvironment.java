@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.core;
 
+import com.intellij.DynamicBundle;
 import com.intellij.codeInsight.folding.CodeFoldingSettings;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
@@ -118,6 +119,8 @@ public class CoreApplicationEnvironment {
     registerApplicationService(GraphAlgorithms.class, new GraphAlgorithmsImpl());
 
     myApplication.registerService(ApplicationInfo.class, ApplicationInfoImpl.class);
+
+    registerApplicationExtensionPoint(DynamicBundle.LanguageBundleEP.EP_NAME, DynamicBundle.LanguageBundleEP.class);
   }
 
   public <T> void registerApplicationService(@NotNull Class<T> serviceInterface, @NotNull T serviceImplementation) {
