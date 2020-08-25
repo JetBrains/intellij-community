@@ -23,6 +23,11 @@ class EmptyBuilderElementHandler implements BuilderElementHandler {
     return Collections.emptyList();
   }
 
+  @Override
+  public String calcBuilderMethodName(@NotNull BuilderInfo info) {
+    return "";
+  }
+
   public List<String> getBuilderMethodNames(@NotNull String newName, @Nullable PsiAnnotation singularAnnotation) {
     return Collections.emptyList();
   }

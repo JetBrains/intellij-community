@@ -160,8 +160,8 @@ public class BuilderInfo {
     return !alreadyExistingFieldNames.contains(fieldInBuilderName);
   }
 
-  public boolean notAlreadyExistingMethod(Collection<String> existedMethodNames) {
-    return notAlreadyExistingField(existedMethodNames);
+  public boolean notAlreadyExistingMethod(Collection<String> alreadyExistedMethodNames) {
+    return !alreadyExistedMethodNames.contains(calcBuilderMethodName());
   }
 
   public Project getProject() {
@@ -258,6 +258,10 @@ public class BuilderInfo {
 
   public Collection<PsiField> renderBuilderFields() {
     return builderElementHandler.renderBuilderFields(this);
+  }
+
+  private String calcBuilderMethodName() {
+    return builderElementHandler.calcBuilderMethodName(this);
   }
 
   public Collection<PsiMethod> renderBuilderMethods() {

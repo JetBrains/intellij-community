@@ -160,4 +160,8 @@ public class BuilderTest extends AbstractLombokParsingTestCase {
     // Initializer should be removed
     doTest(true);
   }
+
+  public void testBuilder$BuilderWithSetterPrefixAndExistedMethods() {
+    doTest(true);
+  }
 }
