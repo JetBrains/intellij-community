@@ -131,6 +131,8 @@ public abstract class DynamicBundle extends AbstractBundle {
   public static void loadLocale(@Nullable LanguageBundleEP langBundle) {
     if (langBundle != null) {
       ourLangTag = langBundle.lang;
+      clearGlobalLocaleCache();
+      ourBundlesForForms.clear();
     }
   }
 

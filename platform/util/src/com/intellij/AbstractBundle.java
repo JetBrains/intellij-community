@@ -162,4 +162,12 @@ public abstract class AbstractBundle {
   protected ResourceBundle findBundle(@NotNull @NonNls String pathToBundle, @NotNull ClassLoader loader, @NotNull ResourceBundle.Control control) {
     return ResourceBundle.getBundle(pathToBundle, Locale.getDefault(), loader, control);
   }
+
+  protected static void clearGlobalLocaleCache() {
+    ourCache.clear();
+  }
+
+  protected void clearLocaleCache() {
+    myBundle.clear();
+  }
 }
