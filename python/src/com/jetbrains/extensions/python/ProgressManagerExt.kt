@@ -4,9 +4,10 @@ package com.jetbrains.extensions.python
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
+import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import javax.swing.SwingUtilities
 
-fun <T> ProgressManager.runUnderProgress(title: String, code: () -> T): T {
+fun <T> ProgressManager.runUnderProgress(@ProgressTitle title: String, code: () -> T): T {
   if (SwingUtilities.isEventDispatchThread()) {
     return run(object : Task.WithResult<T, Exception>(null, title, false) {
       override fun compute(indicator: ProgressIndicator) = code()
