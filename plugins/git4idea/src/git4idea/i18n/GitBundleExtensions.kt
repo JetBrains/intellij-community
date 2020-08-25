@@ -12,6 +12,7 @@ object GitBundleExtensions {
   }
 
   @Nls
+  @JvmStatic
   fun html(@NotNull @PropertyKey(resourceBundle = GitBundle.BUNDLE) key: String, vararg params: Any): String =
     HtmlChunk.raw(GitBundle.message(key, *params)).wrapWith(HtmlChunk.html()).toString()
 }

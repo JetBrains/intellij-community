@@ -15,8 +15,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
@@ -59,11 +61,13 @@ import java.util.regex.Pattern;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.openapi.ui.Messages.getWarningIcon;
+import static com.intellij.openapi.util.text.HtmlChunk.text;
 import static com.intellij.openapi.vcs.VcsNotifier.IMPORTANT_ERROR_NOTIFICATION;
 import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.util.ObjectUtils.tryCast;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static git4idea.GitUtil.*;
+import static git4idea.i18n.GitBundleExtensions.html;
 import static git4idea.merge.GitDefaultMergeDialogCustomizerKt.getTitleWithCommitDetailsCustomizer;
 import static git4idea.merge.GitDefaultMergeDialogCustomizerKt.getTitleWithCommitsRangeDetailsCustomizer;
 import static java.util.Arrays.asList;
@@ -366,10 +370,11 @@ public class GitRebaseProcess {
     }
     catch (VcsException e) {
       LOG.warn(e);
-      return mySaver.getSaveMethod().selectBundleMessage(
-        GitBundle.message("rebase.notification.failed.stash.text", e.getMessage()),
-        GitBundle.message("rebase.notification.failed.shelf.text", e.getMessage())
+      String message = mySaver.getSaveMethod().selectBundleMessage(
+        GitBundle.message("rebase.notification.failed.stash.text"),
+        GitBundle.message("rebase.notification.failed.shelf.text")
       );
+      return new HtmlBuilder().append(message).br().appendRaw(e.getMessage()).toString();
     }
   }
 
@@ -473,9 +478,9 @@ public class GitRebaseProcess {
 
   private static final class GitRebaseMergeDialogCustomizer extends MergeDialogCustomizer {
     @NotNull private final GitRepository myRepository;
-    @NotNull private final String myRebasingBranch;
-    @NotNull private final String myBasePresentable;
-    @Nullable private final String myBaseBranch;
+    @NotNull private final @NlsSafe String myRebasingBranch;
+    @NotNull private final @NlsSafe String myBasePresentable;
+    @Nullable private final @NlsSafe String myBaseBranch;
     @Nullable private final Hash myBaseHash;
     @Nullable private final Hash myIngoingCommit;
     @Nullable private final Hash myMergeBase;
@@ -544,7 +549,11 @@ public class GitRebaseProcess {
         return null;
       }
       return getTitleWithCommitDetailsCustomizer(
-        GitBundle.message("rebase.conflict.diff.dialog.left.title", myIngoingCommit.toShortString(), myRebasingBranch),
+        html(
+          "rebase.conflict.diff.dialog.left.title",
+          myIngoingCommit.toShortString(),
+          text(myRebasingBranch).bold()
+        ),
         myRepository,
         file,
         myIngoingCommit.asString()
@@ -557,8 +566,8 @@ public class GitRebaseProcess {
         return null;
       }
       String title = myBaseBranch != null
-                     ? GitBundle.message("rebase.conflict.diff.dialog.right.with.branch.title", myBaseBranch)
-                     : GitBundle.message("rebase.conflict.diff.dialog.right.simple.title");
+                     ? html("rebase.conflict.diff.dialog.right.with.branch.title", text(myBaseBranch).bold())
+                     : html("rebase.conflict.diff.dialog.right.simple.title");
       return getTitleWithCommitsRangeDetailsCustomizer(title, myRepository, file, new Pair<>(myMergeBase.asString(), HEAD));
     }
   }
@@ -677,9 +686,14 @@ public class GitRebaseProcess {
 
   private static boolean askIfShouldRebasePublishedCommit() {
     Ref<Boolean> rebaseAnyway = Ref.create(false);
+    String message = new HtmlBuilder()
+      .append(GitBundle.message("rebase.confirmation.dialog.published.commits.message.first")).br()
+      .append(GitBundle.message("rebase.confirmation.dialog.published.commits.message.second"))
+      .wrapWith(HtmlChunk.html())
+      .toString();
     ApplicationManager.getApplication().invokeAndWait(() -> {
       int answer = DialogManager.showMessage(
-        GitBundle.message("rebase.confirmation.dialog.published.commits.message"),
+        message,
         GitBundle.message("rebase.confirmation.dialog.published.commits.title"),
         new String[]{
           GitBundle.message("rebase.confirmation.dialog.published.commits.button.rebase.text"),
