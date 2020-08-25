@@ -40,6 +40,8 @@ import com.intellij.usages.rules.PsiElementUsage
 import com.intellij.util.Processor
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.xml.DomManager
+import org.jetbrains.annotations.Nls
+import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.dom.ExtensionPoint
 import org.jetbrains.idea.devkit.dom.ExtensionPoints
@@ -49,7 +51,7 @@ import org.jetbrains.uast.*
 import java.awt.Font
 import javax.swing.Icon
 
-data class Leak(val reason: String, val targetElement: PsiElement?)
+data class Leak(@Nls val reason: String, val targetElement: PsiElement?)
 
 private data class QualifiedCall(val callExpression: UCallExpression, val fullExpression: UExpression)
 
@@ -138,13 +140,14 @@ internal class LeakSearchContext(val project: Project, val epName: String?, val 
       }
     }
 
-    return listOf(Leak("Unknown usage of ExtensionPoint", reference.element))
+    return listOf(Leak(DevKitBundle.message("extension.point.analyzer.reason.unknown.usage"), reference.element))
   }
 
   private fun analyzeGetExtensionsCall(fullExpression: UExpression): List<Leak> {
     val loop = fullExpression.getParentOfType<UForEachExpression>()
     if (loop != null) {
-      if (fullExpression != loop.iteratedValue) return listOf(Leak("Call is not loop's iterated value", fullExpression.sourcePsi))
+      if (fullExpression != loop.iteratedValue) return listOf(
+        Leak(DevKitBundle.message("extension.point.analyzer.reason.call.not.loop.value"), fullExpression.sourcePsi))
       return findVariableUsageLeaks(loop.variable, "Extension instance")
     }
 
@@ -162,14 +165,13 @@ internal class LeakSearchContext(val project: Project, val epName: String?, val 
   }
 
   private fun findLeaksThroughCall(call: UCallExpression, text: String): List<Leak> {
-    val callee = call.resolve() ?: return listOf(Leak("Unresolved method call", call.sourcePsi))
+    val callee = call.resolve() ?: return listOf(Leak(DevKitBundle.message("extension.point.analyzer.reason.unresolved.method.call"), call.sourcePsi))
     if (isSafeCall(callee)) {
       val type = call.returnType
       if (type == null || isSafeType(type)) return emptyList()
       return findObjectLeaks(call, "${text}: return value of '${callee.name}' (type: ${type.presentableText})")
     }
-    return listOf(Leak("${text} passed to impure method, side-effect is possible " +
-                       "(annotate as '@Contract(pure = true)' if this should not be so)", call.sourcePsi))
+    return listOf(Leak(DevKitBundle.message("extension.point.analyzer.reason.impure.method", text), call.sourcePsi))
   }
 
   private fun isSafeCall(callee: PsiMethod): Boolean {
@@ -235,7 +237,7 @@ internal class LeakSearchContext(val project: Project, val epName: String?, val 
       WindowManager.getInstance().getStatusBar(project)?.info = 
         "Analyzing '${StringUtil.shortenTextWithEllipsis(targetElement.text, 50, 5)}' (total: ${processedObjects.size})"
       if (tooManyObjects()) {
-        return listOf(Leak("Too many visited objects, search stopped", targetElement))
+        return listOf(Leak(DevKitBundle.message("extension.point.analyzer.reason.too.many.visited.objects"), targetElement))
       }
       val type = e.getExpressionType()
       if (isSafeType(type)) return emptyList()
@@ -287,7 +289,7 @@ internal class LeakSearchContext(val project: Project, val epName: String?, val 
           }
           val psiMethod = jumpTarget.javaPsi
           if (psiMethod.name == "getInstance") {
-            return listOf(Leak("Returned from 'getInstance' method (too expensive to search call sites)", parent.sourcePsi))
+            return listOf(Leak(DevKitBundle.message("extension.point.analyzer.reason.get.instance.method.skipped"), parent.sourcePsi))
           }
           val methodsToFind = mutableSetOf<PsiMethod>()
           methodsToFind.add(psiMethod)
@@ -316,13 +318,13 @@ internal class LeakSearchContext(val project: Project, val epName: String?, val 
             })
           }
           if (result.isNotEmpty()) {
-            result.add(0, Leak("${text}: returned from method '${psiMethod.name}' and leaks after that", parent.sourcePsi))
+            result.add(0, Leak(DevKitBundle.message("extension.point.analyzer.reason.leak.returned.from.method", text, psiMethod.name), parent.sourcePsi))
           }
           return result
         }
       }
     }
-    return listOf(Leak("${text}: Unknown usage", targetElement?.parent))
+    return listOf(Leak(DevKitBundle.message("extension.point.analyzer.reason.unknown.usage.text", text), targetElement?.parent))
   }
 
   private fun resolveAnonymousClass(uMethod: UMethod): UObjectLiteralExpression? {
@@ -338,7 +340,7 @@ internal class LeakSearchContext(val project: Project, val epName: String?, val 
   private fun findVariableUsageLeaks(variable: UVariable, text: String): List<Leak> {
     val sourcePsi = variable.sourcePsi
     if (sourcePsi == null) {
-      return listOf(Leak("${text}: UVariable has no source PSI", null))
+      return listOf(Leak(DevKitBundle.message("extension.point.analyzer.reason.uast.no.source.psi", text), null))
     }
     val leaks = mutableListOf<Leak>()
     ReferencesSearch.search(sourcePsi, sourcePsi.useScope).forEach(Processor<PsiReference> { psiReference ->
@@ -402,21 +404,21 @@ private fun isEPField(field: PsiField?): Boolean {
 private fun analyzeEPFieldUsages(target: UField, file: PsiFile, editor: Editor, epName: String?, ignoreSafeClasses: Boolean) {
   val sourcePsi = target.sourcePsi ?: return
   if (!isEPField(target.javaPsi as? PsiField)) {
-    HintManager.getInstance().showErrorHint(editor, "Not an ExtensionPointName reference")
+    HintManager.getInstance().showErrorHint(editor, DevKitBundle.message("extension.point.analyzer.not.extension.point.name"))
     return
   }
 
   val context = LeakSearchContext(file.project, epName, ignoreSafeClasses)
-  val task = object : Task.Backgroundable(file.project, "Analyzing EP usages") {
+  val task = object : Task.Backgroundable(file.project, DevKitBundle.message("extension.point.analyzer.analyze.title")) {
     override fun run(indicator: ProgressIndicator) {
       context.processEPFieldUsages(sourcePsi)
       ApplicationManager.getApplication().invokeLater(Runnable {
         if (context.unsafeUsages.isEmpty()) {
           if (context.safeUsages.isEmpty()) {
-            HintManager.getInstance().showErrorHint(editor, "No usages found")
+            HintManager.getInstance().showErrorHint(editor, DevKitBundle.message("extension.point.analyzer.analyze.no.usages"))
           }
           else {
-            HintManager.getInstance().showInformationHint(editor, "All usages are dynamic-safe")
+            HintManager.getInstance().showInformationHint(editor, DevKitBundle.message("extension.point.analyzer.analyze.usage.all.safe"))
           }
         }
         else {
@@ -440,24 +442,26 @@ private fun showEPElementUsages(project: Project, usageTarget: UsageTarget, usag
 private fun analyzeEPTagUsages(xmlTag: XmlTag, file: PsiFile, editor: Editor, ignoreSafeClasses: Boolean) {
   val domElement = DomManager.getDomManager(file.project).getDomElement(xmlTag) as? ExtensionPoint
   if (domElement == null) {
-    HintManager.getInstance().showErrorHint(editor, "Not an <extensionPoint>")
+    HintManager.getInstance().showErrorHint(editor, DevKitBundle.message("extension.point.analyzer.analyze.xml.not.extension.point"))
     return
   }
 
   var effectiveClass = domElement.effectiveClass ?: run {
-    HintManager.getInstance().showErrorHint(editor, "Can't resolve class for EP")
+    HintManager.getInstance().showErrorHint(editor, DevKitBundle.message("extension.point.analyzer.analyze.xml.cannot.resolve.ep.class"))
     return
   }
 
   if (effectiveClass.qualifiedName == "com.intellij.lang.LanguageExtensionPoint") {
     effectiveClass = ContainerUtil.getOnlyItem(domElement.withElements)?.implements?.value ?: run {
-      HintManager.getInstance().showErrorHint(editor, "Can't find implementation class for LanguageExtensionPoint")
+      HintManager.getInstance().showErrorHint(editor,
+                                              DevKitBundle.message("extension.point.analyzer.analyze.xml.no.implementation.language.extension.point"))
       return
     }
   }
 
   val epField = effectiveClass.fields.find { isEPField(it) } ?: run {
-    HintManager.getInstance().showErrorHint(editor, "Can't find ExtensionPointName field")
+    HintManager.getInstance().showErrorHint(editor,
+                                            DevKitBundle.message("extension.point.analyzer.analyze.xml.no.extension.point.name.field"))
     return
   }
 
@@ -468,13 +472,13 @@ private fun analyzeEPTagUsages(xmlTag: XmlTag, file: PsiFile, editor: Editor, ig
 private fun batchAnalyzeEPTagUsages(xmlTag: XmlTag, file: PsiFile, editor: Editor, ignoreSafeClasses: Boolean) {
   val domElement = DomManager.getDomManager(file.project).getDomElement(xmlTag) as? ExtensionPoints
   if (domElement == null) {
-    HintManager.getInstance().showErrorHint(editor, "Not an <extensionPoints>")
+    HintManager.getInstance().showErrorHint(editor, DevKitBundle.message("extension.point.analyzer.analyze.xml.batch.not.extension.points"))
     return
   }
 
   val safeEPs = mutableListOf<ExtensionPoint>()
   val allUnsafeUsages = mutableListOf<EPElementUsage>()
-  val task = object : Task.Backgroundable(file.project, "Analyzing extension points") {
+  val task = object : Task.Backgroundable(file.project, DevKitBundle.message("extension.point.analyzer.analyze.xml.batch.title")) {
     override fun run(indicator: ProgressIndicator) {
       val extensionPoints = runReadAction { domElement.extensionPoints }
       for (extensionPoint in extensionPoints) {
@@ -491,7 +495,7 @@ private fun batchAnalyzeEPTagUsages(xmlTag: XmlTag, file: PsiFile, editor: Edito
           val effectiveClass = extensionPoint.effectiveClass ?: return@runReadAction
           val epField = effectiveClass.fields.find { isEPField(it) }
           if (epField == null) {
-            allUnsafeUsages.add(EPElementUsage(effectiveClass, "No EP field"))
+            allUnsafeUsages.add(EPElementUsage(effectiveClass, DevKitBundle.message("extension.point.analyzer.reason.no.ep.field")))
             return@runReadAction
           }
 
@@ -521,7 +525,7 @@ private fun isInPluginModule(element: PsiElement): Boolean {
          !module.name.startsWith("intellij.appcode")
 }
 
-private class EPElementUsage(private val psiElement: PsiElement, private val reason: String = "") : PsiElementUsage {
+private class EPElementUsage(private val psiElement: PsiElement, @Nls private val reason: String = "") : PsiElementUsage {
   override fun getElement() = psiElement
 
   override fun getPresentation(): UsagePresentation {
