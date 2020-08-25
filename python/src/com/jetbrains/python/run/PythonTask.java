@@ -64,11 +64,11 @@ public class PythonTask {
   private HelperPackage myHelper = null;
 
   private List<String> myParameters = new ArrayList<>();
-  private final String myRunTabTitle;
+  private final @TabTitle String myRunTabTitle;
   private String myHelpId;
   private Runnable myAfterCompletion;
 
-  public PythonTask(Module module, String runTabTitle) throws ExecutionException {
+  public PythonTask(Module module, @TabTitle String runTabTitle) throws ExecutionException {
     this(module, runTabTitle, PythonSdkUtil.findPythonSdk(module));
   }
 
@@ -305,8 +305,8 @@ public class PythonTask {
     if (exitCode == 0) {
       return output.getStdout();
     }
-    throw new ExecutionException(String.format("Error on python side. " +
-                                               "Exit code: %s, err: %s out: %s", exitCode, output.getStderr(), output.getStdout()));
+    throw new ExecutionException(PyBundle.message("dialog.message.error.on.python.side.exit.code.stderr.stdout",
+                                                  exitCode,output.getStderr(),output.getStdout()));
   }
 
   @NotNull
