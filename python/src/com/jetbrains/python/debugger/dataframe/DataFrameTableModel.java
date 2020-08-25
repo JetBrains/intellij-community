@@ -69,8 +69,6 @@ public class DataFrameTableModel extends AsyncArrayTableModel {
 
   @Override
   public String getColumnName(int col) {
-
-
     ArrayChunk.ColHeader header = myColHeaders.get(col);
     if (header != null && header.getLabel() != null) {
       return header.getLabel();

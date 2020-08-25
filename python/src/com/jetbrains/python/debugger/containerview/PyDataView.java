@@ -40,7 +40,6 @@ public final class PyDataView implements DumbAware {
   public static final String DATA_VIEWER_ID = "SciView";
   public static final String COLORED_BY_DEFAULT = "python.debugger.dataview.coloredbydefault";
   public static final String AUTO_RESIZE = "python.debugger.dataview.autoresize";
-  public static final String EMPTY_TAB_NAME = "empty";
   private static final Logger LOG = Logger.getInstance(PyDataView.class);
   private static final String HELP_ID = "reference.toolWindows.PyDataView";
 
@@ -145,10 +144,11 @@ public final class PyDataView implements DumbAware {
   }
 
   public void closeDisconnectedFromConsoleTabs() {
-    closeTabs(frameAccessor -> frameAccessor instanceof PydevConsoleCommunication && !isConnected(((PydevConsoleCommunication)frameAccessor)));
+    closeTabs(
+      frameAccessor -> frameAccessor instanceof PydevConsoleCommunication && !isConnected(((PydevConsoleCommunication)frameAccessor)));
   }
 
-  private static boolean isConnected(PydevConsoleCommunication accessor){
+  private static boolean isConnected(PydevConsoleCommunication accessor) {
     return !accessor.isCommunicationClosed();
   }
 
@@ -200,7 +200,7 @@ public final class PyDataView implements DumbAware {
       String name = ((PyDebugProcess)frameAccessor).getSession().getSessionName();
       info.setTooltipText(PyBundle.message("debugger.data.view.connected.to.debug.session", name));
     }
-    info.setText(EMPTY_TAB_NAME);
+    info.setText(PyBundle.message("debugger.data.view.empty.tab"));
     info.setPreferredFocusableComponent(panel.getSliceTextField());
     info.setActions(new DefaultActionGroup(new NewViewerAction(frameAccessor)), ActionPlaces.UNKNOWN);
     info.setTabLabelActions(new DefaultActionGroup(new CloseViewerAction(info, frameAccessor)), ActionPlaces.UNKNOWN);
@@ -230,7 +230,8 @@ public final class PyDataView implements DumbAware {
     private final PyFrameAccessor myFrameAccessor;
 
     NewViewerAction(PyFrameAccessor frameAccessor) {
-      super(PyBundle.message("debugger.data.view.view.new.container"), PyBundle.message("debugger.data.view.open.new.container.viewer"), AllIcons.General.Add);
+      super(PyBundle.message("debugger.data.view.view.new.container"), PyBundle.message("debugger.data.view.open.new.container.viewer"),
+            AllIcons.General.Add);
       myFrameAccessor = frameAccessor;
     }
 
@@ -246,7 +247,8 @@ public final class PyDataView implements DumbAware {
     private final PyFrameAccessor myFrameAccessor;
 
     CloseViewerAction(TabInfo info, PyFrameAccessor frameAccessor) {
-      super(PyBundle.message("debugger.data.view.close.viewer"), PyBundle.message("debugger.data.view.close.selected.viewer"), AllIcons.Actions.Close);
+      super(PyBundle.message("debugger.data.view.close.viewer"), PyBundle.message("debugger.data.view.close.selected.viewer"),
+            AllIcons.Actions.Close);
       myInfo = info;
       myFrameAccessor = frameAccessor;
     }

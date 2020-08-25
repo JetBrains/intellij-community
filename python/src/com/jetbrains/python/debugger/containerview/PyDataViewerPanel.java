@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.Label;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.EditorTextField;
@@ -18,6 +19,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.TextFieldCompletionProvider;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.frame.XNamedValue;
 import com.intellij.xdebugger.frame.XValueChildrenList;
@@ -33,7 +35,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.border.EmptyBorder;
 import javax.swing.table.TableModel;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
@@ -62,7 +63,7 @@ public class PyDataViewerPanel extends JPanel {
     myFrameAccessor = frameAccessor;
     myErrorLabel.setVisible(false);
     myErrorLabel.setForeground(JBColor.RED);
-    myMainPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
+    myMainPanel.setBorder(JBUI.Borders.empty(20));
     add(myMainPanel, BorderLayout.CENTER);
     myColored = PropertiesComponent.getInstance(myProject).getBoolean(PyDataView.COLORED_BY_DEFAULT, true);
     myListeners = new CopyOnWriteArrayList<>();
@@ -188,7 +189,7 @@ public class PyDataViewerPanel extends JPanel {
     UIUtil.invokeLaterIfNeeded(() -> {
       myTable.setModel(model);
       // Debugger generates a temporary name for every slice evaluation, so we should select a correct name for it
-      String text =
+      @NlsSafe String text =
         debugValue.getName().equals(originalDebugValue.getTempName()) ? originalDebugValue.getName() : chunk.getSlicePresentation();
       mySliceTextField.setText(text);
       if (mySliceTextField.getEditor() != null) {
@@ -213,7 +214,8 @@ public class PyDataViewerPanel extends JPanel {
     try {
       PyDebugValue value = myFrameAccessor.evaluate(expression, false, true);
       if (value == null || value.isErrorOnEval()) {
-        setError(value != null ? value.getValue() : PyBundle.message("debugger.data.view.failed.to.evaluate.expression", expression)); //NON-NLS
+        setError(
+          value != null ? value.getValue() : PyBundle.message("debugger.data.view.failed.to.evaluate.expression", expression)); //NON-NLS
         return null;
       }
       return value;
@@ -229,7 +231,7 @@ public class PyDataViewerPanel extends JPanel {
     myErrorLabel.setText(text);
     myTable.setEmpty();
     for (Listener listener : myListeners) {
-      listener.onNameChanged(PyDataView.EMPTY_TAB_NAME);
+      listener.onNameChanged(PyBundle.message("debugger.data.view.empty.tab"));
     }
   }
 
@@ -267,7 +269,7 @@ public class PyDataViewerPanel extends JPanel {
   }
 
   public interface Listener {
-    void onNameChanged(String name);
+    void onNameChanged(@NlsContexts.TabTitle String name);
   }
 
   private class PyDataViewCompletionProvider extends TextFieldCompletionProvider {
