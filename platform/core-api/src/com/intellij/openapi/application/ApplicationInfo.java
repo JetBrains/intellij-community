@@ -31,7 +31,7 @@ public abstract class ApplicationInfo {
 
   public abstract String getPatchVersion();
 
-  public abstract String getVersionName();
+  public abstract @NlsSafe String getVersionName();
 
   /**
    * Returns the first number from 'minor' part of the version. This method is temporarily added because some products specify a composite number (like '1.3')
