@@ -47,6 +47,7 @@ public class UiTestTask extends Task {
 
   private String classpathFile;
   private List<String> testGroups = Collections.emptyList();
+  private String jvm;
   private Path classpath;
   private final List<Argument> jvmArgs = new ArrayList<Argument>();
 
@@ -89,6 +90,14 @@ public class UiTestTask extends Task {
     this.testGroups = Arrays.stream(testGroupsString.split(",")).filter(s -> !s.isEmpty()).collect(Collectors.toList());
   }
 
+  /**
+   * Allows overriding the default Java executable used by the test runner.
+   * @param jvmPath
+   */
+  public void setJvm(String jvmPath) {
+      this.jvm = jvmPath;
+  }
+
   @Override
   public void execute() throws BuildException {
     try {
@@ -100,6 +109,7 @@ public class UiTestTask extends Task {
 
         task.setFork(true);
         task.setForkMode(new JUnitTask.ForkMode("once"));
+        task.setJvm(jvm);
 
         task.setLogFailedTests(false);
         task.setShowOutput(true);

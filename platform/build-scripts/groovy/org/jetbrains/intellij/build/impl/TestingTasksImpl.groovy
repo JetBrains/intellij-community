@@ -460,7 +460,8 @@ class TestingTasksImpl extends TestingTasks {
   private void runUiTestTask(List<String> jvmArgs, Map<String, String> systemProperties, List<String> bootstrapClasspath, String classpathFile) {
     defineUiTestTask(context.ant, "$context.paths.communityHome/lib")
 
-    context.ant.uitest(classpathFile: classpathFile, testGroups: options.uiTestGroups) {
+    String jvmExecutablePath = options.customJrePath != null ? "$options.customJrePath/bin/java" : "java"
+    context.ant.uitest(classpathFile: classpathFile, testGroups: options.uiTestGroups, jvm: jvmExecutablePath) {
       jvmArgs.each { jvmarg(value: it) }
       systemProperties.each { key, value ->
         if (value != null) {

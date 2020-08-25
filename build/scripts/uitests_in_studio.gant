@@ -25,6 +25,9 @@ target("default": "Run UI tests") {
   TestingOptions options = new TestingOptions()
   options.platformPrefix = "AndroidStudio"
   options.mainModule = "android-uitests"
+  // We'll be migrating UI tests to Bazel, and meanwhile this is only ever used on Linux, so it
+  // seemed unnecessary to make it more configurable and target multiple operating systems.
+  options.customJrePath = "$home/../../prebuilts/studio/jdk/jdk11/linux"
 
   /*
   options.debugPort = 5005
