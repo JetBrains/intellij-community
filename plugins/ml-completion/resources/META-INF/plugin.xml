@@ -6,10 +6,24 @@
 
   <description><![CDATA[
       <p>The plugin improves code completion feature by reordering of elements in the completion
-      popup by ranking more relevant items higher using machine learning.</p>
+      popup by ranking more relevant items higher using machine learning.
+      </p>
       <br>
-      <p>Currently, ML reordering is available for Java, Kotlin and Python languages. To enable the feature for your
-      programming language, check settings in Editor | General | Code Completion | "Machine Learning Assistant Code Completion" section.</p>
+      <p>Currently, ML reordering is available for:</p>
+      <ul>
+        <li>Java</li>
+        <li>Kotlin</li>
+        <li>Python</li>
+        <li>PHP</li>
+        <li>Scala</li>
+        <li>Ruby</li>
+        <li>Go</li>
+        <li>JavaScript</li>
+        <li>TypeScript</li>
+      </ul>
+      <br>
+      <p>To enable the feature for your programming language, check settings in
+      Editor | General | Code Completion | "Machine Learning Assistant Code Completion" section.</p>
     ]]></description>
 
   <depends>com.intellij.modules.lang</depends>
