@@ -49,7 +49,7 @@ public class FacetProjectStructureElement extends ProjectStructureElement {
   }
 
   @Override
-  public @Nls(capitalization = Nls.Capitalization.Sentence) String getPresentableName() {
+  public String getPresentableName() {
     return myFacet.getName();
   }
 

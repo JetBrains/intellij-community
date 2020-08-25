@@ -38,7 +38,7 @@ public final class DetectedContentRoot extends DetectedProjectRoot {
 
   @NotNull
   @Override
-  public @Nls(capitalization = Nls.Capitalization.Sentence) String getRootTypeName() {
+  public String getRootTypeName() {
     return myRootTypeName;
   }
 

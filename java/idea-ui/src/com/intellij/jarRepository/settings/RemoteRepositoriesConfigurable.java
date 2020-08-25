@@ -129,9 +129,9 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
   }
 
   private interface DataAdapter<Data, Presentation> {
-    DataAdapter<String, String> STRING_ADAPTER = new DataAdapter<String, String>() {
+    DataAdapter<String, String> STRING_ADAPTER = new DataAdapter<>() {
       @Override
-      public @Nls String toPresentation(@Nls String s) {
+      public String toPresentation(@Nls String s) {
         return s;
       }
 
@@ -146,9 +146,9 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
       }
     };
 
-    DataAdapter<RemoteRepositoryDescription, String> REPOSITORY_DESCRIPTION_ADAPTER = new DataAdapter<RemoteRepositoryDescription, String>() {
+    DataAdapter<RemoteRepositoryDescription, String> REPOSITORY_DESCRIPTION_ADAPTER = new DataAdapter<>() {
       @Override
-      public @Nls String toPresentation(RemoteRepositoryDescription description) {
+      public String toPresentation(RemoteRepositoryDescription description) {
         return description.getUrl();
       }
 

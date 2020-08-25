@@ -21,7 +21,6 @@ import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -31,7 +30,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.gradle.initialization.BuildLayoutParameters;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
@@ -58,12 +56,12 @@ public class GradleAttachSourcesProvider implements AttachSourcesProvider {
 
     return Collections.singleton(new AttachSourcesAction() {
       @Override
-      public @Nls(capitalization = Nls.Capitalization.Title) String getName() {
+      public String getName() {
         return GradleBundle.message("gradle.action.download.sources");
       }
 
       @Override
-      public @NlsContexts.LinkLabel String getBusyText() {
+      public String getBusyText() {
         return GradleBundle.message("gradle.action.download.sources.busy.text");
       }
 

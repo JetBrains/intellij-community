@@ -156,7 +156,7 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
   }
 
   @Override
-  public @Nls(capitalization = Nls.Capitalization.Sentence) String getPresentableName() {
+  public String getPresentableName() {
     return myLibrary.getName();
   }
 

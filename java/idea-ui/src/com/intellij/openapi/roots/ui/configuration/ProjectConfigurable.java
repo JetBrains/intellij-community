@@ -29,7 +29,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.ProjectStr
 import com.intellij.openapi.ui.DetailsComponent;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -261,7 +260,7 @@ public class ProjectConfigurable extends ProjectStructureElementConfigurable<Pro
   }
 
   @Override
-  public @NlsContexts.DetailedDescription String getBannerSlogan() {
+  public String getBannerSlogan() {
     return JavaUiBundle.message("project.roots.project.banner.text", myProject.getName());
   }
 

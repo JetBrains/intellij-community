@@ -1973,7 +1973,7 @@ public class StringUtil extends StringUtilRt {
    */
   @Contract(value = "null -> null; !null -> !null",pure = true)
   @Deprecated
-  public static String escapeXml(final @Nullable @Nls String text) {
+  public static String escapeXml(final @Nullable String text) {
     return text == null ? null : escapeXmlEntities(text);
   }
 

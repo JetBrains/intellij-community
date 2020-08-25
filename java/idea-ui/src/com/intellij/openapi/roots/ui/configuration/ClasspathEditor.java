@@ -73,7 +73,7 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
   }
 
   @Override
-  public @NlsContexts.ConfigurableName String getDisplayName() {
+  public String getDisplayName() {
     return getName();
   }
 

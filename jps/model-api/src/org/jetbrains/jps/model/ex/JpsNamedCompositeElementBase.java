@@ -36,7 +36,7 @@ public abstract class JpsNamedCompositeElementBase<Self extends JpsNamedComposit
 
   @NotNull
   @Override
-  public @Nls(capitalization = Nls.Capitalization.Title) String getName() {
+  public String getName() {
     return myName;
   }
 

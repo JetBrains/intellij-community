@@ -29,7 +29,6 @@ import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
@@ -102,12 +101,12 @@ public abstract class AbstractAttachSourceProvider implements AttachSourcesProvi
     }
 
     @Override
-    public @Nls(capitalization = Nls.Capitalization.Title) String getName() {
+    public String getName() {
       return myName;
     }
 
     @Override
-    public @NlsContexts.LinkLabel String getBusyText() {
+    public String getBusyText() {
       return getName();
     }
 
@@ -140,12 +139,12 @@ public abstract class AbstractAttachSourceProvider implements AttachSourcesProvi
     }
 
     @Override
-    public @Nls(capitalization = Nls.Capitalization.Title) String getName() {
+    public String getName() {
       return JavaUiBundle.message("attach.source.provider.download.sources.action.name");
     }
 
     @Override
-    public @NlsContexts.LinkLabel String getBusyText() {
+    public String getBusyText() {
       return JavaUiBundle.message("attach.source.provider.download.sources.action.busy.text");
     }
 

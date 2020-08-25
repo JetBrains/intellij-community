@@ -103,7 +103,7 @@ public abstract class DownloadableLibraryType extends LibraryType<LibraryVersion
   }
 
   @Override
-  public @Nls String getDescription(@NotNull LibraryVersionProperties properties) {
+  public String getDescription(@NotNull LibraryVersionProperties properties) {
     final String versionString = properties.getVersionString();
     final int versionStringPresent = versionString != null ? 0 : 1;
     return JavaUiBundle.message("downloadable.library.type.description", myLibraryCategoryName, versionString, versionStringPresent);
