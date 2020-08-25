@@ -938,6 +938,10 @@
     {
       "key": "Window.border",
       "description": "Dialog border. Format: \"top, left, bottom, right, hex\", e.g. \"1,1,1,1,FFFFFF\". Sizes in pixels"
+    },
+    {
+      "key": "DropArea.base",
+      "description": "Base color to highlight drop area (Drag-n-drop in editor / debugger). Actual values go with alpha=40 (of 255) for whole area and with alpha=200 for border line"
     }
   ]
 }

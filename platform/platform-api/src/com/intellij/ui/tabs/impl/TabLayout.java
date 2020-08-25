@@ -2,8 +2,10 @@
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.openapi.util.registry.Registry;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.awt.*;
 
 public abstract class TabLayout {
@@ -29,4 +31,7 @@ public abstract class TabLayout {
   }
 
   public abstract int getDropIndexFor(Point point);
+
+  @MagicConstant(intValues = {SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT, -1})
+  public abstract int getDropSideFor(@NotNull Point point);
 }

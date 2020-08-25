@@ -536,6 +536,10 @@ public final class EditorWindow {
   }
 
   public @Nullable EditorWindow split(int orientation, boolean forceSplit, @Nullable VirtualFile virtualFile, boolean focusNew) {
+    return split(orientation, forceSplit, virtualFile, focusNew, true);
+  }
+
+  public @Nullable EditorWindow split(int orientation, boolean forceSplit, @Nullable VirtualFile virtualFile, boolean focusNew, boolean fileIsSecondaryComponent) {
     checkConsistency();
     if (!splitAvailable()) {
       return null;
@@ -564,9 +568,17 @@ public final class EditorWindow {
       EditorWithProviderComposite selectedEditor = getSelectedEditor();
       panel.remove(myTabbedPane.getComponent());
       panel.add(splitter, BorderLayout.CENTER);
-      splitter.setFirstComponent(myPanel);
+      if (fileIsSecondaryComponent) {
+        splitter.setFirstComponent(myPanel);
+      } else {
+        splitter.setSecondComponent(myPanel);
+      }
       myPanel.add(myTabbedPane.getComponent(), BorderLayout.CENTER);
-      splitter.setSecondComponent(res.myPanel);
+      if (fileIsSecondaryComponent) {
+        splitter.setSecondComponent(res.myPanel);
+      } else {
+        splitter.setFirstComponent(res.myPanel);
+      }
       // open only selected file in the new splitter instead of opening all tabs
       VirtualFile file = selectedEditor.getFile();
       if (virtualFile == null) {
