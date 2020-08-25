@@ -5,6 +5,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -36,8 +38,8 @@ import java.io.File;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.*;
+import java.util.function.Consumer;
 
 /**
  * @author Eugene Zhuravlev
@@ -115,43 +117,76 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
     return ExitCode.ABORT;
   }
 
+  @SuppressWarnings("RedundantThrows")
   static void resolveMissingDependencies(CompileContext context, Collection<? extends JpsModule> modules,
                                          BuildTargetChunk currentTargets) throws Exception {
     Collection<JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>> libs = getRepositoryLibraries(modules);
     if (!libs.isEmpty()) {
       final ArtifactRepositoryManager repoManager = getRepositoryManager(context);
-      for (JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>> lib : libs) {
-        final JpsMavenRepositoryLibraryDescriptor descriptor = lib.getProperties().getData();
-        final ResourceGuard guard = ResourceGuard.get(context, descriptor);
-        if (guard.requestProcessing(context.getCancelStatus())) {
-          try {
-            final Collection<File> required = lib.getFiles(JpsOrderRootType.COMPILED);
-            for (Iterator<File> it = required.iterator(); it.hasNext(); ) {
-              if (it.next().exists()) {
-                it.remove(); // leaving only non-existing stuff requiring synchronization
-              }
-            }
-            if (!required.isEmpty()) {
-              context.processMessage(new ProgressMessage("Resolving '" + lib.getName() + "' library...", currentTargets));
-              LOG.debug("Downloading missing files for " + lib.getName() + " library: " + required);
-              final Collection<File> resolved = repoManager.resolveDependency(descriptor.getGroupId(), descriptor.getArtifactId(),
-                                                                              descriptor.getVersion(), descriptor.isIncludeTransitiveDependencies(),
-                                                                              descriptor.getExcludedDependencies());
-              if (!resolved.isEmpty()) {
-                syncPaths(required, resolved);
-              }
-              else {
-                LOG.info("No artifacts were resolved for repository dependency " + descriptor.getMavenId());
-              }
-            }
-          }
-          catch (TransferCancelledException e) {
-            context.checkCanceled();
-          }
-          finally {
-            guard.finish();
+      resolveMissingDependencies(libs, lib -> {
+        try {
+          resolveMissingDependency(context, currentTargets, lib, repoManager);
+        }
+        catch (Exception e) {
+          throw new RuntimeException(e);
+        }
+      });
+    }
+  }
+
+  private static void resolveMissingDependencies(
+    Collection<JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>> libs,
+    Consumer<JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>>> resolveAction
+  ) throws Exception {
+    String key = "org.jetbrains.jps.incremental.dependencies.resolution.parallelism";
+    int parallelism = SystemProperties.getIntProperty(key, 1);
+    if (parallelism < 2) {
+      libs.forEach(resolveAction);
+    }
+    else {
+      ExecutorService executorService = Executors.newFixedThreadPool(parallelism);
+      try {
+        List<Future<?>> futures = ContainerUtil.map(libs, lib -> executorService.submit(() -> resolveAction.accept(lib)));
+        for (Future<?> future : futures) future.get();
+      }
+      finally {
+        executorService.shutdown();
+      }
+    }
+  }
+
+  private static void resolveMissingDependency(CompileContext context, BuildTargetChunk currentTargets,
+                                               JpsTypedLibrary<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>> lib,
+                                               ArtifactRepositoryManager repoManager) throws Exception {
+    final JpsMavenRepositoryLibraryDescriptor descriptor = lib.getProperties().getData();
+    final ResourceGuard guard = ResourceGuard.get(context, descriptor);
+    if (guard.requestProcessing(context.getCancelStatus())) {
+      try {
+        final Collection<File> required = lib.getFiles(JpsOrderRootType.COMPILED);
+        for (Iterator<File> it = required.iterator(); it.hasNext(); ) {
+          if (it.next().exists()) {
+            it.remove(); // leaving only non-existing stuff requiring synchronization
           }
         }
+        if (!required.isEmpty()) {
+          context.processMessage(new ProgressMessage("Resolving '" + lib.getName() + "' library...", currentTargets));
+          LOG.debug("Downloading missing files for " + lib.getName() + " library: " + required);
+          final Collection<File> resolved = repoManager.resolveDependency(descriptor.getGroupId(), descriptor.getArtifactId(),
+                                                                          descriptor.getVersion(), descriptor.isIncludeTransitiveDependencies(),
+                                                                          descriptor.getExcludedDependencies());
+          if (!resolved.isEmpty()) {
+            syncPaths(required, resolved);
+          }
+          else {
+            LOG.info("No artifacts were resolved for repository dependency " + descriptor.getMavenId());
+          }
+        }
+      }
+      catch (TransferCancelledException e) {
+        context.checkCanceled();
+      }
+      finally {
+        guard.finish();
       }
     }
   }
