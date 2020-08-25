@@ -1,16 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.jcef;
 
-import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.LightEditActionFactory;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.JBColor;
-import com.jetbrains.cef.JCefAppConfig;
-import com.jetbrains.cef.JCefVersionDetails;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
 import org.cef.callback.CefContextMenuParams;
@@ -93,51 +87,6 @@ public class JBCefBrowser implements JBCefDisposable {
     }
   }
 
-  private static final class ShortcutProvider {
-    // Since these CefFrame::* methods are available only with JCEF API 1.1 and higher, we are adding no shortcuts for older JCEF
-    private static final List<Pair<String, AnAction>> ourActions = isSupportedByJCefApi() ? List.of(
-      createAction("$Cut", CefFrame::cut),
-      createAction("$Copy", CefFrame::copy),
-      createAction("$Paste", CefFrame::paste),
-      createAction("$Delete", CefFrame::delete),
-      createAction("$SelectAll", CefFrame::selectAll),
-      createAction("$Undo", CefFrame::undo),
-      createAction("$Redo", CefFrame::redo)
-    ) : List.of();
-
-    // This method may be deleted when JCEF API version check is included into JBCefApp#isSupported
-    private static boolean isSupportedByJCefApi() {
-      try {
-        JCefAppConfig.getVersionDetails();
-        return true;
-      }
-      catch (NoSuchMethodError | JCefVersionDetails.VersionUnavailableException e) {
-        Logger.getInstance(ShortcutProvider.class).warn("JCEF shortcuts are unavailable (incompatible API)", e);
-        return false;
-      }
-    }
-
-    private static Pair<String, AnAction> createAction(String shortcut, Consumer<CefFrame> action) {
-      return Pair.create(
-        shortcut,
-        LightEditActionFactory.create(event -> {
-          Component component = event.getData(PlatformDataKeys.CONTEXT_COMPONENT);
-          if(!(component instanceof JComponent)) return;
-          Object browser = ((JComponent) component).getClientProperty(JBCEFBROWSER_INSTANCE_PROP);
-          if(!(browser instanceof JBCefBrowser)) return;
-          action.accept(((JBCefBrowser) browser).getCefBrowser().getFocusedFrame());
-        })
-      );
-    }
-
-    private static void registerShortcuts(JComponent uiComp, JBCefBrowser jbCefBrowser) {
-      ActionManager actionManager = ActionManager.getInstance();
-      for (Pair<String, AnAction> action : ourActions) {
-        action.second.registerCustomShortcutSet(actionManager.getAction(action.first).getShortcutSet(), uiComp, jbCefBrowser);
-      }
-    }
-  }
-
   /**
    * Creates a browser with the provided {@code JBCefClient} and initial URL. The client's lifecycle is the responsibility of the caller.
    */
@@ -179,10 +128,6 @@ public class JBCefBrowser implements JBCefDisposable {
       cefBrowser : myCefClient.getCefClient().createBrowser(url != null ? url : BLANK_URI, false, false);
     JComponent uiComp = (JComponent)myCefBrowser.getUIComponent();
     uiComp.putClientProperty(JBCEFBROWSER_INSTANCE_PROP, this);
-    if(SystemInfoRt.isMac) {
-      // We handle shortcuts manually on MacOS: https://www.magpcss.org/ceforum/viewtopic.php?f=6&t=12561
-      ShortcutProvider.registerShortcuts(uiComp, this);
-    }
     myComponent.add(uiComp, BorderLayout.CENTER);
 
     myComponent.setFocusCycleRoot(true);
