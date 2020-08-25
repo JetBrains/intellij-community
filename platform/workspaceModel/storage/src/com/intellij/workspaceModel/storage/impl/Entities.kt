@@ -220,10 +220,9 @@ abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable {
     if (other == null) return false
     if (this::class != other::class) return false
 
-    return this::class.memberProperties
-      .filter { it.name != WorkspaceEntityData<*>::id.name }
-      .map { it.getter }
-      .all { it.call(this) == it.call(other) }
+    return this.javaClass.declaredFields.filterNot { it.name == WorkspaceEntityData<*>::id.name }
+      .onEach { it.isAccessible = true }
+      .all { it.get(this) == it.get(other) }
   }
 
   override fun hashCode(): Int {
