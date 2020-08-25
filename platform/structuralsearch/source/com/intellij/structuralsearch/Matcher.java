@@ -75,10 +75,10 @@ public class Matcher {
   public static Matcher buildMatcher(@NotNull Project project, @NotNull LanguageFileType fileType, @NotNull String constraint) {
     if (StringUtil.isQuotedString(constraint)) {
       // keep old configurations working, also useful for testing
-      final MatchOptions myMatchOptions = new MatchOptions();
-      myMatchOptions.setFileType(fileType);
-      myMatchOptions.fillSearchCriteria(StringUtil.unquoteString(constraint));
-      return new Matcher(project, myMatchOptions);
+      final MatchOptions matchOptions = new MatchOptions();
+      matchOptions.setFileType(fileType);
+      matchOptions.fillSearchCriteria(StringUtil.unquoteString(constraint));
+      return new Matcher(project, matchOptions);
     }
     else {
       final Set<String> set = ourRecursionGuard.get();
@@ -166,10 +166,6 @@ public class Matcher {
       return;
     }
 
-    if (scheduler == null) scheduler = new TaskScheduler();
-    matchContext.getSink().setMatchingProcess(scheduler);
-    scheduler.init();
-
     if (isTesting) {
       // testing mode;
       final LocalSearchScope scope = (LocalSearchScope)matchContext.getOptions().getScope();
@@ -187,15 +183,18 @@ public class Matcher {
       }
 
       matchContext.getSink().matchingFinished();
-      return;
     }
-    findMatches();
+    else {
+      if (scheduler == null) scheduler = new TaskScheduler();
+      matchContext.getSink().setMatchingProcess(scheduler);
+      scheduler.init();
+      findMatches();
 
-    if (scheduler.getTaskQueueEndAction() == null) {
-      scheduler.setTaskQueueEndAction(() -> matchContext.getSink().matchingFinished());
+      if (scheduler.getTaskQueueEndAction() == null) {
+        scheduler.setTaskQueueEndAction(() -> matchContext.getSink().matchingFinished());
+      }
+      scheduler.executeNext();
     }
-
-    scheduler.executeNext();
   }
 
   private void findMatches() {
