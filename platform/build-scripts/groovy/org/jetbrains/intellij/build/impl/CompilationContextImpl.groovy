@@ -85,9 +85,6 @@ class CompilationContextImpl implements CompilationContext {
   private static String defineJavaSdk(JpsModel model, String projectHome, BuildOptions options, BuildMessages messages) {
     def sdks = []
     def jbrDir = jbrDir(projectHome, options)
-    def jdk6Home = JdkUtils.computeJdkHome(messages, '1.6', "$jbrDir/1.6", "JDK_16_x64")
-    JdkUtils.defineJdk(model.global, "IDEA jdk", jdk6Home, messages)
-    sdks << "IDEA jdk"
     def jbrVersionName = jbrVersionName(options)
     sdks << jbrVersionName
     def jbrDefaultDir = "$jbrDir/$jbrVersionName"
