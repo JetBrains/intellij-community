@@ -7,6 +7,9 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.xdebugger.XDebuggerManager
+import com.intellij.xdebugger.XSourcePosition
+import com.intellij.xdebugger.breakpoints.XBreakpoint
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.plugins.feature.suggester.actions.Action
 import java.awt.datatransfer.DataFlavor
@@ -42,6 +45,16 @@ internal fun Transferable.asString(): String? {
         getTransferData(DataFlavor.stringFlavor) as? String
     } catch (ex: Exception) {
         null
+    }
+}
+
+internal fun findBreakpointOnPosition(project: Project, position: XSourcePosition): XBreakpoint<*>? {
+    val breakpointManager = XDebuggerManager.getInstance(project)?.breakpointManager ?: return null
+    return breakpointManager.allBreakpoints.find {
+        XSourcePosition.isOnTheSameLine(
+            it.sourcePosition,
+            position
+        )
     }
 }
 

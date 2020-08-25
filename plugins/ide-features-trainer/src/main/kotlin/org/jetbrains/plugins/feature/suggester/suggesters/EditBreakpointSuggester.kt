@@ -1,15 +1,10 @@
 package org.jetbrains.plugins.feature.suggester.suggesters
 
-import com.intellij.openapi.project.Project
-import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.XSourcePosition.isOnTheSameLine
 import com.intellij.xdebugger.breakpoints.XBreakpoint
-import org.jetbrains.plugins.feature.suggester.NoSuggestion
-import org.jetbrains.plugins.feature.suggester.Suggestion
+import org.jetbrains.plugins.feature.suggester.*
 import org.jetbrains.plugins.feature.suggester.actions.DebugSessionPausedAction
-import org.jetbrains.plugins.feature.suggester.actionsLocalSummary
-import org.jetbrains.plugins.feature.suggester.createDocumentationSuggestion
 import org.jetbrains.plugins.feature.suggester.history.ChangesHistory
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
 import org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport
@@ -63,16 +58,6 @@ class EditBreakpointSuggester : FeatureSuggester {
             SUGGESTING_ACTION_ID,
             TimeUnit.DAYS.toMillis(minNotificationIntervalDays.toLong())
         )
-    }
-
-    private fun findBreakpointOnPosition(project: Project, position: XSourcePosition): XBreakpoint<*>? {
-        val breakpointManager = XDebuggerManager.getInstance(project)?.breakpointManager ?: return null
-        return breakpointManager.allBreakpoints.find {
-            isOnTheSameLine(
-                it.sourcePosition,
-                position
-            )
-        }
     }
 
     private val XBreakpoint<*>.isConditional
