@@ -17,6 +17,7 @@ package com.siyeh.ig.bitwise;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.lang.java.parser.ExpressionParser;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -92,12 +93,11 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
     for (int i = 0, length = operands.length; i < length; i++) {
       final PsiExpression operand = operands[i];
       if (isZero(operand)) {
-        if (tokenType.equals(AND) ||
-            (tokenType.equals(LTLT) || tokenType.equals(GTGT) || tokenType.equals(GTGTGT)) && previousOperand == null) {
+        if (tokenType.equals(AND) || ExpressionParser.SHIFT_OPS.contains(tokenType) && previousOperand == null) {
           return getText(expression, operands[0], operands[length - 1], PsiType.LONG.equals(expression.getType()) ? "0L" : "0", ct);
         }
         else if (tokenType.equals(OR) || tokenType.equals(XOR) ||
-                 (tokenType.equals(LTLT) || tokenType.equals(GTGT) || tokenType.equals(GTGTGT)) && previousOperand != null) {
+                 ExpressionParser.SHIFT_OPS.contains(tokenType) && previousOperand != null) {
           return getText(expression, i == length - 1 ? expression.getTokenBeforeOperand(operand) : operand, ct);
         }
       }
@@ -263,7 +263,7 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
       if (sign.equals(AND) || sign.equals(OR) || sign.equals(XOR)) {
         isPointless = booleanExpressionIsPointless(operands);
       }
-      else if (sign.equals(LTLT) || sign.equals(GTGT) || sign.equals(GTGTGT)) {
+      else if (ExpressionParser.SHIFT_OPS.contains(sign)) {
         isPointless = shiftExpressionIsPointless(operands);
       }
       else {
