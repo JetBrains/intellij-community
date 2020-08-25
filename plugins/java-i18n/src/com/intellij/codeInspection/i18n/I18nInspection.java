@@ -648,11 +648,10 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
       PsiMethod target = ref.resolve();
       if (target == null) return;
       if (IGNORED_METHODS.methodMatches(target)) return;
-      UExpression expr = ref;
       if (ref.getUastParent() instanceof UQualifiedReferenceExpression) {
-        expr = (UQualifiedReferenceExpression)ref.getUastParent();
+        UQualifiedReferenceExpression parent = (UQualifiedReferenceExpression)ref.getUastParent();
         if (STRING_BUILDER_TO_STRING.methodMatches(target)) {
-          UExpression receiver = ((UQualifiedReferenceExpression)expr).getReceiver();
+          UExpression receiver = parent.getReceiver();
           if (receiver instanceof UResolvable) {
             PsiElement receiverTarget = ((UResolvable)receiver).resolve();
             if (receiverTarget instanceof PsiModifierListOwner) {
@@ -662,7 +661,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
           }
         }
       }
-      processReferenceToNonLocalized(sourcePsi, expr, target);
+      processReferenceToNonLocalized(sourcePsi, ref, target);
     }
 
     private void visitReferenceExpression(@NotNull PsiElement sourcePsi, @NotNull UReferenceExpression ref) {
