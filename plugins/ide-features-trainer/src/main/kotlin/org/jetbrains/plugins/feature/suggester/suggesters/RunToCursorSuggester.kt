@@ -7,13 +7,11 @@ import org.jetbrains.plugins.feature.suggester.Suggestion
 import org.jetbrains.plugins.feature.suggester.actions.BreakpointAddedAction
 import org.jetbrains.plugins.feature.suggester.actions.BreakpointRemovedAction
 import org.jetbrains.plugins.feature.suggester.actions.DebugSessionPausedAction
-import org.jetbrains.plugins.feature.suggester.actions.EditorFocusGainedAction
 import org.jetbrains.plugins.feature.suggester.actionsLocalSummary
 import org.jetbrains.plugins.feature.suggester.createDocumentationSuggestion
 import org.jetbrains.plugins.feature.suggester.history.UserActionsHistory
 import org.jetbrains.plugins.feature.suggester.suggesters.FeatureSuggester.Companion.createMessageWithShortcut
 import org.jetbrains.plugins.feature.suggester.suggesters.lang.LanguageSupport
-import java.util.concurrent.TimeUnit
 
 class RunToCursorSuggester : FeatureSuggester {
     companion object {
@@ -21,52 +19,66 @@ class RunToCursorSuggester : FeatureSuggester {
         const val SUGGESTING_ACTION_ID = "RunToCursor"
         const val SUGGESTING_DOC_URL =
             "https://www.jetbrains.com/help/idea/stepping-through-the-program.html#run-to-cursor"
+        const val MAX_TIME_MILLIS_BETWEEN_ACTIONS: Long = 5000L
     }
 
-    private class DebuggingData {
+    private object State {
+        var debugSessionPaused: Boolean = false
         var addedBreakpointPosition: XSourcePosition? = null
+        var breakpointAddedTimeMillis: Long = 0L
         var isPausedOnBreakpoint: Boolean = false
 
         val isBreakpointAdded: Boolean
             get() = addedBreakpointPosition != null
+
+        fun isOutOfDate(breakpointRemovedTimeMillis: Long): Boolean {
+            return breakpointRemovedTimeMillis - breakpointAddedTimeMillis > MAX_TIME_MILLIS_BETWEEN_ACTIONS
+        }
+
+        fun reset() {
+            debugSessionPaused = false
+            addedBreakpointPosition = null
+            breakpointAddedTimeMillis = 0L
+            isPausedOnBreakpoint = false
+        }
     }
 
     private val actionsSummary = actionsLocalSummary()
     override lateinit var langSupport: LanguageSupport
 
-    private var debuggingData: DebuggingData? = null
-
     override fun getSuggestion(actions: UserActionsHistory): Suggestion {
         when (val action = actions.lastOrNull()) {
-            is EditorFocusGainedAction -> return NoSuggestion
             is DebugSessionPausedAction -> {
-                if (debuggingData == null || !debuggingData!!.isBreakpointAdded) {
-                    debuggingData = DebuggingData()
-                } else if (isOnTheSameLine(action.position, debuggingData!!.addedBreakpointPosition)) {
-                    debuggingData!!.isPausedOnBreakpoint = true
+                if (State.debugSessionPaused && isOnTheSameLine(action.position, State.addedBreakpointPosition)) {
+                    State.isPausedOnBreakpoint = true
                 } else {
-                    reset()
+                    State.reset()
+                    State.debugSessionPaused = true
                 }
             }
             is BreakpointAddedAction -> {
-                if (debuggingData?.isBreakpointAdded == false) {
-                    debuggingData!!.addedBreakpointPosition = action.position
+                if (!State.isBreakpointAdded) {
+                    State.apply {
+                        addedBreakpointPosition = action.position
+                        breakpointAddedTimeMillis = action.timeMillis
+                    }
                 } else {
-                    reset()
+                    State.reset()
                 }
             }
             is BreakpointRemovedAction -> {
-                if (debuggingData?.isPausedOnBreakpoint == true
-                    && isOnTheSameLine(action.position, debuggingData!!.addedBreakpointPosition)
+                if (State.isPausedOnBreakpoint
+                    && isOnTheSameLine(action.position, State.addedBreakpointPosition)
+                    && !State.isOutOfDate(action.timeMillis)
                 ) {
-                    reset()
+                    State.reset()
                     return createDocumentationSuggestion(
                         createMessageWithShortcut(SUGGESTING_ACTION_ID, POPUP_MESSAGE),
                         suggestingActionDisplayName,
                         SUGGESTING_DOC_URL
                     )
                 }
-                reset()
+                State.reset()
             }
         }
 
@@ -74,15 +86,12 @@ class RunToCursorSuggester : FeatureSuggester {
     }
 
     override fun isSuggestionNeeded(minNotificationIntervalDays: Int): Boolean {
-        return super.isSuggestionNeeded(
-            actionsSummary,
-            SUGGESTING_ACTION_ID,
-            TimeUnit.DAYS.toMillis(minNotificationIntervalDays.toLong())
-        )
-    }
-
-    private fun reset() {
-        debuggingData = null
+//        return super.isSuggestionNeeded(
+//            actionsSummary,
+//            SUGGESTING_ACTION_ID,
+//            TimeUnit.DAYS.toMillis(minNotificationIntervalDays.toLong())
+//        )
+        return false   // todo: edit this method when RunToCursor action statistics will be fixed.
     }
 
     override val id: String = "Run to cursor"

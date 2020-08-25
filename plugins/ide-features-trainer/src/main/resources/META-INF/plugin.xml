@@ -48,9 +48,8 @@
                 implementation="org.jetbrains.plugins.feature.suggester.suggesters.CompletionPopupSuggester"/>
         <featureSuggester.featureSuggester
                 implementation="org.jetbrains.plugins.feature.suggester.suggesters.ReplaceCompletionSuggester"/>
-        <!--    TODO: uncomment when RunToCursor action statistics will be fixed                                                    -->
-        <!--        <featureSuggester.featureSuggester-->
-        <!--                implementation="org.jetbrains.plugins.feature.suggester.suggesters.RunToCursorSuggester"/>-->
+        <featureSuggester.featureSuggester
+                implementation="org.jetbrains.plugins.feature.suggester.suggesters.RunToCursorSuggester"/>
         <featureSuggester.featureSuggester
                 implementation="org.jetbrains.plugins.feature.suggester.suggesters.EditBreakpointSuggester"/>
         <featureSuggester.featureSuggester
