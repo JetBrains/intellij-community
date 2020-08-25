@@ -51,7 +51,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
   private final SynchronizedClearableLazy<JsonSchemaService> myServiceLazy;
   private static final AtomicBoolean myIsNotified = new AtomicBoolean(false);
 
-  JsonSchemaStatusWidget(Project project) {
+  JsonSchemaStatusWidget(@NotNull Project project) {
     super(project, false);
     myServiceLazy = new SynchronizedClearableLazy<>(() -> {
       if (!project.isDisposed()) {
@@ -62,7 +62,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
       }
       return null;
     });
-    JsonWidgetSuppressor.EXTENSION_POINT_NAME.addChangeListener(this::update, project);
+    JsonWidgetSuppressor.EXTENSION_POINT_NAME.addChangeListener(this::update, this);
   }
 
   @Nullable
