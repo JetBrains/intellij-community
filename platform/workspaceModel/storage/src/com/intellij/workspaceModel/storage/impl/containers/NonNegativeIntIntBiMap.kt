@@ -85,13 +85,9 @@ sealed class NonNegativeIntIntBiMap {
 
   fun containsKey(key: Int) = key2Value.containsKey(key)
 
-  fun containsValue(value: Int) = value in value2Keys
-
   fun get(key: Int) = key2Value.get(key)
 
   fun getKeys(value: Int): NonNegativeIntIntMultiMap.IntSequence = value2Keys[value]
-
-  fun isEmpty(): Boolean = key2Value.isEmpty() && value2Keys.isEmpty()
 
   abstract fun toImmutable(): ImmutableNonNegativeIntIntBiMap
 

@@ -1,10 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.storage.impl.containers
 
-import it.unimi.dsi.fastutil.ints.Int2IntMap
-import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
+import it.unimi.dsi.fastutil.ints.*
 import org.jetbrains.annotations.TestOnly
-import java.util.function.IntConsumer
+import java.util.function.BiConsumer
 
 /**
  * Int to Int multimap that can hold *ONLY* non-negative integers and optimized for memory and reading.
@@ -45,6 +44,10 @@ sealed class ImmutableNonNegativeIntIntMultiMap(
 
   abstract fun toMutable(): MutableNonNegativeIntIntMultiMap
 
+  override fun keys(): IntSet = IntOpenHashSet().also {
+    it.addAll(links.keys)
+  }
+
   private class RoMultiResultIntSequence(
     private val values: IntArray,
     private val idx: Int
@@ -68,326 +71,12 @@ sealed class ImmutableNonNegativeIntIntMultiMap(
       }
     }
   }
-}
-
-sealed class MutableNonNegativeIntIntMultiMap(
-  override var values: IntArray,
-  override var links: Int2IntMap,
-  protected var freezed: Boolean
-) : NonNegativeIntIntMultiMap() {
-
-  class ByList private constructor(values: IntArray, links: Int2IntMap, freezed: Boolean) : MutableNonNegativeIntIntMultiMap(values, links, freezed) {
-    constructor() : this(IntArray(0), Int2IntOpenHashMap(), false)
-    internal constructor(values: IntArray, links: Int2IntMap) : this(values, links, true)
-
-    override fun toImmutable(): ImmutableNonNegativeIntIntMultiMap.ByList {
-      freezed = true
-      return ImmutableNonNegativeIntIntMultiMap.ByList(values, links)
-    }
-  }
-
-  override fun get(key: Int): IntSequence {
-    if (!links.containsKey(key)) return EmptyIntSequence
-
-    var idx = links.get(key)
-    if (idx >= 0) return SingleResultIntSequence(idx)
-
-    // idx is a link to  values
-    idx = idx.unpack()
-    val size = size(key)
-    val vals = values.sliceArray(idx until (idx + size))
-    vals[vals.lastIndex] = vals.last().unpack()
-    return RwIntSequence(vals)
-
-  }
-
-  fun putAll(key: Int, newValues: IntArray): Boolean {
-    if (newValues.isEmpty()) return false
-    startWrite()
-    return if (links.containsKey(key)) {
-      var idx = links.get(key)
-      if (idx < 0) {
-        // Adding new values to existing that are already stored in the [values] array
-        idx = idx.unpack()
-        val endIndexInclusive = idx + size(key)
-
-        val newValuesSize = newValues.size
-
-        val newArray = IntArray(values.size + newValuesSize)
-        values.copyInto(newArray, 0, 0, endIndexInclusive)
-        if (endIndexInclusive + newValuesSize < newArray.size) {
-          values.copyInto(newArray, endIndexInclusive + newValuesSize, endIndexInclusive)
-        }
-        newValues.forEachIndexed { index, value ->
-          newArray[endIndexInclusive + index] = value
-        }
-        newArray[endIndexInclusive + newValuesSize - 1] = newValues.last().pack()
-        val oldPrevValue = newArray[endIndexInclusive - 1]
-        newArray[endIndexInclusive - 1] = oldPrevValue.unpack()
-        this.values = newArray
-
-        // Update existing links
-        rightShiftLinks(idx, newValuesSize)
-
-        true // Returned value
-      }
-      else {
-        // This map already contains value, but it's stored directly in the [links]
-        // We should take this value, prepend to the new values and store them into [values]
-        val newValuesSize = newValues.size
-        val arraySize = values.size
-        val newArray = IntArray(arraySize + newValuesSize + 1) // plus one for the value from links
-
-        values.copyInto(newArray) // Put all previous values into array
-        newArray[arraySize] = idx // Put an existing value into array
-        newValues.copyInto(newArray, arraySize + 1)  // Put all new values
-        newArray[arraySize + newValuesSize] = newValues.last().pack()  // Mark last value as the last one
-
-        this.values = newArray
-
-        // Don't convert to links[key] = ... because it *may* became autoboxing
-        @Suppress("ReplacePutWithAssignment")
-        links.put(key, arraySize.pack())
-
-        true // Returned value
-      }
-    }
-    else {
-      // This key wasn't stored in the store before
-      val newValuesSize = newValues.size
-      if (newValuesSize > 1) {
-        // There is more than one element in new values, so we should store them in [values]
-        val arraySize = values.size
-        val newArray = IntArray(arraySize + newValuesSize)
-
-        values.copyInto(newArray)
-        newValues.copyInto(newArray, arraySize)  // Put all new values
-
-        newArray[arraySize + newValuesSize - 1] = newValues.last().pack()
-        this.values = newArray
-
-        // Don't convert to links[key] = ... because it *may* became autoboxing
-        @Suppress("ReplacePutWithAssignment")
-        links.put(key, arraySize.pack())
-
-        true // Returned value
-      }
-      else {
-        // Great! Only one value to store. No need to allocate memory in the [values]
-
-        // Don't convert to links[key] = ... because it *may* became autoboxing
-        @Suppress("ReplacePutWithAssignment")
-        links.put(key, newValues.single())
-
-        true // Returned value
-      }
-    }
-  }
-
-  fun remove(key: Int) {
-    if (!links.containsKey(key)) return
-    startWrite()
-
-    var idx = links.get(key)
-
-    if (idx >= 0) {
-      // Only one value in the store
-      links.remove(key)
-      return
-    }
-
-    idx = idx.unpack()
-
-    val size = values.size
-
-    val sizeToRemove = size(key)
-
-    val newArray = IntArray(size - sizeToRemove)
-    values.copyInto(newArray, 0, 0, idx)
-    values.copyInto(newArray, idx, idx + sizeToRemove)
-    values = newArray
-
-    links.remove(key)
-
-    // Update existing links
-    rightShiftLinks(idx, -sizeToRemove)
-  }
-
-  fun remove(key: Int, value: Int): Boolean {
-    if (!links.containsKey(key)) return false
-    startWrite()
-    var idx = links.get(key)
-
-    if (idx >= 0) {
-      if (value == idx) {
-        links.remove(key)
-        return true
-      }
-      else return false
-    }
-
-    idx = idx.unpack()
-
-    val valuesStartIndex = idx
-    val size = values.size
-    var foundIndex = -1
-
-    // Search for the value in the values list
-    var removeLast = false
-    var valueUnderIdx: Int
-    do {
-      valueUnderIdx = values[idx]
-
-      if (valueUnderIdx < 0) {
-        // Last value in the sequence
-        if (valueUnderIdx.unpack() == value) {
-          foundIndex = idx
-          removeLast = true
-        }
-        break
-      }
-
-      if (valueUnderIdx == value) {
-        foundIndex = idx
-        break
-      }
-      idx++
-    }
-    while (true)
-
-    // There is no such value by this key
-    if (foundIndex == -1) return false
-
-    // If there is only two values for the key remains, after removing one of them we should put the remaining value directly into [links]
-    val remainsOneValueInContainer = removeLast && idx == valuesStartIndex + 1   // Removing last value of two values
-                                     || idx == valuesStartIndex && values[idx + 1] < 0 // Removing first value of two values
-
-    return if (!remainsOneValueInContainer) {
-      val newArray = IntArray(size - 1)
-      values.copyInto(newArray, 0, 0, foundIndex)
-      values.copyInto(newArray, foundIndex, foundIndex + 1)
-      values = newArray
-      if (removeLast) {
-        values[foundIndex - 1] = values[foundIndex - 1].pack()
-      }
-
-      rightShiftLinks(idx, -1)
-
-      true
-    }
-    else {
-      val remainedValue = if (removeLast) values[idx - 1] else values[idx + 1].unpack()
-      val newArray = IntArray(size - 2)
-      values.copyInto(newArray, 0, 0, valuesStartIndex)
-      values.copyInto(newArray, valuesStartIndex, valuesStartIndex + 2)
-      values = newArray
-
-      // Don't convert to links[key] = ... because it *may* became autoboxing
-      @Suppress("ReplacePutWithAssignment")
-      links.put(key, remainedValue)
-
-      rightShiftLinks(idx, -2)
-
-      true
-    }
-  }
-
-  private fun startWrite() {
-    if (!freezed) return
-    values = values.clone()
-    links = Int2IntOpenHashMap(links)
-    freezed = false
-  }
-
-  private fun startWriteDoNotCopyValues() {
-    if (!freezed) return
-    values = values.clone()
-    links = Int2IntOpenHashMap(links)
-    freezed = false
-  }
-
-  private fun rightShiftLinks(idx: Int, shiftTo: Int) {
-    links.keys.forEach(IntConsumer { keyToUpdate ->
-      val valueToUpdate = links.get(keyToUpdate)
-      if (valueToUpdate >= 0) return@IntConsumer
-      val unpackedValue = valueToUpdate.unpack()
-
-      // Don't convert to links[key] = ... because it *may* became autoboxing
-      @Suppress("ReplacePutWithAssignment")
-      if (unpackedValue > idx) links.put(keyToUpdate, (unpackedValue + shiftTo).pack())
-    })
-  }
-
-  fun clear() {
-    startWriteDoNotCopyValues()
-    links.clear()
-    values = IntArray(0)
-  }
-
-  abstract fun toImmutable(): ImmutableNonNegativeIntIntMultiMap
-
-  private class RwIntSequence(private val values: IntArray) : IntSequence() {
-    override fun getIterator(): IntIterator = values.iterator()
-  }
-}
-
-sealed class NonNegativeIntIntMultiMap {
-
-  protected abstract var values: IntArray
-  protected abstract val links: Int2IntMap
-
-  abstract operator fun get(key: Int): IntSequence
-
-  fun get(key: Int, action: (Int) -> Unit) {
-    if (!links.containsKey(key)) return
-
-    var idx = links.get(key)
-    if (idx >= 0) {
-      // It's value
-      action(idx)
-      return
-    }
-
-    // It's a link to values
-    idx = idx.unpack()
-
-    var value: Int
-    do {
-      value = values[idx++]
-      if (value < 0) break
-      action(value)
-    }
-    while (true)
-
-    action(value.unpack())
-  }
-
-  /** This method works o(n) */
-  protected fun size(key: Int): Int {
-    if (!links.containsKey(key)) return 0
-
-    var idx = links.get(key)
-    if (idx >= 0) return 1
-
-    idx = idx.unpack()
-
-    // idx is a link to values
-    var res = 0
-
-    while (values[idx++] >= 0) res++
-
-    return res + 1
-  }
-
-  operator fun contains(key: Int): Boolean = links.containsKey(key)
-
-  fun isEmpty(): Boolean = links.isEmpty()
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
 
-    other as NonNegativeIntIntMultiMap
+    other as ImmutableNonNegativeIntIntMultiMap
 
     if (!values.contentEquals(other.values)) return false
     if (links != other.links) return false
@@ -400,7 +89,227 @@ sealed class NonNegativeIntIntMultiMap {
     result = 31 * result + links.hashCode()
     return result
   }
+}
 
+sealed class MutableNonNegativeIntIntMultiMap(
+  override var values: IntArray,
+  override var links: Int2IntMap,
+  protected var freezed: Boolean
+) : NonNegativeIntIntMultiMap() {
+
+  internal val modifiableValues = HashMap<Int, IntArrayList>()
+
+  class ByList private constructor(values: IntArray, links: Int2IntMap, freezed: Boolean) : MutableNonNegativeIntIntMultiMap(values, links,
+                                                                                                                             freezed) {
+    constructor() : this(IntArray(0), Int2IntOpenHashMap(), false)
+    internal constructor(values: IntArray, links: Int2IntMap) : this(values, links, true)
+
+    override fun toImmutable(): ImmutableNonNegativeIntIntMultiMap.ByList {
+      if (freezed) return ImmutableNonNegativeIntIntMultiMap.ByList(values, links)
+
+      val resultingList = IntArrayList(values.size)
+      val newLinks = Int2IntOpenHashMap()
+
+      var valuesCounter = 0
+      links.forEach(BiConsumer { key, value ->
+        if (value >= 0) {
+          newLinks[key] = value
+        }
+        else {
+          var size = 0
+          this[key].forEach {
+            resultingList.add(it)
+            size += 1
+          }
+          resultingList[resultingList.lastIndex] = resultingList.getInt(resultingList.lastIndex).pack()
+          newLinks[key] = valuesCounter.pack()
+          valuesCounter += size
+        }
+      })
+
+      modifiableValues.forEach { (key, value) ->
+        if (value.isEmpty) return@forEach
+        if (value.size == 1) {
+          newLinks[key] = value.single()
+        }
+        else {
+          resultingList.addAll(value)
+          resultingList[resultingList.lastIndex] = resultingList.getInt(resultingList.lastIndex).pack()
+          newLinks[key] = valuesCounter.pack()
+          valuesCounter += value.size
+        }
+      }
+
+      return ImmutableNonNegativeIntIntMultiMap.ByList(resultingList.toIntArray(), newLinks)
+    }
+  }
+
+  override fun get(key: Int): IntSequence {
+    if (links.containsKey(key)) {
+      var idx = links.get(key)
+      if (idx >= 0) return SingleResultIntSequence(idx)
+
+      // idx is a link to  values
+      idx = idx.unpack()
+      val size = size(key)
+      val vals = values.sliceArray(idx until (idx + size))
+      vals[vals.lastIndex] = vals.last().unpack()
+      return RwIntSequence(vals)
+    }
+    else if (key in modifiableValues) {
+      val array = modifiableValues.getValue(key).toIntArray()
+      return if (array.isEmpty()) EmptyIntSequence else RwIntSequence(array)
+    }
+
+    return EmptyIntSequence
+  }
+
+  fun putAll(key: Int, newValues: IntArray): Boolean {
+    if (newValues.isEmpty()) return false
+    startWrite()
+
+    startModifyingKey(key).addAll(newValues.asIterable())
+    return true
+  }
+
+  fun remove(key: Int) {
+    if (links.containsKey(key)) {
+      startWrite()
+      links.remove(key)
+    }
+    else if (key in modifiableValues) {
+      modifiableValues.remove(key)
+    }
+  }
+
+  fun remove(key: Int, value: Int): Boolean {
+    startWrite()
+
+    val values = startModifyingKey(key)
+    val index = values.indexOf(value)
+    return if (index >= 0) {
+      values.removeInt(index)
+      if (values.isEmpty) {
+        modifiableValues.remove(key)
+      }
+      true
+    }
+    else false
+  }
+
+  override fun keys(): IntSet = IntOpenHashSet().also {
+    it.addAll(links.keys)
+    it.addAll(modifiableValues.keys)
+  }
+
+  private fun startModifyingKey(key: Int): IntArrayList {
+    if (key in modifiableValues) return modifiableValues.getValue(key)
+    return if (links.containsKey(key)) {
+      var valueOrLink = links.get(key)
+      if (valueOrLink >= 0) {
+        val values = IntArrayList()
+        values.add(valueOrLink)
+        modifiableValues[key] = values
+        links.remove(key)
+        values
+      }
+      else {
+        valueOrLink = valueOrLink.unpack()
+        val size = size(key)
+
+        val vals = values.sliceArray(valueOrLink until (valueOrLink + size))
+        vals[vals.lastIndex] = vals.last().unpack()
+        val values = IntArrayList(vals)
+        modifiableValues[key] = values
+        links.remove(key)
+        values
+      }
+    }
+    else {
+      val values = IntArrayList()
+      modifiableValues[key] = values
+      values
+    }
+  }
+
+  /** This method works o(n) in some cases */
+  private fun size(key: Int): Int {
+    if (links.containsKey(key)) {
+      var idx = links.get(key)
+      if (idx >= 0) return 1
+
+      idx = idx.unpack()
+
+      // idx is a link to values
+      var res = 0
+
+      while (values[idx++] >= 0) res++
+
+      return res + 1
+    }
+    else if (key in modifiableValues) {
+      modifiableValues.getValue(key).size
+    }
+
+    return 0
+  }
+
+  private fun startWrite() {
+    if (!freezed) return
+    values = values.clone()
+    links = Int2IntOpenHashMap(links)
+    freezed = false
+  }
+
+  private fun startWriteDoNotCopyValues() {
+    if (!freezed) return
+    links = Int2IntOpenHashMap(links)
+    freezed = false
+  }
+
+  fun clear() {
+    startWriteDoNotCopyValues()
+    links.clear()
+    values = IntArray(0)
+    modifiableValues.clear()
+  }
+
+  abstract fun toImmutable(): ImmutableNonNegativeIntIntMultiMap
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is MutableNonNegativeIntIntMultiMap) return false
+    if (!super.equals(other)) return false
+
+    if (!values.contentEquals(other.values)) return false
+    if (links != other.links) return false
+    if (freezed != other.freezed) return false
+    if (modifiableValues != other.modifiableValues) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = super.hashCode()
+    result = 31 * result + values.contentHashCode()
+    result = 31 * result + links.hashCode()
+    result = 31 * result + freezed.hashCode()
+    result = 31 * result + modifiableValues.hashCode()
+    return result
+  }
+
+  private class RwIntSequence(private val values: IntArray) : IntSequence() {
+    override fun getIterator(): IntIterator = values.iterator()
+  }
+}
+
+sealed class NonNegativeIntIntMultiMap {
+
+  protected abstract var values: IntArray
+  protected abstract val links: Int2IntMap
+
+  abstract operator fun get(key: Int): IntSequence
+  abstract fun keys(): IntSet
 
   companion object {
     internal fun Int.pack(): Int = if (this == 0) Int.MIN_VALUE else -this
