@@ -1189,6 +1189,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   protected void updateEquivalentVariables(DfaVariableValue dfaVar, DfType type) {
     EqClass eqClass = getEqClass(dfaVar);
     if (eqClass != null) {
+      type = sanitizeNullability(type);
       for (DfaVariableValue value : eqClass.asList()) {
         if (value != dfaVar) {
           recordVariableType(value, type);
