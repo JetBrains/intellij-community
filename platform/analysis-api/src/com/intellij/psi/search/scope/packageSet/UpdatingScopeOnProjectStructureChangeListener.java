@@ -51,7 +51,8 @@ public final class UpdatingScopeOnProjectStructureChangeListener implements Proj
       return packageSet;
     });
     if (newSet != oldSet) {
-      return new NamedScope(scope.getName(), scope.getPresentableName(), scope.getIcon(), newSet);
+      String presentableName = scope.getPresentableName();
+      return new NamedScope(scope.getName(), () -> presentableName, scope.getIcon(), newSet);
     }
     return scope;
   }

@@ -8,11 +8,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.function.Supplier;
 
 public class NamedScope {
   public static final NamedScope[] EMPTY_ARRAY = new NamedScope[0];
   private final @NonNls String myName;
-  private final String myPresentableName;
+  private final @NotNull Supplier<@NlsSafe String> myPresentableNameSupplier;
   private final Icon myIcon;
   private final PackageSet myValue;
 
@@ -21,11 +22,11 @@ public class NamedScope {
   }
 
   public NamedScope(@NotNull @NonNls String name, @NotNull Icon icon, @Nullable PackageSet value) {
-    this(name, name, icon, value);
+    this(name, () -> name, icon, value);
   }
 
-  public NamedScope(@NotNull @NonNls String name, @NotNull @NlsSafe String presentableName, @NotNull Icon icon, @Nullable PackageSet value) {
-    myPresentableName = presentableName;
+  public NamedScope(@NotNull @NonNls String name, @NotNull Supplier <@NlsSafe String> presentableNameSupplier, @NotNull Icon icon, @Nullable PackageSet value) {
+    myPresentableNameSupplier = presentableNameSupplier;
     myIcon = icon;
     myName = name;
     myValue = value;
@@ -38,7 +39,7 @@ public class NamedScope {
 
   @NlsSafe
   public String getPresentableName() {
-    return myPresentableName;
+    return myPresentableNameSupplier.get();
   }
 
   @NotNull
@@ -53,7 +54,7 @@ public class NamedScope {
 
   @NotNull
   public NamedScope createCopy() {
-    return new NamedScope(myName, myPresentableName, myIcon, myValue == null ? null : myValue.createCopy());
+    return new NamedScope(myName, myPresentableNameSupplier, myIcon, myValue == null ? null : myValue.createCopy());
   }
 
   @Nullable
@@ -63,7 +64,7 @@ public class NamedScope {
 
   public static class UnnamedScope extends NamedScope {
     public UnnamedScope(@NotNull PackageSet value) {
-      super(value.getText(), value.getText(), AllIcons.Ide.LocalScope, value);
+      super(value.getText(), () -> value.getText(), AllIcons.Ide.LocalScope, value);
     }
   }
 

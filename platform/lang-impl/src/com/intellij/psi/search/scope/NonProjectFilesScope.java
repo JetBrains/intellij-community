@@ -20,7 +20,7 @@ public final class NonProjectFilesScope extends NamedScope {
   public static final NonProjectFilesScope INSTANCE = new NonProjectFilesScope();
 
   private NonProjectFilesScope() {
-    super(NAME, IdeUICustomization.getInstance().projectMessage("scope.name.non.project.files"), AllIcons.Ide.LocalScope, new FilteredPackageSet(NAME) {
+    super(NAME, () -> IdeUICustomization.getInstance().projectMessage("scope.name.non.project.files"), AllIcons.Ide.LocalScope, new FilteredPackageSet(NAME) {
       @Override
       public boolean contains(@NotNull VirtualFile file, @NotNull Project project) {
         return containsImpl(file, project);

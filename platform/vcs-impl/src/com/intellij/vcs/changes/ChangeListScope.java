@@ -18,12 +18,12 @@ public final class ChangeListScope extends FilteredNamedScope implements Weighed
   static final @NonNls String ALL_CHANGED_FILES_SCOPE_NAME = "All Changed Files";
 
   public ChangeListScope(@NotNull ChangeListManager manager) {
-    super(ALL_CHANGED_FILES_SCOPE_NAME, VcsBundle.message("scope.name.changelist.all.changed.files"), AllIcons.Scope.ChangedFilesAll, 0,
+    super(ALL_CHANGED_FILES_SCOPE_NAME, () -> VcsBundle.message("scope.name.changelist.all.changed.files"), AllIcons.Scope.ChangedFilesAll, 0,
           manager::isFileAffected);
   }
 
   public ChangeListScope(@NotNull ChangeListManager manager, @NotNull @Nls String name) {
-    super(name, name, ICON, 0, file -> manager.getChangeLists(file).stream().anyMatch(list -> list.getName().equals(name)));
+    super(name, () -> name, ICON, 0, file -> manager.getChangeLists(file).stream().anyMatch(list -> list.getName().equals(name)));
   }
 
   @Override

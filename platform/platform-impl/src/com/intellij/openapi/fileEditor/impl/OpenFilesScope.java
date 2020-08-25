@@ -19,7 +19,7 @@ public final class OpenFilesScope extends NamedScope {
   public static final OpenFilesScope INSTANCE = new OpenFilesScope();
 
   private OpenFilesScope() {
-    super("Open Files", getNameText(), AllIcons.FileTypes.Any_type, new FilteredPackageSet(getNameText()) {
+    super("Open Files", () -> getNameText(), AllIcons.FileTypes.Any_type, new FilteredPackageSet(getNameText()) {
       @Override
       public boolean contains(@NotNull VirtualFile file, @NotNull Project project) {
         FileEditorManager manager = project.isDisposed() ? null : FileEditorManager.getInstance(project);

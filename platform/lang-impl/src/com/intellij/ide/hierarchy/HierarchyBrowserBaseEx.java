@@ -14,6 +14,7 @@ import com.intellij.ide.util.scopeChooser.EditScopesDialog;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.TreeBuilderUtil;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.lang.LangBundle;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -202,12 +203,13 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
    */
   protected Map<String, Supplier<String>> getPresentableNameMap() {
     HashMap<String, Supplier<String>> map = new HashMap<>();
-    map.put(SCOPE_PROJECT, () -> SCOPE_PROJECT);
-    map.put(SCOPE_CLASS, () -> SCOPE_CLASS);
-    map.put(SCOPE_TEST, () -> SCOPE_TEST);
-    map.put(SCOPE_ALL, () -> SCOPE_ALL);
+    map.put(SCOPE_PROJECT, () -> ProjectProductionScope.INSTANCE.getPresentableName());
+    map.put(SCOPE_CLASS, () -> LangBundle.message("this.class.scope.name"));
+    map.put(SCOPE_TEST, () -> TestsScope.INSTANCE.getPresentableName());
+    map.put(SCOPE_ALL, () -> CustomScopesProviderEx.getAllScope().getPresentableName());
     return map;
   }
+
 
   @Nullable
   protected abstract JPanel createLegendPanel();
@@ -736,12 +738,12 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     }
   }
 
-  private List<NamedScope> getValidScopeNames() {
+  private List<NamedScope> getValidScopes() {
     List<NamedScope> result = new ArrayList<>();
     result.add(ProjectProductionScope.INSTANCE);
     result.add(TestsScope.INSTANCE);
     result.add(CustomScopesProviderEx.getAllScope());
-    result.add(new NamedScope(SCOPE_CLASS, SCOPE_CLASS, AllIcons.Ide.LocalScope, null));
+    result.add(new NamedScope(SCOPE_CLASS, () -> LangBundle.message("this.class.scope.name"), AllIcons.Ide.LocalScope, null));
 
     final NamedScopesHolder[] holders = NamedScopesHolder.getAllNamedScopeHolders(myProject);
     for (NamedScopesHolder holder : holders) {
@@ -771,7 +773,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     protected final DefaultActionGroup createPopupActionGroup(final JComponent button) {
       final DefaultActionGroup group = new DefaultActionGroup();
 
-      for(NamedScope namedScope: getValidScopeNames()) {
+      for(NamedScope namedScope: getValidScopes()) {
         group.add(new MenuAction(namedScope));
       }
 
@@ -822,7 +824,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         EditScopesDialog.showDialog(myProject, null);
-        if (getValidScopeNames().stream().anyMatch(scope -> scope.getName().equals(getCurrentScopeType()))) {
+        if (getValidScopes().stream().anyMatch(scope -> scope.getName().equals(getCurrentScopeType()))) {
           selectScope(SCOPE_ALL);
         }
       }
