@@ -2,7 +2,6 @@
 package com.intellij.application.options.codeStyle.arrangement.match.tokens;
 
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
-import com.intellij.lang.LangBundle;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.ui.InputValidator;
@@ -11,17 +10,18 @@ import com.intellij.openapi.ui.NamedItemsListEditor;
 import com.intellij.openapi.ui.Namer;
 import com.intellij.openapi.util.Cloner;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager;
 import com.intellij.psi.codeStyle.arrangement.std.StdArrangementRuleAliasToken;
 import gnu.trove.Equality;
-import java.text.MessageFormat;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
 import org.jdom.Verifier;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * @author Svetlana.Zemlyanskaya
@@ -89,11 +89,25 @@ public class ArrangementRuleAliasesListEditor extends NamedItemsListEditor<StdAr
     return ApplicationBundle.message("configurable.ArrangementRuleAliasesListEditor.display.name");
   }
 
+  @Override
+  protected @NlsContexts.DialogTitle String getCopyDialogTitle() {
+    return ApplicationBundle.message("dialog.title.copy.alias");
+  }
+
+  @Override
+  protected @NlsContexts.DialogTitle String getCreateNewDialogTitle() {
+    return ApplicationBundle.message("dialog.title.create.new.alias");
+  }
+
+  @Override
+  protected @NlsContexts.Label String getNewLabelText() {
+    return ApplicationBundle.message("label.new.alias.name");
+  }
+
   @Nullable
   @Override
-  public String askForProfileName(String titlePattern) {
-    String title = MessageFormat.format(titlePattern, subjDisplayName());
-    return Messages.showInputDialog(LangBundle.message("message.new.0.name", subjDisplayName()), title, Messages.getQuestionIcon(), "", new InputValidator() {
+  public String askForProfileName(String title) {
+    return Messages.showInputDialog(getNewLabelText(), title, Messages.getQuestionIcon(), "", new InputValidator() {
       @Override
       public boolean checkInput(String s) {
         return s.length() > 0 && findByName(s) == null && Verifier.checkElementName(s) == null;
