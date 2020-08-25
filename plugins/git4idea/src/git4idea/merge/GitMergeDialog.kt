@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.merge
 
+import com.intellij.dvcs.DvcsUtil
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil.BW
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -18,6 +19,7 @@ import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
+import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.components.JBTextField
@@ -25,7 +27,6 @@ import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil.invokeLaterIfNeeded
-import git4idea.GitUtil
 import git4idea.branch.GitBranchUtil
 import git4idea.branch.GitBranchUtil.equalBranches
 import git4idea.commands.Git
@@ -39,6 +40,7 @@ import git4idea.merge.dialog.*
 import git4idea.rebase.ComboBoxPrototypeRenderer
 import git4idea.rebase.ComboBoxPrototypeRenderer.Companion.COMBOBOX_VALUE_PROTOTYPE
 import git4idea.repo.GitRepository
+import git4idea.repo.GitRepositoryManager
 import git4idea.util.GitUIUtil
 import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
@@ -66,9 +68,7 @@ class GitMergeDialog(private val project: Project,
 
   val selectedOptions = mutableSetOf<GitMergeOption>()
 
-  private val repositoryManager = GitUtil.getRepositoryManager(project)
-
-  private val rootsByNames = roots.associateBy { it.name }
+  private val repositories = DvcsUtil.sortRepositories(GitRepositoryManager.getInstance(project).repositories)
 
   private val allBranches = collectAllBranches()
 
@@ -139,7 +139,7 @@ class GitMergeDialog(private val project: Project,
   @NlsSafe
   fun getCommitMessage(): String = commitMsgField.text
 
-  fun getSelectedRoot(): VirtualFile = rootsByNames[rootField.item] ?: defaultRoot
+  fun getSelectedRoot(): VirtualFile = rootField.item.root
 
   fun getSelectedBranches() = listOf(branchField.item)
 
@@ -156,14 +156,8 @@ class GitMergeDialog(private val project: Project,
   private fun collectAllBranches(): Map<GitRepository, List<@NlsSafe String>?> {
     val branches = mutableMapOf<GitRepository, List<String>?>()
 
-    for (root in roots) {
-      val repository = repositoryManager.getRepositoryForFileQuick(root)
-      if (repository == null) {
-        LOG.error("Unable to find repository with root: ${root}")
-        continue
-      }
-
-      branches[repository] = repository.branches
+    for (repo in repositories) {
+      branches[repo] = repo.branches
         .let { it.localBranches + it.remoteBranches }
         .map { it.name }
     }
@@ -271,7 +265,8 @@ class GitMergeDialog(private val project: Project,
     return unmergedBranches[repository] ?: allBranches[repository] ?: emptyList()
   }
 
-  private fun getRepository(root: VirtualFile) = allBranches.keys.find { repo -> repo.root == root }!!
+  private fun getRepository(root: VirtualFile) = repositories.find { repo -> repo.root == root }
+                                                 ?: error("Unable to find repository for root: ${root.presentableUrl}")
 
   private fun getSelectedRepository() = getRepository(getSelectedRoot())
 
@@ -330,11 +325,12 @@ class GitMergeDialog(private val project: Project,
           .growX())
   }
 
-  private fun createRootField(): ComboBox<String> {
-    val model = CollectionComboBoxModel(rootsByNames.keys.toList())
+  private fun createRootField(): ComboBox<GitRepository> {
+    val model = CollectionComboBoxModel(repositories)
     return ComboBox(model).apply {
-      item = defaultRoot.name
+      item = repositories.find { repo -> repo.root == defaultRoot } ?: repositories.first()
       isSwingPopup = false
+      renderer = SimpleListCellRenderer.create("") { DvcsUtil.getShortRepositoryName(it) }
       @Suppress("UsePropertyAccessSyntax")
       setUI(FlatComboBoxUI(outerInsets = Insets(BW.get(), BW.get(), BW.get(), 0)))
 

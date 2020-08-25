@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase
 
+import com.intellij.dvcs.DvcsUtil
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil.BW
 import com.intellij.openapi.components.service
@@ -59,7 +60,7 @@ internal class GitRebaseDialog(private val project: Project,
                                private val roots: List<VirtualFile>,
                                private val defaultRoot: VirtualFile?) : DialogWrapper(project) {
 
-  private val repositoryManager: GitRepositoryManager = GitUtil.getRepositoryManager(project)
+  private val repositories = DvcsUtil.sortRepositories(GitRepositoryManager.getInstance(project).repositories)
 
   private val rebaseSettings = project.service<GitRebaseSettings>()
 
@@ -156,7 +157,7 @@ internal class GitRebaseDialog(private val project: Project,
     }
   }
 
-  fun gitRoot(): VirtualFile = rootField.item
+  fun gitRoot(): VirtualFile = rootField.item.root
 
   fun getSelectedParams(): GitRebaseParams {
     val branch = branchField.item
@@ -166,6 +167,8 @@ internal class GitRebaseDialog(private val project: Project,
 
     return GitRebaseParams(gitVersion, branch, newBase, upstream, selectedOptions intersect REBASE_FLAGS)
   }
+
+  private fun getSelectedRepo() = rootField.item
 
   private fun saveSettings() {
     rebaseSettings.options = selectedOptions intersect REBASE_FLAGS
@@ -255,7 +258,7 @@ internal class GitRebaseDialog(private val project: Project,
   }
 
   private fun validateRebaseInProgress(): ValidationInfo? {
-    if (repositoryManager.getRepositoryForRootQuick(gitRoot())!!.isRebaseInProgress) {
+    if (getSelectedRepo().isRebaseInProgress) {
       return ValidationInfo(GitBundle.message("rebase.dialog.error.rebase.in.progress"))
     }
     return null
@@ -266,16 +269,14 @@ internal class GitRebaseDialog(private val project: Project,
     remoteBranches.clear()
     tags.clear()
 
-    val root = gitRoot()
-    val repository = repositoryManager.getRepositoryForRootQuick(root)
-    check(repository != null) { "Repository is null for root $root" }
+    val repository = getSelectedRepo()
 
     currentBranch = repository.currentBranch
 
     localBranches += GitBranchUtil.sortBranchesByName(repository.branches.localBranches)
     remoteBranches += GitBranchUtil.sortBranchesByName(repository.branches.remoteBranches)
 
-    tags += loadTags(root)
+    tags += loadTags(gitRoot())
   }
 
   private fun loadTags(root: VirtualFile): List<GitTag> {
@@ -429,12 +430,12 @@ internal class GitRebaseDialog(private val project: Project,
     setUI(FlatComboBoxUI(outerInsets = Insets(BW.get(), 0, BW.get(), 0)))
   }
 
-  private fun createRootField() = ComboBox(CollectionComboBoxModel(roots)).apply {
+  private fun createRootField() = ComboBox(CollectionComboBoxModel(repositories)).apply {
     isSwingPopup = false
-    renderer = SimpleListCellRenderer.create(GitBundle.message("rebase.dialog.invalid.root")) { it.name }
+    item = repositories.find { repo -> repo.root == defaultRoot } ?: repositories.first()
+    renderer = SimpleListCellRenderer.create("") { DvcsUtil.getShortRepositoryName(it) }
     @Suppress("UsePropertyAccessSyntax")
     setUI(FlatComboBoxUI(outerInsets = Insets(BW.get(), BW.get(), BW.get(), 0)))
-    item = defaultRoot ?: roots[0]
 
     val listener = ActionListener {
       loadRefs()

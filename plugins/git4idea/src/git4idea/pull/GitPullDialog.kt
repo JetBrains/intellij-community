@@ -386,7 +386,7 @@ class GitPullDialog(private val project: Project,
     @Suppress("UsePropertyAccessSyntax")
     setUI(FlatComboBoxUI(outerInsets = Insets(1, 1, 1, 0)))
 
-    item = repositories.find { repo -> repo.root == defaultRoot }
+    item = repositories.find { repo -> repo.root == defaultRoot } ?: repositories.first()
 
     addActionListener {
       updateTitle()
