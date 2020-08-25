@@ -2,13 +2,11 @@
 package com.intellij.internal.statistics.collector
 
 import com.intellij.internal.statistic.collectors.fus.os.SystemRuntimeCollector
-import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.testFramework.HeavyPlatformTestCase
 import org.junit.Assert
 import org.junit.Test
 
 class SystemRuntimeCollectorTest : HeavyPlatformTestCase() {
-
 
   @Test
   fun `test round down method`() {
@@ -105,11 +103,11 @@ class SystemRuntimeCollectorTest : HeavyPlatformTestCase() {
     assertMb("ReservedCodeCacheSize", 500, SystemRuntimeCollector.convertOptionToData("-XX:ReservedCodeCacheSize=500m"))
     assertMb("ReservedCodeCacheSize", 500, SystemRuntimeCollector.convertOptionToData("-XX:ReservedCodeCacheSize=1500m"))
     assertMb("ReservedCodeCacheSize", 500, SystemRuntimeCollector.convertOptionToData("-XX:ReservedCodeCacheSize=1536000K"))
-
   }
 
-  private fun assertMb(name: String, sizeMb: Long, actual: FeatureUsageData?) {
+  private fun assertMb(name: String, sizeMb: Long, actual: Pair<String, Long>?) {
     Assert.assertNotNull(actual)
-    Assert.assertEquals(FeatureUsageData().addData("name", name).addData("value", sizeMb), actual)
+    Assert.assertEquals(name, actual!!.first)
+    Assert.assertEquals(sizeMb, actual.second)
   }
 }
