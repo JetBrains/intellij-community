@@ -487,7 +487,7 @@ public abstract class InplaceRefactoring {
   private static void navigateToStarted(final Document oldDocument,
                                         final Project project,
                                         @Messages.YesNoResult final int exitCode,
-                                        String commandName) {
+                                        @NlsContexts.Command String commandName) {
     final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(oldDocument);
     if (file != null) {
       final VirtualFile virtualFile = file.getVirtualFile();

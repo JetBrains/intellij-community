@@ -19,6 +19,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -118,7 +119,7 @@ public class ConflictsDialog extends DialogWrapper{
     }
 
     if (myConflictDescriptions.length > MAX_CONFLICTS_SHOWN) {
-      buf.appendLink(EXPAND_LINK, "Show more...");
+      buf.appendLink(EXPAND_LINK, RefactoringBundle.message("show.more.conflicts.link"));
     }
 
     JEditorPane messagePane = new JEditorPane();
@@ -195,7 +196,7 @@ public class ConflictsDialog extends DialogWrapper{
           isWrite = access != ReadWriteAccessDetector.Access.Read;
         }
 
-        for (final String conflictDescription : myElementConflictDescription.get(element)) {
+        for (final @NlsContexts.Tooltip String conflictDescription : myElementConflictDescription.get(element)) {
           final UsagePresentation usagePresentation = new DescriptionOnlyUsage(conflictDescription).getPresentation();
           Usage usage = isRead || isWrite ? new ReadWriteAccessUsageInfo2UsageAdapter(new UsageInfo(element), isRead, isWrite) {
             @NotNull
@@ -228,7 +229,7 @@ public class ConflictsDialog extends DialogWrapper{
     private class DescriptionOnlyUsage implements Usage {
       private final @NlsContexts.Tooltip String myConflictDescription;
 
-      DescriptionOnlyUsage(@NotNull String conflictDescription) {
+      DescriptionOnlyUsage(@NotNull @NlsContexts.Tooltip String conflictDescription) {
         myConflictDescription = StringUtil.unescapeXmlEntities(conflictDescription)
           .replaceAll("<code>", "")
           .replaceAll("</code>", "")
@@ -237,8 +238,12 @@ public class ConflictsDialog extends DialogWrapper{
       }
 
       DescriptionOnlyUsage() {
-        myConflictDescription =
-          Pattern.compile("<[^<>]*>").matcher(StringUtil.join(new LinkedHashSet<>(myElementConflictDescription.get(null)), "\n")).replaceAll("");
+        myConflictDescription = getEscapedDescription(StringUtil.join(new LinkedHashSet<>(myElementConflictDescription.get(null)), "\n"));
+      }
+
+      @Contract(pure = true)
+      private String getEscapedDescription(String conflictsMessage) {
+        return Pattern.compile("<[^<>]*>").matcher(conflictsMessage).replaceAll("");
       }
 
       @Override

@@ -35,6 +35,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -118,7 +119,7 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
           }
         }
         else {
-          final StringBuffer message = new StringBuffer();
+          final @Nls StringBuffer message = new StringBuffer();
           RenameUtil.buildPackagePrefixChangedMessage(virtualFiles, message, qualifiedName);
           buildMultipleDirectoriesInPackageMessage(message, getQualifiedName(aPackage), directories);
           message.append(RefactoringBundle.message("directories.and.all.references.to.package.will.be.renamed",

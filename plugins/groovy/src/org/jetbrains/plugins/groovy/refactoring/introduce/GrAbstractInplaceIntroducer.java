@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -51,7 +52,7 @@ public abstract class GrAbstractInplaceIntroducer<Settings extends GrIntroduceSe
 
   private final GrIntroduceContext myContext;
 
-  public GrAbstractInplaceIntroducer(String title,
+  public GrAbstractInplaceIntroducer(@NlsContexts.Command String title,
                                      OccurrencesChooser.ReplaceChoice replaceChoice,
                                      GrIntroduceContext context) {
     super(context.getProject(), context.getEditor(), context.getExpression(), context.getVar(), context.getOccurrences(), title, GroovyFileType.GROOVY_FILE_TYPE);

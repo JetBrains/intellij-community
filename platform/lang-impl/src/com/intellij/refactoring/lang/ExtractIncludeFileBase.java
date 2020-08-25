@@ -291,7 +291,7 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Re
     return getRefactoringNameText();
   }
 
-  static String getRefactoringNameText() {
+  static @NlsContexts.DialogTitle String getRefactoringNameText() {
     return RefactoringBundle.message("extract.include.file.title");
   }
 }

@@ -188,7 +188,7 @@ class RefactoringAvailableGutterIconRenderer(@NlsContexts.Tooltip private val to
   override fun hashCode() = 0
 }
 
-class RefactoringDisabledGutterIconRenderer(private val tooltip: String) : GutterIconRenderer() {
+class RefactoringDisabledGutterIconRenderer(private @NlsContexts.Tooltip val tooltip: String) : GutterIconRenderer() {
   override fun getIcon() = AllIcons.Gutter.SuggestedRefactoringBulbDisabled
   override fun getTooltipText() = tooltip
   override fun getAlignment() = Alignment.RIGHT

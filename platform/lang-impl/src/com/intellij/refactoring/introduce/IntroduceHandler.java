@@ -203,7 +203,7 @@ public abstract class IntroduceHandler<Target extends IntroduceTarget, Scope ext
    * @return null if everything is ok, or a short message describing why it's impossible to perform the refactoring. It will be shown in a balloon popup.
    */
   @Nullable
-  protected abstract String checkUsages(@NotNull List<UsageInfo> usages);
+  protected abstract @NlsContexts.DialogMessage String checkUsages(@NotNull List<UsageInfo> usages);
 
   /**
    * @return find all possible scopes for the target to introduce
@@ -241,10 +241,10 @@ public abstract class IntroduceHandler<Target extends IntroduceTarget, Scope ext
    * @return null if everything is ok, or a short message describing why the refactoring cannot be performed
    */
   @Nullable
-  protected abstract String checkSelectedTarget(@NotNull Target target,
-                                                @NotNull PsiFile file,
-                                                @NotNull Editor editor,
-                                                @NotNull Project project);
+  protected abstract @NlsContexts.DialogMessage String checkSelectedTarget(@NotNull Target target,
+                                                                           @NotNull PsiFile file,
+                                                                           @NotNull Editor editor,
+                                                                           @NotNull Project project);
 
   @NotNull
   protected abstract @NlsContexts.DialogTitle String getRefactoringName();
@@ -280,7 +280,7 @@ public abstract class IntroduceHandler<Target extends IntroduceTarget, Scope ext
 
   @NotNull
   protected @NlsContexts.DialogMessage String getEmptyScopeErrorMessage() {
-    return getRefactoringName() + " is not available in the current scope";
+    return RefactoringBundle.message("dialog.message.refactoring.not.available.in.current.scope", getRefactoringName());
   }
 
 

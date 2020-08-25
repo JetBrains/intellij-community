@@ -299,7 +299,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
     final JComponent optionsPanel = createOptionsPanel();
 
     final JPanel subPanel = new JPanel(new BorderLayout());
-    final List<Pair<String, JPanel>> panels = createAdditionalPanels();
+    final List<Pair<@NlsContexts.TabTitle String, JPanel>> panels = createAdditionalPanels();
     if (myMethod.canChangeParameters()) {
       final JPanel parametersPanel = createParametersPanel(!panels.isEmpty());
       if (!panels.isEmpty()) {
@@ -320,7 +320,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
     else {
       final TabbedPaneWrapper tabbedPane = new TabbedPaneWrapper(getDisposable());
       tabbedPane.addTab(RefactoringBundle.message("parameters.border.title"), panel);
-      for (Pair<String, JPanel> extraPanel : panels) {
+      for (Pair<@NlsContexts.TabTitle String, JPanel> extraPanel : panels) {
         tabbedPane.addTab(extraPanel.first, extraPanel.second);
       }
       main = new JPanel(new BorderLayout());
@@ -382,7 +382,7 @@ public abstract class ChangeSignatureDialogBase<ParamInfo extends ParameterInfo,
 
 
   @NotNull
-  protected List<Pair<String, JPanel>> createAdditionalPanels() {
+  protected List<Pair<@NlsContexts.TabTitle String, JPanel>> createAdditionalPanels() {
     return Collections.emptyList();
   }
 

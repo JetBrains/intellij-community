@@ -149,7 +149,7 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo, TableItem
       this(project, RefactoringBundle.message("column.name.name"));
     }
 
-    public NameColumn(Project project, String title) {
+    public NameColumn(Project project, @NlsContexts.ColumnName String title) {
       super(title);
       myProject = project;
     }
@@ -195,7 +195,7 @@ public abstract class ParameterTableModelBase<P extends ParameterInfo, TableItem
       this(project, fileType, RefactoringBundle.message("column.name.default.value"));
     }
 
-    public DefaultValueColumn(Project project, FileType fileType, String title) {
+    public DefaultValueColumn(Project project, FileType fileType, @NlsContexts.ColumnName String title) {
       super(title);
       myProject = project;
       myFileType = fileType;

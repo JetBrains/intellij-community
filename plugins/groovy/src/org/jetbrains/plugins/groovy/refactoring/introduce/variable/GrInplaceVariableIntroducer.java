@@ -5,6 +5,7 @@ import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.PopupAdvertisement;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -39,7 +40,7 @@ import java.awt.event.ActionListener;
 public abstract class GrInplaceVariableIntroducer extends GrAbstractInplaceIntroducer<GroovyIntroduceVariableSettings> {
   private JCheckBox myCanBeFinalCb;
 
-  public GrInplaceVariableIntroducer(String title,
+  public GrInplaceVariableIntroducer(@NlsContexts.Command String title,
                                      OccurrencesChooser.ReplaceChoice replaceChoice,
                                      GrIntroduceContext context) {
     super(title, replaceChoice, context);

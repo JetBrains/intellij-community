@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler;
@@ -125,7 +126,11 @@ public class RenameHandlerRegistry {
   }
 
   public static @Nls(capitalization = Nls.Capitalization.Sentence) String getHandlerTitle(RenameHandler renameHandler) {
-    return renameHandler instanceof TitledHandler ? StringUtil.capitalize(StringUtil.toLowerCase(((TitledHandler)renameHandler).getActionTitle())) : renameHandler.toString();
+    if (renameHandler instanceof TitledHandler) {
+      return StringUtil.capitalize(StringUtil.toLowerCase(((TitledHandler)renameHandler).getActionTitle()));
+    }
+    @NlsSafe String handlerToString = renameHandler.toString();
+    return handlerToString;
   }
 
   private static class HandlersChooser extends DialogWrapper {
