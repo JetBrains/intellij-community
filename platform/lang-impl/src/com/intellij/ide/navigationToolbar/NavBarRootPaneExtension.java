@@ -14,6 +14,7 @@ import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
+import kotlin.Unit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,9 +34,17 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
   private JPanel myRunPanel;
   private final boolean myNavToolbarGroupExist;
   private JScrollPane myScrollPane;
+  private NavBarModificator myNavBarModificator;
 
   public NavBarRootPaneExtension(@NotNull Project project) {
     myProject = project;
+
+    myNavBarModificator = new NavBarModificator(
+      () -> {
+        revalidate();
+        return Unit.INSTANCE;
+      },
+      project);
 
     myProject.getMessageBus().connect().subscribe(UISettingsListener.TOPIC, uiSettings -> {
       toggleRunPanel(!uiSettings.getShowMainToolbar() && uiSettings.getShowNavigationBar() && !uiSettings.getPresentationMode());
@@ -122,6 +131,8 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
     if (show && myRunPanel == null && runToolbarExists()) {
       final ActionManager manager = ActionManager.getInstance();
       AnAction toolbarRunGroup = CustomActionsSchema.getInstance().getCorrectedAction("NavBarToolBar");
+      toolbarRunGroup = myNavBarModificator.modify(toolbarRunGroup);
+
       if (toolbarRunGroup instanceof ActionGroup && myWrapperPanel != null) {
         final ActionToolbar actionToolbar = manager.createActionToolbar(ActionPlaces.NAVIGATION_BAR_TOOLBAR, (ActionGroup)toolbarRunGroup, true);
         final JComponent component = actionToolbar.getComponent();
