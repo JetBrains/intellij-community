@@ -19,25 +19,25 @@
   <depends>com.intellij.completion.ml</depends>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationInitializedListener implementation="com.intellij.stats.completion.CompletionTrackerInitializer"/>
+    <applicationInitializedListener implementation="com.intellij.stats.completion.tracker.CompletionTrackerInitializer"/>
 
-    <applicationService serviceInterface="com.intellij.stats.completion.CompletionLoggerProvider"
-                        serviceImplementation="com.intellij.stats.completion.CompletionFileLoggerProvider"/>
+    <applicationService serviceInterface="com.intellij.stats.completion.tracker.CompletionLoggerProvider"
+                        serviceImplementation="com.intellij.stats.completion.tracker.CompletionFileLoggerProvider"/>
 
-    <applicationService serviceInterface="com.intellij.stats.storage.FilePathProvider"
-                        serviceImplementation="com.intellij.stats.storage.PluginDirectoryFilePathProvider"
+    <applicationService serviceInterface="com.intellij.stats.completion.storage.FilePathProvider"
+                        serviceImplementation="com.intellij.stats.completion.storage.PluginDirectoryFilePathProvider"
                         testServiceImplementation="com.intellij.mocks.TestFilePathProvider"/>
 
-    <applicationService serviceInterface="com.intellij.stats.sender.StatisticSender"
-                        serviceImplementation="com.intellij.stats.sender.StatisticSenderImpl"
+    <applicationService serviceInterface="com.intellij.stats.completion.sender.StatisticSender"
+                        serviceImplementation="com.intellij.stats.completion.sender.StatisticSenderImpl"
                         testServiceImplementation="com.intellij.mocks.TestStatisticSender"/>
 
-    <applicationService serviceInterface="com.intellij.stats.network.service.RequestService"
-                        serviceImplementation="com.intellij.stats.network.service.SimpleRequestService"
+    <applicationService serviceInterface="com.intellij.stats.completion.network.service.RequestService"
+                        serviceImplementation="com.intellij.stats.completion.network.service.SimpleRequestService"
                         testServiceImplementation="com.intellij.mocks.TestRequestService"/>
 
-    <applicationService serviceInterface="com.intellij.stats.completion.InstallationIdProvider"
-                        serviceImplementation="com.intellij.stats.completion.PermanentInstallationIdProvider"/>
+    <applicationService serviceInterface="com.intellij.stats.completion.tracker.InstallationIdProvider"
+                        serviceImplementation="com.intellij.stats.completion.tracker.PermanentInstallationIdProvider"/>
 
     <registryKey key="completion.stats.send.logs" defaultValue="true"
                  description="Send anonymous logs about completion usage in EAP builds"/>
@@ -48,6 +48,6 @@
     <registryKey key="stats.collector.analytics.platform.url" defaultValue="default"
                  description="URL to status page with endpoints for sending completion logs to Analytics Platform"/>
 
-    <preloadingActivity implementation="com.intellij.stats.sender.SenderPreloadingActivity"/>
+    <preloadingActivity implementation="com.intellij.stats.completion.sender.SenderPreloadingActivity"/>
   </extensions>
 </idea-plugin>

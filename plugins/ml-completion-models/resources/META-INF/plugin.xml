@@ -14,7 +14,7 @@
   <depends>com.intellij.completion.ml</depends>
 
   <extensions defaultExtensionNs="com.intellij">
-    <completion.ml.model implementation="com.jetbrains.completion.ranker.ExperimentKotlinMLRankingProvider"/>
-    <completion.ml.model implementation="com.jetbrains.completion.ranker.ExperimentScalaMLRankingProvider"/>
+    <completion.ml.model implementation="com.jetbrains.completion.ml.ranker.ExperimentKotlinMLRankingProvider"/>
+    <completion.ml.model implementation="com.jetbrains.completion.ml.ranker.ExperimentScalaMLRankingProvider"/>
   </extensions>
 </idea-plugin>

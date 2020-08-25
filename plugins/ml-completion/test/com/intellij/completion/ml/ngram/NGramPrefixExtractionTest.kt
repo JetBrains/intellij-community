@@ -2,8 +2,7 @@
 package com.intellij.completion.ml.ngram
 
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
-import com.intellij.completion.ngram.NGram
-import com.intellij.completion.util.CompletionUtil
+import com.intellij.completion.ml.util.CompletionUtil
 import com.intellij.ide.highlighter.JavaFileType
 import org.assertj.core.api.Assertions.assertThat
 

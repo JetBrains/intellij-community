@@ -2,12 +2,12 @@
 
 package com.intellij.mocks
 
-import com.intellij.completion.experiment.ExperimentInfo
-import com.intellij.completion.experiment.ExperimentStatus
+import com.intellij.completion.ml.experiment.ExperimentInfo
+import com.intellij.completion.ml.experiment.ExperimentStatus
 import com.intellij.lang.Language
-import com.intellij.stats.network.service.RequestService
-import com.intellij.stats.sender.StatisticSender
-import com.intellij.stats.storage.UniqueFilesProvider
+import com.intellij.stats.completion.network.service.RequestService
+import com.intellij.stats.completion.sender.StatisticSender
+import com.intellij.stats.completion.storage.UniqueFilesProvider
 import org.mockito.Mockito
 import java.io.File
 

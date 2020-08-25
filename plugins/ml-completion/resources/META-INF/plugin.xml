@@ -17,44 +17,44 @@
 
   <extensionPoints>
     <extensionPoint name="policy" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.completion.CompletionStatsPolicy"/>
+      <with attribute="implementationClass" implements="com.intellij.completion.ml.CompletionStatsPolicy"/>
     </extensionPoint>
   </extensionPoints>
 
-  <resource-bundle>messages.MlCompletionBundle</resource-bundle>
+  <resource-bundle>messages.MLCompletionBundle</resource-bundle>
 
   <actions>
     <action id="DumpMLCompletionFeatures"
-            class="com.intellij.completion.actions.MLCompletionFeaturesUtil$CopyFeaturesToClipboard">
+            class="com.intellij.completion.ml.actions.MLCompletionFeaturesUtil$CopyFeaturesToClipboard">
       <keyboard-shortcut keymap="$default" first-keystroke="ctrl shift alt 0"/>
       <add-to-group group-id="MaintenanceGroup" anchor="before" relative-to-action="DumpLookupElementWeights"/>
     </action>
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationInitializedListener implementation="com.intellij.completion.tracker.FactorsTrackerInitializer"/>
-    <applicationService serviceImplementation="com.intellij.completion.settings.CompletionMLRankingSettings"/>
+    <applicationInitializedListener implementation="com.intellij.completion.ml.tracker.FactorsTrackerInitializer"/>
+    <applicationService serviceImplementation="com.intellij.completion.ml.settings.CompletionMLRankingSettings"/>
 
     <applicationService serviceInterface="com.intellij.codeInsight.completion.CompletionFinalSorter$Factory"
-                        serviceImplementation="com.intellij.completion.sorting.MLSorterFactory"/>
+                        serviceImplementation="com.intellij.completion.ml.sorting.MLSorterFactory"/>
 
-    <codeCompletionConfigurable provider="com.intellij.completion.settings.MLRankingConfigurableProvider"/>
+    <codeCompletionConfigurable provider="com.intellij.completion.ml.settings.MLRankingConfigurableProvider"/>
 
-    <applicationService serviceImplementation="com.intellij.completion.personalization.impl.ApplicationUserFactorStorage"/>
+    <applicationService serviceImplementation="com.intellij.completion.ml.personalization.impl.ApplicationUserFactorStorage"/>
 
-    <applicationService serviceInterface="com.intellij.completion.personalization.UserFactorsManager"
-                        serviceImplementation="com.intellij.completion.personalization.impl.UserFactorsManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.completion.ml.personalization.UserFactorsManager"
+                        serviceImplementation="com.intellij.completion.ml.personalization.impl.UserFactorsManagerImpl"/>
 
-    <projectService serviceImplementation="com.intellij.completion.personalization.impl.ProjectUserFactorStorage"/>
+    <projectService serviceImplementation="com.intellij.completion.ml.personalization.impl.ProjectUserFactorStorage"/>
 
-    <applicationService serviceInterface="com.intellij.completion.experiment.ExperimentStatus"
-                        serviceImplementation="com.intellij.completion.experiment.ClientExperimentStatus"/>
+    <applicationService serviceInterface="com.intellij.completion.ml.experiment.ExperimentStatus"
+                        serviceImplementation="com.intellij.completion.ml.experiment.ClientExperimentStatus"/>
 
-    <projectService serviceImplementation="com.intellij.completion.ngram.NGramModelRunnerManager"/>
+    <projectService serviceImplementation="com.intellij.completion.ml.ngram.NGramModelRunnerManager"/>
 
-    <weigher key="completion" id="ml_weigh" implementationClass="com.intellij.completion.ml.MLCompletionWeigher" order="last"/>
+    <weigher key="completion" id="ml_weigh" implementationClass="com.intellij.completion.ml.features.MLCompletionWeigher" order="last"/>
     <completion.contributor language="any" order="first" id="ml_context"
-                            implementationClass="com.intellij.completion.sorting.ContextFeaturesContributor"/>
+                            implementationClass="com.intellij.completion.ml.sorting.ContextFeaturesContributor"/>
 
     <registryKey key="completion.ml.reorder.only.top.items" defaultValue="true"
                  description="Reorder only a few items on the top in the lookup to preserve a proper grouping for the items below"/>
@@ -71,19 +71,19 @@
     <completion.ml.contextFeatures language="" implementationClass="com.intellij.completion.ml.common.CommonLocationFeatures"/>
     <completion.ml.elementFeatures language="" implementationClass="com.intellij.completion.ml.common.CommonElementLocationFeatures"/>
 
-    <completion.ml.elementFeatures language="" implementationClass="com.intellij.completion.ngram.NGramFeatureProvider"/>
+    <completion.ml.elementFeatures language="" implementationClass="com.intellij.completion.ml.ngram.NGramFeatureProvider"/>
     <completion.ml.elementFeatures language="" implementationClass="com.intellij.completion.ml.common.ContextSimilarityFeatures"/>
     <completion.ml.elementFeatures language="" implementationClass="com.intellij.completion.ml.common.RecentPlacesFeatures"/>
     <completion.ml.elementFeatures language="" implementationClass="com.intellij.codeInsight.completion.ml.VcsFeatureProvider"/>
 
-    <lookup.usageDetails implementation="com.intellij.completion.ml.MLRankingLookupUsageDescriptor"/>
+    <lookup.usageDetails implementation="com.intellij.completion.ml.features.MLRankingLookupUsageDescriptor"/>
 
     <statistics.validation.customValidationRule
-      implementation="com.intellij.completion.settings.MLCompletionSettingsCollector$MLRankingSettingsValidationRule"/>
+      implementation="com.intellij.completion.ml.settings.MLCompletionSettingsCollector$MLRankingSettingsValidationRule"/>
   </extensions>
 
   <applicationListeners>
-    <listener class="com.intellij.completion.sorting.PositionDiffArrowInitializer"
+    <listener class="com.intellij.completion.ml.sorting.PositionDiffArrowInitializer"
               topic="com.intellij.openapi.project.ProjectManagerListener"/>
   </applicationListeners>
 

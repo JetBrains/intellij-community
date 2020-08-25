@@ -4,8 +4,8 @@ package com.intellij.completion.ml.common
 import com.intellij.codeInsight.completion.ml.CompletionEnvironment
 import com.intellij.codeInsight.completion.ml.ContextFeatureProvider
 import com.intellij.codeInsight.completion.ml.MLFeatureValue
-import com.intellij.completion.util.prefix
-import com.intellij.completion.ngram.NGram
+import com.intellij.completion.ml.util.prefix
+import com.intellij.completion.ml.ngram.NGram
 import com.intellij.openapi.editor.ex.util.EditorUtil
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.TextRange
