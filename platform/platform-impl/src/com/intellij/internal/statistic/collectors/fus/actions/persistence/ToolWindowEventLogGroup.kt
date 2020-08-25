@@ -17,8 +17,8 @@ class ToolWindowEventLogGroup : CounterUsagesCollector() {
     private val GROUP = EventLogGroup("toolwindow", configVersion)
 
     @JvmField val TOOLWINDOW_ID = String("id").withCustomRule("toolwindow")
-    @JvmField val VIEW_MODE: EnumEventField<ViewMode> = Enum("ViewMode", ViewMode::class.java) { mode: ViewMode -> mode.toString() }
-    @JvmField val LOCATION: EnumEventField<Anchor> = Enum("Location", Anchor::class.java) { location: Anchor -> location.toString() }
+    @JvmField val VIEW_MODE: EnumEventField<ViewMode> = Enum("ViewMode", ViewMode::class.java) { mode: ViewMode -> mode.name }
+    @JvmField val LOCATION: EnumEventField<Anchor> = Enum("Location", Anchor::class.java) { location: Anchor -> location.name }
 
     @JvmField val ACTIVATED = registerToolwindowEvent("activated")
     @JvmField val SHOWN = registerToolwindowEvent("shown")
