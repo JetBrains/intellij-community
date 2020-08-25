@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.ex
 
+import com.intellij.diff.util.LineRange
 import com.intellij.diff.util.Side
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
@@ -68,6 +69,7 @@ interface PartialLocalLineStatusTracker : LineStatusTracker<LocalRange> {
 
 
   fun hasPartialChangesToCommit(): Boolean
+  fun getCommittedChangeLineRanges(changelistId: String?): List<LineRange>
 
   fun handlePartialCommit(side: Side, changelistIds: List<String>, honorExcludedFromCommit: Boolean): PartialCommitHelper
   fun rollbackChanges(changelistsIds: List<String>, honorExcludedFromCommit: Boolean)
@@ -299,6 +301,14 @@ class ChangelistsLocalLineStatusTracker(project: Project,
       dropExistingUndoActions()
 
       updateHighlighters()
+    }
+  }
+
+  override fun getCommittedChangeLineRanges(changelistId: String?): List<LineRange> {
+    val marker = changelistId?.let(::ChangeListMarker) // null = any marker
+
+    return documentTracker.readLock {
+      blocks.mapNotNull { if (it.excludedFromCommit || (marker != null && marker != it.marker)) null else LineRange(it.start, it.end) }
     }
   }
 

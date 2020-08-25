@@ -5,6 +5,7 @@ import com.intellij.diff.comparison.ComparisonManager;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.fragments.LineFragment;
+import com.intellij.diff.util.LineRange;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.ide.todo.TodoFilter;
 import com.intellij.ide.todo.TodoIndexPatternProvider;
@@ -23,7 +24,10 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListChange;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker;
+import com.intellij.openapi.vcs.impl.PartialChangesUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -108,7 +112,27 @@ public class TodoCheckinHandlerWorker {
         String beforeContent = StringUtil.convertLineSeparators(rawBeforeContent);
         String afterContent = afterDocument.getText();
 
-        return new MyEditedFileProcessor(myProject, afterFilePath, beforeContent, afterContent, newTodoItems, myTodoFilter);
+        PartialLocalLineStatusTracker tracker = PartialChangesUtil.getPartialTracker(myProject, change);
+        List<LineRange> committedLineRanges;
+
+        if (tracker != null) {
+          String changelistId;
+
+          if (change instanceof ChangeListChange) {
+            changelistId = ((ChangeListChange)change).getChangeListId();
+          }
+          else {
+            changelistId = null;
+          }
+
+          committedLineRanges = tracker.getCommittedChangeLineRanges(changelistId);
+        }
+        else {
+          committedLineRanges = Collections.singletonList(new LineRange(0, afterDocument.getLineCount()));
+        }
+
+        return new MyEditedFileProcessor(myProject, afterFilePath, beforeContent, afterContent, newTodoItems, myTodoFilter,
+                                         committedLineRanges);
       });
 
       try {
@@ -145,19 +169,22 @@ public class TodoCheckinHandlerWorker {
     @NotNull private final FilePath myAfterFile;
     @NotNull private final List<? extends TodoItem> myNewTodoItems;
     private final TodoFilter myTodoFilter;
+    private final List<LineRange> myCommittedLines;
 
     private MyEditedFileProcessor(@NotNull Project project,
                                   @NotNull FilePath afterFilePath,
                                   @NotNull String beforeContent,
                                   @NotNull String afterContent,
                                   @NotNull List<? extends TodoItem> newTodoItems,
-                                  @Nullable TodoFilter todoFilter) {
+                                  @Nullable TodoFilter todoFilter,
+                                  @NotNull List<LineRange> committedLines) {
       myProject = project;
       myAfterFile = afterFilePath;
       myBeforeContent = beforeContent;
       myAfterContent = afterContent;
       myNewTodoItems = newTodoItems;
       myTodoFilter = todoFilter;
+      myCommittedLines = committedLines;
     }
 
     public void process() throws DiffTooBigException {
@@ -168,6 +195,8 @@ public class TodoCheckinHandlerWorker {
         myNewTodoItems, lineFragments,
         TODO_ITEM_CONVERTOR, new RightLineFragmentConvertor(myAfterContent),
         (todoItem, lineFragment) -> changedTodoItems.add(Pair.create(todoItem, lineFragment)));
+
+      changedTodoItems.removeIf(pair -> !wasTodoItemCommitted(pair.second));
 
       if (changedTodoItems.isEmpty()) return;
 
@@ -219,6 +248,19 @@ public class TodoCheckinHandlerWorker {
         }
       }
       myInChangedTodos.removeAll(myAddedOrEditedTodos);
+    }
+
+    private boolean wasTodoItemCommitted(LineFragment lineFragment) {
+      int fragmentStart = lineFragment.getStartLine2();
+      int fragmentEnd = lineFragment.getEndLine2();
+
+      for (LineRange committed : myCommittedLines) {
+        if (committed.contains(fragmentStart, fragmentEnd)) {
+          return true;
+        }
+      }
+
+      return false;
     }
   }
 
