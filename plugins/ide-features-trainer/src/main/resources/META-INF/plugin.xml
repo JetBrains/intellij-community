@@ -53,6 +53,8 @@
         <!--                implementation="org.jetbrains.plugins.feature.suggester.suggesters.RunToCursorSuggester"/>-->
         <featureSuggester.featureSuggester
                 implementation="org.jetbrains.plugins.feature.suggester.suggesters.EditBreakpointSuggester"/>
+        <featureSuggester.featureSuggester
+                implementation="org.jetbrains.plugins.feature.suggester.suggesters.MuteBreakpointsSuggester"/>
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">
