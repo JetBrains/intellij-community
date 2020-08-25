@@ -467,7 +467,7 @@ public final class JavaI18nUtil extends I18nUtil {
           }
         }
       }
-      else if (!addChoicePattern(expression, formatParameters, project, result)) {
+      else if (nested || !addChoicePattern(expression, formatParameters, project, result)) {
         result.append("{").append(formatParameters.size()).append("}");
         formatParameters.add(expression);
       }
@@ -542,7 +542,7 @@ public final class JavaI18nUtil extends I18nUtil {
         formatParameters.add(expression);
       }
     }
-    return elseStr;
+    return elseStr.replaceAll("([<>|#])", "'$1'");
   }
 
   @NotNull

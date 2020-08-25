@@ -106,7 +106,7 @@ public class I18nizeTest extends LightJavaCodeInsightTestCase {
     UStringConcatenationsFacade concatenation = UStringConcatenationsFacade.createFromTopConcatenation(enclosingStringLiteral);
     assertNotNull(concatenation);
     ArrayList<UExpression> args = new ArrayList<>();
-    Assert.assertEquals("Not a valid java identifier part in {0, choice, 0#prefix|1#suffix}", JavaI18nUtil.buildUnescapedFormatString(concatenation, args, getProject()));
+    Assert.assertEquals("Not a valid java identifier part in {0, choice, 0#prefix|1#'<'br/'>'suffix}", JavaI18nUtil.buildUnescapedFormatString(concatenation, args, getProject()));
     assertSize(1, args);
     assertEquals("prefix ? 0 : 1", args.get(0).getSourcePsi().getText());
   }
