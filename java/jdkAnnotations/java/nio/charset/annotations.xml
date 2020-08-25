@@ -6,6 +6,9 @@
   <item name='java.nio.charset.Charset int compareTo(java.nio.charset.Charset) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
+  <item name='java.nio.charset.Charset java.lang.String displayName()'>
+    <annotation name='org.jetbrains.annotations.Nls'/>
+  </item>
   <item name='java.nio.charset.Charset java.lang.String name()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
