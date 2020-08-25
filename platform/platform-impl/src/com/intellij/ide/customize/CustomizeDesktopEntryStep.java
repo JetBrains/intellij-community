@@ -12,6 +12,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
 import java.awt.*;
@@ -27,7 +28,7 @@ public class CustomizeDesktopEntryStep extends AbstractCustomizeWizardStep {
   private final JCheckBox myCreateEntryCheckBox = new JCheckBox(ActionsBundle.message("action.CreateDesktopEntry.description"));
   private final JCheckBox myGlobalEntryCheckBox = new JCheckBox(ApplicationBundle.message("desktop.entry.system.wide"));
 
-  public CustomizeDesktopEntryStep(String iconPath) {
+  public CustomizeDesktopEntryStep(@NonNls String iconPath) {
     setLayout(new BorderLayout());
 
     JPanel panel = createBigButtonPanel(createSmallBorderLayout(), myCreateEntryCheckBox, EmptyRunnable.INSTANCE);
