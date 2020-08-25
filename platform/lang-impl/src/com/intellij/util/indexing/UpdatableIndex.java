@@ -28,7 +28,8 @@ public interface UpdatableIndex<Key, Value, Input> extends InvertedIndex<Key,Val
   Map<Key, Value> getIndexedFileData(int fileId) throws StorageException;
 
   void setIndexedStateForFile(int fileId, @NotNull IndexedFile file);
-  void resetIndexedStateForFile(int fileId);
+  void invalidateIndexedStateForFile(int fileId);
+  void setUnindexedStateForFile(int fileId);
 
   @NotNull
   FileIndexingState getIndexingStateForFile(int fileId, @NotNull IndexedFile file);

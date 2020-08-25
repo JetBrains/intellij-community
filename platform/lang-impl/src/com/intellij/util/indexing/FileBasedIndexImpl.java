@@ -1388,7 +1388,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
             }
           }
           else {
-            index.resetIndexedStateForFile(inputId);
+            index.setUnindexedStateForFile(inputId);
           }
         });
       }
@@ -1473,7 +1473,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   @ApiStatus.Internal
   public void dropNontrivialIndexedStates(int inputId) {
     for (ID<?, ?> state : IndexingStamp.getNontrivialFileIndexedStates(inputId)) {
-      getIndex(state).resetIndexedStateForFile(inputId);
+      getIndex(state).invalidateIndexedStateForFile(inputId);
     }
   }
 
@@ -1503,7 +1503,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         for (int i = 0, size = nontrivialFileIndexedStates.size(); i < size; ++i) {
           final ID<?, ?> indexId = nontrivialFileIndexedStates.get(i);
           if (needsFileContentLoading(indexId)) {
-            getIndex(indexId).resetIndexedStateForFile(fileId);
+            getIndex(indexId).invalidateIndexedStateForFile(fileId);
           }
         }
 
@@ -1573,7 +1573,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
             for (int i = 0, size = candidates.size(); i < size; ++i) {
               final ID<?, ?> indexId = candidates.get(i);
               if (needsFileContentLoading(indexId) && getInputFilter(indexId).acceptInput(file)) {
-                getIndex(indexId).resetIndexedStateForFile(fileId);
+                getIndex(indexId).invalidateIndexedStateForFile(fileId);
                 scheduleForUpdate = true;
               }
             }
@@ -1701,7 +1701,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       for (ID<?, ?> candidate : candidates) {
         if (myRegisteredIndexes.isContentDependentIndex(candidate)) {
           if(getInputFilter(candidate).acceptInput(virtualFile)) {
-            getIndex(candidate).resetIndexedStateForFile(fileId);
+            getIndex(candidate).invalidateIndexedStateForFile(fileId);
             wasIndexed = true;
           }
         }

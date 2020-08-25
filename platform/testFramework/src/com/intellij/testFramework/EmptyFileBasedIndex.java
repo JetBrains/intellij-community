@@ -219,7 +219,12 @@ public class EmptyFileBasedIndex extends FileBasedIndexEx {
     }
 
     @Override
-    public void resetIndexedStateForFile(int fileId) {
+    public void invalidateIndexedStateForFile(int fileId) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void setUnindexedStateForFile(int fileId) {
       throw new UnsupportedOperationException();
     }
 

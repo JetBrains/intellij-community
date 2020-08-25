@@ -220,8 +220,13 @@ public class VfsAwareMapReduceIndex<Key, Value> extends MapReduceIndex<Key, Valu
   }
 
   @Override
-  public void resetIndexedStateForFile(int fileId) {
+  public void invalidateIndexedStateForFile(int fileId) {
     IndexingStamp.setFileIndexedStateOutdated(fileId, (ID<?, ?>)myIndexId);
+  }
+
+  @Override
+  public void setUnindexedStateForFile(int fileId) {
+    IndexingStamp.setFileIndexedStateUnindexed(fileId, (ID<?, ?>)myIndexId);
   }
 
   @Override
