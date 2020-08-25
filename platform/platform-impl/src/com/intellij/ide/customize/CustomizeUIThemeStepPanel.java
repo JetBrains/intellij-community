@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.customize;
 
 import com.intellij.CommonBundle;
@@ -18,6 +18,7 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -28,13 +29,13 @@ import java.util.Set;
 
 public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
   public static class ThemeInfo {
-    public final String name;
-    public final String previewFileName;
-    public final String laf;
+    public final @NonNls String name;
+    public final @NonNls String previewFileName;
+    public final @NonNls String laf;
 
     private Icon icon;
 
-    public ThemeInfo(String name, String previewFileName, String laf) {
+    public ThemeInfo(@NonNls String name, @NonNls String previewFileName, @NonNls String laf) {
       this.name = name;
       this.previewFileName = SystemInfo.isMac && "IntelliJ".equals(previewFileName) ? "Aqua" : previewFileName;
       this.laf = laf;
