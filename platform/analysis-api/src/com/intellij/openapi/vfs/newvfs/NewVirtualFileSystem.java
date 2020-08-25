@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VirtualFileListener;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +39,7 @@ public abstract class NewVirtualFileSystem extends VirtualFileSystem implements 
   @ApiStatus.OverrideOnly
   protected abstract @NotNull String extractRootPath(@NotNull String normalizedPath);
 
-  public abstract @Nullable VirtualFile findFileByPathIfCached(@NotNull String path);
+  public abstract @Nullable VirtualFile findFileByPathIfCached(@NonNls @NotNull String path);
 
   @Override
   public void refreshWithoutFileWatcher(boolean asynchronous) {
