@@ -17,7 +17,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.javaFX.codeInsight.JavaFxFieldToPropertyIntention;
 import org.jetbrains.plugins.javaFX.fxml.AbstractJavaFXTestCase;
 import org.jetbrains.plugins.javaFX.packaging.JavaFxApplicationArtifactType;
 
@@ -27,7 +26,6 @@ import java.util.List;
  * @author Pavel.Dolgov
  */
 public class JavaFxFieldToPropertyTest extends DaemonAnalyzerTestCase {
-  private static final String actionName = JavaFxFieldToPropertyIntention.FAMILY_NAME;
 
   @Override
   protected void setUpModule() {
@@ -95,7 +93,7 @@ public class JavaFxFieldToPropertyTest extends DaemonAnalyzerTestCase {
     final List<HighlightInfo> infos = doHighlighting();
     final Editor editor = getEditor();
     final PsiFile file = getFile();
-    return findIntentionAction(infos, actionName, editor, file);
+    return findIntentionAction(infos, JavaFXBundle.message("intention.family.name.convert.to.javafx.property"), editor, file);
   }
 
   protected boolean isArtifactNeeded() {

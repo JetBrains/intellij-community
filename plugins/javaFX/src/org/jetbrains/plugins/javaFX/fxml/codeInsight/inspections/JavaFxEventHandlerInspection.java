@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -170,13 +171,12 @@ public class JavaFxEventHandlerInspection extends XmlSuppressableInspectionTool 
   }
 
   private static class ChangeParameterTypeQuickFix extends LocalQuickFixOnPsiElement {
-    final String myText;
+    final @IntentionName String myText;
 
     ChangeParameterTypeQuickFix(@NotNull XmlAttribute attribute, @NotNull PsiMethod method,
                                        @NotNull PsiType suggestedParameterType) {
       super(attribute);
-      myText = "Change parameter type of '" + JavaHighlightUtil.formatMethod(method) +
-               "' to " + suggestedParameterType.getPresentableText();
+      myText = JavaFXBundle.message("intention.name.change.parameter.type.to", JavaHighlightUtil.formatMethod(method), suggestedParameterType.getPresentableText());
     }
 
     @Override

@@ -13,6 +13,7 @@ import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
+import org.jetbrains.plugins.javaFX.JavaFXBundle;
 
 import javax.swing.*;
 import java.util.Collections;
@@ -56,10 +57,10 @@ public class JavaFxApplicationClassBrowser extends ClassBrowser<JTextField> {
   }
 
   public static JavaFxApplicationClassBrowser appClassBrowser(Project project, Artifact artifact) {
-    return new JavaFxApplicationClassBrowser(project, "Choose Application Class", "javafx.application.Application", artifact);
+    return new JavaFxApplicationClassBrowser(project, JavaFXBundle.message("dialog.title.choose.application.class"), "javafx.application.Application", artifact);
   }
 
   public static JavaFxApplicationClassBrowser preloaderClassBrowser(Project project, Artifact artifact) {
-    return new JavaFxApplicationClassBrowser(project, "Choose Preloader Class", "javafx.application.Preloader", artifact);
+    return new JavaFxApplicationClassBrowser(project, JavaFXBundle.message("dialog.title.choose.preloader.class"), "javafx.application.Preloader", artifact);
   }
 }

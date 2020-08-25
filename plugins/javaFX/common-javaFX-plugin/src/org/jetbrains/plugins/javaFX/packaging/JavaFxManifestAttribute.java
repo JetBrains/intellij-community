@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.packaging;
 
+import com.intellij.openapi.util.NlsSafe;
+
 public class JavaFxManifestAttribute {
   private String myName;
   private String myValue;
@@ -13,6 +15,7 @@ public class JavaFxManifestAttribute {
     myValue = value;
   }
 
+  @NlsSafe
   public String getName() {
     return myName;
   }
@@ -21,6 +24,7 @@ public class JavaFxManifestAttribute {
     myName = name;
   }
 
+  @NlsSafe
   public String getValue() {
     return myValue;
   }
