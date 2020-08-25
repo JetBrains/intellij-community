@@ -91,7 +91,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.*;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorReference;
-import org.jetbrains.plugins.groovy.lang.resolve.ast.GrAstGeneratedConstructorUtils;
+import org.jetbrains.plugins.groovy.lang.resolve.ast.AffectedMembersCache;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.InheritConstructorContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.TupleConstructorAttributes;
 import org.jetbrains.plugins.groovy.transformations.immutable.GrImmutableUtils;
@@ -608,7 +608,8 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     PsiAnnotation tupleConstructor = containingClass.getAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR);
     if (tupleConstructor == null) return;
     if (!Boolean.FALSE.equals(GrAnnotationUtil.inferBooleanAttribute(tupleConstructor, TupleConstructorAttributes.DEFAULTS))) return;
-    if (GrAstGeneratedConstructorUtils.isFieldAccepted(tupleConstructor, field)) {
+    AffectedMembersCache cache = new AffectedMembersCache(tupleConstructor);
+    if (!cache.arePropertiesHandledByUser() && cache.isMemberAffected(field)) {
       myHolder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("initializers.are.forbidden.with.defaults"))
         .range(initializer)
         .create();

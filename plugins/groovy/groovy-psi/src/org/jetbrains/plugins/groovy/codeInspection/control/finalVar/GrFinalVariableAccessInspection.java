@@ -32,7 +32,7 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.GrFieldControlFlow
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ResolvedVariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.lang.resolve.ast.GrAstGeneratedConstructorUtils;
+import org.jetbrains.plugins.groovy.lang.resolve.ast.AffectedMembersCache;
 import org.jetbrains.plugins.groovy.transformations.immutable.GrImmutableUtils;
 
 import java.util.*;
@@ -369,7 +369,8 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
     if (anno == null) {
       return false;
     }
-    return GrAstGeneratedConstructorUtils.isFieldAccepted(anno, field);
+    AffectedMembersCache cache = new AffectedMembersCache(anno);
+    return !cache.arePropertiesHandledByUser() && cache.isMemberAffected(field);
   }
 
   private static boolean isImmutableField(@NotNull GrField field) {

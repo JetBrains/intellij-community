@@ -3,13 +3,17 @@ package org.jetbrains.plugins.groovy.lang.resolve.ast;
 
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PropertyUtilBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.transformations.AstTransformationSupport;
@@ -17,9 +21,8 @@ import org.jetbrains.plugins.groovy.transformations.TransformationContext;
 import org.jetbrains.plugins.groovy.transformations.immutable.GrImmutableUtils;
 
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 
 import static org.jetbrains.plugins.groovy.lang.resolve.ast.GrVisibilityUtils.getVisibility;
 /**
@@ -116,49 +119,51 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
     fieldsConstructor.setNavigationElement(typeDefinition);
     fieldsConstructor.setContainingClass(typeDefinition);
 
-    GeneratedConstructorCollector collector = new GeneratedConstructorCollector(tupleConstructor, immutable, fieldsConstructor);
-
-    if (tupleConstructor != null) {
-      Visibility visibility = getVisibility(tupleConstructor, fieldsConstructor, Visibility.PUBLIC);
-      fieldsConstructor.addModifier(visibility.toString());
-
-      final boolean superFields = PsiUtil.getAnnoAttributeValue(tupleConstructor, "includeSuperFields", false);
-      final boolean superProperties = PsiUtil.getAnnoAttributeValue(tupleConstructor, "includeSuperProperties", false);
-      if (superFields || superProperties) {
-        PsiClass superClass = context.getHierarchyView().getSuperClass();
-        addParametersForSuper(superClass, collector, new HashSet<>(), superProperties, superFields);
+    if (canonical) {
+      var modifierList = typeDefinition.getModifierList();
+      if (modifierList != null) {
+        tupleConstructor = new GrLightAnnotation(modifierList, typeDefinition, GroovyCommonClassNames.GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR, Map.of());
       }
     }
-    boolean includeProperties = tupleConstructor == null || PsiUtil.getAnnoAttributeValue(tupleConstructor, "includeProperties", true);
-    boolean includeFields = tupleConstructor != null ? PsiUtil.getAnnoAttributeValue(tupleConstructor, "includeFields", false) : !canonical;
-    boolean includeBeans = tupleConstructor != null && PsiUtil.getAnnoAttributeValue(tupleConstructor, "allProperties", false);
-    collector.accept(typeDefinition, includeProperties, includeBeans, includeFields);
+    if (immutable) {
+      var modifierList = typeDefinition.getModifierList();
+      if (modifierList != null) {
+        tupleConstructor = new GrLightAnnotation(modifierList, typeDefinition, GroovyCommonClassNames.GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR, Map.of(TupleConstructorAttributes.DEFAULTS, "false"));
+      }
+    }
 
-    collector.build(fieldsConstructor);
+    if (tupleConstructor != null) {
+      boolean optional = !immutable && PsiUtil.getAnnoAttributeValue(tupleConstructor, TupleConstructorAttributes.DEFAULTS, true);
+      Visibility visibility = getVisibility(tupleConstructor, fieldsConstructor, Visibility.PUBLIC);
+      fieldsConstructor.addModifier(visibility.toString());
+      AffectedMembersCache cache = new AffectedMembersCache(tupleConstructor);
+      for (PsiNamedElement element : cache.getAllAffectedMembers()) {
+        GrLightParameter parameter;
+        if (element instanceof PsiField) {
+          String name = element.getName();
+          parameter = new GrLightParameter(name == null ? "arg" : name, ((PsiField)element).getType(), fieldsConstructor);
+        } else if (element instanceof GrMethod) {
+          String name = PropertyUtilBase.getPropertyName((PsiMember)element);
+          PsiType type = PropertyUtilBase.getPropertyType((PsiMethod)element);
+          parameter = new GrLightParameter(name == null ? "arg" : name, type, fieldsConstructor);
+        } else {
+          parameter = null;
+        }
+        if (parameter != null) {
+          parameter.setOptional(optional);
+          fieldsConstructor.addParameter(parameter);
+        }
+      }
+    }
     if (immutable) {
       fieldsConstructor.setOriginInfo("created by @Immutable");
+    }
+    else if (canonical) {
+      fieldsConstructor.setOriginInfo("created by @Canonical");
     }
     else if (tupleConstructor != null) {
       fieldsConstructor.setOriginInfo("created by @TupleConstructor");
     }
-    else /*if (canonical != null)*/ {
-      fieldsConstructor.setOriginInfo("created by @Canonical");
-    }
     return fieldsConstructor;
-  }
-
-  private static void addParametersForSuper(@Nullable PsiClass typeDefinition,
-                                            @NotNull GeneratedConstructorCollector collector,
-                                            Set<? super PsiClass> visited,
-                                            boolean includeProperties,
-                                            boolean includeFields) {
-    if (typeDefinition == null) {
-      return;
-    }
-    if (!visited.add(typeDefinition) || GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT.equals(typeDefinition.getQualifiedName())) {
-      return;
-    }
-    addParametersForSuper(typeDefinition.getSuperClass(), collector, visited, includeProperties, includeFields);
-    collector.accept(typeDefinition, includeProperties, false, includeFields);
   }
 }
