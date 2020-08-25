@@ -41,13 +41,9 @@ class LookupFinishTrackerTest : LightFixtureCompletionTestCase() {
   private class TestFinishListener : LookupFinishListener() {
     var finishType: FinishType = FinishType.UNKNOWN
 
-    override fun cancelled(lookup: LookupImpl, canceledExplicitly: Boolean) = update(
-      FinishType.CANCELLED)
-    override fun explicitSelect(lookup: LookupImpl, element: LookupElement) = update(
-      FinishType.EXPLICIT)
-    override fun typedSelect(lookup: LookupImpl,
-                             element: LookupElement) = update(
-      FinishType.TYPED)
+    override fun cancelled(lookup: LookupImpl, canceledExplicitly: Boolean) = update(FinishType.CANCELLED)
+    override fun explicitSelect(lookup: LookupImpl, element: LookupElement) = update(FinishType.EXPLICIT)
+    override fun typedSelect(lookup: LookupImpl, element: LookupElement) = update(FinishType.TYPED)
 
     private fun update(type: FinishType) {
       TestCase.assertEquals(finishType, FinishType.UNKNOWN)

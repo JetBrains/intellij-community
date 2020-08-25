@@ -8,7 +8,7 @@ import java.util.concurrent.atomic.LongAdder
 class CompletionPerformanceTracker {
   private var sortingCount = 0
 
-  protected val measures: ConcurrentHashMap<String, LongAdder> = ConcurrentHashMap()
+  private val measures: ConcurrentHashMap<String, LongAdder> = ConcurrentHashMap()
   private val elementProvidersMeasurer: ConcurrentHashMap<String, LongAdder> = ConcurrentHashMap()
 
   private var totalMlContribution: Long = 0L

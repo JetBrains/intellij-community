@@ -12,8 +12,6 @@ class LanguageRankingModel(private val model: DecisionFunction) : RankingModelWr
 
   override fun version(): String? = model.version()
 
-  //override fun usedFeatures(): Set<String> = model.featuresOrder.map { it.featureName }.toSet()
-
   override fun score(features: RankingFeatures): Double? {
     return model.predict(featuresArrayBuilder.buildArray(features))
   }

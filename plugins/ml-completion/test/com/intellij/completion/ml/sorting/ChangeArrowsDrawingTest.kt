@@ -29,8 +29,7 @@ class ChangeArrowsDrawingTest : LightFixtureCompletionTestCase() {
   override fun setUp() {
     super.setUp()
     val settings = CompletionMLRankingSettings.getInstance()
-    val settingsStateBefore = MLRankingSettingsState.build(
-      "Java", settings)
+    val settingsStateBefore = MLRankingSettingsState.build("Java", settings)
     with(settings) {
       isRankingEnabled = true
       isShowDiffEnabled = true
@@ -60,6 +59,7 @@ class ChangeArrowsDrawingTest : LightFixtureCompletionTestCase() {
     companion object {
       const val VERSION = 1
     }
+
     override fun forLanguage(language: Language): ExperimentInfo =
       ExperimentInfo(true, VERSION, true, true, true)
 
@@ -119,11 +119,7 @@ class ChangeArrowsDrawingTest : LightFixtureCompletionTestCase() {
                                             val rankingEnabled: Boolean) {
     companion object {
       fun build(language: String, settings: CompletionMLRankingSettings): MLRankingSettingsState {
-        return MLRankingSettingsState(language,
-                                      settings.isRankingEnabled,
-                                      settings.isShowDiffEnabled,
-                                      settings.isLanguageEnabled(
-                                        language))
+        return MLRankingSettingsState(language, settings.isRankingEnabled, settings.isShowDiffEnabled, settings.isLanguageEnabled(language))
       }
     }
 
