@@ -63,9 +63,7 @@ public class IncreaseLanguageLevelFix implements IntentionAction, LocalQuickFix,
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     Module module = ModuleUtilCore.findModuleForFile(file);
-    return module != null &&
-           JavaSdkUtil.isLanguageLevelAcceptable(project, module, myLevel)
-           && (editor != null || AcceptedLanguageLevelsSettings.isLanguageLevelAccepted(myLevel));
+    return module != null && JavaSdkUtil.isLanguageLevelAcceptable(project, module, myLevel);
   }
 
   @Override
