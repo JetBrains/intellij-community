@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("MayBeConstant")
 
 package com.intellij.codeInsight.daemon.impl
@@ -167,7 +167,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
       tooltipAction.showAllActions(editor)
     }
 
-    buttons.add(createActionLabel("More actions...", showAllFixes, hintHint.textBackground),
+    buttons.add(createActionLabel(DaemonBundle.message("daemon.tooltip.more.actions.link.label"), showAllFixes, hintHint.textBackground),
                 gridBag.next().insets(topInset, 12, bottomInset, 4))
     buttons.add(createKeymapHint(shortcutShowAllActionsText),
                 gridBag.next().fillCellHorizontally().insets(topInset, 4, bottomInset, 20))
@@ -310,8 +310,10 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
     return wrapper
   }
 
-  private inner class ShowActionsAction(val reloader: TooltipReloader, val isEnabled: Boolean) : ToggleAction(
-    "Show Quick Fixes"), HintManagerImpl.ActionToIgnore {
+  private inner class ShowActionsAction(
+    val reloader: TooltipReloader, val isEnabled: Boolean
+  ) : ToggleAction(DaemonBundle.message("daemon.tooltip.show.quick.fixes.action.text")),
+      HintManagerImpl.ActionToIgnore {
 
     override fun isSelected(e: AnActionEvent): Boolean {
       return isShowActions()
@@ -328,8 +330,12 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
     }
   }
 
-  private inner class ShowDocAction(val reloader: TooltipReloader, val isEnabled: Boolean) : ToggleAction(
-    "Show Inspection Description"), HintManagerImpl.ActionToIgnore, DumbAware, PopupAction {
+  private inner class ShowDocAction(
+    val reloader: TooltipReloader, val isEnabled: Boolean
+  ) : ToggleAction(DaemonBundle.message("daemon.tooltip.show.inspection.description.action.text")),
+      HintManagerImpl.ActionToIgnore,
+      DumbAware,
+      PopupAction {
 
     init {
       shortcutSet = getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_ERROR_DESCRIPTION)
