@@ -25,7 +25,7 @@ public final class ByteBufferUtil {
       Object unsafe = AtomicFieldUpdater.getUnsafe();
       try {
         MethodType type = MethodType.methodType(void.class, ByteBuffer.class);
-        @SuppressWarnings("JavaLangInvokeHandleSignature") MethodHandle handle = MethodHandles.lookup().findVirtual(unsafe.getClass(), "invokeCleaner", type);
+        MethodHandle handle = MethodHandles.lookup().findVirtual(unsafe.getClass(), "invokeCleaner", type);
         handle.invoke(unsafe, buffer);
         return true;
       }
