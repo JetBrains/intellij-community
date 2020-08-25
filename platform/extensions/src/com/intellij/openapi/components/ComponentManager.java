@@ -81,7 +81,7 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
 
   /**
    * @return true when this component is disposed (e.g. the "File|Close Project" invoked or the application is exited)
-   * or is about to be disposed (e.g. the {@link com.intellij.openapi.project.impl.ProjectImpl#dispose()} was called but not completed yet)
+   * or is about to be disposed (e.g. the {@link com.intellij.openapi.project.impl.ProjectExImpl#dispose()} was called but not completed yet)
    * <br>
    * The result is only valid inside read action because the application/project/module can be disposed at any moment.
    * (see <a href="https://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/general_threading_rules.html#readwrite-lock">more details on read actions</a>)

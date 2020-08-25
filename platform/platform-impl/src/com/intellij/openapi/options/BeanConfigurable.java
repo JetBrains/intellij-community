@@ -34,6 +34,17 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
   private final T myInstance;
   private @NlsContexts.BorderTitle String myTitle;
 
+  private final List<BeanField> myFields = new ArrayList<>();
+
+  protected BeanConfigurable(@NotNull T beanInstance) {
+    myInstance = beanInstance;
+  }
+
+  protected BeanConfigurable(@NotNull T beanInstance, @NlsContexts.BorderTitle String title) {
+    this(beanInstance);
+    setTitle(title);
+  }
+
   private abstract static class BeanPropertyAccessor {
     abstract Object getBeanValue(Object instance);
     abstract void setBeanValue(Object instance, @NotNull Object value);
@@ -141,7 +152,7 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
     BeanPropertyAccessor myAccessor;
     T myComponent;
 
-    private BeanField(final BeanPropertyAccessor accessor) {
+    private BeanField(@NotNull BeanPropertyAccessor accessor) {
       myAccessor = accessor;
     }
 
@@ -213,17 +224,6 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
     void setComponentValue(Object value) {
       getComponent().setSelected((Boolean)value);
     }
-  }
-
-  private final List<BeanField> myFields = new ArrayList<>();
-
-  protected BeanConfigurable(@NotNull T beanInstance) {
-    myInstance = beanInstance;
-  }
-
-  protected BeanConfigurable(@NotNull T beanInstance, @NlsContexts.BorderTitle String title) {
-    this(beanInstance);
-    setTitle(title);
   }
 
   @Nullable
