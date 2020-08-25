@@ -10,7 +10,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.stream.Collector;
-import java.util.stream.Collectors;
 
 /**
  * An immutable representation of HTML node. Could be used as a DSL to quickly generate HTML strings.
@@ -133,6 +132,11 @@ public abstract class HtmlChunk {
       return new Element(myTagName, myAttributes.with(name, value), myChildren);
     }
 
+    @Contract(pure = true)
+    public @NotNull Element attr(@NonNls String name, int value) {
+      return new Element(myTagName, myAttributes.with(name, Integer.toString(value)), myChildren);
+    }
+
     /**
      * @param style CSS style specification
      * @return a new element that is like this element but has the specified style added or replaced
@@ -149,6 +153,15 @@ public abstract class HtmlChunk {
     @Contract(pure = true)
     public @NotNull Element addText(@NotNull @Nls String text) {
       return child(text(text));
+    }
+
+    /**
+     * @param text text to add to the list of children (should not be escaped)
+     * @return a new element that is like this element but has an extra text child
+     */
+    @Contract(pure = true)
+    public @NotNull Element addRaw(@NotNull @Nls String text) {
+      return child(raw(text));
     }
 
     /**

@@ -11,6 +11,7 @@ import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -45,7 +46,7 @@ public class ExpandableTextField extends ExtendableTextField implements Expandab
     support = new ExpandableSupport<JTextComponent>(this, onShow, onHide) {
       @NotNull
       @Override
-      protected Content prepare(@NotNull JTextComponent field, @NotNull Function<? super String, String> onShow) {
+      protected Content prepare(@NotNull JTextComponent field, @NotNull Function<? super String, @Nls String> onShow) {
         Font font = field.getFont();
         FontMetrics metrics = font == null ? null : field.getFontMetrics(font);
         int height = metrics == null ? 16 : metrics.getHeight();

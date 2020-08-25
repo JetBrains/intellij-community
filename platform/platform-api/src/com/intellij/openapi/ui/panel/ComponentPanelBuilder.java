@@ -7,6 +7,8 @@ import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.ColorUtil;
@@ -20,6 +22,7 @@ import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -312,20 +315,26 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
                                      boolean isCommentBelow,
                                      int maxLineLength) {
     if (commentText != null) {
-      String css = "<head><style type=\"text/css\">\n" +
-                         "a, a:link {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkColor()) + ";}\n" +
-                         "a:visited {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkVisitedColor()) + ";}\n" +
-                         "a:hover {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkHoverColor()) + ";}\n" +
-                         "a:active {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkPressedColor()) + ";}\n" +
-                         //"body {background-color:#" + ColorUtil.toHex(JBColor.YELLOW) + ";}\n" + // Left for visual debugging
-                         "</style>\n</head>";
+      @NonNls String css = "<head><style type=\"text/css\">\n" +
+                           "a, a:link {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkColor()) + ";}\n" +
+                           "a:visited {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkVisitedColor()) + ";}\n" +
+                           "a:hover {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkHoverColor()) + ";}\n" +
+                           "a:active {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkPressedColor()) + ";}\n" +
+                           //"body {background-color:#" + ColorUtil.toHex(JBColor.YELLOW) + ";}\n" + // Left for visual debugging
+                           "</style>\n</head>";
+      HtmlChunk text = HtmlChunk.text(commentText);
       if (maxLineLength > 0 && commentText.length() > maxLineLength && isCommentBelow) {
         int width = component.getFontMetrics(component.getFont()).stringWidth(commentText.substring(0, maxLineLength));
-        component.setText(String.format("<html>" + css + "<body><div width=%d>%s</div></body></html>", width, commentText));
+        text = text.wrapWith(HtmlChunk.div().attr("width", width));
       }
       else {
-        component.setText(String.format("<html>" + css + "<body><div>%s</div></body></html>", commentText));
+        text = text.wrapWith(HtmlChunk.div());
       }
+      component.setText(new HtmlBuilder()
+        .append(HtmlChunk.raw(css))
+        .append(text.wrapWith("body"))
+        .wrapWith("html")
+        .toString());
     }
   }
 

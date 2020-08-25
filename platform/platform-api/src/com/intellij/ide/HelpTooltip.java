@@ -8,6 +8,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.Tooltip;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
@@ -21,6 +22,7 @@ import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBValue;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -341,7 +343,7 @@ public class HelpTooltip {
     }
 
     if (hasDescription) {
-      String[] pa = description.split(PARAGRAPH_SPLITTER);
+      @Nls String[] pa = description.split(PARAGRAPH_SPLITTER);
       isMultiline = pa.length > 1;
       Arrays.stream(pa).filter(p -> !p.isEmpty()).forEach(p -> tipPanel.add(new Paragraph(p, hasTitle), VerticalLayout.TOP));
     }
@@ -547,20 +549,20 @@ public class HelpTooltip {
         View v = BasicHTML.createHTMLView(this, String.format("<html>%s%s</html>", title, getShortcutAsHTML()));
         float width = v.getPreferredSpan(View.X_AXIS);
         isMultiline = isMultiline || width > MAX_WIDTH.get();
-        setText(width > MAX_WIDTH.get() ?
-                String.format("<html><div width=%d>%s%s</div></html>", MAX_WIDTH.get(), title, getShortcutAsHTML()) :
-                String.format("<html>%s%s</html>", title, getShortcutAsHTML()));
-
+        HtmlChunk.Element div = width > MAX_WIDTH.get() ? HtmlChunk.div().attr("width", MAX_WIDTH.get()) : HtmlChunk.div();
+        setText(div.children(HtmlChunk.text(title), HtmlChunk.raw(getShortcutAsHTML()))
+                  .wrapWith("html")
+                  .toString());
         setSizeForWidth(width);
       }
       else {
         setText(BasicHTML.isHTMLString(title) ?
                 title :
-                String.format("<html>%s%s</html>", title, getShortcutAsHTML()));
+                HtmlChunk.div().addText(title).addRaw(getShortcutAsHTML()).wrapWith("html").toString());
       }
     }
 
-    private String getShortcutAsHTML() {
+    private @NlsSafe String getShortcutAsHTML() {
       return getShortcutAsHtml(shortcut);
     }
   }
@@ -573,9 +575,8 @@ public class HelpTooltip {
       View v = BasicHTML.createHTMLView(this, String.format("<html>%s</html>", text));
       float width = v.getPreferredSpan(View.X_AXIS);
       isMultiline = isMultiline || width > MAX_WIDTH.get();
-      setText(width > MAX_WIDTH.get() ?
-              String.format("<html><div width=%d>%s</div></html>", MAX_WIDTH.get(), text) :
-              String.format("<html>%s</html>", text));
+      HtmlChunk.Element div = width > MAX_WIDTH.get() ? HtmlChunk.div().attr("width", MAX_WIDTH.get()) : HtmlChunk.div();
+      setText(div.addText(text).wrapWith("html").toString());
 
       setSizeForWidth(width);
     }

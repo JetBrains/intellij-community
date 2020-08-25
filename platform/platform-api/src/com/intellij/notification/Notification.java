@@ -2,6 +2,7 @@
 package com.intellij.notification;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -278,7 +279,7 @@ public class Notification {
   @NotNull
   public @LinkLabel String getDropDownText() {
     if (myDropDownText == null) {
-      myDropDownText = "Actions";
+      myDropDownText = IdeBundle.message("link.label.actions");
     }
     return myDropDownText;
   }

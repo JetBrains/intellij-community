@@ -131,11 +131,11 @@ public class JBViewport extends JViewport implements ZoomableViewport {
   private void checkScrollingCapabilities() {
     if (myPreviousNotification == null || myPreviousNotification.isExpired()) {
       if (!Boolean.TRUE.equals(isWindowBlitterAvailableFor(this))) {
-        myPreviousNotification = notify("Scrolling: cannot use window blitter");
+        myPreviousNotification = notify("Scrolling: cannot use window blitter"); //NON-NLS
       }
       else {
         if (!Boolean.TRUE.equals(isTrueDoubleBufferingAvailableFor(this))) {
-          myPreviousNotification = notify("Scrolling: cannot use true double buffering");
+          myPreviousNotification = notify("Scrolling: cannot use true double buffering"); //NON-NLS
         }
       }
     }

@@ -3,6 +3,7 @@ package com.intellij.util.net.ssl;
 
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.io.DigestUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -143,7 +144,7 @@ public final class CertificateWrapper {
     return myIssuerFields;
   }
 
-  public Map<String, String> getSubjectFields() {
+  public Map<String, @Nls String> getSubjectFields() {
     return mySubjectFields;
   }
 
@@ -190,11 +191,11 @@ public final class CertificateWrapper {
       myLongName = longName;
     }
 
-    public String getShortName() {
+    public @NlsSafe String getShortName() {
       return myShortName;
     }
 
-    public String getLongName() {
+    public @NlsSafe String getLongName() {
       return myLongName;
     }
   }

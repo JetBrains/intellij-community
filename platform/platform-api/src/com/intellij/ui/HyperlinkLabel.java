@@ -14,6 +14,7 @@ import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -192,7 +193,7 @@ public class HyperlinkLabel extends HighlightableComponent {
     return region != null && region.textAttributes == myAnchorAttributes;
   }
 
-  private void prepareText(String beforeLinkText, String linkText, String afterLinkText) {
+  private void prepareText(@Nls String beforeLinkText, @Nls String linkText, @Nls String afterLinkText) {
     applyFont();
     myHighlightedText = new HighlightedText();
     myHighlightedText.appendText(beforeLinkText, null);
@@ -203,7 +204,7 @@ public class HyperlinkLabel extends HighlightableComponent {
   }
 
   @Override
-  public void setText(@Nullable String text) {
+  public void setText(@Nullable @Nls String text) {
     applyFont();
     myUseIconAsLink = false;
     super.setText(text);

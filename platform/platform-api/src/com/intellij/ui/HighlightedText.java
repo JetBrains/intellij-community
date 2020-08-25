@@ -1,22 +1,23 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public final class HighlightedText {
-  private final StringBuilder myBuffer;
+  private final @Nls StringBuilder myBuffer;
   private final List<HighlightedRegion> myHighlightedRegions = new ArrayList<>();
 
   public HighlightedText() {
     myBuffer = new StringBuilder();
   }
 
-  public void appendText(String text, TextAttributes attributes) {
+  public void appendText(@Nls String text, TextAttributes attributes) {
     int startOffset = myBuffer.length();
     myBuffer.append(text);
     if (attributes != null) {
@@ -42,6 +43,7 @@ public final class HighlightedText {
   }
 
   @NotNull
+  @Nls
   public String getText() {
     return myBuffer.toString();
   }

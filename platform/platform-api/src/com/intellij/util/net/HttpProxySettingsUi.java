@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.net;
 
 import com.google.common.net.HostAndPort;
@@ -217,7 +217,7 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
 
   @NotNull
   private static @NlsContexts.DialogMessage String errorText(@NotNull String s) {
-    return "Problem with connection: " + s;
+    return IdeBundle.message("dialog.message.problem.with.connection", s);
   }
 
   @Nullable
@@ -225,13 +225,13 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
     if (myUseHTTPProxyRb.isSelected()) {
       String host = getText(myProxyHostTextField);
       if (host == null) {
-        return "Host name is empty";
+        return IdeBundle.message("dialog.message.host.name.empty");
       }
 
       try {
         HostAndPort parsedHost = HostAndPort.fromString(host);
         if (parsedHost.hasPort()) {
-          return "Invalid host value";
+          return IdeBundle.message("dialog.message.invalid.host.value");
         }
         host = parsedHost.getHost();
 
@@ -246,15 +246,15 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
         InternetDomainName.from(host);
       }
       catch (IllegalArgumentException e) {
-        return "Invalid host value";
+        return IdeBundle.message("dialog.message.invalid.host.value");
       }
 
       if (myProxyAuthCheckBox.isSelected()) {
         if (StringUtil.isEmptyOrSpaces(myProxyLoginTextField.getText())) {
-          return "Login is empty";
+          return IdeBundle.message("dialog.message.login.empty");
         }
         if (myProxyPasswordTextField.getPassword().length == 0) {
-          return "Password is empty";
+          return IdeBundle.message("dialog.message.password.empty");
         }
       }
     }

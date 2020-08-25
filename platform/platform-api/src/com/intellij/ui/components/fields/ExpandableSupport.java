@@ -2,6 +2,7 @@
 package com.intellij.ui.components.fields;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.NlsContexts;
@@ -14,6 +15,7 @@ import com.intellij.ui.components.fields.ExtendableTextComponent.Extension;
 import com.intellij.util.Function;
 import com.intellij.util.Functions;
 import org.jetbrains.annotations.ApiStatus.Internal;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -39,7 +41,7 @@ public abstract class ExpandableSupport<Source extends JComponent> implements Ex
   private @NlsContexts.PopupTitle String title;
   private @NlsContexts.PopupAdvertisement String comment;
 
-  public ExpandableSupport(@NotNull Source source, Function<? super String, String> onShow, Function<? super String, String> onHide) {
+  public ExpandableSupport(@NotNull Source source, Function<? super String, @Nls String> onShow, Function<? super String, String> onHide) {
     this.source = source;
     this.onShow = onShow != null ? onShow : Functions.identity();
     this.onHide = onHide != null ? onHide : Functions.identity();
@@ -175,7 +177,7 @@ public abstract class ExpandableSupport<Source extends JComponent> implements Ex
   public Extension createCollapseExtension() {
     return Extension.create(AllIcons.General.CollapseComponent,
                             AllIcons.General.CollapseComponentHover,
-                            createTooltipText("Collapse", "CollapseExpandableComponent"),
+                            createTooltipText(IdeBundle.message("action.collapse"), "CollapseExpandableComponent"),
                             this::collapse);
   }
 
@@ -183,7 +185,7 @@ public abstract class ExpandableSupport<Source extends JComponent> implements Ex
   public Extension createExpandExtension() {
     return Extension.create(AllIcons.General.ExpandComponent,
                             AllIcons.General.ExpandComponentHover,
-                            createTooltipText("Expand", "ExpandExpandableComponent"),
+                            createTooltipText(IdeBundle.message("action.expand"), "ExpandExpandableComponent"),
                             this::expand);
   }
 

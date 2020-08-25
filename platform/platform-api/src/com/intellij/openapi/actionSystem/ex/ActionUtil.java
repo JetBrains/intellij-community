@@ -2,6 +2,7 @@
 package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.openapi.Disposable;
@@ -92,8 +93,10 @@ public final class ActionUtil {
 
   @NotNull
   public static @NlsContexts.PopupContent String getUnavailableMessage(@NotNull String action, boolean plural) {
-    return action + (plural ? " are" : " is")
-           + " not available while " + ApplicationNamesInfo.getInstance().getProductName() + " is updating indices";
+    if (plural) {
+      return IdeBundle.message("popup.content.actions.not.available.while.updating.indices", action, ApplicationNamesInfo.getInstance().getProductName());
+    }
+    return IdeBundle.message("popup.content.action.not.available.while.updating.indices", action, ApplicationNamesInfo.getInstance().getProductName());
   }
 
   /**

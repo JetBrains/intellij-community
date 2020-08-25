@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ComponentUtil;
@@ -260,9 +261,10 @@ public class ComponentValidator {
   public static ComponentPopupBuilder createPopupBuilder(@NotNull ValidationInfo info, @Nullable Consumer<? super JEditorPane> configurator) {
     JEditorPane tipComponent = new JEditorPane();
     View v = BasicHTML.createHTMLView(tipComponent, String.format("<html>%s</html>", info.message));
-    String text = v.getPreferredSpan(View.X_AXIS) > MAX_WIDTH.get() ?
-                  String.format("<html><body><div width=%d>%s</div><body></html>", MAX_WIDTH.get(), trimMessage(info.message, tipComponent)) :
-                  String.format("<html><body><div>%s</div></body></html>", info.message);
+    HtmlChunk.Element div =  v.getPreferredSpan(View.X_AXIS) > MAX_WIDTH.get()
+                             ? HtmlChunk.div().attr("width", MAX_WIDTH.get()).addRaw(trimMessage(info.message, tipComponent))
+                             : HtmlChunk.div().addRaw(info.message);
+    String text = div.wrapWith("body").wrapWith("html").toString();
 
     tipComponent.setContentType("text/html");
     tipComponent.setEditable(false);
