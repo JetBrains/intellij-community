@@ -127,6 +127,8 @@
     <codeInsight.containerProvider implementation="com.intellij.codeInsight.JavaContainerProvider" id="JAVA"/>
     <constantExpressionEvaluator language="JAVA" implementationClass="com.intellij.psi.impl.PsiExpressionEvaluator" />
     <lang.psiAugmentProvider implementation="com.intellij.psi.impl.RecordAugmentProvider"/>
+    <registryKey key="java.empty.enum.constructor.ref" defaultValue="true"
+                 description="Make enum constructor reference have empty range at the end of the enum field identifier"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.uast">
