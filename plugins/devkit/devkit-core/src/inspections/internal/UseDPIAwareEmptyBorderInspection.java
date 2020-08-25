@@ -13,6 +13,7 @@ import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionBase;
 import org.jetbrains.idea.devkit.inspections.quickfix.ConvertToJBBorderQuickFix;
 
@@ -51,12 +52,15 @@ public class UseDPIAwareEmptyBorderInspection extends DevKitInspectionBase {
         && JBEmptyBorder.class.getName().equals(type.getCanonicalText())
         && expression.getText().contains("empty(")
         && ConvertToJBBorderQuickFix.canSimplify(expression)) {
-      return manager.createProblemDescriptor(expression, "Simplify", new ConvertToJBBorderQuickFix() {
-        @Override
-        public @IntentionFamilyName @NotNull String getFamilyName() {
-          return "Simplify";
-        }
-      }, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
+      return manager.createProblemDescriptor(expression,
+                                             DevKitBundle.message("inspections.use.dpi.aware.empty.border.simplify"),
+                                             new ConvertToJBBorderQuickFix() {
+                                               @Override
+                                               public @IntentionFamilyName @NotNull String getFamilyName() {
+                                                 return DevKitBundle.message("inspections.use.dpi.aware.empty.border.family.name");
+                                               }
+                                             },
+                                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
     }
     return null;
   }
@@ -76,12 +80,12 @@ public class UseDPIAwareEmptyBorderInspection extends DevKitInspectionBase {
           if (parentType == null || JBEmptyBorder.class.getName().equals(parentType.getCanonicalText())) return null;
         }
         if (arguments.getExpressionCount() == 4) {
-          return manager.createProblemDescriptor(expression, "Replace with JBUI.Borders.empty(...)", new ConvertToJBBorderQuickFix(),
+          return manager.createProblemDescriptor(expression, DevKitBundle.message("inspections.use.dpi.aware.empty.border.replace"),
+                                                 new ConvertToJBBorderQuickFix(),
                                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING, isOnTheFly);
         }
       }
     }
     return null;
   }
-
 }
