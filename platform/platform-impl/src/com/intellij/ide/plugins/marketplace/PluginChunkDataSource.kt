@@ -10,7 +10,7 @@ import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.nio.charset.Charset
 
-private const val MAX_HTTP_HEADERS_LENGTH: Int = 5000
+private const val MAX_HTTP_HEADERS_LENGTH: Int = 19000
 private const val MAX_RANGE_BYTES: Int = 10_000_000
 private const val MAX_STRING_LENGTH: Int = 1024
 
