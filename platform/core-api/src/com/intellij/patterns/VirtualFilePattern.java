@@ -47,7 +47,7 @@ public class VirtualFilePattern extends TreeElementPattern<VirtualFile, VirtualF
     });
   }
 
-  public VirtualFilePattern withExtension(@NotNull final String extension) {
+  public VirtualFilePattern withExtension(@NonNls @NotNull final String extension) {
     return with(new PatternCondition<VirtualFile>("withExtension") {
       @Override
       public boolean accepts(@NotNull final VirtualFile virtualFile, final ProcessingContext context) {
