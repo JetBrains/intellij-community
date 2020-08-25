@@ -167,7 +167,7 @@ public class JpsOutputLoaderManager implements Disposable {
       LOG.info(info);
       ApplicationManager.getApplication().invokeLater(() -> {
         Notification notification = NONE_NOTIFICATION_GROUP.createNotification("Jps Caches Downloader", info,
-                                                                               NotificationType.WARNING, null);
+                                                                               NotificationType.INFORMATION, null);
         Notifications.Bus.notify(notification, myProject);
       });
       return null;
