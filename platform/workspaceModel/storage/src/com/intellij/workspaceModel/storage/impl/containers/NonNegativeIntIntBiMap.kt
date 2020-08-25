@@ -7,24 +7,24 @@ import it.unimi.dsi.fastutil.ints.Int2IntOpenHashMap
 import it.unimi.dsi.fastutil.ints.IntSet
 import java.util.function.Consumer
 
-class ImmutablePositiveIntIntBiMap(
+class ImmutableNonNegativeIntIntBiMap(
   override val key2Value: Int2IntMap,
-  override val value2Keys: ImmutablePositiveIntIntMultiMap.ByList
-) : PositiveIntIntBiMap() {
+  override val value2Keys: ImmutableNonNegativeIntIntMultiMap.ByList
+) : NonNegativeIntIntBiMap() {
 
-  override fun toImmutable(): ImmutablePositiveIntIntBiMap = this
+  override fun toImmutable(): ImmutableNonNegativeIntIntBiMap = this
 
-  fun toMutable(): MutablePositiveIntIntBiMap = MutablePositiveIntIntBiMap(key2Value, value2Keys.toMutable())
+  fun toMutable(): MutableNonNegativeIntIntBiMap = MutableNonNegativeIntIntBiMap(key2Value, value2Keys.toMutable())
 }
 
-class MutablePositiveIntIntBiMap private constructor(
+class MutableNonNegativeIntIntBiMap private constructor(
   override var key2Value: Int2IntMap,
-  override var value2Keys: MutablePositiveIntIntMultiMap.ByList,
+  override var value2Keys: MutableNonNegativeIntIntMultiMap.ByList,
   private var freezed: Boolean
-) : PositiveIntIntBiMap() {
+) : NonNegativeIntIntBiMap() {
 
-  constructor() : this(Int2IntOpenHashMap(), MutablePositiveIntIntMultiMap.ByList(), false)
-  constructor(key2Value: Int2IntMap, value2Keys: MutablePositiveIntIntMultiMap.ByList) : this(key2Value, value2Keys, true)
+  constructor() : this(Int2IntOpenHashMap(), MutableNonNegativeIntIntMultiMap.ByList(), false)
+  constructor(key2Value: Int2IntMap, value2Keys: MutableNonNegativeIntIntMultiMap.ByList) : this(key2Value, value2Keys, true)
 
   fun putAll(keys: IntArray, value: Int) {
     startWrite()
@@ -65,16 +65,16 @@ class MutablePositiveIntIntBiMap private constructor(
     freezed = false
   }
 
-  override fun toImmutable(): ImmutablePositiveIntIntBiMap {
+  override fun toImmutable(): ImmutableNonNegativeIntIntBiMap {
     freezed = true
-    return ImmutablePositiveIntIntBiMap(key2Value, value2Keys.toImmutable())
+    return ImmutableNonNegativeIntIntBiMap(key2Value, value2Keys.toImmutable())
   }
 }
 
-sealed class PositiveIntIntBiMap {
+sealed class NonNegativeIntIntBiMap {
 
   protected abstract val key2Value: Int2IntMap
-  protected abstract val value2Keys: PositiveIntIntMultiMap
+  protected abstract val value2Keys: NonNegativeIntIntMultiMap
 
   val keys: IntSet
     get() = key2Value.keys
@@ -89,17 +89,17 @@ sealed class PositiveIntIntBiMap {
 
   fun get(key: Int) = key2Value.get(key)
 
-  fun getKeys(value: Int): PositiveIntIntMultiMap.IntSequence = value2Keys[value]
+  fun getKeys(value: Int): NonNegativeIntIntMultiMap.IntSequence = value2Keys[value]
 
   fun isEmpty(): Boolean = key2Value.isEmpty() && value2Keys.isEmpty()
 
-  abstract fun toImmutable(): ImmutablePositiveIntIntBiMap
+  abstract fun toImmutable(): ImmutableNonNegativeIntIntBiMap
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
 
-    other as PositiveIntIntBiMap
+    other as NonNegativeIntIntBiMap
 
     if (key2Value != other.key2Value) return false
     if (value2Keys != other.value2Keys) return false

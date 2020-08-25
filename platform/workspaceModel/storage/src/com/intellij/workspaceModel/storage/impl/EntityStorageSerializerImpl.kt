@@ -14,8 +14,8 @@ import com.intellij.util.SmartList
 import com.intellij.util.containers.*
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.containers.ImmutableIntIntUniqueBiMap
-import com.intellij.workspaceModel.storage.impl.containers.ImmutablePositiveIntIntBiMap
-import com.intellij.workspaceModel.storage.impl.containers.ImmutablePositiveIntIntMultiMap
+import com.intellij.workspaceModel.storage.impl.containers.ImmutableNonNegativeIntIntBiMap
+import com.intellij.workspaceModel.storage.impl.containers.ImmutableNonNegativeIntIntMultiMap
 import com.intellij.workspaceModel.storage.impl.containers.LinkedBidirectionalMap
 import com.intellij.workspaceModel.storage.impl.indices.EntityStorageInternalIndex
 import com.intellij.workspaceModel.storage.impl.indices.MultimapStorageIndex
@@ -165,11 +165,11 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
     kryo.register(ByteArray::class.java)
     kryo.register(ImmutableEntityFamily::class.java)
     kryo.register(RefsTable::class.java)
-    kryo.register(ImmutablePositiveIntIntBiMap::class.java)
+    kryo.register(ImmutableNonNegativeIntIntBiMap::class.java)
     kryo.register(ImmutableIntIntUniqueBiMap::class.java)
     kryo.register(VirtualFileIndex::class.java)
     kryo.register(EntityStorageInternalIndex::class.java)
-    kryo.register(ImmutablePositiveIntIntMultiMap.ByList::class.java)
+    kryo.register(ImmutableNonNegativeIntIntMultiMap.ByList::class.java)
     kryo.register(IntArray::class.java)
     kryo.register(Pair::class.java)
     kryo.register(MultimapStorageIndex::class.java)

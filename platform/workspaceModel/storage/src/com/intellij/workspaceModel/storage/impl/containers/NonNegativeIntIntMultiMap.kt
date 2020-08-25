@@ -10,20 +10,20 @@ import java.util.function.IntConsumer
  * Int to Int multimap that can hold *ONLY* non-negative integers and optimized for memory and reading.
  *
  * See:
- *  - [ImmutablePositiveIntIntMultiMap.ByList]
+ *  - [ImmutableNonNegativeIntIntMultiMap.ByList]
  * and
- *  - [MutablePositiveIntIntMultiMap.ByList]
+ *  - [MutableNonNegativeIntIntMultiMap.ByList]
  *
  * @author Alex Plate
  */
 
-sealed class ImmutablePositiveIntIntMultiMap(
+sealed class ImmutableNonNegativeIntIntMultiMap(
   override var values: IntArray,
   override val links: Int2IntMap
-) : PositiveIntIntMultiMap() {
+) : NonNegativeIntIntMultiMap() {
 
-  class ByList internal constructor(values: IntArray, links: Int2IntMap) : ImmutablePositiveIntIntMultiMap(values, links) {
-    override fun toMutable(): MutablePositiveIntIntMultiMap.ByList = MutablePositiveIntIntMultiMap.ByList(values, links)
+  class ByList internal constructor(values: IntArray, links: Int2IntMap) : ImmutableNonNegativeIntIntMultiMap(values, links) {
+    override fun toMutable(): MutableNonNegativeIntIntMultiMap.ByList = MutableNonNegativeIntIntMultiMap.ByList(values, links)
   }
 
   override operator fun get(key: Int): IntSequence {
@@ -33,7 +33,7 @@ sealed class ImmutablePositiveIntIntMultiMap(
     return RoMultiResultIntSequence(values, idx.unpack())
   }
 
-  abstract fun toMutable(): MutablePositiveIntIntMultiMap
+  abstract fun toMutable(): MutableNonNegativeIntIntMultiMap
 
   private class RoMultiResultIntSequence(
     private val values: IntArray,
@@ -60,19 +60,19 @@ sealed class ImmutablePositiveIntIntMultiMap(
   }
 }
 
-sealed class MutablePositiveIntIntMultiMap(
+sealed class MutableNonNegativeIntIntMultiMap(
   override var values: IntArray,
   override var links: Int2IntMap,
   protected var freezed: Boolean
-) : PositiveIntIntMultiMap() {
+) : NonNegativeIntIntMultiMap() {
 
-  class ByList private constructor(values: IntArray, links: Int2IntMap, freezed: Boolean) : MutablePositiveIntIntMultiMap(values, links, freezed) {
+  class ByList private constructor(values: IntArray, links: Int2IntMap, freezed: Boolean) : MutableNonNegativeIntIntMultiMap(values, links, freezed) {
     constructor() : this(IntArray(0), Int2IntOpenHashMap(), false)
     internal constructor(values: IntArray, links: Int2IntMap) : this(values, links, true)
 
-    override fun toImmutable(): ImmutablePositiveIntIntMultiMap.ByList {
+    override fun toImmutable(): ImmutableNonNegativeIntIntMultiMap.ByList {
       freezed = true
-      return ImmutablePositiveIntIntMultiMap.ByList(values, links)
+      return ImmutableNonNegativeIntIntMultiMap.ByList(values, links)
     }
   }
 
@@ -314,14 +314,14 @@ sealed class MutablePositiveIntIntMultiMap(
     values = IntArray(0)
   }
 
-  abstract fun toImmutable(): ImmutablePositiveIntIntMultiMap
+  abstract fun toImmutable(): ImmutableNonNegativeIntIntMultiMap
 
   private class RwIntSequence(private val values: IntArray) : IntSequence() {
     override fun getIterator(): IntIterator = values.iterator()
   }
 }
 
-sealed class PositiveIntIntMultiMap {
+sealed class NonNegativeIntIntMultiMap {
 
   protected abstract var values: IntArray
   protected abstract val links: Int2IntMap
@@ -377,7 +377,7 @@ sealed class PositiveIntIntMultiMap {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
 
-    other as PositiveIntIntMultiMap
+    other as NonNegativeIntIntMultiMap
 
     if (!values.contentEquals(other.values)) return false
     if (links != other.links) return false
