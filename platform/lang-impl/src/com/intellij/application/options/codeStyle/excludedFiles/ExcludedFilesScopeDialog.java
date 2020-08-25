@@ -45,7 +45,7 @@ public class ExcludedFilesScopeDialog extends ExcludedFilesDialogBase {
   private void fillScopesList(@NotNull List<? extends NamedScope> availableScopes) {
     myScopeListModel = new DefaultComboBoxModel<>();
     for (NamedScope scope : availableScopes) {
-      myScopeListModel.addElement(scope.getName());
+      myScopeListModel.addElement(scope.getScopeId());
     }
     myForm.getScopesList().setModel(myScopeListModel);
   }
@@ -58,7 +58,7 @@ public class ExcludedFilesScopeDialog extends ExcludedFilesDialogBase {
     String scopeName = selectedIndex >= 0 ? myScopeListModel.getElementAt(selectedIndex) : null;
     if (scopeName != null) {
       for (NamedScope scope : myAvailableScopes) {
-        if (scopeName.equals(scope.getName())) {
+        if (scopeName.equals(scope.getScopeId())) {
           return new NamedScopeDescriptor(scope);
         }
       }

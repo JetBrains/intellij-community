@@ -97,7 +97,7 @@ class VcsUpdateInfoScopeFilterConfigurable implements Configurable, NamedScopesH
     boolean selection = false;
     for (NamedScopesHolder holder : myNamedScopeHolders) {
       for (NamedScope scope : holder.getEditableScopes()) {
-        @NlsSafe String name = scope.getName();
+        @NlsSafe String name = scope.getScopeId();
         myComboBox.addItem(name);
         if (!selection && name.equals(myVcsConfiguration.UPDATE_FILTER_SCOPE_NAME)) {
           selection = true;

@@ -28,7 +28,7 @@ public final class ChangeListScope extends FilteredNamedScope implements Weighed
 
   @Override
   public int hashCode() {
-    return getName().hashCode();
+    return getScopeId().hashCode();
   }
 
   @Override
@@ -36,7 +36,7 @@ public final class ChangeListScope extends FilteredNamedScope implements Weighed
     if (object == this) return true;
     if (object instanceof ChangeListScope) {
       ChangeListScope scope = (ChangeListScope)object;
-      return scope.getIcon() == getIcon() && scope.getName().equals(getName());
+      return scope.getIcon() == getIcon() && scope.getScopeId().equals(getScopeId());
     }
     return false;
   }

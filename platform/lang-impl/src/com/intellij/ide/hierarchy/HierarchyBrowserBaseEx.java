@@ -807,7 +807,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
       MenuAction(NamedScope namedScope) {
         super(namedScope.getPresentableName());
-        myScopeType = namedScope.getName();
+        myScopeType = namedScope.getScopeId();
       }
 
       @Override
@@ -824,7 +824,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         EditScopesDialog.showDialog(myProject, null);
-        if (getValidScopes().stream().anyMatch(scope -> scope.getName().equals(getCurrentScopeType()))) {
+        if (getValidScopes().stream().anyMatch(scope -> scope.getScopeId().equals(getCurrentScopeType()))) {
           selectScope(SCOPE_ALL);
         }
       }

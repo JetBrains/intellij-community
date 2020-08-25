@@ -593,12 +593,12 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     Set<Pair<NamedScope,NamedScopesHolder>> namedScopes = new ObjectOpenCustomHashSet<>(new Hash.Strategy<Pair<NamedScope, NamedScopesHolder>>() {
       @Override
       public int hashCode(@Nullable Pair<NamedScope, NamedScopesHolder> object) {
-        return object == null ? 0 : object.getFirst().getName().hashCode();
+        return object == null ? 0 : object.getFirst().getScopeId().hashCode();
       }
 
       @Override
       public boolean equals(@Nullable Pair<NamedScope, NamedScopesHolder> o1, @Nullable Pair<NamedScope, NamedScopesHolder> o2) {
-        return o1 == o2 || (o1 != null && o2 != null && o1.getFirst().getName().equals(o2.getFirst().getName()));
+        return o1 == o2 || (o1 != null && o2 != null && o1.getFirst().getScopeId().equals(o2.getFirst().getScopeId()));
       }
     });
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
@@ -613,7 +613,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     list.sort((o1, o2) -> o1.getFirst().getPresentableName().compareToIgnoreCase(o2.getFirst().getPresentableName()));
     for (Pair<NamedScope,NamedScopesHolder> pair : list) {
       NamedScope namedScope = pair.getFirst();
-      String name = namedScope.getName();
+      String name = namedScope.getScopeId();
       TextAttributesKey textAttributesKey = ScopeAttributesUtil.getScopeTextAttributeKey(name);
       if (scheme.getAttributes(textAttributesKey) == null) {
         scheme.setAttributes(textAttributesKey, new TextAttributes());

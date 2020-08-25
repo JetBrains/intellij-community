@@ -96,7 +96,7 @@ public abstract class ScopesChooser extends ComboBoxAction implements DumbAware 
                                final InspectionProfileImpl inspectionProfile,
                                final Set<String> excludedScopeNames) {
     for (final NamedScope scope : scopes) {
-      final String scopeName = scope.getName();
+      final String scopeName = scope.getScopeId();
       if (excludedScopeNames.contains(scopeName)) {
         continue;
       }

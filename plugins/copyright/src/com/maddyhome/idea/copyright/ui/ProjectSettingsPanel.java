@@ -143,8 +143,8 @@ public class ProjectSettingsPanel {
       final NamedScope scope = setting.getScope();
       if (!iterator.hasNext()) return true;
       final String scopeName = iterator.next();
-      if (scope == null || !Comparing.strEqual(scopeName, scope.getName())) return true;
-      final String profileName = map.get(scope.getName());
+      if (scope == null || !Comparing.strEqual(scopeName, scope.getScopeId())) return true;
+      final String profileName = map.get(scope.getScopeId());
       if (profileName == null) return true;
       if (!profileName.equals(setting.getProfileName())) return true;
     }
@@ -155,7 +155,7 @@ public class ProjectSettingsPanel {
     myManager.setDefaultCopyright((CopyrightProfile)myProfilesComboBox.getSelectedItem());
     myManager.clearMappings();
     for (ScopeSetting scopeSetting : myScopeMappingModel.getItems()) {
-      myManager.mapCopyright(scopeSetting.getScope().getName(), scopeSetting.getProfileName());
+      myManager.mapCopyright(scopeSetting.getScope().getScopeId(), scopeSetting.getProfileName());
     }
   }
 
@@ -295,9 +295,9 @@ public class ProjectSettingsPanel {
             setText("");
           }
           else {
-            final String scopeName = ((NamedScope)value).getName();
+            final String scopeId = ((NamedScope)value).getScopeId();
             if (!isSelected) {
-              final NamedScope scope = NamedScopesHolder.getScope(myProject, scopeName);
+              final NamedScope scope = NamedScopesHolder.getScope(myProject, scopeId);
               if (scope == null) setForeground(JBColor.RED);
             }
             setText(((NamedScope)value).getPresentableName());
@@ -320,7 +320,7 @@ public class ProjectSettingsPanel {
 
         @Override
         public Component getTableCellEditorComponent(final JTable table, Object value, boolean isSelected, int row, int column) {
-          myScopeChooser = new PackageSetChooserCombo(myProject, value == null ? null : ((NamedScope)value).getName(), false, false){
+          myScopeChooser = new PackageSetChooserCombo(myProject, value == null ? null : ((NamedScope)value).getScopeId(), false, false){
             @Override
             protected NamedScope[] createModel() {
               final NamedScope[] model = super.createModel();

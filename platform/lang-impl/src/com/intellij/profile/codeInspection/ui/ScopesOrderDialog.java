@@ -98,7 +98,7 @@ public class ScopesOrderDialog extends DialogWrapper {
       }
     }
     scopes.remove(CustomScopesProviderEx.getAllScope());
-    scopes.sort(Comparator.comparing(namedScope -> namedScope.getName(), new ScopeOrderComparator(myInspectionProfile)));
+    scopes.sort(Comparator.comparing(namedScope -> namedScope.getScopeId(), new ScopeOrderComparator(myInspectionProfile)));
     for (NamedScope scope : scopes) {
       myModel.addElement(scope);
     }
@@ -116,7 +116,7 @@ public class ScopesOrderDialog extends DialogWrapper {
     final String[] newScopeOrder = new String[size];
     for (int i = 0; i < size; i++) {
       final NamedScope namedScope = myOptionsList.getModel().getElementAt(i);
-      newScopeOrder[i] = namedScope.getName();
+      newScopeOrder[i] = namedScope.getScopeId();
     }
     if (!Arrays.equals(newScopeOrder, myInspectionProfile.getScopesOrder())) {
       myInspectionProfile.setScopesOrder(newScopeOrder);

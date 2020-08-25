@@ -98,7 +98,7 @@ public final class Scopes {
 
     for (FindInProjectExtension extension : FindInProjectExtension.EP_NAME.getExtensionList()) {
       for (NamedScope scope : extension.getFilteredNamedScopes(project)) {
-        if (scope.getName().equals(scopeName)) {
+        if (scope.getScopeId().equals(scopeName)) {
           return GlobalSearchScopesCore.filterScope(project, scope);
         }
       }
@@ -106,7 +106,7 @@ public final class Scopes {
 
     for (NamedScopesHolder holder: NamedScopesHolder.getAllNamedScopeHolders(project)) {
       for (NamedScope scope: holder.getEditableScopes()) {
-        if (scope.getName().equals(scopeName)) {
+        if (scope.getScopeId().equals(scopeName)) {
           return GlobalSearchScopesCore.filterScope(project, scope);
         }
       }

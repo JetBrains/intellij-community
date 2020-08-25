@@ -48,7 +48,7 @@ public class PackageSetFactoryImpl extends PackageSetFactory {
               PackageSet value = scope.getValue();
               if (value != null && value.getClass().getClassLoader() == pluginClassLoader) {
                 String presentableName = scope.getPresentableName();
-                scopes[i] = new NamedScope(scope.getName(), () -> presentableName, AllIcons.Ide.LocalScope, new InvalidPackageSet(value.getText()));
+                scopes[i] = new NamedScope(scope.getScopeId(), () -> presentableName, AllIcons.Ide.LocalScope, new InvalidPackageSet(value.getText()));
                 changed = true;
               }
             }

@@ -146,7 +146,7 @@ public class ScopeChooserCombo extends ComboboxWithBrowseButton implements Dispo
     EditScopesDialog dlg = EditScopesDialog.showDialog(myProject, selection);
     if (dlg.isOK()){
       NamedScope namedScope = dlg.getSelectedScope();
-      rebuildModelAndSelectScopeOnSuccess(namedScope == null ? null : namedScope.getName());
+      rebuildModelAndSelectScopeOnSuccess(namedScope == null ? null : namedScope.getScopeId());
     }
     if (myBrowseListener != null) myBrowseListener.onAfterBrowseFinished();
   }

@@ -12,29 +12,38 @@ import java.util.function.Supplier;
 
 public class NamedScope {
   public static final NamedScope[] EMPTY_ARRAY = new NamedScope[0];
-  private final @NonNls String myName;
+  private final @NonNls String myScopeId;
   private final @NotNull Supplier<@NlsSafe String> myPresentableNameSupplier;
   private final Icon myIcon;
   private final PackageSet myValue;
 
-  public NamedScope(@NotNull @NonNls String name, @Nullable PackageSet value) {
-    this(name, AllIcons.Ide.LocalScope, value);
+  public NamedScope(@NotNull @NonNls String scopeId, @Nullable PackageSet value) {
+    this(scopeId, AllIcons.Ide.LocalScope, value);
   }
 
-  public NamedScope(@NotNull @NonNls String name, @NotNull Icon icon, @Nullable PackageSet value) {
-    this(name, () -> name, icon, value);
+  public NamedScope(@NotNull @NonNls String scopeId, @NotNull Icon icon, @Nullable PackageSet value) {
+    this(scopeId, () -> scopeId, icon, value);
   }
 
-  public NamedScope(@NotNull @NonNls String name, @NotNull Supplier <@NlsSafe String> presentableNameSupplier, @NotNull Icon icon, @Nullable PackageSet value) {
+  public NamedScope(@NotNull @NonNls String scopeId, @NotNull Supplier <@NlsSafe String> presentableNameSupplier, @NotNull Icon icon, @Nullable PackageSet value) {
     myPresentableNameSupplier = presentableNameSupplier;
     myIcon = icon;
-    myName = name;
+    myScopeId = scopeId;
     myValue = value;
   }
 
+  /**
+   * @deprecated please use {@link NamedScope#getScopeId()} for search/serialization/mappings and {@link #getPresentableName()} to display in UI
+   */
+  @Deprecated
   @NonNls
   public String getName() {
-    return myName;
+    return myScopeId;
+  }
+
+  @NonNls
+  public String getScopeId() {
+    return myScopeId;
   }
 
   @NlsSafe
@@ -54,7 +63,7 @@ public class NamedScope {
 
   @NotNull
   public NamedScope createCopy() {
-    return new NamedScope(myName, myPresentableNameSupplier, myIcon, myValue == null ? null : myValue.createCopy());
+    return new NamedScope(myScopeId, myPresentableNameSupplier, myIcon, myValue == null ? null : myValue.createCopy());
   }
 
   @Nullable
@@ -70,6 +79,6 @@ public class NamedScope {
 
   @Override
   public String toString() {
-    return "Scope '" + myName + "'; set:" + (myValue == null ? null : myValue.getText());
+    return "Scope '" + myScopeId + "'; set:" + (myValue == null ? null : myValue.getText());
   }
 }

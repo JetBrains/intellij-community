@@ -229,8 +229,8 @@ private class FileColorsTableModel(val manager: FileColorManagerImpl) : Abstract
 
   internal fun addScopeColor(scope: NamedScope, color: String?) {
     val colorName = resolveCustomColor(color) ?: return
-    if (resolveDuplicate(scope.name, colorName, false)) return
-    local.add(0, FileColorConfiguration(scope.name, colorName))
+    if (resolveDuplicate(scope.scopeId, colorName, false)) return
+    local.add(0, FileColorConfiguration(scope.scopeId, colorName))
     onRowInserted(0)
   }
 

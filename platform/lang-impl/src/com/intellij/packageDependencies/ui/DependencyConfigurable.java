@@ -198,7 +198,7 @@ public class DependencyConfigurable implements Configurable {
 
         @Override
         public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-          myCombo = new PackageSetChooserCombo(myProject, value == null ? null : ((NamedScope)value).getName());
+          myCombo = new PackageSetChooserCombo(myProject, value == null ? null : ((NamedScope)value).getScopeId());
           return new CellEditorComponentWithBrowseButton<>(myCombo, this);
         }
       };

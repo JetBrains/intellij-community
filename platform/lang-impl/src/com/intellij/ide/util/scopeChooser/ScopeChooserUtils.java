@@ -69,7 +69,7 @@ public final class ScopeChooserUtils {
     for (NamedScopesHolder holder : NamedScopesHolder.getAllNamedScopeHolders(project)) {
       final NamedScope[] scopes = holder.getEditableScopes();  // predefined scopes already included
       for (NamedScope scope : scopes) {
-        if (scope.getName().equals(scopePresentableName)) {
+        if (scope.getScopeId().equals(scopePresentableName)) {
           return intersectWithContentScope(project, GlobalSearchScopesCore.filterScope(project, scope));
         }
       }

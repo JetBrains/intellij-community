@@ -19,9 +19,9 @@ public abstract class CustomScopesProviderEx implements CustomScopesProvider {
   }
 
   @Nullable
-  public static NamedScope findPredefinedScope(@NotNull String name, @NotNull List<? extends NamedScope> predefinedScopes) {
+  public static NamedScope findPredefinedScope(@NotNull String scopeId, @NotNull List<? extends NamedScope> predefinedScopes) {
     for (NamedScope scope : predefinedScopes) {
-      if (name.equals(scope.getName())) return scope;
+      if (scopeId.equals(scope.getScopeId())) return scope;
     }
     return null;
   }

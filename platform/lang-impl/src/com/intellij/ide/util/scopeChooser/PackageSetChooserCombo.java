@@ -68,12 +68,12 @@ public class PackageSetChooserCombo extends ComponentWithBrowseButton<JComponent
             }
           }
           else {
-            final EditScopesDialog dlg = EditScopesDialog.showDialog(myProject, scope.getName(), true);
+            final EditScopesDialog dlg = EditScopesDialog.showDialog(myProject, scope.getScopeId(), true);
             if (dlg.isOK()) {
               rebuild();
               final NamedScope namedScope = dlg.getSelectedScope();
               if (namedScope != null) {
-                selectScope(namedScope.getName());
+                selectScope(namedScope.getScopeId());
               }
             }
           }
@@ -102,7 +102,7 @@ public class PackageSetChooserCombo extends ComponentWithBrowseButton<JComponent
         final DefaultComboBoxModel model = (DefaultComboBoxModel)((JComboBox)component).getModel();
         for (int i = 0; i < model.getSize(); i++) {
           final NamedScope descriptor = (NamedScope)model.getElementAt(i);
-          if (preselect.equals(descriptor.getName())) {
+          if (preselect.equals(descriptor.getScopeId())) {
             ((JComboBox)component).setSelectedIndex(i);
             break;
           }
@@ -112,7 +112,7 @@ public class PackageSetChooserCombo extends ComponentWithBrowseButton<JComponent
         final Object[] options = ((JBComboBoxTableCellEditorComponent)component).getOptions();
         for (Object option : options) {
           final NamedScope descriptor = (NamedScope)option;
-          if (preselect.equals(descriptor.getName())) {
+          if (preselect.equals(descriptor.getScopeId())) {
             ((JBComboBoxTableCellEditorComponent)component).setDefaultValue(descriptor);
             break;
           }

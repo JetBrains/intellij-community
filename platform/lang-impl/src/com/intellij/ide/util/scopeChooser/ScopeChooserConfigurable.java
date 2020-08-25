@@ -18,7 +18,10 @@ import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.impl.CustomScopesAggregator;
-import com.intellij.psi.search.scope.packageSet.*;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
+import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
+import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
+import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.ui.CommonActionsPanel;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.IconUtil;
@@ -127,7 +130,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   private void checkForPredefinedNames() throws ConfigurationException {
     final Set<String> predefinedScopes = new HashSet<>();
     for (NamedScope scope : CustomScopesAggregator.getAllCustomScopes(myProject)) {
-      predefinedScopes.add(scope.getName());
+      predefinedScopes.add(scope.getScopeId());
     }
     for (int i = 0; i < myRoot.getChildCount(); i++) {
       final MyNode node = (MyNode)myRoot.getChildAt(i);
@@ -154,7 +157,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
       final NamedScope namedScope = scopeConfigurable.getEditableObject();
       if (order.size() <= i) return true;
       final String name = order.get(i);
-      if (!Comparing.strEqual(name, namedScope.getName())) return true;
+      if (!Comparing.strEqual(name, namedScope.getScopeId())) return true;
       if (isInitialized(scopeConfigurable)) {
         final NamedScopesHolder holder = scopeConfigurable.getHolder();
         final NamedScope scope = holder.getScope(name);
@@ -236,8 +239,8 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
   protected boolean wasObjectStored(Object editableObject) {
     if (editableObject instanceof NamedScope) {
       NamedScope scope = (NamedScope)editableObject;
-      final String scopeName = scope.getName();
-      return myLocalScopesManager.getScope(scopeName) != null || mySharedScopesManager.getScope(scopeName) != null;
+      final String scopeId = scope.getScopeId();
+      return myLocalScopesManager.getScope(scopeId) != null || mySharedScopesManager.getScope(scopeId) != null;
     }
     return false;
   }
@@ -285,7 +288,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     for (int i = 0; i < myRoot.getChildCount(); i++) {
       final MyNode node = (MyNode)myRoot.getChildAt(i);
       final NamedScope scope = (NamedScope)node.getConfigurable().getEditableObject();
-      scopes.add(scope.getName());
+      scopes.add(scope.getScopeId());
     }
   }
 
@@ -303,7 +306,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
       @Override
       public boolean checkInput(String inputString) {
         for (NamedScope scope : holder.getPredefinedScopes()) {
-          if (Comparing.strEqual(scope.getName(), inputString.trim())) {
+          if (Comparing.strEqual(scope.getScopeId(), inputString.trim())) {
             return false;
           }
         }
