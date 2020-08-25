@@ -986,7 +986,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
             );
           });
         },
-        "reformat", null
+        LangBundle.message("command.name.reformat"), null
       )
     );
   }
