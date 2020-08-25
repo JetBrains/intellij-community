@@ -26,7 +26,7 @@ public final class NotificationGroupManagerImpl implements NotificationGroupMana
       registerNotificationGroup(extension);
     }
 
-    NotificationGroupEP.EP_NAME.addExtensionPointListener(new ExtensionPointListener<NotificationGroupEP>() {
+    NotificationGroupEP.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull NotificationGroupEP extension, @NotNull PluginDescriptor pluginDescriptor) {
         registerNotificationGroup(extension);
