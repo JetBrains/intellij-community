@@ -23,4 +23,8 @@ enum ImlicitlySealedWithPermitsClause <error descr="No permits clause allowed fo
   FOO {};
 }
 
+sealed class Parent permits TypedChild<error descr="Generics are not allowed in permits list"><Integer></error> {}
+
+non-sealed class TypedChild<F> extends Parent {}
+
 @interface AnnotationType <error descr="No permits clause allowed for annotation type">permits I</error> {}
