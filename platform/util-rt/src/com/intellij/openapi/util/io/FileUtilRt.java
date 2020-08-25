@@ -451,6 +451,15 @@ public class FileUtilRt {
            && filePath.regionMatches(!SystemInfoRt.isFileSystemCaseSensitive, extStart, extension, 0, extLen);
   }
 
+  public static boolean fileNameEquals(@NotNull File file, @NonNls @NotNull String name) {
+    return fileNameEquals(file.getName(), name);
+  }
+
+  public static boolean fileNameEquals(@NotNull @NonNls CharSequence fileName,
+                                       @NotNull @NonNls CharSequence expectedName) {
+    return StringUtilRt.equal(expectedName, fileName, SystemInfoRt.isFileSystemCaseSensitive);
+  }
+
   @NotNull
   public static String toSystemDependentName(@NotNull String fileName) {
     return toSystemDependentName(fileName, File.separatorChar);
