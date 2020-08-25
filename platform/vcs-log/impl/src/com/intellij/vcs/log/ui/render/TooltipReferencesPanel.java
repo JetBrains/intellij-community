@@ -78,7 +78,7 @@ class TooltipReferencesPanel extends ReferencesPanel {
   protected JBLabel createRestLabel(int restSize) {
     String gray = ColorUtil.toHex(UIManager.getColor("Button.disabledText"));
     String labelText = VcsLogBundle.message("vcs.log.references.more.tooltip", restSize);
-    String html = HtmlChunk.text(labelText).wrapWith("font").attr("color", "#" + gray).wrapWith("html").toString();
+    String html = HtmlChunk.text(labelText).wrapWith("font").attr("color", "#" + gray).wrapWith(HtmlChunk.html()).toString();
     return createLabel(html, createEmptyIcon(getIconHeight()));
   }
 }

@@ -243,7 +243,7 @@ public class VcsStructureChooser extends DialogWrapper {
               .wrapWith(HtmlChunk.tag("font").attr("color", "red"));
           selectedLabel.setText(new HtmlBuilder()
                                   .appendRaw((VcsLogBundle.message("vcs.log.filters.structure.label", errorText.toString())))
-                                  .wrapWith("html")
+                                  .wrapWith(HtmlChunk.html())
                                   .toString());
         }
         selectedLabel.revalidate();
