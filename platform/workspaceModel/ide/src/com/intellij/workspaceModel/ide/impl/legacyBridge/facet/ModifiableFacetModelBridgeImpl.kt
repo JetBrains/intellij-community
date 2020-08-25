@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.facet
 
-import com.google.common.collect.HashBiMap
 import com.intellij.facet.Facet
 import com.intellij.facet.FacetManagerImpl
 import com.intellij.facet.ModifiableFacetModel
@@ -21,7 +20,6 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetModelBridge.
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableFacetModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
-import com.intellij.workspaceModel.storage.WorkspaceEntity
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
@@ -102,11 +100,11 @@ internal class ModifiableFacetModelBridgeImpl(private val initialStorage: Worksp
     prepareForCommit()
     facetManager.model.facetsChanged()
     if (moduleDiff != null) {
-      val res = moduleDiff.addDiff(diff)
+      moduleDiff.addDiff(diff)
     }
     else {
       WorkspaceModel.getInstance(moduleBridge.project).updateProjectModel {
-        val res = it.addDiff(diff)
+        it.addDiff(diff)
       }
     }
   }

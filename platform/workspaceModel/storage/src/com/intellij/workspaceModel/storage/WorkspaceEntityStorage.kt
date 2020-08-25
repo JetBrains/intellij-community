@@ -172,8 +172,7 @@ interface WorkspaceEntityStorageDiffBuilder {
   fun removeEntity(e: WorkspaceEntity)
   fun <T : WorkspaceEntity> changeSource(e: T, newSource: EntitySource): T
 
-  // Returns an association between an entity in diff and an entity in the current builder
-  fun addDiff(diff: WorkspaceEntityStorageDiffBuilder): Map<WorkspaceEntity, WorkspaceEntity>
+  fun addDiff(diff: WorkspaceEntityStorageDiffBuilder)
   fun <T> getExternalMapping(identifier: String): ExternalEntityMapping<T>
   fun <T> getMutableExternalMapping(identifier: String): MutableExternalEntityMapping<T>
 

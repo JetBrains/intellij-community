@@ -607,7 +607,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
   override fun isEmpty(): Boolean = changeLogImpl.isEmpty()
 
-  override fun addDiff(diff: WorkspaceEntityStorageDiffBuilder): Map<WorkspaceEntity, WorkspaceEntity> {
+  override fun addDiff(diff: WorkspaceEntityStorageDiffBuilder) {
     val replaceMap = HashBiMap.create<EntityId, EntityId>()
     val builder = diff as WorkspaceEntityStorageBuilderImpl
     val diffLog = builder.changeLog
@@ -672,16 +672,9 @@ internal class WorkspaceEntityStorageBuilderImpl(
       }
     }
     indexes.applyExternalMappingChanges(diff, replaceMap)
-    val res = HashMap<WorkspaceEntity, WorkspaceEntity>()
-    replaceMap.forEach { (oldId, newId) ->
-      if (oldId != newId) {
-        res[diff.entityDataByIdOrDie(oldId).createEntity(diff)] = this.entityDataByIdOrDie(newId).createEntity(this)
-      }
-    }
 
     // Assert consistency
     this.assertConsistencyInStrictMode()
-    return res
   }
 
   @Suppress("UNCHECKED_CAST")
