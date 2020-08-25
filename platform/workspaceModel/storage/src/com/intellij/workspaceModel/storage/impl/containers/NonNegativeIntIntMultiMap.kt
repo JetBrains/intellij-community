@@ -14,6 +14,16 @@ import java.util.function.IntConsumer
  * and
  *  - [MutableNonNegativeIntIntMultiMap.ByList]
  *
+ *
+ *  Immutable version of this map holds the values in the following way:
+ *  1) If the key has _only a single_ associated value, it stores the pair directly in the [links] map.
+ *  2) If the key has multiple values, it stores the key in [links] map and the values in [values] array:
+ *   - [links] contains _key to "-offset"_ associations where offset defines the offset in [values]. "-offset" is the negated offset, so we
+ *      could distinct offset from real value (see point 1). E.g. if the value is "5" - this is a real value (see point 1),
+ *      and if the value is "-5", real values are stored in [values] by offset 5.
+ *   - [values] contains a sequences of values. The last value in the sequence is negated.
+ *       E.g. [3, 1, 5, 3, -8, 4, 2, -1]: This [values] contains two values: [3, 1, 5, 3, 8] and [4, 2, 1]
+ *
  * @author Alex Plate
  */
 
