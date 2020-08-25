@@ -149,8 +149,6 @@ public class JavaTypingTest extends BasePlatformTestCase {
 
   public void testQuestionAfterPolyadicBoolean() { doTest('?'); }
 
-  public void testQuestionInVoidContext() { doTest('?'); }
-
   public void testEqualAfterBitwiseOp() { doTest('='); }
 
   public void testEqualAfterBitwiseOp2() {
