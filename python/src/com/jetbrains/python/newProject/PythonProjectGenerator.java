@@ -135,7 +135,7 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
     // Check if project does not support remote creation at all
     if (!myAllowRemoteProjectCreation && PythonSdkUtil.isRemote(sdk)) {
       throw new PyNoProjectAllowedOnSdkException(
-        "Can't create project of this type on remote interpreter. Choose local interpreter.");
+        PyBundle.message("python.remote.interpreter.can.t.create.project.this.type"));
     }
 
 
