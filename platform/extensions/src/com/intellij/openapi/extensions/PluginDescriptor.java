@@ -2,10 +2,7 @@
 package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.util.NlsSafe;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -88,9 +85,9 @@ public interface PluginDescriptor {
     return null;
   }
 
-  String getSinceBuild();
+  @NlsSafe String getSinceBuild();
 
-  String getUntilBuild();
+  @NlsSafe String getUntilBuild();
 
   default boolean allowBundledUpdate() {
     return false;

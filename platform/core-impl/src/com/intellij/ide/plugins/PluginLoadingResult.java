@@ -1,15 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
+import com.intellij.core.CoreBundle;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +32,7 @@ final class PluginLoadingResult {
   @Nullable Map<PluginId, List<IdeaPluginDescriptorImpl>> duplicateModuleMap;
 
   private final Map<PluginId, PluginLoadingError> pluginErrors = new ConcurrentHashMap<>();
-  private final List<@NlsContexts.DetailedDescription String> globalErrors = Collections.synchronizedList(new ArrayList<>());
+  private final List<Supplier<@NlsContexts.DetailedDescription String>> globalErrors = Collections.synchronizedList(new ArrayList<>());
 
   private final Set<PluginId> shadowedBundledIds = new HashSet<>();
 
@@ -85,7 +84,7 @@ final class PluginLoadingResult {
     return Collections.unmodifiableMap(pluginErrors);
   }
 
-  List<@NlsContexts.DetailedDescription String> getGlobalErrors() {
+  List<Supplier<@NlsContexts.DetailedDescription String>> getGlobalErrors() {
     synchronized (globalErrors) {
       return new ArrayList<>(globalErrors);
     }
@@ -100,30 +99,20 @@ final class PluginLoadingResult {
     }
   }
 
-  void reportIncompatiblePlugin(@NotNull IdeaPluginDescriptorImpl plugin, @NotNull @Nls String reason,
-                                @Nullable @NlsSafe String since, @Nullable @NlsSafe String until) {
+  void reportIncompatiblePlugin(@NotNull IdeaPluginDescriptorImpl plugin, @NotNull PluginLoadingError error) {
     // do not report if some compatible plugin were already added
     // no race condition here: plugins from classpath are loaded before and not in parallel to loading from plugin dir
     if (idMap.containsKey(plugin.getPluginId())) {
       return;
     }
 
-    if (since == null) {
-      since = "0.0";
-    }
-    if (until == null) {
-      until = "*.*";
-    }
-
-    String message = "is incompatible (reason: " + reason + ", target build " +
-                     (since.equals(until) ? ("is " + since) : ("range is " + since + " to " + until)) +
-                     ")";
-    new PluginLoadingError(plugin, message, reason).register(pluginErrors);
+    error.register(pluginErrors);
   }
 
   void reportCannotLoad(@NotNull Path file, Exception e) {
     DescriptorListLoadingContext.LOG.warn("Cannot load " + file, e);
-    globalErrors.add("File \"" + FileUtil.getLocationRelativeToUserHome(file.toString(), false) + "\" contains invalid plugin descriptor");
+    globalErrors.add(CoreBundle.messagePointer("plugin.loading.error.text.file.contains.invalid.plugin.descriptor",
+                                               FileUtil.getLocationRelativeToUserHome(file.toString(), false)));
   }
 
   @SuppressWarnings("UnusedReturnValue")
@@ -140,8 +129,9 @@ final class PluginLoadingResult {
 
     if (!descriptor.isBundled()) {
       if (checkModuleDependencies && !PluginManagerCore.hasModuleDependencies(descriptor)) {
-        String message = "defines no module dependencies (supported only in IntelliJ IDEA)";
-        new PluginLoadingError(descriptor, message, "supported only in IntelliJ IDEA").register(pluginErrors);
+        PluginLoadingError.create(descriptor,
+                                  CoreBundle.messagePointer("plugin.loading.error.long.compatible.with.intellij.idea.only", descriptor.getName()),
+                                  CoreBundle.messagePointer("plugin.loading.error.short.compatible.with.intellij.idea.only")).register(pluginErrors);
         return false;
       }
     }
@@ -177,7 +167,7 @@ final class PluginLoadingResult {
   }
 
   private boolean isCompatible(@NotNull IdeaPluginDescriptorImpl descriptor) {
-    return PluginManagerCore.getIncompatibleMessage(productBuildNumber.get(), descriptor.getSinceBuild(), descriptor.getUntilBuild()) == null;
+    return PluginManagerCore.checkBuildNumberCompatibility(descriptor, productBuildNumber.get()) == null;
   }
 
   @SuppressWarnings("DuplicatedCode")

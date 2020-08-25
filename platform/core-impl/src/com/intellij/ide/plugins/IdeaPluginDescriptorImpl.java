@@ -3,12 +3,12 @@ package com.intellij.ide.plugins;
 
 import com.intellij.AbstractBundle;
 import com.intellij.DynamicBundle;
+import com.intellij.core.CoreBundle;
 import com.intellij.openapi.components.ComponentConfig;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.ref.GCWatcher;
@@ -24,6 +24,7 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.text.ParseException;
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -128,7 +129,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     // root element always `!isIncludeElement`, and it means that result always is a singleton list
     // (also, plugin xml describes one plugin, this descriptor is not able to represent several plugins)
     if (JDOMUtil.isEmpty(element)) {
-      markAsIncomplete(context, "Empty plugin descriptor", null);
+      markAsIncomplete(context, CoreBundle.messagePointer("plugin.loading.error.descriptor.file.is.empty"), null);
       return false;
     }
 
@@ -360,7 +361,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     // context.isPluginIncomplete must be not checked here as another version of plugin maybe supplied later from another source
     if (context.isPluginDisabled(dependencyId)) {
       if (!isOptional) {
-        markAsIncomplete(context, "Non-optional dependency plugin " + dependencyId + " is disabled", dependencyId);
+        markAsIncomplete(context, CoreBundle.messagePointer("plugin.loading.error.short.depends.on.disabled.plugin", dependencyId), dependencyId);
       }
 
       isDisabledOrBroken = true;
@@ -369,7 +370,7 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       if (context.result.isBroken(dependencyId)) {
         if (!isOptional) {
           DescriptorListLoadingContext.LOG.info("Skipping reading of " + myId + " from " + basePath + " (reason: non-optional dependency " + dependencyId + " is broken)");
-          markAsIncomplete(context, "Non-optional dependency " + dependencyId + " is broken", null);
+          markAsIncomplete(context, CoreBundle.messagePointer("plugin.loading.error.short.depends.on.broken.plugin", dependencyId), null);
           return false;
         }
 
@@ -412,34 +413,22 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       return true;
     }
 
-    String message = PluginManagerCore.getIncompatibleMessage(context.result.productBuildNumber.get(), since, until);
-    if (message == null) {
+    @Nullable PluginLoadingError error = PluginManagerCore.checkBuildNumberCompatibility(this, context.result.productBuildNumber.get());
+    if (error == null) {
       return true;
     }
 
     markAsIncomplete(context, null, null);  // error will be added by reportIncompatiblePlugin
-    context.result.reportIncompatiblePlugin(this, message, since, until);
+    context.result.reportIncompatiblePlugin(this, error);
     return false;
   }
 
-  @NonNls @NotNull String formatErrorMessage(@NotNull String message) {
-    String path = this.path.toString();
-    StringBuilder builder = new StringBuilder();
-    builder.append("The ").append(myName).append(" (id=").append(myId).append(", path=");
-    builder.append(FileUtil.getLocationRelativeToUserHome(path, false));
-    if (myVersion != null && !isBundled() && !myVersion.equals(PluginManagerCore.getBuildNumber().asString())) {
-      builder.append(", version=").append(myVersion);
-    }
-    builder.append(") plugin ").append(message);
-    return builder.toString();
-  }
-
-  private void markAsIncomplete(@NotNull DescriptorListLoadingContext context, @Nullable @Nls String errorMessage, @Nullable PluginId disabledDependency) {
+  private void markAsIncomplete(@NotNull DescriptorListLoadingContext context, @Nullable Supplier<@Nls String> shortMessage, @Nullable PluginId disabledDependency) {
     boolean wasIncomplete = incomplete;
     incomplete = true;
     setEnabled(false);
     if (myId != null && !wasIncomplete) {
-      PluginLoadingError pluginError = errorMessage == null ? null : new PluginLoadingError(this, errorMessage, null, false);
+      PluginLoadingError pluginError = shortMessage == null ? null : PluginLoadingError.createWithoutNotification(this, shortMessage);
       if (pluginError != null && disabledDependency != null) {
         pluginError.setDisabledDependency(disabledDependency);
       }

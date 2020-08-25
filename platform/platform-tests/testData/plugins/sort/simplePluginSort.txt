@@ -12,31 +12,33 @@
   missing2
 + incompatible_with_disabled_module
   missing3
++ optional_config_cycle0
 + optional_config_cycle1
-  optional_config_cycle0
-  optional_config_cycle2
-  optional_cycle2
++ optional_config_cycle2
   optional_cycle0
   optional_cycle1
+  optional_cycle2
 + plugin3
 + plugin0
   incompatible_with_enabled_module
 + plugin1
 + plugin2
 
-Plugin "incompatible0" is incompatible (until build 1.111111 < 2042.42).
-Plugin "incompatible0-alt" is incompatible (until build 1.111 < 2042.42).
-Plugin "incompatible1" is incompatible (since build 9999.0 > 2042.42).
-Plugin "incompatible2" is incompatible (until build 1.111111 < 2042.42).
-Plugin "missing4" is incompatible (supported only in IntelliJ IDEA).
-Module com.intellij.modules.duplicate is declared by plugins:
-  PluginDescriptor(name=duplicate0, id=duplicate0, path=file:/duplicate0.xml)
-  PluginDescriptor(name=duplicate, id=duplicate, path=file:/duplicate1.xml).
-Plugins should not have cyclic dependencies: optional_cycle1 <-> optional_cycle2 <-> optional_cycle0, cycle5 <-> cycle4, cycle2 <-> cycle3 <-> cycle1.
-Plugin "missing2" requires "com.intellij.missing" plugin to be installed.
-Plugin "missing3" requires "missing2" plugin to be enabled.
-Plugin "missing1" requires "com.intellij.modules.missing" plugin to be installed.
-Plugin "incompatible_with_enabled_module" is incompatible (IDE contains module "com.intellij.modules.plugin0").
-Plugin "cycle0" requires "cycle1" plugin to be enabled.
-<br><a href="disable">Disable not loaded plugins</a>
+Module com.intellij.modules.duplicate is declared by multiple plugins:
+  PluginDescriptor(name=duplicate0, id=duplicate0, path=file:/duplicate0.xml, version=2042.42)
+  PluginDescriptor(name=duplicate, id=duplicate, path=file:/duplicate1.xml, version=2042.42)
+Plugins &#39;optional_cycle1&#39;, &#39;optional_cycle2&#39;, &#39;optional_cycle0&#39; cannot be loaded because they form a dependency cycle
+Plugins &#39;cycle5&#39;, &#39;cycle4&#39; cannot be loaded because they form a dependency cycle
+Plugins &#39;cycle2&#39;, &#39;cycle3&#39;, &#39;cycle1&#39; cannot be loaded because they form a dependency cycle
+Plugin &#39;cycle0&#39; requires plugin &#39;cycle1&#39; to be enabled
+Plugin &#39;incompatible0&#39; (version &#39;null&#39;) is not compatible with the current version of the IDE, because it requires build 1.111111 or older but the current build is 2042.42
+Plugin &#39;incompatible0-alt&#39; (version &#39;null&#39;) is not compatible with the current version of the IDE, because it requires build 1.111 or older but the current build is 2042.42
+Plugin &#39;incompatible1&#39; (version &#39;null&#39;) is not compatible with the current version of the IDE, because it requires build 9999.0 or newer but the current build is 2042.42
+Plugin &#39;incompatible2&#39; (version &#39;null&#39;) is not compatible with the current version of the IDE, because it requires build 1.111111 or older but the current build is 2042.42
+Plugin &#39;incompatible_with_enabled_module&#39; is not compatible with the IDE because the IDE contains module &#39;com.intellij.modules.plugin0&#39; which conflicts with the plugin
+Plugin &#39;missing1&#39; requires plugin &#39;com.intellij.modules.missing&#39; to be installed
+Plugin &#39;missing2&#39; requires plugin &#39;com.intellij.missing&#39; to be installed
+Plugin &#39;missing3&#39; requires plugin &#39;missing2&#39; to be enabled
+Plugin &#39;missing4&#39; is compatible with IntelliJ IDEA only because it doesn&#39;t define any explicit module dependencies
+<a href="disable">Disable not loaded plugins</a>
 <a href="edit">Open plugin manager</a>

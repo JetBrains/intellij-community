@@ -200,14 +200,12 @@ public final class PluginDownloader {
 
       myDescriptor = actualDescriptor;
 
-      if (PluginManagerCore.isIncompatible(actualDescriptor, myBuildNumber)) {
+      PluginLoadingError incompatibleError =
+        PluginManagerCore.checkBuildNumberCompatibility(actualDescriptor, myBuildNumber != null ? myBuildNumber : PluginManagerCore.getBuildNumber());
+      if (incompatibleError != null) {
         LOG.info("Plugin " + myPluginId + " is incompatible with current installation " +
                  "(since:" + actualDescriptor.getSinceBuild() + " until:" + actualDescriptor.getUntilBuild() + ")");
-        String incompatibleMessage =
-          PluginManagerCore.getIncompatibleMessage(myBuildNumber != null ? myBuildNumber : PluginManagerCore.getBuildNumber(),
-                                                   actualDescriptor.getSinceBuild(),
-                                                   actualDescriptor.getUntilBuild());
-        reportError(showMessageOnError, IdeBundle.message("error.incompatible.update", XmlStringUtil.escapeString(incompatibleMessage)));
+        reportError(showMessageOnError, IdeBundle.message("error.incompatible.update", XmlStringUtil.escapeString(incompatibleError.getDetailedMessage())));
         return null; //host outdated plugins, no compatible plugin for new version
       }
     }

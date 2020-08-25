@@ -2,31 +2,47 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.extensions.PluginId;
-import org.jetbrains.annotations.Nls;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
+import java.util.function.Supplier;
 
-final class PluginLoadingError {
-  final @NotNull IdeaPluginDescriptorImpl plugin;
-  private final @Nls String message;
-  private final @Nls String incompatibleReason;
+public final class PluginLoadingError {
+  private final @NotNull IdeaPluginDescriptor myPlugin;
+  private final Supplier<@NlsContexts.DetailedDescription String> myDetailedMessage;
+  private final Supplier<@NlsContexts.Label String> myShortMessage;
   private final boolean myNotifyUser;
   private PluginId myDisabledDependency;
 
-  PluginLoadingError(@NotNull IdeaPluginDescriptorImpl plugin, @NotNull @Nls String message, @Nullable @Nls String incompatibleReason) {
-    this(plugin, message, incompatibleReason, true);
+  static PluginLoadingError create(@NotNull IdeaPluginDescriptor plugin,
+                                   @NotNull Supplier<@NlsContexts.DetailedDescription String> detailedMessage,
+                                   @NotNull Supplier<@NlsContexts.Label @NotNull String> shortMessage) {
+    return new PluginLoadingError(plugin, detailedMessage, shortMessage, true);
   }
 
-  PluginLoadingError(@NotNull IdeaPluginDescriptorImpl plugin,
-                     @Nls @NotNull String message,
-                     @Nls @Nullable String incompatibleReason,
-                     boolean notifyUser) {
-    this.plugin = plugin;
-    this.message = message;
-    this.incompatibleReason = incompatibleReason;
+  static PluginLoadingError create(@NotNull IdeaPluginDescriptor plugin,
+                                   @NotNull Supplier<@NlsContexts.DetailedDescription @NotNull String> detailedMessage,
+                                   @NotNull Supplier<@NlsContexts.Label @NotNull String> shortMessage,
+                                   boolean notifyUser) {
+    return new PluginLoadingError(plugin, detailedMessage, shortMessage, notifyUser);
+  }
+
+  static PluginLoadingError createWithoutNotification(@NotNull IdeaPluginDescriptor plugin,
+                                                      @NotNull Supplier<@NlsContexts.Label @NotNull String> shortMessage) {
+    return new PluginLoadingError(plugin, null, shortMessage, false);
+  }
+
+  private PluginLoadingError(@NotNull IdeaPluginDescriptor plugin,
+                             Supplier<String> detailedMessage,
+                             Supplier<String> shortMessage,
+                             boolean notifyUser) {
+    myPlugin = plugin;
+    myDetailedMessage = detailedMessage;
+    myShortMessage = shortMessage;
     myNotifyUser = notifyUser;
   }
 
@@ -34,13 +50,9 @@ final class PluginLoadingError {
     myDisabledDependency = disabledDependency;
   }
 
-  @NotNull @Nls String getDetailedMessage() {
-    if (incompatibleReason != null) {
-      return "Plugin \"" + plugin.getName() + "\" is incompatible (" + incompatibleReason + ")";
-    }
-    else {
-      return "Plugin \"" + plugin.getName() + "\" " + message;
-    }
+  @NlsContexts.DetailedDescription
+  public String getDetailedMessage() {
+    return myDetailedMessage.get();
   }
 
   PluginId getDisabledDependency() {
@@ -52,7 +64,7 @@ final class PluginLoadingError {
   }
 
   void register(Map<PluginId, PluginLoadingError> errorsMap) {
-    errorsMap.put(plugin.getPluginId(), this);
+    errorsMap.put(myPlugin.getPluginId(), this);
   }
 
   @Override
@@ -62,14 +74,24 @@ final class PluginLoadingError {
 
   @NotNull
   public @NonNls String getInternalMessage() {
-    return plugin.formatErrorMessage(message);
+    return formatErrorMessage(myPlugin, ObjectUtils.notNull(myDetailedMessage, myShortMessage).get());
   }
 
   public String getShortMessage() {
-    String reason = incompatibleReason;
-    if (reason != null) {
-      return "Incompatible (" + reason + ")";
+    return myShortMessage.get();
+  }
+
+  @NonNls @NotNull
+  static String formatErrorMessage(IdeaPluginDescriptor descriptor, @NotNull String message) {
+    String path = descriptor.getPluginPath().toString();
+    StringBuilder builder = new StringBuilder();
+    builder.append("The ").append(descriptor.getName()).append(" (id=").append(descriptor.getPluginId()).append(", path=");
+    builder.append(FileUtil.getLocationRelativeToUserHome(path, false));
+    String version = descriptor.getVersion();
+    if (version != null && !descriptor.isBundled() && !version.equals(PluginManagerCore.getBuildNumber().asString())) {
+      builder.append(", version=").append(version);
     }
-    return message;
+    builder.append(") plugin ").append(message);
+    return builder.toString();
   }
 }
