@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -103,7 +104,7 @@ public class InlinePropertyHandler extends JavaInlineActionHandler {
     return getRefactoringName();
   }
 
-  public static String getRefactoringName() {
+  public static @NlsActions.ActionText String getRefactoringName() {
     return JavaI18nBundle.message("inline.property.refactoring");
   }
 }

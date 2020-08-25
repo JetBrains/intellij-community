@@ -19,6 +19,7 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.ui.EditorComboBox;
@@ -242,7 +243,7 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
     return myResourceBundleManager.suggestPropertiesFiles(myContextModules);
   }
 
-  public @NotNull String getI18nizedText() {
+  public @NotNull @NlsSafe String getI18nizedText() {
     String propertyKey = StringUtil.escapeStringCharacters(getKey());
     I18nizedTextGenerator textGenerator = myResourceBundleManager.getI18nizedTextGenerator();
     if (textGenerator != null) {
