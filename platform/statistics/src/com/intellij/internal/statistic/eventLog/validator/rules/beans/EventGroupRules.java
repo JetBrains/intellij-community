@@ -7,6 +7,7 @@ import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.FUSRule;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.EnumValidationRule;
 import com.intellij.internal.statistic.eventLog.validator.rules.utils.ValidationSimpleRuleFactory;
+import com.intellij.internal.statistic.eventLog.whitelist.GlobalRulesHolder;
 import com.intellij.internal.statistic.service.fus.FUStatisticsWhiteListGroupsService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SortedList;
@@ -137,12 +138,11 @@ public final class EventGroupRules {
   }
 
   public static @NotNull EventGroupRules create(@NotNull FUStatisticsWhiteListGroupsService.WLGroup group,
-                                                @Nullable Map<String, Set<String>> globalEnums,
-                                                @Nullable Map<String, String> globalRegexps) {
+                                                @NotNull GlobalRulesHolder globalRulesHolder) {
     FUStatisticsWhiteListGroupsService.WLRule rules = group.rules;
     return rules == null
            ? EMPTY
            : new EventGroupRules(rules.event_id, rules.event_data,
-                                 EventGroupContextData.create(rules.enums, globalEnums, rules.regexps, globalRegexps));
+                                 new EventGroupContextData(rules.enums, rules.regexps, globalRulesHolder));
   }
 }
