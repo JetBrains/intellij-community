@@ -153,11 +153,23 @@ public class JpsOutputLoaderManager implements Disposable {
     }
 
     if (!availableCommitsForRemote.contains(commitId)) {
-      LOG.warn("Not found any caches for the latest commits in the branch");
+      String warning = "Not found any caches for the latest commits in the branch";
+      LOG.warn(warning);
+      ApplicationManager.getApplication().invokeLater(() -> {
+        Notification notification = NONE_NOTIFICATION_GROUP.createNotification("Jps Caches Downloader", warning,
+                                                                               NotificationType.WARNING, null);
+        Notifications.Bus.notify(notification, myProject);
+      });
       return null;
     }
     if (previousCommitId != null && commitId.equals(previousCommitId) && !isForceUpdate) {
-      LOG.info("The system contains up to date caches");
+      String info = "The system contains up to date caches";
+      LOG.info(info);
+      ApplicationManager.getApplication().invokeLater(() -> {
+        Notification notification = NONE_NOTIFICATION_GROUP.createNotification("Jps Caches Downloader", info,
+                                                                               NotificationType.WARNING, null);
+        Notifications.Bus.notify(notification, myProject);
+      });
       return null;
     }
     return Pair.create(commitId, commitsBehind);
