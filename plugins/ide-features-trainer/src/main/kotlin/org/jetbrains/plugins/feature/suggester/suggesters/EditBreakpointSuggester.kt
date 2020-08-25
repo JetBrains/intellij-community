@@ -15,8 +15,7 @@ class EditBreakpointSuggester : FeatureSuggester {
         const val POPUP_MESSAGE =
             "You may edit breakpoint and make it conditional instead of waiting needed iteration. Use right click on breakpoint gutter."
         const val SUGGESTING_ACTION_ID = "com.intellij.xdebugger.impl.actions.EditBreakpointAction\$ContextAction"
-        const val SUGGESTING_DOC_URL =
-            "https://www.jetbrains.com/help/rider/Using_Breakpoints.html#setting-conditional-breakpoints"
+        const val SUGGESTING_TIP_FILENAME = "neue-BreakpointSpeedmenu.html"
         const val NUM_OF_PAUSES_TO_GET_SUGGESTION = 8
     }
 
@@ -41,10 +40,10 @@ class EditBreakpointSuggester : FeatureSuggester {
                 ) {
                     previousSuggestionPosition = pausesOnBreakpointHistory.lastOrNull()
                     pausesOnBreakpointHistory.clear()
-                    return createDocumentationSuggestion(
+                    return createTipSuggestion(
                         POPUP_MESSAGE,
                         suggestingActionDisplayName,
-                        SUGGESTING_DOC_URL
+                        SUGGESTING_TIP_FILENAME
                     )
                 }
             }
