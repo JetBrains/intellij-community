@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.annotate;
 import com.intellij.openapi.editor.EditorGutterAction;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
@@ -11,19 +12,39 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public abstract class LineAnnotationAspectAdapter implements LineAnnotationAspect, EditorGutterAction {
-  private final String myId;
+  @Nullable private final String myId;
+  @NlsContexts.ListItem @Nullable private final String myDisplayName;
   private final boolean myShowByDefault;
 
   protected LineAnnotationAspectAdapter() {
-    this(null, false);
+    this(null, null, false);
   }
 
-  protected LineAnnotationAspectAdapter(String id) {
-    this(id, false);
+  /**
+   * @deprecated use {@link LineAnnotationAspectAdapter#LineAnnotationAspectAdapter(String, String)}
+   */
+  @Deprecated
+  protected LineAnnotationAspectAdapter(@Nullable String id) {
+    this(id, null, false);
   }
 
-  public LineAnnotationAspectAdapter(String id, boolean showByDefault) {
+  protected LineAnnotationAspectAdapter(@Nullable String id, @NlsContexts.ListItem @Nullable String displayName) {
+    this(id, displayName, false);
+  }
+
+  /**
+   * @deprecated use {@link LineAnnotationAspectAdapter#LineAnnotationAspectAdapter(String, String, boolean)}
+   */
+  @Deprecated
+  public LineAnnotationAspectAdapter(@NonNls @Nullable String id, boolean showByDefault) {
+    this(id, null, showByDefault);
+  }
+
+  public LineAnnotationAspectAdapter(@NonNls @Nullable String id,
+                                     @NlsContexts.ListItem @Nullable String displayName,
+                                     boolean showByDefault) {
     myId = id;
+    myDisplayName = displayName;
     myShowByDefault = showByDefault;
   }
 
@@ -34,9 +55,14 @@ public abstract class LineAnnotationAspectAdapter implements LineAnnotationAspec
   }
 
   @Override
-  @NonNls
-  public String getId() {
+  public @NonNls @Nullable String getId() {
     return myId;
+  }
+
+
+  protected @NlsContexts.ListItem @Nullable String getDisplayName() {
+    // backward compatibility
+    return myDisplayName != null ? myDisplayName : myId;
   }
 
   @Override

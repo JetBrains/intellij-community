@@ -5,7 +5,6 @@ import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.vcs.VcsBundle;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -20,9 +19,9 @@ import java.awt.*;
  * @see FileAnnotation#getAspects()
  */
 public interface LineAnnotationAspect {
-  @NlsContexts.ListItem String AUTHOR = VcsBundle.message("line.annotation.aspect.author");
-  @NlsContexts.ListItem String DATE = VcsBundle.message("line.annotation.aspect.date");
-  @NlsContexts.ListItem String REVISION = VcsBundle.message("line.annotation.aspect.revision");
+  @NonNls String AUTHOR = "Author";
+  @NonNls String DATE = "Date";
+  @NonNls String REVISION = "Revision";
 
   /**
    * Get annotation text for the specific line number
@@ -82,5 +81,11 @@ public interface LineAnnotationAspect {
   @Nullable
   default Color getBgColor(int line) {
     return null;
+  }
+
+  @NlsContexts.ListItem
+  default String displayName() {
+    // backward compatibility
+    return getId();
   }
 }
