@@ -558,6 +558,7 @@ public final class UIUtil {
     ComponentUtil.putClientProperty(component, key, value);
   }
 
+  @Contract(pure = true)
   public static @NotNull String getHtmlBody(@NotNull String text) {
     int htmlIndex = 6 + text.indexOf("<html>");
     if (htmlIndex < 6) {
@@ -578,6 +579,7 @@ public final class UIUtil {
     return text.substring(bodyIndex, Math.min(bodyCloseIndex, htmlCloseIndex));
   }
 
+  @SuppressWarnings("HardCodedStringLiteral")
   public static @NotNull @Nls String getHtmlBody(@NotNull Html html) {
     String result = getHtmlBody(html.getText());
     return html.isKeepFont() ? result : result.replaceAll("<font(.*?)>", "").replaceAll("</font>", "");
