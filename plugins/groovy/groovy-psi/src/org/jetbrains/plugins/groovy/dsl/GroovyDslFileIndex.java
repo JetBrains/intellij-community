@@ -66,6 +66,7 @@ public final class GroovyDslFileIndex {
   private GroovyDslFileIndex() {}
 
   @Nullable
+  @NlsSafe
   public static String getError(VirtualFile file) {
     DslActivationStatus.Entry info = DslActivationStatus.getInstance().getGdslFileInfo(file);
     return info == null ? null : info.error;
@@ -95,14 +96,14 @@ public final class GroovyDslFileIndex {
     }, app.getDisposed());
   }
 
-  static void disableFile(@NotNull VirtualFile vfile, @NotNull Status status, @Nullable String error) {
+  static void disableFile(@NotNull VirtualFile vfile, @NotNull Status status, @NlsSafe @Nullable String error) {
     assert status != Status.ACTIVE;
     setStatusAndError(vfile, status, error);
     vfile.putUserData(CACHED_EXECUTOR, null);
     clearScriptCache();
   }
 
-  private static void setStatusAndError(@NotNull VirtualFile vfile, @NotNull Status status, @Nullable String error) {
+  private static void setStatusAndError(@NotNull VirtualFile vfile, @NotNull Status status, @NlsSafe @Nullable String error) {
     DslActivationStatus.Entry entry = DslActivationStatus.getInstance().getGdslFileInfoOrCreate(vfile);
     entry.status = status;
     entry.error = error;
