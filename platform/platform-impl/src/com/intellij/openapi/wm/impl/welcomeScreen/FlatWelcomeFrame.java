@@ -24,6 +24,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.WindowStateService;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
@@ -34,8 +35,6 @@ import com.intellij.openapi.wm.impl.IdeMenuBar;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.DefaultFrameHeader;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.FrameHeader;
-import com.intellij.openapi.wm.impl.customFrameDecorations.header.MenuFrameHeader;
-import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.CustomDecorationTitle;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBTextField;
@@ -112,8 +111,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     if (IdeFrameDecorator.isCustomDecorationActive()) {
       Color backgroundColor = UIManager.getColor("WelcomeScreen.background");
 
-      FrameHeader header = useTabWelcomeScreen ?
-                           new MenuFrameHeader(this, new CustomDecorationTitle(this), new WelcomeFrameMenuBar()) : new DefaultFrameHeader(this);
+      FrameHeader header = new DefaultFrameHeader(this);
 
       if (backgroundColor != null) {
         header.setBackground(backgroundColor);
@@ -128,7 +126,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
       }
     }
     else {
-      if (useTabWelcomeScreen) {
+      if (useTabWelcomeScreen && SystemInfo.isMac) {
         rootPane.setJMenuBar(new WelcomeFrameMenuBar());
       }
       setContentPane(myScreen.getWelcomePanel());
