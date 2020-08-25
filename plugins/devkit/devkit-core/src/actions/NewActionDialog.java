@@ -196,12 +196,14 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
   @Override
   @NotNull
   public String getActionText() {
-    return myActionNameEdit.getText();
+    @NlsSafe String text = myActionNameEdit.getText();
+    return text;
   }
 
   @Override
   public String getActionDescription() {
-    return myActionDescriptionEdit.getText();
+    @NlsSafe String description = myActionDescriptionEdit.getText();
+    return description;
   }
 
   @Override
@@ -346,7 +348,8 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
   private static class MyActionRenderer extends ColoredListCellRenderer<AnAction> {
     @Override
     protected void customizeCellRenderer(@NotNull JList list, AnAction value, int index, boolean selected, boolean hasFocus) {
-      append(ActionManager.getInstance().getId(value), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      @NlsSafe String actionId = ActionManager.getInstance().getId(value);
+      append(actionId, SimpleTextAttributes.REGULAR_ATTRIBUTES);
       String text = value.getTemplatePresentation().getText();
       if (StringUtil.isNotEmpty(text)) {
         append(" (" + text + ")", SimpleTextAttributes.REGULAR_ATTRIBUTES);
