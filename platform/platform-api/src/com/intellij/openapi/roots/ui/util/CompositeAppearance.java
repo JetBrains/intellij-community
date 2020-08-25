@@ -55,7 +55,7 @@ public class CompositeAppearance implements ModifiableCellAppearanceEx {
   @NotNull
   public String getText() {
     synchronized (mySections) {
-      StringBuilder buffer = new StringBuilder();
+      @Nls StringBuilder buffer = new StringBuilder();
       for (TextSection section : mySections) {
         buffer.append(section.TEXT);
       }

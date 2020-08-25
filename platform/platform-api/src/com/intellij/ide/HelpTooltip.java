@@ -566,7 +566,7 @@ public class HelpTooltip {
   }
 
   private final class Paragraph extends BoundWidthLabel {
-    private Paragraph(String text, boolean hasTitle) {
+    private Paragraph(@Tooltip String text, boolean hasTitle) {
       setForeground(hasTitle ? INFO_COLOR : UIUtil.getToolTipForeground());
       setFont(deriveDescriptionFont(getFont(), hasTitle));
 

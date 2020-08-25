@@ -819,7 +819,7 @@ public abstract class DialogWrapper {
     if (text == null) return pair(0, null);
 
     int mnemonic = 0;
-    StringBuilder plainText = new StringBuilder();
+    @Nls StringBuilder plainText = new StringBuilder();
     for (int i = 0; i < text.length(); i++) {
       char ch = text.charAt(i);
       if (ch == '_' || ch == '&') {

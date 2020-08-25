@@ -20,7 +20,9 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.LineTokenizer;
+import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 import javax.swing.plaf.metal.MetalToolTipUI;
@@ -49,15 +51,15 @@ public class MultiLineTooltipUI extends MetalToolTipUI {
   @Override
   public Dimension getPreferredSize(JComponent c) {
     FontMetrics metrics = c.getFontMetrics(c.getFont());
-    String tipText = ((JToolTip)c).getTipText();
+    @NlsContexts.Tooltip String tipText = ((JToolTip)c).getTipText();
     if (tipText == null) {
       tipText = "";
     }
     int maxWidth = 0;
     myLines.clear();
 
-    final String[] lines = LineTokenizer.tokenize(tipText.toCharArray(), false);
-    for (String line : lines) {
+    @Nls String[] lines = LineTokenizer.tokenize(tipText.toCharArray(), false);
+    for (@Nls String line : lines) {
       myLines.add(line);
       int width = SwingUtilities.computeStringWidth(metrics, line);
       if (width > maxWidth) {

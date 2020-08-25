@@ -133,6 +133,7 @@ public class TreeComboBox extends ComboBoxWithWidePopup {
             append("");
           }
         } else {
+          //noinspection HardCodedStringLiteral
           append(value.toString());
         }
       }

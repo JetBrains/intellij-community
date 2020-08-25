@@ -20,6 +20,7 @@ import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBValue;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.swing.SwingUtilities2;
@@ -299,9 +300,9 @@ public class ComponentValidator {
       setShowShadow(true);
   }
 
-  private static String trimMessage(String message, JComponent c) {
+  private static @Nls String trimMessage(@Nls String message, JComponent c) {
     String[] words = message.split("\\s+");
-    StringBuilder result = new StringBuilder();
+    @Nls StringBuilder result = new StringBuilder();
 
     for(String word : words) {
       word = SwingUtilities2.clipStringIfNecessary(c, c.getFontMetrics(c.getFont()), word, MAX_WIDTH.get());

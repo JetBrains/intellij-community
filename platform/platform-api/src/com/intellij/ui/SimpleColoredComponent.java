@@ -623,7 +623,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
     synchronized (myFragments) {
       if (!myFragments.isEmpty()) {
-        final StringBuilder sb = new StringBuilder();
+        @Nls StringBuilder sb = new StringBuilder();
         sb.append("<html><body style=\"white-space:nowrap\">");
 
         for (ColoredFragment fragment : myFragments) {

@@ -21,7 +21,7 @@ public final class CliResult {
     this.message = message;
   }
 
-  public static @NotNull Future<CliResult> error(int exitCode, @Nullable String message) {
+  public static @NotNull Future<CliResult> error(int exitCode, @Nullable @NlsContexts.DialogMessage String message) {
     return CompletableFuture.completedFuture(new CliResult(exitCode, message));
   }
 

@@ -61,7 +61,7 @@ public abstract class AbstractWizardStepEx implements Step, Disposable {
     myEventDispatcher.addListener(listener);
   }
 
-  protected void setTitle(@Nullable final String title) {
+  protected void setTitle(@Nullable final @NlsContexts.DialogTitle String title) {
     myTitle = title;
   }
 
