@@ -481,8 +481,8 @@ class GitPullDialog(private val project: Project,
 
   companion object {
     private val FETCH_ACTION_SHORTCUT = if (SystemInfo.isMac)
-      CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_R, KeyEvent.META_MASK))
+      CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_R, KeyEvent.META_DOWN_MASK))
     else
-      CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F5, KeyEvent.CTRL_MASK))
+      CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_F5, KeyEvent.CTRL_DOWN_MASK))
   }
 }
