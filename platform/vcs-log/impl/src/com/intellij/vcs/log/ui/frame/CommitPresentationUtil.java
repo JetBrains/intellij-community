@@ -279,25 +279,24 @@ public final class CommitPresentationUtil {
     }
 
     String tail = "… " + HtmlChunk.link(SHOW_HIDE_BRANCHES, VcsLogBundle.message("vcs.log.details.in.branches.show.all")).toString();
-    int headWidth = metrics.stringWidth(head);
-    int tailWidth = metrics.stringWidth(StringUtil.removeHtmlTags(tail));
-    if (availableWidth <= headWidth + tailWidth) {
-      return head + tail; // oh well
+    int headAndTailWidth = metrics.stringWidth(head) + metrics.stringWidth(StringUtil.removeHtmlTags(tail));
+    if (availableWidth <= headAndTailWidth) {
+      return head + tail;
     }
+    availableWidth -= headAndTailWidth;
 
-    availableWidth -= headWidth;
     StringBuilder branchesText = new StringBuilder();
     for (int i = 0; i < branches.size(); i++) {
       String branch = branches.get(i) + (i != branches.size() - 1 ? ", " : "");
       int branchWidth = metrics.stringWidth(branch);
-      if (branchWidth + tailWidth < availableWidth) {
+      if (branchWidth < availableWidth) {
         branchesText.append(branch);
         availableWidth -= branchWidth;
       }
       else {
         StringBuilder shortenedBranch = new StringBuilder();
         for (char c : branch.toCharArray()) {
-          if (metrics.stringWidth(shortenedBranch.toString() + c) + tailWidth >= availableWidth) {
+          if (metrics.stringWidth(shortenedBranch.toString() + c) >= availableWidth) {
             break;
           }
           shortenedBranch.append(c);
