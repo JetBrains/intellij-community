@@ -4,7 +4,7 @@ package com.intellij.psi.search;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.Nls;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -14,7 +14,7 @@ import java.util.List;
 public interface SearchScopeProvider {
   ExtensionPointName<SearchScopeProvider> EP_NAME = ExtensionPointName.create("com.intellij.searchScopesProvider");
 
-  default @Nullable @Nls String getDisplayName() {
+  default @Nullable @NlsContexts.Separator String getDisplayName() {
     return null;
   }
 
