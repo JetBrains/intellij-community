@@ -12,7 +12,9 @@ import com.intellij.psi.PsiElementFactory;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.ui.JBColor;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.DevKitBundle;
 
 /**
  * @author Konstantin Bulenkov
@@ -20,18 +22,18 @@ import org.jetbrains.annotations.NotNull;
 public class ConvertToJBColorConstantQuickFix implements LocalQuickFix {
   private final String myConstantName;
 
-  public ConvertToJBColorConstantQuickFix(String constantName) {
+  public ConvertToJBColorConstantQuickFix(@NonNls String constantName) {
     myConstantName = constantName;
   }
 
   @Override
   public @IntentionName @NotNull String getName() {
-    return "Convert to JBColor." + myConstantName;
+    return DevKitBundle.message("inspections.use.jb.color.fix", myConstantName);
   }
 
   @Override
   public @IntentionFamilyName @NotNull String getFamilyName() {
-    return "Use JBColor constant";
+    return DevKitBundle.message("inspections.use.jb.color.fix.family.name");
   }
 
   @Override
