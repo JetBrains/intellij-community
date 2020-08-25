@@ -12,6 +12,8 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
@@ -220,7 +222,9 @@ class ProblemsViewPanel extends OnePixelSplitter implements Disposable, DataProv
   @NotNull @NlsContexts.TabTitle String getName(int count) {
     String name = myName.get();
     if (count <= 0) return name;
-    return "<html><body>" + name + " <font color='" + toHtmlColor(UIUtil.getInactiveTextColor()) + "'>" + count + "</font></body></html>";
+    return new HtmlBuilder().append(
+      HtmlChunk.tag("font").attr("color", toHtmlColor(UIUtil.getInactiveTextColor())).addText(String.valueOf(count))
+    ).wrapWithHtmlBody().toString();
   }
 
   @Override
