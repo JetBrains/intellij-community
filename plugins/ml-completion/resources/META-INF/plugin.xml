@@ -35,7 +35,7 @@
     </extensionPoint>
   </extensionPoints>
 
-  <resource-bundle>messages.MLCompletionBundle</resource-bundle>
+  <resource-bundle>messages.MlCompletionBundle</resource-bundle>
 
   <actions>
     <action id="DumpMLCompletionFeatures"

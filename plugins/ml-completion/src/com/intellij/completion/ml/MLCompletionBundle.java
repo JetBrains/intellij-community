@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
 public class MLCompletionBundle extends DynamicBundle {
-  private static final String ML_COMPLETION_BUNDLE = "messages.MLCompletionBundle";
+  private static final String ML_COMPLETION_BUNDLE = "messages.MlCompletionBundle";
 
   public static @Nls String message(@NotNull @PropertyKey(resourceBundle = ML_COMPLETION_BUNDLE) String key, Object @NotNull ... params) {
     return ourInstance.getMessage(key, params);
