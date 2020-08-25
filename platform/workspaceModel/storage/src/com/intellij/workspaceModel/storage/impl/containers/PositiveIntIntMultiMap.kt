@@ -11,25 +11,18 @@ import java.util.function.IntConsumer
  *
  * See:
  *  - [ImmutablePositiveIntIntMultiMap.ByList]
- *  - [ImmutablePositiveIntIntMultiMap.BySet]
  * and
  *  - [MutablePositiveIntIntMultiMap.ByList]
- *  - [MutablePositiveIntIntMultiMap.BySet]
  *
  * @author Alex Plate
  */
 
 sealed class ImmutablePositiveIntIntMultiMap(
   override var values: IntArray,
-  override val links: Int2IntMap,
-  override val distinctValues: Boolean
+  override val links: Int2IntMap
 ) : PositiveIntIntMultiMap() {
 
-  class BySet internal constructor(values: IntArray, links: Int2IntMap) : ImmutablePositiveIntIntMultiMap(values, links, true) {
-    override fun toMutable(): MutablePositiveIntIntMultiMap.BySet = MutablePositiveIntIntMultiMap.BySet(values, links)
-  }
-
-  class ByList internal constructor(values: IntArray, links: Int2IntMap) : ImmutablePositiveIntIntMultiMap(values, links, false) {
+  class ByList internal constructor(values: IntArray, links: Int2IntMap) : ImmutablePositiveIntIntMultiMap(values, links) {
     override fun toMutable(): MutablePositiveIntIntMultiMap.ByList = MutablePositiveIntIntMultiMap.ByList(values, links)
   }
 
@@ -70,23 +63,10 @@ sealed class ImmutablePositiveIntIntMultiMap(
 sealed class MutablePositiveIntIntMultiMap(
   override var values: IntArray,
   override var links: Int2IntMap,
-  override val distinctValues: Boolean,
   protected var freezed: Boolean
 ) : PositiveIntIntMultiMap() {
 
-  class BySet private constructor(values: IntArray, links: Int2IntMap, freezed: Boolean) : MutablePositiveIntIntMultiMap(values, links,
-                                                                                                                         true, freezed) {
-    constructor() : this(IntArray(0), Int2IntOpenHashMap(), false)
-    internal constructor(values: IntArray, links: Int2IntMap) : this(values, links, true)
-
-    override fun toImmutable(): ImmutablePositiveIntIntMultiMap.BySet {
-      freezed = true
-      return ImmutablePositiveIntIntMultiMap.BySet(values, links)
-    }
-  }
-
-  class ByList private constructor(values: IntArray, links: Int2IntMap, freezed: Boolean) : MutablePositiveIntIntMultiMap(values, links,
-                                                                                                                          false, freezed) {
+  class ByList private constructor(values: IntArray, links: Int2IntMap, freezed: Boolean) : MutablePositiveIntIntMultiMap(values, links, freezed) {
     constructor() : this(IntArray(0), Int2IntOpenHashMap(), false)
     internal constructor(values: IntArray, links: Int2IntMap) : this(values, links, true)
 
@@ -121,22 +101,17 @@ sealed class MutablePositiveIntIntMultiMap(
         idx = idx.unpack()
         val endIndexInclusive = idx + size(key)
 
-        val filteredValues = if (distinctValues) {
-          newValues.filterNot { exists(it, idx, endIndexInclusive - 1) }.toTypedArray().toIntArray()
-        }
-        else newValues
-
-        val newValuesSize = filteredValues.size
+        val newValuesSize = newValues.size
 
         val newArray = IntArray(values.size + newValuesSize)
         values.copyInto(newArray, 0, 0, endIndexInclusive)
         if (endIndexInclusive + newValuesSize < newArray.size) {
           values.copyInto(newArray, endIndexInclusive + newValuesSize, endIndexInclusive)
         }
-        filteredValues.forEachIndexed { index, value ->
+        newValues.forEachIndexed { index, value ->
           newArray[endIndexInclusive + index] = value
         }
-        newArray[endIndexInclusive + newValuesSize - 1] = filteredValues.last().pack()
+        newArray[endIndexInclusive + newValuesSize - 1] = newValues.last().pack()
         val oldPrevValue = newArray[endIndexInclusive - 1]
         newArray[endIndexInclusive - 1] = oldPrevValue.unpack()
         this.values = newArray
@@ -307,14 +282,6 @@ sealed class MutablePositiveIntIntMultiMap(
     }
   }
 
-  private fun exists(value: Int, startRange: Int, endRange: Int): Boolean {
-    for (i in startRange until endRange) {
-      if (values[i] == value) return true
-    }
-    if (values[endRange] == value.pack()) return true
-    return false
-  }
-
   private fun startWrite() {
     if (!freezed) return
     values = values.clone()
@@ -358,7 +325,6 @@ sealed class PositiveIntIntMultiMap {
 
   protected abstract var values: IntArray
   protected abstract val links: Int2IntMap
-  protected abstract val distinctValues: Boolean
 
   abstract operator fun get(key: Int): IntSequence
 
@@ -415,7 +381,6 @@ sealed class PositiveIntIntMultiMap {
 
     if (!values.contentEquals(other.values)) return false
     if (links != other.links) return false
-    if (distinctValues != other.distinctValues) return false
 
     return true
   }
@@ -423,7 +388,6 @@ sealed class PositiveIntIntMultiMap {
   override fun hashCode(): Int {
     var result = values.contentHashCode()
     result = 31 * result + links.hashCode()
-    result = 31 * result + distinctValues.hashCode()
     return result
   }
 
