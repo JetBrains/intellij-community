@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -302,7 +303,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
     myTargetComboBox = new MyComboBox();
   }
 
-  private void setTargetComboBoxValue(String text) {
+  private void setTargetComboBoxValue(@NlsContexts.Label String text) {
     myTargetComboBox.setText(text + ":");
   }
 
