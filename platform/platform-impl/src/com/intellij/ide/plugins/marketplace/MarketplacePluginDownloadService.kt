@@ -163,7 +163,7 @@ object MarketplacePluginDownloadService {
     return fileName
   }
 
-  private fun renameFileToZipRoot(zip: File): File {
+  fun renameFileToZipRoot(zip: File): File {
     val newName = "${PluginInstaller.rootEntryName(zip.toPath())}.zip"
     val newZip = File("${zip.parent}/$newName")
     if (newZip.exists()) {
@@ -201,7 +201,7 @@ object MarketplacePluginDownloadService {
   }
 
   @Throws(IOException::class)
-  private fun getPluginTempFile(): File {
+  fun getPluginTempFile(): File {
     val pluginsTemp = File(PathManager.getPluginTempPath())
     if (!pluginsTemp.exists() && !pluginsTemp.mkdirs()) {
       throw IOException(IdeBundle.message("error.cannot.create.temp.dir", pluginsTemp))

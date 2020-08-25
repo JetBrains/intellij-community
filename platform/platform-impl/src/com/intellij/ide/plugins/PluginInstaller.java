@@ -4,6 +4,7 @@ package com.intellij.ide.plugins;
 import com.intellij.CommonBundle;
 import com.intellij.core.CoreBundle;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
@@ -324,6 +325,12 @@ public final class PluginInstaller {
         if (!callbackData.getPluginDescriptor().getPluginId().equals(pluginDescriptor.getPluginId())) {
           callback.accept(callbackData);
         }
+      }
+
+      if (file.toString().endsWith(".zip") && UpdateSettings.getInstance().isKeepPluginsArchive()) {
+        File tempFile = MarketplacePluginDownloadService.INSTANCE.getPluginTempFile();
+        FileUtil.copy(file.toFile(), tempFile);
+        MarketplacePluginDownloadService.INSTANCE.renameFileToZipRoot(tempFile);
       }
       return true;
     }
