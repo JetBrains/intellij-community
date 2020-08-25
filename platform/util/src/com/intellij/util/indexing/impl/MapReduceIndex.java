@@ -249,8 +249,12 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
         if (ex instanceof ProcessCanceledException) {
           LOG.error(message, ex);
         } else {
-          // TODO unit test mode
-          LOG.info(message, ex);
+          if (IndexDebugProperties.IS_UNIT_TEST_MODE) {
+            LOG.error(message, ex);
+          }
+          else {
+            LOG.info(message, ex);
+          }
         }
         requestRebuild(ex);
         return false;
