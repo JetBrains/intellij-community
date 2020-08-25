@@ -17,6 +17,7 @@ import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -41,6 +42,7 @@ import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -74,7 +76,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
 
   private final Map<String, Task> myIssueCache = Collections.synchronizedMap(new LinkedHashMap<>());
 
-  private final Map<String, LocalTask> myTasks = Collections.synchronizedMap(new LinkedHashMap<String, LocalTask>() {
+  private final Map<String, LocalTask> myTasks = Collections.synchronizedMap(new LinkedHashMap<>() {
     @Override
     public LocalTask put(String key, LocalTask task) {
       LocalTask result = super.put(key, task);
@@ -325,11 +327,11 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
   }
 
   @Override
-  public LocalTaskImpl createLocalTask(@NotNull String summary) {
+  public LocalTaskImpl createLocalTask(@NotNull @Nls String summary) {
     return createTask(LOCAL_TASK_ID_FORMAT.format(myConfig.localTasksCounter++), summary);
   }
 
-  private static LocalTaskImpl createTask(@NotNull String id, @NotNull String summary) {
+  private static LocalTaskImpl createTask(@NotNull String id, @NotNull @Nls String summary) {
     LocalTaskImpl task = new LocalTaskImpl(id, summary);
     Date date = new Date();
     task.setCreated(date);
@@ -545,7 +547,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
 
   @Override
   public boolean testConnection(final TaskRepository repository) {
-    TestConnectionTask task = new TestConnectionTask("Test connection") {
+    TestConnectionTask task = new TestConnectionTask(TaskBundle.message("dialog.title.test.connection")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         indicator.setText(TaskBundle.message("progress.text.connecting.to", repository.getUrl()));
@@ -601,11 +603,11 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     else if (!(e instanceof ProcessCanceledException)) {
       String message = e.getMessage();
       if (e instanceof UnknownHostException) {
-        message = "Unknown host: " + message;
+        message = TaskBundle.message("dialog.message.unknown.host", message);
       }
       if (message == null) {
         LOG.error(e);
-        message = "Unknown error";
+        message = TaskBundle.message("dialog.message.unknown.error");
       }
       Messages.showErrorDialog(myProject, StringUtil.capitalize(message), TaskBundle.message("dialog.title.error"));
     }
@@ -654,7 +656,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     for (TaskRepositoryType repositoryType : TaskRepositoryType.getRepositoryTypes()) {
       for (Element o : element.getChildren(repositoryType.getName())) {
         try {
-          @SuppressWarnings({"unchecked"})
+          @SuppressWarnings("unchecked")
           TaskRepository repository = (TaskRepository)XmlSerializer.deserialize(o, repositoryType.getRepositoryClass());
           repository.setRepositoryType(repositoryType);
           repository.initializeRepository();
@@ -783,7 +785,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
 
   @NotNull
   private static LocalTaskImpl createDefaultTask() {
-    LocalTaskImpl task = new LocalTaskImpl(LocalTaskImpl.DEFAULT_TASK_ID, "Default task");
+    LocalTaskImpl task = new LocalTaskImpl(LocalTaskImpl.DEFAULT_TASK_ID, TaskBundle.message("default.task"));
     Date date = new Date();
     task.setCreated(date);
     task.setUpdated(date);
@@ -1057,7 +1059,7 @@ public final class TaskManagerImpl extends TaskManager implements PersistentStat
     @Nullable
     protected TaskRepository.CancellableConnection myConnection;
 
-    TestConnectionTask(String title) {
+    TestConnectionTask(@NlsContexts.DialogTitle String title) {
       super(TaskManagerImpl.this.myProject, title, true);
     }
 

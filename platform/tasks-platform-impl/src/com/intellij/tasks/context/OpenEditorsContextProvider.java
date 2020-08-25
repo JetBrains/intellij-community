@@ -5,6 +5,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.impl.DockableEditorTabbedContainer;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
 import com.intellij.ui.docking.impl.DockManagerImpl;
@@ -31,7 +32,7 @@ final class OpenEditorsContextProvider extends WorkingContextProvider {
   @NotNull
   @Override
   public String getDescription() {
-    return "Open editors and positions";
+    return TaskBundle.message("open.editors.and.positions");
   }
 
   @Override

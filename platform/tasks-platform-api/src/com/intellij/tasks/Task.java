@@ -16,7 +16,9 @@
 
 package com.intellij.tasks;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,19 +54,17 @@ public abstract class Task {
   /**
    * @return ID in the form that is suitable for commit messages, dialogs, completion items, etc.
    */
-  @NotNull
-  public String getPresentableId() {
+  public @NlsSafe @NotNull String getPresentableId() {
     return getId();
   }
+
   /**
    * Short task description.
    * @return description
    */
-  @NotNull
-  public abstract String getSummary();
+  public abstract @Nls @NotNull String getSummary();
 
-  @Nullable
-  public abstract String getDescription();
+  public abstract @Nls @Nullable String getDescription();
 
   public abstract Comment @NotNull [] getComments();
 
