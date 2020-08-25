@@ -7,6 +7,7 @@ import com.google.gson.annotations.SerializedName
 import com.intellij.CommonBundle
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.RunCanceledByUserException
 import com.intellij.execution.configurations.GeneralCommandLine
@@ -39,9 +40,9 @@ import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsContexts.ProgressTitle
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.PathUtil
@@ -246,7 +247,7 @@ val Sdk.pipFileLockRequirements: List<PyRequirement>?
  * A quick-fix for setting up the pipenv for the module of the current PSI element.
  */
 class UsePipEnvQuickFix(sdk: Sdk?, module: Module) : LocalQuickFix {
-  private val quickFixName = when {
+  @IntentionName private val quickFixName = when {
     sdk != null && sdk.isAssociatedWithAnotherModule(module) -> PyBundle.message("python.sdk.pipenv.quickfix.fix.pipenv.name")
     else -> PyBundle.message("python.sdk.pipenv.quickfix.use.pipenv.name")
   }
@@ -342,11 +343,10 @@ class PipEnvPipFileWatcher : EditorFactoryListener {
 
   private fun notifyPipFileChanged(module: Module) {
     if (module.getUserData(notificationActive) == true) return
-    val what = when {
+    val title = when {
       module.pipFileLock == null -> PyBundle.message("python.sdk.pipenv.pip.file.lock.not.found")
       else -> PyBundle.message("python.sdk.pipenv.pip.file.lock.out.of.date")
     }
-    val title = "$PIP_FILE_LOCK is $what"
     val content = PyBundle.message("python.sdk.pipenv.pip.file.notification.content")
     val notification = LOCK_NOTIFICATION_GROUP.createNotification(title = title, content = content,
                                                                   listener = NotificationListener { notification, event ->
@@ -372,8 +372,8 @@ class PipEnvPipFileWatcher : EditorFactoryListener {
     notification.notify(module.project)
   }
 
-  private fun runPipEnvInBackground(module: Module, args: List<String>, description: String) {
-    val task = object : Task.Backgroundable(module.project, StringUtil.toTitleCase(description), true) {
+  private fun runPipEnvInBackground(module: Module, args: List<String>, @ProgressTitle description: String) {
+    val task = object : Task.Backgroundable(module.project, description, true) {
       override fun run(indicator: ProgressIndicator) {
         val sdk = module.pythonSdk ?: return
         indicator.text = "$description..."
@@ -412,7 +412,7 @@ private val Document.virtualFile: VirtualFile?
 private fun VirtualFile.getModule(project: Project): Module? =
   ModuleUtil.findModuleForFile(this, project)
 
-private val LOCK_NOTIFICATION_GROUP = NotificationGroup(PyBundle.message(  "python.sdk.pipenv.pip.file.watcher", PIP_FILE),
+private val LOCK_NOTIFICATION_GROUP = NotificationGroup(PyBundle.message("python.sdk.pipenv.pip.file.watcher"),
                                                         NotificationDisplayType.STICKY_BALLOON, false)
 
 private val Sdk.packageManager: PyPackageManager

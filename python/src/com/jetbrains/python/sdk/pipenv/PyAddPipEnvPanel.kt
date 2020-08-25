@@ -97,8 +97,13 @@ class PyAddPipEnvPanel(private val project: Project?,
 
     val builder = FormBuilder.createFormBuilder().apply {
       if (module == null && modules.size > 1) {
-        val associatedObject = if (PlatformUtils.isPyCharm()) "project" else "module"
-        addLabeledComponent(PyBundle.message("python.sdk.pipenv.associated.object", associatedObject), moduleField)
+        val associatedObjectLabel = if (PlatformUtils.isPyCharm()) {
+          PyBundle.message("python.sdk.pipenv.associated.module")
+        }
+        else {
+          PyBundle.message("python.sdk.pipenv.associated.project")
+        }
+        addLabeledComponent(associatedObjectLabel, moduleField)
       }
       addLabeledComponent(PyBundle.message("base.interpreter"), baseSdkField)
       addComponent(installPackagesCheckBox)
