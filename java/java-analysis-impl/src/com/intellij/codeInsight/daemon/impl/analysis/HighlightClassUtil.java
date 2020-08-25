@@ -1069,8 +1069,11 @@ public final class HighlightClassUtil {
       PsiClass aClass = (PsiClass)parent;
       PsiIdentifier nameIdentifier = aClass.getNameIdentifier();
       if (nameIdentifier == null) return;
-      if (aClass.isEnum() || aClass.isRecord()) {
-        String description = JavaErrorBundle.message(aClass.isRecord() ? "record.permits" : "permits.after.enum");
+      if (aClass.isEnum() || aClass.isRecord() || aClass.isAnnotationType()) {
+        String description = aClass.isEnum() ? JavaErrorBundle.message("permits.after.enum") : null;
+        if (description == null) {
+          description = JavaErrorBundle.message(aClass.isRecord() ? "record.permits" : "annotation.type.permits");
+        }
         HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
           .range(list)
           .descriptionAndTooltip(description)

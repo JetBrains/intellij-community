@@ -22,3 +22,5 @@ sealed class AnotherPackage permits <error descr="Class is not allowed to extend
 enum ImlicitlySealedWithPermitsClause <error descr="No permits clause allowed for enum">permits FOO</error> {
   FOO {};
 }
+
+@interface AnnotationType <error descr="No permits clause allowed for annotation type">permits I</error> {}

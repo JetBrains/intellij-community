@@ -961,6 +961,9 @@ public final class HighlightUtil {
         if (PsiModifier.PUBLIC.equals(modifier)) {
           isAllowed = !(modifierOwnerParent instanceof PsiDeclarationStatement);
         }
+        if (PsiModifier.SEALED.equals(modifier)) {
+          isAllowed = !aClass.isAnnotationType();
+        }
       }
       else {
         if (PsiModifier.PUBLIC.equals(modifier)) {
