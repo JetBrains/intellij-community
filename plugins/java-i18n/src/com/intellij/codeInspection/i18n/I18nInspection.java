@@ -79,7 +79,8 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     CallMatcher.staticCall(CommonClassNames.JAVA_LANG_LONG, "toString"),
     CallMatcher.instanceCall(CommonClassNames.JAVA_IO_FILE, "getAbsolutePath", "getCanonicalPath", "getName", "getPath"),
     CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_THROWABLE, "getMessage", "getLocalizedMessage").parameterCount(0),
-    CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_THROWABLE, "toString").parameterCount(0)
+    CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_THROWABLE, "toString").parameterCount(0),
+    CallMatcher.instanceCall("javax.swing.text.JTextComponent", "getText").parameterCount(0)
   );
   private static final CallMatcher STRING_BUILDER_TO_STRING = CallMatcher.anyOf(
     CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_STRING_BUFFER, "toString").parameterCount(0),
