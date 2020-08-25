@@ -242,7 +242,7 @@ public class VcsStructureChooser extends DialogWrapper {
             HtmlChunk.text("(" + VcsLogBundle.message("vcs.log.filters.structure.max.selected.error.message", MAX_FOLDERS) + ")")
               .wrapWith(HtmlChunk.tag("font").attr("color", "red"));
           selectedLabel.setText(new HtmlBuilder()
-                                  .appendRaw((VcsLogBundle.message("vcs.log.filters.structure.label", errorText.toString())))
+                                  .appendRaw((VcsLogBundle.message("vcs.log.filters.structure.label", errorText)))
                                   .wrapWith(HtmlChunk.html())
                                   .toString());
         }
