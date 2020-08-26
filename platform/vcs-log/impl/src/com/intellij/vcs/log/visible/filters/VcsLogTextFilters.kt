@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NonNls
 import java.util.*
 import java.util.regex.Pattern
 
-data class VcsLogRegexTextFilter internal constructor(private val pattern: Pattern) : VcsLogDetailsFilter, VcsLogTextFilter {
+internal data class VcsLogRegexTextFilter(private val pattern: Pattern) : VcsLogDetailsFilter, VcsLogTextFilter {
   override fun matches(message: String): Boolean = pattern.matcher(message).find()
 
   override fun getText(): String = pattern.pattern()
@@ -23,8 +23,8 @@ data class VcsLogRegexTextFilter internal constructor(private val pattern: Patte
   }
 }
 
-class VcsLogMultiplePatternsTextFilter internal constructor(val patterns: List<String>,
-                                                            private val isMatchCase: Boolean) : VcsLogDetailsFilter, VcsLogTextFilter {
+internal class VcsLogMultiplePatternsTextFilter(val patterns: List<String>,
+                                                private val isMatchCase: Boolean) : VcsLogDetailsFilter, VcsLogTextFilter {
   override fun getText(): String = if (patterns.size == 1) patterns.single() else patterns.joinToString("|") { Pattern.quote(it) }
 
   override fun isRegex(): Boolean = patterns.size > 1
