@@ -28,6 +28,7 @@ import java.util.Map;
 import static com.intellij.openapi.util.text.HtmlChunk.text;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static com.intellij.xml.util.XmlStringUtil.wrapInHtml;
+import static git4idea.i18n.GitBundleExtensions.html;
 
 public class GitRejectedPushUpdateDialog extends DialogWrapper {
 
@@ -53,12 +54,7 @@ public class GitRejectedPushUpdateDialog extends DialogWrapper {
 
     myUpdateAllRoots = new JCheckBox(GitBundle.message("push.rejected.update.not.rejected.repositories.as.well.checkbox"),
                                      initialSettings.shouldUpdateAllRoots());
-    myAutoUpdateInFuture = new JCheckBox(
-      new HtmlBuilder()
-        .append(GitBundle.message("push.rejected.remember.checkbox.first")).br()
-        .append(GitBundle.message("push.rejected.remember.checkbox.second"))
-        .toString()
-    );
+    myAutoUpdateInFuture = new JCheckBox(html("push.rejected.remember.checkbox"));
 
     myMergeAction = new MergeAction();
     myRebaseAction = new RebaseAction();
@@ -120,7 +116,7 @@ public class GitRejectedPushUpdateDialog extends DialogWrapper {
       GitRepository repository = myRepositories.iterator().next();
       String currentBranch = getCurrentBranch(repository).getName();
       return new HtmlBuilder()
-        .append(GitBundle.message("push.rejected.only.one.git.repo", text(currentBranch).code())).br()
+        .appendRaw(GitBundle.message("push.rejected.only.one.git.repo", text(currentBranch).code())).br()
         .appendRaw(descriptionEnding())
         .toString();
     }
@@ -144,7 +140,7 @@ public class GitRejectedPushUpdateDialog extends DialogWrapper {
       HtmlBuilder description = new HtmlBuilder();
       if (allBranchesHaveTheSameName(currentBranches)) {
         String branchName = getFirstItem(currentBranches.values()).getName();
-        description.append(GitBundle.message("push.rejected.many.repos.single.branch", text(branchName).code())).br();
+        description.appendRaw(GitBundle.message("push.rejected.many.repos.single.branch", text(branchName).code())).br();
         for (GitRepository repository : DvcsUtil.sortRepositories(currentBranches.keySet())) {
           description.nbsp(4).append(text(repository.getPresentableUrl()).code()).br();
         }
@@ -155,12 +151,12 @@ public class GitRejectedPushUpdateDialog extends DialogWrapper {
           String repositoryUrl = entry.getKey().getPresentableUrl();
           String currentBranch = entry.getValue().getName();
           description
-            .nbsp(4).append(GitBundle.message("push.rejected.many.repos.item", text(currentBranch).code(), text(repositoryUrl).code()))
+            .nbsp(4).appendRaw(GitBundle.message("push.rejected.many.repos.item", text(currentBranch).code(), text(repositoryUrl).code()))
             .br();
         }
       }
       return description.br()
-        .append(descriptionEnding())
+        .appendRaw(descriptionEnding())
         .toString();
     }
   }
