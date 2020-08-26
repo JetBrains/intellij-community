@@ -51,48 +51,79 @@ private class NativeMacMessageManager : MacMessages() {
   private var myResult: Int? = null
   private var mySuppress: Boolean = false
 
-  override fun showYesNoCancelDialog(@NlsContexts.DialogTitle title: String,
+  private fun getJBMessages() = service<JBMacMessages>()
+
+  override fun showYesNoCancelDialog(title: String,
                                      message: String,
-                                     @NlsContexts.Button yesText: String,
-                                     @NlsContexts.Button noText: String,
-                                     @NlsContexts.Button cancelText: String,
+                                     yesText: String,
+                                     noText: String,
+                                     cancelText: String,
                                      window: Window?,
                                      doNotAskOption: DoNotAskOption?): Int {
-    return showMessageDialog(title, message, arrayOf(yesText, noText, cancelText), false, window, -1, 0, doNotAskOption)
+    return showMessageDialog(title, message, arrayOf(yesText, noText, cancelText), false, window, -1, doNotAskOption) {
+      getJBMessages().showYesNoCancelDialog(title, message, yesText, noText, cancelText, window, doNotAskOption)
+    }
   }
 
-  override fun showOkMessageDialog(@NlsContexts.DialogTitle title: @NlsContexts.DialogMessage String,
+  override fun showOkMessageDialog(title: String,
                                    message: String?,
-                                   @NlsContexts.Button okText: String,
+                                   okText: String,
                                    window: Window?) {
-    showMessageDialog(title, message, arrayOf(okText), false, window, -1, 0, null)
+    showMessageDialog(title, message, arrayOf(okText), false, window, -1, null) {
+      getJBMessages().showOkMessageDialog(title, message, okText, window)
+      Messages.YES
+    }
   }
 
   override fun showYesNoDialog(title: String,
                                message: String,
-                               @NlsContexts.Button yesText: String,
-                               @NlsContexts.Button noText: String,
+                               yesText: String,
+                               noText: String,
                                window: Window?,
                                doNotAskDialogOption: DoNotAskOption?): Boolean {
-    return showMessageDialog(title, message, arrayOf(yesText, noText), false, window, -1, 0, doNotAskDialogOption) == Messages.YES
+    return showMessageDialog(title, message, arrayOf(yesText, noText), false, window, -1, doNotAskDialogOption) {
+      if (getJBMessages().showYesNoDialog(title, message, yesText, noText, window, doNotAskDialogOption)) {
+        Messages.YES
+      }
+      else {
+        Messages.NO
+      }
+    } == Messages.YES
   }
 
-  override fun showErrorDialog(@NlsContexts.DialogTitle title: String,
-                               @NlsContexts.DialogMessage message: String?,
-                               @NlsContexts.Button okButton: String,
+  override fun showErrorDialog(title: String,
+                               message: String?,
+                               okButton: String,
                                window: Window?) {
-    showMessageDialog(title, message, arrayOf(okButton), true, window, -1, 0, null)
+    showMessageDialog(title, message, arrayOf(okButton), true, window, -1, null) {
+      getJBMessages().showErrorDialog(title, message, okButton, window)
+      Messages.OK
+    }
   }
 
-  @Messages.YesNoCancelResult
-  override fun showMessageDialog(@NlsContexts.DialogTitle title: String,
-                                 @NlsContexts.DialogMessage message: String?,
+  override fun showMessageDialog(title: String,
+                                 message: String?,
                                  buttons: Array<String>,
                                  errorStyle: Boolean,
                                  window: Window?,
                                  defaultOptionIndex: Int,
                                  focusedOptionIndex: Int,
                                  doNotAskDialogOption: DoNotAskOption?): Int {
+    return showMessageDialog(title, message, buttons, errorStyle, window, defaultOptionIndex, doNotAskDialogOption) {
+      getJBMessages().showMessageDialog(title, message, buttons, errorStyle, window, defaultOptionIndex, focusedOptionIndex,
+                                        doNotAskDialogOption)
+    }
+  }
+
+  @Messages.YesNoCancelResult
+  private fun showMessageDialog(@NlsContexts.DialogTitle title: String,
+                                @NlsContexts.DialogMessage message: String?,
+                                buttons: Array<@NlsContexts.Button String>,
+                                errorStyle: Boolean,
+                                window: Window?,
+                                defaultOptionIndex: Int,
+                                doNotAskDialogOption: DoNotAskOption?,
+                                fallback: () -> Int): Int {
     val info = MessageInfo(title, message, buttons, errorStyle, window, defaultOptionIndex, doNotAskDialogOption)
 
     assert(info.window.isVisible)
@@ -129,7 +160,7 @@ private class NativeMacMessageManager : MacMessages() {
       return result
     }
 
-    return Messages.CANCEL
+    return fallback()
   }
 
   private val SHOW_ALERT = object : Callback {
