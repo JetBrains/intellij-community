@@ -697,7 +697,7 @@ public final class HtmlUtil {
   }
 
   @Contract("!null -> !null")
-  public static String getTagPresentation(@Nullable XmlTag tag) {
+  public static @NlsSafe String getTagPresentation(@Nullable XmlTag tag) {
     if (tag == null) return null;
     StringBuilder builder = new StringBuilder(tag.getLocalName());
     String idValue = getAttributeValue(tag, ID_ATTRIBUTE_NAME);
