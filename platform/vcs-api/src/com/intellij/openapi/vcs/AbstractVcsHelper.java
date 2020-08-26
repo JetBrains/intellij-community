@@ -4,8 +4,10 @@ package com.intellij.openapi.vcs;
 import com.intellij.ide.errorTreeView.HotfixData;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.TabTitle;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.Change;
@@ -124,38 +126,39 @@ public abstract class AbstractVcsHelper {
   @Nullable
   public abstract Collection<VirtualFile> selectFilesToProcess(List<? extends VirtualFile> files,
                                                                @NlsContexts.DialogTitle String title,
-                                                               @NlsContexts.Label @Nullable String prompt,
-                                                               @Nullable String singleFileTitle,
-                                                               @Nullable String singleFilePromptTemplate,
+                                                               @NlsContexts.DialogMessage @Nullable String prompt,
+                                                               @NlsContexts.DialogTitle @Nullable String singleFileTitle,
+                                                               @NlsContexts.DialogMessage @Nullable String singleFilePromptTemplate,
                                                                @NotNull VcsShowConfirmationOption confirmationOption);
 
   @Nullable
   public abstract Collection<FilePath> selectFilePathsToProcess(@NotNull List<? extends FilePath> files,
                                                                 @NlsContexts.DialogTitle String title,
-                                                                @NlsContexts.Label @Nullable String prompt,
-                                                                @Nullable String singleFileTitle,
-                                                                @Nullable String singleFilePromptTemplate,
+                                                                @NlsContexts.DialogMessage @Nullable String prompt,
+                                                                @NlsContexts.DialogTitle @Nullable String singleFileTitle,
+                                                                @NlsContexts.DialogMessage @Nullable String singleFilePromptTemplate,
                                                                 @NotNull VcsShowConfirmationOption confirmationOption);
 
   @Nullable
   public abstract Collection<FilePath> selectFilePathsToProcess(@NotNull List<? extends FilePath> files,
                                                                 @NlsContexts.DialogTitle String title,
-                                                                @NlsContexts.Label @Nullable String prompt,
-                                                                @Nullable String singleFileTitle,
-                                                                @Nullable String singleFilePromptTemplate,
+                                                                @NlsContexts.DialogMessage @Nullable String prompt,
+                                                                @NlsContexts.DialogTitle @Nullable String singleFileTitle,
+                                                                @NlsContexts.DialogMessage @Nullable String singleFilePromptTemplate,
                                                                 @NotNull VcsShowConfirmationOption confirmationOption,
-                                                                @Nullable String okActionName,
-                                                                @Nullable String cancelActionName);
+                                                                @NlsActions.ActionText @Nullable String okActionName,
+                                                                @NlsActions.ActionText @Nullable String cancelActionName);
 
 
   /**
    * <p>Shows commit dialog, fills it with the given changes and given commit message, initially selects the given changelist.</p>
    * <p>Note that the method is asynchronous: it returns right after user presses "Commit" or "Cancel" and after all pre-commit handlers
-   *    have been called. It doesn't wait for commit itself to succeed or fail - for this use the {@code customResultHandler}.</p>
+   * have been called. It doesn't wait for commit itself to succeed or fail - for this use the {@code customResultHandler}.</p>
+   *
    * @return true if user decides to commit the changes, false if user presses Cancel.
    */
   public abstract boolean commitChanges(@NotNull Collection<? extends Change> changes, @NotNull LocalChangeList initialChangeList,
-                                        @NotNull String commitMessage, @Nullable CommitResultHandler customResultHandler);
+                                        @NotNull @NlsSafe String commitMessage, @Nullable CommitResultHandler customResultHandler);
 
   public abstract void loadAndShowCommittedChangesDetails(@NotNull Project project,
                                                           @NotNull VcsRevisionNumber revision,

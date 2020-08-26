@@ -8,10 +8,12 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.SimpleListCellRenderer;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,7 +42,7 @@ public class VcsScopeItemPresenter implements ModelScopeItemPresenter {
   public List<JComponent> getAdditionalComponents(JRadioButton button, ModelScopeItem m, Disposable dialogDisposable) {
     VcsScopeItem model = (VcsScopeItem)m;
     ComboBox<String> myChangeLists = new ComboBox<>();
-    myChangeLists.setRenderer(SimpleListCellRenderer.create((label, value, index) -> {
+    myChangeLists.setRenderer(SimpleListCellRenderer.create((@NotNull JBLabel label, @NlsSafe String value, int index) -> {
       int availableWidth = myChangeLists.getWidth(); // todo, is it correct?
       if (availableWidth <= 0) {
         availableWidth = JBUIScale.scale(200);

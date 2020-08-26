@@ -13,6 +13,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsIgnoreManager;
@@ -558,19 +559,25 @@ public abstract class VcsVFSListener implements Disposable {
   }
 
   @NotNull
+  @NlsContexts.DialogTitle
   protected abstract String getAddTitle();
 
   @NotNull
+  @NlsContexts.DialogTitle
   protected abstract String getSingleFileAddTitle();
 
   @NotNull
+  @NlsContexts.DialogMessage
   protected abstract String getSingleFileAddPromptTemplate();
 
   @NotNull
+  @NlsContexts.DialogTitle
   protected abstract String getDeleteTitle();
 
+  @NlsContexts.DialogTitle
   protected abstract String getSingleFileDeleteTitle();
 
+  @NlsContexts.DialogMessage
   protected abstract String getSingleFileDeletePromptTemplate();
 
   protected abstract void performAdding(@NotNull Collection<VirtualFile> addedFiles, @NotNull Map<VirtualFile, VirtualFile> copyFromMap);
