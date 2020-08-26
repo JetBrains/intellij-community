@@ -102,7 +102,7 @@ public class GitPreservingProcess {
       LOG.debug("finished.");
     };
 
-    new GitFreezingProcess(myProject, "Git " + myOperationTitle, operation).execute();
+    new GitFreezingProcess(myProject, myOperationTitle, operation).execute();
   }
 
   /**

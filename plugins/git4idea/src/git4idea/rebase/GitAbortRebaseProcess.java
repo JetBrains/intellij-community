@@ -165,7 +165,7 @@ class GitAbortRebaseProcess {
   private void doAbort(final boolean rollback) {
     boolean[] success = new boolean[1];
 
-    new GitFreezingProcess(myProject, "Git rebase", () -> {
+    new GitFreezingProcess(myProject, GitBundle.message("activity.name.rebase"), () -> {
       try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, GitBundle.message("activity.name.rebase"))) {
         if (myRepositoryToAbort != null) {
           myIndicator.setText2(GitBundle.message(
