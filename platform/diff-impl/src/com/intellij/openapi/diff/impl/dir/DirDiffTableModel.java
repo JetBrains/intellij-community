@@ -566,7 +566,7 @@ public class DirDiffTableModel extends AbstractTableModel implements DirDiffMode
       case DATE:
         return DiffBundle.message("column.dirdiff.date");
       default:
-        return type.name();
+        throw new IllegalArgumentException(type.name());
     }
   }
 
