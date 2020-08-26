@@ -110,7 +110,7 @@ public class VcsLogManager implements Disposable {
   }
 
   @NotNull
-  public MainVcsLogUi createLogUi(@NotNull String logId, @NotNull LogWindowKind kind, boolean isClosedOnDispose) {
+  MainVcsLogUi createLogUi(@NotNull String logId, @NotNull LogWindowKind kind, boolean isClosedOnDispose) {
     return createLogUi(getMainLogUiFactory(logId, null), kind, isClosedOnDispose);
   }
 
@@ -136,9 +136,9 @@ public class VcsLogManager implements Disposable {
   }
 
   @NotNull
-  public <U extends VcsLogUiEx> U createLogUi(@NotNull VcsLogUiFactory<U> factory,
-                                              @NotNull LogWindowKind kind,
-                                              boolean isClosedOnDispose) {
+  private <U extends VcsLogUiEx> U createLogUi(@NotNull VcsLogUiFactory<U> factory,
+                                               @NotNull LogWindowKind kind,
+                                               boolean isClosedOnDispose) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (isDisposed()) {
       LOG.error("Trying to create new VcsLogUi on a disposed VcsLogManager instance");
