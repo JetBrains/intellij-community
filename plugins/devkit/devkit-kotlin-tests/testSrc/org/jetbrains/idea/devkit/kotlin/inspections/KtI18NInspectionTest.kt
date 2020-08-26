@@ -103,6 +103,21 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
   
+  fun testWhen() {
+    myFixture.enableInspections(I18nInspection())
+    myFixture.configureByText("Foo.kt", """
+        fun foo(@org.jetbrains.annotations.NonNls nonNls: String, foo: String) {
+          when (nonNls) {
+            "foo bar" -> {}
+          }
+          when (foo) {
+            <warning descr="Hardcoded string literal: \"foo bar\"">"foo bar"</warning> -> {}
+          }
+        }
+    """.trimIndent())
+    myFixture.testHighlighting()
+  }
+  
   fun testFunctionParametersOnlyNls() {
     val inspection = I18nInspection()
     inspection.setIgnoreForAllButNls(true)

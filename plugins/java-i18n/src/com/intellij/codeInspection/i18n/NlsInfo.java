@@ -280,7 +280,7 @@ public abstract class NlsInfo {
       }
     }
     else if (parent instanceof USwitchClauseExpression) {
-      if (((USwitchClauseExpression)parent).getCaseValues().contains(expression)) {
+      if (((USwitchClauseExpression)parent).getCaseValues().contains(normalize(expression))) {
         USwitchExpression switchExpression = UastUtils.getParentOfType(parent, USwitchExpression.class);
         if (switchExpression != null) {
           UExpression selector = switchExpression.getExpression();
