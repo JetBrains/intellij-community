@@ -26,6 +26,8 @@
     <extensionPoint name="generalOptionsProvider" beanClass="com.intellij.ide.GeneralSettingsConfigurableEP">
       <with attribute="instance" implements="com.intellij.openapi.options.SearchableConfigurable"/>
     </extensionPoint>
+    <extensionPoint name="groupConfigurable"
+                    beanClass="com.intellij.openapi.options.ex.ConfigurableGroupEP"/>
 
 
     <extensionPoint name="typeName" beanClass="com.intellij.ide.TypeNameEP">
@@ -52,6 +54,13 @@
 
     <generalOptionsProvider key="<error descr="Cannot resolve property key">INVALID_KEY</error>"
                             bundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"/>
+
+    <groupConfigurable id="myGroup" descriptionKey="my.key" displayNameKey="my.key" />
+    <groupConfigurable id="myGroup2" bundle="extensionI18nAnotherBundle" descriptionKey="another.key" displayNameKey="another.key" />
+    <groupConfigurable id="myGroupInvalid"
+                       bundle="<error descr="Cannot resolve property bundle">INVALID_VALUE</error>"
+                       descriptionKey="<error descr="Cannot resolve property key">INVALID_VALUE</error>"
+                       displayNameKey="<error descr="Cannot resolve property key">INVALID_VALUE</error>" />
 
     <typeName className="java.lang.String" resourceKey="my.key"/>
     <typeName className="java.lang.String"

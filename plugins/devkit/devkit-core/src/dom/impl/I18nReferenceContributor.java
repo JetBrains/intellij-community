@@ -10,6 +10,7 @@ import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.ResourceBundleReference;
 import com.intellij.openapi.options.ConfigurableEP;
+import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.Iconable;
@@ -45,6 +46,7 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
   private static final String SEPARATOR_TAG = "separator";
 
   private static class Holder {
+    private static final String GROUP_CONFIGURABLE_EP = "com.intellij.openapi.options.ex.ConfigurableGroupEP";
     private static final String CONFIGURABLE_EP = ConfigurableEP.class.getName();
     private static final String INSPECTION_EP = InspectionEP.class.getName();
 
@@ -68,6 +70,23 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
 
     registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"groupPathKey"}, Holder.INSPECTION_EP),
                                         new PropertyKeyReferenceProvider(false, "groupPathKey", "groupBundle"));
+
+    registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"displayNameKey"},
+                                                                  Holder.GROUP_CONFIGURABLE_EP),
+                                        new PropertyKeyReferenceProvider(false, "displayNameKey", null) {
+                                          @Override
+                                          protected String getFallbackBundleName() {
+                                            return OptionsBundle.BUNDLE;
+                                          }
+                                        });
+    registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"descriptionKey"},
+                                                                  Holder.GROUP_CONFIGURABLE_EP),
+                                        new PropertyKeyReferenceProvider(false, "descriptionKey", null) {
+                                          @Override
+                                          protected String getFallbackBundleName() {
+                                            return OptionsBundle.BUNDLE;
+                                          }
+                                        });
 
     registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"resourceKey"},
                                                                   Holder.TYPE_NAME_EP),
@@ -106,7 +125,8 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
     registrar.registerReferenceProvider(actionsResourceBundlePattern, bundleReferenceProvider);
 
     registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"bundle", "groupBundle"},
-                                                                  Holder.CONFIGURABLE_EP, Holder.INSPECTION_EP),
+                                                                  Holder.CONFIGURABLE_EP, Holder.INSPECTION_EP,
+                                                                  Holder.GROUP_CONFIGURABLE_EP),
                                         bundleReferenceProvider);
 
     registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"resourceBundle"},
