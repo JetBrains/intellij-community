@@ -939,9 +939,11 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
   }
 
   @Override
-  protected void duplicateError(@NotNull PsiFile file, @NotNull String externalName, @NotNull String text) {
-    String message = text + "; for signature: '" + externalName + "' in the file " + file.getName();
-    LOG.error(message, new Throwable(), AttachmentFactory.createAttachment(file.getVirtualFile()));
+  protected void duplicateError(@NotNull VirtualFile virtualFile,
+                                @NotNull String externalName,
+                                @NotNull String text) {
+    String message = text + "; for signature: '" + externalName + "' in the file " + virtualFile.getName();
+    LOG.error(message, new Throwable(), AttachmentFactory.createAttachment(virtualFile));
   }
 
   public static boolean areExternalAnnotationsApplicable(@NotNull PsiModifierListOwner owner) {

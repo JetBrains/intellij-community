@@ -162,6 +162,11 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
       return null;
     }
 
+    Sdk jdk = getJDKToAnnotate(project);
+    return jdk == null ? null : () -> attachAnnotationsLaterTo(project, jdk);
+  }
+
+  private static Sdk getJDKToAnnotate(@NotNull Project project) {
     PsiClass awtInputEvent = JavaPsiFacade.getInstance(project).findClass("java.awt.event.InputEvent", GlobalSearchScope.allScope(project));
     if (awtInputEvent == null) return null;
     PsiMethod[] methods = awtInputEvent.findMethodsByName("getModifiers", false);
@@ -170,7 +175,7 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
     Sdk jdk = JdkUtils.getJdkForElement(getModifiers);
     if (jdk == null) return null;
     PsiAnnotation annotation = ExternalAnnotationsManager.getInstance(project).findExternalAnnotation(getModifiers, MagicConstant.class.getName());
-    return annotation == null ? () -> attachAnnotationsLaterTo(project, jdk) : null;
+    return annotation == null ? jdk : null;
   }
 
   private static void attachAnnotationsLaterTo(@NotNull Project project, @NotNull Sdk sdk) {
@@ -179,7 +184,11 @@ public final class MagicConstantInspection extends AbstractBaseJavaLocalInspecti
       SdkModificator modificator = sdk.getSdkModificator();
       boolean success = JavaSdkImpl.attachIDEAAnnotationsToJdk(modificator);
       // daemon will restart automatically
-      modificator.commitChanges();
+      if (success) {
+        modificator.commitChanges();
+      }
+      // check if we really attached the necessary annotations, to avoid IDEA-247322
+      success &= getJDKToAnnotate(project) == null;
       // avoid endless loop on JDK misconfiguration
       if (success) {
         project.putUserData(ANNOTATIONS_BEING_ATTACHED, null);
