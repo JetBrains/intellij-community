@@ -105,7 +105,7 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
         .withSuperParent(2, DomPatterns.tagWithDom("actions", Actions.class));
     registrar.registerReferenceProvider(actionsResourceBundlePattern, bundleReferenceProvider);
 
-    registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"bundle"}, "groupBundle",
+    registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"bundle", "groupBundle"},
                                                                   Holder.CONFIGURABLE_EP, Holder.INSPECTION_EP),
                                         bundleReferenceProvider);
 

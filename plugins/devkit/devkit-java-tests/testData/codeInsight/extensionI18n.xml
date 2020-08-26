@@ -42,7 +42,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <localInspection groupKey="my.key" key="my.key"/>
     <localInspection groupKey="my.key" key="my.key" bundle="extensionI18nBundle" groupBundle="extensionI18nBundle"/>
-    <localInspection groupKey="<error descr="Cannot resolve property key">INVALID_KEY</error>" groupBundle="INVALID_BUNDLE"
+    <localInspection groupKey="<error descr="Cannot resolve property key">INVALID_KEY</error>" groupBundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"
                      key="<error descr="Cannot resolve property key">INVALID_KEY</error>" bundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"/>
 
 
@@ -72,7 +72,7 @@
   <extensions defaultExtensionNs="custom">
     <myCustomInspection groupKey="my.key" key="my.key"/>
     <myCustomInspection groupKey="my.key" key="my.key" bundle="extensionI18nBundle" groupBundle="extensionI18nBundle"/>
-    <myCustomInspection groupKey="<error descr="Cannot resolve property key">INVALID_KEY</error>" groupBundle="INVALID_BUNDLE"
+    <myCustomInspection groupKey="<error descr="Cannot resolve property key">INVALID_KEY</error>" groupBundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"
                         key="<error descr="Cannot resolve property key">INVALID_KEY</error>" bundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"/>
   </extensions>
 
