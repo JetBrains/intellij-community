@@ -67,13 +67,13 @@ import static com.intellij.ui.IdeBorderFactory.*;
  */
 public abstract class PerFileConfigurableBase<T> implements SearchableConfigurable, Configurable.NoScroll {
 
-  protected static final Key<String> DESCRIPTION = KeyWithDefaultValue.create("DESCRIPTION", "");
-  protected static final Key<String> TARGET_TITLE = KeyWithDefaultValue.create("TARGET_TITLE", "Path");
-  protected static final Key<String> MAPPING_TITLE = KeyWithDefaultValue.create("MAPPING_TITLE", "Mapping");
-  protected static final Key<String> EMPTY_TEXT = KeyWithDefaultValue.create("EMPTY_TEXT", "New Mapping $addShortcut");
-  protected static final Key<String> OVERRIDE_QUESTION = Key.create("OVERRIDE_QUESTION");
-  protected static final Key<String> OVERRIDE_TITLE = Key.create("OVERRIDE_TITLE");
-  protected static final Key<String> NULL_TEXT = KeyWithDefaultValue.create("NULL_TEXT", "<None>");
+  protected static final Key<@NlsContexts.Label String> DESCRIPTION = KeyWithDefaultValue.create("DESCRIPTION", "");
+  protected static final Key<@NlsContexts.ColumnName String> TARGET_TITLE = KeyWithDefaultValue.create("TARGET_TITLE", LangBundle.message("PerFileConfigurableBase.target.title"));
+  protected static final Key<@NlsContexts.ColumnName String> MAPPING_TITLE = KeyWithDefaultValue.create("MAPPING_TITLE", LangBundle.message("PerFileConfigurableBase.mapping.title"));
+  protected static final Key<@NlsContexts.Label String> EMPTY_TEXT = KeyWithDefaultValue.create("EMPTY_TEXT", LangBundle.message("PerFileConfigurableBase.empty.text"));
+  protected static final Key<@Nls String> OVERRIDE_QUESTION = Key.create("OVERRIDE_QUESTION");
+  protected static final Key<@NlsContexts.DialogTitle String> OVERRIDE_TITLE = Key.create("OVERRIDE_TITLE");
+  protected static final Key<@NlsContexts.Label String> NULL_TEXT = KeyWithDefaultValue.create("NULL_TEXT", LangBundle.message("PerFileConfigurableBase.null.text"));
   protected static final Key<Boolean> ADD_PROJECT_MAPPING = KeyWithDefaultValue.create("ADD_PROJECT_MAPPING", Boolean.TRUE);
   protected static final Key<Boolean> ONLY_DIRECTORIES = KeyWithDefaultValue.create("ONLY_DIRECTORIES", Boolean.FALSE);
   protected static final Key<Boolean> SORT_VALUES = KeyWithDefaultValue.create("SORT_VALUES", Boolean.TRUE);
@@ -88,7 +88,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
 
   private final List<Runnable> myResetRunnables = new ArrayList<>();
   private final Map<String, T> myDefaultVals = new HashMap<>();
-  private final List<Trinity<String, Supplier<T>, Consumer<T>>> myDefaultProps = new ArrayList<>();
+  private final List<Trinity<@NlsContexts.Label String, Supplier<T>, Consumer<T>>> myDefaultProps = new ArrayList<>();
   private VirtualFile myFileToSelect;
 
   protected interface Value<T> extends Setter<T>, Getter<T> {
@@ -145,6 +145,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     //todo multi-editing, separate project/ide combos _if_ needed by specific configurable (SQL, no Web)
     myPanel = new JPanel(new BorderLayout());
     myTable = new JBTable(myModel = new MyModel<>(param(TARGET_TITLE), param(MAPPING_TITLE))) {
+      @SuppressWarnings("unchecked")
       @Override
       public String getToolTipText(@NotNull MouseEvent event) {
         Point point = event.getPoint();
@@ -181,6 +182,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     return myPanel;
   }
 
+  @NlsContexts.Tooltip
   @Nullable
   protected String getToolTipFor(@Nullable T value) {
     return null;
@@ -190,8 +192,9 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   protected JComponent createDefaultMappingComponent() {
     myDefaultProps.addAll(getDefaultMappings());
     if (myMappings instanceof LanguagePerFileMappings && param(ADD_PROJECT_MAPPING)) {
-      myDefaultProps.add(Trinity.create("Project " + StringUtil.capitalize(param(MAPPING_TITLE)),
-                                        () -> ((LanguagePerFileMappings<T>)myMappings).getConfiguredMapping(null),
+      myDefaultProps.add(Trinity.create(
+        LangBundle.message("PerFileConfigurableBase.project.mapping", StringUtil.capitalize(param(MAPPING_TITLE))),
+        () -> ((LanguagePerFileMappings<T>)myMappings).getConfiguredMapping(null),
                                         o -> myMappings.setMapping(null, o)));
     }
     if (myDefaultProps.size() == 0) return null;
@@ -210,9 +213,9 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     cons2.insets = cons1.insets;
     panel.add(Box.createGlue(), new GridBagConstraints(2, 0, 1, 1, 1., 1., GridBagConstraints.CENTER, GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
 
-    for (Trinity<String, Supplier<T>, Consumer<T>> prop : myDefaultProps) {
+    for (Trinity<@NlsContexts.Label String, Supplier<T>, Consumer<T>> prop : myDefaultProps) {
       myDefaultVals.put(prop.first, prop.second.get());
-      JPanel p = createActionPanel(null, new Value<T>() {
+      JPanel p = createActionPanel(null, new Value<>() {
         @Override
         public void commit() {
           myModel.fireTableDataChanged();
@@ -284,7 +287,6 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     TableUtil.editCellAt(myTable, myTable.getSelectedRow(), 0);
     TextFieldWithBrowseButton panel = ObjectUtils.tryCast(myTable.getEditorComponent(), TextFieldWithBrowseButton.class);
     if (panel != null) {
-      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(() -> {
         if (myTable.getEditorComponent() == panel) {
           panel.getButton().doClick();
@@ -308,7 +310,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     return myMappings.getDefaultMapping(file);
   }
 
-  private boolean keyMatches(@Nullable Object key, @Nullable VirtualFile file, boolean strict) {
+  private static boolean keyMatches(@Nullable Object key, @Nullable VirtualFile file, boolean strict) {
     if (file == null) return key == null;
     if (key instanceof VirtualFile) return VfsUtilCore.isAncestor((VirtualFile)key, file, strict);
     // todo also patterns
@@ -534,7 +536,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
         editorValue = pair.second; // (T)value
         if (!canEditTarget(target, editorValue)) return null;
 
-        JPanel panel = createActionPanel(target, new Value<T>() {
+        JPanel panel = createActionPanel(target, new Value<>() {
           @Override
           public T get() {
             return editorValue;
@@ -565,7 +567,6 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
         if (button != null) {
           AtomicInteger clickCount = new AtomicInteger();
           button.addActionListener(e -> clickCount.incrementAndGet());
-          //noinspection SSBasedInspection
           SwingUtilities.invokeLater(() -> {
             if (clickCount.get() == 0 && myTable.getEditorComponent() == panel) {
               button.doClick();
@@ -659,12 +660,14 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
       CommonBundle.getCancelButtonText(), Messages.getWarningIcon());
   }
 
-  private String renderValue(@Nullable Object value, @NotNull String nullValue) {
+  @NlsContexts.Label
+  private String renderValue(@Nullable Object value, @NlsContexts.Label @NotNull String nullValue) {
     if (value == null) {
       return nullValue;
     }
     else {
       SimpleColoredText text = new SimpleColoredText();
+      //noinspection unchecked
       renderValue(null, (T)value, text);
       return text.toString();
     }
@@ -687,7 +690,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
       renderer.append(file.getName(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
     else if (target == null) {
-      renderer.append("Project", SimpleTextAttributes.GRAY_ATTRIBUTES);
+      renderer.append(LangBundle.message("PerFileConfigurableBase.label.project"), SimpleTextAttributes.GRAY_ATTRIBUTES);
     }
   }
 
@@ -768,6 +771,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     return target == null ? getNullValueText(null) : null;
   }
 
+  @NlsContexts.Label
   @Nullable
   protected String getNullValueText(@Nullable Object target) {
     return param(NULL_TEXT);
@@ -853,6 +857,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
       Pair<Object, T> pair = data.get(rowIndex);
       if (columnIndex == 1) {
         if (Comparing.equal(aValue, pair.second)) return;
+        //noinspection unchecked
         data.set(rowIndex, Pair.create(pair.first, (T)aValue));
       }
       else {
