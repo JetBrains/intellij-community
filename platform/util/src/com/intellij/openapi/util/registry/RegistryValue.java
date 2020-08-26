@@ -170,7 +170,7 @@ public class RegistryValue {
   }
 
   @NotNull
-  public String getDescription() {
+  public @NlsSafe String getDescription() {
     if (myKeyDescriptor != null) {
       return myKeyDescriptor.getDescription();
     }
