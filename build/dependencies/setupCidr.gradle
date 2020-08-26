@@ -31,7 +31,7 @@ task setupCidr
     path: "CIDR/clion/bin/clang"
   ],
   lldbkit: [
-    version: "70f31e",
+    version: "01cba6",
     platforms: [
       win: ["x64", "x86"],
       linux: ["x64"],
