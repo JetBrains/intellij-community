@@ -78,7 +78,7 @@ internal fun gitOptionDescriptors(project: Project): List<OptionDescription> {
 }
 
 internal class GitVcsPanel(private val project: Project) :
-  BoundConfigurable(GitVcs.NAME, "project.propVCSSupport.VCSs.Git"),
+  BoundConfigurable(GitBundle.message("settings.git.option.group"), "project.propVCSSupport.VCSs.Git"),
   SearchableConfigurable {
 
   private val projectSettings by lazy { GitVcsSettings.getInstance(project) }
@@ -271,7 +271,7 @@ internal class GitVcsPanel(private val project: Project) :
     if (project.isDefault || GitRepositoryManager.getInstance(project).moreThanOneRoot()) {
       row {
         checkBox(cdSyncBranches(project)).applyToComponent {
-          toolTipText = DvcsBundle.message("sync.setting.description", GitVcs.NAME)
+          toolTipText = DvcsBundle.message("sync.setting.description", GitVcs.DISPLAY_NAME.get())
         }
       }
     }

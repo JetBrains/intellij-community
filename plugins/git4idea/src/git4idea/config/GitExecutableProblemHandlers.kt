@@ -6,7 +6,6 @@ import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
-import git4idea.GitVcs
 import git4idea.config.GitExecutableProblemsNotifier.getPrettyErrorMessage
 import git4idea.i18n.GitBundle
 import org.jetbrains.annotations.CalledInAny
@@ -73,7 +72,7 @@ interface ErrorNotifier {
 
     // todo probably change to "Select on disk" instead of opening Preferences
     internal class Configure(val project: Project) : FixOption(CommonBundle.message("action.text.configure.ellipsis"), {
-      ShowSettingsUtil.getInstance().showSettingsDialog(project, GitVcs.NAME)
+      ShowSettingsUtil.getInstance().showSettingsDialog(project, GitBundle.message("settings.git.option.group"))
     })
   }
 }

@@ -45,7 +45,7 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
   private static final boolean showNewNavbarVCSGroup = UISettings.getInstance().getShowNewNavbarVCSGroup();
 
   public GitBranchWidget(@NotNull Project project) {
-    super(project, GitVcs.NAME);
+    super(project, GitVcs.DISPLAY_NAME.get());
     mySettings = GitVcsSettings.getInstance(project);
 
     project.getMessageBus().connect(this).subscribe(GitRepository.GIT_REPO_CHANGE, r -> updateLater());

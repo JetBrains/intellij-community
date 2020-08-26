@@ -214,7 +214,7 @@ public class GitSimpleHandler extends GitTextHandler {
 
       @Override
       public void startFailed(@NotNull final Throwable exception) {
-        exRef.set(new VcsException(GitBundle.message("git.executable.unknown.error.message", exception.toString()), exception));
+        exRef.set(new VcsException(GitBundle.message("git.executable.unknown.error.message", exception.getMessage()), exception));
       }
     });
     try {

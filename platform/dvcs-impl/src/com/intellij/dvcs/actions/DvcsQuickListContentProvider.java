@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.VcsActions;
 import com.intellij.openapi.vcs.actions.VcsQuickListContentProvider;
 import com.intellij.openapi.vcs.actions.VcsQuickListPopupAction;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,6 +42,7 @@ public abstract class DvcsQuickListContentProvider implements VcsQuickListConten
     return actions;
   }
 
+  @NonNls
   @NotNull
   protected abstract String getVcsName();
 

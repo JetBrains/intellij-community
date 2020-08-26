@@ -58,11 +58,13 @@ import org.jetbrains.annotations.*;
 import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.function.Supplier;
 
 /**
  * Git VCS implementation
  */
 public final class GitVcs extends AbstractVcs {
+  public static final Supplier<@Nls String> DISPLAY_NAME = GitBundle.messagePointer("git4idea.vcs.name");
   public static final @NonNls String NAME = "Git";
   public static final @NonNls String ID = "git";
 
@@ -142,7 +144,7 @@ public final class GitVcs extends AbstractVcs {
   @Override
   @NotNull
   public String getDisplayName() {
-    return NAME;
+    return DISPLAY_NAME.get();
   }
 
   @Override

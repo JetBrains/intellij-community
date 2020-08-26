@@ -86,12 +86,12 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
   @NotNull private final Set<String> myUniqueAvailableRepositories;
   @NotNull private final List<ValidationInfo> myRepositoryListLoadingErrors = new ArrayList<>();
 
-  public CloneDvcsDialog(@NotNull Project project, @NotNull String displayName, @NotNull String vcsDirectoryName) {
+  public CloneDvcsDialog(@NotNull Project project, @NotNull @Nls String displayName, @NotNull String vcsDirectoryName) {
     this(project, displayName, vcsDirectoryName, null);
   }
 
   public CloneDvcsDialog(@NotNull Project project,
-                         @NotNull String displayName,
+                         @NotNull @Nls String displayName,
                          @NotNull String vcsDirectoryName,
                          @Nullable String defaultUrl) {
     super(project, true);

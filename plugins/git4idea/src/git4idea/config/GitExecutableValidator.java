@@ -17,7 +17,6 @@ package git4idea.config;
 
 import com.intellij.execution.ExecutableValidator;
 import com.intellij.openapi.project.Project;
-import git4idea.GitVcs;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,7 +43,7 @@ public class GitExecutableValidator extends ExecutableValidator {
   @NotNull
   @Override
   protected String getConfigurableDisplayName() {
-    return GitVcs.NAME;
+    return GitBundle.message("settings.git.option.group");
   }
 
   @Override

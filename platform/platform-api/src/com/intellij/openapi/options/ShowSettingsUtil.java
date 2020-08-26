@@ -4,6 +4,7 @@ package com.intellij.openapi.options;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +25,7 @@ public abstract class ShowSettingsUtil {
 
   public abstract <T extends Configurable> void showSettingsDialog(@Nullable Project project, @NotNull Class<T> toSelect);
 
-  public abstract void showSettingsDialog(@Nullable Project project, @NotNull String nameToSelect);
+  public abstract void showSettingsDialog(@Nullable Project project, @Nls @NotNull String nameToSelect);
 
   public abstract void showSettingsDialog(@NotNull Project project, @Nullable Configurable toSelect);
 
@@ -42,9 +43,9 @@ public abstract class ShowSettingsUtil {
 
   public abstract boolean editConfigurable(@Nullable Component parent, @NotNull Configurable configurable);
 
-  public abstract boolean editConfigurable(@Nullable Component parent, @NotNull String displayName);
+  public abstract boolean editConfigurable(@Nullable Component parent, @Nls @NotNull String displayName);
 
-  public abstract boolean editConfigurable(@Nullable Component parent, @NotNull String displayName, @Nullable Runnable advancedInitialization);
+  public abstract boolean editConfigurable(@Nullable Component parent, @Nls @NotNull String displayName, @Nullable Runnable advancedInitialization);
 
   public abstract boolean editConfigurable(Component parent, @NotNull Configurable configurable, Runnable advancedInitialization);
 
