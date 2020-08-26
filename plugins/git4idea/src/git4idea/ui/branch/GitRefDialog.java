@@ -1,9 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ui.branch;
 
-import static com.intellij.util.ui.UI.PanelFactory.grid;
-import static com.intellij.util.ui.UI.PanelFactory.panel;
-
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.Disposable;
@@ -12,6 +9,7 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBLabel;
@@ -37,18 +35,16 @@ import git4idea.branch.GitBranchUtil;
 import git4idea.log.GitRefManager;
 import git4idea.repo.GitRepository;
 import gnu.trove.TObjectHashingStrategy;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.ExecutionException;
-import java.util.stream.Stream;
-import javax.swing.JComponent;
-import javax.swing.SwingConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import java.util.*;
+import java.util.concurrent.ExecutionException;
+import java.util.stream.Stream;
+
+import static com.intellij.util.ui.UI.PanelFactory.grid;
+import static com.intellij.util.ui.UI.PanelFactory.panel;
 
 public class GitRefDialog extends DialogWrapper {
   private final TextFieldWithCompletion myTextField;
@@ -56,8 +52,8 @@ public class GitRefDialog extends DialogWrapper {
 
   public GitRefDialog(@NotNull Project project,
                       @NotNull List<GitRepository> repositories,
-                      @NotNull String title,
-                      @NotNull String message) {
+                      @NotNull @NlsContexts.DialogTitle String title,
+                      @NotNull @NlsContexts.Label String message) {
     super(project);
 
     setTitle(title);

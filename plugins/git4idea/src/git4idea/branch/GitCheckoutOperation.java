@@ -8,9 +8,9 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.HtmlBuilder;
-import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
@@ -288,7 +288,7 @@ class GitCheckoutOperation extends GitBranchOperation {
   }
 
   // stash - checkout - unstash
-  private boolean smartCheckout(@NotNull final List<? extends GitRepository> repositories, @NotNull final String reference,
+  private boolean smartCheckout(@NotNull final List<? extends GitRepository> repositories, @NotNull @NlsSafe final String reference,
                                 @Nullable final String newBranch, @NotNull ProgressIndicator indicator) {
     AtomicBoolean result = new AtomicBoolean();
     GitSaveChangesPolicy saveMethod = GitVcsSettings.getInstance(myProject).getSaveChangesPolicy();

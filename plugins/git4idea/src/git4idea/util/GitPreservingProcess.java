@@ -43,11 +43,11 @@ public class GitPreservingProcess {
   @NotNull private final Project myProject;
   @NotNull private final Git myGit;
   @NotNull private final Collection<? extends VirtualFile> myRootsToSave;
-  @NotNull private final String myOperationTitle;
-  @NotNull private final String myDestinationName;
+  @NotNull private final @Nls String myOperationTitle;
+  @NotNull private final @Nls String myDestinationName;
   @NotNull private final ProgressIndicator myProgressIndicator;
   @NotNull private final Runnable myOperation;
-  @NotNull private final String myStashMessage;
+  @NotNull private final @Nls String myStashMessage;
   @NotNull private final GitChangesSaver mySaver;
 
   @NotNull private final AtomicBoolean myLoaded = new AtomicBoolean();
@@ -56,7 +56,7 @@ public class GitPreservingProcess {
                               @NotNull Git git,
                               @NotNull Collection<? extends VirtualFile> rootsToSave,
                               @Nls @NotNull String operationTitle,
-                              @NotNull String destinationName,
+                              @Nls @NotNull String destinationName,
                               @NotNull GitSaveChangesPolicy saveMethod,
                               @NotNull ProgressIndicator indicator,
                               @NotNull Runnable operation) {
@@ -186,8 +186,8 @@ public class GitPreservingProcess {
   public GitPreservingProcess(@NotNull Project project,
                               @NotNull Git git,
                               @NotNull Collection<? extends VirtualFile> rootsToSave,
-                              @NotNull String operationTitle,
-                              @NotNull String destinationName,
+                              @NotNull @Nls String operationTitle,
+                              @NotNull @Nls String destinationName,
                               @NotNull GitVcsSettings.UpdateChangesPolicy saveMethod,
                               @NotNull ProgressIndicator indicator,
                               @NotNull Runnable operation) {

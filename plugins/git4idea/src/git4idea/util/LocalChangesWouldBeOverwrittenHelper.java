@@ -26,6 +26,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.GitUtil;
 import git4idea.ui.ChangesBrowserWithRollback;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.event.HyperlinkEvent;
@@ -34,16 +35,19 @@ import java.util.List;
 
 public class LocalChangesWouldBeOverwrittenHelper {
 
+  @Nls
   @NotNull
   private static String getErrorNotificationDescription() {
     return getErrorDescription(true);
   }
 
+  @Nls
   @NotNull
   private static String getErrorDialogDescription() {
     return getErrorDescription(false);
   }
 
+  @Nls
   @NotNull
   private static String getErrorDescription(boolean forNotification) {
     String line1 = "Your local changes would be overwritten by merge.";

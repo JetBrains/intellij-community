@@ -8,6 +8,7 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.vcs.VcsNotifier;
@@ -43,7 +44,7 @@ class GitMergeOperation extends GitBranchOperation {
   @NotNull private static final String DELETE_HREF_ATTRIBUTE = "delete";
 
   @NotNull private final ChangeListManager myChangeListManager;
-  @NotNull private final String myBranchToMerge;
+  @NotNull private final @NlsSafe String myBranchToMerge;
   private final GitBrancher.DeleteOnMergeOption myDeleteOnMerge;
 
   // true in value, if we've stashed local changes before merge and will need to unstash after resolving conflicts.

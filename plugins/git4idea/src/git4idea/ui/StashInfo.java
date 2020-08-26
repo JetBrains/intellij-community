@@ -51,6 +51,7 @@ public class StashInfo {
     return myText;
   }
 
+  @NlsSafe
   @NotNull
   public String getStash() {
     return myStash;

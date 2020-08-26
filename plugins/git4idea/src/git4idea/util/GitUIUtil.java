@@ -14,7 +14,7 @@ import git4idea.GitBranch;
 import git4idea.GitUtil;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -180,7 +180,7 @@ public final class GitUIUtil {
    * @param ex        the exception
    * @param operation the operation name
    */
-  public static void showOperationError(final Project project, final VcsException ex, @NonNls @NotNull final String operation) {
+  public static void showOperationError(final Project project, final VcsException ex, @Nls @NotNull final String operation) {
     showOperationError(project, operation, ex.getMessage());
   }
 
@@ -193,7 +193,7 @@ public final class GitUIUtil {
    */
   public static void showOperationErrors(final Project project,
                                          final Collection<? extends VcsException> exs,
-                                         @NonNls @NotNull final String operation) {
+                                         @Nls @NotNull final String operation) {
     if (exs.size() == 1) {
       showOperationError(project, operation, exs.iterator().next().getMessage());
     }
@@ -214,7 +214,7 @@ public final class GitUIUtil {
    * @param message   the error description
    * @param operation the operation name
    */
-  public static void showOperationError(final Project project, final String operation, final String message) {
+  public static void showOperationError(final Project project, @Nls String operation, @NlsContexts.DialogMessage String message) {
     Messages.showErrorDialog(project, message, GitBundle.message("error.occurred.during", operation));
   }
 
@@ -345,6 +345,7 @@ public final class GitUIUtil {
     return String.format("<%2$s>%1$s</%2$s>", s, tag);
   }
 
+  @Nls
   public static String getNoCurrentBranch() {
     return GitBundle.getString("common.no.active.branch");
   }

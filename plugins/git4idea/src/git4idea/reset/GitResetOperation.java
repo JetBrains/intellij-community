@@ -86,7 +86,7 @@ public class GitResetOperation {
   }
 
   private GitCommandResult proposeSmartReset(@NotNull GitLocalChangesWouldBeOverwrittenDetector detector,
-                                             @NotNull final GitRepository repository, @NotNull final String target) {
+                                             @NotNull final GitRepository repository, @NotNull @NlsSafe String target) {
     Collection<String> absolutePaths = toAbsolute(repository.getRoot(), detector.getRelativeFilePaths());
     List<Change> affectedChanges = findLocalChangesForPaths(myProject, repository.getRoot(), absolutePaths, false);
     GitSmartOperationDialog.Choice choice = myUiHandler.showSmartOperationDialog(myProject, affectedChanges, absolutePaths,

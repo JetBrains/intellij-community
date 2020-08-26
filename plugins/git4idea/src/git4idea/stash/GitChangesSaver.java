@@ -13,6 +13,7 @@ import git4idea.commands.Git;
 import git4idea.config.GitSaveChangesPolicy;
 import git4idea.i18n.GitBundle;
 import git4idea.merge.GitConflictResolver;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +45,7 @@ public abstract class GitChangesSaver {
   public static GitChangesSaver getSaver(@NotNull Project project,
                                          @NotNull Git git,
                                          @NotNull ProgressIndicator progressIndicator,
-                                         @NotNull String stashMessage,
+                                         @NotNull @Nls String stashMessage,
                                          @NotNull GitSaveChangesPolicy saveMethod) {
     if (saveMethod == GitSaveChangesPolicy.SHELVE) {
       return new GitShelveChangesSaver(project, git, progressIndicator, stashMessage);
