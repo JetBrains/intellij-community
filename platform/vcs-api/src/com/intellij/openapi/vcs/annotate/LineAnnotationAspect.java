@@ -84,7 +84,7 @@ public interface LineAnnotationAspect {
   }
 
   @NlsContexts.ListItem
-  default String displayName() {
+  default String getDisplayName() {
     return getId(); //NON-NLS backward compatibility
   }
 }

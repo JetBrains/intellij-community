@@ -63,8 +63,8 @@ public abstract class LineAnnotationAspectAdapter implements LineAnnotationAspec
     return myId;
   }
 
-
-  protected @NlsContexts.ListItem @Nullable String getDisplayName() {
+  @Override
+  public @NlsContexts.ListItem @Nullable String getDisplayName() {
     return myDisplayName != null ? myDisplayName : myId; //NON-NLS backward compatibility
   }
 

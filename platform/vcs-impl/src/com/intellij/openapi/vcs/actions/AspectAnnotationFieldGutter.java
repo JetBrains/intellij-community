@@ -107,6 +107,6 @@ public class AspectAnnotationFieldGutter extends AnnotationFieldGutter {
 
   @Override
   public @NlsContexts.ListItem @Nullable String getDisplayName() {
-    return myAspect.displayName();
+    return myAspect.getDisplayName();
   }
 }
