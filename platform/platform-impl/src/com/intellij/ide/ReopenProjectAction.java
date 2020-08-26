@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
+import com.intellij.CommonBundle;
 import com.intellij.ide.impl.OpenProjectTask;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.lightEdit.LightEditCompatible;
@@ -50,7 +51,7 @@ public class ReopenProjectAction extends AnAction implements DumbAware, LightEdi
     if (!Files.exists(file)) {
       if (Messages.showDialog(project, IdeBundle
                                 .message("message.the.path.0.does.not.exist.maybe.on.remote", FileUtil.toSystemDependentName(myProjectPath)),
-                              IdeBundle.message("dialog.title.reopen.project"), new String[]{"OK", "&Remove From List"}, 0, Messages.getErrorIcon()) == 1) {
+                              IdeBundle.message("dialog.title.reopen.project"), new String[]{CommonBundle.getOkButtonText(), IdeBundle.message("button.remove.from.list")}, 0, Messages.getErrorIcon()) == 1) {
         myIsRemoved = true;
         RecentProjectsManager.getInstance().removePath(myProjectPath);
       }
@@ -75,6 +76,7 @@ public class ReopenProjectAction extends AnAction implements DumbAware, LightEdi
     return myIsRemoved;
   }
 
+  @NlsSafe
   public String getProjectName() {
     final RecentProjectsManager mgr = RecentProjectsManager.getInstance();
     if (mgr instanceof RecentProjectsManagerBase) {

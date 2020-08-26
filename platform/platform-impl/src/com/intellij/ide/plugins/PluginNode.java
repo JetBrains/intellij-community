@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -217,6 +218,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
   }
 
   @Override
+  @NlsSafe
   public String getDownloads() {
     return downloads;
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.internal.statistic.eventLog.events.EventPair;
@@ -346,7 +346,7 @@ public abstract class ResizeToolWindowAction extends AnAction implements DumbAwa
   private Dimension getReferenceSize() {
     if (myScrollHelper == null) {
       if (SwingUtilities.isEventDispatchThread()) {
-        myScrollHelper = new JLabel("W");
+        myScrollHelper = new JLabel("W"); //NON-NLS
       } else {
         return new Dimension(1, 1);
       }

@@ -44,6 +44,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,11 +64,12 @@ import java.io.File;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.*;
+import java.util.function.Supplier;
 
 public class FileChooserDialogImpl extends DialogWrapper implements FileChooserDialog, PathChooserDialog, FileLookup {
   @NonNls public static final String FILE_CHOOSER_SHOW_PATH_PROPERTY = "FileChooser.ShowPath";
   private static final String RECENT_FILES_KEY = "file.chooser.recent.files";
-  public static final String DRAG_N_DROP_HINT = "Drag and drop a file into the space above to quickly locate it in the tree";
+  public static final @NotNull Supplier<@Nls String> DRAG_N_DROP_HINT = IdeBundle.messagePointer("tooltip.drag.drop.file");
   private final FileChooserDescriptor myChooserDescriptor;
   protected FileSystemTreeImpl myFileSystemTree;
   private Project myProject;
@@ -329,7 +331,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     panel.add(scrollPane, BorderLayout.CENTER);
     panel.setPreferredSize(JBUI.size(400));
 
-    JLabel dndLabel = new JLabel(DRAG_N_DROP_HINT, SwingConstants.CENTER);
+    JLabel dndLabel = new JLabel(DRAG_N_DROP_HINT.get(), SwingConstants.CENTER);
     dndLabel.setFont(JBUI.Fonts.miniFont());
     dndLabel.setForeground(UIUtil.getLabelDisabledForeground());
     panel.add(dndLabel, BorderLayout.SOUTH);

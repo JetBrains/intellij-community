@@ -10,10 +10,7 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.ShutDownTracker;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.local.FileWatcherNotificationSink;
@@ -172,7 +169,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
 
   /* internal stuff */
 
-  private void notifyOnFailure(String cause, @Nullable NotificationListener listener) {
+  private void notifyOnFailure(@NlsContexts.NotificationContent String cause, @Nullable NotificationListener listener) {
     myNotificationSink.notifyUserOnFailure(cause, listener);
   }
 

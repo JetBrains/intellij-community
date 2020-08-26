@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.editor.EditorBundle
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.GridBag
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.PropertyKey
 import java.awt.Container
 import java.util.*
@@ -49,7 +50,7 @@ enum class AnalyzingType {
 /**
  * Severity status item containing text (not necessarily a number) possible icon and severity type
  */
-data class StatusItem @JvmOverloads constructor(val text: String, val icon: Icon? = null, val type: String? = null)
+data class StatusItem @JvmOverloads constructor(@Nls @get:Nls val text: String, val icon: Icon? = null, val type: String? = null)
 
 /**
  * <code>UIController</code> contains methods for filling inspection widget popup and
@@ -129,7 +130,7 @@ class AnalyzerStatus(val icon: Icon, val title: String, val details: String, con
     return this
   }
 
-  fun withTextStatus(status: String): AnalyzerStatus {
+  fun withTextStatus(@Nls status: String): AnalyzerStatus {
     expandedStatus = Collections.singletonList(StatusItem(status))
     textStatus = true
     return this

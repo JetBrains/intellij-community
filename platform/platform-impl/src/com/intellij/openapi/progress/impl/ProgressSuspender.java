@@ -73,7 +73,7 @@ public final class ProgressSuspender implements AutoCloseable {
     }
   }
 
-  public static ProgressSuspender markSuspendable(@NotNull ProgressIndicator indicator, @NotNull String suspendedText) {
+  public static ProgressSuspender markSuspendable(@NotNull ProgressIndicator indicator, @NotNull @NlsContexts.ProgressText String suspendedText) {
     return new ProgressSuspender((ProgressIndicatorEx)indicator, suspendedText);
   }
 

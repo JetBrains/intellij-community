@@ -28,6 +28,7 @@ import com.jediterm.terminal.ui.TerminalAction;
 import com.jediterm.terminal.ui.TerminalActionPresentation;
 import com.jediterm.terminal.ui.settings.DefaultTabbedSettingsProvider;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -154,7 +155,7 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
     return colorPalette;
   }
 
-  public static @NotNull String getGotoNextSplitTerminalActionText(boolean forward) {
+  public static @NotNull @Nls String getGotoNextSplitTerminalActionText(boolean forward) {
     return forward ? ActionsBundle.message("action.NextSplitter.text")
                    : ActionsBundle.message("action.PrevSplitter.text");
   }

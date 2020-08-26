@@ -267,7 +267,7 @@ public abstract class FileTextFieldImpl implements FileLookup, Disposable, FileT
       myText = text;
     }
 
-    public String getText() {
+    public @NlsContexts.Separator String getText() {
       return myText;
     }
   }

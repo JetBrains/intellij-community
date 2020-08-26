@@ -619,7 +619,7 @@ public final class PluginManagerCore {
     }
   }
 
-  public static @Nullable String getShortLoadingErrorMessage(@NotNull IdeaPluginDescriptor pluginDescriptor) {
+  public static @Nullable @NlsContexts.Label String getShortLoadingErrorMessage(@NotNull IdeaPluginDescriptor pluginDescriptor) {
     PluginLoadingError error = ourPluginLoadingErrors.get(pluginDescriptor.getPluginId());
     if (error != null) {
       return error.getShortMessage();

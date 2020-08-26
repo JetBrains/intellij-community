@@ -47,7 +47,7 @@ public abstract class SplitterWithSecondHideable {
     mySplitter.setProportion(1.0f);
   }
 
-  public void setText(String value) {
+  public void setText(@NlsContexts.Separator String value) {
     myTitledSeparator.setText(value);
   }
 

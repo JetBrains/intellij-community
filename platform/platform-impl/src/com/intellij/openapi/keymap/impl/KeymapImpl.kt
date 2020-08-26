@@ -475,7 +475,8 @@ open class KeymapImpl @JvmOverloads constructor(private var dataHolder: SchemeDa
       if (parentScheme == null) {
         LOG.warn("Cannot find parent scheme $parentSchemeName for scheme $name")
         unknownParentName = parentSchemeName
-        notifyAboutMissingKeymap(parentSchemeName, "Cannot find parent keymap \"$parentSchemeName\" for \"$name\"", true)
+        notifyAboutMissingKeymap(parentSchemeName,
+                                 IdeBundle.message("notification.content.cannot.find.parent.keymap", parentSchemeName, name), true)
       }
       else {
         parent = parentScheme as KeymapImpl

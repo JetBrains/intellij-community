@@ -15,6 +15,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import kotlin.reflect.KMutableProperty0;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -244,7 +245,7 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
    * @deprecated use {@link #checkBox(String, Getter, Setter)} instead
    */
   @Deprecated
-  protected void checkBox(@NonNls String fieldName, String title) {
+  protected void checkBox(@NonNls String fieldName, @NlsContexts.Checkbox String title) {
     myFields.add(new CheckboxField(fieldName, title));
   }
 
@@ -293,7 +294,7 @@ public abstract class BeanConfigurable<T> implements UnnamedConfigurable, Config
   @NotNull
   @Override
   public List<OptionDescription> getOptionDescriptors(@NotNull String configurableId,
-                                                      @NotNull Function<? super String, String> nameConverter) {
+                                                      @NotNull Function<? super String, @Nls String> nameConverter) {
     List<CheckboxField> boxes = JBIterable.from(myFields).filter(CheckboxField.class).toList();
     Object instance = getInstance();
     return ContainerUtil.map(boxes, box -> new BooleanOptionDescription(nameConverter.apply(box.getTitle()), configurableId) {

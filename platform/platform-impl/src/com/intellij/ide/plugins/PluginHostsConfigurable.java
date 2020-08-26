@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
@@ -28,6 +28,7 @@ import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -185,7 +186,7 @@ public class PluginHostsConfigurable implements Configurable.NoScroll, Configura
 
   private void validateRepositories(@NotNull List<? extends UrlInfo> urls) {
     List<UrlInfo> infos = new ArrayList<>();
-    List<String> results = new ArrayList<>();
+    List<@Nls String> results = new ArrayList<>();
 
     for (UrlInfo info : urls) {
       info.progress = true;
@@ -201,11 +202,11 @@ public class PluginHostsConfigurable implements Configurable.NoScroll, Configura
         for (int i = 0, size = infos.size(); i < size; i++) {
           try {
             if (RepositoryHelper.loadPlugins(infos.get(i).name, indicator).size() == 0) {
-              results.set(i, "No plugins found. Please check log file for possible errors.");
+              results.set(i, IdeBundle.message("error.no.plugins.found"));
             }
           }
           catch (Exception ignore) {
-            results.set(i, "Connection failed.");
+            results.set(i, IdeBundle.message("error.connection.failed"));
           }
         }
       }
@@ -288,7 +289,7 @@ public class PluginHostsConfigurable implements Configurable.NoScroll, Configura
   private static class UrlInfo {
     String name;
     boolean progress;
-    String errorTooltip;
+    @Nls String errorTooltip;
 
     UrlInfo(@NotNull String name) {
       this.name = name;

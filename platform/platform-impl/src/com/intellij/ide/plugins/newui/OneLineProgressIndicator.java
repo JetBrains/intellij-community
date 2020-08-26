@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.TaskInfo;
@@ -26,7 +27,7 @@ public class OneLineProgressIndicator extends InlineProgressIndicator {
   }
 
   public OneLineProgressIndicator(boolean withText, boolean canBeCancelled) {
-    super(true, task(withText ? "Downloading..." : "", canBeCancelled));
+    super(true, task(withText ? IdeBundle.message("progress.text.downloading") : "", canBeCancelled));
 
     if (!withText) {
       myText.getParent().remove(myText);
@@ -58,7 +59,7 @@ public class OneLineProgressIndicator extends InlineProgressIndicator {
   }
 
   @NotNull
-  public static TaskInfo task(@NotNull String title) {
+  public static TaskInfo task(@NotNull @NlsContexts.DialogTitle String title) {
     return task(title, true);
   }
 

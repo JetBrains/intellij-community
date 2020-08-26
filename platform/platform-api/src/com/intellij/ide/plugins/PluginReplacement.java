@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -29,6 +30,7 @@ public abstract class PluginReplacement implements PluginAware {
   }
 
   @NotNull
+  @Nls
   public String getReplacementMessage(@NotNull IdeaPluginDescriptor oldPlugin, @NotNull IdeaPluginDescriptor newPlugin) {
     return IdeBundle.message("plugin.manager.replace.plugin.0.by.plugin.1", oldPlugin.getName(), newPlugin.getName());
   }

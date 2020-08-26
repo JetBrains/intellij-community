@@ -77,7 +77,7 @@ public final class PluginLoadingError {
     return formatErrorMessage(myPlugin, ObjectUtils.notNull(myDetailedMessage, myShortMessage).get());
   }
 
-  public String getShortMessage() {
+  public @NlsContexts.Label String getShortMessage() {
     return myShortMessage.get();
   }
 

@@ -4,11 +4,12 @@ package com.intellij.ide.plugins.newui;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,13 +60,16 @@ public final class ErrorComponent {
   }
 
   public static void show(@NotNull JComponent errorComponent,
-                          @NotNull String message,
-                          @Nullable String action,
+                          @NotNull @Nls String message,
+                          @Nullable @Nls String action,
                           @Nullable Runnable enableCallback) {
     JEditorPane editorPane = (JEditorPane)errorComponent;
 
-    editorPane.setText("<html><span>" + StringUtil.escapeXmlEntities(message) + "</span>" +
-                       (enableCallback == null ? "" : "&nbsp;<a href='link'>" + action + "</a>") + "</html>");
+    HtmlChunk.Element html = HtmlChunk.html().children(HtmlChunk.span().addText(message));
+    if (enableCallback != null) {
+      html = html.children(HtmlChunk.nbsp(), HtmlChunk.link("link", action));
+    }
+    editorPane.setText(html.toString());
 
     editorPane.putClientProperty(KEY, enableCallback);
   }

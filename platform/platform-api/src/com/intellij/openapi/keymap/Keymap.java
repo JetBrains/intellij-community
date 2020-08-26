@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.MouseShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.options.Scheme;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

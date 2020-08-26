@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.CommonBundle;
@@ -217,10 +217,10 @@ public class PluginUpdateDialog extends DialogWrapper {
                 String message;
                 if (result.getPluginsInstalled().size() == 1) {
                   final IdeaPluginDescriptor installedPlugin = result.getPluginsInstalled().get(0);
-                  message = "Updated " + installedPlugin.getName() + " plugin to version " + installedPlugin.getVersion();
+                  message = IdeBundle.message("notification.content.updated.plugin.to.version", installedPlugin.getName(), installedPlugin.getVersion());
                 }
                 else {
-                  message = "Updated " + result.getPluginsInstalled() + " plugins";
+                  message = IdeBundle.message("notification.content.updated.plugins", result.getPluginsInstalled());
                 }
                 UpdateChecker.NOTIFICATIONS.createNotification(message, NotificationType.INFORMATION).notify(myProject);
               }

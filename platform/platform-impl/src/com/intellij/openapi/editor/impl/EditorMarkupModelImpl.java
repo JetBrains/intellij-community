@@ -55,6 +55,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -1720,7 +1721,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
       }
     }
 
-    private JLabel createStyledLabel(@Nullable String text, @Nullable Icon icon, int alignment) {
+    private JLabel createStyledLabel(@Nullable @Nls String text, @Nullable Icon icon, int alignment) {
       JLabel label = new JLabel(text, icon, alignment) {
         @Override
         protected void paintComponent(Graphics graphics) {

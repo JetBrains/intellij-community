@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.UniqueNameBuilder;
@@ -37,10 +38,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.SystemIndependent;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
@@ -54,6 +52,7 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
 /**
  * @author max
@@ -61,7 +60,7 @@ import java.util.concurrent.TimeUnit;
 public class RecentProjectPanel extends JPanel {
   private static final Logger LOG = Logger.getInstance(RecentProjectPanel.class);
 
-  public static final String RECENT_PROJECTS_LABEL = "Recent Projects";
+  public static final Supplier<@Nls String> RECENT_PROJECTS_LABEL = IdeBundle.messagePointer("popup.title.recent.projects");
 
   protected final JBList<AnAction> myList;
   protected final UniqueNameBuilder<ReopenProjectAction> myPathShortener;
@@ -311,7 +310,7 @@ public class RecentProjectPanel extends JPanel {
     };
     title.setBorder(new BottomLineBorder());
 
-    JLabel titleLabel = new JLabel(RECENT_PROJECTS_LABEL);
+    JLabel titleLabel = new JLabel(RECENT_PROJECTS_LABEL.get());
     title.add(titleLabel);
     titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
     titleLabel.setForeground(WelcomeScreenColors.CAPTION_FOREGROUND);
@@ -329,7 +328,7 @@ public class RecentProjectPanel extends JPanel {
       setExpandableItemsEnabled(false);
       setEmptyText(IdeBundle.message("empty.text.no.project.open.yet"));
       setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-      getAccessibleContext().setAccessibleName(RECENT_PROJECTS_LABEL);
+      getAccessibleContext().setAccessibleName(RECENT_PROJECTS_LABEL.get());
       final PopupHandler handler = new MyPopupMouseHandler();
       addMouseListener(handler);
       addMouseMotionListener(handler);
@@ -365,7 +364,7 @@ public class RecentProjectPanel extends JPanel {
           @SystemIndependent String path = ((ReopenProjectAction)elem).getProjectPath();
           boolean valid = isPathValid(path);
           if (!valid || RecentProjectPanel.this.projectsWithLongPaths.contains(elem)) {
-            String suffix = valid ? "" : " (unavailable)";
+            String suffix = valid ? "" : " " + IdeBundle.message("recent.project.unavailable");
             return PathUtil.toSystemDependentName(path) + suffix;
           }
         }
@@ -478,7 +477,7 @@ public class RecentProjectPanel extends JPanel {
       return this;
     }
 
-    protected String getTitle2Text(ReopenProjectAction action, JComponent pathLabel, int leftOffset) {
+    protected @NlsSafe String getTitle2Text(ReopenProjectAction action, JComponent pathLabel, int leftOffset) {
       String fullText = action.getProjectPath();
       if (fullText == null || fullText.length() == 0) return " ";
 

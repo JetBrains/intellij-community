@@ -20,6 +20,7 @@ import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.containers.ContainerUtil;
@@ -209,9 +210,9 @@ final class PluginsAdvertiserStartupActivity implements StartupActivity.Backgrou
   }
 
   @NotNull
-  private static String getAddressedMessagePresentation(@NotNull Set<PluginDownloader> plugins,
-                                                        @NotNull Map<PluginsAdvertiser.Plugin, IdeaPluginDescriptor> disabledPlugins,
-                                                        @NotNull MultiMap<PluginId, UnknownFeature> features) {
+  private static @NlsContexts.NotificationContent String getAddressedMessagePresentation(@NotNull Set<PluginDownloader> plugins,
+                                                                                         @NotNull Map<PluginsAdvertiser.Plugin, IdeaPluginDescriptor> disabledPlugins,
+                                                                                         @NotNull MultiMap<PluginId, UnknownFeature> features) {
     final MultiMap<String, String> addressedFeatures = MultiMap.createSet();
     final Set<PluginId> ids = new LinkedHashSet<>();
     for (PluginDownloader plugin : plugins) {

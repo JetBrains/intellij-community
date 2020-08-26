@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
 import com.intellij.ide.IdeBundle;
@@ -27,6 +13,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -150,7 +137,7 @@ public class SliderSelectorAction extends DumbAwareAction {
 
   public static class Configuration {
     @NotNull
-    private final String mySelectText;
+    private final @Nls String mySelectText;
     @NotNull
     private final Dictionary myDictionary;
     private final int mySelected;
@@ -160,7 +147,7 @@ public class SliderSelectorAction extends DumbAwareAction {
     private final Consumer<Integer> myResultConsumer;
     private boolean showOk = false;
 
-    public Configuration(int selected, @NotNull Dictionary dictionary, @NotNull String selectText, @NotNull Consumer<Integer> consumer) {
+    public Configuration(int selected, @NotNull Dictionary dictionary, @NotNull @Nls String selectText, @NotNull Consumer<Integer> consumer) {
       mySelected = selected;
       myDictionary = new Hashtable<Integer, JComponent>();
       mySelectText = selectText;
@@ -187,7 +174,7 @@ public class SliderSelectorAction extends DumbAwareAction {
     }
 
     @NotNull
-    public String getSelectText() {
+    public @Nls String getSelectText() {
       return mySelectText;
     }
 

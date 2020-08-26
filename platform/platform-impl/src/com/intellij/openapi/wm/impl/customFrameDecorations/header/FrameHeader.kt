@@ -1,26 +1,29 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header
 
+import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
+import com.intellij.ide.IdeBundle
+import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButtons
 import com.intellij.openapi.wm.impl.customFrameDecorations.ResizableCustomFrameTitleButtons
 import com.intellij.ui.awt.RelativeRectangle
-import com.intellij.ui.scale.ScaleContext
-import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.JBFont
-import com.intellij.util.ui.JBImageIcon
 import java.awt.Font
 import java.awt.Frame
 import java.awt.Toolkit
 import java.awt.event.WindowAdapter
 import java.awt.event.WindowStateListener
 import java.util.*
-import javax.swing.*
+import javax.swing.Action
+import javax.swing.JFrame
+import javax.swing.JPopupMenu
+import javax.swing.JSeparator
 
 open class FrameHeader(val frame: JFrame) : CustomHeader(frame) {
-    private val myIconifyAction: Action = CustomFrameAction("Minimize", AllIcons.Windows.MinimizeSmall) { iconify() }
-    private val myRestoreAction: Action = CustomFrameAction("Restore", AllIcons.Windows.RestoreSmall) { restore() }
-    private val myMaximizeAction: Action = CustomFrameAction("Maximize", AllIcons.Windows.MaximizeSmall) { maximize() }
+    private val myIconifyAction: Action = CustomFrameAction(ActionsBundle.message("action.MinimizeCurrentWindow.text"), AllIcons.Windows.MinimizeSmall) { iconify() }
+    private val myRestoreAction: Action = CustomFrameAction(CommonBundle.message("button.without.mnemonic.restore"), AllIcons.Windows.RestoreSmall) { restore() }
+    private val myMaximizeAction: Action = CustomFrameAction(IdeBundle.message("action.maximize.text"), AllIcons.Windows.MaximizeSmall) { maximize() }
 
     private var windowStateListener: WindowStateListener
     protected var myState = 0

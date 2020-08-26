@@ -308,7 +308,7 @@ public final class FileWatcher {
     }
 
     @Override
-    public void notifyUserOnFailure(@NotNull String cause, @Nullable NotificationListener listener) {
+    public void notifyUserOnFailure(@NotNull @NlsContexts.NotificationContent String cause, @Nullable NotificationListener listener) {
       notifyOnFailure(cause, listener);
     }
   }

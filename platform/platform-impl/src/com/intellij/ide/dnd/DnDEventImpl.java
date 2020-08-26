@@ -1,9 +1,10 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.dnd;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.GutterDraggableObject;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
@@ -30,7 +31,7 @@ public class DnDEventImpl extends UserDataHolderBase implements Transferable, Dn
   private DnDAction myAction;
   private Object myAttachedObject;
   private boolean myDropPossible;
-  private String myExpectedDropResult;
+  private @NlsContexts.PopupContent String myExpectedDropResult;
   private Point myPoint;
   private Point myOrgPoint;
 
@@ -65,7 +66,7 @@ public class DnDEventImpl extends UserDataHolderBase implements Transferable, Dn
   }
 
   @Override
-  public void setDropPossible(boolean possible, @Nullable String aExpectedResult) {
+  public void setDropPossible(boolean possible, @Nullable @NlsContexts.PopupContent String aExpectedResult) {
     myDropPossible = possible;
     myExpectedDropResult = aExpectedResult;
     clearDropHandler();
@@ -77,7 +78,7 @@ public class DnDEventImpl extends UserDataHolderBase implements Transferable, Dn
   }
 
   @Override
-  public void setDropPossible(String aExpectedResult, DropActionHandler aHandler) {
+  public void setDropPossible(@NlsContexts.PopupContent String aExpectedResult, DropActionHandler aHandler) {
     myDropPossible = true;
     myExpectedDropResult = aExpectedResult;
     myDropHandler = aHandler;

@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.HintText;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.ui.*;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.Html;
@@ -217,11 +218,12 @@ public final class HintUtil {
 
   public static @NotNull @Nls String prepareHintText(@NotNull Html text, @NotNull HintHint hintHint) {
     String htmlBody = UIUtil.getHtmlBody(text);
-    return String.format(
-      "<html><head>%s</head><body>%s</body></html>",
-      UIUtil.getCssFontDeclaration(hintHint.getTextFont(), hintHint.getTextForeground(), hintHint.getLinkForeground(), hintHint.getUlImg()),
-      htmlBody
-    );
+    String style =
+      UIUtil.getCssFontDeclaration(hintHint.getTextFont(), hintHint.getTextForeground(), hintHint.getLinkForeground(), hintHint.getUlImg());
+    return HtmlChunk.html().children(
+      HtmlChunk.head().addRaw(style),
+      HtmlChunk.body().addRaw(htmlBody)
+    ).toString();
   }
 
   private static void configureLabel(@NotNull HintLabel label, @Nullable HyperlinkListener hyperlinkListener,

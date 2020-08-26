@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
@@ -79,10 +79,10 @@ public class PluginHeaderPanel {
       myDownloadsPanel.setVisible(false);
       final String version = plugin.getVersion();
       if (ourState.wasUpdated(plugin.getPluginId())) {
-        versionText = "New version will be available after restart";
+        versionText = IdeBundle.message("label.new.version.will.be.available.after.restart");
       }
       else if (version != null && showVersion) {
-        versionText = "Version: " + version;
+        versionText = IdeBundle.message("label.version", version);
       }
       else {
         versionText = null;

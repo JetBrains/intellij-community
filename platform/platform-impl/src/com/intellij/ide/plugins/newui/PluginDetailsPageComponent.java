@@ -612,7 +612,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
       String stamp = instance.getConfirmationStamp(productCode);
       if (stamp == null) {
         if (ApplicationManager.getApplication().isEAP()) {
-          myTagPanel.setFirstTagTooltip("The license is not required for EAP version");
+          myTagPanel.setFirstTagTooltip(IdeBundle.message("tooltip.license.not.required.for.eap.version"));
           myLicensePanel.hideWithChildren();
           return;
         }

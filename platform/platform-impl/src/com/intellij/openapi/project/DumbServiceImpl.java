@@ -532,7 +532,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
     // Only one thread can execute this method at the same time at this point.
 
-    try (ProgressSuspender suspender = ProgressSuspender.markSuspendable(visibleIndicator, "Indexing paused")) {
+    try (ProgressSuspender suspender = ProgressSuspender.markSuspendable(visibleIndicator, IdeBundle.message("progress.text.indexing.paused"))) {
       myHeavyActivities.setCurrentSuspenderAndSuspendIfRequested(suspender);
 
       IdeActivity activity = IdeActivity.started(myProject, "indexing");

@@ -14,6 +14,6 @@ public interface StatusBarInfo {
   void setInfo(@NlsContexts.StatusBarText @Nullable String s);
 
   void setInfo(@NlsContexts.StatusBarText @Nullable String s, @NonNls @Nullable String requestor);
-  
-  String getInfo();
+
+  @NlsContexts.StatusBarText String getInfo();
 }

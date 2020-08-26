@@ -159,6 +159,7 @@ public abstract class FinderRecursivePanel<T> extends OnePixelSplitter implement
   }
 
   @NotNull
+  @Nls
   protected abstract String getItemText(@NotNull T t);
 
   @Nullable

@@ -181,7 +181,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
                              label: JLabel? = null,
                              isSeparated: Boolean = false,
                              noGrid: Boolean = false,
-                             title: String? = null,
+                             @NlsContexts.Separator title: String? = null,
                              incrementsIndent: Boolean = true): MigLayoutRow {
     val subRows = getOrCreateSubRowsList()
     val newIndent = if (!this.incrementsIndent) indent else indent + spacing.indentLevel

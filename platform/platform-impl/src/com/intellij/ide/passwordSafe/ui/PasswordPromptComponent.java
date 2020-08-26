@@ -1,6 +1,7 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.passwordSafe.ui;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
@@ -41,7 +42,7 @@ public class PasswordPromptComponent {
     }
     else {
       myRememberCheckBox.setSelected(PasswordSafe.getInstance().isRememberPasswordByDefault());
-      myRememberCheckBox.setToolTipText("The password will be stored between application sessions.");
+      myRememberCheckBox.setToolTipText(IdeBundle.message("tooltip.text.password.will.be.stored.between.application.sessions"));
     }
 
     setUserInputVisible(showUserName);

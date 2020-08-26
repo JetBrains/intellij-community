@@ -22,10 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.ShutDownTracker;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.ui.BalloonLayoutData;
@@ -408,7 +405,7 @@ public final class EventLog {
 
   public static class LogEntry {
     public final String message;
-    public final String status;
+    public final @NlsContexts.Tooltip String status;
     public final List<Pair<TextRange, HyperlinkInfo>> links;
     public final int titleLength;
 

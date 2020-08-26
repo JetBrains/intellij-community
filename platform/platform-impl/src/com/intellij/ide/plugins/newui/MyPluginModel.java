@@ -27,6 +27,7 @@ import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -791,7 +792,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     return enabled == null || enabled;
   }
 
-  @NotNull
+  @NotNull @Nls
   String getEnabledTitle(@NotNull IdeaPluginDescriptor plugin) {
     return isEnabled(plugin)
            ? IdeBundle.message("plugins.configurable.disable.button")
@@ -1017,7 +1018,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   }
 
   @Nullable
-  public String getErrorMessage(@NotNull IdeaPluginDescriptor pluginDescriptor, @Nullable Ref<? super String> enableAction) {
+  public @Nls String getErrorMessage(@NotNull IdeaPluginDescriptor pluginDescriptor, @Nullable Ref<? super String> enableAction) {
     if (InstalledPluginsState.getInstance().wasInstalledWithoutRestart(pluginDescriptor.getPluginId())) {
       // we'll actually install the plugin when the configurable is closed; at this time we don't know if there's any error
       return null;

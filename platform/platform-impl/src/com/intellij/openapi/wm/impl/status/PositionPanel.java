@@ -22,6 +22,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -198,7 +199,7 @@ public class PositionPanel extends EditorBasedWidget
   private @NlsContexts.Label String getPositionText(@NotNull Editor editor) {
     myCountTask = null;
     if (!editor.isDisposed() && !myAlarm.isDisposed()) {
-      StringBuilder message = new StringBuilder();
+      @Nls StringBuilder message = new StringBuilder();
 
       SelectionModel selectionModel = editor.getSelectionModel();
       int caretCount = editor.getCaretModel().getCaretCount();

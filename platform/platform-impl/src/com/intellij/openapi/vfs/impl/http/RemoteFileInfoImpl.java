@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl.http;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -35,7 +36,7 @@ public class RemoteFileInfoImpl implements RemoteContentProvider.DownloadingCall
   private VirtualFile myLocalVirtualFile;
   private VirtualFile myPrevLocalFile;
   private RemoteFileState myState = RemoteFileState.DOWNLOADING_NOT_STARTED;
-  private String myErrorMessage;
+  private @NlsContexts.DialogMessage String myErrorMessage;
   private final AtomicBoolean myCancelled = new AtomicBoolean();
   private final List<FileDownloadingListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -158,7 +159,7 @@ public class RemoteFileInfoImpl implements RemoteContentProvider.DownloadingCall
   }
 
   @Override
-  public void errorOccurred(@NotNull final String errorMessage, boolean cancelled) {
+  public void errorOccurred(@NotNull final @NlsContexts.DialogMessage String errorMessage, boolean cancelled) {
     LOG.debug("Error: " + errorMessage);
     synchronized (myLock) {
       myLocalVirtualFile = null;
@@ -181,7 +182,7 @@ public class RemoteFileInfoImpl implements RemoteContentProvider.DownloadingCall
   }
 
   @Override
-  public void setProgressText(@NotNull final String text, final boolean indeterminate) {
+  public void setProgressText(@NotNull final @NlsContexts.ProgressText String text, final boolean indeterminate) {
     for (FileDownloadingListener listener : myListeners) {
       listener.progressMessageChanged(indeterminate, text);
     }

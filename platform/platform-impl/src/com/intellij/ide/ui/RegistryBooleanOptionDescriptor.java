@@ -8,6 +8,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.Changeable;
 import org.jetbrains.annotations.Nullable;
@@ -20,7 +21,7 @@ import javax.swing.*;
 public class RegistryBooleanOptionDescriptor extends BooleanOptionDescription implements Changeable {
   protected final String myKey;
 
-  public RegistryBooleanOptionDescriptor(String option, String registryKey) {
+  public RegistryBooleanOptionDescriptor(@NlsContexts.Label String option, String registryKey) {
     super(option, null);
     myKey = registryKey;
   }

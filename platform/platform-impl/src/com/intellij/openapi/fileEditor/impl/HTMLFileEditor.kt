@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl
 
 import com.intellij.CommonBundle
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.MultiPanel
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.EditorBundle
@@ -69,7 +70,7 @@ class HTMLFileEditor(url: String? = null, html: String? = null,
 
   override fun getComponent() = multiPanel
   override fun getPreferredFocusedComponent() = multiPanel
-  override fun getName() = "HTML Preview"
+  override fun getName() = IdeBundle.message("tab.title.html.preview")
   override fun setState(state: FileEditorState) {}
   override fun isModified(): Boolean = false
   override fun isValid(): Boolean = true

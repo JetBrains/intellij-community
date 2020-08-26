@@ -40,7 +40,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.text.MessageFormat;
 import java.util.List;
 import java.util.*;
 
@@ -838,10 +837,10 @@ public abstract class PropertyTable extends JBTable {
     String message = cause == null ? e.getMessage() : cause.getMessage();
 
     if (message == null || message.length() == 0) {
-      message = "No message";
+      message = IdeBundle.message("dialog.message.no.message");
     }
 
-    Messages.showMessageDialog(MessageFormat.format("Error setting value: {0}", message),
+    Messages.showMessageDialog(IdeBundle.message("dialog.message.error.setting.value", message),
                                IdeBundle.message("dialog.title.invalid.input"),
                                Messages.getErrorIcon());
   }
@@ -1137,7 +1136,7 @@ public abstract class PropertyTable extends JBTable {
         LOG.debug(e);
         SimpleColoredComponent errComponent = new SimpleColoredComponent();
         errComponent
-          .append(MessageFormat.format("Error getting value: {0}", e.getMessage()), SimpleTextAttributes.ERROR_ATTRIBUTES);
+          .append(IdeBundle.message("dialog.text.error.getting.value", e.getMessage()), SimpleTextAttributes.ERROR_ATTRIBUTES);
         return errComponent;
       }
       finally {
@@ -1302,7 +1301,7 @@ public abstract class PropertyTable extends JBTable {
         }
         catch (Exception e) {
           LOG.debug(e);
-          renderer.append(MessageFormat.format("Error getting value: {0}", e.getMessage()), SimpleTextAttributes.ERROR_ATTRIBUTES);
+          renderer.append(IdeBundle.message("dialog.text.error.getting.value", e.getMessage()), SimpleTextAttributes.ERROR_ATTRIBUTES);
           return renderer;
         }
       }
