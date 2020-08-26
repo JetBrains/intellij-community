@@ -154,7 +154,8 @@ public final class EndUserAgreement {
       }
     }
     catch (IOException e) {
-      LOG.info(e);
+      LOG.info(docName + ": " + e.getMessage());
+      LOG.debug(e);
     }
     return new Document(docName, "");
   }
