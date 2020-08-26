@@ -252,6 +252,7 @@ public class Change {
     return null;
   }
 
+  @Nls
   @Nullable
   public String getDescription() {
     return null;

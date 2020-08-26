@@ -2,6 +2,7 @@
 package org.jetbrains.idea.svn;
 
 import icons.SvnIcons;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.status.Status;
@@ -36,10 +37,11 @@ public enum ConflictState {
     myDescription = createDescription();
   }
 
+  @Nls
   @Nullable
   private String createDescription() {
     int cnt = 0;
-    final StringBuilder sb = new StringBuilder();
+    @Nls StringBuilder sb = new StringBuilder();
     cnt = checkOne(myTree, cnt, sb, "tree");
     cnt = checkOne(myText, cnt, sb, "text");
     cnt = checkOne(myProperty, cnt, sb, "property");
@@ -49,7 +51,8 @@ public enum ConflictState {
     return sb.toString();
   }
 
-  private static int checkOne(final boolean value, final int init, final StringBuilder sb, final String text) {
+  @Nls
+  private static int checkOne(final boolean value, final int init, @Nls StringBuilder sb, @Nls String text) {
     if (value) {
       if (sb.length() > 0) {
         sb.append(", ");
@@ -81,6 +84,7 @@ public enum ConflictState {
     return myIcon;
   }
 
+  @Nls
   public String getDescription() {
     return myDescription;
   }

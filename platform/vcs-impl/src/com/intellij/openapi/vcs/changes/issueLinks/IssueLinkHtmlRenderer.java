@@ -22,6 +22,7 @@ public final class IssueLinkHtmlRenderer {
   private IssueLinkHtmlRenderer() {
   }
 
+  @Nls
   @NotNull
   public static String formatTextIntoHtml(@NotNull Project project, @NotNull @Nls String c) {
     // todo: use com.intellij.openapi.util.text.HtmlBuilder

@@ -19,6 +19,7 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
 
 import javax.swing.*;
@@ -88,7 +89,7 @@ public class ConflictedSvnChange extends Change {
   public String getDescription() {
     final String description = myConflictState.getDescription();
     if (description != null) {
-      final StringBuilder sb = new StringBuilder(SvnBundle.message("svn.changeview.item.in.conflict.text", description));
+      @Nls StringBuilder sb = new StringBuilder(SvnBundle.message("svn.changeview.item.in.conflict.text", description));
       if (myBeforeDescription != null) {
         sb.append('\n');
         if (myAfterDescription != null) {

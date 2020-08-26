@@ -23,10 +23,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
@@ -744,8 +741,8 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
                                  final boolean showSuccessNotification,
                                  final boolean systemOperation,
                                  final boolean reverse,
-                                 final String leftConflictTitle,
-                                 final String rightConflictTitle,
+                                 @NlsContexts.Label String leftConflictTitle,
+                                 @NlsContexts.Label String rightConflictTitle,
                                  boolean removeFilesFromShelf) {
     List<FilePatch> remainingPatches = new ArrayList<>();
 

@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MultiLineLabelUI;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.ui.JBUI;
@@ -22,12 +23,12 @@ import java.awt.*;
  * @author yole
  */
 public abstract class AbstractSelectFilesDialog extends DialogWrapper {
-  private final String myPrompt;
+  private final @NlsContexts.Label String myPrompt;
 
   public AbstractSelectFilesDialog(Project project,
                                    boolean canBeParent,
                                    @Nullable VcsShowConfirmationOption confirmationOption,
-                                   @Nullable String prompt) {
+                                   @Nullable @NlsContexts.Label String prompt) {
     super(project, canBeParent);
     myPrompt = prompt;
 

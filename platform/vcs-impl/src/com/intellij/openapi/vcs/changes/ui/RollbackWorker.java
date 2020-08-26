@@ -21,6 +21,7 @@ import com.intellij.openapi.vcs.rollback.RollbackEnvironment;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.util.WaitForProgressToShow;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +35,7 @@ import static com.intellij.util.ObjectUtils.notNull;
 
 public class RollbackWorker {
   private final Project myProject;
-  private final String myOperationName;
+  private final @Nls(capitalization = Nls.Capitalization.Title) String myOperationName;
   private final boolean myInvokedFromModalContext;
   private final List<VcsException> myExceptions;
 
@@ -42,7 +43,9 @@ public class RollbackWorker {
     this(project, DefaultRollbackEnvironment.getRollbackOperationText(), false);
   }
 
-  public RollbackWorker(final Project project, final String operationName, boolean invokedFromModalContext) {
+  public RollbackWorker(final Project project,
+                        @Nls(capitalization = Nls.Capitalization.Title) String operationName,
+                        boolean invokedFromModalContext) {
     myProject = project;
     myOperationName = operationName;
     myInvokedFromModalContext = invokedFromModalContext;
@@ -57,14 +60,14 @@ public class RollbackWorker {
   public void doRollback(@NotNull Collection<? extends Change> changes,
                          boolean deleteLocallyAddedFiles,
                          @Nullable Runnable afterVcsRefreshInAwt,
-                         @Nullable String localHistoryActionName) {
+                         @Nullable @Nls String localHistoryActionName) {
     doRollback(changes, deleteLocallyAddedFiles, afterVcsRefreshInAwt, localHistoryActionName, false);
   }
 
   public void doRollback(@NotNull Collection<? extends Change> changes,
                          boolean deleteLocallyAddedFiles,
                          @Nullable Runnable afterVcsRefreshInAwt,
-                         @Nullable String localHistoryActionName,
+                         @Nullable @Nls String localHistoryActionName,
                          boolean honorExcludedFromCommit) {
     ProgressManager.getInstance().executeNonCancelableSection(() -> {
       ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);

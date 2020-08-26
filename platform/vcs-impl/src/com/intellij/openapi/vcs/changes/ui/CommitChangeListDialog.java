@@ -17,6 +17,7 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
@@ -446,7 +447,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
   private final class CommitAction extends AbstractAction implements OptionAction {
     private Action @NotNull [] myOptions = new Action[0];
 
-    private CommitAction(String okActionText) {
+    private CommitAction(@NlsContexts.Button String okActionText) {
       super(okActionText);
       putValue(DEFAULT_ACTION, Boolean.TRUE);
     }

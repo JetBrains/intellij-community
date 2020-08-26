@@ -3,6 +3,7 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -11,6 +12,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,6 +71,7 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
     }
   }
 
+  @NlsContexts.Tooltip
   @Nullable
   private String getTooltipText() {
     if (!(userObject instanceof LocalChangeList)) return null;
@@ -78,7 +81,7 @@ public class ChangesBrowserChangeListNode extends ChangesBrowserNode<ChangeList>
     String dataInfo = data.getPresentation();
     String message = cropMessageIfNeeded(((LocalChangeList)userObject).getComment());
 
-    StringBuilder sb = new StringBuilder();
+    @Nls StringBuilder sb = new StringBuilder();
     if (!StringUtil.isEmpty(dataInfo)) sb.append(dataInfo);
     if (!StringUtil.isEmpty(message)) {
       if (sb.length() > 0) sb.append(UIUtil.BR).append(UIUtil.BR);
