@@ -113,6 +113,7 @@ final class BackgroundHighlighter implements StartupActivity.DumbAware {
     
     project.getMessageBus().connect(parentDisposable)
       .subscribe(TemplateManager.TEMPLATE_STARTED_TOPIC, state -> {
+        if (state.isFinished()) return;
         updateHighlighted(project, state.getEditor());
         state.addTemplateStateListener(new TemplateEditingAdapter() {
           @Override
