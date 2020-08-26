@@ -16,6 +16,10 @@ public abstract class LineAnnotationAspectAdapter implements LineAnnotationAspec
   @NlsContexts.ListItem @Nullable private final String myDisplayName;
   private final boolean myShowByDefault;
 
+  /**
+   * @deprecated use {@link LineAnnotationAspectAdapter#LineAnnotationAspectAdapter(String, String, boolean)}
+   */
+  @Deprecated
   protected LineAnnotationAspectAdapter() {
     this(null, null, false);
   }
