@@ -2,6 +2,7 @@
 package com.intellij.dvcs.ui;
 
 import com.intellij.openapi.actionSystem.*;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,7 +54,7 @@ public class LightActionGroup extends ActionGroup {
     add(Separator.create());
   }
 
-  public void addSeparator(@Nullable String separatorText) {
+  public void addSeparator(@Nullable @Nls String separatorText) {
     add(Separator.create(separatorText));
   }
 }

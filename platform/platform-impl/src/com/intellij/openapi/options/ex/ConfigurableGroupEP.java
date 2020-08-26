@@ -8,6 +8,7 @@ import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.RequiredElement;
 import com.intellij.openapi.options.OptionsBundle;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -100,7 +101,7 @@ final class ConfigurableGroupEP implements PluginAware {
     return getResourceValue(displayNameKey);
   }
 
-  @NotNull String getDescription() {
+  @NlsContexts.DetailedDescription @NotNull String getDescription() {
     return getResourceValue(descriptionKey);
   }
 

@@ -11,6 +11,7 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.pico.CachingConstructorInjectionComponentAdapter;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.picocontainer.PicoContainer;
@@ -80,7 +81,7 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
 
   /**
    * @return true when this component is disposed (e.g. the "File|Close Project" invoked or the application is exited)
-   * or is about to be disposed (e.g. the {@link com.intellij.openapi.project.impl.ProjectImpl#dispose()} was called but not completed yet)
+   * or is about to be disposed (e.g. the {@link com.intellij.openapi.project.impl.ProjectExImpl#dispose()} was called but not completed yet)
    * <br>
    * The result is only valid inside read action because the application/project/module can be disposed at any moment.
    * (see <a href="https://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/general_threading_rules.html#readwrite-lock">more details on read actions</a>)
@@ -162,7 +163,7 @@ public interface ComponentManager extends UserDataHolder, Disposable, AreaInstan
   }
 
   @ApiStatus.Internal
-  default @NotNull RuntimeException createError(@NotNull String message, @NotNull PluginId pluginId) {
+  default @NotNull RuntimeException createError(@NotNull @NonNls String message, @NotNull PluginId pluginId) {
     return new RuntimeException(message);
   }
 

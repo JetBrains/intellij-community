@@ -3,6 +3,7 @@
 package com.intellij.ide.util;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.ElementDescriptionUtil;
 import com.intellij.psi.PsiDirectoryContainer;
@@ -19,7 +20,7 @@ import java.util.Map;
 public final class DeleteUtil {
   private DeleteUtil() { }
 
-  public static String generateWarningMessage(String messageTemplate, final PsiElement[] elements) {
+  public static @NlsContexts.DialogMessage String generateWarningMessage(String messageTemplate, final PsiElement[] elements) {
     if (elements.length == 1) {
       String name = ElementDescriptionUtil.getElementDescription(elements[0], DeleteNameDescriptionLocation.INSTANCE);
       String type = ElementDescriptionUtil.getElementDescription(elements[0], DeleteTypeDescriptionLocation.SINGULAR);

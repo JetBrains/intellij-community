@@ -76,8 +76,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
 
     init();
     updateOkActions();
-    setOKButtonText(DvcsBundle.getString("action.push"));
-    setOKButtonMnemonic('P');
+    setOKButtonText(DvcsBundle.message("action.push"));
     String title = allRepos.size() == 1
                    ? DvcsBundle.message("push.dialog.push.commits.to.title", DvcsUtil.getShortRepositoryName(getFirstItem(allRepos)))
                    : DvcsBundle.getString("push.dialog.push.commits.title");
@@ -425,6 +424,7 @@ public class VcsPushDialog extends DialogWrapper implements VcsPushUi, DataProvi
       putValue(Action.SHORT_DESCRIPTION, myRealAction.getDescription(myDialog, enabled));
     }
 
+    @Nls
     @NotNull
     public String getName() {
       return requireNonNull(myRealAction.getTemplatePresentation().getTextWithMnemonic());

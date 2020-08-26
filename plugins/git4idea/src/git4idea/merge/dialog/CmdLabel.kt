@@ -2,6 +2,7 @@
 package git4idea.merge.dialog
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import net.miginfocom.layout.CC
@@ -17,7 +18,7 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
 
-class CmdLabel(cmd: String,
+class CmdLabel(@NlsSafe cmd: String,
                private val border: Insets = Insets(1, 1, 1, 1),
                private val componentSize: Dimension = JBDimension(100, 28)) : JPanel() {
 

@@ -30,7 +30,7 @@ public class TryExceptAnnotator extends PyAnnotator {
   public void visitPyRaiseStatement(PyRaiseStatement node) {
     if (node.getExpressions().length == 0 &&
         PsiTreeUtil.getParentOfType(node, PyExceptPart.class, PyFinallyPart.class, PyFunction.class) == null) {
-      markError(node, "No exception to reraise");
+      markError(node, PyBundle.message("ANN.no.exception.to.reraise"));
     }
   }
 }

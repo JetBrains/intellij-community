@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery.actions;
 
+import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.actions.VcsFacadeImpl;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
@@ -292,7 +293,7 @@ public class ShowAffectedTestsAction extends AnAction {
                                               @NotNull DataContext dataContext,
                                               @NotNull String title) {
     DiscoveredTestsTree tree = new DiscoveredTestsTree(title);
-    String initTitle = "Tests for " + title;
+    String initTitle = JavaCompilerBundle.message("test.discovery.tests.tab.title", title);
 
     Ref<JBPopup> ref = new Ref<>();
 

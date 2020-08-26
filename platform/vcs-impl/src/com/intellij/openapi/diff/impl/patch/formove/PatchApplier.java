@@ -16,6 +16,7 @@ import com.intellij.openapi.diff.impl.patch.formove.PathsVerifier.PatchAndFile;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
@@ -58,8 +59,8 @@ public final class PatchApplier {
   private final PathsVerifier myVerifier;
 
   private final boolean myReverseConflict;
-  @Nullable private final String myLeftConflictPanelTitle;
-  @Nullable private final String myRightConflictPanelTitle;
+  @NlsContexts.Label @Nullable private final String myLeftConflictPanelTitle;
+  @NlsContexts.Label @Nullable private final String myRightConflictPanelTitle;
 
   public PatchApplier(@NotNull Project project,
                       @NotNull VirtualFile baseDirectory,
@@ -67,8 +68,8 @@ public final class PatchApplier {
                       @Nullable LocalChangeList targetChangeList,
                       @Nullable CommitContext commitContext,
                       boolean reverseConflict,
-                      @Nullable String leftConflictPanelTitle,
-                      @Nullable String rightConflictPanelTitle) {
+                      @NlsContexts.Label @Nullable String leftConflictPanelTitle,
+                      @NlsContexts.Label @Nullable String rightConflictPanelTitle) {
     myProject = project;
     myBaseDirectory = baseDirectory;
     myPatches = patches;
@@ -411,17 +412,17 @@ public final class PatchApplier {
   private static void showApplyStatus(@NotNull Project project, final ApplyPatchStatus status) {
     VcsNotifier vcsNotifier = VcsNotifier.getInstance(project);
     if (status == ApplyPatchStatus.ALREADY_APPLIED) {
-      vcsNotifier.notifyMinorInfo(VcsBundle.message("patch.apply.dialog.title"), VcsBundle.message("patch.apply.already.applied"));
+      vcsNotifier.notifyMinorInfo(VcsBundle.message("patch.apply.notification.title"), VcsBundle.message("patch.apply.already.applied"));
     }
     else if (status == ApplyPatchStatus.PARTIAL) {
-      vcsNotifier.notifyMinorInfo(VcsBundle.message("patch.apply.dialog.title"), VcsBundle.message("patch.apply.partially.applied"));
+      vcsNotifier.notifyMinorInfo(VcsBundle.message("patch.apply.notification.title"), VcsBundle.message("patch.apply.partially.applied"));
     }
     else if (status == ApplyPatchStatus.SUCCESS) {
       vcsNotifier.notifySuccess(VcsBundle.message("patch.apply.success.applied.text"));
     }
   }
 
-  public static void showError(final Project project, final String message) {
+  public static void showError(final Project project, final @NlsContexts.DialogMessage String message) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
     VcsImplUtil.showErrorMessage(project, message, VcsBundle.message("patch.apply.dialog.title"));
   }

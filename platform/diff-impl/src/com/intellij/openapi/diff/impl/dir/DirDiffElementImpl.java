@@ -3,6 +3,7 @@ package com.intellij.openapi.diff.impl.dir;
 
 import com.intellij.ide.diff.*;
 import com.intellij.util.text.DateFormatUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,7 +26,7 @@ public final class DirDiffElementImpl implements DirDiffElement {
   private DirDiffOperation myDefaultOperation;
   private final DTree myNode;
 
-  private DirDiffElementImpl(DTree parent, @Nullable DiffElement source, @Nullable DiffElement target, DiffType type, String name,
+  private DirDiffElementImpl(DTree parent, @Nullable DiffElement source, @Nullable DiffElement target, DiffType type, @Nls String name,
                          @Nullable DirDiffOperation defaultOperation) {
     myParent = parent.getParent();
     myNode = parent;
@@ -106,7 +107,7 @@ public final class DirDiffElementImpl implements DirDiffElement {
     return new DirDiffElementImpl(parent, null, target, DiffType.TARGET, null, null);
   }
 
-  public static DirDiffElementImpl createDirElement(DTree parent, DiffElement src, DiffElement trg, String name) {
+  public static DirDiffElementImpl createDirElement(DTree parent, DiffElement src, DiffElement trg, @Nls String name) {
     return new DirDiffElementImpl(parent, src, trg, DiffType.SEPARATOR, name, null);
   }
 

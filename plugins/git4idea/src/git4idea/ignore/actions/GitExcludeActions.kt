@@ -17,12 +17,17 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import git4idea.GitUtil
 import git4idea.GitVcs
-import git4idea.i18n.GitBundle.message
+import git4idea.i18n.GitBundle.messagePointer
 import git4idea.ignore.lang.GitExcludeFileType
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NotNull
+import java.util.function.Supplier
 import kotlin.streams.toList
 
-abstract class DefaultGitExcludeAction(text: String?, description: String?) : DumbAwareAction(text, description,
-                                                                                              GitExcludeFileType.INSTANCE.icon) {
+abstract class DefaultGitExcludeAction(dynamicText: @NotNull Supplier<@Nls String>,
+                                       dynamicDescription: @NotNull Supplier<@Nls String>)
+  : DumbAwareAction(dynamicText, dynamicDescription, GitExcludeFileType.INSTANCE.icon) {
+
   override fun update(e: AnActionEvent) {
     val enabled = isEnabled(e)
     e.presentation.isVisible = enabled
@@ -37,7 +42,8 @@ abstract class DefaultGitExcludeAction(text: String?, description: String?) : Du
 }
 
 class AddToGitExcludeAction : DefaultGitExcludeAction(
-  message("git.add.to.exclude.file.action.text"), message("git.add.to.exclude.file.action.description")
+  messagePointer("git.add.to.exclude.file.action.text"),
+  messagePointer("git.add.to.exclude.file.action.description")
 ) {
   override fun isEnabled(e: AnActionEvent): Boolean {
     val project = e.getData(CommonDataKeys.PROJECT) ?: return false
@@ -71,7 +77,8 @@ class AddToGitExcludeAction : DefaultGitExcludeAction(
 }
 
 class OpenGitExcludeAction : DefaultGitExcludeAction(
-  message("git.open.exclude.file.action.text"), message("git.open.exclude.file.action.description")
+  messagePointer("git.open.exclude.file.action.text"),
+  messagePointer("git.open.exclude.file.action.description")
 ) {
 
   override fun update(e: AnActionEvent) {

@@ -28,11 +28,11 @@ public final class RefactoringBundle extends DynamicBundle {
     return INSTANCE.getMessage(key);
   }
 
-  public static String getSearchInCommentsAndStringsText() {
+  public static @NlsContexts.Label String getSearchInCommentsAndStringsText() {
     return message("search.in.comments.and.strings");
   }
 
-  public static String getSearchForTextOccurrencesText() {
+  public static @NlsContexts.Label String getSearchForTextOccurrencesText() {
     return message("search.for.text.occurrences");
   }
 

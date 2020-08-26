@@ -45,7 +45,7 @@ public abstract class DefaultHighlightVisitorBasedInspection extends GlobalSimpl
     @NotNull
     @Override
     public String getDisplayName() {
-      return getShortName();
+      return AnalysisBundle.message("inspection.display.name.annotator");
     }
 
     @NotNull

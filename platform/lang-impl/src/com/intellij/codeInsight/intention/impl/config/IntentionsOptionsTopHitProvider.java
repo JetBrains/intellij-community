@@ -7,6 +7,7 @@ import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationImpl;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -56,7 +57,7 @@ final class IntentionsOptionsTopHitProvider implements OptionsTopHitProvider.App
       mySettings.setEnabled(myMetaData, enabled);
     }
 
-    private static String getOptionName(@NotNull IntentionActionMetaData data) {
+    private static @NlsContexts.Label String getOptionName(@NotNull IntentionActionMetaData data) {
       StringBuilder sb = new StringBuilder();
       for (String category : data.myCategory) {
         sb.append(category).append(": ");

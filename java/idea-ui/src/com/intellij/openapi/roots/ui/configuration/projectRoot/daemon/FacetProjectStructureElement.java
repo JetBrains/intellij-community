@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
-import com.intellij.CommonBundle;
 import com.intellij.facet.Facet;
 import com.intellij.facet.pointers.FacetPointersManager;
 import com.intellij.ide.JavaUiBundle;
@@ -50,13 +49,13 @@ public class FacetProjectStructureElement extends ProjectStructureElement {
   }
 
   @Override
-  public @Nls(capitalization = Nls.Capitalization.Sentence) String getPresentableName() {
+  public String getPresentableName() {
     return myFacet.getName();
   }
 
   @Override
   public @Nls(capitalization = Nls.Capitalization.Sentence) String getTypeName() {
-    return CommonBundle.message("facet.title");
+    return JavaUiBundle.message("facet.title");
   }
 
   @Override

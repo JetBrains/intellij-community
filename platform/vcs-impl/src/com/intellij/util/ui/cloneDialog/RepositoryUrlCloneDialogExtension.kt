@@ -38,7 +38,7 @@ class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
   }
 
   override fun createMainComponent(project: Project): VcsCloneDialogExtensionComponent {
-    throw AssertionError("Shouldn't be called")
+    throw AssertionError("Shouldn't be called") // NON-NLS
   }
 
   override fun createMainComponent(project: Project, modalityState: ModalityState): VcsCloneDialogExtensionComponent {

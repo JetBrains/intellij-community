@@ -26,8 +26,10 @@ import java.util.Map;
  */
 public final class GradleClassFinder extends NonClasspathClassFinder {
 
+  private static final String KOTLIN_DEFAULT_EXTENSION = "kt";
+
   public GradleClassFinder(@NotNull Project project) {
-    super(project, JavaFileType.DEFAULT_EXTENSION, GroovyFileType.DEFAULT_EXTENSION);
+    super(project, JavaFileType.DEFAULT_EXTENSION, GroovyFileType.DEFAULT_EXTENSION, KOTLIN_DEFAULT_EXTENSION);
   }
 
   @Override

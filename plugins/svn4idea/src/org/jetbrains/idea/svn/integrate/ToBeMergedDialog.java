@@ -32,6 +32,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.mergeinfo.ListMergeStatus;
@@ -56,6 +57,8 @@ import static com.intellij.util.containers.ContainerUtil.filter;
 import static com.intellij.util.containers.ContainerUtil.isEmpty;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.synchronizedMap;
+import static org.jetbrains.idea.svn.SvnBundle.message;
+import static org.jetbrains.idea.svn.SvnBundle.messagePointer;
 import static org.jetbrains.idea.svn.integrate.MergeCalculatorTask.getBunchSize;
 import static org.jetbrains.idea.svn.integrate.MergeCalculatorTask.loadChangeLists;
 
@@ -81,7 +84,6 @@ public class ToBeMergedDialog extends DialogWrapper {
 
   public ToBeMergedDialog(@NotNull MergeContext mergeContext,
                           @NotNull List<SvnChangeList> changeLists,
-                          final String title,
                           @NotNull MergeChecker mergeChecker,
                           boolean allStatusesCalculated,
                           boolean allListsLoaded) {
@@ -91,13 +93,13 @@ public class ToBeMergedDialog extends DialogWrapper {
     myStatusMap = synchronizedMap(new HashMap<>());
     myMergeChecker = mergeChecker;
     myAllStatusesCalculated = allStatusesCalculated;
-    setTitle(title);
+    setTitle(myMergeContext.getMergeTitle());
 
     myRevisionsModel = new ListTableModel<>(new ColumnInfo[]{FAKE_COLUMN}, changeLists);
     myPanel = new JPanel(new BorderLayout());
     myWiseSelection = new QuantitySelection<>(allStatusesCalculated);
     myAlreadyMerged = new HashSet<>();
-    setOKButtonText("Merge Selected");
+    setOKButtonText(message("button.merge.selected"));
     initUI();
     init();
     enableLoadButtons();
@@ -188,7 +190,7 @@ public class ToBeMergedDialog extends DialogWrapper {
   @Override
   protected Action @NotNull [] createActions() {
     if (myAllStatusesCalculated) {
-      return new Action[]{getOKAction(), new DialogWrapperAction("Merge All") {
+      return new Action[]{getOKAction(), new DialogWrapperAction(message("button.merge.all")) {
         @Override
         protected void doAction(ActionEvent e) {
           close(MERGE_ALL_CODE);
@@ -314,7 +316,7 @@ public class ToBeMergedDialog extends DialogWrapper {
       @Override
       public void preDecorate(@NotNull Change change, @NotNull ChangesBrowserNodeRenderer renderer, boolean showFlatten) {
         if (myAlreadyMerged.contains(change)) {
-          renderer.append(" [already merged] ", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+          renderer.append(" [" + message("label.already.merged") + "] ", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
         }
       }
     };
@@ -373,7 +375,7 @@ public class ToBeMergedDialog extends DialogWrapper {
     private final int myQuantity;
 
     private MoreXAction(final int quantity) {
-      super("Load +" + quantity);
+      super(message("button.load.quantity", quantity));
       myQuantity = quantity;
     }
 
@@ -390,7 +392,11 @@ public class ToBeMergedDialog extends DialogWrapper {
 
   private final class MySelectAll extends DumbAwareAction {
     private MySelectAll() {
-      super("Select All", "Select All", AllIcons.Actions.Selectall);
+      super(
+        messagePointer("action.Subversion.SelectAllRevisions.text"),
+        messagePointer("action.Subversion.SelectAllRevisions.description"),
+        AllIcons.Actions.Selectall
+      );
     }
 
     @Override
@@ -402,7 +408,11 @@ public class ToBeMergedDialog extends DialogWrapper {
 
   private final class MyUnselectAll extends DumbAwareAction {
     private MyUnselectAll() {
-      super("Unselect All", "Unselect All", AllIcons.Actions.Unselectall);
+      super(
+        messagePointer("action.Subversion.UnselectAllRevisions.text"),
+        messagePointer("action.Subversion.UnselectAllRevisions.description"),
+        AllIcons.Actions.Unselectall
+      );
     }
 
     @Override
@@ -420,7 +430,7 @@ public class ToBeMergedDialog extends DialogWrapper {
     private boolean myIsLastListLoaded;
 
     LoadChangeListsTask(long startNumber, int quantity) {
-      super(myMergeContext.getProject(), "Loading recent " + myMergeContext.getBranchName() + " revisions", true);
+      super(myMergeContext.getProject(), message("progress.title.loading.recent.branch.revisions", myMergeContext.getBranchName()), true);
       myStartNumber = startNumber;
       myQuantity = quantity;
     }
@@ -524,7 +534,7 @@ public class ToBeMergedDialog extends DialogWrapper {
     }
   }
 
-  private static final ColumnInfo FAKE_COLUMN = new ColumnInfo<SvnChangeList, SvnChangeList>("fake column") {
+  @NonNls private static final ColumnInfo FAKE_COLUMN = new ColumnInfo<SvnChangeList, SvnChangeList>("Fake Column") {
     @Override
     public SvnChangeList valueOf(SvnChangeList changeList) {
       return changeList;

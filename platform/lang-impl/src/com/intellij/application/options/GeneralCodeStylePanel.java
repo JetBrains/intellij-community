@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleConstraints;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -39,20 +40,15 @@ import com.intellij.ui.components.fields.CommaSeparatedIntegersField;
 import com.intellij.ui.components.fields.IntegerField;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import java.awt.Point;
-import java.awt.Rectangle;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
+import java.awt.*;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
-import javax.swing.Box;
-import javax.swing.JCheckBox;
-import javax.swing.JComponent;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JTextField;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   @SuppressWarnings("UnusedDeclaration")
@@ -342,7 +338,7 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     return null;
   }
 
-  private static void showError(final JTextField field, final String message) {
+  private static void showError(final JTextField field, final @NlsContexts.PopupContent String message) {
     BalloonBuilder balloonBuilder = JBPopupFactory.getInstance()
       .createHtmlTextBalloonBuilder(message, MessageType.ERROR, null);
     balloonBuilder.setFadeoutTime(1500);
@@ -368,19 +364,19 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     super.dispose();
   }
 
-  private static String getSystemDependantString() {
+  private static @NlsContexts.ListItem String getSystemDependantString() {
     return ApplicationBundle.message("combobox.crlf.system.dependent");
   }
 
-  private static String getUnixString() {
+  private static @NlsContexts.ListItem String getUnixString() {
     return ApplicationBundle.message("combobox.crlf.unix");
   }
 
-  private static String getWindowsString() {
+  private static @NlsContexts.ListItem String getWindowsString() {
     return ApplicationBundle.message("combobox.crlf.windows");
   }
 
-  private static String getMacintoshString() {
+  private static @NlsContexts.ListItem String getMacintoshString() {
     return ApplicationBundle.message("combobox.crlf.mac");
   }
 }

@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
@@ -360,7 +361,7 @@ public final class JShellHandler {
               droppedCount++;
             }
           }
-          JShellDiagnostic.notifyInfo("Dropped " + droppedCount + " code snippets", myProject);
+          JShellDiagnostic.notifyInfo(JavaCompilerBundle.message("jshell.dropped.x.code.snippets", droppedCount), myProject);
         }
         else {
           for (Event event : events) {

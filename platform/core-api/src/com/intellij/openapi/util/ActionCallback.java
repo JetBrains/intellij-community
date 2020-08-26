@@ -95,7 +95,7 @@ public class ActionCallback implements Disposable {
   }
 
   @NotNull
-  public ActionCallback reject(String error) {
+  public ActionCallback reject(@NonNls String error) {
     myError = error;
     setRejected();
     return this;

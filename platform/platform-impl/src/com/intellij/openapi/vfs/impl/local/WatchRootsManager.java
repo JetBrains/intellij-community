@@ -218,7 +218,9 @@ final class WatchRootsManager {
     if (index >= 0) root = root.substring(0, index);
     try {
       Path rootPath = Paths.get(FileUtil.toSystemDependentName(root));
-      if (!rootPath.isAbsolute()) throw new InvalidPathException(root, "Watch roots should be absolute");
+      if (!rootPath.isAbsolute()) {
+        throw new InvalidPathException(root, "Watch roots should be absolute");
+      }
       return FileUtil.toSystemIndependentName(rootPath.toString());
     }
     catch (InvalidPathException e) {

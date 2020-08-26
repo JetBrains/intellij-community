@@ -38,6 +38,12 @@ internal open class ExternalEntityMappingImpl<T> internal constructor(internal v
     index.keys.forEach { key -> index[key]?.also { value -> copy[key] = value } }
     return copy
   }
+
+  override fun getAllEntities(): List<WorkspaceEntity> = index.keys.map { entityStorage.entityDataByIdOrDie(it).createEntity(entityStorage) }
+
+  override fun forEach(action: (key: WorkspaceEntity, value: T) -> Unit) {
+    index.forEach { (key, value) -> action(entityStorage.entityDataByIdOrDie(key).createEntity(entityStorage), value) }
+  }
 }
 
 internal class MutableExternalEntityMappingImpl<T> private constructor(
@@ -72,10 +78,11 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
     }
   }
 
-  override fun removeMapping(entity: WorkspaceEntity) {
+  override fun removeMapping(entity: WorkspaceEntity): T? {
     entity as WorkspaceEntityBase
-    remove(entity.id)
+    val removed = remove(entity.id)
     (entityStorage as WorkspaceEntityStorageBuilderImpl).incModificationCount()
+    return removed
   }
 
   internal fun clearMapping() {
@@ -83,9 +90,10 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
     indexLog.add(IndexLogRecord.Clear)
   }
 
-  internal fun remove(id: EntityId) {
-    index.remove(id)
+  internal fun remove(id: EntityId): T? {
+    val removed = index.remove(id)
     indexLog.add(IndexLogRecord.Remove(id))
+    return removed
   }
 
   fun applyChanges(other: MutableExternalEntityMappingImpl<*>, replaceMap: HashBiMap<EntityId, EntityId>) {
@@ -131,4 +139,6 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
 object EmptyExternalEntityMapping : ExternalEntityMapping<Any> {
   override fun getEntities(data: Any): List<WorkspaceEntity> = emptyList()
   override fun getDataByEntity(entity: WorkspaceEntity): Any? = null
+  override fun getAllEntities(): List<WorkspaceEntity> = emptyList()
+  override fun forEach(action: (key: WorkspaceEntity, value: Any) -> Unit) {}
 }

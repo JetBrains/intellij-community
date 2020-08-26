@@ -72,7 +72,7 @@ class CompilationContextImpl implements CompilationContext {
 
     projectHome = toCanonicalPath(projectHome)
     def kotlinHome = toCanonicalPath("$communityHome/build/dependencies/build/kotlin/Kotlin")
-    def model = loadProject(projectHome, kotlinHome, messages, options, ant, gradle)
+    def model = loadProject(projectHome, kotlinHome, messages, options, ant)
     def jdkHome = defineJavaSdk(model, projectHome, options, messages)
     def oldToNewModuleName = loadModuleRenamingHistory(projectHome, messages) + loadModuleRenamingHistory(communityHome, messages)
     def context = new CompilationContextImpl(ant, gradle, model, communityHome, projectHome, jdkHome, kotlinHome, messages, oldToNewModuleName,
@@ -85,9 +85,6 @@ class CompilationContextImpl implements CompilationContext {
   private static String defineJavaSdk(JpsModel model, String projectHome, BuildOptions options, BuildMessages messages) {
     def sdks = []
     def jbrDir = jbrDir(projectHome, options)
-    def jdk6Home = JdkUtils.computeJdkHome(messages, '1.6', "$jbrDir/1.6", "JDK_16_x64")
-    JdkUtils.defineJdk(model.global, "IDEA jdk", jdk6Home, messages)
-    sdks << "IDEA jdk"
     def jbrVersionName = jbrVersionName(options)
     sdks << jbrVersionName
     def jbrDefaultDir = "$jbrDir/$jbrVersionName"
@@ -172,7 +169,7 @@ class CompilationContextImpl implements CompilationContext {
                                       paths.kotlinHome, messages, oldToNewModuleName, buildOutputRootEvaluator, options)
   }
 
-  private static JpsModel loadProject(String projectHome, String kotlinHome, BuildMessages messages, BuildOptions options, AntBuilder ant, GradleRunner gradle) {
+  private static JpsModel loadProject(String projectHome, String kotlinHome, BuildMessages messages, BuildOptions options, AntBuilder ant) {
     if (!options.useCompiledClassesFromProjectOutput && options.pathToCompiledClassesArchive == null && options.pathToCompiledClassesArchivesMetadata == null) {
       //we need to add Kotlin JPS plugin to classpath before loading the project to ensure that Kotlin settings will be properly loaded
       ensureKotlinJpsPluginIsAddedToClassPath(kotlinHome, ant, messages)
@@ -265,7 +262,12 @@ class CompilationContextImpl implements CompilationContext {
 
     suppressWarnings(project)
     exportModuleOutputProperties()
-    cleanOutput(outputDirectoriesToKeep)
+
+    if (options.cleanOutputFolder) {
+      cleanOutput(outputDirectoriesToKeep)
+    } else {
+      messages.info("cleanOutput step was skipped")
+    }
   }
 
   /**

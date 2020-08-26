@@ -22,7 +22,7 @@ public abstract class ProjectStructureElement {
   public abstract @Nls(capitalization = Nls.Capitalization.Sentence) String getPresentableName();
 
   @Nullable
-  public String getDescription() {
+  public @Nls String getDescription() {
     return null;
   }
 

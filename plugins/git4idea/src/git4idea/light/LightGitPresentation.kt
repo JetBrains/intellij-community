@@ -13,7 +13,8 @@ import java.awt.Color
 val LightFileStatus.color: Color?
   get() = getFileStatus().color
 
-fun LightFileStatus.getPresentation(): @Nls String {
+@Nls
+fun LightFileStatus.getPresentation(): String {
   return when (this) {
     LightFileStatus.Blank, is LightFileStatus.NotChanged -> ""
     is LightFileStatus.StatusRecord -> getPresentation()

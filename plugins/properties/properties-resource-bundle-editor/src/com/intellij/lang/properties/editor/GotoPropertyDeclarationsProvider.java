@@ -63,7 +63,7 @@ public class GotoPropertyDeclarationsProvider extends GotoRelatedProvider {
       final IProperty foundProperty = f.findPropertyByKey(propertyKey);
       return foundProperty == null ?
              null :
-             new GotoRelatedItem(foundProperty.getPsiElement(), "Property Declarations");
+             new GotoRelatedItem(foundProperty.getPsiElement(), ResourceBundleEditorBundle.message("goto.property.declaration.group"));
     });
   }
 }

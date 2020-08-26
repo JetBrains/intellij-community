@@ -14,6 +14,7 @@ import com.intellij.ide.util.scopeChooser.EditScopesDialog;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.TreeBuilderUtil;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.lang.LangBundle;
 import com.intellij.lang.LanguageExtension;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -29,6 +30,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
+import com.intellij.psi.search.scope.ProjectProductionScope;
+import com.intellij.psi.search.scope.TestsScope;
+import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.ui.ScrollPaneFactory;
@@ -126,7 +130,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     for (Map.Entry<String, JTree> entry : type2treeMap.entrySet()) {
       JTree tree = entry.getValue();
       String type = entry.getKey();
-      String scope = state.SCOPE != null ? state.SCOPE : getScopeAll();
+      String scope = state.SCOPE != null ? state.SCOPE : SCOPE_ALL;
 
       OccurenceNavigatorSupport occurenceNavigatorSupport = new OccurenceNavigatorSupport(tree) {
         @Override
@@ -199,12 +203,13 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
    */
   protected Map<String, Supplier<String>> getPresentableNameMap() {
     HashMap<String, Supplier<String>> map = new HashMap<>();
-    map.put(SCOPE_PROJECT, HierarchyBrowserBaseEx::getScopeProject);
-    map.put(SCOPE_CLASS, HierarchyBrowserBaseEx::getScopeClass);
-    map.put(SCOPE_TEST, HierarchyBrowserBaseEx::getScopeTest);
-    map.put(SCOPE_ALL, HierarchyBrowserBaseEx::getScopeAll);
+    map.put(SCOPE_PROJECT, () -> ProjectProductionScope.INSTANCE.getPresentableName());
+    map.put(SCOPE_CLASS, () -> LangBundle.message("this.class.scope.name"));
+    map.put(SCOPE_TEST, () -> TestsScope.INSTANCE.getPresentableName());
+    map.put(SCOPE_ALL, () -> CustomScopesProviderEx.getAllScope().getPresentableName());
     return map;
   }
+
 
   @Nullable
   protected abstract JPanel createLegendPanel();
@@ -733,20 +738,17 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     }
   }
 
-  @NotNull
-  private Collection<String> getValidScopeNames() {
-    List<String> result = new ArrayList<>();
-    result.add(getScopeProject());
-    result.add(getScopeTest());
-    result.add(getScopeAll());
-    result.add(getScopeClass());
+  private List<NamedScope> getValidScopes() {
+    List<NamedScope> result = new ArrayList<>();
+    result.add(ProjectProductionScope.INSTANCE);
+    result.add(TestsScope.INSTANCE);
+    result.add(CustomScopesProviderEx.getAllScope());
+    result.add(new NamedScope(SCOPE_CLASS, () -> LangBundle.message("this.class.scope.name"), AllIcons.Ide.LocalScope, null));
 
     final NamedScopesHolder[] holders = NamedScopesHolder.getAllNamedScopeHolders(myProject);
     for (NamedScopesHolder holder : holders) {
       NamedScope[] scopes = holder.getEditableScopes(); //predefined scopes already included
-      for (NamedScope scope : scopes) {
-        result.add(scope.getName());
-      }
+      Collections.addAll(result, scopes);
     }
     return result;
   }
@@ -758,7 +760,8 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       final Project project = e.getProject();
       if (project == null) return;
       presentation.setEnabled(isEnabled());
-      presentation.setText(getCurrentScopeType());
+      String scopeType = getCurrentScopeType();
+      presentation.setText(myI18nMap.getOrDefault(scopeType, () -> scopeType));
     }
 
     protected boolean isEnabled(){
@@ -770,8 +773,8 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     protected final DefaultActionGroup createPopupActionGroup(final JComponent button) {
       final DefaultActionGroup group = new DefaultActionGroup();
 
-      for(String name: getValidScopeNames()) {
-        group.add(new MenuAction(name));
+      for(NamedScope namedScope: getValidScopes()) {
+        group.add(new MenuAction(namedScope));
       }
 
       group.add(new ConfigureScopesAction());
@@ -802,9 +805,9 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     private final class MenuAction extends AnAction {
       private final String myScopeType;
 
-      MenuAction(@NotNull String scopeType) {
-        super(scopeType);
-        myScopeType = scopeType;
+      MenuAction(NamedScope namedScope) {
+        super(namedScope.getPresentableName());
+        myScopeType = namedScope.getScopeId();
       }
 
       @Override
@@ -821,26 +824,10 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         EditScopesDialog.showDialog(myProject, null);
-        if (!getValidScopeNames().contains(getCurrentScopeType())) {
-          selectScope(getScopeAll());
+        if (getValidScopes().stream().anyMatch(scope -> scope.getScopeId().equals(getCurrentScopeType()))) {
+          selectScope(SCOPE_ALL);
         }
       }
     }
-  }
-
-  public static String getScopeProject() {
-    return IdeBundle.message("hierarchy.scope.project");
-  }
-
-  public static String getScopeAll() {
-    return IdeBundle.message("hierarchy.scope.all");
-  }
-
-  public static String getScopeTest() {
-    return IdeBundle.message("hierarchy.scope.test");
-  }
-
-  public static String getScopeClass() {
-    return IdeBundle.message("hierarchy.scope.this.class");
   }
 }

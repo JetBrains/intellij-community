@@ -23,6 +23,7 @@ import com.intellij.application.options.schemes.SimpleSchemesPanel;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -190,7 +191,7 @@ public class CodeStyleSchemesPanel extends SimpleSchemesPanel<CodeStyleScheme> {
     myBottomPanel.setVisible(false);
   }
 
-  private static String getMessage(CodeStyleSettingsModifier @NotNull [] modifiers) {
+  private static @NlsContexts.Label String getMessage(CodeStyleSettingsModifier @NotNull [] modifiers) {
     final StringBuilder messageBuilder = new StringBuilder();
     messageBuilder.append("Settings may be overridden by ");
     boolean isList = false;

@@ -1,4 +1,3 @@
-import os
 import os.path
 from pathlib import Path, PurePath
 
@@ -30,14 +29,14 @@ b = B()
 
 open(<warning descr="Expected type 'Union[str, bytes, PathLike[str], PathLike[bytes], int]', got 'B' instead">b</warning>)
 
-os.fspath(<warning descr="Unexpected type(s):(B)Possible types:(PathLike)(bytes)(str)">b</warning>)
-os.fsencode(<warning descr="Unexpected type(s):(B)Possible types:(Union[str, bytes])(Union[str, bytes, PathLike])">b</warning>)
-os.fsdecode(<warning descr="Unexpected type(s):(B)Possible types:(Union[str, bytes])(Union[str, bytes, PathLike])">b</warning>)
+os.fspath(<warning descr="Unexpected type(s):(B)Possible type(s):(PathLike)(bytes)(str)">b</warning>)
+os.fsencode(<warning descr="Unexpected type(s):(B)Possible type(s):(Union[str, bytes])(Union[str, bytes, PathLike])">b</warning>)
+os.fsdecode(<warning descr="Unexpected type(s):(B)Possible type(s):(Union[str, bytes])(Union[str, bytes, PathLike])">b</warning>)
 
-Path(<warning descr="Unexpected type(s):(B)Possible types:(Union[str, PurePath])(Union[str, PathLike[str]])">b</warning>)
+Path(<warning descr="Unexpected type(s):(B)Possible type(s):(Union[str, PurePath])(Union[str, PathLike[str]])">b</warning>)
 PurePath(<warning descr="Expected type 'str', got 'B' instead">b</warning>)  # TODO update after supporting versioning in pyi-stubs
 
-os.path.abspath(<warning descr="Unexpected type(s):(B)Possible types:(AnyStr)(PathLike)">b</warning>)
+os.path.abspath(<warning descr="Unexpected type(s):(B)Possible type(s):(AnyStr)(PathLike)">b</warning>)
 
 
 # pathlib.PurePath

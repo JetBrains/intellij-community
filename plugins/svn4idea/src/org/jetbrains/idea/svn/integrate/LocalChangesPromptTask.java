@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -15,6 +15,7 @@ import com.intellij.util.FilePathByPathComparator;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.history.SvnChangeList;
@@ -85,7 +86,7 @@ public class LocalChangesPromptTask extends BaseMergeTask {
         myCallback.run();
         break;
       case shelve:
-        myMergeProcess.runInBackground("Shelving local changes before merge", indicator -> {
+        myMergeProcess.runInBackground(SvnBundle.message("progress.title.shelving.local.changes.before.merge"), indicator -> {
           shelveChanges(intersection);
           myCallback.run();
         });
@@ -105,9 +106,9 @@ public class LocalChangesPromptTask extends BaseMergeTask {
 
       ShelveChangesManager shelveManager = ShelveChangesManager.getInstance(myMergeContext.getProject());
 
+      String changeListPrefix = message("stash.changes.message", SvnBundle.message("operation.merge"));
       for (Map.Entry<String, List<Change>> entry : intersection.getChangesByLists().entrySet()) {
-        String shelfName = ChangeListUtil
-          .createSystemShelvedChangeListName(message("stash.changes.message", "merge"), intersection.getComment(entry.getKey()));
+        String shelfName = ChangeListUtil.createSystemShelvedChangeListName(changeListPrefix, intersection.getComment(entry.getKey()));
 
         shelveManager.shelveChanges(entry.getValue(), shelfName, true, true);
       }

@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import git4idea.config.GitExecutable;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.git4idea.GitExternalApp;
 import org.jetbrains.git4idea.util.ScriptGenerator;
@@ -40,11 +41,11 @@ import static com.intellij.openapi.diagnostic.Logger.getInstance;
 public abstract class GitXmlRpcHandlerService<T> implements Disposable {
   private static final Logger LOG = getInstance(GitXmlRpcHandlerService.class);
 
-  @NotNull private final String myScriptTempFilePrefix;
-  @NotNull private final String myHandlerName;
+  @NotNull private final @NonNls String myScriptTempFilePrefix;
+  @NotNull private final @NonNls String myHandlerName;
   @NotNull private final Class<? extends GitExternalApp> myScriptMainClass;
 
-  @NotNull private final Map<String, File> myScriptPaths = new HashMap<>();
+  @NotNull private final Map<@NonNls String, File> myScriptPaths = new HashMap<>();
   @NotNull private final Object SCRIPT_FILE_LOCK = new Object();
 
   @NotNull private final THashMap<UUID, T> handlers = new THashMap<>();
@@ -55,7 +56,9 @@ public abstract class GitXmlRpcHandlerService<T> implements Disposable {
    * @param aClass      Main class of the external application invoked by Git,
    *                    which is able to handle its requests and pass to the main IDEA instance.
    */
-  protected GitXmlRpcHandlerService(@NotNull String prefix, @NotNull String handlerName, @NotNull Class<? extends GitExternalApp> aClass) {
+  protected GitXmlRpcHandlerService(@NotNull @NonNls String prefix,
+                                    @NotNull @NonNls String handlerName,
+                                    @NotNull Class<? extends GitExternalApp> aClass) {
     myScriptTempFilePrefix = prefix;
     myHandlerName = handlerName;
     myScriptMainClass = aClass;
@@ -77,7 +80,7 @@ public abstract class GitXmlRpcHandlerService<T> implements Disposable {
   @NotNull
   public File getScriptPath(@NotNull GitExecutable executable, boolean useBatchFile) throws IOException {
     synchronized (SCRIPT_FILE_LOCK) {
-      String id = executable.getId() + (useBatchFile ? "-bat" : "");
+      String id = executable.getId() + (useBatchFile ? "-bat" : ""); //NON-NLS
       File scriptPath = myScriptPaths.get(id);
       if (scriptPath == null || !scriptPath.exists()) {
         ScriptGenerator generator = new ScriptGenerator(myScriptTempFilePrefix + "-" + executable.getId(), myScriptMainClass);

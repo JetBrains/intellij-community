@@ -2,6 +2,7 @@
 package git4idea.config;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -24,16 +25,19 @@ import java.util.Map;
  */
 public final class GitConfigUtil {
 
-  public static final String USER_NAME = "user.name";
-  public static final String USER_EMAIL = "user.email";
-  public static final String CORE_AUTOCRLF = "core.autocrlf";
+  public static final @NlsSafe String USER_NAME = "user.name";
+  public static final @NlsSafe String USER_EMAIL = "user.email";
+  public static final @NlsSafe String CORE_AUTOCRLF = "core.autocrlf";
+  public static final @NlsSafe String CREDENTIAL_HELPER = "credential.helper";
+  public static final @NlsSafe String LOG_OUTPUT_ENCODING = "i18n.logoutputencoding";
+  public static final @NlsSafe String COMMIT_ENCODING = "i18n.commitencoding";
 
   private GitConfigUtil() {
   }
 
   public static void getValues(@NotNull Project project,
                                @NotNull VirtualFile root,
-                               @Nullable String keyMask,
+                               @Nullable @NonNls String keyMask,
                                @NotNull Map<String, String> result) throws VcsException {
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.CONFIG);
     h.setSilent(true);
@@ -66,7 +70,7 @@ public final class GitConfigUtil {
   }
 
   @Nullable
-  private static String getValue(@NotNull GitLineHandler h, @NotNull String key) throws VcsException {
+  private static String getValue(@NotNull GitLineHandler h, @NotNull @NonNls String key) throws VcsException {
     h.setSilent(true);
     h.addParameters("--null", "--get", key);
     GitCommandResult result = Git.getInstance().runCommand(h);
@@ -83,7 +87,7 @@ public final class GitConfigUtil {
    * @return true if the value represents "true", false if the value represents "false", null if the value doesn't look like a boolean value.
    */
   @Nullable
-  public static Boolean getBooleanValue(@NotNull String value) {
+  public static Boolean getBooleanValue(@NotNull @NonNls String value) {
     value = StringUtil.toLowerCase(value);
     if (ContainerUtil.newHashSet("true", "yes", "on", "1").contains(value)) return true;
     if (ContainerUtil.newHashSet("false", "no", "off", "0", "").contains(value)) return false;
@@ -97,7 +101,7 @@ public final class GitConfigUtil {
   public static String getCommitEncoding(@NotNull Project project, @NotNull VirtualFile root) {
     String encoding = null;
     try {
-      encoding = getValue(project, root, "i18n.commitencoding");
+      encoding = getValue(project, root, COMMIT_ENCODING);
     }
     catch (VcsException e) {
       // ignore exception
@@ -111,7 +115,7 @@ public final class GitConfigUtil {
   public static String getLogEncoding(@NotNull Project project, @NotNull VirtualFile root) {
     String encoding = null;
     try {
-      encoding = getValue(project, root, "i18n.logoutputencoding");
+      encoding = getValue(project, root, LOG_OUTPUT_ENCODING);
     }
     catch (VcsException e) {
       // ignore exception
@@ -130,9 +134,9 @@ public final class GitConfigUtil {
 
   public static void setValue(@NotNull Project project,
                               @NotNull VirtualFile root,
-                              @NotNull String key,
-                              @NotNull String value,
-                              String... additionalParameters) throws VcsException {
+                              @NotNull @NonNls String key,
+                              @NotNull @NonNls String value,
+                              @NonNls String... additionalParameters) throws VcsException {
     GitLineHandler h = new GitLineHandler(project, root, GitCommand.CONFIG);
     h.setSilent(true);
     h.addParameters(additionalParameters);
@@ -146,7 +150,7 @@ public final class GitConfigUtil {
   public static boolean isCredentialHelperUsed(@NotNull Project project, @NotNull File workingDirectory) {
     try {
       GitLineHandler handler = new GitLineHandler(project, workingDirectory, GitCommand.CONFIG);
-      String value = getValue(handler, "credential.helper");
+      String value = getValue(handler, CREDENTIAL_HELPER);
       return StringUtil.isNotEmpty(value);
     }
     catch (VcsException ignored) {

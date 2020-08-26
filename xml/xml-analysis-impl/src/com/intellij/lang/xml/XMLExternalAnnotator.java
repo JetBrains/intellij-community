@@ -17,6 +17,7 @@ package com.intellij.lang.xml;
 
 import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.annotation.AnnotationBuilder;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.ExternalAnnotator;
@@ -29,11 +30,10 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlNSDescriptor;
 import com.intellij.xml.util.XmlTagUtil;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
 import java.util.ArrayList;
 import java.util.List;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ven
@@ -68,15 +68,15 @@ public class XMLExternalAnnotator extends ExternalAnnotator<XMLExternalAnnotator
   }
 
   static class MyHost implements Validator.ValidationHost {
-    private final List<Trinity<PsiElement, String, ErrorType>> messages = new ArrayList<>();
+    private final List<Trinity<PsiElement, @InspectionMessage String, ErrorType>> messages = new ArrayList<>();
 
     @Override
-    public void addMessage(PsiElement context, String message, @NotNull ErrorType type) {
+    public void addMessage(PsiElement context, @InspectionMessage String message, @NotNull ErrorType type) {
       messages.add(Trinity.create(context, message, type));
     }
 
     void apply (AnnotationHolder holder) {
-      for (Trinity<PsiElement, String, ErrorType> message : messages) {
+      for (Trinity<PsiElement, @InspectionMessage String, ErrorType> message : messages) {
         addMessageWithFixes(message.first, message.second, message.third, holder);
       }
     }
@@ -84,7 +84,7 @@ public class XMLExternalAnnotator extends ExternalAnnotator<XMLExternalAnnotator
   
   
   public static void addMessageWithFixes(final PsiElement context,
-                                         final String message,
+                                         final @InspectionMessage String message,
                                          @NotNull final Validator.ValidationHost.ErrorType type,
                                          AnnotationHolder myHolder,
                                          final IntentionAction @NotNull ... fixes) {
@@ -103,7 +103,7 @@ public class XMLExternalAnnotator extends ExternalAnnotator<XMLExternalAnnotator
 
   private static void addMessagesForTreeChild(final PsiElement token,
                                               final HighlightSeverity type,
-                                              final String message,
+                                              final @InspectionMessage String message,
                                               AnnotationHolder myHolder, IntentionAction @NotNull ... actions) {
     if (token != null) {
       AnnotationBuilder builder = myHolder.newAnnotation(type, message).range(token);

@@ -36,6 +36,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.serviceContainer.ComponentManagerImpl;
@@ -604,6 +605,12 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
       stopServicePreloading();
 
+      if (isInstantShutdownPossible()) {
+        for (Frame frame : Frame.getFrames()) {
+          frame.setVisible(false);
+        }
+      }
+
       lifecycleListener.appWillBeClosed(restart);
       LifecycleUsageTriggerCollector.onIdeClose(restart);
 
@@ -639,12 +646,20 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
   }
 
-  private @NotNull CompletableFuture<ProgressWindow> createProgressWindowAsyncIfNeeded(@NotNull String progressTitle,
+  private static boolean isInstantShutdownPossible() {
+    if (!Registry.is("ide.instant.shutdown")) {
+      return false;
+    }
+
+    return !ProgressManager.getInstance().hasProgressIndicator();
+  }
+
+  private @NotNull CompletableFuture<ProgressWindow> createProgressWindowAsyncIfNeeded(@NotNull @NlsContexts.ProgressTitle String progressTitle,
                                                                                        boolean canBeCanceled,
                                                                                        boolean shouldShowModalWindow,
                                                                                        @Nullable Project project,
                                                                                        JComponent parentComponent,
-                                                                                       String cancelText) {
+                                                                                       @NlsContexts.Button String cancelText) {
     if (SwingUtilities.isEventDispatchThread()) {
       return CompletableFuture.completedFuture(createProgressWindow(progressTitle, canBeCanceled, shouldShowModalWindow, project, parentComponent, cancelText));
     }
@@ -654,11 +669,11 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
   }
 
-  private @NotNull ProgressWindow createProgressWindow(@NotNull String progressTitle,
+  private @NotNull ProgressWindow createProgressWindow(@NotNull @NlsContexts.ProgressTitle String progressTitle,
                                                        boolean canBeCanceled,
                                                        boolean shouldShowModalWindow,
                                                        @Nullable Project project,
-                                                       JComponent parentComponent, String cancelText) {
+                                                       JComponent parentComponent, @NlsContexts.Button String cancelText) {
     final ProgressWindow progress = new ProgressWindow(canBeCanceled, !shouldShowModalWindow, project, parentComponent, cancelText);
     // in case of abrupt application exit when 'ProgressManager.getInstance().runProcess(process, progress)' below
     // does not have a chance to run, and as a result the progress won't be disposed
@@ -937,7 +952,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     return runEdtProgressWriteAction(title, project, parentComponent, IdeBundle.message("action.stop"), action);
   }
 
-  private boolean runEdtProgressWriteAction(@NotNull String title,
+  private boolean runEdtProgressWriteAction(@NotNull @NlsContexts.ProgressTitle String title,
                                             @Nullable Project project,
                                             @Nullable JComponent parentComponent,
                                             @Nullable @Nls(capitalization = Nls.Capitalization.Title) String cancelText,
@@ -1314,7 +1329,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
    * callers should be ready for those.
    */
   @ApiStatus.Internal
-  public void executeSuspendingWriteAction(@Nullable Project project, @NotNull String title, @NotNull Runnable runnable) {
+  public void executeSuspendingWriteAction(@Nullable Project project, @NotNull @NlsContexts.DialogTitle String title, @NotNull Runnable runnable) {
     assertIsWriteThread();
     if (!myLock.isWriteLocked()) {
       runModalProgress(project, title, runnable);
@@ -1330,7 +1345,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     }
   }
 
-  private static void runModalProgress(@Nullable Project project, @NotNull String title, @NotNull Runnable runnable) {
+  private static void runModalProgress(@Nullable Project project, @NotNull @NlsContexts.DialogTitle String title, @NotNull Runnable runnable) {
     ProgressManager.getInstance().run(new Task.Modal(project, title, false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {

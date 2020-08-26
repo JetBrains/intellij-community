@@ -2,7 +2,6 @@
 package com.intellij.openapi.vcs.actions
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.text.StringUtil.pluralize
 import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
@@ -70,7 +69,7 @@ open class CommonCheckinFilesAction : AbstractCommonCheckinAction() {
            path.virtualFile?.let { isApplicableRoot(it, status, dataContext) } != false
   }
 
-  @Deprecated("Use `isApplicableRoot(FilePath, VcsContext)` instead", ReplaceWith("isApplicableRoot()"))
+  @Deprecated("Use `isApplicableRoot(FilePath, VcsContext)` instead", ReplaceWith("isApplicableRoot()")) // NON-NLS
   protected open fun isApplicableRoot(file: VirtualFile, status: FileStatus, dataContext: VcsContext): Boolean = true
 
   override fun getRoots(dataContext: VcsContext): Array<FilePath> = dataContext.selectedFilePaths

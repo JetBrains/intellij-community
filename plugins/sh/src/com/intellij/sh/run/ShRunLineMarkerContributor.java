@@ -22,7 +22,7 @@ public class ShRunLineMarkerContributor extends RunLineMarkerContributor impleme
   public Info getInfo(@NotNull PsiElement element) {
     if (!(element instanceof LeafElement) || element.getTextRange().getStartOffset() != 0) return null;
     PsiFile psiFile = element.getContainingFile();
-    if (!(psiFile instanceof ShFile)) return null;
+    if (!(psiFile instanceof ShFile) && !element.getText().startsWith("#!")) return null;
     InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(element.getProject());
     if (injectedLanguageManager.isInjectedFragment(psiFile)) return null;
 

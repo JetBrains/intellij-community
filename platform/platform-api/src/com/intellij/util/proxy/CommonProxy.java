@@ -4,6 +4,7 @@ package com.intellij.util.proxy;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -92,7 +93,7 @@ public final class CommonProxy extends ProxySelector {
   }
 
   @Nullable
-  public static String getMessageFromProps(Map<String, String> props) {
+  public static @NlsContexts.DialogMessage String getMessageFromProps(Map<String, String> props) {
     String message = null;
     for (Map.Entry<String, String> entry : props.entrySet()) {
       if (!Strings.isEmptyOrSpaces(entry.getValue())) {

@@ -12,6 +12,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.StatusBar;
@@ -45,7 +46,7 @@ public class PositionPanel extends EditorBasedWidget
   private MergingUpdateQueue myQueue;
   private CodePointCountTask myCountTask;
 
-  private String myText;
+  private @NlsContexts.Label String myText;
 
   public PositionPanel(@NotNull Project project) {
     super(project);
@@ -194,7 +195,7 @@ public class PositionPanel extends EditorBasedWidget
     }
   }
 
-  private String getPositionText(@NotNull Editor editor) {
+  private @NlsContexts.Label String getPositionText(@NotNull Editor editor) {
     myCountTask = null;
     if (!editor.isDisposed() && !myAlarm.isDisposed()) {
       StringBuilder message = new StringBuilder();

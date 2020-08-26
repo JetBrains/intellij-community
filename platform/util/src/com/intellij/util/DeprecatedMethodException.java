@@ -21,7 +21,7 @@ public final class DeprecatedMethodException extends RuntimeException {
   public static void report(@NotNull @NonNls String message) {
     if (!BEAT_DEAD_HORSE.add(message)) return;
     Class<?> superClass = ReflectionUtil.findCallerClass(2);
-    String superClassName = superClass != null ? superClass.getName() : "<no class>";
+    @NonNls String superClassName = superClass != null ? superClass.getName() : "<no class>";
     String text = "This method in '" + superClassName +
                       "' is deprecated and going to be removed soon. " + message;
     LOG.warn(new DeprecatedMethodException(text));
@@ -33,7 +33,7 @@ public final class DeprecatedMethodException extends RuntimeException {
   public static void reportDefaultImplementation(@NotNull Class<?> thisClass, @NotNull String methodName, @NotNull String message) {
     if (!BEAT_DEAD_HORSE.add(methodName + "###" + message + "###" + thisClass)) return;
     Class<?> superClass = ReflectionUtil.findCallerClass(2);
-    String superClassName = superClass != null ? superClass.getName() : "<no class>";
+    @NonNls String superClassName = superClass != null ? superClass.getName() : "<no class>";
     String text = "The default implementation of method '" + superClassName + "." + methodName + "' is deprecated, you need to override it in '" +
                   thisClass + "'. " + message;
     LOG.warn(new DeprecatedMethodException(text));

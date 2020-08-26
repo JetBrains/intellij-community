@@ -87,7 +87,7 @@ public class RollbackWorker {
           if (afterVcsRefreshInAwt != null) {
             afterVcsRefreshInAwt.run();
           }
-        }, updateMode, "Refresh changelists after update", ModalityState.current());
+        }, updateMode, VcsBundle.message("changes.refresh.changelists.after.update"), ModalityState.current());
       };
 
       List<Change> otherChanges = revertPartialChanges(changes, honorExcludedFromCommit);
@@ -176,7 +176,7 @@ public class RollbackWorker {
             changesToRefresh.addAll(changes);
 
             if (myIndicator != null) {
-              myIndicator.setText(vcs.getDisplayName() + ": performing " + StringUtil.toLowerCase(myOperationName) + "...");
+              myIndicator.setText(VcsBundle.message("changes.progress.text.vcs.name.performing.operation.name", vcs.getDisplayName(), StringUtil.toLowerCase(myOperationName)));
               myIndicator.setIndeterminate(false);
               myIndicator.checkCanceled();
             }
@@ -253,7 +253,7 @@ public class RollbackWorker {
 
     private void deleteAddedFilesLocally(final List<? extends Change> changes) {
       if (myIndicator != null) {
-        myIndicator.setText("Deleting added files locally...");
+        myIndicator.setText(VcsBundle.message("changes.deleting.added.files.locally"));
         myIndicator.setFraction(0);
       }
       final int changesSize = changes.size();

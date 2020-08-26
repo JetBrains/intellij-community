@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
 import com.intellij.util.containers.minimalElements
 import com.intellij.util.recursionSafeLazy
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrLiteralClassType
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_LANG_CLOSURE
@@ -23,7 +24,7 @@ abstract class GroovyClosureType(
   override fun isValid(): Boolean = myContext.isValid
   final override fun getJavaClassName(): String = GROOVY_LANG_CLOSURE
   final override fun setLanguageLevel(languageLevel: LanguageLevel): PsiClassType = error("must not be called")
-  final override fun toString(): String = "Closure"
+  @NonNls final override fun toString(): String = "Closure"
 
   final override fun getParameters(): Array<out PsiType?> = myTypeArguments ?: PsiType.EMPTY_ARRAY
 

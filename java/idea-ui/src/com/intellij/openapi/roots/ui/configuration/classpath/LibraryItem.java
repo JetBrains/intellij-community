@@ -22,7 +22,6 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
@@ -44,7 +43,7 @@ class LibraryItem extends ClasspathTableItem<LibraryOrderEntry> {
   }
 
   @Override
-  public @NlsContexts.Tooltip String getTooltipText() {
+  public String getTooltipText() {
     if (myEntry == null) return null;
 
     final Library library = myEntry.getLibrary();

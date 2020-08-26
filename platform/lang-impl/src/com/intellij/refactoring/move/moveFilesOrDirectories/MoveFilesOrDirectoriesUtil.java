@@ -144,7 +144,8 @@ public final class MoveFilesOrDirectoriesUtil {
         for (PsiElement psiElement : adjustedElements) {
           if (psiElement instanceof PsiFile) {
             PsiFile file = (PsiFile)psiElement;
-            if (CopyFilesOrDirectoriesHandler.checkFileExist(targetDirectory, choice, file, file.getName(), "Move")) continue;
+            if (CopyFilesOrDirectoriesHandler.checkFileExist(targetDirectory, choice, file, file.getName(),
+                                                             RefactoringBundle.message("command.name.move"))) continue;
           }
           checkMove(psiElement, targetDirectory);
           els.add(psiElement);

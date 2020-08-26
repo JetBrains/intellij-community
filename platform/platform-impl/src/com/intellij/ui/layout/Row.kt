@@ -2,6 +2,8 @@
 package com.intellij.ui.layout
 
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
+import com.intellij.openapi.util.NlsContext
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.Label
 import com.intellij.ui.components.noteComponent
 import org.jetbrains.annotations.Nls
@@ -11,7 +13,7 @@ import javax.swing.JLabel
 import kotlin.reflect.KMutableProperty0
 
 interface BaseBuilder {
-  fun withButtonGroup(title: String?, buttonGroup: ButtonGroup, body: () -> Unit)
+  fun withButtonGroup(@NlsContexts.BorderTitle title: String?, buttonGroup: ButtonGroup, body: () -> Unit)
 
   fun withButtonGroup(buttonGroup: ButtonGroup, body: () -> Unit) {
     withButtonGroup(null, buttonGroup, body)
@@ -21,7 +23,7 @@ interface BaseBuilder {
     buttonGroup(null, init)
   }
 
-  fun buttonGroup(title:String? = null, init: () -> Unit) {
+  fun buttonGroup(@NlsContexts.BorderTitle title:String? = null, init: () -> Unit) {
     withButtonGroup(title, ButtonGroup(), init)
   }
 }
@@ -44,7 +46,7 @@ interface RowBuilder : BaseBuilder {
     return createChildRow(label?.let { Label(it) }, isSeparated = separated).apply(init)
   }
 
-  fun titledRow(@Nls title: String, init: Row.() -> Unit): Row
+  fun titledRow(@NlsContexts.BorderTitle title: String, init: Row.() -> Unit): Row
 
   /**
    * Creates row with a huge gap after it, that can be used to group related components.
@@ -56,7 +58,7 @@ interface RowBuilder : BaseBuilder {
    * Creates row with hideable decorator.
    * It allows to hide some information under the titled decorator
    */
-  fun hideableRow(@Nls title: String, init: Row.() -> Unit): Row
+  fun hideableRow(@NlsContexts.Separator title: String, init: Row.() -> Unit): Row
 
   /**
    * Hyperlinks are supported (`<a href=""></a>`), new lines and `<br>` are supported only if no links (file issue if need).

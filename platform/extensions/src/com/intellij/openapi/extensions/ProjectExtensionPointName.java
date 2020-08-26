@@ -58,7 +58,7 @@ public final class ProjectExtensionPointName<T> extends BaseExtensionPointName<T
     return ExtensionProcessingHelper.findFirstSafe(predicate, getPointImpl(areaInstance));
   }
 
-  public @Nullable <R> R computeSafeIfAny(@NotNull AreaInstance areaInstance, @NotNull Function<T, R> processor) {
+  public @Nullable <R> R computeSafeIfAny(@NotNull AreaInstance areaInstance, @NotNull Function<? super T, ? extends R> processor) {
     return ExtensionProcessingHelper.computeSafeIfAny(processor, getPointImpl(areaInstance));
   }
 

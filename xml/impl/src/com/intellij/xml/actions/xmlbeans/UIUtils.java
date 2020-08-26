@@ -7,6 +7,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.NlsContexts.DialogTitle;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -26,7 +27,7 @@ public final class UIUtils {
   public static void configureBrowseButton(final Project myProject,
                                        final TextFieldWithBrowseButton wsdlUrl,
                                        final String[] _extensions,
-                                       final String selectFileDialogTitle,
+                                       final @DialogTitle String selectFileDialogTitle,
                                        final boolean multipleFileSelection) {
     wsdlUrl.getButton().setToolTipText(XmlBundle.message("browse.button.tooltip"));
     wsdlUrl.getButton().addActionListener(

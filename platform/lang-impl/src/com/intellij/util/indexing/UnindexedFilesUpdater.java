@@ -79,7 +79,10 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
   }
 
   public UnindexedFilesUpdater(@NotNull Project project) {
-    this(project, false, false);
+    // If we haven't succeeded to fully scan the project content yet, then we must keep trying to run
+    // file based index extensions for all project files until at least one of UnindexedFilesUpdater-s finishes without cancellation.
+    // This is important, for example, for shared indexes: all files must be associated with their locally available shared index chunks.
+    this(project, false, !isProjectContentFullyScanned(project));
   }
 
   private void updateUnindexedFiles(@NotNull ProjectIndexingHistory projectIndexingHistory, @NotNull ProgressIndicator indicator) {
@@ -164,20 +167,17 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
       concurrentTasksProgressManager.setText(provider.getIndexingProgressText());
       SubTaskProgressIndicator subTaskIndicator = concurrentTasksProgressManager.createSubTaskIndicator(providerFiles.size());
       try {
-        long totalTime = System.nanoTime();
         IndexingJobStatistics statistics;
         IndexUpdateRunner.IndexingInterruptedException exception = null;
         try {
-          statistics = indexUpdateRunner.indexFiles(myProject, providerFiles, subTaskIndicator);
+          statistics = indexUpdateRunner.indexFiles(myProject, provider.getDebugName(), providerFiles, subTaskIndicator);
         } catch (IndexUpdateRunner.IndexingInterruptedException e) {
           exception = e;
           statistics = e.myStatistics;
-        } finally {
-          totalTime = System.nanoTime() - totalTime;
         }
 
         try {
-          projectIndexingHistory.addProviderStatistics(provider.getDebugName(), providerFiles.size(), totalTime, statistics);
+          projectIndexingHistory.addProviderStatistics(statistics);
         }
         catch (Exception e) {
           LOG.error("Failed to add indexing statistics for " + provider.getDebugName(), e);
@@ -361,20 +361,8 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     finally {
       myIndex.filesUpdateFinished(myProject);
       projectIndexingHistory.getTimes().setIndexingEnd(Instant.now());
-      dumpProjectIndexingHistoryIfNecessary(projectIndexingHistory);
+      IndexDiagnosticDumper.INSTANCE.dumpProjectIndexingHistoryIfNecessary(projectIndexingHistory);
     }
-  }
-
-  private static void dumpProjectIndexingHistoryIfNecessary(@NotNull ProjectIndexingHistory projectIndexingHistory) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      return;
-    }
-    if (projectIndexingHistory.getTimes().getWasInterrupted() && !IndexDiagnosticDumper.getShouldDumpDiagnosticsForInterruptedUpdaters()) {
-      return;
-    }
-    NonUrgentExecutor.getInstance().execute(() -> {
-      IndexDiagnosticDumper.INSTANCE.dumpProjectIndexingHistoryToLogSubdirectory(projectIndexingHistory);
-    });
   }
 
   /**

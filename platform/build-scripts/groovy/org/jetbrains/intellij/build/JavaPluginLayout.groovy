@@ -21,11 +21,10 @@ class JavaPluginLayout {
        "intellij.java.guiForms.compiler",
        "intellij.java.guiForms.rt",
        "intellij.java.compiler.instrumentationUtil",
-       "intellij.java.compiler.instrumentationUtil.java8",
-       "intellij.java.jps.javacRefScanner8"].
-        each {
-          withModule(it, "javac2.jar")
-        }
+       "intellij.java.compiler.instrumentationUtil.java8"
+      ].each {
+        withModule(it, "javac2.jar")
+      }
 
       [
         "intellij.java.compiler",
@@ -71,6 +70,7 @@ class JavaPluginLayout {
       withProjectLibrary("Eclipse")
       withProjectLibrary("jgoodies-common")
       withProjectLibrary("debugger-memory-agent")//todo nik: convert to module-level library instead
+      withProjectLibrary("jps-javac-extension")
 
       withResourceArchive("../jdkAnnotations", "lib/jdkAnnotations.jar")
       addition.delegate = delegate

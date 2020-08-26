@@ -7,6 +7,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.ModuleGrouperKt;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import org.jetbrains.annotations.Contract;
@@ -33,7 +34,7 @@ public abstract class PatternDialectProvider {
                                             final DependenciesPanel.DependencyPanelSettings settings);
 
   @Contract(pure = true)
-  public abstract String getDisplayName();
+  public abstract @NlsActions.ActionText String getDisplayName();
 
   @Contract(pure = true)
   @NonNls @NotNull

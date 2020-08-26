@@ -2,6 +2,7 @@
 package com.intellij.vcs.log.util;
 
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.vcs.log.VcsUser;
 import gnu.trove.TObjectHashingStrategy;
@@ -16,6 +17,7 @@ public final class VcsUserUtil {
   @NotNull private static final Pattern PRINTABLE_ASCII_PATTERN = Pattern.compile("[ -~]*");
 
   @NotNull
+  @NlsSafe
   public static String toExactString(@NotNull VcsUser user) {
     return getString(user.getName(), user.getEmail());
   }
@@ -32,11 +34,13 @@ public final class VcsUserUtil {
   }
 
   @NotNull
+  @NlsSafe
   public static String getShortPresentation(@NotNull VcsUser user) {
     return getName(user);
   }
 
   @NotNull
+  @NlsSafe
   private static String getName(@NotNull VcsUser user) {
     return getUserName(user.getName(), user.getEmail());
   }

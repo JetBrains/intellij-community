@@ -105,6 +105,11 @@ public class VcsLogManager implements Disposable {
   }
 
   @NotNull
+  public MainVcsLogUi createLogUi(@NotNull String logId, @NotNull LogWindowKind kind) {
+    return createLogUi(getMainLogUiFactory(logId, null), kind, true);
+  }
+
+  @NotNull
   public MainVcsLogUi createLogUi(@NotNull String logId, @NotNull LogWindowKind kind, boolean isClosedOnDispose) {
     return createLogUi(getMainLogUiFactory(logId, null), kind, isClosedOnDispose);
   }
@@ -264,6 +269,7 @@ public class VcsLogManager implements Disposable {
 
   @FunctionalInterface
   public interface VcsLogUiFactory<T extends VcsLogUiEx> {
+    @ApiStatus.OverrideOnly
     T createLogUi(@NotNull Project project, @NotNull VcsLogData logData);
   }
 

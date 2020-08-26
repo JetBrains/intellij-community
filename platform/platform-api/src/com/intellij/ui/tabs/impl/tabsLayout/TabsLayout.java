@@ -4,9 +4,11 @@ package com.intellij.ui.tabs.impl.tabsLayout;
 import com.intellij.openapi.Disposable;
 import com.intellij.ui.tabs.impl.LayoutPassInfo;
 import com.intellij.ui.tabs.impl.TabLabel;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
@@ -29,6 +31,9 @@ public interface TabsLayout extends Disposable {
   MouseWheelListener getMouseWheelListener();
 
   int getDropIndexFor(Point point);
+
+  @MagicConstant(intValues = {SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT, -1})
+  int getDropSideFor(Point point);
 
   void mouseMotionEventDispatched(MouseEvent mouseMotionEvent);
 

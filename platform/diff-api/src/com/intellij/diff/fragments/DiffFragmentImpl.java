@@ -16,6 +16,7 @@
 package com.intellij.diff.fragments;
 
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NonNls;
 
 public class DiffFragmentImpl implements DiffFragment {
   private static final Logger LOG = Logger.getInstance(DiffFragmentImpl.class);
@@ -64,6 +65,7 @@ public class DiffFragmentImpl implements DiffFragment {
     return myEndOffset2;
   }
 
+  @NonNls
   @Override
   public String toString() {
     return "DiffFragmentImpl [" + myStartOffset1 + ", " + myEndOffset1 + ") - [" + myStartOffset2 + ", " + myEndOffset2 + ")";

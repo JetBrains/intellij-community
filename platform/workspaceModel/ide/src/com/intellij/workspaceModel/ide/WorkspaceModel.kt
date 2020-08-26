@@ -18,7 +18,11 @@ interface WorkspaceModel {
    */
   fun <R> updateProjectModel(updater: (WorkspaceEntityStorageBuilder) -> R): R
 
-  /** Update project model without the notification to message bus */
+  /**
+   * Update project model without the notification to message bus and without resetting accumulated changes.
+   *
+   * This method doesn't require write action.
+   */
   fun <R> updateProjectModelSilent(updater: (WorkspaceEntityStorageBuilder) -> R): R
 
   companion object {

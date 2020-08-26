@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.codeStyle;
 
 import com.intellij.lang.LangBundle;
@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.codeStyle.CodeStyleConstraints;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
@@ -24,6 +25,8 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+
+import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions.getInstance;
 
 /**
  * Can be used for languages which do not use standard "Wrapping and Braces" panel.
@@ -58,7 +61,7 @@ public class RightMarginForm {
 
     //noinspection unchecked
     myWrapOnTypingCombo.setModel(new DefaultComboBoxModel(
-      CodeStyleSettingsCustomizable.WRAP_ON_TYPING_OPTIONS
+      getInstance().WRAP_ON_TYPING_OPTIONS
     ));
     MarginOptionsUtil.customizeWrapOnTypingCombo(myWrapOnTypingCombo, settings);
     myVisualGuidesHint.setForeground(JBColor.GRAY);
@@ -151,7 +154,7 @@ public class RightMarginForm {
     return myTopPanel;
   }
 
-  private static String getDefaultVisualGuidesText(@NotNull CodeStyleSettings settings) {
+  private static @NlsContexts.Label String getDefaultVisualGuidesText(@NotNull CodeStyleSettings settings) {
     List<Integer> margins = settings.getDefaultSoftMargins();
     String marginsString =
       margins.size() <= 2 ?

@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -18,6 +19,7 @@ import git4idea.history.GitHistoryUtils;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.stash.GitChangesSaver;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -88,8 +90,8 @@ public final class GitRebaseUtils {
   private static void notifyContinueFailed(@NotNull Project project, @NotNull @NonNls String action) {
     LOG.warn(String.format("Refusing to %s: no rebase spec", action));
     VcsNotifier.getInstance(project).notifyError(
-      GitBundle.getString("rebase.notification.no.rebase.in.progress.continue.title"),
-      GitBundle.getString("rebase.notification.no.rebase.in.progress.message"),
+      GitBundle.message("rebase.notification.no.rebase.in.progress.continue.title"),
+      GitBundle.message("rebase.notification.no.rebase.in.progress.message"),
       true
     );
   }
@@ -109,8 +111,8 @@ public final class GitRebaseUtils {
     else {
       LOG.warn("Refusing to abort: no rebase spec");
       VcsNotifier.getInstance(project).notifyError(
-        GitBundle.getString("rebase.notification.no.rebase.in.progress.abort.title"),
-        GitBundle.getString("rebase.notification.no.rebase.in.progress.message"),
+        GitBundle.message("rebase.notification.no.rebase.in.progress.abort.title"),
+        GitBundle.message("rebase.notification.no.rebase.in.progress.message"),
         true
       );
     }
@@ -137,19 +139,34 @@ public final class GitRebaseUtils {
           }
           break;
         case MERGING:
-          message = GitBundle.message("rebase.notification.not.allowed.merging.message", repositoryName);
+          message = new HtmlBuilder()
+            .append(GitBundle.message("rebase.notification.not.allowed.merging.message.first", repositoryName)).br()
+            .append(GitBundle.message("rebase.notification.not.allowed.merging.message.second"))
+            .toString();
           break;
         case REBASING:
-          message = GitBundle.message("rebase.notification.not.allowed.rebasing.message", repositoryName);
+          message = new HtmlBuilder()
+            .append(GitBundle.message("rebase.notification.not.allowed.rebasing.message.first", repositoryName)).br()
+            .append(GitBundle.message("rebase.notification.not.allowed.rebasing.message.second"))
+            .toString();
           break;
         case GRAFTING:
-          message = GitBundle.message("rebase.notification.not.allowed.grafting.message", repositoryName);
+          message = new HtmlBuilder()
+            .append(GitBundle.message("rebase.notification.not.allowed.grafting.message.first", repositoryName)).br()
+            .append(GitBundle.message("rebase.notification.not.allowed.grafting.message.second"))
+            .toString();
           break;
         case REVERTING:
-          message = GitBundle.message("rebase.notification.not.allowed.reverting.message", repositoryName);
+          message = new HtmlBuilder()
+            .append(GitBundle.message("rebase.notification.not.allowed.reverting.message.first", repositoryName)).br()
+            .append(GitBundle.message("rebase.notification.not.allowed.reverting.message.second"))
+            .toString();
           break;
         case DETACHED:
-          message = GitBundle.message("rebase.notification.not.allowed.detached.message", repositoryName);
+          message = new HtmlBuilder()
+            .append(GitBundle.message("rebase.notification.not.allowed.detached.message.first", repositoryName)).br()
+            .append(GitBundle.message("rebase.notification.not.allowed.detached.message.second"))
+            .toString();
           break;
         default:
           LOG.error("Unknown state [" + state.name() + "]");
@@ -157,7 +174,7 @@ public final class GitRebaseUtils {
       }
       if (message != null) {
         VcsNotifier.getInstance(project).notifyError(
-          GitBundle.getString("rebase.notification.not.allowed.title"),
+          GitBundle.message("rebase.notification.not.allowed.title"),
           message
         );
         return false;
@@ -246,14 +263,14 @@ public final class GitRebaseUtils {
   }
 
   @NotNull
-  static String mentionLocalChangesRemainingInStash(@Nullable GitChangesSaver saver) {
+  static @Nls String mentionLocalChangesRemainingInStash(@Nullable GitChangesSaver saver) {
     if (saver == null || !saver.wereChangesSaved()) {
       return "";
     }
-    return saver.getSaveMethod().selectBundleMessage(
-      GitBundle.getString("rebase.notification.saved.local.changes.part.stash.text"),
-      GitBundle.getString("rebase.notification.saved.local.changes.part.shelf.text")
-    );
+    return new HtmlBuilder().br().append(saver.getSaveMethod().selectBundleMessage(
+      GitBundle.message("rebase.notification.saved.local.changes.part.stash.text"),
+      GitBundle.message("rebase.notification.saved.local.changes.part.shelf.text")
+    )).toString();
   }
 
   @NotNull
@@ -306,7 +323,7 @@ public final class GitRebaseUtils {
       return HashImpl.build(FileUtil.loadFile(new File(getRebaseDir(project, root), fileName)).trim());
     }
     catch (IOException e) {
-      throw new VcsException("Couldn't resolve " + fileName, e);
+      throw new VcsException(GitBundle.message("rebase.couldnt.resolve.file", fileName), e);
     }
   }
 

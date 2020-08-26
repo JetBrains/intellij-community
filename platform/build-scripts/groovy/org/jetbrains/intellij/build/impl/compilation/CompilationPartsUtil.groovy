@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl.compilation
 
 import com.google.gson.Gson
@@ -32,12 +32,19 @@ import org.jetbrains.intellij.build.impl.CompilationContextImpl
 import org.jetbrains.intellij.build.impl.logging.IntelliJBuildException
 
 import java.nio.charset.StandardCharsets
+import java.nio.file.FileVisitOption
+import java.nio.file.Files
+import java.nio.file.Path
+import java.nio.file.attribute.BasicFileAttributes
+import java.nio.file.attribute.FileTime
 import java.security.MessageDigest
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.ConcurrentLinkedDeque
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
+import java.util.function.Consumer
+import java.util.function.Predicate
 
 @CompileStatic
 class CompilationPartsUtil {
@@ -372,10 +379,10 @@ class CompilationPartsUtil {
     messages.block("Check previously downloaded archives") {
       long start = System.nanoTime()
       contexts.each { ctx ->
+        ctx.jar = new File(tempDownloadsStorage, "${ctx.name}/${ctx.hash}.jar")
         if (upToDate.contains(ctx.name)) return
         toUnpack.add(ctx)
         executor.submit {
-          ctx.jar = new File(tempDownloadsStorage, "${ctx.name}/${ctx.hash}.jar")
           def file = ctx.jar
           if (file.exists() && ctx.hash != computeHash(file)) {
             messages.info("File $file has unexpected hash, will refetch")
@@ -393,6 +400,40 @@ class CompilationPartsUtil {
       executor.reportErrors(messages)
     }
 
+    messages.block("Cleanup outdated compiled classes archives") {
+      long start = System.nanoTime()
+      int count = 0
+      long bytes = 0
+      try {
+        def preserve = new HashSet<Path>(contexts.collect { it.jar.toPath() })
+        def epoch = FileTime.fromMillis(0)
+        def daysAgo = FileTime.fromMillis(System.currentTimeMillis() - TimeUnit.DAYS.toMillis(4))
+        FileUtil.ensureExists(tempDownloadsStorage)
+        // We need to traverse with depth 3 since first level is [production, test], second level is module name, third is file.
+        Files
+          .walk(tempDownloadsStorage.toPath(), 3, FileVisitOption.FOLLOW_LINKS)
+          .filter({ !preserve.contains(it) } as Predicate<Path>)
+          .forEach({ Path file ->
+            BasicFileAttributes attr = Files.readAttributes(file, BasicFileAttributes.class)
+            if (attr.isRegularFile()) {
+              def lastAccessTime = attr.lastAccessTime()
+              if (lastAccessTime > epoch && lastAccessTime < daysAgo) {
+                count++
+                bytes += attr.size()
+                FileUtil.delete(file)
+              }
+            }
+                   } as Consumer<Path>)
+      }
+      catch (Throwable e) {
+        messages.warning("Failed to cleanup outdated archives: $e.message")
+      }
+
+      messages.reportStatisticValue('compile-parts:cleanup:time',
+                                    TimeUnit.NANOSECONDS.toMillis((System.nanoTime() - start)).toString())
+      messages.reportStatisticValue('compile-parts:removed:bytes', bytes.toString())
+      messages.reportStatisticValue('compile-parts:removed:count', count.toString())
+    }
 
     messages.block("Fetch compiled classes archives") {
       long start = System.nanoTime()

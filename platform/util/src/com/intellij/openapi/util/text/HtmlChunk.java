@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.stream.Collector;
 
 /**
  * An immutable representation of HTML node. Could be used as a DSL to quickly generate HTML strings.
@@ -38,7 +39,7 @@ public abstract class HtmlChunk {
 
     @Override
     public void appendTo(@NotNull StringBuilder builder) {
-      builder.append(StringUtil.escapeXmlEntities(myContent));
+      builder.append(StringUtil.escapeXmlEntities(myContent).replaceAll("\n", "<br/>"));
     }
   }
   
@@ -88,6 +89,7 @@ public abstract class HtmlChunk {
     private static final Element BODY = tag("body");
     private static final Element HTML = tag("html");
     private static final Element BR = tag("br");
+    private static final Element HR = tag("hr");
     private static final Element DIV = tag("div");
     private static final Element SPAN = tag("span");
 
@@ -130,6 +132,11 @@ public abstract class HtmlChunk {
       return new Element(myTagName, myAttributes.with(name, value), myChildren);
     }
 
+    @Contract(pure = true)
+    public @NotNull Element attr(@NonNls String name, int value) {
+      return new Element(myTagName, myAttributes.with(name, Integer.toString(value)), myChildren);
+    }
+
     /**
      * @param style CSS style specification
      * @return a new element that is like this element but has the specified style added or replaced
@@ -146,6 +153,15 @@ public abstract class HtmlChunk {
     @Contract(pure = true)
     public @NotNull Element addText(@NotNull @Nls String text) {
       return child(text(text));
+    }
+
+    /**
+     * @param text text to add to the list of children (should not be escaped)
+     * @return a new element that is like this element but has an extra text child
+     */
+    @Contract(pure = true)
+    public @NotNull Element addRaw(@NotNull @Nls String text) {
+      return child(raw(text));
     }
 
     /**
@@ -195,6 +211,14 @@ public abstract class HtmlChunk {
   @Contract(pure = true)
   public @NotNull Element wrapWith(@NotNull Element element) {
     return element.child(this);
+  }
+
+  /**
+   * @return a CODE element that wraps this element
+   */
+  @Contract(pure = true)
+  public @NotNull Element code() {
+    return wrapWith("code");
   }
 
   /**
@@ -271,6 +295,14 @@ public abstract class HtmlChunk {
   }
 
   /**
+   * @return a &lt;hr&gt; element.
+   */
+  @Contract(pure = true)
+  public static @NotNull Element hr() {
+    return Element.HR;
+  }
+
+  /**
    * @return a &lt;body&gt; element.
    */
   @Contract(pure = true)
@@ -313,7 +345,8 @@ public abstract class HtmlChunk {
   /**
    * Creates a HTML text node
    * 
-   * @param text text to display (no escaping should be done by caller).
+   * @param text text to display (no escaping should be done by caller). 
+   *             All {@code '\n'} characters will be converted to {@code <br/>}
    * @return HtmlChunk that represents a HTML text node.
    */
   @Contract(pure = true)
@@ -378,6 +411,33 @@ public abstract class HtmlChunk {
   public @NlsSafe @NotNull String toString() {
     StringBuilder builder = new StringBuilder();
     appendTo(builder);
-    return builder.toString(); 
+    return builder.toString();
+  }
+
+  /**
+   * @return the collector that collects a stream of HtmlChunks to the fragment chunk.
+   */
+  @Contract(pure = true)
+  public static @NotNull Collector<HtmlChunk, ?, HtmlChunk> toFragment() {
+    return Collector.of(HtmlBuilder::new, HtmlBuilder::append, HtmlBuilder::append, HtmlBuilder::toFragment);
+  }
+
+  /**
+   * @param separator a chunk that should be used as a delimiter
+   * @return the collector that collects a stream of HtmlChunks to the fragment chunk.
+   */
+  @Contract(pure = true)
+  public static @NotNull Collector<HtmlChunk, ?, HtmlChunk> toFragment(HtmlChunk separator) {
+    return Collector.of(HtmlBuilder::new, (hb, c) -> {
+      if (!hb.isEmpty()) {
+        hb.append(separator);
+      }
+      hb.append(c);
+    }, (hb1, hb2) -> {
+      if (!hb1.isEmpty()) {
+        hb1.append(separator);
+      }
+      return hb1.append(hb2);
+    }, HtmlBuilder::toFragment);
   }
 }

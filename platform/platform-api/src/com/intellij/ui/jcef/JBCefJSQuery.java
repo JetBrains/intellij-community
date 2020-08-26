@@ -27,7 +27,7 @@ public final class JBCefJSQuery implements JBCefDisposable {
   @NotNull private final CefClient myCefClient;
   @NotNull private final DisposeHelper myDisposeHelper = new DisposeHelper();
 
-  @NotNull private final Map<Function<String, Response>, CefMessageRouterHandler> myHandlerMap = Collections.synchronizedMap(new HashMap<>());
+  @NotNull private final Map<Function<? super String, ? extends Response>, CefMessageRouterHandler> myHandlerMap = Collections.synchronizedMap(new HashMap<>());
 
   private JBCefJSQuery(@NotNull JBCefBrowser browser, @NotNull JBCefJSQuery.JSQueryFunc func) {
     myFunc = func;
@@ -90,7 +90,7 @@ public final class JBCefJSQuery implements JBCefDisposable {
            "});";
   }
 
-  public void addHandler(@NotNull Function<String, Response> handler) {
+  public void addHandler(@NotNull Function<? super String, ? extends Response> handler) {
     CefMessageRouterHandler cefHandler;
     myFunc.myRouter.addHandler(cefHandler = new CefMessageRouterHandlerAdapter() {
       @Override
@@ -117,7 +117,7 @@ public final class JBCefJSQuery implements JBCefDisposable {
     myHandlerMap.put(handler, cefHandler);
   }
 
-  public void removeHandler(@NotNull Function<String, Response> handler) {
+  public void removeHandler(@NotNull Function<? super String, ? extends Response> handler) {
     CefMessageRouterHandler cefHandler = myHandlerMap.remove(handler);
     if (cefHandler != null) {
       myFunc.myRouter.removeHandler(cefHandler);

@@ -18,6 +18,8 @@ package org.intellij.plugins.relaxNG.compact.parser;
 
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.xml.psi.XmlPsiBundle;
+import org.intellij.plugins.relaxNG.RelaxngBundle;
 import org.intellij.plugins.relaxNG.compact.RncElementTypes;
 
 import static org.intellij.plugins.relaxNG.compact.RncTokenTypes.*;
@@ -75,16 +77,16 @@ public abstract class DeclarationParsing extends AbstractParsing {
     } else if (IDENTIFIERS.contains(t)) {
       parseDefine();
     } else {
-      error("Unexpected token");
+      error(XmlPsiBundle.message("xml.parsing.unexpected.token"));
       advance();
     }
   }
 
   private void parseDefine() {
     final PsiBuilder.Marker marker = begin();
-    match(ASSIGN_METHOD, "'=', '|=' or '&=' expected");
+    match(ASSIGN_METHOD, RelaxngBundle.message("relaxng.parse.error.equals-orequals-or-andequals-expected"));
     if (!parsePattern()) {
-      error("Pattern expected");
+      error(RelaxngBundle.message("relaxng.parse.error.pattern-expected"));
     }
     marker.done(RncElementTypes.DEFINE);
   }
@@ -98,19 +100,19 @@ public abstract class DeclarationParsing extends AbstractParsing {
 
     if (matches(LBRACE)) {
       parseIncludeContents();
-      match(RBRACE, "'}' expected");
+      match(RBRACE, RelaxngBundle.message("relaxng.parse.error.rbrace-expected"));
     }
     marker.done(RncElementTypes.INCLUDE);
   }
 
   protected final void parseAnyUriLiteral() {
-    match(LITERAL, "URI literal expected");
+    match(LITERAL, RelaxngBundle.message("relaxng.parse.error.uri-literal-expected"));
   }
 
   protected final void parseInherit() {
     if (matches(KEYWORD_INHERIT)) {
-      match(EQ, "'=' expected");
-      match(IDENTIFIER_OR_KEYWORD, "Identifier expected");
+      match(EQ, RelaxngBundle.message("relaxng.parse.error.equals-expected"));
+      match(IDENTIFIER_OR_KEYWORD, RelaxngBundle.message("relaxng.parse.error.identifier-expected"));
     }
   }
 
@@ -122,17 +124,17 @@ public abstract class DeclarationParsing extends AbstractParsing {
 
   private void parseStart() {
     final PsiBuilder.Marker marker = begin();
-    match(ASSIGN_METHOD, "'=', '|=' or '&=' expected");
+    match(ASSIGN_METHOD, RelaxngBundle.message("relaxng.parse.error.equals-orequals-or-andequals-expected"));
     if (!parsePattern()) {
-      error("Pattern expected");
+      error(RelaxngBundle.message("relaxng.parse.error.pattern-expected"));
     }
     marker.done(RncElementTypes.START);
   }
 
   protected void parseBracedGrammarContents() {
-    match(LBRACE, "'{' expected");
+    match(LBRACE, RelaxngBundle.message("relaxng.parse.error.lbrace-expected"));
     parseGrammarContents();
-    match(RBRACE, "'}' expected");
+    match(RBRACE, RelaxngBundle.message("relaxng.parse.error.rbrace-expected"));
   }
 
   protected void parseDecl(PsiBuilder builder) {
@@ -148,8 +150,8 @@ public abstract class DeclarationParsing extends AbstractParsing {
 
   private void parseDataTypesDecl() {
     final PsiBuilder.Marker marker = begin();
-    match(IDENTIFIER_OR_KEYWORD, "Identifier expected");
-    match(EQ, "'=' expected");
+    match(IDENTIFIER_OR_KEYWORD, RelaxngBundle.message("relaxng.parse.error.identifier-expected"));
+    match(EQ, RelaxngBundle.message("relaxng.parse.error.equals-expected"));
     parseNsUriLiteral();
     marker.done(RncElementTypes.DATATYPES_DECL);
   }
@@ -157,17 +159,17 @@ public abstract class DeclarationParsing extends AbstractParsing {
   private void parseNamespaceDecl(boolean isDefault) {
     final PsiBuilder.Marker marker = begin();
     if (isDefault) {
-      match(KEYWORD_NAMESPACE, "'namespace' expected");
+      match(KEYWORD_NAMESPACE, RelaxngBundle.message("relaxng.parse.error.namespace-expected"));
       matches(IDENTIFIER_OR_KEYWORD);
     } else {
-      match(IDENTIFIER_OR_KEYWORD, "Identifier expected");
+      match(IDENTIFIER_OR_KEYWORD, RelaxngBundle.message("relaxng.parse.error.identifier-expected"));
     }
-    match(EQ, "'=' expected");
+    match(EQ, RelaxngBundle.message("relaxng.parse.error.equals-expected"));
     parseNsUriLiteral();
     marker.done(RncElementTypes.NS_DECL);
   }
 
   private void parseNsUriLiteral() {
-    match(NS_URI_LITERAL, "Namespace URI or 'inherit' expected");
+    match(NS_URI_LITERAL, RelaxngBundle.message("relaxng.parse.error.namespace-uri-or-inherit-expected"));
   }
 }

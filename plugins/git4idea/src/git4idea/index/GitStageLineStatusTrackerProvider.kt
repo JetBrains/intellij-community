@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package git4idea.index.lst
+package git4idea.index
 
 import com.intellij.diff.DiffContentFactoryImpl
 import com.intellij.openapi.application.runReadAction
@@ -19,7 +19,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcsUtil.VcsFileUtil
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitUtil
-import git4idea.index.*
 import git4idea.index.vfs.GitIndexVirtualFileCache
 import git4idea.repo.GitRepositoryManager
 import git4idea.util.GitFileUtils

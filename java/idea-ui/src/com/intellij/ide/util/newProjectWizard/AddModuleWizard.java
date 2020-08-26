@@ -38,7 +38,7 @@ public class AddModuleWizard extends AbstractProjectWizard {
   /**
    * @param project if null, the wizard will start creating new project, otherwise will add a new module to the existing project.
    */
-  public AddModuleWizard(@Nullable Project project, String filePath, ProjectImportProvider... importProviders) {
+  public AddModuleWizard(@Nullable Project project, @NotNull String filePath, ProjectImportProvider... importProviders) {
     super(getImportWizardTitle(project, importProviders), project, filePath);
     myImportProviders = Arrays.asList(importProviders);
     myModulesProvider = DefaultModulesProvider.createForProject(project);
@@ -48,7 +48,7 @@ public class AddModuleWizard extends AbstractProjectWizard {
   /**
    * @param project if null, the wizard will start creating new project, otherwise will add a new module to the existing project.
    */
-  public AddModuleWizard(Project project, Component dialogParent, String filePath, ProjectImportProvider... importProviders) {
+  public AddModuleWizard(Project project, Component dialogParent, @NotNull String filePath, ProjectImportProvider... importProviders) {
     super(getImportWizardTitle(project, importProviders), project, dialogParent);
     myImportProviders = Arrays.asList(importProviders);
     myModulesProvider = DefaultModulesProvider.createForProject(project);
@@ -63,7 +63,7 @@ public class AddModuleWizard extends AbstractProjectWizard {
     return JavaUiBundle.message("module.wizard.dialog.title", isProject, 1, providers[0].getName());
   }
 
-  private void initModuleWizard(@Nullable final Project project, @Nullable final String defaultPath) {
+  private void initModuleWizard(@Nullable final Project project, @NotNull final String defaultPath) {
     myWizardContext.addContextListener(new WizardContext.Listener() {
       @Override
       public void buttonsUpdateRequested() {

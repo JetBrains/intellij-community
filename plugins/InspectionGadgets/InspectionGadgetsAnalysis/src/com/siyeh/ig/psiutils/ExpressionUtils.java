@@ -39,7 +39,7 @@ import static com.intellij.util.ObjectUtils.tryCast;
 
 public final class ExpressionUtils {
   private static final @NonNls Set<String> IMPLICIT_TO_STRING_METHOD_NAMES =
-    ContainerUtil.immutableSet("append", "format", "print", "printf", "println", "valueOf");
+    Set.of("append", "format", "print", "printf", "println", "valueOf");
   @NonNls static final Set<String> convertableBoxedClassNames = new HashSet<>(3);
 
   static {

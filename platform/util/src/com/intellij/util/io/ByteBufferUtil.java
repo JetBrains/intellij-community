@@ -25,7 +25,7 @@ public final class ByteBufferUtil {
       Object unsafe = AtomicFieldUpdater.getUnsafe();
       try {
         MethodType type = MethodType.methodType(void.class, ByteBuffer.class);
-        @SuppressWarnings("JavaLangInvokeHandleSignature") MethodHandle handle = MethodHandles.lookup().findVirtual(unsafe.getClass(), "invokeCleaner", type);
+        MethodHandle handle = MethodHandles.lookup().findVirtual(unsafe.getClass(), "invokeCleaner", type);
         handle.invoke(unsafe, buffer);
         return true;
       }
@@ -34,6 +34,21 @@ public final class ByteBufferUtil {
         return false;
       }
     }
-    return false;
+    else {
+      //todo[nik]: check we really need this for Java 8 and older
+      try {
+        Class<?> directBufferClass = Class.forName("sun.nio.ch.DirectBuffer");
+        Class<?> cleanerClass = Class.forName("sun.misc.Cleaner");
+        Object cleaner = directBufferClass.getDeclaredMethod("cleaner").invoke(buffer);
+        if (cleaner != null) {
+          cleanerClass.getDeclaredMethod("clean").invoke(cleaner);  // already cleaned otherwise
+        }
+        return true;
+      }
+      catch (Exception e) {
+        Logger.getInstance(ByteBufferUtil.class).warn(e);
+        return false;
+      }
+    }
   }
 }

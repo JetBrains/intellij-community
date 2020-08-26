@@ -455,7 +455,7 @@ public final class PerformanceWatcher implements Disposable {
   }
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  public static void dumpThreadsToConsole(String message) {
+  public static void dumpThreadsToConsole(@NonNls String message) {
     System.err.println(message);
     System.err.println(ThreadDumper.dumpThreadsToString());
   }

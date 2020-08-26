@@ -756,7 +756,7 @@ public final class EditorMouseHoverPopupManager implements Disposable {
 
   private static class PopupBridge {
     private AbstractPopup popup;
-    private List<Consumer<AbstractPopup>> consumers = new ArrayList<>();
+    private List<Consumer<? super AbstractPopup>> consumers = new ArrayList<>();
 
     private void setPopup(@NotNull AbstractPopup popup) {
       assert this.popup == null;
@@ -770,7 +770,7 @@ public final class EditorMouseHoverPopupManager implements Disposable {
       return popup;
     }
 
-    private void performWhenAvailable(@NotNull Consumer<AbstractPopup> consumer) {
+    private void performWhenAvailable(@NotNull Consumer<? super AbstractPopup> consumer) {
       if (popup == null) {
         consumers.add(consumer);
       }

@@ -18,6 +18,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.DevKitUastInspectionBase;
 import org.jetbrains.uast.*;
 import org.jetbrains.uast.visitor.AbstractUastVisitor;
@@ -68,9 +69,11 @@ public class UndesirableClassUsageInspection extends DevKitUastInspectionBase {
             final String name = psiClass.getQualifiedName();
             String replacement = CLASSES.get(name);
             if (replacement != null) {
-              descriptors.add(manager.createProblemDescriptor(Objects.requireNonNull(expression.getPsi()),
-                                                              "Please use '" + replacement + "' instead", true,
-                                                              ProblemHighlightType.LIKE_DEPRECATED, isOnTheFly));
+              descriptors.add(
+                manager.createProblemDescriptor(Objects.requireNonNull(expression.getPsi()),
+                                                DevKitBundle.message("inspections.undesirable.class.use.instead", replacement),
+                                                true,
+                                                ProblemHighlightType.LIKE_DEPRECATED, isOnTheFly));
             }
           }
         }

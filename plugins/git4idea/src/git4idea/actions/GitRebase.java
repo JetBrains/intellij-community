@@ -52,7 +52,7 @@ public class GitRebase extends DumbAwareAction {
     if (dialog.showAndGet()) {
       VirtualFile root = dialog.gitRoot();
       GitRebaseParams selectedParams = dialog.getSelectedParams();
-      ProgressManager.getInstance().run(new Task.Backgroundable(project, GitBundle.getString("rebase.progress.indicator.title")) {
+      ProgressManager.getInstance().run(new Task.Backgroundable(project, GitBundle.message("rebase.progress.indicator.title")) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           GitRepository selectedRepository =

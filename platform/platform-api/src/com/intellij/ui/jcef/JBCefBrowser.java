@@ -20,7 +20,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
@@ -41,7 +40,7 @@ public class JBCefBrowser implements JBCefDisposable {
   @SuppressWarnings("SpellCheckingInspection")
   private static final String JBCEFBROWSER_INSTANCE_PROP = "JBCefBrowser.instance";
 
-  @NotNull private static final List<Consumer<JBCefBrowser>> ourOnBrowserMoveResizeCallbacks =
+  @NotNull private static final List<Consumer<? super JBCefBrowser>> ourOnBrowserMoveResizeCallbacks =
     Collections.synchronizedList(new ArrayList<>(1));
 
   @NotNull private final JBCefClient myCefClient;
@@ -400,14 +399,14 @@ public class JBCefBrowser implements JBCefDisposable {
   /**
    * For internal usage.
    */
-  public static void addOnBrowserMoveResizeCallback(@NotNull Consumer<JBCefBrowser> callback) {
+  public static void addOnBrowserMoveResizeCallback(@NotNull Consumer<? super JBCefBrowser> callback) {
     ourOnBrowserMoveResizeCallbacks.add(callback);
   }
 
   /**
    * For internal usage.
    */
-  public static void removeOnBrowserMoveResizeCallback(@NotNull Consumer<JBCefBrowser> callback) {
+  public static void removeOnBrowserMoveResizeCallback(@NotNull Consumer<? super JBCefBrowser> callback) {
     ourOnBrowserMoveResizeCallbacks.remove(callback);
   }
 

@@ -2,6 +2,7 @@
 
 package com.intellij.openapi.vcs.vfs;
 
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ByteBackedContentRevision;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -69,7 +70,7 @@ public final class ContentRevisionVirtualFile extends AbstractVcsVirtualFile {
       }
 
       if (bytes == null) {
-        throw new VcsException("Could not load content");
+        throw new VcsException(VcsBundle.message("vfs.could.not.load.content"));
       }
 
       synchronized (LOCK) {

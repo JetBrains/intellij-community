@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.codeInsight.intention.*;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
@@ -209,7 +210,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
   }
 
   @Nullable
-  protected String getIntentionActionText() {
+  protected @IntentionName String getIntentionActionText() {
     return null;
   }
 
@@ -327,7 +328,6 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
       return myOptions.isEmpty() ? Collections.emptyList() : myOptions.subList(1, myOptions.size());
     }
 
-    @Nls
     @NotNull
     @Override
     public String getText() {

@@ -26,6 +26,8 @@ import org.jetbrains.idea.svn.history.SvnChangeList;
 import java.util.HashMap;
 import java.util.Map;
 
+import static org.jetbrains.idea.svn.SvnBundle.message;
+
 public final class SvnMergeInfoCache {
 
   private final static Logger LOG = Logger.getInstance(SvnMergeInfoCache.class);
@@ -103,7 +105,7 @@ public final class SvnMergeInfoCache {
       myPath = path;
       myRevision = -1;
 
-      Task.Backgroundable task = new Task.Backgroundable(vcs.getProject(), "Calculating Copy Revision", false) {
+      Task.Backgroundable task = new Task.Backgroundable(vcs.getProject(), message("progress.title.calculating.copy.revision"), false) {
         private CopyData myData;
 
         @Override

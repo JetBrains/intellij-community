@@ -24,7 +24,7 @@ import java.util.List;
 
 public class PyIntroduceParameterHandler extends IntroduceHandler {
   public PyIntroduceParameterHandler() {
-    super(new VariableValidator(), PyBundle.message("refactoring.introduce.parameter.dialog.title"));
+    super(new VariableValidator(), PyBundle.message("refactoring.extract.parameter.dialog.title"));
   }
 
   @Override
@@ -137,9 +137,9 @@ public class PyIntroduceParameterHandler extends IntroduceHandler {
     private final PyNamedParameter myTarget;
 
     PyInplaceParameterIntroducer(PyNamedParameter target,
-                                       IntroduceOperation operation,
-                                       List<PsiElement> occurrences) {
-      super(target, operation.getEditor(), operation.getProject(), "Introduce Parameter",
+                                 IntroduceOperation operation,
+                                 List<PsiElement> occurrences) {
+      super(target, operation.getEditor(), operation.getProject(), PyBundle.message("refactoring.introduce.parameter.dialog.title"),
             occurrences.toArray(PsiElement.EMPTY_ARRAY), null);
       myTarget = target;
     }

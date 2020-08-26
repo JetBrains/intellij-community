@@ -50,7 +50,7 @@ public final class ProhibitAWTEvents implements IdeEventQueue.EventDispatcher {
     };
   }
 
-  public static <T> T prohibitEventsInside(@NonNls @NotNull String activityName, @NotNull Supplier<T> supplier) {
+  public static <T> T prohibitEventsInside(@NonNls @NotNull String activityName, @NotNull Supplier<? extends T> supplier) {
     ProhibitAWTEvents dispatcher = new ProhibitAWTEvents(activityName);
     IdeEventQueue.getInstance().addPostprocessor(dispatcher, null);
     try {

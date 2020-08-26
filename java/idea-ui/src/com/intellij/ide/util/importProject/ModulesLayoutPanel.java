@@ -1,9 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.importProject;
 
-import com.intellij.CommonBundle;
 import com.intellij.ide.JavaUiBundle;
-import com.intellij.java.JavaBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
@@ -92,18 +90,13 @@ public class ModulesLayoutPanel extends ProjectLayoutPanel<ModuleDescriptor>{
   }
 
   @Override
-  protected String getElementTypeName() {
-    return JavaBundle.message("java.terms.module");
-  }
-
-  @Override
-  protected @Nls(capitalization = Nls.Capitalization.Title) String getElementTypeNameTitle() {
-    return CommonBundle.message("label.module");
-  }
-
-  @Override
-  protected @Nls(capitalization = Nls.Capitalization.Title) String getElementTypeNamePlural() {
+  protected String getElementTypeNamePlural() {
     return JavaUiBundle.message("title.modules");
+  }
+
+  @Override
+  protected ElementType getElementType() {
+    return ElementType.MODULE;
   }
 
   @Override

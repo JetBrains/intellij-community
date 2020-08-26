@@ -31,13 +31,16 @@ internal class TestStatisticSender : StatisticSender {
 
 
 internal class TestExperimentStatus : ExperimentStatus {
+    companion object {
+        const val VERSION = 0
+    }
     private var inExperiment = false
     private var shouldRank = false
     private var shouldShowArrows = false
     private var shouldCalculateFeatures = false
 
     override fun forLanguage(language: Language): ExperimentInfo =
-      ExperimentInfo(inExperiment, 0, shouldRank, shouldShowArrows, shouldCalculateFeatures)
+      ExperimentInfo(inExperiment, VERSION, shouldRank, shouldShowArrows, shouldCalculateFeatures)
 
     override fun experimentChanged(language: Language): Boolean = false
 

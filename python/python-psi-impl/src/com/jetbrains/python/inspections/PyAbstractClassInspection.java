@@ -59,7 +59,7 @@ public class PyAbstractClassInspection extends PyInspection {
         }
 
         registerProblem(nameNode.getPsi(),
-                        PyPsiBundle.message("INSP.NAME.abstract.class.$0.must.implement", pyClass.getName()),
+                        PyPsiBundle.message("INSP.abstract.class.class.must.implement.all.abstract.methods", pyClass.getName()),
                         quickFixes.toArray(LocalQuickFix.EMPTY_ARRAY));
       }
     }

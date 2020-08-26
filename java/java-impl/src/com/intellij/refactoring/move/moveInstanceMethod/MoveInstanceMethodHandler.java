@@ -141,7 +141,7 @@ public class MoveInstanceMethodHandler implements RefactoringActionHandler {
   }
 
   @Nullable
-  private static String collectSuitableVariables(final PsiMethod method, final List<? super PsiVariable> suitableVariables) {
+  private static @NlsContexts.DialogMessage String collectSuitableVariables(final PsiMethod method, final List<? super PsiVariable> suitableVariables) {
     final List<PsiVariable> allVariables = new ArrayList<>();
     ContainerUtil.addAll(allVariables, method.getParameterList().getParameters());
     ContainerUtil.addAll(allVariables, method.getContainingClass().getFields());

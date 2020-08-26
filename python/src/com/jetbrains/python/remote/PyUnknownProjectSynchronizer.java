@@ -2,7 +2,9 @@ package com.jetbrains.python.remote;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.util.PathMappingSettings;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.Result;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,10 +25,11 @@ final class PyUnknownProjectSynchronizer implements PyProjectSynchronizer {
   private PyUnknownProjectSynchronizer() {
   }
 
+  @DialogMessage
   @Override
   @Nullable
   public String checkSynchronizationAvailable(@NotNull final PySyncCheckStrategy syncCheckStrategy) {
-    return "This interpreter type does not support remote project creation";
+    return PyBundle.message("python.unknown.project.synchronizer.this.interpreter.type.does.not.support.remote.project.creation");
   }
 
   @Nullable

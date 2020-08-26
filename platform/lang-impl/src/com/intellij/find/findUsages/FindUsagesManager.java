@@ -34,6 +34,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.psi.*;
@@ -526,7 +527,7 @@ public final class FindUsagesManager {
   }
 
   @NotNull
-  private static String getNoUsagesFoundMessage(@NotNull PsiElement psiElement) {
+  private static @NlsContexts.HintText String getNoUsagesFoundMessage(@NotNull PsiElement psiElement) {
     String elementType = UsageViewUtil.getType(psiElement);
     String elementName = UsageViewUtil.getShortName(psiElement);
     return FindBundle.message("find.usages.of.element_type.element_name.not.found.message", elementType, elementName);
@@ -537,7 +538,7 @@ public final class FindUsagesManager {
   }
 
   @NotNull
-  private static String getSearchAgainMessage(@NotNull PsiElement element, @NotNull FileSearchScope direction) {
+  private static @NlsContexts.HintText String getSearchAgainMessage(@NotNull PsiElement element, @NotNull FileSearchScope direction) {
     String message = getNoUsagesFoundMessage(element);
     if (direction == FileSearchScope.AFTER_CARET) {
       AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_FIND_NEXT);
@@ -629,7 +630,7 @@ public final class FindUsagesManager {
     return selectedOptions.generateUsagesString();
   }
 
-  private static void showEditorHint(@NotNull String message, @NotNull Editor editor) {
+  private static void showEditorHint(@NotNull @NlsContexts.HintText String message, @NotNull Editor editor) {
     JComponent component = HintUtil.createInformationLabel(message);
     LightweightHint hint = new LightweightHint(component);
     HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, HintManager.UNDER,

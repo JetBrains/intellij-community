@@ -10,13 +10,18 @@ import org.jetbrains.annotations.NotNull;
  * @author Konstantin Bulenkov
  */
 public class BundledJreProvider implements JreProvider {
+  public static final String BUNDLED = "Bundled";
   private final JdkBundle myBundle = JdkBundle.createBundled();
 
   @NotNull
   @Override
   public String getJrePath() {
     assert myBundle != null;
-    String path = myBundle.getLocation().getPath();
+    return getPatchedJrePath(myBundle.getLocation().getPath());
+  }
+
+  @NotNull
+  public static String getPatchedJrePath(@NotNull String path) {
     if (SystemInfo.isMac && !path.endsWith("/Contents/Home")) {
       path += "/Contents/Home";
     }
@@ -25,7 +30,7 @@ public class BundledJreProvider implements JreProvider {
 
   @Override
   public String getPresentableName() {
-    return "Bundled";
+    return BUNDLED;
   }
 
   @Override

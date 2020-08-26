@@ -20,6 +20,7 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
@@ -139,7 +140,7 @@ public class PyCompatibilityInspection extends PyInspection {
     @Override
     protected void registerProblem(@NotNull PsiElement element,
                                    @NotNull TextRange range,
-                                   @NotNull String message,
+                                   @NotNull @InspectionMessage String message,
                                    @Nullable LocalQuickFix quickFix,
                                    boolean asError) {
       if (element.getTextLength() == 0) {
@@ -182,7 +183,7 @@ public class PyCompatibilityInspection extends PyInspection {
             final Map<LanguageLevel, Set<String>> unsupportedMethods = UnsupportedFeaturesUtil.CLASS_METHODS.get(className);
 
             registerForAllMatchingVersions(level -> unsupportedMethods.getOrDefault(level, Collections.emptySet()).contains(functionName),
-                                           " not have method " + functionName,
+                                           PyPsiBundle.message("INSP.compatibility.feature.have.method", functionName),
                                            node);
           }
         }
@@ -192,7 +193,7 @@ public class PyCompatibilityInspection extends PyInspection {
             !"exec".equals(functionName) &&
             !myUsedImports.contains(functionName)) {
           registerForAllMatchingVersions(level -> UnsupportedFeaturesUtil.BUILTINS.get(level).contains(functionName),
-                                         " not have method " + functionName,
+                                         PyPsiBundle.message("INSP.compatibility.feature.have.method", functionName),
                                          node);
         }
       }
@@ -203,7 +204,7 @@ public class PyCompatibilityInspection extends PyInspection {
             PyNames.TYPE_LONG.equals(target.getName()) &&
             PyBuiltinCache.getInstance(resolvedCallee).isBuiltin(resolvedCallee)) {
           registerForAllMatchingVersions(level -> UnsupportedFeaturesUtil.BUILTINS.get(level).contains(PyNames.TYPE_LONG),
-                                         " not have type long. Use int instead.",
+                                         PyPsiBundle.message("INSP.compatibility.feature.have.type.long"),
                                          node);
         }
       }
@@ -234,7 +235,7 @@ public class PyCompatibilityInspection extends PyInspection {
         final String moduleName = qName.toString();
 
         registerForAllMatchingVersions(level -> UnsupportedFeaturesUtil.MODULES.get(level).contains(moduleName) && !BACKPORTED_PACKAGES.contains(moduleName),
-                                       " not have module " + moduleName,
+                                       PyPsiBundle.message("INSP.compatibility.feature.have.module", moduleName),
                                        importElement);
       }
     }
@@ -264,7 +265,7 @@ public class PyCompatibilityInspection extends PyInspection {
         final String moduleName = name.toString();
 
         registerForAllMatchingVersions(level -> UnsupportedFeaturesUtil.MODULES.get(level).contains(moduleName) && !BACKPORTED_PACKAGES.contains(moduleName),
-                                       " not have module " + name,
+                                       PyPsiBundle.message("INSP.compatibility.feature.have.module", name),
                                        source);
       }
     }
@@ -300,7 +301,8 @@ public class PyCompatibilityInspection extends PyInspection {
             final PyType type = context.getType(qualifier);
             final PyClassType dictType = PyBuiltinCache.getInstance(node).getDictType();
             if (PyTypeChecker.match(dictType, type, context)) {
-              registerProblem(node, "dict.iterkeys(), dict.iteritems() and dict.itervalues() methods are not available in py3");
+              //noinspection DialogTitleCapitalization
+              registerProblem(node, PyPsiBundle.message("INSP.compatibility.old.dict.methods.not.available.in.py3"));
             }
           }
         }
@@ -312,11 +314,13 @@ public class PyCompatibilityInspection extends PyInspection {
             if (file != null) {
               final VirtualFile virtualFile = file.getVirtualFile();
               if (virtualFile != null && ProjectRootManager.getInstance(node.getProject()).getFileIndex().isInLibraryClasses(virtualFile)) {
-                registerProblem(node, "basestring type is not available in py3");
+                //noinspection DialogTitleCapitalization
+                registerProblem(node, PyPsiBundle.message("INSP.compatibility.basestring.type.not.available.in.py3"));
               }
             }
             else {
-              registerProblem(node, "basestring type is not available in py3");
+              //noinspection DialogTitleCapitalization
+              registerProblem(node, PyPsiBundle.message("INSP.compatibility.basestring.type.not.available.in.py3"));
             }
           }
         }
@@ -353,7 +357,7 @@ public class PyCompatibilityInspection extends PyInspection {
           ArrayUtil.contains(nameIdentifierOwner.getName(), PyNames.AWAIT, PyNames.ASYNC) &&
           LanguageLevel.forElement(nameIdentifierOwner).isOlderThan(LanguageLevel.PYTHON37)) {
         registerForAllMatchingVersions(level -> level.isAtLeast(LanguageLevel.PYTHON37),
-                                       " not allow 'async' and 'await' as names",
+                                       PyPsiBundle.message("INSP.compatibility.feature.allow.async.and.await.as.names"),
                                        nameIdentifier,
                                        PythonUiService.getInstance().createPyRenameElementQuickFix(nameIdentifierOwner));
       }

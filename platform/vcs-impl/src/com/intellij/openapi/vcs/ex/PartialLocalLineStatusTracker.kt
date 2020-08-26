@@ -27,6 +27,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.ChangeListWorker
@@ -538,7 +539,7 @@ class ChangelistsLocalLineStatusTracker(project: Project,
 
       val group = DefaultActionGroup()
       if (changeLists.size > 1) {
-        group.add(Separator("Changelists"))
+        group.add(Separator(VcsBundle.message("ex.changelists")))
         for (changeList in changeLists) {
           group.add(MoveToChangeListAction(editor, range, mousePosition, changeList))
         }
@@ -562,7 +563,7 @@ class ChangelistsLocalLineStatusTracker(project: Project,
 
       val shortcuts = moveChangesShortcutSet.shortcuts
       if (shortcuts.isNotEmpty()) {
-        link.toolTipText = "Move lines to another changelist (${KeymapUtil.getShortcutText(shortcuts.first())})"
+        link.toolTipText = VcsBundle.message("ex.move.lines.to.another.changelist.0", KeymapUtil.getShortcutText(shortcuts.first()))
       }
 
       val panel = JPanel(BorderLayout())
@@ -575,7 +576,7 @@ class ChangelistsLocalLineStatusTracker(project: Project,
     private inner class MoveToAnotherChangeListAction(editor: Editor, range: Range, val mousePosition: Point?)
       : RangeMarkerAction(editor, range, null) {
       init {
-        templatePresentation.text = "New Changelist..."
+        templatePresentation.text = VcsBundle.message("ex.new.changelist")
       }
 
       override fun isEnabled(editor: Editor, range: Range): Boolean = range is LocalRange

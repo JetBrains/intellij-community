@@ -46,7 +46,7 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
     private final Set<String> myPredefinedSeparators = new LinkedHashSet<>();
 
     ChangeGroupSeparatorAction() {
-      super("Group by: ", true);
+      super(PropertiesBundle.message("group.by.title"), true);
       myPredefinedSeparators.add(".");
       myPredefinedSeparators.add("_");
       myPredefinedSeparators.add("/");
@@ -58,7 +58,7 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
     public final void update(@NotNull AnActionEvent e) {
       String separator = getCurrentSeparator();
       Presentation presentation = e.getPresentation();
-      presentation.setText("Group by: " + separator, false);
+      presentation.setText(PropertiesBundle.message("group.by.0", separator), false);
       presentation.setIcon(EmptyIcon.ICON_16);
     }
 

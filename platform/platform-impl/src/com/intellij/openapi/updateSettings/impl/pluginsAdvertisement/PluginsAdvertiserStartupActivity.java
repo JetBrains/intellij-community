@@ -116,7 +116,7 @@ final class PluginsAdvertiserStartupActivity implements StartupActivity.Backgrou
       List<PluginNode> marketplacePlugins = MarketplaceRequests.getInstance()
         .loadLastCompatiblePluginDescriptors(ContainerUtil.map(ids.keySet(), it -> it.getIdString()));
 
-      List<IdeaPluginDescriptor> compatibleUpdates = UpdateChecker.mergePluginsFromRepositories(marketplacePlugins, customPlugins);
+      List<IdeaPluginDescriptor> compatibleUpdates = UpdateChecker.mergePluginsFromRepositories(marketplacePlugins, customPlugins, true);
 
       for (IdeaPluginDescriptor loadedPlugin : compatibleUpdates) {
         IdeaPluginDescriptor existingPlugin = PluginManagerCore.getPlugin(loadedPlugin.getPluginId());

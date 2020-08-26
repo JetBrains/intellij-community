@@ -458,7 +458,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     return new ArrayList<>(extensions);
   }
 
-  public static String getFontConfigurableName() {
+  public static @NlsContexts.ConfigurableName String getFontConfigurableName() {
     return ApplicationBundle.message("title.colors.scheme.font");
   }
 
@@ -593,12 +593,12 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     Set<Pair<NamedScope,NamedScopesHolder>> namedScopes = new ObjectOpenCustomHashSet<>(new Hash.Strategy<Pair<NamedScope, NamedScopesHolder>>() {
       @Override
       public int hashCode(@Nullable Pair<NamedScope, NamedScopesHolder> object) {
-        return object == null ? 0 : object.getFirst().getName().hashCode();
+        return object == null ? 0 : object.getFirst().getScopeId().hashCode();
       }
 
       @Override
       public boolean equals(@Nullable Pair<NamedScope, NamedScopesHolder> o1, @Nullable Pair<NamedScope, NamedScopesHolder> o2) {
-        return o1 == o2 || (o1 != null && o2 != null && o1.getFirst().getName().equals(o2.getFirst().getName()));
+        return o1 == o2 || (o1 != null && o2 != null && o1.getFirst().getScopeId().equals(o2.getFirst().getScopeId()));
       }
     });
     Project[] projects = ProjectManager.getInstance().getOpenProjects();
@@ -610,10 +610,10 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
     List<Pair<NamedScope, NamedScopesHolder>> list = new ArrayList<>(namedScopes);
 
-    list.sort((o1, o2) -> o1.getFirst().getName().compareToIgnoreCase(o2.getFirst().getName()));
+    list.sort((o1, o2) -> o1.getFirst().getPresentableName().compareToIgnoreCase(o2.getFirst().getPresentableName()));
     for (Pair<NamedScope,NamedScopesHolder> pair : list) {
       NamedScope namedScope = pair.getFirst();
-      String name = namedScope.getName();
+      String name = namedScope.getScopeId();
       TextAttributesKey textAttributesKey = ScopeAttributesUtil.getScopeTextAttributeKey(name);
       if (scheme.getAttributes(textAttributesKey) == null) {
         scheme.setAttributes(textAttributesKey, new TextAttributes());
@@ -622,7 +622,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
       PackageSet value = namedScope.getValue();
       String toolTip = holder.getDisplayName() + (value==null ? "" : ": "+ value.getText());
-      descriptions.add(new SchemeTextAttributesDescription(name, getScopesGroup(), textAttributesKey, scheme, holder.getIcon(), toolTip));
+      descriptions.add(new SchemeTextAttributesDescription(namedScope.getPresentableName(), getScopesGroup(), textAttributesKey, scheme, holder.getIcon(), toolTip));
     }
   }
 
@@ -1525,7 +1525,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
     return page != null;
   }
 
-  public static String getScopesGroup() {
+  public static @NlsContexts.ConfigurableName String getScopesGroup() {
     return ApplicationBundle.message("title.scope.based");
   }
 }

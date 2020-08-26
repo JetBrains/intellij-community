@@ -17,7 +17,6 @@ import com.intellij.grazie.ide.language.LanguageGrammarChecking
 import com.intellij.grazie.ide.msg.GrazieStateLifecycle
 import com.intellij.grazie.utils.lazyConfig
 import com.intellij.lang.injection.InjectedLanguageManager
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
@@ -67,7 +66,7 @@ class GrazieInspection : LocalInspectionTool() {
 
         for (strategy in strategies) {
           val domain = strategy.getContextRootTextDomain(element)
-          val isCheckNeeded = ApplicationManager.getApplication().isUnitTestMode || when (domain) {
+          val isCheckNeeded = when (domain) {
             GrammarCheckingStrategy.TextDomain.NON_TEXT -> false
             GrammarCheckingStrategy.TextDomain.LITERALS -> checking.isCheckInStringLiteralsEnabled
             GrammarCheckingStrategy.TextDomain.COMMENTS -> checking.isCheckInCommentsEnabled

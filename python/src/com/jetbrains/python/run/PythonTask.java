@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts.TabTitle;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -34,6 +35,7 @@ import com.jetbrains.python.buildout.BuildoutFacet;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,17 +64,17 @@ public class PythonTask {
   private HelperPackage myHelper = null;
 
   private List<String> myParameters = new ArrayList<>();
-  private final String myRunTabTitle;
+  private final @TabTitle String myRunTabTitle;
   private String myHelpId;
   private Runnable myAfterCompletion;
 
-  public PythonTask(Module module, String runTabTitle) throws ExecutionException {
+  public PythonTask(Module module, @TabTitle String runTabTitle) throws ExecutionException {
     this(module, runTabTitle, PythonSdkUtil.findPythonSdk(module));
   }
 
   @NotNull
   public static PythonTask create(@NotNull final Module module,
-                                  @NotNull final String runTabTitle,
+                                  @Nls @NotNull final String runTabTitle,
                                   @NotNull final Sdk sdk) {
     // Ctor throws checked exception which is not good, so this wrapper saves user from dumb code
     try {
@@ -83,12 +85,12 @@ public class PythonTask {
     }
   }
 
-  public PythonTask(final Module module, final String runTabTitle, @Nullable final Sdk sdk) throws ExecutionException {
+  public PythonTask(final Module module, @TabTitle String runTabTitle, @Nullable final Sdk sdk) throws ExecutionException {
     myModule = module;
     myRunTabTitle = runTabTitle;
     mySdk = sdk;
     if (mySdk == null) { // TODO: Get rid of such a weird contract
-      throw new ExecutionException("Cannot find Python interpreter for selected module");
+      throw new ExecutionException(PyBundle.message("python.task.cannot.find.python.interpreter.for.selected.module"));
     }
   }
 
@@ -303,8 +305,8 @@ public class PythonTask {
     if (exitCode == 0) {
       return output.getStdout();
     }
-    throw new ExecutionException(String.format("Error on python side. " +
-                                               "Exit code: %s, err: %s out: %s", exitCode, output.getStderr(), output.getStdout()));
+    throw new ExecutionException(PyBundle.message("dialog.message.error.on.python.side.exit.code.stderr.stdout",
+                                                  exitCode,output.getStderr(),output.getStdout()));
   }
 
   @NotNull

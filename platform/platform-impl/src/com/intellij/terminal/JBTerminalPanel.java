@@ -99,7 +99,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
   private final TerminalEventDispatcher myEventDispatcher = new TerminalEventDispatcher();
   private final JBTerminalSystemSettingsProviderBase mySettingsProvider;
   private final TerminalEscapeKeyListener myEscapeKeyListener;
-  private final List<Consumer<KeyEvent>> myPreKeyEventConsumers = new CopyOnWriteArrayList<>();
+  private final List<Consumer<? super KeyEvent>> myPreKeyEventConsumers = new CopyOnWriteArrayList<>();
 
   private List<AnAction> myActionsToSkip;
 
@@ -151,7 +151,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
       }
     }
     myEscapeKeyListener.handleKeyEvent(e);
-    for (Consumer<KeyEvent> preKeyEventConsumer : myPreKeyEventConsumers) {
+    for (Consumer<? super KeyEvent> preKeyEventConsumer : myPreKeyEventConsumers) {
       preKeyEventConsumer.accept(e);
     }
     if (!e.isConsumed()) {
@@ -159,7 +159,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
     }
   }
 
-  public void addPreKeyEventHandler(@NotNull Consumer<KeyEvent> preKeyEventHandler) {
+  public void addPreKeyEventHandler(@NotNull Consumer<? super KeyEvent> preKeyEventHandler) {
     myPreKeyEventConsumers.add(preKeyEventHandler);
   }
 

@@ -33,6 +33,12 @@
       <val name="valuesFromClass" val="javax.swing.BoxLayout.class" />
     </annotation>
   </item>
+  <item name='javax.swing.ImageIcon ImageIcon(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='javax.swing.ImageIcon ImageIcon(java.lang.String, java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
   <item name="javax.swing.InputMap void put(javax.swing.KeyStroke, java.lang.Object) 1">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
@@ -81,7 +87,16 @@
   <item name="javax.swing.JEditorPane JEditorPane(java.lang.String, java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
+  <item name='javax.swing.JEditorPane void scrollToReference(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
   <item name='javax.swing.JEditorPane void setContentType(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='javax.swing.JFormattedTextField.AbstractFormatter java.lang.Object stringToValue(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='javax.swing.JFormattedTextField.AbstractFormatter java.lang.String valueToString(java.lang.Object)'>
     <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
   <item name='javax.swing.JFrame void setDefaultCloseOperation(int) 0'>
@@ -312,6 +327,9 @@
       <val name="intValues" val="{javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER, javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS}" />
     </annotation>
   </item>
+  <item name='javax.swing.JScrollPane void setCorner(java.lang.String, java.awt.Component) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
   <item name="javax.swing.JSplitPane JSplitPane(int, boolean) 0">
     <annotation name="org.intellij.lang.annotations.MagicConstant">
       <val name="intValues" val="{javax.swing.JSplitPane.HORIZONTAL_SPLIT,javax.swing.JSplitPane.VERTICAL_SPLIT}" />
@@ -474,6 +492,9 @@
   </item>
   <item name="javax.swing.RowSorter.SortKey SortKey(int, javax.swing.SortOrder) 1">
     <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name='javax.swing.ScrollPaneConstants'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
   <item name="javax.swing.Scrollable int getScrollableBlockIncrement(java.awt.Rectangle, int, int) 1">
     <annotation name="org.intellij.lang.annotations.MagicConstant">

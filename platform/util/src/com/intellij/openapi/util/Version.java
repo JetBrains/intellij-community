@@ -114,7 +114,7 @@ public class Version implements Comparable<Version> {
   /**
    * @return compact string representation in the following form: "n.n", "n.n.n", e.g 1.0, 1.1.0
    */
-  public String toCompactString() {
+  public @NlsSafe String toCompactString() {
     return toCompactString(major, minor, bugfix);
   }
 

@@ -2,6 +2,7 @@
 package com.intellij.refactoring.encapsulateFields;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -306,7 +307,7 @@ public class EncapsulateFieldsDialog extends RefactoringDialog implements Encaps
 
     JPanel encapsulateBox = new JPanel(new BorderLayout());
     encapsulateBox.add(leftPanel, BorderLayout.CENTER);
-    myJavadocPolicy = new DocCommentPanel("JavaDoc");
+    myJavadocPolicy = new DocCommentPanel(JavaBundle.message("encapsulate.fields.dialog.javadoc.title"));
     encapsulateBox.add(myJavadocPolicy, BorderLayout.EAST);
     boolean hasJavadoc = false;
     for (PsiField field : myFields) {

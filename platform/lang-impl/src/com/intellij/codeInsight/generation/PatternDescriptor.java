@@ -2,6 +2,8 @@ package com.intellij.codeInsight.generation;
 
 import com.intellij.codeInsight.template.Template;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.util.NlsActions;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,7 +17,7 @@ public abstract class PatternDescriptor {
   public static final String ROOT = "root";
 
   @Nullable
-  public String getId() {
+  public @NonNls String getId() {
     return null;
   }
 
@@ -23,7 +25,7 @@ public abstract class PatternDescriptor {
   public abstract String getParentId();
 
   @NotNull
-  public abstract String getName();
+  public abstract @NlsActions.ActionText String getName();
 
   @Nullable
   public abstract Icon getIcon();

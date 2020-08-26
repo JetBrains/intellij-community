@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.PlatformIcons;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,9 +31,9 @@ import javax.swing.*;
  * @author Konstantin Bulenkov
  */
 public class DiffErrorElement extends DiffElement {
-  private final String myMessage;
+  private final @Nls String myMessage;
 
-  public DiffErrorElement(@NotNull String message, @NotNull String description) {
+  public DiffErrorElement(@NotNull @Nls String message, @NotNull @Nls String description) {
     myMessage = message;
   }
 

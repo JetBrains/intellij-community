@@ -15,6 +15,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.keymap.MacKeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.RefreshablePanel;
@@ -62,7 +63,7 @@ public class ToolEditorDialog extends DialogWrapper {
   private JBCheckBox myShowConsoleOnStdErrCheckbox;
   private RawCommandLineEditor myOutputFilterField;
 
-  protected ToolEditorDialog(JComponent parent, String title) {
+  protected ToolEditorDialog(JComponent parent, @NlsContexts.DialogTitle String title) {
     super(parent, true);
 
     myArgumentsField.setDialogCaption("Program Arguments");
@@ -131,7 +132,7 @@ public class ToolEditorDialog extends DialogWrapper {
 
     myAdvancedOptionsSeparator = new AbstractTitledSeparatorWithIcon(AllIcons.General.ArrowRight,
                                                                      AllIcons.General.ArrowDown,
-                                                                     "Advanced Options") {
+                                                                     ToolsBundle.message("dialog.separator.advanced.options")) {
       @Override
       protected RefreshablePanel createPanel() {
         return new RefreshablePanel() {

@@ -23,6 +23,7 @@ import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -85,7 +86,7 @@ final class InteractiveTemplateStateProcessor implements TemplateStateProcessor 
   }
 
   private void runLookup(TemplateState state, final List<TemplateExpressionLookupElement> lookupItems, Project project, Editor editor,
-                         @Nullable String advertisingText, @NotNull LookupFocusDegree lookupFocusDegree) {
+                         @Nullable @NlsContexts.PopupAdvertisement String advertisingText, @NotNull LookupFocusDegree lookupFocusDegree) {
     if (state.isDisposed()) return;
 
     final LookupManager lookupManager = LookupManager.getInstance(project);

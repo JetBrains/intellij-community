@@ -63,15 +63,9 @@ class ScheduleForAdditionWithIgnoredFilesConfirmationAction : ScheduleForAdditio
     val (ignored, toAddWithoutIgnored) = toAdd.partition(changeListManager::isIgnoredFile)
     val confirmedIgnored =
       confirmAddFilePaths(project, ignored,
-                          { path ->
-                            message(
-                              "confirmation.title.add.ignored.single", if (path.isDirectory) "Directory" else "File")
-                          },
-                          { path ->
-                            message("confirmation.message.add.ignored.single", if (path.isDirectory) "directory" else "file",
-                                    FileUtil.getLocationRelativeToUserHome(path.presentableUrl))
-                          },
-                          getString("confirmation.title.add.ignored.files.or.dirs"))
+                          this::dialogTitle,
+                          this::dialogMessage,
+                          message("confirmation.title.add.ignored.files.or.dirs"))
 
     val addToVcsTask =
       if (toAdd.isNotEmpty()) PairConsumer<ProgressIndicator, MutableList<VcsException>> { _, exceptions ->
@@ -81,6 +75,17 @@ class ScheduleForAdditionWithIgnoredFilesConfirmationAction : ScheduleForAdditio
 
     addUnversioned(project, unversionedFiles, browser, addToVcsTask)
   }
+
+  private fun dialogMessage(path: FilePath): String {
+    val question =
+      if (path.isDirectory) message("confirmation.message.add.ignored.single.directory")
+      else message("confirmation.message.add.ignored.single.file")
+    return question + "\n" + FileUtil.getLocationRelativeToUserHome(path.presentableUrl)
+  }
+
+  private fun dialogTitle(path: FilePath): String =
+    if (path.isDirectory) message("confirmation.title.add.ignored.single.directory")
+    else message("confirmation.title.add.ignored.single.file")
 
   private fun addPathsToVcs(project: Project,
                             toAdd: Collection<FilePath>,

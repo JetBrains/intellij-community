@@ -3,6 +3,7 @@ package com.intellij.execution.jshell;
 
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
@@ -20,6 +21,6 @@ public final class JShellDiagnostic {
   }
 
   public static void notifyError(Exception ex, final Project project) {
-    new Notification(NOTIFICATION_GROUP, TITLE, StringUtil.notNullize(ex.getMessage(), "internal error"), NotificationType.ERROR).notify(project);
+    new Notification(NOTIFICATION_GROUP, TITLE, StringUtil.notNullize(ex.getMessage(), JavaCompilerBundle.message("jshell.internal.error")), NotificationType.ERROR).notify(project);
   }
 }

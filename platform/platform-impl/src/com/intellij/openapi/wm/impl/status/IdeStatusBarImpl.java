@@ -107,7 +107,7 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
     return frame != null ? frame.getStatusBar() : this;
   }
 
-  private void updateChildren(@NotNull Consumer<IdeStatusBarImpl> consumer) {
+  private void updateChildren(@NotNull Consumer<? super IdeStatusBarImpl> consumer) {
     for (IdeStatusBarImpl child : myChildren) {
       consumer.accept(child);
     }

@@ -19,6 +19,7 @@ package com.intellij.ide.util.frameworkSupport;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +41,7 @@ public abstract class FrameworkSupportProviderBase extends FrameworkSupportProvi
     return Collections.emptyList();
   }
 
-  public String getVersionLabelText() {
+  public @NlsContexts.Label String getVersionLabelText() {
     return "Version:";
   }
 

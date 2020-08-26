@@ -17,7 +17,6 @@ import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
-import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.RoamingType;
@@ -40,7 +39,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.components.DefaultLinkButtonUI;
@@ -133,6 +131,8 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
   private final SynchronizedClearableLazy<CollectionComboBoxModel<LafReference>> myPreferredDarkComboBoxModel =
     new SynchronizedClearableLazy<>(() -> new CollectionComboBoxModel<>(getDarkReferences()));
+
+  private final SystemDarkThemeDetector lafDetector = SystemDarkThemeDetector.createDetector(this::syncLaf);
 
   static {
     ourLafClassesAliases.put("idea.dark.laf.classname", DarculaLookAndFeelInfo.CLASS_NAME);
@@ -234,7 +234,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       @Override
       public void afterValueChanged(@NotNull RegistryValue value) {
         autodetect.drop();
-        syncLaf();
+        detectAndSyncLaf();
       }
     }, this);
 
@@ -275,27 +275,23 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       }
     });
 
-    bus.connect(this).subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener() {
-      @Override
-      public void applicationActivated(@NotNull IdeFrame ideFrame) {
-        syncLaf();
-      }
-    });
+    detectAndSyncLaf();
   }
 
-  private void syncLaf() {
-    SystemDarkThemeDetector detector = SystemDarkThemeDetector.getInstance();
-    if (detector.getDetectionSupported() && isAutoDetect()) {
-      boolean currentDark = myCurrentLaf instanceof UIThemeBasedLookAndFeelInfo && ((UIThemeBasedLookAndFeelInfo)myCurrentLaf).getTheme().isDark() ||
-                           UIUtil.isUnderDarcula();
+  private void detectAndSyncLaf() {
+    if (lafDetector.getDetectionSupported() && isAutoDetect()) {
+      lafDetector.check();
+    }
+  }
 
-      detector.check(systemDark -> {
-        UIManager.LookAndFeelInfo expectedLaf = systemDark ? myPreferredDarkLaf : myPreferredLightLaf;
+  private void syncLaf(boolean systemDark) {
+    boolean currentDark = myCurrentLaf instanceof UIThemeBasedLookAndFeelInfo && ((UIThemeBasedLookAndFeelInfo)myCurrentLaf).getTheme().isDark() ||
+                          UIUtil.isUnderDarcula();
 
-        if (currentDark != systemDark || myCurrentLaf != expectedLaf) {
-          QuickChangeLookAndFeel.switchLafAndUpdateUI(LafManager.getInstance(), expectedLaf, true);
-        }
-      });
+    UIManager.LookAndFeelInfo expectedLaf = systemDark ? myPreferredDarkLaf : myPreferredLightLaf;
+
+    if (currentDark != systemDark || myCurrentLaf != expectedLaf) {
+      QuickChangeLookAndFeel.switchLafAndUpdateUI(LafManager.getInstance(), expectedLaf, true);
     }
   }
 
@@ -503,12 +499,12 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       switch (type) {
         case DARK:
           myPreferredDarkLaf = findLaf(lafReference.getClassName(), lafReference.getThemeId());
-          syncLaf();
+          detectAndSyncLaf();
           break;
 
         case LIGHT:
           myPreferredLightLaf = findLaf(lafReference.getClassName(), lafReference.getThemeId());
-          syncLaf();
+          detectAndSyncLaf();
           break;
 
         default:

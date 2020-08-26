@@ -204,7 +204,7 @@ public class BackspaceHandler extends EditorWriteActionHandler {
     if (pos.column < logicalPosition.column) {
       int targetOffset = editor.logicalPositionToOffset(pos);
       int offset = editor.getCaretModel().getOffset();
-      editor.getSelectionModel().setSelection(targetOffset, offset);
+      editor.getCaretModel().getCurrentCaret().setSelection(targetOffset, offset, false);
       EditorModificationUtil.deleteSelectedText(editor);
       editor.getCaretModel().moveToLogicalPosition(pos);
     }

@@ -5,6 +5,7 @@ import com.intellij.execution.configurations.*
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.text.nullize
 import org.jetbrains.annotations.ApiStatus
@@ -125,7 +126,7 @@ abstract class RunManager {
    * @param factory the factory instance.
    * @see RunManager.suggestUniqueName
    */
-  abstract fun createConfiguration(name: String, factory: ConfigurationFactory): RunnerAndConfigurationSettings
+  abstract fun createConfiguration(@NlsSafe name: String, factory: ConfigurationFactory): RunnerAndConfigurationSettings
 
   fun createConfiguration(name: String, typeClass: Class<out ConfigurationType>): RunnerAndConfigurationSettings {
     return createConfiguration(name, ConfigurationTypeUtil.findConfigurationType(typeClass).configurationFactories.first())

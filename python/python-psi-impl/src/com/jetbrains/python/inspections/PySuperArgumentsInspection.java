@@ -61,7 +61,7 @@ public class PySuperArgumentsInspection extends PyInspection {
                 if (!secondClass.isSubclass(firstClass, myTypeEvalContext)) {
                   registerProblem(
                     node.getArgumentList(),
-                    PyPsiBundle.message("INSP.$0.is.not.superclass.of.$1",
+                    PyPsiBundle.message("INSP.class.is.not.subtype.of.class",
                                         secondClass.getName(), firstClass.getName())
                   );
                 }

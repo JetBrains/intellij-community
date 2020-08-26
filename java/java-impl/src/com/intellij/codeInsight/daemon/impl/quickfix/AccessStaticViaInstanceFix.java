@@ -158,7 +158,7 @@ public class AccessStaticViaInstanceFix extends LocalQuickFixAndIntentionActionO
             return MessageFormat.format(getFormatString(),
                                         JavaBundle.message("side.effects.expression.presentation", qualifierExpression.getText()),
                                         myExpression.getText(), //before text
-                                        qualifierExpression.getText() + ";<br>" + qualifiedWithClassName.getText());//after text
+                                        qualifierExpression.getText() + ";" + "<br>" + qualifiedWithClassName.getText());//after text
           }
           return JavaBundle.message("side.effects.non.fixable.message", qualifierExpression.getText());
         }

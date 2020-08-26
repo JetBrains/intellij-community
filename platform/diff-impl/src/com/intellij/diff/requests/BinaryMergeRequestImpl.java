@@ -29,8 +29,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.UIBundle;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,7 +49,7 @@ public class BinaryMergeRequestImpl extends BinaryMergeRequest {
   @NotNull private final List<byte[]> myByteContents;
   private final byte @NotNull [] myOriginalContent;
 
-  @Nullable private final String myTitle;
+  @Nullable private final @NlsContexts.DialogTitle String myTitle;
   @NotNull private final List<String> myTitles;
 
   public BinaryMergeRequestImpl(@Nullable Project project,
@@ -55,8 +57,8 @@ public class BinaryMergeRequestImpl extends BinaryMergeRequest {
                                 byte @NotNull [] originalContent,
                                 @NotNull List<DiffContent> contents,
                                 @NotNull List<byte[]> byteContents,
-                                @Nullable String title,
-                                @NotNull List<String> contentTitles) {
+                                @Nullable @NlsContexts.DialogTitle String title,
+                                @NotNull List<@Nls String> contentTitles) {
     assert byteContents.size() == 3;
     assert contents.size() == 3;
     assert contentTitles.size() == 3;

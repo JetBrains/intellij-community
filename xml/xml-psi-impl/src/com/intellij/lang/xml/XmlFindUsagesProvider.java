@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.xml;
 
+import com.intellij.lang.HelpID;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.psi.PsiElement;
@@ -58,7 +59,7 @@ public class XmlFindUsagesProvider implements FindUsagesProvider {
 
   @Override
   public String getHelpId(@NotNull PsiElement element) {
-    return com.intellij.lang.HelpID.FIND_OTHER_USAGES;
+    return HelpID.FIND_OTHER_USAGES;
   }
 
   @Override
@@ -87,7 +88,7 @@ public class XmlFindUsagesProvider implements FindUsagesProvider {
       final String name = metaData != null ? DescriptiveNameUtil.getMetaDataName(metaData) : xmlTag.getName();
 
       String presentableName = metaData == null ? "<" + name + ">" : name;
-      return XmlPsiBundle.message("node.text.presentable.name.of.containing.file", presentableName, xmlTag.getContainingFile().getName());
+      return XmlPsiBundle.message("xml.find.usages.presentable.name.of.containing.file", presentableName, xmlTag.getContainingFile().getName());
     }
     if (element instanceof XmlAttributeValue) {
       return ((XmlAttributeValue)element).getValue();

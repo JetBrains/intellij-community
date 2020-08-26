@@ -1,5 +1,8 @@
 package com.intellij.util.indexing.diagnostic.dump.paths
 
+import com.fasterxml.jackson.annotation.JsonInclude
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
 data class IndexedFilePath(
   val originalFileSystemId: Int,
   val fileType: String?,

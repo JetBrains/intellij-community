@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.content;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +29,7 @@ import java.util.List;
 public interface TabbedContent extends Content {
   String SPLIT_PROPERTY_PREFIX = "tabbed.toolwindow.expanded.";
 
-  void addContent(@NotNull JComponent content, @NotNull String name, boolean selectTab);
+  void addContent(@NotNull JComponent content, @NlsContexts.TabTitle @NotNull String name, boolean selectTab);
 
   default void addContent(@NotNull TabDescriptor tab, boolean selectTab) {
     addContent(tab.getComponent(), tab.getDisplayName(), selectTab);

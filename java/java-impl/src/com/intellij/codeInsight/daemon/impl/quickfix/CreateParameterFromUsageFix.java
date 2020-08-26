@@ -15,7 +15,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.JavaElementKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.JavaChangeSignatureDialog;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
@@ -75,7 +74,7 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
     method = IntroduceParameterHandler.chooseEnclosingMethod(method);
     if (method == null) return;
 
-    method = SuperMethodWarningUtil.checkSuperMethod(method, RefactoringBundle.message("to.refactor"));
+    method = SuperMethodWarningUtil.checkSuperMethod(method);
     if (method == null) return;
 
     final List<ParameterInfoImpl> parameterInfos =

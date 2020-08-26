@@ -40,7 +40,7 @@
             <properties>
               <componentStyle value="MINI"/>
               <fontColor value="BRIGHTER"/>
-              <text value="Info"/>
+              <text resource-bundle="messages/JavaUiBundle" key="label.info"/>
             </properties>
           </component>
           <component id="e17fc" class="com.intellij.ui.components.JBLabel" binding="myCaptionLabel">
@@ -50,7 +50,7 @@
             <properties>
               <componentStyle value="SMALL"/>
               <fontColor value="BRIGHTER"/>
-              <text value="Description"/>
+              <text resource-bundle="messages/JavaUiBundle" key="label.description"/>
             </properties>
           </component>
         </children>
@@ -84,7 +84,7 @@
                   <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text value="&amp;Sources"/>
+                  <text resource-bundle="messages/JavaUiBundle" key="checkbox.sources"/>
                 </properties>
               </component>
               <component id="63ac5" class="javax.swing.JCheckBox" binding="myJavaDocCheckBox">
@@ -92,7 +92,7 @@
                   <grid row="0" column="3" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text value="Java&amp;Docs"/>
+                  <text resource-bundle="messages/JavaUiBundle" key="checkbox.javadocs"/>
                 </properties>
               </component>
               <hspacer id="8d05c">
@@ -106,7 +106,7 @@
                 </constraints>
                 <properties>
                   <selected value="true"/>
-                  <text value="&amp;Transitive dependencies"/>
+                  <text resource-bundle="messages/JavaUiBundle" key="checkbox.transitive.dependencies"/>
                 </properties>
               </component>
               <component id="49eb5" class="com.intellij.ui.components.JBCheckBox" binding="myAnnotationsCheckBox">
@@ -114,7 +114,7 @@
                   <grid row="0" column="4" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text value="A&amp;nnotations"/>
+                  <text resource-bundle="messages/JavaUiBundle" key="checkbox.annotations"/>
                 </properties>
               </component>
             </children>
@@ -124,7 +124,7 @@
               <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Download to:  "/>
+              <text resource-bundle="messages/JavaUiBundle" key="checkbox.download.to"/>
             </properties>
           </component>
         </children>
@@ -148,7 +148,7 @@
             </constraints>
             <properties>
               <selected value="true"/>
-              <text value="Include &amp;transitive dependencies"/>
+              <text resource-bundle="messages/JavaUiBundle" key="checkbox.include.transitive.dependencies"/>
             </properties>
           </component>
         </children>

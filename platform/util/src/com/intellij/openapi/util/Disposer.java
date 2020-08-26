@@ -38,7 +38,7 @@ public final class Disposer {
 
   @NotNull
   @Contract(pure = true, value = "_->new")
-  public static Disposable newDisposable(@NotNull String debugName) {
+  public static Disposable newDisposable(@NotNull @NonNls String debugName) {
     // must not be lambda because we care about identity in ObjectTree.myObject2NodeMap
     return new Disposable() {
       @Override

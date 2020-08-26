@@ -6,10 +6,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.text.OrdinalFormat;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.lang.reflect.Field;
 import java.text.MessageFormat;
@@ -22,7 +19,7 @@ import java.util.ResourceBundle;
  */
 public abstract class BundleBase {
   public static final char MNEMONIC = 0x1B;
-  public static final String MNEMONIC_STRING = Character.toString(MNEMONIC);
+  public static final @NlsSafe String MNEMONIC_STRING = Character.toString(MNEMONIC);
   static final String L10N_MARKER = "🔅";
   public static final boolean SHOW_LOCALIZED_MESSAGES = Boolean.getBoolean("idea.l10n");
   public static final boolean SHOW_DEFAULT_MESSAGES = Boolean.getBoolean("idea.l10n.english");
@@ -55,8 +52,8 @@ public abstract class BundleBase {
     if (unassignedParams <= 0) throw new IllegalArgumentException();
     Object[] newParams = new Object[params.length + unassignedParams];
     System.arraycopy(params, 0, newParams, 0, params.length);
-    final String prefix = "#$$$TemplateParameter$$$#";
-    final String suffix = "#$$$/TemplateParameter$$$#";
+    @NonNls String prefix = "#$$$TemplateParameter$$$#";
+    @NonNls String suffix = "#$$$/TemplateParameter$$$#";
     for (int i = 0; i < unassignedParams; i++) {
       newParams[i + params.length] = prefix + i + suffix;
     }
@@ -93,7 +90,7 @@ public abstract class BundleBase {
 
   public static @Nls String messageOrDefault(@Nullable ResourceBundle bundle,
                                              @NotNull String key,
-                                             @Nullable String defaultValue,
+                                             @Nullable @Nls String defaultValue,
                                              Object @NotNull ... params) {
     if (bundle == null) return defaultValue;
 
@@ -143,6 +140,7 @@ public abstract class BundleBase {
     catch (IllegalAccessException e) {
       LOG.warn("Cannot fetch default message with -Didea.l10n.english enabled, by key '" + key + "'");
     }
+    //noinspection HardCodedStringLiteral
     return "undefined";
   }
 
@@ -157,7 +155,7 @@ public abstract class BundleBase {
   }
 
   @NotNull
-  static String useDefaultValue(@Nullable ResourceBundle bundle, @NotNull String key, @Nullable String defaultValue) {
+  static @Nls String useDefaultValue(@Nullable ResourceBundle bundle, @NotNull String key, @Nullable @Nls String defaultValue) {
     if (defaultValue != null) {
       return defaultValue;
     }
@@ -165,11 +163,13 @@ public abstract class BundleBase {
     if (assertOnMissedKeys) {
       LOG.error("'" + key + "' is not found in " + bundle);
     }
+    //noinspection HardCodedStringLiteral
     return "!" + key + "!";
   }
 
+  @SuppressWarnings("HardCodedStringLiteral")
   @NotNull
-  static @Nls String postprocessValue(@NotNull ResourceBundle bundle, @NotNull String value, Object @NotNull ... params) {
+  static @Nls String postprocessValue(@NotNull ResourceBundle bundle, @NotNull @Nls String value, Object @NotNull ... params) {
     value = replaceMnemonicAmpersand(value);
 
     if (params.length > 0 && value.indexOf('{') >= 0) {

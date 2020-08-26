@@ -20,8 +20,8 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ObjectUtils;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,9 +30,9 @@ import java.awt.event.MouseEvent;
 
 public abstract class DiffGutterRenderer extends GutterIconRenderer implements NonHideableIconGutterMark {
   @NotNull private final Icon myIcon;
-  @Nullable private final String myTooltip;
+  @Nullable private final @NlsContexts.Tooltip String myTooltip;
 
-  public DiffGutterRenderer(@NotNull Icon icon, @Nullable @Nls String tooltip) {
+  public DiffGutterRenderer(@NotNull Icon icon, @Nullable @NlsContexts.Tooltip String tooltip) {
     myIcon = icon;
     myTooltip = tooltip;
   }
@@ -43,6 +43,7 @@ public abstract class DiffGutterRenderer extends GutterIconRenderer implements N
     return myIcon;
   }
 
+  @NlsContexts.Tooltip
   @Nullable
   @Override
   public String getTooltipText() {

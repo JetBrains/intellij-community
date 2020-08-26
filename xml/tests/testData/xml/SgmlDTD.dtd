@@ -259,7 +259,7 @@
 
 <!--=================== Document Body ====================================-->
 
-<!ELEMENT BODY O O (%block;|SCRIPT)+ +(<error descr="Unresolved Dtd Element Reference INS">INS</error>|<error descr="Unresolved Dtd Element Reference DEL">DEL</error>) -- document body -->
+<!ELEMENT BODY O O (%block;|SCRIPT)+ +(<error descr="Unresolved DTD element reference INS">INS</error>|<error descr="Unresolved DTD element reference DEL">DEL</error>) -- document body -->
 <!ATTLIST BODY
   %attrs;                              -- %coreattrs, %i18n, %events --
   onload          %Script;   #IMPLIED  -- the document has been loaded --
@@ -710,7 +710,7 @@
 <!ELEMENT TBODY    O O (TR)+           -- table body -->
 <!ELEMENT COLGROUP - O (COL)*          -- table column group -->
 <!ELEMENT COL      - O EMPTY           -- table column -->
-<!ELEMENT TR       - O (<error descr="Unresolved Dtd Element Reference TH">TH</error>|<error descr="Unresolved Dtd Element Reference TD">TD</error>)+        -- table row -->
+<!ELEMENT TR       - O (<error descr="Unresolved DTD element reference TH">TH</error>|<error descr="Unresolved DTD element reference TD">TD</error>)+        -- table row -->
 <!ELEMENT (TH|TD)  - O (%flow;)*       -- table header cell, table data cell-->
 
 <!ATTLIST TABLE                        -- table element --

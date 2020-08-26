@@ -9,6 +9,8 @@
     <tasks.contextProvider implementation="com.intellij.tasks.context.XDebuggerBreakpointsContextProvider"/>
     <tasks.contextProvider implementation="com.intellij.tasks.context.XDebuggerWatchesProvider"/>
     <tasks.contextProvider implementation="com.intellij.tasks.context.BookmarkContextProvider"/>
+    <notificationGroup id="Tasks" displayType="BALLOON"/>
+    <notificationGroup id="Branch Context group" displayType="BALLOON"/>
   </extensions>
   <projectListeners>
     <listener class="com.intellij.tasks.context.BranchContextTracker" topic="com.intellij.openapi.vcs.BranchChangeListener"/>

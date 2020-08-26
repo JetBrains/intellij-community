@@ -5,6 +5,9 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.scale.DerivedScaleType;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.ui.svg.MyTranscoder;
@@ -22,7 +25,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.Dimension2D;
 import java.awt.image.BufferedImage;
@@ -33,6 +39,7 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Map;
 
 /**
  * @author tav
@@ -41,6 +48,9 @@ public final class SVGLoader {
   private static final byte[] DEFAULT_THEME = new byte[0];
 
   private static SvgElementColorPatcherProvider ourColorPatcher = null;
+  private static SvgElementColorPatcherProvider ourColorPatcherForSelection = null;
+
+  private static boolean ourIsSelectionContext = false;
 
   private static final SVGLoaderCache ourCache = new SVGLoaderCache() {
     @NotNull
@@ -82,7 +92,7 @@ public final class SVGLoader {
     byte[] svgBytes = null;
     BufferedImage image;
 
-    if (SystemProperties.getBooleanProperty("idea.ui.icons.svg.disk.cache", true)) {
+    if (SystemProperties.getBooleanProperty("idea.ui.icons.svg.disk.cache", true) && !isSelectionContext()) {
       theme = DEFAULT_THEME;
       SvgElementColorPatcherProvider colorPatcher = ourColorPatcher;
       if (colorPatcher != null) {
@@ -110,7 +120,7 @@ public final class SVGLoader {
     }
 
     image = loadWithoutCache(url, stream, scale, docSize);
-    if (image != null && theme != null) {
+    if (image != null && theme != null && !isSelectionContext()) {
       ourCache.storeLoadedImage(theme, svgBytes, scale, image, docSize);
     }
     return image;
@@ -234,6 +244,75 @@ public final class SVGLoader {
         patcher.patchColors(document.getDocumentElement());
       }
     }
+    if (isSelectionContext()) {
+      SvgElementColorPatcher selectionPatcher = getSelectionPatcher();
+      if (selectionPatcher != null) {
+        selectionPatcher.patchColors(document.getDocumentElement());
+      }
+    }
+  }
+
+  private static SvgElementColorPatcher getSelectionPatcher() {
+    //todo[kb] move this code to a common place for LaFs and themes.
+    //HashMap<String, String> map = new HashMap<>();
+    //map.put("#f26522", "#e2987c");
+    //HashMap<String, Integer> alpha = new HashMap<>();
+    //alpha.put("#e2987c", 255);
+    //
+    //return newPatcher(null, map, alpha);
+    return null;
+  }
+
+  @Nullable
+  public static SVGLoader.SvgElementColorPatcher newPatcher(byte @Nullable [] digest,
+                                                      @NotNull Map<String, String> newPalette,
+                                                      @NotNull Map<String, Integer> alphas) {
+    if (newPalette.isEmpty()) {
+      return null;
+    }
+
+    return new SVGLoader.SvgElementColorPatcher() {
+      @Override
+      public byte[] digest() {
+        return digest;
+      }
+
+      @Override
+      public void patchColors(@NotNull Element svg) {
+        patchColorAttribute(svg, "fill");
+        patchColorAttribute(svg, "stroke");
+        NodeList nodes = svg.getChildNodes();
+        int length = nodes.getLength();
+        for (int i = 0; i < length; i++) {
+          Node item = nodes.item(i);
+          if (item instanceof Element) {
+            patchColors((Element)item);
+          }
+        }
+      }
+
+      private void patchColorAttribute(@NotNull Element svg, String attrName) {
+        String color = svg.getAttribute(attrName);
+        if (!StringUtil.isEmpty(color)) {
+          String newColor = newPalette.get(toCanonicalColor(color));
+          if (newColor != null) {
+            svg.setAttribute(attrName, newColor);
+            if (alphas.get(newColor) != null) {
+              svg.setAttribute(attrName + "-opacity", String.valueOf((Float.valueOf(alphas.get(newColor)) / 255f)));
+            }
+          }
+        }
+      }
+    };
+  }
+
+  private static String toCanonicalColor(String color) {
+    String s = StringUtil.toLowerCase(color);
+    //todo[kb]: add support for red, white, black, and other named colors
+    if (s.startsWith("#") && s.length() < 7) {
+      s = "#" + ColorUtil.toHex(ColorUtil.fromHex(s));
+    }
+    return s;
   }
 
   /**
@@ -275,6 +354,23 @@ public final class SVGLoader {
     new GVTBuilder().build(ctx, document);
     Dimension2D size = ctx.getDocumentSize();
     return new ImageLoader.Dimension2DDouble(size.getWidth() * scale, size.getHeight() * scale);
+  }
+
+  public static void setIsSelectionContext(boolean isSelectionContext) {
+    ourIsSelectionContext = isSelectionContext;
+  }
+
+  public static boolean isSelectionContext() {
+    return ourIsSelectionContext && Registry.is("ide.patch.icons.on.selection");
+  }
+
+  public static void paintIconWithSelection(Icon icon, Component c, Graphics g, int x, int y) {
+    try {
+      setIsSelectionContext(true);
+      icon.paintIcon(c, g, x, y);
+    } finally {
+      setIsSelectionContext(false);
+    }
   }
 
   public interface SvgElementColorPatcher {

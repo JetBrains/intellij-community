@@ -7,75 +7,70 @@ import com.intellij.internal.ml.completion.RankingModelProvider
 import com.intellij.lang.Language
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.LightPlatformTestCase.assertThrows
-import com.jetbrains.completion.ranker.WeakModelProvider
+import com.intellij.completion.ranker.ExperimentModelProvider
 import junit.framework.TestCase
 
 class RankingProvidersTest : LightPlatformTestCase() {
   private lateinit var testLanguage: Language
 
   fun `test no providers registered`() {
-    checkActiveProvider(null)
+    checkActiveProvider(null, 0)
   }
 
-  fun `test disabled weak provider`() {
-    registerProviders(weak(false, false))
-    checkActiveProvider(null)
+  fun `test not matching experiment provider`() {
+    registerProviders(experiment(-1))
+    checkActiveProvider(null, 0)
   }
 
-  fun `test replacing weak provider cannot be used`() {
-    registerProviders(weak(false, true))
-    checkActiveProvider(null)
-  }
-
-  fun `test enabled weak provider`() {
-    val expectedProvider = weak(true, false)
+  fun `test enabled experiment provider`() {
+    val expectedProvider = experiment(0)
     registerProviders(expectedProvider)
-    checkActiveProvider(expectedProvider)
+    checkActiveProvider(expectedProvider, 0)
   }
 
-  fun `test weak provider replace strong`() {
-    val expectedProvider = weak(true, true)
-    registerProviders(expectedProvider, strong())
-    checkActiveProvider(expectedProvider)
+  fun `test experiment provider replace default`() {
+    val expectedProvider = experiment(0)
+    registerProviders(expectedProvider, default())
+    checkActiveProvider(expectedProvider, 0)
   }
 
-  fun `test weak provider should not replace strong`() {
-    val expectedProvider = strong()
-    registerProviders(weak(true, false), expectedProvider)
-    checkActiveProvider(expectedProvider)
+  fun `test experiment provider should not replace default if not matching`() {
+    val expectedProvider = default()
+    registerProviders(experiment(-1), expectedProvider)
+    checkActiveProvider(expectedProvider, 0)
   }
 
-  fun `test strong provider used if there is no weak`() {
-    val expectedProvider = strong()
+  fun `test default provider used if there is no experiment`() {
+    val expectedProvider = default()
     registerProviders(expectedProvider)
-    checkActiveProvider(expectedProvider)
+    checkActiveProvider(expectedProvider, 0)
   }
 
-  fun `test few weak providers`() {
-    val expectedProvider = weak(true, false)
-    registerProviders(expectedProvider, weak(false, true), weak(false, false))
-    checkActiveProvider(expectedProvider)
+  fun `test few experiment providers`() {
+    val expectedProvider = experiment(0)
+    registerProviders(expectedProvider, experiment(-1), experiment(1))
+    checkActiveProvider(expectedProvider, 0)
   }
 
-  fun `test too many weak providers`() {
-    registerProviders(weak(true, false), weak(true, false))
-    assertThrows<IllegalStateException>(IllegalStateException::class.java) { WeakModelProvider.findProvider(testLanguage) }
+  fun `test too many experiment providers`() {
+    registerProviders(experiment(0), experiment(0))
+    assertThrows<IllegalStateException>(IllegalStateException::class.java) { ExperimentModelProvider.findProvider(testLanguage, 0) }
   }
 
-  fun `test too many strong providers`() {
-    registerProviders(strong(), strong())
-    assertThrows<IllegalStateException>(IllegalStateException::class.java) { WeakModelProvider.findProvider(testLanguage) }
+  fun `test too many default providers`() {
+    registerProviders(default(), default())
+    assertThrows<IllegalStateException>(IllegalStateException::class.java) { ExperimentModelProvider.findProvider(testLanguage, 0) }
   }
 
-  private fun checkActiveProvider(expectedProvider: RankingModelProvider?) {
+  private fun checkActiveProvider(expectedProvider: RankingModelProvider?, groupNumber: Int) {
     val languageSupported = expectedProvider != null
     TestCase.assertEquals(languageSupported, expectedProvider in RankingSupport.availableRankers())
-    val actualProvider = WeakModelProvider.findProvider(testLanguage)
+    val actualProvider = ExperimentModelProvider.findProvider(testLanguage, groupNumber)
     TestCase.assertEquals(expectedProvider, actualProvider)
   }
 
   private fun registerProviders(vararg providers: RankingModelProvider) {
-    providers.forEach { WeakModelProvider.registerProvider(it, testRootDisposable) }
+    providers.forEach { ExperimentModelProvider.registerProvider(it, testRootDisposable) }
   }
 
   override fun setUp() {
@@ -92,10 +87,9 @@ class RankingProvidersTest : LightPlatformTestCase() {
     }
   }
 
-  private fun weak(canBeUsed: Boolean, shouldReplace: Boolean): RankingModelProvider = TestWeakProvider(canBeUsed, shouldReplace,
-                                                                                                        testLanguage)
+  private fun experiment(groupNumber: Int): RankingModelProvider = TestExperimentProvider(groupNumber, testLanguage)
 
-  private fun strong(): RankingModelProvider = TestModelProvider(testLanguage)
+  private fun default(): RankingModelProvider = TestModelProvider(testLanguage)
 
   private open class TestModelProvider(private val supportedLanguage: Language) : RankingModelProvider {
     override fun getModel(): DecisionFunction = TestDummyDecisionFunction()
@@ -105,10 +99,9 @@ class RankingProvidersTest : LightPlatformTestCase() {
     override fun isLanguageSupported(language: Language): Boolean = language == supportedLanguage
   }
 
-  private class TestWeakProvider(private val canBeUsed: Boolean, private val shouldReplace: Boolean, supportedLanguage: Language)
-    : TestModelProvider(supportedLanguage), WeakModelProvider {
-    override fun shouldReplace(): Boolean = shouldReplace
-    override fun canBeUsed(): Boolean = canBeUsed
+  private class TestExperimentProvider(private val experimentGroupNumber: Int, supportedLanguage: Language)
+    : TestModelProvider(supportedLanguage), ExperimentModelProvider {
+    override fun experimentGroupNumber(): Int = experimentGroupNumber
   }
 
   private class TestDummyDecisionFunction : DecisionFunction {

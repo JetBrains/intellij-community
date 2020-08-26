@@ -88,7 +88,7 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
   }
 
   @NotNull
-  protected abstract Function<PsiElement, PsiType> getMigrationTypeFunction();
+  protected abstract Function<? super PsiElement, ? extends PsiType> getMigrationTypeFunction();
 
   protected void appendMigrationTypeEditor(JPanel panel, GridBagConstraints cs) {
 
@@ -118,20 +118,19 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
   }
 
   public static class MultipleElements extends TypeMigrationDialog {
-    private final Function<PsiElement, PsiType> myMigrationTypeFunction;
+    private final Function<? super PsiElement, ? extends PsiType> myMigrationTypeFunction;
 
     public MultipleElements(@NotNull Project project,
                             PsiElement @NotNull [] roots,
-                            @NotNull Function<PsiElement, PsiType> migrationTypeFunction,
+                            @NotNull Function<? super PsiElement, ? extends PsiType> migrationTypeFunction,
                             @NotNull TypeMigrationRules rules) {
       super(project, roots, rules);
       myMigrationTypeFunction = migrationTypeFunction;
       init();
     }
 
-    @NotNull
     @Override
-    protected Function<PsiElement, PsiType> getMigrationTypeFunction() {
+    protected @NotNull Function<? super PsiElement, ? extends PsiType> getMigrationTypeFunction() {
       return myMigrationTypeFunction;
     }
   }
@@ -243,9 +242,8 @@ public abstract class TypeMigrationDialog extends RefactoringDialog {
       super.doAction();
     }
 
-    @NotNull
     @Override
-    protected Function<PsiElement, PsiType> getMigrationTypeFunction() {
+    protected @NotNull Function<? super PsiElement, ? extends PsiType> getMigrationTypeFunction() {
       return Functions.constant(getMigrationType());
     }
 

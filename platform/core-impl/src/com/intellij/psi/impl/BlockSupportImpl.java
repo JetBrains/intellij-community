@@ -33,6 +33,7 @@ import com.intellij.util.diff.DiffTree;
 import com.intellij.util.diff.DiffTreeChangeBuilder;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import com.intellij.util.diff.ShallowNodeComparator;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -193,12 +194,12 @@ public class BlockSupportImpl extends BlockSupport {
   }
 
   private static void reportInconsistentLength(PsiFile file, CharSequence newFileText, ASTNode node, int start, int end) {
-    String message = "Index out of bounds: type=" + node.getElementType() +
-                     "; file=" + file +
-                     "; file.class=" + file.getClass() +
-                     "; start=" + start +
-                     "; end=" + end +
-                     "; length=" + node.getTextLength();
+    @NonNls String message = "Index out of bounds: type=" + node.getElementType() +
+                             "; file=" + file +
+                             "; file.class=" + file.getClass() +
+                             "; start=" + start +
+                             "; end=" + end +
+                             "; length=" + node.getTextLength();
     String newTextBefore = newFileText.subSequence(0, start).toString();
     String oldTextBefore = file.getText().subSequence(0, start).toString();
     if (oldTextBefore.equals(newTextBefore)) {
@@ -281,7 +282,7 @@ public class BlockSupportImpl extends BlockSupport {
     return newFile;
   }
 
-  private static String details(FileViewProvider providerCopy, FileViewProvider viewProvider) {
+  private static @NonNls String details(FileViewProvider providerCopy, FileViewProvider viewProvider) {
     return "; languages: " + viewProvider.getLanguages() +
            "; base: " + viewProvider.getBaseLanguage() +
            "; copy: " + providerCopy +

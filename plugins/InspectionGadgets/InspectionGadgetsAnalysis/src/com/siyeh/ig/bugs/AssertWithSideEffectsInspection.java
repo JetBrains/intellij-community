@@ -108,7 +108,7 @@ public class AssertWithSideEffectsInspection extends BaseInspection {
       PsiExpression expression =
         signature.mutatedExpressions(call).filter(expr -> !ExpressionUtils.isNewObject(expr)).findFirst().orElse(null);
       if (expression != null) {
-        return "call to '" + method.getName() + "()' mutates '" + expression.getText() + "'";
+        return InspectionGadgetsBundle.message("assert.with.side.effects.call.mutates.expression", method.getName(), expression.getText());
       }
     }
     final PsiCodeBlock body = method.getBody();
@@ -119,7 +119,7 @@ public class AssertWithSideEffectsInspection extends BaseInspection {
     body.accept(visitor);
     String description = visitor.getMutatedField();
     if (description != null) {
-      return "call to '" + method.getName() + "()' mutates field '" + description + "'";
+      return InspectionGadgetsBundle.message("assert.with.side.effects.call.mutates.field", method.getName(), description);
     }
     return null;
   }

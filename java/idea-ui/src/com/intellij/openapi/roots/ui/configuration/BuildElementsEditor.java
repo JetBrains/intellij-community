@@ -223,7 +223,7 @@ public class BuildElementsEditor extends ModuleElementsEditor {
       }
     });
 
-    return new CommittableFieldPanel(textField, null, null, new BrowseFilesListener(textField, title, "", outputPathsChooserDescriptor) {
+    return new CommittableFieldPanel(textField, new BrowseFilesListener(textField, title, "", outputPathsChooserDescriptor) {
       @Override
       public void actionPerformed(ActionEvent e) {
         super.actionPerformed(e);
@@ -285,12 +285,10 @@ public class BuildElementsEditor extends ModuleElementsEditor {
     private final Runnable myCommitRunnable;
 
     CommittableFieldPanel(final JTextField textField,
-                          String labelText,
-                          final String viewerDialogTitle,
                           ActionListener browseButtonActionListener,
                           final Runnable documentListener,
                           final Runnable commitPathRunnable) {
-      super(textField, labelText, viewerDialogTitle, browseButtonActionListener, documentListener);
+      super(textField, null, null, browseButtonActionListener, documentListener);
       myCommitRunnable = commitPathRunnable;
     }
 

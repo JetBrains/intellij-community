@@ -9,6 +9,7 @@ import com.intellij.openapi.fileChooser.ex.FileSystemTreeImpl;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.UIBundle;
@@ -64,7 +65,7 @@ public class NewFolderAction extends FileChooserAction implements LightEditCompa
   private static class NewFolderValidator implements InputValidatorEx {
 
     private final VirtualFile myDirectory;
-    private String myErrorText;
+    private @NlsContexts.DetailedDescription String myErrorText;
 
     NewFolderValidator(VirtualFile directory) {
       myDirectory = directory;

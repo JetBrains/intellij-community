@@ -2,6 +2,7 @@
 package com.intellij.util.ui;
 
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.accessibility.AccessibleContext;
@@ -33,19 +34,19 @@ public class ThreeStateCheckBox extends JCheckBox {
     this(null, null, initial);
   }
 
-  public ThreeStateCheckBox(final String text) {
+  public ThreeStateCheckBox(@Nls String text) {
     this(text, null, State.DONT_CARE);
   }
 
-  public ThreeStateCheckBox(final String text, final State initial) {
+  public ThreeStateCheckBox(@Nls String text, final State initial) {
     this(text, null, initial);
   }
 
-  public ThreeStateCheckBox(final String text, final Icon icon) {
+  public ThreeStateCheckBox(@Nls String text, final Icon icon) {
     this(text, icon, State.DONT_CARE);
   }
 
-  public ThreeStateCheckBox(final String text, final Icon icon, final State initial) {
+  public ThreeStateCheckBox(@Nls String text, final Icon icon, final State initial) {
     super(text, icon);
 
     setModel(new ToggleButtonModel() {
@@ -143,12 +144,13 @@ public class ThreeStateCheckBox extends JCheckBox {
 
         final Rectangle r2 = new Rectangle();
         final Rectangle r3 = new Rectangle();
+        String text = getText();
         SwingUtilities.layoutCompoundLabel(
-          this, getFontMetrics(getFont()), getText(), icon,
+          this, getFontMetrics(getFont()), text, icon,
           getVerticalAlignment(), getHorizontalAlignment(),
           getVerticalTextPosition(), getHorizontalTextPosition(),
           r1, r2, r3,
-          getText() == null ? 0 : getIconTextGap());
+          text == null ? 0 : getIconTextGap());
 
         // selected table cell: do not paint white on white
         g.setColor(UIUtil.getTreeForeground());

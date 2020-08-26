@@ -3,6 +3,8 @@ package git4idea.util;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
@@ -12,7 +14,6 @@ import git4idea.GitBranch;
 import git4idea.GitUtil;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,6 +26,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+
+import static com.intellij.util.ui.UIUtil.BR;
 
 /**
  * Utilities for git plugin user interface
@@ -44,11 +47,11 @@ public final class GitUIUtil {
   }
 
   public static void notifyMessages(@NotNull Project project,
-                                    @Nls @NotNull String title,
-                                    @Nls @Nullable String description,
+                                    @NotNull @NlsContexts.NotificationTitle String title,
+                                    @Nullable @NlsContexts.NotificationContent String description,
                                     boolean important,
                                     @Nullable Collection<String> messages) {
-    String desc = (description != null ? description.replace("\n", "<br/>") : "");
+    String desc = (description != null ? description.replace("\n", BR) : "");
     if (messages != null && !messages.isEmpty()) {
       desc += StringUtil.join(messages, "<hr/><br/>");
     }
@@ -62,8 +65,8 @@ public final class GitUIUtil {
   }
 
   public static void notifyMessage(Project project,
-                                   @Nls @NotNull String title,
-                                   @Nls @Nullable String description,
+                                   @NotNull @NlsContexts.NotificationTitle String title,
+                                   @Nullable @NlsContexts.NotificationContent String description,
                                    boolean important,
                                    @Nullable Collection<? extends Exception> errors) {
     Collection<String> errorMessages;
@@ -75,11 +78,11 @@ public final class GitUIUtil {
       for (Exception error : errors) {
         if (error instanceof VcsException) {
           for (String message : ((VcsException)error).getMessages()) {
-            errorMessages.add(message.replace("\n", "<br/>"));
+            errorMessages.add(message.replace("\n", BR));
           }
         }
         else {
-          errorMessages.add(error.getMessage().replace("\n", "<br/>"));
+          errorMessages.add(error.getMessage().replace("\n", BR));
         }
       }
     }
@@ -87,8 +90,8 @@ public final class GitUIUtil {
   }
 
   public static void notifyError(Project project,
-                                 @Nls @NotNull String title,
-                                 @Nls @Nullable String description,
+                                 @NotNull @NlsContexts.NotificationTitle String title,
+                                 @Nullable @NlsContexts.NotificationContent String description,
                                  boolean important,
                                  @Nullable Exception error) {
     notifyMessage(project, title, description, important, error == null ? null : Collections.singleton(error));
@@ -98,6 +101,7 @@ public final class GitUIUtil {
    * Splits the given VcsExceptions to one string. Exceptions are separated by &lt;br/&gt;
    * Line separator is also replaced by &lt;br/&gt;
    */
+  @NlsSafe
   @NotNull
   public static String stringifyErrors(@Nullable Collection<? extends VcsException> errors) {
     if (errors == null) {
@@ -106,13 +110,15 @@ public final class GitUIUtil {
     StringBuilder content = new StringBuilder();
     for (VcsException e : errors) {
       for (String message : e.getMessages()) {
-        content.append(message.replace("\n", "<br/>")).append("<br/>");
+        content.append(message.replace("\n", BR)).append(BR);
       }
     }
     return content.toString();
   }
 
-  public static void notifyImportantError(Project project, @Nls @NotNull String title, @Nls @Nullable String description) {
+  public static void notifyImportantError(Project project,
+                                          @NotNull @NlsContexts.NotificationTitle String title,
+                                          @Nullable @NlsContexts.NotificationContent String description) {
     notifyMessage(project, title, description, true, null);
   }
 

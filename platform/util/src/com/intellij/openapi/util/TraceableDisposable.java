@@ -107,7 +107,7 @@ public class TraceableDisposable {
   @NotNull
   public String getStackTrace() {
     StringWriter s = new StringWriter();
-    PrintWriter out = new PrintWriter(s);
+    @NonNls PrintWriter out = new PrintWriter(s);
     if (CREATE_TRACE != null) {
       out.println("--------------Creation trace: ");
       CREATE_TRACE.printStackTrace(out);

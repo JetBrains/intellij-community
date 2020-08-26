@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.configurationStore.StoreReloadManager;
@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts.ProgressTitle;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
@@ -22,6 +23,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.ViewUpdateInfoNotification;
 import com.intellij.vcs.commit.SingleChangeListCommitWorkflowHandler;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
@@ -54,11 +56,18 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
   private final IMerger myMerger;
   private ResolveWorker myResolveWorker;
   private FilePath myMergeTarget;
-  private final String myTitle;
+  private final @ProgressTitle @NotNull String myTitle;
   private final boolean myDryRun;
 
-  public SvnIntegrateChangesTask(final SvnVcs vcs, @NotNull WorkingCopyInfo info, final MergerFactory mergerFactory,
-                                 final Url currentBranchUrl, final String title, final boolean dryRun, String branchName) {
+  public SvnIntegrateChangesTask(
+    final SvnVcs vcs,
+    @NotNull WorkingCopyInfo info,
+    final MergerFactory mergerFactory,
+    final Url currentBranchUrl,
+    @ProgressTitle @NotNull String title,
+    final boolean dryRun,
+    String branchName
+  ) {
     super(vcs.getProject(), title, true, VcsConfiguration.getInstance(vcs.getProject()).getUpdateOption());
     myDryRun = dryRun;
     myTitle = title;
@@ -301,7 +310,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
                             SvnBundle.message("action.Subversion.integrate.changes.collecting.changes.to.commit.task.title")) {
 
       private final GatheringChangelistBuilder changesBuilder = new GatheringChangelistBuilder(myVcs, myAccumulatedFiles);
-      private final Ref<String> caughtError = new Ref<>();
+      private final Ref<@Nls String> caughtError = new Ref<>();
 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {

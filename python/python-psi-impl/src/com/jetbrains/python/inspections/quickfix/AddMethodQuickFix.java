@@ -48,13 +48,13 @@ public class AddMethodQuickFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getName() {
-    return PyPsiBundle.message("QFIX.NAME.add.method.$0.to.class.$1", myIdentifier, myClassName);
+    return PyPsiBundle.message("QFIX.add.method.to.class", myIdentifier, myClassName);
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return PyPsiBundle.message("QFIX.add.method.to.class");
+    return PyPsiBundle.message("QFIX.NAME.add.method.to.class");
   }
 
   @Override

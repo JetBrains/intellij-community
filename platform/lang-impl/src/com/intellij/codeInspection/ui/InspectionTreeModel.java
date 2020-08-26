@@ -161,7 +161,7 @@ public class InspectionTreeModel extends BaseTreeModel<InspectionTreeNode> imple
     return getOrAdd(entity, () -> ReadAction.compute(supplier::get), parent);
   }
 
-  public <T extends InspectionTreeNode> T createCustomNode(@NotNull Object userObject, @NotNull Supplier<T> supplier, @NotNull InspectionTreeNode parent) {
+  public <T extends InspectionTreeNode> T createCustomNode(@NotNull Object userObject, @NotNull Supplier<? extends T> supplier, @NotNull InspectionTreeNode parent) {
     return getOrAdd(userObject, supplier, parent);
   }
 

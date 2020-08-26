@@ -15,6 +15,8 @@ import org.jetbrains.yaml.formatter.YAMLCodeStyleSettings;
 
 import javax.swing.*;
 
+import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions.getInstance;
+
 public class YAMLLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSettingsProvider {
   private static class Holder {
     private static final int[] ALIGN_VALUES = new int[]{
@@ -58,7 +60,7 @@ public class YAMLLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     }
     else if (settingsType == SettingsType.SPACING_SETTINGS) {
       consumer.showStandardOptions("SPACE_WITHIN_BRACES", "SPACE_WITHIN_BRACKETS");
-      consumer.showCustomOption(YAMLCodeStyleSettings.class, "SPACE_BEFORE_COLON", "Before ':'", CodeStyleSettingsCustomizable.SPACES_OTHER);
+      consumer.showCustomOption(YAMLCodeStyleSettings.class, "SPACE_BEFORE_COLON", "Before ':'", getInstance().SPACES_OTHER);
     }
     else if (settingsType == SettingsType.WRAPPING_AND_BRACES_SETTINGS) {
       consumer.showStandardOptions("KEEP_LINE_BREAKS");

@@ -23,7 +23,7 @@ import javax.swing.*;
 
 public class IconButton extends ActiveIcon {
 
-  private final String myTooltip;
+  private final @Tooltip String myTooltip;
 
   private Icon myHovered;
 
@@ -55,7 +55,7 @@ public class IconButton extends ActiveIcon {
     return myHovered;
   }
 
-  public String getTooltip() {
+  public @Tooltip String getTooltip() {
     return myTooltip;
   }
 }

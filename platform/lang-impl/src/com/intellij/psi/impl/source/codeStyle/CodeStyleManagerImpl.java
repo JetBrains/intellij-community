@@ -917,22 +917,22 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
 
   @Override
   public int getSpacing(@NotNull PsiFile file, int offset) {
-    FormattingModel model = createFormattingModel(file);
+    FormattingModel model = createFormattingModel(file, offset);
     return model == null ? -1 : FormatterEx.getInstance().getSpacingForBlockAtOffset(model, offset);
   }
 
   @Override
   public int getMinLineFeeds(@NotNull PsiFile file, int offset) {
-    FormattingModel model = createFormattingModel(file);
+    FormattingModel model = createFormattingModel(file, offset);
     return model == null ? -1 : FormatterEx.getInstance().getMinLineFeedsBeforeBlockAtOffset(model, offset);
   }
 
   @Nullable
-  private static FormattingModel createFormattingModel(@NotNull PsiFile file) {
+  private static FormattingModel createFormattingModel(@NotNull PsiFile file, int offset) {
     FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(file);
     if (builder == null) return null;
     CodeStyleSettings settings = CodeStyle.getSettings(file);
-    return builder.createModel(file, settings);
+    return builder.createModel(FormattingContext.create(file, TextRange.create(offset, offset), settings, FormattingMode.REFORMAT));
   }
 
   @Override
@@ -986,7 +986,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
             );
           });
         },
-        "reformat", null
+        LangBundle.message("command.name.reformat"), null
       )
     );
   }

@@ -36,10 +36,8 @@ import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetManagerBridge;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge;
-import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge;
 import com.intellij.workspaceModel.ide.legacyBridge.*;
-import com.intellij.workspaceModel.storage.WorkspaceEntity;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
 import org.jetbrains.annotations.NotNull;
@@ -166,12 +164,10 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
         }
       }
       myModifiableModels.values().forEach(ModifiableModel::commit);
-      Map<WorkspaceEntity, WorkspaceEntity> res = WorkspaceModel.getInstance(myProject).updateProjectModel(builder -> builder.addDiff(getActualStorageBuilder()));
-      for (Map.Entry<Module, ModifiableFacetModel> each: myModifiableFacetModels.entrySet()) {
-        if (!each.getKey().isDisposed()) {
-          ((ModifiableFacetModelBridge)each.getValue()).populateFacetManager(res);
-        }
-      }
+      WorkspaceModel.getInstance(myProject).updateProjectModel(builder -> {
+        builder.addDiff(getActualStorageBuilder());
+        return null;
+      });
     });
     myUserData.clear();
   }

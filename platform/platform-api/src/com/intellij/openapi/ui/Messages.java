@@ -8,10 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.messages.MessageDialog;
 import com.intellij.openapi.ui.messages.MessagesService;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.BrowserHyperlinkListener;
@@ -942,7 +939,7 @@ public class Messages {
    * @return trimmed input string or {@code null} if user cancelled dialog.
    */
   @Nullable
-  public static String showInputDialog(@Nullable Project project,
+  public static @NlsSafe String showInputDialog(@Nullable Project project,
                                        @DialogMessage String message,
                                        @DialogTitle String title,
                                        @Nullable Icon icon) {
@@ -953,7 +950,7 @@ public class Messages {
    * @return trimmed input string or {@code null} if user cancelled dialog.
    */
   @Nullable
-  public static String showInputDialog(@NotNull Component parent,
+  public static @NlsSafe String showInputDialog(@NotNull Component parent,
                                        @DialogMessage String message,
                                        @DialogTitle String title,
                                        @Nullable Icon icon) {
@@ -967,28 +964,28 @@ public class Messages {
    * @see #showInputDialog(Component, String, String, Icon)
    */
   @Nullable
-  public static String showInputDialog(@DialogMessage String message,
+  public static @NlsSafe String showInputDialog(@DialogMessage String message,
                                        @DialogTitle String title,
                                        @Nullable Icon icon) {
     return showInputDialog(message, title, icon, null, null);
   }
 
   @Nullable
-  public static String showInputDialog(@Nullable Project project,
+  public static @NlsSafe String showInputDialog(@Nullable Project project,
                                        @DialogMessage String message,
                                        @DialogTitle String title,
                                        @Nullable Icon icon,
-                                       @Nullable String initialValue,
+                                       @Nullable @NonNls String initialValue,
                                        @Nullable InputValidator validator) {
     return MessagesService.getInstance().showInputDialog(project, null, message, title, icon, initialValue, validator, null, null);
   }
 
   @Nullable
-  public static String showInputDialog(Project project,
+  public static @NlsSafe String showInputDialog(Project project,
                                        @DialogMessage String message,
                                        @DialogTitle String title,
                                        @Nullable Icon icon,
-                                       @Nullable String initialValue,
+                                       @Nullable @NonNls String initialValue,
                                        @Nullable InputValidator validator,
                                        @Nullable TextRange selection) {
     return showInputDialog(project, message, title, icon, initialValue, validator, selection, null);
@@ -996,11 +993,11 @@ public class Messages {
   }
 
   @Nullable
-  public static String showInputDialog(Project project,
+  public static @NlsSafe String showInputDialog(Project project,
                                        @DialogMessage String message,
                                        @DialogTitle String title,
                                        @Nullable Icon icon,
-                                       @Nullable String initialValue,
+                                       @Nullable @NonNls String initialValue,
                                        @Nullable InputValidator validator,
                                        @Nullable TextRange selection,
                                        @Nullable @DetailedDescription String comment) {
@@ -1008,11 +1005,11 @@ public class Messages {
   }
 
   @Nullable
-  public static String showInputDialog(@NotNull Component parent,
+  public static @NlsSafe String showInputDialog(@NotNull Component parent,
                                        @DialogMessage String message,
                                        @DialogTitle String title,
                                        @Nullable Icon icon,
-                                       @Nullable String initialValue,
+                                       @Nullable @NonNls String initialValue,
                                        @Nullable InputValidator validator) {
     return MessagesService.getInstance().showInputDialog(null, parent, message, title, icon, initialValue, validator, null, null);
   }
@@ -1024,19 +1021,19 @@ public class Messages {
    * @see #showInputDialog(Component, String, String, Icon, String, InputValidator)
    */
   @Nullable
-  public static String showInputDialog(@DialogMessage String message,
-                                       @DialogTitle String title,
-                                       @Nullable Icon icon,
-                                       @Nullable String initialValue,
-                                       @Nullable InputValidator validator) {
+  public static @NlsSafe String showInputDialog(@DialogMessage String message,
+                                                @DialogTitle String title,
+                                                @Nullable Icon icon,
+                                                @Nullable @NonNls String initialValue,
+                                                @Nullable InputValidator validator) {
     return MessagesService.getInstance().showInputDialog(null, null, message, title, icon, initialValue, validator, null, null);
   }
 
   @Nullable
-  public static String showMultilineInputDialog(Project project,
+  public static @NlsSafe String showMultilineInputDialog(Project project,
                                                 @DialogMessage String message,
                                                 @DialogTitle String title,
-                                                @Nullable String initialValue,
+                                                @Nullable @NonNls String initialValue,
                                                 @Nullable Icon icon,
                                                 @Nullable InputValidator validator) {
     return MessagesService.getInstance().showMultilineInputDialog(project, message, title, initialValue, icon, validator);
@@ -1049,7 +1046,7 @@ public class Messages {
                                                                   boolean checked,
                                                                   boolean checkboxEnabled,
                                                                   @Nullable Icon icon,
-                                                                  String initialValue,
+                                                                  @Nullable @NonNls String initialValue,
                                                                   @Nullable InputValidator validator) {
     return MessagesService.getInstance()
       .showInputDialogWithCheckBox(message, title, checkboxText, checked, checkboxEnabled, icon, initialValue, validator);
@@ -1176,13 +1173,13 @@ public class Messages {
   public static class InputDialog extends MessageDialog {
     protected JTextComponent myField;
     private final InputValidator myValidator;
-    private final String myComment;
+    private final @DetailedDescription String myComment;
 
     public InputDialog(@Nullable Project project,
                        @DialogMessage String message,
                        @DialogTitle String title,
                        @Nullable Icon icon,
-                       @Nullable String initialValue,
+                       @Nullable @NonNls String initialValue,
                        @Nullable InputValidator validator,
                        String @NotNull @NlsContexts.Button [] options,
                        int defaultOption,
@@ -1199,7 +1196,7 @@ public class Messages {
                        @DialogMessage String message,
                        @DialogTitle String title,
                        @Nullable Icon icon,
-                       @Nullable String initialValue,
+                       @Nullable @NonNls String initialValue,
                        @Nullable InputValidator validator,
                        String @NotNull @NlsContexts.Button [] options,
                        int defaultOption) {
@@ -1210,7 +1207,7 @@ public class Messages {
                        @DialogMessage String message,
                        @DialogTitle String title,
                        @Nullable Icon icon,
-                       @Nullable String initialValue,
+                       @Nullable @NonNls String initialValue,
                        @Nullable InputValidator validator) {
       this(project, message, title, icon, initialValue, validator, new String[]{getOkButton(), getCancelButton()}, 0);
     }
@@ -1355,7 +1352,7 @@ public class Messages {
     }
 
     @Nullable
-    public String getInputString() {
+    public @NlsSafe String getInputString() {
       if (getExitCode() == 0) {
         return myField.getText().trim();
       }
@@ -1368,7 +1365,7 @@ public class Messages {
                                 @DialogMessage String message,
                                 @DialogTitle String title,
                                 @Nullable Icon icon,
-                                @Nullable String initialValue,
+                                @Nullable @NonNls String initialValue,
                                 @Nullable InputValidator validator,
                                 String @NotNull @NlsContexts.Button [] options,
                                 int defaultOption) {

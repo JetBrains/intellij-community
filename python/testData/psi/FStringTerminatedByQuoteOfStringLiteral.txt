@@ -11,9 +11,9 @@ PyFile:FStringTerminatedByQuoteOfStringLiteral.py
         PsiElement(Py:FSTRING_TEXT)('foo')
         PyFStringFragment
           PsiElement(Py:FSTRING_FRAGMENT_START)('{')
-          PsiErrorElement:expression expected
+          PsiErrorElement:Expression expected
             <empty list>
-          PsiErrorElement:} expected
+          PsiErrorElement:'}' expected
             <empty list>
         PsiElement(Py:FSTRING_END)(''')
     PsiErrorElement:End of statement expected

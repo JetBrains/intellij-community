@@ -35,6 +35,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.refactoring.PyDefUseUtil;
 import com.jetbrains.python.refactoring.PyReplaceExpressionUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -298,7 +299,7 @@ public class PyInlineLocalHandler extends InlineActionHandler {
     return "refactoring.python.inline.local";
   }
 
-  private static String getRefactoringName() {
+  private static @Nls(capitalization = Nls.Capitalization.Title) String getRefactoringName() {
     return RefactoringBundle.message("inline.variable.title");
   }
 }

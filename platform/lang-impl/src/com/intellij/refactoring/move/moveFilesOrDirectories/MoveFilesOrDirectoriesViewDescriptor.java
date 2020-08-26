@@ -24,12 +24,13 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 class MoveFilesOrDirectoriesViewDescriptor implements UsageViewDescriptor {
   private final PsiElement[] myElementsToMove;
   private String myProcessedElementsHeader;
-  private final String myCodeReferencesText;
+  private final @Nls String myCodeReferencesText;
 
   MoveFilesOrDirectoriesViewDescriptor(PsiElement[] elementsToMove, PsiDirectory newParent) {
     myElementsToMove = elementsToMove;

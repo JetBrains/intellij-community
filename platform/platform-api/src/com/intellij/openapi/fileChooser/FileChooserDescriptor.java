@@ -34,8 +34,8 @@ public class FileChooserDescriptor implements Cloneable {
   private final boolean myChooseJarContents;
   private final boolean myChooseMultiple;
 
-  private String myTitle = UIBundle.message("file.chooser.default.title");
-  private String myDescription;
+  private @NlsContexts.DialogTitle String myTitle = UIBundle.message("file.chooser.default.title");
+  private @NlsContexts.Label String myDescription;
 
   private boolean myHideIgnored = true;
   private final List<VirtualFile> myRoots = new ArrayList<>();
@@ -106,7 +106,7 @@ public class FileChooserDescriptor implements Cloneable {
     return myChooseMultiple;
   }
 
-  public String getTitle() {
+  public @NlsContexts.DialogTitle String getTitle() {
     return myTitle;
   }
 
@@ -119,7 +119,7 @@ public class FileChooserDescriptor implements Cloneable {
     return this;
   }
 
-  public String getDescription() {
+  public @NlsContexts.Label String getDescription() {
     return myDescription;
   }
 

@@ -18,6 +18,8 @@ import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.FileDownloadingAdapter;
@@ -49,7 +51,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
   private final SynchronizedClearableLazy<JsonSchemaService> myServiceLazy;
   private static final AtomicBoolean myIsNotified = new AtomicBoolean(false);
 
-  JsonSchemaStatusWidget(Project project) {
+  JsonSchemaStatusWidget(@NotNull Project project) {
     super(project, false);
     myServiceLazy = new SynchronizedClearableLazy<>(() -> {
       if (!project.isDisposed()) {
@@ -60,7 +62,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
       }
       return null;
     });
-    JsonWidgetSuppressor.EXTENSION_POINT_NAME.addChangeListener(this::update, project);
+    JsonWidgetSuppressor.EXTENSION_POINT_NAME.addChangeListener(this::update, this);
   }
 
   @Nullable
@@ -415,8 +417,11 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
     myIsNotified.set(true);
     Alarm alarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
     alarm.addRequest(() -> {
-      final JComponent label =
-        HintUtil.createErrorLabel("<b>" + JsonBundle.message("schema.widget.conflict.popup.title") + "</b><br/><br/>" + ((MyWidgetState)state).getTooltip());
+      String message = new HtmlBuilder()
+        .append(HtmlChunk.tag("b").addText(JsonBundle.message("schema.widget.conflict.popup.title")))
+        .append(HtmlChunk.br()).append(HtmlChunk.br())
+        .append(((MyWidgetState)state).getTooltip()).toString();
+      JComponent label = HintUtil.createErrorLabel(message);
       BalloonBuilder builder = JBPopupFactory.getInstance().createBalloonBuilder(label);
       JComponent statusBarComponent = getComponent();
       Balloon balloon = builder

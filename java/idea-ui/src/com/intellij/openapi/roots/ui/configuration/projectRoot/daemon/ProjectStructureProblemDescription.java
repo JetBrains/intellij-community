@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration.projectRoot.daemon;
 
+import com.intellij.openapi.util.NlsContexts.DetailedDescription;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nls;
@@ -27,7 +28,7 @@ public class ProjectStructureProblemDescription {
   public enum ProblemLevel {PROJECT, GLOBAL}
   @NotNull
   private final @Nls(capitalization = Nls.Capitalization.Sentence) String myMessage;
-  private final String myDescription;
+  private final @DetailedDescription String myDescription;
   private final PlaceInProjectStructure myPlace;
   private final List<? extends ConfigurationErrorQuickFix> myFixes;
   private final ProjectStructureProblemType myProblemType;
@@ -35,7 +36,7 @@ public class ProjectStructureProblemDescription {
   private final boolean myCanShowPlace;
 
   public ProjectStructureProblemDescription(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String message,
-                                            @Nullable String description,
+                                            @Nullable @DetailedDescription String description,
                                             @NotNull PlaceInProjectStructure place,
                                             @NotNull ProjectStructureProblemType problemType,
                                             @NotNull List<? extends ConfigurationErrorQuickFix> fixes) {
@@ -43,7 +44,7 @@ public class ProjectStructureProblemDescription {
   }
 
   public ProjectStructureProblemDescription(@NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String message,
-                                            @Nullable String description,
+                                            @Nullable @DetailedDescription String description,
                                             @NotNull PlaceInProjectStructure place,
                                             @NotNull ProjectStructureProblemType problemType,
                                             @NotNull ProblemLevel level,
@@ -74,7 +75,7 @@ public class ProjectStructureProblemDescription {
   }
 
   @Nullable
-  public String getDescription() {
+  public @DetailedDescription String getDescription() {
     return myDescription;
   }
 

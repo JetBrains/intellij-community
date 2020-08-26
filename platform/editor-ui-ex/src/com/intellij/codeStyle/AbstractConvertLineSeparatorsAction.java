@@ -123,8 +123,8 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction imple
       commandText = PlatformEditorBundle.message("command.name.changed.line.separators.to", LineSeparator.fromString(newSeparator));
     }
     else {
-      commandText = String.format("Changed line separators from %s to %s",
-                                  LineSeparator.fromString(currentSeparator), LineSeparator.fromString(newSeparator));
+      commandText = PlatformEditorBundle.message("command.name.changed.line.separators.from.s.to.s",
+                                                 LineSeparator.fromString(currentSeparator), LineSeparator.fromString(newSeparator));
     }
 
     WriteCommandAction.writeCommandAction(project).withName(commandText).run(() -> {

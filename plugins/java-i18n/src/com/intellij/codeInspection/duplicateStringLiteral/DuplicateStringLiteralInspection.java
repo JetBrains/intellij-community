@@ -3,6 +3,7 @@ package com.intellij.codeInspection.duplicateStringLiteral;
 
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.i18n.JavaI18nUtil;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.java.JavaLanguage;
@@ -287,7 +288,7 @@ public class DuplicateStringLiteralInspection extends AbstractBaseJavaLocalInspe
   }
 
   private static final class ReplaceFix extends LocalQuickFixAndIntentionActionOnPsiElement {
-    private final String myText;
+    private final @IntentionName String myText;
     @SafeFieldForPreview
     private final SmartPsiElementPointer<PsiField> myConst;
 

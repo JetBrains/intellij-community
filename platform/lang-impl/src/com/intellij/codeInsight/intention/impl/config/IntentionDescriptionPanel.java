@@ -14,6 +14,7 @@ import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.HyperlinkLabel;
@@ -71,7 +72,7 @@ public class IntentionDescriptionPanel {
   }
 
   // TODO 134099: see SingleInspectionProfilePanel#setHTML and PostfixDescriptionPanel#readHtml
-  private String toHTML(String text) {
+  private String toHTML(@NlsContexts.HintText String text) {
     final HintHint hintHint = new HintHint(myDescriptionBrowser, new Point(0, 0));
     hintHint.setFont(StartupUiUtil.getLabelFont());
     return HintUtil.prepareHintText(text, hintHint);

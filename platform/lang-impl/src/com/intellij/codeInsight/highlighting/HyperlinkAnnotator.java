@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class HyperlinkAnnotator implements Annotator {
 
-  private static final Key<String> messageKey = Key.create("hyperlink.message");
+  private static final Key<@Nls String> messageKey = Key.create("hyperlink.message");
 
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {

@@ -149,7 +149,7 @@ class IncompatibleGradleJdkIssueChecker : GradleIssueChecker {
   companion object {
     /**
      * Checks if the error might be caused by applying the workaround for https://github.com/gradle/gradle/issues/8431
-     * @see org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper.workaroundJavaVersionIssueIfNeeded
+     * @see org.jetbrains.plugins.gradle.GradleConnectorService.workaroundJavaVersionIssueIfNeeded
      */
     private fun causedByJavaVersionWorkaround(gradleVersionUsed: GradleVersion?, rootCause: Throwable): Boolean {
       return JavaVersion.current().feature > 8 && gradleVersionUsed != null &&

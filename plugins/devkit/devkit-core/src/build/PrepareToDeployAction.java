@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.build;
 
 import com.intellij.compiler.server.CompileServerPlugin;
@@ -24,6 +24,7 @@ import com.intellij.openapi.roots.NativeLibraryOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -51,6 +52,7 @@ public class PrepareToDeployAction extends AnAction {
   private static final String ZIP_EXTENSION = ".zip";
   private static final String JAR_EXTENSION = ".jar";
   private static final String TEMP_PREFIX = "temp";
+
   private static class Holder {
     private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.balloonGroup("Plugin DevKit Deployment");
   }
@@ -79,13 +81,15 @@ public class PrepareToDeployAction extends AnAction {
             }
           }
           if (!errorMessages.isEmpty()) {
-            Messages.showErrorDialog(errorMessages.iterator().next(), DevKitBundle.message("error.occurred"));
+            @NlsSafe String errorMessage = errorMessages.iterator().next();
+            Messages.showErrorDialog(errorMessage, DevKitBundle.message("error.occurred"));
           }
           else if (!successMessages.isEmpty()) {
             String title = pluginModules.size() == 1 ?
                            DevKitBundle.message("success.deployment.message", pluginModules.get(0).getName()) :
                            DevKitBundle.message("success.deployment.message.all");
-            Holder.NOTIFICATION_GROUP.createNotification(title, StringUtil.join(successMessages, "\n"), NotificationType.INFORMATION, null).notify(project);
+            @NlsSafe String successMessage = StringUtil.join(successMessages, "\n");
+            Holder.NOTIFICATION_GROUP.createNotification(title, successMessage, NotificationType.INFORMATION, null).notify(project);
           }
         }, project.getDisposed());
       }
@@ -121,7 +125,7 @@ public class PrepareToDeployAction extends AnAction {
     return clearReadOnly(module.getProject(), dstFile) && ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
       if (progressIndicator != null) {
-        progressIndicator.setText(DevKitBundle.message("prepare.for.deployment.common"));
+        progressIndicator.setText(DevKitBundle.message("prepare.for.deployment.task.progress"));
         progressIndicator.setIndeterminate(true);
       }
       try {
@@ -143,7 +147,7 @@ public class PrepareToDeployAction extends AnAction {
       catch (IOException e) {
         errorMessages.add(e.getMessage() + "\n(" + dstPath + ")");
       }
-    }, DevKitBundle.message("prepare.for.deployment", pluginName), true, module.getProject());
+    }, DevKitBundle.message("prepare.for.deployment.task", pluginName), true, module.getProject());
   }
 
   @NotNull

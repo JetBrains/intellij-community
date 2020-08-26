@@ -3,14 +3,14 @@ package com.intellij.ui.tabs
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
-import com.intellij.openapi.options.SearchableConfigurable
-import com.intellij.openapi.options.Configurable.NoScroll
 import com.intellij.ide.IdeBundle.message
 import com.intellij.ide.util.scopeChooser.EditScopesDialog
 import com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable.PROJECT_SCOPES
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.keymap.KeymapUtil.getShortcutsText
 import com.intellij.openapi.options.CheckBoxConfigurable
+import com.intellij.openapi.options.Configurable.NoScroll
+import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.Project
@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.packageDependencies.DependencyValidationManager
 import com.intellij.psi.search.scope.packageSet.NamedScope
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager
+import com.intellij.psi.search.scope.packageSet.NamedScopesHolder
 import com.intellij.ui.ColorChooser.chooseColor
 import com.intellij.ui.ColorUtil.toHex
 import com.intellij.ui.CommonActionsPanel
@@ -38,7 +39,6 @@ import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI.Borders
 import com.intellij.util.ui.PaintIcon
 import java.awt.*
-import java.lang.IllegalStateException
 import javax.swing.*
 import javax.swing.table.AbstractTableModel
 import javax.swing.table.DefaultTableCellRenderer
@@ -186,9 +186,10 @@ private class FileColorsTableModel(val manager: FileColorManagerImpl) : Abstract
     val index = list.indexOfFirst { it.scopeName == scopeName }
     if (index < 0) return false
     val parent = table ?: return false
+    val presentableName = findScope(scopeName, manager.project)!!.presentableName
     val title = when (toSharedList) {
-      true -> message("settings.file.colors.dialog.warning.shared", scopeName)
-      else -> message("settings.file.colors.dialog.warning.local", scopeName)
+      true -> message("settings.file.colors.dialog.warning.shared", presentableName)
+      else -> message("settings.file.colors.dialog.warning.local", presentableName)
     }
     val configuration = list[index]
     val update = when (configuration.colorName == colorName) {
@@ -228,8 +229,8 @@ private class FileColorsTableModel(val manager: FileColorManagerImpl) : Abstract
 
   internal fun addScopeColor(scope: NamedScope, color: String?) {
     val colorName = resolveCustomColor(color) ?: return
-    if (resolveDuplicate(scope.name, colorName, false)) return
-    local.add(0, FileColorConfiguration(scope.name, colorName))
+    if (resolveDuplicate(scope.scopeId, colorName, false)) return
+    local.add(0, FileColorConfiguration(scope.scopeId, colorName))
     onRowInserted(0)
   }
 
@@ -425,9 +426,10 @@ private class TableScopeRenderer(val manager: FileColorManagerImpl) : DefaultTab
   override fun getTableCellRendererComponent(table: JTable?, value: Any?,
                                              selected: Boolean, focused: Boolean, row: Int, column: Int): Component {
     val component = super.getTableCellRendererComponent(table, value, selected, focused, row, column)
-    val unknown = null == value?.toString()?.let { findScope(it, manager.project) }
-    toolTipText = if (unknown) message("settings.file.colors.scope.unknown") else null
-    icon = if (unknown) AllIcons.General.Error else null
+    val namedScope = value?.toString()?.let { findScope(it, manager.project) }
+    toolTipText = if (namedScope == null) message("settings.file.colors.scope.unknown") else null
+    icon = if (namedScope == null) AllIcons.General.Error else null
+    text = if (namedScope != null) namedScope.presentableName else value?.toString()
     return component
   }
 }
@@ -439,15 +441,13 @@ private fun getScopes(project: Project): List<NamedScope> {
   return list.filter { it.value != null }
 }
 
-private fun findScope(scopeName: String, project: Project) =
-  DependencyValidationManager.getInstance(project).scopes.find { it.name == scopeName }
-  ?: NamedScopeManager.getInstance(project).scopes.find { it.name == scopeName }
+private fun findScope(scopeName: String, project: Project) = NamedScopesHolder.getScope(project, scopeName)
 
 // popup steps
 
 private class ScopeListPopupStep(val model: FileColorsTableModel)
   : BaseListPopupStep<NamedScope>(null, getScopes(model.manager.project)) {
-  override fun getTextFor(scope: NamedScope?) = scope?.name ?: ""
+  override fun getTextFor(scope: NamedScope?) = scope?.presentableName ?: ""
   override fun getIconFor(scope: NamedScope?) = scope?.icon
   override fun hasSubstep(selectedValue: NamedScope?) = true
   override fun onChosen(scope: NamedScope?, finalChoice: Boolean): PopupStep<*>? {

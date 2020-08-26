@@ -4,7 +4,6 @@ package org.jetbrains.idea.devkit.inspections.quickfix;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
@@ -50,17 +49,18 @@ public final class ImplementOrExtendFix extends BaseFix {
   @NotNull
   public String getName() {
     PsiClass clazz = myCompClassPointer.getElement();
-    if (clazz == null) return "Invalid";
-    return (clazz.isInterface()
-            ? StringUtil.capitalize(DevKitBundle.message("keyword.implement"))
-            : StringUtil.capitalize(DevKitBundle.message("keyword.extend")))
-           + " '" + clazz.getQualifiedName() + "'";
+    if (clazz == null) return DevKitBundle.message("inspections.registration.problems.fix.implement.invalid");
+
+    if (clazz.isInterface()) {
+      return DevKitBundle.message("inspections.registration.problems.fix.implement.name", clazz.getQualifiedName());
+    }
+    return DevKitBundle.message("inspections.registration.problems.fix.extend.name", clazz.getQualifiedName());
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return "Implement/Extend required base class";
+    return DevKitBundle.message("inspections.registration.problems.fix.implement.extend.family.name");
   }
 
   @Override

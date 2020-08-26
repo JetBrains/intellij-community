@@ -105,7 +105,7 @@ internal class SpaceCloneComponent(val project: Project) : VcsCloneDialogExtensi
   }
 
   override fun doValidateAll(): List<ValidationInfo> {
-    return cloneView.doValidteAll()
+    return cloneView.doValidateAll()
   }
 
   override fun getView(): Wrapper = wrapper
@@ -374,7 +374,7 @@ private class CloneView(
 
   fun getDirectory(): String = directoryField.text
 
-  fun doValidteAll(): List<ValidationInfo> {
+  fun doValidateAll(): List<ValidationInfo> {
     val list = ArrayList<ValidationInfo>()
     ContainerUtil.addIfNotNull(list, CloneDvcsValidationUtils.checkDirectory(directoryField.text, directoryField.textField))
     return list

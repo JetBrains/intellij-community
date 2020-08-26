@@ -16,8 +16,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,8 +46,8 @@ public final class ProgramRunnerUtil {
   }
 
   @NotNull
-  public static String getCannotRunOnErrorMessage(@NotNull RunProfile profile, @NotNull ExecutionTarget target) {
-    return StringUtil.escapeXmlEntities("Cannot run '" + profile.getName() + "' on '" + target.getDisplayName() + "'");
+  public static @NlsContexts.DialogMessage String getCannotRunOnErrorMessage(@NotNull RunProfile profile, @NotNull ExecutionTarget target) {
+    return StringUtil.escapeXmlEntities(ExecutionBundle.message("dialog.message.cannot.run.profile.on.target", profile.getName(), target.getDisplayName()));
   }
 
   public static void executeConfigurationAsync(@NotNull ExecutionEnvironment environment,
@@ -83,20 +85,14 @@ public final class ProgramRunnerUtil {
     HyperlinkListener listener = null;
     Project project = configuration.getProject();
     RunManager runManager = RunManager.getInstance(project);
-    RunnerAndConfigurationSettings runnerAndConfigurationSettings = runManager.getAllSettings().stream()
-      .filter(settings -> settings.getConfiguration() == configuration)
-      .findFirst()
-      .orElse(null);
+    RunnerAndConfigurationSettings runnerAndConfigurationSettings = ContainerUtil.find(runManager.getAllSettings(), settings -> settings.getConfiguration() == configuration);
     if (runnerAndConfigurationSettings != null &&
         (configuration.getShortenCommandLine() == null || configuration.getShortenCommandLine() == ShortenCommandLine.NONE)) {
       ConfigurationFactory factory = runnerAndConfigurationSettings.getFactory();
       RunnerAndConfigurationSettings configurationTemplate = runManager.getConfigurationTemplate(factory);
 
-      description = "Command line is too long. Shorten command line for <a href=\"current\">" + name + "</a>";
-      if (((ConfigurationWithCommandLineShortener)configurationTemplate.getConfiguration()).getShortenCommandLine() == null) {
-        description += " or also for " + factory.getName() + " <a href=\"default\">default</a> configuration";
-      }
-      description += ".";
+      boolean hasShortener = ((ConfigurationWithCommandLineShortener)configurationTemplate.getConfiguration()).getShortenCommandLine() == null;
+      description = ExecutionBundle.message("dialog.message.command.line.too.long", name, hasShortener ? 0 : 1, factory.getName());
 
       listener = event -> {
         if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {

@@ -1,11 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.pull
 
+import com.intellij.openapi.util.NlsSafe
 import git4idea.i18n.GitBundle
 import org.jetbrains.annotations.Nls
-import org.jetbrains.annotations.NonNls
 
-enum class GitPullOption(@NonNls val option: String,
+enum class GitPullOption(@NlsSafe val option: String,
                          @Nls val description: String) {
 
   REBASE("--rebase", GitBundle.message("pull.option.rebase")),

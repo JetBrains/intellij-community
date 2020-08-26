@@ -197,22 +197,22 @@ public class XmlTagBlock extends AbstractXmlBlock{
    * between <code>{{</code> and <code>}}</code>:
    * <pre> foo   bar{{1+ 2   }}   a {{ 12*23}} b </pre>
    * <p>by Injected Block Builder ({@code withInjections} parameter) is split into 5 blocks (T - HTML text block, FL - foreign language block):
-   * <p><code>
-   *  T≪ foo   bar{{≫,
-   *  FL≪1+ 2   ≫,
-   *  T≪}}   a {{≫,
-   *  FL≪ 12*23 ≫,
-   *  T≪}} b ≫,
-   * </code>
+   * <p>{@code
+   *  T< foo   bar{{>,
+   *  FL<1+ 2   >,
+   *  T<}}   a {{>,
+   *  FL< 12*23 >,
+   *  T<}} b >,
+   * }
    * <p>Such division will allow to properly format injections, but will fail to format HTML text, where continuous spaces should be reduced
    * to a single space. On the other hand the regular HTML formatting ({@code regularBlocks} parameter) of the fragment would result in
-   * following text blocks: <p><code>≪foo≫, ≪bar{{1+≫, ≪2≫, ≪}}≫, ≪a≫, ≪{{≫, ≪12*23}}≫, ≪b≫</code>
+   * following text blocks: <p><code><foo>, <bar{{1+>, <2>, <}}>, <a>, <{{>, <12*23}}>, <b></code>
    * <p>
    * Here HTML text blocks intersect with injection blocks. These two representations are combined together by the procedure into {@code result}
    * parameter and for the given example following formatting blocks are created:
-   * <p><code>
-   *   T≪foo≫, T≪bar{{≫, FL≪1+ 2 ≫, T≪}}≫, T≪a≫, T≪{{≫, FL≪12*23≫, T≪}}≫, T≪b≫
-   * </code>
+   * <p>{@code
+   *   T<foo>, T<bar{{>, FL<1+ 2 >, T<}}>, T<a>, T<{{>, FL<12*23>, T<}}>, T<b>
+   * }
    */
   private void combineRegularBlocksWithInjected(@NotNull ASTNode injectionHost, @NotNull List<Block> result,
                                                 @NotNull List<Block> withInjections, @NotNull List<Block> regularBlocks) {

@@ -2,6 +2,7 @@
 package com.intellij.packaging.artifacts;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementOutputKind;
@@ -27,7 +28,7 @@ public abstract class ArtifactType {
     myTitle = title;
   }
 
-  public final String getId() {
+  public final @NonNls String getId() {
     return myId;
   }
 
@@ -44,7 +45,7 @@ public abstract class ArtifactType {
   }
 
   @Nullable
-  public abstract String getDefaultPathFor(@NotNull PackagingElementOutputKind kind);
+  public abstract @NlsSafe String getDefaultPathFor(@NotNull PackagingElementOutputKind kind);
 
   public boolean isSuitableItem(@NotNull PackagingSourceItem sourceItem) {
     return true;

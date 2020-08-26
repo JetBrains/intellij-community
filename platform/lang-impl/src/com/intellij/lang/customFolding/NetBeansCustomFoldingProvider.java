@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.customFolding;
 
+import com.intellij.lang.LangBundle;
 import com.intellij.lang.folding.CustomFoldingProvider;
 
 /**
@@ -40,7 +41,8 @@ public class NetBeansCustomFoldingProvider extends CustomFoldingProvider {
 
   @Override
   public String getDescription() {
-    return "<editor-fold...> Comments";
+    //noinspection DialogTitleCapitalization -- <editor-fold...> is a part of syntax
+    return LangBundle.message("custom.folding.comments.net.beans.description");
   }
 
   @Override

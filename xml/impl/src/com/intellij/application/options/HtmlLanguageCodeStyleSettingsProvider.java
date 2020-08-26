@@ -5,8 +5,10 @@ import com.intellij.lang.Language;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.openapi.extensions.BaseExtensionPointName;
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.util.NlsContexts.ConfigurableName;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
+import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,8 +30,8 @@ public class HtmlLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     return getDisplayName();
   }
 
-  public static String getDisplayName() {
-    return "HTML";
+  public static @ConfigurableName String getDisplayName() {
+    return XmlBundle.message("options.html.display.name");
   }
 
   @Nullable
@@ -66,7 +68,7 @@ public class HtmlLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
 
     private HtmlLanguageCodeStyleConfigurable(@NotNull CodeStyleSettings baseSettings,
                                               @NotNull CodeStyleSettings modelSettings,
-                                              @NotNull String displayName) {
+                                              @NotNull @ConfigurableName String displayName) {
       super(baseSettings, modelSettings, displayName);
     }
 

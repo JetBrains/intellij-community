@@ -52,7 +52,7 @@ public class LibrariesDetectionStep extends AbstractStepWithProgress<List<Librar
 
   @Override
   protected String getProgressText() {
-    return "Searching for libraries. Please wait.";
+    return JavaUiBundle.message("progress.text.searching.for.libraries");
   }
 
   private int myPreviousStateHashCode = -1;

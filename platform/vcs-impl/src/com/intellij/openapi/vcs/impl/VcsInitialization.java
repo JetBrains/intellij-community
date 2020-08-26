@@ -16,6 +16,7 @@ import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.QueueProcessor;
 import com.intellij.util.containers.ContainerUtil;
@@ -62,7 +63,7 @@ public final class VcsInitialization {
 
   private void startInitialization() {
     myFuture = ((CoreProgressManager)ProgressManager.getInstance())
-      .runProcessWithProgressAsynchronously(new Task.Backgroundable(myProject, "VCS Initialization") {
+      .runProcessWithProgressAsynchronously(new Task.Backgroundable(myProject, VcsBundle.message("impl.vcs.initialization")) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           execute();
@@ -250,7 +251,7 @@ public final class VcsInitialization {
 
     @Override
     public String toString() {
-      return String.format("ProxyVcsStartupActivity{runnable=%s, order=%s}", myRunnable, myOrder);
+      return String.format("ProxyVcsStartupActivity{runnable=%s, order=%s}", myRunnable, myOrder); //NON-NLS
     }
   }
 }

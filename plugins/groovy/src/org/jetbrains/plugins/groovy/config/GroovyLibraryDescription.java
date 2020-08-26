@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 
 import javax.swing.*;
 import java.util.Collections;
@@ -100,8 +101,8 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
         return findManager(file) != null;
       }
     };
-    descriptor.setTitle(myFrameworkName + " SDK");
-    descriptor.setDescription("Choose a directory containing " + myFrameworkName + " distribution");
+    descriptor.setTitle(GroovyBundle.message("framework.0.sdk.chooser.title", myFrameworkName));
+    descriptor.setDescription(GroovyBundle.message("framework.0.sdk.chooser.description", myFrameworkName));
     final VirtualFile dir = FileChooser.chooseFile(descriptor, parentComponent, null, initial);
     if (dir == null) return null;
 
@@ -112,10 +113,12 @@ public class GroovyLibraryDescription extends CustomLibraryDescription {
 
     final String path = dir.getPath();
     final String sdkVersion = provider.getSDKVersion(path);
-    if (AbstractConfigUtils.UNDEFINED_VERSION.equals(sdkVersion)) {
-      Messages.showErrorDialog(parentComponent,
-                               "Looks like " + myFrameworkName + " distribution in specified path is broken. Cannot determine version.",
-                               "Failed to Create Library");
+    if (sdkVersion == null) {
+      Messages.showErrorDialog(
+        parentComponent,
+        GroovyBundle.message("framework.0.sdk.chooser.error.message", myFrameworkName),
+        GroovyBundle.message("framework.0.sdk.chooser.error.title")
+      );
       return null;
     }
 

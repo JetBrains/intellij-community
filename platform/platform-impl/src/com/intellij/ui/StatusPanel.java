@@ -4,6 +4,7 @@ package com.intellij.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanel;
@@ -126,7 +127,7 @@ public class StatusPanel extends JBPanel {
   /**
    * <b>NB!</b> Must be called within EDT.
    */
-  private void showMessage(@NotNull String message, @NotNull JBColor color, @Nullable Icon statusIcon) {
+  private void showMessage(@NlsContexts.DialogMessage @NotNull String message, @NotNull JBColor color, @Nullable Icon statusIcon) {
     removeAll();
 
     setVisible(true);
@@ -189,15 +190,15 @@ public class StatusPanel extends JBPanel {
       }
     }
 
-    public void doneWithResult(@NotNull String message) {
+    public void doneWithResult(@NotNull @NlsContexts.DialogMessage String message) {
       showMessageOnce(message, false);
     }
 
-    public void failed(@Nullable String message) {
+    public void failed(@Nullable @NlsContexts.DialogMessage String message) {
       showMessageOnce(message, true);
     }
 
-    private void showMessageOnce(@Nullable String message, boolean isError) {
+    private void showMessageOnce(@Nullable @NlsContexts.DialogMessage String message, boolean isError) {
       if (checkIsInProgressAndComplete()) {
         invokeLater(() -> {
           myLock.lock();

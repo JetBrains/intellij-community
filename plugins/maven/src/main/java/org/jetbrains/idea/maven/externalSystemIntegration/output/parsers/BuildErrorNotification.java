@@ -3,13 +3,17 @@ package org.jetbrains.idea.maven.externalSystemIntegration.output.parsers;
 
 import com.intellij.build.FilePosition;
 import com.intellij.build.events.BuildEvent;
+import com.intellij.build.events.BuildEventsNls;
 import com.intellij.build.events.MessageEvent;
 import com.intellij.build.events.impl.FileMessageEventImpl;
 import com.intellij.build.events.impl.MessageEventImpl;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.maven.execution.RunnerBundle;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.LogMessageType;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenLogEntryReader;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenLoggedEventParser;
@@ -24,9 +28,9 @@ public abstract class BuildErrorNotification implements MavenLoggedEventParser {
   private static final Pattern LINE_ONLY = Pattern.compile("[^\\d]+?(\\d+)");
   private final String myLanguage;
   private final String myExtension;
-  private final String myMessageGroup;
+  private @BuildEventsNls.Title final String myMessageGroup;
 
-  protected BuildErrorNotification(String language, String extension, String messageGroup) {
+  protected BuildErrorNotification(@NonNls String language, @NonNls String extension, @BuildEventsNls.Title String messageGroup) {
     myLanguage = language;
     myExtension = extension;
     myMessageGroup = messageGroup;
@@ -46,7 +50,7 @@ public abstract class BuildErrorNotification implements MavenLoggedEventParser {
     String line = logLine.getLine();
     if (line.endsWith("java.lang.OutOfMemoryError")) {
       messageConsumer.accept(new MessageEventImpl(parentId, MessageEvent.Kind.ERROR, myMessageGroup,
-                                                  "Out of memory.", line));
+                                                  RunnerBundle.message("build.event.message.out.memory"), line));
       return true;
     }
     int fileNameIdx = line.indexOf("." + myExtension + ":");
@@ -95,6 +99,7 @@ public abstract class BuildErrorNotification implements MavenLoggedEventParser {
   }
 
   @NotNull
+  @NlsSafe
   private String getErrorMessage(@NotNull FilePosition position, @NotNull String message) {
     message = message.trim();
     while (message.startsWith(":") || message.startsWith("]") || message.startsWith(")")) {

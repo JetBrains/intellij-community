@@ -12,6 +12,7 @@ import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.impl.VcsLogContentUtil
 import com.intellij.vcs.log.impl.VcsLogTabsManager
 import com.intellij.vcs.log.ui.VcsLogPanel
+import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 
 internal class DefaultVcsLogFile(name: String, panel: VcsLogPanel) : VcsLogFile(name) {
@@ -28,6 +29,7 @@ internal class DefaultVcsLogFile(name: String, panel: VcsLogPanel) : VcsLogFile(
     return vcsLogPanel ?: JBPanelWithEmptyText().withEmptyText(VcsLogBundle.message("vcs.log.tab.closed.status"))
   }
 
+  @Nls
   fun getDisplayName(): String? {
     return vcsLogPanel?.let {
       val logUi = VcsLogContentUtil.getLogUi(it) ?: return null

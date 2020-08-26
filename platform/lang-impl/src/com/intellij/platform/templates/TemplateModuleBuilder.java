@@ -47,6 +47,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.apache.velocity.exception.VelocityException;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
@@ -140,7 +141,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
 
   @NotNull
   @Override
-  public String getBuilderId() {
+  public @NonNls String getBuilderId() {
     return myTemplate.getName();
   }
 

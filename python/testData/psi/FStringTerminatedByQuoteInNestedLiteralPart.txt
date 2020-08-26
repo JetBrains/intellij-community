@@ -17,7 +17,7 @@ PyFile:FStringTerminatedByQuoteInNestedLiteralPart.py
               PsiElement(Py:FSTRING_TEXT)('baz')
               PsiErrorElement:" expected
                 <empty list>
-          PsiErrorElement:} expected
+          PsiErrorElement:'}' expected
             <empty list>
         PsiElement(Py:FSTRING_END)(''')
     PsiErrorElement:End of statement expected

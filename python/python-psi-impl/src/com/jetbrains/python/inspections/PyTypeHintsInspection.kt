@@ -3,6 +3,7 @@ package com.jetbrains.python.inspections
 
 import com.intellij.codeInsight.controlflow.ControlFlowUtil
 import com.intellij.codeInspection.*
+import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
@@ -86,7 +87,8 @@ class PyTypeHintsInspection : PyInspection() {
       val qualifier = node.qualifier
       if (qualifier is PyReferenceExpression) {
         if (PyBuiltinCache.isInBuiltins(qualifier) && qualifier.name in PyTypingTypeProvider.TYPING_BUILTINS_GENERIC_ALIASES) {
-          registerProblem(node, "Builtin '${qualifier.name}' cannot be parameterized directly", ReplaceWithTypingGenericAliasQuickFix())
+          registerProblem(node, PyPsiBundle.message("INSP.type.hints.builtin.cannot.be.parameterized.directly", qualifier.name),
+                          ReplaceWithTypingGenericAliasQuickFix())
         }
       }
     }
@@ -97,7 +99,8 @@ class PyTypeHintsInspection : PyInspection() {
       if (node.referencedName == PyNames.CANONICAL_SELF && PyTypingTypeProvider.isInAnnotationOrTypeComment(node)) {
         val typeName = myTypeEvalContext.getType(node)?.name
         if (typeName != null && typeName != PyNames.CANONICAL_SELF) {
-          registerProblem(node, "Invalid type 'self'", ProblemHighlightType.GENERIC_ERROR, null, ReplaceWithTypeNameQuickFix(typeName))
+          registerProblem(node, PyPsiBundle.message("INSP.type.hints.invalid.type.self"), ProblemHighlightType.GENERIC_ERROR, null,
+                          ReplaceWithTypeNameQuickFix(typeName))
         }
       }
 
@@ -109,10 +112,10 @@ class PyTypeHintsInspection : PyInspection() {
           .mapNotNull { it.qualifiedName }
           .toList()
         if (qNames.any { it == PyTypingTypeProvider.LITERAL || it == PyTypingTypeProvider.LITERAL_EXT }) {
-          registerProblem(node, "'Literal' must have at least one parameter")
+          registerProblem(node, PyPsiBundle.message("INSP.type.hints.literal.must.have.at.least.one.parameter"))
         }
         if (qNames.any { it == PyTypingTypeProvider.ANNOTATED || it == PyTypingTypeProvider.ANNOTATED_EXT }) {
-          registerProblem(node, "'Annotated' must be called with at least two arguments")
+          registerProblem(node, PyPsiBundle.message("INSP.type.hints.annotated.must.be.called.with.at.least.two.arguments"))
         }
       }
     }
@@ -131,17 +134,17 @@ class PyTypeHintsInspection : PyInspection() {
       if (node is PyTypeCommentOwner &&
           node is PyAnnotationOwner &&
           node.typeCommentAnnotation.let { it != null && it != PyTypingTypeProvider.IGNORE }) {
-        val message = "Type(s) specified both in type comment and annotation"
+        val message = PyPsiBundle.message("INSP.type.hints.type.specified.both.in.type.comment.and.annotation")
 
         if (node is PyFunction) {
           if (node.annotationValue != null || node.parameterList.parameters.any { it is PyNamedParameter && it.annotationValue != null }) {
-            registerProblem(node.typeComment, message, RemoveElementQuickFix("Remove type comment"))
+            registerProblem(node.typeComment, message, RemoveElementQuickFix(PyPsiBundle.message("QFIX.remove.type.comment")))
             registerProblem(node.nameIdentifier, message, RemoveFunctionAnnotations())
           }
         }
         else if (node.annotationValue != null) {
-          registerProblem(node.typeComment, message, RemoveElementQuickFix("Remove type comment"))
-          registerProblem(node.annotation, message, RemoveElementQuickFix("Remove annotation"))
+          registerProblem(node.typeComment, message, RemoveElementQuickFix(PyPsiBundle.message("QFIX.remove.type.comment")))
+          registerProblem(node.annotation, message, RemoveElementQuickFix(PyPsiBundle.message("QFIX.remove.annotation")))
         }
       }
     }
@@ -160,7 +163,7 @@ class PyTypeHintsInspection : PyInspection() {
 
     private fun checkTypeVarPlacement(call: PyCallExpression, target: PyExpression?) {
       if (target == null) {
-        registerProblem(call, "A 'TypeVar()' expression must always directly be assigned to a variable")
+        registerProblem(call, PyPsiBundle.message("INSP.type.hints.typevar.expression.must.be.always.directly.assigned.to.variable"))
       }
     }
 
@@ -176,7 +179,7 @@ class PyTypeHintsInspection : PyInspection() {
             instruction.num() != startInstruction &&
             name == instruction.name &&
             instruction.access.isWriteAccess) {
-          registerProblem(target, "Type variables must not be redefined")
+          registerProblem(target, PyPsiBundle.message("INSP.type.hints.type.variables.must.not.be.redefined"))
           ControlFlowUtil.Operation.BREAK
         }
         else {
@@ -203,13 +206,13 @@ class PyTypeHintsInspection : PyInspection() {
             when (name) {
               "name" ->
                 if (argument !is PyStringLiteralExpression) {
-                  registerProblem(argument, "'TypeVar()' expects a string literal as first argument")
+                  registerProblem(argument, PyPsiBundle.message("INSP.type.hints.typevar.expects.string.literal.as.first.argument"))
                 }
                 else {
                   val targetName = target?.name
                   if (targetName != null && targetName != argument.stringValue) {
                     registerProblem(argument,
-                                    "The argument to 'TypeVar()' must be a string equal to the variable name to which it is assigned",
+                                    PyPsiBundle.message("INSP.type.hints.argument.to.typevar.must.be.string.equal.to.variable.name"),
                                     ReplaceWithTargetNameQuickFix(targetName))
                   }
                 }
@@ -222,15 +225,18 @@ class PyTypeHintsInspection : PyInspection() {
         }
 
       if (covariant && contravariant) {
-        registerProblem(call, "Bivariant type variables are not supported", ProblemHighlightType.GENERIC_ERROR)
+        registerProblem(call, PyPsiBundle.message("INSP.type.hints.bivariant.type.variables.are.not.supported"),
+                        ProblemHighlightType.GENERIC_ERROR)
       }
 
       if (constraints.isNotEmpty() && bound != null) {
-        registerProblem(call, "Constraints cannot be combined with bound=...", ProblemHighlightType.GENERIC_ERROR)
+        registerProblem(call, PyPsiBundle.message("INSP.type.hints.typevar.constraints.cannot.be.combined.with.bound"),
+                        ProblemHighlightType.GENERIC_ERROR)
       }
 
       if (constraints.size == 1) {
-        registerProblem(call, "A single constraint is not allowed", ProblemHighlightType.GENERIC_ERROR)
+        registerProblem(call, PyPsiBundle.message("INSP.type.hints.single.typevar.constraint.not.allowed"),
+                        ProblemHighlightType.GENERIC_ERROR)
       }
 
       constraints.asSequence().plus(bound).forEach {
@@ -238,7 +244,7 @@ class PyTypeHintsInspection : PyInspection() {
           val type = PyTypingTypeProvider.getType(it, myTypeEvalContext)?.get()
 
           if (PyTypeChecker.hasGenerics(type, myTypeEvalContext)) {
-            registerProblem(it, "Constraints cannot be parametrized by type variables")
+            registerProblem(it, PyPsiBundle.message("INSP.type.hints.typevar.constraints.cannot.be.parametrized.by.type.variables"))
           }
         }
       }
@@ -259,7 +265,7 @@ class PyTypeHintsInspection : PyInspection() {
       if (type is PyGenericType && !type.isDefinition ||
           type is PyCollectionType && type.elementTypes.any { it is PyGenericType } && !type.isDefinition) {
         registerProblem(base,
-                        "Type variables cannot be used with instance and class checks",
+                        PyPsiBundle.message("INSP.type.hints.type.variables.cannot.be.used.with.instance.class.checks"),
                         ProblemHighlightType.GENERIC_ERROR)
 
       }
@@ -286,10 +292,11 @@ class PyTypeHintsInspection : PyInspection() {
               PyTypingTypeProvider.LITERAL,
               PyTypingTypeProvider.LITERAL_EXT,
               PyTypingTypeProvider.ANNOTATED,
-              PyTypingTypeProvider.ANNOTATED_EXT ->
-                registerProblem(base,
-                                "'${it.substringAfterLast('.')}' cannot be used with instance and class checks",
+              PyTypingTypeProvider.ANNOTATED_EXT -> {
+                val shortName = it.substringAfterLast('.')
+                registerProblem(base, PyPsiBundle.message("INSP.type.hints.type.cannot.be.used.with.instance.class.checks", shortName),
                                 ProblemHighlightType.GENERIC_ERROR)
+              }
             }
           }
 
@@ -325,8 +332,8 @@ class PyTypeHintsInspection : PyInspection() {
                 PyTypingTypeProvider.LITERAL_EXT,
                 PyTypingTypeProvider.ANNOTATED,
                 PyTypingTypeProvider.ANNOTATED_EXT -> {
-                  registerProblem(base,
-                                  "'${qName.substringAfterLast('.')}' cannot be used with instance and class checks",
+                  val shortName = qName.substringAfterLast('.')
+                  registerProblem(base, PyPsiBundle.message("INSP.type.hints.type.cannot.be.used.with.instance.class.checks", shortName),
                                   ProblemHighlightType.GENERIC_ERROR)
                   return@forEach
                 }
@@ -336,7 +343,7 @@ class PyTypeHintsInspection : PyInspection() {
                 PyTypingTypeProvider.PROTOCOL,
                 PyTypingTypeProvider.PROTOCOL_EXT -> {
                   registerProblem(base,
-                                  "Parameterized generics cannot be used with instance and class checks",
+                                  PyPsiBundle.message("INSP.type.hints.parameterized.generics.cannot.be.used.with.instance.class.checks"),
                                   ProblemHighlightType.GENERIC_ERROR,
                                   null,
                                   if (base is PySubscriptionExpression) RemoveGenericParametersQuickFix() else null)
@@ -350,7 +357,7 @@ class PyTypeHintsInspection : PyInspection() {
 
               if (type is PyWithAncestors && PyTypingTypeProvider.isGeneric(type, myTypeEvalContext)) {
                 registerProblem(base,
-                                "Parameterized generics cannot be used with instance and class checks",
+                                PyPsiBundle.message("INSP.type.hints.parameterized.generics.cannot.be.used.with.instance.class.checks"),
                                 ProblemHighlightType.GENERIC_ERROR,
                                 null,
                                 if (base is PySubscriptionExpression) RemoveGenericParametersQuickFix() else null)
@@ -365,7 +372,7 @@ class PyTypeHintsInspection : PyInspection() {
       if (callee is PyReferenceExpression) {
         if (PyResolveUtil.resolveImportedElementQNameLocally(callee).any { PyTypingTypeProvider.GENERIC_CLASSES.contains(it.toString()) }) {
           registerProblem(call,
-                          "Generics should be specified through square brackets",
+                          PyPsiBundle.message("INSP.type.hints.generics.should.be.specified.through.square.brackets"),
                           ProblemHighlightType.GENERIC_ERROR,
                           null,
                           ReplaceWithSubscriptionQuickFix())
@@ -376,7 +383,8 @@ class PyTypeHintsInspection : PyInspection() {
             .map { if (it is PyFunction) it.containingClass else it }
             .any { it is PyWithAncestors && PyTypingTypeProvider.isGeneric(it, myTypeEvalContext) }
             .also {
-              if (it) registerProblem(call, "Generics should be specified through square brackets", ReplaceWithSubscriptionQuickFix())
+              if (it) registerProblem(call, PyPsiBundle.message("INSP.type.hints.generics.should.be.specified.through.square.brackets"),
+                                      ReplaceWithSubscriptionQuickFix())
             }
         }
       }
@@ -387,7 +395,8 @@ class PyTypeHintsInspection : PyInspection() {
         .asSequence()
         .filterIsInstance<PyReferenceExpression>()
         .filter { genericQName in PyResolveUtil.resolveImportedElementQNameLocally(it) }
-        .forEach { registerProblem(it, "Cannot inherit from plain 'Generic'", ProblemHighlightType.GENERIC_ERROR) }
+        .forEach { registerProblem(it, PyPsiBundle.message("INSP.type.hints.cannot.inherit.from.plain.generic"),
+                                   ProblemHighlightType.GENERIC_ERROR) }
     }
 
     private fun checkGenericDuplication(superClassExpressions: List<PyExpression>) {
@@ -404,7 +413,8 @@ class PyTypeHintsInspection : PyInspection() {
             .any { genericQName in PyResolveUtil.resolveImportedElementQNameLocally(it) }
         }
         .drop(1)
-        .forEach { registerProblem(it, "Cannot inherit from 'Generic[...]' multiple times", ProblemHighlightType.GENERIC_ERROR) }
+        .forEach { registerProblem(it, PyPsiBundle.message("INSP.type.hints.cannot.inherit.from.generic.multiple.times"),
+                                   ProblemHighlightType.GENERIC_ERROR) }
     }
 
     private fun checkGenericCompleteness(cls: PyClass) {
@@ -437,7 +447,8 @@ class PyTypeHintsInspection : PyInspection() {
           .joinToString(", ")
 
         registerProblem(cls.superClassExpressionList,
-                        "Some type variables ($nonGenericTypeVarsNames) are not listed in 'Generic[$genericTypeVarsNames]'",
+                        PyPsiBundle.message("INSP.type.hints.some.type.variables.are.not.listed.in.generic",
+                                            nonGenericTypeVarsNames, genericTypeVarsNames),
                         ProblemHighlightType.GENERIC_ERROR)
       }
     }
@@ -523,15 +534,13 @@ class PyTypeHintsInspection : PyInspection() {
       }
 
       if (PyLiteralType.fromLiteralParameter(index, myTypeEvalContext) == null) {
-        registerProblem(index,
-                        "'Literal' may be parameterized with literal ints, byte and unicode strings, bools, Enum values, None, " +
-                        "other literal types, or type aliases to other literal types")
+        registerProblem(index, PyPsiBundle.message("INSP.type.hints.illegal.literal.parameter"))
       }
     }
 
     private fun checkAnnotatedParameter(index: PyExpression) {
       if (index !is PyTupleExpression) {
-        registerProblem(index, "'Annotated' must be called with at least two arguments")
+        registerProblem(index, PyPsiBundle.message("INSP.type.hints.annotated.must.be.called.with.at.least.two.arguments"))
       }
     }
 
@@ -541,7 +550,8 @@ class PyTypeHintsInspection : PyInspection() {
 
       parameters.forEach {
         if (it !is PyReferenceExpression) {
-          registerProblem(it, "Parameters to 'Generic[...]' must all be type variables", ProblemHighlightType.GENERIC_ERROR)
+          registerProblem(it, PyPsiBundle.message("INSP.type.hints.parameters.to.generic.must.all.be.type.variables"),
+                          ProblemHighlightType.GENERIC_ERROR)
         }
         else {
           val type = myTypeEvalContext.getType(it)
@@ -549,11 +559,13 @@ class PyTypeHintsInspection : PyInspection() {
           if (type != null) {
             if (type is PyGenericType) {
               if (!typeVars.addAll(multiFollowAssignmentsChain(it))) {
-                registerProblem(it, "Parameters to 'Generic[...]' must all be unique", ProblemHighlightType.GENERIC_ERROR)
+                registerProblem(it, PyPsiBundle.message("INSP.type.hints.parameters.to.generic.must.all.be.unique"),
+                                ProblemHighlightType.GENERIC_ERROR)
               }
             }
             else {
-              registerProblem(it, "Parameters to 'Generic[...]' must all be type variables", ProblemHighlightType.GENERIC_ERROR)
+              registerProblem(it, PyPsiBundle.message("INSP.type.hints.parameters.to.generic.must.all.be.type.variables"),
+                              ProblemHighlightType.GENERIC_ERROR)
             }
           }
         }
@@ -561,10 +573,9 @@ class PyTypeHintsInspection : PyInspection() {
     }
 
     private fun checkCallableParameters(index: PyExpression) {
-      val message = "'Callable' must be used as 'Callable[[arg, ...], result]'"
 
       if (index !is PyTupleExpression) {
-        registerProblem(index, message, ProblemHighlightType.GENERIC_ERROR)
+        registerProblem(index, PyPsiBundle.message("INSP.type.hints.illegal.callable.format"), ProblemHighlightType.GENERIC_ERROR)
         return
       }
 
@@ -573,21 +584,21 @@ class PyTypeHintsInspection : PyInspection() {
         val possiblyLastParameter = parameters[parameters.size - 2]
 
         registerProblem(index,
-                        message,
+                        PyPsiBundle.message("INSP.type.hints.illegal.callable.format"),
                         ProblemHighlightType.GENERIC_ERROR,
                         null,
                         TextRange.create(0, possiblyLastParameter.startOffsetInParent + possiblyLastParameter.textLength),
                         SurroundElementsWithSquareBracketsQuickFix())
       }
       else if (parameters.size < 2) {
-        registerProblem(index, message, ProblemHighlightType.GENERIC_ERROR)
+        registerProblem(index, PyPsiBundle.message("INSP.type.hints.illegal.callable.format"), ProblemHighlightType.GENERIC_ERROR)
       }
       else {
         val first = parameters.first()
 
         if (first !is PyListLiteralExpression && !(first is PyNoneLiteralExpression && first.isEllipsis)) {
           registerProblem(first,
-                          message,
+                          PyPsiBundle.message("INSP.type.hints.illegal.callable.format"),
                           ProblemHighlightType.GENERIC_ERROR,
                           null,
                           if (first is PyParenthesizedExpression) ReplaceWithListQuickFix() else SurroundElementWithSquareBracketsQuickFix())
@@ -604,13 +615,14 @@ class PyTypeHintsInspection : PyInspection() {
         .forEach {
           if (it is PyListLiteralExpression) {
             registerProblem(it,
-                            "Parameters to generic types must be types",
+                            PyPsiBundle.message("INSP.type.hints.parameters.to.generic.types.must.be.types"),
                             ProblemHighlightType.GENERIC_ERROR,
                             null,
                             RemoveSquareBracketsQuickFix())
           }
           else if (it is PyReferenceExpression && multiFollowAssignmentsChain(it).any { resolved -> resolved is PyListLiteralExpression }) {
-            registerProblem(it, "Parameters to generic types must be types", ProblemHighlightType.GENERIC_ERROR)
+            registerProblem(it, PyPsiBundle.message("INSP.type.hints.parameters.to.generic.types.must.be.types"),
+                            ProblemHighlightType.GENERIC_ERROR)
           }
         }
     }
@@ -623,7 +635,7 @@ class PyTypeHintsInspection : PyInspection() {
 
       if (PyTypingTypeProvider.mapTargetsToAnnotations(lhs, expression).isEmpty() &&
           (expression.elements.isNotEmpty() || assignment.rawTargets.isNotEmpty())) {
-        registerProblem(expression, "Type comment cannot be matched with unpacked variables")
+        registerProblem(expression, PyPsiBundle.message("INSP.type.hints.type.comment.cannot.be.matched.with.unpacked.variables"))
       }
     }
 
@@ -642,10 +654,10 @@ class PyTypeHintsInspection : PyInspection() {
       val hasSelf = cls != null && modifier != PyFunction.Modifier.STATICMETHOD
 
       if (commentParametersSize < actualParametersSize - if (hasSelf) 1 else 0) {
-        registerProblem(node.typeComment, "Type signature has too few arguments")
+        registerProblem(node.typeComment, PyPsiBundle.message("INSP.type.hints.type.signature.has.too.few.arguments"))
       }
       else if (commentParametersSize > actualParametersSize) {
-        registerProblem(node.typeComment, "Type signature has too many arguments")
+        registerProblem(node.typeComment, PyPsiBundle.message("INSP.type.hints.type.signature.has.too.many.arguments"))
       }
       else if (hasSelf && actualParametersSize == commentParametersSize) {
         val actualSelfType =
@@ -663,8 +675,8 @@ class PyTypeHintsInspection : PyInspection() {
           val actualSelfTypeDescription = PythonDocumentationProvider.getTypeDescription(actualSelfType, myTypeEvalContext)
           val commentSelfTypeDescription = PythonDocumentationProvider.getTypeDescription(commentSelfType, myTypeEvalContext)
 
-          registerProblem(node.typeComment,
-                          "The type of self '$commentSelfTypeDescription' is not a supertype of its class '$actualSelfTypeDescription'")
+          registerProblem(node.typeComment, PyPsiBundle.message("INSP.type.hints.type.self.not.supertype.its.class",
+                                                                commentSelfTypeDescription, actualSelfTypeDescription))
         }
       }
     }
@@ -675,14 +687,14 @@ class PyTypeHintsInspection : PyInspection() {
 
       val scopeOwner = ScopeUtil.getScopeOwner(node)
       if (scopeOwner !is PyFunction) {
-        registerProblem(node, "Non-self attribute could not be type hinted")
+        registerProblem(node, PyPsiBundle.message("INSP.type.hints.non.self.attribute.could.not.be.type.hinted"))
         return
       }
 
       val self = scopeOwner.parameterList.parameters.firstOrNull()?.takeIf { it.isSelf }
       if (self == null ||
           PyUtil.multiResolveTopPriority(qualifier, resolveContext).let { it.isNotEmpty() && it.all { e -> e != self } }) {
-        registerProblem(node, "Non-self attribute could not be type hinted")
+        registerProblem(node, PyPsiBundle.message("INSP.type.hints.non.self.attribute.could.not.be.type.hinted"))
       }
     }
 
@@ -712,7 +724,7 @@ class PyTypeHintsInspection : PyInspection() {
       }
     }
 
-    private class RemoveElementQuickFix(private val description: String) : LocalQuickFix {
+    private class RemoveElementQuickFix(@IntentionFamilyName private val description: String) : LocalQuickFix {
 
       override fun getFamilyName() = description
       override fun applyFix(project: Project, descriptor: ProblemDescriptor) = descriptor.psiElement.delete()

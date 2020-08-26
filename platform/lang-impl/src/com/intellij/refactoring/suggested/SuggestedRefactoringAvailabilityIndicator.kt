@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.markup.*
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
@@ -26,7 +27,7 @@ class SuggestedRefactoringAvailabilityIndicator(private val project: Project) {
     val highlighterRangeMarker: RangeMarker,
     val availabilityRangeMarker: RangeMarker,
     val refactoringEnabled: Boolean,
-    val tooltip: String
+    @NlsContexts.Tooltip val tooltip: String
   ) {
     override fun equals(other: Any?): Boolean {
       return other is Data
@@ -67,7 +68,7 @@ class SuggestedRefactoringAvailabilityIndicator(private val project: Project) {
     markerRange: TextRange,
     availabilityRange: TextRange,
     refactoringEnabled: Boolean,
-    tooltip: String
+    @NlsContexts.Tooltip tooltip: String
   ) {
     ApplicationManager.getApplication().assertIsDispatchThread()
 
@@ -156,7 +157,7 @@ class SuggestedRefactoringAvailabilityIndicator(private val project: Project) {
   }
 }
 
-class RefactoringAvailableGutterIconRenderer(private val tooltip: String) : GutterIconRenderer() {
+class RefactoringAvailableGutterIconRenderer(@NlsContexts.Tooltip private val tooltip: String) : GutterIconRenderer() {
   override fun getIcon() = AllIcons.Gutter.SuggestedRefactoringBulb
   override fun getTooltipText() = tooltip
   override fun isNavigateAction() = true
@@ -187,7 +188,7 @@ class RefactoringAvailableGutterIconRenderer(private val tooltip: String) : Gutt
   override fun hashCode() = 0
 }
 
-class RefactoringDisabledGutterIconRenderer(private val tooltip: String) : GutterIconRenderer() {
+class RefactoringDisabledGutterIconRenderer(private @NlsContexts.Tooltip val tooltip: String) : GutterIconRenderer() {
   override fun getIcon() = AllIcons.Gutter.SuggestedRefactoringBulbDisabled
   override fun getTooltipText() = tooltip
   override fun getAlignment() = Alignment.RIGHT

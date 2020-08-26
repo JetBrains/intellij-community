@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.mvc;
 
 import com.intellij.notification.Notification;
@@ -30,9 +16,9 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 
 import javax.swing.event.HyperlinkEvent;
-import java.util.Map;
 
 /**
  * @author Sergey Evdokimov
@@ -49,18 +35,18 @@ public class MvcProjectWithoutLibraryNotificator implements StartupActivity.Dumb
       final MvcFramework framework = pair.second;
       final Module module = pair.first;
       final String name = framework.getFrameworkName();
-      final Map<String, Runnable> actions = framework.createConfigureActions(module);
+      final var actions = framework.createConfigureActions(module);
 
       HtmlBuilder builder = new HtmlBuilder();
-      builder.append("Module '" + module.getName() + "' has no " + name + " SDK.");
+      builder.append(GroovyBundle.message("mvc.framework.0.module.1.has.no.sdk", name, module.getName()));
       if (!actions.isEmpty()) builder.br();
-      for (String actionName : actions.keySet()) {
+      for (var actionName : actions.keySet()) {
         builder.appendLink(actionName, actionName).append(" ");
       }
       String message = builder.wrapWithHtmlBody().toString();
 
       new Notification(
-        name + ".Configure", name + " SDK not found", message, NotificationType.INFORMATION,
+        name + ".Configure", GroovyBundle.message("mvc.framework.0.sdk.not.found.title", name), message, NotificationType.INFORMATION,
         new NotificationListener.Adapter() {
           @Override
           protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {

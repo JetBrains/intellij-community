@@ -32,6 +32,9 @@ public final class ClassEditorField extends EditorTextField {
                                                   Computable<? extends Module> moduleSelector,
                                                   JavaCodeFragment.VisibilityChecker visibilityChecker,
                                                   @Nullable BrowseModuleValueActionListener<?> classBrowser) {
+    if (project.isDefault()) {
+      return new ClassEditorField();
+    }
     PsiElement defaultPackage = JavaPsiFacade.getInstance(project).findPackage("");
     JavaCodeFragmentFactory factory = JavaCodeFragmentFactory.getInstance(project);
     JavaCodeFragment fragment = factory.createReferenceCodeFragment("", defaultPackage, true, true);
@@ -75,5 +78,8 @@ public final class ClassEditorField extends EditorTextField {
 
   private ClassEditorField(Document document, Project project, FileType fileType) {
     super(document, project, fileType);
+  }
+
+  private ClassEditorField() {
   }
 }

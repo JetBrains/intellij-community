@@ -23,7 +23,7 @@ final class ApproveRemovedMappingsActivity implements StartupActivity {
   @Override
   public void runActivity(@NotNull Project project) {
     RemovedMappingTracker removedMappings = ((FileTypeManagerImpl)FileTypeManager.getInstance()).getRemovedMappingTracker();
-    List<RemovedMappingTracker.RemovedMapping> list = removedMappings.retrieveUnapprovedMappings();
+    List<RemovedMappingTracker.RemovedMapping> list = removedMappings.deleteUnapprovedMappings();
     if (list.isEmpty()) {
       return;
     }

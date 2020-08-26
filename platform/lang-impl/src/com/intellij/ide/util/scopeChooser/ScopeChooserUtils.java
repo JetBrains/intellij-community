@@ -2,9 +2,9 @@
 package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.find.impl.FindInProjectExtension;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.scratch.ScratchesSearchScope;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.impl.OpenFilesScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.*;
@@ -26,31 +26,31 @@ public final class ScopeChooserUtils {
    * @return custom or standard scope with the provided name, i.e. scope that matches corresponding item from {@link ScopeChooserCombo}
    * with the following limitations:
    * <ul>
-   * <li>module-specific scope is not handled: if <code>scopeName</code> is "Module 'foo'" then {@link ProjectFilesScope} is returned</li>
+   * <li>module-specific scope is not handled: if <code>scopePresentableName</code> is "Module 'foo'" then {@link ProjectFilesScope} is returned</li>
    * <li>each returned scope is intersected with the project content (the only exception is 'Scratches and Consoles' scope)</li>
    * <li>if no known scope with the provided name found then empty scope is returned</li>
    * </ul>
    */
   @NotNull
-  public static GlobalSearchScope findScopeByName(@NotNull Project project, @Nullable String scopeName) {
+  public static GlobalSearchScope findScopeByName(@NotNull Project project, @Nullable String scopePresentableName) {
     // logic here is similar to ScopeChooserCombo
 
-    if (scopeName == null) return GlobalSearchScope.EMPTY_SCOPE;
+    if (scopePresentableName == null) return GlobalSearchScope.EMPTY_SCOPE;
 
-    if (getOpenFilesScopeName().equals(scopeName)) {
+    if (OpenFilesScope.getNameText().equals(scopePresentableName)) {
       return intersectWithContentScope(project, GlobalSearchScopes.openFilesScope(project));
     }
 
-    if (getCurrentFileScopeName().equals(scopeName)) {
+    if (PredefinedSearchScopeProviderImpl.getCurrentFileScopeName().equals(scopePresentableName)) {
       VirtualFile[] array = FileEditorManager.getInstance(project).getSelectedFiles();
       List<VirtualFile> files = ContainerUtil.createMaybeSingletonList(ArrayUtil.getFirstElement(array));
-      GlobalSearchScope scope = GlobalSearchScope.filesScope(project, files, getCurrentFileScopeName());
+      GlobalSearchScope scope = GlobalSearchScope.filesScope(project, files, PredefinedSearchScopeProviderImpl.getCurrentFileScopeName());
       return intersectWithContentScope(project, scope);
     }
 
-    for (SearchScope scope: PredefinedSearchScopeProvider.getInstance()
-                                                         .getPredefinedScopes(project, null, false, false, false, false, true)) {
-      if (scope instanceof GlobalSearchScope && scope.getDisplayName().equals(scopeName)) {
+    PredefinedSearchScopeProvider scopeProvider = PredefinedSearchScopeProvider.getInstance();
+    for (SearchScope scope : scopeProvider.getPredefinedScopes(project, null, false, false, false, false, true)) {
+      if (scope instanceof GlobalSearchScope && scope.getDisplayName().equals(scopePresentableName)) {
         if (scope instanceof ScratchesSearchScope) {
           return (ScratchesSearchScope)scope;
         }
@@ -59,23 +59,23 @@ public final class ScopeChooserUtils {
     }
 
     for (FindInProjectExtension extension : FindInProjectExtension.EP_NAME.getExtensionList()) {
-      for (NamedScope scope: extension.getFilteredNamedScopes(project)) {
-        if (scope.getName().equals(scopeName)) {
+      for (NamedScope scope : extension.getFilteredNamedScopes(project)) {
+        if (scope.getPresentableName().equals(scopePresentableName)) {
           return intersectWithContentScope(project, GlobalSearchScopesCore.filterScope(project, scope));
         }
       }
     }
 
-    for (NamedScopesHolder holder: NamedScopesHolder.getAllNamedScopeHolders(project)) {
+    for (NamedScopesHolder holder : NamedScopesHolder.getAllNamedScopeHolders(project)) {
       final NamedScope[] scopes = holder.getEditableScopes();  // predefined scopes already included
-      for (NamedScope scope: scopes) {
-        if (scope.getName().equals(scopeName)) {
+      for (NamedScope scope : scopes) {
+        if (scope.getScopeId().equals(scopePresentableName)) {
           return intersectWithContentScope(project, GlobalSearchScopesCore.filterScope(project, scope));
         }
       }
     }
 
-    if (scopeName.startsWith("Module '") && scopeName.endsWith("'")) {
+    if (scopePresentableName.startsWith("Module '") && scopePresentableName.endsWith("'")) {
       // Backward compatibility with previous File Watchers behavior.
       // It never worked correctly for scopes like "Module 'foo'" and always returned ProjectFilesScope in such cases.
       return ProjectScope.getContentScope(project);
@@ -84,16 +84,7 @@ public final class ScopeChooserUtils {
     return GlobalSearchScope.EMPTY_SCOPE;
   }
 
-  @NotNull
-  private static GlobalSearchScope intersectWithContentScope(@NotNull Project project, @NotNull GlobalSearchScope scope) {
+  private static @NotNull GlobalSearchScope intersectWithContentScope(@NotNull Project project, @NotNull GlobalSearchScope scope) {
     return scope.intersectWith(ProjectScope.getContentScope(project));
-  }
-
-  private static String getCurrentFileScopeName() {
-    return IdeBundle.message("scope.current.file");
-  }
-
-  private static String getOpenFilesScopeName() {
-    return IdeBundle.message("scope.open.files");
   }
 }

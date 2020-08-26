@@ -336,8 +336,8 @@ bool LoadVMOptionsFile(const TCHAR* path, std::vector<std::string>& vmOptionLine
   FILE *f = _tfopen(path, _T("rt"));
   if (!f) return false;
 
-  char line[_MAX_PATH];
-  while (fgets(line, _MAX_PATH, f))
+  char line[4096];
+  while (fgets(line, 4096, f))
   {
     TrimLine(line);
     if (line[0] == '#') continue;

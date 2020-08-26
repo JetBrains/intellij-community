@@ -1,6 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.validator.rules.beans;
 
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.EnumValidationRule;
+import com.intellij.internal.statistic.eventLog.validator.rules.impl.RegexpValidationRule;
+import com.intellij.internal.statistic.eventLog.whitelist.GlobalRulesHolder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -8,45 +11,43 @@ import java.util.Map;
 import java.util.Set;
 
 public class EventGroupContextData {
-  public static final EventGroupContextData EMPTY = create(null, null, null, null);
+  public static final EventGroupContextData EMPTY = new EventGroupContextData(null, null, null);
 
   @Nullable private final Map<String, Set<String>> myEnums;
-  @Nullable private final Map<String, Set<String>> myGlobalEnums;
   @Nullable private final Map<String, String> myRegexps;
-  @Nullable private final Map<String, String> myGlobalRegexps;
+  @Nullable GlobalRulesHolder myGlobalRulesHolder;
 
   public EventGroupContextData(@Nullable Map<String, Set<String>> enums,
-                               @Nullable Map<String, Set<String>> globalEnums,
                                @Nullable Map<String, String> regexps,
-                               @Nullable Map<String, String> globalRegexps) {
+                               @Nullable GlobalRulesHolder globalRulesHolder) {
     myEnums = enums;
-    myGlobalEnums = globalEnums;
     myRegexps = regexps;
-    myGlobalRegexps = globalRegexps;
+    myGlobalRulesHolder = globalRulesHolder;
   }
 
-  public static EventGroupContextData create(@Nullable Map<String, Set<String>> enums,
-                                             @Nullable Map<String, Set<String>> globalEnums,
-                                             @Nullable Map<String, String> regexps,
-                                             @Nullable Map<String, String> globalRegexps) {
-    return new EventGroupContextData(enums, globalEnums, regexps, globalRegexps);
-  }
-
-  @Nullable
-  public Set<String> getEnum(@NotNull String enumRef) {
+  @NotNull
+  public EnumValidationRule getEnumValidationRule(@NotNull String enumRef) {
     if (myEnums != null) {
       Set<String> values = myEnums.get(enumRef);
-      if (values != null) return values;
+      if (values != null) return new EnumValidationRule(values);
     }
-    return myGlobalEnums != null ? myGlobalEnums.get(enumRef) : null;
+    if (myGlobalRulesHolder != null) {
+      EnumValidationRule globalEnum = myGlobalRulesHolder.getEnumValidationRules(enumRef);
+      if (globalEnum != null) return globalEnum;
+    }
+    return new EnumValidationRule(null);
   }
 
-  @Nullable
-  public String getRegexp(@NotNull String regexpRef) {
+  @NotNull
+  public RegexpValidationRule getRegexpValidationRule(@NotNull String regexpRef) {
     if (myRegexps != null) {
       String regexp = myRegexps.get(regexpRef);
-      if (regexp != null) return regexp;
+      if (regexp != null) return new RegexpValidationRule(regexp);
     }
-    return myGlobalRegexps != null ? myGlobalRegexps.get(regexpRef) : null;
+    if (myGlobalRulesHolder != null) {
+      RegexpValidationRule globalRegexp = myGlobalRulesHolder.getRegexpValidationRules(regexpRef);
+      if (globalRegexp != null) return globalRegexp;
+    }
+    return new RegexpValidationRule(null);
   }
 }

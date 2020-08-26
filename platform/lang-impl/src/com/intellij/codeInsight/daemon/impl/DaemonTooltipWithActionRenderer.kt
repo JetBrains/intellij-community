@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("MayBeConstant")
 
 package com.intellij.codeInsight.daemon.impl
@@ -24,6 +24,8 @@ import com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.GraphicsConfig
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.*
@@ -165,7 +167,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
       tooltipAction.showAllActions(editor)
     }
 
-    buttons.add(createActionLabel("More actions...", showAllFixes, hintHint.textBackground),
+    buttons.add(createActionLabel(DaemonBundle.message("daemon.tooltip.more.actions.link.label"), showAllFixes, hintHint.textBackground),
                 gridBag.next().insets(topInset, 12, bottomInset, 4))
     buttons.add(createKeymapHint(shortcutShowAllActionsText),
                 gridBag.next().fillCellHorizontally().insets(topInset, 4, bottomInset, 20))
@@ -226,6 +228,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
     return wrapper
   }
 
+  @NlsSafe
   private fun getKeymap(key: String): String {
     val keymapManager = KeymapManager.getInstance()
     if (keymapManager != null) {
@@ -236,7 +239,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
     return ""
   }
 
-  private fun createKeymapHint(shortcutRunAction: String): JComponent {
+  private fun createKeymapHint(@NlsContexts.Label shortcutRunAction: String): JComponent {
     val fixHint = object : JBLabel(shortcutRunAction) {
       override fun getForeground(): Color {
         return getKeymapColor()
@@ -307,8 +310,10 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
     return wrapper
   }
 
-  private inner class ShowActionsAction(val reloader: TooltipReloader, val isEnabled: Boolean) : ToggleAction(
-    "Show Quick Fixes"), HintManagerImpl.ActionToIgnore {
+  private inner class ShowActionsAction(
+    val reloader: TooltipReloader, val isEnabled: Boolean
+  ) : ToggleAction(DaemonBundle.message("daemon.tooltip.show.quick.fixes.action.text")),
+      HintManagerImpl.ActionToIgnore {
 
     override fun isSelected(e: AnActionEvent): Boolean {
       return isShowActions()
@@ -325,8 +330,12 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
     }
   }
 
-  private inner class ShowDocAction(val reloader: TooltipReloader, val isEnabled: Boolean) : ToggleAction(
-    "Show Inspection Description"), HintManagerImpl.ActionToIgnore, DumbAware, PopupAction {
+  private inner class ShowDocAction(
+    val reloader: TooltipReloader, val isEnabled: Boolean
+  ) : ToggleAction(DaemonBundle.message("daemon.tooltip.show.inspection.description.action.text")),
+      HintManagerImpl.ActionToIgnore,
+      DumbAware,
+      PopupAction {
 
     init {
       shortcutSet = getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_ERROR_DESCRIPTION)
@@ -351,7 +360,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
 }
 
 
-fun createActionLabel(text: String, action: (InputEvent?) -> Unit, background: Color): HyperlinkLabel {
+fun createActionLabel(@NlsContexts.LinkLabel text: String, action: (InputEvent?) -> Unit, background: Color): HyperlinkLabel {
   val label = object : HyperlinkLabel(text, background) {
     override fun getTextOffset(): Int {
       return 0

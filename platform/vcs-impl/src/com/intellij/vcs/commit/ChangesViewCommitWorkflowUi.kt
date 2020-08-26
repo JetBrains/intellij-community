@@ -13,6 +13,8 @@ interface ChangesViewCommitWorkflowUi : CommitWorkflowUi {
   val isActive: Boolean
   fun deactivate(isRestoreState: Boolean)
 
+  fun endExecution()
+
   var isDefaultCommitActionEnabled: Boolean
   fun setCustomCommitActions(actions: List<AnAction>)
 

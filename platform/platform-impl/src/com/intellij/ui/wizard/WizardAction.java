@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.wizard;
 
+import com.intellij.openapi.util.NlsActions;
+
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 
@@ -8,7 +10,7 @@ public abstract class WizardAction extends AbstractAction {
 
   protected WizardModel myModel;
 
-  public WizardAction(String name, WizardModel model) {
+  public WizardAction(@NlsActions.ActionText String name, WizardModel model) {
     super(name);
     myModel = model;
   }
@@ -17,7 +19,7 @@ public abstract class WizardAction extends AbstractAction {
     putValue(Action.MNEMONIC_KEY, new Integer(value));
   }
 
-  public final void setName(String name) {
+  public final void setName(@NlsActions.ActionText String name) {
     putValue(Action.NAME, name);
   }
 

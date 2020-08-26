@@ -10,7 +10,6 @@ import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.Checkbox;
-import com.intellij.openapi.util.NlsContexts.Label;
 import com.intellij.openapi.util.NlsContexts.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -80,7 +79,7 @@ public class PythonUiService {
     return null;
   }
 
-  public JComponent createSingleCheckboxOptionsPanel(@Label String label, InspectionProfileEntry inspection, String property) {
+  public JComponent createSingleCheckboxOptionsPanel(@Checkbox String label, InspectionProfileEntry inspection, String property) {
     return null;
   }
 
@@ -109,7 +108,7 @@ public class PythonUiService {
     return null;
   }
 
-  public JComponent createListEditForm(String title, List<String> stringList) {
+  public JComponent createListEditForm(@ColumnName String title, List<String> stringList) {
     return null;
   }
 

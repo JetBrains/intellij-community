@@ -3,6 +3,7 @@ package com.intellij.ui.components.breadcrumbs;
 
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
@@ -15,6 +16,7 @@ import com.intellij.util.ui.AbstractLayoutManager;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.MouseEventHandler;
 import org.intellij.lang.annotations.JdkConstants.FontStyle;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -121,7 +123,7 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
   }
 
   @Override
-  public String getToolTipText(MouseEvent event) {
+  public @NlsContexts.Tooltip String getToolTipText(MouseEvent event) {
     return hovered == null ? null : hovered.getTooltip();
   }
 
@@ -348,7 +350,7 @@ public class Breadcrumbs extends JBPanelWithEmptyText {
     private Icon icon;
     private int crumbIconWidth;
     private int crumbIconHeight;
-    private String text;
+    private @Nls String text;
     private Path2D path;
     private Font font;
     private Color foreground;

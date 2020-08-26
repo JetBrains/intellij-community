@@ -253,7 +253,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
   private final int myPositionChangeYShift;
   private boolean myDialogMode;
   private IdeFocusManager myFocusManager;
-  private String myTitle;
+  private @NlsContexts.PopupTitle String myTitle;
   private JLabel myTitleLabel;
 
   private boolean myAnimationEnabled = true;
@@ -342,7 +342,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
                      int positionChangeXShift,
                      int positionChangeYShift,
                      boolean dialogMode,
-                     String title,
+                     @NlsContexts.PopupTitle String title,
                      Insets contentInsets,
                      boolean shadow,
                      boolean smallVariant,
@@ -1641,7 +1641,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
     private final Consumer<? super MouseEvent> myListener;
     protected final BaseButtonBehavior myButton;
 
-    public ActionButton(@NotNull Icon icon, @Nullable Icon hoverIcon, @Nullable String hint, @NotNull Consumer<? super MouseEvent> listener) {
+    public ActionButton(@NotNull Icon icon, @Nullable Icon hoverIcon, @NlsContexts.Tooltip @Nullable String hint, @NotNull Consumer<? super MouseEvent> listener) {
       myIcon = icon;
       myHoverIcon = hoverIcon;
       myListener = listener;

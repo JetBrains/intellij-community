@@ -9,6 +9,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType.EXE
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkProvider
 import com.intellij.openapi.externalSystem.service.internal.AbstractExternalSystemTask
 import com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgressNotificationManagerImpl
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
@@ -94,6 +95,10 @@ private class EnsureInstalledWrapperExecutionTask(
       progressNotificationManager.onStart(id, externalProjectPath)
       ensureInstalledWrapper(progressNotificationListener)
       progressNotificationManager.onSuccess(id)
+    }
+    catch (e: ProcessCanceledException) {
+      progressNotificationManager.onCancel(id)
+      throw e
     }
     catch (e: Exception) {
       progressNotificationManager.onFailure(id, e)

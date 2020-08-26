@@ -25,7 +25,12 @@ public final class VcsBundle extends DynamicBundle {
     return INSTANCE.getLazyMessage(key, params);
   }
 
-  public static String getString(@PropertyKey(resourceBundle = BUNDLE) final String key) {
+  /**
+   * @deprecated prefer {@link #message(String, Object...)} instead
+   */
+  @NotNull
+  @Deprecated
+  public static @Nls String getString(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key) {
     return message(key);
   }
 }

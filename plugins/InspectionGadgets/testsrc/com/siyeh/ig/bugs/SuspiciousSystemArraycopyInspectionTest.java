@@ -107,6 +107,18 @@ public class SuspiciousSystemArraycopyInspectionTest extends LightJavaInspection
                  "    }");
   }
 
+  public void test248060() {
+    doMemberTest("public class ArrayCopyExample {\n" +
+                 "    private double[] margins = new double[4];\n" +
+                 "\n" +
+                 "    public ArrayCopyExample() {}\n" +
+                 "\n" +
+                 "    public ArrayCopyExample(ArrayCopyExample original) {\n" +
+                 "        System.arraycopy(original.margins, 0, margins, 0, 4);\n" +
+                 "    }\n" +
+                 "}");
+  }
+
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {

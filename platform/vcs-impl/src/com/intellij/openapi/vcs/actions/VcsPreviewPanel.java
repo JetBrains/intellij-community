@@ -32,6 +32,7 @@ import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.markup.ActiveGutterRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.ex.Range;
 import com.intellij.openapi.vcs.ex.Range.InnerRange;
 import com.intellij.util.EventDispatcher;
@@ -75,19 +76,19 @@ class VcsPreviewPanel implements PreviewPanel {
     EditorColorsScheme colorsScheme = myEditor.getColorsScheme();
 
     StringBuilder sb = new StringBuilder();
-    sb.append(
-      "Deleted line below\n\n" +
-      "Modified line\n\n" +
-      "Added line\n\n" +
-      "Line with modified whitespaces\n\n" +
-      "Added line\n" +
-      "Line with modified whitespaces and deletion after\n\n" +
-      "Deleted ignored line below\n\n" +
-      "Modified ignored line\n\n" +
-      "Added ignored line\n\n"
-    );
+    String nn = "\n\n";
+    String n = "\n";
+    sb.append(VcsBundle.message("vcs.preview.panel.deleted.line.below")).append(nn)
+      .append(VcsBundle.message("vcs.preview.panel.modified.line")).append(nn)
+      .append(VcsBundle.message("vcs.preview.panel.added.line")).append(nn)
+      .append(VcsBundle.message("vcs.preview.panel.line.with.modified.whitespaces")).append(nn)
+      .append(VcsBundle.message("vcs.preview.panel.added.line")).append(n)
+      .append(VcsBundle.message("vcs.preview.panel.line.with.modified.whitespaces.and.deletion.after")).append(nn)
+      .append(VcsBundle.message("vcs.preview.panel.deleted.ignored.line.below")).append(nn)
+      .append(VcsBundle.message("vcs.preview.panel.modified.ignored.line")).append(nn)
+      .append(VcsBundle.message("vcs.preview.panel.added.ignored.line")).append(nn);
     int additionalLines = Math.max(0, AnnotationsSettings.getInstance().getOrderedColors(colorsScheme).size() - StringUtil.countNewLines(sb));
-    sb.append(StringUtil.repeat("\n", additionalLines));
+    sb.append(StringUtil.repeat(n, additionalLines));
 
     myEditor.getDocument().setText(sb);
     myEditor.getMarkupModel().removeAllHighlighters();
@@ -179,7 +180,7 @@ class VcsPreviewPanel implements PreviewPanel {
     public String getLineText(int line, Editor editor) {
       if (line < myBackgroundColors.size()) {
         int anchorIndex = myAnchorIndexes.indexOf(line);
-        String text = "Annotation background";
+        String text = VcsBundle.message("annotation.background");
         if (anchorIndex != -1) text += " #" + (anchorIndex + 1);
         return text;
       }

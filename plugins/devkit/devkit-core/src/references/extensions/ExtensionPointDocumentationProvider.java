@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.references.extensions;
 
 import com.intellij.codeInsight.documentation.DocumentationManager;
@@ -11,6 +11,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.PomTarget;
 import com.intellij.pom.PomTargetPsiElement;
 import com.intellij.psi.*;
@@ -22,6 +23,7 @@ import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 
@@ -94,9 +96,9 @@ public class ExtensionPointDocumentationProvider implements DocumentationProvide
           HtmlChunk hyperLink = createLink(JavaDocUtil.getReferenceText(field.getProject(), field), displayName);
 
           final String typeText = field.getType().getPresentableText();
+          final String requiredText = required ? " " + DevKitBundle.message("extension.point.documentation.field.required.suffix") : "";
           final String initializer = field.getInitializer() != null ? " = " + field.getInitializer().getText() : "";
-
-          bindingRows.append(createSectionRow(hyperLink, typeText + (required ? " (required)" : "") + initializer));
+          bindingRows.append(createSectionRow(hyperLink, typeText + requiredText + initializer));
         }
       });
 
@@ -112,7 +114,7 @@ public class ExtensionPointDocumentationProvider implements DocumentationProvide
     final PsiClass extensionPointClass = extensionPoint.getExtensionPointClass();
     if (extensionPointClass != null) { // e.g. ServiceDescriptor
       HtmlBuilder content = new HtmlBuilder();
-      content.append(HtmlChunk.text("Extension Point Implementation").wrapWith("h2"));
+      content.append(HtmlChunk.text(DevKitBundle.message("extension.point.documentation.implementation.section")).wrapWith("h2"));
       content.append(generateClassDoc(extensionPointClass));
       builder.append(content.wrapWith(DocumentationMarkup.CONTENT_ELEMENT));
     }
@@ -137,13 +139,9 @@ public class ExtensionPointDocumentationProvider implements DocumentationProvide
     return HtmlChunk.tag("a").attr("href", link).child(text);
   }
 
-  private static HtmlChunk generateClassDoc(@Nullable PsiElement element) {
-    if (element == null) {
-      return HtmlChunk.text("??? not found ???");
-    }
-
+  private static HtmlChunk generateClassDoc(@NotNull PsiElement element) {
     final DocumentationProvider documentationProvider = DocumentationManager.getProviderFromElement(element);
-    return HtmlChunk.raw(documentationProvider.generateDoc(element, null));
+    return HtmlChunk.raw(StringUtil.notNullize(documentationProvider.generateDoc(element, null)));
   }
 
   private static HtmlChunk createSectionRow(HtmlChunk sectionName, @Nls String sectionContent) {

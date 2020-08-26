@@ -2,13 +2,17 @@
 package org.jetbrains.idea.devkit.icons;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.intellij.images.thumbnail.ThumbnailView;
 import org.intellij.images.thumbnail.actions.ThemeFilter;
+import org.jetbrains.idea.devkit.DevKitBundle;
+
+import java.util.function.Supplier;
 
 public enum Theme implements ThemeFilter{
-  WHITE(null, "Default") {
+  WHITE(null, DevKitBundle.messagePointer("action.default.theme.text")) {
     @Override
     public boolean accepts(VirtualFile fileName) {
       String nameWithoutExtension = FileUtilRt.getNameWithoutExtension(fileName.getName());
@@ -22,13 +26,13 @@ public enum Theme implements ThemeFilter{
       return true;
     }
   },
-  HIGH_DPI_WHITE("@2x", "Default HiDPI") {
+  HIGH_DPI_WHITE("@2x", DevKitBundle.messagePointer("action.default.hidpi.theme.text")) {
     @Override
     public boolean accepts(VirtualFile fileName) {
       return FileUtilRt.getNameWithoutExtension(fileName.getName()).endsWith(getExtension());
     }
   },
-  DARK("_dark", "Darcula") {
+  DARK("_dark", DevKitBundle.messagePointer("action.darcula.theme.text")) {
     @Override
     public boolean accepts(VirtualFile file) {
       String name = FileUtilRt.getNameWithoutExtension(file.getName());
@@ -42,7 +46,7 @@ public enum Theme implements ThemeFilter{
       return WHITE.accepts(file);
     }
   },
-  HIGH_DPI_DARK("@2x_dark", "Darcula HiDPI") {
+  HIGH_DPI_DARK("@2x_dark", DevKitBundle.messagePointer("action.darcula.hidpi.theme.text")) {
     @Override
     public boolean accepts(VirtualFile file) {
       String name = FileUtilRt.getNameWithoutExtension(file.getName());
@@ -57,11 +61,11 @@ public enum Theme implements ThemeFilter{
     }
   };
   private final String myExtension;
-  private final String myDisplayName;
+  private final Supplier<@NlsActions.ActionText String> myDisplayNameSupplier;
 
-  Theme(String extension, String displayName) {
+  Theme(String extension, Supplier<@NlsActions.ActionText String> displayNameSupplier) {
     myExtension = extension;
-    myDisplayName = displayName;
+    myDisplayNameSupplier = displayNameSupplier;
   }
 
   public String getExtension() {
@@ -70,7 +74,7 @@ public enum Theme implements ThemeFilter{
 
   @Override
   public String getDisplayName() {
-    return myDisplayName;
+    return myDisplayNameSupplier.get();
   }
 
   @Override

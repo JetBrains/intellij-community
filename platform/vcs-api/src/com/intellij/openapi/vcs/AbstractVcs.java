@@ -5,6 +5,7 @@ import com.intellij.openapi.diff.impl.patch.formove.FilePathComparator;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.changes.ChangeProvider;
@@ -24,10 +25,7 @@ import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
 import com.intellij.util.ui.VcsSynchronousProgressWrapper;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.Collections;
 import java.util.List;
@@ -50,7 +48,7 @@ public abstract class AbstractVcs extends StartedActivated {
   private UpdateEnvironment myUpdateEnvironment;
   private RollbackEnvironment myRollbackEnvironment;
 
-  public AbstractVcs(@NotNull Project project, String name) {
+  public AbstractVcs(@NotNull Project project, @NonNls String name) {
     myProject = project;
     myName = name;
     myKey = new VcsKey(myName);
@@ -82,8 +80,8 @@ public abstract class AbstractVcs extends StartedActivated {
    * Returns the name of the VCS as it should be displayed in the UI.
    * @see #getShortName()
    */
+  @Nls
   @NotNull
-  @NonNls
   public abstract String getDisplayName();
 
   /**
@@ -91,6 +89,7 @@ public abstract class AbstractVcs extends StartedActivated {
    * (e.g. it can be "SVN" for Subversion or "Hg" for Mercurial).<br/><br/>
    * By default returns the same as {@link #getDisplayName()}.
    */
+  @Nls
   @NotNull
   public String getShortName() {
     return getDisplayName();
@@ -108,6 +107,7 @@ public abstract class AbstractVcs extends StartedActivated {
   /**
    * @return Custom value for {@link com.intellij.openapi.vcs.actions.CompareWithTheSameVersionAction} action text.
    */
+  @NlsActions.ActionText
   @Nullable
   public String getCompareWithTheSameVersionActionName() {
     return null;
@@ -374,6 +374,7 @@ public abstract class AbstractVcs extends StartedActivated {
   /**
    * @return null if does not support revision parsing
    */
+  @NonNls
   @Nullable
   public String getRevisionPattern() {
     return null;
@@ -481,7 +482,7 @@ public abstract class AbstractVcs extends StartedActivated {
     return myProject;
   }
 
-  protected static VcsKey createKey(final String name) {
+  protected static VcsKey createKey(@NonNls String name) {
     return new VcsKey(name);
   }
 

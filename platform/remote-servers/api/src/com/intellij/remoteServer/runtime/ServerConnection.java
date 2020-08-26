@@ -43,7 +43,7 @@ public interface ServerConnection<D extends DeploymentConfiguration> {
 
   void disconnect();
 
-  void deploy(@NotNull DeploymentTask<D> task, @NotNull Consumer<String> onDeploymentStarted);
+  void deploy(@NotNull DeploymentTask<D> task, @NotNull Consumer<? super String> onDeploymentStarted);
 
   void computeDeployments(@NotNull Runnable onFinished);
 

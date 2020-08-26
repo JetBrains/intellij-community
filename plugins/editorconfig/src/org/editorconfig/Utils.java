@@ -42,6 +42,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public final class Utils {
+  public static final String EDITOR_CONFIG_NAME = "EditorConfig";
   public static final String EDITOR_CONFIG_FILE_NAME = ".editorconfig";
 
   public static final  String FULL_SETTINGS_SUPPORT_REG_KEY = "editor.config.full.settings.support";

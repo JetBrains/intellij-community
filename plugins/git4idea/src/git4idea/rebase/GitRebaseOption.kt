@@ -22,8 +22,7 @@ enum class GitRebaseOption(@NonNls private val option: String,
         "--preserve-merges"
     }
   },
-  KEEP_EMPTY("--keep-empty", GitBundle.message("rebase.option.keep.empty")),
-  ROOT("--root", GitBundle.message("rebase.option.root"));
+  KEEP_EMPTY("--keep-empty", GitBundle.message("rebase.option.keep.empty"));
 
   open fun getOption(gitVersion: GitVersion) = option
 }
@@ -33,5 +32,4 @@ enum class GitRebaseOption(@NonNls private val option: String,
  */
 val REBASE_FLAGS = setOf(GitRebaseOption.INTERACTIVE,
                          GitRebaseOption.REBASE_MERGES,
-                         GitRebaseOption.KEEP_EMPTY,
-                         GitRebaseOption.ROOT)
+                         GitRebaseOption.KEEP_EMPTY)

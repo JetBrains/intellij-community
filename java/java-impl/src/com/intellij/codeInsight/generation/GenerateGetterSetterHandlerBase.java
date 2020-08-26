@@ -48,7 +48,7 @@ import java.util.List;
 public abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHandlerBase {
   private static final Logger LOG = Logger.getInstance(GenerateGetterSetterHandlerBase.class);
 
-  public GenerateGetterSetterHandlerBase(String chooserTitle) {
+  public GenerateGetterSetterHandlerBase(@NlsContexts.DialogTitle String chooserTitle) {
     super(chooserTitle);
   }
 

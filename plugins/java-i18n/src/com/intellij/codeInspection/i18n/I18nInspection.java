@@ -21,8 +21,8 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.controlFlow.DefUseUtil;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -38,8 +38,8 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
-import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
+import com.siyeh.ig.psiutils.VariableAccessUtils;
 import gnu.trove.THashSet;
 import org.intellij.lang.annotations.RegExp;
 import org.jdom.Element;
@@ -78,10 +78,14 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     CallMatcher.staticCall(CommonClassNames.JAVA_LANG_INTEGER, "toString"),
     CallMatcher.staticCall(CommonClassNames.JAVA_LANG_LONG, "toString"),
     CallMatcher.instanceCall(CommonClassNames.JAVA_IO_FILE, "getAbsolutePath", "getCanonicalPath", "getName", "getPath"),
-    CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_THROWABLE, "getMessage").parameterCount(0),
-    CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_THROWABLE, "toString").parameterCount(0)
+    CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_THROWABLE, "getMessage", "getLocalizedMessage").parameterCount(0),
+    CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_THROWABLE, "toString").parameterCount(0),
+    CallMatcher.instanceCall("javax.swing.text.JTextComponent", "getText").parameterCount(0)
   );
-  @RegExp private static final String DEFAULT_NON_NLS_LITERAL_PATTERN = "((?i)https?://.+)|\\w*(\\.\\w+)+|\\w*[$]\\w*|((?i)</?(html|b|i|body|li|ol|ul)>)*|&\\w+;|[A-Za-z][a-z0-9]*([A-Z]+[a-z0-9]*)+";
+  private static final CallMatcher STRING_BUILDER_TO_STRING = CallMatcher.anyOf(
+    CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_STRING_BUFFER, "toString").parameterCount(0),
+    CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_STRING_BUILDER, "toString").parameterCount(0));
+  @RegExp private static final String DEFAULT_NON_NLS_LITERAL_PATTERN = "((?i)https?://.+)|\\w*(\\.\\w+)+|\\w*[$]\\w*|((?i)</?(html|b|i|body|br|li|ol|ul|code)>)*|&\\w+;|[A-Za-z][a-z0-9]*([A-Z]+[a-z0-9]*)+";
   private static final CallMatcher STRING_LENGTH =
     CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_STRING, "length").parameterCount(0);
   private static final CallMatcher STRING_EQUALS =
@@ -417,7 +421,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
         for (String e : ignored) {
           if (!e.isEmpty()) initialList.add(e);
         }
-        myPanel = new AddDeleteListPanel<String>(null, initialList) {
+        myPanel = new AddDeleteListPanel<>(null, initialList) {
           @Override
           protected String findItemToAdd() {
             final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
@@ -645,11 +649,20 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
       PsiMethod target = ref.resolve();
       if (target == null) return;
       if (IGNORED_METHODS.methodMatches(target)) return;
-      UExpression expr = ref;
       if (ref.getUastParent() instanceof UQualifiedReferenceExpression) {
-        expr = (UQualifiedReferenceExpression)ref.getUastParent();
+        UQualifiedReferenceExpression parent = (UQualifiedReferenceExpression)ref.getUastParent();
+        if (STRING_BUILDER_TO_STRING.methodMatches(target)) {
+          UExpression receiver = parent.getReceiver();
+          if (receiver instanceof UResolvable) {
+            PsiElement receiverTarget = ((UResolvable)receiver).resolve();
+            if (receiverTarget instanceof PsiModifierListOwner) {
+              NlsInfo stringBuilderNlsStatus = NlsInfo.forModifierListOwner((PsiModifierListOwner)receiverTarget);
+              if (stringBuilderNlsStatus.canBeUsedInLocalizedContext()) return;
+            }
+          }
+        }
       }
-      processReferenceToNonLocalized(sourcePsi, expr, target);
+      processReferenceToNonLocalized(sourcePsi, ref, target);
     }
 
     private void visitReferenceExpression(@NotNull PsiElement sourcePsi, @NotNull UReferenceExpression ref) {
@@ -661,12 +674,13 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     private void processReferenceToNonLocalized(@NotNull PsiElement sourcePsi, @NotNull UExpression ref, PsiModifierListOwner target) {
       PsiType type = ref.getExpressionType();
       if (!TypeUtils.isJavaLangString(type)) return;
+      if (target instanceof PsiMethod && NlsInfo.isStringProcessingMethod((PsiMethod)target)) return;
       if (NlsInfo.forModifierListOwner(target).canBeUsedInLocalizedContext()) return;
       if (NlsInfo.forType(type).canBeUsedInLocalizedContext()) return;
       
       String value = target instanceof PsiVariable ? ObjectUtils.tryCast(((PsiVariable)target).computeConstantValue(), String.class) : null;
 
-      NlsInfo targetInfo = getExpectedNlsInfo(myManager.getProject(), ref, value, new THashSet<>());
+      NlsInfo targetInfo = getExpectedNlsInfo(myManager.getProject(), ref, value, new THashSet<>(), myOnTheFly);
       if (targetInfo instanceof NlsInfo.Localized) {
         AddAnnotationFix fix =
           new AddAnnotationFix(((NlsInfo.Localized)targetInfo).suggestAnnotation(target), target, AnnotationUtil.NON_NLS);
@@ -688,7 +702,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
       }
 
       Set<PsiModifierListOwner> nonNlsTargets = new THashSet<>();
-      NlsInfo info = getExpectedNlsInfo(myManager.getProject(), expression, stringValue, nonNlsTargets);
+      NlsInfo info = getExpectedNlsInfo(myManager.getProject(), expression, stringValue, nonNlsTargets, myOnTheFly);
       if (!(info instanceof NlsInfo.Localized)) {
         return;
       }
@@ -714,18 +728,20 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
         }
       }
 
-      if (myOnTheFly) {
-        fixes.add(new I18nizeQuickFix((NlsInfo.Localized)info));
-        if (I18nizeConcatenationQuickFix.getEnclosingLiteralConcatenation(sourcePsi) != null) {
-          fixes.add(new I18nizeConcatenationQuickFix((NlsInfo.Localized)info));
-        }
+      if (!(sourcePsi instanceof PsiLiteralExpression) || !isSwitchCase(expression)) {
+        if (myOnTheFly) {
+          fixes.add(new I18nizeQuickFix((NlsInfo.Localized)info));
+          if (I18nizeConcatenationQuickFix.getEnclosingLiteralConcatenation(sourcePsi) != null) {
+            fixes.add(new I18nizeConcatenationQuickFix((NlsInfo.Localized)info));
+          }
 
-        if (sourcePsi instanceof PsiLiteralExpression && !isNotConstantFieldInitializer((PsiExpression)sourcePsi)) {
-          fixes.add(createIntroduceConstantFix());
+          if (sourcePsi instanceof PsiLiteralExpression && !isNotConstantFieldInitializer((PsiExpression)sourcePsi)) {
+            fixes.add(createIntroduceConstantFix());
+          }
         }
-      }
-      else {
-        fixes.add(new I18nizeBatchQuickFix());
+        else {
+          fixes.add(new I18nizeBatchQuickFix());
+        }
       }
 
       LocalQuickFix[] farr = fixes.toArray(LocalQuickFix.EMPTY_ARRAY);
@@ -733,6 +749,14 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
                                                                           description, myOnTheFly, farr,
                                                                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
       myProblems.add(problem);
+    }
+
+    private boolean isSwitchCase(@NotNull UInjectionHost expression) {
+      if (expression.getUastParent() instanceof USwitchClauseExpression) {
+        return ((USwitchClauseExpression)expression.getUastParent()).getCaseValues().stream()
+          .anyMatch(value -> expression.equals(UastLiteralUtils.wrapULiteral(value)));
+      }
+      return false;
     }
 
     private boolean isNotConstantFieldInitializer(final PsiExpression expression) {
@@ -757,55 +781,62 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     }
   }
 
-  private static List<UExpression> findIndirectUsages(UExpression expression) {
-    PsiElement sourcePsi = expression.getSourcePsi();
-    if (!(sourcePsi instanceof PsiLiteralExpression)) {
-      return Collections.emptyList();
-    }
-
-    while (true) {
-      PsiElement psiParent = sourcePsi.getParent();
-      if (psiParent instanceof PsiPolyadicExpression || psiParent instanceof PsiParenthesizedExpression ||
-          (psiParent instanceof PsiConditionalExpression && ((PsiConditionalExpression)psiParent).getCondition() != sourcePsi)) {
-        sourcePsi = psiParent;
-      }
-      else {
-        break;
-      }
-    }
-
-    PsiExpression passThrough = ExpressionUtils.getPassThroughExpression((PsiExpression)sourcePsi);
-    PsiElement parent = passThrough.getParent();
-    List<UExpression> expressions = new ArrayList<>();
-    if (!passThrough.equals(sourcePsi)) {
-      expressions.add(UastContextKt.toUElement(passThrough, UExpression.class));
-    }
-
-    PsiLocalVariable local = null;
-    if (parent instanceof PsiLocalVariable) {
-      local = (PsiLocalVariable)parent;
-    }
-    else if (parent instanceof PsiAssignmentExpression &&
-             passThrough.equals(((PsiAssignmentExpression)parent).getRExpression()) &&
-             ((PsiAssignmentExpression)parent).getOperationTokenType() == JavaTokenType.EQ) {
-      local = ExpressionUtils.resolveLocalVariable(((PsiAssignmentExpression)parent).getLExpression());
-    }
-
-    if (local != null && NlsInfo.forModifierListOwner(local).getNlsStatus() == ThreeState.UNSURE) {
-      PsiElement codeBlock = PsiUtil.getVariableCodeBlock(local, null);
-      if (codeBlock instanceof PsiCodeBlock) {
-        for (PsiElement e : DefUseUtil.getRefs(((PsiCodeBlock)codeBlock), local, passThrough)) {
-          ContainerUtil.addIfNotNull(expressions, UastContextKt.toUElement(e, UExpression.class));
+  protected static List<UExpression> findIndirectUsages(UExpression expression) {
+    UExpression passThrough = NlsInfo.goUp(expression);
+    UElement uastParent = passThrough.getUastParent();
+    ULocalVariable uVar = null;
+    if (uastParent instanceof ULocalVariable) {
+      uVar = (ULocalVariable)uastParent;
+    } else if (uastParent instanceof UBinaryExpression &&
+               (((UBinaryExpression)uastParent).getOperator() == UastBinaryOperator.ASSIGN ||
+                ((UBinaryExpression)uastParent).getOperator() == UastBinaryOperator.PLUS_ASSIGN) &&
+               NlsInfo.expressionsAreEquivalent(((UBinaryExpression)uastParent).getRightOperand(), passThrough)){
+      UExpression left = ((UBinaryExpression)uastParent).getLeftOperand();
+      if (left instanceof UResolvable) {
+        PsiElement target = ((UResolvable)left).resolve();
+        uVar = ObjectUtils.tryCast(UastContextKt.toUElement(target), ULocalVariable.class);
+        if (uVar == null && target != null) {
+          uVar = ObjectUtils.tryCast(UastContextKt.toUElement(target.getParent()), ULocalVariable.class);
         }
       }
     }
-    return expressions;
+    if (uVar != null) {
+      PsiElement psiVar = uVar.getSourcePsi();
+      PsiElement psi = passThrough.getSourcePsi();
+      if (psi != null && psiVar != null) {
+        if (psiVar instanceof PsiLocalVariable) {
+          // Java
+          PsiLocalVariable local = (PsiLocalVariable)psiVar;
+          if (NlsInfo.forModifierListOwner(local).getNlsStatus() == ThreeState.UNSURE) {
+            PsiElement codeBlock = PsiUtil.getVariableCodeBlock(local, null);
+            if (codeBlock instanceof PsiCodeBlock) {
+              List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(local, codeBlock);
+              return ContainerUtil.mapNotNull(
+                refs, ref -> PsiUtil.isAccessedForWriting(ref) ? null : UastContextKt.toUElement(ref, UExpression.class));
+            }
+          }
+        } else {
+          // Kotlin
+          Collection<PsiReference> refs = ReferencesSearch.search(psiVar, psiVar.getUseScope()).findAll();
+          return ContainerUtil.mapNotNull(refs, ref -> {
+            UExpression expr = UastContextKt.toUElement(ref.getElement(), UExpression.class);
+            if (expr != null && expr.getUastParent() instanceof UBinaryExpression &&
+                NlsInfo.expressionsAreEquivalent(((UBinaryExpression)expr.getUastParent()).getLeftOperand(), expr)) {
+              return null;
+            }
+            return expr;
+          });
+        }
+      }
+    }
+    return Collections.singletonList(passThrough);
   }
 
   private NlsInfo getExpectedNlsInfo(@NotNull Project project,
                                      @NotNull UExpression expression,
                                      @Nullable String value,
-                                     @NotNull Set<? super PsiModifierListOwner> nonNlsTargets) {
+                                     @NotNull Set<? super PsiModifierListOwner> nonNlsTargets,
+                                     boolean onTheFly) {
     if (ignoreForNonAlpha && value != null && !StringUtil.containsAlphaCharacters(value)) {
       return NlsInfo.nonLocalized();
     }
@@ -835,6 +866,9 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
           }
           if (shouldIgnoreUsage(project, value, nonNlsTargets, usage)) {
             break;
+          }
+          if (!onTheFly) { //keep only potential annotation candidate
+            nonNlsTargets.clear();
           }
           ContainerUtil.addIfNotNull(nonNlsTargets, ((NlsInfo.Unspecified)info).getAnnotationCandidate());
           return NlsInfo.localized();
@@ -902,7 +936,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     if (ignoreForJUnitAsserts && isArgOfJUnitAssertion(usage)) {
       return true;
     }
-    if (ignoreForClassReferences && value != null && isClassRef(usage, value)) {
+    if (ignoreForClassReferences && value != null && isClassRef(project, value)) {
       return true;
     }
     if (ignoreForPropertyKeyReferences && value != null && !PropertiesImplUtil.findPropertiesByKey(project, value).isEmpty()) {
@@ -940,12 +974,12 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     }
   }
 
-  private static boolean isClassRef(final UExpression expression, String value) {
+  private static boolean isClassRef(@NotNull Project project,
+                                    String value) {
     if (StringUtil.startsWithChar(value, '#')) {
       value = value.substring(1); // A favor for JetBrains team to catch common Logger usage practice.
     }
 
-    Project project = Objects.requireNonNull(expression.getSourcePsi()).getProject();
     return JavaPsiFacade.getInstance(project).findClass(value, GlobalSearchScope.allScope(project)) != null ||
            ClassUtil.findPsiClassByJVMName(PsiManager.getInstance(project), value) != null;
   }

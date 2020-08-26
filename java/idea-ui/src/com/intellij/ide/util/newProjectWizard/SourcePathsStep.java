@@ -158,7 +158,7 @@ public class SourcePathsStep extends AbstractStepWithProgress<List<JavaModuleSou
 
   private JComponent createComponentForChooseSources() {
     final JPanel panel = new JPanel(new GridBagLayout());
-    mySourcePathsChooser = new ElementsChooser<JavaModuleSourceRoot>(true) {
+    mySourcePathsChooser = new ElementsChooser<>(true) {
       @Override
       public String getItemText(@NotNull JavaModuleSourceRoot sourceRoot) {
         String packagePrefix = sourceRoot.getPackagePrefix();

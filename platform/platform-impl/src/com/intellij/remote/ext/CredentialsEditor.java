@@ -16,6 +16,7 @@
 package com.intellij.remote.ext;
 
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.remote.RemoteSdkAdditionalData;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,7 +34,7 @@ public interface CredentialsEditor<T> {
    * @return the name of the editor
    */
   @NotNull
-  String getName();
+  @NlsContexts.Label String getName();
 
   JPanel getMainPanel();
 
@@ -41,6 +42,7 @@ public interface CredentialsEditor<T> {
 
   ValidationInfo validate();
 
+  @NlsContexts.DialogMessage
   String validateFinal(@NotNull Supplier<? extends RemoteSdkAdditionalData<?>> supplier,
                        @NotNull Consumer<String> helpersPathUpdateCallback);
 

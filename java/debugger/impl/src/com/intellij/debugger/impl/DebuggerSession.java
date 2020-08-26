@@ -29,6 +29,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
@@ -154,7 +155,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
      * since the thread was resumed
      */
     @Override
-    public void setState(@NotNull final DebuggerContextImpl context, final State state, final Event event, final String description) {
+    public void setState(@NotNull final DebuggerContextImpl context, final State state, final Event event, final @NlsContexts.Label String description) {
       ApplicationManager.getApplication().assertIsDispatchThread();
       final DebuggerSession session = context.getDebuggerSession();
       LOG.assertTrue(session == DebuggerSession.this || session == null);
@@ -236,9 +237,9 @@ public final class DebuggerSession implements AbstractDebuggerSession {
 
   private static class DebuggerSessionState {
     final State myState;
-    final String myDescription;
+    final @NlsContexts.Label String myDescription;
 
-    DebuggerSessionState(State state, String description) {
+    DebuggerSessionState(State state, @NlsContexts.Label String description) {
       myState = state;
       myDescription = description;
     }
@@ -248,7 +249,7 @@ public final class DebuggerSession implements AbstractDebuggerSession {
     return myState.myState;
   }
 
-  public String getStateDescription() {
+  public @NlsContexts.Label String getStateDescription() {
     if (myState.myDescription != null) {
       return myState.myDescription;
     }

@@ -40,15 +40,15 @@ public class SnapshotDependenciesImportingTest extends MavenImportingTestCase {
     remoteRepoDir.mkdirs();
   }
 
-  public void testSnapshotVersionDependencyToModule() {
+  public void testSnapshotVersionDependencyToModule() throws Exception {
     performTestWithDependencyVersion("1-SNAPSHOT");
   }
 
-  public void testSnapshotRangeDependencyToModule() {
+  public void testSnapshotRangeDependencyToModule() throws Exception {
     performTestWithDependencyVersion("SNAPSHOT");
   }
 
-  private void performTestWithDependencyVersion(String version) {
+  private void performTestWithDependencyVersion(String version) throws Exception {
     if (!hasMavenInstallation()) return;
 
     createProjectPom("<groupId>test</groupId>" +
@@ -274,11 +274,11 @@ public class SnapshotDependenciesImportingTest extends MavenImportingTestCase {
                        "jar://" + getRepositoryPath() + "/test/foo/1-SNAPSHOT/foo-1-SNAPSHOT-javadoc.jar!/");
   }
 
-  private void deployArtifact(String groupId, String artifactId, String version) throws IOException {
+  private void deployArtifact(String groupId, String artifactId, String version) throws Exception {
     deployArtifact(groupId, artifactId, version, "");
   }
 
-  private void deployArtifact(String groupId, String artifactId, String version, String tail) throws IOException {
+  private void deployArtifact(String groupId, String artifactId, String version, String tail) throws Exception {
     String moduleName = "___" + artifactId;
 
     createProjectSubFile(moduleName + "/src/main/java/Foo.java",
@@ -300,7 +300,7 @@ public class SnapshotDependenciesImportingTest extends MavenImportingTestCase {
     FileUtil.delete(new File(m.getParent().getPath()));
   }
 
-  private void deploy(String modulePath) {
+  private void deploy(String modulePath) throws Exception {
     executeGoal(modulePath, "deploy");
   }
 

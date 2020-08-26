@@ -33,7 +33,7 @@ import java.util.*;
 
 import static com.intellij.openapi.util.Pair.pair;
 
-public final class FileTypeConfigurable implements SearchableConfigurable, Configurable.NoScroll {
+public final class FileTypeConfigurable implements SearchableConfigurable, Configurable.NoScroll, FileTypeSelectable {
   private static final Insets TITLE_INSETS = JBUI.insetsTop(8);
 
   private RecognizedFileTypes myRecognizedFileType;
@@ -44,6 +44,7 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
   private FileTypeAssocTable<FileType> myTempPatternsTable;
   private FileTypeAssocTable<Language> myTempTemplateDataLanguages;
   private final Map<UserFileType, UserFileType> myOriginalToEditedMap = new HashMap<>();
+  private FileType myFileTypeToPreselect;
 
   @Override
   public String getDisplayName() {
@@ -105,6 +106,9 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     updateExtensionList();
 
     myFileTypePanel.myIgnoreFilesField.setText(fileTypeManager.getIgnoredFilesList());
+    if (myFileTypeToPreselect != null) {
+      myRecognizedFileType.selectFileType(myFileTypeToPreselect);
+    }
   }
 
   @Override
@@ -448,6 +452,17 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     void selectFileType(@NotNull FileType fileType) {
       myFileTypesList.setSelectedValue(fileType, true);
       IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myFileTypesList, true));
+    }
+  }
+
+  @Override
+  public void selectFileType(@NotNull FileType fileType) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    if (myRecognizedFileType == null) {
+      myFileTypeToPreselect = fileType;
+    }
+    else {
+      myRecognizedFileType.selectFileType(fileType);
     }
   }
 

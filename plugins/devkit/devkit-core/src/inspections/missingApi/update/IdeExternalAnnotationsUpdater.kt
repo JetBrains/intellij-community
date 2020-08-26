@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections.missingApi.update
 
 import com.intellij.codeInspection.ex.modifyAndCommitProjectProfile
@@ -211,7 +211,7 @@ class IdeExternalAnnotationsUpdater {
     project: Project,
     private val ideaJdk: Sdk,
     private val ideBuildNumber: BuildNumber
-  ) : Task.Backgroundable(project, "Updating IntelliJ API Annotations $ideBuildNumber", true) {
+  ) : Task.Backgroundable(project, DevKitBundle.message("intellij.api.annotations.update.task.title", ideBuildNumber), true) {
 
     private val ideAnnotations = AtomicReference<IdeExternalAnnotations>()
 

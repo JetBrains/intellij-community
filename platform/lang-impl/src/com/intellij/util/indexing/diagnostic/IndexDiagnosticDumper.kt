@@ -3,9 +3,11 @@ package com.intellij.util.indexing.diagnostic
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.SystemProperties
+import com.intellij.util.concurrency.NonUrgentExecutor
 import com.intellij.util.indexing.diagnostic.dto.JsonIndexDiagnostic
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.delete
@@ -22,12 +24,16 @@ import kotlin.streams.asSequence
 object IndexDiagnosticDumper {
 
   @JvmStatic
-  val shouldDumpDiagnosticsForInterruptedUpdaters: Boolean get() =
+  private val shouldDumpDiagnosticsForInterruptedUpdaters: Boolean get() =
     SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.dump.for.interrupted.index.updaters", false)
 
   @JvmStatic
-  val indexingDiagnosticsLimitOfFiles: Int get() =
+  private val indexingDiagnosticsLimitOfFiles: Int get() =
     SystemProperties.getIntProperty("intellij.indexes.diagnostics.limit.of.files", 20)
+
+  @JvmStatic
+  val shouldDumpPathsOfIndexedFiles: Boolean get() =
+    SystemProperties.getBooleanProperty("intellij.indexes.diagnostics.should.dump.paths.of.indexed.files", false)
 
   val indexingDiagnosticDir: Path by lazy {
     val logPath = PathManager.getLogPath()
@@ -46,8 +52,18 @@ object IndexDiagnosticDumper {
 
   private var lastTime: LocalDateTime = LocalDateTime.MIN
 
+  fun dumpProjectIndexingHistoryIfNecessary(projectIndexingHistory: ProjectIndexingHistory) {
+    if (ApplicationManager.getApplication().isUnitTestMode) {
+      return
+    }
+    if (projectIndexingHistory.times.wasInterrupted && !shouldDumpDiagnosticsForInterruptedUpdaters) {
+      return
+    }
+    NonUrgentExecutor.getInstance().execute { dumpProjectIndexingHistoryToLogSubdirectory(projectIndexingHistory) }
+  }
+
   @Synchronized
-  fun dumpProjectIndexingHistoryToLogSubdirectory(projectIndexingHistory: ProjectIndexingHistory) {
+  private fun dumpProjectIndexingHistoryToLogSubdirectory(projectIndexingHistory: ProjectIndexingHistory) {
     try {
       val indexDiagnosticDirectory = indexingDiagnosticDir
       indexDiagnosticDirectory.createDirectories()
@@ -88,6 +104,7 @@ object IndexDiagnosticDumper {
           files
             .asSequence()
             .filterNot { it in survivedHistories }
+            .filter { it.toString().endsWith(".json") }
             .forEach { it.delete() }
         }
     }

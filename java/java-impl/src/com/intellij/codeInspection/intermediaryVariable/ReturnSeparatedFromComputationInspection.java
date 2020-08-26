@@ -69,7 +69,12 @@ public class ReturnSeparatedFromComputationInspection extends AbstractBaseJavaLo
                 final PsiVariable returnedVariable = (PsiVariable)resolved;
                 final PsiCodeBlock variableScope = getVariableScopeBlock(returnedVariable);
                 if (variableScope != null) {
-                  return new ReturnContext(returnStatement, returnScope, returnType, refactoredStatement, returnedVariable, variableScope);
+                  PsiElement variableMethod = PsiTreeUtil.getParentOfType(variableScope, PsiMethod.class, PsiLambdaExpression.class);
+                  PsiElement returnMethod = PsiTreeUtil.getParentOfType(returnScope, PsiMethod.class, PsiLambdaExpression.class);
+                  if (variableMethod == returnMethod) {
+                    return new ReturnContext(returnStatement, returnScope, returnType, refactoredStatement, returnedVariable,
+                                             variableScope);
+                  }
                 }
               }
             }

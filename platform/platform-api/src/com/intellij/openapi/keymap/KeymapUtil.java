@@ -2,10 +2,7 @@
 package com.intellij.openapi.keymap;
 
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
@@ -141,7 +138,7 @@ public final class KeymapUtil {
   }
 
   @NotNull
-  public static String getKeystrokeText(KeyStroke accelerator) {
+  public static @NlsSafe String getKeystrokeText(KeyStroke accelerator) {
     if (accelerator == null) return "";
     if (isNativeMacShortcuts()) {
       return MacKeymapUtil.getKeyStrokeText(accelerator);
@@ -326,7 +323,7 @@ public final class KeymapUtil {
   }
 
   @NotNull
-  public static String getFirstKeyboardShortcutText(@NotNull @NonNls String actionId) {
+  public static @NlsSafe String getFirstKeyboardShortcutText(@NotNull @NonNls String actionId) {
     for (Shortcut shortcut : getActiveKeymapShortcuts(actionId).getShortcuts()) {
       if (shortcut instanceof KeyboardShortcut) {
         return getShortcutText(shortcut);
@@ -364,7 +361,7 @@ public final class KeymapUtil {
   }
 
   @NotNull
-  public static String getShortcutsText(Shortcut @NotNull [] shortcuts) {
+  public static @NlsSafe String getShortcutsText(Shortcut @NotNull [] shortcuts) {
     if (shortcuts.length == 0) {
       return "";
     }
@@ -584,13 +581,13 @@ public final class KeymapUtil {
   }
 
   @NotNull
-  public static String createTooltipText(@NotNull String name, @NotNull @NonNls String actionId) {
+  public static @NlsContexts.Tooltip String createTooltipText(@NotNull @NlsContexts.Tooltip String name, @NotNull @NonNls String actionId) {
     String text = getFirstKeyboardShortcutText(actionId);
     return text.isEmpty() ? name : name + " (" + text + ")";
   }
 
   @NotNull
-  public static String createTooltipText(@Nullable String name, @NotNull AnAction action) {
+  public static @NlsSafe String createTooltipText(@Nullable String name, @NotNull AnAction action) {
     String toolTipText = name == null ? "" : name;
     while (StringUtil.endsWithChar(toolTipText, '.')) {
       toolTipText = toolTipText.substring(0, toolTipText.length() - 1);

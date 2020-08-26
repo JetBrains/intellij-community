@@ -15,11 +15,8 @@ import com.siyeh.ig.psiutils.SerializationUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Optional;
-
 import static com.intellij.psi.CommonClassNames.JAVA_IO_SERIAL;
-import static com.intellij.psi.CommonClassNames.SERIAL_VERSION_UID_FIELD_NAME;
-import static com.intellij.psi.PsiModifier.*;
+import static com.intellij.psi.PsiModifier.PRIVATE;
 
 public class MissingSerialAnnotationInspection extends BaseInspection {
 
@@ -43,18 +40,19 @@ public class MissingSerialAnnotationInspection extends BaseInspection {
     @Override
     public void visitField(PsiField field) {
       super.visitField(field);
-      if (field.hasAnnotation(JAVA_IO_SERIAL) || !isConstant(field)) return;
+      if (field.hasAnnotation(JAVA_IO_SERIAL)) return;
 
-      Optional<PsiClass> pClass = getSerializablePsiClass(field);
-      if (pClass.isEmpty()) return;
+      PsiClass pClass = getSerializablePsiClass(field);
+      if (pClass == null) return;
 
       boolean candidateToBeAnnotated;
-      if (pClass.get().isRecord()) {
-        candidateToBeAnnotated = isSerialFieldInExternalizable(field);
+      if (pClass.isRecord()) {
+        candidateToBeAnnotated = SerializationUtils.isSerialVersionUid(field);
       }
       else {
-        candidateToBeAnnotated = SerializationUtils.isExternalizable(pClass.get()) ? isSerialFieldInExternalizable(field)
-                                                                                   : isSerialFieldInSerializable(field);
+        candidateToBeAnnotated = SerializationUtils.isExternalizable(pClass) ? SerializationUtils.isSerialVersionUid(field)
+                                                                             : SerializationUtils.isSerialVersionUid(field) ||
+                                                                               SerializationUtils.isSerialPersistentFields(field);
       }
       if (candidateToBeAnnotated) {
         registerError(field.getNameIdentifier(), field);
@@ -66,16 +64,16 @@ public class MissingSerialAnnotationInspection extends BaseInspection {
       super.visitMethod(method);
       if (method.hasAnnotation(JAVA_IO_SERIAL)) return;
 
-      Optional<PsiClass> pClass = getSerializablePsiClass(method);
-      if (pClass.isEmpty()) return;
+      PsiClass pClass = getSerializablePsiClass(method);
+      if (pClass == null) return;
 
       boolean candidateToBeAnnotated;
-      if (pClass.get().isRecord()) {
+      if (pClass.isRecord()) {
         candidateToBeAnnotated = isSerialMethodInExternalizable(method);
       }
       else {
-        candidateToBeAnnotated = SerializationUtils.isExternalizable(pClass.get()) ? isSerialMethodInExternalizable(method)
-                                                                                   : isSerialMethodInSerializable(method);
+        candidateToBeAnnotated = SerializationUtils.isExternalizable(pClass) ? isSerialMethodInExternalizable(method)
+                                                                             : isSerialMethodInSerializable(method);
       }
       if (candidateToBeAnnotated) {
         PsiIdentifier methodIdentifier = method.getNameIdentifier();
@@ -83,21 +81,13 @@ public class MissingSerialAnnotationInspection extends BaseInspection {
         registerError(methodIdentifier, method);
       }
     }
-
-    private static Optional<PsiClass> getSerializablePsiClass(@NotNull PsiElement psiElement) {
-      PsiClass psiClass = PsiTreeUtil.getParentOfType(psiElement, PsiClass.class);
-      if (psiClass == null) return Optional.empty();
-      return !psiClass.isEnum() && SerializationUtils.isSerializable(psiClass) ? Optional.of(psiClass) : Optional.empty();
-    }
   }
 
-  static boolean isConstant(@NotNull PsiField field) {
-    return field.hasModifierProperty(PRIVATE) && field.hasModifierProperty(STATIC) && field.hasModifierProperty(FINAL);
-  }
-
-  static boolean isSerialFieldInSerializable(@NotNull PsiField field) {
-    return isSerialFieldInExternalizable(field) ||
-           (field.getName().equals("serialPersistentFields") && field.getType().equalsToText("java.io.ObjectStreamField[]"));
+  @Nullable
+  static PsiClass getSerializablePsiClass(@NotNull PsiElement psiElement) {
+    PsiClass psiClass = PsiTreeUtil.getParentOfType(psiElement, PsiClass.class);
+    if (psiClass == null) return null;
+    return !psiClass.isEnum() && SerializationUtils.isSerializable(psiClass) ? psiClass : null;
   }
 
   static boolean isSerialMethodInSerializable(@NotNull PsiMethod method) {
@@ -109,10 +99,6 @@ public class MissingSerialAnnotationInspection extends BaseInspection {
     }
 
     return isSerialMethodInExternalizable(method);
-  }
-
-  static boolean isSerialFieldInExternalizable(@NotNull PsiField field) {
-    return field.getName().equals(SERIAL_VERSION_UID_FIELD_NAME) && field.getType().equals(PsiType.LONG);
   }
 
   static boolean isSerialMethodInExternalizable(@NotNull PsiMethod method) {

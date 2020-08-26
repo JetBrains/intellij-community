@@ -15,6 +15,9 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.usageView.UsageViewUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
+
+import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
 
 public final class RefactoringMessageUtil {
 
@@ -25,32 +28,32 @@ public final class RefactoringMessageUtil {
 
   /**
    * @return null, if can create a class
-   *         an error message, if cannot create a class
-   *
+   * an error message, if cannot create a class
    */
-  public static String checkCanCreateClass(PsiDirectory destinationDirectory, String className) {
+  public static @Nls(capitalization = Sentence) @Nullable String checkCanCreateClass(PsiDirectory destinationDirectory, String className) {
     PsiClass[] classes = JavaDirectoryService.getInstance().getClasses(destinationDirectory);
     VirtualFile file = destinationDirectory.getVirtualFile();
     for (PsiClass aClass : classes) {
       if (className.equals(aClass.getName())) {
         return JavaRefactoringBundle.message("directory.0.already.contains.1.named.2",
-                                         file.getPresentableUrl(), UsageViewUtil.getType(aClass), className);
+                                             file.getPresentableUrl(), UsageViewUtil.getType(aClass), className);
       }
     }
-    @NonNls String fileName = className+".java";
+    @NonNls String fileName = className + ".java";
     return checkCanCreateFile(destinationDirectory, fileName);
   }
-  public static String checkCanCreateFile(PsiDirectory destinationDirectory, String fileName) {
+
+  public static @Nls(capitalization = Sentence) @Nullable String checkCanCreateFile(PsiDirectory destinationDirectory, String fileName) {
     VirtualFile file = destinationDirectory.getVirtualFile();
     VirtualFile child = file.findChild(fileName);
     if (child != null) {
       return JavaRefactoringBundle.message("directory.0.already.contains.a.file.named.1",
-                                       file.getPresentableUrl(), fileName);
+                                           file.getPresentableUrl(), fileName);
     }
     return null;
   }
 
-  public static String getGetterSetterMessage(String newName, String action, PsiMethod getter, PsiMethod setter) {
+  public static @NlsContexts.DialogMessage String getGetterSetterMessage(String newName, String action, PsiMethod getter, PsiMethod setter) {
     String text;
     if (getter != null && setter != null) {
       text = JavaRefactoringBundle.message("getter.and.setter.methods.found.for.the.field.0", newName, action);

@@ -29,6 +29,8 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NlsContexts.PopupContent;
+import com.intellij.openapi.util.NlsContexts.PopupTitle;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -53,12 +55,14 @@ import java.util.List;
  */
 public abstract class NavigationGutterIconRenderer extends GutterIconRenderer
   implements GutterIconNavigationHandler<PsiElement>, DumbAware {
-  protected final String myPopupTitle;
-  private final String myEmptyText;
+  protected final @PopupTitle String myPopupTitle;
+  private final @PopupContent String myEmptyText;
   protected final Computable<? extends PsiElementListCellRenderer> myCellRenderer;
   private final NotNullLazyValue<? extends List<SmartPsiElementPointer<?>>> myPointers;
 
-  protected NavigationGutterIconRenderer(final String popupTitle, final String emptyText, @NotNull Computable<? extends PsiElementListCellRenderer<?>> cellRenderer,
+  protected NavigationGutterIconRenderer(final @PopupTitle String popupTitle,
+                                         final @PopupContent String emptyText,
+                                         @NotNull Computable<? extends PsiElementListCellRenderer<?>> cellRenderer,
                                          @NotNull NotNullLazyValue<? extends List<SmartPsiElementPointer<?>>> pointers) {
     myPopupTitle = popupTitle;
     myEmptyText = emptyText;

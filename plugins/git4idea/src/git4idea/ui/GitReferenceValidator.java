@@ -8,6 +8,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
+import git4idea.i18n.GitBundle;
 import git4idea.util.GitUIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -68,7 +69,7 @@ public class GitReferenceValidator {
         try {
           GitRevisionNumber revision = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
             return GitRevisionNumber.resolve(myProject, gitRoot(), revisionExpression);
-          }, "Validating Revision...", true, project);
+          }, GitBundle.message("progress.title.validating.revision"), true, project);
           GitUtil.showSubmittedFiles(myProject, revision.asString(), gitRoot(), false, false);
           myLastResult = true;
         }

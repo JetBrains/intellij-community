@@ -13,24 +13,22 @@ typealias PositiveInt = Int?
 
 fun Int.toPositiveInt() = takeIf { it > 0 }
 
-fun IndexingJobStatistics.createProviderJsonStatistics(
-  providerDebugName: String,
-  numberOfFiles: Int,
-  totalTime: TimeNano
-): JsonFileProviderIndexStatistics {
+fun IndexingJobStatistics.toJsonStatistics(): JsonFileProviderIndexStatistics {
   val statsPerFileType = aggregateStatsPerFileType()
   val allStatsPerIndexer = aggregateStatsPerIndexer()
   val (statsPerIndexer, fastIndexers) = allStatsPerIndexer.partition { it.partOfTotalIndexingTime.percentages > 0.01 }
+  val indexedFilePaths = if (IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles) indexedFiles else null
 
   return JsonFileProviderIndexStatistics(
-    providerDebugName,
-    numberOfFiles,
-    JsonDuration(totalTime),
-    numberOfTooLargeForIndexingFiles.get().toPositiveInt(),
+    fileSetName,
+    numberOfIndexedFiles,
+    JsonDuration(totalIndexingTime),
+    numberOfTooLargeForIndexingFiles.toPositiveInt(),
     tooLargeForIndexingFiles.biggestElements.map { it.toJson() }.takeIf { it.isNotEmpty() },
     statsPerFileType.sortedByDescending { it.partOfTotalIndexingTime.percentages },
     statsPerIndexer.sortedByDescending { it.partOfTotalIndexingTime.percentages },
-    fastIndexers.map { it.indexId }.sorted()
+    fastIndexers.map { it.indexId }.sorted(),
+    indexedFilePaths
   )
 }
 

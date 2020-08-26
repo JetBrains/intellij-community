@@ -5,37 +5,25 @@ package com.intellij.ui.messages
 
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.ui.DialogWrapper.DoNotAskOption
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.ui.Messages.YesNoCancelResult
-import com.intellij.openapi.ui.Messages.YesNoResult
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.IdeFocusManager
-import com.intellij.ui.ComponentUtil
-import com.intellij.ui.MessageException
 import com.intellij.ui.mac.MacMessages
 import com.intellij.ui.mac.foundation.Foundation
 import com.intellij.ui.mac.foundation.ID
 import com.intellij.ui.mac.foundation.MacUtil
 import com.intellij.util.ui.UIUtil
 import com.sun.jna.Callback
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
-import org.jetbrains.annotations.NotNull
-import org.jetbrains.annotations.Nullable
-import java.awt.AWTEvent
-import java.awt.Component
+import java.awt.SecondaryLoop
+import java.awt.Toolkit
 import java.awt.Window
-import java.awt.event.InputEvent
-import java.awt.event.WindowAdapter
-import java.awt.event.WindowEvent
-import java.util.*
 
 internal class MacMessageManagerProviderImpl : MacMessages.MacMessageManagerProvider {
   override fun getMessageManager(): MacMessages {
-    if (!SystemInfo.isMacOSBigSur || Registry.`is`("ide.mac.message.sheets.java.emulation.dialogs", true)) {
+    if (Registry.`is`("ide.mac.message.sheets.java.emulation.dialogs", true)) {
       return service<JBMacMessages>()
     }
     else {
@@ -44,550 +32,190 @@ internal class MacMessageManagerProviderImpl : MacMessages.MacMessageManagerProv
   }
 }
 
-private val LOG = Logger.getInstance("#com.intellij.ui.mac.MacMessages")
-
-private class MessageResult(val returnCode: Int, val suppress: Boolean)
+private class MessageInfo(val title: String,
+                          message: String?,
+                          val buttons: Array<String>,
+                          val errorStyle: Boolean,
+                          window: Window?,
+                          val defaultOptionIndex: Int,
+                          val doNotAskDialogOption: DoNotAskOption?) {
+  val message = StringUtil.stripHtml(message ?: "", true).replace("%", "%%")
+  val window = window ?: JBMacMessages.getForemostWindow()
+  val nativeWindow: ID = MacUtil.findWindowFromJavaWindow(this.window)
+}
 
 @Service
 private class NativeMacMessageManager : MacMessages() {
-  companion object {
-    private val lock = Any()
-    private val blockedDocumentRoots = Object2IntOpenHashMap<Window>()
-    private val idToWindow = HashMap<Long, Window>()
+  private var myInfo: MessageInfo? = null
+  private var myLoop: SecondaryLoop? = null
+  private var myResult: Int? = null
+  private var mySuppress: Boolean = false
 
-    private val resultsFromDocumentRoot: MutableMap<Window, MessageResult> = HashMap()
-    private val windowToQueue = HashMap<Window, MacMessagesQueue<Runnable>>()
-
-    private val alertDidEnd = object : Callback {
-      @Suppress("UNUSED_PARAMETER", "unused")
-      fun callback(self: ID?, selector: String?, alert: ID?, returnCode: ID, contextInfo: ID) {
-        synchronized(lock) {
-          val documentRoot = idToWindow.get(contextInfo.toLong())!!
-          processResult(documentRoot)
-          val suppressState = Foundation.invoke(Foundation.invoke(alert, "suppressionButton"), "state")
-          resultsFromDocumentRoot.put(documentRoot, MessageResult(returnCode.toInt(), suppressState.toInt() == 1))
-          windowToQueue.get(idToWindow.get(contextInfo.toLong())!!)!!.runFromQueue()
-        }
-        Foundation.cfRelease(self)
-      }
-    }
-
-    private val VARIABLE_BUTTONS_ALERT_PANEL = object : Callback {
-      @Suppress("UNUSED_PARAMETER", "unused")
-      fun callback(self: ID?, selector: String?, params: ID?) {
-        val title = Foundation.invoke(params, "objectAtIndex:", 0)
-        val message = Foundation.invoke(params, "objectAtIndex:", 1)
-        val focusedWindow = Foundation.invoke(params, "objectAtIndex:", 2)
-        val alertStyle = Foundation.invoke(params, "objectAtIndex:", 4)
-        val doNotAskText = Foundation.invoke(params, "objectAtIndex:", 5)
-        val defaultOptionIndex = Foundation.toStringViaUTF8(Foundation.invoke(params, "objectAtIndex:", 6))!!.toInt()
-        //val focusedOptionIndex = Foundation.toStringViaUTF8(Foundation.invoke(params, "objectAtIndex:", 7))!!.toInt()
-        val buttons = Foundation.invoke(params, "objectAtIndex:", 8)
-        val doNotAskChecked = Foundation.invoke(params, "objectAtIndex:", 9)
-        val alert = Foundation.invoke(Foundation.invoke("NSAlert", "alloc"), "init")
-        Foundation.invoke(alert, "setMessageText:", title)
-        Foundation.invoke(alert, "setInformativeText:", message)
-        if ("error" == Foundation.toStringViaUTF8(alertStyle)) {
-          // NSCriticalAlertStyle = 2
-          Foundation.invoke(alert, "setAlertStyle:", 2)
-        }
-
-        val buttonEnumerator = Foundation.invoke(buttons, "objectEnumerator")
-        while (true) {
-          val button = Foundation.invoke(buttonEnumerator, "nextObject")
-          if (button.toInt() == 0) {
-            break
-          }
-          Foundation.invoke(alert, "addButtonWithTitle:", button)
-        }
-        if (defaultOptionIndex != -1) {
-          val button = Foundation.invoke(Foundation.invoke(alert, "buttons"), "objectAtIndex:", defaultOptionIndex)
-          Foundation.invoke(Foundation.invoke(alert, "window"), "setDefaultButtonCell:", Foundation.invoke(button, "cell"))
-        }
-
-        // it seems like asking for focus will cause java to go and query focus owner too, which may cause dead locks on main-thread
-        //if (focusedOptionIndex != -1) {
-        //  invoke(invoke(alert, "window"), "makeFirstResponder:",
-        //         invoke(invoke(alert, "buttons"), "objectAtIndex:", focusedOptionIndex));
-        //} else {
-        //  int count = invoke(buttons, "count").intValue();
-        //  invoke(invoke(alert, "window"), "makeFirstResponder:",
-        //         invoke(invoke(alert, "buttons"), "objectAtIndex:", count == 1 ? 0 : 1));
-        //}
-        enableEscapeToCloseTheMessage(alert)
-        val doNotAsk = Foundation.toStringViaUTF8(doNotAskText)
-        if (doNotAsk != "-1") {
-          Foundation.invoke(alert, "setShowsSuppressionButton:", 1)
-          Foundation.invoke(Foundation.invoke(alert, "suppressionButton"), "setTitle:", doNotAskText)
-          Foundation.invoke(Foundation.invoke(alert, "suppressionButton"), "setState:", "checked" == Foundation.toStringViaUTF8(doNotAskChecked))
-        }
-        Foundation.invoke(alert, "beginSheetModalForWindow:modalDelegate:didEndSelector:contextInfo:", focusedWindow, self,
-                          Foundation.createSelector("alertDidEnd:returnCode:contextInfo:"), focusedWindow)
-        Foundation.cfRelease(alert)
-      }
-    }
-
-    private val SIMPLE_ALERT_PANEL: Callback = object : Callback {
-      @Suppress("UNUSED_PARAMETER", "unused")
-      fun callback(self: ID?, selector: String?, params: ID?) {
-        val title = Foundation.invoke(params, "objectAtIndex:", 0)
-        val defaultText = Foundation.invoke(params, "objectAtIndex:", 1)
-        val otherText = Foundation.invoke(params, "objectAtIndex:", 2)
-        val alternateText = Foundation.invoke(params, "objectAtIndex:", 3)
-        val message = Foundation.invoke(params, "objectAtIndex:", 4)
-        val focusedWindow = Foundation.invoke(params, "objectAtIndex:", 5)
-        val alertStyle = Foundation.invoke(params, "objectAtIndex:", 7)
-        val doNotAskText = Foundation.invoke(params, "objectAtIndex:", 8)
-        val doNotAskChecked = Foundation.invoke(params, "objectAtIndex:", 9)
-        val alternateExist = "-1" != Foundation.toStringViaUTF8(alternateText)
-        val otherExist = "-1" != Foundation.toStringViaUTF8(otherText)
-        val alert = Foundation.invoke("NSAlert",
-                                      "alertWithMessageText:defaultButton:alternateButton:otherButton:informativeTextWithFormat:",
-                                      title, defaultText, if (alternateExist) alternateText else null, if (otherExist) otherText else null,
-                                      message)
-        if (Foundation.toStringViaUTF8(alertStyle) == "error") {
-          // NSCriticalAlertStyle = 2
-          Foundation.invoke(alert, "setAlertStyle:", 2)
-        }
-
-        // it seems like asking for focus will cause java to go and query focus owner too, which may cause dead locks on main-thread
-        //ID window = invoke(alert, "window");
-        //invoke(window, "makeFirstResponder:",
-        //       invoke(invoke(alert, "buttons"), "objectAtIndex:", alternateExist ? 2 : otherExist ? 1 : 0));
-        //
-        if (!alternateExist) {
-          enableEscapeToCloseTheMessage(alert)
-        }
-        val doNotAsk = Foundation.toStringViaUTF8(doNotAskText)
-        if ("-1" != doNotAsk) {
-          Foundation.invoke(alert, "setShowsSuppressionButton:", 1)
-          Foundation.invoke(Foundation.invoke(alert, "suppressionButton"), "setTitle:", doNotAskText)
-          Foundation.invoke(Foundation.invoke(alert, "suppressionButton"), "setState:",
-                            "checked" == Foundation.toStringViaUTF8(doNotAskChecked))
-        }
-        Foundation.invoke(alert, "beginSheetModalForWindow:modalDelegate:didEndSelector:contextInfo:", focusedWindow, self,
-                          Foundation.createSelector("alertDidEnd:returnCode:contextInfo:"), focusedWindow)
-      }
-    }
-
-    private val windowDidBecomeMainCallback = object : Callback {
-      @Suppress("UNUSED_PARAMETER", "unused")
-      fun callback(self: ID, nsNotification: ID?) {
-        synchronized(lock) {
-          if (!idToWindow.keys.contains(self.toLong())) {
-            return
-          }
-        }
-        Foundation.invoke(self, "oldWindowDidBecomeMain:", nsNotification)
-      }
-    }
-
-    init {
-      val delegateClass = Foundation.allocateObjcClassPair(Foundation.getObjcClass("NSObject"), "NSAlertDelegate_")
-      if (!Foundation.addMethod(delegateClass, Foundation.createSelector("alertDidEnd:returnCode:contextInfo:"), alertDidEnd, "v*")) {
-        throw RuntimeException("Unable to add method to objective-c delegate class!")
-      }
-      if (!Foundation.addMethod(delegateClass, Foundation.createSelector("showSheet:"), SIMPLE_ALERT_PANEL, "v*")) {
-        throw RuntimeException("Unable to add method to objective-c delegate class!")
-      }
-      if (!Foundation.addMethod(delegateClass, Foundation.createSelector("showVariableButtonsSheet:"), VARIABLE_BUTTONS_ALERT_PANEL, "v*")) {
-        throw RuntimeException("Unable to add method to objective-c delegate class!")
-      }
-      Foundation.registerObjcClassPair(delegateClass)
-        val awtWindow = Foundation.getObjcClass("AWTWindow")
-        val windowWillEnterFullScreenMethod = Foundation.createSelector("windowDidBecomeMain:")
-        val originalWindowWillEnterFullScreen = Foundation.class_replaceMethod(awtWindow, windowWillEnterFullScreenMethod, windowDidBecomeMainCallback, "v@::@")
-        Foundation.addMethodByID(awtWindow, Foundation.createSelector("oldWindowDidBecomeMain:"), originalWindowWillEnterFullScreen, "v@::@")
-    }
-
-    private fun processResult(window: Window) {
-      synchronized(lock) {
-        if (!blockedDocumentRoots.containsKey(window)) {
-          throw IllegalStateException("Window should be in th list.")
-        }
-
-        val openedAlertsForWindow = blockedDocumentRoots.getInt(window)
-        if (openedAlertsForWindow < 1) {
-          throw IllegalStateException("Should be at least one window in the list")
-        }
-
-        if (openedAlertsForWindow == 1) {
-          // the last alert
-          blockedDocumentRoots.removeInt(window)
-        }
-        else {
-          blockedDocumentRoots.put(window, openedAlertsForWindow - 1)
-        }
-      }
-    }
-
-    fun pumpEventsDocumentExclusively(documentRoot: Window) {
-      val messageNumber = blockedDocumentRoots.getInt(documentRoot)
-      val theQueue = documentRoot.toolkit.systemEventQueue
-      do {
-        try {
-          val event = theQueue.nextEvent
-          var eventOk = true
-          if (event is InputEvent) {
-            val source = event.getSource()
-            if (source is Component) {
-              val window = findDocumentRoot(source)
-              if (window === documentRoot) {
-                eventOk = false
-                event.consume()
-              }
-            }
-          }
-
-          if (eventOk) {
-            val method = theQueue.javaClass.getDeclaredMethod("dispatchEvent", AWTEvent::class.java)
-            method.isAccessible = true
-            method.invoke(theQueue, event)
-          }
-        }
-        catch (e: MessageException) {
-          throw e
-        }
-        catch (e: Throwable) {
-          LOG.error(e)
-        }
-      }
-      while (isBlockedDocumentRoot(documentRoot, messageNumber))
-    }
-
-    private fun isBlockedDocumentRoot(documentRoot: Window?, messageNumber: Int?): Boolean {
-      synchronized(lock) {
-        return messageNumber == blockedDocumentRoots.getInt(documentRoot)
-      }
-    }
-
-    private fun startModal(window: Window, windowId: ID) {
-      val windowPointer = windowId.toLong()
-      synchronized(lock) {
-        idToWindow.put(windowPointer, window)
-        blockedDocumentRoots.addTo(window, 1)
-      }
-      pumpEventsDocumentExclusively(window)
-      synchronized(lock) {
-        idToWindow.remove(windowPointer)
-      }
-    }
-
-    @YesNoCancelResult
-    fun showAlertDialog(title: String,
-                        message: String? = null,
-                        yesText: String,
-                        alternateText: String? = null,
-                        noText: String? = null,
-                        window: Window? = null,
-                        errorStyle: Boolean = false,
-                        doNotAskOption: DoNotAskOption? = null): Int {
-      val effectiveWindow = window ?: JBMacMessages.getForemostWindow()
-      runAndRelease {
-        val params = DialogParamsWrapper(DialogType.alert)
-        params.add(CommonDialogParamType.title, title)
-        params.removeMnemonicAndAdd(AlertDialogParamType.defaultText, yesText)
-        params.removeMnemonicAndAdd(AlertDialogParamType.alternateText, noText)
-        params.removeMnemonicAndAdd(AlertDialogParamType.otherText, alternateText)
-        // replace % -> %% to avoid formatted parameters (causes SIGTERM)
-        params.add(CommonDialogParamType.message, StringUtil.stripHtml(message ?: "", true).replace("%", "%%"))
-        params.add(CommonDialogParamType.errorStyle, if (errorStyle) "error" else "-1")
-        // TODO: state=!doNotAsk.shouldBeShown()
-        params.add(CommonDialogParamType.doNotAskDialogOption1, if (doNotAskOption == null || !doNotAskOption.canBeHidden()) "-1" else doNotAskOption.doNotShowMessage)
-        params.add(CommonDialogParamType.doNotAskDialogOption2, if (doNotAskOption != null && !doNotAskOption.isToBeShown) "checked" else "-1")
-
-        val result = resultsFromDocumentRoot.remove(showDialog(effectiveWindow, "showSheet:", params))!!
-        val convertedResult = convertReturnCodeFromNativeAlertDialog(result.returnCode, alternateText)
-        if (doNotAskOption != null && doNotAskOption.canBeHidden()) {
-          val operationCanceled = convertedResult == Messages.CANCEL
-          if (!operationCanceled || doNotAskOption.shouldSaveOptionsOnCancel()) {
-            doNotAskOption.setToBeShown(!result.suppress, convertedResult)
-          }
-        }
-        return convertedResult
-      }
-    }
-
-    private fun showDialog(window: Window, methodName: String, paramsWrapper: DialogParamsWrapper): Window? {
-      val documentRoot = findDocumentRoot(window)
-      val nativeFocusedWindow = MacUtil.findWindowFromJavaWindow(window)
-      val paramsArray = paramsWrapper.getParamsAsId(nativeFocusedWindow)
-      window.addWindowListener(object : WindowAdapter() {
-        override fun windowClosed(e: WindowEvent) {
-          super.windowClosed(e)
-          //if (blockedDocumentRoots.get(documentRoot) != null) {
-          //   LOG.assertTrue(blockedDocumentRoots.get(documentRoot) < 2);
-          //}
-          windowToQueue.remove(documentRoot)
-          if (blockedDocumentRoots.containsKey(documentRoot)) {
-            blockedDocumentRoots.removeInt(documentRoot)
-            throw MessageException("Owner window has been removed")
-          }
-        }
-      })
-      val delegate = Foundation.invoke(Foundation.invoke(Foundation.getObjcClass("NSAlertDelegate_"), "alloc"), "init")
-      IdeFocusManager.getGlobalInstance().setTypeaheadEnabled(false)
-      runOrPostponeForWindow(documentRoot!!, Runnable {
-        Foundation.invoke(delegate, "performSelectorOnMainThread:withObject:waitUntilDone:",
-                          Foundation.createSelector(methodName), paramsArray, false)
-      })
-      startModal(documentRoot, nativeFocusedWindow)
-      IdeFocusManager.getGlobalInstance().setTypeaheadEnabled(true)
-      return documentRoot
-    }
-
-    private fun convertReturnCodeFromNativeMessageDialog(result: Int): Int {
-      return result - 1000
-    }
-
-    private fun runOrPostponeForWindow(documentRoot: Window, task: Runnable) {
-      synchronized(lock) {
-        var queue = windowToQueue.get(documentRoot)
-        if (queue == null) {
-          queue = MacMessagesQueue()
-          windowToQueue.put(documentRoot, queue)
-        }
-        queue.runOrSchedule(task)
-      }
-    }
+  override fun showYesNoCancelDialog(@NlsContexts.DialogTitle title: String,
+                                     message: String,
+                                     @NlsContexts.Button yesText: String,
+                                     @NlsContexts.Button noText: String,
+                                     @NlsContexts.Button cancelText: String,
+                                     window: Window?,
+                                     doNotAskOption: DoNotAskOption?): Int {
+    return showMessageDialog(title, message, arrayOf(yesText, noText, cancelText), false, window, -1, 0, doNotAskOption)
   }
 
-  override fun showOkMessageDialog(title: String, message: String, okText: String, window: Window?) {
-    showAlertDialog(title = title, message = message, window = window, yesText = okText)
+  override fun showOkMessageDialog(@NlsContexts.DialogTitle title: @NlsContexts.DialogMessage String,
+                                   message: String?,
+                                   @NlsContexts.Button okText: String,
+                                   window: Window?) {
+    showMessageDialog(title, message, arrayOf(okText), false, window, -1, 0, null)
   }
 
-  @YesNoResult
   override fun showYesNoDialog(title: String,
                                message: String,
-                               yesText: String,
-                               noText: String,
+                               @NlsContexts.Button yesText: String,
+                               @NlsContexts.Button noText: String,
                                window: Window?,
                                doNotAskDialogOption: DoNotAskOption?): Boolean {
-    return showAlertDialog(title = title, message = message, yesText = yesText, noText = noText,
-                           window = window,
-                           doNotAskOption = doNotAskDialogOption) == Messages.YES
+    return showMessageDialog(title, message, arrayOf(yesText, noText), false, window, -1, 0, doNotAskDialogOption) == Messages.YES
   }
 
-  override fun showErrorDialog(title: String, message: String, okButton: String, window: Window?) {
-    showAlertDialog(title = title, message = message, yesText = okButton, window = window, errorStyle = true)
+  override fun showErrorDialog(@NlsContexts.DialogTitle title: String,
+                               @NlsContexts.DialogMessage message: String?,
+                               @NlsContexts.Button okButton: String,
+                               window: Window?) {
+    showMessageDialog(title, message, arrayOf(okButton), true, window, -1, 0, null)
   }
 
-  @YesNoCancelResult
-  override fun showYesNoCancelDialog(title: @NotNull String,
-                                     message: String,
-                                     yesText: @NotNull String,
-                                     noText: @NotNull String,
-                                     cancelText: @NotNull String,
-                                     window: @Nullable Window?,
-                                     doNotAskOption: @Nullable DoNotAskOption?): Int {
-    return showAlertDialog(title = title, message = message,
-                           yesText = yesText, alternateText = noText, noText = cancelText,
-                           window = window, doNotAskOption = doNotAskOption)
-  }
-
-  override fun showMessageDialog(title: String,
-                                 message: String,
+  @Messages.YesNoCancelResult
+  override fun showMessageDialog(@NlsContexts.DialogTitle title: String,
+                                 @NlsContexts.DialogMessage message: String?,
                                  buttons: Array<String>,
                                  errorStyle: Boolean,
                                  window: Window?,
                                  defaultOptionIndex: Int,
                                  focusedOptionIndex: Int,
                                  doNotAskDialogOption: DoNotAskOption?): Int {
-    val effectiveWindow = window ?: JBMacMessages.getForemostWindow()
-    runAndRelease {
-      val params = DialogParamsWrapper(DialogType.message)
-      params.add(CommonDialogParamType.title, title)
-      // replace % -> %% to avoid formatted parameters (causes SIGTERM)
-      params.add(CommonDialogParamType.message, StringUtil.stripHtml(message, true).replace("%", "%%"))
-      params.add(CommonDialogParamType.errorStyle, if (errorStyle) "error" else "-1")
-      // TODO: state=!doNotAsk.shouldBeShown()
-      params.add(CommonDialogParamType.doNotAskDialogOption1, if (doNotAskDialogOption == null || !doNotAskDialogOption.canBeHidden()) "-1" else doNotAskDialogOption.doNotShowMessage)
-      params.add(CommonDialogParamType.doNotAskDialogOption2, if (doNotAskDialogOption != null && !doNotAskDialogOption.isToBeShown) "checked" else "-1")
-      params.add(MessageDialogParamType.defaultOptionIndex, defaultOptionIndex.toString())
-      params.add(MessageDialogParamType.focusedOptionIndex, focusedOptionIndex.toString())
+    val info = MessageInfo(title, message, buttons, errorStyle, window, defaultOptionIndex, doNotAskDialogOption)
 
-      val buttonArray = Foundation.invoke("NSMutableArray", "array")
-      for (button in buttons) {
-        Foundation.invoke(buttonArray, "addObject:", Foundation.nsString(UIUtil.removeMnemonic(button)))
-      }
-      params.params.put(MessageDialogParamType.buttonArray, buttonArray)
+    assert(info.window.isVisible)
+    assert(myInfo == null)
 
-      val result = resultsFromDocumentRoot.remove(showDialog(effectiveWindow, "showVariableButtonsSheet:", params))
-      val code = convertReturnCodeFromNativeMessageDialog(result!!.returnCode)
-      val cancelCode = buttons.size - 1
+    myInfo = info
+    myResult = null
+    myLoop = Toolkit.getDefaultToolkit().systemEventQueue.createSecondaryLoop()
+
+    try {
+      IdeFocusManager.getGlobalInstance().setTypeaheadEnabled(false)
+
+      val delegate = Foundation.invoke(Foundation.invoke(Foundation.getObjcClass("NSJavaAlertDelegate"), "alloc"), "init")
+      Foundation.invoke(delegate, "performSelectorOnMainThread:withObject:waitUntilDone:", Foundation.createSelector("showAlert:"), ID.NIL,
+                        false)
+      myLoop!!.enter()
+      Foundation.cfRelease(delegate)
+    }
+    finally {
+      IdeFocusManager.getGlobalInstance().setTypeaheadEnabled(true)
+      myInfo = null
+      myLoop = null
+    }
+
+    if (myResult != null) {
+      val result = myResult!! - 1000
+
       if (doNotAskDialogOption != null && doNotAskDialogOption.canBeHidden()) {
-        if (cancelCode != code || doNotAskDialogOption.shouldSaveOptionsOnCancel()) {
-          doNotAskDialogOption.setToBeShown(!result.suppress, code)
+        if (result != Messages.CANCEL || doNotAskDialogOption.shouldSaveOptionsOnCancel()) {
+          doNotAskDialogOption.setToBeShown(!mySuppress, result)
         }
       }
-      return code
+
+      return result
     }
-  }
-}
 
-private inline fun <T> runAndRelease(task: () -> T): T {
-  val pool = Foundation.invoke(Foundation.invoke("NSAutoreleasePool", "alloc"), "init")
-  try {
-    return task()
-  }
-  finally {
-    Foundation.invoke(pool, "release")
-  }
-}
-
-private enum class CommonDialogParamType {
-  title, message, errorStyle, doNotAskDialogOption1, doNotAskDialogOption2, nativeFocusedWindow
-}
-
-private enum class DialogType {
-  alert, message
-}
-
-private enum class MessageDialogParamType {
-  buttonArray, defaultOptionIndex, focusedOptionIndex
-}
-
-private enum class AlertDialogParamType {
-  defaultText, alternateText, otherText
-}
-
-private class DialogParamsWrapper(private val dialogType: DialogType) {
-  val params = HashMap<Enum<*>, Any>()
-
-  fun add(name: Enum<*>, value: String) {
-    params.put(name, Foundation.nsString(value))
+    return Messages.CANCEL
   }
 
-  fun removeMnemonicAndAdd(name: Enum<*>, value: String?) {
-    params.put(name, Foundation.nsString(if (value == null) "-1" else UIUtil.removeMnemonic(value)))
-  }
+  private val SHOW_ALERT = object : Callback {
+    @Suppress("UNUSED_PARAMETER", "unused")
+    fun callback(self: ID, selector: String, params: ID) {
+      val info = myInfo!!
 
-  fun getParamsAsId(window: ID): ID? {
-    params.put(CommonDialogParamType.nativeFocusedWindow, window)
-    return when (dialogType) {
-      DialogType.alert -> getParamsForAlertDialog(params)
-      DialogType.message -> getParamsForMessageDialog(params)
-    }
-  }
-}
+      val window = getActualWindow(info.nativeWindow)
+      if (window == null) {
+        myLoop!!.exit()
+        return
+      }
 
-private fun getParamsForAlertDialog(params: Map<Enum<*>, Any>): ID {
-  return Foundation.invoke(
-    "NSArray", "arrayWithObjects:",
-    // message as title
-    params[CommonDialogParamType.message],
-    params[AlertDialogParamType.defaultText],
-    params[AlertDialogParamType.alternateText],
-    params[AlertDialogParamType.otherText],
-    // do not specify message
-    Foundation.nsString(""),
-    params[CommonDialogParamType.nativeFocusedWindow],
-    Foundation.nsString(""),
-    params[CommonDialogParamType.errorStyle],
-    params[CommonDialogParamType.doNotAskDialogOption1],
-    params[CommonDialogParamType.doNotAskDialogOption2],
-    null
-  )
-}
+      val alert = Foundation.invoke(Foundation.invoke("NSAlert", "alloc"), "init")
 
-private fun getParamsForMessageDialog(params: Map<Enum<*>, Any>): ID {
-  return Foundation.invoke(
-    "NSArray", "arrayWithObjects:",
-    params[CommonDialogParamType.title],
-    params[CommonDialogParamType.message],
-    params[CommonDialogParamType.nativeFocusedWindow],
-    Foundation.nsString(""),
-    params[CommonDialogParamType.errorStyle],
-    params[CommonDialogParamType.doNotAskDialogOption1],
-    params[MessageDialogParamType.defaultOptionIndex],
-    params[MessageDialogParamType.focusedOptionIndex],
-    params[MessageDialogParamType.buttonArray],
-    params[CommonDialogParamType.doNotAskDialogOption2],
-    null
-  )
-}
+      Foundation.invoke(alert, "setMessageText:", Foundation.nsString(info.title))
+      Foundation.invoke(alert, "setInformativeText:", Foundation.nsString(info.message))
 
-private fun enableEscapeToCloseTheMessage(alert: ID) {
-  val buttonCount = Foundation.invoke(Foundation.invoke(alert, "buttons"), "count").toInt()
-  if (buttonCount < 2) {
-    return
-  }
-  val button = Foundation.invoke(Foundation.invoke(alert, "buttons"), "objectAtIndex:", buttonCount - 1)
-  Foundation.invoke(button, "setKeyEquivalent:", Foundation.nsString("\u001b"))
-}
+      val app = Foundation.invoke("NSApplication", "sharedApplication")
+      Foundation.invoke(alert, "setIcon:", Foundation.invoke(app, "applicationIconImage"))
 
-@YesNoCancelResult
-private fun convertReturnCodeFromNativeAlertDialog(returnCode: Int, alternateText: String?): Int {
-  // DEFAULT = 1
-  // ALTERNATE = 0
-  // OTHER = -1 (cancel)
-  val cancelCode: Int
-  var code: Int
-  if (alternateText != null) {
-    // DEFAULT = 0
-    // ALTERNATE = 1
-    // CANCEL = 2
-    cancelCode = Messages.CANCEL
-    code = when (returnCode) {
-      1 -> Messages.YES
-      0 -> Messages.NO
-      -1 -> Messages.CANCEL
-      else -> Messages.CANCEL
-    }
-  }
-  else {
-    // DEFAULT = 0
-    // CANCEL = 1
-    cancelCode = 1
-    code = when (returnCode) {
-      1 -> Messages.YES
-      -1 -> Messages.NO
-      else -> Messages.NO
+      if (info.errorStyle) {
+        Foundation.invoke(alert, "setAlertStyle:", /*NSCriticalAlertStyle*/2)
+      }
+
+      for (button in info.buttons) {
+        Foundation.invoke(alert, "addButtonWithTitle:", Foundation.nsString(UIUtil.removeMnemonic(button)))
+      }
+
+      enableEscapeToCloseTheMessage(alert)
+
+      if (info.doNotAskDialogOption != null && info.doNotAskDialogOption.canBeHidden()) {
+        Foundation.invoke(alert, "setShowsSuppressionButton:", 1)
+
+        val button = Foundation.invoke(alert, "suppressionButton")
+        Foundation.invoke(button, "setTitle:", Foundation.nsString(info.doNotAskDialogOption.doNotShowMessage))
+        Foundation.invoke(button, "setState:", !info.doNotAskDialogOption.isToBeShown)
+      }
+
+      if (info.defaultOptionIndex in info.buttons.indices) {
+        val button = Foundation.invoke(Foundation.invoke(alert, "buttons"), "objectAtIndex:", info.defaultOptionIndex)
+        Foundation.invoke(Foundation.invoke(alert, "window"), "setDefaultButtonCell:", Foundation.invoke(button, "cell"))
+      }
+
+      Foundation.invoke(alert, "beginSheetModalForWindow:modalDelegate:didEndSelector:contextInfo:", window, self,
+                        Foundation.createSelector("alertDidEnd:returnCode:contextInfo:"), ID.NIL)
+      Foundation.cfRelease(alert)
     }
   }
 
-  if (cancelCode == code) {
-    code = Messages.CANCEL
+  private val ALERT_DID_END = object : Callback {
+    @Suppress("UNUSED_PARAMETER", "unused")
+    fun callback(self: ID, selector: String, alert: ID, returnCode: ID, contextInfo: ID) {
+      myResult = returnCode.toInt()
+      mySuppress = Foundation.invoke(Foundation.invoke(alert, "suppressionButton"), "state").toInt() == 1
+      myLoop!!.exit()
+    }
   }
 
-  LOG.assertTrue(code == Messages.YES || code == Messages.NO || code == Messages.CANCEL, code)
-  return code
+  init {
+    val delegateClass = Foundation.allocateObjcClassPair(Foundation.getObjcClass("NSObject"), "NSJavaAlertDelegate")
+    if (!Foundation.addMethod(delegateClass, Foundation.createSelector("showAlert:"), SHOW_ALERT, "v*")) {
+      throw RuntimeException("Unable to add `showAlert:` method to Objective-C NSJavaAlertDelegate class")
+    }
+    if (!Foundation.addMethod(delegateClass, Foundation.createSelector("alertDidEnd:returnCode:contextInfo:"), ALERT_DID_END, "v*")) {
+      throw RuntimeException("Unable to add `alertDidEnd:returnCode:contextInfo:` method to Objective-C NSJavaAlertDelegate class")
+    }
+    Foundation.registerObjcClassPair(delegateClass)
+  }
 }
 
-private fun findDocumentRoot(component: Component): Window? {
-  var window = ComponentUtil.getWindow(component)!!
-  synchronized(component.treeLock) {
-    while (window.owner != null) {
-      window = window.owner
+private fun getActualWindow(window: ID): ID? {
+  if (!Foundation.invoke(window, "isVisible").booleanValue() || ID.NIL.equals(Foundation.invoke(window, "screen"))) {
+    val parent = Foundation.invoke(window, "parent")
+    if (ID.NIL.equals(parent)) {
+      return null
     }
+    return getActualWindow(parent)
   }
   return window
 }
 
-private class MacMessagesQueue<T : Runnable> {
-  private var waitingForAppKit = false
-  private val queue = ArrayDeque<Runnable>()
-
-  @Synchronized
-  fun runOrSchedule(runnable: T) {
-    if (waitingForAppKit) {
-      queue.add(runnable)
-    }
-    else {
-      runnable.run()
-      waitingForAppKit = true
-    }
-  }
-
-  @Synchronized
-  fun runFromQueue() {
-    val task = queue.pollFirst()
-    if (task == null) {
-      waitingForAppKit = false
-    }
-    else {
-      task.run()
-      waitingForAppKit = true
-    }
+private fun enableEscapeToCloseTheMessage(alert: ID) {
+  val buttonCount = Foundation.invoke(Foundation.invoke(alert, "buttons"), "count").toInt()
+  if (buttonCount > 1) {
+    val button = Foundation.invoke(Foundation.invoke(alert, "buttons"), "objectAtIndex:", buttonCount - 1)
+    Foundation.invoke(button, "setKeyEquivalent:", Foundation.nsString("\u001b"))
   }
 }

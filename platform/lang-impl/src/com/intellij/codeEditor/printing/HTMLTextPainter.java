@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -401,18 +402,19 @@ public final class HTMLTextPainter {
    * @return the HTML fragment in {@code pre}-tag container
    */
   @NotNull
+  @NlsSafe
   public static String convertCodeFragmentToHTMLFragmentWithInlineStyles(@NotNull PsiElement context, @NotNull String codeFragment) {
     try {
       StringWriter writer = new StringWriter();
       new HTMLTextPainter(context, codeFragment).paint(null, writer, false);
-      return writer.toString();
+      return writer.toString(); //NON-NLS
     }
     catch (ProcessCanceledException cancel) {
       throw cancel;
     }
     catch (Throwable e) {
       LOG.error(e);
-      return String.format("<pre>%s</pre>\n", codeFragment);
+      return String.format("<pre>%s</pre>\n", codeFragment); //NON-NLS
     }
   }
 }

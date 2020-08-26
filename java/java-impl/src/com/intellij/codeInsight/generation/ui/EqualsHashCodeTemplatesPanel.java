@@ -10,10 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.NamedItemsListEditor;
 import com.intellij.openapi.ui.Namer;
 import com.intellij.openapi.ui.Splitter;
-import com.intellij.openapi.util.Cloner;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.*;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.util.ui.JBUI;
 import gnu.trove.Equality;
@@ -99,8 +96,18 @@ public class EqualsHashCodeTemplatesPanel extends NamedItemsListEditor<Couple<Te
   }
 
   @Override
-  protected String subjDisplayName() {
-    return "template";
+  protected String getCopyDialogTitle() {
+    return JavaBundle.message("dialog.title.copy.template");
+  }
+
+  @Override
+  protected String getCreateNewDialogTitle() {
+    return JavaBundle.message("dialog.title.create.new.template");
+  }
+
+  @Override
+  protected @NlsContexts.Label String getNewLabelText() {
+    return JavaBundle.message("label.new.template.name");
   }
 
   @Override

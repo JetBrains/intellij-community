@@ -244,7 +244,7 @@ public class ExternalJavacManager extends ProcessAdapter {
     }
   }
 
-  private static <T> void debug(T data, Function<T, String> message) {
+  private static <T> void debug(T data, Function<? super T, String> message) {
     if (LOG.isDebugEnabled()) {
       LOG.debug(message.apply(data));
     }

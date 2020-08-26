@@ -19,6 +19,8 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.LibraryConfigurab
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
@@ -75,11 +77,11 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
     }
   }
 
-  private static String createInvalidRootsDescription(List<String> invalidClasses, String rootName, String libraryName) {
+  private static @NlsContexts.DetailedDescription String createInvalidRootsDescription(List<String> invalidClasses, String rootName, @NlsSafe String libraryName) {
     HtmlBuilder buffer = new HtmlBuilder();
     final String name = StringUtil.escapeXmlEntities(libraryName);
     final HtmlChunk.Element link = HtmlChunk.link("http://library/" + name, name);
-    buffer.append(
+    buffer.appendRaw(
       JavaUiBundle.message("library.project.structure.invalid.roots.description",
                            link,
                            rootName,
@@ -154,7 +156,7 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
   }
 
   @Override
-  public @Nls(capitalization = Nls.Capitalization.Sentence) String getPresentableName() {
+  public String getPresentableName() {
     return myLibrary.getName();
   }
 

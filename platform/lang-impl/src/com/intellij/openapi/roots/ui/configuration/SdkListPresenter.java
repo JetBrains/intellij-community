@@ -10,6 +10,7 @@ import com.intellij.openapi.roots.ui.SdkAppearanceService;
 import com.intellij.openapi.roots.ui.configuration.SdkListItem.GroupItem;
 import com.intellij.openapi.roots.ui.configuration.SdkListItem.SdkItem;
 import com.intellij.openapi.roots.ui.configuration.SdkListItem.SdkReferenceItem;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
@@ -239,7 +240,7 @@ public final class SdkListPresenter extends ColoredListCellRenderer<SdkListItem>
   }
 
   @NotNull
-  public static String presentDetectedSdkPath(@NotNull String home) {
+  public static @NlsSafe String presentDetectedSdkPath(@NotNull String home) {
     return presentDetectedSdkPath(home, 50, 30);
   }
 

@@ -259,16 +259,14 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends BaseInspect
           }
         }
         final PsiMethod[] superMethods = method.findSuperMethods(objectClass);
+        final String expressionText = CommonRefactoringUtil.htmlEmphasize(expression.getText());
+        final String classText = RefactoringUIUtil.getDescription(junit3Class, false);
         if (superMethods.length > 0) {
-          final @Nls String problem = "Method call " + CommonRefactoringUtil.htmlEmphasize(expression.getText()) +
-                               " may change semantics when " + RefactoringUIUtil.getDescription(junit3Class, false) +
-                               " is converted to JUnit 4";
+          final @Nls String problem = InspectionGadgetsBundle.message("convert.junit3.test.fix.conflict.semantics", expressionText, classText);
           conflicts.putValue(expression, problem);
         }
         else {
-          final @Nls String problem = "Method call " + CommonRefactoringUtil.htmlEmphasize(expression.getText()) +
-                               " will not compile when " + RefactoringUIUtil.getDescription(junit3Class, false) +
-                               " is converted to JUnit 4";
+          final @Nls String problem = InspectionGadgetsBundle.message("convert.junit3.test.fix.conflict.compile", expressionText, classText);
           conflicts.putValue(expression, problem);
         }
       }
@@ -284,8 +282,9 @@ public class JUnit4AnnotatedMethodInJUnit3TestCaseInspection extends BaseInspect
           final PsiType expectedType = ExpectedTypeUtils.findExpectedType((PsiExpression)element, false);
           if (InheritanceUtil.isInheritor(expectedType, "junit.framework.Test") &&
               PsiUtil.resolveClassInClassTypeOnly(expectedType) != junit3Class) {
-            final @Nls String problem = "Reference " + CommonRefactoringUtil.htmlEmphasize(element.getText()) + " will not compile when " +
-                                 RefactoringUIUtil.getDescription(junit3Class, false) + " is converted to JUnit 4";
+            final String elementText = CommonRefactoringUtil.htmlEmphasize(element.getText());
+            final String classText = RefactoringUIUtil.getDescription(junit3Class, false);
+            final @Nls String problem = InspectionGadgetsBundle.message("convert.junit3.test.fix.conflict.compile.2", elementText, classText);
             conflicts.putValue(element, problem);
           }
           return true;

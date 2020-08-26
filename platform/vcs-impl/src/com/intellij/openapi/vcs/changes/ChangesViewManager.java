@@ -25,14 +25,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffPreviewAction;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.ui.*;
@@ -236,7 +233,7 @@ public class ChangesViewManager implements ChangesViewEx,
   }
 
   @Override
-  public void updateProgressText(String text, boolean isError) {
+  public void updateProgressText(@NlsContexts.Label String text, boolean isError) {
     if (myToolWindowPanel == null) return;
     myToolWindowPanel.updateProgressText(text, isError);
   }
@@ -284,20 +281,22 @@ public class ChangesViewManager implements ChangesViewEx,
     return myToolWindowPanel.isAllowExcludeFromCommit();
   }
 
-  public void closeEditorPreview() {
-    if (myToolWindowPanel == null) {
-      return;
-    }
-
-    DiffPreview diffPreview = myToolWindowPanel.myDiffPreview;
-    if (diffPreview instanceof EditorTabPreview) {
-      ((EditorTabPreview)diffPreview).closePreview();
-    }
+  public boolean isEditorPreview() {
+    return myToolWindowPanel != null && !myToolWindowPanel.isSplitterPreview();
   }
 
   public void openEditorPreview() {
     if (myToolWindowPanel == null) return;
     myToolWindowPanel.openEditorPreview();
+  }
+
+  public void closeEditorPreview() {
+    closeEditorPreview(false);
+  }
+
+  public void closeEditorPreview(boolean onlyIfEmpty) {
+    if (myToolWindowPanel == null) return;
+    myToolWindowPanel.closeEditorPreview(onlyIfEmpty);
   }
 
   public static final class ChangesViewToolWindowPanel extends SimpleToolWindowPanel implements ChangesViewContentManagerListener, Disposable {
@@ -556,6 +555,15 @@ public class ChangesViewManager implements ChangesViewEx,
       ((EditorTabPreview)myDiffPreview).openPreview(false);
     }
 
+    private void closeEditorPreview(boolean onlyIfEmpty) {
+      if (isSplitterPreview()) return;
+
+      EditorTabPreview editorPreview = (EditorTabPreview)myDiffPreview;
+
+      if (onlyIfEmpty && editorPreview.hasContent()) return;
+      editorPreview.closePreview();
+    }
+
     @Nullable
     public ChangesViewCommitWorkflowHandler getCommitWorkflowHandler() {
       return myCommitWorkflowHandler;
@@ -664,7 +672,7 @@ public class ChangesViewManager implements ChangesViewEx,
       });
     }
 
-    public void updateProgressText(String text, boolean isError) {
+    public void updateProgressText(@NlsContexts.Label String text, boolean isError) {
       updateProgressComponent(createTextStatusFactory(text, isError));
     }
 
@@ -884,7 +892,7 @@ public class ChangesViewManager implements ChangesViewEx,
   }
 
   @NotNull
-  public static Factory<JComponent> createTextStatusFactory(final String text, final boolean isError) {
+  public static Factory<JComponent> createTextStatusFactory(@NlsContexts.Label String text, final boolean isError) {
     return () -> {
       JLabel label = new JLabel(text);
       label.setForeground(isError ? JBColor.RED : UIUtil.getLabelForeground());

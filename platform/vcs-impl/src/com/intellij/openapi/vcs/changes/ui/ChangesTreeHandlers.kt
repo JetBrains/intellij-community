@@ -17,14 +17,14 @@ private class ChangesTreeHandlers(private val tree: ChangesTree) {
   private var enterKeyListener: KeyListener? = null
   private var doubleClickListener: DoubleClickListener? = null
 
-  var enterKeyHandler by observable<Processor<KeyEvent>?>(null) { _, oldValue, newValue ->
+  var enterKeyHandler by observable<Processor<in KeyEvent>?>(null) { _, oldValue, newValue ->
     if (oldValue == newValue) return@observable
 
     if (oldValue == null) enterKeyListener = createEnterListener().also { tree.addKeyListener(it) }
     if (newValue == null) enterKeyListener?.let { tree.removeKeyListener(it) }?.also { enterKeyListener = null }
   }
 
-  var doubleClickHandler by observable<Processor<MouseEvent>?>(null) { _, oldValue, newValue ->
+  var doubleClickHandler by observable<Processor<in MouseEvent>?>(null) { _, oldValue, newValue ->
     if (oldValue == newValue) return@observable
 
     if (oldValue == null) doubleClickListener = createDoubleClickListener().also { it.installOn(tree) }

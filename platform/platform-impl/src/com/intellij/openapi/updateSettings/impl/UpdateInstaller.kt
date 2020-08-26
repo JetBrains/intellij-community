@@ -8,16 +8,15 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.ArrayUtil
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.copy
-import org.jetbrains.annotations.NonNls
 import java.io.File
 import java.io.IOException
 import java.net.URL
@@ -33,7 +32,8 @@ internal data class PluginUpdateResult(val pluginsInstalled: List<IdeaPluginDesc
 internal object UpdateInstaller {
   const val UPDATER_MAIN_CLASS = "com.intellij.updater.Runner"
 
-  @NonNls
+  private val LOG = logger<UpdateInstaller>()
+
   private const val PATCH_FILE_NAME = "patch-file.zip"
   private const val UPDATER_ENTRY = "com/intellij/updater/Runner.class"
 
@@ -61,6 +61,7 @@ internal object UpdateInstaller {
           super.setFraction((i - 1) * share + fraction / share)
         }
       }
+      LOG.info("downloading ${url}")
       HttpRequests.request(url).gzip(false).saveToFile(patchFile, partIndicator)
       try {
         ZipFile(patchFile).use {
@@ -173,7 +174,7 @@ internal object UpdateInstaller {
       java = javaCopy.path
     }
 
-    @NonNls val args = mutableListOf<String>()
+    val args = mutableListOf<String>()
 
     if (SystemInfo.isWindows && !Files.isWritable(Paths.get(PathManager.getHomePath()))) {
       val launcher = PathManager.findBinFile("launcher.exe")
@@ -206,7 +207,7 @@ internal object UpdateInstaller {
       args += patchFiles.joinToString(File.pathSeparator)
     }
 
-    return ArrayUtil.toStringArray(args)
+    return args.toTypedArray()
   }
 
   private fun findLib(libName: String): File {

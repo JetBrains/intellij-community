@@ -11,6 +11,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffAction;
@@ -196,7 +197,7 @@ public class DirectoryHistoryDialog extends HistoryDialog<DirectoryHistoryDialog
   }
 
   private abstract class ActionOnSelection extends MyAction {
-    ActionOnSelection(String name, Icon icon) {
+    ActionOnSelection(@NlsActions.ActionText String name, Icon icon) {
       super(name, null, icon);
     }
 

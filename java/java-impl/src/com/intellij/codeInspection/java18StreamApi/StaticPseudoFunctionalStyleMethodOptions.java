@@ -176,7 +176,7 @@ public class StaticPseudoFunctionalStyleMethodOptions {
       myTemplate = template;
     }
 
-    public String getHandlerClass() {
+    public @NlsSafe String getHandlerClass() {
       return myHandlerClass;
     }
 

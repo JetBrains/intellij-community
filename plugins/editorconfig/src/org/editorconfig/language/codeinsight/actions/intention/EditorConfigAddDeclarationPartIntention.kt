@@ -18,8 +18,8 @@ import org.editorconfig.language.util.EditorConfigPsiTreeUtil
 import org.editorconfig.language.util.EditorConfigTemplateUtil
 
 class EditorConfigAddDeclarationPartIntention : IntentionAction {
-  override fun getText() = EditorConfigBundle["intention.add-declaration-part"]
-  override fun getFamilyName() = EditorConfigBundle["intention.add-declaration-part"]
+  override fun getText() = EditorConfigBundle.get("intention.add-declaration-part")
+  override fun getFamilyName() = EditorConfigBundle.get("intention.add-declaration-part")
   override fun startInWriteAction() = true
 
   override fun isAvailable(project: Project, editor: Editor, file: PsiFile) =

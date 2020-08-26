@@ -6,6 +6,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
@@ -44,6 +45,7 @@ public class GroovyPsiManager implements Disposable {
                                                                                 CommonClassNames.JAVA_UTIL_LIST,
                                                                                 CommonClassNames.JAVA_UTIL_COLLECTION,
                                                                                 CommonClassNames.JAVA_LANG_STRING);
+  @NlsSafe private static final String PASS = "PASS";
   private final Project myProject;
 
   private final Map<String, GrTypeDefinition> myArrayClass = new HashMap<>();
@@ -110,7 +112,7 @@ public class GroovyPsiManager implements Disposable {
     PsiAnnotationMemberValue value = annotation.findAttributeValue("value");
     return value == null ||
            value instanceof PsiReference &&
-           ResolveUtil.isEnumConstant((PsiReference)value, "PASS", GroovyCommonClassNames.GROOVY_TRANSFORM_TYPE_CHECKING_MODE);
+           ResolveUtil.isEnumConstant((PsiReference)value, PASS, GroovyCommonClassNames.GROOVY_TRANSFORM_TYPE_CHECKING_MODE);
   }
 
   @Nullable

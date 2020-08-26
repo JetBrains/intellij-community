@@ -2345,7 +2345,7 @@ public class PyTypeTest extends PyTestCase {
   public void testNotMatchedOverloadsAndImplementationInImportedModule() {
     runWithLanguageLevel(
       LanguageLevel.PYTHON35,
-      () -> doMultiFileTest("Union[int, str]",
+      () -> doMultiFileTest("Union[str, int]",
                             "from b import foo\n" +
                             "expr = foo(object())")
     );
@@ -2353,7 +2353,7 @@ public class PyTypeTest extends PyTestCase {
 
   // PY-24383
   public void testSubscriptionOnWeakType() {
-    doTest("Union[int, Any]",
+    doTest("int",
            "foo = bar() if 42 != 42 else [1, 2, 3, 4]\n" +
            "expr = foo[0]");
   }

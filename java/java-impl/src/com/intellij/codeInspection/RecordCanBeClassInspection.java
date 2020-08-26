@@ -19,12 +19,17 @@ import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.siyeh.ig.fixes.AddSerialVersionUIDFix;
 import com.siyeh.ig.psiutils.MethodUtils;
+import com.siyeh.ig.psiutils.SerializationUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.Objects;
+
+import static com.intellij.psi.CommonClassNames.SERIAL_VERSION_UID_FIELD_NAME;
 
 public class RecordCanBeClassInspection extends AbstractBaseJavaLocalInspectionTool {
   @Override
@@ -81,7 +86,6 @@ public class RecordCanBeClassInspection extends AbstractBaseJavaLocalInspectionT
 
     @NotNull
     private static String generateText(@NotNull PsiClass recordClass) {
-      PsiRecordComponent[] components = recordClass.getRecordComponents();
       PsiField lastField =
         StreamEx.of(recordClass.getFields()).filter(field -> field.hasModifierProperty(PsiModifier.STATIC)).reduce((a, b) -> b)
           .orElse(null);
@@ -94,7 +98,7 @@ public class RecordCanBeClassInspection extends AbstractBaseJavaLocalInspectionT
       for (PsiElement child = recordClass.getFirstChild(); child != null; child = child.getNextSibling()) {
         result.append(getChildText(recordClass, child));
         if (child == insertFieldsAfter) {
-          insertFields(result, components);
+          insertFields(result, recordClass);
           insertConstructor(result, JavaPsiRecordUtil.findCanonicalConstructor(recordClass), recordClass);
         }
         if (child == insertMethodsAfter) {
@@ -103,7 +107,7 @@ public class RecordCanBeClassInspection extends AbstractBaseJavaLocalInspectionT
       }
       if (insertFieldsAfter == null) {
         result.append("{\n");
-        insertFields(result, components);
+        insertFields(result, recordClass);
         insertConstructor(result, JavaPsiRecordUtil.findCanonicalConstructor(recordClass), recordClass);
         insertMethods(result, recordClass, recordClass.getRecordComponents());
         result.append("}");
@@ -142,11 +146,25 @@ public class RecordCanBeClassInspection extends AbstractBaseJavaLocalInspectionT
     private static void postProcessAnnotations(PsiClass recordClass, PsiClass converted) {
       PsiRecordComponent[] components = recordClass.getRecordComponents();
       Map<String, PsiRecordComponent> componentMap = StreamEx.of(components).toMap(c -> c.getName(), c -> c, (a, b) -> a);
+      boolean serializableRecord = SerializationUtils.isSerializable(recordClass);
       for (PsiField field : converted.getFields()) {
-        postProcessFieldAnnotations(componentMap, field);
+        if (serializableRecord && SerializationUtils.isSerialVersionUid(field)) {
+          postProcessSerialVersionUIDFieldAnnotations(recordClass, field);
+        }
+        else {
+          postProcessFieldAnnotations(componentMap, field);
+        }
       }
       for (PsiMethod method : converted.getMethods()) {
         postProcessMethodAnnotations(recordClass, componentMap, method);
+      }
+    }
+
+    private static void postProcessSerialVersionUIDFieldAnnotations(PsiClass recordClass, PsiField convertedField) {
+      // converted field may have wrong annotation fqn, so we have to find the origin field at first
+      PsiField originSerialVersionUIDField = getSerialVersionUIDField(recordClass);
+      if (originSerialVersionUIDField == null || !originSerialVersionUIDField.hasAnnotation(CommonClassNames.JAVA_IO_SERIAL)) {
+        AddSerialVersionUIDFix.annotateFieldWithSerial(convertedField);
       }
     }
 
@@ -309,13 +327,23 @@ public class RecordCanBeClassInspection extends AbstractBaseJavaLocalInspectionT
       return CommonClassNames.JAVA_UTIL_OBJECTS + ".equals(this." + component.getName() + ",that." + component.getName() + ")";
     }
 
-    private static void insertFields(StringBuilder result, PsiRecordComponent[] components) {
-      for (PsiRecordComponent component : components) {
+    private static void insertFields(StringBuilder result, PsiClass recordClass) {
+      if (SerializationUtils.isSerializable(recordClass)) {
+        if (getSerialVersionUIDField(recordClass) == null) {
+          result.append(AddSerialVersionUIDFix.generateSerialVersionUIDFieldText(0)).append("\n");
+        }
+      }
+      for (PsiRecordComponent component : recordClass.getRecordComponents()) {
         PsiField field = JavaPsiRecordUtil.getFieldForComponent(component);
         if (field != null) {
           result.append(field.getText()).append("\n");
         }
       }
+    }
+
+    @Nullable
+    private static PsiField getSerialVersionUIDField(@NotNull PsiClass recordClass) {
+      return recordClass.findFieldByName(SERIAL_VERSION_UID_FIELD_NAME, false);
     }
   }
 }

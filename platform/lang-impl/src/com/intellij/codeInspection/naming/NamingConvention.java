@@ -5,6 +5,7 @@ package com.intellij.codeInspection.naming;
 
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.util.InspectionMessage;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiNameIdentifierOwner;
 import org.jetbrains.annotations.NonNls;
 
@@ -17,7 +18,7 @@ public abstract class NamingConvention<T extends PsiNameIdentifierOwner> {
   /**
    * @return Text presentation which will be shown in check box UI
    */
-  public abstract String getElementDescription();
+  public abstract @NlsContexts.Checkbox String getElementDescription();
 
   /**
    * @return unique short name;

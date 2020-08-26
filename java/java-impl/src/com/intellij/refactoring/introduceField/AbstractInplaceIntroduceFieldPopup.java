@@ -18,6 +18,7 @@ package com.intellij.refactoring.introduceField;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
@@ -45,7 +46,7 @@ public abstract class AbstractInplaceIntroduceFieldPopup extends AbstractJavaInp
                                             PsiVariable localVariable,
                                             PsiExpression[] occurrences,
                                             TypeSelectorManagerImpl typeSelectorManager,
-                                            String title,
+                                            @NlsContexts.Command String title,
                                             PsiClass parentClass,
                                             final PsiElement anchorElement,
                                             final OccurrenceManager occurrenceManager,

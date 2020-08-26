@@ -14,11 +14,13 @@ import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 
 import static com.intellij.util.ArrayUtil.isEmpty;
-import static org.jetbrains.idea.svn.SvnBundle.message;
+import static org.jetbrains.idea.svn.SvnBundle.messagePointer;
 
 public class ConfigureBranchesAction extends DumbAwareAction {
   public ConfigureBranchesAction() {
-    super(message("configure.branches.item"), message("configure.branches.item"), null);
+    super(messagePointer("configure.branches.item"),
+          messagePointer("configure.branches.item"),
+          null);
   }
 
   @Override

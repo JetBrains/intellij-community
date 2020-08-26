@@ -83,12 +83,12 @@ class DetailsPanel extends HtmlPanel implements DataProvider, CopyProvider {
       String message = revision.getRevision().getCommitMessage();
       if (StringUtil.isEmpty(message)) continue;
       if (html.length() > 0) {
-        html.append("<br/><br/>");
+        html.append("<br/><br/>"); //NON-NLS
       }
       if (addRevisionInfo) {
         String revisionInfo = FileHistoryPanelImpl.getPresentableText(revision.getRevision(), false);
-        html.append("<font color=\"").append(ColorUtil.toHtmlColor(JBColor.gray).substring(2)).append("\">")
-            .append(getHtmlWithFonts(revisionInfo)).append("</font><br/>");
+        html.append("<font color=\"").append(ColorUtil.toHtmlColor(JBColor.gray).substring(2)).append("\">") //NON-NLS
+            .append(getHtmlWithFonts(revisionInfo)).append("</font><br/>"); //NON-NLS
       }
       html.append(getHtmlWithFonts(formatTextWithLinks(myProject, message)));
     }

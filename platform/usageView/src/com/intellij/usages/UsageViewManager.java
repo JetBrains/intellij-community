@@ -16,14 +16,19 @@ public abstract class UsageViewManager {
     return ServiceManager.getService(project, UsageViewManager.class);
   }
 
-  @NotNull
-  public abstract UsageView createUsageView(UsageTarget @NotNull [] targets, Usage @NotNull [] usages, @NotNull UsageViewPresentation presentation, Factory<? extends UsageSearcher> usageSearcherFactory);
+  public abstract @NotNull UsageView createUsageView(UsageTarget @NotNull [] targets,
+                                                     Usage @NotNull [] usages,
+                                                     @NotNull UsageViewPresentation presentation,
+                                                     @Nullable Factory<? extends UsageSearcher> usageSearcherFactory);
 
-  @NotNull
-  public abstract UsageView showUsages(UsageTarget @NotNull [] searchedFor, Usage @NotNull [] foundUsages, @NotNull UsageViewPresentation presentation, Factory<? extends UsageSearcher> factory);
+  public abstract @NotNull UsageView showUsages(UsageTarget @NotNull [] searchedFor,
+                                                Usage @NotNull [] foundUsages,
+                                                @NotNull UsageViewPresentation presentation,
+                                                @Nullable Factory<? extends UsageSearcher> factory);
 
-  @NotNull
-  public abstract UsageView showUsages(UsageTarget @NotNull [] searchedFor, Usage @NotNull [] foundUsages, @NotNull UsageViewPresentation presentation);
+  public abstract @NotNull UsageView showUsages(UsageTarget @NotNull [] searchedFor,
+                                                Usage @NotNull [] foundUsages,
+                                                @NotNull UsageViewPresentation presentation);
 
   @Nullable ("returns null in case of no usages found or usage view not shown for one usage")
   public abstract UsageView searchAndShowUsages(UsageTarget @NotNull [] searchFor,

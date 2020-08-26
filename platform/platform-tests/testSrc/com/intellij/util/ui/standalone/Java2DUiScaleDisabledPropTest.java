@@ -25,6 +25,7 @@ public class Java2DUiScaleDisabledPropTest {
   @Test
   public void test() {
     TestScaleHelper.assumeStandalone();
+    TestScaleHelper.assumeHeadful();
 
     System.setProperty(JAVA2D_UI_SCALE_ENABLED_PROP, "false");
 

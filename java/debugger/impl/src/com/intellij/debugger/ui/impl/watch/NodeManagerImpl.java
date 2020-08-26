@@ -13,6 +13,7 @@ import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.NodeManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.sun.jdi.InternalException;
 import com.sun.jdi.Location;
 import com.sun.jdi.Method;
@@ -62,7 +63,7 @@ public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeMa
 
   @Override
   @NotNull
-  public DebuggerTreeNodeImpl createMessageNode(String message) {
+  public DebuggerTreeNodeImpl createMessageNode(@NlsContexts.Label String message) {
     return DebuggerTreeNodeImpl.createNodeNoUpdate(getTree(), new MessageDescriptor(message));
   }
 

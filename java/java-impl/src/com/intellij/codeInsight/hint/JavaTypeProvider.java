@@ -50,7 +50,7 @@ public class JavaTypeProvider extends ExpressionTypeProvider<PsiExpression> {
     return StringUtil.escapeXmlEntities(getTypePresentation(element));
   }
 
-  private static @NotNull String getTypePresentation(@NotNull PsiExpression element) {
+  private static @NotNull @NlsSafe String getTypePresentation(@NotNull PsiExpression element) {
     PsiType type = element.getType();
     if (type instanceof PsiLambdaExpressionType) {
       type = ((PsiLambdaExpressionType)type).getExpression().getFunctionalInterfaceType();

@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
@@ -36,13 +37,13 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.*;
 import java.util.List;
+import java.util.*;
 
 /**
  * @author peter
  */
-public class ComboControl extends BaseModifiableControl<JComboBox, String> {
+public class ComboControl extends BaseModifiableControl<JComboBox<Pair<String, Icon>>, String> {
   private static final Pair<String, Icon> EMPTY = new ComboBoxItem(" ", null);
   private final Factory<? extends List<Pair<String, Icon>>> myDataFactory;
   private boolean myNullable;
@@ -65,7 +66,7 @@ public class ComboControl extends BaseModifiableControl<JComboBox, String> {
     reset();
   }
 
-  public ComboControl(final DomWrapper<String> domWrapper, final Class<? extends Enum> aClass) {
+  public ComboControl(final DomWrapper<String> domWrapper, final Class<? extends Enum<?>> aClass) {
     super(domWrapper);
     myDataFactory = createEnumFactory(aClass);
     reset();
@@ -85,7 +86,7 @@ public class ComboControl extends BaseModifiableControl<JComboBox, String> {
 
   public static Factory<List<Pair<String, Icon>>> createResolvingFunction(final GenericDomValue<?> reference) {
     return () -> {
-      final Converter converter = reference.getConverter();
+      final Converter<?> converter = reference.getConverter();
       if (converter instanceof ResolvingConverter) {
         final AbstractConvertContext context = new AbstractConvertContext() {
           @Override
@@ -94,12 +95,12 @@ public class ComboControl extends BaseModifiableControl<JComboBox, String> {
             return reference;
           }
         };
-        final ResolvingConverter resolvingConverter = (ResolvingConverter)converter;
-        final Collection<Object> variants = resolvingConverter.getVariants(context);
+        final ResolvingConverter<String> resolvingConverter = (ResolvingConverter<String>)converter;
+        final Collection<? extends String> variants = resolvingConverter.getVariants(context);
         final List<Pair<String, Icon>> all =
           new ArrayList<>(ContainerUtil.map(variants, s -> Pair
             .create(ElementPresentationManager.getElementName(s), ElementPresentationManager.getIcon(s))));
-        all.addAll(ContainerUtil.map(resolvingConverter.getAdditionalVariants(context), (Function)s -> new Pair(s, null)));
+        all.addAll(ContainerUtil.map(resolvingConverter.getAdditionalVariants(context), s -> new Pair<>(s, null)));
         return all;
       }
       return Collections.emptyList();
@@ -108,19 +109,21 @@ public class ComboControl extends BaseModifiableControl<JComboBox, String> {
 
   public static Factory<List<Pair<String, Icon>>> createPresentationFunction(final Factory<? extends Collection<?>> variantFactory) {
     return () -> ContainerUtil.map(variantFactory.create(),
-                                   (Function<Object, Pair<String, Icon>>)s -> Pair.create(ElementPresentationManager.getElementName(s), ElementPresentationManager.getIcon(s)));
+                                   (Function<Object, Pair<String, Icon>>)s -> Pair
+                                     .create(ElementPresentationManager.getElementName(s), ElementPresentationManager.getIcon(s)));
   }
 
   static Factory<List<Pair<String, Icon>>> createEnumFactory(final Class<? extends Enum> aClass) {
-    return () -> ContainerUtil.map2List(aClass.getEnumConstants(),
-                                        (Function<Enum, Pair<String, Icon>>)s -> Pair.create(NamedEnumUtil.getEnumValueByElement(s), ElementPresentationManager.getIcon(s)));
+    return () -> ContainerUtil.<Enum, Pair<String, Icon>>map2List(
+      aClass.getEnumConstants(), s -> Pair.create(NamedEnumUtil.getEnumValueByElement(s), ElementPresentationManager.getIcon(s)));
   }
 
-  public static <T extends Enum> JComboBox createEnumComboBox(final Class<T> type) {
-    return tuneUpComboBox(new JComboBox(), createEnumFactory(type));
+  public static <T extends Enum<?>> JComboBox<Pair<String, Icon>> createEnumComboBox(final Class<T> type) {
+    return tuneUpComboBox(new JComboBox<>(), createEnumFactory(type));
   }
 
-  private static JComboBox tuneUpComboBox(final JComboBox comboBox, Factory<? extends List<Pair<String, Icon>>> dataFactory) {
+  private static JComboBox<Pair<String, Icon>> tuneUpComboBox(final JComboBox<Pair<String, Icon>> comboBox,
+                                                              Factory<? extends List<Pair<String, Icon>>> dataFactory) {
     final List<Pair<String, Icon>> list = dataFactory.create();
     final Set<String> standardValues = new HashSet<>();
     for (final Pair<String, Icon> pair : list) {
@@ -130,13 +133,13 @@ public class ComboControl extends BaseModifiableControl<JComboBox, String> {
     return initComboBox(comboBox, object -> standardValues.contains(object));
   }
 
-  private static class ComboBoxItem extends Pair<String,Icon> {
+  private static class ComboBoxItem extends Pair<String, Icon> {
 
     ComboBoxItem(String first, Icon second) {
       super(first, second);
     }
 
-    ComboBoxItem(Pair<String,Icon> pair) {
+    ComboBoxItem(Pair<String, Icon> pair) {
       super(pair.first, pair.second);
     }
 
@@ -145,7 +148,8 @@ public class ComboControl extends BaseModifiableControl<JComboBox, String> {
     }
   }
 
-  static JComboBox initComboBox(final JComboBox comboBox, final Condition<? super String> validity) {
+  static JComboBox<Pair<String, Icon>> initComboBox(final JComboBox<Pair<String, Icon>> comboBox,
+                                                    final Condition<? super String> validity) {
     comboBox.setEditable(false);
     comboBox.setPrototypeDisplayValue(new ComboBoxItem("A", null));
     comboBox.setRenderer(new DefaultListCellRenderer() {
@@ -153,7 +157,7 @@ public class ComboControl extends BaseModifiableControl<JComboBox, String> {
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         final Pair<String, Icon> pair = (Pair<String, Icon>)value;
-        final String text = Pair.getFirst(pair);
+        final @NlsSafe String text = Pair.getFirst(pair);
         setText(text);
         final Dimension dimension = getPreferredSize();
         if (!validity.value(text)) {
@@ -169,8 +173,8 @@ public class ComboControl extends BaseModifiableControl<JComboBox, String> {
   }
 
   @Override
-  protected JComboBox createMainComponent(final JComboBox boundedComponent) {
-    return initComboBox(boundedComponent == null ? new JComboBox() : boundedComponent, object -> isValidValue(object));
+  protected JComboBox<Pair<String, Icon>> createMainComponent(final JComboBox<Pair<String, Icon>> boundedComponent) {
+    return initComboBox(boundedComponent == null ? new JComboBox<>() : boundedComponent, object -> isValidValue(object));
   }
 
   public boolean isValidValue(final String object) {
@@ -178,11 +182,11 @@ public class ComboControl extends BaseModifiableControl<JComboBox, String> {
   }
 
   private boolean dataChanged(List<? extends Pair<String, Icon>> newData) {
-    final JComboBox comboBox = getComponent();
+    final JComboBox<Pair<String, Icon>> comboBox = getComponent();
     final int size = comboBox.getItemCount();
     final List<Pair<String, Icon>> oldData = new ArrayList<>(size);
     for (int i = 0; i < size; i++) {
-      oldData.add((Pair<String, Icon>)comboBox.getItemAt(i));
+      oldData.add(comboBox.getItemAt(i));
     }
 
     if (myNullable) {
@@ -202,7 +206,7 @@ public class ComboControl extends BaseModifiableControl<JComboBox, String> {
   @Override
   protected void doReset() {
     final List<Pair<String, Icon>> data = myDataFactory.create();
-    final JComboBox comboBox = getComponent();
+    final JComboBox<Pair<String, Icon>> comboBox = getComponent();
     comboBox.removeItemListener(myCommitListener);
     try {
       if (!dataChanged(data)) {
@@ -237,7 +241,7 @@ public class ComboControl extends BaseModifiableControl<JComboBox, String> {
 
   @Override
   protected final void setValue(final String value) {
-    final JComboBox component = getComponent();
+    final JComboBox<Pair<String, Icon>> component = getComponent();
     if (!isValidValue(value)) {
       component.setEditable(true);
     }
@@ -251,7 +255,7 @@ public class ComboControl extends BaseModifiableControl<JComboBox, String> {
     final DomElement domElement = getDomElement();
     if (domElement == null || !domElement.isValid()) return;
 
-    final JComboBox comboBox = getComponent();
+    final JComboBox<Pair<String, Icon>> comboBox = getComponent();
 
     final Project project = getProject();
     ApplicationManager.getApplication().invokeLater(() -> {
@@ -278,13 +282,12 @@ public class ComboControl extends BaseModifiableControl<JComboBox, String> {
         comboBox.setToolTipText(TooltipUtils.getTooltipText(warningProblems));
       }
 
-          final Pair<String, Icon> pair = (Pair<String, Icon>)comboBox.getSelectedItem();
+      final Pair<String, Icon> pair = (Pair<String, Icon>)comboBox.getSelectedItem();
       final String s = Pair.getFirst(pair);
-          background = s != null && s.trim().length() > 0 ? getDefaultBackground() : background;
+      background = s != null && s.trim().length() > 0 ? getDefaultBackground() : background;
 
       comboBox.setBackground(background);
       comboBox.getEditor().getEditorComponent().setBackground(background);
     });
-
   }
 }

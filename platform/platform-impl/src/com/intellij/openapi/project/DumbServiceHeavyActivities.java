@@ -4,8 +4,8 @@ package com.intellij.openapi.project;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.progress.impl.ProgressSuspender;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -16,13 +16,13 @@ class DumbServiceHeavyActivities {
   private final List<String> myRequestedSuspensions = ContainerUtil.createEmptyCOWList();
 
 
-  void suspendIndexingAndRun(@NotNull String activityName, @NotNull Runnable activity) {
+  void suspendIndexingAndRun(@NlsContexts.ProgressText @NotNull String activityName, @NotNull Runnable activity) {
     try (AccessToken ignore = heavyActivityStarted(activityName)) {
       activity.run();
     }
   }
 
-  @NotNull AccessToken heavyActivityStarted(@NotNull @Nls String activityName) {
+  @NotNull AccessToken heavyActivityStarted(@NlsContexts.ProgressText @NotNull String activityName) {
     String reason = IdeBundle.message("dumb.service.indexing.paused.due.to", activityName);
     synchronized (myRequestedSuspensions) {
       myRequestedSuspensions.add(reason);
@@ -61,7 +61,7 @@ class DumbServiceHeavyActivities {
     suspendIfRequested(suspender);
   }
 
-  private void resumeAutoSuspendedTask(@NotNull String reason) {
+  private void resumeAutoSuspendedTask(@NlsContexts.ProgressText @NotNull String reason) {
     ProgressSuspender currentSuspender = myCurrentSuspender;
     if (currentSuspender != null && currentSuspender.isSuspended() && reason.equals(currentSuspender.getSuspendedText())) {
       currentSuspender.resumeProcess();
@@ -78,7 +78,7 @@ class DumbServiceHeavyActivities {
     }
   }
 
-  private void suspendCurrentTask(String reason) {
+  private void suspendCurrentTask(@NlsContexts.ProgressText String reason) {
     ProgressSuspender currentSuspender = myCurrentSuspender;
     if (currentSuspender != null && !currentSuspender.isSuspended()) {
       currentSuspender.suspendProcess(reason);

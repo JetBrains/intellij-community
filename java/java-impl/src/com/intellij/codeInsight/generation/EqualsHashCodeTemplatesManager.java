@@ -98,7 +98,7 @@ public final class EqualsHashCodeTemplatesManager extends TemplatesManager {
     return getDefaultTemplate(HASH_CODE_SUFFIX, EQUALS_SUFFIX, template);
   }
 
-  public static @NotNull String getTemplateBaseName(TemplateResource resource) {
+  public static @NotNull @NlsSafe String getTemplateBaseName(TemplateResource resource) {
     return StringUtil.trimEnd(StringUtil.trimEnd(resource.getFileName(), EQUALS_SUFFIX), HASH_CODE_SUFFIX).trim();
   }
 

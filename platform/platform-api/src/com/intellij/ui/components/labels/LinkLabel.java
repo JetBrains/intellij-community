@@ -260,7 +260,7 @@ public class LinkLabel<T> extends JLabel {
     repaint();
   }
 
-  protected String getStatusBarText() {
+  protected @NlsContexts.StatusBarText String getStatusBarText() {
     return getToolTipText();
   }
 
@@ -272,7 +272,7 @@ public class LinkLabel<T> extends JLabel {
     setActive(false);
   }
 
-  private static void setStatusBarText(String statusBarText) {
+  private static void setStatusBarText(@NlsContexts.StatusBarText String statusBarText) {
     if (ApplicationManager.getApplication() == null) return; // makes this component work in UIDesigner preview.
     final Project[] projects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : projects) {

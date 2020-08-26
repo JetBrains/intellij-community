@@ -20,6 +20,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ProgressWrapper;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -32,6 +33,7 @@ import com.intellij.util.Processors;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.StringSearcher;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -63,25 +65,23 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
       if (elementToLink != null) {
         HTMLComposer.appendAfterHeaderIndention(anchor);
         HTMLComposer.appendAfterHeaderIndention(anchor);
-        anchor.append("<a HREF=\"");
+        String link = "";
         final PsiFile file = element.getContainingFile();
         if (file != null) {
           final VirtualFile virtualFile = file.getVirtualFile();
           if (virtualFile != null) {
-            anchor.append(virtualFile.getUrl()).append("#").append(elementToLink.getTextRange().getStartOffset());
+            link = virtualFile.getUrl() + "#" + elementToLink.getTextRange().getStartOffset();
           }
         }
-        anchor.append("\">");
-        anchor.append(elementToLink.getText().replaceAll("\\$", "\\\\\\$"));
-        anchor.append("</a>");
+        HtmlChunk.link(link, elementToLink.getText().replaceAll("\\$", "\\\\\\$")).appendTo(anchor);
         compoundLineLink(anchor, element);
         anchor.append("<br>");
       }
     }
     else {
-      anchor.append("<font style=\"font-family:verdana; font-weight:bold; color:#FF0000\";>");
-      anchor.append(PropertiesBundle.message("inspection.export.results.invalidated.item"));
-      anchor.append("</font>");
+      HtmlChunk.tag("font")
+        .style("font-family:verdana; font-weight:bold; color:#FF0000")
+        .addText(PropertiesBundle.message("inspection.export.results.invalidated.item")).appendTo(anchor);
     }
   }
 
@@ -93,13 +93,9 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
         Document doc = FileDocumentManager.getInstance().getDocument(vFile);
         final int lineNumber = doc.getLineNumber(psiElement.getTextOffset()) + 1;
         lineAnchor.append(" ").append(AnalysisBundle.message("inspection.export.results.at.line")).append(" ");
-        lineAnchor.append("<a HREF=\"");
         int offset = doc.getLineStartOffset(lineNumber - 1);
         offset = CharArrayUtil.shiftForward(doc.getCharsSequence(), offset, " \t");
-        lineAnchor.append(vFile.getUrl()).append("#").append(offset);
-        lineAnchor.append("\">");
-        lineAnchor.append(lineNumber);
-        lineAnchor.append("</a>");
+        HtmlChunk.link(vFile.getUrl() + "#" + offset, String.valueOf(lineNumber)).appendTo(lineAnchor);
       }
     }
   }
@@ -184,7 +180,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
       }
       if (value.length() == 0) continue;
       StringSearcher searcher = new StringSearcher(value, true, true);
-      StringBuilder message = new StringBuilder();
+      @Nls StringBuilder message = new StringBuilder();
       final int[] duplicatesCount = {0};
       Property[] propertyInCurrentFile = new Property[1];
       Set<PsiFile> psiFilesWithDuplicates = valueToFiles.get(value);
@@ -228,7 +224,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
         progress.setText2(PropertiesBundle.message("duplicate.property.key.progress.indicator.text", key));
         ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled(progress);
       }
-      StringBuilder message = new StringBuilder();
+      @Nls StringBuilder message = new StringBuilder();
       int duplicatesCount = 0;
       PsiElement propertyInCurrentFile = null;
       Set<PsiFile> psiFilesWithDuplicates = keyToFiles.get(key);
@@ -277,7 +273,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
       if (values == null || values.size() < 2){
         keyToFiles.remove(key);
       } else {
-        StringBuilder message = new StringBuilder();
+        @Nls StringBuilder message = new StringBuilder();
         final Set<PsiFile> psiFiles = keyToFiles.get(key);
         boolean firstUsage = true;
         for (PsiFile file : psiFiles) {

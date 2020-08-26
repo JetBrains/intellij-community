@@ -22,10 +22,7 @@ import com.intellij.openapi.fileEditor.ex.FileEditorWithProvider;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Weighted;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -88,7 +85,7 @@ public class EditorComposite implements Disposable {
   private final FileEditorManagerEx myFileEditorManager;
   private final Map<FileEditor, JComponent> myTopComponents = new HashMap<>();
   private final Map<FileEditor, JComponent> myBottomComponents = new HashMap<>();
-  private final Map<FileEditor, String> myDisplayNames = new HashMap<>();
+  private final Map<FileEditor, @NlsContexts.TabTitle String> myDisplayNames = new HashMap<>();
 
   private FileEditorProvider[] myProviders;
 
@@ -357,7 +354,7 @@ public class EditorComposite implements Disposable {
     return -1;
   }
 
-  public void setDisplayName(@NotNull FileEditor editor, @NotNull String name) {
+  public void setDisplayName(@NotNull FileEditor editor, @NlsContexts.TabTitle @NotNull String name) {
     int index = ContainerUtil.indexOfIdentity(ContainerUtil.immutableList(myEditors), editor);
     assert index != -1;
 
@@ -368,7 +365,7 @@ public class EditorComposite implements Disposable {
   }
 
   @NotNull
-  protected String getDisplayName(@NotNull FileEditor editor) {
+  protected @NlsContexts.TabTitle String getDisplayName(@NotNull FileEditor editor) {
     return ObjectUtils.notNull(myDisplayNames.get(editor), editor.getName());
   }
 

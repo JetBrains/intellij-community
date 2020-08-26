@@ -40,10 +40,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
-import org.jetbrains.idea.devkit.dom.ActionOrGroup;
-import org.jetbrains.idea.devkit.dom.Extension;
-import org.jetbrains.idea.devkit.dom.ExtensionPoint;
-import org.jetbrains.idea.devkit.dom.Separator;
+import org.jetbrains.idea.devkit.dom.*;
 import org.jetbrains.idea.devkit.util.DescriptorI18nUtil;
 import org.jetbrains.idea.devkit.util.PluginPlatformInfo;
 import org.jetbrains.uast.UExpression;
@@ -81,13 +78,20 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
       if (implementationClass == null || implementationClass.getStringValue() == null) {
         return;
       }
-      GenericAttributeValue displayNameAttr = getAttribute(element, "displayName");
-      if (displayNameAttr != null && displayNameAttr.getStringValue() != null) {
-        holder.createProblem(element, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                             DevKitBundle.message("inspections.plugin.xml.i18n.inspection.tag.family.name"),
-                             null,
-                             new InspectionI18NQuickFix());
-      }
+      checkInspectionDisplayName(holder, element, "displayName", new InspectionI18NQuickFix());
+      checkInspectionDisplayName(holder, element, "groupName", null);
+      //checkInspectionDisplayName(holder, element, "groupPath", null);
+    }
+  }
+
+  private static void checkInspectionDisplayName(DomElementAnnotationHolder holder,
+                                                 DomElement element,
+                                                 String attributeName, InspectionI18NQuickFix fix) {
+    GenericAttributeValue displayNameAttr = getAttribute(element, attributeName);
+    if (displayNameAttr != null && displayNameAttr.getStringValue() != null) {
+      holder.createProblem(element, 
+                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                           DevKitBundle.message("inspections.plugin.xml.i18n.inspection.tag.family.name", attributeName), null, fix);
     }
   }
 
@@ -116,7 +120,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
 
     holder.createProblem(action, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                          DevKitBundle.message("inspections.plugin.xml.i18n.name"),
-                         null, new ActionQuickFixAction(propertiesFile != null ? propertiesFile.getVirtualFile() : null));
+                         null, new ActionQuickFixAction(propertiesFile != null ? propertiesFile.getVirtualFile() : null, action instanceof Action));
   }
 
   private static boolean isInternal(@NotNull DomElement action) {
@@ -196,7 +200,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
     @NotNull
     @Override
     public String getFamilyName() {
-      return DevKitBundle.message("inspections.plugin.xml.i18n.inspection.tag.family.name");
+      return DevKitBundle.message("inspections.plugin.xml.i18n.inspection.tag.family.name", "displayName");
     }
 
     @Override
@@ -263,9 +267,11 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
 
   private static final class ActionQuickFixAction implements LocalQuickFix, BatchQuickFix<CommonProblemDescriptor> {
     private final VirtualFile myPropertiesFile;
+    private final boolean myIsAction;
 
-    private ActionQuickFixAction(VirtualFile file) {
+    private ActionQuickFixAction(VirtualFile file, boolean isAction) {
       myPropertiesFile = file;
+      myIsAction = isAction;
     }
 
     @Nls(capitalization = Nls.Capitalization.Sentence)
@@ -334,7 +340,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
                                    if (attachResourceBundle) {
                                      createResourceBundleTag(project, tags, propertiesFile);
                                    }
-                                   extractTextAndDescription(project, tags, propertiesFile);
+                                   extractTextAndDescription(project, tags, propertiesFile, myIsAction);
                                  },
                                  psiFiles.toArray(PsiFile.EMPTY_ARRAY));
       }
@@ -353,7 +359,10 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
       }
     }
 
-    private static void extractTextAndDescription(@NotNull Project project, Collection<XmlTag> tags, PropertiesFile propertiesFile) {
+    private static void extractTextAndDescription(@NotNull Project project,
+                                                  Collection<XmlTag> tags,
+                                                  PropertiesFile propertiesFile,
+                                                  boolean isAction) {
       for (XmlTag tag : tags) {
         String text = tag.getAttributeValue("text");
         tag.setAttribute("text", null);
@@ -363,17 +372,18 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
         String id = tag.getAttributeValue("id");
 
         List<PropertiesFile> propertiesFiles = Collections.singletonList(propertiesFile);
+        String actionOrGroupPrefix = isAction ? "action." : "group.";
         if (text != null) {
           JavaI18nUtil.DEFAULT_PROPERTY_CREATION_HANDLER.createProperty(project,
                                                                         propertiesFiles,
-                                                                        "action." + id + ".text",
+                                                                        actionOrGroupPrefix + id + ".text",
                                                                         text,
                                                                         new UExpression[0]);
         }
         if (description != null) {
           JavaI18nUtil.DEFAULT_PROPERTY_CREATION_HANDLER.createProperty(project,
                                                                         propertiesFiles,
-                                                                        "description." + id + ".description",
+                                                                        actionOrGroupPrefix + id + ".description",
                                                                         description,
                                                                         new UExpression[0]);
         }

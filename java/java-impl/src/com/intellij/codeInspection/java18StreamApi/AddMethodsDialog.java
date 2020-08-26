@@ -4,6 +4,7 @@ package com.intellij.codeInspection.java18StreamApi;
 
 import com.intellij.codeInsight.intention.impl.config.ActionUsagePanel;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -11,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -35,6 +37,8 @@ import java.util.*;
  * @author Dmitry Batkovich
  */
 public class AddMethodsDialog extends DialogWrapper {
+  public static final @NlsSafe String OR_ELSE_DEFAULT_VALUE = ".orElseGet(() -> defaultValue)";
+  private static final @NlsSafe String STREAM_PREFIX = "stream.";
   private final static Logger LOG = Logger.getInstance(AddMethodsDialog.class);
   @NotNull private final Project myProject;
 
@@ -61,16 +65,17 @@ public class AddMethodsDialog extends DialogWrapper {
         if (template == null) {
           return;
         }
-        append("stream.");
+        append(STREAM_PREFIX);
         final String streamApiMethodName = template.getStreamApiMethodName();
         if (StreamApiConstants.STREAM_STREAM_API_METHODS.getValue().contains(streamApiMethodName)) {
           append(streamApiMethodName + "()", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
         }
         else {
           LOG.assertTrue(StreamApiConstants.FAKE_FIND_MATCHED.equals(streamApiMethodName));
-          append(String.format(StreamApiConstants.FAKE_FIND_MATCHED_PATTERN, "condition"), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-          append(" or ");
-          append(".orElseGet(() -> defaultValue)", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+          @NlsSafe String fragment = String.format(StreamApiConstants.FAKE_FIND_MATCHED_PATTERN, "condition");
+          append(fragment, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+          append(JavaBundle.message("add.methods.dialog.or"));
+          append(OR_ELSE_DEFAULT_VALUE, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
         }
       }
     });

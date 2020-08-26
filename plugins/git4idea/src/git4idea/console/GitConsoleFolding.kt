@@ -25,7 +25,7 @@ class GitConsoleFolding : VcsConsoleFolding {
       if (start < end && StringUtil.isWhiteSpace(line[start])) start++
 
       if (start < end) {
-        result.add(Placeholder("-c ...", TextRange(start, end)))
+        result.add(Placeholder("-c ...", TextRange(start, end))) // NON-NLS
       }
     }
 

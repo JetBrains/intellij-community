@@ -713,7 +713,7 @@ final class PuritySolver {
     return solved;
   }
 
-  public void addPlainFieldEquations(Predicate<MemberDescriptor> plainByDefault) {
+  public void addPlainFieldEquations(Predicate<? super MemberDescriptor> plainByDefault) {
     for (EKey key : dependencies.keySet()) {
       if (key.getDirection() == Direction.Volatile && plainByDefault.test(key.member)) {
         // Absent fields are considered non-volatile

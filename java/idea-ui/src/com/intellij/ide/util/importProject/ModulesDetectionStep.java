@@ -51,13 +51,13 @@ public class ModulesDetectionStep extends AbstractStepWithProgress<List<ModuleDe
 
   @Override
   protected JComponent createResultsPanel() {
-    myModulesLayoutPanel = new ModulesLayoutPanel(myInsight, libDescriptor -> myProjectDescriptor.isLibraryChosen(libDescriptor));
+    myModulesLayoutPanel = new ModulesLayoutPanel(myInsight, myProjectDescriptor::isLibraryChosen);
     return myModulesLayoutPanel;
   }
 
   @Override
   protected String getProgressText() {
-    return "Searching for modules. Please wait.";
+    return JavaUiBundle.message("progress.text.searching.for.modules");
   }
 
   private int myPreviousStateHashCode = -1;

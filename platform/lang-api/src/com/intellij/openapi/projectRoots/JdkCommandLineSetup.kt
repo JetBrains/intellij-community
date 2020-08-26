@@ -594,7 +594,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
 
     @Throws(CantRunException::class)
     private fun throwUnableToCreateTempFile(cause: IOException?) {
-      throw CantRunException("Failed to create a temporary file in " + FileUtilRt.getTempDirectory(), cause)
+      throw CantRunException("Failed to create a temporary file in " + FileUtil.getTempDirectory(), cause)
     }
   }
 

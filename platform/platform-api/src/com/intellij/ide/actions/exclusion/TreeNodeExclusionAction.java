@@ -1,11 +1,13 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.exclusion;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.ui.tree.TreeCollector.TreePathRoots;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
@@ -23,7 +25,7 @@ abstract class TreeNodeExclusionAction<T extends TreeNode> extends AnAction {
 
   TreeNodeExclusionAction(boolean isExclude) {
     myIsExclude = isExclude;
-    getTemplatePresentation().setText(getActionText());
+    getTemplatePresentation().setText(getActionText(false));
   }
 
   @Override
@@ -60,11 +62,7 @@ abstract class TreeNodeExclusionAction<T extends TreeNode> extends AnAction {
     }
     presentation.setEnabledAndVisible(isEnabled[0]);
     if (isEnabled[0]) {
-      String text = getActionText();
-      if (selection.size() > 1) {
-        text += " All";
-      }
-      presentation.setText(text);
+      presentation.setText(getActionText(selection.size() > 1));
     }
   }
 
@@ -93,7 +91,10 @@ abstract class TreeNodeExclusionAction<T extends TreeNode> extends AnAction {
     exclusionProcessor.onDone(myIsExclude);
   }
 
-  private String getActionText() {
-    return myIsExclude ? "Exclude" : "Include";
+  private @NlsActions.ActionText String getActionText(boolean plural) {
+    if (plural) {
+      return myIsExclude ? IdeBundle.message("action.exclude.all.text") : IdeBundle.message("action.include.all.text");
+    }
+    return myIsExclude ? IdeBundle.message("button.exclude") : IdeBundle.message("button.include");
   }
 }

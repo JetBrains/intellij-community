@@ -51,7 +51,7 @@ import java.util.regex.Pattern;
  */
 public class InternetAttachSourceProvider extends AbstractAttachSourceProvider {
   private static final Logger LOG = Logger.getInstance(InternetAttachSourceProvider.class);
-  private static final Pattern ARTIFACT_IDENTIFIER = Pattern.compile("[A-Za-z0-9\\.\\-_]+");
+  private static final Pattern ARTIFACT_IDENTIFIER = Pattern.compile("[A-Za-z0-9.\\-_]+");
 
   @NotNull
   @Override
@@ -101,7 +101,7 @@ public class InternetAttachSourceProvider extends AbstractAttachSourceProvider {
         }
 
         @Override
-        public @NlsContexts.LinkLabel String getBusyText() {
+        public String getBusyText() {
           return getName();
         }
 
@@ -120,7 +120,7 @@ public class InternetAttachSourceProvider extends AbstractAttachSourceProvider {
       }
 
       @Override
-      public @NlsContexts.LinkLabel String getBusyText() {
+      public String getBusyText() {
         return JavaUiBundle.message("internet.attach.source.provider.action.busy.text");
       }
 

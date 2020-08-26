@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.ColorUtil;
@@ -71,9 +72,7 @@ public final class ExecutionUtil {
     String description = e.getMessage();
     HyperlinkListener listener = null;
     if (isProcessNotCreated(e) && !PropertiesComponent.getInstance(project).isTrueValue("dynamic.classpath")) {
-      description = "Command line is too long. In order to reduce its length classpath file can be used.<br>" +
-                    "Would you like to enable classpath file mode for all run configurations of your project?<br>" +
-                    "<a href=\"\">Enable</a>";
+      description = ExecutionBundle.message("dialog.message.command.line.too.long.notification");
       listener = event -> PropertiesComponent.getInstance(project).setValue("dynamic.classpath", "true");
     }
 
@@ -93,7 +92,7 @@ public final class ExecutionUtil {
                                           @NotNull String toolWindowId,
                                           @NotNull String taskName,
                                           @NotNull Throwable e,
-                                          @Nullable String description,
+                                          @Nullable @DialogMessage String description,
                                           @Nullable HyperlinkListener listener) {
     String title = ExecutionBundle.message("error.running.configuration.message", taskName);
 

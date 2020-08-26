@@ -22,8 +22,6 @@ import com.intellij.codeInsight.template.*;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -31,6 +29,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.ResolveResult;
 import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.PythonUiService;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.PyRecursiveElementVisitor;
@@ -124,9 +123,7 @@ public class PyRenameUnresolvedRefQuickFix implements LocalQuickFix {
   @Nullable
   private static Editor getEditor(@NotNull final Project project, @NotNull final PsiFile file, int offset) {
     final VirtualFile virtualFile = file.getVirtualFile();
-    return virtualFile != null ? FileEditorManager.getInstance(project).openTextEditor(
-      new OpenFileDescriptor(project, virtualFile, offset), true
-    ) : null;
+    return virtualFile != null ? PythonUiService.getInstance().openTextEditor(project, virtualFile, offset) : null;
   }
 
   private static LookupElement[] collectLookupItems(@NotNull final ScopeOwner parentScope) {

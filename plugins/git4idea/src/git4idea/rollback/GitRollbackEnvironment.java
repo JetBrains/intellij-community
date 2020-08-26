@@ -121,12 +121,12 @@ public final class GitRollbackEnvironment implements RollbackEnvironment {
         File ioFile = file.getIOFile();
         if (ioFile.exists()) {
           if (!ioFile.delete()) {
-            exceptions.add(new VcsException("Unable to delete file: " + file));
+            exceptions.add(new VcsException(GitBundle.message("error.cannot.delete.file", file.getPresentableUrl())));
           }
         }
       }
       catch (Exception e) {
-        exceptions.add(new VcsException("Unable to delete file: " + file, e));
+        exceptions.add(new VcsException(GitBundle.message("error.cannot.delete.file", file.getPresentableUrl()), e));
       }
     }
     // revert files from HEAD

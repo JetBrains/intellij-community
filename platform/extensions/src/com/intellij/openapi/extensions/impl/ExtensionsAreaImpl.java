@@ -160,6 +160,14 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
     doRegisterExtensionPoint(extensionPointName, extensionPointBeanClass, kind);
   }
 
+  @Override
+  @TestOnly
+  public void registerDynamicExtensionPoint(@NonNls @NotNull String extensionPointName,
+                                            @NotNull String extensionPointBeanClass,
+                                            ExtensionPoint.@NotNull Kind kind) {
+    doRegisterExtensionPoint(extensionPointName, extensionPointBeanClass, kind, true);
+  }
+
   @TestOnly
   public void registerExtensionPoint(@NotNull BaseExtensionPointName<?> extensionPoint,
                                      @NotNull String extensionPointBeanClass,
@@ -172,8 +180,13 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
 
   @TestOnly
   void doRegisterExtensionPoint(@NotNull String extensionPointName, @NotNull String extensionPointBeanClass, @NotNull ExtensionPoint.Kind kind) {
+    doRegisterExtensionPoint(extensionPointName, extensionPointBeanClass, kind, false);
+  }
+
+  @TestOnly
+  void doRegisterExtensionPoint(@NotNull String extensionPointName, @NotNull String extensionPointBeanClass, @NotNull ExtensionPoint.Kind kind, boolean dynamic) {
     PluginDescriptor pluginDescriptor = new DefaultPluginDescriptor(PluginId.getId("FakeIdForTests"));
-    doRegisterExtensionPoint(extensionPointName, extensionPointBeanClass, pluginDescriptor, kind == ExtensionPoint.Kind.INTERFACE, false);
+    doRegisterExtensionPoint(extensionPointName, extensionPointBeanClass, pluginDescriptor, kind == ExtensionPoint.Kind.INTERFACE, dynamic);
   }
 
   @TestOnly
@@ -215,7 +228,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
 
     PluginId id1 = getExtensionPoint(pointName).getPluginDescriptor().getPluginId();
     PluginId id2 = pluginDescriptor.getPluginId();
-    String message = "Duplicate registration for EP '" + pointName + "': first in " + id1 + ", second in " + id2;
+    @NonNls String message = "Duplicate registration for EP '" + pointName + "': first in " + id1 + ", second in " + id2;
     if (DEBUG_REGISTRATION) {
       LOG.error(message, epTraces.get(pointName));
     }

@@ -603,7 +603,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
               callback.evaluated(create(inspectDescriptor, evaluationContext, myNodeManager));
             }
             else {
-              callback.errorOccurred("Context is not available");
+              callback.errorOccurred(JavaDebuggerBundle.message("error.context.not.available"));
             }
           }
         });

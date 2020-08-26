@@ -26,6 +26,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+
 public class IncreaseLanguageLevelFix implements IntentionAction, LocalQuickFix, HighPriorityAction {
   private final LanguageLevel myLevel;
 
@@ -55,23 +57,20 @@ public class IncreaseLanguageLevelFix implements IntentionAction, LocalQuickFix,
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiElement element = descriptor.getPsiElement();
-    if (!isAvailable(project, null, element.getContainingFile())) return;
     invoke(project, null, element.getContainingFile());
   }
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     Module module = ModuleUtilCore.findModuleForFile(file);
-    return module != null &&
-           JavaSdkUtil.isLanguageLevelAcceptable(project, module, myLevel)
-           && (editor != null || AcceptedLanguageLevelsSettings.isLanguageLevelAccepted(myLevel));
+    return module != null && JavaSdkUtil.isLanguageLevelAcceptable(project, module, myLevel);
   }
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!AcceptedLanguageLevelsSettings.isLanguageLevelAccepted(myLevel)) {
-      assert editor != null;
-      if (AcceptedLanguageLevelsSettings.checkAccepted(editor.getComponent(), myLevel) == null) {
+      JComponent component = editor == null ? null : editor.getComponent();
+      if (AcceptedLanguageLevelsSettings.checkAccepted(component, myLevel) == null) {
         return;
       }
     }

@@ -6,7 +6,6 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 import com.intellij.psi.codeStyle.modifier.CodeStyleStatusBarUIContributor;
@@ -58,7 +57,7 @@ public abstract class IndentStatusBarUIContributor implements CodeStyleStatusBar
   }
 
   @NotNull
-  public static String createTooltip(@Nls String indentInfo, @NlsContexts.HintText String hint) {
+  public static @NlsContexts.Tooltip String createTooltip(@Nls String indentInfo, @NlsContexts.HintText String hint) {
     HtmlBuilder builder = new HtmlBuilder();
     builder.append(CodeInsightBundle.message("indent.status.bar.indent.tooltip")).append(indentInfo);
     if (hint != null) {
@@ -70,14 +69,12 @@ public abstract class IndentStatusBarUIContributor implements CodeStyleStatusBar
   @NotNull
   @Override
   public String getStatusText(@NotNull PsiFile psiFile) {
-    String indentInfo = getIndentInfo(myIndentOptions);
-    StringBuilder widgetText = new StringBuilder();
-    widgetText.append(indentInfo);
+    String widgetText = getIndentInfo(myIndentOptions);
     IndentOptions projectIndentOptions = CodeStyle.getSettings(psiFile.getProject()).getLanguageIndentOptions(psiFile.getLanguage());
     if (!projectIndentOptions.equals(myIndentOptions)) {
-      widgetText.append("*");
+      widgetText += "*";
     }
-    return widgetText.toString();
+    return widgetText;
   }
 }
 

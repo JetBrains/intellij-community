@@ -27,6 +27,8 @@ import com.intellij.ui.popup.list.ListPopupModel;
 import com.intellij.util.FontUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -372,7 +374,7 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
       updateInfoComponent(myInfoLabel, additionalInfoAction != null ? additionalInfoAction.getInfoText() : null, isSelected);
     }
 
-    private void updateInfoComponent(@NotNull ErrorLabel infoLabel, @Nullable String infoText, boolean isSelected) {
+    private void updateInfoComponent(@NotNull ErrorLabel infoLabel, @Nullable @Nls String infoText, boolean isSelected) {
       if (infoText != null) {
         infoLabel.setVisible(true);
         infoLabel.setText(infoText);
@@ -435,24 +437,25 @@ public final class BranchActionGroupPopup extends FlatSpeedSearchPopup {
   private static class MoreAction extends DumbAwareAction implements KeepingPopupOpenAction {
 
     @NotNull private final Project myProject;
-    @Nullable private final String mySettingName;
+    @Nullable private final @NonNls String mySettingName;
     private final boolean myDefaultExpandValue;
     private boolean myIsExpanded;
-    @NotNull private final String myToCollapseText;
-    @NotNull private final String myToExpandText;
+    @NotNull private final @Nls String myToCollapseText;
+    @NotNull private final @Nls String myToExpandText;
 
     MoreAction(@NotNull Project project,
-                      int numberOfHiddenNodes,
-                      @Nullable String settingName,
-                      boolean defaultExpandValue,
-                      boolean hasFavorites) {
+               int numberOfHiddenNodes,
+               @Nullable @NonNls String settingName,
+               boolean defaultExpandValue,
+               boolean hasFavorites) {
       super();
       myProject = project;
       mySettingName = settingName;
       myDefaultExpandValue = defaultExpandValue;
       assert numberOfHiddenNodes > 0;
-      myToExpandText = "Show " + numberOfHiddenNodes + " More...";
-      myToCollapseText = "Show " + (hasFavorites ? "Only Favorites" : "Less");
+      myToExpandText = DvcsBundle.message("action.branch.popup.show.n.nodes.more", numberOfHiddenNodes);
+      myToCollapseText = hasFavorites ? DvcsBundle.message("action.branch.popup.show.only.favorites")
+                                      : DvcsBundle.message("action.branch.popup.show.less");
       setExpanded(
         settingName != null ? PropertiesComponent.getInstance(project).getBoolean(settingName, defaultExpandValue) : defaultExpandValue);
     }

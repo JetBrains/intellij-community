@@ -16,6 +16,7 @@
 package com.intellij.testFramework.propertyBased;
 
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.paths.WebReference;
 import com.intellij.psi.*;
@@ -92,6 +93,13 @@ public class CompletionPolicy {
 
   public boolean shouldCheckDuplicates(@NotNull Editor editor, @NotNull PsiFile file, @Nullable PsiElement leaf) {
     return leaf != null && !isAfterError(file, leaf);
+  }
+
+  /**
+   * @return whether it's OK for two lookup elements at the same place to have the same presentation (e.g. due to errors in the source code)
+   */
+  public boolean areDuplicatesOk(@NotNull LookupElement item1, @NotNull LookupElement item2) {
+    return false;
   }
 
   private static PsiElement getValidResolveResult(@NotNull PsiReference ref) {

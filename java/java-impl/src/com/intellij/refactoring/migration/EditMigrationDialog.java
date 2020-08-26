@@ -4,6 +4,7 @@ package com.intellij.refactoring.migration;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.FormBuilder;
@@ -50,11 +51,13 @@ public class EditMigrationDialog extends DialogWrapper{
   }
 
   public @Nls String getName() {
-    return myNameField.getText();
+    @NlsSafe String text = myNameField.getText();
+    return text;
   }
 
   public @Nls String getDescription() {
-    return myDescriptionTextArea.getText();
+    @NlsSafe String text = myDescriptionTextArea.getText();
+    return text;
   }
 
   @Override

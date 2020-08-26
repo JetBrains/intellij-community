@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.impl.quickfix.AddTypeArgumentsFix;
 import com.intellij.codeInspection.AnonymousCanBeLambdaInspection;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.PsiDiamondTypeUtil;
@@ -167,7 +168,7 @@ public class PseudoLambdaReplaceTemplate {
     return validate(argumentTypes, methodReturnType, methodSubstitutor, expression);
   }
 
-  public String getStreamApiMethodName() {
+  public @NlsSafe String getStreamApiMethodName() {
     return myStreamApiMethodName;
   }
 

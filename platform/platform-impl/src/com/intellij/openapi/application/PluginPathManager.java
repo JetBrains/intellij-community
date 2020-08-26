@@ -49,7 +49,7 @@ public final class PluginPathManager {
     }
   }
 
-  public static File getPluginHome(String pluginName) {
+  public static File getPluginHome(@NonNls String pluginName) {
     File subrepo = findSubrepo(pluginName);
     if (subrepo != null) {
       return subrepo;

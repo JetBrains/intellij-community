@@ -2,7 +2,9 @@
 package com.intellij.remote.ext
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.remote.RemoteSdkAdditionalData
+import org.jetbrains.annotations.Nls
 import java.util.function.Supplier
 import javax.swing.JTextField
 
@@ -13,6 +15,6 @@ import javax.swing.JTextField
 interface PathsBrowserDialogProvider {
   fun showPathsBrowserDialog(project: Project?,
                              textField: JTextField,
-                             dialogTitle: String,
+                             dialogTitle: @NlsContexts.DialogTitle String,
                              supplier: Supplier<out RemoteSdkAdditionalData<*>>)
 }

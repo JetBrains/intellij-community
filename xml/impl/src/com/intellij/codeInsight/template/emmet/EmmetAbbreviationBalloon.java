@@ -11,6 +11,8 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts.LinkLabel;
+import com.intellij.openapi.util.NlsContexts.Tooltip;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
@@ -167,19 +169,19 @@ public class EmmetAbbreviationBalloon {
 
   public static class EmmetContextHelp {
     @NotNull
-    private final String myDescription;
+    private final @Tooltip String myDescription;
 
     @Nullable
-    private String myLinkText = null;
+    private @LinkLabel String myLinkText = null;
 
     @Nullable
     private String myLinkUrl = null;
 
-    public EmmetContextHelp(@NotNull String description) {
+    public EmmetContextHelp(@NotNull @Tooltip String description) {
       myDescription = description;
     }
 
-    public EmmetContextHelp(@NotNull String description, @NotNull String linkText, @NotNull String linkUrl) {
+    public EmmetContextHelp(@NotNull @Tooltip String description, @NotNull @LinkLabel String linkText, @NotNull String linkUrl) {
       myDescription = description;
       myLinkText = linkText;
       myLinkUrl = linkUrl;

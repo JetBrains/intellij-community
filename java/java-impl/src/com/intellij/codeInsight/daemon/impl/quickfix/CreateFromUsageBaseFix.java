@@ -61,7 +61,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
 
   protected abstract boolean isValidElement(PsiElement result);
 
-  protected void chooseTargetClass(@NotNull Project project, @NotNull Editor editor, @NotNull Consumer<PsiClass> createInClass) {
+  protected void chooseTargetClass(@NotNull Project project, @NotNull Editor editor, @NotNull Consumer<? super PsiClass> createInClass) {
     PsiElement element = getElement();
     List<PsiClass> targetClasses = filterTargetClasses(element, project);
 
@@ -78,7 +78,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
     return ContainerUtil.filter(getTargetClasses(element), psiClass -> JVMElementFactories.getFactory(psiClass.getLanguage(), project) != null);
   }
 
-  private static void doInvoke(final PsiClass targetClass, Consumer<PsiClass> invokeImpl) {
+  private static void doInvoke(final PsiClass targetClass, Consumer<? super PsiClass> invokeImpl) {
     if (!FileModificationService.getInstance().prepareFileForWrite(targetClass.getContainingFile())) {
       return;
     }
@@ -90,7 +90,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
   @Nullable
   protected abstract PsiElement getElement();
 
-  private void chooseTargetClass(List<PsiClass> classes, final Editor editor, Consumer<PsiClass> invokeImpl) {
+  private void chooseTargetClass(List<PsiClass> classes, final Editor editor, Consumer<? super PsiClass> invokeImpl) {
     final PsiClass firstClass = classes.get(0);
     final Project project = firstClass.getProject();
 

@@ -916,9 +916,12 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   // caller is responsible to ensure no concurrent same document processing
   void indexUnsavedDocument(@NotNull final Document document, @NotNull final ID<?, ?> requestedIndexId, final Project project,
                             @NotNull final VirtualFile vFile) {
+    myStorageBufferingHandler.assertTransientMode();
+
     final PsiFile dominantContentFile = project == null ? null : findLatestKnownPsiForUncomittedDocument(document, project);
 
     final DocumentContent content;
+    // TODO seems we should choose the source with highest stamp!
     if (dominantContentFile != null && dominantContentFile.getViewProvider().getModificationStamp() != document.getModificationStamp()) {
       content = new PsiContent(document, dominantContentFile);
     }
@@ -1376,6 +1379,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         mapInputTime = System.nanoTime() - mapInputTime;
       }
       if (myStorageBufferingHandler.runUpdate(false, storageUpdate)) {
+        myStorageBufferingHandler.assertOnTheDiskMode();
+
         ConcurrencyUtil.withLock(myReadLock, () -> {
           if (currentFC != null) {
             if (!isMock(currentFC.getFile())) {
@@ -1383,7 +1388,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
             }
           }
           else {
-            index.resetIndexedStateForFile(inputId);
+            index.setUnindexedStateForFile(inputId);
           }
         });
       }
@@ -1468,7 +1473,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   @ApiStatus.Internal
   public void dropNontrivialIndexedStates(int inputId) {
     for (ID<?, ?> state : IndexingStamp.getNontrivialFileIndexedStates(inputId)) {
-      getIndex(state).resetIndexedStateForFile(inputId);
+      getIndex(state).invalidateIndexedStateForFile(inputId);
     }
   }
 
@@ -1498,7 +1503,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         for (int i = 0, size = nontrivialFileIndexedStates.size(); i < size; ++i) {
           final ID<?, ?> indexId = nontrivialFileIndexedStates.get(i);
           if (needsFileContentLoading(indexId)) {
-            getIndex(indexId).resetIndexedStateForFile(fileId);
+            getIndex(indexId).invalidateIndexedStateForFile(fileId);
           }
         }
 
@@ -1568,7 +1573,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
             for (int i = 0, size = candidates.size(); i < size; ++i) {
               final ID<?, ?> indexId = candidates.get(i);
               if (needsFileContentLoading(indexId) && getInputFilter(indexId).acceptInput(file)) {
-                getIndex(indexId).resetIndexedStateForFile(fileId);
+                getIndex(indexId).invalidateIndexedStateForFile(fileId);
                 scheduleForUpdate = true;
               }
             }
@@ -1696,7 +1701,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       for (ID<?, ?> candidate : candidates) {
         if (myRegisteredIndexes.isContentDependentIndex(candidate)) {
           if(getInputFilter(candidate).acceptInput(virtualFile)) {
-            getIndex(candidate).resetIndexedStateForFile(fileId);
+            getIndex(candidate).invalidateIndexedStateForFile(fileId);
             wasIndexed = true;
           }
         }

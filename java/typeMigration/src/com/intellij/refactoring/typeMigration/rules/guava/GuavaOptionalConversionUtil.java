@@ -6,6 +6,7 @@ import com.intellij.psi.*;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.MatchResult;
 import com.intellij.structuralsearch.Matcher;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -29,7 +30,7 @@ public final class GuavaOptionalConversionUtil {
     return aClass != null && GuavaOptionalConversionRule.GUAVA_OPTIONAL.equals(aClass.getQualifiedName());
   }
 
-  static String simplifyParameterPattern(PsiMethodCallExpression methodCall) {
+  static @NonNls String simplifyParameterPattern(PsiMethodCallExpression methodCall) {
     final PsiExpressionList argumentList = methodCall.getArgumentList();
     final PsiExpression[] expressions = argumentList.getExpressions();
     if (expressions.length == 1) {

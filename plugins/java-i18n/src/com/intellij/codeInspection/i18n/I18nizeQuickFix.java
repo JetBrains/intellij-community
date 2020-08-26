@@ -30,7 +30,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
@@ -45,7 +44,7 @@ import java.util.stream.Stream;
 
 public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler, HighPriorityAction {
   private static final Logger LOG = Logger.getInstance(I18nizeQuickFix.class);
-  private static final Set<String> AUXILIARY_WORDS = ContainerUtil.immutableSet("is", "the", "of", "and", "a", "an");
+  private static final Set<String> AUXILIARY_WORDS = Set.of("is", "the", "of", "and", "a", "an");
   private final NlsInfo.Localized myInfo;
   private TextRange mySelectionRange;
 
@@ -215,12 +214,12 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler, High
 
   @NotNull
   I18nizeQuickFixDialog.DialogCustomization getCustomization(String value) {
-    return new DialogCustomization(null, true, false, null, getSuggestedName(value));
+    return new DialogCustomization(null, true, false, null, getSuggestedName(value, myInfo));
   }
 
-  private String getSuggestedName(String value) {
-    String prefix = myInfo.getPrefix();
-    String suffix = myInfo.getSuffix();
+  protected static String getSuggestedName(String value, NlsInfo.Localized info) {
+    String prefix = info.getPrefix();
+    String suffix = info.getSuffix();
     if (prefix.isEmpty() && suffix.isEmpty()) return null;
     if (!prefix.isEmpty()) {
       prefix += "."; 

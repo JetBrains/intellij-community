@@ -128,6 +128,8 @@
     <constantExpressionEvaluator language="JAVA" implementationClass="com.intellij.psi.impl.PsiExpressionEvaluator" />
     <lang.psiAugmentProvider implementation="com.intellij.psi.impl.RecordAugmentProvider"/>
     <psi.classFileDecompiler id="clsStubBuilder" implementation="com.intellij.psi.impl.compiled.ClsDecompilerImpl" order="last"/>
+    <registryKey key="java.empty.enum.constructor.ref" defaultValue="true"
+                 description="Make enum constructor reference have empty range at the end of the enum field identifier"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.uast">

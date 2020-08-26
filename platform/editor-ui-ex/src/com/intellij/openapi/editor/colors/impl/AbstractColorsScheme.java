@@ -937,7 +937,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     return settingsEqual(other, null);
   }
 
-  public boolean settingsEqual(Object other, @Nullable Predicate<ColorKey> colorKeyFilter) {
+  public boolean settingsEqual(Object other, @Nullable Predicate<? super ColorKey> colorKeyFilter) {
     if (!(other instanceof AbstractColorsScheme)) return false;
     AbstractColorsScheme otherScheme = (AbstractColorsScheme)other;
 
@@ -977,7 +977,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     return myAttributesMap.equals(otherScheme.myAttributesMap);
   }
 
-  protected boolean colorsEqual(AbstractColorsScheme otherScheme, @Nullable Predicate<ColorKey> colorKeyFilter) {
+  protected boolean colorsEqual(AbstractColorsScheme otherScheme, @Nullable Predicate<? super ColorKey> colorKeyFilter) {
     if (myColorsMap.size() != otherScheme.myColorsMap.size()) return false;
     for (Map.Entry<ColorKey, Color> entry : myColorsMap.entrySet()) {
       Color c1 = entry.getValue();

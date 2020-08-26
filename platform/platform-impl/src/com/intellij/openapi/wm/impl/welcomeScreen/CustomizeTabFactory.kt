@@ -5,6 +5,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.QuickChangeLookAndFeel
 import com.intellij.ide.ui.*
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.PlatformEditorBundle
 import com.intellij.openapi.editor.colors.EditorColorsListener
@@ -27,12 +28,14 @@ import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.options.ShowSettingsUtil.getSettingsMenuName
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.WelcomeTabFactory
 import com.intellij.openapi.wm.impl.welcomeScreen.TabbedWelcomeScreen.DefaultWelcomeScreenTab
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.Link
+import com.intellij.ui.components.labels.ActionLink
 import com.intellij.ui.layout.*
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBFont
@@ -151,14 +154,18 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
         header(KeyMapBundle.message("keymap.display.name"))
         fullRow {
           comboBox(DefaultComboBoxModel(getKeymaps().toTypedArray()), keymapProperty)
-          component(Link(KeyMapBundle.message("welcome.screen.keymap.configure.link")) {
+          component(focusableLink(KeyMapBundle.message("welcome.screen.keymap.configure.link")) {
             ShowSettingsUtil.getInstance().showSettingsDialog(null, KeyMapBundle.message("keymap.display.name"))
           }).withLargeLeftGap()
         }
       }
       blockRow {
-        component(Link(IdeBundle.message("welcome.screen.all.settings.link"))
-                  { ShowSettingsUtil.getInstance().showSettingsDialog(null, getSettingsMenuName()) })
+        val action = ActionManager.getInstance().getAction("WelcomeScreen.Configure.Import")
+        component(ActionLink(action.templateText, null, action).apply { isFocusable = true })
+        row {
+          component(focusableLink(IdeBundle.message("welcome.screen.all.settings.link"))
+                    { ShowSettingsUtil.getInstance().showSettingsDialog(null, getSettingsMenuName()) })
+        }
       }
     }.withBorder(JBUI.Borders.empty(23, 30, 20, 20))
       .withBackground(WelcomeScreenUIManager.getMainAssociatedComponentBackground())
@@ -178,7 +185,7 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
             PlatformEditorBundle.message(it?.key ?: "")
           }).comment(UIBundle.message("color.blindness.combobox.comment")).enableIf(checkBox.selected)
         }
-        component(Link(UIBundle.message("color.blindness.link.to.help"))
+        component(focusableLink(UIBundle.message("color.blindness.link.to.help"))
                   { HelpManager.getInstance().invokeHelp("Colorblind_Settings") })
           .withLargeLeftGap()
       }
@@ -198,6 +205,10 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
         font = FontUIResource(font.deriveFont(font.size2D + JBUIScale.scale(3)).deriveFont(Font.BOLD))
       }
     }
+  }
+
+  private fun focusableLink(@NlsContexts.Label text: String, action: () -> Unit): JComponent {
+    return Link(text, null, action).apply { isFocusable = true }
   }
 
   private fun Cell.fontComboBox(fontProperty: GraphProperty<Int>): CellBuilder<ComboBox<Int>> {

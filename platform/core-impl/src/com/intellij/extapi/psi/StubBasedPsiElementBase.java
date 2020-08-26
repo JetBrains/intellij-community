@@ -163,7 +163,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
 
   @NotNull
   private String dumpCreationTraces(@NotNull FileElement fileElement) {
-    final StringBuilder traces = new StringBuilder("\nNow " + Thread.currentThread() + "\n");
+    @NonNls StringBuilder traces = new StringBuilder("\nNow " + Thread.currentThread() + "\n");
     traces.append("My creation trace:\n").append(getUserData(CREATION_TRACE));
     traces.append("AST creation traces:\n");
     fileElement.acceptTree(new RecursiveTreeElementWalkingVisitor(false) {
@@ -185,7 +185,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
 
   @SuppressWarnings({"NonConstantStringShouldBeStringBuffer", "StringConcatenationInLoop"})
   private ASTNode notBoundInExistingAst(@NotNull PsiFileImpl file, @NotNull FileElement treeElement) {
-    String message = "file=" + file + "; tree=" + treeElement;
+    @NonNls String message = "file=" + file + "; tree=" + treeElement;
     PsiElement each = this;
     while (each != null) {
       message += "\n each of class " + each.getClass() + "; valid=" + each.isValid();

@@ -84,7 +84,7 @@ public class ArtifactProjectStructureElement extends ProjectStructureElement {
     final Artifact artifact = myArtifactsStructureContext.getArtifactModel().getArtifactByOriginal(myOriginalArtifact);
     final List<ProjectStructureElementUsage> usages = new ArrayList<>();
     final CompositePackagingElement<?> rootElement = myArtifactsStructureContext.getRootElement(artifact);
-    ArtifactUtil.processPackagingElements(rootElement, null, new PackagingElementProcessor<PackagingElement<?>>() {
+    ArtifactUtil.processPackagingElements(rootElement, null, new PackagingElementProcessor<>() {
       @Override
       public boolean process(@NotNull PackagingElement<?> packagingElement, @NotNull PackagingElementPath path) {
         ProjectStructureElement element = getProjectStructureElementFor(packagingElement, ArtifactProjectStructureElement.this.myContext,
@@ -148,7 +148,7 @@ public class ArtifactProjectStructureElement extends ProjectStructureElement {
   }
 
   @Override
-  public @Nls(capitalization = Nls.Capitalization.Sentence) String getPresentableName() {
+  public String getPresentableName() {
     return getActualArtifactName();
   }
 

@@ -68,7 +68,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     initWizard(title);
   }
 
-  private void initWizard(final String title) {
+  private void initWizard(final @NlsContexts.DialogTitle String title) {
     setTitle(title);
     myCurrentStep = 0;
     myPreviousButton = new JButton(IdeBundle.message("button.wizard.previous"));

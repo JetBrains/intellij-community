@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.roots.ui.configuration;
 
+import com.intellij.openapi.util.NlsContexts.DetailedDescription;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 
@@ -22,14 +23,14 @@ import javax.swing.*;
 
 public abstract class ConfigurationError implements Comparable<ConfigurationError> {
   private final String myPlainTextTitle;
-  private final String myDescription;
+  private final @DetailedDescription String myDescription;
   private boolean myIgnored;
 
-  protected ConfigurationError(final String plainTextTitle, final String description) {
+  protected ConfigurationError(final String plainTextTitle, final @DetailedDescription String description) {
     this(plainTextTitle, description, false);
   }
 
-  protected ConfigurationError(final String plainTextTitle, final String description, final boolean ignored) {
+  protected ConfigurationError(final String plainTextTitle, final @DetailedDescription String description, final boolean ignored) {
     myPlainTextTitle = plainTextTitle;
     myDescription = description;
     myIgnored = ignored;
@@ -41,7 +42,7 @@ public abstract class ConfigurationError implements Comparable<ConfigurationErro
   }
 
   @NotNull
-  public String getDescription() {
+  public @DetailedDescription String getDescription() {
     return myDescription;
   }
 

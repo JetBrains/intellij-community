@@ -90,7 +90,7 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
 
     final Project project = holder.getProject();
     final InspectionProfileImpl profile =
-      (mySessionProfile != null) ? mySessionProfile : InspectionProfileManager.getInstance(project).getCurrentProfile();
+      (mySessionProfile != null && !isOnTheFly) ? mySessionProfile : InspectionProfileManager.getInstance(project).getCurrentProfile();
     for (Configuration configuration : myConfigurations) {
       register(configuration);
     }

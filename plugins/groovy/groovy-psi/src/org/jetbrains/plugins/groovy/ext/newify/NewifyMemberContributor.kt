@@ -1,10 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.ext.newify
 
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightMethodBuilder
 import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.util.parentsWithSelf
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.plugins.groovy.GroovyLanguage
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
@@ -23,8 +25,20 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassProcessor
 import org.jetbrains.plugins.groovy.lang.resolve.shouldProcessMethods
 import java.util.regex.PatternSyntaxException
 
-internal const val newifyAnnotationFqn = "groovy.lang.Newify"
+@NlsSafe internal const val newifyAnnotationFqn = "groovy.lang.Newify"
+@NonNls
 internal const val newifyOriginInfo = "by @Newify"
+
+interface GrNewifyAttributes {
+  companion object {
+    @NlsSafe
+    public const val VALUE = "value"
+    @NlsSafe
+    public const val AUTO = "auto"
+    @NlsSafe
+    public const val NEW = "new"
+  }
+}
 
 class NewifyMemberContributor : NonCodeMembersContributor() {
   override fun processDynamicElements(qualifierType: PsiType,
@@ -50,15 +64,15 @@ class NewifyMemberContributor : NonCodeMembersContributor() {
     for (annotation in newifyAnnotations) {
 
       if (qualifier == null) {
-        val newifiedClasses = getClassArrayValue(annotation, "value", true)
+        val newifiedClasses = getClassArrayValue(annotation, GrNewifyAttributes.VALUE, true)
         newifiedClasses
           .filter { psiClass -> GrStaticChecker.isStaticsOK(psiClass, place, psiClass, false) }
           .flatMap { buildConstructors(it, it.name) }
           .forEach { ResolveUtil.processElement(processor, it, state) }
       }
-      val createNewMethods = GrAnnotationUtil.inferBooleanAttributeNotNull(annotation, "auto")
+      val createNewMethods = GrAnnotationUtil.inferBooleanAttributeNotNull(annotation, GrNewifyAttributes.AUTO)
       if (type != null && createNewMethods) {
-          buildConstructors(type, "new").forEach {
+          buildConstructors(type, GrNewifyAttributes.NEW).forEach {
             ResolveUtil.processElement(processor, it, state)
         }
       }

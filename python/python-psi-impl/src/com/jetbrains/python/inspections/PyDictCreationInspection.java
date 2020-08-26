@@ -22,6 +22,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.inspections.quickfix.DictCreationQuickFix;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -68,7 +69,9 @@ public class PyDictCreationInspection extends PyInspection {
           if (targets == null)
             return;
           if (!targets.isEmpty()) {
-            registerProblem(node, "This dictionary creation could be rewritten as a dictionary literal", new DictCreationQuickFix(node));
+            registerProblem(node,
+                            PyPsiBundle.message("INSP.dict.creation.this.dictionary.creation.could.be.rewritten.as.dictionary.literal"),
+                            new DictCreationQuickFix(node));
             break;
           }
           statement = PsiTreeUtil.getNextSiblingOfType(assignmentStatement, PyStatement.class);

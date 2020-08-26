@@ -55,7 +55,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
 
   private static boolean hasSuperMethodCandidates(final PsiMethod method,
                                                   final GlobalSearchScope scope,
-                                                  final Predicate<PsiMember> qualifiedMatcher) {
+                                                  final Predicate<? super PsiMember> qualifiedMatcher) {
     if (method.hasModifierProperty(PsiModifier.PRIVATE) || method.hasModifierProperty(PsiModifier.STATIC)) return false;
 
     final PsiClass containingClass = method.getContainingClass();
@@ -78,7 +78,7 @@ public class DefaultSymbolNavigationContributor implements ChooseByNameContribut
 
   }
 
-  private static boolean hasSuperMethod(PsiMethod method, GlobalSearchScope scope, Predicate<PsiMember> qualifiedMatcher, String pattern) {
+  private static boolean hasSuperMethod(PsiMethod method, GlobalSearchScope scope, Predicate<? super PsiMember> qualifiedMatcher, String pattern) {
     if (pattern.contains(".") && Registry.is("ide.goto.symbol.include.overrides.on.qualified.patterns")) {
       return false;
     }

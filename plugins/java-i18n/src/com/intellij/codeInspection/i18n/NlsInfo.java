@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.openapi.util.NlsContext;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -10,7 +11,7 @@ import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
-import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.TypeUtils;
 import gnu.trove.THashSet;
 import kotlin.Pair;
 import org.jetbrains.annotations.Nls;
@@ -30,9 +31,9 @@ import java.util.stream.IntStream;
  * which may provide additional information.
  */
 public abstract class NlsInfo {
-  private static final @NotNull Set<String> ANNOTATION_NAMES = ContainerUtil.immutableSet(AnnotationUtil.NLS, AnnotationUtil.NON_NLS);
   private static final @NotNull String NLS_CONTEXT = "com.intellij.openapi.util.NlsContext";
   static final String NLS_SAFE = "com.intellij.openapi.util.NlsSafe";
+  private static final @NotNull Set<String> ANNOTATION_NAMES = Set.of(AnnotationUtil.NLS, AnnotationUtil.NON_NLS, NLS_SAFE);
 
   /**
    * Describes a string that should be localized
@@ -286,7 +287,7 @@ public abstract class NlsInfo {
     return Unspecified.UNKNOWN;
   }
 
-  private static boolean expressionsAreEquivalent(UExpression expr1, UExpression expr2) {
+  static boolean expressionsAreEquivalent(UExpression expr1, UExpression expr2) {
     return normalize(expr1).equals(normalize(expr2));
   }
 
@@ -318,7 +319,7 @@ public abstract class NlsInfo {
     if (fromParameter != Unspecified.UNKNOWN) {
       return fromParameter;
     }
-    PsiParameter parameter = method.getParameterList().getParameter(idx.getAsInt());
+    PsiParameter parameter = getParameter(method, idx.getAsInt());
     if (parameter != null) {
       PsiType parameterType = parameter.getType();
       PsiElement psi = callExpression.getSourcePsi();
@@ -329,6 +330,12 @@ public abstract class NlsInfo {
       NlsInfo info = fromType(parameterType);
       if (info != Unspecified.UNKNOWN) {
         return info;
+      }
+      if (parameter.isVarArgs() && parameterType instanceof PsiEllipsisType) {
+        info = fromType(((PsiEllipsisType)parameterType).getComponentType());
+        if (info != Unspecified.UNKNOWN) {
+          return info;
+        }
       }
     }
     return new Unspecified(parameter);
@@ -348,26 +355,85 @@ public abstract class NlsInfo {
     return result.get();
   }
 
-  private static @NotNull UExpression goUp(@NotNull UExpression expression) {
+  static @NotNull UExpression goUp(@NotNull UExpression expression) {
     UExpression parent = expression;
     while (true) {
-      UExpression next = ObjectUtils.tryCast(parent.getUastParent(), UExpression.class);
+      UElement parentElement = parent.getUastParent();
+      if (parentElement instanceof ULocalVariable && parentElement.getUastParent() instanceof UDeclarationsExpression) {
+        // Kotlin has strange hierarchy for elvis operator
+        UExpressionList elvis = ObjectUtils.tryCast(parentElement.getUastParent().getUastParent(), UExpressionList.class);
+        if (elvis != null) {
+          parentElement = elvis;
+        }
+      }
+      UExpression next = ObjectUtils.tryCast(parentElement, UExpression.class);
       if (next == null ||
-          next instanceof ULambdaExpression ||
           next instanceof UReturnExpression ||
           next instanceof USwitchClauseExpression ||
           next instanceof UNamedExpression) {
         return parent;
       }
+      if (next instanceof ULambdaExpression) {
+        next = ObjectUtils.tryCast(next.getUastParent(), UExpression.class);
+        if (!(next instanceof UCallExpression)) {
+          return parent;
+        }
+        PsiMethod method = ((UCallExpression)next).resolve();
+        if (method == null || !isKotlinPassthroughMethod(method)) {
+          return parent;
+        }
+      }
+      if (next instanceof UQualifiedReferenceExpression && !TypeUtils.isJavaLangString(next.getExpressionType())) {
+        return parent;
+      }
       if (next instanceof UPolyadicExpression && ((UPolyadicExpression)next).getOperator() != UastBinaryOperator.PLUS) return parent;
       if (next instanceof UCallExpression) {
         if (!UastExpressionUtils.isArrayInitializer(next) && !UastExpressionUtils.isNewArrayWithInitializer(next)) {
-          return parent;
+          PsiMethod method = ((UCallExpression)next).resolve();
+          if (!(TypeUtils.isJavaLangString(next.getExpressionType()) && isStringProcessingMethod(method))) {
+            return parent;
+          }
         }
       }
       if (next instanceof UIfExpression && expressionsAreEquivalent(parent, ((UIfExpression)next).getCondition())) return parent;
       parent = next;
     }
+  }
+
+  /**
+   * Checks if the method is detected to be a string-processing method. A string processing method is a method that:
+   * <ul>
+   *   <li>Pure (either explicitly marked or inferred)</li>
+   *   <li>Accepts parameters</li>
+   *   <li>No parameters are marked using Nls annotations</li>
+   *   <li>Return value is not marked using Nls annotations</li>
+   * </ul>
+   * 
+   * @param method method to check
+   * @return true if method is detected to be a string-processing method. A string processing method is a method that:
+   */
+  static boolean isStringProcessingMethod(PsiMethod method) {
+    if (method == null) return false;
+    if (!(forModifierListOwner(method) instanceof Unspecified)) return false;
+    if (!JavaMethodContractUtil.isPure(method) && !isKotlinPassthroughMethod(method)) return false;
+    PsiParameter[] parameters = method.getParameterList().getParameters();
+    if (parameters.length == 0) return false;
+    for (PsiParameter parameter : parameters) {
+      if (!(forModifierListOwner(parameter) instanceof Unspecified)) return false;
+    }
+    return true;
+  }
+
+  private static boolean isKotlinPassthroughMethod(PsiMethod method) {
+    if ((method.getName().equals("let") || method.getName().equals("run")) &&
+        method.getModifierList().textMatches("public inline")) {
+      PsiParameter[] parameters = method.getParameterList().getParameters();
+      if (parameters.length == 2 && parameters[0].getName().equals("$this$" + method.getName()) &&
+          parameters[1].getName().equals("block")) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static @NotNull NlsInfo fromMethodReturn(@NotNull UExpression expression) {
@@ -426,6 +492,10 @@ public abstract class NlsInfo {
         NlsInfo superInfo = fromMethodReturn(superMethod, null, processed);
         if (superInfo != Unspecified.UNKNOWN) return superInfo;
       }
+    }
+    NlsInfo fromContainer = fromContainer(method);
+    if (fromContainer != Unspecified.UNKNOWN) {
+      return fromContainer;
     }
     return new Unspecified(method);
   }
@@ -526,6 +596,22 @@ public abstract class NlsInfo {
     }
     return Unspecified.UNKNOWN;
   }
+  
+  private static PsiParameter getParameter(PsiMethod method, int idx) {
+    final PsiParameter[] params = method.getParameterList().getParameters();
+    if (idx >= params.length) {
+      PsiParameter lastParam = ArrayUtil.getLastElement(params);
+      if (lastParam == null || !lastParam.isVarArgs()) return null;
+      return lastParam;
+    }
+    else if (params[0].getName().equals("$this$" + method.getName())) {
+      if (idx + 1 == params.length) return null;
+      return params[idx + 1];
+    }
+    else {
+      return params[idx];
+    }
+  }
 
   private static @NotNull NlsInfo fromMethodParameter(@NotNull PsiMethod method,
                                                       int idx,
@@ -534,16 +620,8 @@ public abstract class NlsInfo {
       return Unspecified.UNKNOWN;
     }
 
-    final PsiParameter[] params = method.getParameterList().getParameters();
-    PsiParameter param;
-    if (idx >= params.length) {
-      PsiParameter lastParam = ArrayUtil.getLastElement(params);
-      if (lastParam == null || !lastParam.isVarArgs()) return Unspecified.UNKNOWN;
-      param = lastParam;
-    }
-    else {
-      param = params[idx];
-    }
+    PsiParameter param = getParameter(method, idx);
+    if (param == null) return Unspecified.UNKNOWN;
     NlsInfo explicit = fromAnnotationOwner(param.getModifierList());
     if (explicit != Unspecified.UNKNOWN) {
       return explicit;

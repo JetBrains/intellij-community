@@ -2,6 +2,7 @@
 package com.jetbrains.python.codeInsight.intentions;
 
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -185,7 +186,7 @@ public class ImportToImportFromIntention extends PyBaseIntentionAction {
 
 
     @NotNull
-    public String getText() {
+    public @IntentionName String getText() {
       String moduleName = "?";
       if (myImportElement != null) {
         final PyReferenceExpression reference = myImportElement.getImportReferenceExpression();
@@ -193,7 +194,7 @@ public class ImportToImportFromIntention extends PyBaseIntentionAction {
           moduleName = PyPsiUtils.toPath(reference);
         }
       }
-      return PyPsiBundle.message("INTN.convert.to.from.$0.import.$1", getDots() + moduleName, "...");
+      return PyPsiBundle.message("INTN.convert.to.from.import", getDots() + moduleName, "...");
     }
 
     @NotNull
@@ -209,7 +210,7 @@ public class ImportToImportFromIntention extends PyBaseIntentionAction {
   @Override
   @NotNull
   public String getFamilyName() {
-    return PyPsiBundle.message("INTN.Family.convert.import.unqualify");
+    return PyPsiBundle.message("INTN.NAME.convert.import.unqualify");
   }
 
   @Nullable

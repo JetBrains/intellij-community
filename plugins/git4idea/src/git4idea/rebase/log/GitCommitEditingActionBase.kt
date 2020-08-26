@@ -34,7 +34,7 @@ internal abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBas
             {
               branchesGetter.getContainingBranchesSynchronously(root, hash)
             },
-            GitBundle.getString("rebase.log.commit.editing.action.progress.containing.branches.title"),
+            GitBundle.message("rebase.log.commit.editing.action.progress.containing.branches.title"),
             true,
             data.project
           )
@@ -47,6 +47,7 @@ internal abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBas
 
   protected abstract fun actionPerformedAfterChecks(commitEditingData: T)
 
+  @Nls(capitalization = Nls.Capitalization.Title)
   protected abstract fun getFailureTitle(): String
 
   protected abstract fun createCommitEditingData(
@@ -101,7 +102,7 @@ internal abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBas
       val branches = commitEditingData.log.getContainingBranches(commit.id, commit.root)
       if (branches != null) { // otherwise the information is not available yet, and we'll recheck harder in actionPerformed
         if (GitUtil.HEAD !in branches) {
-          e.presentation.description = GitBundle.getString("rebase.log.commit.editing.action.commit.not.in.head.error.text")
+          e.presentation.description = GitBundle.message("rebase.log.commit.editing.action.commit.not.in.head.error.text")
           return
         }
 
@@ -150,6 +151,7 @@ internal abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBas
     actionPerformedAfterChecks(commitEditingRequirements)
   }
 
+  @Nls
   protected open fun checkCommitsEditingAvailability(commitEditingData: T): String? {
     val description = checkHeadLinearHistory(commitEditingData)
     if (description != null) {
@@ -173,6 +175,7 @@ internal abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBas
   /**
    * Check that a path which contains selected commits and doesn't contain merge commits exists in HEAD
    */
+  @Nls
   private fun checkHeadLinearHistory(commitEditingData: MultipleCommitEditingData): String? {
     val project = commitEditingData.project
     val root = commitEditingData.repository.root
@@ -220,7 +223,7 @@ internal abstract class GitCommitEditingActionBase<T : GitCommitEditingActionBas
           }
         }
       },
-      GitBundle.getString("rebase.log.multiple.commit.editing.action.progress.indicator.action.possibility.check"),
+      GitBundle.message("rebase.log.multiple.commit.editing.action.progress.indicator.action.possibility.check"),
       true,
       project
     )

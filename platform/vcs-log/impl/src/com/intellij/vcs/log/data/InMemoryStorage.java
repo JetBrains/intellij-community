@@ -36,7 +36,7 @@ public final class InMemoryStorage implements VcsLogStorage {
   }
 
   @Override
-  public void iterateCommits(@NotNull Predicate<CommitId> consumer) {
+  public void iterateCommits(@NotNull Predicate<? super CommitId> consumer) {
     myCommitIdEnumerator.forEachValue(consumer);
   }
 

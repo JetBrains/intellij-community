@@ -15,6 +15,7 @@ import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.BuildNumber;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.Urls;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -97,7 +98,7 @@ public final class PluginDownloader {
     return myPluginVersion;
   }
 
-  public @NotNull String getPluginName() {
+  public @NlsSafe @NotNull String getPluginName() {
     return myPluginName != null ? myPluginName : myPluginId.getIdString();
   }
 
@@ -199,14 +200,12 @@ public final class PluginDownloader {
 
       myDescriptor = actualDescriptor;
 
-      if (PluginManagerCore.isIncompatible(actualDescriptor, myBuildNumber)) {
+      PluginLoadingError incompatibleError =
+        PluginManagerCore.checkBuildNumberCompatibility(actualDescriptor, myBuildNumber != null ? myBuildNumber : PluginManagerCore.getBuildNumber());
+      if (incompatibleError != null) {
         LOG.info("Plugin " + myPluginId + " is incompatible with current installation " +
                  "(since:" + actualDescriptor.getSinceBuild() + " until:" + actualDescriptor.getUntilBuild() + ")");
-        String incompatibleMessage =
-          PluginManagerCore.getIncompatibleMessage(myBuildNumber != null ? myBuildNumber : PluginManagerCore.getBuildNumber(),
-                                                   actualDescriptor.getSinceBuild(),
-                                                   actualDescriptor.getUntilBuild());
-        reportError(showMessageOnError, IdeBundle.message("error.incompatible.update", XmlStringUtil.escapeString(incompatibleMessage)));
+        reportError(showMessageOnError, IdeBundle.message("error.incompatible.update", XmlStringUtil.escapeString(incompatibleError.getDetailedMessage())));
         return null; //host outdated plugins, no compatible plugin for new version
       }
     }
@@ -247,7 +246,7 @@ public final class PluginDownloader {
       throw new IOException("Plugin '" + getPluginName() + "' was not successfully downloaded");
     }
 
-    PluginInstaller.installAfterRestart(myFile.toPath(), true, myOldFile, myDescriptor);
+    PluginInstaller.installAfterRestart(myFile.toPath(), !UpdateSettings.getInstance().isKeepPluginsArchive(), myOldFile, myDescriptor);
 
     InstalledPluginsState state = InstalledPluginsState.getInstanceIfLoaded();
     if (state != null) {
@@ -280,8 +279,12 @@ public final class PluginDownloader {
   private @NotNull File downloadPlugin(@NotNull ProgressIndicator indicator) throws IOException {
     indicator.checkCanceled();
     indicator.setText2(IdeBundle.message("progress.downloading.plugin", getPluginName()));
-
-    return myMarketplaceRequests.download(myPluginUrl, indicator);
+    if (myOldFile == null) {
+      return myMarketplaceRequests.downloadPlugin(myPluginUrl, indicator);
+    }
+    else {
+      return myMarketplaceRequests.downloadPluginViaBlockMap(myPluginUrl, myOldFile, indicator);
+    }
   }
 
   // creators-converters

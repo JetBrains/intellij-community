@@ -18,6 +18,7 @@ import com.intellij.profile.codeInspection.ui.ScopeOrderComparator;
 import com.intellij.profile.codeInspection.ui.ScopesChooser;
 import com.intellij.profile.codeInspection.ui.inspectionsTree.InspectionConfigTreeNode;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
+import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.SmartList;
@@ -30,6 +31,7 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
 import java.awt.*;
@@ -61,6 +63,28 @@ public class ScopesAndSeveritiesTable extends JBTable {
     scopeEnabledColumn.setMaxWidth(30);
     scopeEnabledColumn.setCellRenderer(new ThreeStateCheckBoxRenderer());
     scopeEnabledColumn.setCellEditor(new ThreeStateCheckBoxRenderer());
+    
+    columnModel.getColumn(SCOPE_NAME_COLUMN).setCellRenderer(new DefaultTableCellRenderer() {
+      @Override
+      public Component getTableCellRendererComponent(JTable table,
+                                                     Object value,
+                                                     boolean isSelected,
+                                                     boolean hasFocus,
+                                                     int row,
+                                                     int column) {
+        Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+        if (value instanceof String) {
+          NamedScope namedScope = NamedScopesHolder.getScope(tableSettings.myProject, (String)value);
+          if (namedScope != null) {
+            setText(namedScope.getPresentableName());
+          }
+          else {
+            setText((String)value);
+          }
+        }
+        return component;
+      }
+    });
 
     final TableColumn severityColumn = columnModel.getColumn(SEVERITY_COLUMN);
     SeverityRenderer renderer = new SeverityRenderer(tableSettings.getInspectionProfile(), tableSettings.getProject(), () -> tableSettings.onSettingsChanged(), this);
@@ -341,7 +365,7 @@ public class ScopesAndSeveritiesTable extends JBTable {
           .flatMap(Collection::stream)
           .map(state -> state.getScope(myProject))
           .filter(Objects::nonNull)
-          .map(NamedScope::getName)
+          .map(NamedScope::getScopeId)
           .sorted(myScopeComparator)
           .toArray(String[]::new);
     }

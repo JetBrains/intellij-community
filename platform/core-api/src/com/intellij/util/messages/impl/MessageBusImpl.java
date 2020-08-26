@@ -332,7 +332,7 @@ public class MessageBusImpl implements MessageBus {
   }
 
   protected void doComputeSubscribers(@NotNull Topic<?> topic, @NotNull List<Object> result, boolean subscribeLazyListeners) {
-    // todo — check that handler implements method (not a default implementation)
+    // todo check that handler implements method (not a default implementation)
     for (MessageHandlerHolder subscriber : mySubscribers) {
       subscriber.collectHandlers(topic, result);
     }

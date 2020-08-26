@@ -44,7 +44,7 @@ public class PyNegateComparisonIntention extends PyBaseIntentionAction {
   @Override
   @NotNull
   public String getFamilyName() {
-    return PyPsiBundle.message("INTN.negate.comparison");
+    return PyPsiBundle.message("INTN.NAME.negate.comparison");
   }
 
   @Override
@@ -58,7 +58,7 @@ public class PyNegateComparisonIntention extends PyBaseIntentionAction {
     while (binaryExpression != null) {
       PyElementType operator = binaryExpression.getOperator();
       if (comparisonStrings.containsKey(operator)) {
-        setText(PyPsiBundle.message("INTN.negate.$0.to.$1", comparisonStrings.get(operator),
+        setText(PyPsiBundle.message("INTN.negate.comparison", comparisonStrings.get(operator),
                                     comparisonStrings.get(invertedComparasions.get(operator))));
         return true;
       }

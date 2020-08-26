@@ -7,6 +7,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitUtil;
 import git4idea.commands.GitHandler;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -181,6 +182,7 @@ class GitLogRecord {
     myHandler = handler;
   }
 
+  @NonNls
   @Override
   public String toString() {
     return String.format("GitLogRecord{myOptions=%s, mySupportsRawBody=%s, myHandler=%s}",

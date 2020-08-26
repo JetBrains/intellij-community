@@ -323,7 +323,7 @@ public class TemplateBuilderImpl implements TemplateBuilder {
     TemplateManager.getInstance(myFile.getProject()).startTemplate(editor, template);
   }
 
-  public void replaceElement(PsiElement element, String varName, Expression expression, boolean alwaysStopAt, boolean skipOnStart) {
+  public void replaceElement(PsiElement element, @NonNls String varName, Expression expression, boolean alwaysStopAt, boolean skipOnStart) {
     final RangeMarker key = wrapElement(element);
     myAlwaysStopAtMap.put(key, alwaysStopAt ? Boolean.TRUE : Boolean.FALSE);
     myVariableNamesMap.put(key, varName);

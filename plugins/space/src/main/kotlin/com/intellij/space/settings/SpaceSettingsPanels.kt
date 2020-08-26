@@ -1,5 +1,6 @@
 package com.intellij.space.settings
 
+import com.intellij.ide.IdeBundle
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder.createCommentComponent
 import com.intellij.space.messages.SpaceBundle
@@ -8,7 +9,6 @@ import com.intellij.ui.components.JBLabel
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.UIUtil
-import git4idea.i18n.GitBundle
 import javax.swing.JButton
 import javax.swing.JTextField
 
@@ -64,7 +64,7 @@ private fun RowBuilder.buildRow(popupMode: Boolean): Row {
 
 internal fun buildConnectingPanel(st: SpaceLoginState.Connecting, cancelAction: () -> Unit): DialogPanel {
   return panel {
-    val cancelButton = JButton(SpaceBundle.message("login.panel.cancel.connecting.button.text")).apply {
+    val cancelButton = JButton(IdeBundle.message("button.cancel")).apply {
       addActionListener { cancelAction() }
     }
     row(SpaceBundle.message("login.panel.connecting.to.server.label", st.server)) {

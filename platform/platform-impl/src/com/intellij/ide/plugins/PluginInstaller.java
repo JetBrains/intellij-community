@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.CommonBundle;
+import com.intellij.core.CoreBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.ide.util.PropertiesComponent;
@@ -15,7 +16,6 @@ import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
@@ -210,7 +210,7 @@ public final class PluginInstaller {
     return target;
   }
 
-  private static String rootEntryName(@NotNull Path zip) throws IOException {
+  public static String rootEntryName(@NotNull Path zip) throws IOException {
     try (ZipFile zipFile = new ZipFile(zip.toFile())) {
       Enumeration<? extends ZipEntry> entries = zipFile.entries();
       while (entries.hasMoreElements()) {
@@ -250,19 +250,14 @@ public final class PluginInstaller {
         return false;
       }
 
-      String incompatibleMessage = PluginManagerCore.getIncompatibleMessage(PluginManagerCore.getBuildNumber(),
-                                                                            pluginDescriptor.getSinceBuild(),
-                                                                            pluginDescriptor.getUntilBuild());
-      if (incompatibleMessage != null || PluginManagerCore.isBrokenPlugin(pluginDescriptor)) {
-        StringBuilder builder = new StringBuilder().append("Plugin '").append(pluginDescriptor.getName()).append("'");
-        if (pluginDescriptor.getVersion() != null) {
-          builder.append(" version ").append(pluginDescriptor.getVersion());
-        }
-        builder.append(" is incompatible with this installation");
-        if (incompatibleMessage != null) {
-          builder.append(": ").append(incompatibleMessage);
-        }
-        MessagesEx.showErrorDialog(parent, builder.toString(), CommonBundle.getErrorTitle());
+      PluginLoadingError error = PluginManagerCore.checkBuildNumberCompatibility(pluginDescriptor, PluginManagerCore.getBuildNumber());
+      if (error != null) {
+        MessagesEx.showErrorDialog(parent, error.getDetailedMessage(), CommonBundle.getErrorTitle());
+        return false;
+      }
+      if (PluginManagerCore.isBrokenPlugin(pluginDescriptor)) {
+        String message = CoreBundle.message("plugin.loading.error.long.marked.as.broken", pluginDescriptor.getName(), pluginDescriptor.getVersion());
+        MessagesEx.showErrorDialog(parent, message, CommonBundle.getErrorTitle());
         return false;
       }
 

@@ -27,3 +27,5 @@ enum ImplicitlySealedEnum {
 <error descr="Modifier 'sealed' not allowed here">sealed</error> enum WithConstants {
   BAR {}
 }
+
+<error descr="Modifier 'sealed' not allowed here">sealed</error> @interface MyAnnoType {}

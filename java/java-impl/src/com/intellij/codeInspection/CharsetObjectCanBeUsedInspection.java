@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 import static com.intellij.psi.CommonClassNames.*;
+import static java.util.Map.entry;
 
 public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool {
   private static final CharsetCallMatcher[] MATCHERS = {
@@ -67,21 +68,19 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
   private static final CallMatcher FOR_NAME_MATCHER =
     CallMatcher.staticCall("java.nio.charset.Charset", "forName").parameterTypes(JAVA_LANG_STRING);
 
-  private static final Map<String, String> SUPPORTED_CHARSETS =
-    ContainerUtil.<String, String>immutableMapBuilder()
-      .put("US-ASCII", "US_ASCII")
-      .put("ASCII", "US_ASCII")
-      .put("ISO646-US", "US_ASCII")
-      .put("ISO-8859-1", "ISO_8859_1")
-      .put("UTF-8", "UTF_8")
-      .put("UTF8", "UTF_8")
-      .put("UTF-16BE", "UTF_16BE")
-      .put("UTF16BE", "UTF_16BE")
-      .put("UTF-16LE", "UTF_16LE")
-      .put("UTF16LE", "UTF_16LE")
-      .put("UTF-16", "UTF_16")
-      .put("UTF16", "UTF_16")
-      .build();
+  private static final Map<String, String> SUPPORTED_CHARSETS = Map.ofEntries(
+      entry("US-ASCII", "US_ASCII"),
+      entry("ASCII", "US_ASCII"),
+      entry("ISO646-US", "US_ASCII"),
+      entry("ISO-8859-1", "ISO_8859_1"),
+      entry("UTF-8", "UTF_8"),
+      entry("UTF8", "UTF_8"),
+      entry("UTF-16BE", "UTF_16BE"),
+      entry("UTF16BE", "UTF_16BE"),
+      entry("UTF-16LE", "UTF_16LE"),
+      entry("UTF16LE", "UTF_16LE"),
+      entry("UTF-16", "UTF_16"),
+      entry("UTF16", "UTF_16"));
 
   @NotNull
   @Override

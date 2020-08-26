@@ -3,6 +3,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.icons.CompositeIcon;
 import com.intellij.ui.icons.DarkIconProvider;
 import com.intellij.util.ArrayUtil;
@@ -319,13 +320,13 @@ public class LayeredIcon extends JBCachingScalableIcon<LayeredIcon> implements D
   }
 
   @Nullable
-  static String combineIconTooltips(Icon[] icons) {
+  static @NlsContexts.Tooltip String combineIconTooltips(Icon[] icons) {
     // If a layered icon contains only a single non-null layer and other layers are null, its tooltip is not a composite one.
     Icon singleIcon = null;
     for (Icon icon : icons) {
       if (icon != null) {
         if (singleIcon != null) {
-          StringBuilder result = new StringBuilder();
+          @NlsContexts.Tooltip StringBuilder result = new StringBuilder();
           Set<String> seenTooltips = new HashSet<>();
           buildCompositeTooltip(icons, result, seenTooltips);
           return result.toString();

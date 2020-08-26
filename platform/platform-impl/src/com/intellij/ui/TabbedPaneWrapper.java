@@ -107,7 +107,7 @@ public class TabbedPaneWrapper  {
     insertTab(title, null, component, null, myTabbedPane.getTabCount());
   }
 
-  public synchronized void insertTab(@TabTitle final String title, final Icon icon, final JComponent component, final String tip, final int index) {
+  public synchronized void insertTab(@TabTitle final String title, final Icon icon, final JComponent component, final @NlsContexts.Tooltip String tip, final int index) {
     myTabbedPane.insertTab(title, icon, createTabWrapper(component), tip, index);
   }
 
@@ -222,7 +222,7 @@ public class TabbedPaneWrapper  {
     return (TabWrapper)myTabbedPane.getComponentAt(i);
   }
 
-  public final void setTitleAt(final int index, @NotNull String title) {
+  public final void setTitleAt(final int index, @NotNull @TabTitle String title) {
     assertIsDispatchThread();
     myTabbedPane.setTitleAt(index, title);
   }

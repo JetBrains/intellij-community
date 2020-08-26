@@ -19,6 +19,7 @@ import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.lang.java.parser.ExpressionParser;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -110,11 +111,7 @@ public class ShiftOutOfRangeInspection extends BaseInspection {
       super.visitBinaryExpression(expression);
       final PsiJavaToken sign = expression.getOperationSign();
       final IElementType tokenType = sign.getTokenType();
-      if (!tokenType.equals(JavaTokenType.LTLT) &&
-          !tokenType.equals(JavaTokenType.GTGT) &&
-          !tokenType.equals(JavaTokenType.GTGTGT)) {
-        return;
-      }
+      if (!ExpressionParser.SHIFT_OPS.contains(tokenType)) return;
       final PsiExpression rhs = expression.getROperand();
       if (rhs == null) return;
       final PsiType expressionType = expression.getType();

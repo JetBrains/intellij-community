@@ -16,6 +16,7 @@
 
 package com.intellij.codeInsight.generation;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,12 +26,12 @@ import javax.swing.*;
 public class PsiElementMemberChooserObject extends MemberChooserObjectBase {
   private final PsiElement myPsiElement;
 
-  public PsiElementMemberChooserObject(@NotNull final PsiElement psiElement, final String text) {
+  public PsiElementMemberChooserObject(@NotNull final PsiElement psiElement, final @NlsContexts.Label String text) {
     super(text);
     myPsiElement = psiElement;
   }
 
-  public PsiElementMemberChooserObject(@NotNull PsiElement psiElement, final String text, @Nullable final Icon icon) {
+  public PsiElementMemberChooserObject(@NotNull PsiElement psiElement, final @NlsContexts.Label String text, @Nullable final Icon icon) {
     super(text, icon);
     myPsiElement = psiElement;
   }

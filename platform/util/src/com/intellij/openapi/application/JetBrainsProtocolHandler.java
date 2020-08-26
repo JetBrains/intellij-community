@@ -4,6 +4,7 @@ package com.intellij.openapi.application;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,7 +19,7 @@ import java.util.Map;
  */
 public final class JetBrainsProtocolHandler {
   public static final String PROTOCOL = "jetbrains://";
-  public static final String FRAGMENT_PARAM_NAME = "__fragment";
+  public static final @NonNls String FRAGMENT_PARAM_NAME = "__fragment";
   public static final String REQUIRED_PLUGINS_KEY = "idea.required.plugins.id";
 
   private static String ourMainParameter = null;
@@ -73,7 +74,7 @@ public final class JetBrainsProtocolHandler {
   }
 
   @Nullable
-  public static String getCommand() {
+  public static @NonNls String getCommand() {
     init();
     return ourCommand;
   }

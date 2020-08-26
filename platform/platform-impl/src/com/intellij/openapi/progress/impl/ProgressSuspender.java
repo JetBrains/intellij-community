@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorListenerAdapter;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.util.containers.ContainerUtil;
@@ -34,7 +35,7 @@ public final class ProgressSuspender implements AutoCloseable {
   private final Object myLock = new Object();
   private static final Application ourApp = ApplicationManager.getApplication();
   @NotNull private final String mySuspendedText;
-  @Nullable private String myTempReason;
+  @Nullable private @NlsContexts.ProgressText String myTempReason;
   private final SuspenderListener myPublisher;
   private volatile boolean mySuspended;
   private final CoreProgressManager.CheckCanceledHook myHook = this::freezeIfNeeded;
@@ -99,7 +100,7 @@ public final class ProgressSuspender implements AutoCloseable {
   }
 
   @NotNull
-  public String getSuspendedText() {
+  public @NlsContexts.ProgressText String getSuspendedText() {
     synchronized (myLock) {
       return myTempReason != null ? myTempReason : mySuspendedText;
     }
@@ -112,7 +113,7 @@ public final class ProgressSuspender implements AutoCloseable {
   /**
    * @param reason if provided, is displayed in the UI instead of suspended text passed into constructor until the progress is resumed
    */
-  public void suspendProcess(@Nullable String reason) {
+  public void suspendProcess(@NlsContexts.ProgressText @Nullable String reason) {
     synchronized (myLock) {
       if (mySuspended || myClosed) return;
 

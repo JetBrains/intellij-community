@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections
 
 import com.intellij.codeInspection.LocalQuickFix
@@ -15,10 +15,15 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.SmartList
+import org.jetbrains.annotations.Nls
+import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.util.processExtensionsByClassName
 
 class StatefulEpInspection : DevKitJvmInspection() {
-  override fun buildVisitor(project: Project, sink: HighlightSink, isOnTheFly: Boolean): DefaultJvmElementVisitor<Boolean?> = object : DefaultJvmElementVisitor<Boolean?> {
+
+  override fun buildVisitor(project: Project,
+                            sink: HighlightSink,
+                            isOnTheFly: Boolean): DefaultJvmElementVisitor<Boolean?> = object : DefaultJvmElementVisitor<Boolean?> {
 
     override fun visitField(field: JvmField): Boolean? {
       val clazz = field.containingClass ?: return null
@@ -32,9 +37,11 @@ class StatefulEpInspection : DevKitJvmInspection() {
       }
 
       if (isInheritor(fieldTypeClass, PsiElement::class.java.canonicalName)) {
-        sink.highlight(
-          "Potential memory leak: don't hold PsiElement, use SmartPsiElementPointer instead${if (isQuickFix) "; also see LocalQuickFixOnPsiElement" else ""}"
-        )
+        var message = DevKitBundle.message("inspections.stateful.extension.point.leak.psi.element")
+        if (isQuickFix) {
+          message += " " + DevKitBundle.message("inspections.stateful.extension.point.leak.psi.element.quick.fix")
+        }
+        sink.highlight(message)
         return false
       }
 
@@ -80,7 +87,10 @@ private fun isProjectFieldAllowed(field: JvmField, clazz: JvmClass, targets: Col
   } || isInheritor(clazz, projectComponentFqn)
 }
 
+@Nls(capitalization = Nls.Capitalization.Sentence)
 private fun message(what: String, quickFix: Boolean): String {
-  val where = if (quickFix) "quick fix" else "extension"
-  return "Don't use $what as a field in $where"
+  if (quickFix) {
+    return DevKitBundle.message("inspections.stateful.extension.point.do.not.use.in.quick.fix", what)
+  }
+  return DevKitBundle.message("inspections.stateful.extension.point.do.not.use.in.extension", what)
 }

@@ -16,6 +16,7 @@
 package com.intellij.diff.requests;
 
 import com.intellij.diff.contents.DiffContent;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -33,5 +34,5 @@ public abstract class ContentDiffRequest extends DiffRequest {
    * Titles could be null.
    */
   @NotNull
-  public abstract List<String> getContentTitles();
+  public abstract List<@Nls String> getContentTitles();
 }

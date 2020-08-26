@@ -15,12 +15,12 @@
  */
 package org.jetbrains.jps.model;
 
-import org.jetbrains.annotations.Nls;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 
 public interface JpsNamedElement extends JpsElement {
   @NotNull
-  @Nls(capitalization = Nls.Capitalization.Title) String getName();
+  @NlsSafe String getName();
 
   void setName(@NotNull String name);
 }

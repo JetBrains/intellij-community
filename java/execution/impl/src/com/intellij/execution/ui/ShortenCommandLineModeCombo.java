@@ -25,7 +25,7 @@ public class ShortenCommandLineModeCombo extends ComboBox<ShortenCommandLine> {
   public ShortenCommandLineModeCombo(Project project,
                                      JrePathEditor pathEditor,
                                      ModuleDescriptionsComboBox component) {
-    this(project, pathEditor, () -> component.getSelectedModule(), listener -> component.addActionListener(listener));
+    this(project, pathEditor, component::getSelectedModule, component::addActionListener);
   }
 
   public ShortenCommandLineModeCombo(Project project,

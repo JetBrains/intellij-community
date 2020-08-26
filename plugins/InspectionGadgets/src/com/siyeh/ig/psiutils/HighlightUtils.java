@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiElement;
@@ -85,7 +86,7 @@ public final class HighlightUtils {
   }
 
   public static void highlightElements(@NotNull final Collection<? extends PsiElement> elementCollection,
-                                       String statusBarText,
+                                       @NlsContexts.StatusBarText String statusBarText,
                                        @Nullable Editor editor) {
     if (elementCollection.isEmpty()) {
       return;

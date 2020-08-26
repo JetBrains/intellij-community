@@ -6,7 +6,10 @@ import com.intellij.CommonBundle;
 import com.intellij.ProjectTopics;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
-import com.intellij.ide.*;
+import com.intellij.ide.CopyPasteDelegator;
+import com.intellij.ide.DeleteProvider;
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeView;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.*;
@@ -131,7 +134,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
       if (file != null) {
         final NamedScope currentScope = getCurrentScope();
         final PackageSet value = currentScope.getValue();
-        if (value != null && value.contains(file, NamedScopesHolder.getHolder(myProject, currentScope.getName(), myDependencyValidationManager))) {
+        if (value != null && value.contains(file, NamedScopesHolder.getHolder(myProject, currentScope.getScopeId(), myDependencyValidationManager))) {
           if (!myBuilder.hasFileNode(virtualFile)) return;
           final PackageDependenciesNode node = myBuilder.getFileParentNode(virtualFile);
           final PackageDependenciesNode[] nodes = FileTreeModelBuilder.findNodeForPsiElement(node, file);
@@ -216,7 +219,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     myUpdateQueue.cancelAllUpdates();
     refreshScope(scope);
     if (scope != CustomScopesProviderEx.getAllScope() && scope != null) {
-      CURRENT_SCOPE_NAME = scope.getName();
+      CURRENT_SCOPE_NAME = scope.getScopeId();
     }
   }
 
@@ -262,7 +265,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     if (scope == null) { //was deleted
       scope = CustomScopesProviderEx.getAllScope();
     }
-    final NamedScopesHolder holder = NamedScopesHolder.getHolder(myProject, scope.getName(), myDependencyValidationManager);
+    final NamedScopesHolder holder = NamedScopesHolder.getHolder(myProject, scope.getScopeId(), myDependencyValidationManager);
     final PackageSet packageSet = scope.getValue() != null ? scope.getValue() : new InvalidPackageSet("");
     final DependenciesPanel.DependencyPanelSettings settings = new DependenciesPanel.DependencyPanelSettings();
     settings.UI_FILTER_LEGALS = true;
@@ -588,7 +591,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
             final NamedScope scope = getCurrentScope();
             final PackageSet packageSet = scope.getValue();
             if (packageSet == null) return; //invalid scope selected
-            if (packageSet.contains(file, NamedScopesHolder.getHolder(myProject, scope.getName(), myDependencyValidationManager))){
+            if (packageSet.contains(file, NamedScopesHolder.getHolder(myProject, scope.getScopeId(), myDependencyValidationManager))){
               reload(myBuilder.getFileParentNode(file.getVirtualFile()));
             }
           }
@@ -656,7 +659,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
       if (!file.isValid() || !file.getViewProvider().isPhysical()) return;
       final PackageSet packageSet = scope.getValue();
       if (packageSet == null) return; //invalid scope selected
-      if (packageSet.contains(file, NamedScopesHolder.getHolder(myProject, scope.getName(), myDependencyValidationManager))) {
+      if (packageSet.contains(file, NamedScopesHolder.getHolder(myProject, scope.getScopeId(), myDependencyValidationManager))) {
         reload(myBuilder.addFileNode(file));
       }
       else {

@@ -43,7 +43,6 @@ class CommunityStandaloneJpsBuilder {
           module("intellij.java.guiForms.compiler")
           module("intellij.java.compiler.instrumentationUtil")
           module("intellij.java.compiler.instrumentationUtil.java8")
-          module("intellij.java.jps.javacRefScanner8")
           module("intellij.platform.jps.build")
           module("intellij.tools.jps.build.standalone")
         }
@@ -80,7 +79,7 @@ class CommunityStandaloneJpsBuilder {
         [
           "JDOM", "jna", "OroMatcher", "Trove4j", "ASM", "NanoXML", "protobuf", "cli-parser", "Log4J", "jgoodies-forms", "Eclipse",
           "netty-codec-http", "lz4-java", "commons-codec", "commons-logging", "http-client", "Slf4j", "Guava", "plexus-utils",
-          "jetbrains-annotations-java5", "qdox-java-parser", "gson"
+          "jetbrains-annotations-java5", "qdox-java-parser", "gson", "jps-javac-extension"
         ].each {
           projectLibrary(it)
         }

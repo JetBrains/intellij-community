@@ -9,6 +9,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.util.ProgressWindow
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.AbstractVcsHelper
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
@@ -24,7 +26,6 @@ import com.intellij.ui.SideBorder
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.OpenSourceUtil
 import com.intellij.util.Processor
-import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.commit.getDefaultCommitShortcut
 import com.intellij.vcs.commit.showEmptyCommitMessageConfirmation
 import com.intellij.vcs.log.runInEdt
@@ -38,7 +39,10 @@ import git4idea.i18n.GitBundle
 import git4idea.index.CommitListener
 import git4idea.index.GitStageTracker
 import git4idea.index.GitStageTrackerListener
-import git4idea.index.actions.*
+import git4idea.index.actions.GitAddOperation
+import git4idea.index.actions.GitResetOperation
+import git4idea.index.actions.StagingAreaOperation
+import git4idea.index.actions.performStageOperation
 import git4idea.merge.GitDefaultMergeDialogCustomizer
 import git4idea.merge.GitMergeUtil
 import git4idea.repo.GitRepository
@@ -250,7 +254,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker, disposablePar
       if (failedRoots.isNotEmpty()) {
         notifier.notifyError(GitBundle.message("stage.commit.failed", failedRoots.keys.joinToString {
           "'${VcsImplUtil.getShortVcsRootName(project, it)}'"
-        }), failedRoots.values.joinToString(UIUtil.BR) { it.localizedMessage })
+        }), HtmlBuilder().appendWithSeparators(HtmlChunk.br(), failedRoots.values.map { HtmlChunk.text(it.localizedMessage) }).toString())
       }
     }
   }

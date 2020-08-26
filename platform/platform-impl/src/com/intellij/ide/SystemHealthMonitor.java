@@ -15,6 +15,7 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -179,7 +180,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
   }
 
   private static final class MyNotification extends Notification implements NotificationFullContent {
-    MyNotification(@NotNull String content) {
+    MyNotification(@NotNull @NlsContexts.NotificationContent String content) {
       super(GROUP.getDisplayId(), "", content, NotificationType.WARNING);
     }
   }

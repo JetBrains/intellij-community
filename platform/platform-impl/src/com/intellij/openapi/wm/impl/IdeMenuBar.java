@@ -94,6 +94,11 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
       myClockPanel = null;
       myButton = null;
     }
+
+    if(IdeFrameDecorator.isCustomDecorationActive()) {
+      setOpaque(false);
+    }
+
   }
 
   @Override
@@ -116,6 +121,10 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
 
   @Override
   public Border getBorder() {
+   if(IdeFrameDecorator.isCustomDecorationActive()) {
+      return JBUI.Borders.empty();
+    }
+
     State state = getState();
     // avoid moving lines
     if (state == State.EXPANDING || state == State.COLLAPSING) {
@@ -241,7 +250,8 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   public Dimension getPreferredSize() {
     Dimension dimension = super.getPreferredSize();
     if (getState().isInProgress()) {
-      dimension.height = COLLAPSED_HEIGHT + (int)((getState() == State.COLLAPSING ? 1 - myProgress : myProgress) * (dimension.height - COLLAPSED_HEIGHT));
+      dimension.height =
+        COLLAPSED_HEIGHT + (int)((getState() == State.COLLAPSING ? 1 - myProgress : myProgress) * (dimension.height - COLLAPSED_HEIGHT));
     }
     else if (getState() == State.COLLAPSED) {
       dimension.height = COLLAPSED_HEIGHT;
@@ -270,7 +280,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
     IdeEventQueue.getInstance().addDispatcher(this, myDisposable);
   }
 
-  private static void doWithLazyActionManager(@NotNull Consumer<ActionManager> whatToDo) {
+  private static void doWithLazyActionManager(@NotNull Consumer<? super ActionManager> whatToDo) {
     ActionManager created = ApplicationManager.getApplication().getServiceIfCreated(ActionManager.class);
     if (created == null) {
       NonUrgentExecutor.getInstance().execute(() -> {
@@ -310,7 +320,11 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
 
   private void considerRestartingAnimator(MouseEvent mouseEvent) {
     boolean mouseInside = myActivated || UIUtil.isDescendingFrom(findActualComponent(mouseEvent), this);
-    if (mouseEvent.getID() == MouseEvent.MOUSE_EXITED && mouseEvent.getSource() == SwingUtilities.windowForComponent(this) && !myActivated) mouseInside = false;
+    if (mouseEvent.getID() == MouseEvent.MOUSE_EXITED &&
+        mouseEvent.getSource() == SwingUtilities.windowForComponent(this) &&
+        !myActivated) {
+      mouseInside = false;
+    }
     if (mouseInside && getState() == State.COLLAPSED) {
       setState(State.EXPANDING);
       restartAnimator();
@@ -397,7 +411,14 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
 
   @NotNull
   protected ActionMenu createActionMenu(boolean enableMnemonics, boolean isDarkMenu, ActionGroup action) {
-    return new ActionMenu(null, ActionPlaces.MAIN_MENU, action, myPresentationFactory, enableMnemonics, isDarkMenu);
+    ActionMenu actionMenu = new ActionMenu(null, ActionPlaces.MAIN_MENU, action, myPresentationFactory, enableMnemonics, isDarkMenu);
+
+    if(IdeFrameDecorator.isCustomDecorationActive()) {
+      actionMenu.setOpaque(false);
+      actionMenu.setFocusable(false);
+    }
+
+    return actionMenu;
   }
 
   @Override
@@ -407,6 +428,16 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
   }
 
   protected void paintBackground(Graphics g) {
+    if(IdeFrameDecorator.isCustomDecorationActive()) {
+      Window window = SwingUtilities.getWindowAncestor(this);
+      if (window instanceof IdeFrame) {
+        boolean fullScreen = ((IdeFrame)window).isInFullScreen();
+        if (!fullScreen) {
+          return;
+        }
+      }
+    }
+
     if (StartupUiUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF()) {
       g.setColor(UIManager.getColor("MenuItem.background"));
       g.fillRect(0, 0, getWidth(), getHeight());
@@ -624,6 +655,7 @@ public class IdeMenuBar extends JMenuBar implements IdeEventQueue.EventDispatche
         }
       });
     }
+
     @Override
     public Dimension getPreferredSize() {
       int height;

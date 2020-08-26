@@ -121,7 +121,7 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
         catch (IOException e) {
           LOG.error(e);
         }
-      }, d -> false);
+      });
 
       writer.write('\n');
     }
@@ -154,6 +154,12 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
     if (descriptions != null) {
       exportResults(descriptions, refEntity, resultConsumer, isDescriptorExcluded);
     }
+  }
+
+  public void exportResults(final CommonProblemDescriptor @NotNull [] descriptors,
+                               @NotNull RefEntity refEntity,
+                               @NotNull Consumer<? super Element> problemSink) {
+    exportResults(descriptors, refEntity, problemSink, (problem) -> false);
   }
 
   protected void exportResults(final CommonProblemDescriptor @NotNull [] descriptors,
@@ -414,16 +420,20 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
         myProblemElements.put(refElement, descriptors);
       }
       else {
-        try {
-          writeOutput(descriptors, refElement);
-        }
-        catch (IOException e) {
-          LOG.error(e);
-        }
+       addLocalInspectionProblem(refElement, descriptors);
       }
     }
     else {
       myProblemElements.put(refElement, descriptors);
+    }
+  }
+
+  public void addLocalInspectionProblem(@NotNull RefEntity refElement, final CommonProblemDescriptor @NotNull[] descriptors) {
+    try {
+      writeOutput(descriptors, refElement);
+    }
+    catch (IOException e) {
+      LOG.error(e);
     }
   }
 

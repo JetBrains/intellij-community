@@ -6,6 +6,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -57,8 +58,12 @@ public final class GantUtils {
     return node.getElementType() == GroovyTokenTypes.mIDENT;
   }
 
+  public static @NlsSafe @Nullable String getGantVersionOrNull(String path) {
+    return AbstractConfigUtils.getSDKJarVersion(path + "/lib", "gant-\\d.*\\.jar", AbstractConfigUtils.MANIFEST_PATH);
+  }
+
   public static String getGantVersion(String path) {
-    String jarVersion = AbstractConfigUtils.getSDKJarVersion(path + "/lib", "gant-\\d.*\\.jar", AbstractConfigUtils.MANIFEST_PATH);
+    String jarVersion = getGantVersionOrNull(path);
     return jarVersion != null ? jarVersion : AbstractConfigUtils.UNDEFINED_VERSION;
   }
 
@@ -94,10 +99,6 @@ public final class GantUtils {
 
   public static boolean isGantJarFile(final String name) {
     return name.matches(GANT_JAR_FILE_PATTERN);
-  }
-
-  public static String getSDKVersion(@NotNull Library library) {
-    return getGantVersion(getGantLibraryHome(library));
   }
 
   public static String getGantLibraryHome(Library library) {

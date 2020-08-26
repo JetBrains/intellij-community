@@ -50,9 +50,9 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
   private volatile long startTime;
   private volatile long endTime;
   @Nullable
-  private String myTitle;
+  private @BuildEventsNls.Title String myTitle;
   @Nullable
-  private String myHint;
+  private @BuildEventsNls.Hint String myHint;
   @Nullable
   private volatile EventResult myResult;
   private final boolean myAutoExpandNode;
@@ -61,8 +61,7 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
   private volatile Navigatable myNavigatable;
   @Nullable
   private volatile NullableLazyValue<Icon> myPreferredIconValue;
-  @Nullable
-  private Predicate<ExecutionNode> myFilter;
+  private Predicate<? super ExecutionNode> myFilter;
   private boolean myAlwaysLeaf;
 
   public ExecutionNode(Project aProject, ExecutionNode parentNode, boolean isAutoExpandNode, @NotNull Supplier<Boolean> isCorrectThread) {
@@ -116,12 +115,12 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
     return myTitle;
   }
 
-  public void setTitle(@Nullable String title) {
+  public void setTitle(@BuildEventsNls.Title @Nullable String title) {
     assert myIsCorrectThread.get();
     myTitle = title;
   }
 
-  public void setHint(@Nullable String hint) {
+  public void setHint(@BuildEventsNls.Hint @Nullable String hint) {
     assert myIsCorrectThread.get();
     myHint = hint;
   }
@@ -193,7 +192,7 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
     if (myParentNode != null) {
       List<ExecutionNode> parentVisibleChildrenList = myParentNode.myVisibleChildrenList;
       if (parentVisibleChildrenList != null) {
-        Predicate<ExecutionNode> filter = myParentNode.myFilter;
+        Predicate<? super ExecutionNode> filter = myParentNode.myFilter;
         if (filter != null) {
           boolean wasPresent = parentVisibleChildrenList.contains(this);
           boolean shouldBePresent = filter.test(this);
@@ -235,13 +234,12 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
     return this;
   }
 
-  @Nullable
-  public Predicate<ExecutionNode> getFilter() {
+  public Predicate<? super ExecutionNode> getFilter() {
     assert myIsCorrectThread.get();
     return myFilter;
   }
 
-  public void setFilter(@Nullable Predicate<ExecutionNode> filter) {
+  public void setFilter(@Nullable Predicate<? super ExecutionNode> filter) {
     assert myIsCorrectThread.get();
     myFilter = filter;
     for (ExecutionNode node : myChildrenList) {
@@ -368,7 +366,7 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
     return myChildrenList.stream().filter(filter).findFirst().orElse(null);
   }
 
-  private String getCurrentHint() {
+  private @BuildEventsNls.Hint String getCurrentHint() {
     assert myIsCorrectThread.get();
     String hint = myHint;
     int warnings = myWarnings.get();

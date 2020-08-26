@@ -6,7 +6,7 @@
 <GridPane xmlns:fx="http://javafx.com/fxml">
   <fx:define>
     <FXCollections fx:factory="observableArrayList">
-      <ArrayList fx:value=<error descr="Unable to coerce 'A' to java.util.ArrayList.">"A"</error>/>
+      <ArrayList fx:value=<error descr="Unable to coerce A to java.util.ArrayList">"A"</error>/>
     </FXCollections>
 
     <FXCollections fx:factory="observableArrayList">

@@ -4,6 +4,7 @@ package com.intellij.diagnostic;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -30,7 +31,7 @@ public final class VMOptions {
   public enum MemoryKind {
     HEAP("Xmx", ""), MIN_HEAP("Xms", ""), PERM_GEN("XX:MaxPermSize", "="), METASPACE("XX:MaxMetaspaceSize", "="), CODE_CACHE("XX:ReservedCodeCacheSize", "=");
 
-    public final String optionName;
+    public final @NlsSafe String optionName;
     public final String option;
     private final Pattern pattern;
 
@@ -140,7 +141,7 @@ public final class VMOptions {
     };
   }
 
-  private static void writeGeneralOptions(@NotNull Function<String, String> transformContent) {
+  private static void writeGeneralOptions(@NotNull Function<? super String, String> transformContent) {
     Path path = getWriteFile();
     if (path == null) {
       LOG.warn("VM options file not configured");

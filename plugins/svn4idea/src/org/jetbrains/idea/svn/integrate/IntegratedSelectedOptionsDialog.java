@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts.DialogTitle;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.IconUtil;
@@ -19,7 +20,6 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Set;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.SvnUtil.isAncestor;
 
 public class IntegratedSelectedOptionsDialog extends DialogWrapper {
@@ -65,7 +66,7 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
 
     mySelectedRepositoryUUID = SvnUtil.getRepositoryUUID(myVcs, currentBranch);
 
-    setTitle(SvnBundle.message("action.Subversion.integrate.changes.dialog.title"));
+    setTitle(message("dialog.title.integrate.to.branch"));
     init();
 
     myWorkingCopiesList.setModel(new DefaultListModel());
@@ -93,11 +94,11 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
     myDryRunCheckbox.setSelected(svnConfig.isMergeDryRun());
     myIgnoreWhitespacesCheckBox.setSelected(svnConfig.isIgnoreSpacesInMerge());
 
-    mySourceInfoLabel.setText(SvnBundle.message("action.Subversion.integrate.changes.branch.info.source.label.text", currentBranch));
+    mySourceInfoLabel.setText(message("action.Subversion.integrate.changes.branch.info.source.label.text", currentBranch));
     myTargetInfoLabel
-      .setText(SvnBundle.message("action.Subversion.integrate.changes.branch.info.target.label.text", selectedBranchUrl.toDecodedString()));
+      .setText(message("action.Subversion.integrate.changes.branch.info.target.label.text", selectedBranchUrl.toDecodedString()));
 
-    final String addText = SvnBundle.message("action.Subversion.integrate.changes.dialog.add.wc.text");
+    final String addText = message("action.Subversion.integrate.changes.dialog.add.wc.text");
     final AnAction addAction = new DumbAwareAction(addText, addText, IconUtil.getAddIcon()) {
       {
         registerCustomShortcutSet(CommonShortcuts.INSERT, myWorkingCopiesList);
@@ -116,8 +117,8 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
 
           // local not consistent copy can not prevent us from integration: only remote local copy is really involved
           if ((mySelectedRepositoryUUID != null) && (! mySelectedRepositoryUUID.equals(repositoryUUID))) {
-            if (Messages.OK == Messages.showOkCancelDialog((repositoryUUID == null) ? SvnBundle.message("action.Subversion.integrate.changes.message.not.under.control.text")
-                                                            : SvnBundle.message("action.Subversion.integrate.changes.message.another.wc.text"),
+            if (Messages.OK == Messages.showOkCancelDialog((repositoryUUID == null) ? message("action.Subversion.integrate.changes.message.not.under.control.text")
+                                                            : message("action.Subversion.integrate.changes.message.another.wc.text"),
                                                             getTitle(), UIUtil.getWarningIcon())) {
               onOkToAdd(file);
             }
@@ -131,7 +132,7 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
 
     myGroup.add(addAction);
 
-    final String removeText = SvnBundle.message("action.Subversion.integrate.changes.dialog.remove.wc.text");
+    final String removeText = message("action.Subversion.integrate.changes.dialog.remove.wc.text");
     myGroup.add(new DumbAwareAction(removeText, removeText, PlatformIcons.DELETE_ICON) {
       {
         registerCustomShortcutSet(CommonShortcuts.getDelete(), myWorkingCopiesList);
@@ -171,10 +172,10 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
 
   public void selectWcopyRootOnly() {
     myMustSelectBeforeOk = false;
-    setTitle(SvnBundle.message("dialog.Subversion.select.working.copy.title"));
+    setTitle(message("dialog.Subversion.select.working.copy.title"));
     myIgnoreWhitespacesCheckBox.setVisible(false);
     myDryRunCheckbox.setVisible(false);
-    myWcListTitleLabel.setText(SvnBundle.message("dialog.Subversion.select.working.copy.wcopy.list.title"));
+    myWcListTitleLabel.setText(message("dialog.Subversion.select.working.copy.wcopy.list.title"));
   }
 
   private void createUIComponents() {
@@ -251,9 +252,12 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
   }
 
   @Nullable
-  public static Pair<WorkingCopyInfo, Url> selectWorkingCopy(final Project project, final Url currentBranch, @NotNull Url targetBranch,
+  public static Pair<WorkingCopyInfo, Url> selectWorkingCopy(final Project project,
+                                                             final Url currentBranch,
+                                                             @NotNull Url targetBranch,
                                                              final boolean showIntegrationParameters,
-                                                             final String selectedLocalBranchPath, final String dialogTitle) {
+                                                             final String selectedLocalBranchPath,
+                                                             @DialogTitle @Nullable String dialogTitle) {
     final IntegratedSelectedOptionsDialog dialog = new IntegratedSelectedOptionsDialog(project, currentBranch, targetBranch);
     if (!showIntegrationParameters) {
       dialog.selectWcopyRootOnly();
@@ -272,16 +276,16 @@ public class IntegratedSelectedOptionsDialog extends DialogWrapper {
       if (info != null) {
         final File file = new File(info.getLocalPath());
         if ((!file.exists()) || (!file.isDirectory())) {
-          Messages.showErrorDialog(SvnBundle.message("action.Subversion.integrate.changes.error.target.not.dir.text"),
-                                   SvnBundle.message("action.Subversion.integrate.changes.messages.title"));
+          Messages.showErrorDialog(message("dialog.message.integrate.changes.error.target.not.dir"),
+                                   message("dialog.title.integrate.to.branch"));
           return null;
         }
 
         final Url targetUrl = realTargetUrl(SvnVcs.getInstance(project), info, targetBranch);
 
         if (targetUrl == null) {
-          Messages.showErrorDialog(SvnBundle.message("action.Subversion.integrate.changes.error.not.versioned.text"),
-                                   SvnBundle.message("action.Subversion.integrate.changes.messages.title"));
+          Messages.showErrorDialog(message("dialog.message.integrate.changes.error.not.versioned"),
+                                   message("dialog.title.integrate.to.branch"));
           return null;
         }
         return Pair.create(info, targetUrl);

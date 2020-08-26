@@ -18,6 +18,8 @@ package org.jetbrains.plugins.groovy.codeInspection;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.util.InspectionMessage;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -75,7 +77,7 @@ public abstract class BaseInspectionVisitor extends GroovyElementVisitor {
     registerError(variable.getNameIdentifierGroovy(), description, fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
   }
 
-  protected void registerMethodCallError(GrMethodCall method, Object... args) {
+  protected void registerMethodCallError(GrMethodCall method, @NlsSafe Object... args) {
     if (method == null) {
       return;
     }
@@ -89,7 +91,7 @@ public abstract class BaseInspectionVisitor extends GroovyElementVisitor {
   }
 
   protected void registerError(@NotNull PsiElement location,
-                               @NotNull String description,
+                               @InspectionMessage @NotNull String description,
                                LocalQuickFix @Nullable [] fixes,
                                ProblemHighlightType highlightType) {
     problemsHolder.registerProblem(location, description, highlightType, fixes);

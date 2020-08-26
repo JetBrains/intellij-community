@@ -60,7 +60,7 @@ public abstract class CollectionModelEditor<T, E extends CollectionItemEditor<T>
     return false;
   }
 
-  public void processModifiedItems(@NotNull BiPredicate<T, T> processor) {
+  public void processModifiedItems(@NotNull BiPredicate<? super T, ? super T> processor) {
     // don't want to expose TObjectObjectProcedure - avoid implementation details
     helper.process(processor);
   }
@@ -121,7 +121,7 @@ public abstract class CollectionModelEditor<T, E extends CollectionItemEditor<T>
       return !modifiedToOriginal.isEmpty();
     }
 
-    public void process(@NotNull BiPredicate<T, T> procedure) {
+    public void process(@NotNull BiPredicate<? super T, ? super T> procedure) {
       for (Map.Entry<T, T> entry : modifiedToOriginal.entrySet()) {
         T key = entry.getKey();
         T value = entry.getValue();

@@ -20,7 +20,7 @@ public class DefaultBundleService {
   }
 
   @NotNull
-  public <T> T compute(@NotNull Supplier<T> computable) {
+  public <T> T compute(@NotNull Supplier<? extends T> computable) {
     ourDefaultBundle.set(true);
     try {
       return computable.get();

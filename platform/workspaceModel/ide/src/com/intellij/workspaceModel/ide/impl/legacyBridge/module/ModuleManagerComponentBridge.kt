@@ -42,12 +42,12 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootsCha
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
-import com.intellij.workspaceModel.storage.VersionedStorageChange
 import java.io.File
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.*
 import java.util.concurrent.Callable
+import kotlin.collections.HashSet
 
 @Suppress("ComponentNotRegistered")
 class ModuleManagerComponentBridge(private val project: Project) : ModuleManagerEx(), Disposable {
@@ -142,6 +142,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
           val moduleLibraryChanges = event.getChanges(LibraryEntity::class.java).filterModuleLibraryChanges()
           val changes = event.getChanges(ModuleEntity::class.java)
           val facetChanges = event.getChanges(FacetEntity::class.java)
+          val addedModulesNames = changes.filterIsInstance<EntityChange.Added<ModuleEntity>>().mapTo(HashSet()) { it.entity.name }
           if (changes.isNotEmpty() || moduleLibraryChanges.isNotEmpty() || facetChanges.isNotEmpty()) {
             executeOrQueueOnDispatchThread {
               LOG.debug("Process changed modules and facets")
@@ -158,8 +159,8 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
               }
 
               for (change in facetChanges) when (change) {
-                is EntityChange.Removed -> FacetEntityChangeListener.getInstance(project).processChange(change)
-                is EntityChange.Replaced -> FacetEntityChangeListener.getInstance(project).processChange(change)
+                is EntityChange.Removed -> FacetEntityChangeListener.getInstance(project).processChange(change, event.storageBefore, addedModulesNames)
+                is EntityChange.Replaced -> FacetEntityChangeListener.getInstance(project).processChange(change, event.storageBefore, addedModulesNames)
                 is EntityChange.Added -> Unit
               }
 
@@ -174,7 +175,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
               for (change in facetChanges) when (change) {
                 is EntityChange.Removed -> Unit
                 is EntityChange.Replaced -> Unit
-                is EntityChange.Added -> FacetEntityChangeListener.getInstance(project).processChange(change)
+                is EntityChange.Added -> FacetEntityChangeListener.getInstance(project).processChange(change, event.storageBefore, addedModulesNames)
               }
 
               // After every change processed
@@ -311,10 +312,8 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
 
   private fun addModule(moduleEntity: ModuleEntity): ModuleBridge {
     val module = createModuleInstance(moduleEntity, entityStore, diff = null, isNew = false)
-    runWriteAction {
-      WorkspaceModel.getInstance(project).updateProjectModelSilent {
-        it.mutableModuleMap.addMapping(moduleEntity, module)
-      }
+    WorkspaceModel.getInstance(project).updateProjectModelSilent {
+      it.mutableModuleMap.addMapping(moduleEntity, module)
     }
     return module
   }
@@ -365,15 +364,11 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
         }
 
       val results = service.invokeAll(tasks)
-      ApplicationManager.getApplication().invokeAndWait {
-        runWriteAction {
-          WorkspaceModel.getInstance(project).updateProjectModelSilent { builder ->
-            val moduleMap = builder.mutableModuleMap
-            results.mapNotNull { it.get() }.forEach { (entity, module) ->
-              moduleMap.addMapping(entity, module)
-              ModuleRootComponentBridge.getInstance(module).moduleLibraryTable.registerModuleLibraryInstances(builder)
-            }
-          }
+      WorkspaceModel.getInstance(project).updateProjectModelSilent { builder ->
+        val moduleMap = builder.mutableModuleMap
+        results.mapNotNull { it.get() }.forEach { (entity, module) ->
+          moduleMap.addMapping(entity, module)
+          ModuleRootComponentBridge.getInstance(module).moduleLibraryTable.registerModuleLibraryInstances(builder)
         }
       }
     }

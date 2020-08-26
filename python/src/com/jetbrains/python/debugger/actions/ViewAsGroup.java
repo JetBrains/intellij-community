@@ -33,7 +33,7 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
     private final PyNodeRenderer myPyNodeRenderer;
 
     private RendererAction(PyNodeRenderer pyNodeRenderer) {
-      super(pyNodeRenderer.getName());
+      super(pyNodeRenderer.getName()); //NON-NLS
       myPyNodeRenderer = pyNodeRenderer;
     }
 

@@ -3,6 +3,7 @@ package com.intellij.application.options.schemes;
 
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
@@ -100,7 +101,7 @@ public abstract class SchemesCombo<T extends Scheme> extends ComboBox<SchemesCom
     }
 
     @NotNull
-    public String getPresentableText() {
+    public @NlsContexts.ListItem String getPresentableText() {
       return myScheme != null ? myScheme.getDisplayName() : "";
     }
 
@@ -161,9 +162,9 @@ public abstract class SchemesCombo<T extends Scheme> extends ComboBox<SchemesCom
 
   private class MySeparatorItem extends MySchemeListItem<T> {
 
-    private final String myTitle;
+    private final @NlsContexts.ListItem String myTitle;
 
-    MySeparatorItem(@NotNull String title) {
+    MySeparatorItem(@NotNull @NlsContexts.ListItem String title) {
       super(null);
       myTitle = title;
     }
@@ -182,7 +183,7 @@ public abstract class SchemesCombo<T extends Scheme> extends ComboBox<SchemesCom
 
   private static class MyTitledSeparator extends JPanel {
 
-    MyTitledSeparator(@NotNull String titleText) {
+    MyTitledSeparator(@NlsContexts.Separator @NotNull String titleText) {
       super();
       setLayout(new BoxLayout(this, BoxLayout.X_AXIS));
       JLabel label = new JLabel(titleText);

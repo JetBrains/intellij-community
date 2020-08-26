@@ -31,7 +31,7 @@ public abstract class SerializationManagerEx extends SerializationManager {
 
   public abstract boolean isNameStorageCorrupted();
 
-  public abstract void repairNameStorage();
+  public abstract void repairNameStorage(@NotNull Exception corruptionCause);
 
   public abstract void flushNameStorage();
 

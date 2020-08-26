@@ -3,7 +3,6 @@ package git4idea.commands;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.credentialStore.CredentialAttributes;
-import com.intellij.credentialStore.CredentialAttributesKt;
 import com.intellij.credentialStore.Credentials;
 import com.intellij.dvcs.DvcsRememberedInputs;
 import com.intellij.ide.passwordSafe.PasswordSafe;
@@ -23,16 +22,20 @@ import com.intellij.util.io.URLUtil;
 import git4idea.DialogManager;
 import git4idea.config.GitConfigUtil;
 import git4idea.config.GitVcsApplicationSettings;
+import git4idea.i18n.GitBundle;
 import git4idea.remote.GitHttpAuthDataProvider;
 import git4idea.remote.GitRememberedInputs;
 import git4idea.remote.GitRepositoryHostingService;
 import git4idea.remote.InteractiveGitHttpAuthDataProvider;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
 import java.util.function.Function;
+
+import static com.intellij.credentialStore.CredentialAttributesKt.generateServiceName;
 
 /**
  * <p>Handles "ask username" and "ask password" requests from Git:
@@ -48,7 +51,6 @@ import java.util.function.Function;
 class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
 
   private static final Logger LOG = Logger.getInstance(GitHttpGuiAuthenticator.class);
-  private static final Class<GitHttpAuthenticator> PASS_REQUESTER = GitHttpAuthenticator.class;
   private static final String HTTP_SCHEME_URL_PREFIX = "http" + URLUtil.SCHEME_SEPARATOR;
 
   @NotNull private final Project myProject;
@@ -262,6 +264,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
       myUrl = url;
     }
 
+    @NonNls
     @NotNull
     abstract String getName();
 
@@ -455,7 +458,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     @Nullable
     public AuthData getDataForKnownLogin(@NotNull String login) {
       String key = makeKey(myUrl, login);
-      Credentials credentials = CredentialAttributesKt.getAndMigrateCredentials(oldCredentialAttributes(key), credentialAttributes(key));
+      Credentials credentials = PasswordSafe.getInstance().get(credentialAttributes(key));
       String password = StringUtil.nullize(credentials == null ? null : credentials.getPasswordAsString());
       return (myData = new AuthData(login, password));
     }
@@ -498,12 +501,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     @VisibleForTesting
     @NotNull
     static CredentialAttributes credentialAttributes(@NotNull String key) {
-      return new CredentialAttributes(CredentialAttributesKt.generateServiceName("Git HTTP", key), key, PASS_REQUESTER);
-    }
-
-    @NotNull
-    private static CredentialAttributes oldCredentialAttributes(@NotNull String key) {
-      return CredentialAttributesKt.CredentialAttributes(PASS_REQUESTER, key);
+      return new CredentialAttributes(generateServiceName(GitBundle.message("label.credential.store.key.http.password"), key), key);
     }
 
     /**
@@ -580,6 +578,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
       return myPassword;
     }
 
+    @NonNls
     @Override
     public String toString() {
       return "provider='" + myProvider.getName() + "', login='" + myLogin + '\'';

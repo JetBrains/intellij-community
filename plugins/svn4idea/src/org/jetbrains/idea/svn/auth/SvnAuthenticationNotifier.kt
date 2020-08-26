@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.Messages.showYesNoDialog
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.NamedRunnable
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces
 import com.intellij.openapi.vcs.impl.GenericNotifierImpl
@@ -190,7 +191,8 @@ class SvnAuthenticationNotifier(project: Project) :
     return ThreeState.fromBoolean(calculatedResult)
   }
 
-  override fun getNotificationContent(obj: AuthenticationRequest) = "<a href=\"\">Click to fix.</a> Not logged In to Subversion '${obj.realm}' (${obj.url.toDecodedString()})"
+  override fun getNotificationContent(obj: AuthenticationRequest): @NlsContexts.NotificationContent String =
+    "<a href=\"\">Click to fix.</a> Not logged In to Subversion '${obj.realm}' (${obj.url.toDecodedString()})"
 
   class AuthenticationRequest(val myProject: Project, val kind: String, val url: Url, val realm: String) {
     var wcUrl: Url? = null

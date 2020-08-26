@@ -14,6 +14,7 @@ import com.intellij.openapi.roots.SourceFolder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
@@ -240,8 +241,8 @@ public abstract class AbstractCreateFileFix extends LocalQuickFixAndIntentionAct
   }
 
   @NotNull
-  private static String getPresentableContentRootPath(@NotNull PsiDirectory directory,
-                                                      String @NotNull [] pathToCreate) {
+  private static @NlsSafe String getPresentableContentRootPath(@NotNull PsiDirectory directory,
+                                                               String @NotNull [] pathToCreate) {
     VirtualFile f = directory.getVirtualFile();
     Project project = directory.getProject();
 

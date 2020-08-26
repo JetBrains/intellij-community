@@ -4,6 +4,7 @@ package org.jetbrains.plugins.javaFX.resources;
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.XmlSuppressableInspectionTool;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.references.PropertyReference;
 import com.intellij.psi.PsiElementVisitor;
@@ -31,7 +32,7 @@ public final class JavaFxResourcePropertyValueInspection extends XmlSuppressable
       public void visitXmlAttributeValue(XmlAttributeValue xmlAttributeValue) {
         super.visitXmlAttributeValue(xmlAttributeValue);
         final String value = xmlAttributeValue.getValue();
-        if (value != null && value.startsWith("%") && value.length() > 1) {
+        if (value.startsWith("%") && value.length() > 1) {
           final PsiReference reference = xmlAttributeValue.getReference();
           if (reference instanceof PropertyReference) {
             final ResolveResult[] resolveResults = ((PropertyReference)reference).multiResolve(false);
@@ -48,7 +49,7 @@ public final class JavaFxResourcePropertyValueInspection extends XmlSuppressable
                 .map(propertyValue -> JavaFxPropertyAttributeDescriptor.validateLiteralOrEnumConstant(xmlAttributeValue, propertyValue))
                 .nonNull()
                 .distinct()
-                .forEach(errorMessage -> holder.registerProblem(xmlAttributeValue, errorMessage));
+                .forEach((@InspectionMessage var errorMessage) -> holder.registerProblem(xmlAttributeValue, errorMessage));
             }
           }
         }

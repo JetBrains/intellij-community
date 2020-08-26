@@ -19,6 +19,10 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.util.CommitCompareInfo;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBUI;
@@ -39,8 +43,8 @@ import java.util.List;
 class CompareBranchesLogPanel extends JPanel {
 
   private final CompareBranchesHelper myHelper;
-  private final String myBranchName;
-  private final String myCurrentBranchName;
+  private final @NlsSafe String myBranchName;
+  private final @NlsSafe String myCurrentBranchName;
   private final CommitCompareInfo myCompareInfo;
   private final Repository myInitialRepo;
 
@@ -63,10 +67,12 @@ class CompareBranchesLogPanel extends JPanel {
   private JComponent createCenterPanel() {
     final SimpleChangesBrowser changesBrowser = new SimpleChangesBrowser(myHelper.getProject(), false, true);
 
-    myHeadToBranchListPanel = new CommitListPanel(getHeadToBranchCommits(myInitialRepo),
-                                                  String.format("Branch %s is fully merged to %s", myBranchName, myCurrentBranchName));
-    myBranchToHeadListPanel = new CommitListPanel(getBranchToHeadCommits(myInitialRepo),
-                                                  String.format("Branch %s is fully merged to %s", myCurrentBranchName, myBranchName));
+    myHeadToBranchListPanel = new CommitListPanel(
+      getHeadToBranchCommits(myInitialRepo),
+      DvcsBundle.message("label.branch.fully.merged.to.branch", myBranchName, myCurrentBranchName));
+    myBranchToHeadListPanel = new CommitListPanel(
+      getBranchToHeadCommits(myInitialRepo),
+      DvcsBundle.message("label.branch.fully.merged.to.branch", myCurrentBranchName, myBranchName));
 
     addSelectionListener(myHeadToBranchListPanel, myBranchToHeadListPanel, changesBrowser);
     addSelectionListener(myBranchToHeadListPanel, myHeadToBranchListPanel, changesBrowser);
@@ -157,10 +163,15 @@ class CompareBranchesLogPanel extends JPanel {
     return bth;
   }
 
+  @NlsContexts.Label
   private String makeDescription(boolean forward) {
     String firstBranch = forward ? myCurrentBranchName : myBranchName;
     String secondBranch = forward ? myBranchName : myCurrentBranchName;
-    return String.format("<html>Commits that exist in <code><b>%s</b></code> but don't exist in <code><b>%s</b></code> (<code>%s</code>):</html>",
-                         secondBranch, firstBranch, myHelper.formatLogCommand(firstBranch, secondBranch));
+    return new HtmlBuilder().appendRaw(
+      DvcsBundle.message("compare.branches.commits.that.exist.in.branch.but.not.in.branch.vcs.command",
+                         HtmlChunk.text(secondBranch).bold().code(),
+                         HtmlChunk.text(firstBranch).bold().code(),
+                         HtmlChunk.text(myHelper.formatLogCommand(firstBranch, secondBranch)).bold().code()))
+      .wrapWithHtmlBody().toString();
   }
 }

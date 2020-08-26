@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.net.ssl;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
@@ -218,7 +219,7 @@ public class CertificateTreeBuilder extends AbstractTreeBuilder {
 
     @Override
     protected void update(@NotNull PresentationData presentation) {
-      presentation.addText("<root>", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+      presentation.addText(IdeBundle.message("label.certificate.root"), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
   }
 

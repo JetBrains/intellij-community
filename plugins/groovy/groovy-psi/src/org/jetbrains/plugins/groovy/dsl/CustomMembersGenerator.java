@@ -14,6 +14,7 @@ import groovy.lang.GroovyObjectSupport;
 import groovy.lang.MetaMethod;
 import org.codehaus.groovy.runtime.DefaultGroovyMethods;
 import org.codehaus.groovy.runtime.InvokerHelper;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.dsl.dsltop.GdslMembersProvider;
@@ -41,7 +42,7 @@ import java.util.function.Consumer;
 public class CustomMembersGenerator extends GroovyObjectSupport implements GdslMembersHolderConsumer {
   private static final Logger LOG = Logger.getInstance(CustomMembersGenerator.class);
   private static final GdslMembersProvider[] PROVIDERS = GdslMembersProvider.EP_NAME.getExtensions();
-  public static final String THROWS = "throws";
+  public static final @NonNls String THROWS = "throws";
   private FList<Map> myDeclarations = FList.emptyList();
   private final Project myProject;
   private final CompoundMembersHolder myDepot = new CompoundMembersHolder();
@@ -136,7 +137,7 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
     Object docUrl = args.get("docUrl");
     Boolean isStatic = (Boolean)args.get("isStatic");
 
-    Map<Object, Object> getter = new HashMap<>();
+    Map<@NonNls Object, Object> getter = new HashMap<>();
     getter.put("name", GroovyPropertyUtils.getGetterNameNonBoolean(name));
     getter.put("type", type);
     getter.put("isStatic", isStatic);
@@ -144,7 +145,7 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
     getter.put("docUrl", docUrl);
     method(getter);
 
-    Map<Object, Object> setter = new HashMap<>();
+    Map<@NonNls Object, @NonNls Object> setter = new HashMap<>();
     setter.put("name", GroovyPropertyUtils.getSetterName(name));
     setter.put("type", "void");
     setter.put("isStatic", isStatic);
@@ -207,13 +208,13 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
   }
 
   @SuppressWarnings("unchecked")
-  private static void parseMethod(Map args) {
+  private static void parseMethod(@NonNls Map args) {
     String type = stringifyType(args.get("type"));
     args.put("type", type);
 
     Object namedParams = args.get("namedParams");
     if (namedParams instanceof List) {
-      LinkedHashMap newParams = new LinkedHashMap();
+      @NonNls LinkedHashMap newParams = new LinkedHashMap();
       newParams.put("args", namedParams);
       Object oldParams = args.get("params");
       if (oldParams instanceof Map) {
@@ -282,10 +283,10 @@ public class CustomMembersGenerator extends GroovyObjectSupport implements GdslM
     if (type instanceof Class) return ((Class)type).getName();
 
     String s = type.toString();
-    LOG.assertTrue(!s.startsWith("? extends"), s);
-    LOG.assertTrue(!s.contains("?extends"), s);
-    LOG.assertTrue(!s.contains("<null."), s);
-    LOG.assertTrue(!s.startsWith("null."), s);
+    LOG.assertTrue(!s.startsWith("? extends"), s); // NON-NLS
+    LOG.assertTrue(!s.contains("?extends"), s); // NON-NLS
+    LOG.assertTrue(!s.contains("<null."), s); // NON-NLS
+    LOG.assertTrue(!s.startsWith("null."), s); // NON-NLS
     LOG.assertTrue(!(s.contains(",") && !s.contains("<")), s);
     return s;
   }

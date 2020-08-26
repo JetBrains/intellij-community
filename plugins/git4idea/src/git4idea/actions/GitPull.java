@@ -37,6 +37,7 @@ import git4idea.rebase.GitRebaseUtils;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -49,11 +50,12 @@ import static java.util.Collections.singletonList;
 
 public class GitPull extends GitMergeAction {
   private static final Logger LOG = Logger.getInstance(GitPull.class);
+  @NonNls private static final String INTERACTIVE = "interactive";
 
   @Override
   @NotNull
   protected String getActionName() {
-    return GitBundle.getString("pull.action.name");
+    return GitBundle.message("pull.action.name");
   }
 
   @Override
@@ -90,7 +92,7 @@ public class GitPull extends GitMergeAction {
     VirtualFile selectedRoot = dialogState.selectedRoot;
     String selectedBranch = dialogState.selectedBranches.get(0);
 
-    ProgressManager.getInstance().run(new Task.Backgroundable(project, GitBundle.getString("rebase.progress.indicator.title")) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(project, GitBundle.message("rebase.progress.indicator.title")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         GitRepository selectedRepository = Objects.requireNonNull(
@@ -111,7 +113,7 @@ public class GitPull extends GitMergeAction {
     catch (VcsException e) {
       LOG.warn(e);
     }
-    return "interactive".equals(value);
+    return INTERACTIVE.equals(value);
   }
 
   @NotNull

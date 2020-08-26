@@ -39,7 +39,7 @@ public class SvnBindException extends VcsException {
   }
 
   public SvnBindException(@Nullable String message, @Nullable Throwable cause) {
-    super(chooseNotNull(message, getMessage(cause)), cause);
+    super(chooseNotNull(message, VcsException.getMessage(cause)), cause);
 
     init(message);
   }

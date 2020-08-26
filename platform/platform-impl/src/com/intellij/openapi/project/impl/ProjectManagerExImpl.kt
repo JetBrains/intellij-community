@@ -28,6 +28,7 @@ import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.wm.IdeFocusManager
@@ -262,6 +263,7 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
   protected open fun isRunStartUpActivitiesEnabled(project: Project): Boolean = true
 }
 
+@NlsSafe
 private fun message(e: Throwable): String {
   var message = e.message ?: e.localizedMessage
   if (message != null) {

@@ -1188,7 +1188,8 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       @Override
       public DiffRequest process(@NotNull UserDataHolder context, @NotNull ProgressIndicator indicator)
         throws DiffRequestProducerException, ProcessCanceledException {
-        throw new DiffRequestProducerException("Cannot find base for '" + (beforePath != null ? beforePath : afterPath) + "'");
+        throw new DiffRequestProducerException(
+          VcsBundle.message("changes.error.cannot.find.base.for.path", beforePath != null ? beforePath : afterPath));
       }
     };
   }

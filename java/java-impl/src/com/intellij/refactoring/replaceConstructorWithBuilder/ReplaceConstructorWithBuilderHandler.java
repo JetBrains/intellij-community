@@ -36,13 +36,13 @@ public class ReplaceConstructorWithBuilderHandler implements RefactoringActionHa
     final PsiElement element = file.findElementAt(offset);
     final PsiClass psiClass = getParentNamedClass(element);
     if (psiClass == null) {
-      showErrorMessage("The caret should be positioned inside a class which constructors are to be replaced with builder.", project, editor);
+      showErrorMessage(JavaRefactoringBundle.message("replace.constructor.builder.error.caret.position"), project, editor);
       return;
     }
 
     final PsiMethod[] constructors = psiClass.getConstructors();
     if (constructors.length == 0) {
-      showErrorMessage("Current class doesn't have constructors to replace with builder.", project, editor);
+      showErrorMessage(JavaRefactoringBundle.message("replace.constructor.builder.error.no.constructors"), project, editor);
       return;
     }
 

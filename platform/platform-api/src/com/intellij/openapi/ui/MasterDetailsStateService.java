@@ -57,7 +57,7 @@ public final class MasterDetailsStateService implements PersistentStateComponent
   @Tag("state")
   public static final class ComponentState {
     @Attribute("key")
-    public String myKey;
+    public @NonNls String myKey;
 
     @Tag("settings")
     public Element mySettings;

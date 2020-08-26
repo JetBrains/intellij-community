@@ -2,12 +2,23 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.XmlSuppressableInspectionTool;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
+import com.intellij.psi.SmartPointerManager;
+import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.URLReference;
 import com.intellij.psi.impl.source.xml.SchemaPrefix;
 import com.intellij.psi.xml.XmlAttribute;
@@ -19,10 +30,9 @@ import com.intellij.xml.DefaultXmlExtension;
 import com.intellij.xml.analysis.XmlAnalysisBundle;
 import com.intellij.xml.util.XmlRefCountHolder;
 import com.intellij.xml.util.XmlUtil;
+import java.util.Objects;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Objects;
 
 /**
  * @author Dmitry Avdeev
@@ -211,7 +221,7 @@ public final class XmlUnusedNamespaceInspection extends XmlSuppressableInspectio
     @Override
     @NotNull
     public String getFamilyName() {
-      return XmlAnalysisBundle.message("xml.inspections.unused.schema.remove");
+      return XmlAnalysisBundle.message("xml.quickfix.remove.unused.namespace.decl");
     }
 
     @Override
@@ -312,7 +322,6 @@ public final class XmlUnusedNamespaceInspection extends XmlSuppressableInspectio
   }
 
   public static final class RemoveNamespaceLocationFix extends RemoveNamespaceDeclarationFix {
-    public static final String NAME = "Remove unused namespace location";
 
     private RemoveNamespaceLocationFix(String namespace) {
       super(namespace, true, true);
@@ -321,7 +330,7 @@ public final class XmlUnusedNamespaceInspection extends XmlSuppressableInspectio
     @NotNull
     @Override
     public String getName() {
-      return NAME;
+      return XmlAnalysisBundle.message("xml.intention.remove.unused.namespace.location");
     }
 
     @Override

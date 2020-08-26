@@ -94,7 +94,7 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
   @NotNull
   @ApiStatus.Internal
   public static File createZip(@Nullable Project project,
-                               @NotNull Consumer<@NotNull Compressor> additionalFiles) throws IOException {
+                               @NotNull Consumer<? super @NotNull Compressor> additionalFiles) throws IOException {
     PerformanceWatcher.getInstance().dumpThreads("", false);
 
     String productName = StringUtil.toLowerCase(ApplicationNamesInfo.getInstance().getLowercaseProductName());

@@ -4,6 +4,7 @@ package com.intellij.refactoring.changeSignature;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -33,6 +34,6 @@ public interface ChangeSignatureHandler extends RefactoringActionHandler {
   @Override
   void invoke(@NotNull Project project, PsiElement @NotNull [] elements, @Nullable DataContext dataContext);
 
-  @Nullable
+  @Nullable @NlsContexts.DialogMessage
   String getTargetNotFoundMessage();
 }

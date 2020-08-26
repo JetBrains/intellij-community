@@ -21,7 +21,7 @@ import java.util.Map;
 public class PackagesNotificationPanel {
   private final JEditorPane myHtmlViewer;
   private final Map<String, Runnable> myLinkHandlers = new HashMap<>();
-  private String myErrorTitle;
+  private @NlsContexts.DialogTitle String myErrorTitle;
   private PackageManagementService.ErrorDescription myErrorDescription;
 
   public PackagesNotificationPanel() {

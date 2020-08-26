@@ -49,13 +49,13 @@ public class AddFieldQuickFix implements LocalQuickFix {
   @Override
   @NotNull
   public String getName() {
-    return PyPsiBundle.message("QFIX.NAME.add.field.$0.to.class.$1", myIdentifier, myClassName);
+    return PyPsiBundle.message("QFIX.add.field.to.class", myIdentifier, myClassName);
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return PyPsiBundle.message("QFIX.add.field.to.class");
+    return PyPsiBundle.message("QFIX.NAME.add.field.to.class");
   }
 
   @NotNull
@@ -163,7 +163,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
         newInit = (PyFunction)clsContent.addAfter(newInit, addAnchor);
 
         PythonUiService.getInstance()
-          .showBalloonInfo(project, PyPsiBundle.message("QFIX.added.constructor.$0.for.field.$1", cls.getName(), itemName));
+          .showBalloonInfo(project, PyPsiBundle.message("QFIX.add.field.to.class.popup.content.added.init", cls.getName(), itemName));
 
         final PyStatementList statementList = newInit.getStatementList();
         final PyStatement[] statements = statementList.getStatements();

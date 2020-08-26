@@ -22,10 +22,7 @@ import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageEditorUtil;
@@ -68,7 +65,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
                                    @Nullable E expr,
                                    @Nullable V localVariable,
                                    E[] occurrences,
-                                   String title,
+                                   @NlsContexts.Command String title,
                                    final FileType languageFileType) {
     super(null, editor, project, title, occurrences, expr);
     myLocalVariable = localVariable;

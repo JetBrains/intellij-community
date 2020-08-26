@@ -56,7 +56,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
   public UsageViewEx createUsageView(UsageTarget @NotNull [] targets,
                                      Usage @NotNull [] usages,
                                      @NotNull UsageViewPresentation presentation,
-                                     Factory<? extends UsageSearcher> usageSearcherFactory) {
+                                     @Nullable Factory<? extends UsageSearcher> usageSearcherFactory) {
     for (UsageViewFactory factory : UsageViewFactory.EP_NAME.getExtensionList()) {
       UsageViewEx result = factory.createUsageView(targets, usages, presentation, usageSearcherFactory);
       if (result != null) {
@@ -79,11 +79,10 @@ public class UsageViewManagerImpl extends UsageViewManager {
   }
 
   @Override
-  @NotNull
-  public UsageView showUsages(UsageTarget @NotNull [] searchedFor,
-                              Usage @NotNull [] foundUsages,
-                              @NotNull UsageViewPresentation presentation,
-                              Factory<? extends UsageSearcher> factory) {
+  public @NotNull UsageView showUsages(UsageTarget @NotNull [] searchedFor,
+                                       Usage @NotNull [] foundUsages,
+                                       @NotNull UsageViewPresentation presentation,
+                                       @Nullable Factory<? extends UsageSearcher> factory) {
     UsageViewEx usageView = createUsageView(searchedFor, foundUsages, presentation, factory);
     showUsageView(usageView, presentation);
     if (usageView instanceof UsageViewImpl) {
@@ -98,8 +97,9 @@ public class UsageViewManagerImpl extends UsageViewManager {
   }
 
   @Override
-  @NotNull
-  public UsageView showUsages(UsageTarget @NotNull [] searchedFor, Usage @NotNull [] foundUsages, @NotNull UsageViewPresentation presentation) {
+  public @NotNull UsageView showUsages(UsageTarget @NotNull [] searchedFor,
+                                       Usage @NotNull [] foundUsages,
+                                       @NotNull UsageViewPresentation presentation) {
     return showUsages(searchedFor, foundUsages, presentation, null);
   }
 

@@ -6,6 +6,7 @@ import com.intellij.credentialStore.CredentialAttributes;
 import com.intellij.credentialStore.CredentialAttributesKt;
 import com.intellij.credentialStore.Credentials;
 import com.intellij.ide.passwordSafe.PasswordSafe;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.PasswordUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.annotations.Transient;
@@ -21,7 +22,7 @@ import java.util.Objects;
  * @author michael.golubev
  */
 public class RemoteCredentialsHolder implements MutableRemoteCredentials {
-  private static final String SERVICE_NAME_PREFIX = CredentialAttributesKt.SERVICE_NAME_PREFIX + " Remote Credentials ";
+  private static final @NonNls String SERVICE_NAME_PREFIX = CredentialAttributesKt.SERVICE_NAME_PREFIX + " Remote Credentials ";
 
   @NonNls public static final String HOST = "HOST";
   @NonNls public static final String PORT = "PORT";
@@ -35,9 +36,9 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
 
   @NonNls public static final String SSH_PREFIX = "ssh://";
 
-  private static final Map<AuthType, String> CREDENTIAL_ATTRIBUTES_QUALIFIERS = ImmutableMap.of(AuthType.PASSWORD, "password",
-                                                                                                AuthType.KEY_PAIR, "passphrase",
-                                                                                                AuthType.OPEN_SSH, "empty");
+  private static final Map<AuthType, @NonNls String> CREDENTIAL_ATTRIBUTES_QUALIFIERS = ImmutableMap.of(AuthType.PASSWORD, "password",
+                                                                                                        AuthType.KEY_PAIR, "passphrase",
+                                                                                                        AuthType.OPEN_SSH, "empty");
 
   private @NotNull String myHost = "";
   private int myPort;//will always be equal to myLiteralPort, if it's valid, or equal to 0 otherwise
@@ -56,7 +57,7 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
     copyFrom(credentials);
   }
 
-  public static String getCredentialsString(@NotNull RemoteCredentials cred) {
+  public static @NlsSafe String getCredentialsString(@NotNull RemoteCredentials cred) {
     return SSH_PREFIX + cred.getUserName() + "@" + cred.getHost() + ":" + cred.getLiteralPort();
   }
 
@@ -66,7 +67,7 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
   }
 
   @Override
-  public void setHost(@Nullable String host) {
+  public void setHost(@Nullable @NlsSafe String host) {
     myHost = StringUtil.notNullize(host);
   }
 

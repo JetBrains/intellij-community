@@ -133,7 +133,7 @@ public class MavenApplicationConfigurationExecutionEnvironmentProvider implement
       return ((JavaSdkType)type).getVMExecutablePath(jdk);
     }
     catch (CantRunException e) {
-      ExecutionErrorDialog.show(e, "Cannot use specified JRE", project);
+      ExecutionErrorDialog.show(e, RunnerBundle.message("dialog.title.cannot.use.specified.jre"), project);
     }
     return null;
   }

@@ -114,7 +114,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
   }
 
   @Override
-  public void deploy(final @NotNull DeploymentTask<D> task, final @NotNull java.util.function.Consumer<String> onDeploymentStarted) {
+  public void deploy(final @NotNull DeploymentTask<D> task, final java.util.function.@NotNull Consumer<? super String> onDeploymentStarted) {
     connectIfNeeded(new ConnectionCallbackBase<D>() {
       @Override
       public void connected(@NotNull ServerRuntimeInstance<D> instance) {

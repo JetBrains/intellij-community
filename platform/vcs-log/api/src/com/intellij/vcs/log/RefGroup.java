@@ -1,5 +1,6 @@
 package com.intellij.vcs.log;
 
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -22,6 +23,7 @@ public interface RefGroup {
    * Returns the name of the reference group. This reference will be displayed on the branches panel.
    */
   @NotNull
+  @Nls
   String getName();
 
   /**

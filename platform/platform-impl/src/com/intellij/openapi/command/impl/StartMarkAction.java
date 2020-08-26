@@ -10,16 +10,17 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 public final class StartMarkAction extends BasicUndoableAction {
   public static final Key<StartMarkAction> START_MARK_ACTION_KEY = Key.create("current.inplace.refactorings.mark");
-  private String myCommandName;
+  private @NlsContexts.Command String myCommandName;
   private boolean myGlobal;
   private Document myDocument;
 
-  private StartMarkAction(Editor editor, String commandName) {
+  private StartMarkAction(Editor editor, @NlsContexts.Command String commandName) {
     super(DocumentReferenceManager.getInstance().create(editor.getDocument()));
     myCommandName = commandName;
     myDocument = editor.getDocument();
@@ -42,11 +43,11 @@ public final class StartMarkAction extends BasicUndoableAction {
     return myGlobal;
   }
 
-  public String getCommandName() {
+  public @NlsContexts.Command String getCommandName() {
     return myCommandName;
   }
 
-  public void setCommandName(String commandName) {
+  public void setCommandName(@NlsContexts.Command String commandName) {
     myCommandName = commandName;
   }
 
@@ -68,7 +69,7 @@ public final class StartMarkAction extends BasicUndoableAction {
     }
   }
 
-  public static StartMarkAction start(Editor editor, Project project, String commandName) throws AlreadyStartedException {
+  public static StartMarkAction start(Editor editor, Project project, @NlsContexts.Command String commandName) throws AlreadyStartedException {
     final StartMarkAction existingMark = project.getUserData(START_MARK_ACTION_KEY);
     if (existingMark != null) {
       throw new AlreadyStartedException(existingMark.myCommandName,

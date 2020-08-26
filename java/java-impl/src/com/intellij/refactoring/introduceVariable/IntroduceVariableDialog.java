@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiNameHelper;
@@ -82,7 +83,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
   }
 
   @Override
-  public String getEnteredName() {
+  public @NlsSafe String getEnteredName() {
     return myNameField.getEnteredName();
   }
 

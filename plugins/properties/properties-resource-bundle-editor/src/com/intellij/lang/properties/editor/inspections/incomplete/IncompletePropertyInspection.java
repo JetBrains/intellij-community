@@ -39,6 +39,7 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,10 +51,10 @@ import java.util.function.Function;
  * @author Dmitry Batkovich
  */
 public class IncompletePropertyInspection extends LocalInspectionTool implements UnfairLocalInspectionTool {
-  private static final String SUFFIXES_TAG_NAME = "suffixes";
+  private static final @NonNls String SUFFIXES_TAG_NAME = "suffixes";
   public static final String TOOL_KEY = "IncompleteProperty";
 
-  SortedSet<String> mySuffixes = new TreeSet<>();
+  private final SortedSet<String> mySuffixes = new TreeSet<>();
 
   @Nullable
   @Override

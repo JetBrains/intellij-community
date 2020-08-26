@@ -249,7 +249,12 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
         if (ex instanceof ProcessCanceledException) {
           LOG.error(message, ex);
         } else {
-          LOG.info(message, ex);
+          if (IndexDebugProperties.IS_UNIT_TEST_MODE) {
+            LOG.error(message, ex);
+          }
+          else {
+            LOG.info(message, ex);
+          }
         }
         requestRebuild(ex);
         return false;
@@ -335,8 +340,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     @Override
     public void process(Key key, Value value, int inputId) throws StorageException {
       myModificationStamp.incrementAndGet();
-      myStorage.removeAllValues(key, inputId);
-      myStorage.addValue(key, inputId, value);
+      myStorage.updateValue(key, inputId, value);
     }
   };
 
@@ -350,6 +354,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
         if (hasDifference) updateData.updateForwardIndex();
       }
       catch (ProcessCanceledException e) {
+        LOG.error("ProcessCanceledException is not expected here!", e);
         throw e;
       }
       catch (Throwable e) { // e.g. IOException, AssertionError

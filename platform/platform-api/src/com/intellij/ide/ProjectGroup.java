@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -15,24 +16,24 @@ import java.util.List;
  * @author Konstantin Bulenkov
  */
 public final class ProjectGroup {
-  private @NotNull String myName = "";
+  private @NotNull @NlsSafe String myName = "";
   private String myProjectPaths = "";
   private boolean myExpanded = false;
   //used in different places, i.e. closing tutorials group should hide all nested items too
   private boolean myTutorials = false;
 
-  public ProjectGroup(@NotNull String name) {
+  public ProjectGroup(@NotNull @NlsSafe String name) {
     myName = name;
   }
 
   public ProjectGroup() {}
 
   @NotNull
-  public String getName() {
+  public @NlsSafe String getName() {
     return myName;
   }
 
-  public void setName(@NotNull String name) {
+  public void setName(@NotNull @NlsSafe String name) {
     myName = name;
   }
 

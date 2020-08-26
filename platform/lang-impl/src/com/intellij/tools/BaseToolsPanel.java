@@ -5,6 +5,7 @@ package com.intellij.tools;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.CompoundScheme;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.util.ArrayUtilRt;
@@ -466,7 +467,7 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
     }
   }
 
-  protected ToolEditorDialog createToolEditorDialog(String title) {
+  protected ToolEditorDialog createToolEditorDialog(@NlsContexts.DialogTitle String title) {
     return new ToolEditorDialog(this, title);
   }
 

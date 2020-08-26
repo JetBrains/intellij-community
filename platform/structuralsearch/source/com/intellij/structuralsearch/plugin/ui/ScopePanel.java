@@ -21,10 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.GlobalSearchScopesCore;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.SearchScope;
+import com.intellij.psi.search.*;
 import com.intellij.structuralsearch.Scopes;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.NullableConsumer;
@@ -167,7 +164,7 @@ public class ScopePanel extends JPanel {
           if (file != null) {
             myDirectoryComboBox.setDirectory(file.getParent());
           }
-          myScopesComboBox.selectItem(IdeBundle.message("scope.current.file"));
+          myScopesComboBox.selectItem(PredefinedSearchScopeProviderImpl.getCurrentFileScopeName());
         }
         else {
           final VirtualFile[] files = CommonDataKeys.VIRTUAL_FILE_ARRAY.getData(context);

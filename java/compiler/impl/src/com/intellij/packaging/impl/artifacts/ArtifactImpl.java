@@ -16,6 +16,7 @@
 package com.intellij.packaging.impl.artifacts;
 
 import com.intellij.openapi.roots.ProjectModelExternalSource;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -24,7 +25,6 @@ import com.intellij.packaging.artifacts.*;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.impl.elements.ArchivePackagingElement;
 import com.intellij.util.EventDispatcher;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +36,7 @@ import java.util.Map;
 
 public class ArtifactImpl extends UserDataHolderBase implements ModifiableArtifact {
   private CompositePackagingElement<?> myRootElement;
-  private @Nls(capitalization = Nls.Capitalization.Title) String myName;
+  private @NlsSafe String myName;
   private boolean myBuildOnMake;
   private String myOutputPath;
   private final EventDispatcher<? extends ArtifactListener> myDispatcher;
@@ -44,14 +44,14 @@ public class ArtifactImpl extends UserDataHolderBase implements ModifiableArtifa
   private Map<ArtifactPropertiesProvider, ArtifactProperties<?>> myProperties;
   private final ProjectModelExternalSource myExternalSource;
 
-  public ArtifactImpl(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String name,
+  public ArtifactImpl(@NotNull @NlsSafe String name,
                       @NotNull ArtifactType artifactType, boolean buildOnMake,
                       @NotNull CompositePackagingElement<?> rootElement, String outputPath,
                       @Nullable ProjectModelExternalSource externalSource) {
     this(name, artifactType, buildOnMake, rootElement, outputPath, externalSource, null);
   }
 
-  public ArtifactImpl(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String name,
+  public ArtifactImpl(@NotNull @NlsSafe String name,
                       @NotNull ArtifactType artifactType, boolean buildOnMake,
                       @NotNull CompositePackagingElement<?> rootElement, String outputPath,
                       @Nullable ProjectModelExternalSource externalSource, EventDispatcher<? extends ArtifactListener> dispatcher) {

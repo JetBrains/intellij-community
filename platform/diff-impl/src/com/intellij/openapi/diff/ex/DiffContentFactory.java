@@ -5,6 +5,7 @@ import com.intellij.openapi.diff.DiffContent;
 import com.intellij.openapi.diff.SimpleDiffRequest;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -15,7 +16,7 @@ public final class DiffContentFactory {
   private DiffContentFactory() {}
 
   @Nullable
-  public static SimpleDiffRequest compareVirtualFiles(Project project, VirtualFile file1, VirtualFile file2, String title) {
+  public static SimpleDiffRequest compareVirtualFiles(Project project, VirtualFile file1, VirtualFile file2, @Nls String title) {
     DiffContent content1 = DiffContent.fromFile(project, file1);
     DiffContent content2 = DiffContent.fromFile(project, file2);
     if (content1 == null || content2 == null) return null;

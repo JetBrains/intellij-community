@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2019 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections.internal;
 
 import com.intellij.codeInspection.ProblemsHolder;
@@ -24,17 +10,13 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionBase;
 
 public class UnsafeVfsRecursionInspection extends DevKitInspectionBase {
 
   private static final String VIRTUAL_FILE_CLASS_NAME = VirtualFile.class.getName();
   private static final String GET_CHILDREN_METHOD_NAME = "getChildren";
-
-  private static final String MESSAGE =
-    "VirtualFile.getChildren() is called from a recursive method. " +
-    "This may cause an endless loop on cyclic symlinks. " +
-    "Please use VfsUtilCore.visitChildrenRecursively() instead.";
 
   @NotNull
   @Override
@@ -73,7 +55,7 @@ public class UnsafeVfsRecursionInspection extends DevKitInspectionBase {
           }
         });
         if (!result.isNull()) {
-          holder.registerProblem(expression, MESSAGE);
+          holder.registerProblem(expression, DevKitBundle.message("inspections.unsafe.vfs.recursion"));
         }
       }
     };

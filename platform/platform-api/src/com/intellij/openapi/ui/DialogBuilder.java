@@ -6,7 +6,9 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts.DialogTitle;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.openapi.util.NlsContexts;
 import org.intellij.lang.annotations.MagicConstant;
@@ -30,9 +32,9 @@ public class DialogBuilder implements Disposable {
 
   private JComponent myCenterPanel;
   private JComponent myNorthPanel;
-  private String myTitle;
+  private @DialogTitle String myTitle;
   private JComponent myPreferedFocusComponent;
-  private String myDimensionServiceKey;
+  private @NonNls String myDimensionServiceKey;
   private ArrayList<ActionDescriptor> myActions = null;
   private final MyDialogWrapper myDialogWrapper;
   private Runnable myCancelOperation = null;
@@ -113,7 +115,7 @@ public class DialogBuilder implements Disposable {
     myDimensionServiceKey = dimensionServiceKey;
   }
 
-  public DialogBuilder dimensionKey(@NotNull String dimensionServiceKey) {
+  public DialogBuilder dimensionKey(@NotNull @NlsSafe String dimensionServiceKey) {
     myDimensionServiceKey = dimensionServiceKey;
     return this;
   }
@@ -232,11 +234,11 @@ public class DialogBuilder implements Disposable {
   }
 
   public abstract static class DialogActionDescriptor implements ActionDescriptor {
-    private final String myName;
+    private final @NlsActions.ActionText String myName;
     private final Object myMnemonicChar;
     private boolean myIsDefault = false;
 
-    protected DialogActionDescriptor(String name, int mnemonicChar) {
+    protected DialogActionDescriptor(@NlsActions.ActionText String name, int mnemonicChar) {
       myName = name;
       myMnemonicChar = mnemonicChar == -1 ? null : Integer.valueOf(mnemonicChar);
     }
@@ -264,7 +266,7 @@ public class DialogBuilder implements Disposable {
       this(CommonBundle.getCloseButtonText(), -1, DialogWrapper.CLOSE_EXIT_CODE);
     }
 
-    public CloseDialogAction(String name, int mnemonicChar, int exitCode) {
+    public CloseDialogAction(@NlsActions.ActionText String name, int mnemonicChar, int exitCode) {
       super(name, mnemonicChar);
       myExitCode = exitCode;
     }
@@ -287,7 +289,7 @@ public class DialogBuilder implements Disposable {
   }
 
   public interface CustomizableAction {
-    void setText(String text);
+    void setText(@NlsActions.ActionText String text);
   }
 
   public static class CustomActionDescriptor implements ActionDescriptor {
@@ -304,7 +306,7 @@ public class DialogBuilder implements Disposable {
   }
 
   private abstract static class BuiltinAction implements ActionDescriptor, CustomizableAction {
-    protected String myText = null;
+    protected @NlsActions.ActionText String myText = null;
 
     @Override
     public void setText(String text) {
@@ -336,7 +338,7 @@ public class DialogBuilder implements Disposable {
   }
 
   private final class MyDialogWrapper extends DialogWrapper {
-    private String myHelpId = null;
+    private @NonNls String myHelpId = null;
     private MyDialogWrapper(@Nullable Project project, boolean canBeParent) {
       super(project, canBeParent);
     }
@@ -345,7 +347,7 @@ public class DialogBuilder implements Disposable {
       super(parent, canBeParent);
     }
 
-    public void setHelpId(String helpId) {
+    public void setHelpId(@NonNls String helpId) {
       myHelpId = helpId;
     }
 

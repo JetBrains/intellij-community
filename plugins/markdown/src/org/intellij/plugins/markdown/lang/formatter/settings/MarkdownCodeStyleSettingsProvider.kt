@@ -25,37 +25,37 @@ internal class MarkdownCodeStyleSettingsProvider : LanguageCodeStyleSettingsProv
         consumer.showCustomOption(
           MarkdownCustomCodeStyleSettings::class.java,
           MarkdownCustomCodeStyleSettings::MAX_LINES_AROUND_HEADER.name, "Around header",
-          CodeStyleSettingsCustomizable.BLANK_LINES
+          CodeStyleSettingsCustomizableOptions.getInstance().BLANK_LINES
         )
 
         consumer.showCustomOption(
           MarkdownCustomCodeStyleSettings::class.java,
           MarkdownCustomCodeStyleSettings::MAX_LINES_AROUND_BLOCK_ELEMENTS.name, "Around block elements",
-          CodeStyleSettingsCustomizable.BLANK_LINES
+          CodeStyleSettingsCustomizableOptions.getInstance().BLANK_LINES
         )
 
         consumer.showCustomOption(
           MarkdownCustomCodeStyleSettings::class.java,
           MarkdownCustomCodeStyleSettings::MAX_LINES_BETWEEN_PARAGRAPHS.name, "Between paragraphs",
-          CodeStyleSettingsCustomizable.BLANK_LINES
+          CodeStyleSettingsCustomizableOptions.getInstance().BLANK_LINES
         )
 
         consumer.showCustomOption(
           MarkdownCustomCodeStyleSettings::class.java,
           MarkdownCustomCodeStyleSettings::MIN_LINES_AROUND_HEADER.name, "Around header",
-          CodeStyleSettingsCustomizable.BLANK_LINES_KEEP
+          CodeStyleSettingsCustomizableOptions.getInstance().BLANK_LINES_KEEP
         )
 
         consumer.showCustomOption(
           MarkdownCustomCodeStyleSettings::class.java,
           MarkdownCustomCodeStyleSettings::MIN_LINES_AROUND_BLOCK_ELEMENTS.name, "Around block elements",
-          CodeStyleSettingsCustomizable.BLANK_LINES_KEEP
+          CodeStyleSettingsCustomizableOptions.getInstance().BLANK_LINES_KEEP
         )
 
         consumer.showCustomOption(
           MarkdownCustomCodeStyleSettings::class.java,
           MarkdownCustomCodeStyleSettings::MIN_LINES_BETWEEN_PARAGRAPHS.name, "Between paragraphs",
-          CodeStyleSettingsCustomizable.BLANK_LINES_KEEP
+          CodeStyleSettingsCustomizableOptions.getInstance().BLANK_LINES_KEEP
         )
       }
       SettingsType.SPACING_SETTINGS -> {

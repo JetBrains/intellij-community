@@ -11,10 +11,7 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.StatusBarWidgetFactory;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.zmlx.hg4idea.HgBundle;
 import org.zmlx.hg4idea.HgProjectSettings;
 import org.zmlx.hg4idea.HgVcs;
@@ -29,7 +26,7 @@ import java.util.Objects;
  * Widget to display basic hg status in the status bar.
  */
 public class HgStatusWidget extends DvcsStatusWidget<HgRepository> {
-  private static final String ID = "hg";
+  private static final @NonNls String ID = "hg";
 
   @NotNull private final HgVcs myVcs;
   @NotNull private final HgProjectSettings myProjectSettings;

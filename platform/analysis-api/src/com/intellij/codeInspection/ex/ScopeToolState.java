@@ -39,7 +39,7 @@ public final class ScopeToolState {
                         @NotNull InspectionToolWrapper<?, ?> toolWrapper,
                         boolean enabled,
                         @NotNull HighlightDisplayLevel level) {
-    this(scope.getName(), toolWrapper, enabled, level);
+    this(scope.getScopeId(), toolWrapper, enabled, level);
     myScope = scope;
   }
 

@@ -278,7 +278,7 @@ final class AccessibleGutterLine extends JPanel {
     DumbAwareAction.create(e -> action.run()).registerCustomShortcutSet(shortcut, this);
   }
 
-  private void installActionHandler(ShortcutSet shortcut, Consumer<AnActionEvent> action) {
+  private void installActionHandler(ShortcutSet shortcut, Consumer<? super AnActionEvent> action) {
     DumbAwareAction.create(e -> action.accept(e)).registerCustomShortcutSet(shortcut, this);
   }
 

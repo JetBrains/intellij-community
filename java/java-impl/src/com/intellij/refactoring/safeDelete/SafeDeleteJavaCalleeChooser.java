@@ -20,6 +20,7 @@ import com.intellij.java.JavaBundle;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -55,13 +56,13 @@ abstract class SafeDeleteJavaCalleeChooser extends CallerChooserBase<PsiElement>
   protected abstract ArrayList<SafeDeleteMemberCalleeUsageInfo> getTopLevelItems();
 
   @Override
-  protected String getEmptyCallerText() {
-    return "Caller text with highlighted callee would be shown here";
+  protected @NlsContexts.Label String getEmptyCallerText() {
+    return JavaRefactoringBundle.message("java.safe.delete.caller.text");
   }
 
   @Override
-  protected String getEmptyCalleeText() {
-    return "Callee text would be shown here";
+  protected @NlsContexts.Label String getEmptyCalleeText() {
+    return JavaRefactoringBundle.message("java.safe.delete.empty.callee.text");
   }
   
   @Override

@@ -33,10 +33,7 @@ import com.intellij.util.containers.Stack;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.indexing.impl.InvertedIndexValueIterator;
 import com.intellij.util.indexing.roots.*;
-import it.unimi.dsi.fastutil.ints.IntIterable;
-import it.unimi.dsi.fastutil.ints.IntIterator;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.ints.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -162,13 +159,16 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     if (!(virtualFile instanceof VirtualFileWithId)) return Collections.emptyMap();
     int fileId = getFileId(virtualFile);
 
-    if ((IndexDebugProperties.DEBUG && !ApplicationManager.getApplication().isUnitTestMode()) &&
-        !((FileBasedIndexExtension<K, V>)getIndex(id).getExtension()).needsForwardIndexWhenSharing()) {
-      LOG.error("Index extension " + id + " doesn't require forward index but accesses it");
-    }
-
     if (getAccessibleFileIdFilter(project).test(fileId)) {
-      Map<K, V> map = processExceptions(id, virtualFile, GlobalSearchScope.fileScope(project, virtualFile), index -> index.getIndexedFileData(fileId));
+      Map<K, V> map = processExceptions(id, virtualFile, GlobalSearchScope.fileScope(project, virtualFile), index -> {
+
+        if ((IndexDebugProperties.DEBUG && !ApplicationManager.getApplication().isUnitTestMode()) &&
+            !((FileBasedIndexExtension<K, V>)index.getExtension()).needsForwardIndexWhenSharing()) {
+          LOG.error("Index extension " + id + " doesn't require forward index but accesses it");
+        }
+
+        return index.getIndexedFileData(fileId);
+      });
       return ContainerUtil.notNullize(map);
     }
     return Collections.emptyMap();
@@ -369,7 +369,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
         set.retainAll(queryResult);
       }
     }
-    return set == null || processVirtualFiles(set, filter, processor);
+    return set != null && processVirtualFiles(set, filter, processor);
   }
 
   @Override
@@ -501,11 +501,15 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     return processExceptions(indexId, null, filter, convertor);
   }
 
-  private static boolean processVirtualFiles(@NotNull IntIterable ids,
+  private static boolean processVirtualFiles(@NotNull IntCollection ids,
                                              @NotNull VirtualFileFilter filter,
                                              @NotNull Processor<? super VirtualFile> processor) {
+    // ensure predictable order because result might be cached by consumer
+    IntArrayList sortedIds = new IntArrayList(ids);
+    sortedIds.sort(null);
+
     PersistentFS fs = PersistentFS.getInstance();
-    for (IntIterator iterator = ids.iterator(); iterator.hasNext(); ) {
+    for (IntIterator iterator = sortedIds.iterator(); iterator.hasNext(); ) {
       ProgressManager.checkCanceled();
       int id = iterator.nextInt();
       VirtualFile file = IndexInfrastructure.findFileByIdIfCached(fs, id);

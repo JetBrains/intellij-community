@@ -54,9 +54,9 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
           if (!LambdaUtil.isSafeLambdaReplacement(lambda, replacementText)) return;
           String qualifiedName = Objects.requireNonNull(StringUtil.substringBefore(replacementText, "("));
           String methodName = StringUtil.getShortName(qualifiedName);
-          holder
-            .registerProblem(lambda, InspectionGadgetsBundle.message("inspection.comparator.combinators.description2", methodName),
-                             ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithComparatorFix("Comparator." + methodName));
+          final String problemMessage = InspectionGadgetsBundle.message("inspection.comparator.combinators.description2", methodName);
+          final String fixMessage = InspectionGadgetsBundle.message("inspection.comparator.combinators.fix.normal", methodName);
+          holder.registerProblem(lambda, problemMessage, ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithComparatorFix(fixMessage));
           return;
         }
         if (lambda.getBody() instanceof PsiCodeBlock) {
@@ -66,9 +66,9 @@ public class ComparatorCombinatorsInspection extends AbstractBaseJavaLocalInspec
           String chainCombinator = generateChainCombinator(blocks, parameters[0], parameters[1]);
           if (chainCombinator == null) return;
           if (!LambdaUtil.isSafeLambdaReplacement(lambda, chainCombinator)) return;
-          holder
-            .registerProblem(lambda, InspectionGadgetsBundle.message("inspection.comparator.combinators.description"),
-                             ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithComparatorFix("Comparator chain"));
+          final String problemMessage = InspectionGadgetsBundle.message("inspection.comparator.combinators.description");
+          final String fixMessage = InspectionGadgetsBundle.message("inspection.comparator.combinators.fix.chain");
+          holder.registerProblem(lambda, problemMessage, ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithComparatorFix(fixMessage));
         }
       }
     };

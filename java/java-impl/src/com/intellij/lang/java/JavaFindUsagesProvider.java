@@ -15,10 +15,10 @@ import com.intellij.psi.impl.search.ThrowSearchUtil;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.indexing.IndexingBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ven
@@ -152,7 +152,8 @@ public class JavaFindUsagesProvider implements FindUsagesProvider {
       else {
         PsiClass aClass = (PsiClass)element;
         String qName = aClass.getQualifiedName();
-        return qName != null ? qName : ObjectUtils.notNull(aClass.getName(), "");
+        @Nullable String value = aClass.getName();
+        return qName != null ? qName : value == null ? "" : value;
       }
     }
     if (element instanceof PsiMethod) {

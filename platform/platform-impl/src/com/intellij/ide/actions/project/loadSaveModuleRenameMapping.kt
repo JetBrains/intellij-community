@@ -25,8 +25,6 @@ import com.intellij.util.xmlb.XmlSerializer
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
 
-private val LOG = Logger.getInstance(LoadModuleRenamingSchemeAction::class.java)
-
 class LoadModuleRenamingSchemeAction(private val dialog: ConvertModuleGroupsToQualifiedNamesDialog) : AbstractAction() {
   init {
     UIUtil.setActionNameAndMnemonic(ProjectBundle.message("module.renaming.scheme.load.button.text"), this)
@@ -62,6 +60,9 @@ class LoadModuleRenamingSchemeAction(private val dialog: ConvertModuleGroupsToQu
       IdeFocusManager.getGlobalInstance().requestFocus(dialog.preferredFocusedComponent, true)
     }
   }
+  companion object {
+    val LOG = Logger.getInstance(LoadModuleRenamingSchemeAction::class.java)
+  }
 }
 
 class SaveModuleRenamingSchemeAction(private val dialog: ConvertModuleGroupsToQualifiedNamesDialog, private val onSaved: () -> Unit) : AbstractAction() {
@@ -93,7 +94,7 @@ internal fun saveModuleRenamingScheme(dialog: ConvertModuleGroupsToQualifiedName
       return true
     }
     catch (e: Exception) {
-      LOG.info(e)
+      LoadModuleRenamingSchemeAction.LOG.info(e)
       Messages.showErrorDialog(project, CommonBundle.getErrorTitle(),
                                ProjectBundle.message("module.renaming.scheme.cannot.save.error", e.message ?: ""))
     }

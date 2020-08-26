@@ -52,7 +52,7 @@ public class JavaSettingsStep extends SdkSettingsStep {
   private       TextFieldWithBrowseButton mySourcePath;
   private       JPanel                    myPanel;
 
-  public JavaSettingsStep(@NotNull SettingsStep settingsStep, @NotNull ModuleBuilder moduleBuilder, @NotNull Condition<SdkTypeId> sdkFilter) {
+  public JavaSettingsStep(@NotNull SettingsStep settingsStep, @NotNull ModuleBuilder moduleBuilder, @NotNull Condition<? super SdkTypeId> sdkFilter) {
     super(settingsStep, moduleBuilder, sdkFilter);
     mySourcePath.setText(PropertiesComponent.getInstance().getValue(MODULE_SOURCE_ROOT_KEY, DEFAULT_MODULE_SOURCE_ROOT_PATH));
     myModuleBuilder = moduleBuilder;

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.formConversion
 
 import com.intellij.codeInsight.hint.HintManager
@@ -22,6 +22,7 @@ import com.intellij.uiDesigner.binding.FormClassIndex
 import com.intellij.uiDesigner.compiler.Utils.getRootContainer
 import com.intellij.uiDesigner.core.GridLayoutManager
 import com.intellij.uiDesigner.lw.*
+import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.uast.UClass
 import org.jetbrains.uast.UastVisibility
 import org.jetbrains.uast.toUElement
@@ -38,12 +39,12 @@ class ConvertFormToDslAction : AnAction() {
     val project = psiFile.project
     val element = psiFile.findElementAt(editor.caretModel.offset)
     val psiClass = PsiTreeUtil.getParentOfType(element, PsiClass::class.java) ?: run {
-      HintManager.getInstance().showErrorHint(editor, "Please put a caret inside a Java class bound to a form")
+      HintManager.getInstance().showErrorHint(editor, DevKitBundle.message("convert.form.hint.caret.not.in.form.bound.class"))
       return
     }
     val qName = psiClass.qualifiedName ?: return
     val formFile = FormClassIndex.findFormsBoundToClass(project, qName).singleOrNull() ?: run {
-      HintManager.getInstance().showErrorHint(editor, "Can't find a form bound to ${qName}")
+      HintManager.getInstance().showErrorHint(editor, DevKitBundle.message("convert.form.hint.class.not.bound.to.form", qName))
       return
     }
 

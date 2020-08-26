@@ -16,6 +16,7 @@
 package com.intellij.openapi.options;
 
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts.TabTitle;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,9 +25,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SettingsEditorGroup<T> extends SettingsEditor<T> {
-  private final List<Pair<String, SettingsEditor<T>>> myEditors = new ArrayList<>();
+  private final List<Pair<@TabTitle String, SettingsEditor<T>>> myEditors = new ArrayList<>();
 
-  public void addEditor(String name, SettingsEditor<T> editor) {
+  public void addEditor(@TabTitle String name, SettingsEditor<T> editor) {
     Disposer.register(this, editor);
     myEditors.add(Pair.create(name, editor));
   }
@@ -38,7 +39,7 @@ public class SettingsEditorGroup<T> extends SettingsEditor<T> {
     myEditors.addAll(group.myEditors);
   }
 
-  public List<Pair<String, SettingsEditor<T>>> getEditors() {
+  public List<Pair<@TabTitle String, SettingsEditor<T>>> getEditors() {
     return myEditors;
   }
 

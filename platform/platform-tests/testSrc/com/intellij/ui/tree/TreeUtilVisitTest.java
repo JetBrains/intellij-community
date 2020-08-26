@@ -630,7 +630,7 @@ public final class TreeUtilVisitTest {
       -> test.assertTree(expected, true, test::done)));
   }
 
-  private static void select(@NotNull TreeTest test, @NotNull TreeVisitor visitor, @NotNull Consumer<TreePath> consumer) {
+  private static void select(@NotNull TreeTest test, @NotNull TreeVisitor visitor, @NotNull Consumer<? super TreePath> consumer) {
     TreeUtil.promiseSelect(test.getTree(), visitor).onSuccess(consumer);
   }
 
@@ -711,7 +711,7 @@ public final class TreeUtilVisitTest {
     testMultiSelect(array, count, expected, TreeTest::done);
   }
 
-  private static void testMultiSelect(TreeVisitor @NotNull [] array, int count, @NotNull String expected, @NotNull Consumer<TreeTest> then) {
+  private static void testMultiSelect(TreeVisitor @NotNull [] array, int count, @NotNull String expected, @NotNull Consumer<? super TreeTest> then) {
     TreeTest.test(TreeUtilVisitTest::rootDeep, test -> TreeUtil.promiseSelect(test.getTree(), Stream.of(array)).onProcessed(paths -> {
       test.invokeSafely(() -> {
         if (count == 0) {
@@ -891,7 +891,7 @@ public final class TreeUtilVisitTest {
     });
   }
 
-  private static void testCollectSelection(@NotNull Consumer<TreeTest> consumer) {
+  private static void testCollectSelection(@NotNull Consumer<? super TreeTest> consumer) {
     TreeVisitor[] array = {
       convertArrayToVisitor("1", "11"),
       convertArrayToVisitor("2", "22", "222"),

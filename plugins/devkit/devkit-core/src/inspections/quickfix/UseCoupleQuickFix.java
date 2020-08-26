@@ -9,15 +9,18 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.DevKitBundle;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class UseCoupleQuickFix implements LocalQuickFix {
   private static final String COUPLE_FQN = "com.intellij.openapi.util.Couple";
+
+  @IntentionName
   private final String myText;
 
-  public UseCoupleQuickFix(String text) {
+  public UseCoupleQuickFix(@IntentionName String text) {
     myText = text;
   }
 
@@ -28,7 +31,7 @@ public class UseCoupleQuickFix implements LocalQuickFix {
 
   @Override
   public @IntentionFamilyName @NotNull String getFamilyName() {
-    return "Replace 'Pair' with 'Couple'";
+    return DevKitBundle.message("inspections.use.couple.family.name");
   }
 
   @Override

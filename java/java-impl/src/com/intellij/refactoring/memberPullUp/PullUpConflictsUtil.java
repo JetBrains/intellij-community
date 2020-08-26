@@ -167,10 +167,9 @@ public final class PullUpConflictsUtil {
               isAccessible = true;
             }
             if (isAccessible) {
-              String message = RefactoringUIUtil.getDescription(abstractMethod, false) +
-                               " uses " +
-                               RefactoringUIUtil.getDescription(classMember, true) +
-                               " which won't be accessible from the subclass.";
+              String message = JavaRefactoringBundle
+                .message("push.up.abstract.accessibility.in.subclass.conflict", RefactoringUIUtil.getDescription(abstractMethod, false),
+                         RefactoringUIUtil.getDescription(classMember, true));
               message = StringUtil.capitalize(message);
               conflicts.putValue(classMember, message);
             }
@@ -179,8 +178,8 @@ public final class PullUpConflictsUtil {
       });
       if (abstractMethod.hasModifierProperty(PsiModifier.PACKAGE_LOCAL) && toDifferentPackage) {
         if (!isInterfaceTarget) {
-          String message = "Can't make " + RefactoringUIUtil.getDescription(abstractMethod, false) +
-                           " abstract as it won't be accessible from the subclass.";
+          String message = JavaRefactoringBundle
+            .message("push.up.abstract.accessible.from.the.subclass.conflict", RefactoringUIUtil.getDescription(abstractMethod, false));
           message = StringUtil.capitalize(message);
           conflicts.putValue(abstractMethod, message);
         }
@@ -261,9 +260,10 @@ public final class PullUpConflictsUtil {
               final PsiMethod wouldBeOverriden = MethodSignatureUtil.findMethodBySignature(subClass, signature, false);
               if (wouldBeOverriden != null && VisibilityUtil.compare(VisibilityUtil.getVisibilityModifier(wouldBeOverriden.getModifierList()),
                                                                      VisibilityUtil.getVisibilityModifier(modifierList)) > 0) {
-                conflictsList.putValue(wouldBeOverriden, StringUtil.capitalize(RefactoringUIUtil.getDescription(method, true) +
-                                                                               " in super class would clash with local method from " +
-                                                                               RefactoringUIUtil.getDescription(subClass, true)));
+                conflictsList.putValue(wouldBeOverriden, StringUtil.capitalize(JavaRefactoringBundle
+                                                                                 .message("push.up.super.class.signature.conflict",
+                                                                                          RefactoringUIUtil.getDescription(method, true),
+                                                                                          RefactoringUIUtil.getDescription(subClass, true))));
               }
             }
           }

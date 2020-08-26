@@ -8,9 +8,11 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.completion.sorting.RankingSupport
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.mocks.TestExperimentStatus
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.stats.CompletionStatsPolicy
 import com.intellij.stats.experiment.ExperimentStatus
 import com.intellij.stats.storage.factors.MutableLookupStorage
+import com.intellij.testFramework.replaceService
 import junit.framework.TestCase
 
 class MLFeaturesComputingTest : CompletionLoggingTestBase() {
@@ -25,6 +27,7 @@ class MLFeaturesComputingTest : CompletionLoggingTestBase() {
   fun `test features should not be calculated if in such experiment group`() = doTest(true, false, true, false)
 
   private fun doTest(enableLogging: Boolean, enableRanking: Boolean, experimentWithoutComputing: Boolean, shouldCompute: Boolean) {
+    ApplicationManager.getApplication().replaceService(ExperimentStatus::class.java, TestExperimentStatus(), testRootDisposable)
     val contextFeatureProvider = TestContextFeatureProvider()
     ContextFeatureProvider.EP_NAME.addExplicitExtension(JavaLanguage.INSTANCE, contextFeatureProvider, testRootDisposable)
     val elementFeatureProvider = TestElementFeatureProvider()

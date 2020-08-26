@@ -8,11 +8,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.ThrowableComputable
+import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier
 import com.intellij.vcsUtil.VcsFileUtil
 import com.intellij.vcsUtil.VcsUtil
-import com.intellij.xml.util.XmlStringUtil
 import git4idea.index.ui.GitFileStatusNode
 import git4idea.index.vfs.GitIndexFileSystemRefresher
 
@@ -54,7 +55,9 @@ fun <T> runProcess(project: Project, @NlsContexts.ProgressTitle title: String, c
 }
 
 private fun showErrorMessage(project: Project, messageTitle: String, exceptions: Collection<Exception>) {
-  VcsBalloonProblemNotifier.showOverVersionControlView(project, XmlStringUtil.wrapInHtmlTag("$messageTitle:", "b")
-                                                                + "\n" + exceptions.joinToString("\n") { it.localizedMessage },
-                                                       MessageType.ERROR)
+  val message = HtmlBuilder().append(HtmlChunk.text("$messageTitle:").bold())
+    .br()
+    .appendWithSeparators(HtmlChunk.br(), exceptions.map { HtmlChunk.text(it.localizedMessage) })
+
+  VcsBalloonProblemNotifier.showOverVersionControlView(project, message.toString(), MessageType.ERROR)
 }

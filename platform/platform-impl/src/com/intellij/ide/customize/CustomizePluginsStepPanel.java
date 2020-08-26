@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBCardLayout;
 import com.intellij.ui.JBColor;
@@ -288,6 +289,6 @@ public final class CustomizePluginsStepPanel extends AbstractCustomizeWizardStep
   }
 
   private interface TextProvider {
-    String getText();
+    @NlsContexts.LinkLabel String getText();
   }
 }

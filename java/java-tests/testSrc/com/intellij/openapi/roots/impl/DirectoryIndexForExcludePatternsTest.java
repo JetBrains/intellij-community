@@ -255,7 +255,7 @@ public class DirectoryIndexForExcludePatternsTest extends DirectoryIndexTestCase
                                            model -> MarkRootActionBase.findContentEntry(model, myContentRoot).addExcludePattern(pattern));
   }
 
-  private void registerLibrary(@NotNull VirtualFile root, @Nullable Condition<VirtualFile> excludePattern) {
+  private void registerLibrary(@NotNull VirtualFile root, @Nullable Condition<? super VirtualFile> excludePattern) {
     WriteAction.run(() -> ProjectRootManagerEx.getInstanceEx(myProject).makeRootsChange(
       () -> AdditionalLibraryRootsProvider.EP_NAME.getPoint().registerExtension(new AdditionalLibraryRootsProvider() {
               @NotNull

@@ -82,7 +82,6 @@ open class ShowTypeDefinitionAction : ShowRelatedElementsActionBase() {
       : List<ImplementationViewElement> = emptyList()
 
     companion object {
-      private val PROGRESS_MESSAGE = CodeInsightBundle.message("searching.for.definitions")
 
       private fun searchTypeDefinitions(element: PsiElement): List<PsiImplementationViewElement> {
         val search = ThrowableComputable<List<PsiElement>, Exception> {
@@ -95,7 +94,8 @@ open class ShowTypeDefinitionAction : ShowRelatedElementsActionBase() {
             .firstOrNull()
           ?: emptyList()
         }
-        val definitions = ProgressManager.getInstance().runProcessWithProgressSynchronously(search, PROGRESS_MESSAGE, true, element.project)
+        val message = CodeInsightBundle.message("searching.for.definitions")
+        val definitions = ProgressManager.getInstance().runProcessWithProgressSynchronously(search, message, true, element.project)
         return definitions.map { PsiImplementationViewElement(it) }
       }
     }

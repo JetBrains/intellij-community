@@ -24,10 +24,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.util.ActionCallback
-import com.intellij.openapi.util.BuildNumber
-import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.*
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
@@ -446,13 +443,19 @@ object UpdateChecker {
   @JvmStatic
   fun mergePluginsFromRepositories(
     marketplaceUpdates: List<IdeaPluginDescriptor>,
-    customPlugins: List<IdeaPluginDescriptor>
+    customPlugins: List<IdeaPluginDescriptor>,
+    addNotExist: Boolean
   ): List<IdeaPluginDescriptor> {
     val compatiblePluginMap = marketplaceUpdates.associateBy { it.pluginId }.toMutableMap()
     for (customPlugin in customPlugins) {
       val pluginId = customPlugin.pluginId
       val plugin = compatiblePluginMap[pluginId]
-      if (plugin == null || PluginDownloader.compareVersionsSkipBrokenAndIncompatible(customPlugin.version, plugin) > 0) {
+      if (plugin == null) {
+        if (addNotExist) {
+          compatiblePluginMap[pluginId] = customPlugin
+        }
+      }
+      else if (PluginDownloader.compareVersionsSkipBrokenAndIncompatible(customPlugin.version, plugin) > 0) {
         compatiblePluginMap[pluginId] = customPlugin
       }
     }
@@ -502,7 +505,7 @@ object UpdateChecker {
     }
   }
 
-  private fun showErrorMessage(showDialog: Boolean, message: String) {
+  private fun showErrorMessage(showDialog: Boolean, @NlsContexts.DialogMessage message: String) {
     LOG.info(message)
     if (showDialog) {
       UIUtil.invokeLaterIfNeeded { Messages.showErrorDialog(message, IdeBundle.message("updates.error.connection.title")) }
@@ -587,8 +590,9 @@ object UpdateChecker {
                 PluginUpdateDialog.runUpdateAll(updatedPlugins, e.getData(PlatformDataKeys.CONTEXT_COMPONENT) as JComponent?)
               }
             })
-            notification.addAction(object : NotificationAction(
-              IdeBundle.message(if (updatedPlugins.size == 1) "updates.ignore.update.link" else "updates.ignore.updates.link")) {
+            val linkMessage = if (updatedPlugins.size == 1) IdeBundle.message("updates.ignore.update.link")
+            else IdeBundle.message("updates.ignore.updates.link")
+            notification.addAction(object : NotificationAction(linkMessage) {
               override fun actionPerformed(e: AnActionEvent, notification: Notification) {
                 notification.expire()
                 PluginUpdateDialog.ignorePlugins(updatedPlugins.map { downloader -> downloader.descriptor })
@@ -641,8 +645,8 @@ object UpdateChecker {
   }
 
   private fun showNotification(project: Project?,
-                               title: String,
-                               message: String,
+                               @NlsContexts.NotificationTitle title: String,
+                               @NlsContexts.NotificationContent message: String,
                                action: () -> Unit,
                                extraBuilder: ((Notification) -> Unit)?,
                                notificationType: NotificationUniqueType,

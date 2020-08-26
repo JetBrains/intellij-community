@@ -5,6 +5,7 @@ import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.util.HgUtil;
@@ -18,12 +19,13 @@ import java.util.List;
 
 public class HgMqAdditionalPatchReader {
 
-  private static final String NODE_ID = "# Node ID ";
-  private static final String PARENT_ID = "# Parent ";
-  private static final String DATE = "# Date ";
-  private static final String BRANCH = "# Branch ";
-  private static final String USER = "# User ";
-  private static final String DIFF_INFO = "diff -";
+  private static final @NonNls String HG_PATCH_PREFIX = "# HG changeset patch";
+  private static final @NonNls String NODE_ID = "# Node ID ";
+  private static final @NonNls String PARENT_ID = "# Parent ";
+  private static final @NonNls String DATE = "# Date ";
+  private static final @NonNls String BRANCH = "# Branch ";
+  private static final @NonNls String USER = "# User ";
+  private static final @NonNls String DIFF_INFO = "diff -";
 
   @NotNull
   public static MqPatchDetails readMqPatchInfo(@Nullable VirtualFile root, @Nullable File patchFile) {
@@ -86,6 +88,6 @@ public class HgMqAdditionalPatchReader {
   @SuppressWarnings("unused")
   // for future custom additional patch reader implementation
   public boolean isMqPatch(@NotNull File file) {
-    return DvcsUtil.tryLoadFileOrReturn(file, "").startsWith("# HG changeset patch");
+    return DvcsUtil.tryLoadFileOrReturn(file, "").startsWith(HG_PATCH_PREFIX);
   }
 }

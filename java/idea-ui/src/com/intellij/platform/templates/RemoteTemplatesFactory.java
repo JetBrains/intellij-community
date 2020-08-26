@@ -118,7 +118,7 @@ public final class RemoteTemplatesFactory extends ProjectTemplatesFactory {
     private final String myPath;
     private final @NlsContexts.DetailedDescription String myDescription;
 
-    RemoteProjectTemplate(String name,
+    RemoteProjectTemplate(@NlsContexts.Label String name,
                           Element element,
                           ModuleType moduleType,
                           String path, @NlsContexts.DetailedDescription String description) {

@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.fileChooser.FileChooser
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.components.JBRadioButton
 import org.jetbrains.annotations.Nls
@@ -41,7 +42,7 @@ open class LayoutBuilder @PublishedApi internal constructor(@PublishedApi intern
 class CellBuilderWithButtonGroupProperty<T : Any>
 @PublishedApi internal constructor(private val prop: PropertyBinding<T>)  {
 
-  fun Cell.radioButton(@Nls text: String, value: T, @Nls comment: String? = null): CellBuilder<JBRadioButton> {
+  fun Cell.radioButton(@NlsContexts.RadioButton text: String, value: T, @Nls comment: String? = null): CellBuilder<JBRadioButton> {
     val component = JBRadioButton(text, prop.get() == value)
     return component(comment = comment).bindValue(value)
   }
@@ -53,7 +54,7 @@ class CellBuilderWithButtonGroupProperty<T : Any>
 class RowBuilderWithButtonGroupProperty<T : Any>
     @PublishedApi internal constructor(private val builder: RowBuilder, private val prop: PropertyBinding<T>) : RowBuilder by builder {
 
-  fun Row.radioButton(@Nls text: String, value: T, @Nls comment: String? = null): CellBuilder<JBRadioButton> {
+  fun Row.radioButton(@NlsContexts.RadioButton text: String, value: T, @Nls comment: String? = null): CellBuilder<JBRadioButton> {
     val component = JBRadioButton(text, prop.get() == value)
     attachSubRowsEnabled(component)
     return component(comment = comment).bindValue(value)

@@ -110,7 +110,7 @@ Includes the following features:</p>
       <className>org.intellij.plugins.markdown.injection.MarkdownCodeFenceErrorHighlightingIntention</className>
       <category>Markdown</category>
     </intentionAction>
-    <notificationAllowlist groupIds="Markdown headers group;Markdown"/>
+    <notificationGroup id="Markdown" displayType="BALLOON"/>
 
     <registryKey key="markdown.clear.cache.interval"
                  defaultValue="600000"

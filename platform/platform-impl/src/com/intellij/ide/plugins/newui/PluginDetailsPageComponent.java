@@ -353,7 +353,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
   }
 
   @NotNull
-  public static JEditorPane createDescriptionComponent(@Nullable Consumer<View> imageViewHandler) {
+  public static JEditorPane createDescriptionComponent(@Nullable Consumer<? super View> imageViewHandler) {
     JEditorPane editorPane = new JEditorPane();
 
     HTMLEditorKit kit;

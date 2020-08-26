@@ -52,8 +52,7 @@
                         testServiceImplementation="com.intellij.mocks.TestStatisticSender"/>
 
     <applicationService serviceInterface="com.intellij.stats.experiment.ExperimentStatus"
-                        serviceImplementation="com.intellij.stats.experiment.ClientExperimentStatus"
-                        testServiceImplementation="com.intellij.mocks.TestExperimentStatus"/>
+                        serviceImplementation="com.intellij.stats.experiment.ClientExperimentStatus"/>
 
     <applicationService serviceInterface="com.intellij.stats.network.service.RequestService"
                         serviceImplementation="com.intellij.stats.network.service.SimpleRequestService"
@@ -76,9 +75,6 @@
 
     <projectService serviceImplementation="com.intellij.completion.ngram.NGramModelRunnerManager"/>
 
-    <completion.ml.model implementation="com.jetbrains.completion.ranker.FallbackKotlinMLRankingProvider"/>
-    <completion.ml.model implementation="com.jetbrains.completion.ranker.FallbackScalaMLRankingProvider"/>
-<!--    <completion.ml.model implementation="com.jetbrains.completion.ranker.PythonMLRankingProvider"/>-->
     <weigher key="completion" id="ml_weigh" implementationClass="com.intellij.completion.ml.MLCompletionWeigher" order="last"/>
     <completion.contributor language="any" order="first" id="ml_context"
                             implementationClass="com.intellij.stats.completion.ContextFeaturesContributor"/>

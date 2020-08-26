@@ -60,7 +60,7 @@ public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHa
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
 
-    Ref<String> errorMessage = Ref.create();
+    Ref<@NlsContexts.DialogMessage String> errorMessage = Ref.create();
     List<PsiElement> elements = getElements(editor, file, errorMessage, false);
     if (elements.isEmpty()) {
       String message =
@@ -73,7 +73,7 @@ public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHa
   }
 
   @NotNull
-  private static List<PsiElement> getElements(Editor editor, PsiFile file, Ref<? super String> errorMessage, boolean stopAtCodeBlock) {
+  private static List<PsiElement> getElements(Editor editor, PsiFile file, Ref<@NlsContexts.DialogMessage String> errorMessage, boolean stopAtCodeBlock) {
     List<PsiElement> elements = new ArrayList<>();
     for (Caret caret : editor.getCaretModel().getAllCarets()) {
       int offset = caret.getOffset();
@@ -86,7 +86,7 @@ public class JavaPushDownHandler implements RefactoringActionHandler, ElementsHa
     return elements;
   }
 
-  private static String collectElementsUnderCaret(PsiElement element, List<? super PsiElement> elements, boolean stopAtCodeBlock) {
+  private static @NlsContexts.DialogMessage String collectElementsUnderCaret(PsiElement element, List<? super PsiElement> elements, boolean stopAtCodeBlock) {
     while (true) {
       if (element == null || element instanceof PsiFile) {
         return RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("the.caret.should.be.positioned.inside.a.class.to.push.members.from"));

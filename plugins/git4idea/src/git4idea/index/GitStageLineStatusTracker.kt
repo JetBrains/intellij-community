@@ -44,10 +44,8 @@ import git4idea.GitUtil
 import git4idea.i18n.GitBundle
 import git4idea.index.actions.GitAddOperation
 import git4idea.index.actions.GitResetOperation
-import net.miginfocom.layout.CC
-import net.miginfocom.layout.LC
-import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.CalledInAwt
+import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.util.*
 import javax.swing.BorderFactory
@@ -456,7 +454,7 @@ class GitStageLineStatusTracker(
       return editorsPanel
     }
 
-    private fun createEditorPane(editor: Editor, text: String, textField: EditorTextField, topBorder: Boolean): JComponent {
+    private fun createEditorPane(editor: Editor, @Nls text: String, textField: EditorTextField, topBorder: Boolean): JComponent {
       val label = JBLabel(text)
       label.border = JBUI.Borders.emptyBottom(2);
       label.font = UIUtil.getLabelFont(UIUtil.FontSize.SMALL)

@@ -13,6 +13,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil.inferClosureAttribute
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
+import org.jetbrains.plugins.groovy.lang.resolve.ast.TupleConstructorAttributes.Companion.CALL_SUPER
+import org.jetbrains.plugins.groovy.lang.resolve.ast.TupleConstructorAttributes.Companion.EXCLUDES
+import org.jetbrains.plugins.groovy.lang.resolve.ast.TupleConstructorAttributes.Companion.INCLUDES
+import org.jetbrains.plugins.groovy.lang.resolve.ast.TupleConstructorAttributes.Companion.POST
+import org.jetbrains.plugins.groovy.lang.resolve.ast.TupleConstructorAttributes.Companion.PRE
 import org.jetbrains.plugins.groovy.lang.resolve.ast.contributor.SyntheticKeywordConstructorContributor.Companion.isSyntheticConstructorCall
 import org.jetbrains.plugins.groovy.lang.resolve.ast.getIdentifierList
 
@@ -44,23 +49,23 @@ class TupleConstructorAnnotationChecker : CustomAnnotationChecker() {
     if (annotation.qualifiedName != GroovyCommonClassNames.GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR) {
       return false
     }
-    val excludes = getIdentifierList(annotation, "excludes")
-    val includes = AnnotationUtil.findDeclaredAttribute(annotation, "includes")
+    val excludes = getIdentifierList(annotation, EXCLUDES)
+    val includes = AnnotationUtil.findDeclaredAttribute(annotation, INCLUDES)
     if (includes != null && excludes != null && excludes.isNotEmpty()) {
-      registerIdentifierListError(holder, AnnotationUtil.findDeclaredAttribute(annotation, "excludes")!!)
+      registerIdentifierListError(holder, AnnotationUtil.findDeclaredAttribute(annotation, EXCLUDES)!!)
       registerIdentifierListError(holder, includes)
     }
-    val pre = AnnotationUtil.findDeclaredAttribute(annotation, "pre")?.value
+    val pre = AnnotationUtil.findDeclaredAttribute(annotation, PRE)?.value
     if (pre != null && pre !is GrFunctionalExpression) {
       registerClosureError(holder, pre)
     }
-    val post = AnnotationUtil.findDeclaredAttribute(annotation, "post")?.value
+    val post = AnnotationUtil.findDeclaredAttribute(annotation, POST)?.value
     if (post != null && post !is GrFunctionalExpression) {
       registerClosureError(holder, post)
     }
-    val callSuper = AnnotationUtil.findDeclaredAttribute(annotation, "callSuper")
+    val callSuper = AnnotationUtil.findDeclaredAttribute(annotation, CALL_SUPER)
     if (callSuper != null && pre != null &&
-        GrAnnotationUtil.inferBooleanAttribute(annotation, "callSuper") == true &&
+        GrAnnotationUtil.inferBooleanAttribute(annotation, CALL_SUPER) == true &&
         isSuperCalledInPre(annotation)) {
       registerDuplicateSuperError(holder, callSuper)
     }

@@ -40,14 +40,14 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
 
     if (tupleConstructor != null &&
         typeDefinition.getCodeConstructors().length > 0 &&
-        !PsiUtil.getAnnoAttributeValue(tupleConstructor, "force", false)) {
+        !PsiUtil.getAnnoAttributeValue(tupleConstructor, TupleConstructorAttributes.FORCE, false)) {
       return;
     }
 
     final GrLightMethodBuilder fieldsConstructor = generateFieldConstructor(context, tupleConstructor, immutable, canonical);
     context.addMethod(fieldsConstructor);
 
-    if (tupleConstructor == null || PsiUtil.getAnnoAttributeValue(tupleConstructor, "defaults", true)) {
+    if (tupleConstructor == null || PsiUtil.getAnnoAttributeValue(tupleConstructor, TupleConstructorAttributes.DEFAULTS, true)) {
       GrLightMethodBuilder mapConstructor = generateMapConstructor(typeDefinition);
       context.addMethod(mapConstructor);
     }

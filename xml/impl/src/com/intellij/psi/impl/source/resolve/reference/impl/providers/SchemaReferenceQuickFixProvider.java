@@ -30,10 +30,10 @@ public class SchemaReferenceQuickFixProvider extends UnresolvedReferenceQuickFix
   public void registerFixes(@NotNull TypeOrElementOrAttributeReference ref, @NotNull QuickFixActionRegistrar registrar) {
     if (ref.getType() == TypeOrElementOrAttributeReference.ReferenceType.TypeReference) {
       registrar.register(
-        new CreateXmlElementIntentionAction("xml.schema.create.complex.type.intention.name", SchemaReferencesProvider.COMPLEX_TYPE_TAG_NAME, ref)
+        new CreateXmlElementIntentionAction("xml.quickfix.schema.create.complex.type", SchemaReferencesProvider.COMPLEX_TYPE_TAG_NAME, ref)
       );
       registrar.register(
-        new CreateXmlElementIntentionAction("xml.schema.create.simple.type.intention.name", SchemaReferencesProvider.SIMPLE_TYPE_TAG_NAME, ref)
+        new CreateXmlElementIntentionAction("xml.quickfix.schema.create.simple.type", SchemaReferencesProvider.SIMPLE_TYPE_TAG_NAME, ref)
       );
     }
     else if (ref.getType() != null) {
@@ -42,16 +42,16 @@ public class SchemaReferenceQuickFixProvider extends UnresolvedReferenceQuickFix
 
       if (ref.getType() == TypeOrElementOrAttributeReference.ReferenceType.ElementReference) {
         declarationTagName = SchemaReferencesProvider.ELEMENT_TAG_NAME;
-        key = "xml.schema.create.element.intention.name";
+        key = "xml.quickfix.schema.create.element";
       } else if (ref.getType() == TypeOrElementOrAttributeReference.ReferenceType.AttributeReference) {
         declarationTagName = SchemaReferencesProvider.ATTRIBUTE_TAG_NAME;
-        key = "xml.schema.create.attribute.intention.name";
+        key = "xml.quickfix.schema.create.attribute";
       } else if (ref.getType() == TypeOrElementOrAttributeReference.ReferenceType.AttributeGroupReference) {
         declarationTagName = SchemaReferencesProvider.ATTRIBUTE_GROUP_TAG_NAME;
-        key = "xml.schema.create.attribute.group.intention.name";
+        key = "xml.quickfix.schema.create.attribute.group";
       } else if (ref.getType() == TypeOrElementOrAttributeReference.ReferenceType.GroupReference) {
         declarationTagName = SchemaReferencesProvider.GROUP_TAG_NAME;
-        key = "xml.schema.create.group.intention.name";
+        key = "xml.quickfix.schema.create.group";
       }
 
       assert key != null;

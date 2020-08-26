@@ -12,7 +12,9 @@ data class JsonFileProviderIndexStatistics(
   val tooLargeForIndexingFiles: List<JsonTooLargeForIndexingFile>?,
   val statsPerFileType: List<JsonStatsPerFileType>,
   val statsPerIndexer: List<JsonStatsPerIndexer>,
-  val fastIndexers: List<String /* Index ID */>
+  val fastIndexers: List<String /* Index ID */>,
+  // Available only if [com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles] is enabled.
+  val indexedFiles: List<String>?
 ) {
 
   data class JsonStatsPerFileType(

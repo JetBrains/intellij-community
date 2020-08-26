@@ -24,6 +24,7 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -122,7 +123,7 @@ public class PyStringLiteralTest extends PyTestCase {
     assertEquals(6, escaper.getOffsetInHost(0, range));
     assertEquals(7, escaper.getOffsetInHost(1, range));
     // Each \\U0001F600 is represented as a surrogate pair, hence 2 characters-wide step in decoded text
-    assertEquals(17, escaper.getOffsetInHost(3, range)); 
+    assertEquals(17, escaper.getOffsetInHost(3, range));
     assertEquals(27, escaper.getOffsetInHost(5, range));
     assertEquals(28, escaper.getOffsetInHost(6, range));
     assertEquals(-1, escaper.getOffsetInHost(7, range));
@@ -154,20 +155,30 @@ public class PyStringLiteralTest extends PyTestCase {
     assertEquals("\n{foo}\r\"", createLiteralFromText("f'\\n{foo}\\r\"'").getStringValue());
   }
 
-  private static String decodeRange(PyStringLiteralExpression expr, TextRange range) {
+  public void testFStringDecodedRanges() {
+    assertContainsOrdered(getCharacterRanges("f'foo\"bar'"), "foo\"bar");
+    assertContainsOrdered(getCharacterRanges("f'foo\\'bar'"), "foo", "'", "bar");
+    assertContainsOrdered(getCharacterRanges("f'foo\\{bar}'"), "foo\\", "{bar}");
+    assertContainsOrdered(getCharacterRanges("f'''foo\nbar'''"), "foo\nbar");
+  }
+
+  @NotNull
+  private static String decodeRange(@NotNull PyStringLiteralExpression expr, @NotNull TextRange range) {
     final StringBuilder builder = new StringBuilder();
     expr.createLiteralTextEscaper().decode(range, builder);
     return builder.toString();
   }
 
-  private PyStringLiteralExpression createLiteralFromText(final String text) {
+  @NotNull
+  private PyStringLiteralExpression createLiteralFromText(@NotNull String text) {
     final PsiFile file = PsiFileFactory.getInstance(myFixture.getProject()).createFileFromText("test.py", PythonFileType.INSTANCE, "a = (" + text + ")");
     final PyStringLiteralExpression expr = PsiTreeUtil.getParentOfType(file.findElementAt(6), PyStringLiteralExpression.class);
     assert expr != null;
     return expr;
   }
 
-  private List<String> getCharacterRanges(String text) {
+  @NotNull
+  private List<String> getCharacterRanges(@NotNull String text) {
     final PyStringLiteralExpression expr = createLiteralFromText(text);
     assertNotNull(expr);
     final List<String> characters = new ArrayList<>();

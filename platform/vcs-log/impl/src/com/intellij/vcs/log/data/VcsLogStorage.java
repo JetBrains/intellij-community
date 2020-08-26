@@ -40,7 +40,7 @@ public interface VcsLogStorage {
   /**
    * Iterates over known commit ids. Stops when processor returns false.
    */
-  void iterateCommits(@NotNull Predicate<CommitId> consumer);
+  void iterateCommits(@NotNull Predicate<? super CommitId> consumer);
 
   /**
    * Checks whether the storage contains the commit.
@@ -56,7 +56,7 @@ public interface VcsLogStorage {
    * @return matching commit or null if no commit matches the given condition
    */
   @Nullable
-  default CommitId findCommitId(@NotNull Predicate<CommitId> condition) {
+  default CommitId findCommitId(@NotNull Predicate<? super CommitId> condition) {
     Ref<CommitId> hashRef = Ref.create();
     iterateCommits(commitId -> {
       boolean matches = condition.test(commitId);

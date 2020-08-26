@@ -4,6 +4,7 @@ package com.intellij.execution.testDiscovery;
 import com.intellij.execution.testDiscovery.actions.ShowAffectedTestsAction;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -81,7 +82,7 @@ public class AffectedTestsInChangeListPainter implements ChangeListDecorator {
     if (!myChangeListsToShow.get().contains(changeList.getId())) return;
 
     renderer.append(", ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
-    renderer.append("show affected tests", new SimpleTextAttributes(STYLE_UNDERLINE, UIUtil.getInactiveTextColor()), (Runnable)() -> {
+    renderer.append(JavaCompilerBundle.message("test.discovery.show.affected.tests"), new SimpleTextAttributes(STYLE_UNDERLINE, UIUtil.getInactiveTextColor()), (Runnable)() -> {
       DataContext dataContext = DataManager.getInstance().getDataContext(renderer.getTree());
       Change[] changes = changeList.getChanges().toArray(new Change[0]);
       ShowAffectedTestsAction.showDiscoveredTestsByChanges(myProject, changes, changeList.getName(), dataContext);

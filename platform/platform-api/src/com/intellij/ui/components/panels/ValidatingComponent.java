@@ -15,6 +15,7 @@
  */
 package com.intellij.ui.components.panels;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.UIUtil;
 
@@ -47,7 +48,7 @@ public abstract class ValidatingComponent<T extends JComponent> extends NonOpaqu
 
   protected abstract T createMainComponent();
 
-  public void setErrorText(String errorText) {
+  public void setErrorText(@NlsContexts.Label String errorText) {
     if ("".equals(errorText) || errorText == null) {
       errorText = " ";
     }

@@ -258,20 +258,20 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   }
 
   @Nullable
-  public Processor<MouseEvent> getDoubleClickHandler() {
+  public Processor<? super MouseEvent> getDoubleClickHandler() {
     return myHandlers.getDoubleClickHandler();
   }
 
-  public void setDoubleClickHandler(@Nullable Processor<MouseEvent> handler) {
+  public void setDoubleClickHandler(@Nullable Processor<? super MouseEvent> handler) {
     myHandlers.setDoubleClickHandler(handler);
   }
 
   @Nullable
-  public Processor<KeyEvent> getEnterKeyHandler() {
+  public Processor<? super KeyEvent> getEnterKeyHandler() {
     return myHandlers.getEnterKeyHandler();
   }
 
-  public void setEnterKeyHandler(@Nullable Processor<KeyEvent> handler) {
+  public void setEnterKeyHandler(@Nullable Processor<? super KeyEvent> handler) {
     myHandlers.setEnterKeyHandler(handler);
   }
 

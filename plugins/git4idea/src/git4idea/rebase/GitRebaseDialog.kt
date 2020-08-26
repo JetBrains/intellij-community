@@ -401,6 +401,7 @@ internal class GitRebaseDialog(private val project: Project,
       .setFocusable(true)
       .setRequestFocus(true)
       .setCancelOnWindowDeactivation(false)
+      .setCancelOnClickOutside(true)
       .createPopup()
       .showUnderneathOf(rootPane)
   }

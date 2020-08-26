@@ -26,6 +26,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.Nls;
@@ -255,7 +256,7 @@ public class TextMergeChange extends ThreesideDiffChangeBase {
   }
 
   @NotNull
-  private static GutterIconRenderer createIconRenderer(@NotNull final String text,
+  private static GutterIconRenderer createIconRenderer(@NotNull final @NlsContexts.Tooltip String text,
                                                        @NotNull final Icon icon,
                                                        boolean ctrlClickVisible,
                                                        @NotNull final Runnable perform) {

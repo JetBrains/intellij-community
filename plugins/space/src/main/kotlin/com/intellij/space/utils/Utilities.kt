@@ -1,9 +1,9 @@
 package com.intellij.space.utils
 
 import com.intellij.notification.Notification
-import com.intellij.notification.NotificationListener
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ComponentManager
@@ -45,12 +45,15 @@ inline fun <T : Any, C : ComponentManager> C.computeSafe(crossinline compute: C.
     if (isDisposed) null else compute()
   })
 
-fun notify(text: String, handler: (() -> Unit)? = null) {
-  Notification(
+fun notify(text: String, actions: List<AnAction> = listOf()) {
+  val notification = Notification(
     ProductName,
     ProductName,
     XmlStringUtil.wrapInHtml(text),
-    NotificationType.INFORMATION,
-    handler?.let { NotificationListener { _, _ -> it() } }
-  ).notify(null)
+    NotificationType.INFORMATION
+  )
+  if (actions.isNotEmpty()) {
+    notification.addActions(actions)
+  }
+  notification.notify(null)
 }

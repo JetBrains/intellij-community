@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.ext.logback
 
 import com.intellij.openapi.fileTypes.LanguageFileType
+import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.GroovyFileType
 import org.jetbrains.plugins.groovy.GroovyLanguage
 import javax.swing.Icon
@@ -14,6 +15,6 @@ object LogbackFileType : LanguageFileType(GroovyLanguage, true) {
 
   override fun getIcon(): Icon? = GroovyFileType.GROOVY_FILE_TYPE.icon
   override fun getName(): String = "logback"
-  override fun getDescription(): String = "Groovy Logback DSL configuration"
+  override fun getDescription(): String = GroovyBundle.message("file.type.logback")
   override fun getDefaultExtension(): String = "groovy"
 }

@@ -17,6 +17,7 @@ import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +32,7 @@ public class ModuleClasspathCombo extends ComboBox<ModuleClasspathCombo.Item> im
 
   private final Item[] myOptionItems;
   private boolean myPreventPopupClosing;
-  private @Nullable String myNoModule;
+  private @Nullable @Nls String myNoModule;
   private static final Item mySeparator = new Item((String)null);
 
   public static class Item {
@@ -63,7 +64,7 @@ public class ModuleClasspathCombo extends ComboBox<ModuleClasspathCombo.Item> im
   }
 
   private void buildModel(@NotNull Collection<? extends Module> modules) {
-    List<@NotNull Item> items = ContainerUtil.map(modules, module -> new Item(module));
+    List<@NotNull Item> items = ContainerUtil.map(modules, Item::new);
     items.sort(Comparator.comparing(o -> o.myModule.getName()));
     CollectionComboBoxModel<Item> model = new ModelWithOptions();
     model.add(items);
@@ -83,7 +84,7 @@ public class ModuleClasspathCombo extends ComboBox<ModuleClasspathCombo.Item> im
 
   public void reset(ModuleBasedConfiguration<?,?> configuration) {
     Module[] all = ModuleManager.getInstance(configuration.getProject()).getModules();
-    buildModel(ContainerUtil.filter(all, module -> isModuleAccepted(module)));
+    buildModel(ContainerUtil.filter(all, ModuleClasspathCombo::isModuleAccepted));
     setSelectedModule(configuration.getConfigurationModule().getModule());
   }
 
@@ -174,6 +175,7 @@ public class ModuleClasspathCombo extends ComboBox<ModuleClasspathCombo.Item> im
     protected void customizeCellRenderer(@NotNull JList<? extends Item> list, Item value, int index, boolean selected, boolean hasFocus) {
       String name = value == null ? null : value.myModule == null ? myNoModule : value.myModule.getName();
       if (index == -1 && name != null) {
+        //noinspection HardCodedStringLiteral
         append("-cp ", SimpleTextAttributes.GRAYED_ATTRIBUTES);
       }
       append(StringUtil.notNullize(name));

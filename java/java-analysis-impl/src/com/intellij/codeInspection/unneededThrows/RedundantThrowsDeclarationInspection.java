@@ -9,6 +9,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.unneededThrows.RedundantThrowsDeclarationLocalInspection.ThrowRefType;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.openapi.application.WriteAction;
@@ -83,7 +84,7 @@ public final class RedundantThrowsDeclarationInspection extends GlobalJavaBatchI
   }
 
   @NotNull
-  private static String getMessage(@NotNull final RefMethod refMethod) {
+  private static @InspectionMessage String getMessage(@NotNull final RefMethod refMethod) {
     final RefClass ownerClass = refMethod.getOwnerClass();
     if (refMethod.isAbstract() || ownerClass != null && ownerClass.isInterface()) {
       return JavaAnalysisBundle.message("inspection.redundant.throws.problem.descriptor", "<code>#ref</code>");

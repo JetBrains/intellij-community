@@ -52,13 +52,13 @@ public class PyMakeFunctionReturnTypeQuickFix implements LocalQuickFix {
   public String getName() {
     PyFunction function = myFunction.getElement();
     String functionName = function != null ? function.getName() : "function";
-    return PyPsiBundle.message("QFIX.NAME.make.$0.return.$1", functionName, myReturnTypeName);
+    return PyPsiBundle.message("QFIX.make.function.return.type", functionName, myReturnTypeName);
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return PyPsiBundle.message("QFIX.NAME.make.$0.return.$1", "function", "inferred type");
+    return PyPsiBundle.message("QFIX.NAME.make.function.return.type");
   }
 
   @Override

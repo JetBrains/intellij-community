@@ -1,11 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl
 
 import com.intellij.openapi.util.Key
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiRecursiveElementWalkingVisitor
-import com.intellij.psi.PsiType
+import com.intellij.psi.*
 import com.intellij.psi.stubs.StubElement
 import com.intellij.psi.util.CachedValue
 import com.intellij.psi.util.CachedValueProvider.Result
@@ -171,5 +168,5 @@ fun GrVariable.isDeclaredIn(block: GrControlFlowOwner): Boolean {
 fun isThisRef(expression: GrExpression?): Boolean {
   return expression is GrReferenceExpression &&
          expression.qualifier == null &&
-         "this" == expression.referenceName
+         PsiKeyword.THIS == expression.referenceName
 }

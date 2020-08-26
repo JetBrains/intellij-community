@@ -620,6 +620,18 @@
       "description": "The yellow rectangle under the search match text"
     },
     {
+      "key": "SearchOption.selectedBackground",
+      "description": "Button background to highlight chosen search option"
+    },
+    {
+      "key": "SearchResults.Ordinal.File.Foreground",
+      "description": "Filename foreground in 'Find in Path' (the first file row) and line number (all rows)"
+    },
+    {
+      "key": "SearchResults.Repeated.File.Foreground",
+      "description": "Filename foreground in 'Find in Path' (all file rows except the first one)"
+    },
+    {
       "key": "SearchMatch.startBackground"
     },
     {
@@ -668,6 +680,10 @@
     },
     {
       "key": "Table.lightSelectionInactiveForeground"
+    },
+    {
+      "key": "Table.alternativeRowBackground",
+      "description": "Contrast background color for lists with tall rows, e.g. View | Tool Windows | Endpoints"
     },
     {
       "key": "Table.stripeColor"
@@ -922,6 +938,10 @@
     {
       "key": "Window.border",
       "description": "Dialog border. Format: \"top, left, bottom, right, hex\", e.g. \"1,1,1,1,FFFFFF\". Sizes in pixels"
+    },
+    {
+      "key": "DropArea.base",
+      "description": "Base color to highlight drop area (Drag-n-drop in editor / debugger). Actual values go with alpha=40 (of 255) for whole area and with alpha=200 for border line"
     }
   ]
 }

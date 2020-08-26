@@ -11,6 +11,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ThreeState;
 import git4idea.i18n.GitBundle;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,18 +29,18 @@ import static git4idea.config.GitExecutableManager.runUnderProgressIfNeeded;
 public class GitExecutableDetector {
 
   private static final Logger LOG = Logger.getInstance(GitExecutableDetector.class);
-  private static final String[] UNIX_PATHS = {
+  private static final @NonNls String[] UNIX_PATHS = {
     "/usr/local/bin",
     "/opt/local/bin",
     "/usr/bin",
     "/opt/bin",
     "/usr/local/git/bin"};
 
-  private static final String GIT = "git";
-  private static final String UNIX_EXECUTABLE = GIT;
+  private static final @NonNls String GIT = "git";
+  private static final @NonNls String UNIX_EXECUTABLE = GIT;
 
   private static final File WIN_ROOT = new File("C:\\"); // the constant is extracted to be able to create files in "Program Files" in tests
-  private static final String GIT_EXE = "git.exe";
+  private static final @NonNls String GIT_EXE = "git.exe";
 
   private static final String WIN_EXECUTABLE = GIT_EXE;
 

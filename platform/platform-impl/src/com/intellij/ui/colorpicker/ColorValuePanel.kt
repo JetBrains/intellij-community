@@ -16,6 +16,7 @@
 package com.intellij.ui.colorpicker
 
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.picker.ColorListener
 import com.intellij.util.Alarm
@@ -460,7 +461,7 @@ abstract class ButtonPanel : JPanel() {
   }
 }
 
-private class ColorLabel(text: String = ""): JLabel(text, SwingConstants.CENTER) {
+private class ColorLabel(@NlsContexts.Label text: String = ""): JLabel(text, SwingConstants.CENTER) {
   init {
     foreground = PICKER_TEXT_COLOR
   }

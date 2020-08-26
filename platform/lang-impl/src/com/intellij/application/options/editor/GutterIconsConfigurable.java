@@ -170,7 +170,7 @@ public class GutterIconsConfigurable implements SearchableConfigurable, Configur
     }
   }
 
-  private static String getPluginDisplayName(PluginDescriptor pluginDescriptor) {
+  private static @Nls String getPluginDisplayName(PluginDescriptor pluginDescriptor) {
     if (pluginDescriptor instanceof IdeaPluginDescriptor && pluginDescriptor.getPluginId() == PluginManagerCore.CORE_ID) return IdeBundle.message("title.common");
     return pluginDescriptor.getName();
   }

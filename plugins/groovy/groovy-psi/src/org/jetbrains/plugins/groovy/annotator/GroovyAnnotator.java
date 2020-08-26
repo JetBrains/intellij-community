@@ -7,6 +7,7 @@ import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.AnnotationBuilder;
 import com.intellij.lang.annotation.AnnotationHolder;
@@ -18,6 +19,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -91,6 +93,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorReference;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.GrTupleConstructorUtils;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.InheritConstructorContributor;
+import org.jetbrains.plugins.groovy.lang.resolve.ast.TupleConstructorAttributes;
 import org.jetbrains.plugins.groovy.transformations.immutable.GrImmutableUtils;
 
 import java.util.*;
@@ -604,7 +607,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     if (containingClass == null) return;
     PsiAnnotation tupleConstructor = containingClass.getAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR);
     if (tupleConstructor == null) return;
-    if (!Boolean.FALSE.equals(GrAnnotationUtil.inferBooleanAttribute(tupleConstructor, "defaults"))) return;
+    if (!Boolean.FALSE.equals(GrAnnotationUtil.inferBooleanAttribute(tupleConstructor, TupleConstructorAttributes.DEFAULTS))) return;
     if (GrTupleConstructorUtils.isFieldAccepted(tupleConstructor, field)) {
       myHolder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("initializers.are.forbidden.with.defaults"))
         .range(initializer)
@@ -1083,6 +1086,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   @Nullable
+  @InspectionMessage
   private static String checkSuperMethodSignature(@NotNull PsiMethod superMethod,
                                                   @NotNull MethodSignatureBackedByPsiMethod superMethodSignature,
                                                   @NotNull PsiType superReturnType,
@@ -1134,12 +1138,14 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   @NotNull
+  @NlsSafe
   private static String getQNameOfMember(@NotNull PsiMember member) {
     final PsiClass aClass = member.getContainingClass();
     return getQName(aClass);
   }
 
   @NotNull
+  @NlsSafe
   private static String getQName(@Nullable PsiClass aClass) {
     if (aClass instanceof PsiAnonymousClass) {
       return GroovyBundle.message("anonymous.class.derived.from.0", ((PsiAnonymousClass)aClass).getBaseClassType().getCanonicalText());
@@ -1154,12 +1160,12 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
 
-  private void checkTypeArgForPrimitive(@Nullable GrTypeElement element, @NotNull String message) {
+  private void checkTypeArgForPrimitive(@Nullable GrTypeElement element, @NotNull @InspectionMessage String message) {
     if (element == null || !(element.getType() instanceof PsiPrimitiveType)) return;
 
     AnnotationBuilder builder = myHolder.newAnnotation(HighlightSeverity.ERROR, message).range(element);
     builder = registerLocalFix(builder, new GrReplacePrimitiveTypeWithWrapperFix(element), element, message, ProblemHighlightType.ERROR,
-                     element.getTextRange());
+                               element.getTextRange());
     builder.create();
   }
 
@@ -1426,7 +1432,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   @Override
   public void visitAnnotationArgumentList(@NotNull GrAnnotationArgumentList annotationArgumentList) {
     GrAnnotation parent = (GrAnnotation)annotationArgumentList.getParent();
-    Pair<PsiElement, String> r = AnnotationChecker.checkAnnotationArgumentList(parent, myHolder);
+    Pair<PsiElement, @InspectionMessage String> r = AnnotationChecker.checkAnnotationArgumentList(parent, myHolder);
     if (r != null && r.getFirst() != null && r.getSecond() != null) {
       myHolder.newAnnotation(HighlightSeverity.ERROR, r.getSecond()).range(r.getFirst()).create();
     }
@@ -1446,7 +1452,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
 
     final PsiType type = annotationMethod.getReturnType();
 
-    Pair.NonNull<PsiElement, String> result = CustomAnnotationChecker.checkAnnotationValueByType(value, type, false);
+    Pair.NonNull<PsiElement, @InspectionMessage String> result = CustomAnnotationChecker.checkAnnotationValueByType(value, type, false);
     if (result != null) {
       myHolder.newAnnotation(HighlightSeverity.ERROR, result.getSecond()).range(result.getFirst()).create();
     }
@@ -1589,7 +1595,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   private static void checkReferenceList(@NotNull AnnotationHolder holder,
                                          @NotNull GrReferenceList list,
                                          @NotNull Condition<? super PsiClass> applicabilityCondition,
-                                         @NotNull String message,
+                                         @NotNull @InspectionMessage String message,
                                          @Nullable IntentionAction fix) {
     for (GrCodeReferenceElement refElement : list.getReferenceElementsGroovy()) {
       final PsiElement psiClass = refElement.resolve();
@@ -1683,7 +1689,9 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     }
   }
 
-  private static void checkAnnotationList(AnnotationHolder holder, @NotNull GrModifierList modifierList, @NotNull String message) {
+  private static void checkAnnotationList(AnnotationHolder holder,
+                                          @NotNull GrModifierList modifierList,
+                                          @NotNull @InspectionMessage String message) {
     final PsiElement[] modifiers = modifierList.getModifiers();
     for (PsiElement modifier : modifiers) {
       if (!(modifier instanceof PsiAnnotation)) {
@@ -1715,7 +1723,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   private static AnnotationBuilder registerImplementsMethodsFix(@NotNull GrTypeDefinition typeDefinition,
                                                                 @NotNull PsiMethod abstractMethod,
                                                                 @NotNull AnnotationBuilder builder,
-                                                                String message,
+                                                                @InspectionMessage String message,
                                                                 TextRange range) {
     if (!OverrideImplementExploreUtil.getMethodsToOverrideImplement(typeDefinition, true).isEmpty()) {
       builder = builder.withFix(QuickFixFactory.getInstance().createImplementMethodsFix(typeDefinition));
@@ -1747,7 +1755,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   private static AnnotationBuilder registerMakeAbstractMethodNotAbstractFix(AnnotationBuilder builder,
                                                                             GrMethod method,
                                                                             boolean makeClassAbstract,
-                                                                            String message, TextRange range) {
+                                                                            @InspectionMessage String message, TextRange range) {
     if (method.getBlock() == null) {
       builder = builder.withFix(QuickFixFactory.getInstance().createAddMethodBodyFix(method));
     }
@@ -2088,6 +2096,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     return defaultScope;
   }
 
+  @NlsSafe
   private static String getPackageName(GrTypeDefinition typeDefinition) {
     final PsiFile file = typeDefinition.getContainingFile();
     String packageName = "<default package>";

@@ -686,8 +686,9 @@ public class PopupFactoryImpl extends JBPopupFactory {
     private final Icon myIcon;
     private final Icon mySelectedIcon;
     private final boolean myPrependWithSeparator;
-    private final String mySeparatorText;
+    private final @NlsContexts.Separator String mySeparatorText;
     private final String myDescription;
+    private final String myValue;
 
     ActionItem(@NotNull AnAction action,
                @NotNull String text,
@@ -696,7 +697,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
                @Nullable Icon icon,
                @Nullable Icon selectedIcon,
                final boolean prependWithSeparator,
-               String separatorText) {
+               @NlsContexts.Separator String separatorText,
+               @Nullable String value) {
       myAction = action;
       myText = text;
       myIsEnabled = enabled;
@@ -705,6 +707,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       myPrependWithSeparator = prependWithSeparator;
       mySeparatorText = separatorText;
       myDescription = description;
+      myValue = value;
       myAction.getTemplatePresentation().addPropertyChangeListener(evt -> {
         if (evt.getPropertyName() == Presentation.PROP_TEXT) {
           myText = myAction.getTemplatePresentation().getText();
@@ -732,7 +735,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       return myPrependWithSeparator;
     }
 
-    public String getSeparatorText() {
+    public @NlsContexts.Separator String getSeparatorText() {
       return mySeparatorText;
     }
 
@@ -751,6 +754,10 @@ public class PopupFactoryImpl extends JBPopupFactory {
     @Override
     public String toString() {
       return myText;
+    }
+
+    public String getValue() {
+      return myValue;
     }
   }
 }

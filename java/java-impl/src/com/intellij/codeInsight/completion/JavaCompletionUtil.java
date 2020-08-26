@@ -235,7 +235,7 @@ public final class JavaCompletionUtil {
                                                  PsiJavaCodeReferenceElement javaReference,
                                                  ElementFilter elementFilter,
                                                  JavaCompletionProcessor.Options options,
-                                                 Condition<String> nameCondition,
+                                                 Condition<? super String> nameCondition,
                                                  CompletionParameters parameters) {
     PsiElement elementParent = element.getContext();
     if (elementParent instanceof PsiReferenceExpression) {
@@ -272,7 +272,7 @@ public final class JavaCompletionUtil {
                                                                   PsiJavaCodeReferenceElement javaReference,
                                                                   ElementFilter elementFilter,
                                                                   JavaCompletionProcessor.Options options,
-                                                                  Condition<String> nameCondition,
+                                                                  Condition<? super String> nameCondition,
                                                                   CompletionParameters parameters) {
     final Set<LookupElement> set = new LinkedHashSet<>();
 

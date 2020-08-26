@@ -23,11 +23,11 @@ class GithubServerPathTest : UsefulTestCase() {
   @Test
   fun testEnterpriseRemotes() {
     match("ghe.labs.intellij.net", "ghe.labs.intellij.net")
-    match("someserver.net/ghe", "someserver.net", "ghe/user/repo.git")
+    match("someserver.net/ghe", "someserver.net/ghe")
+    match("someserver.net", "someserver.net/ghe")
 
     noMatch("ghe.labs.net", "ghe.labs.intellij.net")
     noMatch("ghe.labs.net", "ghe.labs.network.com")
-    noMatch("someserver.net", "someserver.net", "ghe/user/repo.git")
     noMatch("someserver.net/ghe", "someserver.net")
   }
 
@@ -37,6 +37,23 @@ class GithubServerPathTest : UsefulTestCase() {
 
   private fun checkMatch(shouldMatch: Boolean, serverUri: String, host: String, path: String) {
     val serverPath = GithubServerPath.from(serverUri)
+
+    val httpServer = "http://$host"
+    val httpsServer = "https://$host"
+    val gitServer = "git://$host"
+    val sshServer = "ssh://$host"
+    val sshUserServer = "ssh://username@$host"
+
+    TestCase.assertEquals("$serverUri should ${if (!shouldMatch) "NOT " else ""}match $httpServer", shouldMatch,
+                          serverPath.matches(httpServer))
+    TestCase.assertEquals("$serverUri should ${if (!shouldMatch) "NOT " else ""}match $httpsServer", shouldMatch,
+                          serverPath.matches(httpsServer))
+    TestCase.assertEquals("$serverUri should ${if (!shouldMatch) "NOT " else ""}match $gitServer", shouldMatch,
+                          serverPath.matches(gitServer))
+    TestCase.assertEquals("$serverUri should ${if (!shouldMatch) "NOT " else ""}match $sshServer", shouldMatch,
+                          serverPath.matches(sshServer))
+    TestCase.assertEquals("$serverUri should ${if (!shouldMatch) "NOT " else ""}match $sshUserServer", shouldMatch,
+                          serverPath.matches(sshUserServer))
 
     val httpRemote = "http://$host/$path"
     val httpsRemote = "https://$host/$path"

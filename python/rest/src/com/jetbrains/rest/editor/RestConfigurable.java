@@ -5,6 +5,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.LabeledComponent;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.jcef.JBCefApp;
 import com.jetbrains.rest.RestBundle;
 import org.jetbrains.annotations.Nls;
@@ -17,8 +18,8 @@ public class RestConfigurable implements SearchableConfigurable, Configurable.No
   public static final String ID = "restructured.text.topic";
   private final JPanel myPanel = new JPanel(new BorderLayout());
   private final ComboBox<String> myComboBox;
-  public static final String SWING = "Swing";
-  public static final String JCEF = "JCEF";
+  public static final @NlsSafe String SWING = "Swing";
+  public static final @NlsSafe String JCEF = "JCEF";
 
   RestConfigurable() {
     myComboBox = new ComboBox<>();

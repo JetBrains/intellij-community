@@ -31,15 +31,15 @@
         implementationClass="org.jetbrains.idea.eclipse.importer.EclipseCodeStyleSchemeImporter"
         schemeClass="com.intellij.psi.codeStyle.CodeStyleScheme"/>
     <schemeImporter 
-        name="Eclipse Color Theme (XML)"
+        name="Eclipse color theme (XML)"
         implementationClass="org.jetbrains.idea.eclipse.importer.colors.EclipseColorSchemeImporter"
         schemeClass="com.intellij.openapi.editor.colors.EditorColorsScheme"/>
 
     <moduleService serviceImplementation="org.jetbrains.idea.eclipse.config.EclipseModuleManagerImpl"/>
-    <notificationAllowlist groupIds="Unknown Natures Detected"/>
+    <notificationGroup id="Unknown Natures Detected" displayType="BALLOON"/>
   </extensions>
   <actions>
-    <action id="ExportToEclipse" class="org.jetbrains.idea.eclipse.export.ExportEclipseProjectsAction" text="Export Project to Eclipse...">
+    <action id="ExportToEclipse" class="org.jetbrains.idea.eclipse.export.ExportEclipseProjectsAction">
       <override-text place="MainMenu" text="Project to Eclipse..."/>
       <add-to-group group-id="FileExportGroup" anchor="last"/>
     </action>
@@ -47,4 +47,5 @@
   <extensionPoints>
     <extensionPoint name="natureImporter" interface="org.jetbrains.idea.eclipse.importWizard.EclipseNatureImporter" dynamic="true"/>
   </extensionPoints>
+  <resource-bundle>messages.EclipseBundle</resource-bundle>
 </idea-plugin>

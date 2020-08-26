@@ -72,7 +72,7 @@ public interface CommonClassNames {
   String JAVA_IO_FILE = "java.io.File";
 
   String JAVA_LANG_STRING = "java.lang.String";
-  String JAVA_LANG_STRING_SHORT = "String";
+  @NonNls String JAVA_LANG_STRING_SHORT = "String";
   String JAVA_LANG_NUMBER = "java.lang.Number";
   String JAVA_LANG_BOOLEAN = "java.lang.Boolean";
   String JAVA_LANG_BYTE = "java.lang.Byte";

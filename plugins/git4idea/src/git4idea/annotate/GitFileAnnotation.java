@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.annotate;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
@@ -45,6 +32,7 @@ import git4idea.log.GitCommitTooltipLinkHandler;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import gnu.trove.TObjectIntHashMap;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,27 +51,30 @@ public class GitFileAnnotation extends FileAnnotation {
   @NotNull private final Map<VcsRevisionNumber, String> myCommitMessageMap = new HashMap<>();
   private final VcsLogApplicationSettings myLogSettings = ApplicationManager.getApplication().getService(VcsLogApplicationSettings.class);
 
-  private final LineAnnotationAspect DATE_ASPECT = new GitAnnotationAspect(LineAnnotationAspect.DATE, true) {
-    @Override
-    public String doGetValue(LineInfo info) {
-      Date date = getDate(info);
-      return FileAnnotation.formatDate(date);
-    }
-  };
+  private final LineAnnotationAspect DATE_ASPECT =
+    new GitAnnotationAspect(LineAnnotationAspect.DATE, VcsBundle.message("line.annotation.aspect.date"), true) {
+      @Override
+      public String doGetValue(LineInfo info) {
+        Date date = getDate(info);
+        return FileAnnotation.formatDate(date);
+      }
+    };
 
-  private final LineAnnotationAspect REVISION_ASPECT = new GitAnnotationAspect(LineAnnotationAspect.REVISION, false) {
-    @Override
-    protected String doGetValue(LineInfo lineInfo) {
-      return lineInfo.getRevisionNumber().getShortRev();
-    }
-  };
+  private final LineAnnotationAspect REVISION_ASPECT =
+    new GitAnnotationAspect(LineAnnotationAspect.REVISION, VcsBundle.message("line.annotation.aspect.revision"), false) {
+      @Override
+      protected String doGetValue(LineInfo lineInfo) {
+        return lineInfo.getRevisionNumber().getShortRev();
+      }
+    };
 
-  private final LineAnnotationAspect AUTHOR_ASPECT = new GitAnnotationAspect(LineAnnotationAspect.AUTHOR, true) {
-    @Override
-    protected String doGetValue(LineInfo lineInfo) {
-      return lineInfo.getAuthor();
-    }
-  };
+  private final LineAnnotationAspect AUTHOR_ASPECT =
+    new GitAnnotationAspect(LineAnnotationAspect.AUTHOR, VcsBundle.message("line.annotation.aspect.author"), true) {
+      @Override
+      protected String doGetValue(LineInfo lineInfo) {
+        return lineInfo.getAuthor();
+      }
+    };
   private final VcsLogUiProperties.PropertiesChangeListener myLogSettingChangeListener = this::onLogSettingChange;
 
   public GitFileAnnotation(@NotNull Project project,
@@ -240,8 +231,8 @@ public class GitFileAnnotation extends FileAnnotation {
    * Revision annotation aspect implementation
    */
   private abstract class GitAnnotationAspect extends LineAnnotationAspectAdapter {
-    GitAnnotationAspect(String id, boolean showByDefault) {
-      super(id, showByDefault);
+    GitAnnotationAspect(@NonNls String id, @NlsContexts.ListItem String displayName, boolean showByDefault) {
+      super(id, displayName, showByDefault);
     }
 
     @Override

@@ -2,6 +2,7 @@
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.java.parser.ExpressionParser;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiElement;
@@ -114,13 +115,13 @@ public final class ReplaceExpressionUtil {
       else if (opType == JavaTokenType.LT || opType == JavaTokenType.GT || opType == JavaTokenType.LE || opType == JavaTokenType.GE) {
         return 8;
       }
-      else if (opType == JavaTokenType.LTLT || opType == JavaTokenType.GTGT || opType == JavaTokenType.GTGTGT) {
+      else if (ExpressionParser.SHIFT_OPS.contains(opType)) {
         return 9;
       }
-      else if (opType == JavaTokenType.PLUS || opType == JavaTokenType.MINUS) {
+      else if (ExpressionParser.ADDITIVE_OPS.contains(opType)) {
         return 10;
       }
-      else if (opType == JavaTokenType.ASTERISK || opType == JavaTokenType.DIV || opType == JavaTokenType.PERC) {
+      else if (ExpressionParser.MULTIPLICATIVE_OPS.contains(opType)) {
         return 11;
       }
       return 8;

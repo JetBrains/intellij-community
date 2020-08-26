@@ -43,6 +43,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  */
 public final class IndexingStamp {
   private static final long INDEX_DATA_OUTDATED_STAMP = -2L;
+  private static final long HAS_NO_INDEXED_DATA_STAMP = 0L;
 
   private static final int VERSION = 15;
   private static final ConcurrentMap<ID<?, ?>, IndexVersion> ourIndexIdToCreationStamp = new ConcurrentHashMap<>();
@@ -251,7 +252,7 @@ public final class IndexingStamp {
   public static FileIndexingState isFileIndexedStateCurrent(int fileId, ID<?, ?> indexName) {
     try {
       long stamp = getIndexStamp(fileId, indexName);
-      if (stamp == 0) return FileIndexingState.NOT_INDEXED;
+      if (stamp == HAS_NO_INDEXED_DATA_STAMP) return FileIndexingState.NOT_INDEXED;
       return stamp == getIndexCreationStamp(indexName) ? FileIndexingState.UP_TO_DATE : FileIndexingState.OUT_DATED;
     }
     catch (RuntimeException e) {
@@ -270,6 +271,10 @@ public final class IndexingStamp {
 
   public static void setFileIndexedStateOutdated(int fileId, ID<?, ?> id) {
     update(fileId, id, INDEX_DATA_OUTDATED_STAMP);
+  }
+
+  public static void setFileIndexedStateUnindexed(int fileId, ID<?, ?> id) {
+    update(fileId, id, HAS_NO_INDEXED_DATA_STAMP);
   }
 
   /**

@@ -65,7 +65,7 @@ public class PyDynamicTypesTest extends PyEnvTestCase {
 
           EditorTestUtil.setCaretsAndSelection(myFixture.getEditor(), new EditorTestUtil.CaretAndSelectionState(
             Lists.newArrayList(new EditorTestUtil.CaretInfo(new LogicalPosition(0, 6), null)), null));
-          final IntentionAction action = myFixture.findSingleIntention(PyPsiBundle.message("INTN.doc.string.stub"));
+          final IntentionAction action = myFixture.findSingleIntention(PyPsiBundle.message("INTN.insert.docstring.stub"));
           boolean saved = PyCodeInsightSettings.getInstance().INSERT_TYPE_DOCSTUB;
           try {
             PyCodeInsightSettings.getInstance().INSERT_TYPE_DOCSTUB = true;

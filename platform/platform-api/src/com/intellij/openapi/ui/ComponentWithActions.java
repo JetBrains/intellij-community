@@ -16,6 +16,7 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,8 +30,7 @@ public interface ComponentWithActions {
   @Nullable
   JComponent getSearchComponent();
 
-  @Nullable
-  String getToolbarPlace();
+  @NonNls @Nullable String getToolbarPlace();
 
   @Nullable
   JComponent getToolbarContextComponent();
@@ -42,12 +42,12 @@ public interface ComponentWithActions {
 
   class Impl implements ComponentWithActions {
     private final ActionGroup myToolbar;
-    private final String myToolbarPlace;
+    private final @NonNls String myToolbarPlace;
     private final JComponent myToolbarContext;
     private final JComponent mySearchComponent;
     private final JComponent myComponent;
 
-    public Impl(final ActionGroup toolbar, final String toolbarPlace, final JComponent toolbarContext,
+    public Impl(final ActionGroup toolbar, final @NonNls String toolbarPlace, final JComponent toolbarContext,
                 final JComponent searchComponent,
                 final JComponent component) {
       myToolbar = toolbar;

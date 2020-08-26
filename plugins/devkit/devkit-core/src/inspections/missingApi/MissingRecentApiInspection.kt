@@ -14,6 +14,7 @@ import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.xml.XmlFile
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.FormBuilder
+import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.actions.DevkitActionsUtil
 import org.jetbrains.idea.devkit.module.PluginModuleType
 import org.jetbrains.idea.devkit.util.DescriptorUtil
@@ -97,9 +98,9 @@ class MissingRecentApiInspection : LocalInspectionTool() {
     }
 
     val formBuilder = FormBuilder.createFormBuilder()
-      .addComponent(JBLabel("Plugin compatibility range"))
-      .addLabeledComponent("since", sinceField)
-      .addLabeledComponent("until", untilField)
+      .addComponent(JBLabel(DevKitBundle.message("inspections.missing.recent.api.settings.range")))
+      .addLabeledComponent(DevKitBundle.message("inspections.missing.recent.api.settings.since"), sinceField)
+      .addLabeledComponent(DevKitBundle.message("inspections.missing.recent.api.settings.until"), untilField)
 
     val container = JPanel(BorderLayout())
     container.add(formBuilder.panel, BorderLayout.NORTH)

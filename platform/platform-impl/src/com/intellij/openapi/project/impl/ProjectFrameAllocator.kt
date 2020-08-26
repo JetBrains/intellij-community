@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.impl.CoreProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
@@ -117,6 +118,7 @@ internal class ProjectUiFrameAllocator(private var options: OpenProjectTask, pri
     return result
   }
 
+  @NlsContexts.ProgressTitle
   private fun getProgressTitle(): String {
     val projectName = options.projectName ?: (projectStoreBaseDir.fileName ?: projectStoreBaseDir).toString()
     return IdeUICustomization.getInstance().projectMessage("progress.title.project.loading.name", projectName)

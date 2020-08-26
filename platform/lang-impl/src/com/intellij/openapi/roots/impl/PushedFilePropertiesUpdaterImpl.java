@@ -311,7 +311,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
     });
   }
 
-  public static void scanProject(@NotNull Project project, @NotNull Function<Module, ContentIteratorEx> iteratorProducer) {
+  public static void scanProject(@NotNull Project project, @NotNull Function<? super Module, ? extends ContentIteratorEx> iteratorProducer) {
     Module[] modules = ReadAction.compute(() -> ModuleManager.getInstance(project).getModules());
     List<Runnable> tasks = ContainerUtil.mapNotNull(modules, module -> {
       return ReadAction.compute(() -> {

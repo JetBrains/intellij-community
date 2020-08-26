@@ -196,7 +196,7 @@ public final class DiffShelvedChangesActionProvider implements AnActionExtension
           }
         }
       }
-      throw new VcsException("Can not find patch for " + shelvedChange.getBeforePath() + " in patch file.");
+      throw new VcsException(VcsBundle.message("changes.can.not.find.patch.for.path.in.patch.file", shelvedChange.getBeforePath()));
     }
 
     private PatchInfo getInfoFromCache(@NotNull Path patchPath) {
@@ -336,7 +336,7 @@ public final class DiffShelvedChangesActionProvider implements AnActionExtension
         return request;
       }
       catch (VcsException e) {
-        throw new DiffRequestProducerException("Can't show diff for '" + getFilePath() + "'", e);
+        throw new DiffRequestProducerException(VcsBundle.message("changes.error.can.t.show.diff.for", getFilePath()), e);
       }
     }
   }
@@ -375,7 +375,7 @@ public final class DiffShelvedChangesActionProvider implements AnActionExtension
                                        VcsBundle.message("shelve.shelved.version"));
         }
         catch (VcsException e) {
-          throw new DiffRequestProducerException("Can't show diff for '" + getFilePath() + "'", e);
+          throw new DiffRequestProducerException(VcsBundle.message("changes.error.can.t.show.diff.for", getFilePath()), e);
         }
       }
       else {
@@ -439,7 +439,7 @@ public final class DiffShelvedChangesActionProvider implements AnActionExtension
         }
       }
       catch (VcsException e) {
-        throw new DiffRequestProducerException("Can't show diff for '" + getFilePath() + "'", e);
+        throw new DiffRequestProducerException(VcsBundle.message("changes.error.can.t.show.diff.for", getFilePath()), e);
       }
     }
 
@@ -523,3 +523,4 @@ public final class DiffShelvedChangesActionProvider implements AnActionExtension
     }
   }
 }
+

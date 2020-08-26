@@ -26,6 +26,7 @@ import java.io.Reader;
 import java.lang.reflect.Field;
 
 import static com.intellij.openapi.util.io.StreamUtil.readText;
+import static com.intellij.psi.codeStyle.CodeStyleSettingsCustomizableOptions.getInstance;
 import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType.*;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -37,7 +38,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
   @Override
   public CodeStyleConfigurable createConfigurable(@NotNull CodeStyleSettings baseSettings,
                                                   @NotNull CodeStyleSettings modelSettings) {
-    return new CodeStyleAbstractConfigurable(baseSettings, modelSettings, "Groovy") {
+    return new CodeStyleAbstractConfigurable(baseSettings, modelSettings, GroovyBundle.message("language.groovy")) {
       @Override
       protected CodeStyleAbstractPanel createPanel(CodeStyleSettings settings) {
         return new GroovyCodeStyleMainPanel(getCurrentSettings(), settings) {};
@@ -168,15 +169,23 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
         "VARIABLE_ANNOTATION_WRAP",
         "ENUM_CONSTANTS_WRAP"
       );
-      consumer.showCustomOption(GroovyCodeStyleSettings.class, "USE_FLYING_GEESE_BRACES", "Use flying geese braces",
-                                CodeStyleSettingsCustomizable.WRAPPING_BRACES);
-      consumer.showCustomOption(GroovyCodeStyleSettings.class, "ALIGN_MULTILINE_LIST_OR_MAP", "Align when multiple",     "List and map literals");
-      consumer.showCustomOption(GroovyCodeStyleSettings.class, "ALIGN_NAMED_ARGS_IN_MAP",     "Align multiline named arguments",   "List and map literals");
-      consumer.showCustomOption(GroovyCodeStyleSettings.class, "IMPORT_ANNOTATION_WRAP", "Import annotations", null,
+      consumer.showCustomOption(GroovyCodeStyleSettings.class, "USE_FLYING_GEESE_BRACES",
+                                GroovyBundle.message("code.style.option.use.flying.geese.braces"),
+                                getInstance().WRAPPING_BRACES);
+      consumer
+        .showCustomOption(GroovyCodeStyleSettings.class, "ALIGN_MULTILINE_LIST_OR_MAP",
+                          GroovyBundle.message("code.style.option.align.when.multiple"),
+                          GroovyBundle.message("code.style.group.list.map.literals"));
+      consumer.showCustomOption(GroovyCodeStyleSettings.class, "ALIGN_NAMED_ARGS_IN_MAP",
+                                GroovyBundle.message("code.style.option.align.multiline.named.arguments"),
+                                GroovyBundle.message("code.style.group.list.map.literals"));
+      consumer.showCustomOption(GroovyCodeStyleSettings.class, "IMPORT_ANNOTATION_WRAP",
+                                GroovyBundle.message("code.style.option.import.annotations"), null,
                                 CodeStyleSettingsCustomizable.OptionAnchor.AFTER, "VARIABLE_ANNOTATION_WRAP",
-                                CodeStyleSettingsCustomizable.WRAP_OPTIONS, CodeStyleSettingsCustomizable.WRAP_VALUES);
+                                getInstance().WRAP_OPTIONS, CodeStyleSettingsCustomizable.WRAP_VALUES);
 
-      consumer.renameStandardOption("KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE", "Simple lambdas/closures in one line");
+      consumer.renameStandardOption("KEEP_SIMPLE_LAMBDAS_IN_ONE_LINE",
+                                    GroovyBundle.message("code.style.option.simple.lambdas.closures.in.one.line"));
 
       return;
     }
@@ -248,18 +257,36 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
                                    "SPACE_BEFORE_ANOTATION_PARAMETER_LIST",
                                    "SPACE_WITHIN_ANNOTATION_PARENTHESES"
       );
-      consumer.renameStandardOption("SPACE_AROUND_RELATIONAL_OPERATORS", "Relational operators (<, >, <=, >=, <=>)");
-      consumer.renameStandardOption("SPACE_AROUND_UNARY_OPERATOR", "Unary operators (!, -, +, ++, --, *)");
+      consumer.renameStandardOption("SPACE_AROUND_RELATIONAL_OPERATORS", GroovyBundle.message("code.style.option.relational.operators"));
+      consumer.renameStandardOption("SPACE_AROUND_UNARY_OPERATOR", GroovyBundle.message("code.style.option.unary.operators"));
 
-      consumer.showCustomOption(GroovyCodeStyleSettings.class, "SPACE_IN_NAMED_ARGUMENT_BEFORE_COLON" , "In named argument before ':'", CodeStyleSettingsCustomizable.SPACES_OTHER);
-      consumer.showCustomOption(GroovyCodeStyleSettings.class, "SPACE_IN_NAMED_ARGUMENT", "In named argument after ':'", CodeStyleSettingsCustomizable.SPACES_OTHER);
-      consumer.showCustomOption(GroovyCodeStyleSettings.class, "SPACE_WITHIN_LIST_OR_MAP", "List and maps literals", CodeStyleSettingsCustomizable.SPACES_WITHIN);
-      consumer.showCustomOption(GroovyCodeStyleSettings.class, "SPACE_BEFORE_CLOSURE_LBRACE", "Closure left brace in method calls", CodeStyleSettingsCustomizable.SPACES_BEFORE_LEFT_BRACE);
-      consumer.showCustomOption(GroovyCodeStyleSettings.class, "SPACE_WITHIN_GSTRING_INJECTION_BRACES", "GString injection braces", CodeStyleSettingsCustomizable.SPACES_WITHIN);
-      consumer.showCustomOption(GroovyCodeStyleSettings.class, "SPACE_WITHIN_TUPLE_EXPRESSION", "Tuple assignment expression", CodeStyleSettingsCustomizable.SPACES_WITHIN);
-      consumer.showCustomOption(GroovyCodeStyleSettings.class, "SPACE_AROUND_REGEX_OPERATORS", "Regexp expression (==~, =~)", CodeStyleSettingsCustomizable.SPACES_AROUND_OPERATORS);
-      consumer.showCustomOption(GroovyCodeStyleSettings.class, "SPACE_BEFORE_ASSERT_SEPARATOR", "Before 'assert' separator", CodeStyleSettingsCustomizable.SPACES_OTHER);
-      consumer.showCustomOption(GroovyCodeStyleSettings.class, "SPACE_AFTER_ASSERT_SEPARATOR", "After 'assert' separator", CodeStyleSettingsCustomizable.SPACES_OTHER);
+      consumer.showCustomOption(GroovyCodeStyleSettings.class, "SPACE_IN_NAMED_ARGUMENT_BEFORE_COLON",
+                                GroovyBundle.message("code.style.option.in.named.argument.before.colon"),
+                                getInstance().SPACES_OTHER);
+      consumer.showCustomOption(GroovyCodeStyleSettings.class, "SPACE_IN_NAMED_ARGUMENT",
+                                GroovyBundle.message("code.style.option.in.named.argument.after.colon"),
+                                getInstance().SPACES_OTHER);
+      consumer.showCustomOption(GroovyCodeStyleSettings.class, "SPACE_WITHIN_LIST_OR_MAP",
+                                GroovyBundle.message("code.style.option.list.maps.literals"),
+                                getInstance().SPACES_WITHIN);
+      consumer.showCustomOption(GroovyCodeStyleSettings.class, "SPACE_BEFORE_CLOSURE_LBRACE",
+                                GroovyBundle.message("code.style.option.closure.left.brace.in.method.calls"),
+                                getInstance().SPACES_BEFORE_LEFT_BRACE);
+      consumer.showCustomOption(GroovyCodeStyleSettings.class, "SPACE_WITHIN_GSTRING_INJECTION_BRACES",
+                                GroovyBundle.message("code.style.option.gstring.injection.braces"),
+                                getInstance().SPACES_WITHIN);
+      consumer.showCustomOption(GroovyCodeStyleSettings.class, "SPACE_WITHIN_TUPLE_EXPRESSION",
+                                GroovyBundle.message("code.style.option.tuple.assignment.expression"),
+                                getInstance().SPACES_WITHIN);
+      consumer.showCustomOption(GroovyCodeStyleSettings.class, "SPACE_AROUND_REGEX_OPERATORS",
+                                GroovyBundle.message("code.style.option.regexp.expression"),
+                                getInstance().SPACES_AROUND_OPERATORS);
+      consumer.showCustomOption(GroovyCodeStyleSettings.class, "SPACE_BEFORE_ASSERT_SEPARATOR",
+                                GroovyBundle.message("code.style.option.before.assert.separator"),
+                                getInstance().SPACES_OTHER);
+      consumer.showCustomOption(GroovyCodeStyleSettings.class, "SPACE_AFTER_ASSERT_SEPARATOR",
+                                GroovyBundle.message("code.style.option.after.assert.separator"),
+                                getInstance().SPACES_OTHER);
       return;
     }
     if (settingsType == BLANK_LINES_SETTINGS) {

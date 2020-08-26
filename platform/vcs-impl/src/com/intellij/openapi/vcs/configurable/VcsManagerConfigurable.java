@@ -8,6 +8,7 @@ import com.intellij.openapi.options.ConfigurableEP;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -141,6 +142,7 @@ public final class VcsManagerConfigurable extends SearchableConfigurable.Parent.
   }
 
   @NotNull
+  @NlsSafe
   public static String getVcsConfigurableId(@NotNull String displayName) {
     return "vcs." + displayName;
   }

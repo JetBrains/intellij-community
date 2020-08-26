@@ -97,7 +97,7 @@ public abstract class JavaResourceRootEditHandlerBase extends ModuleSourceRootEd
       myProperties = properties;
       setTitle(ProjectBundle.message("module.paths.edit.properties.title"));
       myRelativeOutputPathField = new JTextField();
-      myIsGeneratedCheckBox = new JCheckBox(JavaUiBundle.message("for.generated.resources"));
+      myIsGeneratedCheckBox = new JCheckBox(JavaUiBundle.message("checkbox.for.generated.resources"));
       myMainPanel = FormBuilder.createFormBuilder()
         .addLabeledComponent(JavaUiBundle.message("label.relative.output.path"), myRelativeOutputPathField)
         .addComponent(myIsGeneratedCheckBox)

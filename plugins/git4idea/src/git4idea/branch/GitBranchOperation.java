@@ -194,7 +194,7 @@ abstract class GitBranchOperation {
   /**
    * Show fatal error as a notification or as a dialog with rollback proposal.
    */
-  protected void fatalError(@NotNull String title, @NotNull String message) {
+  protected void fatalError(@NotNull @NlsContexts.NotificationTitle String title, @NotNull @NlsContexts.NotificationContent String message) {
     if (wereSuccessful())  {
       showFatalErrorDialogWithRollback(title, message);
     }
@@ -210,11 +210,11 @@ abstract class GitBranchOperation {
     }
   }
 
-  protected void showFatalNotification(@NotNull String title, @NotNull String message) {
+  protected void showFatalNotification(@NotNull @NlsContexts.NotificationTitle String title, @NotNull @NlsContexts.NotificationContent String message) {
     notifyError(title, message);
   }
 
-  protected void notifyError(@NotNull String title, @NotNull String message) {
+  protected void notifyError(@NotNull @NlsContexts.NotificationTitle String title, @NotNull @NlsContexts.NotificationContent String message) {
     VcsNotifier.getInstance(myProject).notifyError(title, message);
   }
 

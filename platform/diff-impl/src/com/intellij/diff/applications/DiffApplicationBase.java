@@ -22,6 +22,7 @@ import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -36,13 +37,14 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 public abstract class DiffApplicationBase extends ApplicationStarterBase {
-  protected static final String NULL_PATH = "/dev/null";
+  @NlsSafe protected static final String NULL_PATH = "/dev/null";
 
   protected static final Logger LOG = Logger.getInstance(DiffApplicationBase.class);
 
@@ -55,7 +57,7 @@ public abstract class DiffApplicationBase extends ApplicationStarterBase {
   //
 
   @NotNull
-  public static List<VirtualFile> findFiles(@NotNull List<String> filePaths, @Nullable String currentDirectory) throws Exception {
+  public static List<VirtualFile> findFilesOrThrow(@NotNull List<String> filePaths, @Nullable String currentDirectory) throws Exception {
     List<VirtualFile> files = new ArrayList<>();
 
     for (String path : filePaths) {
@@ -69,16 +71,16 @@ public abstract class DiffApplicationBase extends ApplicationStarterBase {
       }
     }
 
-    refreshAndEnsureFilesValid(ContainerUtil.skipNulls(files));
+    refreshAndEnsureFilesValid(files);
 
     return files;
   }
 
-  private static void refreshAndEnsureFilesValid(@NotNull List<? extends VirtualFile> files) throws Exception {
+  public static void refreshAndEnsureFilesValid(@NotNull List<? extends VirtualFile> files) throws Exception {
     VfsUtil.markDirtyAndRefresh(false, false, false, VfsUtilCore.toVirtualFileArray(files));
 
     for (VirtualFile file : files) {
-      if (!file.isValid()) throw new Exception(DiffBundle.message("cannot.find.file.error", file.getPresentableUrl()));
+      if (file != null && !file.isValid()) throw new Exception(DiffBundle.message("cannot.find.file.error", file.getPresentableUrl()));
     }
   }
 
@@ -88,6 +90,22 @@ public abstract class DiffApplicationBase extends ApplicationStarterBase {
     VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     if (virtualFile == null) {
       LOG.warn(String.format("Can't find file: current directory - %s; path - %s", currentDirectory, path));
+    }
+    return virtualFile;
+  }
+
+  @Nullable
+  public static VirtualFile findOrCreateFile(@NotNull String path, @Nullable String currentDirectory) throws IOException {
+    File file = getFile(path, currentDirectory);
+    VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+    if (virtualFile == null) {
+      boolean wasCreated = file.createNewFile();
+      if (wasCreated) {
+        virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+      }
+    }
+    if (virtualFile == null) {
+      LOG.warn(String.format("Can't create file: current directory - %s; path - %s", currentDirectory, path));
     }
     return virtualFile;
   }

@@ -216,6 +216,12 @@ public final class HttpRequests {
     });
   }
 
+  public static RequestBuilder requestWithRange(@NotNull String url,
+                                                @NotNull String bytes){
+    return requestWithBody(url, "GET", null,
+                           connection -> connection.setRequestProperty("Range", "bytes="+bytes));
+  }
+
   @NotNull
   public static String createErrorMessage(@NotNull IOException e, @NotNull Request request, boolean includeHeaders) {
     StringBuilder builder = new StringBuilder();

@@ -81,7 +81,7 @@ public class NullArgumentToVariableArgMethodInspection extends BaseInspection {
    * @return true iff {@code call} is varargs method call and {@code lastArgumentType} is {@code null} type or array type, 
    *              which is assignable from vararg parameter component type
    */
-  public static boolean isSuspiciousVararg(PsiCall call, PsiType lastArgumentType, Supplier<PsiMethod> methodSupplier) {
+  public static boolean isSuspiciousVararg(PsiCall call, PsiType lastArgumentType, Supplier<? extends PsiMethod> methodSupplier) {
     return NullArgumentToVariableArgVisitor.getSuspiciousVarargType(call, lastArgumentType, methodSupplier) != null;
   }
 
@@ -99,7 +99,7 @@ public class NullArgumentToVariableArgMethodInspection extends BaseInspection {
       visitCall(call);
     }
 
-      private static PsiArrayType getSuspiciousVarargType(PsiCall call, PsiType type, Supplier<PsiMethod> resolver) {
+      private static PsiArrayType getSuspiciousVarargType(PsiCall call, PsiType type, Supplier<? extends PsiMethod> resolver) {
       final boolean checkArray;
       if (PsiType.NULL.equals(type)) {
         checkArray = false;

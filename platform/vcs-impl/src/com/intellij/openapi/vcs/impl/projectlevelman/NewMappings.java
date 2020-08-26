@@ -398,7 +398,7 @@ public final class NewMappings implements Disposable {
 
   private void dumpMappingsToLog() {
     for (VcsDirectoryMapping mapping : myMappings) {
-      String path = mapping.isDefaultMapping() ? VcsDirectoryMapping.PROJECT_CONSTANT : mapping.getDirectory();
+      String path = mapping.isDefaultMapping() ? "<Project>" : mapping.getDirectory();
       String vcs = mapping.getVcs();
       LOG.info(String.format("VCS Root: [%s] - [%s]", vcs, path));
     }
@@ -521,7 +521,8 @@ public final class NewMappings implements Disposable {
       else {
         AbstractVcs vcs = myVcsManager.findVcsByName(vcsName);
         if (vcs == null) {
-          VcsBalloonProblemNotifier.showOverChangesView(myProject, "VCS plugin not found for mapping to : '" + vcsName + "'",
+          VcsBalloonProblemNotifier.showOverChangesView(myProject,
+                                                        VcsBundle.message("impl.notification.content.vcs.plugin.not.found.for.mapping.to", vcsName),
                                                         MessageType.ERROR);
           filteredMappings.addAll(mappings);
         }

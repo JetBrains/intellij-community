@@ -46,6 +46,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.jetbrains.idea.svn.SvnBundle.message;
+import static org.jetbrains.idea.svn.SvnBundle.messagePointer;
 
 public class RootsAndBranches implements CommittedChangeListDecorator {
   private static final Logger LOG = Logger.getInstance(RootsAndBranches.class);
@@ -377,8 +378,9 @@ public class RootsAndBranches implements CommittedChangeListDecorator {
 
   private final class MyRefresh extends DumbAwareAction {
     private MyRefresh() {
-      super(message("committed.changes.action.merge.highlighting.refresh.text"),
-            message("committed.changes.action.merge.highlighting.refresh.description"), AllIcons.Actions.Refresh);
+      super(messagePointer("committed.changes.action.merge.highlighting.refresh.text"),
+            messagePointer("committed.changes.action.merge.highlighting.refresh.description"),
+            AllIcons.Actions.Refresh);
     }
 
     @Override

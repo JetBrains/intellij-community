@@ -149,7 +149,7 @@ public class RncDefineImpl extends RncElementImpl implements RncDefine, PsiMetaO
 
     @Override
     public String getTypeName() {
-      return RelaxngBundle.message("pattern.definition");
+      return RelaxngBundle.message("relaxng.symbol.pattern-definition");
     }
 
     @Override

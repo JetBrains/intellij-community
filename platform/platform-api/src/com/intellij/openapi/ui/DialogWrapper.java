@@ -43,10 +43,7 @@ import com.intellij.util.ui.*;
 import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -790,7 +787,7 @@ public abstract class DialogWrapper {
       button.putClientProperty("JButton.buttonType", "text");
     }
 
-    Pair<Integer, String> pair = extractMnemonic(button.getText());
+    Pair<Integer, @Nls String> pair = extractMnemonic(button.getText());
     button.setText(pair.second);
     int mnemonic = pair.first;
 
@@ -818,11 +815,11 @@ public abstract class DialogWrapper {
   }
 
   @NotNull
-  public static Pair<Integer, String> extractMnemonic(@Nullable String text) {
+  public static Pair<Integer, @Nls String> extractMnemonic(@Nullable @Nls String text) {
     if (text == null) return pair(0, null);
 
     int mnemonic = 0;
-    StringBuilder plainText = new StringBuilder();
+    @Nls StringBuilder plainText = new StringBuilder();
     for (int i = 0; i < text.length(); i++) {
       char ch = text.charAt(i);
       if (ch == '_' || ch == '&') {
@@ -1187,7 +1184,7 @@ public abstract class DialogWrapper {
   }
 
   @Nullable
-  public final String getDimensionKey() {
+  public final @NonNls String getDimensionKey() {
     return getDimensionServiceKey();
   }
 
@@ -1818,7 +1815,7 @@ public abstract class DialogWrapper {
      *
      * @param name the action name (see {@link Action#NAME})
      */
-    protected DialogWrapperAction(@NotNull String name) {
+    protected DialogWrapperAction(@NotNull @NlsContexts.Button String name) {
       super(name);
     }
 
@@ -1916,7 +1913,7 @@ public abstract class DialogWrapper {
      * @param name     the action name
      * @param exitCode the exit code for dialog
      */
-    public DialogWrapperExitAction(String name, int exitCode) {
+    public DialogWrapperExitAction(@NlsContexts.Button String name, int exitCode) {
       super(name);
       myExitCode = exitCode;
     }

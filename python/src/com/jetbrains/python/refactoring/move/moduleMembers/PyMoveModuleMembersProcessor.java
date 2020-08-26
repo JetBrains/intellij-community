@@ -38,6 +38,7 @@ import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import com.jetbrains.python.refactoring.classes.PyClassRefactoringUtil;
 import com.jetbrains.python.refactoring.move.PyMoveRefactoringUtil;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -157,7 +158,7 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
     }
   }
 
-  public static String getRefactoringName() {
+  public static @Nls String getRefactoringName() {
     return PyBundle.message("refactoring.move.module.members");
   }
 }

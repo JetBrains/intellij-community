@@ -2,6 +2,7 @@
 package com.intellij.openapi.extensions;
 
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +28,7 @@ public final class ExtensionInstantiationException extends RuntimeException {
   }
 
   @Override
-  public String getMessage() {
+  public @NonNls String getMessage() {
     String message = super.getMessage();
     PluginId pluginId = getExtensionOwnerId();
     return pluginId != null ? StringUtil.notNullize(message) + " [Plugin " + pluginId + "]" : message;

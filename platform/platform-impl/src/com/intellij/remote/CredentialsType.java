@@ -35,7 +35,7 @@ public abstract class CredentialsType<T> {
     }
   };
 
-  private final String myName;
+  private final @Nls(capitalization = Nls.Capitalization.Title) String myName;
   private final String myPrefix;
 
   protected CredentialsType(@Nls(capitalization = Nls.Capitalization.Title) String name, String prefix) {
@@ -43,7 +43,7 @@ public abstract class CredentialsType<T> {
     myPrefix = prefix;
   }
 
-  public String getName() {
+  public @Nls(capitalization = Nls.Capitalization.Title) String getName() {
     return myName;
   }
 

@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.JBList;
@@ -267,7 +268,10 @@ public class SearchTextField extends JPanel {
     }
   }
 
-  private void addMenuItem(final String item) {
+  protected void historyItemChosen(String item) {
+  }
+
+  private void addMenuItem(@NlsSafe String item) {
     if (myNativeSearchPopup != null) {
       myNativeSearchPopup.remove(myNoItems);
       final JMenuItem menuItem = new JBMenuItem(item);
@@ -275,6 +279,7 @@ public class SearchTextField extends JPanel {
       menuItem.addActionListener(e -> {
         myTextField.setText(item);
         addCurrentTextToHistory();
+        historyItemChosen(item);
       });
     }
   }

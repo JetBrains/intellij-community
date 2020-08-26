@@ -133,7 +133,7 @@ public class GradleRunTaskDialog extends DialogWrapper {
 
   public void setCommandLine(@NotNull String fullCommandLine) {
     if (commandLineComboBox != null) {
-      commandLineComboBox.setSelectedItem(fullCommandLine);
+      commandLineComboBox.setSelectedItem(fullCommandLine); //NON-NLS
     }
 
     commandLineEditor.setText(fullCommandLine);

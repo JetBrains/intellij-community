@@ -446,6 +446,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
     if (w == 0) return;
 
+    int viewportStartY = myEditor.getScrollingModel().getVisibleArea().y;
+
     AffineTransform old = setMirrorTransformIfNeeded(g, x, w);
     try {
       Color color = myEditor.getColorsScheme().getColor(EditorColors.ANNOTATIONS_COLOR);
@@ -464,11 +466,31 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
         int annotationSize = myTextAnnotationGutterSizes.getInt(i);
 
+        int logicalLine = -1;
+        Color bg = null;
         VisualLinesIterator visLinesIterator = new VisualLinesIterator(myEditor, startVisualLine);
         while (!visLinesIterator.atEnd() && visLinesIterator.getVisualLine() <= endVisualLine) {
-          int logLine = visLinesIterator.getDisplayedLogicalLine();
           int y = visLinesIterator.getY();
-          paintAnnotationLine(g, gutterProvider, logLine, x, y, annotationSize, lineHeight);
+          boolean paintText = !visLinesIterator.startsWithSoftWrap() || y <= viewportStartY;
+
+          if (y < viewportStartY && visLinesIterator.endsWithSoftWrap()) {  // "sticky" line annotation
+            y = viewportStartY;
+          }
+          else if (viewportStartY < y && y < viewportStartY + lineHeight && visLinesIterator.startsWithSoftWrap()) {
+            y = viewportStartY + lineHeight;  // to avoid drawing bg over the "sticky" line above
+          }
+
+          if (paintText || logicalLine == -1) {
+            logicalLine = visLinesIterator.getDisplayedLogicalLine();
+            bg = gutterProvider.getBgColor(logicalLine, myEditor);
+          }
+          if (bg != null) {
+            g.setColor(bg);
+            g.fillRect(x, y, annotationSize, lineHeight + y - visLinesIterator.getY());
+          }
+          if (paintText) {
+            paintAnnotationLine(g, gutterProvider, logicalLine, x, y);
+          }
 
           visLinesIterator.advance();
         }
@@ -482,13 +504,8 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     }
   }
 
-  private void paintAnnotationLine(Graphics g, TextAnnotationGutterProvider gutterProvider, int line, int x, int y, int width, int height) {
+  private void paintAnnotationLine(Graphics g, TextAnnotationGutterProvider gutterProvider, int line, int x, int y) {
     String s = gutterProvider.getLineText(line, myEditor);
-    final Color bg = gutterProvider.getBgColor(line, myEditor);
-    if (bg != null) {
-      g.setColor(bg);
-      g.fillRect(x, y, width, height);
-    }
     if (!StringUtil.isEmpty(s)) {
       g.setColor(myEditor.getColorsScheme().getColor(gutterProvider.getColor(line, myEditor)));
       EditorFontType style = gutterProvider.getStyle(line, myEditor);
@@ -587,17 +604,21 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     Color colorUnderCaretRow = myEditor.getColorsScheme().getColor(EditorColors.LINE_NUMBER_ON_CARET_ROW_COLOR);
     Font font = getFontForLineNumbers();
     g.setFont(font);
+    int viewportStartY = myEditor.getScrollingModel().getVisibleArea().y;
 
     AffineTransform old = setMirrorTransformIfNeeded(g, getLineNumberAreaOffset(), getLineNumberAreaWidth());
     try {
       int caretLogicalLine = myEditor.getCaretModel().getLogicalPosition().line;
       VisualLinesIterator visLinesIterator = new VisualLinesIterator(myEditor, startVisualLine);
       while (!visLinesIterator.atEnd() && visLinesIterator.getVisualLine() <= endVisualLine) {
-        if (!visLinesIterator.startsWithSoftWrap()) {
+        if (!visLinesIterator.startsWithSoftWrap() || visLinesIterator.getY() <= viewportStartY) {
           int logicalLine = visLinesIterator.getDisplayedLogicalLine();
           Integer lineToDisplay = converter.convert(myEditor, logicalLine + 1);
           if (lineToDisplay != null) {
-            int startY = visLinesIterator.getY();
+            int y = visLinesIterator.getY();
+            if (y < viewportStartY && visLinesIterator.endsWithSoftWrap()) {  // "sticky" line number
+              y = viewportStartY;
+            }
             if (myEditor.isInDistractionFreeMode()) {
               Color fgColor = myTextFgColors.get(visLinesIterator.getVisualLine());
               g.setColor(fgColor != null ? fgColor : color != null ? color : JBColor.blue);
@@ -616,7 +637,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
             g.drawString(s,
                          textOffset,
-                         startY + myEditor.getAscent());
+                         y + myEditor.getAscent());
           }
         }
         visLinesIterator.advance();

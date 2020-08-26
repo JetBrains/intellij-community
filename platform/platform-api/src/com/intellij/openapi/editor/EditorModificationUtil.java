@@ -9,9 +9,9 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.util.MathUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Producer;
 import org.jetbrains.annotations.NotNull;
@@ -409,7 +409,7 @@ public final class EditorModificationUtil {
   /**
    * @see #setReadOnlyHint(Editor, String, HyperlinkListener)
    */
-  public static void setReadOnlyHint(@NotNull Editor editor, @Nullable String message) {
+  public static void setReadOnlyHint(@NotNull Editor editor, @Nullable @NlsContexts.HintText String message) {
     setReadOnlyHint(editor, message, null);
   }
 
@@ -419,16 +419,16 @@ public final class EditorModificationUtil {
    * @param message      New hint message or {@code null} if default message should be used instead.
    * @param linkListener Callback for html hyperlinks that can be used in hint message.
    */
-  public static void setReadOnlyHint(@NotNull Editor editor, @Nullable String message, @Nullable HyperlinkListener linkListener) {
+  public static void setReadOnlyHint(@NotNull Editor editor, @Nullable @NlsContexts.HintText String message, @Nullable HyperlinkListener linkListener) {
     editor.putUserData(READ_ONLY_VIEW_HINT_KEY, message != null ? new ReadOnlyHint(message, linkListener) : null);
   }
 
   private static final class ReadOnlyHint {
 
-    @NotNull public final String message;
+    @NotNull public final @NlsContexts.HintText String message;
     @Nullable public final HyperlinkListener linkListener;
 
-    private ReadOnlyHint(@NotNull String message, @Nullable HyperlinkListener linkListener) {
+    private ReadOnlyHint(@NotNull @NlsContexts.HintText String message, @Nullable HyperlinkListener linkListener) {
       this.message = message;
       this.linkListener = linkListener;
     }

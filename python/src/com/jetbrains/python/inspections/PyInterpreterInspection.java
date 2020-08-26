@@ -5,6 +5,7 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -19,6 +20,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -75,7 +77,6 @@ public final class PyInterpreterInspection extends PyInspection {
 
       final boolean pyCharm = PythonIdeLanguageCustomization.isMainlyPythonIde();
 
-      final String interpreterOwner = pyCharm ? "project" : "module";
       final List<LocalQuickFix> fixes = new ArrayList<>();
       // TODO: Introduce an inspection extension
       if (UsePipEnvQuickFix.Companion.isApplicable(module)) {
@@ -94,33 +95,62 @@ public final class PyInterpreterInspection extends PyInspection {
         fixes.add(new InterpreterSettingsQuickFix(module));
       }
 
-      final String product = pyCharm ? "PyCharm" : "Python plugin";
-
       if (sdk == null) {
-        registerProblem(node, PyPsiBundle.message("python.sdk.no.interpreter.configured.owner", interpreterOwner), fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+        final @InspectionMessage String message;
+        if (pyCharm) {
+          message = PyPsiBundle.message("INSP.interpreter.no.python.interpreter.configured.for.project");
+        }
+        else {
+          message = PyPsiBundle.message("INSP.interpreter.no.python.interpreter.configured.for.module");
+        }
+        registerProblem(node, message, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
       }
       else {
         // TODO: Introduce an inspection extension
-        final String associatedModulePath = PySdkExtKt.getAssociatedModulePath(sdk);
+        final @NlsSafe String associatedModulePath = PySdkExtKt.getAssociatedModulePath(sdk);
         if (PipenvKt.isPipEnv(sdk) && (associatedModulePath == null || PySdkExtKt.isAssociatedWithAnotherModule(sdk, module))) {
-          final String message = associatedModulePath != null ?
-                                 "Pipenv interpreter is associated with another " + interpreterOwner + ": '" + associatedModulePath + "'" :
-                                 "Pipenv interpreter is not associated with any " + interpreterOwner;
+          final @InspectionMessage String message;
+          if (associatedModulePath != null) {
+            if (pyCharm) {
+              message = PyPsiBundle.message("INSP.interpreter.pipenv.interpreter.associated.with.another.project", associatedModulePath);
+            }
+            else {
+              message = PyPsiBundle.message("INSP.interpreter.pipenv.interpreter.associated.with.another.module", associatedModulePath);
+            }
+          }
+          else {
+            if (pyCharm) {
+              message = PyPsiBundle.message("INSP.interpreter.pipenv.interpreter.not.associated.with.any.project");
+            }
+            else  {
+              message = PyPsiBundle.message("INSP.interpreter.pipenv.interpreter.not.associated.with.any.module");
+            }
+          }
           registerProblem(node, message, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
         }
         else if (PythonSdkUtil.isInvalid(sdk)) {
-          registerProblem(node,
-                          "Invalid Python interpreter selected for the " + interpreterOwner,
-                          fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+          final @InspectionMessage String message;
+          if (pyCharm) {
+            message = PyPsiBundle.message("INSP.interpreter.invalid.python.interpreter.selected.for.project");
+          }
+          else {
+            message = PyPsiBundle.message("INSP.interpreter.invalid.python.interpreter.selected.for.module");
+          }
+          registerProblem(node, message, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
         }
         else {
           final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(sdk);
           if (!LanguageLevel.SUPPORTED_LEVELS.contains(languageLevel)) {
-            registerProblem(
-              node,
-              "Python " + languageLevel + " has reached its end-of-life date and it is no longer supported in " + product + ".",
-              fixes.toArray(LocalQuickFix.EMPTY_ARRAY)
-            );
+            final @InspectionMessage String message;
+            if (pyCharm) {
+              message = PyPsiBundle.message("INSP.interpreter.python.has.reached.its.end.of.life.and.is.no.longer.supported.in.pycharm",
+                                         languageLevel);
+            }
+            else {
+              message = PyPsiBundle.message("INSP.interpreter.python.has.reached.its.end.life.and.is.no.longer.supported.in.python.plugin",
+                                         languageLevel);
+            }
+            registerProblem(node, message, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
           }
         }
       }

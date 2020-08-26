@@ -14,6 +14,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -60,7 +61,7 @@ public abstract class UndoRedoAction extends DumbAwareAction implements LightEdi
     }
     presentation.setEnabled(isAvailable(editor, undoManager));
 
-    Pair<String, String> pair = getActionNameAndDescription(editor, undoManager);
+    Pair<@NlsActions.ActionText String, @NlsActions.ActionDescription String> pair = getActionNameAndDescription(editor, undoManager);
 
     presentation.setText(pair.first);
     presentation.setDescription(pair.second);
@@ -107,7 +108,7 @@ public abstract class UndoRedoAction extends DumbAwareAction implements LightEdi
 
   protected abstract boolean isAvailable(FileEditor editor, UndoManager undoManager);
 
-  protected abstract Pair<String, String> getActionNameAndDescription(FileEditor editor, UndoManager undoManager);
+  protected abstract Pair<@NlsActions.ActionText String, @NlsActions.ActionDescription String> getActionNameAndDescription(FileEditor editor, UndoManager undoManager);
 
   private static class SwingUndoManagerWrapper extends UndoManager{
     private final javax.swing.undo.UndoManager mySwingUndoManager;

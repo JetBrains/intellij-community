@@ -1,11 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.actions.validate;
 
+import com.intellij.ide.highlighter.XHtmlFileType;
+import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts.Command;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -39,26 +41,27 @@ public class ValidateXmlAction extends AnAction {
 
   private void doRunAction(final @NotNull PsiFile psiFile) {
 
-    CommandProcessor.getInstance().executeCommand(psiFile.getProject(), () -> {
-      final Runnable action = () -> {
-        try {
-          psiFile.putUserData(runningValidationKey, "");
-          PsiDocumentManager.getInstance(psiFile.getProject()).commitAllDocuments();
+    CommandProcessor.getInstance().executeCommand(
+      psiFile.getProject(), () -> {
+        final Runnable action = () -> {
+          try {
+            psiFile.putUserData(runningValidationKey, "");
+            PsiDocumentManager.getInstance(psiFile.getProject()).commitAllDocuments();
 
-          getHandler(psiFile).doValidate((XmlFile)psiFile);
-        }
-        finally {
-          psiFile.putUserData(runningValidationKey, null);
-        }
-      };
-      ApplicationManager.getApplication().runWriteAction(action);
-    },
-                                                  getCommandName(),
-                                                  null
+            getHandler(psiFile).doValidate((XmlFile)psiFile);
+          }
+          finally {
+            psiFile.putUserData(runningValidationKey, null);
+          }
+        };
+        ApplicationManager.getApplication().runWriteAction(action);
+      },
+      getCommandName(),
+      null
     );
   }
 
-  private String getCommandName(){
+  private @Command String getCommandName() {
     String text = getTemplatePresentation().getText();
     return text != null ? text : "";
   }
@@ -76,13 +79,14 @@ public class ValidateXmlAction extends AnAction {
     if (enabled) {
       final PsiFile containingFile = psiElement.getContainingFile();
 
-      if (containingFile!=null &&
+      if (containingFile != null &&
           containingFile.getVirtualFile() != null &&
-          (containingFile.getFileType() == StdFileTypes.XML ||
-           containingFile.getFileType() == StdFileTypes.XHTML
+          (containingFile.getFileType() == XmlFileType.INSTANCE ||
+           containingFile.getFileType() == XHtmlFileType.INSTANCE
           )) {
         enabled = containingFile.getUserData(runningValidationKey) == null;
-      } else {
+      }
+      else {
         enabled = false;
       }
     }

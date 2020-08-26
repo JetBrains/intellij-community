@@ -16,6 +16,7 @@ import git4idea.config.GitVcsSettings
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepository
 import git4idea.util.GitLocalCommitCompareInfo
+import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import javax.swing.JComponent
 
@@ -93,6 +94,6 @@ internal class ShowDiffWithBranchDialog(val project: Project,
 
   private sealed class LoadingResult {
     class Success(val compareInfo: GitLocalCommitCompareInfo): LoadingResult()
-    class Error(val error: String) : LoadingResult()
+    class Error(@Nls val error: String) : LoadingResult()
   }
 }

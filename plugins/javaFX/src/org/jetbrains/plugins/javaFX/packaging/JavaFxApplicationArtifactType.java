@@ -85,9 +85,9 @@ public class JavaFxApplicationArtifactType extends ArtifactType {
     @Override
     public String getPresentableName() {
       if (myModules.size() == 1) {
-        return "From module '" + myModules.get(0).getName() + "'";
+        return JavaFXBundle.message("action.from.modules.artifact.text", myModules.get(0).getName());
       }
-      return "From module...";
+      return JavaFXBundle.message("action.from.module.artifact.text");
     }
 
     @Override
@@ -97,8 +97,9 @@ public class JavaFxApplicationArtifactType extends ArtifactType {
         module = myModules.get(0);
       } else {
         final ChooseModulesDialog dialog = new ChooseModulesDialog(myModules.get(0).getProject(), myModules,
-                                                                   "Select Module",
-                                                                   "Selected module output would to be included in the artifact");
+                                                                   JavaFXBundle.message("dialog.title.select.module.for.artifact"),
+                                                                   JavaFXBundle.message(
+                                                                     "label.selected.module.output.would.to.be.included.in.artifact"));
         dialog.setSingleSelectionMode();
         if (dialog.showAndGet()) {
           final List<Module> elements = dialog.getChosenElements();

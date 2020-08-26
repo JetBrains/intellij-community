@@ -7,9 +7,12 @@ import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.GuiUtils;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.CalledInAny;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -84,9 +87,9 @@ public class GitExecutableProblemsNotifier {
   static class BadGitExecutableNotification extends Notification {
     BadGitExecutableNotification(@NotNull String groupDisplayId,
                                         @Nullable Icon icon,
-                                        @Nullable String title,
-                                        @Nullable String subtitle,
-                                        @Nullable String content,
+                                        @Nullable @NlsContexts.NotificationTitle String title,
+                                        @Nullable @NlsContexts.NotificationSubtitle String subtitle,
+                                        @Nullable @NlsContexts.NotificationContent String content,
                                         @NotNull NotificationType type,
                                         @Nullable NotificationListener listener) {
       super(groupDisplayId, icon, title, subtitle, content, type, listener);
@@ -96,6 +99,7 @@ public class GitExecutableProblemsNotifier {
   /**
    * Convert validation exception to pretty error message
    */
+  @Nls
   @NotNull
   public static String getPrettyErrorMessage(@NotNull Throwable exception) {
     String errorMessage = null;
@@ -115,7 +119,7 @@ public class GitExecutableProblemsNotifier {
         return exception.getMessage();
       }
       else {
-        return exception.getClass().getName();
+        return VcsBundle.message("exception.text.unknown.error");
       }
     }
     return errorMessage;

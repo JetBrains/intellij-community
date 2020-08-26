@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.vcs.log.VcsCommitMetadata
@@ -76,6 +77,7 @@ open class GoToParentOrChildAction(val parent: Boolean) : DumbAwareAction() {
     VcsLogUsageTriggerCollector.triggerUsage(e, this) { data -> data.addData("parent_commit", parent) }
   }
 
+  @NlsActions.ActionText
   private fun getActionText(commitMetadata: VcsCommitMetadata): String {
     if (commitMetadata !is LoadingDetails) {
       val time: Long = commitMetadata.authorTime

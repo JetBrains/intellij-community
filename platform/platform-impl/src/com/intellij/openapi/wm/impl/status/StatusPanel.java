@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.JBMenuItem;
 import com.intellij.openapi.ui.JBPopupMenu;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
@@ -244,7 +245,7 @@ class StatusPanel extends JPanel {
     return myCurrentNotification != null;
   }
 
-  private void setStatusText(String text) {
+  private void setStatusText(@NlsContexts.StatusBarText String text) {
     myTextPanel.setText(text);
   }
 

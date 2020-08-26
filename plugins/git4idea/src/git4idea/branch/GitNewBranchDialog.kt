@@ -5,9 +5,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.layout.*
-import com.intellij.util.ui.UIUtil.BR
 import git4idea.branch.GitBranchOperationType.CHECKOUT
 import git4idea.branch.GitBranchOperationType.CREATE
 import git4idea.i18n.GitBundle
@@ -97,9 +98,14 @@ internal class GitNewBranchDialog @JvmOverloads constructor(project: Project,
       overwriteCheckbox?.isEnabled = localBranchConflict != null
 
       if (localBranchConflict == null || overwriteCheckbox?.isSelected == true) null // no conflicts or ask to reset
-      else if (localBranchConflict.warning && localConflictsAllowed) warning("${localBranchConflict.message}.$BR${operation.description}")
-      else error(localBranchConflict.message +
-                 if (showResetOption) ".$BR" + GitBundle.message("new.branch.dialog.overwrite.existing.branch.warning") else "")
+      else if (localBranchConflict.warning && localConflictsAllowed) {
+        warning(HtmlBuilder().append(localBranchConflict.message + ".").br().append(operation.description).toString())
+      }
+      else if (showResetOption) {
+        error(HtmlBuilder().append(localBranchConflict.message + ".").br()
+                .append(GitBundle.message("new.branch.dialog.overwrite.existing.branch.warning")))
+      }
+      else error(localBranchConflict.message)
     }
   }
 

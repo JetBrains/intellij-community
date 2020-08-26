@@ -5,6 +5,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.presentation.Presentation;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.*;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.impl.ExtensionOrderConverter;
@@ -12,11 +13,11 @@ import org.jetbrains.idea.devkit.dom.impl.ExtensionOrderConverter;
 @Presentation(typeName = DevkitDomPresentationConstants.EXTENSION)
 public interface Extension extends DomElement {
 
-  String ID_ATTRIBUTE = "id";
-  String ORDER_ATTRIBUTE = "order";
-  String OS_ATTRIBUTE = "os";
+  @NonNls String ID_ATTRIBUTE = "id";
+  @NonNls String ORDER_ATTRIBUTE = "order";
+  @NonNls String OS_ATTRIBUTE = "os";
 
-  String IMPLEMENTATION_ATTRIBUTE = "implementation";
+  @NonNls String IMPLEMENTATION_ATTRIBUTE = "implementation";
 
   @NotNull
   @Override

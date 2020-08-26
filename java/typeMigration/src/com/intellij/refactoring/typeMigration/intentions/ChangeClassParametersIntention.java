@@ -23,6 +23,7 @@ import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
 import com.intellij.refactoring.typeMigration.TypeMigrationRules;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -80,7 +81,7 @@ public class ChangeClassParametersIntention extends PsiElementBaseIntentionActio
         final TemplateBuilderImpl templateBuilder = (TemplateBuilderImpl)TemplateBuilderFactory.getInstance().createTemplateBuilder(aClass);
 
         final String oldTypeText = typeElement.getText();
-        final String varName = "param";
+        final @NonNls String varName = "param";
         templateBuilder.replaceElement(typeElement, varName, new TypeExpression(project, new PsiType[]{typeElement.getType()}), true);
 
         final Template template = templateBuilder.buildInlineTemplate();
@@ -127,7 +128,7 @@ public class ChangeClassParametersIntention extends PsiElementBaseIntentionActio
                                                                     ((PsiAnonymousClass)aClass).getBaseClassReference().getParameterList(), targetClassType);
               }
               catch (IncorrectOperationException e) {
-                HintManager.getInstance().showErrorHint(editor, "Incorrect type");
+                HintManager.getInstance().showErrorHint(editor, TypeMigrationBundle.message("change.class.parameter.incorrect.type.error.hint"));
               }
             }
           }

@@ -2,6 +2,7 @@
 package git4idea.rebase;
 
 import git4idea.i18n.GitBundle;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,7 +12,7 @@ class GitSuccessfulRebase extends GitRebaseStatus {
   }
 
   @NotNull
-  public static String formatMessage(@Nullable String currentBranch, @Nullable String baseBranch, boolean withCheckout) {
+  public static @Nls String formatMessage(@Nullable String currentBranch, @Nullable String baseBranch, boolean withCheckout) {
     if (withCheckout) {
       return GitBundle.message(
         "rebase.notification.successful.rebased.checkout.message",

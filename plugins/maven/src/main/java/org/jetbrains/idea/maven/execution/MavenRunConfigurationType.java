@@ -177,7 +177,7 @@ public final class MavenRunConfigurationType implements ConfigurationType {
       runner.execute(environment);
     }
     catch (ExecutionException e) {
-      MavenUtil.showError(project, "Failed to execute Maven goal", e);
+      MavenUtil.showError(project, RunnerBundle.message("notification.title.failed.to.execute.maven.goal"), e);
     }
   }
 

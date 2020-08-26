@@ -28,8 +28,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface ArtifactPointer {
 
-  @NotNull
-  String getArtifactName();
+  @NotNull @NlsSafe String getArtifactName();
 
   @Nullable
   Artifact getArtifact();

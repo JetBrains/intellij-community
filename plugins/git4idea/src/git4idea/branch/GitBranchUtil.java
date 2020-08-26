@@ -6,6 +6,8 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.NaturalComparator;
@@ -17,16 +19,14 @@ import com.intellij.util.containers.ContainerUtil;
 import git4idea.*;
 import git4idea.commands.*;
 import git4idea.config.GitVcsSettings;
+import git4idea.i18n.GitBundle;
 import git4idea.repo.GitBranchTrackInfo;
 import git4idea.repo.GitRepository;
 import git4idea.ui.branch.GitMultiRootBranchConfig;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.CalledInBackground;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -54,10 +54,11 @@ public final class GitBranchUtil {
   }
 
   @Nullable
-  public static GitBranchTrackInfo getTrackInfo(@NotNull GitRepository repository, @NotNull String localBranchName) {
+  public static GitBranchTrackInfo getTrackInfo(@NotNull GitRepository repository, @NotNull @NonNls String localBranchName) {
     return repository.getBranchTrackInfo(localBranchName);
   }
 
+  @NlsSafe
   @NotNull
   static String getCurrentBranchOrRev(@NotNull Collection<? extends GitRepository> repositories) {
     if (repositories.size() > 1) {
@@ -107,8 +108,9 @@ public final class GitBranchUtil {
     return ContainerUtil.filter(convertBranchesToNames(remoteBranches), input -> !input.equals("HEAD")); //NON-NLS
   }
 
+  @NlsSafe
   @NotNull
-  public static String stripRefsPrefix(@NotNull String branchName) {
+  public static String stripRefsPrefix(@NotNull @NonNls String branchName) {
     if (branchName.startsWith(GitBranch.REFS_HEADS_PREFIX)) {
       return branchName.substring(GitBranch.REFS_HEADS_PREFIX.length());
     }
@@ -125,6 +127,7 @@ public final class GitBranchUtil {
    * Returns current branch name (if on branch) or current revision otherwise.
    * For fresh repository returns an empty string.
    */
+  @NlsSafe
   @NotNull
   public static String getBranchNameOrRev(@NotNull GitRepository repository) {
     if (repository.isOnBranch()) {
@@ -146,16 +149,16 @@ public final class GitBranchUtil {
   @Nullable
   public static GitNewBranchOptions getNewBranchNameFromUser(@NotNull Project project,
                                                              @NotNull Collection<? extends GitRepository> repositories,
-                                                             @NotNull String dialogTitle,
-                                                             @Nullable String initialName) {
+                                                             @NotNull @NlsContexts.DialogTitle String dialogTitle,
+                                                             @Nullable @NlsSafe String initialName) {
     return getNewBranchNameFromUser(project, repositories, dialogTitle, initialName, false);
   }
 
   @Nullable
   public static GitNewBranchOptions getNewBranchNameFromUser(@NotNull Project project,
                                                              @NotNull Collection<? extends GitRepository> repositories,
-                                                             @NotNull String dialogTitle,
-                                                             @Nullable String initialName,
+                                                             @NotNull @NlsContexts.DialogTitle String dialogTitle,
+                                                             @Nullable @NlsSafe String initialName,
                                                              boolean showTrackingOption) {
     return new GitNewBranchDialog(project, repositories, dialogTitle, initialName, true, false, showTrackingOption).showAndGetOptions();
   }
@@ -164,6 +167,7 @@ public final class GitBranchUtil {
    * Returns the text that is displaying current branch.
    * In the simple case it is just the branch name, but in detached HEAD state it displays the hash or "rebasing master".
    */
+  @Nls
   @NotNull
   public static String getDisplayableBranchText(@NotNull GitRepository repository) {
     GitRepository.State state = repository.getState();
@@ -173,20 +177,24 @@ public final class GitBranchUtil {
       return DvcsUtil.getShortHash(currentRevision);
     }
 
-    String prefix = "";
-    if (state == GitRepository.State.MERGING || state == GitRepository.State.REBASING) {
-      prefix = state.toString() + " ";
-    }
-    else if (state == GitRepository.State.GRAFTING) {
-      prefix = "Cherry-picking in "; //NON-NLS
-    }
-    else if (state == GitRepository.State.REVERTING) {
-      prefix = "Reverting in "; //NON-NLS
-    }
-
     GitBranch branch = repository.getCurrentBranch();
     String branchName = (branch == null ? "" : branch.getName());
-    return prefix + branchName;
+
+    if (state == GitRepository.State.MERGING) {
+      return GitBundle.message("git.status.bar.widget.text.merge", branchName);
+    }
+    else if (state == GitRepository.State.REBASING) {
+      return GitBundle.message("git.status.bar.widget.text.rebase", branchName);
+    }
+    else if (state == GitRepository.State.GRAFTING) {
+      return GitBundle.message("git.status.bar.widget.text.cherry.pick", branchName);
+    }
+    else if (state == GitRepository.State.REVERTING) {
+      return GitBundle.message("git.status.bar.widget.text.revert", branchName);
+    }
+    else {
+      return branchName;
+    }
   }
 
   /**
@@ -372,7 +380,7 @@ public final class GitBranchUtil {
    * Checks whether branch names passed through arguments are the same
    * considering OS file system case sensitivity.
    */
-  public static boolean equalBranches(@Nullable String branchA, @Nullable String branchB) {
+  public static boolean equalBranches(@Nullable @NonNls String branchA, @Nullable @NonNls String branchB) {
     return StringUtilRt.equal(branchA, branchB, SystemInfo.isFileSystemCaseSensitive);
   }
 }

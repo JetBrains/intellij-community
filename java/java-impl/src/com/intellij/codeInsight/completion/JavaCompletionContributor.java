@@ -372,7 +372,7 @@ public class JavaCompletionContributor extends CompletionContributor implements 
 
   private static boolean smartCompleteExpression(CompletionParameters parameters,
                                                  CompletionResultSet result,
-                                                 Set<ExpectedTypeInfo> infos) {
+                                                 Set<? extends ExpectedTypeInfo> infos) {
     PsiElement position = parameters.getPosition();
     if (SmartCastProvider.shouldSuggestCast(parameters) ||
         !JavaSmartCompletionContributor.INSIDE_EXPRESSION.accepts(position) ||
@@ -544,8 +544,8 @@ public class JavaCompletionContributor extends CompletionContributor implements 
   private static List<LookupElement> completeReference(CompletionParameters parameters,
                                                        PsiJavaCodeReferenceElement ref,
                                                        JavaCompletionSession session,
-                                                       Set<ExpectedTypeInfo> expectedTypes,
-                                                       Condition<String> nameCondition) {
+                                                       Set<? extends ExpectedTypeInfo> expectedTypes,
+                                                       Condition<? super String> nameCondition) {
     PsiElement position = parameters.getPosition();
     ElementFilter filter = getReferenceFilter(position);
     if (filter == null) return Collections.emptyList();
@@ -994,7 +994,7 @@ public class JavaCompletionContributor extends CompletionContributor implements 
 
   private static boolean addExpectedTypeMembers(CompletionParameters parameters,
                                                 boolean searchInheritors,
-                                                Collection<ExpectedTypeInfo> types,
+                                                Collection<? extends ExpectedTypeInfo> types,
                                                 Consumer<? super LookupElement> result) {
     boolean[] added = new boolean[1];
     boolean smart = parameters.getCompletionType() == CompletionType.SMART;
@@ -1055,7 +1055,7 @@ public class JavaCompletionContributor extends CompletionContributor implements 
     }
   }
 
-  private static void addAutoModuleReference(String name, PsiElement parent, Set<String> filter, CompletionResultSet result) {
+  private static void addAutoModuleReference(String name, PsiElement parent, Set<? super String> filter, CompletionResultSet result) {
     if (PsiNameHelper.isValidModuleName(name, parent) && filter.add(name)) {
       LookupElement lookup = LookupElementBuilder.create(name).withIcon(AllIcons.FileTypes.Archive);
       lookup = TailTypeDecorator.withTail(lookup, TailType.SEMICOLON);

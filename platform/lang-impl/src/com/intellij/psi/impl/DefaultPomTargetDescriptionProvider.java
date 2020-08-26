@@ -3,6 +3,7 @@ package com.intellij.psi.impl;
 
 import com.intellij.codeInsight.highlighting.HighlightUsagesDescriptionLocation;
 import com.intellij.ide.TypePresentationService;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.PomDescriptionProvider;
 import com.intellij.pom.PomNamedTarget;
@@ -33,7 +34,7 @@ public class DefaultPomTargetDescriptionProvider extends PomDescriptionProvider 
     return null;
   }
 
-  private static String getTypeName(PomTarget element) {
+  private static @NlsSafe String getTypeName(PomTarget element) {
     TypePresentationService presentationService = TypePresentationService.getService();
     String elementTypeName = presentationService.getTypeName(element);
     if (elementTypeName != null) return elementTypeName;

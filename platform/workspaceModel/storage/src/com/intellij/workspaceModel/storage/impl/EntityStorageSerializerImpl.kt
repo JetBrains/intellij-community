@@ -14,8 +14,8 @@ import com.intellij.util.SmartList
 import com.intellij.util.containers.*
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.containers.ImmutableIntIntUniqueBiMap
-import com.intellij.workspaceModel.storage.impl.containers.ImmutablePositiveIntIntBiMap
-import com.intellij.workspaceModel.storage.impl.containers.ImmutablePositiveIntIntMultiMap
+import com.intellij.workspaceModel.storage.impl.containers.ImmutableNonNegativeIntIntBiMap
+import com.intellij.workspaceModel.storage.impl.containers.ImmutableNonNegativeIntIntMultiMap
 import com.intellij.workspaceModel.storage.impl.containers.LinkedBidirectionalMap
 import com.intellij.workspaceModel.storage.impl.indices.EntityStorageInternalIndex
 import com.intellij.workspaceModel.storage.impl.indices.MultimapStorageIndex
@@ -165,11 +165,11 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
     kryo.register(ByteArray::class.java)
     kryo.register(ImmutableEntityFamily::class.java)
     kryo.register(RefsTable::class.java)
-    kryo.register(ImmutablePositiveIntIntBiMap::class.java)
+    kryo.register(ImmutableNonNegativeIntIntBiMap::class.java)
     kryo.register(ImmutableIntIntUniqueBiMap::class.java)
     kryo.register(VirtualFileIndex::class.java)
     kryo.register(EntityStorageInternalIndex::class.java)
-    kryo.register(ImmutablePositiveIntIntMultiMap.ByList::class.java)
+    kryo.register(ImmutableNonNegativeIntIntMultiMap.ByList::class.java)
     kryo.register(IntArray::class.java)
     kryo.register(Pair::class.java)
     kryo.register(MultimapStorageIndex::class.java)
@@ -304,7 +304,10 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
 
       // Write indexes
       kryo.writeClassAndObject(output, storage.indexes.softLinks)
-      kryo.writeClassAndObject(output, storage.indexes.virtualFileIndex)
+
+      kryo.writeClassAndObject(output, storage.indexes.virtualFileIndex.entityId2VirtualFileUrlInfo)
+      kryo.writeClassAndObject(output, storage.indexes.virtualFileIndex.vfu2VirtualFileUrlInfo)
+
       kryo.writeClassAndObject(output, storage.indexes.entitySourceIndex)
       kryo.writeClassAndObject(output, storage.indexes.persistentIdIndex)
     }
@@ -351,7 +354,11 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
 
       // Read indexes
       val softLinks = kryo.readClassAndObject(input) as MultimapStorageIndex
-      val virtualFileIndex = kryo.readClassAndObject(input) as VirtualFileIndex
+
+      val entityId2VirtualFileUrlInfo = kryo.readClassAndObject(input) as HashMap<EntityId, MutableList<VirtualFileIndex.VirtualFileUrlInfo>>
+      val vfu2VirtualFileUrlInfo = kryo.readClassAndObject(input) as HashMap<VirtualFileUrl, MutableList<VirtualFileIndex.VirtualFileUrlInfo>>
+      val virtualFileIndex = VirtualFileIndex(entityId2VirtualFileUrlInfo, vfu2VirtualFileUrlInfo)
+
       val entitySourceIndex = kryo.readClassAndObject(input) as EntityStorageInternalIndex<EntitySource>
       val persistentIdIndex = kryo.readClassAndObject(input) as EntityStorageInternalIndex<PersistentEntityId<*>>
       val storageIndexes = StorageIndexes(softLinks, virtualFileIndex, entitySourceIndex, persistentIdIndex)

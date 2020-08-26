@@ -271,6 +271,9 @@
       <reference id="Git.Ignore.File"/>
       <separator/>
       <reference id="Diff.ShowDiff"/>
+      <reference ref="ChangesView.CreatePatchFromChanges"/>
+      <reference ref="ChangesView.CreatePatchToClipboard"/>
+      <separator/>
       <reference id="Vcs.ShowTabbedFileHistory"/>
       <reference id="LocalHistory"/>
     </group>
@@ -499,7 +502,7 @@
 
     <projectService serviceImplementation="git4idea.index.GitStageManager"/>
     <projectService serviceImplementation="git4idea.index.GitStageTracker"/>
-    <openapi.vcs.impl.LocalLineStatusTrackerProvider implementation="git4idea.index.lst.GitStageLineStatusTrackerProvider"/>
+    <openapi.vcs.impl.LocalLineStatusTrackerProvider implementation="git4idea.index.GitStageLineStatusTrackerProvider"/>
 
     <backgroundPostStartupActivity implementation="git4idea.index.GitStageStartupActivity"/>
 
@@ -512,6 +515,10 @@
     <editorTabTitleProvider implementation="git4idea.index.vfs.GitIndexVirtualFileTabTitleProvider"/>
 
     <diff.actions.ShowDiffAction.ExtensionProvider implementation="git4idea.index.actions.GitStageDiffAction"/>
+    <openapi.vcs.changes.actions.CreatePatchFromChangesAction.Dialog.ExtensionProvider
+      implementation="git4idea.index.actions.GitStageCreatePatchActionProvider$Dialog"/>
+    <openapi.vcs.changes.actions.CreatePatchFromChangesAction.Clipboard.ExtensionProvider
+      implementation="git4idea.index.actions.GitStageCreatePatchActionProvider$Clipboard"/>
 
     <vcs.consoleFolding implementation="git4idea.console.GitConsoleFolding"/>
     <console.folding implementation="git4idea.console.GitProgressOutputConsoleFolding"/>

@@ -53,7 +53,7 @@ public class AnnotationsEditor extends ModuleElementsEditor {
   }
 
   @Override
-  public @NlsContexts.ConfigurableName String getDisplayName() {
+  public String getDisplayName() {
     return getName();
   }
 

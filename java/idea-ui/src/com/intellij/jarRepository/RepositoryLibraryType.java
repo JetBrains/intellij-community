@@ -25,7 +25,6 @@ import com.intellij.openapi.roots.libraries.ui.LibraryPropertiesEditor;
 import com.intellij.openapi.roots.libraries.ui.LibraryRootsComponentDescriptor;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
@@ -36,7 +35,7 @@ import javax.swing.*;
 public class RepositoryLibraryType extends LibraryType<RepositoryLibraryProperties> {
 
   public static final PersistentLibraryKind<RepositoryLibraryProperties>
-    REPOSITORY_LIBRARY_KIND = new PersistentLibraryKind<RepositoryLibraryProperties>("repository") {
+    REPOSITORY_LIBRARY_KIND = new PersistentLibraryKind<>("repository") {
     @NotNull
     @Override
     public RepositoryLibraryProperties createDefaultProperties() {
@@ -81,7 +80,7 @@ public class RepositoryLibraryType extends LibraryType<RepositoryLibraryProperti
 
   @NotNull
   @Override
-  public @Nls String getDescription(@NotNull RepositoryLibraryProperties properties) {
+  public String getDescription(@NotNull RepositoryLibraryProperties properties) {
     RepositoryLibraryDescription description = RepositoryLibraryDescription.findDescription(properties);
     final String name = description.getDisplayName(properties.getVersion());
     return JavaUiBundle.message("repository.library.type.maven.description", name);

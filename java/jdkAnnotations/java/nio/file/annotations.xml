@@ -4,9 +4,11 @@
   </item>
   <item name='java.nio.file.FileSystem java.nio.file.Path getPath(java.lang.String, java.lang.String...) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
   <item name='java.nio.file.FileSystem java.nio.file.Path getPath(java.lang.String, java.lang.String...) 1'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
   <item name='java.nio.file.Files A readAttributes(java.nio.file.Path, java.lang.Class&lt;A&gt;, java.nio.file.LinkOption...) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -285,6 +287,12 @@
   </item>
   <item name='java.nio.file.Path java.nio.file.Path getName(int)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.nio.file.Path java.nio.file.Path of(java.lang.String, java.lang.String...) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='java.nio.file.Path java.nio.file.Path of(java.lang.String, java.lang.String...) 1'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
   <item name='java.nio.file.Path java.nio.file.Path relativize(java.nio.file.Path)'>
     <annotation name='org.jetbrains.annotations.NotNull'/>

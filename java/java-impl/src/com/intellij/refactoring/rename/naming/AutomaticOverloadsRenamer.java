@@ -44,7 +44,7 @@ public class AutomaticOverloadsRenamer extends AutomaticRenamer {
 
   @Override
   public String entityName() {
-    return "Overload";
+    return JavaRefactoringBundle.message("automatic.overload.renamer.entity.name");
   }
 
   @Override

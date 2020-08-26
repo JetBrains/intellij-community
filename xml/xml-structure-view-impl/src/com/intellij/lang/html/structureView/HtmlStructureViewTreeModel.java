@@ -17,7 +17,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 
-class HtmlStructureViewTreeModel extends XmlStructureViewTreeModel implements PlaceHolder<String> {
+class HtmlStructureViewTreeModel extends XmlStructureViewTreeModel implements PlaceHolder {
 
   private final Collection<NodeProvider> myNodeProviders;
   private String myStructureViewPlace;

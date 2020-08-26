@@ -34,7 +34,7 @@ import static javax.swing.SwingConstants.LEFT;
 import static javax.swing.SwingUtilities.layoutCompoundLabel;
 
 public class SeparatorWithText extends JComponent implements Accessible {
-  private String myCaption;
+  private @NlsContexts.Separator String myCaption;
   private int myPrefWidth;
   private int myAlignment;
   private Color myTextForeground;
@@ -135,7 +135,7 @@ public class SeparatorWithText extends JComponent implements Accessible {
     FILL.paint((Graphics2D)g, x, y, width, 1, null);
   }
 
-  public String getCaption() {
+  public @NlsContexts.Separator String getCaption() {
     return myCaption == null || myCaption.trim().isEmpty() ? null : myCaption;
   }
 

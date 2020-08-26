@@ -104,7 +104,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
       serverSocket = new ServerSocket(0);
     }
     catch (IOException e) {
-      throw new ExecutionException("Failed to find free socket port", e);
+      throw new ExecutionException("Failed to find free socket port", e); //NON-NLS
     }
     return serverSocket;
   }

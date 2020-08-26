@@ -347,7 +347,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
       }
     };
     // TODO: there are no reason to use such heavy interface for a simple task.
-    return new SplitterWithSecondHideable(true, "Diff", rootPane, listener) {
+    return new SplitterWithSecondHideable(true, message("changes.diff.separator"), rootPane, listener) {
       @Override
       protected RefreshablePanel createDetails() {
         JPanel panel = JBUI.Panels.simplePanel(myDiffDetails.getComponent());
@@ -427,7 +427,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
       if (updateException != null) {
         String[] messages = updateException.getMessages();
         if (!isEmpty(messages)) {
-          String message = "Warning: not all local changes may be shown due to an error: " + messages[0];
+          String message = message("changes.warning.not.all.local.changes.may.be.shown.due.to.an.error", messages[0]);
           String htmlMessage = buildHtml(getCssFontDeclaration(getLabelFont()), getHtmlBody(escapeXmlEntities(message)));
 
           myWarningLabel.setText(htmlMessage);

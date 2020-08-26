@@ -164,7 +164,7 @@ public abstract class ModuleInsight {
     }
   }
 
-  private static void walkParents(@NotNull File file, Predicate<File> stopCondition, @NotNull Consumer<File> fileConsumer) {
+  private static void walkParents(@NotNull File file, Predicate<? super File> stopCondition, @NotNull Consumer<? super File> fileConsumer) {
     File current = file;
     while (true) {
       fileConsumer.consume(current);

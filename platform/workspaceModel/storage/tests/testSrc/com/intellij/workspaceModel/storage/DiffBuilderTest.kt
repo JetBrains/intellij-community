@@ -6,6 +6,7 @@ import com.intellij.workspaceModel.storage.entities.*
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageImpl
 import com.intellij.workspaceModel.storage.impl.exceptions.AddDiffException
+import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
 import org.junit.Assert.*
 import org.junit.Test
 
@@ -258,5 +259,23 @@ class DiffBuilderTest {
     }
 
     source.applyDiff(target)
+  }
+
+  @Test
+  fun `checking external mapping`() {
+    val target = WorkspaceEntityStorageBuilderImpl.create()
+
+    target.addSampleEntity("Entity at index 0")
+
+    val source = WorkspaceEntityStorageBuilderImpl.create()
+    val sourceSample = source.addSampleEntity("Entity at index 1")
+    val mutableExternalMapping = source.getMutableExternalMapping<Any>("Ext")
+    val anyObj = Any()
+    mutableExternalMapping.addMapping(sourceSample, anyObj)
+
+    target.addDiff(source)
+
+    val externalMapping = target.getExternalMapping<Any>("Ext") as ExternalEntityMappingImpl<Any>
+    assertEquals(1, externalMapping.index.size)
   }
 }

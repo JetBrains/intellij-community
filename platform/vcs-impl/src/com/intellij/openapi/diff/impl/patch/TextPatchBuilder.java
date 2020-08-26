@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.BeforeAfter;
 import com.intellij.util.containers.ContainerUtil;
@@ -22,6 +23,7 @@ import java.nio.file.Path;
 import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import static java.util.Collections.singletonList;
@@ -100,21 +102,20 @@ public final class TextPatchBuilder {
 
     TextFilePatch patch = buildPatchHeading(beforeRevision, afterRevision);
 
-    if (beforeContent.equals(afterContent)) {
-      if (beforeRevision.getPath().getPath().equals(afterRevision.getPath().getPath())) return null;
-      // movement
-      return patch;
-    }
-
     List<PatchHunk> hunks = buildPatchHunks(beforeContent, afterContent);
     for (PatchHunk hunk : hunks) {
       patch.addHunk(hunk);
     }
+
+    // skip empty patch
+    if (hunks.isEmpty() && beforeRevision.getPath().getPath().equals(afterRevision.getPath().getPath())) return null;
+
     return patch;
   }
 
   @NotNull
   public static List<PatchHunk> buildPatchHunks(@NotNull String beforeContent, @NotNull String afterContent) {
+    if (beforeContent.equals(afterContent)) return Collections.emptyList();
     if (beforeContent.isEmpty()) {
       return singletonList(createWholeFileHunk(afterContent, true, true));
     }
@@ -361,8 +362,8 @@ public final class TextPatchBuilder {
   private static String getContent(@NotNull AirContentRevision revision) throws VcsException {
     String beforeContent = revision.getContentAsString();
     if (beforeContent == null) {
-      throw new VcsException(String.format("Failed to fetch old content for file %s in revision %s",
-                                           revision.getPath().getPath(), revision.getRevisionNumber()));
+      throw new VcsException(
+        VcsBundle.message("patch.failed.to.fetch.old.content.for.file.name.in.revision", revision.getPath().getPath(),revision.getRevisionNumber()));
     }
     return beforeContent;
   }

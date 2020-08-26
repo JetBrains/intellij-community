@@ -410,11 +410,8 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
 
     if (focus) {
       ApplicationManager.getApplication().invokeLater(() -> {
-        boolean focusWnd = Registry.is("debugger.mayBringFrameToFrontOnBreakpoint");
-        ProjectUtil.focusProjectWindow(myProject, focusWnd);
-        if (!focusWnd) {
-          AppIcon.getInstance().requestAttention(myProject, true);
-        }
+        boolean stealFocus = Registry.is("debugger.mayBringFrameToFrontOnBreakpoint");
+        ProjectUtil.focusProjectWindow(myProject, stealFocus);
       });
     }
   }

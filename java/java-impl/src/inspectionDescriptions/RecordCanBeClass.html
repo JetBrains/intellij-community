@@ -1,18 +1,20 @@
 <html>
 <body>
 Suggests to replace records with ordinary classes.
-The inspection could be useful if you need to move Java record 
+The inspection could be useful if you need to move a Java record
 to codebases that use earlier Java versions.
 <p>
   Note that the resulting class is not completely equivalent to the original record:
 </p>
 <ul>
-  <li>the resulting class no longer extends <code>java.lang.Record</code>, 
+  <li>the resulting class no longer extends <code>java.lang.Record</code>,
     so <code>instanceof Record</code> returns false.</li>
-  <li>reflection methods like <code>Class.isRecord()</code> and 
+  <li>reflection methods like <code>Class.isRecord()</code> and
     <code>Class.getRecordComponents()</code> produce different results.</li>
-  <li>the generated <code>hashCode()</code> implementation may produce different result,
-    as exact formula used to calculate record hashCode is deliberately not specified.</li>
+  <li>the generated <code>hashCode()</code> implementation may produce a different result
+    because the formula to calculate record hashCode is deliberately not specified.</li>
+  <li>record serialization mechanism differs from that of ordinary classes.
+    Refer to Java Object Serialization Specification for details.</li>
 </ul>
 <!-- tooltip end -->
 <p>Example:</p>

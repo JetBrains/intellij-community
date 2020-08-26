@@ -2,10 +2,7 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.application.PathManager;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -34,7 +31,7 @@ public final class BuildNumber implements Comparable<BuildNumber> {
     myComponents = components;
   }
 
-  private static boolean isPlaceholder(@NotNull String value) {
+  private static boolean isPlaceholder(@NotNull @NonNls String value) {
     return "__BUILD_NUMBER__".equals(value) || "__BUILD__".equals(value);
   }
 
@@ -109,7 +106,7 @@ public final class BuildNumber implements Comparable<BuildNumber> {
    * Returns {@code null} if the string is not a valid build number.
    */
   @Nullable
-  public static BuildNumber fromStringOrNull(@NotNull String version) {
+  public static BuildNumber fromStringOrNull(@NotNull @NonNls String version) {
     try {
       return fromString(version);
     } catch (RuntimeException ignored) {
@@ -117,7 +114,7 @@ public final class BuildNumber implements Comparable<BuildNumber> {
     }
   }
 
-  public static @Nullable BuildNumber fromString(@Nullable String version) {
+  public static @Nullable BuildNumber fromString(@Nullable @NonNls String version) {
     if (version == null) {
       return null;
     }
@@ -125,11 +122,11 @@ public final class BuildNumber implements Comparable<BuildNumber> {
     return version.isEmpty() ? null : fromString(version, null, null);
   }
 
-  public static @Nullable BuildNumber fromStringWithProductCode(@NotNull String version, @NotNull String productCode) {
+  public static @Nullable BuildNumber fromStringWithProductCode(@NotNull @NonNls String version, @NotNull @NonNls String productCode) {
     return fromString(version, null, productCode);
   }
 
-  public static @Nullable BuildNumber fromString(@NotNull String version, @Nullable String pluginName, @Nullable String productCodeIfAbsentInVersion) {
+  public static @Nullable BuildNumber fromString(@NotNull @NonNls String version, @Nullable @NonNls String pluginName, @Nullable @NonNls String productCodeIfAbsentInVersion) {
     String code = version;
     int productSeparator = code.indexOf('-');
     String productCode;

@@ -4,6 +4,7 @@ package com.intellij.vcs.log.visible.filters
 import com.intellij.openapi.util.Comparing
 import com.intellij.vcs.log.VcsLogDetailsFilter
 import com.intellij.vcs.log.VcsLogTextFilter
+import org.jetbrains.annotations.NonNls
 import java.util.*
 import java.util.regex.Pattern
 
@@ -16,6 +17,7 @@ data class VcsLogRegexTextFilter internal constructor(private val pattern: Patte
 
   override fun matchesCase(): Boolean = (pattern.flags() and Pattern.CASE_INSENSITIVE) == 0
 
+  @NonNls
   override fun toString(): String {
     return "matching '$text' ${caseSensitiveText()}"
   }
@@ -31,6 +33,7 @@ class VcsLogMultiplePatternsTextFilter internal constructor(val patterns: List<S
 
   override fun matches(message: String): Boolean = patterns.any { message.contains(it, !isMatchCase) }
 
+  @NonNls
   override fun toString(): String {
     return "containing at least one of the ${patterns.joinToString(", ") { s -> "'$s'" }} ${caseSensitiveText()}"
   }
@@ -51,4 +54,5 @@ class VcsLogMultiplePatternsTextFilter internal constructor(val patterns: List<S
   }
 }
 
-internal fun VcsLogTextFilter.caseSensitiveText() = "(case ${if (matchesCase()) "sensitive" else "insensitive"})" // NON-NLS
+@NonNls
+internal fun VcsLogTextFilter.caseSensitiveText() = "(case ${if (matchesCase()) "sensitive" else "insensitive"})"

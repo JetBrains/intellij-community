@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.intellij.images.ImagesBundle;
 import org.intellij.images.thumbnail.ThumbnailView;
 import org.intellij.images.thumbnail.actionSystem.ThumbnailViewActionUtil;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +51,7 @@ public final class FilterByThemeComboBoxAction extends ComboBoxAction {
         group.add(new FilterImagesAction(new ThemeFilter() {
             @Override
             public String getDisplayName() {
-                return "All";
+                return ImagesBundle.message("action.all.text");
             }
 
             @Override

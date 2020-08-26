@@ -71,10 +71,10 @@ final class ModelAccessor {
   }
 
   @NotNull
-  private <T> CancellablePromise<T> compute(@NotNull Function<Obsolescent, T> function) {
+  private <T> CancellablePromise<T> compute(@NotNull Function<? super Obsolescent, ? extends T> function) {
     AsyncPromise<T> promise = new AsyncPromise<>();
     if (invoker != null) {
-      invoker.compute(() -> function.apply(promise::isDone))
+      invoker.compute(() -> function.apply((Obsolescent)promise::isDone))
         .onError(promise::setError)
         .onSuccess(result -> EventQueue.invokeLater(() -> {
           if (!promise.isDone()) promise.setResult(result);
@@ -89,11 +89,11 @@ final class ModelAccessor {
     return promise;
   }
 
-  private static <T> void computeOnEDT(@NotNull Function<Obsolescent, T> function, @NotNull AsyncPromise<T> promise) {
+  private static <T> void computeOnEDT(@NotNull Function<? super Obsolescent, ? extends T> function, @NotNull AsyncPromise<T> promise) {
     assert EventQueue.isDispatchThread();
     T result;
     try {
-      result = function.apply(promise::isDone);
+      result = function.apply((Obsolescent)promise::isDone);
     }
     catch (IndexNotReadyException | ProcessCanceledException exception) {
       getScheduledExecutorInstance().schedule(() -> computeOnEDT(function, promise), 10, MILLISECONDS);

@@ -13,12 +13,12 @@ import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 
 public class InlineFieldDialog extends InlineOptionsWithSearchSettingsDialog {
-  private final PsiReferenceExpression myReferenceExpression;
+  private final PsiElement myReferenceExpression;
 
   private final PsiField myField;
   protected final int myOccurrencesNumber;
 
-  public InlineFieldDialog(Project project, PsiField field, PsiReferenceExpression ref) {
+  public InlineFieldDialog(Project project, PsiField field, PsiElement ref) {
     super(project, true, field);
     myField = field;
     myReferenceExpression = ref;

@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ComponentUtil;
@@ -20,6 +21,7 @@ import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBValue;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import sun.swing.SwingUtilities2;
@@ -259,9 +261,10 @@ public class ComponentValidator {
   public static ComponentPopupBuilder createPopupBuilder(@NotNull ValidationInfo info, @Nullable Consumer<? super JEditorPane> configurator) {
     JEditorPane tipComponent = new JEditorPane();
     View v = BasicHTML.createHTMLView(tipComponent, String.format("<html>%s</html>", info.message));
-    String text = v.getPreferredSpan(View.X_AXIS) > MAX_WIDTH.get() ?
-                  String.format("<html><body><div width=%d>%s</div><body></html>", MAX_WIDTH.get(), trimMessage(info.message, tipComponent)) :
-                  String.format("<html><body><div>%s</div></body></html>", info.message);
+    HtmlChunk.Element div =  v.getPreferredSpan(View.X_AXIS) > MAX_WIDTH.get()
+                             ? HtmlChunk.div().attr("width", MAX_WIDTH.get()).addRaw(trimMessage(info.message, tipComponent))
+                             : HtmlChunk.div().addRaw(info.message);
+    String text = div.wrapWith("body").wrapWith("html").toString();
 
     tipComponent.setContentType("text/html");
     tipComponent.setEditable(false);
@@ -299,9 +302,9 @@ public class ComponentValidator {
       setShowShadow(true);
   }
 
-  private static String trimMessage(String message, JComponent c) {
+  private static @Nls String trimMessage(@Nls String message, JComponent c) {
     String[] words = message.split("\\s+");
-    StringBuilder result = new StringBuilder();
+    @Nls StringBuilder result = new StringBuilder();
 
     for(String word : words) {
       word = SwingUtilities2.clipStringIfNecessary(c, c.getFontMetrics(c.getFont()), word, MAX_WIDTH.get());

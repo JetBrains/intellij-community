@@ -8,10 +8,7 @@ import com.intellij.openapi.util.NlsContexts.Tooltip;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.JBUI;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -59,6 +56,7 @@ public interface StatusBarWidget extends Disposable {
     @Tooltip
     String getTooltipText();
 
+    @Nls
     @Nullable
     default String getShortcutText() { return null; }
 
@@ -91,7 +89,7 @@ public interface StatusBarWidget extends Disposable {
     @Nullable("null means the widget is unable to show the popup")
     ListPopup getPopupStep();
 
-    @Nullable
+    @Nullable @NlsContexts.StatusBarText
     String getSelectedValue();
 
     /**

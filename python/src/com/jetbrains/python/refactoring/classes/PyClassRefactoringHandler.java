@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts.DialogTitle;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.RefactoringActionHandler;
@@ -87,7 +88,7 @@ public abstract class PyClassRefactoringHandler implements RefactoringActionHand
     return true;
   }
 
-  protected abstract String getTitle();
+  protected abstract @DialogTitle String getTitle();
   protected abstract String getHelpId();
 
   @Override

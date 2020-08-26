@@ -20,6 +20,7 @@ import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.uiDesigner.core.GridConstraints;
@@ -88,7 +89,7 @@ public abstract class SelectImportedProjectsStep<T> extends ProjectImportWizardS
     return null;
   }
 
-  protected abstract String getElementText(final T item);
+  protected abstract @NlsSafe String getElementText(final T item);
 
   @Override
   public JComponent getComponent() {

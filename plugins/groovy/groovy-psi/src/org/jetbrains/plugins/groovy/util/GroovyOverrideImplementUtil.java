@@ -15,6 +15,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
@@ -170,7 +171,7 @@ public final class GroovyOverrideImplementUtil {
   private static void setupTraitMethodBody(Project project, GrMethod resultMethod, GrTraitMethod traitMethod) {
     PsiClass traitClass = traitMethod.getPrototype().getContainingClass();
 
-    StringBuilder builder = new StringBuilder();
+    @NlsSafe StringBuilder builder = new StringBuilder();
     builder.append("\nreturn ");
     builder.append(traitClass.getQualifiedName());
     builder.append(".super.");

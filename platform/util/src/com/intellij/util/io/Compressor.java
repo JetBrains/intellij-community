@@ -134,15 +134,15 @@ public abstract class Compressor implements Closeable {
     }
   }
 
-  private BiPredicate<String, File> myFilter;
-  private BiPredicate<String, Path> nioFilter;
+  private @Nullable BiPredicate<? super String, ? super @Nullable File> myFilter;
+  private @Nullable BiPredicate<? super String, ? super @Nullable Path> nioFilter;
 
   /**
    * Allows filtering entries being added to the archive.
    * Please note that <b>the second parameter of a filter ({@code File}) could be {@code null}</b> when the filter is applied
    * to an entry not present on a disk - e.g. via {@link #addFile(String, byte[])}.
    */
-  public Compressor filter(@Nullable BiPredicate<String, @Nullable File> filter) {
+  public Compressor filter(@Nullable BiPredicate<? super String, ? super @Nullable File> filter) {
     myFilter = filter;
     return this;
   }
@@ -152,7 +152,7 @@ public abstract class Compressor implements Closeable {
    * Please note that <b>the second parameter of a filter ({@code File}) could be {@code null}</b> when the filter is applied
    * to an entry not present on a disk - e.g. via {@link #addFile(String, byte[])}.
    */
-  public Compressor nioFilter(@Nullable BiPredicate<String, @Nullable Path> filter) {
+  public Compressor nioFilter(@Nullable BiPredicate<? super String, ? super @Nullable Path> filter) {
     nioFilter = filter;
     return this;
   }

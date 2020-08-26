@@ -10,6 +10,7 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.panels.OpaquePanel;
@@ -40,7 +41,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
   private boolean mySelectingHint;
 
   private boolean myForceShowAsPopup = false;
-  private String myTitle = null;
+  private @NlsContexts.PopupTitle String myTitle = null;
   private boolean myCancelOnClickOutside = true;
   private boolean myCancelOnOtherWindowOpen = true;
   private boolean myResizable;
@@ -68,7 +69,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
     myFocusRequestor = c;
   }
 
-  public void setTitle(final String title) {
+  public void setTitle(final @NlsContexts.PopupTitle String title) {
     myTitle = title;
   }
 

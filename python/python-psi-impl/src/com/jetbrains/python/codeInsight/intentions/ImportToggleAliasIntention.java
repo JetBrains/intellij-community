@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.codeInsight.intentions;
 
+import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.WriteAction;
@@ -79,22 +80,23 @@ public class ImportToggleAliasIntention extends PyBaseIntentionAction {
       return true;
     }
 
-    public String getText() {
-      String add_name = "Add alias";
+    @NotNull
+    public @IntentionName String getText() {
+      String add_name = PyPsiBundle.message("INTN.add.import.alias");
       if (myImportElement != null) {
         PyReferenceExpression refex = myImportElement.getImportReferenceExpression();
         if (refex != null) {
-          add_name = PyPsiBundle.message("INTN.add.alias.for.import.$0", refex.getText());
+          add_name = PyPsiBundle.message("INTN.add.import.alias.to.name", refex.getText());
         }
       }
-      return myAlias == null? add_name : PyPsiBundle.message("INTN.remove.alias.for.import.$0", myAlias);
+      return myAlias == null? add_name : PyPsiBundle.message("INTN.remove.import.alias", myAlias);
     }
   }
 
   @Override
   @NotNull
   public String getFamilyName() {
-    return PyPsiBundle.message("INTN.Family.toggle.import.alias");
+    return PyPsiBundle.message("INTN.NAME.toggle.import.alias");
   }
 
   @Override
@@ -137,8 +139,9 @@ public class ImportToggleAliasIntention extends PyBaseIntentionAction {
       }
       else {
         // ask for and add alias
-        String alias = PythonUiService.getInstance().showInputDialog(project, PyPsiBundle.message("INTN.alias.for.$0.dialog.title", imported_name),
-                                                                     PyPsiBundle.message("INTN.add.alias.title"), "", new InputValidator() {
+        String alias = PythonUiService.getInstance().showInputDialog(project,
+                                                                     PyPsiBundle.message("INTN.add.import.alias.dialog.message", imported_name),
+                                                                     PyPsiBundle.message("INTN.add.import.alias.title"), "", new InputValidator() {
             @Override
             public boolean checkInput(String inputString) {
               return PyNames.isIdentifier(inputString);

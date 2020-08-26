@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.codeInsight.typing.PyProtocolsKt;
@@ -89,7 +90,7 @@ public class PyTypeCheckerInspection extends PyInspection {
             PyMakeFunctionReturnTypeQuickFix localQuickFix = new PyMakeFunctionReturnTypeQuickFix(function, actualName, myTypeEvalContext);
             PyMakeFunctionReturnTypeQuickFix globalQuickFix = new PyMakeFunctionReturnTypeQuickFix(function, null, myTypeEvalContext);
             registerProblem(returnExpr != null ? returnExpr : node,
-                            String.format("Expected type '%s', got '%s' instead", expectedName, actualName),
+                            PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead", expectedName, actualName),
                             localQuickFix, globalQuickFix);
           }
         }
@@ -117,9 +118,9 @@ public class PyTypeCheckerInspection extends PyInspection {
       final PyType expected = myTypeEvalContext.getType(node);
       final PyType actual = tryPromotingType(value, expected);
       if (!PyTypeChecker.match(expected, actual, myTypeEvalContext)) {
-        registerProblem(value, String.format("Expected type '%s', got '%s' instead",
-                                             PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext),
-                                             PythonDocumentationProvider.getTypeName(actual, myTypeEvalContext)));
+        String expectedName = PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext);
+        String actualName = PythonDocumentationProvider.getTypeName(actual, myTypeEvalContext);
+        registerProblem(value, PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead", expectedName, actualName));
       }
     }
 
@@ -143,14 +144,14 @@ public class PyTypeCheckerInspection extends PyInspection {
             final String expectedName = PythonDocumentationProvider.getTypeName(expected, myTypeEvalContext);
             if (expected != null && !(expected instanceof PyNoneType)) {
               registerProblem(annotation != null ? annotation.getValue() : node.getTypeComment(),
-                              String.format("Expected to return '%s', got no return", expectedName));
+                              PyPsiBundle.message("INSP.type.checker.expected.to.return.type.got.no.return", expectedName));
             }
           }
         }
 
         if (PyUtil.isInitMethod(node) && !(getExpectedReturnType(node) instanceof PyNoneType)) {
           registerProblem(annotation != null ? annotation.getValue() : node.getTypeComment(),
-                          PyNames.INIT + " should return " + PyNames.NONE);
+                          PyPsiBundle.message("INSP.type.checker.init.should.return.none"));
         }
       }
     }
@@ -204,7 +205,8 @@ public class PyTypeCheckerInspection extends PyInspection {
             !PyABCUtil.isSubtype(type, iterableClassName, myTypeEvalContext)) {
           final String typeName = PythonDocumentationProvider.getTypeName(type, myTypeEvalContext);
 
-          registerProblem(iteratedValue, String.format("Expected 'collections.%s', got '%s' instead", iterableClassName, typeName));
+          String qualifiedName = "collections." + iterableClassName;
+          registerProblem(iteratedValue, PyPsiBundle.message("INSP.type.checker.expected.type.got.type.instead", qualifiedName, typeName));
         }
       }
     }

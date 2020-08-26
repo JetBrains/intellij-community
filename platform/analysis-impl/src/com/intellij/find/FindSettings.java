@@ -17,6 +17,7 @@
 package com.intellij.find;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class FindSettings {
@@ -107,7 +108,7 @@ public abstract class FindSettings {
    *
    * @return the recent file masks list
    */
-  public abstract String @NotNull [] getRecentFileMasks();
+  public abstract @NlsSafe String @NotNull [] getRecentFileMasks();
 
   public abstract void setWithSubdirectories(boolean b);
 

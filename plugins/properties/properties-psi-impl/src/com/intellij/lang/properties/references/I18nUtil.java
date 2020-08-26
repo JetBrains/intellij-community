@@ -82,8 +82,8 @@ public class I18nUtil {
     }
   }
 
-  public static List<String> defaultSuggestPropertiesFiles(@NotNull Project project,
-                                                           @NotNull Set<Module> contextModules) {
+  public static @NotNull List<String> defaultSuggestPropertiesFiles(@NotNull Project project,
+                                                                    @NotNull Set<? extends Module> contextModules) {
     List<String> relevantPaths = new ArrayList<>();
     List<String> otherPaths = new ArrayList<>();
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();

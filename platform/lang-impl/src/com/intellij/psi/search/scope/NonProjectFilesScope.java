@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search.scope;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
@@ -15,11 +16,11 @@ import org.jetbrains.annotations.NotNull;
  * @author Konstantin Bulenkov
  */
 public final class NonProjectFilesScope extends NamedScope {
-  public static final String NAME = IdeUICustomization.getInstance().projectMessage("scope.name.non.project.files");
+  public static final String NAME = "Non-Project Files";
   public static final NonProjectFilesScope INSTANCE = new NonProjectFilesScope();
 
   private NonProjectFilesScope() {
-    super(NAME, new FilteredPackageSet(NAME) {
+    super(NAME, () -> IdeUICustomization.getInstance().projectMessage("scope.name.non.project.files"), AllIcons.Ide.LocalScope, new FilteredPackageSet(NAME) {
       @Override
       public boolean contains(@NotNull VirtualFile file, @NotNull Project project) {
         return containsImpl(file, project);

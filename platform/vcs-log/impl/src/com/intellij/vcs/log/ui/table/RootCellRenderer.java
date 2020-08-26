@@ -22,14 +22,14 @@ import java.util.Objects;
 
 import static com.intellij.vcs.log.impl.CommonUiProperties.SHOW_ROOT_NAMES;
 
-class RootCellRenderer extends SimpleColoredRenderer implements TableCellRenderer, VcsLogCellRenderer {
+public class RootCellRenderer extends SimpleColoredRenderer implements TableCellRenderer, VcsLogCellRenderer {
   @NotNull private final VcsLogUiProperties myProperties;
   @NotNull private final VcsLogColorManager myColorManager;
   @NotNull private Color myColor = UIUtil.getTableBackground();
   @NotNull private Color myBorderColor = UIUtil.getTableBackground();
   private boolean isNarrow = true;
 
-  RootCellRenderer(@NotNull VcsLogUiProperties properties, @NotNull VcsLogColorManager colorManager) {
+  public RootCellRenderer(@NotNull VcsLogUiProperties properties, @NotNull VcsLogColorManager colorManager) {
     myProperties = properties;
     myColorManager = colorManager;
     setTextAlign(SwingConstants.CENTER);

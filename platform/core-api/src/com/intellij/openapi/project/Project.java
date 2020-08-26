@@ -3,6 +3,7 @@ package com.intellij.openapi.project;
 
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.AreaInstance;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.*;
 
@@ -26,7 +27,7 @@ public interface Project extends ComponentManager, AreaInstance {
    * @return project name
    */
   @NotNull
-  @Nls String getName();
+  @NlsSafe String getName();
 
   /**
    * Returns a project base directory - a parent directory of a {@code .ipr} file or {@code .idea} directory.<br/>
@@ -47,7 +48,7 @@ public interface Project extends ComponentManager, AreaInstance {
    * @see com.intellij.openapi.project.ProjectUtil#guessProjectDir
    */
   @Nullable
-  @SystemIndependent
+  @SystemIndependent @NlsSafe
   String getBasePath();
 
   /**
@@ -67,7 +68,7 @@ public interface Project extends ComponentManager, AreaInstance {
    * @return a path to project file (see {@linkplain #getProjectFile()}) or {@code null} for default project.
    */
   @Nullable
-  @SystemIndependent
+  @SystemIndependent @NlsSafe
   String getProjectFilePath();
 
   /**
@@ -77,7 +78,7 @@ public interface Project extends ComponentManager, AreaInstance {
    * <b>Note:</b> the word "presentable" here implies file system presentation, not a UI one.
    */
   @Nullable
-  @SystemDependent
+  @SystemDependent @NlsSafe
   default String getPresentableUrl() {
     return null;
   }
@@ -95,7 +96,7 @@ public interface Project extends ComponentManager, AreaInstance {
   @Nullable
   VirtualFile getWorkspaceFile();
 
-  @NotNull
+  @NotNull @NonNls
   String getLocationHash();
 
   void save();

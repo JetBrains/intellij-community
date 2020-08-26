@@ -22,6 +22,7 @@ public class Java2DUiScaleEnabledPropTest {
   @Test
   public void test() {
     TestScaleHelper.assumeStandalone();
+    TestScaleHelper.assumeHeadful();
 
     System.setProperty(JAVA2D_UI_SCALE_ENABLED_PROP, "true");
     System.setProperty(JAVA2D_UI_SCALE_PROP, "3.0");

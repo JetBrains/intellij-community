@@ -94,7 +94,7 @@ public final class ContractConverter {
       }
       int index = oldToNewIndex[oldIndex];
       if (index == -1) {
-        String paramRemovedMessage = JavaRefactoringBundle.message("changeSignature.contract.converter.parameter.removed",
+        String paramRemovedMessage = JavaRefactoringBundle.message("changeSignature.contract.converter.return.parameter.removed",
                                                                    oldParameterNames[oldIndex], contract);
         throw new ContractConversionException(paramRemovedMessage);
       }

@@ -19,6 +19,7 @@ import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.CompilationTasks
 import org.jetbrains.intellij.build.impl.compilation.PortableCompilationCache
+import org.jetbrains.jps.model.java.JdkVersionDetector
 
 @CompileStatic
 class CompilationTasksImpl extends CompilationTasks {
@@ -50,6 +51,11 @@ class CompilationTasksImpl extends CompilationTasks {
     }
     else {
       CompilationContextImpl.setupCompilationDependencies(context.gradle, context.options)
+      def currentJdk = JdkUtils.currentJdk
+      def jdkInfo = JdkVersionDetector.instance.detectJdkVersionInfo(currentJdk)
+      if (jdkInfo.version.feature != 11) {
+        context.messages.error("Build script must be executed under Java 11 to compile intellij project, but it's executed under Java $jdkInfo.version ($currentJdk)")
+      }
 
       context.messages.progress("Compiling project")
       JpsCompilationRunner runner = new JpsCompilationRunner(context)

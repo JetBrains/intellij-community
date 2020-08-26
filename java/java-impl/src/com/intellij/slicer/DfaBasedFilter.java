@@ -7,6 +7,7 @@ import com.intellij.codeInspection.dataFlow.DfaNullability;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.*;
+import com.intellij.java.JavaBundle;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -144,18 +145,18 @@ final class DfaBasedFilter {
       if (constraint.getPresentationText(psiType).isEmpty()) {
         stripped = stripped.dropTypeConstraint();
       }
-      String constraintText = stripped.toString();
+      @Nls String constraintText = stripped.toString();
       if (nullability == DfaNullability.NOT_NULL) {
         if (constraintText.isEmpty()) {
-          return "not-null";
+          return JavaBundle.message("dfa.constraint.not.null");
         }
-        return constraintText + " (not-null)";
+        return JavaBundle.message("dfa.constraint.0.not.null", constraintText);
       }
       else if (nullability != DfaNullability.NULL) {
         if (constraintText.isEmpty()) {
           return "";
         }
-        return "null or " + constraintText;
+        return JavaBundle.message("dfa.constraint.null.or.0", constraintText);
       }
     }
     return type.toString();

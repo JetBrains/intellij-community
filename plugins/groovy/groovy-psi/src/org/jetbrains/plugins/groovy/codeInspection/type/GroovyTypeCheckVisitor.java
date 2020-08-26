@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.codeInspection.type;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -174,7 +175,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
         registerError(
           namedArgumentExpression,
           ProblemHighlightType.GENERIC_ERROR,
-          "Type of argument '" + labelName + "' can not be '" + expressionType.getPresentableText() + "'"
+          GroovyBundle.message("inspection.message.type.argument.0.can.not.be.1", labelName,expressionType.getPresentableText())
         );
       }
     }
@@ -319,7 +320,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
 
   @Override
   protected void registerError(@NotNull PsiElement location,
-                               @NotNull String description,
+                               @InspectionMessage @NotNull String description,
                                LocalQuickFix @Nullable [] fixes,
                                ProblemHighlightType highlightType) {
     if (PsiUtil.isCompileStatic(location)) {
@@ -645,7 +646,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
   @Override
   protected void registerError(@NotNull PsiElement location,
                                ProblemHighlightType highlightType,
-                               Object... args) {
+                               @InspectionMessage Object... args) {
     registerError(location, (String)args[0], LocalQuickFix.EMPTY_ARRAY, highlightType);
   }
 }

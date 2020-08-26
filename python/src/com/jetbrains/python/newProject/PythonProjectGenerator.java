@@ -30,6 +30,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.DirectoryProjectGeneratorBase;
@@ -134,7 +135,7 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
     // Check if project does not support remote creation at all
     if (!myAllowRemoteProjectCreation && PythonSdkUtil.isRemote(sdk)) {
       throw new PyNoProjectAllowedOnSdkException(
-        "Can't create project of this type on remote interpreter. Choose local interpreter.");
+        PyBundle.message("python.remote.interpreter.can.t.create.project.this.type"));
     }
 
 
@@ -423,7 +424,7 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
     /**
      * @param reason why project can't be created
      */
-    PyNoProjectAllowedOnSdkException(@NotNull final String reason) {
+    PyNoProjectAllowedOnSdkException(@NotNull @DialogMessage final String reason) {
       super(reason);
     }
   }

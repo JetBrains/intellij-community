@@ -26,23 +26,23 @@ import com.jetbrains.python.psi.LanguageLevel;
 public class PyAddFieldQuickFixTest extends PyQuickFixTestCase {
 
   public void testAddClassField() {
-    doQuickFixTest(PyUnresolvedReferencesInspection.class, PyPsiBundle.message("QFIX.NAME.add.field.$0.to.class.$1", "FIELD", "A"));
+    doQuickFixTest(PyUnresolvedReferencesInspection.class, PyPsiBundle.message("QFIX.add.field.to.class", "FIELD", "A"));
   }
 
   public void testAddFieldFromMethod() {
-    doQuickFixTest(PyUnresolvedReferencesInspection.class, PyPsiBundle.message("QFIX.NAME.add.field.$0.to.class.$1", "y", "A"));
+    doQuickFixTest(PyUnresolvedReferencesInspection.class, PyPsiBundle.message("QFIX.add.field.to.class", "y", "A"));
   }
 
   public void testAddFieldFromInstance() {
-    doQuickFixTest(PyUnresolvedReferencesInspection.class, PyPsiBundle.message("QFIX.NAME.add.field.$0.to.class.$1", "y", "A"));
+    doQuickFixTest(PyUnresolvedReferencesInspection.class, PyPsiBundle.message("QFIX.add.field.to.class", "y", "A"));
   }
 
   public void testAddFieldAddConstructor() {
-    doQuickFixTest(PyUnresolvedReferencesInspection.class, PyPsiBundle.message("QFIX.NAME.add.field.$0.to.class.$1", "x", "B"));
+    doQuickFixTest(PyUnresolvedReferencesInspection.class, PyPsiBundle.message("QFIX.add.field.to.class", "x", "B"));
   }
 
   public void testAddFieldNewConstructor() {
-    doQuickFixTest(PyUnresolvedReferencesInspection.class, PyPsiBundle.message("QFIX.NAME.add.field.$0.to.class.$1", "x", "B"));
+    doQuickFixTest(PyUnresolvedReferencesInspection.class, PyPsiBundle.message("QFIX.add.field.to.class", "x", "B"));
   }
 
   public void testFromUnusedParameter() {  // PY-1398

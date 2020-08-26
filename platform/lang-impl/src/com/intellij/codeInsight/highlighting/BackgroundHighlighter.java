@@ -4,6 +4,9 @@ package com.intellij.codeInsight.highlighting;
 
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPass;
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory;
+import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.TemplateEditingAdapter;
+import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -106,6 +109,17 @@ final class BackgroundHighlighter implements StartupActivity.DumbAware {
             updateHighlighted(project, ((TextEditor)newEditor).getEditor());
           }
         }
+      });
+    
+    project.getMessageBus().connect(parentDisposable)
+      .subscribe(TemplateManager.TEMPLATE_STARTED_TOPIC, state -> {
+        updateHighlighted(project, state.getEditor());
+        state.addTemplateStateListener(new TemplateEditingAdapter() {
+          @Override
+          public void templateFinished(@NotNull Template template, boolean brokenOff) {
+            updateHighlighted(project, state.getEditor());
+          }
+        });
       });
   }
 

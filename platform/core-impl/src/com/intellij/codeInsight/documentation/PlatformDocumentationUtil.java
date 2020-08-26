@@ -34,7 +34,7 @@ public final class PlatformDocumentationUtil {
   @Nullable
   public static String getDocUrl(@NotNull VirtualFile root, String relPath) {
     if (root.getFileSystem() instanceof HttpFileSystem) {
-      String url = StringUtil.trimEnd(root.getUrl(), "/index.html", true);
+      @NonNls String url = StringUtil.trimEnd(root.getUrl(), "/index.html", true);
       if (!url.endsWith("/")) {
         url += "/";
       }

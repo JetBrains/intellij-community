@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Iconable;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -100,7 +101,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     setTitle(getChooserTitle(descriptor));
   }
 
-  private static String getChooserTitle(final FileChooserDescriptor descriptor) {
+  private static @NlsContexts.DialogTitle String getChooserTitle(final FileChooserDescriptor descriptor) {
     final String title = descriptor.getTitle();
     return title != null ? title : UIBundle.message("file.chooser.default.title");
   }
@@ -224,7 +225,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
         return new Dimension(myPathTextField.getField().getWidth(), super.getPreferredSize().height);
       }
     };
-    files.setCellRenderer(SimpleListCellRenderer.create((label, value, index) -> {
+    files.setCellRenderer(SimpleListCellRenderer.create((var label, @NlsContexts.Label var value, var index) -> {
       label.setText(value);
       VirtualFile file = LocalFileSystem.getInstance().findFileByIoFile(new File(value));
       label.setIcon(file == null ? EmptyIcon.ICON_16 : IconUtil.getIcon(file, Iconable.ICON_FLAG_READ_STATUS, null));

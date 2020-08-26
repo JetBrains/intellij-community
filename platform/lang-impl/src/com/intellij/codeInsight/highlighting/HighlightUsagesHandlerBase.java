@@ -21,6 +21,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiElement;
@@ -41,8 +42,8 @@ public abstract class HighlightUsagesHandlerBase<T extends PsiElement> {
 
   protected List<TextRange> myReadUsages = new ArrayList<>();
   protected List<TextRange> myWriteUsages = new ArrayList<>();
-  protected String myStatusText;
-  protected String myHintText;
+  protected @NlsContexts.StatusBarText String myStatusText;
+  protected @NlsContexts.HintText String myHintText;
 
   protected HighlightUsagesHandlerBase(@NotNull Editor editor, @NotNull PsiFile file) {
     myEditor = editor;

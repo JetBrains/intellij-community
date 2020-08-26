@@ -13,6 +13,7 @@ import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.util.ui.JBDimension;
 import org.jetbrains.annotations.NotNull;
@@ -24,7 +25,7 @@ import java.util.function.Consumer;
 final class KeymapSelector extends SimpleSchemesPanel<KeymapScheme> {
   private KeymapSchemeManager manager;
   private final Consumer<? super Keymap> consumer;
-  private String messageReplacement;
+  private @NlsContexts.Label String messageReplacement;
   private boolean messageShown;
   private boolean internal;
 

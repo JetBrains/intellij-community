@@ -75,7 +75,7 @@ public class JBCefJSQueryTest {
     });
   }
 
-  public void test(@NotNull Function<JBCefClient, Void> setProperty) {
+  public void test(@NotNull Function<? super JBCefClient, Void> setProperty) {
     JBCefBrowser browser = new JBCefBrowser("chrome:version");
     setProperty.apply(browser.getJBCefClient());
 

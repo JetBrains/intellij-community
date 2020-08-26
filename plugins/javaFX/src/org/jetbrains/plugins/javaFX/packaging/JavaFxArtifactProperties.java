@@ -10,6 +10,7 @@ import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.artifacts.ArtifactProperties;
@@ -303,7 +304,7 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
     return null;
   }
 
-  public String getNativeBundle() {
+  public @NlsSafe String getNativeBundle() {
     return myNativeBundle;
   }
 
@@ -327,7 +328,7 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
     myIcons = icons;
   }
 
-  public String getMsgOutputLevel() {
+  public @NlsSafe String getMsgOutputLevel() {
     return myMsgOutputLevel;
   }
 

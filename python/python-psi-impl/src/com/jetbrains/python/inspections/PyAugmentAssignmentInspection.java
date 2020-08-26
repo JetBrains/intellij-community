@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.inspections.quickfix.AugmentedAssignmentQuickFix;
 import com.jetbrains.python.psi.*;
@@ -104,7 +105,7 @@ public class PyAugmentAssignmentInspection extends PyInspection {
 
         final PyElementType operator = value.getOperator();
         if (operator != null && assignmentCanBeReplaced(mainOperandExpression, otherOperandExpression, operator, changedParts)) {
-          registerProblem(node, "Assignment can be replaced with augmented assignment", new AugmentedAssignmentQuickFix());
+          registerProblem(node, PyPsiBundle.message("INSP.assignment.can.be.replaced.with.augmented.assignment"), new AugmentedAssignmentQuickFix());
         }
       }
     }

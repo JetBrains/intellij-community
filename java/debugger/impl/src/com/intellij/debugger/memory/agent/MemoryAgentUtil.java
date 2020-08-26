@@ -292,9 +292,7 @@ public final class MemoryAgentUtil {
             RuntimeExceptionWithAttachments exception =
               new RuntimeExceptionWithAttachments("Could not start debug process with memory agent", mentionsInOutput);
             String checkboxName = JavaDebuggerBundle.message("label.debugger.general.configurable.enable.memory.agent");
-            String description =
-              "Memory agent could not be loaded. <a href=\"Disable\">Disable</a> the agent. To enable it back use \"" +
-              checkboxName + "\" option in File | Settings | Build, Execution, Deployment | Debugger";
+            String description = JavaDebuggerBundle.message("error.memory.agent.could.not.be.loaded", checkboxName);
             ExecutionUtil.handleExecutionError(project, windowId, name, exception, description, new DisablingMemoryAgentListener());
             LOG.error(exception);
           }

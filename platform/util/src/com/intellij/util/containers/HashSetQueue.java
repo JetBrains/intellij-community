@@ -48,6 +48,11 @@ public final class HashSetQueue<T> extends AbstractCollection<T> implements Queu
       //noinspection unchecked
       return obj instanceof QueueEntry && t.equals(((QueueEntry<T>)obj).t);
     }
+
+    @Override
+    public String toString() {
+      return t.toString();
+    }
   }
 
   @Override

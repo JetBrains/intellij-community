@@ -20,6 +20,8 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.NlsActions;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.ui.awt.RelativePoint;
@@ -42,7 +44,7 @@ import java.util.Hashtable;
 public class SliderSelectorAction extends DumbAwareAction {
   @NotNull private final Configuration myConfiguration;
 
-  public SliderSelectorAction(@Nullable String text, @Nullable String description, @Nullable Icon icon,
+  public SliderSelectorAction(@Nullable @NlsActions.ActionText String text, @Nullable @NlsActions.ActionDescription String description, @Nullable Icon icon,
                               @NotNull Configuration configuration) {
     super(text, description, icon);
     myConfiguration = configuration;
@@ -219,7 +221,7 @@ public class SliderSelectorAction extends DumbAwareAction {
       this.showOk = showOk;
     }
 
-    public String getTooltip() {
+    public @NlsContexts.Tooltip String getTooltip() {
       return null;
     }
   }

@@ -101,7 +101,7 @@ public class PyAttributeOutsideInitInspection extends PyInspection {
             !inheritedProperties.contains(attributeName) &&
             !localProperties.containsKey(attributeName) &&
             !isDefinedByProperty(attribute, localProperties.values(), declaredAttributes)) {
-          registerProblem(attribute, PyPsiBundle.message("INSP.attribute.$0.outside.init", attributeName),
+          registerProblem(attribute, PyPsiBundle.message("INSP.attribute.outside.init", attributeName),
                           new PyMoveAttributeToInitQuickFix());
         }
       }

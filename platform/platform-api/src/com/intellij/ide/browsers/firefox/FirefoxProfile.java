@@ -15,22 +15,24 @@
  */
 package com.intellij.ide.browsers.firefox;
 
+import com.intellij.openapi.util.NlsSafe;
+
 import java.io.File;
 
 public class FirefoxProfile {
-  private final String myName;
+  private final @NlsSafe String myName;
   private final String myPath;
   private final boolean myDefault;
   private final boolean myRelative;
 
-  public FirefoxProfile(String name, String path, boolean aDefault, boolean relative) {
+  public FirefoxProfile(@NlsSafe String name, String path, boolean aDefault, boolean relative) {
     myName = name;
     myPath = path;
     myDefault = aDefault;
     myRelative = relative;
   }
 
-  public String getName() {
+  public @NlsSafe String getName() {
     return myName;
   }
 

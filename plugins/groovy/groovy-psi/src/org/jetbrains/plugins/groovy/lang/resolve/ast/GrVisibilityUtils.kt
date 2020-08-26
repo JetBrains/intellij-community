@@ -16,6 +16,7 @@ enum class Visibility {
   PROTECTED,
   PUBLIC;
 
+  @GrModifier.GrModifierConstant
   override fun toString(): String = when (this) {
     PRIVATE -> GrModifier.PRIVATE
     PACKAGE_PRIVATE -> GrModifier.PACKAGE_LOCAL

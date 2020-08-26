@@ -13,6 +13,7 @@ import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListen
 import com.intellij.openapi.project.ExternalStorageConfigurationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.xmlb.annotations.XCollection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -102,6 +103,7 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
    * in order to increase performance
    */
   @Nullable
+  @NlsSafe
   public String getServiceDirectoryPath() {
     return GradleSystemSettings.getInstance().getServiceDirectoryPath();
   }

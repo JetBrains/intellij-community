@@ -15,6 +15,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWrapper;
@@ -249,9 +250,9 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   }
 
   @NotNull
-  private static AnAction createImportExportAction(@NotNull String groupName,
-                                                   @NotNull Collection<String> actionNames,
-                                                   @NotNull BiFunction<? super String, ? super String, ? extends AnAction> createActionByName) {
+  private static AnAction createImportExportAction(@NotNull @NlsActions.ActionText String groupName,
+                                                   @NotNull Collection<@NlsActions.ActionText String> actionNames,
+                                                   @NotNull BiFunction<? super String, ? super @NlsActions.ActionText String, ? extends AnAction> createActionByName) {
     if (actionNames.size() == 1) {
       return createActionByName.apply(ContainerUtil.getFirstItem(actionNames), groupName + "...");
     }
@@ -265,9 +266,9 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   }
 
   private abstract static class ImportExportActionGroup extends ActionGroup {
-    private final Collection<String> myActionNames;
+    private final Collection<@NlsActions.ActionText String> myActionNames;
 
-    ImportExportActionGroup(@NotNull String groupName, @NotNull Collection<String> actionNames) {
+    ImportExportActionGroup(@NotNull @NlsActions.ActionText String groupName, @NotNull Collection<@NlsActions.ActionText String> actionNames) {
       super(groupName, true);
       myActionNames = actionNames;
     }
@@ -289,7 +290,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
 
     private final String myImporterName;
 
-    ImportAction(@NotNull String importerName, @NotNull String importerText) {
+    ImportAction(@NotNull String importerName, @NotNull @NlsActions.ActionText String importerText) {
       super(importerText);
       myImporterName = importerName;
     }
@@ -304,7 +305,7 @@ public abstract class AbstractSchemeActions<T extends Scheme> {
   private class ExportAction extends DumbAwareAction {
     private final String myExporterName;
 
-    ExportAction(@NotNull String exporterName, @NotNull String exporterText) {
+    ExportAction(@NotNull String exporterName, @NotNull @NlsActions.ActionText String exporterText) {
       super(exporterText);
       myExporterName = exporterName;
     }
