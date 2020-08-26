@@ -15,6 +15,7 @@ import com.intellij.util.containers.ContainerUtil
 import git4idea.branch.GitBranchUtil
 import git4idea.config.GitVersionSpecialty
 import git4idea.config.UpdateMethod
+import git4idea.i18n.GitBundle
 import git4idea.push.GitPushRepoResult.Type.*
 import git4idea.repo.GitRepository
 import git4idea.test.*
@@ -437,7 +438,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
 
     var rebaseOverMergeProblemDetected = false
     dialogManager.onMessage {
-      rebaseOverMergeProblemDetected = it.contains(GitRebaseOverMergeProblem.DESCRIPTION)
+      rebaseOverMergeProblemDetected = it.contains(GitBundle.message("dialog.message.rebasing.merge.commits"))
       Messages.CANCEL
     }
     push("master", "origin/master")

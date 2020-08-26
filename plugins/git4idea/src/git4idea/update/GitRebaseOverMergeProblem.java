@@ -13,6 +13,7 @@ import com.intellij.util.containers.ContainerUtil;
 import git4idea.DialogManager;
 import git4idea.GitCommit;
 import git4idea.history.GitHistoryUtils;
+import git4idea.i18n.GitBundle;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 
@@ -21,10 +22,6 @@ import java.util.Objects;
 
 public class GitRebaseOverMergeProblem {
   private static final Logger LOG = Logger.getInstance(GitRebaseOverMergeProblem.class);
-  public static final String DESCRIPTION =
-    "You are about to rebase a merge commit with conflicts.\n\n" +
-    "Choose 'Merge' if you don't want to resolve conflicts again, " +
-    "or you still can rebase if you want to linearize the history.";
 
   public enum Decision {
     MERGE_INSTEAD("Merge"),
@@ -79,9 +76,11 @@ public class GitRebaseOverMergeProblem {
 
   @NotNull
   private static Decision doShowDialog() {
-    int decision = DialogManager.showMessage(DESCRIPTION, "Rebasing Merge Commits", Decision.getButtonTitles(),
-                                             Decision.getDefaultButtonIndex(),
-                                             Decision.getFocusedButtonIndex(), Messages.getWarningIcon(), null);
+    int decision =
+      DialogManager.showMessage(GitBundle.message("dialog.message.rebasing.merge.commits"),
+                                GitBundle.message("dialog.title.rebasing.merge.commits"), Decision.getButtonTitles(),
+                                Decision.getDefaultButtonIndex(),
+                                Decision.getFocusedButtonIndex(), Messages.getWarningIcon(), null);
     return Decision.getOption(decision);
   }
 }

@@ -29,6 +29,8 @@ import git4idea.merge.GitMerger;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitUIUtil;
 import git4idea.util.GitUntrackedFilesHelper;
+import git4idea.util.LocalChangesWouldBeOverwrittenHelper;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -66,7 +68,7 @@ public class GitMergeUpdater extends GitUpdater {
     GitUntrackedFilesOverwrittenByOperationDetector untrackedFilesDetector = new GitUntrackedFilesOverwrittenByOperationDetector(myRoot);
 
     String originalText = myProgressIndicator.getText();
-    myProgressIndicator.setText("Merging" + GitUtil.mention(myRepository) + "...");
+    myProgressIndicator.setText(GitBundle.message("progress.text.merging.repository", GitUtil.mention(myRepository)));
     try {
       GitCommandResult result = myGit.merge(myRepository, myBranchPair.getTarget().getName(),
                                             asList("--no-stat", "-v"), mergeLineListener, untrackedFilesDetector,
@@ -86,7 +88,7 @@ public class GitMergeUpdater extends GitUpdater {
   private GitUpdateResult handleMergeFailure(MergeLineListener mergeLineListener,
                                              GitMessageWithFilesDetector untrackedFilesWouldBeOverwrittenByMergeDetector,
                                              final GitMerger merger,
-                                             String errorMessage) {
+                                             @Nls String errorMessage) {
     final MergeError error = mergeLineListener.getMergeError();
     LOG.info("merge error: " + error);
     if (error == MergeError.CONFLICT) {
@@ -101,8 +103,7 @@ public class GitMergeUpdater extends GitUpdater {
       final Collection<Change> changes = getLocalChangesFilteredByFiles(paths);
       UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
         ChangeListViewerDialog dialog = new ChangeListViewerDialog(myProject, changes);
-        dialog.setDescription("Your local changes to the following files would be overwritten by merge.<br/>" +
-                              "Please, commit your changes or stash them before you can merge.");
+        dialog.setDescription(LocalChangesWouldBeOverwrittenHelper.getErrorNotificationDescription());
         dialog.show();
       });
       return GitUpdateResult.ERROR;
@@ -116,7 +117,7 @@ public class GitMergeUpdater extends GitUpdater {
     }
     else {
       LOG.info("Unknown error: " + errorMessage);
-      GitUIUtil.notifyImportantError(myProject, "Error merging", errorMessage);
+      GitUIUtil.notifyImportantError(myProject, GitBundle.message("notification.title.error.merging"), errorMessage);
       return GitUpdateResult.ERROR;
     }
   }
@@ -164,7 +165,8 @@ public class GitMergeUpdater extends GitUpdater {
     GitCommandResult result = Git.getInstance().runCommand(h);
     if (!result.success()) {
       LOG.info("cancel git reset --merge: " + result.getErrorOutputAsJoinedString());
-      GitUIUtil.notifyImportantError(myProject, "Couldn't reset merge", result.getErrorOutputAsHtmlString());
+      GitUIUtil.notifyImportantError(myProject, GitBundle.message("notification.title.couldn.t.reset.merge"),
+                                     result.getErrorOutputAsHtmlString());
     }
   }
 

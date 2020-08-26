@@ -40,7 +40,7 @@ public class LocalChangesWouldBeOverwrittenHelper {
 
   @Nls
   @NotNull
-  private static String getErrorNotificationDescription() {
+  public static String getErrorNotificationDescription() {
     return getErrorDescription(true);
   }
 
