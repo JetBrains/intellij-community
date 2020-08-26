@@ -168,7 +168,7 @@ public final class ValidationSimpleRuleFactory {
       }
     }
     if (fusRule == null) return UNPARSED_EXPRESSION;
-    return new UtilExpressionValidationRule(fusRule, prefix, suffix);
+    return new ExpressionValidationRule(fusRule, prefix, suffix);
   }
 
   @NotNull

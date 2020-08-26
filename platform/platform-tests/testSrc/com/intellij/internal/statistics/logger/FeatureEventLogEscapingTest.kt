@@ -67,8 +67,8 @@ class FeatureEventLogEscapingTest {
 
   @Test
   fun testEventEventIdSystemSymbolsEscaping() {
-    testEventIdEscaping(newEvent(eventId = "t:est;ev,ent"), "t_est_ev_ent")
-    testEventIdEscaping(newEvent(eventId = "t:e'st\"e;v\te,n t"), "t_este_v_e_n_t")
+    testEventIdEscaping(newEvent(eventId = "t:est;ev,ent"), "t:est;ev,ent")
+    testEventIdEscaping(newEvent(eventId = "t:e'st\"e;v\te,n t"), "t:este;v_e,n_t")
   }
 
   @Test
@@ -84,7 +84,7 @@ class FeatureEventLogEscapingTest {
     testEventIdEscaping(newEvent(eventId = "test\uFFFD"), "test?")
     testEventIdEscaping(newEvent(eventId = "\u7A97\uFFFD"), "??")
     testEventIdEscaping(newEvent(eventId = "\u7A97\uFFFD\uFFFD\uFFFD"), "????")
-    testEventIdEscaping(newEvent(eventId = "\u7A97e:v'e\"n\uFFFD\uFFFD\uFFFDt;t\ty,p e"), "?e_ven???t_t_y_p_e")
+    testEventIdEscaping(newEvent(eventId = "\u7A97e:v'e\"n\uFFFD\uFFFD\uFFFDt;t\ty,p e"), "?e:ven???t;t_y,p_e")
     testEventIdEscaping(newEvent(eventId = "event\u7A97type"), "event?type")
     testEventIdEscaping(newEvent(eventId = "event弹typeʾļ"), "event?type??")
     testEventIdEscaping(newEvent(eventId = "eventʾ"), "event?")
@@ -122,11 +122,11 @@ class FeatureEventLogEscapingTest {
 
     val expected = HashMap<String, Any>()
     expected["my_key"] = "v.alue"
-    expected["my_"] = "valu_e"
-    expected["_mykey"] = "_value"
+    expected["my_"] = "valu:e"
+    expected["_mykey"] = ";value"
     expected["anotherkey"] = "value"
     expected["second"] = "value"
-    expected["all_s_y_s_t_em_symbols"] = "final__v_a_l_u_e"
+    expected["all_s_y_s_t_em_symbols"] = "final_:v;a_l,u_e"
     testEventDataEscaping(event, expected)
   }
 

@@ -27,7 +27,15 @@ public class EnumValidationRule extends PerformanceCareRule implements FUSRegexp
   @Override
   public ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
     if (myEnumValues.isEmpty()) return INCORRECT_RULE;
-    return myEnumValues.contains(StatisticsEventEscaper.escape(data)) ? ACCEPTED : REJECTED;
+
+    String escaped = StatisticsEventEscaper.escapeEventIdOrFieldValue(data);
+    if (myEnumValues.contains(escaped)) {
+      return ACCEPTED;
+    }
+
+    // for backward compatibility with rules created before allowed symbols were changed
+    String legacyData = StatisticsEventEscaper.cleanupForLegacyRulesIfNeeded(escaped);
+    return legacyData != null && myEnumValues.contains(legacyData) ? ACCEPTED : REJECTED;
   }
 
   @NotNull

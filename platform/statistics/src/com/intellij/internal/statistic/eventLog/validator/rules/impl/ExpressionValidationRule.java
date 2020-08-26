@@ -8,12 +8,12 @@ import com.intellij.internal.statistic.eventLog.validator.rules.FUSRule;
 import com.intellij.internal.statistic.eventLog.validator.rules.PerformanceCareRule;
 import org.jetbrains.annotations.NotNull;
 
-public class UtilExpressionValidationRule extends PerformanceCareRule implements FUSRule {
+public class ExpressionValidationRule extends PerformanceCareRule implements FUSRule {
   @NotNull private final FUSRule myRule;
   @NotNull private final String myPrefix;
   @NotNull private final String mySuffix;
 
-  public UtilExpressionValidationRule(@NotNull FUSRule rule, @NotNull String prefix, @NotNull String suffix) {
+  public ExpressionValidationRule(@NotNull FUSRule rule, @NotNull String prefix, @NotNull String suffix) {
     myRule = rule;
     myPrefix = prefix;
     mySuffix = suffix;
@@ -22,7 +22,20 @@ public class UtilExpressionValidationRule extends PerformanceCareRule implements
   @NotNull
   @Override
   public ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
-    final String escapedData = StatisticsEventEscaper.escape(data);
+    String escaped = StatisticsEventEscaper.escapeEventIdOrFieldValue(data);
+    ValidationResultType result = validateEscaped(escaped, context);
+    if (result != ValidationResultType.ACCEPTED) {
+      // for backward compatibility with rules created before allowed symbols were changed
+      String legacyData = StatisticsEventEscaper.cleanupForLegacyRulesIfNeeded(escaped);
+      if (legacyData != null) {
+        return validateEscaped(legacyData, context);
+      }
+    }
+    return result;
+  }
+
+  @NotNull
+  private ValidationResultType validateEscaped(@NotNull String escapedData, @NotNull EventContext context) {
     if (acceptPrefix(escapedData) && acceptSuffix(escapedData)) {
       return myRule.validate(escapedData.substring(myPrefix.length(), escapedData.length() - mySuffix.length()), context);
     }
