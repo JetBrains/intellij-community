@@ -8,12 +8,14 @@ import com.intellij.icons.AllIcons;
 import com.intellij.lang.ASTNode;
 import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.util.NlsContexts.PopupTitle;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.CollectionQuery;
 import com.intellij.util.Function;
 import com.intellij.util.Query;
 import com.intellij.util.containers.MultiMap;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
@@ -88,8 +90,8 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
 
   private static final PyLineMarkerNavigator<PsiElement> SUPER_METHOD_NAVIGATOR = new PyLineMarkerNavigator<PsiElement>() {
     @Override
-    protected String getTitle(@NotNull PsiElement nameIdentifier) {
-      return "Choose Super Method of " + ((PyFunction)nameIdentifier.getParent()).getName();
+    protected @PopupTitle String getTitle(@NotNull PsiElement nameIdentifier) {
+      return PyBundle.message("line.markers.popup.title.choose.super.method", ((PyFunction)nameIdentifier.getParent()).getName());
     }
 
     @Override
@@ -102,8 +104,8 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
 
   private static final PyLineMarkerNavigator<PsiElement> SUPER_ATTRIBUTE_NAVIGATOR = new PyLineMarkerNavigator<PsiElement>() {
     @Override
-    protected String getTitle(@NotNull PsiElement nameIdentifier) {
-      return "Choose Super Attribute of " + ((PyTargetExpression)nameIdentifier.getParent()).getName();
+    protected @PopupTitle String getTitle(@NotNull PsiElement nameIdentifier) {
+      return PyBundle.message("line.markers.popup.title.choose.super.attribute", ((PyTargetExpression)nameIdentifier.getParent()).getName());
     }
 
     @Override
@@ -126,9 +128,9 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
 
   private static final PyLineMarkerNavigator<PsiElement> ourSubclassNavigator = new PyLineMarkerNavigator<PsiElement>() {
     @Override
-    protected String getTitle(final PsiElement elt) {
+    protected @PopupTitle String getTitle(final PsiElement elt) {
       PsiElement parent = elt.getParent();
-      return parent instanceof PyClass  ? "Choose Subclass of " + ((PyClass)parent).getName() : "";
+      return parent instanceof PyClass ? PyBundle.message("line.markers.popup.title.choose.subclass", ((PyClass)parent).getName()) : "";
     }
 
     @Nullable
@@ -141,9 +143,12 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
 
   private static final PyLineMarkerNavigator<PsiElement> ourOverridingMethodNavigator = new PyLineMarkerNavigator<PsiElement>() {
     @Override
-    protected String getTitle(PsiElement element) {
+    protected @PopupTitle String getTitle(PsiElement element) {
       PsiElement parent = element.getParent();
-      return parent instanceof PyFunction ? "Choose Overriding Method of " + ((PyFunction)parent).getName() : "";
+      if (parent instanceof PyFunction) {
+        return PyBundle.message("line.markers.popup.title.choose.overriding.method", ((PyFunction)parent).getName());
+      }
+      return "";
     }
 
     @Override
