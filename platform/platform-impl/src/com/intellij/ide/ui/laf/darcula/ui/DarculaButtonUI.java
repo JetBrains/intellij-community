@@ -65,6 +65,10 @@ public class DarculaButtonUI extends BasicButtonUI {
     return smallVariant || a != null && a.isSmallVariant();
   }
 
+  public static boolean isTag(Component c) {
+    return c instanceof AbstractButton && ((AbstractButton)c).getClientProperty("styleTag") != null;
+  }
+
   public static boolean isComboAction(Component c) {
     return c instanceof AbstractButton && ((JComponent)c).getClientProperty("styleCombo") != null;
   }
@@ -123,8 +127,8 @@ public class DarculaButtonUI extends BasicButtonUI {
 
         g2.translate(r.x, r.y);
 
-        float arc = DarculaUIUtil.BUTTON_ARC.getFloat();
         float bw = isSmallVariant(c) ? 0 : BW.getFloat();
+        float arc = isTag(c) ? r.height - bw * 2 : DarculaUIUtil.BUTTON_ARC.getFloat();
 
         if (!c.hasFocus() && !isSmallVariant(c) && c.isEnabled() && UIManager.getBoolean("Button.paintShadow")) {
           Color shadowColor = JBColor.namedColor("Button.shadowColor", JBColor.namedColor("Button.darcula.shadowColor",

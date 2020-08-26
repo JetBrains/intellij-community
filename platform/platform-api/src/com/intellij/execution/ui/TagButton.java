@@ -27,6 +27,7 @@ public class TagButton extends JBLayeredPane implements Disposable {
         super.paintComponent(g);
       }
     };
+    myButton.putClientProperty("styleTag", true);
     myButton.putClientProperty("JButton.backgroundColor", getBackgroundColor());
     myButton.addKeyListener(new KeyAdapter() {
       @Override
@@ -49,11 +50,12 @@ public class TagButton extends JBLayeredPane implements Disposable {
     myButton.setMargin(JBUI.emptyInsets());
     Dimension size = myButton.getPreferredSize();
     Dimension iconSize = myCloseButton.getPreferredSize();
-    Dimension tagSize = new Dimension(size.width + iconSize.width, size.height);
+    int inset = JBUI.scale(3);
+    Dimension tagSize = new Dimension(size.width + iconSize.width - inset * 2, size.height);
     setPreferredSize(tagSize);
     myButton.setBounds(new Rectangle(tagSize));
     myButton.setMargin(JBUI.insetsRight(iconSize.width));
-    Point p = new Point(tagSize.width - iconSize.width - JBUI.scale(10),
+    Point p = new Point(tagSize.width - iconSize.width - inset * 3,
                         (tagSize.height - iconSize.height) / 2 + JBUI.scale(1));
     myCloseButton.setBounds(new Rectangle(p, iconSize));
   }
