@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -149,6 +150,7 @@ public final class FileHistorySessionPartner implements VcsHistorySessionConsume
     toolWindow.activate(null);
   }
 
+  @NlsContexts.TabTitle
   @NotNull
   private static String getTabName(@NotNull FilePath path, @Nullable VcsRevisionNumber revisionNumber) {
     String tabName = path.getName();

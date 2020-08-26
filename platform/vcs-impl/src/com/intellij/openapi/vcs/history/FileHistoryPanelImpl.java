@@ -18,6 +18,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ByteBackedContentRevision;
@@ -50,10 +51,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
@@ -200,10 +198,11 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
     }
   }
 
+  @Nls
   @NotNull
   public static String getPresentableText(@NotNull VcsFileRevision revision, boolean withMessage) {
     // implementation reflected by com.intellij.vcs.log.ui.frame.VcsLogGraphTable.getPresentableText()
-    StringBuilder sb = new StringBuilder();
+    @Nls StringBuilder sb = new StringBuilder();
     long time = revision.getRevisionDate().getTime();
     sb.append(VcsBundle.message("file.history.details.hash.author.on.date.at.time",
                                 VcsUtil.getShortRevisionString(revision.getRevisionNumber()),
@@ -716,12 +715,12 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
   }
 
   private static class AuthorCellRenderer extends BaseHistoryCellRenderer {
-    private String myTooltipText;
+    private @NlsContexts.Tooltip String myTooltipText;
 
     /**
      * @noinspection MethodNamesDifferingOnlyByCase
      */
-    public void setTooltipText(final String text) {
+    public void setTooltipText(@NlsContexts.Tooltip String text) {
       myTooltipText = text;
     }
 
@@ -759,7 +758,7 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
       if (renderer instanceof AuthorCellRenderer) {
         if (revision instanceof VcsFileRevisionEx) {
           VcsFileRevisionEx ex = (VcsFileRevisionEx)revision;
-          StringBuilder sb = new StringBuilder(StringUtil.notNullize(ex.getAuthor()));
+          @Nls StringBuilder sb = new StringBuilder(StringUtil.notNullize(ex.getAuthor()));
           if (ex.getAuthorEmail() != null) sb.append(" &lt;").append(ex.getAuthorEmail()).append("&gt;"); // NON-NLS
           if (ex.getCommitterName() != null && !Objects.equals(ex.getAuthor(), ex.getCommitterName())) {
             sb.append(", ").append(VcsBundle.message("file.history.details.committer.tooltip.info", ex.getCommitterName()));
@@ -995,6 +994,7 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
     }
   }
 
+  @NlsContexts.ColumnName
   private static String getCommitMessageTitle() {
     return VcsBundle.message("label.selected.revision.commit.message");
   }

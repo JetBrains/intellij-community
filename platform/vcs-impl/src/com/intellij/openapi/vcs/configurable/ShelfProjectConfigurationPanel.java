@@ -10,6 +10,7 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -77,14 +78,15 @@ public class ShelfProjectConfigurationPanel extends JPanel {
   private void updateLabelInfo() {
     myInfoLabel.setText((myProject.isDefault() ? VcsBundle.message("settings.default.location")
                                                : VcsBundle.message("settings.current.location")) +
-                        (myVcsConfiguration.USE_CUSTOM_SHELF_PATH ? FileUtil.toSystemDependentName(
-                          Objects.requireNonNull(myVcsConfiguration.CUSTOM_SHELF_PATH)) : getDefaultShelfPresentationPath(myProject)));
+                        (myVcsConfiguration.USE_CUSTOM_SHELF_PATH
+                         ? FileUtil.toSystemDependentName(Objects.requireNonNull(myVcsConfiguration.CUSTOM_SHELF_PATH))
+                         : getDefaultShelfPresentationPath(myProject)));
   }
 
   /**
    * System dependent path to default shelf dir
    */
-  static @NotNull String getDefaultShelfPresentationPath(@NotNull Project project) {
+  static @NotNull @Nls String getDefaultShelfPresentationPath(@NotNull Project project) {
     return project.isDefault() ? DEFAULT_PROJECT_PRESENTATION_PATH : getDefaultShelfPath(project).toString();
   }
 

@@ -35,10 +35,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.util.ZipperUpdater;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
@@ -62,10 +59,7 @@ import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsUser;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -464,7 +458,7 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
     return reader;
   }
 
-  private void addNotificationAndWarn(@NotNull String errorMessage) {
+  private void addNotificationAndWarn(@NotNull @NlsContexts.Label String errorMessage) {
     LOG.warn(errorMessage);
     myErrorNotificationPanel.setText(errorMessage);
     myErrorNotificationPanel.setVisible(true);

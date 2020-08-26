@@ -123,7 +123,7 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
                                    @NotNull AbstractVcs vcs,
                                    int selectionStart,
                                    int selectionEnd,
-                                   @NotNull String title) {
+                                   @NotNull @NlsContexts.DialogTitle String title) {
     super(project, "VCS.FileHistoryDialog");
 
     myProject = project;

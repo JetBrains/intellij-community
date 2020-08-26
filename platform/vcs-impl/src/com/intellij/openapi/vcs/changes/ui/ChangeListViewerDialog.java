@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
@@ -139,7 +140,7 @@ public class ChangeListViewerDialog extends DialogWrapper {
   /**
    * @param description Text that is added to the top of this dialog. May be null - then no description is shown.
    */
-  public void setDescription(@Nullable String description) {
+  public void setDescription(@Nullable @NlsContexts.Label String description) {
     myChangesPanel.setDescription(description);
   }
 

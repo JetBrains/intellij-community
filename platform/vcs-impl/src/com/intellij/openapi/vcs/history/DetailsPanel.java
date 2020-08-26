@@ -29,6 +29,7 @@ import com.intellij.util.ui.HtmlPanel;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,7 +79,7 @@ class DetailsPanel extends HtmlPanel implements DataProvider, CopyProvider {
     }
 
     boolean addRevisionInfo = mySelection.size() > 1;
-    StringBuilder html = new StringBuilder();
+    @Nls StringBuilder html = new StringBuilder();
     for (TreeNodeOnVcsRevision revision : mySelection) {
       String message = revision.getRevision().getCommitMessage();
       if (StringUtil.isEmpty(message)) continue;

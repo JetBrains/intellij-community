@@ -29,9 +29,7 @@ import com.intellij.openapi.vcs.changes.patch.tool.ApplyPatchDiffRequest;
 import com.intellij.openapi.vcs.changes.patch.tool.ApplyPatchMergeRequest;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import org.jetbrains.annotations.CalledInAny;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.Arrays;
 import java.util.List;
@@ -115,12 +113,12 @@ public final class PatchDiffRequestFactory {
   @NotNull
   public static DiffRequest createBadDiffRequest(@Nullable Project project,
                                                  @NotNull VirtualFile file,
-                                                 @NotNull String localContent,
+                                                 @NotNull @NonNls String localContent,
                                                  @NotNull AppliedTextPatch textPatch,
-                                                 @Nullable String windowTitle,
-                                                 @Nullable String localTitle,
-                                                 @Nullable String resultTitle,
-                                                 @Nullable String patchTitle) {
+                                                 @Nullable @NlsContexts.DialogTitle String windowTitle,
+                                                 @Nullable @NlsContexts.Label String localTitle,
+                                                 @Nullable @NlsContexts.Label String resultTitle,
+                                                 @Nullable @NlsContexts.Label String patchTitle) {
     if (windowTitle == null) windowTitle = getBadPatchTitle(file);
     if (localTitle == null) localTitle = VcsBundle.message("patch.apply.conflict.local.version");
     if (resultTitle == null) resultTitle = VcsBundle.message("patch.apply.conflict.patched.somehow.version");
@@ -135,9 +133,9 @@ public final class PatchDiffRequestFactory {
   public static MergeRequest createMergeRequest(@Nullable Project project,
                                                 @NotNull Document document,
                                                 @NotNull VirtualFile file,
-                                                @NotNull String baseContent,
-                                                @NotNull String localContent,
-                                                @NotNull String patchedContent,
+                                                @NotNull @NonNls String baseContent,
+                                                @NotNull @NonNls String localContent,
+                                                @NotNull @NonNls String patchedContent,
                                                 @Nullable Consumer<? super MergeResult> callback)
     throws InvalidDiffRequestException {
     List<String> titles = Arrays.asList(null, null, null);
@@ -187,10 +185,10 @@ public final class PatchDiffRequestFactory {
                                                    @Nullable VirtualFile file,
                                                    @NotNull String localContent,
                                                    @NotNull AppliedTextPatch textPatch,
-                                                   @Nullable String windowTitle,
-                                                   @Nullable String localTitle,
-                                                   @Nullable String resultTitle,
-                                                   @Nullable String patchTitle,
+                                                   @Nullable @NlsContexts.DialogTitle String windowTitle,
+                                                   @Nullable @NlsContexts.Label String localTitle,
+                                                   @Nullable @NlsContexts.Label String resultTitle,
+                                                   @Nullable @NlsContexts.Label String patchTitle,
                                                    @Nullable Consumer<? super MergeResult> callback)
     throws InvalidDiffRequestException {
     if (!DiffUtil.canMakeWritable(document)) {
@@ -219,6 +217,7 @@ public final class PatchDiffRequestFactory {
   }
 
 
+  @Nls
   @NotNull
   private static String getBadPatchTitle(@Nullable VirtualFile file) {
     if (file != null) {
@@ -229,6 +228,7 @@ public final class PatchDiffRequestFactory {
     }
   }
 
+  @Nls
   @NotNull
   private static String getPresentablePath(@NotNull VirtualFile file) {
     String fullPath = file.getParent() == null ? file.getPath() : file.getParent().getPath();

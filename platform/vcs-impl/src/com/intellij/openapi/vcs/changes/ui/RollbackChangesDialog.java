@@ -36,7 +36,7 @@ public class RollbackChangesDialog extends DialogWrapper {
   private final ChangeInfoCalculator myInfoCalculator;
   private final CommitLegendPanel myCommitLegendPanel;
   private final Runnable myListChangeListener;
-  private final String myOperationName;
+  private final @Nls String myOperationName;
 
   public static void rollbackChanges(final Project project, final Collection<? extends Change> changes) {
     final ChangeListManagerEx manager = (ChangeListManagerEx) ChangeListManager.getInstance(project);

@@ -59,7 +59,7 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
 
   private final Project myProject;
   private final Disposable myDisposable = Disposer.newDisposable();
-  private final String myProjectMessage;
+  private final @Nls String myProjectMessage;
   private final ProjectLevelVcsManager myVcsManager;
   private final TableView<MapInfo> myDirectoryMappingTable;
   private final ComboBox<VcsDescriptor> myVcsComboBox = new ComboBox<>();

@@ -54,7 +54,7 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog {
   @Deprecated
   public static SelectFilesDialog init(Project project,
                                        @NotNull List<? extends VirtualFile> originalFiles,
-                                       @Nullable String prompt,
+                                       @Nullable @NlsContexts.Label String prompt,
                                        @Nullable VcsShowConfirmationOption confirmationOption,
                                        boolean selectableFiles,
                                        boolean showDoNotAskOption,
@@ -65,7 +65,7 @@ public class SelectFilesDialog extends AbstractSelectFilesDialog {
   @NotNull
   public static SelectFilesDialog init(Project project,
                                        @NotNull List<? extends VirtualFile> originalFiles,
-                                       @Nullable String prompt,
+                                       @Nullable @NlsContexts.Label String prompt,
                                        @Nullable VcsShowConfirmationOption confirmationOption,
                                        boolean selectableFiles,
                                        boolean deletableFiles) {

@@ -25,7 +25,7 @@ public final class FontUtil {
     int start = baseFont.canDisplayUpTo(input);
     if (start == -1) return input;
 
-    StringBuilder result = new StringBuilder();
+    @Nls StringBuilder result = new StringBuilder();
 
     FontFallbackIterator it = new FontFallbackIterator();
     it.setPreferredFont(baseFont.getFamily(), baseFont.getSize());

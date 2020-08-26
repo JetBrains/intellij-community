@@ -471,6 +471,7 @@ public class VcsUtil {
     return sb.toString();
   }
 
+  @Nls
   public static String getShortRevisionString(@NotNull VcsRevisionNumber revision) {
     return revision instanceof ShortVcsRevisionNumber
            ? ((ShortVcsRevisionNumber)revision).toShortString()
@@ -501,7 +502,7 @@ public class VcsUtil {
     PropertiesComponent.getInstance().setValue(ANNO_ASPECT + aspectID, String.valueOf(showByDefault));
   }
 
-  public static boolean isPathRemote(String path) {
+  public static boolean isPathRemote(@NonNls String path) {
     final int idx = path.indexOf("://");
     if (idx == -1) {
       final int idx2 = path.indexOf(":\\\\");
@@ -513,6 +514,7 @@ public class VcsUtil {
     return idx > 0;
   }
 
+  @Nls
   public static String getPathForProgressPresentation(@NotNull File file) {
     return file.getName() + " (" + FileUtil.getLocationRelativeToUserHome(file.getParent()) + ")";
   }
@@ -620,7 +622,7 @@ public class VcsUtil {
                              ApplicationNamesInfo.getInstance().getProductName());
   }
 
-  private static int nthIndexOf(@NotNull String text, char c, int n) {
+  private static int nthIndexOf(@NotNull @NonNls String text, char c, int n) {
     assert n > 0;
     int length = text.length();
     int count = 0;
