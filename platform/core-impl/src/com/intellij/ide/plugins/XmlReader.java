@@ -219,7 +219,8 @@ final class XmlReader {
       catch (IOException | JDOMException e) {
         String message = "Plugin " + rootDescriptor + " misses optional descriptor " + configFile;
         if (context.ignoreMissingSubDescriptor) {
-          LOG.info(message, e);
+          LOG.info(message);
+          LOG.debug(e);
         }
         else {
           throw new RuntimeException(message, e);
