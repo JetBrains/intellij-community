@@ -17,6 +17,7 @@ package com.intellij.openapi.compiler;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,7 +45,7 @@ public interface CompilerMessage {
    *
    * @return message text
    */
-  String getMessage();
+  @Nls(capitalization = Nls.Capitalization.Sentence) String getMessage();
 
   /**
    * Returns the navigatable object allowing to navigate to the message source.

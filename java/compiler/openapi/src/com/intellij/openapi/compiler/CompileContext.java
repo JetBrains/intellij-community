@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +39,8 @@ public interface CompileContext extends UserDataHolder {
    * @param lineNum   a line number, -1 if not available.
    * @param columnNum a column number, -1 if not available.
    */
-  void addMessage(@NotNull CompilerMessageCategory category, String message, @Nullable String url, int lineNum, int columnNum);
+  void addMessage(@NotNull CompilerMessageCategory category, @Nls(capitalization = Nls.Capitalization.Sentence) String message,
+                  @Nullable String url, int lineNum, int columnNum);
 
   /**
    * Allows to add a message to be shown in Compiler message view, with a specified Navigatable
@@ -51,8 +53,8 @@ public interface CompileContext extends UserDataHolder {
    * @param columnNum   a column number, -1 if not available.
    * @param navigatable the navigatable pointing to the error location.
    */
-  void addMessage(@NotNull CompilerMessageCategory category, String message, @Nullable String url, int lineNum, int columnNum,
-                  Navigatable navigatable);
+  void addMessage(@NotNull CompilerMessageCategory category, @Nls(capitalization = Nls.Capitalization.Sentence) String message,
+                  @Nullable String url, int lineNum, int columnNum, Navigatable navigatable);
 
   /**
    * Returns all messages of the specified category added during the current compile session.

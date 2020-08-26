@@ -260,6 +260,7 @@ public final class CompileDriver {
 
       @Override
       public void handleFailure(@NotNull UUID sessionId, CmdlineRemoteProto.Message.Failure failure) {
+        //noinspection HardCodedStringLiteral
         compileContext.addMessage(CompilerMessageCategory.ERROR, failure.hasDescription()? failure.getDescription() : "", null, -1, -1);
         final String trace = failure.hasStacktrace()? failure.getStacktrace() : null;
         if (trace != null) {
@@ -272,6 +273,7 @@ public final class CompileDriver {
       protected void handleCompileMessage(UUID sessionId, CmdlineRemoteProto.Message.BuilderMessage.CompileMessage message) {
         final CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind kind = message.getKind();
         //System.out.println(compilerMessage.getText());
+        //noinspection HardCodedStringLiteral
         final String messageText = message.getText();
         if (kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.PROGRESS) {
           final ProgressIndicator indicator = compileContext.getProgressIndicator();
@@ -354,6 +356,7 @@ public final class CompileDriver {
              if (event.hasCustomBuilderMessage()) {
                final CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage message = event.getCustomBuilderMessage();
                if (GlobalOptions.JPS_SYSTEM_BUILDER_ID.equals(message.getBuilderId()) && GlobalOptions.JPS_UNPROCESSED_FS_CHANGES_MESSAGE_ID.equals(message.getMessageType())) {
+                 //noinspection HardCodedStringLiteral
                  final String text = message.getMessageText();
                  if (!StringUtil.isEmpty(text)) {
                    compileContext.addMessage(CompilerMessageCategory.INFORMATION, text, null, -1, -1);
@@ -546,7 +549,7 @@ public final class CompileDriver {
     return duration;
   }
 
-  private static String createStatusMessage(final ExitStatus status, final int warningCount, final int errorCount, long duration) {
+  private static @Nls String createStatusMessage(final ExitStatus status, final int warningCount, final int errorCount, long duration) {
     String message;
     if (status == ExitStatus.CANCELLED) {
       message = JavaCompilerBundle.message("status.compilation.aborted");

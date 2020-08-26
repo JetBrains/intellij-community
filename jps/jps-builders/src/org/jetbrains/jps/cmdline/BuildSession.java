@@ -165,6 +165,7 @@ final class BuildSession implements Runnable, CanceledStatus {
             if (worthReporting) {
               LOG.info(message.getMessageText());
             }
+            //noinspection HardCodedStringLiteral
             response = worthReporting && REPORT_BUILD_STATISTICS ?
                        CmdlineProtoUtil.createCompileMessage(BuildMessage.Kind.JPS_INFO, message.getMessageText(), null, -1, -1, -1, -1, -1, -1.0f):
                        null;
