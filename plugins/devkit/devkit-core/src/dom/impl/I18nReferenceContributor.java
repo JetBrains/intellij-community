@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInspection.InspectionEP;
 import com.intellij.ide.TypeNameEP;
+import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.ResourceBundleReference;
 import com.intellij.openapi.options.ConfigurableEP;
@@ -19,6 +20,7 @@ import com.intellij.patterns.XmlTagPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.IconDescriptionBundleEP;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.xml.DomElement;
@@ -26,6 +28,7 @@ import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.*;
+import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -54,6 +57,8 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
     registerKeyProviders(registrar);
 
     registerBundleNameProviders(registrar);
+
+    registerLiveTemplateSetXml(registrar);
   }
 
   private static void registerKeyProviders(PsiReferenceRegistrar registrar) {
@@ -88,12 +93,7 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
   }
 
   private static void registerBundleNameProviders(PsiReferenceRegistrar registrar) {
-    final PsiReferenceProvider bundleReferenceProvider = new PsiReferenceProvider() {
-      @Override
-      public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull ProcessingContext context) {
-        return new PsiReference[]{new MyResourceBundleReference(element)};
-      }
-    };
+    final PsiReferenceProvider bundleReferenceProvider = createBundleReferenceProvider();
 
     final XmlTagPattern.Capture resourceBundleTagPattern =
       xmlTag().withLocalName("resource-bundle").
@@ -125,7 +125,7 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
     return xmlAttributeValue(attributeNames)
       .inFile(DomPatterns.inDomFile(IdeaPlugin.class))
       .withSuperParent(2, xmlTag()
-        .and(DomPatterns.withDom(DomPatterns.domElement(Extension.class).with(new PatternCondition<Extension>("relevantEP") {
+        .and(DomPatterns.withDom(DomPatterns.domElement(Extension.class).with(new PatternCondition<>("relevantEP") {
           @Override
           public boolean accepts(@NotNull Extension extension,
                                  ProcessingContext context) {
@@ -139,6 +139,43 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
           }
         }))));
   }
+
+  private static void registerLiveTemplateSetXml(PsiReferenceRegistrar registrar) {
+    final XmlTagPattern.Capture templateTagCapture =
+      xmlTag().withLocalName("template")
+        .withParent(xmlTag().withLocalName("templateSet"))
+        .with(new PatternCondition<>("pluginProject") {
+          @Override
+          public boolean accepts(@NotNull XmlTag tag, ProcessingContext context) {
+            return PsiUtil.isPluginProject(tag.getProject());
+          }
+        });
+
+    registrar.registerReferenceProvider(xmlAttributeValue("key").withSuperParent(2, templateTagCapture),
+                                        new PropertyKeyReferenceProvider(tag -> tag.getAttributeValue("resource-bundle")));
+
+
+    registrar.registerReferenceProvider(xmlAttributeValue("resource-bundle").withSuperParent(2, templateTagCapture),
+                                        createBundleReferenceProvider());
+  }
+
+  @NotNull
+  private static PsiReferenceProvider createBundleReferenceProvider() {
+    return new PsiReferenceProvider() {
+
+      @Override
+      public boolean acceptsTarget(@NotNull PsiElement target) {
+        return target instanceof PsiFile && PropertiesImplUtil.isPropertiesFile((PsiFile)target);
+      }
+
+      @Override
+      public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element,
+                                                             @NotNull ProcessingContext context) {
+        return new PsiReference[]{new MyResourceBundleReference(element)};
+      }
+    };
+  }
+
 
   private static final class MyResourceBundleReference extends ResourceBundleReference implements EmptyResolveMessageProvider {
 
