@@ -15,9 +15,11 @@
  */
 package com.intellij.openapi.vcs.update;
 
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public interface SequentialUpdatesContext {
+  @Nls
   @NotNull
   String getMessageWhenInterruptedBeforeStart();
   boolean shouldFail();

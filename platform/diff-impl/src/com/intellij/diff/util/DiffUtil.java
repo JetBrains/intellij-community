@@ -459,9 +459,9 @@ public final class DiffUtil {
                             : DiffBundle.message("label.diff.settings.path");
   }
 
-  @Nls
+  @NlsContexts.Tooltip
   @NotNull
-  public static String createTooltipText(@NotNull @Nls String text, @Nullable @Nls String appendix) {
+  public static String createTooltipText(@NotNull @NlsContexts.Tooltip String text, @Nullable @Nls String appendix) {
     HtmlBuilder result = new HtmlBuilder();
     result.append(text);
     if (appendix != null) {

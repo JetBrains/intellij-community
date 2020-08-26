@@ -12,10 +12,7 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
 import com.intellij.util.messages.Topic;
-import org.jetbrains.annotations.CalledInAwt;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.List;
 
@@ -51,7 +48,7 @@ public abstract class ProjectLevelVcsManager {
    */
   public abstract @Nullable AbstractVcs findVcsByName(@Nullable @NonNls String name);
 
-  public abstract @Nullable VcsDescriptor getDescriptor(final String name);
+  public abstract @Nullable VcsDescriptor getDescriptor(@NonNls String name);
 
   /**
    * Checks if all given files are managed by the specified VCS.
@@ -120,9 +117,9 @@ public abstract class ProjectLevelVcsManager {
    * @deprecated use {@link #addMessageToConsoleWindow(String, ConsoleViewContentType)}
    */
   @Deprecated
-  public abstract void addMessageToConsoleWindow(String message, TextAttributes attributes);
+  public abstract void addMessageToConsoleWindow(@Nls String message, TextAttributes attributes);
 
-  public abstract void addMessageToConsoleWindow(@Nullable String message, @NotNull ConsoleViewContentType contentType);
+  public abstract void addMessageToConsoleWindow(@Nls @Nullable String message, @NotNull ConsoleViewContentType contentType);
 
   public abstract void addMessageToConsoleWindow(@Nullable VcsConsoleLine line);
 
@@ -136,7 +133,7 @@ public abstract class ProjectLevelVcsManager {
                                                                         @NotNull AbstractVcs vcs);
 
   @CalledInAwt
-  public abstract void showProjectOperationInfo(final UpdatedFiles updatedFiles, String displayActionName);
+  public abstract void showProjectOperationInfo(final UpdatedFiles updatedFiles, @Nls String displayActionName);
 
   /**
    * Adds a listener for receiving notifications about changes in VCS configuration for the project.
@@ -182,6 +179,7 @@ public abstract class ProjectLevelVcsManager {
 
   public abstract VcsRoot @NotNull [] getAllVcsRoots();
 
+  @Nls
   public abstract String getConsolidatedVcsName();
 
   /**
@@ -199,7 +197,7 @@ public abstract class ProjectLevelVcsManager {
    * This method can be used only when initially loading the project configuration!
    */
   @Deprecated
-  public abstract void setDirectoryMapping(final String path, final String activeVcsName);
+  public abstract void setDirectoryMapping(@NonNls String path, @NonNls String activeVcsName);
 
   public abstract void setDirectoryMappings(final List<VcsDirectoryMapping> items);
 

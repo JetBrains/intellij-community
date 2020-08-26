@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch.HunkStatus;
@@ -202,6 +203,7 @@ class ApplyPatchChange {
   }
 
   @NotNull
+  @NlsContexts.Tooltip
   private String getStatusText() {
     switch (myStatus) {
       case ALREADY_APPLIED:
@@ -273,7 +275,7 @@ class ApplyPatchChange {
   }
 
   @Nullable
-  private static GutterIconRenderer createIconRenderer(@NotNull final String text,
+  private static GutterIconRenderer createIconRenderer(@NotNull @NlsContexts.Tooltip String text,
                                                        @NotNull final Icon icon,
                                                        @NotNull final Runnable perform) {
     final String tooltipText = DiffUtil.createTooltipText(text, null);
@@ -323,9 +325,9 @@ class ApplyPatchChange {
     private final int myLine1;
     private final int myLine2;
     private final Color myColor;
-    private final String myTooltip;
+    private final @NlsContexts.Tooltip String myTooltip;
 
-    MyGutterRenderer(int line1, int line2, Color color, String tooltip) {
+    MyGutterRenderer(int line1, int line2, Color color, @NlsContexts.Tooltip String tooltip) {
       myLine1 = line1;
       myLine2 = line2;
       myColor = color;

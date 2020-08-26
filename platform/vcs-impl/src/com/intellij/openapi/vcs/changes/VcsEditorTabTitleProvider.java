@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,6 +24,7 @@ public class VcsEditorTabTitleProvider implements EditorTabTitleProvider, DumbAw
   }
 
   @Nullable
+  @NlsContexts.TabTitle
   private static String getEditorTabName(@NotNull VirtualFile file) {
     if (file instanceof PreviewDiffVirtualFile) {
       return ((PreviewDiffVirtualFile)file).getProvider().getEditorTabName();

@@ -6,6 +6,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.components.JBCheckBox;
@@ -104,10 +105,10 @@ public class VcsExecutablePathSelector {
 
   public void reset(@Nullable String globalPath,
                     boolean pathOverriddenForProject,
-                    @Nullable String projectPath,
-                    @NotNull String autoDetectedPath) {
+                    @Nullable @NlsSafe String projectPath,
+                    @NotNull @NlsSafe String autoDetectedPath) {
     myAutoDetectedPath = autoDetectedPath;
-    ((JBTextField)myPathSelector.getTextField()).getEmptyText().setText(VcsBundle.message("settings.auto.detected") + myAutoDetectedPath);
+    ((JBTextField)myPathSelector.getTextField()).getEmptyText().setText(VcsBundle.message("settings.auto.detected") + autoDetectedPath);
 
     myProjectPathCheckbox.setSelected(pathOverriddenForProject);
     if (pathOverriddenForProject) {

@@ -3,8 +3,10 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,9 +19,9 @@ public final class LocalChangeListImpl extends LocalChangeList {
   private static final Logger LOG = Logger.getInstance(ChangeList.class);
 
   @NotNull private final Project myProject;
-  @NotNull private final String myId;
-  @NotNull private final String myName;
-  @NotNull private final String myComment;
+  @NonNls @NotNull private final String myId;
+  @NlsSafe @NotNull private final String myName;
+  @NlsSafe @NotNull private final String myComment;
   @NotNull private final Set<Change> myChanges;
   @Nullable private final ChangeListData myData;
 
@@ -27,7 +29,9 @@ public final class LocalChangeListImpl extends LocalChangeList {
   private final boolean myIsReadOnly;
 
   @NotNull
-  public static LocalChangeListImpl createEmptyChangeListImpl(@NotNull Project project, @NotNull String name, @Nullable String id) {
+  public static LocalChangeListImpl createEmptyChangeListImpl(@NotNull Project project,
+                                                              @NlsSafe @NotNull String name,
+                                                              @NonNls @Nullable String id) {
     return new Builder(project, name).setId(id).build();
   }
 
@@ -37,9 +41,9 @@ public final class LocalChangeListImpl extends LocalChangeList {
   }
 
   private LocalChangeListImpl(@NotNull Project project,
-                              @NotNull String id,
-                              @NotNull String name,
-                              @NotNull String comment,
+                              @NonNls @NotNull String id,
+                              @NlsSafe @NotNull String name,
+                              @NlsSafe @NotNull String comment,
                               @NotNull Set<Change> changes,
                               @Nullable ChangeListData data,
                               boolean isDefault,
@@ -52,17 +56,6 @@ public final class LocalChangeListImpl extends LocalChangeList {
     myData = data;
     myIsDefault = isDefault;
     myIsReadOnly = isReadOnly;
-  }
-
-  private LocalChangeListImpl(@NotNull LocalChangeListImpl origin) {
-    myProject = origin.myProject;
-    myId = origin.myId;
-    myName = origin.myName;
-    myComment = origin.myComment;
-    myChanges = origin.myChanges;
-    myData = origin.myData;
-    myIsDefault = origin.myIsDefault;
-    myIsReadOnly = origin.myIsReadOnly;
   }
 
   @NotNull
@@ -154,7 +147,7 @@ public final class LocalChangeListImpl extends LocalChangeList {
     private boolean myIsDefault = false;
     private boolean myIsReadOnly = false;
 
-    public Builder(@NotNull Project project, @NotNull String name) {
+    public Builder(@NotNull Project project, @NlsSafe @NotNull String name) {
       if (StringUtil.isEmptyOrSpaces(name) && Registry.is("vcs.log.empty.change.list.creation")) {
         LOG.info("Creating a changelist with empty name");
       }
@@ -174,12 +167,12 @@ public final class LocalChangeListImpl extends LocalChangeList {
       myIsReadOnly = list.myIsReadOnly;
     }
 
-    public Builder setId(@Nullable String value) {
+    public Builder setId(@NonNls @Nullable String value) {
       myId = value;
       return this;
     }
 
-    public Builder setComment(@NotNull String value) {
+    public Builder setComment(@NlsSafe @NotNull String value) {
       myComment = value;
       return this;
     }

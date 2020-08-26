@@ -22,6 +22,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.SomeQueue;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayDeque;
@@ -39,7 +40,7 @@ public class ProgressManagerQueue {
   private boolean myIsStarted;
   private boolean myActive;
 
-  public ProgressManagerQueue(@NotNull Project project, @NotNull String title) {
+  public ProgressManagerQueue(@NotNull Project project, @NotNull @NlsContexts.ProgressTitle String title) {
     myProject = project;
     myQueuePollTask = new Task.Backgroundable(project, title) {
       @Override

@@ -75,6 +75,7 @@ public class ShowBaseRevisionAction extends AbstractVcsAction {
     }
   }
 
+  @Nls
   private static String createMessage(@NotNull Project project, @NotNull VcsRevisionDescription description, @NotNull VirtualFile vf) {
     String commitMessage = IssueLinkHtmlRenderer.formatTextWithLinks(project, StringUtil.notNullize(description.getCommitMessage()));
     String message = VcsBundle.message("current.version.text",
@@ -83,7 +84,7 @@ public class ShowBaseRevisionAction extends AbstractVcsAction {
                                        commitMessage,
                                        description.getRevisionNumber().asString(),
                                        vf.getName());
-    return "<html><head>" + UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()) + "</head><body>" + message + "</body></html>"; //NON-NLS //NON-NLS
+    return "<html><head>" + UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()) + "</head><body>" + message + "</body></html>"; //NON-NLS
   }
 
   @Override

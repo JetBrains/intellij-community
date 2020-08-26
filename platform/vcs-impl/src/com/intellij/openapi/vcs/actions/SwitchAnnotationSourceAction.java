@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.annotate.AnnotationSource;
 import com.intellij.openapi.vcs.annotate.AnnotationSourceSwitcher;
@@ -47,10 +48,12 @@ class SwitchAnnotationSourceAction extends AnAction implements DumbAware {
     AnnotateActionGroup.revalidateMarkupInAllEditors();
   }
 
+  @NlsActions.ActionText
   private static String getShowMerged() {
     return VcsBundle.message("annotation.switch.to.merged.text");
   }
 
+  @NlsActions.ActionText
   private static String getHideMerged() {
     return VcsBundle.message("annotation.switch.to.original.text");
   }

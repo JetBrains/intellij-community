@@ -38,7 +38,7 @@ public final class IssueLinkHtmlRenderer {
     if (StringUtil.isEmpty(str)) return "";
     String comment = XmlStringUtil.escapeString(VcsUtil.trimCommitMessageToSaneSize(str), false);
 
-    StringBuilder commentBuilder = new StringBuilder();
+    @Nls StringBuilder commentBuilder = new StringBuilder();
     IssueNavigationConfiguration config = IssueNavigationConfiguration.getInstance(project);
     final List<IssueNavigationConfiguration.LinkMatch> list = config.findIssueLinks(comment);
     int pos = 0;
