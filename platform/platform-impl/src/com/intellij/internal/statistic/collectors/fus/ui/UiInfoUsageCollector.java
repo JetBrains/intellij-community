@@ -36,7 +36,7 @@ final class UiInfoUsageCollector extends ApplicationUsagesCollector {
 
   @Override
   public int getVersion() {
-    return 7;
+    return 8;
   }
 
   @NotNull
