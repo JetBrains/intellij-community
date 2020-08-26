@@ -36,7 +36,7 @@ public final class TabbedContentImpl extends ContentImpl implements TabbedConten
    */
   @Deprecated
   public TabbedContentImpl(JComponent component, @NotNull @NlsContexts.TabTitle String displayName, boolean isPinnable, @NotNull @NonNls String titlePrefix) {
-    this(new TabGroupId(titlePrefix, titlePrefix), new TabDescriptor(component, displayName), isPinnable);
+    this(new TabGroupId(titlePrefix, titlePrefix), new TabDescriptor(component, displayName), isPinnable); //NON-NLS
   }
 
   public TabbedContentImpl(@NotNull TabGroupId id, @NotNull TabDescriptor tab, boolean isPinnable) {

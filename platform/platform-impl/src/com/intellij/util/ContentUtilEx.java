@@ -32,7 +32,7 @@ public final class ContentUtilEx extends ContentsUtil {
                                       @NotNull @NlsContexts.TabTitle String tabName,
                                       boolean select,
                                       @Nullable Disposable childDisposable) {
-    addTabbedContent(manager, new TabGroupId(groupPrefix, groupPrefix),
+    addTabbedContent(manager, new TabGroupId(groupPrefix, groupPrefix), //NON-NLS one value for id and display name, nothing to be done
                      new TabDescriptor(contentComponent, () -> tabName, childDisposable), select);
   }
 
