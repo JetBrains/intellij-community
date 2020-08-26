@@ -409,7 +409,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           LOG.error(e);
         }
         else {
-          LOG.info(e);
+          LOG.warn(e);
         }
         boolean instantiatedStorage = storage != null;
         try {
