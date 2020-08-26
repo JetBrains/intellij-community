@@ -1,5 +1,5 @@
 <idea-plugin>
-  <id>com.intellij.completion.ml.models</id>
+  <id>com.intellij.completion.ml.ranking.models</id>
   <name>Machine Learning Code Completion Models</name>
   <vendor>JetBrains</vendor>
   <category>Other Tools</category>
@@ -11,7 +11,7 @@
 
   <depends>com.intellij.modules.lang</depends>
   <depends>com.intellij.modules.platform</depends>
-  <depends>com.intellij.completion.ml</depends>
+  <depends>com.intellij.completion.ml.ranking</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <completion.ml.model implementation="com.jetbrains.completion.ml.ranker.ExperimentKotlinMLRankingProvider"/>

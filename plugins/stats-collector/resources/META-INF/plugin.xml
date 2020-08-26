@@ -16,7 +16,7 @@
 
   <depends>com.intellij.modules.lang</depends>
   <depends>com.intellij.modules.platform</depends>
-  <depends>com.intellij.completion.ml</depends>
+  <depends>com.intellij.completion.ml.ranking</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationInitializedListener implementation="com.intellij.stats.completion.tracker.CompletionTrackerInitializer"/>

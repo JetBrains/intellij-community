@@ -23,7 +23,7 @@
     <orderEntry type="module" module-name="intellij.properties" />
     <orderEntry type="module" module-name="intellij.markdown" />
     <orderEntry type="module" module-name="intellij.configurationScript" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.mlCompletion" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.completionMlRanking" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.statsCollector" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.sh" />
     <orderEntry type="module" module-name="intellij.vcs.changeReminder" />

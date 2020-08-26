@@ -246,8 +246,8 @@ class CommunityRepositoryModules {
     plugin("intellij.android.smali") {
       withModule("intellij.android.smali")
     },
-    plugin("intellij.mlCompletion"),
-    plugin("intellij.mlCompletionModels") {
+    plugin("intellij.completionMlRanking"),
+    plugin("intellij.completionMlRankingModels") {
       bundlingRestrictions.includeInEapOnly = true
     },
     plugin("intellij.statsCollector") {

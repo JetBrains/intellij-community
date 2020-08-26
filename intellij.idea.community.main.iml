@@ -123,10 +123,10 @@
     <orderEntry type="module" module-name="intellij.platform.images.build" scope="TEST" />
     <orderEntry type="module" module-name="intellij.statsCollector" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.statsCollector.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.mlCompletionModels" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.mlCompletionModels.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.mlCompletion" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.mlCompletion.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.completionMlRankingModels" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.completionMlRankingModels.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.completionMlRanking" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.completionMlRanking.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.debugger.streams" scope="RUNTIME" />
     <orderEntry type="library" scope="RUNTIME" name="jgoodies-common" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="commons-net" level="project" />
