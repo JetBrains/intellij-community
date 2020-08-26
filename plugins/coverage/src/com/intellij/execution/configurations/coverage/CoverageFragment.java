@@ -75,6 +75,9 @@ public class CoverageFragment<T extends RunConfigurationBase<?>> extends NestedG
 
   private static void setCoveragePatterns(JavaCoverageEnabledConfiguration configuration, ClassFilter[] filters, boolean included) {
     ClassFilter[] patterns = CoverageConfigurable.getCoveragePatterns(configuration, !included);
+    for (ClassFilter filter : filters) {
+      filter.INCLUDE = included;
+    }
     configuration.setCoveragePatterns(ArrayUtil.mergeArrays(filters, patterns));
   }
 
