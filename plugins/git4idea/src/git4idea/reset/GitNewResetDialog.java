@@ -18,6 +18,7 @@ package git4idea.reset;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBLabel;
@@ -109,7 +110,7 @@ public class GitNewResetDialog extends DialogWrapper {
       return String.format("%s -> %s", getSourceText(entry.getKey()), getTargetText(entry.getValue())); //NON-NLS
     }
 
-    StringBuilder desc = new StringBuilder();
+    @NlsSafe StringBuilder desc = new StringBuilder();
     for (Map.Entry<GitRepository, VcsFullCommitDetails> entry : commits.entrySet()) {
       GitRepository repository = entry.getKey();
       VcsFullCommitDetails commit = entry.getValue();
