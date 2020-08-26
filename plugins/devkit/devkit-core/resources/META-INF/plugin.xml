@@ -337,8 +337,8 @@
                                     implementationClass="org.jetbrains.idea.devkit.references.DevKitRelatedPropertiesProvider"/>
     <psi.referenceContributor
       language="Properties"
-      implementation="org.jetbrains.idea.devkit.references.DevKitActionOrGroupIdReferenceContributor"/>
-    <properties.implicitPropertyUsageProvider implementation="org.jetbrains.idea.devkit.references.DevKitActionOrGroupIdReferenceContributor$ImplicitUsageProvider"/>
+      implementation="org.jetbrains.idea.devkit.references.MessageBundleReferenceContributor"/>
+    <properties.implicitPropertyUsageProvider implementation="org.jetbrains.idea.devkit.references.MessageBundleReferenceContributor$ImplicitUsageProvider"/>
     <codeInsight.implicitSubclassProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitSubclassProvider"/>
 
     <annotator language="Properties" implementationClass="org.jetbrains.idea.devkit.inspections.RegistryPropertiesAnnotator"/>

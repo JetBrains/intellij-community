@@ -1,8 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
@@ -32,6 +34,10 @@ abstract class ExtensionPointReferenceBase extends PsiReferenceBase<PsiElement> 
     super(element);
   }
 
+  protected ExtensionPointReferenceBase(@NotNull PsiElement element, TextRange rangeInElement) {
+    super(element, rangeInElement);
+  }
+
   /**
    * Returns FQN of extension.
    *
@@ -49,12 +55,12 @@ abstract class ExtensionPointReferenceBase extends PsiReferenceBase<PsiElement> 
   @Nullable
   @Override
   public PsiElement resolve() {
-    final String id = getValue();
+    final String resolveId = getResolveValue();
     final CommonProcessors.FindProcessor<Extension> resolveProcessor = new CommonProcessors.FindProcessor<Extension>() {
       @Override
       protected boolean accept(Extension extension) {
         final GenericAttributeValue<?> nameElement = getNameElement(extension);
-        return nameElement != null && id.equals(nameElement.getStringValue());
+        return nameElement != null && resolveId.equals(nameElement.getStringValue());
       }
     };
     processCandidates(resolveProcessor);
@@ -65,6 +71,10 @@ abstract class ExtensionPointReferenceBase extends PsiReferenceBase<PsiElement> 
     }
     final DomTarget target = DomTarget.getTarget(value, getNameElement(value));
     return target != null ? PomService.convertToPsi(target) : value.getXmlElement();
+  }
+
+  protected @NotNull @NlsSafe String getResolveValue() {
+    return getValue();
   }
 
   @Nullable

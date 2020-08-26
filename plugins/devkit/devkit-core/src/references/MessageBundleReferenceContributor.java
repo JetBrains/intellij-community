@@ -1,12 +1,18 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.references;
 
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInspection.unused.ImplicitPropertyUsageProvider;
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.psi.impl.PropertyKeyImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.ToolWindowEP;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.patterns.VirtualFilePattern;
@@ -15,27 +21,35 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.xml.DomTarget;
+import com.intellij.util.xml.GenericAttributeValue;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.ActionOrGroup;
+import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.index.IdeaPluginRegistrationIndex;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
-import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 import static com.intellij.patterns.PlatformPatterns.virtualFile;
 
-public class DevKitActionOrGroupIdReferenceContributor extends PsiReferenceContributor {
+public class MessageBundleReferenceContributor extends PsiReferenceContributor {
 
   @NonNls private static final String ACTION = "action.";
   @NonNls private static final String GROUP = "group.";
   @NonNls private static final String TEXT = ".text";
   @NonNls private static final String DESC = ".description";
   @NonNls private static final String BUNDLE_PROPERTIES = "Bundle.properties";
+
+  @NonNls private static final String TOOLWINDOW_STRIPE_PREFIX = "toolwindow.stripe.";
 
   public static final PsiElementResolveResult[] EMPTY_RESOLVE_RESULT = new PsiElementResolveResult[0];
 
@@ -44,27 +58,37 @@ public class DevKitActionOrGroupIdReferenceContributor extends PsiReferenceContr
     registrar.registerReferenceProvider(
       PlatformPatterns.psiElement(PropertyKeyImpl.class).inVirtualFile(bundleFile()),
       new PsiReferenceProvider() {
-        @NotNull
+
         @Override
-        public PsiReference[] getReferencesByElement(@NotNull PsiElement element,
-                                                     @NotNull ProcessingContext context) {
+        public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element,
+                                                               @NotNull ProcessingContext context) {
           if (!(element instanceof PropertyKeyImpl)) return PsiReference.EMPTY_ARRAY;
           if (!PsiUtil.isPluginProject(element.getProject())) return PsiReference.EMPTY_ARRAY;
 
           String text = ((PropertyKeyImpl)element).getText();
           return JBIterable.of(
-            createRef(element, text, ACTION, TEXT),
-            createRef(element, text, ACTION, DESC),
-            createRef(element, text, GROUP, TEXT),
-            createRef(element, text, GROUP, DESC)).filter(Objects::nonNull).toArray(PsiReference.EMPTY_ARRAY);
+            createActionReference(element, text, ACTION, TEXT),
+            createActionReference(element, text, ACTION, DESC),
+            createActionReference(element, text, GROUP, TEXT),
+            createActionReference(element, text, GROUP, DESC),
+            createToolwindowIdReference(element, text)
+          ).filter(Objects::nonNull).toArray(PsiReference.EMPTY_ARRAY);
         }
 
         @Nullable
-        private PsiReference createRef(@NotNull PsiElement element, String text, String prefix, String suffix) {
+        private PsiReference createActionReference(@NotNull PsiElement element, String text, String prefix, String suffix) {
           if (!text.startsWith(prefix) || !text.endsWith(suffix)) return null;
 
           String id = text.replace(prefix, "").replace(suffix, "");
           return new DevKitActionReference(id, prefix, element);
+        }
+
+        @Nullable
+        private PsiReference createToolwindowIdReference(@NotNull PsiElement element, String text) {
+          if (!text.startsWith(TOOLWINDOW_STRIPE_PREFIX)) return null;
+
+          String id = StringUtil.notNullize(StringUtil.substringAfter(text, TOOLWINDOW_STRIPE_PREFIX)).replace('_', ' ');
+          return new ToolwindowIdReference(element, id);
         }
       });
   }
@@ -105,6 +129,52 @@ public class DevKitActionOrGroupIdReferenceContributor extends PsiReferenceContr
     }
   }
 
+
+  private static class ToolwindowIdReference extends ExtensionPointReferenceBase {
+
+    private ToolwindowIdReference(@NotNull PsiElement element, String id) {
+      super(element, TextRange.allOf(id).shiftRight(TOOLWINDOW_STRIPE_PREFIX.length()));
+    }
+
+    @Override
+    protected String getExtensionPointClassname() {
+      return ToolWindowEP.class.getName();
+    }
+
+    @Override
+    protected GenericAttributeValue<?> getNameElement(Extension extension) {
+      return extension.getId();
+    }
+
+    @Override
+    public @InspectionMessage @NotNull String getUnresolvedMessagePattern() {
+      return DevKitBundle.message("message.bundle.convert.toolwindow.id.cannot.resolve", getValue());
+    }
+
+    @Override
+    protected @NotNull @NlsSafe String getResolveValue() {
+      return super.getResolveValue().replace('_', ' ');
+    }
+
+    @Override
+    public Object @NotNull [] getVariants() {
+      final List<LookupElement> variants = Collections.synchronizedList(new SmartList<>());
+      processCandidates(extension -> {
+        final GenericAttributeValue<String> id = extension.getId();
+        if (id == null || extension.getXmlElement() == null) return true;
+
+        final String value = id.getStringValue();
+        if (value == null) return true;
+
+        variants.add(LookupElementBuilder.create(extension.getXmlElement(), value.replace(' ', '_'))
+                       .withTypeText(getAttributeValue(extension, "factoryClass")));
+        return true;
+      });
+      return variants.toArray(LookupElement.EMPTY_ARRAY);
+    }
+  }
+
+
   public static class ImplicitUsageProvider extends ImplicitPropertyUsageProvider {
 
     @NonNls public static final String ICON_TOOLTIP_PREFIX = "icon.";
@@ -117,11 +187,13 @@ public class DevKitActionOrGroupIdReferenceContributor extends PsiReferenceContr
       if (!fileName.endsWith(BUNDLE_PROPERTIES)) return false;
       String name = property.getName();
       if (name == null) return false;
+
       if ((name.startsWith(ACTION) || name.startsWith(GROUP)) &&
-          (name.endsWith(TEXT) || name.endsWith(DESC))) {
+          (name.endsWith(TEXT) || name.endsWith(DESC)) ||
+          name.startsWith(TOOLWINDOW_STRIPE_PREFIX)) {
         PsiElement key = property.getFirstChild();
         PsiReference[] references = key == null ? PsiReference.EMPTY_ARRAY : key.getReferences();
-        return Arrays.stream(references).anyMatch(reference -> reference.resolve() != null);
+        return ContainerUtil.exists(references, reference -> reference.resolve() != null);
       }
 
       return name.startsWith(ICON_TOOLTIP_PREFIX) && name.endsWith(ICON_TOOLTIP_SUFFIX);
