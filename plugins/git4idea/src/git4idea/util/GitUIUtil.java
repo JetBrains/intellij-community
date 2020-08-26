@@ -53,7 +53,7 @@ public final class GitUIUtil {
                                     @Nullable Collection<String> messages) {
     String desc = (description != null ? description.replace("\n", BR) : "");
     if (messages != null && !messages.isEmpty()) {
-      desc += StringUtil.join(messages, "<hr/><br/>");
+      desc += StringUtil.join(messages, "<hr/><br/>"); //NON-NLS
     }
     VcsNotifier notificator = VcsNotifier.getInstance(project);
     if (important) {
@@ -149,7 +149,8 @@ public final class GitUIUtil {
     for (VirtualFile root : roots) {
       gitRootChooser.addItem(root);
     }
-    gitRootChooser.setRenderer(SimpleListCellRenderer.create("(invalid)", VirtualFile::getPresentableUrl));
+    gitRootChooser.setRenderer(SimpleListCellRenderer.create(GitBundle.message("combobox.item.file.invalid"),
+                                                             VirtualFile::getPresentableUrl));
     gitRootChooser.setSelectedItem(defaultRoot != null ? defaultRoot : roots.get(0));
     if (currentBranchLabel != null) {
       final ActionListener listener = new ActionListener() {

@@ -9,7 +9,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.NlsContext;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
@@ -30,7 +29,6 @@ import git4idea.i18n.GitBundle;
 import git4idea.merge.GitConflictResolver;
 import git4idea.repo.GitRepository;
 import git4idea.util.GitUntrackedFilesHelper;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,9 +60,9 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
   }
 
   @Override
-  public boolean notifyErrorWithRollbackProposal(@Nls(capitalization = Nls.Capitalization.Title) @NotNull final String title,
-                                                 @Nls @NotNull final String message,
-                                                 @Nls @NotNull final String rollbackProposal) {
+  public boolean notifyErrorWithRollbackProposal(@NotNull final String title,
+                                                 @NotNull final String message,
+                                                 @NotNull final String rollbackProposal) {
     final AtomicBoolean ok = new AtomicBoolean();
     ApplicationManager.getApplication().invokeAndWait(() -> {
       StringBuilder description = new StringBuilder();
@@ -100,7 +98,7 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
   }
 
   @Override
-  public boolean showUnmergedFilesMessageWithRollback(@NotNull @Nls String operationName, @NotNull final String rollbackProposal) {
+  public boolean showUnmergedFilesMessageWithRollback(@NotNull String operationName, @NotNull final String rollbackProposal) {
     final AtomicBoolean ok = new AtomicBoolean();
     ApplicationManager.getApplication().invokeAndWait(() -> {
       String description = XmlStringUtil.wrapInHtml(
@@ -134,8 +132,8 @@ public class GitBranchUiHandlerImpl implements GitBranchUiHandler {
   public GitSmartOperationDialog.Choice showSmartOperationDialog(@NotNull Project project,
                                                                  @NotNull List<? extends Change> changes,
                                                                  @NotNull Collection<String> paths,
-                                                                 @NotNull @Nls String operation,
-                                                                 @Nullable @Nls(capitalization = Nls.Capitalization.Title) String forceButtonTitle) {
+                                                                 @NotNull String operation,
+                                                                 @Nullable String forceButtonTitle) {
     Ref<GitSmartOperationDialog.Choice> exitCode = Ref.create();
     ApplicationManager.getApplication().invokeAndWait(
       () -> exitCode.set(GitSmartOperationDialog.show(project, changes, paths, StringUtil.capitalize(operation), forceButtonTitle)));

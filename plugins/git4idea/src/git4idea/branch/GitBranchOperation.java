@@ -203,7 +203,8 @@ abstract class GitBranchOperation {
     }
   }
 
-  protected void showFatalErrorDialogWithRollback(@NotNull final String title, @NotNull final String message) {
+  protected void showFatalErrorDialogWithRollback(@NotNull @NlsContexts.DialogTitle String title,
+                                                  @NotNull @NlsContexts.DialogMessage String message) {
     boolean rollback = myUiHandler.notifyErrorWithRollbackProposal(title, message, getRollbackProposal());
     if (rollback) {
       rollback();

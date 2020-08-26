@@ -20,11 +20,14 @@ import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.ex.MultiLineLabel;
+import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ui.UIUtil;
 import git4idea.GitUtil;
+import git4idea.i18n.GitBundle;
 import git4idea.ui.ChangesBrowserWithRollback;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -50,13 +53,15 @@ public class LocalChangesWouldBeOverwrittenHelper {
   @Nls
   @NotNull
   private static String getErrorDescription(boolean forNotification) {
-    String line1 = "Your local changes would be overwritten by merge.";
-    String line2 = "Commit, stash or revert them to proceed.";
+    String message = GitBundle.message("warning.your.local.changes.would.be.overwritten.by.merge");
     if (forNotification) {
-      return line1 + "<br/>" + line2 + " <a href='view'>View them</a>";
+      return new HtmlBuilder()
+        .appendRaw(StringUtil.replace(message, "\n", UIUtil.BR))
+        .appendLink("view", GitBundle.message("link.label.local.changes.would.be.overwritten.by.merge.view.them"))
+        .toString();
     }
     else {
-      return line1 + "\n" + line2;
+      return message;
     }
   }
 
@@ -64,7 +69,7 @@ public class LocalChangesWouldBeOverwrittenHelper {
                                            @NotNull final Collection<String> relativeFilePaths) {
     final Collection<String> absolutePaths = GitUtil.toAbsolute(root, relativeFilePaths);
     final List<Change> changes = GitUtil.findLocalChangesForPaths(project, root, absolutePaths, false);
-    String notificationTitle = "Git " + StringUtil.capitalize(operationName) + " Failed";
+    String notificationTitle = GitBundle.message("notification.title.git.operation.failed", StringUtil.capitalize(operationName));
     VcsNotifier.getInstance(project).notifyError(notificationTitle, getErrorNotificationDescription(),
       new NotificationListener.Adapter() {
        @Override
@@ -88,7 +93,7 @@ public class LocalChangesWouldBeOverwrittenHelper {
 
   private static void showErrorDialog(@NotNull Project project, @NotNull String operationName, @NotNull List<? extends Change> changes,
                                       @NotNull Collection<String> absolutePaths) {
-    String title = "Local Changes Prevent from " + StringUtil.capitalize(operationName);
+    String title = GitBundle.message("dialog.title.local.changes.prevent.from.operation", StringUtil.capitalize(operationName));
     String description = getErrorDialogDescription();
     if (changes.isEmpty()) {
       GitUtil.showPathsInDialog(project, absolutePaths, title, description);
