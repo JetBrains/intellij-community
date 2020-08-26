@@ -92,7 +92,7 @@ public final class EnvironmentUtil {
       return getter.join();
     }
     catch (Throwable t) {
-      throw new IllegalStateException(t);
+      throw new AssertionError(t);  // unknown state; is not expected to happen
     }
   }
 
