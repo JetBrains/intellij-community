@@ -241,6 +241,7 @@ class StudioTests(unittest.TestCase):
     kotlin_plugin_count = sum(name.endswith("kotlin-plugin.jar") for name in mac_zip.namelist())
     self.assertEqual(kotlin_plugin_count, 1)
 
+  @unittest.skip("b/166452874")
   def test_kotlin_binary_compatibility(self):
     dist_all = os.path.join(out_dir, "dist.all")
 
