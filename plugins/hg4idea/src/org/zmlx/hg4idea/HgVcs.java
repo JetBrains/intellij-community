@@ -280,7 +280,7 @@ public class HgVcs extends AbstractVcs {
     return (HgVcs)vcsManager.findVcsByName(VCS_NAME);
   }
 
-  public void showMessageInConsole(@NotNull String message, @NotNull ConsoleViewContentType contentType) {
+  public void showMessageInConsole(@NotNull @Nls String message, @NotNull ConsoleViewContentType contentType) {
     if (message.length() > MAX_CONSOLE_OUTPUT_SIZE) {
       message = message.substring(0, MAX_CONSOLE_OUTPUT_SIZE);
     }
