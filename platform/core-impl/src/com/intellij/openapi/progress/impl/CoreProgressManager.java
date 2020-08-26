@@ -422,7 +422,12 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   protected TaskRunnable createTaskRunnable(@NotNull Task task,
                                             @NotNull ProgressIndicator indicator,
                                             @Nullable Runnable continuation) {
-    return new TaskRunnable(task, indicator, continuation);
+    try {
+      return new TaskRunnable(task, indicator, continuation);
+    } finally {
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC)
+        .onTaskRunnableCreated(task, indicator, continuation);
+    }
   }
 
   private static class IndicatorDisposable implements Disposable {
@@ -580,6 +585,8 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     }
     finally {
       task.onFinished();
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC)
+        .onTaskFinished(task, canceled, error);
     }
   }
 
@@ -600,6 +607,8 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     if (progress == null) myUnsafeProgressCount.incrementAndGet();
 
     try {
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC)
+        .beforeExecuteUnderProgress(process, progress);
       ProgressIndicator oldIndicator = null;
       boolean set = progress != null && progress != (oldIndicator = getProgressIndicator());
       if (set) {
@@ -619,6 +628,8 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     }
     finally {
       if (progress == null) myUnsafeProgressCount.decrementAndGet();
+      ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC)
+        .afterExecuteUnderProgress(process, progress);
     }
   }
 
