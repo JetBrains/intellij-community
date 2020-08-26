@@ -244,6 +244,9 @@ public abstract class NlsInfo {
           expressionsAreEquivalent(expression, rightOperand)) {
         UExpression leftOperand = UastUtils.skipParenthesizedExprDown(binOp.getLeftOperand());
         UReferenceExpression lValue = ObjectUtils.tryCast(leftOperand, UReferenceExpression.class);
+        if (lValue instanceof UQualifiedReferenceExpression) {
+          lValue = ObjectUtils.tryCast(((UQualifiedReferenceExpression)lValue).getSelector(), UReferenceExpression.class);
+        }
         if (lValue != null) {
           var = lValue.resolve();
         }
@@ -253,6 +256,13 @@ public abstract class NlsInfo {
           }
           if (leftOperand instanceof UResolvable) {
             var = ((UResolvable)leftOperand).resolve();
+          }
+        }
+        if (var instanceof PsiMethod && PsiType.VOID.equals(((PsiMethod)var).getReturnType())) {
+          PsiParameter[] parameters = ((PsiMethod)var).getParameterList().getParameters();
+          if (parameters.length == 1) {
+            PsiParameter parameter = parameters[0];
+            return forModifierListOwner(parameter);
           }
         }
       }

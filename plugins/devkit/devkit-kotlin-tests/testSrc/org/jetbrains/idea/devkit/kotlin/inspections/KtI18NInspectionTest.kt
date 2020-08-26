@@ -97,8 +97,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
             // TODO: prop is resolved to getter 
             // but Kotlin properties do not propagate annotations to getter ultra-light method 
             prop = "value"
-            // TODO: foo is not resolved to X.getFoo()
-            x.foo = "value"
+            x.foo = <warning descr="Hardcoded string literal: \"value\"">"value"</warning>
           }
         }
     """.trimIndent())
