@@ -18,6 +18,7 @@ package com.intellij.execution.ui;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -42,5 +43,9 @@ public interface JreProvider {
   @Contract(pure=true)
   default @NlsSafe String getPresentableName() {
     return getJrePath();
+  }
+
+  default @NonNls String getID() {
+    return null;
   }
 }

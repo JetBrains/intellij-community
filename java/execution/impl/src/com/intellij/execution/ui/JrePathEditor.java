@@ -24,6 +24,7 @@ import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StatusText;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
@@ -87,7 +88,7 @@ public class JrePathEditor extends LabeledComponent<ComboBox> implements PanelWi
         String path = provider.getJrePath();
         if (!StringUtil.isEmpty(path)) {
           jrePaths.add(path);
-          myComboBoxModel.add(new CustomJreItem(path, provider.getPresentableName(), null));
+          myComboBoxModel.add(new CustomJreItem(provider));
         }
       }
     }
@@ -152,7 +153,7 @@ public class JrePathEditor extends LabeledComponent<ComboBox> implements PanelWi
             }
           }
         });
-        field.setTextToTriggerEmptyTextStatus(JavaPsiBundle.message("default.jre.name"));
+        field.setTextToTriggerEmptyTextStatus(ExecutionBundle.message("default.jre.name"));
 
         return field;
       }
@@ -216,7 +217,7 @@ public class JrePathEditor extends LabeledComponent<ComboBox> implements PanelWi
   private void updateDefaultJrePresentation() {
     StatusText text = myComboboxEditor.getEmptyText();
     text.clear();
-    text.appendText(JavaPsiBundle.message("default.jre.name"), SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    text.appendText(ExecutionBundle.message("default.jre.name"), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     text.appendText(myDefaultJreSelector.getDescriptionString(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
   }
 
@@ -239,6 +240,7 @@ public class JrePathEditor extends LabeledComponent<ComboBox> implements PanelWi
   interface JreComboBoxItem {
     void render(SimpleColoredComponent component, boolean selected);
     String getPresentableText();
+    default @NonNls @Nullable String getID() { return null; }
     @Nullable @NlsSafe
     String getPathOrName();
     @Nullable
@@ -290,18 +292,28 @@ public class JrePathEditor extends LabeledComponent<ComboBox> implements PanelWi
     private final String myPath;
     private final @NlsContexts.Label String myName;
     private final String myVersion;
+    private final String myID;
 
     CustomJreItem(String path) {
       myPath = path;
       myName = null;
       JdkVersionDetector.JdkVersionInfo info = SdkVersionUtil.getJdkVersionInfo(path);
       myVersion = info == null ? null : info.toString();
+      myID = null;
+    }
+
+    CustomJreItem(@NotNull JreProvider provider) {
+      myPath = provider.getJrePath();
+      myName = provider.getPresentableName();
+      myVersion = null;
+      myID = provider.getID();
     }
 
     CustomJreItem(String path, @NlsContexts.Label String name, String version) {
       myPath = path;
       myName = name;
       myVersion = version;
+      myID = null;
     }
 
     @Override
@@ -313,6 +325,11 @@ public class JrePathEditor extends LabeledComponent<ComboBox> implements PanelWi
     @Override
     public @NlsContexts.Label String getPresentableText() {
       return myName != null && !myName.equals(myPath) ? myName : FileUtil.toSystemDependentName(myPath);
+    }
+
+    @Override
+    public @NonNls @Nullable String getID() {
+      return myID;
     }
 
     @Override
@@ -339,7 +356,7 @@ public class JrePathEditor extends LabeledComponent<ComboBox> implements PanelWi
   private class DefaultJreItem implements JreComboBoxItem {
     @Override
     public void render(SimpleColoredComponent component, boolean selected) {
-      component.append(JavaPsiBundle.message("default.jre.name"));
+      component.append(ExecutionBundle.message("default.jre.name"));
       //may be null if JrePathEditor is added to a GUI Form where the default constructor is used and setDefaultJreSelector isn't called
       if (myDefaultJreSelector != null) {
         component.append(myDefaultJreSelector.getDescriptionString(), SimpleTextAttributes.GRAY_ATTRIBUTES);
@@ -348,7 +365,7 @@ public class JrePathEditor extends LabeledComponent<ComboBox> implements PanelWi
 
     @Override
     public String getPresentableText() {
-      return JavaPsiBundle.message("default.jre.name");
+      return ExecutionBundle.message("default.jre.name");
     }
 
     @Override

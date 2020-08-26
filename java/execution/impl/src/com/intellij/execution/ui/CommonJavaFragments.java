@@ -145,7 +145,7 @@ public final class CommonJavaFragments {
 
         if (BundledJreProvider.BUNDLED.equals(value.getPresentableText())) {
           if (index == -1) append("java ");
-          append(value.getPresentableText(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          append(ExecutionBundle.message("bundled.jre.name"), SimpleTextAttributes.GRAYED_ATTRIBUTES);
           return;
         }
 
