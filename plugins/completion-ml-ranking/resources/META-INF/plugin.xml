@@ -66,9 +66,6 @@
     <registryKey key="completion.ml.enable.session.factors" defaultValue="true"
                  description="Use inside single session factors"/>
 
-    <registryKey key="completion.ml.exit.experiment" defaultValue="false"
-                 description="Do not perform A/B experiment for code completion on this installation"/>
-
     <completion.ml.contextFeatures language="" implementationClass="com.intellij.completion.ml.common.CommonLocationFeatures"/>
     <completion.ml.elementFeatures language="" implementationClass="com.intellij.completion.ml.common.CommonElementLocationFeatures"/>
 

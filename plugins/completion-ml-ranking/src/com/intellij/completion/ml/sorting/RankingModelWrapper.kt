@@ -4,8 +4,6 @@ package com.intellij.completion.ml.sorting
 interface RankingModelWrapper {
   fun version(): String?
 
-  //fun usedFeatures(): Set<String>
-
   fun canScore(features: RankingFeatures): Boolean
 
   fun score(features: RankingFeatures): Double?
