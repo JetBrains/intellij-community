@@ -1,10 +1,11 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,8 +14,8 @@ import org.jetbrains.annotations.Nullable;
  * Most of the methods here exist for compatibility reasons, corresponding functionality is also provided by {@link CaretModel} now.
  * <p>
  * In editors supporting multiple carets, each caret has its own associated selection range. Unless mentioned explicitly, methods of this
- * interface operate on the current caret (see {@link CaretModel#runForEachCaret(CaretAction)}), or 'primary' caret if current caret 
- * is not defined. 
+ * interface operate on the current caret (see {@link CaretModel#runForEachCaret(CaretAction)}), or 'primary' caret if current caret
+ * is not defined.
  *
  * @see Editor#getSelectionModel()
  * @see CaretModel
@@ -69,7 +70,7 @@ public interface SelectionModel {
    * @return the selected text, or {@code null} if there is currently no selection.
    */
   @Nullable
-  default String getSelectedText() {
+  default @NlsSafe String getSelectedText() {
     return getSelectedText(false);
   }
 
@@ -78,7 +79,7 @@ public interface SelectionModel {
    * are no selections. If {@code allCarets} is {@code false}, works just like {@link #getSelectedText}.
    */
   @Nullable
-  default String getSelectedText(boolean allCarets) {
+  default @NlsSafe String getSelectedText(boolean allCarets) {
     if (allCarets && getEditor().getCaretModel().supportsMultipleCarets()) {
       final StringBuilder buf = new StringBuilder();
       String separator = "";
