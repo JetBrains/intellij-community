@@ -87,9 +87,9 @@ public class PythonUiService {
   }
 
   @NotNull
-  public JComponent createEncodingsOptionsPanel(String[] possibleEncodings,
-                                                String defaultEncoding,
-                                                String[] possibleFormats,
+  public JComponent createEncodingsOptionsPanel(String @ListItem [] possibleEncodings,
+                                                @ListItem String defaultEncoding,
+                                                String @ListItem[] possibleFormats,
                                                 int formatIndex,
                                                 Consumer<String> encodingChanged,
                                                 Consumer<Integer> formatIndexChanged) {
@@ -116,7 +116,7 @@ public class PythonUiService {
     return null;
   }
 
-  public void showErrorHint(Editor editor, String message) {
+  public void showErrorHint(Editor editor, @NotNull @HintText String message) {
   }
 
   public static PythonUiService getInstance() {
@@ -130,8 +130,8 @@ public class PythonUiService {
 
   @Nullable
   public JComponent createComboBoxWithLabel(@NotNull @NlsContexts.Label String label,
-                                            String[] items,
-                                            final String selectedItem,
+                                            String @ListItem [] items,
+                                            @ListItem String selectedItem,
                                             Consumer<Object> selectedItemChanged) {
     return null;
   }
@@ -167,10 +167,10 @@ public class PythonUiService {
 
   public int showChooseDialog(@Nullable Project project,
                               @Nullable Component parentComponent,
-                              String message,
-                              String title,
-                              String[] values,
-                              String initialValue,
+                              @DialogMessage String message,
+                              @DialogTitle String title,
+                              String @ListItem [] values,
+                              @ListItem String initialValue,
                               @Nullable Icon icon) {
     return -1;
 

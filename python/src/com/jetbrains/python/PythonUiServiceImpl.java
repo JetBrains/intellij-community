@@ -24,7 +24,7 @@ import com.intellij.openapi.ui.messages.MessagesService;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.NlsContexts.PopupContent;
+import com.intellij.openapi.util.NlsContexts.*;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -164,9 +164,9 @@ public final class PythonUiServiceImpl extends PythonUiService {
 
   @Override
   @NotNull
-  public JComponent createEncodingsOptionsPanel(String[] possibleEncodings,
-                                                final String defaultEncoding,
-                                                String[] possibleFormats,
+  public JComponent createEncodingsOptionsPanel(String @ListItem [] possibleEncodings,
+                                                @ListItem String defaultEncoding,
+                                                String @ListItem [] possibleFormats,
                                                 final int formatIndex,
                                                 Consumer<String> encodingChanged,
                                                 Consumer<Integer> formatIndexChanged) {
@@ -250,9 +250,9 @@ public final class PythonUiServiceImpl extends PythonUiService {
 
   @Override
   @NotNull
-  public JComponent createComboBoxWithLabel(@NotNull String label,
-                                            String[] items,
-                                            final String selectedItem,
+  public JComponent createComboBoxWithLabel(@NotNull @NlsContexts.Label String label,
+                                            String @ListItem [] items,
+                                            @ListItem String selectedItem,
                                             Consumer<Object> selectedItemChanged) {
     ComboBox comboBox = new ComboBox<>(items);
     comboBox.setSelectedItem(selectedItem);
@@ -456,8 +456,8 @@ public final class PythonUiServiceImpl extends PythonUiService {
 
   @Override
   public @Nullable String showInputDialog(@Nullable Project project,
-                                          @NlsContexts.DialogMessage String message,
-                                          @NlsContexts.DialogTitle String title,
+                                          @DialogMessage String message,
+                                          @DialogTitle String title,
                                           @Nullable String initialValue,
                                           @Nullable InputValidator validator) {
     return Messages.showInputDialog(project, message,
@@ -465,17 +465,17 @@ public final class PythonUiServiceImpl extends PythonUiService {
   }
 
   @Override
-  public void showErrorHint(Editor editor, String message) {
+  public void showErrorHint(Editor editor, @NotNull @HintText String message) {
     HintManager.getInstance().showErrorHint(editor, message);
   }
 
   @Override
   public int showChooseDialog(@Nullable Project project,
                               @Nullable Component parentComponent,
-                              String message,
-                              String title,
-                              String[] values,
-                              String initialValue,
+                              @DialogMessage String message,
+                              @DialogTitle String title,
+                              String @ListItem [] values,
+                              @ListItem String initialValue,
                               @Nullable Icon icon) {
     return MessagesService.getInstance().showChooseDialog(project, parentComponent, message, title, values, initialValue, icon);
   }
