@@ -74,7 +74,7 @@ public class GitReferenceValidator {
           myLastResult = true;
         }
         catch (VcsException ex) {
-          GitUIUtil.showOperationError(myProject, ex, "Validating revision: " + revisionExpression);
+          GitUIUtil.showOperationError(myProject, ex, GitBundle.message("operation.name.validating.revision.0", revisionExpression));
         }
         if (statusChanged != null) {
           statusChanged.run();

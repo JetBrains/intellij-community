@@ -186,7 +186,7 @@ public class GitUnstashDialog extends DialogWrapper {
           GitUtil.showSubmittedFiles(myProject, hash, root, true, false);
         }
         catch (VcsException ex) {
-          GitUIUtil.showOperationError(myProject, ex, "resolving revision");
+          GitUIUtil.showOperationError(myProject, ex, GitBundle.message("operation.name.resolving.revision"));
         }
       }
     });
