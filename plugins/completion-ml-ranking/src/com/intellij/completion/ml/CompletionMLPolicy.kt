@@ -4,22 +4,15 @@ package com.intellij.completion.ml
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageExtension
 
-interface CompletionStatsPolicy {
+interface CompletionMLPolicy {
     companion object {
-        val Instance = LanguageExtension<CompletionStatsPolicy>("com.intellij.stats.completion.policy")
-
-        fun isStatsLogDisabled(language: Language): Boolean {
-            val policy = Instance.forLanguage(language) ?: return false
-            return policy.isStatsLogDisabled()
-        }
+        val Instance = LanguageExtension<CompletionMLPolicy>("com.intellij.completion.ml.ranking.policy")
 
         fun useNgramModel(language: Language): Boolean {
             val policy = Instance.forLanguage(language) ?: return false
             return policy.useNgramModel()
         }
     }
-
-    fun isStatsLogDisabled(): Boolean
 
     fun useNgramModel(): Boolean
 }

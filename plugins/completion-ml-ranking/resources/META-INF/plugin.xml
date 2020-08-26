@@ -18,7 +18,7 @@
 
   <extensionPoints>
     <extensionPoint name="policy" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
-      <with attribute="implementationClass" implements="com.intellij.completion.ml.CompletionStatsPolicy"/>
+      <with attribute="implementationClass" implements="com.intellij.completion.ml.CompletionMLPolicy"/>
     </extensionPoint>
   </extensionPoints>
 

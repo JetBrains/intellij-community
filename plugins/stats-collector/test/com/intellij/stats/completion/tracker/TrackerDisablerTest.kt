@@ -2,8 +2,8 @@
 package com.intellij.stats.completion.tracker
 
 import com.intellij.codeInsight.lookup.Lookup
-import com.intellij.completion.ml.CompletionStatsPolicy
 import com.intellij.lang.java.JavaLanguage
+import com.intellij.stats.completion.CompletionStatsPolicy
 import junit.framework.TestCase
 
 class TrackerDisablerTest : CompletionLoggingTestBase() {
@@ -36,7 +36,5 @@ class TrackerDisablerTest : CompletionLoggingTestBase() {
       checked = true
       return disabled
     }
-
-    override fun useNgramModel(): Boolean = true
   }
 }

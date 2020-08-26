@@ -18,6 +18,12 @@
   <depends>com.intellij.modules.platform</depends>
   <depends>com.intellij.completion.ml.ranking</depends>
 
+  <extensionPoints>
+    <extensionPoint name="policy" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.stats.completion.CompletionStatsPolicy"/>
+    </extensionPoint>
+  </extensionPoints>
+
   <extensions defaultExtensionNs="com.intellij">
     <applicationInitializedListener implementation="com.intellij.stats.completion.tracker.CompletionTrackerInitializer"/>
 

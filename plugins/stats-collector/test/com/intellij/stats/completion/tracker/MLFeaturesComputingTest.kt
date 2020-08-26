@@ -5,13 +5,13 @@ import com.intellij.codeInsight.completion.CompletionLocation
 import com.intellij.codeInsight.completion.ml.*
 import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
-import com.intellij.completion.ml.CompletionStatsPolicy
 import com.intellij.completion.ml.experiment.ExperimentStatus
 import com.intellij.completion.ml.sorting.RankingSupport
 import com.intellij.completion.ml.storage.MutableLookupStorage
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.mocks.TestExperimentStatus
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.stats.completion.CompletionStatsPolicy
 import com.intellij.testFramework.replaceService
 import junit.framework.TestCase
 
@@ -54,7 +54,6 @@ class MLFeaturesComputingTest : CompletionLoggingTestBase() {
     if (!value) {
       CompletionStatsPolicy.Instance.addExplicitExtension(JavaLanguage.INSTANCE, object : CompletionStatsPolicy {
         override fun isStatsLogDisabled(): Boolean = true
-        override fun useNgramModel(): Boolean = true
       }, testRootDisposable)
     }
   }
