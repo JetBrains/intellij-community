@@ -14,6 +14,7 @@ import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -56,8 +57,8 @@ public class CoverageFragment<T extends RunConfigurationBase<?>> extends NestedG
 
   @NotNull
   private SettingsEditorFragment<T, CoverageClassFilterEditor> createFilterEditor(String id,
-                                                                                  @NotNull String message,
-                                                                                  boolean included, @NotNull String optionName) {
+                                                                                  @NotNull @Nls String message,
+                                                                                  boolean included, @NotNull @Nls String optionName) {
     JavaCoverageEnabledConfiguration configuration = getConfiguration();
     CoverageClassFilterEditor filterEditor = new CoverageClassFilterEditor(myConfiguration.getProject());
     filterEditor.setBorder(IdeBorderFactory.createTitledBorder(message, false, JBUI.emptyInsets()));
