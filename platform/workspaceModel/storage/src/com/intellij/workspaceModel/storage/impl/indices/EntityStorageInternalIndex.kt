@@ -57,10 +57,8 @@ open class EntityStorageInternalIndex<T> private constructor(
     private fun startWrite() {
       if (!freezed) return
       freezed = false
-      index = copyIndex()
+      index = index.copy()
     }
-
-    private fun copyIndex(): BidirectionalMap<EntityId, T> = index.copy()
 
     fun toImmutable(): EntityStorageInternalIndex<T> {
       freezed = true
