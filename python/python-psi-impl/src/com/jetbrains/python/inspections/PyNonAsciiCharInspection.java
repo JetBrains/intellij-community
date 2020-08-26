@@ -17,6 +17,7 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -103,7 +104,7 @@ public class PyNonAsciiCharInspection extends PyInspection {
     }
   }
 
-  public String myDefaultEncoding = "utf-8";
+  public @NlsSafe String myDefaultEncoding = "utf-8";
   public int myEncodingFormatIndex = 0;
 
   @Override
