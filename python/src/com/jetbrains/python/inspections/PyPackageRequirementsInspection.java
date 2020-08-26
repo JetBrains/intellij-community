@@ -40,6 +40,7 @@ import com.jetbrains.python.sdk.PySdkExtKt;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.pipenv.PipEnvInstallQuickFix;
 import com.jetbrains.python.sdk.pipenv.PipenvKt;
+import com.jetbrains.python.ui.PyUiUtil;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -414,6 +415,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       if (!checkAdminPermissionsAndConfigureInterpreter(project, descriptor, mySdk)) {
+        PyUiUtil.clearFileLevelInspectionResults(project);
         installPackages(project);
       }
     }
