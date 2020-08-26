@@ -8,13 +8,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.RecursionGuard;
 import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.util.NullableFunction;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.ProcessingContext;
+import com.intellij.util.SharedProcessingContext;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectMap;
@@ -24,16 +24,18 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.BiFunction;
+
+import static java.util.Collections.emptyList;
 
 /**
  * @author peter
  */
-@SuppressWarnings("unchecked")
 public final class SemServiceImpl extends SemService {
   private static final Logger LOG = Logger.getInstance(SemServiceImpl.class);
 
   private final Object myLock = ObjectUtils.sentinel(getClass().getName());
-  private volatile MultiMap<SemKey<?>, NullableFunction<PsiElement, Collection<? extends SemElement>>> myProducers;
+  private volatile MultiMap<SemKey<?>, BiFunction<PsiElement, ProcessingContext, Collection<? extends SemElement>>> myProducers;
   private final Project myProject;
   private final CachedValuesManager myCVManager;
 
@@ -43,39 +45,24 @@ public final class SemServiceImpl extends SemService {
     SemContributor.EP_NAME.addChangeListener(() -> myProducers = null, project);
   }
 
-  private MultiMap<SemKey<?>, NullableFunction<PsiElement, Collection<? extends SemElement>>> collectProducers() {
-    MultiMap<SemKey<?>, NullableFunction<PsiElement, Collection<? extends SemElement>>> map = new MultiMap<>();
+  private MultiMap<SemKey<?>, BiFunction<PsiElement, ProcessingContext, Collection<? extends SemElement>>> collectProducers() {
+    MultiMap<SemKey<?>, BiFunction<PsiElement, ProcessingContext, Collection<? extends SemElement>>> map = new MultiMap<>();
 
-    final SemRegistrar registrar = new SemRegistrar() {
+    SemRegistrar registrar = new SemRegistrar() {
       @Override
-      public <T extends SemElement, V extends PsiElement> void registerSemElementProvider(SemKey<T> key,
-                                                                                          final ElementPattern<? extends V> place,
-                                                                                          final NullableFunction<? super V, ? extends T> provider) {
-        map.putValue(key, element -> {
-          if (place.accepts(element)) {
-            return Collections.singleton(provider.fun((V)element));
-          }
-          return null;
-        });
-      }
+      public <T extends SemElement> void registerSemProvider(
+        SemKey<T> key,
+        BiFunction<? super PsiElement, ? super ProcessingContext, ? extends Collection<T>> provider) {
 
-      @Override
-      public <T extends SemElement, V extends PsiElement> void registerRepeatableSemElementProvider(SemKey<T> key,
-                                                                                                    ElementPattern<? extends V> place,
-                                                                                                    NullableFunction<? super V, ? extends Collection<T>> provider) {
-        map.putValue(key, element -> {
-          if (place.accepts(element)) {
-            return provider.fun((V)element);
-          }
-          return null;
-        });
+        map.putValue(key, provider::apply);
       }
     };
 
     for (SemContributorEP contributor : SemContributor.EP_NAME.getExtensionList()) {
       SemContributor semContributor;
       try {
-        semContributor = myProject.instantiateExtensionWithPicoContainerOnlyIfNeeded(contributor.implementation, contributor.getPluginDescriptor());
+        semContributor =
+          myProject.instantiateExtensionWithPicoContainerOnlyIfNeeded(contributor.implementation, contributor.getPluginDescriptor());
       }
       catch (ProcessCanceledException e) {
         throw e;
@@ -94,25 +81,26 @@ public final class SemServiceImpl extends SemService {
   }
 
   @Override
-  public <T extends SemElement> List<T> getSemElements(@NotNull SemKey<T> key, @NotNull final PsiElement psi) {
+  public <T extends SemElement> List<T> getSemElements(@NotNull SemKey<T> key, @NotNull PsiElement psi) {
     SemCacheChunk chunk = myCVManager.getCachedValue((UserDataHolder)psi, () ->
-      CachedValueProvider.Result.create(new SemCacheChunk(), PsiModificationTracker.MODIFICATION_COUNT));
+      Result.create(new SemCacheChunk(), PsiModificationTracker.MODIFICATION_COUNT));
     List<T> cached = findCached(key, chunk);
     return cached != null ? cached : createSemElements(key, psi, chunk);
   }
 
+  @SuppressWarnings("unchecked")
   @NotNull
-  private <T extends SemElement> List<T> createSemElements(@NotNull SemKey<T> key,
-                                                           @NotNull PsiElement psi,
-                                                           SemCacheChunk chunk) {
+  private <T extends SemElement> List<T> createSemElements(@NotNull SemKey<T> key, @NotNull PsiElement psi, SemCacheChunk chunk) {
     ensureInitialized();
 
     RecursionGuard.StackStamp stamp = RecursionManager.markStack();
 
     LinkedHashSet<T> result = new LinkedHashSet<>();
     Map<SemKey<?>, List<SemElement>> map = new THashMap<>();
+
+    ProcessingContext processingContext = new ProcessingContext(new SharedProcessingContext());
     for (SemKey<?> each : key.getInheritors()) {
-      List<SemElement> list = createSemElements(each, psi);
+      List<SemElement> list = createSemElements(each, psi, processingContext);
       map.put(each, list);
       result.addAll((List<T>)list);
     }
@@ -137,21 +125,22 @@ public final class SemServiceImpl extends SemService {
   }
 
   @NotNull
-  private List<SemElement> createSemElements(SemKey<?> key, PsiElement psi) {
+  private List<SemElement> createSemElements(SemKey<?> key, PsiElement psi, ProcessingContext processingContext) {
     List<SemElement> result = null;
-    Collection<NullableFunction<PsiElement, Collection<? extends SemElement>>> functions = myProducers.get(key);
+    Collection<BiFunction<PsiElement, ProcessingContext, Collection<? extends SemElement>>> functions = myProducers.get(key);
     if (!functions.isEmpty()) {
-      for (final NullableFunction<PsiElement, Collection<? extends SemElement>> producer : functions) {
-        Collection<? extends SemElement> elements = producer.fun(psi);
+      for (BiFunction<PsiElement, ProcessingContext, Collection<? extends SemElement>> producer : functions) {
+        Collection<? extends SemElement> elements = producer.apply(psi, processingContext);
         if (elements != null) {
           if (result == null) result = new SmartList<>();
           ContainerUtil.addAllNotNull(result, elements);
         }
       }
     }
-    return result == null ? Collections.emptyList() : Collections.unmodifiableList(result);
+    return result == null ? emptyList() : Collections.unmodifiableList(result);
   }
 
+  @SuppressWarnings("unchecked")
   @Nullable
   private static <T extends SemElement> List<T> findCached(SemKey<T> key, SemCacheChunk chunk) {
     List<T> singleList = null;
@@ -177,13 +166,12 @@ public final class SemServiceImpl extends SemService {
       }
     }
 
-
     if (result == null) {
       if (singleList != null) {
         return singleList;
       }
 
-      return Collections.emptyList();
+      return emptyList();
     }
 
     return new ArrayList<>(result);
@@ -199,7 +187,5 @@ public final class SemServiceImpl extends SemService {
     void putSemElements(SemKey<?> key, List<SemElement> elements) {
       map.put(key.getUniqueId(), elements);
     }
-
   }
-
 }

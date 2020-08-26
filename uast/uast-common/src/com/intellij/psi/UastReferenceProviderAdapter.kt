@@ -8,7 +8,7 @@ internal class UastReferenceProviderAdapter(private val supportedUElementTypes: 
                                             private val provider: UastReferenceProvider) : PsiReferenceProvider() {
 
   override fun getReferencesByElement(element: PsiElement, context: ProcessingContext): Array<PsiReference> {
-    val uElement = getOrCreateCachedElement(element, context, supportedUElementTypes) ?: return PsiReference.EMPTY_ARRAY
+    val uElement = UastPatternAdapter.getOrCreateCachedElement(element, context, supportedUElementTypes) ?: return PsiReference.EMPTY_ARRAY
     return provider.getReferencesByElement(uElement, context)
   }
 
