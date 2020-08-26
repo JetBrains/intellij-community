@@ -20,13 +20,13 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -99,11 +99,14 @@ public class HgUpdateCommand {
     return result;
   }
 
-  public static int showDiscardChangesConfirmation(@NotNull final Project project, @NotNull @Nls String confirmationMessage) {
+  public static int showDiscardChangesConfirmation(@NotNull final Project project,
+                                                   @NotNull @NlsContexts.DialogTitle String confirmationMessage) {
     final AtomicInteger exitCode = new AtomicInteger();
-    UIUtil.invokeAndWaitIfNeeded(
-      (Runnable)() -> exitCode.set(Messages.showOkCancelDialog(project, confirmationMessage, HgBundle.message("hg4idea.update.uncommitted.problem"),
-                                                               HgBundle.message("changes.discard"), CommonBundle.message("button.cancel.c"), Messages.getWarningIcon())));
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      exitCode.set(Messages.showOkCancelDialog(project, confirmationMessage, HgBundle.message("hg4idea.update.uncommitted.problem"),
+                                               HgBundle.message("changes.discard"), CommonBundle.message("button.cancel.c"),
+                                               Messages.getWarningIcon()));
+    });
     return exitCode.get();
   }
 

@@ -17,7 +17,6 @@ package org.zmlx.hg4idea.push;
 
 import com.intellij.dvcs.push.PushTarget;
 import com.intellij.openapi.util.NlsSafe;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.util.HgUtil;
 
@@ -30,7 +29,6 @@ public class HgTarget implements PushTarget {
     myBranchName = branchName;
   }
 
-  @Nls
   @NotNull
   @Override
   public String getPresentation() {

@@ -296,7 +296,7 @@ public class HgMqUnAppliedPatchesPanel extends JPanel implements DataProvider, H
 
     @Override
     public String getColumnName(int col) {
-      return myColumnNames[col].toString();
+      return myColumnNames[col].getColumnName();
     }
 
     @Override
