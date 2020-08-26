@@ -105,7 +105,12 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix {
   @Nullable
   public static UPolyadicExpression getEnclosingLiteralConcatenation(final PsiElement psiElement) {
     UExpression topExpression = UastContextKt.getUastParentOfType(psiElement, UPolyadicExpression.class);
+    UStringConcatenationsFacade concatenation = null;
     while (topExpression != null) {
+      UStringConcatenationsFacade nextConcatenation = UStringConcatenationsFacade.createFromTopConcatenation(topExpression);
+      if (nextConcatenation != null) {
+        concatenation = nextConcatenation;
+      }
       UElement parent = topExpression.getUastParent();
       if (parent instanceof UParenthesizedExpression || 
           parent instanceof UIfExpression || 
@@ -116,7 +121,7 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix {
         break;
       }
     }
-    UStringConcatenationsFacade concatenation = UStringConcatenationsFacade.createFromTopConcatenation(topExpression);
+    
     if (concatenation != null) {
       PartiallyKnownString pks = concatenation.asPartiallyKnownString();
       if (pks.getSegments().size() == 1) {
