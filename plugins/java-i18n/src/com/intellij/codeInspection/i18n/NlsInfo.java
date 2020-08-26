@@ -367,21 +367,20 @@ public abstract class NlsInfo {
         }
       }
       UExpression next = ObjectUtils.tryCast(parentElement, UExpression.class);
-      if (next == null ||
-          next instanceof UReturnExpression ||
-          next instanceof USwitchClauseExpression ||
-          next instanceof UNamedExpression) {
+      if (next == null || next instanceof USwitchClauseExpression || next instanceof UNamedExpression) {
         return parent;
       }
-      if (next instanceof ULambdaExpression) {
-        next = ObjectUtils.tryCast(next.getUastParent(), UExpression.class);
-        if (!(next instanceof UCallExpression)) {
-          return parent;
-        }
-        PsiMethod method = ((UCallExpression)next).resolve();
-        if (method == null || !isKotlinPassthroughMethod(method)) {
-          return parent;
-        }
+      ULambdaExpression lambda = ObjectUtils.tryCast(next, ULambdaExpression.class);
+      if (next instanceof UReturnExpression) {
+        lambda = ObjectUtils.tryCast(((UReturnExpression)next).getJumpTarget(), ULambdaExpression.class);
+        if (lambda == null) return parent;
+      }
+      if (lambda != null) {
+        UCallExpression uastParent = ObjectUtils.tryCast(lambda.getUastParent(), UCallExpression.class);
+        if (uastParent == null) return parent;
+        PsiMethod method = uastParent.resolve();
+        if (method == null || !isPassthroughMethod(method)) return parent;
+        next = uastParent;
       }
       if (next instanceof UQualifiedReferenceExpression && !TypeUtils.isJavaLangString(next.getExpressionType())) {
         return parent;
@@ -415,13 +414,26 @@ public abstract class NlsInfo {
   static boolean isStringProcessingMethod(PsiMethod method) {
     if (method == null) return false;
     if (!(forModifierListOwner(method) instanceof Unspecified)) return false;
-    if (!JavaMethodContractUtil.isPure(method) && !isKotlinPassthroughMethod(method)) return false;
+    if (!JavaMethodContractUtil.isPure(method) &&
+        !isPassthroughMethod(method)) return false;
     PsiParameter[] parameters = method.getParameterList().getParameters();
     if (parameters.length == 0) return false;
     for (PsiParameter parameter : parameters) {
       if (!(forModifierListOwner(parameter) instanceof Unspecified)) return false;
     }
     return true;
+  }
+
+  private static boolean isPassthroughMethod(PsiMethod method) {
+    PsiType type = method.getReturnType();
+    PsiTypeParameter typeParameter = ObjectUtils.tryCast(PsiUtil.resolveClassInClassTypeOnly(type), PsiTypeParameter.class);
+    if (typeParameter == null || typeParameter.getExtendsList().getReferencedTypes().length > 0) return false;
+    for (PsiParameter parameter : method.getParameterList().getParameters()) {
+      PsiType parameterType = parameter.getType();
+      PsiType returnType = LambdaUtil.getFunctionalInterfaceReturnType(parameterType);
+      if (type.equals(returnType)) return true;
+    }
+    return isKotlinPassthroughMethod(method);
   }
 
   private static boolean isKotlinPassthroughMethod(PsiMethod method) {

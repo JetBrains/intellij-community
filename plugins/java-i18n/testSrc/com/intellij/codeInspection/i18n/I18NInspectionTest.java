@@ -138,6 +138,8 @@ public class I18NInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   
   public void testConverterMethods() { doTestNlsMode(); }
   
+  public void testPassthroughMethods() { doTestNlsMode(); }
+  
   public void testNlsSafeStringBuilder() { doTestNlsMode(); }
   
   public void testUnannotatedReferencesQualified() { doTestNlsMode(); }
