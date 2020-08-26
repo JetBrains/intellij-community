@@ -191,13 +191,11 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
           break;
         }
         userProvidedPath = null; // According to checkSynchronizationAvailable should be cleared
-        final String message = String.format("Local/Remote synchronization is not configured correctly.\n%s\n" +
-                                             "You may need to sync local and remote project manually.\n\n Do you want to continue? \n\n" +
-                                             "Say 'Yes' to stay with misconfigured  mappings or 'No' to start manual configuration process.",
-                                             syncError);
+        final String message =
+          PyBundle.message("python.new.project.synchronization.not.configured.dialog.message", syncError);
         if (Messages.showYesNoDialog(project,
                                      message,
-                                     PyBundle.message("python.new.project.synchronization.not.configured"),
+                                     PyBundle.message("python.new.project.synchronization.not.configured.dialog.title"),
                                      General.WarningDialog) == Messages.YES) {
           break;
         }
@@ -327,7 +325,7 @@ public abstract class PythonProjectGenerator<T extends PyNewProjectSettings> ext
     }
 
     if (errorDescription == null) {
-      errorDescription = ErrorDescription.fromMessage("Choose another SDK");
+      errorDescription = ErrorDescription.fromMessage(PyBundle.message("python.new.project.error.solution.another.sdk"));
     }
     return errorDescription;
   }
