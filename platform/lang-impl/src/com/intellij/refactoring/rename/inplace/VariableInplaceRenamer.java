@@ -4,6 +4,7 @@ package com.intellij.refactoring.rename.inplace;
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.LangBundle;
@@ -117,7 +118,12 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
       final RenameChooser renameChooser = new RenameChooser(myEditor) {
         @Override
         protected void runRenameTemplate(Collection<Pair<PsiElement, TextRange>> stringUsages) {
-          VariableInplaceRenamer.super.buildTemplateAndStart(refs, stringUsages, scope, containingFile);
+          if (!VariableInplaceRenamer.super.buildTemplateAndStart(refs, stringUsages, scope, containingFile)) {
+            VariableInplaceRenameHandler.performDialogRename(myElementToRename, 
+                                                             myEditor, 
+                                                             DataManager.getInstance().getDataContext(myEditor.getContentComponent()), 
+                                                             myInitialName);
+          }
         }
       };
       renameChooser.showChooser(refs, stringUsages);
