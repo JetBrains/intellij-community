@@ -133,12 +133,11 @@ public class GitDefineRemoteDialog extends DialogWrapper {
   @Nullable
   @Nls
   private String validateRemoteUnderModal(@NotNull final String url) throws ProcessCanceledException {
-    return ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-      GitCommandResult result = myGit.lsRemote(myRepository.getProject(), virtualToIoFile(myRepository.getRoot()), url);
-      return !result.success()
-             ? message("remotes.define.remote.url.validation.fail.message") + " " + result.getErrorOutputAsHtmlString()
-             : null;
+    GitCommandResult result = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
+      return myGit.lsRemote(myRepository.getProject(), virtualToIoFile(myRepository.getRoot()), url);
     }, message("remotes.define.checking.url.progress.message"), true, myRepository.getProject());
+    return !result.success()
+           ? message("remotes.define.remote.url.validation.fail.message") + " " + result.getErrorOutputAsHtmlString()
+           : null;
   }
-
 }
