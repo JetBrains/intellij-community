@@ -35,10 +35,7 @@ import com.intellij.remote.ext.LanguageCaseCollector;
 import com.intellij.util.Consumer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PyNames;
-import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.PythonHelper;
+import com.jetbrains.python.*;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.remote.PyCredentialsContribution;
@@ -378,10 +375,8 @@ public final class PythonSdkType extends SdkType {
             restartAction.run();
           }
         };
-      @NonNls
-      final String before = "\n<a href=\"#\">";
-      @NonNls
-      final String after = "</a>";
+      @NonNls final String before = "\n<a href=\"#\">";
+      @NonNls final String after = "</a>";
       notificationMessage = e.getMessage() + before + PyBundle.message("python.vagrant.refresh.skeletons") + after;
     }
     else if (ExceptionUtil.causedBy(e, ExceptionFix.class)) {
@@ -466,9 +461,8 @@ public final class PythonSdkType extends SdkType {
     final ProcessOutput runResult = PySdkUtil.getProcessOutput(cmd, new File(binaryPath).getParent(),
                                                                activateVirtualEnv(sdk), MINUTE);
     if (!runResult.checkSuccess(LOG)) {
-      throw new InvalidSdkException(String.format("Failed to determine Python's sys.path value:\nSTDOUT: %s\nSTDERR: %s",
-                                                  runResult.getStdout(),
-                                                  runResult.getStderr()));
+      throw new InvalidSdkException(PySdkBundle.message("python.sdk.failed.to.determine.sys.path",
+                                                        runResult.getStdout(), runResult.getStderr()));
     }
     return runResult.getStdoutLines();
   }

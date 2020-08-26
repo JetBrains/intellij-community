@@ -32,6 +32,7 @@ import com.intellij.webcore.packaging.InstalledPackagesPanel;
 import com.intellij.webcore.packaging.PackageManagementService;
 import com.intellij.webcore.packaging.PackagesNotificationPanel;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.packaging.*;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import icons.PythonIcons;
@@ -103,7 +104,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
         myHasManagement = PyPackageManager.getInstance(selectedSdk).hasManagement();
         application.invokeLater(() -> updateUninstallUpgrade(), ModalityState.any());
         if (!myHasManagement) {
-          throw new PyExecutionException("Python packaging tools not found", "pip", Collections.emptyList(), "", "", 0,
+          throw new PyExecutionException(PySdkBundle.message("python.sdk.packaging.tools.not.found"), "pip", Collections.emptyList(), "", "", 0,
                                          ImmutableList.of(new PyInstallPackageManagementFix()));
         }
       }
