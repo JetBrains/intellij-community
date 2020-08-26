@@ -45,6 +45,7 @@ import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntArrayList;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -109,7 +110,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   protected abstract <S> Object getParameter(@NotNull Key<S> key);
 
   @NotNull
-  protected List<Trinity<String, Supplier<T>, Consumer<T>>> getDefaultMappings() {
+  protected List<Trinity<@Nls String, Supplier<T>, Consumer<T>>> getDefaultMappings() {
     return ContainerUtil.emptyList();
   }
 
