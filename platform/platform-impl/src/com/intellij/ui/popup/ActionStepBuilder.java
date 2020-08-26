@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.impl.MenuItemPresentationFactory;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.ui.SizedIcon;
 import com.intellij.util.ObjectUtils;
@@ -29,7 +30,7 @@ class ActionStepBuilder {
   private final boolean                         myShowDisabled;
   private       int                             myCurrentNumber;
   private       boolean                         myPrependWithSeparator;
-  private       String                          mySeparatorText;
+  private @NlsContexts.Separator String mySeparatorText;
   private final boolean                         myHonorActionMnemonics;
   private final String                          myActionPlace;
   private Icon myEmptyIcon;

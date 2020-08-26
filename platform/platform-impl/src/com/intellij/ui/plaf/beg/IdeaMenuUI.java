@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.plaf.beg;
 
 import com.intellij.ide.ui.UISettings;
@@ -9,6 +9,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -230,7 +231,7 @@ public class IdeaMenuUI extends BasicMenuUI{
 
   private String layoutMenuItem(
     FontMetrics fontmetrics,
-    String text,
+    @Nls String text,
     Icon icon,
     Icon checkIcon,
     Icon arrowIcon,

@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventId;
@@ -662,7 +663,9 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
         ProgressSuspender suspender = getSuspender();
         suspendButton.setVisible(suspender != null);
         if (suspender != null) {
-          String toolTipText = suspender.isSuspended() ? "Resume" : "Pause";
+          String toolTipText = suspender.isSuspended()
+                               ? IdeBundle.message("comment.text.resume")
+                               : IdeBundle.message("comment.text.pause");
           if (!toolTipText.equals(suspendButton.getToolTipText())) {
             updateProgressIcon();
             if (suspender.isSuspended()) {
@@ -977,10 +980,10 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
       myMultiProcessLink.setVisible(showPopup || size > 1);
 
       if (showPopup) {
-        myMultiProcessLink.setText("Hide processes (" + size + ")");
+        myMultiProcessLink.setText(IdeBundle.message("link.hide.processes", size));
       }
       else if (size > 1) {
-        myMultiProcessLink.setText("Show all (" + size + ")");
+        myMultiProcessLink.setText(IdeBundle.message("link.show.all.processes", size));
       }
 
       doLayout();

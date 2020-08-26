@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
+import com.intellij.CommonBundle;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.troubleshooting.CompositeGeneralTroubleInfoCollector;
@@ -50,8 +51,8 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
     if (!doNotShowDialog) {
       if (!MessageDialogBuilder.okCancel(IdeBundle.message("dialog.title.sensitive.data"),
                                          IdeBundle.message("message.included.logs.and.settings.may.contain.sensitive.data"))
-        .yesText("Show in " + RevealFileAction.getFileManagerName())
-        .noText("Cancel")
+        .yesText(IdeBundle.message("button.show.in.file.manager", RevealFileAction.getFileManagerName()))
+        .noText(CommonBundle.getCancelButtonText())
         .icon(Messages.getWarningIcon())
         .doNotAsk(new DialogWrapper.DoNotAskOption.Adapter() {
           @Override

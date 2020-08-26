@@ -2,6 +2,7 @@
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.Condition;
@@ -659,8 +660,8 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     @Override
     public String getTooltip() {
       String prefix = null;
-      if (UIUtil.getClientProperty(getComponent(), INPLACE_HISTORY) != null) prefix = "Recent Search";
-      if (getActionOnClick() != null) prefix = "Search History";
+      if (UIUtil.getClientProperty(getComponent(), INPLACE_HISTORY) != null) prefix = IdeBundle.message("tooltip.recent.search");
+      if (getActionOnClick() != null) prefix = IdeBundle.message("tooltip.search.history");
       return (prefix == null) ? null : prefix + " (" + KeymapUtil.getFirstKeyboardShortcutText("ShowSearchHistory") + ")";
     }
 

@@ -178,10 +178,10 @@ public class InlineProgressIndicator extends ProgressIndicatorBase implements Di
 
     if (isStopping()) {
       if (myCompact) {
-        setTextValue("Stopping - " + getTextValue());
+        setTextValue(IdeBundle.message("progress.text.stopping", getTextValue()));
       }
       else {
-        setProcessNameValue("Stopping - " + myInfo.getTitle());
+        setProcessNameValue(IdeBundle.message("progress.text.stopping", myInfo.getTitle()));
         setTextEnabled(false);
         setText2Enabled(false);
       }

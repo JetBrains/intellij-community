@@ -3,6 +3,7 @@ package com.intellij.openapi.fileEditor;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
@@ -17,6 +18,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.JBSplitter;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,6 +27,7 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import static com.intellij.openapi.actionSystem.ActionPlaces.TEXT_EDITOR_WITH_PREVIEW;
 
@@ -43,12 +46,12 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
   private Layout myLayout;
   private JComponent myComponent;
   private SplitEditorToolbar myToolbarWrapper;
-  private final String myName;
+  private final @Nls String myName;
   public static final Key<Layout> DEFAULT_LAYOUT_FOR_FILE = Key.create("TextEditorWithPreview.DefaultLayout");
 
   public TextEditorWithPreview(@NotNull TextEditor editor,
                                @NotNull FileEditor preview,
-                               @NotNull String editorName,
+                               @NotNull @Nls String editorName,
                                @NotNull Layout defaultLayout) {
     myEditor = editor;
     myPreview = preview;
@@ -56,7 +59,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     myDefaultLayout = defaultLayout;
   }
 
-  public TextEditorWithPreview(@NotNull TextEditor editor, @NotNull FileEditor preview, @NotNull String editorName) {
+  public TextEditorWithPreview(@NotNull TextEditor editor, @NotNull FileEditor preview, @NotNull @Nls String editorName) {
     this(editor, preview, editorName, Layout.SHOW_EDITOR_AND_PREVIEW);
   }
 
@@ -114,7 +117,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
 
       if (myLayout == null) {
         String lastUsed = PropertiesComponent.getInstance().getValue(getLayoutPropertyName());
-        myLayout = Layout.fromName(lastUsed, myDefaultLayout);
+        myLayout = Layout.fromId(lastUsed, myDefaultLayout);
       }
       adjustEditorsVisibility();
 
@@ -186,7 +189,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
       case SHOW_PREVIEW:
         return myPreview.getPreferredFocusedComponent();
       default:
-        throw new IllegalStateException(myLayout.myName);
+        throw new IllegalStateException(myLayout.myId);
     }
   }
 
@@ -381,29 +384,31 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
   }
 
   public enum Layout {
-    SHOW_EDITOR("Editor only", AllIcons.General.LayoutEditorOnly),
-    SHOW_PREVIEW("Preview only", AllIcons.General.LayoutPreviewOnly),
-    SHOW_EDITOR_AND_PREVIEW("Editor and Preview", AllIcons.General.LayoutEditorPreview);
+    SHOW_EDITOR("Editor only", IdeBundle.messagePointer("tab.title.editor.only"), AllIcons.General.LayoutEditorOnly),
+    SHOW_PREVIEW("Preview only", IdeBundle.messagePointer("tab.title.preview.only"), AllIcons.General.LayoutPreviewOnly),
+    SHOW_EDITOR_AND_PREVIEW("Editor and Preview", IdeBundle.messagePointer("tab.title.editor.and.preview"), AllIcons.General.LayoutEditorPreview);
 
-    private final String myName;
+    private final @NotNull Supplier<@Nls String> myName;
     private final Icon myIcon;
+    private final String myId;
 
-    Layout(String name, Icon icon) {
+    Layout(String id, @NotNull Supplier<String> name, Icon icon) {
+      myId = id;
       myName = name;
       myIcon = icon;
     }
 
-    public static Layout fromName(String name, Layout defaultValue) {
+    public static Layout fromId(String id, Layout defaultValue) {
       for (Layout layout : Layout.values()) {
-        if (layout.myName.equals(name)) {
+        if (layout.myId.equals(id)) {
           return layout;
         }
       }
       return defaultValue;
     }
 
-    public String getName() {
-      return myName;
+    public @Nls String getName() {
+      return myName.get();
     }
 
     public Icon getIcon() {
@@ -428,7 +433,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
       if (state) {
         myLayout = myActionLayout;
-        PropertiesComponent.getInstance().setValue(getLayoutPropertyName(), myLayout.myName, myDefaultLayout.myName);
+        PropertiesComponent.getInstance().setValue(getLayoutPropertyName(), myLayout.myId, myDefaultLayout.myId);
         adjustEditorsVisibility();
       }
     }

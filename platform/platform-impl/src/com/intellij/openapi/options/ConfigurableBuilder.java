@@ -3,10 +3,7 @@ package com.intellij.openapi.options;
 
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Getter;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.Setter;
+import com.intellij.openapi.util.*;
 import com.intellij.ui.layout.RowBuilder;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -212,7 +209,7 @@ public abstract class ConfigurableBuilder extends UiDslConfigurable.Simple
   @NotNull
   @Override
   public List<OptionDescription> getOptionDescriptors(@NotNull String configurableId,
-                                                      @NotNull Function<? super String, String> nameConverter) {
+                                                      @NotNull Function<? super String, @NlsContexts.Command String> nameConverter) {
     List<ConfigurableBuilder.CheckboxField> boxes = JBIterable.from(myFields).filter(CheckboxField.class).toList();
     return ContainerUtil.map(boxes, box -> new BooleanOptionDescription(nameConverter.apply(box.getTitle()), configurableId) {
       @Override

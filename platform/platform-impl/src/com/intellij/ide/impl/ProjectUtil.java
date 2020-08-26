@@ -40,11 +40,7 @@ import com.intellij.util.PlatformUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.io.PathKt;
-import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -314,7 +310,7 @@ public final class ProjectUtil {
     return showYesNoDialog(IdeBundle.message(msgKey, path), titleKey);
   }
 
-  public static boolean showYesNoDialog(@NotNull String message, @NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String titleKey) {
+  public static boolean showYesNoDialog(@NotNull @Nls String message, @NotNull @PropertyKey(resourceBundle = IdeBundle.BUNDLE) String titleKey) {
     return MessageDialogBuilder.yesNo(IdeBundle.message(titleKey), message)
       .icon(Messages.getWarningIcon())
       .ask(getActiveFrameOrWelcomeScreen());

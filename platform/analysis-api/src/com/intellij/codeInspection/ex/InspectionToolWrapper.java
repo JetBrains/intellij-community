@@ -14,6 +14,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ResourceUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -115,6 +116,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
   }
 
   @NotNull
+  @Nls
   public String getDisplayName() {
     if (myEP == null) {
       return getTool().getDisplayName();
@@ -126,6 +128,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
   }
 
   @NotNull
+  @Nls
   public String getGroupDisplayName() {
     if (myEP == null) {
       return getTool().getGroupDisplayName();

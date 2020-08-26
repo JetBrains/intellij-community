@@ -22,7 +22,7 @@ data class CommandLineProcessorResult(val project: Project?, val future: Future<
     if (future.isDone) {
       val result = future.get()
       if (result.exitCode == 1) {
-        Messages.showErrorDialog(result.message, "Cannot execute command")
+        Messages.showErrorDialog(result.message, IdeBundle.message("dialog.title.cannot.execute.command"))
         return true
       }
     }

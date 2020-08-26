@@ -135,7 +135,7 @@ abstract class ToolWindowManager {
    */
   abstract fun invokeLater(runnable: Runnable)
 
-  abstract fun notifyByBalloon(toolWindowId: String, type: MessageType, htmlBody: String)
+  abstract fun notifyByBalloon(toolWindowId: String, type: MessageType, @NlsContexts.NotificationContent htmlBody: String)
 
   fun notifyByBalloon(toolWindowId: String,
                       type: MessageType,

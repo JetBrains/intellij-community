@@ -183,7 +183,7 @@ public final class LightEditUtil {
   public static EmptyCompletionNotifier createEmptyCompletionNotifier() {
     return new EmptyCompletionNotifier() {
       @Override
-      public void showIncompleteHint(@NotNull Editor editor, @NotNull String text, boolean isDumbMode) {
+      public void showIncompleteHint(@NotNull Editor editor, @NotNull @NlsContexts.HintText String text, boolean isDumbMode) {
         HintManager.getInstance().showInformationHint(
           editor,
           StringUtil.escapeXmlEntities(text) + CodeInsightBundle.message("completion.incomplete.light.edit.suffix", OPEN_FILE_IN_PROJECT_HREF),

@@ -32,8 +32,8 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   private Icon myLayeredIcon = new LayeredIcon(2);
   private Disposable myDisposer;
   private boolean myShouldDisposeContent = true;
-  private String myTabName;
-  private String myToolwindowTitle;
+  private @NlsContexts.TabTitle String myTabName;
+  private @NlsContexts.TabTitle String myToolwindowTitle;
   private boolean myCloseable = true;
   private ActionGroup myActions;
   private @NonNls String myPlace;
@@ -133,7 +133,7 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   }
 
   @Override
-  public void setTabName(String tabName) {
+  public void setTabName(@NlsContexts.TabTitle String tabName) {
     myTabName = tabName;
   }
 

@@ -19,6 +19,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.util.BusyObject
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
@@ -56,7 +57,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
                               windowInfo: WindowInfo,
                               private var contentFactory: ToolWindowFactory?,
                               private var isAvailable: Boolean = true,
-                              private var stripeTitle: String) : ToolWindowEx {
+                              private @NlsContexts.TabTitle var stripeTitle: String) : ToolWindowEx {
   var windowInfoDuringInit: WindowInfoImpl? = null
 
   private val focusTask by lazy { FocusTask(this) }

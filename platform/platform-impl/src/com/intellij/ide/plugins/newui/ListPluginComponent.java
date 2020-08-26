@@ -203,7 +203,7 @@ public class ListPluginComponent extends JPanel {
       @Override
       public int getBaseline(int width, int height) {
         if (myBaseline == -1) {
-          JCheckBox checkBox = new JCheckBox("Foo", true);
+          JCheckBox checkBox = new JCheckBox("Foo", true);  // NON-NLS
           Dimension size = checkBox.getPreferredSize();
           myBaseline = checkBox.getBaseline(size.width, size.height) - JBUIScale.scale(1);
         }

@@ -2,6 +2,7 @@
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
@@ -138,7 +139,7 @@ public class TextEditorImpl extends UserDataHolderBase implements TextEditor {
   @Override
   @NotNull
   public String getName() {
-    return "Text";
+    return IdeBundle.message("tab.title.text");
   }
 
   @Override

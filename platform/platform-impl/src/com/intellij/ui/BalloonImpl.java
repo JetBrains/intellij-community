@@ -2115,7 +2115,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
   }
 
   @Override
-  public void setTitle(String title) {
+  public void setTitle(@NlsContexts.NotificationTitle String title) {
     myTitle = title;
     myTitleLabel.setText(title);
   }

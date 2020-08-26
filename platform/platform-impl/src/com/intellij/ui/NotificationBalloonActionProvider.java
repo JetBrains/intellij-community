@@ -2,6 +2,7 @@
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.notification.impl.NotificationCollector;
 import com.intellij.notification.impl.NotificationsConfigurable;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
@@ -58,7 +59,7 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
     else {
       mySettingButton = myBalloon.new ActionButton(
         AllIcons.Ide.Notification.Gear, AllIcons.Ide.Notification.GearHover,
-        "Turn notification off or change its behavior",
+        IdeBundle.message("tooltip.turn.notification.off"),
         event -> myBalloon.runWithSmartFadeoutPause(() -> {
           NotificationCollector.getInstance().logNotificationSettingsClicked(myNotificationId, myNotificationDisplayId, myDisplayGroupId);
           final NotificationsConfigurable configurable = new NotificationsConfigurable();
@@ -93,7 +94,7 @@ public class NotificationBalloonActionProvider implements BalloonImpl.ActionProv
 
     myCloseButton = myBalloon.new ActionButton(
       AllIcons.Ide.Notification.Close, AllIcons.Ide.Notification.CloseHover,
-      "Close. Alt-click to close all notifications",
+      IdeBundle.message("tooltip.close.notification"),
       event -> {
         final int modifiers = event.getModifiers();
         //noinspection SSBasedInspection

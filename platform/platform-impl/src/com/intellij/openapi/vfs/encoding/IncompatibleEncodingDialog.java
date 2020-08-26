@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.encoding;
 
 import com.intellij.CommonBundle;
@@ -41,10 +41,7 @@ public class IncompatibleEncodingDialog extends DialogWrapper {
   @Override
   protected JComponent createCenterPanel() {
     JLabel label = new JLabel(XmlStringUtil.wrapInHtml(
-                              "The encoding you've chosen ('" + charset.displayName() + "') may change the contents of '" + virtualFile.getName() + "'.<br>" +
-                              "Do you want to<br>" +
-                              "1. <b>Reload</b> the file from disk in the new encoding '" + charset.displayName() + "' and overwrite editor contents or<br>" +
-                              "2. <b>Convert</b> the text and overwrite file in the new encoding" + "?"));
+      IdeBundle.message("dialog.message.incompatible.encoding", charset.displayName(), virtualFile.getName())));
     label.setIcon(Messages.getQuestionIcon());
     label.setIconTextGap(10);
     return label;

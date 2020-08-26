@@ -3,10 +3,10 @@ package com.intellij.ide.util;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +21,7 @@ import java.util.*;
 
 public abstract class ChooseElementsDialog<T> extends DialogWrapper {
   protected ElementsChooser<T> myChooser;
-  private final String myDescription;
+  private final @NlsContexts.Label String myDescription;
 
   public ChooseElementsDialog(Project project, List<? extends T> items, @NlsContexts.DialogTitle String title, @NlsContexts.Label String description) {
     this(project, items, title, description, false);
@@ -91,7 +91,7 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
     return getChosenElements();
   }
 
-  protected abstract String getItemText(T item);
+  protected abstract @NlsContexts.ListItem String getItemText(T item);
 
   @Nullable
   protected abstract Icon getItemIcon(T item);

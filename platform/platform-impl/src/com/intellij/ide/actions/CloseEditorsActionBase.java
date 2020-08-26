@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
@@ -9,6 +9,7 @@ import com.intellij.openapi.fileEditor.impl.EditorComposite;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.FileStatusManager;
 import org.jetbrains.annotations.NotNull;
@@ -89,5 +90,5 @@ public abstract class CloseEditorsActionBase extends AnAction implements DumbAwa
     return getFilesToClose(event).size() > 0;
   }
 
-  protected abstract String getPresentationText(boolean inSplitter);
+  protected abstract @NlsContexts.Command String getPresentationText(boolean inSplitter);
 }

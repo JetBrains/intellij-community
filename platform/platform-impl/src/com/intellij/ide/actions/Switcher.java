@@ -831,7 +831,7 @@ public final class Switcher extends AnAction implements DumbAware {
 
     @NotNull
     private static JPanel createTopPanel(@NotNull JBCheckBox showOnlyEditedFilesCheckBox,
-                                         @NotNull String title,
+                                         @NotNull @NlsContexts.Label String title,
                                          boolean isMovable) {
       JPanel topPanel = new CaptionPanel();
       JBLabel titleLabel = new JBLabel(title);

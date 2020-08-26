@@ -22,10 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.ColorUtil;
@@ -687,18 +684,18 @@ public class PopupFactoryImpl extends JBPopupFactory {
     private final Icon mySelectedIcon;
     private final boolean myPrependWithSeparator;
     private final @NlsContexts.Separator String mySeparatorText;
-    private final String myDescription;
-    private final String myValue;
+    private final @NlsContexts.DetailedDescription String myDescription;
+    private final @NlsContexts.ListItem String myValue;
 
     ActionItem(@NotNull AnAction action,
                @NotNull String text,
-               @Nullable String description,
+               @Nullable @NlsContexts.DetailedDescription String description,
                boolean enabled,
                @Nullable Icon icon,
                @Nullable Icon selectedIcon,
                final boolean prependWithSeparator,
                @NlsContexts.Separator String separatorText,
-               @Nullable String value) {
+               @Nullable @NlsContexts.ListItem String value) {
       myAction = action;
       myText = text;
       myIsEnabled = enabled;
@@ -741,7 +738,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
     public boolean isEnabled() { return myIsEnabled; }
 
-    public String getDescription() {
+    public @NlsContexts.DetailedDescription String getDescription() {
       return myDescription;
     }
 
@@ -756,7 +753,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       return myText;
     }
 
-    public String getValue() {
+    public @NlsContexts.ListItem String getValue() {
       return myValue;
     }
   }

@@ -1241,7 +1241,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     return toolWindowPane?.getStripeFor(idToEntry.get(toolWindowId)?.readOnlyWindowInfo?.anchor ?: return false)?.getButtonFor(toolWindowId) != null
   }
 
-  override fun notifyByBalloon(toolWindowId: String, type: MessageType, htmlBody: String) {
+  override fun notifyByBalloon(toolWindowId: String, type: MessageType, @NlsContexts.NotificationContent htmlBody: String) {
     notifyByBalloon(toolWindowId, type, htmlBody, null, null)
   }
 

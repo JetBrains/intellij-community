@@ -14,6 +14,7 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.util.xmlb.annotations.*;
 import org.jetbrains.annotations.Nls;
@@ -71,6 +72,7 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
   public String bundle;
 
   @NotNull
+  @NlsContexts.ConfigurableName
   public String getDisplayName() {
     if (displayName != null) {
       return displayName;
@@ -86,9 +88,11 @@ public class ConfigurableEP<T extends UnnamedConfigurable> implements PluginAwar
       }
 
       if (providerClass == null) {
+        //noinspection HardCodedStringLiteral
         return instanceClass == null ? implementationClass : instanceClass;
       }
       else {
+        //noinspection HardCodedStringLiteral
         return providerClass;
       }
     }

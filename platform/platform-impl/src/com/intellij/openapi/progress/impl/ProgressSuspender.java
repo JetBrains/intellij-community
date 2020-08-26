@@ -34,7 +34,7 @@ public final class ProgressSuspender implements AutoCloseable {
 
   private final Object myLock = new Object();
   private static final Application ourApp = ApplicationManager.getApplication();
-  @NotNull private final String mySuspendedText;
+  @NotNull private final @NlsContexts.ProgressText String mySuspendedText;
   @Nullable private @NlsContexts.ProgressText String myTempReason;
   private final SuspenderListener myPublisher;
   private volatile boolean mySuspended;
@@ -43,7 +43,7 @@ public final class ProgressSuspender implements AutoCloseable {
   private final Map<ProgressIndicator, Integer> myProgressesInNonSuspendableSections = new ConcurrentHashMap<>();
   private boolean myClosed;
 
-  private ProgressSuspender(@NotNull ProgressIndicatorEx progress, @NotNull String suspendedText) {
+  private ProgressSuspender(@NotNull ProgressIndicatorEx progress, @NotNull @NlsContexts.ProgressText String suspendedText) {
     mySuspendedText = suspendedText;
     assert progress.isRunning();
     assert ProgressIndicatorProvider.getGlobalProgressIndicator() == progress;

@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
@@ -291,9 +292,9 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
 
   private String layoutMenuItem(
     FontMetrics fontmetrics,
-    String text,
+    @NlsContexts.Command String text,
     FontMetrics fontmetrics1,
-    String keyStrokeText,
+    @NlsContexts.Label String keyStrokeText,
     Icon icon,
     Icon checkIcon,
     Icon arrowIcon,

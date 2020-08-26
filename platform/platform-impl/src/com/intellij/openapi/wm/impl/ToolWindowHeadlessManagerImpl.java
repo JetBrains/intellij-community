@@ -373,6 +373,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManager {
     }
   }
 
+  @SuppressWarnings({"HardCodedStringLiteral", "DialogTitleCapitalization"})
   private static class MockContentManager implements ContentManager {
     private final EventDispatcher<ContentManagerListener> myDispatcher = EventDispatcher.create(ContentManagerListener.class);
     private final List<Content> myContents = new ArrayList<>();

@@ -99,7 +99,7 @@ public class TabbedPaneWrapper  {
   /**
    * @see JTabbedPane#addTab(String, Icon, Component, String)
    */
-  public final synchronized void addTab(@TabTitle final String title, final Icon icon, final JComponent component, final String tip) {
+  public final synchronized void addTab(@TabTitle final String title, final Icon icon, final JComponent component, final @NlsContexts.Tooltip String tip) {
     insertTab(title, icon, component, tip, myTabbedPane.getTabCount());
   }
 

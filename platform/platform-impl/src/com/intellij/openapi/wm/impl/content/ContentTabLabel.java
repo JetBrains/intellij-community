@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl.content;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.ui.UISettings;
@@ -11,6 +12,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.ActiveIcon;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.EngravedTextGraphics;
 import com.intellij.ui.Gray;
 import com.intellij.ui.content.Content;
@@ -44,11 +46,10 @@ class ContentTabLabel extends BaseLabel {
   private final TabContentLayout myLayout;
 
   private final List<AdditionalIcon> myAdditionalIcons = new SmartList<>();
-  private String myText;
+  private @NlsContexts.Label String myText;
   private int myIconWithInsetsWidth;
 
   private final AdditionalIcon closeTabIcon = new AdditionalIcon(myCloseIcon) {
-    private static final String ACTION_NAME = "Close tab";
 
     @NotNull
     @Override
@@ -86,7 +87,7 @@ class ContentTabLabel extends BaseLabel {
     @Override
     public String getTooltip() {
       String text = KeymapUtil.getShortcutsText(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_CLOSE_ACTIVE_TAB));
-      return text.isEmpty() || !isSelected() ? ACTION_NAME : ACTION_NAME + " (" + text + ")";
+      return text.isEmpty() || !isSelected() ? IdeBundle.message("tooltip.close.tab") : IdeBundle.message("tooltip.close.tab") + " (" + text + ")";
     }
   };
 
@@ -151,7 +152,7 @@ class ContentTabLabel extends BaseLabel {
   };
 
   @Override
-  public void setText(String text) {
+  public void setText(@NlsContexts.Label String text) {
     myText = text;
     updateText();
   }

@@ -1,9 +1,10 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.TaskInfo;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.impl.status.InlineProgressIndicator;
 import com.intellij.ui.components.panels.Wrapper;
 import org.jetbrains.annotations.NotNull;
@@ -62,7 +63,7 @@ public class OneLineProgressIndicator extends InlineProgressIndicator {
   }
 
   @NotNull
-  private static TaskInfo task(@NotNull String title, boolean canBeCancelled) {
+  private static TaskInfo task(@NotNull @NlsContexts.DialogTitle String title, boolean canBeCancelled) {
     return new Task.Modal(null, title, canBeCancelled) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {

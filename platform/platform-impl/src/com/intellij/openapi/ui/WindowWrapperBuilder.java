@@ -200,7 +200,7 @@ public class WindowWrapperBuilder {
         myComponent = component;
       }
 
-      public void setParameters(@Nullable String dimensionServiceKey,
+      public void setParameters(@Nullable @NonNls String dimensionServiceKey,
                                 @Nullable Computable<? extends JComponent> preferredFocusedComponent,
                                 @Nullable BooleanGetter onCloseHandler) {
         myDimensionServiceKey = dimensionServiceKey;

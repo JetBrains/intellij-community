@@ -9,6 +9,7 @@ import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +43,7 @@ public final class FinishMarkAction extends BasicUndoableAction {
     myGlobal = isGlobal;
   }
 
-  public void setCommandName(String commandName) {
+  public void setCommandName(@NlsContexts.Command String commandName) {
     myStartAction.setCommandName(commandName);
     myCommandName = commandName;
   }

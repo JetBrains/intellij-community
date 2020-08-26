@@ -97,7 +97,7 @@ final class ConfigurableGroupEP implements PluginAware {
     myPluginDescriptor = descriptor;
   }
 
-  @NotNull String getDisplayName() {
+  @NotNull @NlsContexts.ConfigurableName String getDisplayName() {
     return getResourceValue(displayNameKey);
   }
 
@@ -117,7 +117,7 @@ final class ConfigurableGroupEP implements PluginAware {
     return DynamicBundle.INSTANCE.getResourceBundle(pathToBundle, classLoader);
   }
 
-  @NotNull String getResourceValue(@NotNull String key) {
+  @NotNull @NlsContexts.ConfigurableName String getResourceValue(@NotNull String key) {
     String message = AbstractBundle.messageOrNull(getResourceBundle(), key);
     return message != null ? message : OptionsBundle.message(key);
   }

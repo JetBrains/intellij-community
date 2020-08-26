@@ -64,6 +64,7 @@ public final class BuildNumber implements Comparable<BuildNumber> {
   }
 
   @NotNull
+  @NlsSafe
   public String asString() {
     return asString(true, true);
   }
