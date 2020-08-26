@@ -943,7 +943,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
       new Matcher(project, matchOptions).findMatches(sink);
       final List<MatchResult> matches = sink.getMatches();
       removeMatchHighlights();
-      addMatchHighlights(matches, editor, file, matches.size() + " results found in current file");
+      addMatchHighlights(matches, editor, file, SSRBundle.message("status.bar.text.results.found.in.current.file", matches.size()));
     }
     catch (StructuralSearchException e) {
       reportMessage(e.getMessage().replace(ScriptSupport.UUID, ""), true, mySearchCriteriaEdit);
@@ -954,7 +954,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   private void addMatchHighlights(@NotNull List<? extends MatchResult> matchResults,
                                   @NotNull Editor editor,
                                   @NotNull PsiFile file,
-                                  @Nullable String statusBarText) {
+                                  @NlsContexts.StatusBarText @Nullable String statusBarText) {
     ApplicationManager.getApplication().invokeLater(() -> {
       final Project project = getProject();
       if (project.isDisposed()) {
@@ -994,7 +994,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   }
 
   private Balloon myBalloon;
-  private void reportMessage(@Nullable String message, boolean error, @NotNull JComponent component) {
+  private void reportMessage(@NlsContexts.PopupContent @Nullable String message, boolean error, @NotNull JComponent component) {
     ApplicationManager.getApplication().invokeLater(() -> {
       if (myBalloon != null) myBalloon.hide();
       component.putClientProperty("JComponent.outline", (!error || message == null) ? null : "error");
@@ -1070,7 +1070,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     myTargetComboBox.setItems(names);
     if (names.size() > 1) {
       myTargetComboBox.setEnabled(true);
-      for (String name : names) {
+      for (@NlsSafe String name : names) {
         final MatchVariableConstraint constraint = matchOptions.getVariableConstraint(name);
         if (constraint != null && constraint.isPartOfSearchResults()) {
           myTargetComboBox.setSelectedItem(name);

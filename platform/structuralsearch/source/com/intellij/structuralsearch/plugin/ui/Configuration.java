@@ -2,6 +2,7 @@
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.structuralsearch.MatchOptions;
 import com.intellij.structuralsearch.NamedScriptableDefinition;
@@ -69,7 +70,7 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
   @NotNull
   public abstract Configuration copy();
 
-  @NotNull
+  @NotNull @NlsSafe
   public String getName() {
     return name;
   }
@@ -110,7 +111,7 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
     this.uuid = uuid;
   }
 
-  public String getDescription() {
+  public @Nullable String getDescription() {
     return description;
   }
 
@@ -118,7 +119,7 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
     this.description = description;
   }
 
-  public String getSuppressId() {
+  public @NlsSafe @Nullable String getSuppressId() {
     return suppressId;
   }
 
@@ -126,7 +127,7 @@ public abstract class Configuration implements JDOMExternalizable, Comparable<Co
     this.suppressId = suppressId;
   }
 
-  public String getProblemDescriptor() {
+  public @NlsSafe @Nullable String getProblemDescriptor() {
     return this.problemDescriptor;
   }
 

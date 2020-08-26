@@ -20,6 +20,7 @@ import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.*;
 import com.intellij.structuralsearch.Scopes;
@@ -232,7 +233,7 @@ public class ScopePanel extends JPanel {
 
     private final Scopes.Type myScopeType;
 
-    ScopeToggleAction(@NotNull String text, @NotNull Scopes.Type scopeType) {
+    ScopeToggleAction(@NotNull @NlsActions.ActionText String text, @NotNull Scopes.Type scopeType) {
       super(text);
       myScopeType = scopeType;
     }

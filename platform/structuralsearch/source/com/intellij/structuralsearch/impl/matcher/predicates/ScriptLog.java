@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.predicates;
 
 import com.intellij.notification.NotificationType;
@@ -39,7 +39,9 @@ public class ScriptLog {
     for (StackTraceElement e : stackTrace) {
       final String methodName = e.getMethodName();
       if ("run".equals(methodName)) {
-        location = "(" + StringUtil.replace(e.getFileName(), UUID + ".groovy", "") + ":" + e.getLineNumber() + ") ";
+        final String fileName = e.getFileName();
+        assert fileName != null;
+        location = "(" + StringUtil.replace(fileName, UUID + ".groovy", "") + ":" + e.getLineNumber() + ") ";
         break;
       }
     }

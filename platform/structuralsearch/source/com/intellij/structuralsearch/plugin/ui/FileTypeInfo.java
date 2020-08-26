@@ -3,8 +3,10 @@ package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.LanguageFileType;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.structuralsearch.PatternContext;
+import com.intellij.structuralsearch.SSRBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,14 +51,13 @@ class FileTypeInfo {
     return myContext;
   }
 
-  @NotNull
-  public String getText() {
+  public @NlsSafe @NotNull String getText() {
     if (myNested) {
       if (myDialect != null && myDialect != myFileType.getLanguage()) {
         return myDialect.getDisplayName();
       }
       if (myContext != null) {
-        return myDescription + " - " + myContext.getDisplayName();
+        return SSRBundle.message("file.type.pattern.context", myDescription, myContext.getDisplayName());
       }
     }
     return myDescription;
