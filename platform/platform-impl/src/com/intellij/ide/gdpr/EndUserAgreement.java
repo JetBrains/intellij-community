@@ -5,7 +5,7 @@ import com.intellij.ide.Prefs;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
@@ -96,7 +96,8 @@ public final class EndUserAgreement {
     if (!fromFile.getVersion().isUnknown()) {
       return fromFile;
     }
-    return loadContent(docName, EndUserAgreement.class.getResourceAsStream(getBundledResourcePath(docName)));
+
+    return loadContent(docName, getBundledResourcePath(docName));
   }
 
   public static boolean updateCachedContentToLatestBundledVersion() {
@@ -106,7 +107,7 @@ public final class EndUserAgreement {
       if (Files.exists(cacheFile)) {
         Document cached = loadContent(docName, cacheFile);
         if (!cached.getVersion().isUnknown()) {
-          final Document bundled = loadContent(docName, EndUserAgreement.class.getResourceAsStream(getBundledResourcePath(docName)));
+          Document bundled = loadContent(docName, getBundledResourcePath(docName));
           if (!bundled.getVersion().isUnknown() && bundled.getVersion().isNewer(cached.getVersion())) {
             try {
               // update content only and not the active document name
@@ -124,8 +125,7 @@ public final class EndUserAgreement {
         }
       }
     }
-    catch (Throwable ignored) {
-    }
+    catch (Throwable ignored) { }
     return false;
   }
 
@@ -147,28 +147,21 @@ public final class EndUserAgreement {
     }
   }
 
-  private static @NotNull Document loadContent(String docName, InputStream stream) {
-    if (stream != null) {
-      try {
-        return new Document(docName, new String(FileUtilRt.loadBytes(stream), StandardCharsets.UTF_8));
+  private static @NotNull Document loadContent(String docName, String resourcePath) {
+    try (InputStream stream = EndUserAgreement.class.getResourceAsStream(resourcePath)) {
+      if (stream != null) {
+        return new Document(docName, new String(StreamUtil.readBytes(stream), StandardCharsets.UTF_8));
       }
-      catch (IOException e) {
-        LOG.info(e);
-      }
-      finally {
-        try {
-          stream.close();
-        }
-        catch (IOException ignore) {
-        }
-      }
+    }
+    catch (IOException e) {
+      LOG.info(e);
     }
     return new Document(docName, "");
   }
 
-  private static @NotNull Document loadContent(String docName, @NotNull Path file) {
+  private static @NotNull Document loadContent(String docName, Path file) {
     try {
-      return new Document(docName, new String(Files.readAllBytes(file), StandardCharsets.UTF_8));
+      return new Document(docName, Files.readString(file));
     }
     catch (IOException e) {
       LOG.info(docName + ": " + e.getMessage());
@@ -183,13 +176,12 @@ public final class EndUserAgreement {
     }
 
     try {
-      String docName = new String(Files.readAllBytes(getDocumentNameFile()), StandardCharsets.UTF_8);
+      String docName = Files.readString(getDocumentNameFile());
       if (!StringUtilRt.isEmptyOrSpaces(docName)) {
         return docName;
       }
     }
-    catch (IOException ignored) {
-    }
+    catch (IOException ignored) { }
     return isEAP()? DEFAULT_DOC_EAP_NAME : DEFAULT_DOC_NAME;
   }
 
@@ -261,6 +253,5 @@ public final class EndUserAgreement {
       }
       return Version.UNKNOWN;
     }
-
   }
 }
