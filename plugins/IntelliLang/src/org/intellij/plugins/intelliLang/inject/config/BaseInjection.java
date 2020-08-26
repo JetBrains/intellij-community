@@ -33,21 +33,19 @@ import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Objects;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import org.intellij.lang.annotations.RegExp;
 import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.jdom.CDATA;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Injection base class: Contains properties for language-id, prefix and suffix.
@@ -112,13 +110,14 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
     return myInjectedLanguageId;
   }
 
+  @Nls
   @Override
   @NotNull
   public String getDisplayName() {
     return myDisplayName;
   }
 
-  public void setDisplayName(@NotNull String displayName) {
+  public void setDisplayName(@Nls @NotNull String displayName) {
     myDisplayName = displayName;
   }
 
