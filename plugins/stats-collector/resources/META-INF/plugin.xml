@@ -48,10 +48,10 @@
     <registryKey key="completion.stats.send.logs" defaultValue="true"
                  description="Send anonymous logs about completion usage in EAP builds"/>
 
-    <registryKey key="stats.collector.analytics.platform.send" defaultValue="true"
+    <registryKey key="completion.stats.analytics.platform.send" defaultValue="true"
                  description="Send completion logs to Analytics Platform"/>
 
-    <registryKey key="stats.collector.analytics.platform.url" defaultValue="default"
+    <registryKey key="completion.stats.analytics.platform.url" defaultValue="default"
                  description="URL to status page with endpoints for sending completion logs to Analytics Platform"/>
 
     <preloadingActivity implementation="com.intellij.stats.completion.sender.SenderPreloadingActivity"/>

@@ -5,8 +5,8 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.registry.Registry
 
 object WebServiceStatusManager {
-  private const val USE_ANALYTICS_PLATFORM_REGISTRY = "stats.collector.analytics.platform.send"
-  private const val ANALYTICS_PLATFORM_URL_REGISTRY = "stats.collector.analytics.platform.url"
+  private const val USE_ANALYTICS_PLATFORM_REGISTRY = "completion.stats.analytics.platform.send"
+  private const val ANALYTICS_PLATFORM_URL_REGISTRY = "completion.stats.analytics.platform.url"
   private val LOG = logger<WebServiceStatusManager>()
   private val statuses: MutableMap<String, WebServiceStatus> = mutableMapOf()
 

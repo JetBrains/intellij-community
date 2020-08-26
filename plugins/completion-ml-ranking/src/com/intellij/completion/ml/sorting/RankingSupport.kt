@@ -21,7 +21,7 @@ import com.intellij.openapi.util.registry.Registry
 import org.jetbrains.annotations.TestOnly
 
 object RankingSupport {
-  private const val SHOW_ARROWS_NOTIFICATION_REGISTRY = "completion.stats.show.arrows.notification"
+  private const val SHOW_ARROWS_NOTIFICATION_REGISTRY = "completion.ml.show.arrows.notification"
   private val LOG = logger<RankingSupport>()
   private var enabledInTests: Boolean = false
 

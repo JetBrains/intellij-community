@@ -32,7 +32,7 @@ object SessionFactorsUtils {
     elementFactor("min_time_in_selection") { it.selectionTracker.getMinTimeInSelection() }
   )
 
-  fun shouldUseSessionFactors(): Boolean = Registry.`is`("completion.stats.enable.session.factors")
+  fun shouldUseSessionFactors(): Boolean = Registry.`is`("completion.ml.enable.session.factors")
 
   fun updateSessionFactors(lookupStorage: MutableLookupStorage, items: List<LookupElement>): Map<String, Any> {
     if (!shouldUseSessionFactors()) return emptyMap()

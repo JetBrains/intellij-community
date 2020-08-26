@@ -60,13 +60,13 @@
     <registryKey key="completion.ml.reorder.only.top.items" defaultValue="true"
                  description="Reorder only a few items on the top in the lookup to preserve a proper grouping for the items below"/>
 
-    <registryKey key="completion.stats.show.arrows.notification" defaultValue="true"
+    <registryKey key="completion.ml.show.arrows.notification" defaultValue="true"
                  description="Show notification about arrows if user in corresponding group of A/B experiment"/>
 
-    <registryKey key="completion.stats.enable.session.factors" defaultValue="true"
+    <registryKey key="completion.ml.enable.session.factors" defaultValue="true"
                  description="Use inside single session factors"/>
 
-    <registryKey key="completion.stats.exit.experiment" defaultValue="false"
+    <registryKey key="completion.ml.exit.experiment" defaultValue="false"
                  description="Do not perform A/B experiment for code completion on this installation"/>
 
     <completion.ml.contextFeatures language="" implementationClass="com.intellij.completion.ml.common.CommonLocationFeatures"/>
