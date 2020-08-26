@@ -23,7 +23,7 @@ public class FileGroup implements JDOMExternalizable {
   private final Collection<UpdatedFile> myFiles = new ArrayList<>();
   public boolean mySupportsDeletion;
   public boolean myCanBeAbsent;
-  public String myId;
+  public @NonNls String myId;
   @NonNls private static final String PATH = "PATH";
   @NonNls private static final String VCS_ATTRIBUTE = "vcs";
   @NonNls private static final String REVISION_ATTRIBUTE = "revision";
@@ -54,7 +54,7 @@ public class FileGroup implements JDOMExternalizable {
    * @param id               - Using in order to find the group
    * @param canBeAbsent      - If canBeAbsent == true absent files from the group will not be marked as invalid
    */
-  public FileGroup(@Nls String updateName, @Nls String statusName, boolean supportsDeletion, String id, boolean canBeAbsent) {
+  public FileGroup(@Nls String updateName, @Nls String statusName, boolean supportsDeletion, @NonNls String id, boolean canBeAbsent) {
     mySupportsDeletion = supportsDeletion;
     myId = id;
     myCanBeAbsent = canBeAbsent;
@@ -141,6 +141,7 @@ public class FileGroup implements JDOMExternalizable {
     }
   }
 
+  @NonNls
   public String getId() {
     return myId;
   }

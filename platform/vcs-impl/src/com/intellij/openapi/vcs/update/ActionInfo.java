@@ -9,6 +9,7 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashMap;
@@ -210,6 +211,7 @@ public interface ActionInfo {
 
   String getActionName();
 
+  @Nls
   String getGroupName(FileGroup fileGroup);
 
   boolean canGroupByChangelist();

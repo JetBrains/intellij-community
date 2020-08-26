@@ -37,6 +37,7 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,7 +62,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
   private DefaultTreeModel myTreeModel;
   private FileStatusListener myFileStatusListener;
   private final FileStatusManager myFileStatusManager;
-  private final String myRootName;
+  private final @Nls String myRootName;
   private final ActionInfo myActionInfo;
   private boolean myCanGroupByChangeList = false;
   private boolean myGroupByChangeList = false;
@@ -80,7 +81,7 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
   public UpdateInfoTree(@NotNull ContentManager contentManager,
                         @NotNull Project project,
                         UpdatedFiles updatedFiles,
-                        String rootName,
+                        @Nls String rootName,
                         ActionInfo actionInfo) {
     super(contentManager, "reference.versionControl.toolwindow.update");
     myActionInfo = actionInfo;
