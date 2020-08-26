@@ -86,6 +86,9 @@ fun collectImmutableAnnotations(alias: GrAnnotation, list: MutableList<in GrAnno
   list.add(GrLightAnnotation(owner, alias, GROOVY_TRANSFORM_IMMUTABLE_BASE, emptyMap()))
   list.add(GrLightAnnotation(owner, alias, GROOVY_TRANSFORM_IMMUTABLE_OPTIONS, emptyMap()))
   list.add(GrLightAnnotation(owner, alias, GROOVY_TRANSFORM_KNOWN_IMMUTABLE, emptyMap()))
+  list.add(GrLightAnnotation(owner, alias, GroovyCommonClassNames.GROOVY_TRANSFORM_MAP_CONSTRUCTOR, mapOf("noArg" to "true",
+                                                                                                          TupleConstructorAttributes.INCLUDE_SUPER_PROPERTIES to "true",
+                                                                                                          TupleConstructorAttributes.INCLUDE_FIELDS to "true")))
   list.add(GrLightAnnotation(owner, alias, GroovyCommonClassNames.GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR, mapOf(TupleConstructorAttributes.DEFAULTS to "false")))
   list.add(GrLightAnnotation(owner, alias, GroovyCommonClassNames.GROOVY_TRANSFORM_PROPERTY_OPTIONS, emptyMap()))
 }

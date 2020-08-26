@@ -62,14 +62,15 @@ class AffectedMembersCache(anno: PsiAnnotation) {
       val includeBeans = GrAnnotationUtil.inferBooleanAttribute(anno, TupleConstructorAttributes.ALL_PROPERTIES) ?: false
       val acceptSuperProperties = GrAnnotationUtil.inferBooleanAttribute(anno, TupleConstructorAttributes.INCLUDE_SUPER_PROPERTIES) ?: false
       val acceptSuperFields = GrAnnotationUtil.inferBooleanAttribute(anno, TupleConstructorAttributes.INCLUDE_SUPER_FIELDS) ?: false
+      val includeStatic = GrAnnotationUtil.inferBooleanAttribute(anno, "includeStatic") ?: false
       val collector = mutableListOf<PsiNamedElement>()
       if (acceptSuperFields || acceptSuperProperties) {
         val visited = mutableSetOf<PsiClass>()
         val superClass = containingClass.getSupers(false)[0]
         collectSupers(superClass, acceptSuperFields, acceptSuperProperties, collector, nameFilter, visited)
       }
-      accept(containingClass, acceptProperties, includeBeans, acceptFields, nameFilter, collector)
-      cache = BidirectionalMap<String, PsiElement>()
+      accept(containingClass, acceptProperties, includeBeans, acceptFields, includeStatic, nameFilter, collector)
+      cache = BidirectionalMap()
       for (prop in collector) {
         if (prop is PsiMethod) {
           val name = PropertyUtilBase.getPropertyName(prop) ?: continue
@@ -104,7 +105,7 @@ class AffectedMembersCache(anno: PsiAnnotation) {
       return
     }
     collectSupers(owner.superClass, acceptSuperFields, acceptSuperProperties, collector, nameFilter, visited)
-    accept(owner, acceptSuperProperties, false, acceptSuperFields, nameFilter, collector)
+    accept(owner, acceptSuperProperties, false, acceptSuperFields, false, nameFilter, collector)
   }
 
   companion object {
@@ -114,13 +115,14 @@ class AffectedMembersCache(anno: PsiAnnotation) {
                includeProperties: Boolean,
                includeBeans: Boolean,
                includeFields: Boolean,
+               includeStatic: Boolean,
                nameFilter: (String) -> Boolean,
                collector: MutableCollection<PsiNamedElement>) {
       val (properties, setters, fields) = getGroupedClassMembers(clazz)
 
       fun addParameter(origin: PsiField) {
         val name = origin.name
-        if (!nameFilter(name) || origin.hasModifierProperty(PsiModifier.STATIC)) return // todo: static
+        if (!nameFilter(name) || (!includeStatic && origin.hasModifierProperty(PsiModifier.STATIC))) return
         collector.add(origin)
       }
 
@@ -133,7 +135,7 @@ class AffectedMembersCache(anno: PsiAnnotation) {
       if (includeBeans) {
         for (method in setters) {
           val name = PropertyUtilBase.getPropertyNameBySetter(method)
-          if (!nameFilter(name) || method.hasModifierProperty(PsiModifier.STATIC)) continue
+          if (!nameFilter(name) || (!includeStatic && method.hasModifierProperty(PsiModifier.STATIC))) continue
           collector.add(method)
         }
       }
