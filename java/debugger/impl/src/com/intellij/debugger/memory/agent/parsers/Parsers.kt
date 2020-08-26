@@ -177,6 +177,8 @@ object MemoryAgentReferringObjectCreator {
           MemoryAgentConstantPoolReferringObject(referrer, IntArrayParser.parse(value)[0])
         MemoryAgentReferenceKind.ARRAY_ELEMENT ->
           MemoryAgentArrayReferringObject(referrer as ArrayReference, isWeakSoftReachable, IntArrayParser.parse(value)[0])
+        MemoryAgentReferenceKind.TRUNCATE ->
+          MemoryAgentTruncatedReferringObject(referrer, isWeakSoftReachable, IntArrayParser.parse(value)[0])
         else -> MemoryAgentKindReferringObject(referrer, isWeakSoftReachable, kind)
       }
   }

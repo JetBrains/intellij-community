@@ -42,12 +42,14 @@ final class MemoryAgentOperations {
 
   @NotNull
   static ReferringObjectsInfo findPathsToClosestGCRoots(@NotNull EvaluationContextImpl evaluationContext,
-                                                        @NotNull ObjectReference reference, int number) throws EvaluateException {
-    IntegerValue numberValue = evaluationContext.getDebugProcess().getVirtualMachineProxy().mirrorOf(number);
+                                                        @NotNull ObjectReference reference, int pathsNumber,
+                                                        int objectsNumber) throws EvaluateException {
+    IntegerValue pathsNumberValue = evaluationContext.getDebugProcess().getVirtualMachineProxy().mirrorOf(pathsNumber);
+    IntegerValue objectsNumberValue = evaluationContext.getDebugProcess().getVirtualMachineProxy().mirrorOf(objectsNumber);
     Value value = callMethod(
       evaluationContext,
       MemoryAgentNames.Methods.FIND_PATHS_TO_CLOSEST_GC_ROOTS,
-      Arrays.asList(reference, numberValue)
+      Arrays.asList(reference, pathsNumberValue, objectsNumberValue)
     );
     return GcRootsPathsParser.INSTANCE.parse(value);
   }

@@ -82,7 +82,7 @@ public class GCRootReferringObject implements ReferringObject {
     };
   }
 
-  @Nullable
+  @NotNull
   @Override
   public String getNodeName(int order) {
     return "Root";

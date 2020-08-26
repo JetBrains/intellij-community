@@ -569,7 +569,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
 
         MemoryAgentCapabilities capabilities = MemoryAgent.get(getEvaluationContext().getDebugProcess()).capabilities();
         if (capabilities.canFindPathsToClosestGcRoots()) {
-          provider = new MemoryAgentPathsToClosestGCRootsProvider(MemoryAgent.DEFAULT_GC_ROOTS_PATHS_LIMIT);
+          provider = new MemoryAgentPathsToClosestGCRootsProvider(MemoryAgent.DEFAULT_GC_ROOTS_PATHS_LIMIT, MemoryAgent.DEFAULT_GC_ROOTS_OBJECTS_LIMIT);
         }
 
         return new JavaReferringObjectsValue(JavaValue.this, provider, null);

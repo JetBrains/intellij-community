@@ -15,9 +15,11 @@ import java.util.Map;
 public class MemoryAgentPathsToClosestGCRootsProvider implements ReferringObjectsProvider {
   private final Map<ObjectReference, ReferringObjectsInfo> myCachedRequests = new HashMap<>();
   private final int myPathsToRequestLimit;
+  private final int myObjectsToRequestLimit;
 
-  public MemoryAgentPathsToClosestGCRootsProvider(int pathsToRequestLimit) {
+  public MemoryAgentPathsToClosestGCRootsProvider(int pathsToRequestLimit, int objectsToRequestLimit) {
     myPathsToRequestLimit = pathsToRequestLimit;
+    myObjectsToRequestLimit = objectsToRequestLimit;
   }
 
   @NotNull
@@ -47,6 +49,6 @@ public class MemoryAgentPathsToClosestGCRootsProvider implements ReferringObject
       throw new UnsupportedOperationException();
     }
 
-    return memoryAgent.findPathsToClosestGCRoots(evaluationContext, value, myPathsToRequestLimit);
+    return memoryAgent.findPathsToClosestGCRoots(evaluationContext, value, myPathsToRequestLimit, myObjectsToRequestLimit);
   }
 }

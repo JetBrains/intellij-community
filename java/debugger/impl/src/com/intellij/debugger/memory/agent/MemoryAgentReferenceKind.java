@@ -21,7 +21,8 @@ public enum MemoryAgentReferenceKind {
   STACK_LOCAL(24),
   JNI_LOCAL(25),
   THREAD(26),
-  OTHER(27);
+  OTHER(27),
+  TRUNCATE(42); // Fake reference to truncate paths
 
   private final int value;
 

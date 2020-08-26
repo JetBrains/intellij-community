@@ -18,7 +18,7 @@ public class StackLocalReferringObject extends GCRootReferringObject {
     this.depth = depth;
   }
 
-  @Nullable
+  @NotNull
   @Override
   protected String getAdditionalInfo() {
     return String.format("%sTID: %d DEPTH: %d",
