@@ -171,7 +171,8 @@ public final class EndUserAgreement {
       return new Document(docName, new String(Files.readAllBytes(file), StandardCharsets.UTF_8));
     }
     catch (IOException e) {
-      LOG.info(e);
+      LOG.info(docName + ": " + e.getMessage());
+      LOG.debug(e);
     }
     return new Document(docName, "");
   }
