@@ -230,7 +230,7 @@ public class FileInEditorProcessor {
       String message = virtualFile == null ? LangBundle.message("formatter.unavailable.message")
                                            : LangBundle.message("formatter.unavailable.for.0.message", virtualFile.getName());
       return new HtmlBuilder().append(message).append(
-        HtmlChunk.tag("p").child(
+        HtmlChunk.p().child(
           HtmlChunk.span().child(
             HtmlChunk.link("", LangBundle.message("formatter.unavailable.show.settings.link"))
           )

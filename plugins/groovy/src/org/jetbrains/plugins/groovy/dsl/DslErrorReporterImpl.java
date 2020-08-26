@@ -40,9 +40,9 @@ public class DslErrorReporterImpl extends DslErrorReporter {
     }
 
     String content = new HtmlBuilder().append(
-      HtmlChunk.tag("p").addText(e.getMessage())
+      HtmlChunk.p().addText(e.getMessage())
     ).append(
-      HtmlChunk.tag("p").child(
+      HtmlChunk.p().child(
         HtmlChunk.link("", GroovyBundle.message("gdsl.investigate.link.label"))
       )
     ).toString();

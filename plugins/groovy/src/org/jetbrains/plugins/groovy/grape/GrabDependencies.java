@@ -204,7 +204,7 @@ public class GrabDependencies implements IntentionAction {
             handler.waitFor();
             int jarCount = handler.jarCount;
             totalJarCount += jarCount;
-            messages.append(HtmlChunk.tag("p").children(
+            messages.append(HtmlChunk.p().children(
               HtmlChunk.raw(GroovyBundle.message("grab.jar.count", grabText, jarCount)),
               handler.messages
             ));

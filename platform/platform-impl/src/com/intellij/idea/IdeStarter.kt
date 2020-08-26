@@ -262,7 +262,7 @@ private fun reportPluginErrors() {
 
   ApplicationManager.getApplication().invokeLater({
     val title = IdeBundle.message("title.plugin.error")
-    val content = HtmlBuilder().appendWithSeparators(HtmlChunk.tag("p"), pluginErrors).toString()
+    val content = HtmlBuilder().appendWithSeparators(HtmlChunk.p(), pluginErrors).toString()
     Notification(NotificationGroup.createIdWithTitle("Plugin Error", title),
                  title, content, NotificationType.ERROR) { notification, event ->
       notification.expire()
