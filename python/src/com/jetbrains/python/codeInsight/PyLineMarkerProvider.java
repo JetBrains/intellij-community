@@ -8,7 +8,9 @@ import com.intellij.icons.AllIcons;
 import com.intellij.lang.ASTNode;
 import com.intellij.notebook.editor.BackedVirtualFile;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.PopupTitle;
+import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.CollectionQuery;
@@ -36,10 +38,10 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparatorUtil.Provider {
 
-  private static final class TooltipProvider implements Function<PsiElement, String> {
+  private static final class TooltipProvider implements Function<PsiElement, @NlsContexts.Tooltip String> {
     private final String myText;
 
-    private TooltipProvider(String text) {
+    private TooltipProvider(@NlsContexts.Tooltip String text) {
       myText = text;
     }
 
@@ -49,43 +51,49 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
     }
   }
 
-  private static final Function<PsiElement, String> ourSubclassTooltipProvider = identifier -> {
+  private static final int INHERITORS_LIMIT = 10;
+
+  private static final Function<PsiElement, @NlsContexts.Tooltip String> ourSubclassTooltipProvider = identifier -> {
     PsiElement parent = identifier.getParent();
     if (!(parent instanceof PyClass)) return null;
-    final StringBuilder builder = new StringBuilder("<html>Is subclassed by:");
+    final HtmlBuilder builder = new HtmlBuilder();
+    builder.append(PyBundle.message("line.markers.tooltip.header.is.subclassed.by"));
     final AtomicInteger count = new AtomicInteger();
     PyClass pyClass = (PyClass)parent;
-    PyClassInheritorsSearch.search(pyClass, true).forEach(pyClass1 -> {
-      if (count.incrementAndGet() >= 10) {
-        builder.setLength(0);
-        builder.append("Has subclasses");
+    PyClassInheritorsSearch.search(pyClass, true).forEach(inheritor -> {
+      String className = inheritor.getName();
+      if (className == null) return true;
+      if (count.incrementAndGet() >= INHERITORS_LIMIT) {
         return false;
       }
-      builder.append("<br>&nbsp;&nbsp;").append(pyClass1.getName());
+      builder.br().nbsp(2).append(className);
       return true;
     });
-    return builder.toString();
+    boolean tooManySubclasses = count.get() >= INHERITORS_LIMIT;
+    return tooManySubclasses ? PyBundle.message("line.markers.tooltip.has.subclasses") : builder.wrapWithHtmlBody().toString();
   };
 
-  private static final Function<PsiElement, String> ourOverridingMethodTooltipProvider = element -> {
+  private static final Function<PsiElement, @NlsContexts.Tooltip String> ourOverridingMethodTooltipProvider = element -> {
     PsiElement parent = element.getParent();
     if (!(parent instanceof PyFunction)) return "";
-    final StringBuilder builder = new StringBuilder("<html>Is overridden in:");
+    final HtmlBuilder builder = new HtmlBuilder();
+    builder.append(PyBundle.message("line.markers.tooltip.header.is.overridden.in"));
     final AtomicInteger count = new AtomicInteger();
     PyFunction pyFunction = (PyFunction)parent;
 
     PyClassInheritorsSearch.search(pyFunction.getContainingClass(), true).forEach(pyClass -> {
-      if (count.incrementAndGet() >= 10) {
-        builder.setLength(0);
-        builder.append("Has overridden methods");
+      String className = pyClass.getName();
+      if (className == null) return true;
+      if (count.incrementAndGet() >= INHERITORS_LIMIT) {
         return false;
       }
       if (pyClass.findMethodByName(pyFunction.getName(), false, null) != null) {
-        builder.append("<br>&nbsp;&nbsp;").append(pyClass.getName());
+        builder.br().nbsp(2).append(className);
       }
       return true;
     });
-    return builder.toString();
+    boolean tooManyOverrides = count.get() >= INHERITORS_LIMIT;
+    return tooManyOverrides ? PyBundle.message("line.markers.tooltip.has.overridden.methods") : builder.wrapWithHtmlBody().toString();
   };
 
   private static final PyLineMarkerNavigator<PsiElement> SUPER_METHOD_NAVIGATOR = new PyLineMarkerNavigator<PsiElement>() {
@@ -194,7 +202,8 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
       }
       // TODO: show "implementing" instead of "overriding" icon for Python implementations of Java interface methods
       return new LineMarkerInfo<>(identifier, identifier.getTextRange(), AllIcons.Gutter.OverridingMethod,
-                                  superClass == null ? null : new TooltipProvider("Overrides method in " + superClass.getName()),
+                                  superClass == null ? null : new TooltipProvider(PyBundle.message(
+                                    "line.markers.tooltip.overrides.method.in.class", superClass.getName())),
                                   SUPER_METHOD_NAVIGATOR, GutterIconRenderer.Alignment.RIGHT);
     }
     return null;
@@ -215,7 +224,8 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
         PsiElement identifier = element.getNameIdentifier();
         if (identifier != null) {
           return new LineMarkerInfo<>(identifier, identifier.getTextRange(), AllIcons.Gutter.OverridingMethod,
-                                      new TooltipProvider("Overrides attribute in " + ancestor.getName()), SUPER_ATTRIBUTE_NAVIGATOR,
+                                      new TooltipProvider(
+                                        PyBundle.message("line.markers.tooltip.overrides.attribute.in.class", ancestor.getName())), SUPER_ATTRIBUTE_NAVIGATOR,
                                       GutterIconRenderer.Alignment.RIGHT);
         }
       }
