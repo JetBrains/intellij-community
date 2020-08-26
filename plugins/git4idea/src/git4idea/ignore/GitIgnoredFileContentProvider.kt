@@ -4,6 +4,7 @@ package git4idea.ignore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Comparing
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.NotIgnored
@@ -152,7 +153,8 @@ open class GitIgnoredFileContentProvider(private val project: Project) : Ignored
     return "/${FileUtil.getRelativePath(ignoreEntryRoot.path, ignoredFileDescriptor.path!!, '/') ?: ""}"
   }
 
-  private fun prependCommentHashCharacterIfNeeded(description: String): String {
+  @NlsContexts.DetailedDescription
+  private fun prependCommentHashCharacterIfNeeded(@NlsContexts.DetailedDescription description : String): String {
     return if (description.startsWith("#")) description else "# $description"
   }
 
