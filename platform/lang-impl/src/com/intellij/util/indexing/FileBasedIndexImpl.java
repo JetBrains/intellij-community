@@ -95,8 +95,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   private final PerIndexDocumentVersionMap myLastIndexedDocStamps = new PerIndexDocumentVersionMap();
 
   // findExtensionOrFail is thread safe
-  private final NotNullLazyValue<ChangedFilesCollector> myChangedFilesCollector = NotNullLazyValue.createValue(()
-           -> AsyncEventSupport.EP_NAME.findExtensionOrFail(ChangedFilesCollector.class));
+  private final NotNullLazyValue<ChangedFilesCollector> myChangedFilesCollector =
+    NotNullLazyValue.createValue(() -> AsyncEventSupport.EP_NAME.findExtensionOrFail(ChangedFilesCollector.class));
 
   private final List<IndexableFileSet> myIndexableSets = ContainerUtil.createLockFreeCopyOnWriteList();
   private final Map<IndexableFileSet, Project> myIndexableSetToProjectMap = new HashMap<>();
@@ -109,10 +109,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   private final boolean myIsUnitTestMode;
 
-  @Nullable
-  private Runnable myShutDownTask;
-  @Nullable
-  private ScheduledFuture<?> myFlushingFuture;
+  private @Nullable Runnable myShutDownTask;
+  private @Nullable ScheduledFuture<?> myFlushingFuture;
 
   private final AtomicInteger myLocalModCount = new AtomicInteger();
   private final AtomicInteger myFilesModCount = new AtomicInteger();
@@ -190,7 +188,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
     myConnection = connection;
 
-    FileBasedIndexExtension.EXTENSION_POINT_NAME.addExtensionPointListener(new ExtensionPointListener<FileBasedIndexExtension<?, ?>>() {
+    FileBasedIndexExtension.EXTENSION_POINT_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionRemoved(@NotNull FileBasedIndexExtension<?, ?> extension, @NotNull PluginDescriptor pluginDescriptor) {
         ID.unloadId(extension.getName());
@@ -223,13 +221,16 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       if (filter.test(indexId)) {
         try {
           clearIndex(indexId);
-        } catch (StorageException e) {
+        }
+        catch (StorageException e) {
           LOG.info(e);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
           LOG.error(e);
         }
         clearedIndexes.add(indexId);
-      } else {
+      }
+      else {
         survivedIndexes.add(indexId);
       }
     }
@@ -347,7 +348,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
             ex.onFileBasedIndexVersionChanged(name);
           }
         }
-      } catch (Exception e) {
+      }
+      catch (Exception e) {
         LOG.error(e);
       }
     }
@@ -416,8 +418,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           if (storage != null) storage.close();
           storage = null;
         }
-        catch (Exception ignored) {
-        }
+        catch (Exception ignored) { }
 
         FileUtil.deleteWithRenaming(IndexInfrastructure.getIndexRootDir(name));
 
@@ -450,9 +451,14 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   private static <K, V> UpdatableIndex<K, V, FileContent> createIndex(@NotNull final FileBasedIndexExtension<K, V> extension,
                                                                       @NotNull final TransientChangesIndexStorage<K, V> storage)
     throws StorageException, IOException {
-    return extension instanceof CustomImplementationFileBasedIndexExtension
-           ? ((CustomImplementationFileBasedIndexExtension<K, V>)extension).createIndexImplementation(extension, storage)
-           : new VfsAwareMapReduceIndex<>(extension, storage);
+    if (extension instanceof CustomImplementationFileBasedIndexExtension) {
+      @SuppressWarnings("unchecked") UpdatableIndex<K, V, FileContent> index =
+        ((CustomImplementationFileBasedIndexExtension<K, V>)extension).createIndexImplementation(extension, storage);
+      return index;
+    }
+    else {
+      return new VfsAwareMapReduceIndex<>(extension, storage);
+    }
   }
 
   void performShutdown(boolean keepConnection) {
@@ -498,7 +504,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
               index.clear(); // if the index was scheduled for rebuild, only clean it
             }
             index.dispose();
-          } catch (Throwable throwable) {
+          }
+          catch (Throwable throwable) {
             LOG.info("Problem disposing " + indexId, throwable);
           }
         }
@@ -754,7 +761,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           if (data.getModificationCount() == currentFileModCount) {
             return data;
           }
-        } else if (!isUpToDateCheckEnabled()) {
+        }
+        else if (!isUpToDateCheckEnabled()) {
           return null;
         }
 
@@ -1181,7 +1189,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         if (file instanceof DeletedVirtualFileStub && ((DeletedVirtualFileStub)file).isResurrected()) {
           CachedFileContent resurrectedFileContent = new CachedFileContent(((DeletedVirtualFileStub)file).getOriginalFile());
           indexingResult = doIndexFileContent(project, resurrectedFileContent);
-        } else {
+        }
+        else {
           indexingResult = new FileIndexingResult(true, Collections.emptyMap(), Collections.emptyMap(), file.getFileType());
         }
       }
@@ -1281,7 +1290,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
             SingleIndexUpdateStats updateStats = updateSingleIndex(indexId, file, inputId, fc);
             if (updateStats == null) {
               setIndexedStatus.set(Boolean.FALSE);
-            } else {
+            }
+            else {
               perIndexerUpdateTimes.put(indexId, updateStats.mapInputTime);
             }
             currentIndexedStates.remove(indexId);
@@ -1305,7 +1315,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           SingleIndexUpdateStats updateStats = updateSingleIndex(indexId, file, inputId, null);
           if (updateStats == null) {
             setIndexedStatus.set(Boolean.FALSE);
-          } else {
+          }
+          else {
             perIndexerDeletionTimes.put(indexId, updateStats.mapInputTime);
           }
         }
@@ -1321,7 +1332,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   private static byte @NotNull[] getBytesOrNull(@NotNull CachedFileContent content) {
     try {
       return content.getBytes();
-    } catch (IOException e) {
+    }
+    catch (IOException e) {
       return ArrayUtilRt.EMPTY_BYTE_ARRAY;
     }
   }
