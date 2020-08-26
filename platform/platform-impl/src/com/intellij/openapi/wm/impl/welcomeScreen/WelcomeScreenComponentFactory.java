@@ -92,6 +92,7 @@ public class WelcomeScreenComponentFactory {
     textPanel.add(appName);
     textPanel.add(version);
     panel.add(textPanel, BorderLayout.CENTER);
+    panel.setToolTipText(applicationName + " " + appVersion);
     return panel;
   }
 
