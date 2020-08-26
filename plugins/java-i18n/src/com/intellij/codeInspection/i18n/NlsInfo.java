@@ -259,10 +259,22 @@ public abstract class NlsInfo {
           }
         }
         if (var instanceof PsiMethod && PsiType.VOID.equals(((PsiMethod)var).getReturnType())) {
+          // If assignment target is Java, it resolves to the setter
           PsiParameter[] parameters = ((PsiMethod)var).getParameterList().getParameters();
           if (parameters.length == 1) {
             PsiParameter parameter = parameters[0];
             return forModifierListOwner(parameter);
+          }
+        }
+        if (var instanceof PsiMethod) {
+          // If assignment target is Kotlin property, it resolves to the getter but annotation will be applied to the field
+          // (unless @get:Nls is used), so we have to navigate to the corresponding field.
+          UElement element = UastContextKt.toUElement(var.getNavigationElement());
+          if (element instanceof UField) {
+            PsiElement javaPsi = element.getJavaPsi();
+            if (javaPsi instanceof PsiField) {
+              return forModifierListOwner((PsiField)javaPsi);
+            }
           }
         }
       }

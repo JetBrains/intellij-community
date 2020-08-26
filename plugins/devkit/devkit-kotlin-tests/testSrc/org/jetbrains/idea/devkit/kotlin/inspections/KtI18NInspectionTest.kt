@@ -94,9 +94,8 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
           @org.jetbrains.annotations.Nls var prop = "";
        
           fun foo(x : X) {
-            // TODO: prop is resolved to getter 
             // but Kotlin properties do not propagate annotations to getter ultra-light method 
-            prop = "value"
+            prop = <warning descr="Hardcoded string literal: \"value\"">"value"</warning>
             x.foo = <warning descr="Hardcoded string literal: \"value\"">"value"</warning>
           }
         }
