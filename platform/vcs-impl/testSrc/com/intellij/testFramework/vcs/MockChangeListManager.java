@@ -312,7 +312,7 @@ public class MockChangeListManager extends ChangeListManagerEx {
   }
 
   @Override
-  public void waitForUpdate(@Nullable String operationName) {
+  public void waitForUpdate() {
     throw new UnsupportedOperationException();
   }
 

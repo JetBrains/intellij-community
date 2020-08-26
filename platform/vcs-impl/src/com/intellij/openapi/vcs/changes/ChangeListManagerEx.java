@@ -61,5 +61,14 @@ public abstract class ChangeListManagerEx extends ChangeListManager {
    * that is waiting for EDT.
    */
   @CalledInBackground
-  public abstract void waitForUpdate(@Nullable String operationName);
+  public abstract void waitForUpdate();
+
+  /**
+   * @deprecated Parameter ignored, use {@link #waitForUpdate()}.
+   */
+  @Deprecated
+  @CalledInBackground
+  public void waitForUpdate(@Nullable String operationName) {
+    waitForUpdate();
+  }
 }

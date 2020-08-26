@@ -386,10 +386,10 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
   }
 
   @Override
-  public void waitForUpdate(@Nullable @NlsContexts.ProgressTitle String operationName) {
+  public void waitForUpdate() {
     assert !ApplicationManager.getApplication().isDispatchThread();
     CountDownLatch waiter = new CountDownLatch(1);
-    invokeAfterUpdate(waiter::countDown, InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED, operationName, ModalityState.NON_MODAL);
+    invokeAfterUpdate(waiter::countDown, InvokeAfterUpdateMode.SILENT_CALLBACK_POOLED, null, ModalityState.NON_MODAL);
     awaitWithCheckCanceled(waiter);
   }
 

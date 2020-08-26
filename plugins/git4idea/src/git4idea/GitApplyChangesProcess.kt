@@ -112,7 +112,7 @@ class GitApplyChangesProcess(private val project: Project,
           else {
             refreshStagedVfs(repository.root)
             VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(repository.root)
-            changeListManager.waitForUpdate(operationName)
+            changeListManager.waitForUpdate()
             val committed = commit(repository, commit, commitMessage, changeList, successfulCommits,
                                    alreadyPicked)
             if (!committed) return false
@@ -125,7 +125,7 @@ class GitApplyChangesProcess(private val project: Project,
 
           refreshStagedVfs(repository.root) // `ConflictResolver` only refreshes conflicted files
           VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(repository.root)
-          changeListManager.waitForUpdate(operationName)
+          changeListManager.waitForUpdate()
 
           if (mergeCompleted) {
             LOG.debug("All conflicts resolved, will show commit dialog. Current default changelist is [$changeList]")
@@ -194,7 +194,7 @@ class GitApplyChangesProcess(private val project: Project,
     val committed = showCommitDialogAndWaitForCommit(repository, changeList, commitMessage, changes)
     if (committed) {
       markDirty(changes)
-      changeListManager.waitForUpdate(operationName)
+      changeListManager.waitForUpdate()
 
       successfulCommits.add(commit)
       return true

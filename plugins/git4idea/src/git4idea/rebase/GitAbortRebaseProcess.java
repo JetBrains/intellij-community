@@ -244,7 +244,7 @@ class GitAbortRebaseProcess {
     }).execute();
 
     if (success[0]) {
-      ((ChangeListManagerEx)ChangeListManager.getInstance(myProject)).waitForUpdate(null);
+      ((ChangeListManagerEx)ChangeListManager.getInstance(myProject)).waitForUpdate();
 
       if (mySaver != null) {
         mySaver.load();
