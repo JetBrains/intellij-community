@@ -21,6 +21,7 @@ import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -315,13 +316,25 @@ public final class JavaSdkImpl extends JavaSdk {
 
   // does this file look like the genuine root for all correct annotations.xml
   private static boolean isInternalJdkAnnotationRootCorrect(@NotNull VirtualFile root) {
-    VirtualFile xml = root.findFileByRelativePath("java/awt/event/annotations.xml");
-    if (xml == null) return false;
+    String relPath = "java/awt/event/annotations.xml";
+    VirtualFile xml = root.findFileByRelativePath(relPath);
+    if (xml == null) {
+      reportCorruptedJdkAnnotations(root, "there's no file " + root.getPath() + "/" + relPath);
+      return false;
+    }
     MostlySingularMultiMap<String, BaseExternalAnnotationsManager.AnnotationData> loaded = BaseExternalAnnotationsManager.loadData(xml, LoadTextUtil.loadText(xml), null);
     Iterable<BaseExternalAnnotationsManager.AnnotationData> data = loaded.get("java.awt.event.InputEvent int getModifiers()");
 
     BaseExternalAnnotationsManager.AnnotationData magicAnno = ContainerUtil.find(data, ann -> ann.toString().equals(MagicConstant.class.getName() + "(flagsFromClass=java.awt.event.InputEvent.class)"));
-    return magicAnno != null;
+    if (magicAnno != null) {
+      return true;
+    }
+    reportCorruptedJdkAnnotations(root, "java.awt.event.InputEvent.getModifiers() not annotated with MagicConstant: "+data);
+    return false;
+  }
+
+  private static void reportCorruptedJdkAnnotations(@NotNull VirtualFile root, @NotNull @NlsSafe String reason) {
+    LOG.warn("Internal jdk annotation root " + root + " seems corrupted: " + reason);
   }
 
   static VirtualFile internalJdkAnnotationsPath(@NotNull List<? super String> pathsChecked) {
