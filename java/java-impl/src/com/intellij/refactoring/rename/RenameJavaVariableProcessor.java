@@ -124,13 +124,7 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
       if (containingClass != null) {
         String name = ((PsiRecordComponent)element).getName();
         if (name != null) {
-          PsiMethod explicitGetter = ContainerUtil
-            .find(containingClass.findMethodsByName(name, false), m -> m.getParameterList().isEmpty());
-
-          if (explicitGetter != null) {
-            AutomaticGetterSetterRenamer
-              .addOverriddenAndImplemented(explicitGetter, newName, null, newName, JavaCodeStyleManager.getInstance(element.getProject()), allRenames);
-          }
+          addGetter(element, newName, allRenames, containingClass, name);
 
           PsiMethod canonicalConstructor = ContainerUtil.find(containingClass.getConstructors(), c -> JavaPsiRecordUtil.isExplicitCanonicalConstructor(c));
           if (canonicalConstructor != null) {
@@ -141,6 +135,34 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
           }
         }
       }
+    }
+    if (element instanceof PsiParameter) {
+      PsiMethod method = PsiTreeUtil.getParentOfType(element.getParent(), PsiMethod.class);
+      if (method == null) return;
+      if (JavaPsiRecordUtil.isExplicitCanonicalConstructor(method)) {
+        PsiRecordComponent recordComponent = JavaPsiRecordUtil.getComponentForCanonicalConstructorParameter((PsiParameter)element);
+        allRenames.put(recordComponent, newName);
+
+        PsiClass containingClass = method.getContainingClass();
+        if (containingClass != null) {
+          addGetter(element, newName, allRenames, containingClass, ((PsiParameter)element).getName());
+        }
+      }
+    }
+  }
+
+  private static void addGetter(@NotNull PsiElement element,
+                                @NotNull String newName,
+                                @NotNull Map<PsiElement, String> allRenames,
+                                PsiClass containingClass,
+                                String name) {
+    PsiMethod explicitGetter = ContainerUtil
+      .find(containingClass.findMethodsByName(name, false), m -> m.getParameterList().isEmpty());
+
+    if (explicitGetter != null) {
+      AutomaticGetterSetterRenamer
+        .addOverriddenAndImplemented(explicitGetter, newName, null, newName, JavaCodeStyleManager.getInstance(element.getProject()),
+                                     allRenames);
     }
   }
 
