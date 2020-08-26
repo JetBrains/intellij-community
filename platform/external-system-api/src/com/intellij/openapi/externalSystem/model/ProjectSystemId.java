@@ -4,6 +4,7 @@ package com.intellij.openapi.externalSystem.model;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.serialization.PropertyMapping;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,7 +32,7 @@ public final class ProjectSystemId implements Serializable {
   }
 
   @PropertyMapping({"id", "readableName"})
-  public ProjectSystemId(@NotNull String id, @NotNull @Nls String readableName) {
+  public ProjectSystemId(@NotNull @NonNls String id, @NotNull @Nls String readableName) {
     this.id = id;
     this.readableName = readableName;
     ourExistingIds.putIfAbsent(id, this);

@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -273,7 +274,7 @@ public class TemplateBuilderImpl implements TemplateBuilder {
   }
 
   @Override
-  public void replaceElement(@NotNull PsiElement element, String replacementText) {
+  public void replaceElement(@NotNull PsiElement element, @NlsSafe String replacementText) {
     replaceElement(element, new ConstantNode(replacementText));
   }
 

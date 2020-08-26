@@ -26,6 +26,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.LimitedPool;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -1031,7 +1032,7 @@ public class GeneratedParserUtilBase {
     public int position;
     public int level;
     public int modifiers;
-    public String name;
+    @NonNls public String name;
     public int variantCount;
     public int errorReportedAt;
     public int lastVariantAt;
