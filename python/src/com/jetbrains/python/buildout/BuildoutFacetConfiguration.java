@@ -8,6 +8,7 @@ import com.intellij.facet.ui.FacetValidatorsManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.util.ui.JBUI;
 import com.jetbrains.python.PyBundle;
@@ -42,7 +43,7 @@ public class BuildoutFacetConfiguration implements FacetConfiguration {
     return new FacetEditorTab[] {new Tab(editorContext.getModule())};
   }
 
-  public String getScriptName() {
+  public @NlsSafe String getScriptName() {
     return myScriptName;
   }
 
