@@ -4,19 +4,20 @@ package com.intellij.structuralsearch.inspection;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.ProblemDescriptorWithReporterName;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.DynamicGroupTool;
-import com.intellij.codeInspection.ex.GlobalInspectionContextBase;
-import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.ex.*;
 import com.intellij.dupLocator.iterators.CountingNodeIterator;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.fileTypes.PlainTextLikeFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
+import com.intellij.psi.PsiFile;
 import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
@@ -30,19 +31,27 @@ import com.intellij.structuralsearch.plugin.ui.ConfigurationManager;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
 import com.intellij.structuralsearch.plugin.util.SmartPsiPointer;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.stream.Collectors;
 
 import static com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
 
 public class SSBasedInspection extends LocalInspectionTool implements DynamicGroupTool {
   private static final Object LOCK = ObjectUtils.sentinel("SSRLock"); // hack to avoid race conditions in SSR
+
+  private static final Key<Map<Configuration, Matcher>> COMPILED_PATTERNS = Key.create("SSR_COMPILED_PATTERNS");
+  private final MultiMapEx<Configuration, Matcher> myCompiledPatterns = new MultiMapEx<>();
 
   @NonNls public static final String SHORT_NAME = "SSBasedInspection";
   private final List<Configuration> myConfigurations = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -84,70 +93,56 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
   public void cleanup(@NotNull Project project) {
     super.cleanup(project);
     mySessionProfile = null;
+    myCompiledPatterns.clear();
+  }
+
+  @Override
+  public void inspectionFinished(@NotNull LocalInspectionToolSession session, @NotNull ProblemsHolder problemsHolder) {
+    final Map<Configuration, Matcher> compiledPatterns = session.getUserData(COMPILED_PATTERNS);
+    if (compiledPatterns != null) {
+      checkInCompiledPatterns(compiledPatterns);
+    }
   }
 
   @NotNull
   @Override
-  public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
+  public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
     if (myConfigurations.isEmpty()) return PsiElementVisitor.EMPTY_VISITOR;
+    final PsiFile file = holder.getFile();
+    if (file.getFileType() instanceof PlainTextLikeFileType) return PsiElementVisitor.EMPTY_VISITOR;
 
     final Project project = holder.getProject();
     final InspectionProfileImpl profile =
       (mySessionProfile != null && !isOnTheFly) ? mySessionProfile : InspectionProfileManager.getInstance(project).getCurrentProfile();
+    final List<Configuration> configurations = new SmartList<>();
     for (Configuration configuration : myConfigurations) {
-      register(configuration);
-    }
-
-    final Map<Configuration, Matcher> compiledOptions =
-      SSBasedInspectionCompiledPatternsCache.getInstance(project).getCompiledOptions(myConfigurations);
-    if (compiledOptions.isEmpty()) return PsiElementVisitor.EMPTY_VISITOR;
-
-    synchronized (LOCK) {
-      for (Map.Entry<Configuration, Matcher> entry : compiledOptions.entrySet()) {
-        final Matcher matcher = entry.getValue();
-        if (matcher == null) {
-          continue;
-        }
-        matcher.getMatchContext().setSink(new InspectionResultSink());
+      final ToolsImpl tools = profile.getToolsOrNull(configuration.getUuid().toString(), project);
+      if (tools != null && tools.isEnabled()) {
+        configurations.add(configuration);
+        register(configuration);
       }
     }
+    if (configurations.isEmpty()) return PsiElementVisitor.EMPTY_VISITOR;
 
-    return new PsiElementVisitor() {
-
-      @Override
-      public void visitElement(@NotNull PsiElement element) {
-        if (LexicalNodesFilter.getInstance().accepts(element)) return;
-        synchronized (LOCK) {
-          final SsrFilteringNodeIterator matchedNodes = new SsrFilteringNodeIterator(element);
-          for (Map.Entry<Configuration, Matcher> entry : compiledOptions.entrySet()) {
-            final Configuration configuration = entry.getKey();
-            final Matcher matcher = entry.getValue();
-            if (matcher == null) continue;
-
-            if (matcher.checkIfShouldAttemptToMatch(matchedNodes) &&
-                profile.isToolEnabled(HighlightDisplayKey.find(configuration.getUuid().toString()), element)) {
-              final MatchContext matchContext = matcher.getMatchContext();
-              final InspectionResultSink sink = (InspectionResultSink)matchContext.getSink();
-              sink.setConfigurationAndHolder(configuration, holder);
-              final int nodeCount = matchContext.getPattern().getNodeCount();
-              try {
-                matcher.processMatchesInElement(new CountingNodeIterator(nodeCount, matchedNodes));
-              }
-              catch (StructuralSearchException e) {
-                if (myProblemsReported.add(configuration.getName())) { // don't overwhelm the user with messages
-                  final String message = e.getMessage().replace(ScriptSupport.UUID, "");
-                  UIUtil.SSR_NOTIFICATION_GROUP.createNotification(NotificationType.ERROR)
-                    .setContent(SSRBundle.message("inspection.script.problem", message, configuration.getName()))
-                    .setImportant(true)
-                    .notify(element.getProject());
-                }
-              }
-              matchedNodes.reset();
-            }
+    final Map<Configuration, Matcher> compiledPatterns;
+    if (!Registry.is("ssr.multithreaded.inspection")) {
+      compiledPatterns = SSBasedInspectionCompiledPatternsCache.getInstance(project).getCachedCompiledConfigurations(configurations);
+      if (compiledPatterns.isEmpty()) return PsiElementVisitor.EMPTY_VISITOR;
+      synchronized (LOCK) {
+        for (Map.Entry<Configuration, Matcher> entry : compiledPatterns.entrySet()) {
+          final Matcher matcher = entry.getValue();
+          if (matcher == null) {
+            continue;
           }
+          matcher.getMatchContext().setSink(new InspectionResultSink());
         }
       }
-    };
+    }
+    else {
+      compiledPatterns = checkOutCompiledPatterns(configurations, project);
+      session.putUserData(COMPILED_PATTERNS, compiledPatterns);
+    }
+    return new SSBasedVisitor(compiledPatterns, profile, holder);
   }
 
   public static void register(@NotNull Configuration configuration) {
@@ -301,6 +296,124 @@ public class SSBasedInspection extends LocalInspectionTool implements DynamicGro
     @Override
     public void matchingFinished() {
       duplicates.clear();
+    }
+  }
+
+  @Nullable
+  Map<Configuration, Matcher> checkOutCompiledPatterns(@NotNull List<? extends Configuration> configurations, @NotNull Project project) {
+    final Map<Configuration, Matcher> result = new HashMap<>();
+    for (Configuration configuration : configurations) {
+      final Matcher matcher = myCompiledPatterns.popValue(configuration);
+      if (matcher == Matcher.EMPTY) {
+        continue;
+      }
+      if (matcher != null) {
+        result.put(configuration, matcher);
+      }
+      else {
+        final Matcher newMatcher = SSBasedInspectionCompiledPatternsCache.getInstance(project).buildCompiledConfiguration(configuration);
+        if (newMatcher != null) {
+          newMatcher.getMatchContext().setSink(new InspectionResultSink());
+        }
+        result.put(configuration, newMatcher);
+      }
+    }
+    return result;
+  }
+
+  void checkInCompiledPatterns(@NotNull Map<Configuration, Matcher> compiledPatterns) {
+    for (Map.Entry<Configuration, Matcher> entry : compiledPatterns.entrySet()) {
+      final Configuration configuration = entry.getKey();
+      final Matcher matcher = entry.getValue();
+      if (matcher == null) {
+        myCompiledPatterns.putValue(configuration, Matcher.EMPTY);
+      }
+      else {
+        matcher.getMatchContext().getSink().matchingFinished();
+        myCompiledPatterns.putValue(configuration, matcher);
+      }
+    }
+  }
+
+  private static class MultiMapEx<K, V> extends MultiMap<K, V> {
+    MultiMapEx() {
+      super(new ConcurrentHashMap<>());
+    }
+
+    @Override
+    protected @NotNull Collection<V> createCollection() {
+      return new ConcurrentLinkedDeque<>();
+    }
+
+    public V popValue(K k) {
+      final Deque<V> vs = (Deque<V>)myMap.get(k);
+      return vs == null ? null : vs.pollLast();
+    }
+  }
+
+  private class SSBasedVisitor extends PsiElementVisitor {
+
+    private final Map<Configuration, Matcher> myCompiledOptions;
+    private final InspectionProfileImpl myProfile;
+    private @NotNull final ProblemsHolder myHolder;
+
+    SSBasedVisitor(Map<Configuration, Matcher> compiledOptions, InspectionProfileImpl profile, @NotNull ProblemsHolder holder) {
+      myCompiledOptions = compiledOptions;
+      myProfile = profile;
+      myHolder = holder;
+    }
+
+    @Override
+    public void visitElement(@NotNull PsiElement element) {
+      if (LexicalNodesFilter.getInstance().accepts(element)) return;
+      if (Registry.is("ssr.multithreaded.inspection")) {
+        processElement(element);
+      }
+      else {
+        synchronized (LOCK) {
+          processElement(element);
+        }
+      }
+    }
+
+    private void processElement(@NotNull PsiElement element) {
+      for (Map.Entry<Configuration, Matcher> entry : myCompiledOptions.entrySet()) {
+        final Configuration configuration = entry.getKey();
+        final Matcher matcher = entry.getValue();
+        if (matcher == null) continue;
+
+        processElement(element, configuration, matcher);
+      }
+    }
+
+    private void processElement(PsiElement element, Configuration configuration, Matcher matcher) {
+      if (!myProfile.isToolEnabled(HighlightDisplayKey.find(configuration.getUuid().toString()), element)) {
+        return;
+      }
+      final SsrFilteringNodeIterator matchedNodes = new SsrFilteringNodeIterator(element);
+      if (!matcher.checkIfShouldAttemptToMatch(matchedNodes)) {
+        return;
+      }
+      try {
+        final MatchContext matchContext = matcher.getMatchContext();
+        final InspectionResultSink sink = (InspectionResultSink)matchContext.getSink();
+        sink.setConfigurationAndHolder(configuration, myHolder);
+        final int nodeCount = matchContext.getPattern().getNodeCount();
+        try {
+          matcher.processMatchesInElement(new CountingNodeIterator(nodeCount, matchedNodes));
+        }
+        catch (StructuralSearchException e) {
+          if (myProblemsReported.add(configuration.getName())) { // don't overwhelm the user with messages
+            final String message = e.getMessage().replace(ScriptSupport.UUID, "");
+            UIUtil.SSR_NOTIFICATION_GROUP.createNotification(NotificationType.ERROR)
+              .setContent(SSRBundle.message("inspection.script.problem", message, configuration.getName()))
+              .setImportant(true)
+              .notify(element.getProject());
+          }
+        }
+      } finally {
+        matchedNodes.reset();
+      }
     }
   }
 }

@@ -44,6 +44,7 @@ import static com.intellij.structuralsearch.impl.matcher.iterators.SingleNodeIte
  * This class makes program structure tree matching:
  */
 public class Matcher {
+  public static final Matcher EMPTY = new Matcher();
   private static final Logger LOG = Logger.getInstance(Matcher.class);
 
   @SuppressWarnings("SSBasedInspection")
@@ -59,6 +60,10 @@ public class Matcher {
 
   private int totalFilesToScan;
   private int scannedFilesCount;
+
+  private Matcher() {
+    project = null;
+  }
 
   public Matcher(@NotNull Project project, @NotNull MatchOptions matchOptions) {
     this(project, matchOptions, PatternCompiler.compilePattern(project, matchOptions, false, true));
@@ -361,12 +366,14 @@ public class Matcher {
     }
 
     void init() {
+      assert project != null;
       ended = false;
       suspended = false;
       PsiManager.getInstance(project).startBatchFilesProcessingMode();
     }
 
     private void clearSchedule() {
+      assert project != null;
       if (tasks != null) {
         taskQueueEndAction.run();
         if (!project.isDisposed()) {
@@ -492,6 +499,7 @@ public class Matcher {
     @NotNull
     @Override
     protected List<PsiElement> getPsiElementsToProcess() {
+      assert project != null;
       return ReadAction.compute(
         () -> {
           if (!myFile.isValid()) {
@@ -519,6 +527,7 @@ public class Matcher {
   private abstract class MatchOneFile implements Runnable {
     @Override
     public void run() {
+      assert project != null;
       final List<PsiElement> files = getPsiElementsToProcess();
 
       final MatchContext matchContext = getMatchContext();
