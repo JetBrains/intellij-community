@@ -58,7 +58,7 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget {
     panel.setPreferredSize(myDropFirst.getPreferredSize());
     add(panel);
     myDropFirst.setVisible(false);
-    JBEmptyBorder border = JBUI.Borders.empty(0, 0, 0, 5);
+    JBEmptyBorder border = JBUI.Borders.emptyRight(5);
     myAddButton = new InplaceButton(ExecutionBundle.message("run.configuration.before.run.add.task"), AllIcons.General.Add, e -> showPopup());
     myAddPanel = new JPanel();
     myAddPanel.setBorder(border);
