@@ -54,8 +54,6 @@ final class LineMarkerInfoHelper {
     return ((ExtensionPoint)element).getEffectiveQualifiedName();
   }
 
-  private static final String MODULE_SUFFIX_PATTERN = " <font color='" + ColorUtil.toHex(UIUtil.getInactiveTextColor()) + "'>[{0}]</font>";
-
   private LineMarkerInfoHelper() {
   }
 
@@ -105,7 +103,8 @@ final class LineMarkerInfoHelper {
       String fileDisplayName = file.getName();
       Module module = ModuleUtilCore.findModuleForPsiElement(file);
       if (module != null) {
-        fileDisplayName += MessageFormat.format(MODULE_SUFFIX_PATTERN, module.getName());
+        fileDisplayName += MessageFormat.format(" <font color='" + ColorUtil.toHex(UIUtil.getInactiveTextColor()) + "'>[{0}]</font>",
+                                                module.getName());
       }
 
       return DevKitBundle.message(tooltipPatternPropertyName,

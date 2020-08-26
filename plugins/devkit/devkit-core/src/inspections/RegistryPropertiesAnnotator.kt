@@ -111,6 +111,7 @@ class RegistryPropertiesAnnotator : Annotator {
 
   companion object {
 
+    @NonNls
     private val PLUGIN_GROUP_NAMES = setOf(
       "appcode", "cidr", "clion",
       "cvs", "git", "github", "svn", "hg4idea", "tfs",

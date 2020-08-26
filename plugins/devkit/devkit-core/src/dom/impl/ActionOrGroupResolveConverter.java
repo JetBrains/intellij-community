@@ -92,7 +92,7 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
   @Override
   public LookupElement createLookupElement(ActionOrGroup actionOrGroup) {
     PsiElement psiElement = getPsiElement(actionOrGroup);
-    String name = StringUtil.notNullize(getName(actionOrGroup), "<invalid name>");
+    String name = StringUtil.notNullize(getName(actionOrGroup), DevKitBundle.message("plugin.xml.convert.action.or.group.invalid.name"));
     LookupElementBuilder builder = psiElement == null ? LookupElementBuilder.create(name) :
                                    LookupElementBuilder.create(psiElement, name);
 

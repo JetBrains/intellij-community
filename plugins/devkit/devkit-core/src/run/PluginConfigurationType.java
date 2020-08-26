@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -23,7 +24,7 @@ import java.io.IOException;
 import java.util.Collection;
 
 public final class PluginConfigurationType extends SimpleConfigurationType {
-  private String myVmParameters = "-Xmx512m -Xms256m -ea";
+  private @NonNls String myVmParameters = "-Xmx512m -Xms256m -ea";
 
   public PluginConfigurationType() {
     super("#org.jetbrains.idea.devkit.run.PluginConfigurationType", DevKitBundle.message("run.configuration.title"), DevKitBundle.message("run.configuration.type.description"),

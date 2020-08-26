@@ -33,6 +33,7 @@ import com.intellij.ui.HyperlinkLabel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.io.HttpRequests;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.plugins.gradle.frameworkSupport.BuildScriptDataBuilder;
@@ -50,14 +51,16 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradleFrameworkSupportProvider {
-  private static final String ID = "gradle-intellij-plugin";
+  private static final @NonNls String ID = "gradle-intellij-plugin";
   private static final Logger LOG = Logger.getInstance(GradleIntellijPluginFrameworkSupportProvider.class);
 
-  private static final String LATEST_GRADLE_VERSION_KEY = "LATEST_GRADLE_VERSION_KEY";
-  private static final String LATEST_UPDATING_TIME_KEY = "LATEST_UPDATING_TIME_KEY";
+  private static final @NonNls String LATEST_GRADLE_VERSION_KEY = "LATEST_GRADLE_VERSION_KEY";
+  private static final @NonNls String LATEST_UPDATING_TIME_KEY = "LATEST_UPDATING_TIME_KEY";
 
-  private static final String FALLBACK_VERSION = "0.4.21";
-  protected static final String HELP_COMMENT = "// See https://github.com/JetBrains/gradle-intellij-plugin/\n";
+  private static final @NonNls String FALLBACK_VERSION = "0.4.21";
+  protected static final @NonNls String HELP_COMMENT = "// See https://github.com/JetBrains/gradle-intellij-plugin/\n";
+
+  private static final @NonNls String TASK_NAME_RUN_IDE = ":runIde";
 
   private static class Lazy {
     static final ExecutorService EXECUTOR = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("UPDATE_GRADLE_PLUGIN_VERSIONS");
@@ -203,7 +206,7 @@ public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradl
     RunConfiguration runConfiguration = configuration.getConfiguration();
     if (runConfiguration instanceof ExternalSystemRunConfiguration) {
       ExternalSystemTaskExecutionSettings settings = ((ExternalSystemRunConfiguration)runConfiguration).getSettings();
-      settings.setTaskNames(Collections.singletonList(":runIde"));
+      settings.setTaskNames(Collections.singletonList(TASK_NAME_RUN_IDE));
       settings.setExternalProjectPath(contentRootPath);
     }
     runManager.addConfiguration(configuration);

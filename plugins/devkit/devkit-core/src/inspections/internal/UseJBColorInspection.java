@@ -10,6 +10,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.JBColor;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -47,7 +48,7 @@ public class UseJBColorInspection extends DevKitInspectionBase {
         if (colorField instanceof PsiField && ((PsiField)colorField).hasModifierProperty(PsiModifier.STATIC)) {
           final PsiClass colorClass = ((PsiField)colorField).getContainingClass();
           if (colorClass != null && Color.class.getName().equals(colorClass.getQualifiedName())) {
-            String text = expression.getText();
+            @NonNls String text = expression.getText();
             if (text.contains(".")) {
               text = text.substring(text.lastIndexOf('.'));
             }

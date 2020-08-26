@@ -406,7 +406,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
 
     if (!ideaPlugin.hasRealPluginId()) return;
 
-    String id = ideaPlugin.getId().getStringValue();
+    @NonNls String id = ideaPlugin.getId().getStringValue();
     if (id != null &&
         (StringUtil.startsWith(id, "com.android.") ||
          id.equals("org.jetbrains.android"))) {
@@ -982,7 +982,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
   }
 
   private static void checkTemplateText(GenericDomValue<String> domValue,
-                                        String templateText,
+                                        @NonNls String templateText,
                                         DomElementAnnotationHolder holder) {
     if (templateText.equals(domValue.getValue())) {
       holder.createProblem(domValue, DevKitBundle.message("inspections.plugin.xml.do.not.use.template.text", templateText));
@@ -990,7 +990,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
   }
 
   private static void checkTemplateTextContains(GenericDomValue<String> domValue,
-                                                String containsText,
+                                                @NonNls String containsText,
                                                 DomElementAnnotationHolder holder) {
     String text = domValue.getStringValue();
     if (text != null && StringUtil.containsIgnoreCase(text, containsText)) {
@@ -999,7 +999,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
   }
 
   private static void checkTemplateTextContainsWord(GenericDomValue<String> domValue,
-                                                    String templateWord,
+                                                    @NonNls String templateWord,
                                                     DomElementAnnotationHolder holder) {
     String text = domValue.getStringValue();
     if (text == null) return;

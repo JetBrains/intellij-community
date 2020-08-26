@@ -17,6 +17,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -30,8 +31,8 @@ import java.util.List;
  */
 public final class PsiUtil {
   private static final Key<Boolean> IDEA_PROJECT = Key.create("idea.internal.inspections.enabled");
-  private static final String IDE_PROJECT_MARKER_CLASS = JBList.class.getName();
-  private static final String[] IDEA_PROJECT_MARKER_FILES = {
+  private static final @NonNls String IDE_PROJECT_MARKER_CLASS = JBList.class.getName();
+  private static final @NonNls String[] IDEA_PROJECT_MARKER_FILES = {
     "idea.iml", "community-main.iml", "intellij.idea.community.main.iml", "intellij.idea.ultimate.main.iml"
   };
 

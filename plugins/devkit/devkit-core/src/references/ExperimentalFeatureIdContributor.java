@@ -75,7 +75,8 @@ class ExperimentalFeatureIdContributor extends PsiReferenceContributor {
 
         final boolean requireRestart = "true".equals(getAttributeValue(extension, "requireRestart"));
         final boolean isInternalFeature = "true".equals(getAttributeValue(extension, "internalFeature"));
-        final String description = " " + StringUtil.notNullize(getDescription(extension), "No Description");
+        final String description = " " + StringUtil.notNullize(getDescription(extension),
+                                                               DevKitBundle.message("code.convert.experimental.feature.no.description"));
         final String percentage = getAttributeValue(extension, "percentOfUsers");
 
         variants.add(LookupElementBuilder.create(extension.getXmlElement(), value)

@@ -157,8 +157,8 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
         boolean fromIdeaProject = PsiUtil.isPathToIntelliJIdeaSources(ideaJdkHome);
 
         if (!fromIdeaProject) {
-          String bootPath = "/lib/boot.jar";
-          String bootJarPath = ideaJdkHome + toSystemDependentName(bootPath);
+          @NonNls String bootPath = "/lib/boot.jar";
+          @NonNls String bootJarPath = ideaJdkHome + toSystemDependentName(bootPath);
           if (new File(bootJarPath).exists()) {
             //there is no need to add boot.jar in modern IDE builds (181.*)
             vm.add("-Xbootclasspath/a:" + bootJarPath);

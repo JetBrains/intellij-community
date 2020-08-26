@@ -37,6 +37,7 @@ import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
 import com.intellij.util.xml.highlighting.DomHighlightingHelper;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -86,7 +87,8 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
 
   private static void checkInspectionDisplayName(DomElementAnnotationHolder holder,
                                                  DomElement element,
-                                                 String attributeName, InspectionI18NQuickFix fix) {
+                                                 @NonNls String attributeName,
+                                                 InspectionI18NQuickFix fix) {
     GenericAttributeValue displayNameAttr = getAttribute(element, attributeName);
     if (displayNameAttr != null && displayNameAttr.getStringValue() != null) {
       holder.createProblem(element, 

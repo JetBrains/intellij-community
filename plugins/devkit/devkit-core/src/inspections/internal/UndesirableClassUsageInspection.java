@@ -16,6 +16,7 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.QueryExecutor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -31,6 +32,7 @@ import java.util.Objects;
 
 public class UndesirableClassUsageInspection extends DevKitUastInspectionBase {
 
+  @NonNls
   private static final Map<String, String> CLASSES = ContainerUtil.<String, String>immutableMapBuilder()
     .put(JList.class.getName(), JBList.class.getName())
     .put(JTable.class.getName(), JBTable.class.getName())

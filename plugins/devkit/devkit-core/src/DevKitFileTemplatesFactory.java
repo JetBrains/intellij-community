@@ -18,7 +18,7 @@ public class DevKitFileTemplatesFactory implements FileTemplateGroupDescriptorFa
     descriptor.addTemplate(new FileTemplateDescriptor("gradleBasedPlugin.xml", XmlFileType.INSTANCE.getIcon()) {
       @Override
       public String getDisplayName() {
-        return "plugin.xml in Gradle-based projects";
+        return DevKitBundle.message("module.wizard.gradle.plugin.xml.template.display.name");
       }
     });
     descriptor.addTemplate(new FileTemplateDescriptor("plugin.xml", XmlFileType.INSTANCE.getIcon()));

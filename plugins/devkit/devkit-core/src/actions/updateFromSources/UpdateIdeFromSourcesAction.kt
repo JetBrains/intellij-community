@@ -33,6 +33,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.task.ProjectTaskManager
 import com.intellij.util.PathUtil
 import com.intellij.util.Restarter
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.util.PsiUtil
 import java.io.File
@@ -161,7 +162,8 @@ internal open class UpdateIdeFromSourcesAction
             if (event.exitCode != 0) {
               val errorText = errorLines.joinToString("\n")
               notificationGroup.createNotification(title = DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.failed.title"),
-                                                   content = DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.failed.content", event.exitCode, errorText),
+                                                   content = DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.failed.content",
+                                                                                  event.exitCode, errorText),
                                                    type = NotificationType.ERROR).notify(project)
               return
             }
@@ -361,11 +363,13 @@ private const val includeBinAndRuntimeProperty = "intellij.build.generate.bin.an
 
 internal class UpdateIdeFromSourcesSettingsAction : UpdateIdeFromSourcesAction(true)
 
+@NonNls
 private val safeToDeleteFilesInHome = setOf(
   "bin", "help", "jre", "jre64", "jbr", "lib", "license", "plugins", "redist", "MacOS", "Resources",
   "build.txt", "product-info.json", "Install-Linux-tar.txt", "Install-Windows-zip.txt", "ipr.reg"
 )
 
+@NonNls
 private val safeToDeleteFilesInBin = setOf(
   "append.bat", "appletviewer.policy", "format.sh", "format.bat",
   "fsnotifier", "fsnotifier64",
@@ -381,6 +385,7 @@ private val safeToDeleteFilesInBin = setOf(
   "idea64.vmoptions",
   "log.xml",
 */
-  )
+)
 
+@NonNls
 private val safeToDeleteExtensions = setOf("exe", "dll", "dylib", "so", "ico", "svg", "png", "py")

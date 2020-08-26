@@ -10,17 +10,18 @@ import com.intellij.codeInspection.util.IntentionName;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.inspections.DevKitInspectionBase;
 
 public class UnsafeReturnStatementVisitorInspection extends DevKitInspectionBase {
 
-  private static final String BASE_WALKING_VISITOR_NAME = JavaRecursiveElementWalkingVisitor.class.getName();
-  private static final String BASE_VISITOR_NAME = JavaRecursiveElementVisitor.class.getName();
+  private static final @NonNls String BASE_WALKING_VISITOR_NAME = JavaRecursiveElementWalkingVisitor.class.getName();
+  private static final @NonNls String BASE_VISITOR_NAME = JavaRecursiveElementVisitor.class.getName();
 
-  private static final String EMPTY_LAMBDA = "public void visitLambdaExpression(PsiLambdaExpression expression) {}";
-  private static final String EMPTY_CLASS = "public void visitClass(PsiClass aClass) {}";
+  private static final @NonNls String EMPTY_LAMBDA = "public void visitLambdaExpression(PsiLambdaExpression expression) {}";
+  private static final @NonNls String EMPTY_CLASS = "public void visitClass(PsiClass aClass) {}";
 
   @NotNull
   @Override

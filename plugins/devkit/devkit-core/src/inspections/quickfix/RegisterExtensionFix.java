@@ -23,6 +23,7 @@ import com.intellij.util.KeyedLazyInstanceEP;
 import com.intellij.util.PsiNavigateUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomFileElement;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Extension;
@@ -106,6 +107,7 @@ public class RegisterExtensionFix implements IntentionAction {
     PsiNavigateUtil.navigate(navTarget);
   }
 
+  @NonNls
   private static final Map<String, String> KEY_MAP = ContainerUtil.<String, String>immutableMapBuilder()
     .put(KeyedFactoryEPBean.class.getName(), "key")
     .put(KeyedLazyInstanceEP.class.getName(), "key")

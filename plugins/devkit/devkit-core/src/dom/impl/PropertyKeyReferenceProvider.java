@@ -22,6 +22,7 @@ import com.intellij.util.NullableFunction;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.Actions;
@@ -41,7 +42,7 @@ class PropertyKeyReferenceProvider extends PsiReferenceProvider {
 
   @Nullable private final NullableFunction<? super XmlTag, String> myBundleNameFunction;
 
-  PropertyKeyReferenceProvider(boolean tagMode, @Nullable String fallbackKeyName, @Nullable String fallbackBundleName) {
+  PropertyKeyReferenceProvider(boolean tagMode, @NonNls @Nullable String fallbackKeyName, @Nullable String fallbackBundleName) {
     myTagMode = tagMode;
     myFallbackKeyName = fallbackKeyName;
     myFallbackBundleName = fallbackBundleName;

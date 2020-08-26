@@ -33,6 +33,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.PathUtil;
 import com.intellij.util.io.Compressor;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -49,9 +50,9 @@ import java.util.*;
 import java.util.jar.Manifest;
 
 public class PrepareToDeployAction extends AnAction {
-  private static final String ZIP_EXTENSION = ".zip";
-  private static final String JAR_EXTENSION = ".jar";
-  private static final String TEMP_PREFIX = "temp";
+  private static final @NonNls String ZIP_EXTENSION = ".zip";
+  private static final @NonNls String JAR_EXTENSION = ".jar";
+  private static final @NonNls String TEMP_PREFIX = "temp";
 
   private static class Holder {
     private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.balloonGroup("Plugin DevKit Deployment");

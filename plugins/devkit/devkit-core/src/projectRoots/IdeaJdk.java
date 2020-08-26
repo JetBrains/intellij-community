@@ -133,7 +133,7 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   @NotNull
   @Override
   public String suggestSdkName(@Nullable String currentSdkName, String sdkHome) {
-    if (PsiUtil.isPathToIntelliJIdeaSources(sdkHome)) return "Local IDEA [" + sdkHome + "]";
+    if (PsiUtil.isPathToIntelliJIdeaSources(sdkHome)) return "Local IDEA [" + sdkHome + "]"; //NON-NLS
     String buildNumber = getBuildNumber(sdkHome);
     return IntelliJPlatformProduct.fromBuildNumber(buildNumber).getName() + " " + (buildNumber != null ? buildNumber : "");
   }
@@ -170,7 +170,7 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
     return VfsUtilCore.toVirtualFileArray(result);
   }
 
-  private static void appendIdeaLibrary(@NotNull String libDirPath,
+  private static void appendIdeaLibrary(@NonNls @NotNull String libDirPath,
                                         @NotNull List<VirtualFile> result,
                                         @NonNls final String @NotNull ... forbidden) {
     Arrays.sort(forbidden);
@@ -332,7 +332,7 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
     }
 
     Map<String, JpsModule> moduleByName = model.getProject().getModules().stream().collect(Collectors.toMap(JpsModule::getName, Function.identity()));
-    String[] mainModuleCandidates = {
+    @NonNls String[] mainModuleCandidates = {
       "intellij.idea.ultimate.main",
       "intellij.idea.community.main",
       "main",

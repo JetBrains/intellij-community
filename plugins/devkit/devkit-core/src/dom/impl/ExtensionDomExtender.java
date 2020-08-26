@@ -77,7 +77,7 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
     binding.visit(new ExtensionPointBinding.BindingVisitor() {
 
       @Override
-      public void visitAttribute(@NotNull PsiField field, @NotNull String attributeName, boolean required) {
+      public void visitAttribute(@NotNull PsiField field, @NotNull @NonNls String attributeName, boolean required) {
         final With withElement = findWithElement(elements, field);
         final PsiType fieldType = field.getType();
         Class<?> clazz = String.class;

@@ -33,9 +33,11 @@ import java.util.Set;
 public final class PluginDescriptorStructureUtil {
   public static final Icon DEFAULT_ICON = AllIcons.Nodes.Tag;
 
+  @NonNls 
   private static final Set<String> KNOWN_TOP_LEVEL_NODE_NAMES =
     ContainerUtil.immutableSet("id", "name", "version", "category", "resource-bundle");
 
+  @NonNls
   private static final Map<String, String> TAG_DISPLAY_NAME_REPLACEMENTS = new ContainerUtil.ImmutableMapBuilder<String, String>()
     .put("psi", "PSI")
     .put("dom", "DOM")
@@ -251,7 +253,7 @@ public final class PluginDescriptorStructureUtil {
   private static @Nullable String getTopLevelNodeLocation(GenericDomValue<?> element) {
     if (element instanceof Dependency) {
       Dependency dependency = (Dependency)element;
-      String result = dependency.getRawText();
+      @NonNls String result = dependency.getRawText();
 
       Boolean optional = dependency.getOptional().getValue();
       if (optional != null && optional) {
@@ -349,7 +351,7 @@ public final class PluginDescriptorStructureUtil {
     return result;
   }
 
-  private static @Nullable String firstNotNullAttribute(DomElement element, String... attributes) {
+  private static @Nullable @NonNls String firstNotNullAttribute(DomElement element, @NonNls String... attributes) {
     DomGenericInfo genericInfo = element.getGenericInfo();
     for (String attribute : attributes) {
       DomAttributeChildDescription<?> description = genericInfo.getAttributeChildDescription(attribute);

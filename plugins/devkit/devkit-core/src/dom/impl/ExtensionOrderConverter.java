@@ -24,6 +24,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.reflect.DomAttributeChildDescription;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -308,7 +309,7 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
     @Nullable
     private static String getSpecificExtensionAttribute(@NotNull Extension e,
                                                         @NotNull PsiClass parentBeanClass,
-                                                        @NotNull String attribute) {
+                                                        @NotNull @NonNls String attribute) {
       ExtensionPoint ep = e.getExtensionPoint();
       if (ep == null) {
         return null;

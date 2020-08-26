@@ -28,6 +28,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.IncludedXmlTag;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -208,7 +209,7 @@ abstract class NewServiceActionBase extends CreateInDirectoryActionBase implemen
       }
       else if (myNeedAdjust) {
         myAdjusting = true;
-        myServiceImplementationTextField.setText("impl." + myServiceNameTextField.getText() + "Impl");
+        myServiceImplementationTextField.setText("impl." + myServiceNameTextField.getText() + "Impl"); //NON-NLS
         myAdjusting = false;
       }
     }
@@ -259,8 +260,8 @@ abstract class NewServiceActionBase extends CreateInDirectoryActionBase implemen
 
   static class ServiceCreator { // not private for testing purpose only
     private static final Logger LOG = Logger.getInstance(ServiceCreator.class);
-    private static final String INTERFACE_NAME_PROPERTY = "INTERFACE_NAME";
-    private static final String INTERFACE_PACKAGE_PROPERTY = "INTERFACE_PACKAGE_NAME";
+    private static final @NonNls String INTERFACE_NAME_PROPERTY = "INTERFACE_NAME";
+    private static final @NonNls String INTERFACE_PACKAGE_PROPERTY = "INTERFACE_PACKAGE_NAME";
 
     private final PsiDirectory myDirectory;
     private final String myServiceInterfaceTemplateName;

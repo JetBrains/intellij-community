@@ -7,6 +7,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.intellij.images.thumbnail.ThumbnailView;
 import org.intellij.images.thumbnail.actions.ThemeFilter;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
 import java.util.function.Supplier;
@@ -63,12 +64,12 @@ public enum Theme implements ThemeFilter{
   private final String myExtension;
   private final Supplier<@NlsActions.ActionText String> myDisplayNameSupplier;
 
-  Theme(String extension, Supplier<@NlsActions.ActionText String> displayNameSupplier) {
+  Theme(@NonNls String extension, Supplier<@NlsActions.ActionText String> displayNameSupplier) {
     myExtension = extension;
     myDisplayNameSupplier = displayNameSupplier;
   }
 
-  public String getExtension() {
+  public @NonNls String getExtension() {
     return myExtension;
   }
 

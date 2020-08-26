@@ -36,6 +36,7 @@ import com.intellij.usages.FindUsagesProcessPresentation;
 import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -186,7 +187,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor
               return null;
             }
 
-            private PsiElement replace(String fqn, String newName, String pckg) {
+            private PsiElement replace(@NonNls String fqn, @NonNls String newName, @NonNls String pckg) {
               XmlAttribute parent = (XmlAttribute)getElement().getParent();
               parent.setValue(fqn.substring(pckg.length()) + "." + newName);
               return parent.getValueElement();
@@ -277,7 +278,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor
             return null;
           }
 
-          private PsiElement replace(String newElementName, String fqn, String packageName) {
+          private PsiElement replace(@NonNls String newElementName, @NonNls String fqn, @NonNls String packageName) {
             String newValue = fqn.substring(packageName.length()) + "." + newElementName;
             return ElementManipulators.handleContentChange(getElement(), newValue);
           }
@@ -287,6 +288,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor
 
 
   @NotNull
+  @NonNls
   private static String getPathToImage(VirtualFile image, Module module) {
     final String path = ModuleRootManager.getInstance(module).getSourceRoots()[0].getPath();
     return "/" + FileUtil.getRelativePath(path, image.getPath(), '/');
@@ -303,12 +305,12 @@ public class IconsReferencesContributor extends PsiReferenceContributor
   }
 
   @Nullable
-  private static PsiField resolveIconPath(@Nullable String pathStr, PsiElement element) {
+  private static PsiField resolveIconPath(@NonNls @Nullable String pathStr, PsiElement element) {
     if (pathStr == null) {
       return null;
     }
 
-    List<String> path = StringUtil.split(pathStr, ".");
+    @NonNls List<String> path = StringUtil.split(pathStr, ".");
     if (path.size() > 1 && path.get(0).endsWith("Icons")) {
       Project project = element.getProject();
       PsiClass cur = findIconClass(project, path.get(0));
@@ -330,7 +332,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor
   }
 
   @Nullable
-  private static PsiClass findIconClass(Project project, String className) {
+  private static PsiClass findIconClass(Project project, @NonNls String className) {
     final boolean isAllIcons = "AllIcons".equals(className);
     final String fqnClassName = isAllIcons ? "com.intellij.icons.AllIcons" : "icons." + className;
     return JavaPsiFacade.getInstance(project)

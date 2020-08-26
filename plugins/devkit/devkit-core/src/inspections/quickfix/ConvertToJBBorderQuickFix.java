@@ -10,6 +10,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
@@ -26,7 +27,7 @@ public class ConvertToJBBorderQuickFix implements LocalQuickFix {
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiCall newExpression = (PsiCall)descriptor.getPsiElement();
     PsiExpressionList list = newExpression.getArgumentList();
-    String text;
+    @NonNls String text;
     if (list != null && list.getExpressionCount() == 4) {
       String top = list.getExpressions()[0].getText();
       String left = list.getExpressions()[1].getText();

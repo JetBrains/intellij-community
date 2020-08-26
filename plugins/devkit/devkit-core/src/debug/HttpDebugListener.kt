@@ -8,6 +8,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.text.StringUtil
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.*
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.ide.HttpRequestHandler
 import org.jetbrains.io.send
 import java.nio.charset.Charset
@@ -15,6 +16,7 @@ import java.nio.charset.Charset
 class HttpDebugListener : HttpRequestHandler() {
 
   companion object {
+    @NonNls
     private const val PREFIX = "/debug/attachToTestProcess"
   }
 

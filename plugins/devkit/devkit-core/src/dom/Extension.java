@@ -43,7 +43,7 @@ public interface Extension extends DomElement {
   @Nullable
   ExtensionPoint getExtensionPoint();
 
-  static boolean isClassField(@NotNull String fieldName) {
+  static boolean isClassField(@NotNull @NonNls String fieldName) {
     return fieldName.equals(IMPLEMENTATION_ATTRIBUTE) ||
            fieldName.equals("className") ||
            fieldName.equals("serviceInterface") ||

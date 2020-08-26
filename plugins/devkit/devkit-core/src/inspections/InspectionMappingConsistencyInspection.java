@@ -14,6 +14,7 @@ import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.highlighting.AddDomElementQuickFix;
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
 import com.intellij.util.xml.highlighting.DomHighlightingHelper;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Extension;
@@ -62,7 +63,7 @@ public class InspectionMappingConsistencyInspection extends DevKitPluginXmlInspe
     }
   }
 
-  private static boolean hasDefinedAttribute(DomElement element, String attributeName) {
+  private static boolean hasDefinedAttribute(DomElement element, @NonNls String attributeName) {
     final GenericAttributeValue attribute = DevKitPluginXmlInspectionBase.getAttribute(element, attributeName);
     return attribute != null && DomUtil.hasXml(attribute);
   }
@@ -77,7 +78,7 @@ public class InspectionMappingConsistencyInspection extends DevKitPluginXmlInspe
 
   private static void registerProblem(DomElement element, DomElementAnnotationHolder holder,
                                       @InspectionMessage String message,
-                                      String... createAttrs) {
+                                      @NonNls String... createAttrs) {
     if (holder.isOnTheFly()) {
       holder.createProblem(element, message, ContainerUtil.map(createAttrs, attributeName -> {
         final XmlTag tag = element.getXmlTag();

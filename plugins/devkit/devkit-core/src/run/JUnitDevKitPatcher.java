@@ -21,6 +21,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.lang.UrlClassLoader;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
@@ -63,8 +64,8 @@ public class JUnitDevKitPatcher extends JUnitPatcher {
     jdk = IdeaJdk.findIdeaJdk(jdk);
     if (jdk == null) return;
 
-    String libPath = jdk.getHomePath() + File.separator + "lib";
-    String bootJarPath = libPath + File.separator + "boot.jar";
+    @NonNls String libPath = jdk.getHomePath() + File.separator + "lib";
+    @NonNls String bootJarPath = libPath + File.separator + "boot.jar";
     if (new File(bootJarPath).exists()) {
       //there is no need to add boot.jar in modern IDE builds (181.*)
       vm.add("-Xbootclasspath/a:" + bootJarPath);

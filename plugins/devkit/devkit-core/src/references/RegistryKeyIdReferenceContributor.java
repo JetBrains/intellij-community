@@ -105,8 +105,10 @@ final class RegistryKeyIdReferenceContributor extends PsiReferenceContributor {
         if (key == null || extension.getXmlElement() == null) return true;
 
         final boolean requireRestart = "true".equals(getAttributeValue(extension, "restartRequired"));
-        final String description = " " + StringUtil.notNullize(getAttributeValue(extension, "description"), "No Description");
-        final String defaultValue = StringUtil.notNullize(getAttributeValue(extension, "defaultValue"), "No Default");
+        final String description = " " + StringUtil.notNullize(getAttributeValue(extension, "description"),
+                                                               DevKitBundle.message("code.convert.registry.key.no.description"));
+        final String defaultValue = StringUtil.notNullize(getAttributeValue(extension, "defaultValue"),
+                                                          DevKitBundle.message("code.convert.registry.key.no.default.value"));
 
         variants.add(LookupElementBuilder.create(extension.getXmlElement(), key)
                        .withIcon(requireRestart ? AllIcons.Nodes.PluginRestart : AllIcons.Nodes.Plugin)

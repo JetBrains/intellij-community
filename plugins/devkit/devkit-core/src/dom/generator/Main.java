@@ -28,6 +28,7 @@ import java.io.File;
  * @author Gregory.Shrago
  * @author Konstantin Bulenkov
  */
+@SuppressWarnings("HardCodedStringLiteral")
 public class Main {
 
 

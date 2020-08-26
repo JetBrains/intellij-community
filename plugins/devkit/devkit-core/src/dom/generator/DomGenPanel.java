@@ -21,6 +21,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ArrayUtilRt;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.idea.devkit.DevKitBundle;
 
 import javax.swing.*;
@@ -114,7 +115,7 @@ public class DomGenPanel {
     return myOutputDir.getText();
   }
 
-  private static final String PREFIX = "DomGenPanel.";
+  private static final @NonNls String PREFIX = "DomGenPanel.";
 
   public void restore() {
     myNamespace.setText(getValue("namespace", ""));
@@ -127,11 +128,11 @@ public class DomGenPanel {
     myUseQualifiedClassNames.setSelected(getValue("useFQNs", "false").equals("true"));
   }
 
-  private static String getValue(String name, String defaultValue) {
+  private static String getValue(String name, @NonNls String defaultValue) {
     return PropertiesComponent.getInstance().getValue(PREFIX + name, defaultValue);
   }
 
-  private static void setValue(String name, String value) {
+  private static void setValue(String name, @NonNls String value) {
     PropertiesComponent.getInstance().setValue(PREFIX + name, value);
   }
 

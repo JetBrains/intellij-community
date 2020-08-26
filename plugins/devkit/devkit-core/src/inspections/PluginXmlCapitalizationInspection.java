@@ -27,6 +27,7 @@ import com.intellij.util.xml.reflect.DomAttributeChildDescription;
 import com.intellij.util.xml.reflect.DomChildrenDescription;
 import com.intellij.xml.util.XmlUtil;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -117,7 +118,7 @@ public class PluginXmlCapitalizationInspection extends DevKitPluginXmlInspection
   private static void checkPropertyCapitalization(DomElementAnnotationHolder holder,
                                                   DomElement domElement,
                                                   Nls.Capitalization capitalization,
-                                                  @Nullable String resourceKey, boolean required) {
+                                                  @NonNls @Nullable String resourceKey, boolean required) {
     if (resourceKey == null) return;
 
     final PropertiesFile bundleFile = DescriptorI18nUtil.findBundlePropertiesFile(domElement);

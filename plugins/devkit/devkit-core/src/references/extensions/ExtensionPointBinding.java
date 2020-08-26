@@ -9,6 +9,7 @@ import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XCollection;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.util.PsiUtil;
@@ -74,10 +75,10 @@ public class ExtensionPointBinding {
 
   public interface BindingVisitor {
 
-    void visitAttribute(@NotNull PsiField field, @NotNull String attributeName, boolean required);
+    void visitAttribute(@NotNull PsiField field, @NotNull @NonNls String attributeName, boolean required);
 
-    void visitTagOrProperty(@NotNull PsiField field, @NotNull String tagName, boolean required);
+    void visitTagOrProperty(@NotNull PsiField field, @NotNull @NonNls String tagName, boolean required);
 
-    void visitXCollection(@NotNull PsiField field, @Nullable String tagName, @NotNull PsiAnnotation collectionAnnotation, boolean required);
+    void visitXCollection(@NotNull PsiField field, @Nullable @NonNls String tagName, @NotNull PsiAnnotation collectionAnnotation, boolean required);
   }
 }

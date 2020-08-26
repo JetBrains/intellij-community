@@ -246,7 +246,7 @@ public class NewActionDialog extends DialogWrapper implements ActionData {
     return getKeystrokeText(mySecondKeystrokeEdit.getKeyStroke());
   }
 
-  private static String getKeystrokeText(KeyStroke keyStroke) {
+  private static @NonNls String getKeystrokeText(KeyStroke keyStroke) {
     return keyStroke != null ?
            keyStroke.toString().replaceAll("pressed ", "").replaceAll("released ", "") :
            null;

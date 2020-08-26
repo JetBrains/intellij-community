@@ -10,6 +10,7 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.impl.AbstractCollectionChildDescription;
 import com.intellij.util.xml.impl.DomInvocationHandler;
 import com.intellij.util.xml.impl.DomManagerImpl;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
@@ -51,7 +52,7 @@ abstract class PluginXmlIndexBase<K, V> extends FileBasedIndexExtension<K, V> {
   }
 
   // skip any xi:include
-  protected static List<? extends DomElement> getChildrenWithoutIncludes(DomElement parent, String tagName) {
+  protected static List<? extends DomElement> getChildrenWithoutIncludes(DomElement parent, @NonNls String tagName) {
     AbstractCollectionChildDescription collectionChildDescription =
       (AbstractCollectionChildDescription)parent.getGenericInfo().getCollectionChildDescription(tagName);
     DomInvocationHandler handler = Objects.requireNonNull(DomManagerImpl.getDomInvocationHandler(parent));
@@ -84,7 +85,7 @@ abstract class PluginXmlIndexBase<K, V> extends FileBasedIndexExtension<K, V> {
         continue;
       }
 
-      return CharArrayUtil.regionMatches(text, idx, "<idea-plugin");
+      return CharArrayUtil.regionMatches(text, idx, "<idea-plugin"); //NON-NLS
     }
   }
 }

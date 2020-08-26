@@ -55,7 +55,7 @@ public class PluginModuleBuilder extends JavaModuleBuilder {
       contentEntry.addSourceFolder(VfsUtilCore.pathToUrl(resourceRootPath), JavaResourceRootType.RESOURCE);
     }
 
-    final String defaultPluginXMLLocation = resourceRootPath + "/META-INF/plugin.xml";
+    final String defaultPluginXMLLocation = resourceRootPath + "/" + PluginDescriptorConstants.PLUGIN_XML_PATH;
     final Module module = rootModel.getModule();
     final Project project = module.getProject();
     StartupManager.getInstance(project).runWhenProjectIsInitialized(() -> {

@@ -2,6 +2,7 @@
 package org.jetbrains.idea.devkit.projectRoots;
 
 import com.intellij.util.PlatformUtils;
+import org.jetbrains.annotations.NonNls;
 
 /**
  * @author yole
@@ -29,15 +30,15 @@ public enum IntelliJPlatformProduct {
   private final String myName;
   private final String myPlatformPrefix;
 
-  public String getName() {
+  public @NonNls String getName() {
     return myName;
   }
 
-  public String getPlatformPrefix() {
+  public @NonNls String getPlatformPrefix() {
     return myPlatformPrefix;
   }
 
-  IntelliJPlatformProduct(String productCode, String name, String platformPrefix) {
+  IntelliJPlatformProduct(@NonNls String productCode,@NonNls String name, @NonNls String platformPrefix) {
     myProductCode = productCode;
     myName = name;
     myPlatformPrefix = platformPrefix;
