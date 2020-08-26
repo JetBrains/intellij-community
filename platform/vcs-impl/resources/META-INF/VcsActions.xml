@@ -8,8 +8,6 @@
     <action id="CheckinProject" class="com.intellij.openapi.vcs.actions.CommonCheckinProjectAction" icon="AllIcons.Actions.Commit">
       <keyboard-shortcut first-keystroke="control K" keymap="$default"/>
     </action>
-    <action id="ShowBranches" class="git4idea.actions.VCSBranchesComboBoxAction" icon="AllIcons.Vcs.Branch">
-    </action>
     <action id="ChangesView.ToggleCommitUi" class="com.intellij.vcs.commit.ToggleChangesViewCommitUiAction" use-shortcut-of="CheckinProject" />
     <action id="CheckinFiles" class="com.intellij.openapi.vcs.actions.CommonCheckinFilesAction"/>
     <action id="UpdateFiles" class="com.intellij.openapi.vcs.update.CommonUpdateFileOrDirectoryAction"/>
@@ -354,15 +352,15 @@
 
     <!-- New light VCS toolbar for the root toolbar instead of navbar -->
     <group id="VcsNavBarToolbarActionsLight">
-      <reference ref="ShowBranches"/>
-      <reference ref="Vcs.UpdateProject"/>
-      <reference ref="CheckinProject"/>
-      <reference ref="ChangesView.ToggleCommitUi"/>
-      <reference ref="Vcs.Toolbar.QuickListPopupAction"/>
-      <add-to-group group-id="NavBarVcsGroupLight" anchor="first"/>
-    </group>
+      <!--<reference ref="ShowBranches"/> -->
+       <reference ref="Vcs.UpdateProject"/>
+       <reference ref="CheckinProject"/>
+       <reference ref="ChangesView.ToggleCommitUi"/>
+       <reference ref="Vcs.Toolbar.QuickListPopupAction"/>
+       <add-to-group group-id="NavBarVcsGroupLight" anchor="first"/>
+     </group>
 
-    <!-- Window -->
+ <!-- Window -->
     <action id="CloseAllUnmodifiedEditors" class="com.intellij.ide.actions.CloseAllUnmodifiedEditorsAction">
       <add-to-group group-id="CloseEditorsGroup" anchor="before" relative-to-action="CloseAllUnpinnedEditors"/>
     </action>
