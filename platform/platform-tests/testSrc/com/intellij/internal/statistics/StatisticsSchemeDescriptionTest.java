@@ -2,7 +2,8 @@
 package com.intellij.internal.statistics;
 
 import com.intellij.internal.statistic.FUCounterCollectorTestCase;
-import com.intellij.internal.statistic.eventLog.*;
+import com.intellij.internal.statistic.eventLog.EventLogGroup;
+import com.intellij.internal.statistic.eventLog.LogEvent;
 import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
@@ -12,7 +13,10 @@ import junit.framework.TestCase;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Map;
 
 public class StatisticsSchemeDescriptionTest extends BasePlatformTestCase {
 
@@ -62,7 +66,7 @@ public class StatisticsSchemeDescriptionTest extends BasePlatformTestCase {
     } */
 
     EventLogGroup group = new EventLogGroup("newGroup", 1);
-    StringEventField nameField = EventFields.String("name");
+    StringEventField nameField = EventFields.StringValidatedByEnum("name", "os");
     StringListEventField versionsField = EventFields.StringList("versions");
     IntEventField intEventField = EventFields.Int("intField");
     EventId2<Integer, ObjectEventData> event =
@@ -87,7 +91,7 @@ public class StatisticsSchemeDescriptionTest extends BasePlatformTestCase {
 
   public void testLogOnlyRegisteredObjectFields() {
     EventLogGroup group = new EventLogGroup("newGroup", 1);
-    StringEventField nameField = EventFields.String("name");
+    StringEventField nameField = EventFields.StringValidatedByEnum("name", "os");
     IntEventField notRegisteredField = EventFields.Int("not_registered");
     EventId1<ObjectEventData> event = group.registerEvent("testEvent", new ObjectEventField("obj", nameField));
 
@@ -101,7 +105,7 @@ public class StatisticsSchemeDescriptionTest extends BasePlatformTestCase {
   public void testObjectListEventByFields() {
     EventLogGroup group = new EventLogGroup("newGroup", 1);
     IntEventField countField = EventFields.Int("count");
-    StringEventField nameField = EventFields.String("name");
+    StringEventField nameField = EventFields.StringValidatedByEnum("name", "os");
     EventId1<List<? extends ObjectEventData>> event =
       group.registerEvent("testEvent", new ObjectListEventField("objects", nameField, countField));
 
@@ -140,7 +144,7 @@ public class StatisticsSchemeDescriptionTest extends BasePlatformTestCase {
   }
 
   public void testPrimitiveStringField() {
-    doTestField(EventFields.String("type"), "OPENED", "OPENED");
+    doTestField(EventFields.StringValidatedByEnum("type", "os"), "OPENED", "OPENED");
   }
 
   public void testClassNameField() {

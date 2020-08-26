@@ -2,7 +2,7 @@
 package com.intellij.completion.settings
 
 import com.intellij.completion.ranker.ExperimentModelProvider
-import com.intellij.internal.statistic.eventLog.*
+import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.BooleanEventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.StringEventField
@@ -12,7 +12,7 @@ import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValid
 
 object MLCompletionSettingsCollector {
   private val COUNTER_GROUP = EventLogGroup("ml.completion", 1)
-  private val rankerIdField: StringEventField = EventFields.String("ranker_id").withCustomRule("ml_completion_ranker_id")
+  private val rankerIdField: StringEventField = EventFields.StringValidatedByCustomRule("ranker_id", "ml_completion_ranker_id")
   private val enabledField: BooleanEventField = EventFields.Boolean("enabled")
   private val enabledByDefaultField: BooleanEventField = EventFields.Boolean("enabled_by_default")
   private val languageCheckboxUsedField: BooleanEventField = EventFields.Boolean("using_language_checkbox")

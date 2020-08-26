@@ -12,7 +12,7 @@ import java.util.List;
 import static com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup.ACTION_INVOKED_EVENT_ID;
 
 public class ToolwindowFusEventFields implements FeatureUsageCollectorExtension {
-  public static final StringEventField TOOLWINDOW = EventFields.String("toolwindow").withCustomRule("toolwindow");
+  public static final StringEventField TOOLWINDOW = EventFields.StringValidatedByCustomRule("toolwindow", "toolwindow");
 
   @Override
   public String getGroupId() {

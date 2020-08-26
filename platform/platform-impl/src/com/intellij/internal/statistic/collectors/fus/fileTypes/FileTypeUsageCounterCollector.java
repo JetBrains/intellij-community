@@ -1,12 +1,12 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus.fileTypes;
 
-import com.intellij.internal.statistic.eventLog.*;
-import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
+import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.EventField;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.internal.statistic.eventLog.events.EventPair;
 import com.intellij.internal.statistic.eventLog.events.VarargEventId;
+import com.intellij.internal.statistic.eventLog.fus.FeatureUsageLogger;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
@@ -47,8 +47,8 @@ public class FileTypeUsageCounterCollector extends CounterUsagesCollector {
 
   private static final EventLogGroup GROUP = new EventLogGroup("file.types.usage", FeatureUsageLogger.INSTANCE.getConfig().getVersion());
 
-  private static final EventField<String> FILE_TYPE = EventFields.String("file_type").withCustomRule("file_type");
-  private static final EventField<String> SCHEMA = EventFields.String("schema").withCustomRule("file_type_schema");
+  private static final EventField<String> FILE_TYPE = EventFields.StringValidatedByCustomRule("file_type", "file_type");
+  private static final EventField<String> SCHEMA = EventFields.StringValidatedByCustomRule("schema", "file_type_schema");
   private static final EventField<Boolean> IS_WRITABLE = EventFields.Boolean("is_writable");
 
   @Override
@@ -56,7 +56,7 @@ public class FileTypeUsageCounterCollector extends CounterUsagesCollector {
     return GROUP;
   }
 
-  private static VarargEventId registerFileTypeEvent(String eventId, EventField<?> ... extraFields) {
+  private static VarargEventId registerFileTypeEvent(String eventId, EventField<?>... extraFields) {
     EventField<?>[] baseFields = {EventFields.PluginInfoFromInstance, FILE_TYPE, EventFields.AnonymizedPath, SCHEMA};
     return GROUP.registerVarargEvent(eventId, ArrayUtil.mergeArrays(baseFields, extraFields));
   }

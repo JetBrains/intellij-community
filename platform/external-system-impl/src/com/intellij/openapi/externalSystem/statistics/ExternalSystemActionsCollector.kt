@@ -1,12 +1,12 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.statistics
 
 import com.intellij.execution.Executor
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsEventLogGroup.Companion.ACTION_INVOKED_EVENT_ID
-import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.actionSystem.AnAction
@@ -24,8 +24,8 @@ class ExternalSystemActionsCollector : CounterUsagesCollector() {
 
   companion object {
     private val GROUP = EventLogGroup("build.tools.actions", 3)
-    private val EXTERNAL_SYSTEM_ID = EventFields.String("system_id").withCustomEnum("build_tools")
-    private val ACTION_EXECUTOR_FIELD = EventFields.String("executor").withCustomRule("run_config_executor")
+    private val EXTERNAL_SYSTEM_ID = EventFields.StringValidatedByEnum("system_id", "build_tools")
+    private val ACTION_EXECUTOR_FIELD = EventFields.StringValidatedByCustomRule("executor", "run_config_executor")
     private val DELEGATE_ACTION_ID = EventFields.Enum<ActionId>("action_id")
 
     private val ACTION_INVOKED = ActionsEventLogGroup.registerActionInvokedEvent(GROUP, ACTION_INVOKED_EVENT_ID, EXTERNAL_SYSTEM_ID)
@@ -40,7 +40,7 @@ class ExternalSystemActionsCollector : CounterUsagesCollector() {
                 actionId: ActionId,
                 place: String?,
                 isFromContextMenu: Boolean,
-                executor : Executor? = null) {
+                executor: Executor? = null) {
       val data: MutableList<EventPair<*>> = arrayListOf(DELEGATE_ACTION_ID.with(actionId))
 
       if (place != null) {

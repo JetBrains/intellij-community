@@ -24,7 +24,7 @@ import static com.intellij.execution.impl.statistics.RunConfigurationTypeUsagesC
 public final class RunConfigurationUsageTriggerCollector {
   public static final String GROUP = "run.configuration.exec";
   private static final ObjectEventField ADDITIONAL_FIELD = EventFields.createAdditionalDataField(GROUP, "started");
-  private static final StringEventField EXECUTOR = EventFields.String("executor").withCustomRule("run_config_executor");
+  private static final StringEventField EXECUTOR = EventFields.StringValidatedByCustomRule("executor", "run_config_executor");
 
   @NotNull
   public static IdeActivity trigger(@NotNull Project project,

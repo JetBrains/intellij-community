@@ -1,8 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.ide.util.TipAndTrickBean;
-import com.intellij.internal.statistic.eventLog.*;
+import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.internal.statistic.eventLog.events.EventId;
 import com.intellij.internal.statistic.eventLog.events.EventId1;
@@ -28,8 +28,8 @@ public class TipsOfTheDayUsagesCollector extends CounterUsagesCollector {
 
   private static final EventId3<String, String, String> TIP_SHOWN =
     GROUP.registerEvent("tip.shown",
-                        EventFields.String("filename").withCustomRule("tip_info"),
-                        EventFields.String("algorithm").withCustomEnum("tips_order_algorithm"),
+                        EventFields.StringValidatedByCustomRule("filename", "tip_info"),
+                        EventFields.StringValidatedByEnum("algorithm", "tips_order_algorithm"),
                         EventFields.Version);
 
   @Override

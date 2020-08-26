@@ -9,8 +9,33 @@ import com.intellij.lang.Language
 import org.jetbrains.annotations.NonNls
 
 object EventFields {
+  /**
+   * Create field that will be validated by global regexp rule
+   * @param name  name of the field
+   * @param regexpRef reference to global regexp, e.g "integer" for "{regexp#integer}"
+   */
   @JvmStatic
-  fun String(@NonNls name: String): StringEventField = StringEventField(name)
+  fun StringValidatedByRegexp(@NonNls name: String, @NonNls regexpRef: String): StringEventField =
+    StringEventField.withRegexp(name, regexpRef)
+
+  /**
+   * Create field that will be validated by global enum rule
+   * @param name  name of the field
+   * @param enumRef reference to global enum, e.g "os" for "{enum#os}"
+   */
+  @JvmStatic
+  fun StringValidatedByEnum(@NonNls name: String, @NonNls enumRef: String): StringEventField =
+    StringEventField.withEnum(name, enumRef)
+
+  /**
+   * Create field that will be validated by [com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule]
+   * @param name  name of the field
+   * @param customRuleId ruleId that is accepted by [com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule.acceptRuleId],
+   * e.g "class_name" for "{util#class_name}"
+   */
+  @JvmStatic
+  fun StringValidatedByCustomRule(@NonNls name: String, @NonNls customRuleId: String): StringEventField =
+    StringEventField.withCustomRule(name, customRuleId)
 
   @JvmStatic
   fun Int(@NonNls name: String): IntEventField = IntEventField(name)
