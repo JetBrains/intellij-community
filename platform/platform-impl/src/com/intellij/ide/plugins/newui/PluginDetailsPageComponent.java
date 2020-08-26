@@ -325,7 +325,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
     myBottomScrollPane = new JBScrollPane(bottomPanel);
     myBottomScrollPane.getVerticalScrollBar().setBackground(PluginManagerConfigurable.MAIN_BG_COLOR);
-    myBottomScrollPane.setBorder(null);
+    myBottomScrollPane.setBorder(JBUI.Borders.empty());
     myPanel.add(myBottomScrollPane);
 
     bottomPanel.add(myLicensePanel);
