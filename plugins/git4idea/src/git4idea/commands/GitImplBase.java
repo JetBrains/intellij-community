@@ -254,7 +254,7 @@ public abstract class GitImplBase implements Git {
   @Nullable
   private static String showUnstructuredEditorAndWait(@NotNull Project project,
                                                       @Nullable VirtualFile root,
-                                                      @NotNull @NonNls String initialText,
+                                                      @NotNull @NlsSafe String initialText,
                                                       @NotNull @NlsContexts.DialogTitle String dialogTitle,
                                                       @NotNull @NlsContexts.Button String okButtonText) {
     Ref<String> newText = Ref.create();
