@@ -173,6 +173,7 @@ class GitConfigureRemotesDialog(val project: Project, val repositories: Collecti
   private fun isRemoteSelected() = getSelectedRemote() != null
 
   private abstract class Node {
+    @Nls
     abstract fun getPresentableString() : String
   }
   private class RepoNode(val repository: GitRepository) : Node() {

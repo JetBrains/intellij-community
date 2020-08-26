@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.GridBag;
@@ -17,6 +18,7 @@ import git4idea.commands.GitCommandResult;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.validators.GitRefNameValidator;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,8 +47,8 @@ public class GitDefineRemoteDialog extends DialogWrapper {
 
   public GitDefineRemoteDialog(@NotNull GitRepository repository,
                                @NotNull Git git,
-                               @NotNull String initialRemoteName,
-                               @NotNull String initialRemoteUrl) {
+                               @NotNull @NlsSafe String initialRemoteName,
+                               @NotNull @NlsSafe String initialRemoteUrl) {
     super(repository.getProject());
     myRepository = repository;
     myGit = git;
@@ -129,6 +131,7 @@ public class GitDefineRemoteDialog extends DialogWrapper {
   }
 
   @Nullable
+  @Nls
   private String validateRemoteUnderModal(@NotNull final String url) throws ProcessCanceledException {
     return ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       GitCommandResult result = myGit.lsRemote(myRepository.getProject(), virtualToIoFile(myRepository.getRoot()), url);
