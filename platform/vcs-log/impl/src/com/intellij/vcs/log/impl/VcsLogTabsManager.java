@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.content.TabGroupId;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
@@ -22,14 +23,17 @@ import com.intellij.vcs.log.ui.MainVcsLogUi;
 import com.intellij.vcs.log.ui.VcsLogPanel;
 import com.intellij.vcs.log.ui.editor.DefaultVcsLogFile;
 import com.intellij.vcs.log.visible.filters.VcsLogFiltersKt;
-import java.util.Collection;
-import java.util.Set;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+import java.util.Set;
+
 public class VcsLogTabsManager {
   private static final Logger LOG = Logger.getInstance(VcsLogTabsManager.class);
+  private static final TabGroupId TAB_GROUP_ID = new TabGroupId(VcsLogContentProvider.TAB_NAME,
+                                                                () -> VcsLogBundle.message("vcs.log.tab.name"), true);
   @NotNull private final Project myProject;
   @NotNull private final VcsLogProjectTabsProperties myUiProperties;
   private boolean myIsLogDisposing = false;
@@ -92,9 +96,7 @@ public class VcsLogTabsManager {
       });
     }
     else if (kind == VcsLogManager.LogWindowKind.TOOL_WINDOW) {
-      ui = VcsLogContentUtil.openLogTab(myProject, manager, VcsLogContentProvider.TAB_NAME,
-                                        () -> VcsLogBundle.message("vcs.log.tab.name"), u -> generateShortDisplayName(u),
-                                        factory, focus);
+      ui = VcsLogContentUtil.openLogTab(myProject, manager, TAB_GROUP_ID, u -> generateShortDisplayName(u), factory, focus);
       ui.getFilterUi().addFilterListener(() -> VcsLogContentUtil.updateLogUiName(myProject, ui));
     }
     else {
