@@ -141,50 +141,15 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
 
     @Override
     public @NotNull StatusBarWidget createWidget(@NotNull Project project) {
-      if(showNewNavbarVCSGroup){
-        return createMockVCSWidget();
-      }
       return new GitBranchWidget(project);
     }
 
-    private StatusBarWidget createMockVCSWidget() {
-      return new StatusBarWidget(){
-
-        @Override
-        public @Nullable WidgetPresentation getPresentation() {
-          return new StatusBarWidget.TextPresentation(){
-            @Override
-            public @NotNull @NlsContexts.Label String getText() {
-              return "";
-            }
-            @Override
-            public float getAlignment() {
-              return 0;
-            }
-            @Override
-            public @Nullable @NlsContexts.Tooltip String getTooltipText() {
-              return null;
-            }
-            @Override
-            public @Nullable Consumer<MouseEvent> getClickConsumer() {
-              return null;
-            }
-          };
-        }
-
-        @Override
-        public void dispose() {
-        }
-
-        @Override
-        public @NonNls @NotNull String ID() {
-          return "";
-        }
-
-        @Override
-        public void install(@NotNull StatusBar statusBar) {
-        }
-      };
+    @Override
+    public boolean isEnabledByDefault() {
+      if(showNewNavbarVCSGroup){
+        return false;
+      }
+      return true;
     }
 
     @Override
