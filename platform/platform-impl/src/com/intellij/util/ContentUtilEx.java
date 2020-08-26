@@ -21,6 +21,11 @@ import java.util.function.Supplier;
  * @author Konstantin Bulenkov
  */
 public final class ContentUtilEx extends ContentsUtil {
+  /**
+   * @deprecated use {@link ContentUtilEx#addTabbedContent(ContentManager, JComponent, String, Supplier, Supplier, boolean, Disposable)}
+   * as it allows to set tab group id separately from display name.
+   */
+  @Deprecated
   public static void addTabbedContent(@NotNull ContentManager manager,
                                       @NotNull JComponent contentComponent,
                                       @NotNull @NonNls String groupPrefix,
