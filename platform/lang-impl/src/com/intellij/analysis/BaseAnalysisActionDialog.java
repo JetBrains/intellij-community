@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.analysis;
 
 import com.intellij.analysis.dialog.ModelScopeItem;
@@ -40,7 +38,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
   @NotNull private final AnalysisUIOptions myOptions;
   private final boolean myRememberScope;
   private final boolean myShowInspectTestSource;
-  private final @NlsContexts.Separator String myAnalysisNoon;
+  private final @NlsContexts.Separator String myScopeTitle;
   private final Project myProject;
   private final ButtonGroup myGroup = new ButtonGroup();
   private final JCheckBox myInspectTestSource = new JCheckBox();
@@ -51,14 +49,14 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
    */
   @Deprecated
   public BaseAnalysisActionDialog(@NlsContexts.DialogTitle @NotNull String title,
-                                   @NotNull @NlsContexts.Separator String analysisNoon,
+                                   @NotNull @NlsContexts.Separator String scopeTitle,
                                    @NotNull Project project,
                                    @NotNull final AnalysisScope scope,
                                    final String moduleName,
                                    final boolean rememberScope,
                                    @NotNull AnalysisUIOptions analysisUIOptions,
                                    @Nullable PsiElement context) {
-    this(title, analysisNoon, project, standardItems(project, scope, moduleName != null ? ModuleManager.getInstance(project).findModuleByName(moduleName) : null, context),
+    this(title, scopeTitle, project, standardItems(project, scope, moduleName != null ? ModuleManager.getInstance(project).findModuleByName(moduleName) : null, context),
          analysisUIOptions, rememberScope);
   }
 
@@ -73,23 +71,23 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
   }
 
   public BaseAnalysisActionDialog(@NlsContexts.DialogTitle @NotNull String title,
-                                @NotNull @NlsContexts.Separator String analysisNoon,
+                                @NotNull @NlsContexts.Separator String scopeTitle,
                                 @NotNull Project project,
                                 @NotNull List<? extends ModelScopeItem> items,
                                 @NotNull AnalysisUIOptions options,
                                 final boolean rememberScope) {
-    this(title, analysisNoon, project, items, options, rememberScope, ModuleUtil.hasTestSourceRoots(project));
+    this(title, scopeTitle, project, items, options, rememberScope, ModuleUtil.hasTestSourceRoots(project));
   }
 
   public BaseAnalysisActionDialog(@NlsContexts.DialogTitle @NotNull String title,
-                                  @NotNull @NlsContexts.Separator String analysisNoon,
+                                  @NotNull @NlsContexts.Separator String scopeTitle,
                                   @NotNull Project project,
                                   @NotNull List<? extends ModelScopeItem> items,
                                   @NotNull AnalysisUIOptions options,
                                   final boolean rememberScope,
                                   final boolean showInspectTestSource) {
     super(true);
-    myAnalysisNoon = analysisNoon;
+    myScopeTitle = scopeTitle;
     myProject = project;
 
     myViewItems = ModelScopeItemPresenter.createOrderedViews(items, getDisposable());
@@ -105,7 +103,7 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
   protected JComponent createCenterPanel() {
     BorderLayoutPanel panel = new BorderLayoutPanel();
     TitledSeparator titledSeparator = new TitledSeparator();
-    titledSeparator.setText(myAnalysisNoon);
+    titledSeparator.setText(myScopeTitle);
     panel.addToTop(titledSeparator);
 
     JPanel scopesPanel = new JPanel(new GridBagLayout());
