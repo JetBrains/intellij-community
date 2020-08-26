@@ -298,6 +298,8 @@ class CommunityLibraryLicenses {
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt", url: "https://github.com/thebuzzmedia/imgscalr"),
     new LibraryLicense(name: "Inconsolata", attachedTo: "intellij.platform.resources", version: "001.010", license: "OFL",
                        url: "https://github.com/google/fonts/blob/master/ofl/inconsolata/OFL.txt"),
+    new LibraryLicense(name: "Incremental DOM", attachedTo: "intellij.markdown", version: "0.7.0", license: "Apache 2.0",
+                       url: "https://github.com/google/incremental-dom/blob/master/LICENSE"),
     new LibraryLicense(name: "indriya", libraryName: "tech.units:indriya:1.2",
                        license: "BSD", url: "https://github.com/unitsofmeasurement/indriya",
                        licenseUrl: "https://github.com/unitsofmeasurement/indriya/blob/master/LICENSE"),

@@ -58,7 +58,7 @@ class PreviewStaticServer : HttpRequestHandler() {
         style-src https: ${StringUtil.join(styles.map(::stripQueryParameters), " ")} 'unsafe-inline';
         img-src file: *; connect-src 'none'; font-src * data: *;
         object-src 'none'; media-src 'none'; child-src 'none';
-      """.trimIndent()
+      """
     }
 
     @JvmStatic

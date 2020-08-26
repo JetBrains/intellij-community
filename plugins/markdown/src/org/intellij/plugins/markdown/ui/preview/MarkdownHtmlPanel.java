@@ -1,3 +1,4 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.preview;
 
 import com.intellij.openapi.Disposable;
@@ -15,15 +16,27 @@ public interface MarkdownHtmlPanel extends Disposable {
   @NotNull
   JComponent getComponent();
 
-  void setHtml(@NotNull String html);
+  void setHtml(@NotNull String html, int initialScrollOffset);
 
+  default void reloadWithOffset(int offset) {}
+
+  @Deprecated
   default void setCSS(@Nullable String inlineCss, String @NotNull ... fileUris) {
   }
 
+  @Deprecated
   default void render() {
   }
 
   void scrollToMarkdownSrcOffset(int offset);
+
+  interface ScrollListener {
+    void onScroll(int offset);
+  }
+
+  default void addScrollListener(ScrollListener listener) {}
+
+  default void removeScrollListener(ScrollListener listener) {}
 
   @Nullable
   static Range<Integer> nodeToSrcRange(@NotNull Node node) {

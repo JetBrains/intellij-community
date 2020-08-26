@@ -74,6 +74,14 @@ interface ResourceProvider {
     }
 
     /**
+     * See [loadInternalResource]
+     */
+    @JvmStatic
+    inline fun <reified T : Any> loadInternalResource(path: String, contentType: String? = null): Resource? {
+      return loadInternalResource(T::class.java, path, contentType)
+    }
+
+    /**
      * Load resource from the filesystem.
      *
      * @param file File to load.

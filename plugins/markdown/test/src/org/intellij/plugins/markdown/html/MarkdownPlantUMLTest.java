@@ -11,8 +11,8 @@ import org.intellij.plugins.markdown.extensions.MarkdownCodeFencePluginGeneratin
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionWithExternalFiles;
 import org.intellij.plugins.markdown.extensions.common.plantuml.PlantUMLCodeGeneratingProvider;
 import org.intellij.plugins.markdown.settings.MarkdownApplicationSettings;
-import org.intellij.plugins.markdown.ui.preview.MarkdownCodeFencePluginCache;
-import org.intellij.plugins.markdown.ui.preview.MarkdownUtil;
+import org.intellij.plugins.markdown.ui.preview.html.MarkdownCodeFencePluginCache;
+import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil;
 
 import java.io.IOException;
 import java.util.Collections;

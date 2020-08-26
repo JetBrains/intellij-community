@@ -3,12 +3,13 @@ package org.intellij.plugins.markdown.extensions.jcef.mermaid
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
+import org.intellij.markdown.ast.ASTNode
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.extensions.MarkdownCodeFenceCacheableProvider
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionWithExternalFiles
 import org.intellij.plugins.markdown.extensions.jcef.MarkdownJCEFPreviewExtension
-import org.intellij.plugins.markdown.ui.preview.MarkdownCodeFencePluginCacheCollector
-import org.intellij.plugins.markdown.ui.preview.MarkdownUtil
+import org.intellij.plugins.markdown.ui.preview.html.MarkdownCodeFencePluginCacheCollector
+import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
 import java.io.File
 import java.nio.file.Paths
@@ -31,13 +32,13 @@ internal class MermaidCodeGeneratingProviderExtension(
 
   override fun isApplicable(language: String) = isEnabled && isAvailable && language == "mermaid"
 
-  override fun generateHtml(language: String, raw: String): String {
+  override fun generateHtml(language: String, raw: String, node: ASTNode): String {
     val hash = MarkdownUtil.md5(raw, "")
     val key = getUniqueFile("mermaid", hash, "svg").toFile()
     if (key.exists()) {
       return "<img src=\"${key.toURI()}\"/>"
     }
-    return "<div class=\"mermaid\" cache-id=\"$hash\">$raw</div>"
+    return "<div class=\"mermaid\" cache-id=\"$hash\" id=\"$hash\">$raw</div>"
   }
 
   fun store(key: String, content: ByteArray) {

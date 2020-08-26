@@ -1,5 +1,5 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.intellij.plugins.markdown.ui.preview
+package org.intellij.plugins.markdown.ui.preview.html
 
 import org.intellij.markdown.MarkdownTokenTypes
 import org.intellij.markdown.ast.ASTNode
@@ -12,18 +12,18 @@ import java.util.*
 internal class MarkdownCodeFenceGeneratingProvider(private val pluginCacheProviders: Array<MarkdownCodeFencePluginGeneratingProvider>)
   : GeneratingProvider {
 
-  private fun pluginGeneratedHtml(language: String, codeFenceContent: String, codeFenceRawContent: String): String {
+  private fun pluginGeneratedHtml(language: String, codeFenceContent: String, codeFenceRawContent: String, node: ASTNode): String {
     return pluginCacheProviders
       .filter { it.isApplicable(language) }.stream()
       .findFirst()
-      .map { it.generateHtml(language, codeFenceRawContent) }
-      .orElse(codeFenceContent)
+      .map { it.generateHtml(language, codeFenceRawContent, node) }
+      .orElse(insertCodeOffsets(codeFenceContent, node))
   }
 
   override fun processNode(visitor: HtmlGenerator.HtmlGeneratingVisitor, text: String, node: ASTNode) {
     val indentBefore = node.getTextInNode(text).commonPrefixWith(" ".repeat(10)).length
 
-    visitor.consumeHtml("<pre>")
+    visitor.consumeHtml("<pre ${HtmlGenerator.getSrcPosAttribute(node)}>")
 
     var state = 0
 
@@ -55,8 +55,12 @@ internal class MarkdownCodeFenceGeneratingProvider(private val pluginCacheProvid
     }
 
     if (state == 1) {
-      visitor.consumeHtml(if (language != null) pluginGeneratedHtml(language, codeFenceContent.toString(), codeFenceRawContent.toString())
-                          else codeFenceContent)
+      visitor.consumeHtml(
+        if (language != null) {
+          pluginGeneratedHtml(language, codeFenceContent.toString(), codeFenceRawContent.toString(), node)
+        }
+        else insertCodeOffsets(codeFenceContent.toString(), node)
+      )
     }
 
     if (state == 0) {
@@ -73,4 +77,30 @@ internal class MarkdownCodeFenceGeneratingProvider(private val pluginCacheProvid
 
   private fun codeFenceText(text: String, node: ASTNode): CharSequence =
     if (node.type != MarkdownTokenTypes.BLOCK_QUOTE) HtmlGenerator.leafText(text, node, false) else ""
+
+  private fun insertCodeOffsets(content: String, node: ASTNode): String {
+    val lines = ArrayList<String>()
+    val baseOffset = calcCodeFenceContentBaseOffset(node)
+    var left = baseOffset
+    for (line in content.lines()) {
+      val right = left + line.length
+      lines.add("<span ${HtmlGenerator.SRC_ATTRIBUTE_NAME}='$left..${left + line.length}'>$line</span>")
+      left = right + 1
+    }
+    return lines.joinToString(
+      separator = "\n",
+      prefix = "<span ${HtmlGenerator.SRC_ATTRIBUTE_NAME}='${node.startOffset}..$baseOffset'/>",
+      postfix = node.children.find { it.type == MarkdownTokenTypes.CODE_FENCE_END }?.let {
+        "<span ${HtmlGenerator.SRC_ATTRIBUTE_NAME}='${it.startOffset}..${it.endOffset}'/>"
+      } ?: ""
+    )
+  }
+
+  companion object {
+    internal fun calcCodeFenceContentBaseOffset(node: ASTNode): Int {
+      val baseNode = node.children.find { it.type == MarkdownTokenTypes.FENCE_LANG }
+                     ?: node.children.find { it.type == MarkdownTokenTypes.CODE_FENCE_START }
+      return baseNode?.let { it.endOffset + 1 } ?: node.startOffset
+    }
+  }
 }
