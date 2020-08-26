@@ -4,6 +4,7 @@ package git4idea.annotate;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
@@ -158,18 +159,21 @@ public class GitFileAnnotation extends FileAnnotation {
     return myLines.get(lineNumber);
   }
 
+  @NlsContexts.Tooltip
   @Nullable
   @Override
   public String getToolTip(int lineNumber) {
     return getToolTip(lineNumber, false);
   }
 
+  @NlsContexts.Tooltip
   @Nullable
   @Override
   public String getHtmlToolTip(int lineNumber) {
     return getToolTip(lineNumber, true);
   }
 
+  @NlsContexts.Tooltip
   @Nullable
   private String getToolTip(int lineNumber, boolean asHtml) {
     LineInfo lineInfo = getLineInfo(lineNumber);
@@ -194,6 +198,7 @@ public class GitFileAnnotation extends FileAnnotation {
     return atb.toString();
   }
 
+  @NlsSafe
   @Nullable
   public String getCommitMessage(@NotNull VcsRevisionNumber revisionNumber) {
     if (myRevisions != null && myRevisionMap != null &&
@@ -384,6 +389,7 @@ public class GitFileAnnotation extends FileAnnotation {
       return myCommitInfo.getAuthor();
     }
 
+    @NlsSafe
     @NotNull
     public String getSubject() {
       return myCommitInfo.getSubject();
