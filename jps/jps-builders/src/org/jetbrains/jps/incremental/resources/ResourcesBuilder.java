@@ -3,9 +3,11 @@ package org.jetbrains.jps.incremental.resources;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildOutputConsumer;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
+import org.jetbrains.jps.builders.JpsBuildBundle;
 import org.jetbrains.jps.builders.java.ResourceRootDescriptor;
 import org.jetbrains.jps.builders.java.ResourcesTargetType;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
@@ -25,12 +27,15 @@ import java.util.*;
 public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, ResourcesTarget> {
   private static final Logger LOG = Logger.getInstance(ResourcesBuilder.class);
 
-  public static final String BUILDER_NAME = "Resource Compiler";
-
   private static final List<StandardResourceBuilderEnabler> ourEnablers = Collections.synchronizedList(new ArrayList<>());
 
   public ResourcesBuilder() {
     super(ResourcesTargetType.ALL_TYPES);
+  }
+
+  @NotNull
+  private static @Nls String getBuilderName() {
+    return JpsBuildBundle.message("builder.name.resource.compiler");
   }
 
   public static void registerEnabler(StandardResourceBuilderEnabler enabler) {
@@ -65,7 +70,7 @@ public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, Reso
         catch (IOException e) {
           LOG.info(e);
           context.processMessage(
-            new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, e.getMessage(), FileUtil.toSystemIndependentName(f.getPath()))
+            new CompilerMessage(getBuilderName(), BuildMessage.Kind.ERROR, e.getMessage(), FileUtil.toSystemIndependentName(f.getPath()))
           );
           return false;
         }
@@ -110,20 +115,21 @@ public class ResourcesBuilder extends TargetBuilder<ResourceRootDescriptor, Reso
     }
     targetPath.append('/').append(relativePath);
 
-    context.processMessage(new ProgressMessage("Copying resources... [" + rd.getTarget().getModule().getName() + "]"));
+    context.processMessage(new ProgressMessage(JpsBuildBundle.message("progress.message.copying.resources.0",
+                                                                      rd.getTarget().getModule().getName())));
     try {
       final File targetFile = new File(targetPath.toString());
       FSOperations.copy(file, targetFile);
       outputConsumer.registerOutputFile(targetFile, Collections.singletonList(file.getPath()));
     }
     catch (Exception e) {
-      context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, CompilerMessage.getTextFromThrowable(e)));
+      context.processMessage(new CompilerMessage(getBuilderName(), BuildMessage.Kind.ERROR, CompilerMessage.getTextFromThrowable(e)));
     }
   }
 
   @Override
   @NotNull
   public String getPresentableName() {
-    return BUILDER_NAME;
+    return getBuilderName();
   }
 }

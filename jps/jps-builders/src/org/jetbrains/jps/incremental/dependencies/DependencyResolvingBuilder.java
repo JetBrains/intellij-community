@@ -3,6 +3,7 @@ package org.jetbrains.jps.incremental.dependencies;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.CollectionFactory;
@@ -10,12 +11,14 @@ import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.containers.SmartHashSet;
 import org.eclipse.aether.repository.RemoteRepository;
 import org.eclipse.aether.transfer.TransferCancelledException;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
 import org.jetbrains.idea.maven.aether.ProgressConsumer;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
+import org.jetbrains.jps.builders.JpsBuildBundle;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.incremental.*;
@@ -46,7 +49,6 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class DependencyResolvingBuilder extends ModuleLevelBuilder{
   private static final Logger LOG = Logger.getInstance(DependencyResolvingBuilder.class);
-  private static final String NAME = "Maven Dependency Resolver";
   private static final String MAVEN_REPOSITORY_PATH_VAR = "MAVEN_REPOSITORY";
   private static final String DEFAULT_MAVEN_REPOSITORY_PATH = ".m2/repository";
 
@@ -64,7 +66,7 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
 
   @Override
   public @NotNull String getPresentableName() {
-    return NAME;
+    return getBuilderName();
   }
 
   @Override
@@ -113,7 +115,7 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
     }
     final String msg = builder.toString();
     LOG.info(msg, error);
-    context.processMessage(new CompilerMessage(NAME, BuildMessage.Kind.ERROR, msg));
+    context.processMessage(new CompilerMessage(getBuilderName(), BuildMessage.Kind.ERROR, msg));
     return ExitCode.ABORT;
   }
 
@@ -134,7 +136,7 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
               }
             }
             if (!required.isEmpty()) {
-              context.processMessage(new ProgressMessage("Resolving '" + lib.getName() + "' library...", currentTargets));
+              context.processMessage(new ProgressMessage(JpsBuildBundle.message("progress.message.resolving.0.library", lib.getName()), currentTargets));
               LOG.debug("Downloading missing files for " + lib.getName() + " library: " + required);
               final Collection<File> resolved = repoManager.resolveDependency(descriptor.getGroupId(), descriptor.getArtifactId(),
                                                                               descriptor.getVersion(), descriptor.isIncludeTransitiveDependencies(),
@@ -252,7 +254,7 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
       }
       manager = new ArtifactRepositoryManager(getLocalRepoDir(context), repositories, new ProgressConsumer() {
         @Override
-        public void consume(String message) {
+        public void consume(@NlsSafe String message) {
           context.processMessage(new ProgressMessage(message));
         }
 
@@ -275,5 +277,10 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
     }
     final String root = System.getProperty("user.home", null);
     return root != null ? new File(root, DEFAULT_MAVEN_REPOSITORY_PATH) : new File(DEFAULT_MAVEN_REPOSITORY_PATH);
+  }
+
+  @NotNull
+  private static @Nls String getBuilderName() {
+    return JpsBuildBundle.message("builder.name.maven.dependency.resolver");
   }
 }

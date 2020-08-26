@@ -13,6 +13,7 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.io.DataOutputStream;
 import io.netty.channel.Channel;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.TimingLog;
@@ -203,7 +204,8 @@ final class BuildSession implements Runnable, CanceledStatus {
   private void runBuild(final MessageHandler msgHandler, CanceledStatus cs) throws Throwable{
     final File dataStorageRoot = Utils.getDataStorageRoot(myProjectPath);
     if (dataStorageRoot == null) {
-      msgHandler.processMessage(new CompilerMessage("build", BuildMessage.Kind.ERROR, "Cannot determine build data storage root for project " + myProjectPath));
+      msgHandler.processMessage(new CompilerMessage(BuildRunner.getRootCompilerName(), BuildMessage.Kind.ERROR,
+                                                    JpsBuildBundle.message("build.message.cannot.determine.build.data.storage.root.for.project.0", myProjectPath)));
       return;
     }
     final boolean storageFilesAbsent = !dataStorageRoot.exists() || !new File(dataStorageRoot, FS_STATE_FILE).exists();
@@ -545,7 +547,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     CmdlineRemoteProto.Message lastMessage = null;
     try {
       if (error instanceof CannotLoadJpsModelException) {
-        String text = "Failed to load project configuration: " + StringUtil.decapitalize(error.getMessage());
+        String text = JpsBuildBundle.message("build.message.failed.to.load.project.configuration.0", StringUtil.decapitalize(error.getMessage()));
         String path = ((CannotLoadJpsModelException)error).getFile().getAbsolutePath();
         lastMessage = CmdlineProtoUtil.toMessage(mySessionId, CmdlineProtoUtil.createCompileMessage(BuildMessage.Kind.ERROR, text, path, -1, -1, -1, -1, -1, -1.0f));
       }
@@ -559,14 +561,14 @@ final class BuildSession implements Runnable, CanceledStatus {
           cause.printStackTrace(stream);
         }
 
-        final StringBuilder messageText = new StringBuilder();
-        messageText.append("Internal error: (").append(cause.getClass().getName()).append(") ").append(cause.getMessage());
+        @Nls StringBuilder messageText = new StringBuilder();
+        messageText.append(JpsBuildBundle.message("build.message.internal.error.0.1", cause.getClass().getName(),cause.getMessage()));
         final String trace = out.toString();
         if (!trace.isEmpty()) {
           messageText.append("\n").append(trace);
         }
         if (error instanceof RebuildRequestedException || cause instanceof IOException) {
-          messageText.append("\n").append("Please perform full project rebuild (Build | Rebuild Project)");
+          messageText.append("\n").append(JpsBuildBundle.message("build.message.perform.full.project.rebuild"));
         }
         lastMessage = CmdlineProtoUtil.toMessage(mySessionId, CmdlineProtoUtil.createFailure(messageText.toString(), cause));
       }

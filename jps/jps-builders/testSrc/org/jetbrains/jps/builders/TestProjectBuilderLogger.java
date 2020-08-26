@@ -29,9 +29,9 @@ public final class TestProjectBuilderLogger extends ProjectBuilderLoggerBase {
   }
 
   @Override
-  public void logCompiledFiles(Collection<File> files, String builderName, String description) throws IOException {
-    super.logCompiledFiles(files, builderName, description);
-    myCompiledFiles.putValues(builderName, files);
+  public void logCompiledFiles(Collection<File> files, String builderId, String description) throws IOException {
+    super.logCompiledFiles(files, builderId, description);
+    myCompiledFiles.putValues(builderId, files);
   }
 
   public void clearFilesData() {

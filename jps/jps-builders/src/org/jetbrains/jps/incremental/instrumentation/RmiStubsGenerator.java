@@ -7,6 +7,7 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -14,10 +15,12 @@ import com.intellij.util.SmartList;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.FileCollectionFactory;
 import gnu.trove.THashMap;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
+import org.jetbrains.jps.builders.JpsBuildBundle;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
@@ -49,12 +52,11 @@ public final class RmiStubsGenerator extends ClassProcessingBuilder {
 
   @Override
   protected String getProgressMessage() {
-    return "Generating RMI stubs...";
+    return JpsBuildBundle.message("progress.message.generating.rmi.stubs");
   }
 
-  @NotNull
   @Override
-  public String getPresentableName() {
+  public @NlsSafe String getPresentableName() {
     return "rmic";
   }
 
@@ -160,7 +162,8 @@ public final class RmiStubsGenerator extends ClassProcessingBuilder {
         else {
           final int exitValue = handler.getProcess().exitValue();
           if (exitValue != 0) {
-            context.processMessage(new CompilerMessage(getPresentableName(), BuildMessage.Kind.ERROR, "RMI stub generation failed"));
+            context.processMessage(new CompilerMessage(getPresentableName(), BuildMessage.Kind.ERROR,
+                                                       JpsBuildBundle.message("build.message.rmi.stub.generation.failed")));
             break;
           }
         }
@@ -329,10 +332,10 @@ public final class RmiStubsGenerator extends ClassProcessingBuilder {
 
   private static final class RmicOutputParser extends LineOutputWriter {
     private final CompileContext myContext;
-    private final String myCompilerName;
+    private final @Nls String myCompilerName;
     private boolean myErrorsReported = false;
 
-    private RmicOutputParser(CompileContext context, String name) {
+    private RmicOutputParser(CompileContext context, @Nls String name) {
       myContext = context;
       myCompilerName = name;
     }
@@ -342,7 +345,7 @@ public final class RmiStubsGenerator extends ClassProcessingBuilder {
     }
 
     @Override
-    protected void lineAvailable(String line) {
+    protected void lineAvailable(@NlsSafe String line) {
       if (!StringUtil.isEmpty(line)) {
         BuildMessage.Kind kind = BuildMessage.Kind.INFO;
         if (line.contains("error")) {

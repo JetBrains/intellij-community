@@ -129,6 +129,7 @@ public class CompilerMessage extends BuildMessage {
 
   @Override
   public @Nls String getMessageText() {
+    //noinspection HardCodedStringLiteral
     return super.getMessageText();
   }
 

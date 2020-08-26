@@ -9,6 +9,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
+import org.jetbrains.jps.builders.JpsBuildBundle;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.BinaryContent;
 import org.jetbrains.jps.incremental.CompileContext;
@@ -36,12 +37,12 @@ public class NotNullInstrumentingBuilder extends BaseInstrumentingBuilder{
   @NotNull
   @Override
   public String getPresentableName() {
-    return "NotNull instrumentation";
+    return JpsBuildBundle.message("builder.name.notnull.instrumentation");
   }
 
   @Override
   protected String getProgressMessage() {
-    return "Adding @NotNull assertions...";
+    return JpsBuildBundle.message("progress.message.adding.notnull.assertions");
   }
 
   @Override
@@ -73,7 +74,8 @@ public class NotNullInstrumentingBuilder extends BaseInstrumentingBuilder{
     catch (Throwable e) {
       LOG.error(e);
       final Collection<File> sourceFiles = compiledClass.getSourceFiles();
-      String msg = "Cannot instrument " + ContainerUtil.map(sourceFiles, file -> file.getName()) + ": " + e.getMessage();
+      String msg = JpsBuildBundle.message("build.message.cannot.instrument.0.1",
+                                          ContainerUtil.map(sourceFiles, file -> file.getName()), e.getMessage());
       context.processMessage(new CompilerMessage(getPresentableName(),
                                                  BuildMessage.Kind.ERROR,
                                                  msg,

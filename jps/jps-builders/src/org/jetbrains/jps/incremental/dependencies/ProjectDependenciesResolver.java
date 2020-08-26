@@ -36,7 +36,7 @@ public final class ProjectDependenciesResolver extends TargetBuilder<BuildRootDe
                     @NotNull DirtyFilesHolder<BuildRootDescriptor, ProjectDependenciesResolvingTarget> holder,
                     @NotNull BuildOutputConsumer outputConsumer,
                     @NotNull CompileContext context) {
-    context.processMessage(new ProgressMessage("Resolving repository libraries in the project..."));
+    context.processMessage(new ProgressMessage(JpsBuildBundle.message("progress.message.resolving.repository.libraries.in.the.project")));
     try {
       DependencyResolvingBuilder.resolveMissingDependencies(context, context.getProjectDescriptor().getProject().getModules(),
                                                             BuildTargetChunk.forSingleTarget(target));
@@ -49,7 +49,7 @@ public final class ProjectDependenciesResolver extends TargetBuilder<BuildRootDe
   @NotNull
   @Override
   public String getPresentableName() {
-    return "Project Dependencies Resolver";
+    return JpsBuildBundle.message("builder.name.project.dependencies.resolver");
   }
 
   public static class ProjectDependenciesResolvingTarget extends BuildTarget<BuildRootDescriptor> {

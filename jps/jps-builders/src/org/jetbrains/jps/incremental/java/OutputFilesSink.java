@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.FileCollectionFactory;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.builders.JpsBuildBundle;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.incremental.BinaryContent;
@@ -77,7 +78,7 @@ final class OutputFilesSink implements OutputFileConsumer {
         }
       }
       catch (IOException e) {
-        myContext.processMessage(new CompilerMessage(JavaBuilder.BUILDER_NAME, e));
+        myContext.processMessage(new CompilerMessage(JavaBuilder.getBuilderName(), e));
       }
 
       if (!isTemp && outKind == JavaFileObject.Kind.CLASS) {
@@ -88,17 +89,18 @@ final class OutputFilesSink implements OutputFileConsumer {
         }
         catch (Throwable e) {
           // need this to make sure that unexpected errors in, for example, ASM will not ruin the compilation
-          final String message = "Class dependency information may be incomplete! Error parsing generated class " + fileObject.getFile().getPath();
+          final String message =
+            JpsBuildBundle.message("build.message.class.dependency.information.may.be.incomplete", fileObject.getFile().getPath());
           LOG.info(message, e);
           myContext.processMessage(new CompilerMessage(
-            JavaBuilder.BUILDER_NAME, BuildMessage.Kind.WARNING, message + "\n" + CompilerMessage.getTextFromThrowable(e), sourcePath)
+            JavaBuilder.getBuilderName(), BuildMessage.Kind.WARNING, message + "\n" + CompilerMessage.getTextFromThrowable(e), sourcePath)
           );
         }
       }
     }
 
     if (outKind == JavaFileObject.Kind.CLASS) {
-      myContext.processMessage(new ProgressMessage("Writing classes... " + myChunkName));
+      myContext.processMessage(new ProgressMessage(JpsBuildBundle.message("progress.message.writing.classes.0", myChunkName)));
       if (!isTemp && srcFile != null) {
         mySuccessfullyCompiled.add(srcFile);
       }

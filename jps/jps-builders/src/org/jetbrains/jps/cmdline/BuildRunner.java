@@ -4,6 +4,7 @@ package org.jetbrains.jps.cmdline;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.containers.FileCollectionFactory;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.BuildType;
@@ -78,7 +79,8 @@ public final class BuildRunner {
       dataManager = new BuildDataManager(dataPaths, targetsState, relativizer);
       if (dataManager.versionDiffers()) {
         myForceCleanCaches = true;
-        msgHandler.processMessage(new CompilerMessage("build", BuildMessage.Kind.INFO, "Dependency data format has changed, project rebuild required"));
+        msgHandler.processMessage(new CompilerMessage(getRootCompilerName(), BuildMessage.Kind.INFO,
+                                                      JpsBuildBundle.message("build.message.dependency.data.format.has.changed.project.rebuild.required")));
       }
     }
     catch (Exception e) {
@@ -96,11 +98,17 @@ public final class BuildRunner {
       projectStamps = new ProjectStamps(dataStorageRoot, targetsState, relativizer);
       dataManager = new BuildDataManager(dataPaths, targetsState, relativizer);
       // second attempt succeeded
-      msgHandler.processMessage(new CompilerMessage("build", BuildMessage.Kind.INFO, "Project rebuild forced: " + e.getMessage()));
+      msgHandler.processMessage(new CompilerMessage(getRootCompilerName(), BuildMessage.Kind.INFO,
+                                                    JpsBuildBundle.message("build.message.project.rebuild.forced.0", e.getMessage())));
     }
 
     return new ProjectDescriptor(jpsModel, fsState, projectStamps, dataManager, BuildLoggingManager.DEFAULT, index, targetsState,
                                  targetIndex, buildRootIndex, ignoredFileIndex);
+  }
+
+  @NotNull
+  public static @Nls String getRootCompilerName() {
+    return JpsBuildBundle.message("builder.name.root");
   }
 
   public void setForceCleanCaches(boolean forceCleanCaches) {
