@@ -444,11 +444,11 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
     }
 
     boolean saveNeeded = false;
-    IOException ioException = null;
+    Exception ioException = null;
     try {
       saveNeeded = isSaveNeeded(document, file);
     }
-    catch (IOException e) {
+    catch (IOException|RuntimeException e) {
       // in case of corrupted VFS try to stay consistent
       ioException = e;
     }
@@ -458,7 +458,8 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
       }
       removeFromUnsaved(document);
       updateModifiedProperty(file);
-      if (ioException != null) throw ioException;
+      if (ioException instanceof IOException) throw (IOException)ioException;
+      if (ioException instanceof RuntimeException) throw (RuntimeException)ioException;
       return;
     }
 
