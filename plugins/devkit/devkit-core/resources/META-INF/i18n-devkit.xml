@@ -4,15 +4,18 @@
   <extensions defaultExtensionNs="com.intellij.java-i18n">
     <resourceBundleManager implementation="org.jetbrains.idea.devkit.i18n.IntelliJProjectResourceBundleManager"/>
   </extensions>
-  
+
   <extensions defaultExtensionNs="com.intellij">
-    <localInspection language="XML" displayName="Plugin.xml i18n verification" applyToDialects="false"
-                     groupPath="Plugin DevKit" groupKey="inspections.group.descriptor"
+    <localInspection language="XML" applyToDialects="false"
+                     groupPathKey="inspections.group.path" groupKey="inspections.group.descriptor"
                      enabledByDefault="false" level="WARNING"
-                     implementationClass="org.jetbrains.idea.devkit.inspections.PluginXmlI18nInspection"/>
-    <localInspection language="Properties" displayName="Quotes validation in properties files"
-                     groupPath="Plugin DevKit"
+                     implementationClass="org.jetbrains.idea.devkit.inspections.PluginXmlI18nInspection"
+                     key="inspection.plugin.xml.i18n.display.name"/>
+    <!--suppress PluginXmlCapitalization -->
+    <localInspection language="Properties"
+                     groupKey="inspections.group.name"
                      enabledByDefault="true" level="WARNING"
-                     implementationClass="org.jetbrains.idea.devkit.inspections.DevKitPropertiesQuotesValidationInspection"/>
+                     implementationClass="org.jetbrains.idea.devkit.inspections.DevKitPropertiesQuotesValidationInspection"
+                     key="inspection.dev.kit.properties.quotes.validation.display.name"/>
   </extensions>
 </idea-plugin>
