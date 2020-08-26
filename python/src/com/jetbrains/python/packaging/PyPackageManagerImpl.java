@@ -24,6 +24,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.net.HttpConfigurable;
+import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.PyPsiPackageUtil;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -92,8 +93,8 @@ public class PyPackageManagerImpl extends PyPackageManager {
   public void installManagement() throws ExecutionException {
     final LanguageLevel languageLevel = PythonSdkType.getLanguageLevelForSdk(getSdk());
     if (languageLevel.isOlderThan(LanguageLevel.PYTHON27)) {
-      throw new ExecutionException("Package management for Python " + languageLevel + " is not supported. " +
-                                   "Upgrade your project interpreter to Python " + LanguageLevel.PYTHON27 + " or newer");
+      throw new ExecutionException(PySdkBundle.message("python.sdk.conda.dialog.package.management.for.python.not.supported",
+                                                       languageLevel, LanguageLevel.PYTHON27));
     }
 
     boolean success = updatePackagingTools();
@@ -195,7 +196,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
       buildDir = FileUtil.createTempDirectory("pycharm-packaging", null);
     }
     catch (IOException e) {
-      throw new ExecutionException("Cannot create temporary build directory");
+      throw new ExecutionException(PySdkBundle.message("python.sdk.conda.dialog.cannot.create.temporary.build.directory"));
     }
     if (!extraArgs.contains(BUILD_DIR_OPTION)) {
       args.addAll(Arrays.asList(BUILD_DIR_OPTION, buildDir.getAbsolutePath()));
@@ -317,8 +318,8 @@ public class PyPackageManagerImpl extends PyPackageManager {
     final LanguageLevel languageLevel = getOrRequestLanguageLevelForSdk(sdk);
 
     if (languageLevel.isOlderThan(LanguageLevel.PYTHON27)) {
-      throw new ExecutionException("Creating virtual environment for Python " + languageLevel + " is not supported. " +
-                                   "Upgrade your project interpreter to Python " + LanguageLevel.PYTHON27 + " or newer");
+      throw new ExecutionException(PySdkBundle.message("python.sdk.conda.dialog.creating.virtual.environment.for.python.not.supported",
+                                                       languageLevel, LanguageLevel.PYTHON27));
     }
 
     final boolean usePyVenv = languageLevel.isAtLeast(LanguageLevel.PYTHON33);
@@ -367,7 +368,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
                              false, true, workingDirectoryPath);
     }
     catch (IOException e) {
-      throw new ExecutionException("Cannot create temporary build directory", e);
+      throw new ExecutionException(PySdkBundle.message("python.sdk.conda.dialog.cannot.create.temporary.build.directory"), e);
     }
     finally {
       if (workingDirectory != null) {
@@ -383,7 +384,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
       if (flavor != null && sdk.getHomePath() != null) {
         return flavor.getLanguageLevel(sdk.getHomePath());
       }
-      throw new ExecutionException("Cannot retrieve the version of the detected SDK: " + sdk.getHomePath());
+      throw new ExecutionException(PySdkBundle.message("python.sdk.conda.dialog.cannot.retrieve.version", sdk.getHomePath()));
     }
     // Use the cached version for an already configured SDK
     return PythonSdkType.getLanguageLevelForSdk(sdk);
@@ -463,7 +464,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
                                  boolean showProgress, @Nullable String parentDir) throws ExecutionException {
     final String helperPath = getHelperPath(helper);
     if (helperPath == null) {
-      throw new ExecutionException("Cannot find external tool: " + helper);
+      throw new ExecutionException(PySdkBundle.message("python.sdk.conda.dialog.cannot.find.external.tool", helper));
     }
     return getPythonProcessResult(helperPath, args, askForSudo, showProgress, parentDir);
   }
@@ -479,10 +480,10 @@ public class PyPackageManagerImpl extends PyPackageManager {
     final ProcessOutput output = getPythonProcessOutput(path, args, askForSudo, showProgress, workingDir);
     final int exitCode = output.getExitCode();
     if (output.isTimeout()) {
-      throw new PyExecutionException("Timed out", path, args, output);
+      throw new PyExecutionException(PySdkBundle.message("python.sdk.conda.dialog.timed.out"), path, args, output);
     }
     else if (exitCode != 0) {
-      throw new PyExecutionException("Non-zero exit code (" + exitCode + ")", path, args, output);
+      throw new PyExecutionException(PySdkBundle.message("python.sdk.conda.dialog.non.zero.exit.code", exitCode), path, args, output);
     }
     return output.getStdout();
   }
@@ -492,7 +493,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
                                                  boolean showProgress, @Nullable String workingDir) throws ExecutionException {
     final String homePath = getSdk().getHomePath();
     if (homePath == null) {
-      throw new ExecutionException("Cannot find Python interpreter for SDK " + mySdk.getName());
+      throw new ExecutionException(PySdkBundle.message("python.sdk.conda.dialog.cannot.find.python.interpreter", mySdk.getName()));
     }
     if (workingDir == null) {
       workingDir = new File(homePath).getParent();
@@ -539,8 +540,9 @@ public class PyPackageManagerImpl extends PyPackageManager {
       result.checkSuccess(LOG);
       final int exitCode = result.getExitCode();
       if (exitCode != 0) {
-        final String message = StringUtil.isEmptyOrSpaces(result.getStdout()) && StringUtil.isEmptyOrSpaces(result.getStderr()) ?
-                               "Permission denied" : "Non-zero exit code (" + exitCode + ")";
+        final String message = StringUtil.isEmptyOrSpaces(result.getStdout()) && StringUtil.isEmptyOrSpaces(result.getStderr())
+                               ? PySdkBundle.message("python.conda.permission.denied")
+                               : PySdkBundle.message("python.sdk.conda.dialog.non.zero.exit.code", exitCode);
         throw new PyExecutionException(message, helperPath, args, result);
       }
       return result;
@@ -589,7 +591,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
     for (String line : lines) {
       final List<String> fields = StringUtil.split(line, "\t");
       if (fields.size() < 3) {
-        throw new PyExecutionException("Invalid output format", PACKAGING_TOOL, Collections.emptyList());
+        throw new PyExecutionException(PySdkBundle.message("python.sdk.conda.dialog.invalid.output.format"), PACKAGING_TOOL, Collections.emptyList());
       }
       final String name = fields.get(0);
       final String version = fields.get(1);
