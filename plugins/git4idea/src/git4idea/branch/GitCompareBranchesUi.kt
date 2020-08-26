@@ -33,6 +33,7 @@ import com.intellij.vcs.log.visible.filters.VcsLogFilterObject.collection
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject.fromRange
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject.fromRoot
 import git4idea.i18n.GitBundle
+import git4idea.i18n.GitBundleExtensions.html
 import git4idea.repo.GitRepository
 import java.util.*
 import javax.swing.JComponent
@@ -189,8 +190,7 @@ private fun VcsLogRangeFilter.asReversed(): VcsLogRangeFilter {
 
 @NlsContexts.LinkLabel
 private fun getExplanationText(@NlsSafe dontExist: String, @NlsSafe existIn: String): String {
-  return HtmlChunk.raw(GitBundle.message("git.compare.branches.explanation.message",
-                                         HtmlChunk.tag("code").child(HtmlChunk.text(existIn).bold()),
-                                         HtmlChunk.tag("code").child(HtmlChunk.text(dontExist).bold())))
-    .wrapWith("html").toString()
+  return html("git.compare.branches.explanation.message",
+              HtmlChunk.tag("code").child(HtmlChunk.text(existIn).bold()),
+              HtmlChunk.tag("code").child(HtmlChunk.text(dontExist).bold()))
 }
