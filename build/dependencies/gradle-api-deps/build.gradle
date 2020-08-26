@@ -35,6 +35,9 @@ task expandGradleApiJar() {
       writer << """
 defaultTasks 'setupGradleApiDeps'
 
+// ensure generated jars are created from specified Gradle distribution
+project.delete(new File(project.gradle.gradleUserHomeDir, "caches/$gradleApiVersion/generated-gradle-jars"))
+
 configurations {
   gradleApiDeps
 }
@@ -61,8 +64,15 @@ task setupGradleApiDeps(dependsOn: configurations.gradleApiDeps, type: Sync) {
 """
     }
 
-    def connection = GradleConnector.newConnector()
-      .useGradleVersion(gradleApiVersion)
+    def connector = GradleConnector.newConnector()
+    def gradleDistribution = findProperty('gradleDistribution') ?: null
+    if (gradleDistribution) {
+      println 'Using Gradle distribution from: ' + gradleDistribution
+      connector.useDistribution(new URI(gradleDistribution))
+    } else {
+      connector.useGradleVersion(gradleApiVersion)
+    }
+    def connection = connector
       .forProjectDirectory(projectDir)
       .connect()
     try {
