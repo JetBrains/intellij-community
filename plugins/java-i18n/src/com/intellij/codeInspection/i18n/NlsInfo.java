@@ -452,7 +452,7 @@ public abstract class NlsInfo {
     if (typeParameter == null || typeParameter.getExtendsList().getReferencedTypes().length > 0) return false;
     for (PsiParameter parameter : method.getParameterList().getParameters()) {
       PsiType parameterType = parameter.getType();
-      PsiType returnType = LambdaUtil.getFunctionalInterfaceReturnType(parameterType);
+      PsiType returnType = GenericsUtil.getVariableTypeByExpressionType(LambdaUtil.getFunctionalInterfaceReturnType(parameterType));
       if (type.equals(returnType)) return true;
     }
     return isKotlinPassthroughMethod(method);
@@ -462,7 +462,8 @@ public abstract class NlsInfo {
     if ((method.getName().equals("let") || method.getName().equals("run")) &&
         method.getModifierList().textMatches("public inline")) {
       PsiParameter[] parameters = method.getParameterList().getParameters();
-      if (parameters.length == 2 && parameters[0].getName().equals("$this$" + method.getName()) &&
+      if (parameters.length == 2 && 
+          (parameters[0].getName().equals("$receiver") || parameters[0].getName().equals("$this$" + method.getName())) &&
           parameters[1].getName().equals("block")) {
         return true;
       }
