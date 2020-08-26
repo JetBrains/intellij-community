@@ -43,14 +43,6 @@ class ImlSerializationTest {
   }
 
   @Test
-  fun communityProjectSizeCheck() {
-    val projectDir = File(PathManagerEx.getCommunityHomePath())
-    val bytes = loadProjectAndCheck(projectDir)
-
-    checkSerializationSize(bytes, 2_377_408, 20_000)
-  }
-
-  @Test
   fun externalIndexIsNotSerialized() {
     val builder = WorkspaceEntityStorageBuilder.create()
     val entity = builder.addEntity(ModifiableSampleEntity::class.java, Source) {
