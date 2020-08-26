@@ -30,8 +30,10 @@ open class EntityStorageInternalIndex<T> private constructor(
 
     internal fun index(id: EntityId, entry: T? = null) {
       startWrite()
-      index.remove(id)
-      if (entry == null) return
+      if (entry == null) {
+        index.remove(id)
+        return
+      }
       index[id] = entry
       if (oneToOneAssociation) {
         if (index.getKeysByValue(entry)?.size ?: 0 > 1) {
