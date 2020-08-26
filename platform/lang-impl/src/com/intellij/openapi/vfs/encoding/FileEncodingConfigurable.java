@@ -26,10 +26,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ColoredTextContainer;
@@ -59,12 +56,32 @@ class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
   private HyperlinkLabel myExplanationLabel;
 
   private Charset myPropsCharset;
+  private final Trinity<String, Supplier<Charset>, Consumer<Charset>> myProjectMapping;
+  private final Trinity<String, Supplier<Charset>, Consumer<Charset>> myGlobalMapping;
 
   FileEncodingConfigurable(@NotNull Project project) {
     super(project, createMappings(project));
     myBOMForUTF8Combo.setModel(new EnumComboBoxModel<>(EncodingProjectManagerImpl.BOMForNewUTF8Files.class));
     myBOMForUTF8Combo.addItemListener(e -> updateExplanationLabelText());
     myExplanationLabel.setHyperlinkTarget("https://en.wikipedia.org/wiki/Byte_order_mark#UTF-8");
+    EncodingManager app = EncodingManager.getInstance();
+    EncodingProjectManagerImpl prj = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(myProject);
+    myProjectMapping = Trinity.create(IdeBundle.message("file.encoding.option.global.encoding"),
+                                      () -> app.getDefaultCharsetName().isEmpty() ? null : app.getDefaultCharset(),
+                                      o -> app.setDefaultCharsetName(getCharsetName(o)));
+    myGlobalMapping = Trinity.create(IdeBundle.message("file.encoding.option.project.encoding"),
+                                     prj::getConfiguredDefaultCharset,
+                                     o -> prj.setDefaultCharsetName(getCharsetName(o)));
+  }
+
+  @Override
+  protected boolean isGlobalMapping(Trinity<@NlsContexts.Label String, Supplier<Charset>, Consumer<Charset>> prop) {
+    return prop == myGlobalMapping || super.isGlobalMapping(prop);
+  }
+
+  @Override
+  protected boolean isProjectMapping(Trinity<@NlsContexts.Label String, Supplier<Charset>, Consumer<Charset>> prop) {
+    return prop == myProjectMapping || super.isProjectMapping(prop);
   }
 
   private void updateExplanationLabelText() {
@@ -194,15 +211,9 @@ class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
   @NotNull
   @Override
   protected List<Trinity<String, Supplier<Charset>, Consumer<Charset>>> getDefaultMappings() {
-    EncodingManager app = EncodingManager.getInstance();
-    EncodingProjectManagerImpl prj = (EncodingProjectManagerImpl)EncodingProjectManager.getInstance(myProject);
     return Arrays.asList(
-      Trinity.create(IdeBundle.message("file.encoding.option.global.encoding"),
-                     () -> app.getDefaultCharsetName().isEmpty() ? null : app.getDefaultCharset(),
-                     o -> app.setDefaultCharsetName(getCharsetName(o))),
-      Trinity.create(IdeBundle.message("file.encoding.option.project.encoding"),
-                     prj::getConfiguredDefaultCharset,
-                     o -> prj.setDefaultCharsetName(getCharsetName(o))));
+      myProjectMapping,
+      myGlobalMapping);
   }
 
   @Override

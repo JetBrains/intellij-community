@@ -90,6 +90,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   private final Map<String, T> myDefaultVals = new HashMap<>();
   private final List<Trinity<@NlsContexts.Label String, Supplier<T>, Consumer<T>>> myDefaultProps = new ArrayList<>();
   private VirtualFile myFileToSelect;
+  private final Trinity<@NlsContexts.Label String, Supplier<T>, Consumer<T>> myProjectMapping;
 
   protected interface Value<T> extends Setter<T>, Getter<T> {
     void commit();
@@ -98,6 +99,10 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   protected PerFileConfigurableBase(@NotNull Project project, @NotNull PerFileMappingsEx<T> mappings) {
     myProject = project;
     myMappings = mappings;
+    myProjectMapping = Trinity.create(
+      LangBundle.message("PerFileConfigurableBase.project.mapping", StringUtil.capitalize(param(MAPPING_TITLE))),
+      () -> ((LanguagePerFileMappings<T>)myMappings).getConfiguredMapping(null),
+      o -> myMappings.setMapping(null, o));
   }
 
   @Override
@@ -192,10 +197,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
   protected JComponent createDefaultMappingComponent() {
     myDefaultProps.addAll(getDefaultMappings());
     if (myMappings instanceof LanguagePerFileMappings && param(ADD_PROJECT_MAPPING)) {
-      myDefaultProps.add(Trinity.create(
-        LangBundle.message("PerFileConfigurableBase.project.mapping", StringUtil.capitalize(param(MAPPING_TITLE))),
-        () -> ((LanguagePerFileMappings<T>)myMappings).getConfiguredMapping(null),
-                                        o -> myMappings.setMapping(null, o)));
+     myDefaultProps.add(myProjectMapping);
     }
     if (myDefaultProps.size() == 0) return null;
     JPanel panel = new JPanel(new GridBagLayout());
@@ -301,13 +303,21 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
       if (keyMatches(p.first, file, false) && p.second != null) return p.second;
     }
     ProjectFileIndex index = ProjectFileIndex.getInstance(myProject);
-    for (Trinity<String, Supplier<T>, Consumer<T>> prop : ContainerUtil.reverse(myDefaultProps)) {
-      if (prop.first.startsWith("Project ") && file != null && index.isInContent(file) || prop.first.startsWith("Global ")) {
+    for (Trinity<@NlsContexts.Label String, Supplier<T>, Consumer<T>> prop : ContainerUtil.reverse(myDefaultProps)) {
+      if (isProjectMapping(prop) && file != null && index.isInContent(file) || isGlobalMapping(prop)) {
         T t = myDefaultVals.get(prop.first);
         if (t != null) return t;
       }
     }
     return myMappings.getDefaultMapping(file);
+  }
+
+  protected boolean isGlobalMapping(Trinity<@NlsContexts.Label String, Supplier<T>, Consumer<T>> prop) {
+    return false;
+  }
+
+  protected boolean isProjectMapping(Trinity<@NlsContexts.Label String, Supplier<T>, Consumer<T>> prop) {
+    return prop == myProjectMapping;
   }
 
   private static boolean keyMatches(@Nullable Object key, @Nullable VirtualFile file, boolean strict) {
@@ -378,7 +388,7 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     }
     if (myMappings instanceof LanguagePerFileMappings) {
       for (Trinity<String, Supplier<T>, Consumer<T>> prop : ContainerUtil.reverse(myDefaultProps)) {
-        if (prop.first.startsWith("Project ")) {
+        if (isProjectMapping(prop)) {
           T t = myDefaultVals.get(prop.first);
           if (t != null) map.put(null, t);
           break;
