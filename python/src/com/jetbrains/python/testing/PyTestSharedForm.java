@@ -151,7 +151,7 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
     for (final PyRunTargetVariant testTargetType : PyRunTargetVariant.values()) {
       final JBRadioButton button =
         new JBRadioButton(StringUtil.capitalize(testTargetType.getCustomName().toLowerCase(Locale.getDefault())));
-      button.setActionCommand(testTargetType.name());
+      button.setActionCommand(testTargetType.name()); // NON-NLS
       button.addActionListener(o -> form.onTargetTypeChanged());
       form.myButtonGroup.add(button);
       form.myTargets.add(button);
@@ -191,7 +191,7 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
 
     for (final PyTestCustomOption option : customOptions) {
       final JBTextField textField = optionValueFields.get(option.getName());
-      final JLabel label = new JLabel(option.getLocalizedName());
+      final JLabel label = new JLabel(option.getLocalizedName()); // NON-NLS
       label.setHorizontalAlignment(SwingConstants.LEFT);
 
       constraints.fill = GridBagConstraints.NONE;
