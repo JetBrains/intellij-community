@@ -12,6 +12,7 @@ import com.intellij.openapi.util.Segment
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
 import java.util.*
 import kotlin.math.max
 import kotlin.math.min
@@ -114,10 +115,10 @@ open class CommonInjectedFileChangesHandler(
   protected fun fragmentMarkerFromShred(shred: PsiLanguageInjectionHost.Shred): RangeMarker =
     myFragmentDocument.createRangeMarker(shred.innerRange)
 
-  protected fun failAndReport(message: String, e: DocumentEvent? = null, exception: Exception? = null): Nothing =
+  protected fun failAndReport(@NonNls message: String, e: DocumentEvent? = null, exception: Exception? = null): Nothing =
     throw getReportException(message, e, exception)
 
-  protected fun getReportException(message: String,
+  protected fun getReportException(@NonNls message: String,
                                    e: DocumentEvent?,
                                    exception: Exception?): RuntimeExceptionWithAttachments =
     RuntimeExceptionWithAttachments("${this.javaClass.simpleName}: $message (event = $e)," +
