@@ -6,6 +6,7 @@ import com.intellij.execution.RunManager;
 import com.intellij.openapi.components.BaseState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.DeprecatedMethodException;
 import com.intellij.util.IconUtil;

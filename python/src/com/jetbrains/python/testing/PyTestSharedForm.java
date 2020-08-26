@@ -19,6 +19,8 @@ import com.google.common.collect.ObjectArrays;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -133,7 +135,7 @@ public final class PyTestSharedForm implements SimplePropertiesProvider {
   /**
    * Titles border used among test run configurations
    */
-  public static void setBorderToPanel(@NotNull final JPanel panel, @NotNull final String title) {
+  public static void setBorderToPanel(@NotNull final JPanel panel, @NotNull final @NlsSafe String title) {
     panel.setBorder(IdeBorderFactory.createTitledBorder(title, false));
   }
 

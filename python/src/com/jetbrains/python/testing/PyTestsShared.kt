@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.JDOMExternalizerUtil.readField
 import com.intellij.openapi.util.JDOMExternalizerUtil.writeField
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -304,8 +305,7 @@ data class ConfigurationTarget(@ConfigField("runcfg.python_tests.config.target")
     }
 
   private fun getArgumentsForPythonTarget(configuration: PyAbstractTestConfiguration): List<String> = runReadAction ra@{
-    val element = asPsiElement(configuration) ?: throw ExecutionException(
-      "Can't resolve $target. Try to remove configuration and generate it again")
+    val element = asPsiElement(configuration) ?: throw ExecutionException(PyBundle.message("python.testing.cant.resolve", target))
 
     if (element is PsiDirectory) {
       // Directory is special case: we can't run it as package for now, so we run it as path
@@ -320,8 +320,7 @@ data class ConfigurationTarget(@ConfigField("runcfg.python_tests.config.target")
       allowInaccurateResult = true
     )
     val qualifiedNameParts = QualifiedName.fromDottedString(target.trim()).tryResolveAndSplit(qNameResolveContext)
-                             ?: throw ExecutionException("Can't find file where $target declared. " +
-                                                         "Make sure it is in project root")
+                             ?: throw ExecutionException(PyBundle.message("python.testing.cant.find.where.declared", target))
 
     // We can't provide element qname here: it may point to parent class in case of inherited functions,
     // so we make fix file part, but obey element(symbol) part of qname
@@ -340,7 +339,7 @@ data class ConfigurationTarget(@ConfigField("runcfg.python_tests.config.target")
       }
       // Use "full" (path from closest root) otherwise
       val name = (element.containingFile as? PyFile)?.getQName()?.append(qualifiedNameParts.elementName) ?: throw ExecutionException(
-        "Can't get importable name for ${element.containingFile}. Is it a python file in project?")
+        PyBundle.message("python.testing.cant.get.importable.name", element.containingFile))
 
       return@ra listOf("--target", name.toString())
     }
