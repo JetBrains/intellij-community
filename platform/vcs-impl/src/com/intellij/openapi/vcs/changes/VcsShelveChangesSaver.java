@@ -13,6 +13,7 @@ import com.intellij.openapi.vcs.changes.ui.RollbackWorker;
 import com.intellij.openapi.vcs.impl.LocalChangesUnderRoots;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,13 +24,13 @@ import static com.intellij.openapi.vcs.changes.ChangeListUtil.createSystemShelve
 public class VcsShelveChangesSaver {
   private static final Logger LOG = Logger.getInstance(VcsShelveChangesSaver.class);
   private final Project project;
-  private final String myStashMessage;
+  private final @Nls String myStashMessage;
   private final ProgressIndicator myProgressIndicator;
   private Map<String, ShelvedChangeList> myShelvedLists;
 
   public VcsShelveChangesSaver(@NotNull Project project,
                                @NotNull ProgressIndicator indicator,
-                               @NotNull String stashMessage) {
+                               @NotNull @Nls String stashMessage) {
     this.project = project;
     myProgressIndicator = indicator;
     myStashMessage = stashMessage;
@@ -77,11 +78,11 @@ public class VcsShelveChangesSaver {
       String oldProgressTitle = myProgressIndicator.getText();
       myProgressIndicator.setText(VcsBundle.getString("vcs.unshelving.changes"));
       for (Map.Entry<String, ShelvedChangeList> listEntry : myShelvedLists.entrySet()) {
-        VcsShelveUtils
-          .doSystemUnshelve(project, listEntry.getValue(), ChangeListManagerImpl.getInstanceImpl(project).findChangeList(listEntry.getKey()), ShelveChangesManager.getInstance(
-            project),
-                            VcsBundle.getString("vcs.unshelving.conflict.left"),
-                            VcsBundle.getString("vcs.unshelving.conflict.right"));
+        VcsShelveUtils.doSystemUnshelve(project, listEntry.getValue(),
+                                        ChangeListManagerImpl.getInstanceImpl(project).findChangeList(listEntry.getKey()),
+                                        ShelveChangesManager.getInstance(project),
+                                        VcsBundle.getString("vcs.unshelving.conflict.left"),
+                                        VcsBundle.getString("vcs.unshelving.conflict.right"));
       }
       myProgressIndicator.setText(oldProgressTitle);
     }

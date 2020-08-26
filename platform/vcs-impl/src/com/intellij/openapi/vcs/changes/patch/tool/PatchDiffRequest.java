@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.changes.patch.tool;
 
 import com.intellij.diff.requests.DiffRequest;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,15 +24,17 @@ import org.jetbrains.annotations.Nullable;
 public class PatchDiffRequest extends DiffRequest {
   @NotNull private final AppliedTextPatch myAppliedPatch;
 
-  @Nullable private final String myWindowTitle;
-  @Nullable private final String myPanelTitle;
+  @Nullable private final @NlsContexts.DialogTitle String myWindowTitle;
+  @Nullable private final @NlsContexts.Label String myPanelTitle;
 
 
   public PatchDiffRequest(@NotNull AppliedTextPatch appliedPatch) {
     this(appliedPatch, null, null);
   }
 
-  public PatchDiffRequest(@NotNull AppliedTextPatch patch, @Nullable String windowTitle, @Nullable String panelTitle) {
+  public PatchDiffRequest(@NotNull AppliedTextPatch patch,
+                          @Nullable @NlsContexts.DialogTitle String windowTitle,
+                          @Nullable @NlsContexts.Label String panelTitle) {
     myAppliedPatch = patch;
     myWindowTitle = windowTitle;
     myPanelTitle = panelTitle;
@@ -43,6 +46,7 @@ public class PatchDiffRequest extends DiffRequest {
     return myWindowTitle;
   }
 
+  @NlsContexts.Label
   @Nullable
   public String getPanelTitle() {
     return myPanelTitle;

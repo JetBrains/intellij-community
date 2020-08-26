@@ -162,7 +162,7 @@ public final class PatchDiffRequestFactory {
                                                 @NotNull Document document,
                                                 @Nullable VirtualFile file,
                                                 @NotNull List<String> contents,
-                                                @Nullable String windowTitle,
+                                                @Nullable @NlsContexts.DialogTitle String windowTitle,
                                                 @NotNull List<String> titles,
                                                 @Nullable Consumer<? super MergeResult> callback)
     throws InvalidDiffRequestException {

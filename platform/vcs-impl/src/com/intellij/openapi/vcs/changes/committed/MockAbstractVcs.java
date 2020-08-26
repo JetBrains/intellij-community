@@ -50,7 +50,7 @@ public class MockAbstractVcs extends AbstractVcs {
   @Override
   @NotNull
   public String getDisplayName() {
-    return getName();
+    return getName(); //NON-NLS
   }
 
   @Override

@@ -6,6 +6,7 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.util.text.DateFormatUtil;
 import com.michaelbaranov.microba.calendar.DatePicker;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -103,6 +104,7 @@ public class DateFilterComponent {
     settings.setDateAfter(myDateAfter.getDate());
   }
 
+  @Nls
   @Nullable
   public String validateInput() {
     if (myUseDateAfterFilter.isSelected() && myDateAfter.getDate() == null) {

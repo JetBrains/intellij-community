@@ -9,6 +9,7 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
@@ -39,8 +40,8 @@ public final class VcsShelveUtils {
                                       final ShelvedChangeList shelvedChangeList,
                                       @Nullable final LocalChangeList targetChangeList,
                                       final ShelveChangesManager shelveManager,
-                                      @Nullable final String leftConflictTitle,
-                                      @Nullable final String rightConflictTitle) {
+                                      @NlsContexts.Label @Nullable final String leftConflictTitle,
+                                      @NlsContexts.Label @Nullable final String rightConflictTitle) {
     VirtualFile baseDir = project.getBaseDir();
     assert baseDir != null;
     final String projectPath = baseDir.getPath() + "/";

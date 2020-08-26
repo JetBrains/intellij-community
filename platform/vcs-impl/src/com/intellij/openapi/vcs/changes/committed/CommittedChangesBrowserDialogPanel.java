@@ -19,6 +19,7 @@ import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -193,6 +194,7 @@ public class CommittedChangesBrowserDialogPanel extends JPanel {
     }
   }
 
+  @Nls
   private String formatText(final CommittedChangeList list) {
     return IssueLinkHtmlRenderer.formatTextIntoHtml(myProject, list.getComment());
   }

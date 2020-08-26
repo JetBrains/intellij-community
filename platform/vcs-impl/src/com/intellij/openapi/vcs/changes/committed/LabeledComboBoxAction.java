@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes.committed;
 
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -15,9 +16,9 @@ import java.awt.*;
  */
 public abstract class LabeledComboBoxAction extends ComboBoxAction {
 
-  @NotNull private final String myLabel;
+  @NotNull private final @NlsContexts.Label String myLabel;
 
-  protected LabeledComboBoxAction(@NotNull String label) {
+  protected LabeledComboBoxAction(@NlsContexts.Label @NotNull String label) {
     myLabel = label;
   }
 

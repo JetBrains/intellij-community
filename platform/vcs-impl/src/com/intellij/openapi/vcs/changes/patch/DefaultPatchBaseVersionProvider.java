@@ -6,6 +6,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
@@ -138,7 +139,9 @@ public final class DefaultPatchBaseVersionProvider {
     }
   }
 
-  private static void runWithModalProgressIfNeeded(@Nullable Project project, @NotNull String title, @NotNull VcsRunnable task)
+  private static void runWithModalProgressIfNeeded(@Nullable Project project,
+                                                   @NotNull @NlsContexts.ProgressTitle String title,
+                                                   @NotNull VcsRunnable task)
     throws VcsException {
     VcsUtil.runVcsProcessWithProgress(task, title, true, project);
   }
