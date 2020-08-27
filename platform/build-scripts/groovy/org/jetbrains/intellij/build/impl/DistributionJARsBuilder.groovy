@@ -329,7 +329,7 @@ class DistributionJARsBuilder {
 
   @CompileStatic
   List<String> getProductModules() {
-    List<String> result = new ArrayList<>();
+    List<String> result = new ArrayList<>()
     for (moduleJar in platform.moduleJars.entrySet()) {
       // Filter out jars with relative paths in name
       if (moduleJar.key.contains("\\") || moduleJar.key.contains("/"))
@@ -791,6 +791,10 @@ class DistributionJARsBuilder {
     }
   }
 
+  /**
+   * This function builds a blockmap and hash files for each non bundled plugin
+   * to provide downloading plugins via incremental downloading algorithm Blockmap.
+   */
   void buildNonBundledPluginsBlockMaps(){
     def pluginsDirectoryName = "${buildContext.applicationInfo.productCode}-plugins"
     def nonBundledPluginsArtifacts = "$buildContext.paths.artifacts/$pluginsDirectoryName"
