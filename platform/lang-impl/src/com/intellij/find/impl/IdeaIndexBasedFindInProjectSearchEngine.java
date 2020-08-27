@@ -4,6 +4,7 @@ package com.intellij.find.impl;
 import com.intellij.find.FindInProjectSearchEngine;
 import com.intellij.find.FindModel;
 import com.intellij.find.TextSearchService;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -54,6 +55,13 @@ public final class IdeaIndexBasedFindInProjectSearchEngine implements FindInProj
 
     @Override
     public @NotNull Collection<VirtualFile> searchForOccurrences() {
+      return ReadAction
+        .nonBlocking(this::doSearchForOccurrences)
+        .withDocumentsCommitted(myProject)
+        .executeSynchronously();
+    }
+
+    public Collection<VirtualFile> doSearchForOccurrences() {
       String stringToFind = getStringToFindInIndexes(myFindModel, myProject);
 
       if (stringToFind.isEmpty() || (DumbService.getInstance(myProject).isDumb() && !FileBasedIndex.isIndexAccessDuringDumbModeEnabled())) {
