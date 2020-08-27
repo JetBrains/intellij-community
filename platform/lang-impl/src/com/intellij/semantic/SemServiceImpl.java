@@ -14,7 +14,6 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ProcessingContext;
-import com.intellij.util.SharedProcessingContext;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.IntObjectMap;
@@ -98,7 +97,7 @@ public final class SemServiceImpl extends SemService {
     LinkedHashSet<T> result = new LinkedHashSet<>();
     Map<SemKey<?>, List<SemElement>> map = new THashMap<>();
 
-    ProcessingContext processingContext = new ProcessingContext(new SharedProcessingContext());
+    ProcessingContext processingContext = new ProcessingContext();
     for (SemKey<?> each : key.getInheritors()) {
       List<SemElement> list = createSemElements(each, psi, processingContext);
       map.put(each, list);
