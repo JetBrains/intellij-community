@@ -186,7 +186,9 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
       else {
         description = error.getDescription();
       }
-      description = XmlStringUtil.convertToHtmlContent(description);
+      if (XmlStringUtil.isWrappedInHtml(description)) {
+        description = XmlStringUtil.stripHtml(description);
+      }
       if (error.canBeFixed()) {
         final String text = "[" + JavaUiBundle.message("fix.link.text") + "]";
         description += " " + HtmlChunk.link("http://fix/" + i, text);
