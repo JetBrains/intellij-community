@@ -193,7 +193,7 @@ public class ParameterInfoController extends UserDataHolderBase implements Dispo
 
       @Override
       public void lookupShown(@NotNull LookupEvent event) {
-        activeLookup = (LookupImpl)event.getLookup();
+        activeLookup = (LookupImpl) event.getLookup();
       }
 
       @Override
@@ -201,7 +201,7 @@ public class ParameterInfoController extends UserDataHolderBase implements Dispo
         queue.queue(new Update("PI update") {
           @Override
           public void run() {
-            if(activeLookup!=null){
+            if (activeLookup != null) {
               updateComponent();
             }
           }
@@ -288,40 +288,6 @@ public class ParameterInfoController extends UserDataHolderBase implements Dispo
     HintManagerImpl.getInstanceImpl().showEditorHint(myHint, editorToShow, pos.getFirst(), flags, 0, false, hintHint);
 
     updateComponent();
-  }
-
-  private void adjustPositionForLookup(@NotNull Lookup lookup) {
-    if (myEditor.isDisposed()) {
-      Disposer.dispose(this);
-      return;
-    }
-
-    if (!myHint.isVisible()) {
-      if (!myKeepOnHintHidden) Disposer.dispose(this);
-      return;
-    }
-
-    IdeTooltip tooltip = myHint.getCurrentIdeTooltip();
-    if (tooltip != null) {
-      JRootPane root = myEditor.getComponent().getRootPane();
-      if (root != null) {
-        Point p = tooltip.getShowingPoint().getPoint(root.getLayeredPane());
-        if (lookup.isPositionedAboveCaret()) {
-          if (Position.above == tooltip.getPreferredPosition()) {
-            myHint.pack();
-            myHint.updatePosition(Position.below);
-            myHint.updateLocation(p.x, p.y + tooltip.getPositionChangeY());
-          }
-        }
-        else {
-          if (Position.below == tooltip.getPreferredPosition()) {
-            myHint.pack();
-            myHint.updatePosition(Position.above);
-            myHint.updateLocation(p.x, p.y - tooltip.getPositionChangeY());
-          }
-        }
-      }
-    }
   }
 
   private void rescheduleUpdate(){
