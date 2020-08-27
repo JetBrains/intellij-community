@@ -2,11 +2,19 @@
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.diagnostic.Activity
+import com.intellij.diagnostic.StartUpMeasurer
+import com.intellij.openapi.project.Project
+import com.intellij.workspaceModel.ide.WorkspaceModel
 
-internal lateinit var moduleLoadingActivity: Activity
+internal var moduleLoadingActivity: Activity? = null
 
 fun finishModuleLoadingActivity() {
-  if (::moduleLoadingActivity.isInitialized) {
-    moduleLoadingActivity.end()
+  moduleLoadingActivity?.end()
+  moduleLoadingActivity = null
+}
+
+fun recordModuleLoadingActivity(project: Project) {
+  if (moduleLoadingActivity == null && !(WorkspaceModel.getInstance(project) as WorkspaceModelImpl).loadedFromCache) {
+    moduleLoadingActivity = StartUpMeasurer.startMainActivity("module loading")
   }
 }

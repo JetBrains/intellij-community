@@ -37,7 +37,7 @@ import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.isExternalModuleFile
-import com.intellij.workspaceModel.ide.impl.moduleLoadingActivity
+import com.intellij.workspaceModel.ide.impl.recordModuleLoadingActivity
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
@@ -67,7 +67,7 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
           if (project === this@JpsProjectModelSynchronizer.project
               && !(WorkspaceModel.getInstance(project) as WorkspaceModelImpl).loadedFromCache) {
             LOG.info("Workspace model loaded without cache. Loading real project state into workspace model. ${Thread.currentThread()}")
-            loadRealProject(project.configLocation!!)
+            loadRealProject(project)
           }
         }
       })
@@ -151,9 +151,10 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
     })
   }
 
-  internal fun loadRealProject(configLocation: JpsProjectConfigLocation) {
+  internal fun loadRealProject(project: Project) {
+    val configLocation: JpsProjectConfigLocation = project.configLocation!!
     LOG.debug { "Initial loading of project located at $configLocation" }
-    moduleLoadingActivity = StartUpMeasurer.startMainActivity("module loading")
+    recordModuleLoadingActivity(project)
     val activity = StartUpMeasurer.startActivity("(wm) Load initial project")
     var childActivity = activity.startChild("(wm) Prepare serializers")
     val baseDirUrl = configLocation.baseDirectoryUrlString

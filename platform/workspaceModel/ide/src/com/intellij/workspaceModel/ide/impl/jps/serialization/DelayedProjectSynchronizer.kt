@@ -14,7 +14,7 @@ class DelayedProjectSynchronizer : StartupActivity {
     if ((WorkspaceModel.getInstance(project) as WorkspaceModelImpl).loadedFromCache) {
       // invokeLater / write locks / AWT  ?
       val loadingTime = measureTimeMillis {
-        JpsProjectModelSynchronizer.getInstance(project)?.loadRealProject(project.configLocation!!)
+        JpsProjectModelSynchronizer.getInstance(project)?.loadRealProject(project)
       }
       log.info("Workspace model loaded from cache. Syncing real project state into workspace model in $loadingTime ms. ${Thread.currentThread()}")
     }
