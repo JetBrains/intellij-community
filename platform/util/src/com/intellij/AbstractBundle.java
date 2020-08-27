@@ -168,6 +168,8 @@ public abstract class AbstractBundle {
   }
 
   protected void clearLocaleCache() {
-    myBundle.clear();
+    if (myBundle != null) {
+      myBundle.clear();
+    }
   }
 }
