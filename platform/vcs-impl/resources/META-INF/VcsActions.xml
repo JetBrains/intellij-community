@@ -352,7 +352,6 @@
 
     <!-- New light VCS toolbar for the root toolbar instead of navbar -->
     <group id="VcsNavBarToolbarActionsLight">
-      <!--<reference ref="ShowBranches"/> -->
        <reference ref="Vcs.UpdateProject"/>
        <reference ref="CheckinProject"/>
        <reference ref="ChangesView.ToggleCommitUi"/>

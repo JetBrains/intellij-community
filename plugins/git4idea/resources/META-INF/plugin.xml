@@ -193,6 +193,10 @@
       <add-to-group group-id="VcsGroup" anchor="last"/>
     </group>
 
+    <action id="Vcs.ShowBranches" class="git4idea.actions.VCSBranchesComboBoxAction" icon="AllIcons.Vcs.Branch">
+      <add-to-group group-id="VcsNavBarToolbarActionsLight" anchor="first"/>
+    </action>
+
     <!--This group is empty and unused, left for plugins compatibility.-->
     <group id="Git.LogContextMenu"/>
 
