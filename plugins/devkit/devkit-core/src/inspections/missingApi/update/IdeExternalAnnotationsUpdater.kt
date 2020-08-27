@@ -227,7 +227,7 @@ class IdeExternalAnnotationsUpdater {
       return try {
         PublicIdeExternalAnnotationsRepository(project).downloadExternalAnnotations(ideBuildNumber)
       } catch (e: Exception) {
-        throw Exception("Failed to download annotations for $ideBuildNumber", e)
+        throw Exception(DevKitBundle.message("intellij.api.annotations.update.failed.download", ideBuildNumber), e)
       }
     }
 
