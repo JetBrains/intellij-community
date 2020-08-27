@@ -20,7 +20,6 @@ import com.intellij.ui.DoubleClickListener
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.table.JBTable
-import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil.DEFAULT_HGAP
 import git4idea.commands.Git
@@ -29,7 +28,6 @@ import git4idea.i18n.GitBundle.message
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRemote.ORIGIN
 import git4idea.repo.GitRepository
-import git4idea.ui.branch.dashboard.BranchTreeNode
 import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.awt.Font
@@ -73,9 +71,11 @@ class GitConfigureRemotesDialog(val project: Project, val repositories: Collecti
 
     object : DoubleClickListener() {
       override fun onDoubleClick(e: MouseEvent): Boolean {
-        getSelectedRemote() ?: return false
-        editRemote()
-        return true
+        if (isRemoteSelected()) {
+          editRemote()
+          return true
+        }
+        return false
       }
     }.installOn(table)
 
