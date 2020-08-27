@@ -47,6 +47,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.Assume;
 
 import javax.swing.*;
 import java.io.File;
@@ -70,6 +71,8 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     myOldIgnoredFilesList = myFileTypeManager.getIgnoredFilesList();
     FileTypeManagerImpl.reDetectAsync(true);
     ConflictingMappingTracker.throwOnConflict(true);
+    Assume.assumeTrue("Test must be run under community classpath because otherwise everything would break thanks to weird HelmYamlLanguage which is created on each HelmYamlFileType registration which happens a lot in this class",
+                      StdFileTypes.JSPX == StdFileTypes.PLAIN_TEXT);
   }
 
   @Override
