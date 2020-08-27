@@ -127,6 +127,17 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     """.trimIndent())
     myFixture.testHighlighting()
   }
+
+  fun testIf() {
+    myFixture.enableInspections(I18nInspection())
+    myFixture.configureByText("Foo.kt", """
+        fun foo() {
+          @org.jetbrains.annotations.NonNls val prefix = if (true) "foo bar" else ""
+          val <warning descr="[UNUSED_VARIABLE] Variable 'suffix' is never used">suffix</warning> = if (true) <warning descr="Hardcoded string literal: \"foo bar\"">"foo bar"</warning> else prefix
+        }
+    """.trimIndent())
+    myFixture.testHighlighting()
+  }
   
   fun testFunctionParametersOnlyNls() {
     val inspection = I18nInspection()

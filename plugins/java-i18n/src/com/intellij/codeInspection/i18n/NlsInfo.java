@@ -11,6 +11,7 @@ import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.TypeUtils;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
@@ -389,8 +390,9 @@ public abstract class NlsInfo {
           parentElement = elvis;
         }
       }
-      if (parentElement instanceof UExpressionList && parentElement.getUastParent() instanceof USwitchClauseExpression) {
-        // Kotlin has intermediate UExpressionList node
+      if (parentElement instanceof UExpressionList &&
+          expressionsAreEquivalent(parent, ContainerUtil.getLastItem(((UExpressionList)parentElement).getExpressions()))) {
+        // Result of expression list is the last expression in the list in Kotlin
         parentElement = parentElement.getUastParent();
       }
       UExpression next = ObjectUtils.tryCast(parentElement, UExpression.class);
