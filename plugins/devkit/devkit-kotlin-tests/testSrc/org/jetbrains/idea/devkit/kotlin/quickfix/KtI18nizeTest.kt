@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.kotlin.quickfix
 
+import com.intellij.codeInspection.i18n.I18nQuickFixHandler
 import com.intellij.codeInspection.i18n.I18nizeAction
 import com.intellij.codeInspection.i18n.I18nizeConcatenationQuickFix
 import com.intellij.codeInspection.i18n.JavaI18nUtil
@@ -21,32 +22,38 @@ private const val i18nizedExpr = "i18nizedExpr"
  */
 class KtI18nizeTest : LightJavaCodeInsightFixtureTestCase() {
 
-  private fun doTest(before: String, expected: String? = null, i18nized: String = i18nizedExpr) {
+  private fun <T : UExpression> doTest(before: String, expected: String? = null, i18nized: String = i18nizedExpr) {
     myFixture.configureByText("Test.kt", before)
     val action = I18nizeAction()
     val dataContext = DataManager.getInstance().getDataContext(editor.component)
     val event = AnActionEvent.createFromAnAction(action, null, "place", dataContext)
     action.update(event)
-    val handler = I18nizeAction.getHandler(event)
+    val handler: I18nQuickFixHandler<T>? = I18nizeAction.getHandler(event) as I18nQuickFixHandler<T>?
     handler?.checkApplicability(file, editor)
     TestCase.assertEquals(expected != null, event.presentation.isEnabled)
     if (expected != null) {
-      val literalExpression = I18nizeAction.getEnclosingStringLiteral(file, editor)
       WriteCommandAction.runWriteCommandAction(myFixture.project) {
         assertNotNull(handler)
-        handler!!.performI18nization(file,
-                                     editor,
-                                     literalExpression,
-                                     emptyList(),
-                                     "key1",
-                                     "value1",
-                                     i18nized,
-                                     emptyArray(),
-                                     JavaI18nUtil.DEFAULT_PROPERTY_CREATION_HANDLER)
+        val literalExpression = handler!!.getEnclosingLiteral(file, editor)
+        handler.performI18nization(
+          file,
+          editor,
+          literalExpression,
+          emptyList(),
+          "key1",
+          "value1",
+          i18nized,
+          emptyArray(),
+          JavaI18nUtil.DEFAULT_PROPERTY_CREATION_HANDLER
+        )
       }
       myFixture.checkResult(expected)
     }
   }
+
+  @JvmName("doTestWithoutGeneric")
+  private fun doTest(before: String, expected: String? = null, i18nized: String = i18nizedExpr) =
+    doTest<UExpression>(before, expected, i18nized)
 
   fun testLiteral() = doTest("""
     fun main() {

@@ -41,7 +41,7 @@ import java.util.Collection;
  */
 public class I18nizeJspHandlerProvider extends I18nizeHandlerProvider {
 
-  private static final I18nQuickFixHandler HADLER = new I18nQuickFixHandler() {
+  private static final I18nQuickFixHandler<UExpression> HADLER = new I18nQuickFixHandler<>() {
     @Override
     public void checkApplicability(final PsiFile psiFile, final Editor editor) throws IncorrectOperationException {
       final JspFile jspFile = (JspFile)psiFile;
@@ -84,13 +84,18 @@ public class I18nizeJspHandlerProvider extends I18nizeHandlerProvider {
     }
 
     @Override
-    public JavaI18nizeQuickFixDialog createDialog(final Project project, final Editor editor, final PsiFile psiFile) {
+    public UExpression getEnclosingLiteral(PsiFile file, Editor editor) {
+      return I18nizeAction.getEnclosingStringLiteral(file, editor);
+    }
+
+    @Override
+    public JavaI18nizeQuickFixDialog<UExpression> createDialog(final Project project, final Editor editor, final PsiFile psiFile) {
       JspFile jspFile = (JspFile)psiFile;
 
       TextRange selectedRange = JavaI18nUtil.getSelectedRange(editor, psiFile);
       if (selectedRange == null) return null;
       String text = editor.getDocument().getText(selectedRange);
-      return new JavaI18nizeQuickFixDialog(project, jspFile, null, text, null, false, true) {
+      return new JavaI18nizeQuickFixDialog<>(project, jspFile, null, text, null, false, true) {
         @Override
         protected String getTemplateName() {
           return JavaTemplateUtil.TEMPLATE_I18NIZED_JSP_EXPRESSION;
@@ -100,7 +105,7 @@ public class I18nizeJspHandlerProvider extends I18nizeHandlerProvider {
   };
 
   @Override
-  public I18nQuickFixHandler getHandler(@NotNull PsiFile psiFile, @NotNull Editor editor, @NotNull TextRange range) {
+  public I18nQuickFixHandler<?> getHandler(@NotNull PsiFile psiFile, @NotNull Editor editor, @NotNull TextRange range) {
     return psiFile instanceof JspFile ? HADLER : null;
   }
 }

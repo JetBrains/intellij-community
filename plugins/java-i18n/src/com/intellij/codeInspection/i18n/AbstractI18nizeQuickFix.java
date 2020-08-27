@@ -29,7 +29,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.UElement;
 import org.jetbrains.uast.UExpression;
 import org.jetbrains.uast.UastContextKt;
-import org.jetbrains.uast.expressions.UInjectionHost;
 import org.jetbrains.uast.generate.UastCodeGenerationPlugin;
 
 import java.util.Collection;
@@ -37,19 +36,21 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-abstract class AbstractI18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler, HighPriorityAction {
+abstract class AbstractI18nizeQuickFix<T extends UExpression> implements LocalQuickFix, I18nQuickFixHandler<T>, HighPriorityAction {
   private static final Logger LOG = Logger.getInstance(I18nizeQuickFix.class);
   private static final Set<String> AUXILIARY_WORDS = Set.of("is", "the", "of", "and", "a", "an");
   private final NlsInfo.Localized myInfo;
+  private final Class<T> myClazz;
 
-  protected AbstractI18nizeQuickFix(NlsInfo.Localized info) {
+  protected AbstractI18nizeQuickFix(NlsInfo.Localized info, Class<T> clazz) {
     myInfo = info;
+    myClazz = clazz;
   }
 
   @Override
   public final void performI18nization(final PsiFile psiFile,
                                        final Editor editor,
-                                       UExpression literalExpression,
+                                       T literalExpression,
                                        Collection<PropertiesFile> propertiesFiles,
                                        String key, String value, String i18nizedText,
                                        UExpression[] parameters,
@@ -76,7 +77,7 @@ abstract class AbstractI18nizeQuickFix implements LocalQuickFix, I18nQuickFixHan
 
   abstract protected void doReplacement(@NotNull PsiFile psiFile,
                                         Editor editor,
-                                        UExpression literalExpression,
+                                        T literalExpression,
                                         String i18nizedText) throws IncorrectOperationException;
 
   protected static void doDocumentReplacement(@NotNull PsiFile psiFile,
@@ -116,12 +117,12 @@ abstract class AbstractI18nizeQuickFix implements LocalQuickFix, I18nQuickFixHan
 
   private void doFix(final ProblemDescriptor descriptor, final Project project) {
     final PsiElement psi = descriptor.getPsiElement();
-    UInjectionHost uast = UastContextKt.toUElement(psi, UInjectionHost.class);
+    T uast = UastContextKt.getUastParentOfType(psi, myClazz, false);
     final PsiFile psiFile = descriptor.getPsiElement().getContainingFile();
     if (!JavaI18nizeQuickFixDialog.isAvailable(psiFile)) {
       return;
     }
-    final JavaI18nizeQuickFixDialog dialog = createDialog(project, psiFile, uast);
+    final JavaI18nizeQuickFixDialog<T> dialog = createDialog(project, psiFile, uast);
     if (!dialog.showAndGet()) {
       return;
     }
@@ -144,7 +145,7 @@ abstract class AbstractI18nizeQuickFix implements LocalQuickFix, I18nQuickFixHan
     }), PropertiesBundle.message("quickfix.i18n.command.name"), project);
   }
 
-  protected abstract JavaI18nizeQuickFixDialog createDialog(Project project, PsiFile context, @NotNull UExpression concatenation);
+  protected abstract JavaI18nizeQuickFixDialog<T> createDialog(Project project, PsiFile context, @NotNull T concatenation);
 
   protected static String getSuggestedName(String value, NlsInfo.Localized info) {
     String prefix = info.getPrefix();

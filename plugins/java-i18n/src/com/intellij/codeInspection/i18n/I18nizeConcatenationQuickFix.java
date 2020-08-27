@@ -23,24 +23,30 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-public class I18nizeConcatenationQuickFix extends AbstractI18nizeQuickFix {
+public class I18nizeConcatenationQuickFix extends AbstractI18nizeQuickFix<UPolyadicExpression> {
   @NonNls public static final String PARAMETERS_OPTION_KEY = "PARAMETERS";
 
   public I18nizeConcatenationQuickFix(NlsInfo.Localized info) {
-    super(info);
+    super(info, UPolyadicExpression.class);
   }
 
   @Override
   public void checkApplicability(final PsiFile psiFile, final Editor editor) throws IncorrectOperationException {
-    UPolyadicExpression concatenation = getEnclosingLiteralConcatenation(psiFile, editor);
+    UPolyadicExpression concatenation = getEnclosingLiteral(psiFile, editor);
     if (concatenation != null) return;
     String message = JavaI18nBundle.message("quickfix.i18n.concatentation.error");
     throw new IncorrectOperationException(message);
   }
 
   @Override
-  public JavaI18nizeQuickFixDialog createDialog(Project project, Editor editor, PsiFile psiFile) {
-    UPolyadicExpression concatenation = getEnclosingLiteralConcatenation(psiFile, editor);
+  public UPolyadicExpression getEnclosingLiteral(PsiFile file, Editor editor) {
+    final PsiElement elementAt = file.findElementAt(editor.getCaretModel().getOffset());
+    return getEnclosingLiteralConcatenation(elementAt);
+  }
+
+  @Override
+  public JavaI18nizeQuickFixDialog<UPolyadicExpression> createDialog(Project project, Editor editor, PsiFile psiFile) {
+    UPolyadicExpression concatenation = getEnclosingLiteral(psiFile, editor);
     return concatenation == null ? null : createDialog(project, psiFile, concatenation);
   }
 
@@ -53,7 +59,7 @@ public class I18nizeConcatenationQuickFix extends AbstractI18nizeQuickFix {
   @Override
   protected void doReplacement(@NotNull final PsiFile psiFile,
                                @NotNull final Editor editor,
-                               @Nullable UExpression literalExpression,
+                               @Nullable UPolyadicExpression literalExpression,
                                String i18nizedText) throws IncorrectOperationException {
     @Nullable UPolyadicExpression concatenation = getEnclosingLiteralConcatenation(literalExpression);
     assert concatenation != null;
@@ -62,15 +68,14 @@ public class I18nizeConcatenationQuickFix extends AbstractI18nizeQuickFix {
   }
 
   @Override
-  protected JavaI18nizeQuickFixDialog createDialog(final Project project,
-                                                   final PsiFile context,
-                                                   @NotNull UExpression rawConcatenation) {
-    UPolyadicExpression concatenation = UastUtils.getParentOfType(rawConcatenation, UPolyadicExpression.class, false);
+  protected JavaI18nizeQuickFixDialog<UPolyadicExpression> createDialog(final Project project,
+                                                                        final PsiFile context,
+                                                                        @NotNull UPolyadicExpression concatenation) {
     final List<UExpression> args = new ArrayList<>();
     String formatString = JavaI18nUtil
       .buildUnescapedFormatString(Objects.requireNonNull(UStringConcatenationsFacade.createFromTopConcatenation(concatenation)), args, project);
 
-    return new JavaI18nizeQuickFixDialog(project, context, concatenation, formatString, getCustomization(formatString), true, true) {
+    return new JavaI18nizeQuickFixDialog<>(project, context, concatenation, formatString, getCustomization(formatString), true, true) {
       @Override
       @Nullable
       protected String getTemplateName() {
@@ -100,11 +105,6 @@ public class I18nizeConcatenationQuickFix extends AbstractI18nizeQuickFix {
         attributes.put(PARAMETERS_OPTION_KEY, JavaI18nUtil.composeParametersText(args));
       }
     };
-  }
-
-  private static @Nullable UPolyadicExpression getEnclosingLiteralConcatenation(@NotNull PsiFile file, @NotNull Editor editor) {
-    final PsiElement elementAt = file.findElementAt(editor.getCaretModel().getOffset());
-    return getEnclosingLiteralConcatenation(elementAt);
   }
 
   @Nullable

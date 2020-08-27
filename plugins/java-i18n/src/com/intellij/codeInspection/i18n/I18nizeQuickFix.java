@@ -22,12 +22,12 @@ import org.jetbrains.uast.expressions.UInjectionHost;
 import org.jetbrains.uast.generate.UastCodeGenerationPlugin;
 import org.jetbrains.uast.generate.UastElementFactory;
 
-public class I18nizeQuickFix extends AbstractI18nizeQuickFix {
+public class I18nizeQuickFix extends AbstractI18nizeQuickFix<UInjectionHost> {
   private static final Logger LOG = Logger.getInstance(I18nizeQuickFix.class);
   private TextRange mySelectionRange;
 
   public I18nizeQuickFix(NlsInfo.Localized info) {
-    super(info);
+    super(info, UInjectionHost.class);
   }
 
   public I18nizeQuickFix() {
@@ -64,7 +64,12 @@ public class I18nizeQuickFix extends AbstractI18nizeQuickFix {
   }
 
   @Override
-  public JavaI18nizeQuickFixDialog createDialog(Project project, Editor editor, PsiFile psiFile) {
+  public UInjectionHost getEnclosingLiteral(PsiFile file, Editor editor) {
+    return I18nizeAction.getEnclosingStringLiteral(file, editor);
+  }
+
+  @Override
+  public JavaI18nizeQuickFixDialog<UInjectionHost> createDialog(Project project, Editor editor, PsiFile psiFile) {
     UInjectionHost literalExpression = I18nizeAction.getEnclosingStringLiteral(psiFile, editor);
     return createDialog(project, psiFile, literalExpression);
   }
@@ -72,10 +77,8 @@ public class I18nizeQuickFix extends AbstractI18nizeQuickFix {
   @Override
   protected void doReplacement(@NotNull PsiFile psiFile,
                                Editor editor,
-                               UExpression rawLiteralExpression,
+                               UInjectionHost literalExpression,
                                String i18nizedText) throws IncorrectOperationException {
-    UInjectionHost literalExpression = UastUtils.getParentOfType(rawLiteralExpression, UInjectionHost.class, false);
-    assert literalExpression != null; // literalExpression shouldn't be null because it's checked in `checkApplicability` method
     UastCodeGenerationPlugin generationPlugin = UastCodeGenerationPlugin.byLanguage(literalExpression.getLang());
     Document document = editor.getDocument();
     if (mySelectionRange != null && generationPlugin != null) {
@@ -98,19 +101,16 @@ public class I18nizeQuickFix extends AbstractI18nizeQuickFix {
     doDocumentReplacement(psiFile, literalExpression, i18nizedText, document, generationPlugin);
   }
 
-  @Override
-  protected JavaI18nizeQuickFixDialog createDialog(Project project,
-                                                   PsiFile context,
-                                                   @NotNull UExpression rawLiteralExpression) {
-    UInjectionHost literalExpression = UastUtils.getParentOfType(rawLiteralExpression, UInjectionHost.class, false);
-    assert literalExpression != null; // literalExpression shouldn't be null because it's checked in `checkApplicability` method
+  protected JavaI18nizeQuickFixDialog<UInjectionHost> createDialog(Project project,
+                                                                   PsiFile context,
+                                                                   @NotNull UInjectionHost literalExpression) {
     String value = StringUtil.notNullize(literalExpression.evaluateToString());
     if (mySelectionRange != null) {
       TextRange literalRange = literalExpression.getSourcePsi().getTextRange();
       TextRange intersection = literalRange.intersection(mySelectionRange);
       value = literalExpression.asSourceString().substring(intersection.getStartOffset() - literalRange.getStartOffset(), intersection.getEndOffset() - literalRange.getStartOffset());
     }
-    return new JavaI18nizeQuickFixDialog(project, context, literalExpression, value, getCustomization(value), true, true);
+    return new JavaI18nizeQuickFixDialog<>(project, context, literalExpression, value, getCustomization(value), true, true);
   }
 
   @Nullable

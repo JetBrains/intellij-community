@@ -48,7 +48,7 @@ public class I18nizeTest extends LightJavaCodeInsightTestCase {
     doTest("i18nizedExpr");
   }
 
-  private void doTest(String i18nizedText) {
+  private <T extends UExpression> void doTest(String i18nizedText) {
     configureByFile(getBasePath() + "/before" + getTestName(false) + "." + "java");
     I18nizeAction action = new I18nizeAction();
     DataContext dataContext = DataManager.getInstance().getDataContext(getEditor().getComponent());
@@ -56,7 +56,7 @@ public class I18nizeTest extends LightJavaCodeInsightTestCase {
     action.update(event);
     @NonNls String afterFile = getBasePath() + "/after" + getTestName(false) + "." + "java";
     boolean afterFileExists = new File(PathManagerEx.getTestDataPath() + afterFile).exists();
-    I18nQuickFixHandler handler = I18nizeAction.getHandler(event);
+    I18nQuickFixHandler<T> handler = (I18nQuickFixHandler<T>)I18nizeAction.getHandler(event);
     try {
       if (handler != null) {
         handler.checkApplicability(getFile(), getEditor());
@@ -68,7 +68,7 @@ public class I18nizeTest extends LightJavaCodeInsightTestCase {
     assertEquals(afterFileExists, event.getPresentation().isEnabled());
 
     if (afterFileExists) {
-      UInjectionHost literalExpression = I18nizeAction.getEnclosingStringLiteral(getFile(), getEditor());
+      T literalExpression = handler.getEnclosingLiteral(getFile(), getEditor());
       assertNotNull(handler);
       ApplicationManager.getApplication().runWriteAction(() -> {
         handler.performI18nization(getFile(),

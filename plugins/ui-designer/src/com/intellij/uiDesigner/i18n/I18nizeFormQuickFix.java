@@ -60,7 +60,7 @@ public class I18nizeFormQuickFix extends QuickFix {
       return;
     }
     String initialValue = StringUtil.escapeStringCharacters(descriptor.getValue());
-    final JavaI18nizeQuickFixDialog dialog = new JavaI18nizeQuickFixDialog(project, psiFile, null, initialValue, null, false, false) {
+    final JavaI18nizeQuickFixDialog<?> dialog = new JavaI18nizeQuickFixDialog<>(project, psiFile, null, initialValue, null, false, false) {
       @Override
       protected String getDimensionServiceKey() {
         return "#com.intellij.codeInsight.i18n.I18nizeQuickFixDialog_Form";

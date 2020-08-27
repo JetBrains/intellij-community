@@ -45,8 +45,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
-  private final UExpression myLiteralExpression; // Mostly UPolyadicExpression or UInjectionHost
+public class JavaI18nizeQuickFixDialog<T extends UExpression> extends I18nizeQuickFixDialog {
+  private final T myLiteralExpression;
 
   private final JLabel myPreviewLabel;
   private final JPanel myHyperLinkPanel;
@@ -66,7 +66,7 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
 
   public JavaI18nizeQuickFixDialog(@NotNull Project project,
                                    @NotNull final PsiFile context,
-                                   @Nullable final UExpression literalExpression,
+                                   @Nullable final T literalExpression,
                                    @NotNull String defaultPropertyValue,
                                    DialogCustomization customization,
                                    final boolean showJavaCodeInfo,
@@ -282,7 +282,7 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
     return myShowJavaCodeInfo ? myRBEditorTextField.getText() : null;
   }
 
-  public UExpression getLiteralExpression() {
+  public T getLiteralExpression() {
     return myLiteralExpression;
   }
 
