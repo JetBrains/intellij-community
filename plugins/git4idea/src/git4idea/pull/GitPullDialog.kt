@@ -29,6 +29,7 @@ import com.intellij.ui.components.JBTextField
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
+import git4idea.GitRemoteBranch
 import git4idea.GitUtil
 import git4idea.GitVcs
 import git4idea.branch.GitBranchUtil
@@ -119,7 +120,11 @@ class GitPullDialog(private val project: Project,
 
   fun getSelectedRemote(): GitRemote = remoteField.item
 
-  fun getSelectedBranches() = listOf(branchField.item)
+  fun getSelectedBranch(): GitRemoteBranch {
+    val branchName = "${getSelectedRemote().name}/${branchField.item}"
+    return getSelectedRepository().branches.findRemoteBranch(branchName)
+           ?: error("Unable to find remote branch: $branchName")
+  }
 
   fun isCommitAfterMerge() = GitPullOption.NO_COMMIT !in selectedOptions
 
