@@ -5,14 +5,14 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.ide.configLocation
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
+import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeProjectLifecycleListener
 import kotlin.system.measureTimeMillis
 
 class DelayedProjectSynchronizer : StartupActivity {
   override fun runActivity(project: Project) {
-    if ((WorkspaceModel.getInstance(project) as WorkspaceModelImpl).loadedFromCache) {
-      // invokeLater / write locks / AWT  ?
+    if (LegacyBridgeProjectLifecycleListener.enabled(project)
+        && (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).loadedFromCache) {
       val loadingTime = measureTimeMillis {
         JpsProjectModelSynchronizer.getInstance(project)?.loadRealProject(project)
       }
