@@ -15,4 +15,5 @@ internal class UpdateFromSourcesSettingsState : BaseState() {
   var workIdePath by string()
   var buildDisabledPlugins by property(false)
   var pluginDirectoriesForDisabledPlugins by list<String>()
+  var restartAutomatically by property(false)
 }

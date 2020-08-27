@@ -41,6 +41,10 @@ class UpdateFromSourcesDialog(private val project: Project,
         checkBox(DevKitBundle.message("action.UpdateIdeFromSourcesAction.settings.enabled.plugins.only"), { !state.buildDisabledPlugins }, { state.buildDisabledPlugins = !it })
       }
       row {
+        checkBox(DevKitBundle.message("action.UpdateIdeFromSourcesAction.settings.restart.automatically"),
+                 { state.restartAutomatically }, { state.restartAutomatically = it })
+      }
+      row {
         checkBox(UIBundle.message("dialog.options.do.not.show"), { !state.showSettings }, { state.showSettings = !it },
                  "You can invoke 'Update From Sources Settings' action to change settings")
       }

@@ -33,6 +33,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.task.ProjectTaskManager
 import com.intellij.util.PathUtil
 import com.intellij.util.Restarter
+import com.intellij.util.TimeoutUtil
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.util.PsiUtil
@@ -65,6 +66,7 @@ internal open class UpdateIdeFromSourcesAction
     val state = UpdateFromSourcesSettings.getState()
     val devIdeaHome = project.basePath ?: return
     val workIdeHome = state.workIdePath ?: PathManager.getHomePath()
+    val restartAutomatically = state.restartAutomatically
     if (!ApplicationManager.getApplication().isRestartCapable && FileUtil.pathsEqual(workIdeHome, PathManager.getHomePath())) {
       return error("This IDE cannot restart itself so updating from sources isn't supported")
     }
@@ -110,7 +112,7 @@ internal open class UpdateIdeFromSourcesAction
       .buildAllModules()
       .onSuccess {
         if (!it.isAborted && !it.hasErrors()) {
-          runUpdateScript(params, project, workIdeHome, "$deployDir/$distRelativePath", backupDir)
+          runUpdateScript(params, project, workIdeHome, "$deployDir/$distRelativePath", backupDir, restartAutomatically)
         }
       }
   }
@@ -133,7 +135,8 @@ internal open class UpdateIdeFromSourcesAction
                               project: Project,
                               workIdeHome: String,
                               builtDistPath: String,
-                              backupDir: String) {
+                              backupDir: String,
+                              restartAutomatically: Boolean) {
     object : Task.Backgroundable(project, DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.title"), true) {
       override fun run(indicator: ProgressIndicator) {
         indicator.text = "Updating IDE from sources..."
@@ -174,13 +177,11 @@ internal open class UpdateIdeFromSourcesAction
             }
 
             val command = generateUpdateCommand(builtDistPath, workIdeHome)
-            if (indicator.isShowing) {
-              restartWithCommand(command)
+            if (restartAutomatically) {
+              ApplicationManager.getApplication().invokeLater { scheduleRestart(command, project) }
             }
             else {
-              notificationGroup.createNotification(title = DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.success.title"),
-                                                   content = DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.success.content"),
-                                                   listener = NotificationListener { _, _ -> restartWithCommand(command) }).notify(project)
+              showRestartNotification(command, project)
             }
           }
         })
@@ -191,6 +192,34 @@ internal open class UpdateIdeFromSourcesAction
         }
       }
     }.queue()
+  }
+
+  private fun showRestartNotification(command: Array<String>, project: Project) {
+    notificationGroup.createNotification(title = DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.success.title"),
+                                         content = DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.success.content"),
+                                         listener = NotificationListener { _, _ -> restartWithCommand(command) }).notify(project)
+  }
+
+  private fun scheduleRestart(command: Array<String>, project: Project) {
+    object : Task.Modal(project, DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.success.title"), true) {
+      override fun run(indicator: ProgressIndicator) {
+        indicator.isIndeterminate = false
+        var progress = 0
+        for (i in 10 downTo 1) {
+          indicator.text = DevKitBundle.message("action.UpdateIdeFromSourcesAction.progress.text.new.installation.prepared.ide.will.restart", i)
+          repeat(10) {
+            indicator.fraction = 0.01 * progress++
+            indicator.checkCanceled()
+            TimeoutUtil.sleep(100)
+          }
+        }
+        restartWithCommand(command)
+      }
+
+      override fun onCancel() {
+        showRestartNotification(command, project)
+      }
+    }.setCancelText(DevKitBundle.message("action.UpdateIdeFromSourcesAction.button.postpone")).queue()
   }
 
   private fun backupImportantFilesIfNeeded(workIdeHome: String,
