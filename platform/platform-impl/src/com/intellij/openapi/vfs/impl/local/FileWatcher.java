@@ -8,7 +8,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.local.FileWatcherNotificationSink;
@@ -37,13 +36,6 @@ import java.util.function.Supplier;
  */
 public final class FileWatcher {
   private static final Logger LOG = Logger.getInstance(FileWatcher.class);
-
-  public static final NotNullLazyValue<NotificationGroup> NOTIFICATION_GROUP = new NotNullLazyValue<NotificationGroup>() {
-    @Override
-    protected @NotNull NotificationGroup compute() {
-      return new NotificationGroup("File Watcher Messages", NotificationDisplayType.STICKY_BALLOON, true);
-    }
-  };
 
   final static class DirtyPaths {
     final Set<String> dirtyPaths = new HashSet<>();
@@ -180,7 +172,7 @@ public final class FileWatcher {
     LOG.warn(cause);
 
     if (myFailureShown.compareAndSet(false, true)) {
-      NotificationGroup group = NOTIFICATION_GROUP.getValue();
+      NotificationGroup group = NotificationGroupManager.getInstance().requireNotificationGroup("File Watcher Messages");
       String title = ApplicationBundle.message("watcher.slow.sync");
       ApplicationManager.getApplication().invokeLater(
         () -> Notifications.Bus.notify(group.createNotification(title, cause, NotificationType.WARNING, listener)),
