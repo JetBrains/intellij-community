@@ -125,7 +125,7 @@ public abstract class NonCodeMembersContributor {
 
   private static void dropCache() {
     cache = null;
-    PatternCompilerFactory.getFactory().clear();
+    PatternCompilerFactory.getFactory().dropCache();
   }
 
   private static void ensureInit() {

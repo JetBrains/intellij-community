@@ -28,5 +28,5 @@ public abstract class PatternCompilerFactory {
     return getPatternCompiler(getPatternClasses(alias));
   }
 
-  public abstract void clear();
+  public abstract void dropCache();
 }

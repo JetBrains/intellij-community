@@ -87,7 +87,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
 
     private void reloadInjections() {
       myDefaultInjections.clear();
-      PatternCompilerFactory.getFactory().clear();
+      PatternCompilerFactory.getFactory().dropCache();
       loadState(getState());
       myDefaultInjections.addAll(Configuration.loadDefaultInjections());
     }
