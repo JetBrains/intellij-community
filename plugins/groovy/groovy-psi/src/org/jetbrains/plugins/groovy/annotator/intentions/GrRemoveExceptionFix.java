@@ -11,7 +11,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrCatchClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrDisjunctionTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
@@ -26,10 +26,10 @@ public class GrRemoveExceptionFix implements IntentionAction {
   public GrRemoveExceptionFix(boolean isDisjunction) {
     myDisjunction = isDisjunction;
     if (isDisjunction) {
-      myText = GroovyIntentionsBundle.message("remove.exception");
+      myText = GroovyBundle.message("remove.exception");
     }
     else {
-      myText = GroovyIntentionsBundle.message("remove.catch.block");
+      myText = GroovyBundle.message("remove.catch.block");
     }
   }
 
@@ -43,7 +43,7 @@ public class GrRemoveExceptionFix implements IntentionAction {
   @NotNull
   @Override
   public String getFamilyName() {
-    return GroovyIntentionsBundle.message("try.catch.fix");
+    return GroovyBundle.message("try.catch.fix");
   }
 
   @Override

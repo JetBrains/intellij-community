@@ -14,8 +14,8 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.StringComboboxEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.settings.GroovyApplicationSettings;
 
@@ -43,7 +43,7 @@ public class GroovyMapParameterDialog extends DialogWrapper {
   }
 
   private void setUpDialog(final @NlsSafe String[] possibleNames, boolean createNew) {
-    setTitle(GroovyIntentionsBundle.message("convert.param.to.map.entry"));
+    setTitle(GroovyBundle.message("convert.param.to.map.entry"));
 
     if (GroovyApplicationSettings.getInstance().CONVERT_PARAM_CREATE_NEW_PARAM != null) {
       myCreateNew.setSelected(createNew = GroovyApplicationSettings.getInstance().CONVERT_PARAM_CREATE_NEW_PARAM.booleanValue());

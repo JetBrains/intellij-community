@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
@@ -18,8 +18,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.actions.GroovyTemplates;
-import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.intentions.base.IntentionUtils;
 import org.jetbrains.plugins.groovy.lang.GrCreateClassKind;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
@@ -143,7 +143,7 @@ public abstract class CreateClassFix {
         if (template == null) {
           ApplicationManager.getApplication().invokeLater(() -> {
             if (editor != null && editor.getComponent().isDisplayable()) {
-              HintManager.getInstance().showErrorHint(editor, GroovyIntentionsBundle.message("cannot.create.class"));
+              HintManager.getInstance().showErrorHint(editor, GroovyBundle.message("cannot.create.class"));
             }
           });
           return;

@@ -27,7 +27,6 @@ import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.intentions.GroovyIntentionsBundle;
 import org.jetbrains.plugins.groovy.intentions.base.Intention;
 import org.jetbrains.plugins.groovy.intentions.base.PsiElementPredicate;
 import org.jetbrains.plugins.groovy.lang.psi.GrNamedElement;
@@ -91,17 +90,17 @@ public class ConvertParameterToMapEntryIntention extends Intention {
         LOG.assertTrue(namedElement != null);
         final String msg;
         if (isClosure) {
-          msg = GroovyIntentionsBundle.message("wrong.closure.first.parameter.type", namedElement.getName(), firstParam.getName());
+          msg = GroovyBundle.message("wrong.closure.first.parameter.type", namedElement.getName(), firstParam.getName());
         }
         else {
-          msg = GroovyIntentionsBundle.message("wrong.method.first.parameter.type", namedElement.getName(), firstParam.getName());
+          msg = GroovyBundle.message("wrong.method.first.parameter.type", namedElement.getName(), firstParam.getName());
         }
         showErrorMessage(msg, project);
         return;
       }
       case MUST_BE_MAP: {
         if (firstParam == getAppropriateParameter(element)) {
-          final String msg = GroovyIntentionsBundle.message("convert.cannot.itself");
+          final String msg = GroovyBundle.message("convert.cannot.itself");
           showErrorMessage(msg, project);
           return;
         }
@@ -148,7 +147,7 @@ public class ConvertParameterToMapEntryIntention extends Intention {
         occurrence = occurrence.getParent();
       }
       if (occurrence instanceof GrArgumentList) {
-        conflicts.putValue(origin, GroovyIntentionsBundle.message("closure.used.as.variable"));
+        conflicts.putValue(origin, GroovyBundle.message("closure.used.as.variable"));
       }
     }
   }
@@ -395,8 +394,8 @@ public class ConvertParameterToMapEntryIntention extends Intention {
     boolean result = true;
     final StringBuilder msg = new StringBuilder();
     msg.append(
-      isClosure ? GroovyIntentionsBundle.message("conversion.closure.not.allowed.in.non.groovy.files")
-                : GroovyIntentionsBundle.message("conversion.method.not.allowed.in.non.groovy.files")
+      isClosure ? GroovyBundle.message("conversion.closure.not.allowed.in.non.groovy.files")
+                : GroovyBundle.message("conversion.method.not.allowed.in.non.groovy.files")
     );
     for (PsiElement element : occurrences) {
       final PsiFile file = element.getContainingFile();
@@ -421,8 +420,8 @@ public class ConvertParameterToMapEntryIntention extends Intention {
     final Ref<Boolean> result = new Ref<>(true);
     final Task task = new Task.Modal(
       project,
-      owner instanceof GrClosableBlock ? GroovyIntentionsBundle.message("find.method.ro.closure.usages")
-                                       : GroovyIntentionsBundle.message("find.method.ro.method.usages"),
+      owner instanceof GrClosableBlock ? GroovyBundle.message("find.method.ro.closure.usages")
+                                       : GroovyBundle.message("find.method.ro.method.usages"),
       true
     ) {
       @Override
