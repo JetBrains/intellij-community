@@ -33,7 +33,7 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix {
 
   @Override
   public void checkApplicability(final PsiFile psiFile, final Editor editor) throws IncorrectOperationException {
-    @Nullable UPolyadicExpression concatenation = getEnclosingLiteralConcatenation(psiFile, editor);
+    UPolyadicExpression concatenation = getEnclosingLiteralConcatenation(psiFile, editor);
     if (concatenation != null) return;
     String message = JavaI18nBundle.message("quickfix.i18n.concatentation.error");
     throw new IncorrectOperationException(message);
@@ -41,11 +41,8 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix {
 
   @Override
   public JavaI18nizeQuickFixDialog createDialog(Project project, Editor editor, PsiFile psiFile) {
-    @Nullable UPolyadicExpression concatenation = getEnclosingLiteralConcatenation(psiFile, editor);
-    assert concatenation != null;
-    UInjectionHost literalExpression = getContainingLiteral(concatenation);
-    if (literalExpression == null) return null;
-    return createDialog(project, psiFile, literalExpression);
+    UPolyadicExpression concatenation = getEnclosingLiteralConcatenation(psiFile, editor);
+    return concatenation == null ? null : createDialog(project, psiFile, concatenation);
   }
 
   @Override
@@ -57,22 +54,21 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix {
   @Override
   protected void doReplacement(@NotNull final PsiFile psiFile,
                                @NotNull final Editor editor,
-                               @Nullable UInjectionHost literalExpression,
+                               @Nullable UExpression literalExpression,
                                String i18nizedText) throws IncorrectOperationException {
-    @Nullable UPolyadicExpression concatenation = getEnclosingLiteralConcatenation(psiFile, editor);
+    @Nullable UPolyadicExpression concatenation = getEnclosingLiteralConcatenation(literalExpression);
     assert concatenation != null;
     UastCodeGenerationPlugin generationPlugin = UastCodeGenerationPlugin.byLanguage(psiFile.getLanguage());
     doDocumentReplacement(psiFile, concatenation, i18nizedText, editor.getDocument(), generationPlugin);
   }
 
   @Override
-  protected JavaI18nizeQuickFixDialog createDialog(final Project project, final PsiFile context, final UInjectionHost literalExpression) {
+  protected JavaI18nizeQuickFixDialog createDialog(final Project project, final PsiFile context, @NotNull UExpression concatenation) {
     final List<UExpression> args = new ArrayList<>();
-    UExpression expression = getEnclosingLiteralConcatenation(literalExpression.getSourcePsi());
     String formatString = JavaI18nUtil
-      .buildUnescapedFormatString(Objects.requireNonNull(UStringConcatenationsFacade.createFromTopConcatenation(expression)), args, project);
+      .buildUnescapedFormatString(Objects.requireNonNull(UStringConcatenationsFacade.createFromTopConcatenation(concatenation)), args, project);
 
-    return new JavaI18nizeQuickFixDialog(project, context, literalExpression, formatString, getCustomization(formatString), true, true) {
+    return new JavaI18nizeQuickFixDialog(project, context, concatenation, formatString, getCustomization(formatString), true, true) {
       @Override
       @Nullable
       protected String getTemplateName() {
@@ -82,7 +78,7 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix {
       @Override
       protected String generateText(final I18nizedTextGenerator textGenerator, final @NotNull String propertyKey, final PropertiesFile propertiesFile,
                                     final PsiElement context) {
-        return textGenerator.getI18nizedConcatenationText(propertyKey, JavaI18nUtil.composeParametersText(args), propertiesFile, literalExpression.getSourcePsi());
+        return textGenerator.getI18nizedConcatenationText(propertyKey, JavaI18nUtil.composeParametersText(args), propertiesFile, concatenation.getSourcePsi());
       }
 
       @Override
@@ -104,7 +100,14 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix {
 
   @Nullable
   public static UPolyadicExpression getEnclosingLiteralConcatenation(final PsiElement psiElement) {
-    UExpression topExpression = UastContextKt.getUastParentOfType(psiElement, UPolyadicExpression.class);
+    return getEnclosingLiteralConcatenation(UastContextKt.getUastParentOfType(psiElement, UPolyadicExpression.class));
+  }
+
+  public static @Nullable UPolyadicExpression getEnclosingLiteralConcatenation(@Nullable UExpression literalExpression) {
+    if (literalExpression == null) {
+      return null;
+    }
+    UExpression topExpression = UastUtils.getParentOfType(literalExpression, UPolyadicExpression.class, false);
     UStringConcatenationsFacade concatenation = null;
     while (topExpression != null) {
       UStringConcatenationsFacade nextConcatenation = UStringConcatenationsFacade.createFromTopConcatenation(topExpression);
@@ -112,8 +115,8 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix {
         concatenation = nextConcatenation;
       }
       UElement parent = topExpression.getUastParent();
-      if (parent instanceof UParenthesizedExpression || 
-          parent instanceof UIfExpression || 
+      if (parent instanceof UParenthesizedExpression ||
+          parent instanceof UIfExpression ||
           parent instanceof UPolyadicExpression && !UastExpressionUtils.isAssignment(parent)) {
         topExpression = (UExpression)parent;
       }
@@ -121,22 +124,13 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix {
         break;
       }
     }
-    
+
     if (concatenation != null) {
       PartiallyKnownString pks = concatenation.asPartiallyKnownString();
       if (pks.getSegments().size() == 1) {
         return null;
       }
       return (UPolyadicExpression)concatenation.getRootUExpression();
-    }
-    return null;
-  }
-
-  private static UInjectionHost getContainingLiteral(final UPolyadicExpression concatenation) {
-    for (UExpression operand : concatenation.getOperands()) {
-      if (operand instanceof UInjectionHost) {
-        return (UInjectionHost)operand;
-      }
     }
     return null;
   }

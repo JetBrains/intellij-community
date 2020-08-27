@@ -93,7 +93,7 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler, High
   @Override
   public void performI18nization(final PsiFile psiFile,
                                  final Editor editor,
-                                 UInjectionHost literalExpression,
+                                 UExpression literalExpression,
                                  Collection<PropertiesFile> propertiesFiles,
                                  String key, String value, String i18nizedText,
                                  UExpression[] parameters,
@@ -148,8 +148,10 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler, High
 
   protected void doReplacement(@NotNull PsiFile psiFile,
                                Editor editor,
-                               UInjectionHost literalExpression,
+                               UExpression rawLiteralExpression,
                                String i18nizedText) throws IncorrectOperationException {
+    UInjectionHost literalExpression = UastUtils.getParentOfType(rawLiteralExpression, UInjectionHost.class, false);
+    assert literalExpression != null; // literalExpression shouldn't be null because it's checked in `checkApplicability` method
     UastCodeGenerationPlugin generationPlugin = UastCodeGenerationPlugin.byLanguage(literalExpression.getLang());
     Document document = editor.getDocument();
     if (mySelectionRange != null && generationPlugin != null) {
@@ -202,7 +204,9 @@ public class I18nizeQuickFix implements LocalQuickFix, I18nQuickFixHandler, High
     generationPlugin.replace(uElement, uElement, UElement.class);
   }
 
-  protected JavaI18nizeQuickFixDialog createDialog(final Project project, final PsiFile context, final UInjectionHost literalExpression) {
+  protected JavaI18nizeQuickFixDialog createDialog(final Project project, final PsiFile context, final UExpression rawLiteralExpression) {
+    UInjectionHost literalExpression = UastUtils.getParentOfType(rawLiteralExpression, UInjectionHost.class, false);
+    assert literalExpression != null; // literalExpression shouldn't be null because it's checked in `checkApplicability` method
     String value = StringUtil.notNullize(literalExpression.evaluateToString());
     if (mySelectionRange != null) {
       TextRange literalRange = literalExpression.getSourcePsi().getTextRange();

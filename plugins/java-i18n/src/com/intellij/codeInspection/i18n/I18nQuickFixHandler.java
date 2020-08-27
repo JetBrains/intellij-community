@@ -35,7 +35,7 @@ public interface I18nQuickFixHandler {
                           final Editor editor) throws IncorrectOperationException;
   void performI18nization(final PsiFile psiFile,
                           final Editor editor,
-                          UInjectionHost literalExpression,
+                          UExpression literalExpression,
                           Collection<PropertiesFile> propertiesFiles,
                           String key,
                           String value,

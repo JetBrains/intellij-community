@@ -71,7 +71,7 @@ public class I18nizeJspHandlerProvider extends I18nizeHandlerProvider {
     @Override
     public void performI18nization(final PsiFile psiFile,
                                    final Editor editor,
-                                   UInjectionHost literalExpression,
+                                   UExpression literalExpression,
                                    Collection<PropertiesFile> propertiesFiles,
                                    String key, String value, String i18nizedText,
                                    UExpression[] parameters,

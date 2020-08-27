@@ -23,6 +23,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UExpression;
 import org.jetbrains.uast.UastContextKt;
 import org.jetbrains.uast.UastUtils;
 import org.jetbrains.uast.expressions.UInjectionHost;

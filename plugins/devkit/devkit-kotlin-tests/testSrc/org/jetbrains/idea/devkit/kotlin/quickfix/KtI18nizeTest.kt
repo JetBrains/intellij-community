@@ -80,6 +80,18 @@ class KtI18nizeTest : LightJavaCodeInsightFixtureTestCase() {
     }
   """.trimIndent())
 
+  fun testConcatenationWithInterpolation() = doTest("""
+    fun main() {
+      val bar = "bar"
+      val foo = "str<caret>ing ${'$'}bar string1" + bar
+    }
+  """.trimIndent(), """
+    fun main() {
+      val bar = "bar"
+      val foo = $i18nizedExpr
+    }
+  """.trimIndent())
+
   fun testOutsideLiteral() = doTest("""
     fun main() {
       <caret>val foo = "string"

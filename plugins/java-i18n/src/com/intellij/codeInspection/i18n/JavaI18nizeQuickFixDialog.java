@@ -33,6 +33,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UPolyadicExpression;
 import org.jetbrains.uast.expressions.UInjectionHost;
 
 import javax.swing.*;
@@ -45,7 +46,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
-  private final UInjectionHost myLiteralExpression;
+  private final UExpression myLiteralExpression; // Mostly UPolyadicExpression or UInjectionHost
 
   private final JLabel myPreviewLabel;
   private final JPanel myHyperLinkPanel;
@@ -65,7 +66,7 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
 
   public JavaI18nizeQuickFixDialog(@NotNull Project project,
                                    @NotNull final PsiFile context,
-                                   @Nullable final UInjectionHost literalExpression,
+                                   @Nullable final UExpression literalExpression,
                                    @NotNull String defaultPropertyValue,
                                    DialogCustomization customization,
                                    final boolean showJavaCodeInfo,
@@ -281,7 +282,7 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
     return myShowJavaCodeInfo ? myRBEditorTextField.getText() : null;
   }
 
-  public UInjectionHost getLiteralExpression() {
+  public UExpression getLiteralExpression() {
     return myLiteralExpression;
   }
 
