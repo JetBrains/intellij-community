@@ -73,11 +73,3 @@ fun Credentials?.isFulfilled() = this != null && userName != null && !password.i
 fun Credentials?.hasOnlyUserName() = this != null && userName != null && password.isNullOrEmpty()
 
 fun Credentials?.isEmpty() = this == null || (userName == null && password.isNullOrEmpty())
-
-/**
- * Tries to get credentials both by `newAttributes` and `oldAttributes`, and if they are available by `oldAttributes` migrates old to new,
- * i.e. removes `oldAttributes` from the credentials store, and adds `newAttributes` instead.
- */
-fun getAndMigrateCredentials(oldAttributes: CredentialAttributes, newAttributes: CredentialAttributes): Credentials? {
-  return PasswordSafe.instance.get(newAttributes)
-}
