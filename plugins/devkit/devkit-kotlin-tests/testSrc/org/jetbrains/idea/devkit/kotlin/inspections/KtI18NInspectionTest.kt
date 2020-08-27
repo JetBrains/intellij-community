@@ -168,6 +168,16 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
   
+  fun testConcatenation() {
+    myFixture.enableInspections(I18nInspection())
+    myFixture.configureByText("Foo.kt", """
+        fun test() {
+          @org.jetbrains.annotations.NonNls val <warning descr="[UNUSED_VARIABLE] Variable 'id' is never used">id</warning> = "foo:" + "bar"
+        }
+    """.trimIndent())
+    myFixture.testHighlighting()
+  }
+  
   fun testFunctionParametersOnlyNls() {
     val inspection = I18nInspection()
     inspection.setIgnoreForAllButNls(true)
