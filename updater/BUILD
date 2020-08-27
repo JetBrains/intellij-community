@@ -1,4 +1,5 @@
 load("//tools/base/bazel:bazel.bzl", "iml_module")
+load("//tools/base/bazel:utils.bzl", "select_project")
 
 # managed by go/iml_to_build
 iml_module(
@@ -54,9 +55,13 @@ iml_module(
 java_binary(
     name = "updater",
     main_class = "com.intellij.updater.Runner",
-    visibility = ["//visibility:public"],
     # This uses the jar rather than the iml_module to avoid packaging jdk langtools
     # TODO(b/124044861): switch to using the below java_binary with deploy_env once we are on a bazel that supports it.
+    tags = select_project({
+        "unb": ["manual"],
+        "": [],
+    }),
+    visibility = ["//visibility:public"],
     runtime_deps = [
         ":intellij.platform.updater.jar",
         "//prebuilts/tools/common/m2/repository/com/nothome/javaxdelta/2.0.1:jar",
