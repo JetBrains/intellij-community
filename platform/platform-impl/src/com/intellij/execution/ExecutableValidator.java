@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.CommonBundle;
@@ -13,8 +13,12 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,7 +68,7 @@ public abstract class ExecutableValidator {
    * @return the settings configurable display name, where the executable is shown and can be fixed.
    *         This configurable will be opened if user presses "Fix" on the notification about invalid executable.
    */
-  @NotNull
+  @NotNull @Nls
   protected abstract String getConfigurableDisplayName();
 
   @Nullable
@@ -134,22 +138,27 @@ public abstract class ExecutableValidator {
   }
 
   @NotNull
-  protected @NlsContexts.NotificationContent String prepareDescription(@NotNull String description, boolean appendFixIt) {
-    StringBuilder result = new StringBuilder();
-    String executable = getCurrentExecutable();
+  protected @NlsContexts.NotificationContent String prepareDescription(@NotNull @Nls String description, boolean appendFixIt) {
+    @NlsSafe String executable = getCurrentExecutable();
+
+    HtmlBuilder builder = new HtmlBuilder();
 
     if (executable.isEmpty()) {
-      result.append(String.format("<b>%s</b>%s", myNotificationErrorTitle, description));
+      builder.append(HtmlChunk.raw(myNotificationErrorTitle).bold()).append(HtmlChunk.raw(description));
     }
     else {
-      result.append(
-        String.format("<b>%s:</b> <b>%s</b><br/>%s", myNotificationErrorTitle, executable, description));
+      builder
+        .append(HtmlChunk.raw(myNotificationErrorTitle).bold())
+        .append(" ")
+        .append(HtmlChunk.text(executable).bold())
+        .append(HtmlChunk.br())
+        .append(HtmlChunk.raw(description));
     }
     if (appendFixIt) {
-      result.append(" <a href=''>Fix it.</a>");
+      builder.append(" ").appendLink("", IdeBundle.message("button.fix.it"));
     }
 
-    return result.toString();
+    return builder.toString();
   }
 
   protected void showSettingsAndExpireIfFixed(@NotNull Notification notification) {

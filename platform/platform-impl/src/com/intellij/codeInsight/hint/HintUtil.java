@@ -78,7 +78,7 @@ public final class HintUtil {
   public static JComponent createInformationLabel(@NotNull @HintText String text,
                                                   @Nullable HyperlinkListener hyperlinkListener,
                                                   @Nullable MouseListener mouseListener,
-                                                  @Nullable Ref<? super Consumer<? super String>> updatedTextConsumer) {
+                                                  @Nullable Ref<? super Consumer<@Nls String>> updatedTextConsumer) {
     HintHint hintHint = getInformationHint();
     HintLabel label = createLabel(text, null, hintHint.getTextBackground(), hintHint);
     configureLabel(label, hyperlinkListener, mouseListener, updatedTextConsumer);
@@ -159,8 +159,7 @@ public final class HintUtil {
 
   public static JComponent createErrorLabel(@NotNull @HintText String text,
                                             @Nullable HyperlinkListener hyperlinkListener,
-                                            @Nullable MouseListener mouseListener,
-                                            @Nullable Ref<? super Consumer<? super String>> updatedTextConsumer) {
+                                            @Nullable MouseListener mouseListener) {
     Color bg = getErrorColor();
     HintHint hintHint = new HintHint().setTextBg(bg)
                                       .setTextFg(JBColor.foreground())
@@ -168,13 +167,13 @@ public final class HintUtil {
                                       .setAwtTooltip(true);
 
     HintLabel label = createLabel(text, null, bg, hintHint);
-    configureLabel(label, hyperlinkListener, mouseListener, updatedTextConsumer);
+    configureLabel(label, hyperlinkListener, mouseListener, null);
     return label;
   }
 
   @NotNull
   public static JComponent createErrorLabel(@NotNull @HintText String text) {
-    return createErrorLabel(text, null, null, null);
+    return createErrorLabel(text, null, null);
   }
 
   @NotNull
@@ -228,7 +227,7 @@ public final class HintUtil {
 
   private static void configureLabel(@NotNull HintLabel label, @Nullable HyperlinkListener hyperlinkListener,
                                      @Nullable MouseListener mouseListener,
-                                     @Nullable Ref<? super Consumer<? super String>> updatedTextConsumer) {
+                                     @Nullable Ref<? super Consumer<@Nls String>> updatedTextConsumer) {
     if (hyperlinkListener != null) {
       label.myPane.addHyperlinkListener(hyperlinkListener);
     }
@@ -236,7 +235,7 @@ public final class HintUtil {
       label.myPane.addMouseListener(mouseListener);
     }
     if (updatedTextConsumer != null) {
-      Consumer<? super String> consumer = s -> {
+      Consumer<@Nls String> consumer = s -> {
         label.myPane.setText(s);
 
         // Force preferred size recalculation.
@@ -290,7 +289,7 @@ public final class HintUtil {
       repaint();
     }
 
-    public void setText(String s, HintHint hintHint) {
+    public void setText(@NlsContexts.Tooltip String s, HintHint hintHint) {
       clearText();
 
       if (s != null) {

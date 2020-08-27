@@ -87,9 +87,9 @@ public interface ApplicationEx extends Application {
    * @return true if process run successfully and was not canceled.
    */
   boolean runProcessWithProgressSynchronouslyInReadAction(@Nullable Project project,
-                                                          @NotNull String progressTitle,
+                                                          @NotNull @NlsContexts.ProgressTitle String progressTitle,
                                                           boolean canBeCanceled,
-                                                          String cancelText,
+                                                          @NlsContexts.Button String cancelText,
                                                           JComponent parentComponent,
                                                           @NotNull Runnable process);
 

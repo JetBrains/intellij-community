@@ -26,6 +26,7 @@ import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsActions.ActionText;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.*;
 import com.intellij.ui.AnimatedIcon.Recording;
@@ -38,6 +39,7 @@ import com.intellij.util.ui.BaseButtonBehavior;
 import com.intellij.util.ui.PositionTracker;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -56,7 +58,6 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
   private static final Logger LOG = Logger.getInstance(ActionMacroManager.class);
 
   private static final String TYPING_SAMPLE = "WWWWWWWWWWWWWWWWWWWW";
-  private static final String RECORDED = "Recorded: ";
   public static final String NO_NAME_NAME = "<noname>";
 
   private boolean myIsRecording;
@@ -193,7 +194,7 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
 
       final NonOpaquePanel top = new NonOpaquePanel(new BorderLayout());
       top.add(tb.getComponent(), BorderLayout.WEST);
-      myText = new JLabel(RECORDED + "..." + TYPING_SAMPLE, SwingConstants.LEFT);
+      myText = new JLabel(IdeBundle.message("status.bar.text.macro.recorded", "..." + TYPING_SAMPLE), SwingConstants.LEFT);
       final Dimension preferredSize = myText.getPreferredSize();
       myText.setPreferredSize(preferredSize);
       myText.setText(IdeBundle.message("label.macro.recording.started"));
@@ -283,7 +284,7 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
       myStatusBar.removeWidget(ID());
     }
 
-    public void notifyUser(String text) {
+    public void notifyUser(@Nls String text) {
       myText.setText(text);
       myText.revalidate();
       myText.repaint();
@@ -361,12 +362,12 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
     final PlaybackRunner runner = new PlaybackRunner(script.toString(), new PlaybackRunner.StatusCallback.Edt() {
 
       @Override
-      public void messageEdt(PlaybackContext context, String text, Type type) {
+      public void messageEdt(PlaybackContext context, @NlsContexts.StatusBarText String text, Type type) {
         if (type == Type.message || type == Type.error) {
           StatusBar statusBar = frame.getStatusBar();
           if (statusBar != null) {
             if (context != null) {
-              text = "Line " + context.getCurrentLine() + ": " + text;
+              text = IdeBundle.message("status.bar.message.at.line", context.getCurrentLine(), text);
             }
             statusBar.setInfo(text);
           }
@@ -379,7 +380,7 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
     runner.run()
       .doWhenDone(() -> {
         StatusBar statusBar = frame.getStatusBar();
-        statusBar.setInfo("Script execution finished");
+        statusBar.setInfo(IdeBundle.message("status.bar.text.script.execution.finished"));
       })
       .doWhenProcessed(() -> myIsPlaying = false);
   }
@@ -555,7 +556,7 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
     }
 
     if (myWidget != null) {
-      myWidget.notifyUser(RECORDED + actualText);
+      myWidget.notifyUser(IdeBundle.message("status.bar.text.macro.recorded", actualText));
     }
   }
 }

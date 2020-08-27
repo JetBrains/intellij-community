@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.CommonBundle;
@@ -6,9 +6,12 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,17 +52,18 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
   }
 
   protected void configureMessageArea(@NotNull JEditorPane area,
-                                      @NotNull String messageBody,
+                                      @NotNull @Nls String messageBody,
                                       @Nullable HyperlinkListener listener) {
-    String text =
-      "<html><head>" +
-      UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()) +
-      "<style>body {background: #" + ColorUtil.toHex(UIUtil.getPanelBackground()) + ";}</style>" +
-      "</head><body>" + messageBody + "</body></html>";
+    HtmlChunk. Element html = new HtmlBuilder()
+      .append(HtmlChunk.head()
+                .addRaw(UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()))
+                .child(HtmlChunk.styleTag("body {background: #" + ColorUtil.toHex(UIUtil.getPanelBackground()) + ";}")))
+      .append(HtmlChunk.body().addRaw(messageBody))
+      .wrapWith("html");
 
     area.setBackground(UIUtil.getPanelBackground());
     area.setBorder(JBUI.Borders.empty());
-    area.setText(text);
+    area.setText(html.toString());
     area.setCaretPosition(0);
     area.setEditable(false);
 

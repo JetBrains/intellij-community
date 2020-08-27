@@ -5,11 +5,11 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.util.ui.AsyncProcessIcon;
-import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -134,8 +134,10 @@ public class StatusPanel extends JBPanel {
 
     JBLabel label = new JBLabel(message);
     label
-      .setText(XmlStringUtil
-                 .wrapInHtml("<font color='#" + ColorUtil.toHex(color) + "'><left>" + message + "</left></b></font>"));
+      .setText(HtmlChunk.tag("font").attr("color", "#" + ColorUtil.toHex(color))
+               .child(HtmlChunk.tag("left").addRaw(message))
+               .wrapWith("html")
+               .toString());
     label.setIcon(statusIcon);
     label.setBorder(new EmptyBorder(4, 10, 0, 2));
 

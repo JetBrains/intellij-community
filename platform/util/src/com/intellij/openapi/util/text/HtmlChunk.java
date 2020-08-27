@@ -320,6 +320,14 @@ public abstract class HtmlChunk {
     return Element.HEAD;
   }
 
+  public static @NotNull Element styleTag(@NonNls @NotNull String style) {
+    return tag("style").addRaw(style); //NON-NLS
+  }
+
+  public static @NotNull Element font(@NonNls @NotNull String color) {
+    return tag("font").attr("color", color);
+  }
+
   /**
    * @return a &lt;body&gt; element.
    */

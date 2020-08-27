@@ -48,6 +48,7 @@ import static com.intellij.util.ui.JBUI.Panels.simplePanel;
 /**
  * @author Konstantin Bulenkov
  */
+@SuppressWarnings("HardCodedStringLiteral")
 public class ShowUIDefaultsAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {

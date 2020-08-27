@@ -186,7 +186,7 @@ public class WindowWrapperBuilder {
 
     private static class MyDialogWrapper extends DialogWrapper {
       @NotNull private final JComponent myComponent;
-      @Nullable private String myDimensionServiceKey;
+      @Nullable @NonNls private String myDimensionServiceKey;
       @Nullable private Computable<? extends JComponent> myPreferredFocusedComponent;
       @Nullable private BooleanGetter myOnCloseHandler;
 

@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 
+@SuppressWarnings("HardCodedStringLiteral")
 final class ShowEditorHighlighterTokensAction extends EditorAction {
   private static class Holder {
     private static final Key<String> TOKEN_NAME = Key.create("token.name");

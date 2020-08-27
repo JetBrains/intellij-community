@@ -3,6 +3,7 @@ package com.intellij.openapi.editor.markup
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.editor.EditorBundle
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.GridBag
 import org.jetbrains.annotations.Nls
@@ -26,12 +27,12 @@ enum class InspectionsLevel(@PropertyKey(resourceBundle = EditorBundle.BUNDLE) p
 /*
  * Per language highlight level
  */
-data class LanguageHighlightLevel(val langID: String, val level: InspectionsLevel)
+data class LanguageHighlightLevel(@NlsSafe @get:NlsSafe val langID: String, val level: InspectionsLevel)
 
 /**
  * Light wrapper for <code>ProgressableTextEditorHighlightingPass</code> with only essential UI data.
  */
-data class PassWrapper(val presentableName: String, val progress: Double, val finished: Boolean) {
+data class PassWrapper(@Nls @get:Nls val presentableName: String, val progress: Double, val finished: Boolean) {
   fun toPercent() : Int {
     val percent = (progress * 100).roundToInt()
     return if (percent == 100 && !finished) 99 else percent
@@ -112,7 +113,7 @@ interface UIController {
  * Container containing all necessary information for rendering TrafficLightRenderer.
  * Instance is created each time <code>ErrorStripeRenderer.getStatus</code> is called.
  */
-class AnalyzerStatus(val icon: Icon, val title: String, val details: String, controllerCreator: () -> UIController) {
+class AnalyzerStatus(val icon: Icon, @Nls @get:Nls val title: String, @Nls @get:Nls val details: String, controllerCreator: () -> UIController) {
   /**
    * Lazy UI controller getter. Call only when you do need access to the UI details.
    */

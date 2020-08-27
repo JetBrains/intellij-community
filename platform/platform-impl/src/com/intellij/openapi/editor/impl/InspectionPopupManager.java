@@ -30,6 +30,7 @@ import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -254,7 +255,7 @@ class InspectionPopupManager {
   }
 
   private @NotNull JComponent createDetailsPanel() {
-    StringBuilder text = new StringBuilder();
+    @Nls StringBuilder text = new StringBuilder();
     for (int i = 0; i < getAnalyzerStatus().getExpandedStatus().size(); i++) {
       boolean last = i == getAnalyzerStatus().getExpandedStatus().size() - 1;
       StatusItem item = getAnalyzerStatus().getExpandedStatus().get(i);

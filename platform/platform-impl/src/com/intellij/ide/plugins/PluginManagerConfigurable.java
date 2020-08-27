@@ -1363,7 +1363,7 @@ public class PluginManagerConfigurable
   }
 
   @Messages.YesNoResult
-  public static int showRestartDialog(@NotNull @NlsContexts.DialogTitle String title, @NotNull Function<? super String, String> message) {
+  public static int showRestartDialog(@NotNull @NlsContexts.DialogTitle String title, @NotNull Function<? super String, @Nls String> message) {
     String action =
       IdeBundle.message(ApplicationManager.getApplication().isRestartCapable() ? "ide.restart.action" : "ide.shutdown.action");
     return Messages
@@ -1374,7 +1374,7 @@ public class PluginManagerConfigurable
     shutdownOrRestartApp(IdeBundle.message("update.notifications.title"));
   }
 
-  public static void shutdownOrRestartApp(@NotNull String title) {
+  public static void shutdownOrRestartApp(@NotNull @NlsContexts.DialogTitle String title) {
     if (showRestartDialog(title) == Messages.YES) {
       ApplicationManagerEx.getApplicationEx().restart(true);
     }

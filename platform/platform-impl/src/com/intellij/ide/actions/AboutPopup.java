@@ -765,7 +765,7 @@ public final class AboutPopup {
 
         String resultHtmlText = getScaledHtmlText();
         if (StartupUiUtil.isUnderDarcula()) {
-          resultHtmlText = resultHtmlText.replaceAll("779dbd", "5676a0");
+          resultHtmlText = resultHtmlText.replaceAll("779dbd", "5676a0"); // NON-NLS
         }
         viewer.setText(resultHtmlText);
 
@@ -803,9 +803,9 @@ public final class AboutPopup {
     };
 
     ourPopup.cancel();
-    dialog.setTitle(String.format("Third-Party Software Used by %s %s",
-                                  ApplicationNamesInfo.getInstance().getFullProductName(),
-                                  ApplicationInfo.getInstance().getFullVersion()));
+    dialog.setTitle(IdeBundle.message("dialog.title.third.party.software",
+                                      ApplicationNamesInfo.getInstance().getFullProductName(),
+                                      ApplicationInfo.getInstance().getFullVersion()));
     dialog.setSize(JBUIScale.scale(750), JBUIScale.scale(650));
     dialog.show();
   }

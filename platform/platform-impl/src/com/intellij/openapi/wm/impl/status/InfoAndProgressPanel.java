@@ -42,6 +42,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -338,7 +339,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
     }
   }
 
-  public @NotNull Pair<String, String> setText(@Nullable String text, @Nullable String requestor) {
+  public @NotNull Pair<String, String> setText(@Nullable @NlsContexts.StatusBarText String text, @Nullable String requestor) {
     if (StringUtil.isEmpty(text) && !Objects.equals(requestor, myCurrentRequestor) && !EventLog.LOG_REQUESTOR.equals(requestor)) {
       return new Pair<>(myInfoPanel.getText(), myCurrentRequestor);
     }

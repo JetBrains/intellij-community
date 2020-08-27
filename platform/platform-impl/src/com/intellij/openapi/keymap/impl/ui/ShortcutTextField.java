@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.keymap.impl.ui;
 
@@ -141,14 +141,14 @@ public final class ShortcutTextField extends ExtendableTextField {
   @NotNull
   private @NlsContexts.Tooltip String getPopupTooltip() {
     StringBuilder sb = new StringBuilder();
-    String prefix = "Set shortcuts with ";
+    String prefix = "";
     for (KeyStroke stroke : getKeyStrokes()) {
       if (0 == stroke.getModifiers()) {
         sb.append(prefix).append(KeymapUtil.getKeystrokeText(stroke));
         prefix = ", ";
       }
     }
-    return sb.append(" keys").toString();
+    return IdeBundle.message("tooltip.text.add.shortcut.with.special.keys", sb.toString());
   }
 
   @NotNull

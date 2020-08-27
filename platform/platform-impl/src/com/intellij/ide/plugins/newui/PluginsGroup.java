@@ -18,7 +18,7 @@ import java.util.List;
  * @author Alexander Lobas
  */
 public class PluginsGroup {
-  protected final String myTitlePrefix;
+  protected final @Nls String myTitlePrefix;
   public @Nls String title;
   public JLabel titleLabel;
   public LinkLabel<Object> rightAction;

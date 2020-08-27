@@ -11,6 +11,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +22,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public class TextPanel extends NonOpaquePanel implements Accessible {
-  @Nullable private String myText;
+  @Nullable @Nls private String myText;
 
   private Integer myPrefHeight;
   private Dimension myExplicitSize;
@@ -60,7 +61,7 @@ public class TextPanel extends NonOpaquePanel implements Accessible {
 
   @Override
   protected void paintComponent(final Graphics g) {
-    String s = getText();
+    @Nls String s = getText();
     int panelWidth = getWidth();
     int panelHeight = getHeight();
     if (s == null) return;
@@ -103,7 +104,8 @@ public class TextPanel extends NonOpaquePanel implements Accessible {
     return insets.left;
   }
 
-  protected String truncateText(String text, Rectangle bounds, FontMetrics fm, Rectangle textR, Rectangle iconR, int maxWidth) {
+  @Nls
+  protected String truncateText(@Nls String text, Rectangle bounds, FontMetrics fm, Rectangle textR, Rectangle iconR, int maxWidth) {
     return SwingUtilities.layoutCompoundLabel(this, fm, text, null, SwingConstants.CENTER, SwingConstants.CENTER, SwingConstants.CENTER,
                                               SwingConstants.TRAILING,
                                               bounds, iconR, textR, 0);
@@ -139,6 +141,7 @@ public class TextPanel extends NonOpaquePanel implements Accessible {
   }
 
   @Nullable
+  @Nls
   public String getText() {
     return myText;
   }

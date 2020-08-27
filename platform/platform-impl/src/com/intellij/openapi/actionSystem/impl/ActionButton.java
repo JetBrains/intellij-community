@@ -14,7 +14,6 @@ import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ComponentUtil;
@@ -346,9 +345,9 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       if (StringUtil.isNotEmpty(text) || StringUtil.isNotEmpty(description)) {
         HelpTooltip ht = new HelpTooltip().setTitle(text).setShortcut(getShortcutText());
         if (myAction instanceof TooltipLinkProvider) {
-          Pair<@NotNull String, @NotNull Runnable> link = ((TooltipLinkProvider)myAction).getTooltipLink(this);
+          TooltipLinkProvider.TooltipLink link = ((TooltipLinkProvider)myAction).getTooltipLink(this);
           if (link != null) {
-            ht.setLink(link.first, link.second);
+            ht.setLink(link.tooltip, link.action);
           }
         }
         String id = ActionManager.getInstance().getId(myAction);

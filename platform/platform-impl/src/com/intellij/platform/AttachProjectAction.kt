@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform
 
 import com.intellij.ide.GeneralSettings
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.OpenProjectFileChooserDescriptor
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.AnAction
@@ -53,7 +54,8 @@ private fun attachProject(virtualFile: VirtualFile, project: Project) {
   }
 
   if (baseDir == null) {
-    Messages.showErrorDialog("Project not found in ${virtualFile.path}", "Can't Attach Project")
+    Messages.showErrorDialog(IdeBundle.message("dialog.message.attach.project.not.found", virtualFile.path),
+                             IdeBundle.message("dialog.title.attach.project.error"))
   }
   else {
     PlatformProjectOpenProcessor.attachToProject(project, Paths.get(FileUtil.toSystemDependentName(baseDir.path)), null)

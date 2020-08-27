@@ -78,8 +78,8 @@ public final class ErrorComponent {
   public static JComponent show(@NotNull JPanel panel,
                                 @Nullable Object constraints,
                                 @Nullable JComponent errorComponent,
-                                @NotNull String message,
-                                @Nullable String action,
+                                @NotNull @Nls String message,
+                                @Nullable @Nls String action,
                                 @Nullable Runnable enableCallback) {
     JComponent component = errorComponent == null ? create(panel, constraints) : errorComponent;
     show(component, message, action, enableCallback);

@@ -622,8 +622,8 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
       new MySwitchStateToggleAction("find.regex", "Regex",
                                     AllIcons.Actions.Regex, AllIcons.Actions.RegexHovered, AllIcons.Actions.RegexSelected,
                                     myRegexState, () -> !myHelper.getModel().isReplaceState() || !myPreserveCaseState.get(),
-                                    Pair.create(FindBundle.message("find.regex.help.link"),
-                                                RegExHelpPopup.createRegExLinkRunnable(mySearchTextArea)));
+                                    new TooltipLinkProvider.TooltipLink(FindBundle.message("find.regex.help.link"),
+                                                                        RegExHelpPopup.createRegExLinkRunnable(mySearchTextArea)));
     List<Component> searchExtraButtons =
       mySearchTextArea.setExtraActions(myCaseSensitiveAction, myWholeWordsAction, myRegexAction);
     AnAction preserveCaseAction =
@@ -1717,7 +1717,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     private final String myOptionName;
     private final AtomicBoolean myState;
     private final Producer<Boolean> myEnableStateProvider;
-    private final Pair<@NotNull String, @NotNull Runnable> myTooltipLink;
+    private final TooltipLink myTooltipLink;
 
     private MySwitchStateToggleAction(@NotNull String message,
                                       @NotNull String optionName,
@@ -1732,7 +1732,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
                                       @NotNull Icon icon, @NotNull Icon hoveredIcon, @NotNull Icon selectedIcon,
                                       @NotNull AtomicBoolean state,
                                       @NotNull Producer<Boolean> enableStateProvider,
-                                      @Nullable Pair<@NotNull String, @NotNull Runnable> tooltipLink) {
+                                      @Nullable TooltipLink tooltipLink) {
       super(FindBundle.message(message), null, icon);
       myOptionName = optionName;
       myState = state;
@@ -1748,7 +1748,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     }
 
     @Override
-    public @Nullable Pair<@NotNull String, @NotNull Runnable> getTooltipLink(@Nullable JComponent owner) {
+    public @Nullable TooltipLink getTooltipLink(@Nullable JComponent owner) {
       return myTooltipLink;
     }
 

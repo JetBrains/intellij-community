@@ -167,7 +167,7 @@ public class SliderSelectorAction extends DumbAwareAction {
       myMax = max;
     }
 
-    private static JLabel markLabel(final String text) {
+    private static JLabel markLabel(final @Nls String text) {
       JLabel label = new JLabel(text);
       label.setFont(UIUtil.getLabelFont());
       return label;

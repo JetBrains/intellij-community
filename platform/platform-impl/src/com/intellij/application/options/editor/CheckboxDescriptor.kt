@@ -1,9 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.editor
 
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.search.BooleanOptionDescription
-import com.intellij.openapi.util.NlsContext
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.layout.*
@@ -15,7 +14,7 @@ class CheckboxDescriptor(@NlsContexts.Checkbox val name: String,
                          @NlsContexts.DetailedDescription val comment: String? = null,
                          @Nls val groupName: String? = null) {
   constructor(@NlsContexts.Checkbox name: String, mutableProperty: KMutableProperty0<Boolean>,
-              @NlsContexts.DetailedDescription comment: String? = null, groupName: String? = null)
+              @NlsContexts.DetailedDescription comment: String? = null, @Nls groupName: String? = null)
     : this(name, mutableProperty.toBinding(), comment, groupName)
 
   fun asUiOptionDescriptor(): BooleanOptionDescription = asOptionDescriptor {

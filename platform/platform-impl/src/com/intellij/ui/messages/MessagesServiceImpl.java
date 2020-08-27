@@ -75,7 +75,7 @@ public class MessagesServiceImpl implements MessagesService {
   public int showMoreInfoMessageDialog(Project project,
                                        String message,
                                        String title,
-                                       String moreInfo,
+                                       @NlsContexts.DetailedDescription String moreInfo,
                                        String[] options,
                                        int defaultOptionIndex,
                                        int focusedOptionIndex,

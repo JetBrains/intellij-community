@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.BalloonHandler;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.PopupContent;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -33,6 +34,7 @@ import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,7 +70,7 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
   private JPanel myCenterPanel;
   private Component myHoveredComponent;
 
-  private String myInfo;
+  private @NlsContexts.StatusBarText String myInfo;
 
   private final List<String> myCustomComponentIds = new ArrayList<>();
 
@@ -392,7 +394,7 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
   }
 
   @Override
-  public void setInfo(@Nullable String s, @Nullable String requestor) {
+  public void setInfo(@Nullable @Nls String s, @Nullable String requestor) {
     UIUtil.invokeLaterIfNeeded(() -> {
       if (myInfoAndProgressPanel != null) {
         myInfo = myInfoAndProgressPanel.setText(s, requestor).first;
@@ -401,6 +403,7 @@ public final class IdeStatusBarImpl extends JComponent implements Accessible, St
   }
 
   @Override
+  @NlsContexts.StatusBarText
   public String getInfo() {
     return myInfo;
   }

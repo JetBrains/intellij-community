@@ -431,9 +431,9 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
 
   @Override
   public boolean runProcessWithProgressSynchronouslyInReadAction(final @Nullable Project project,
-                                                                 final @NotNull String progressTitle,
+                                                                 final @NotNull @NlsContexts.ProgressTitle String progressTitle,
                                                                  final boolean canBeCanceled,
-                                                                 final String cancelText,
+                                                                 final @NlsContexts.Button String cancelText,
                                                                  final JComponent parentComponent,
                                                                  final @NotNull Runnable process) {
     boolean writeAccessAllowed = isWriteAccessAllowed();

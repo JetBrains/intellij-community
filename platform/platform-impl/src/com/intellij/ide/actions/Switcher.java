@@ -33,6 +33,8 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
@@ -367,7 +369,7 @@ public final class Switcher extends AnAction implements DumbAware {
     };
 
     @SuppressWarnings({"ConstantConditions"})
-    SwitcherPanel(@NotNull final Project project, @NotNull String title, @NotNull String actionId, boolean onlyEdited, boolean pinned,
+    SwitcherPanel(@NotNull final Project project, @NotNull @Nls String title, @NotNull String actionId, boolean onlyEdited, boolean pinned,
                   boolean moveForward)
     {
       setLayout(new BorderLayout());
@@ -1397,14 +1399,15 @@ public final class Switcher extends AnAction implements DumbAware {
     }
 
     private static @NlsContexts.Checkbox String layoutText(@NotNull String actionId) {
-      String text = "<html>" + IdeBundle.message("recent.files.checkbox.label");
+      HtmlBuilder html = new HtmlBuilder().append(IdeBundle.message("recent.files.checkbox.label"));
       ShortcutSet shortcuts = getActiveKeymapShortcuts(actionId);
       if (shortcuts.getShortcuts().length > 0) {
-        text += " <font color=\"" + RecentLocationsAction.Holder.SHORTCUT_HEX_COLOR + "\">"
-                + KeymapUtil.getShortcutsText(shortcuts.getShortcuts()) + "</font>"
-                + "</html>";
+        html
+          .append(" ")
+          .append(HtmlChunk.font(RecentLocationsAction.Holder.SHORTCUT_HEX_COLOR)
+                    .addText(KeymapUtil.getShortcutsText(shortcuts.getShortcuts())));
       }
-      return text;
+      return html.toString();
     }
   }
 
@@ -1455,7 +1458,7 @@ public final class Switcher extends AnAction implements DumbAware {
       myProject = project;
     }
 
-    String getNameForRendering() {
+    @NlsSafe String getNameForRendering() {
       if (myNameForRendering == null) {
         // Recently changed files would also be taken into account (not only open 'visible' files)
         myNameForRendering = EditorTabPresentationUtil.getUniqueEditorTabTitle(myProject, first, second);
