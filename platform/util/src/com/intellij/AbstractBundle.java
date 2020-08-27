@@ -66,7 +66,7 @@ public abstract class AbstractBundle {
     return () -> getMessage(key, params);
   }
 
-  public @Nullable @Nls String messageOfNull(@NotNull @NonNls String key, Object @NotNull ... params) {
+  public @Nullable @Nls String messageOrNull(@NotNull @NonNls String key, Object @NotNull ... params) {
     return messageOrNull(getResourceBundle(), key, params);
   }
 
