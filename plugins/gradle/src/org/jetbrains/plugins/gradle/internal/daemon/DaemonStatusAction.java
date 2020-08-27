@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.internal.daemon;
 
+import com.intellij.DynamicBundle;
 import org.gradle.internal.id.IdGenerator;
 import org.gradle.internal.service.ServiceRegistry;
 import org.gradle.launcher.daemon.client.DaemonClientConnection;
@@ -106,7 +107,7 @@ public class DaemonStatusAction extends DaemonAction {
       for (DaemonStopEvent stopEvent : stopEvents) {
         DaemonExpirationStatus expirationStatus = stopEvent.getStatus();
         String daemonExpirationStatus =
-          expirationStatus != null ? expirationStatus.name().replace("_", " ").toLowerCase(Locale.ENGLISH) : "";
+          expirationStatus != null ? expirationStatus.name().replace("_", " ").toLowerCase(DynamicBundle.getLocale()) : "";
         Long stopEventPid;
         if (GradleVersion.current().compareTo(GradleVersion.version("3.0")) <= 0) {
           try {

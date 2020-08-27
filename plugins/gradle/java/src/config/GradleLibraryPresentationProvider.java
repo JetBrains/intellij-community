@@ -76,7 +76,7 @@ final class GradleLibraryPresentationProvider extends GroovyLibraryPresentationP
   @NotNull
   @Override
   public String getLibraryCategoryName() {
-    return GradleConstants.GRADLE_NAME;
+    return GradleConstants.GRADLE_NAME; //NON-NLS GRADLE_NAME
   }
 
   @Override

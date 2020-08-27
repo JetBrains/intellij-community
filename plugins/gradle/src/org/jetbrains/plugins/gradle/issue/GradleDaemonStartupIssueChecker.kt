@@ -17,6 +17,7 @@ import com.intellij.util.io.isFile
 import com.intellij.util.text.nullize
 import org.gradle.initialization.BuildLayoutParameters
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.gradle.execution.GradleConsoleFilter
 import org.jetbrains.plugins.gradle.issue.quickfix.GradleSettingsQuickFix
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionErrorHandler.getRootCauseAndLocation
@@ -101,9 +102,9 @@ class GradleDaemonStartupIssueChecker : GradleIssueChecker {
     if (location == null) return false
 
     if (failureCause == "startup failed:") {
-      val locationLine = message.substringAfter("> startup failed:", "").nullize()?.trimStart()?.substringBefore("\n") ?: return false
-      val failedStartupReason = locationLine.substringAfter("'${location.file.path}': ${location.startLine + 1}: ", "")
-                                  .nullize()?.substringBeforeLast(" @ ") ?: return false
+      val locationLine: @Nls String = message.substringAfter("> startup failed:", "").nullize()?.trimStart()?.substringBefore("\n") ?: return false
+      val failedStartupReason: @Nls String  = locationLine.substringAfter("'${location.file.path}': ${location.startLine + 1}: ", "") //NON-NLS
+                                  .nullize()?.substringBeforeLast(" @ ") ?: return false //NON-NLS
       val locationPart = locationLine.substringAfterLast(" @ ")
       val matchResult = GradleConsoleFilter.LINE_AND_COLUMN_PATTERN.toRegex().matchEntire(locationPart)
       val values = matchResult?.groupValues?.drop(1)?.map { it.toInt() } ?: listOf(location.startLine + 1, 0)

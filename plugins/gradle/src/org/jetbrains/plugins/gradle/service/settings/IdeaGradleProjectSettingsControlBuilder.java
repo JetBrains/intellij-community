@@ -321,7 +321,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
   }
 
   private void addGradleComponents(PaintAwarePanel content, int indentLevel) {
-    myGradlePanel = addComponentsGroup(GradleConstants.GRADLE_NAME, content, indentLevel, panel -> {
+    myGradlePanel = addComponentsGroup(GradleConstants.GRADLE_NAME, content, indentLevel, panel -> { //NON-NLS GRADLE_NAME
       addGradleChooserComponents(panel, indentLevel + 1);
       addGradleJdkComponents(panel, indentLevel + 1);
     });
@@ -1027,7 +1027,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     @NlsContexts.ListItem
     private String getText(@Nullable Boolean state) {
       if (state == Boolean.TRUE) {
-        return GradleConstants.GRADLE_NAME;
+        return GradleConstants.GRADLE_NAME; //NON-NLS GRADLE_NAME
       }
       if (state == Boolean.FALSE) {
         return getIDEName();
@@ -1059,7 +1059,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     @NlsContexts.ListItem
     private String getText(@Nullable TestRunner runner) {
       if (runner == TestRunner.GRADLE) {
-        return GradleConstants.GRADLE_NAME;
+        return GradleConstants.GRADLE_NAME;  //NON-NLS GRADLE_NAME
       }
       if (runner == TestRunner.PLATFORM) {
         return getIDEName();
