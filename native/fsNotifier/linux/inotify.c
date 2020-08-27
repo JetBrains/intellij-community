@@ -62,7 +62,7 @@ bool init_inotify() {
     int e = errno;
     userlog(LOG_ERR, "inotify_init: %s", strerror(e));
     if (e == EMFILE) {
-      message(MSG_INSTANCE_LIMIT);
+      message("inotify.instance.limit");
     }
     return false;
   }
@@ -189,7 +189,7 @@ static int add_watch(int path_len, watch_node* parent) {
 static void watch_limit_reached() {
   if (!limit_reached) {
     limit_reached = true;
-    message(MSG_WATCH_LIMIT);
+    message("inotify.watch.limit");
   }
 }
 

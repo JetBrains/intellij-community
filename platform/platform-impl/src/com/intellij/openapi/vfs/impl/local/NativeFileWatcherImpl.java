@@ -364,8 +364,9 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
         }
       }
       else if (myLastOp == WatcherOp.MESSAGE) {
-        LOG.warn(line);
-        notifyOnFailure(line, NotificationListener.URL_OPENING_LISTENER);
+        String localized = Objects.requireNonNullElse(ApplicationBundle.INSTANCE.messageOrNull(line), line); //NON-NLS
+        LOG.warn(localized);
+        notifyOnFailure(localized, NotificationListener.URL_OPENING_LISTENER);
         myLastOp = null;
       }
       else if (myLastOp == WatcherOp.REMAP || myLastOp == WatcherOp.UNWATCHEABLE) {
