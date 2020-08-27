@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixActionRegistrarImpl;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
@@ -110,6 +111,16 @@ public final class GenericsHighlightUtil {
               QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createIncreaseLanguageLevelFix(LanguageLevel.JDK_1_9));
             }
             return highlightInfo;
+          }
+        }
+
+        PsiElement parent = referenceParameterList.getParent().getParent();
+        if (parent instanceof PsiAnonymousClass) {
+          PsiAnonymousClass anonymousClass = (PsiAnonymousClass)parent;
+          if (ContainerUtil.exists(anonymousClass.getMethods(), method -> !method.hasModifierProperty(PsiModifier.PRIVATE) && method.findSuperMethods().length == 0)) {
+            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(referenceParameterList)
+              .descriptionAndTooltip(JavaPsiBundle.message("diamond.error.anonymous.inner.classes.non.private"))
+              .create();
           }
         }
       }

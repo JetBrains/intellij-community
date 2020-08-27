@@ -13,6 +13,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,6 +51,12 @@ public final class PsiDiamondTypeUtil {
             if (!skipDiamonds && typeElements.length == 1 && typeElements[0].getType() instanceof PsiDiamondType) return false;
             final PsiDiamondTypeImpl.DiamondInferenceResult inferenceResult = PsiDiamondTypeImpl.resolveInferredTypes(expression, context);
             if (inferenceResult.getErrorMessage() == null) {
+              PsiAnonymousClass anonymousClass = expression.getAnonymousClass();
+              if (anonymousClass != null &&
+                  ContainerUtil.exists(anonymousClass.getMethods(), 
+                                       method -> !method.hasModifierProperty(PsiModifier.PRIVATE) && method.findSuperMethods().length == 0)) {
+                return false;
+              }
               final List<PsiType> types = inferenceResult.getInferredTypes();
               PsiType[] typeArguments = null;
               if (expectedType instanceof PsiClassType) {
