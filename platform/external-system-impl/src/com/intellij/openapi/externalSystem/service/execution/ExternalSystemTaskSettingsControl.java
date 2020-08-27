@@ -172,11 +172,8 @@ public class ExternalSystemTaskSettingsControl implements ExternalSystemSettings
   public boolean validate(@NotNull ExternalSystemTaskExecutionSettings settings) throws ConfigurationException {
     String projectPath = myProjectPathField.getText();
     if (myOriginalSettings == null) {
-      throw new ConfigurationException(String.format(
-        "Can't store external task settings into run configuration. Reason: target run configuration is undefined. Tasks: '%s', " +
-        "external project: '%s', vm options: '%s', arguments: '%s'",
-        myTasksTextField.getText(), projectPath, myVmOptionsEditor.getText(), myArgumentsEditor.getText()
-      ));
+      throw new ConfigurationException(
+        ExternalSystemBundle.message("dialog.message.can.t.store.external.task.settings.into.run.configuration", myTasksTextField.getText(),projectPath,myVmOptionsEditor.getText(),myArgumentsEditor.getText()));
     }
     return true;
   }

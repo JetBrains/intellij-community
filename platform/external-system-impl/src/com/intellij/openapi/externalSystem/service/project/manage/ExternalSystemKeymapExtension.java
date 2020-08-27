@@ -107,7 +107,7 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
       }
       if (systemGroup instanceof Group) {
         Icon icon = AllIcons.General.Add;
-        ((Group)systemGroup).addHyperlink(new Hyperlink(icon, "Choose a task to assign a shortcut") {
+        ((Group)systemGroup).addHyperlink(new Hyperlink(icon, ExternalSystemBundle.message("link.label.choose.task.to.assign.shortcut")) {
           @Override
           public void onClick(MouseEvent e) {
             SelectExternalTaskDialog dialog = new SelectExternalTaskDialog(systemId, project);

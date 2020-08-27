@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SimpleModificationTracker;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.CachedValue;
@@ -117,7 +118,7 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
     });
 
     String externalSystemName = myProjectInfo.getProjectSystemId().getReadableName();
-    setTitle(String.format("%s Project Data To Import", externalSystemName));
+    setTitle(ExternalSystemBundle.message("dialog.title.project.data.to.import", externalSystemName));
     init();
   }
 
@@ -164,7 +165,7 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    loadingPanel.setLoadingText("Please wait...");
+    loadingPanel.setLoadingText(ExternalSystemBundle.message("please.wait"));
     loadingPanel.startLoading();
 
     final DataNode<ProjectData> projectStructure = myProjectInfo.getExternalProjectStructure();
@@ -248,7 +249,7 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
                 }, "<br>");
             if (StringUtil.isNotEmpty(listOfUncheckedDependencies)) {
               hasErrors = true;
-              tooltip = "There are not selected module dependencies of the module: <br><b>" + listOfUncheckedDependencies + "</b>";
+              tooltip = ExternalSystemBundle.message("there.are.not.selected.module.dependencies.of.the.module.br.b.0.b", listOfUncheckedDependencies);
             }
           }
         }
@@ -651,7 +652,7 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
         }
         return true;
       });
-      stateMessage = String.format("%1$d Modules. %2$d selected", myModulesCount, selectedModulesCount[0]);
+      stateMessage = ExternalSystemBundle.message("label.modules.selected", myModulesCount, selectedModulesCount[0]);
     }
 
     return new SelectionState(isRequiredSelectionEnabled, stateMessage);
@@ -676,7 +677,7 @@ public final class ExternalProjectDataSelectorDialog extends DialogWrapper {
     boolean isRequiredSelectionEnabled;
     @Nullable String message;
 
-    SelectionState(boolean isRequiredSelectionEnabled, @Nullable String message) {
+    SelectionState(boolean isRequiredSelectionEnabled, @Nullable @NlsContexts.Label String message) {
       this.isRequiredSelectionEnabled = isRequiredSelectionEnabled;
       this.message = message;
     }
