@@ -27,6 +27,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.EmptyIcon;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -138,7 +139,7 @@ public abstract class LRUPopupBuilder<T> {
   }
 
   @NotNull
-  public LRUPopupBuilder<T> withExtra(@NotNull T extra, @NotNull String displayName, @Nullable Icon icon) {
+  public LRUPopupBuilder<T> withExtra(@NotNull T extra, @Nls @NotNull String displayName, @Nullable Icon icon) {
     myExtraItems = myExtraItems.append(extra);
     myPresentations.put(extra, Pair.create(displayName, icon));
     return this;
