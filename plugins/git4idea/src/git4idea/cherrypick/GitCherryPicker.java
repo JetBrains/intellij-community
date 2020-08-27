@@ -46,7 +46,7 @@ public class GitCherryPicker extends VcsCherryPicker {
 
   @Override
   public void cherryPick(@NotNull List<? extends VcsFullCommitDetails> commits) {
-    new GitApplyChangesProcess(myProject, commits, isAutoCommit(), "cherry-pick",
+    new GitApplyChangesProcess(myProject, commits, isAutoCommit(),
                                GitBundle.message("cherry.pick.name"), GitBundle.message("cherry.pick.applied"),
                                (repository, commit, autoCommit, listeners) ->
                                  Git.getInstance()

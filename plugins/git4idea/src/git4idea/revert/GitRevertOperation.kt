@@ -34,7 +34,7 @@ class GitRevertOperation(private val project: Project,
   private val git = Git.getInstance()
 
   fun execute() {
-    GitApplyChangesProcess(project, commits, autoCommit, "revert", GitBundle.message("revert.operation.name"),
+    GitApplyChangesProcess(project, commits, autoCommit, GitBundle.message("revert.operation.name"),
                            GitBundle.message("revert.operation.applied"),
                            command = { repository, commit, autoCommit, listeners ->
                              doRevert(autoCommit, repository, commit, listeners)

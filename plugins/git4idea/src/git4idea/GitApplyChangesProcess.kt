@@ -52,12 +52,11 @@ import javax.swing.event.HyperlinkEvent
 class GitApplyChangesProcess(private val project: Project,
                              private val commits: List<VcsFullCommitDetails>,
                              private val autoCommit: Boolean,
-                             @NonNls private val operationName: String,
                              @Nls val operationDisplayName: String,
                              @Nls private val appliedWord: String,
                              private val command: (GitRepository, Hash, Boolean, List<GitLineHandlerListener>) -> GitCommandResult,
                              private val emptyCommitDetector: (GitCommandResult) -> Boolean,
-                             private val defaultCommitMessageGenerator: (GitRepository, VcsFullCommitDetails) -> @NonNls String, // Do not i18n commit templates
+                             private val defaultCommitMessageGenerator: (GitRepository, VcsFullCommitDetails) -> @NonNls String,
                              private val preserveCommitMetadata: Boolean,
                              private val cleanupBeforeCommit: (GitRepository) -> Unit = {}) {
   private val LOG = logger<GitApplyChangesProcess>()
@@ -68,7 +67,7 @@ class GitApplyChangesProcess(private val project: Project,
 
   fun execute() {
     val commitsInRoots = DvcsUtil.groupCommitsByRoots<GitRepository>(repositoryManager, commits)
-    LOG.info("${operationName}ing commits: " + toString(commitsInRoots))
+    LOG.info("${operationDisplayName}ing commits: " + toString(commitsInRoots))
 
     val successfulCommits = mutableListOf<VcsFullCommitDetails>()
     val skippedCommits = mutableListOf<VcsFullCommitDetails>()
