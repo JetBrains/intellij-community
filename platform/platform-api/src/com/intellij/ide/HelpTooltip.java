@@ -39,6 +39,8 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.function.BooleanSupplier;
 
+import static com.intellij.openapi.util.text.HtmlChunk.html;
+
 /**
  * Standard implementation of help context tooltip.
  *
@@ -550,15 +552,15 @@ public class HelpTooltip {
         float width = v.getPreferredSpan(View.X_AXIS);
         isMultiline = isMultiline || width > MAX_WIDTH.get();
         HtmlChunk.Element div = width > MAX_WIDTH.get() ? HtmlChunk.div().attr("width", MAX_WIDTH.get()) : HtmlChunk.div();
-        setText(div.children(HtmlChunk.text(title), HtmlChunk.raw(getShortcutAsHTML()))
-                  .wrapWith("html")
+        setText(div.children(HtmlChunk.raw(title), HtmlChunk.raw(getShortcutAsHTML()))
+                  .wrapWith(html())
                   .toString());
         setSizeForWidth(width);
       }
       else {
         setText(BasicHTML.isHTMLString(title) ?
                 title :
-                HtmlChunk.div().addText(title).addRaw(getShortcutAsHTML()).wrapWith("html").toString());
+                HtmlChunk.div().addRaw(title).addRaw(getShortcutAsHTML()).wrapWith(html()).toString());
       }
     }
 
@@ -572,11 +574,11 @@ public class HelpTooltip {
       setForeground(hasTitle ? INFO_COLOR : UIUtil.getToolTipForeground());
       setFont(deriveDescriptionFont(getFont(), hasTitle));
 
-      View v = BasicHTML.createHTMLView(this, String.format("<html>%s</html>", text));
+      View v = BasicHTML.createHTMLView(this, HtmlChunk.raw(text).wrapWith(html()).toString());
       float width = v.getPreferredSpan(View.X_AXIS);
       isMultiline = isMultiline || width > MAX_WIDTH.get();
       HtmlChunk.Element div = width > MAX_WIDTH.get() ? HtmlChunk.div().attr("width", MAX_WIDTH.get()) : HtmlChunk.div();
-      setText(div.addText(text).wrapWith("html").toString());
+      setText(div.addRaw(text).wrapWith(html()).toString());
 
       setSizeForWidth(width);
     }
