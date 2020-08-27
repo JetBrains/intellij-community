@@ -177,7 +177,7 @@ public abstract class HtmlChunk {
       }
       List<HtmlChunk> newChildren = new ArrayList<>(myChildren.size() + chunks.length);
       newChildren.addAll(myChildren);
-      Collections.addAll(myChildren, chunks);
+      Collections.addAll(newChildren, chunks);
       return new Element(myTagName, myAttributes, newChildren);
     }
 
