@@ -168,17 +168,17 @@ internal class ChooseComponentsToExportDialog(fileToComponents: Map<FileSpec, Li
   }
 
   override fun createLeftSideActions(): Array<Action> {
-    val selectAll = object : AbstractAction("Select &All") {
+    val selectAll = object : AbstractAction(ConfigurationStoreBundle.message("export.components.list.action.select.all")) {
       override fun actionPerformed(e: ActionEvent) {
         chooser.setAllElementsMarked(true)
       }
     }
-    val selectNone = object : AbstractAction("Select &None") {
+    val selectNone = object : AbstractAction(ConfigurationStoreBundle.message("export.components.list.action.select.none")) {
       override fun actionPerformed(e: ActionEvent) {
         chooser.setAllElementsMarked(false)
       }
     }
-    val invert = object : AbstractAction("&Invert") {
+    val invert = object : AbstractAction(ConfigurationStoreBundle.message("export.components.list.action.invert.selection")) {
       override fun actionPerformed(e: ActionEvent) {
         chooser.invertSelection()
       }

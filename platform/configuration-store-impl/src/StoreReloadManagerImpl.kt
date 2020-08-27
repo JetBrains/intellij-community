@@ -295,31 +295,47 @@ internal fun reloadStore(changedStorages: Set<StateStorage>, store: ComponentSto
 
 // used in settings repository plugin
 fun askToRestart(store: IComponentStore, notReloadableComponents: Collection<String>, changedStorages: Set<StateStorage>?, isApp: Boolean): Boolean {
-  val message = StringBuilder()
-  val storeName = if (store is IProjectStore) "Project '${store.projectName}'" else "Application"
-  message.append(storeName).append(' ')
-  message.append("components were changed externally and cannot be reloaded:\n\n")
-  var count = 0
-  for (component in notReloadableComponents) {
-    if (count == 10) {
-      message.append('\n').append("and ").append(notReloadableComponents.size - count).append(" more").append('\n')
-    }
-    else {
-      message.append(component).append('\n')
-      count++
-    }
-  }
-
-  message.append("\nWould you like to ")
-  if (isApp) {
-    message.append(if (ApplicationManager.getApplication().isRestartCapable) "restart" else "shutdown").append(' ')
-    message.append(ApplicationNamesInfo.getInstance().productName).append('?')
+  val firstMessage = if (store is IProjectStore) {
+    ConfigurationStoreBundle.message("configuration.project.files.changed.message.start", store.projectName)
   }
   else {
-    message.append("reload project?")
+    ConfigurationStoreBundle.message("configuration.application.files.changed.message.start")
   }
 
-  if (Messages.showYesNoDialog(message.toString(), "$storeName Files Changed", Messages.getQuestionIcon()) != Messages.YES) {
+  val nonReloadableComponentsJoined = notReloadableComponents.take(10).joinToString("\n").let {
+    if (notReloadableComponents.size > 10) {
+      ConfigurationStoreBundle.message("configuration.project.components.changed.and.several.more", it, notReloadableComponents.size - 10)
+    }
+    else {
+      it
+    }
+  }
+
+  val question = if (isApp) {
+    val productName = ApplicationNamesInfo.getInstance().productName
+    if (ApplicationManager.getApplication().isRestartCapable) {
+      ConfigurationStoreBundle.message("configuration.project.files.changed.restart.proposal", productName)
+    }
+    else {
+      ConfigurationStoreBundle.message("configuration.project.files.changed.shutdown.proposal", productName)
+    }
+  }
+  else {
+    ConfigurationStoreBundle.message("configuration.project.files.changed.reload.project.proposal")
+  }
+
+  val message = """
+    $firstMessage
+
+    $nonReloadableComponentsJoined
+    $question
+  """.trimIndent()
+
+  val title = if (store is IProjectStore)
+    ConfigurationStoreBundle.message("configuration.project.files.changed.restart.prompt.title", store.projectName)
+    else ConfigurationStoreBundle.message("configuration.application.files.changed.restart.prompt.title")
+
+  if (Messages.showYesNoDialog(message, title, Messages.getQuestionIcon()) != Messages.YES) {
     return false
   }
 
