@@ -12,6 +12,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil
+import org.jetbrains.plugins.groovy.lang.psi.impl.getArrayValue
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import java.util.*
 import kotlin.collections.ArrayList
@@ -40,12 +41,18 @@ fun getIdentifierList(annotation: PsiAnnotation, @NlsSafe attributeName: String)
   annotation.takeIf { it.hasAttribute(attributeName) } ?: return null
   val rawIdentifiers = GrAnnotationUtil.inferStringAttribute(annotation, attributeName)
   return rawIdentifiers?.split(',')?.mapNotNull { it.trim().takeUnless(CharSequence::isBlank) }?.toList()
-         ?: GrAnnotationUtil.getStringArrayValue(annotation, attributeName, false)
+         ?: inferStringArrayValueShallow(annotation, attributeName)
 }
 
 /**
- * For specific annotation (@MapConstructor/@TupleConstructor) this class computes all actually affected members, and allows to check
- * whether arbitrary identifier is handled by the annotation
+ * This function prevents evaluation of constant expressions inside attributes,
+ * because this evaluation may trigger a recursion within the `TransformationContext`
+ */
+private fun inferStringArrayValueShallow(anno: PsiAnnotation, attributeName: String) : List<String>? =
+  anno.findAttributeValue(attributeName)?.getArrayValue(GrAnnotationUtil::getString) ?: emptyList()
+
+/**
+ * For specific annotation (@MapConstructor/@TupleConstructor) this class computes all actually affected members
  */
 class AffectedMembersCache(anno: PsiAnnotation) {
   private val order: List<PsiNamedElement>
