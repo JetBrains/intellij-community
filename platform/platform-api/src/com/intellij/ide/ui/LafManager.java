@@ -38,7 +38,7 @@ public abstract class LafManager {
   public abstract ListCellRenderer<LafReference> getLookAndFeelCellRenderer();
 
   @ApiStatus.Internal
-  public abstract JComponent getSettingsToolbar();
+  public abstract @Nullable JComponent getSettingsToolbar();
 
   public void setCurrentLookAndFeel(@NotNull UIManager.LookAndFeelInfo lookAndFeelInfo) {
     setCurrentLookAndFeel(lookAndFeelInfo, false);

@@ -137,10 +137,11 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
                                { laf.lookAndFeelReference },
                                { laf.lookAndFeelReference = it },
                                laf.lookAndFeelCellRenderer)
-
-          component(laf.settingsToolbar)
-            .visibleIf(theme.component.selectedValueIs(LafManager.LafReference.SYNC_OS))
-            .withLeftGap()
+          laf.settingsToolbar?.let {
+            component(it)
+              .visibleIf(theme.component.selectedValueIs(LafManager.LafReference.SYNC_OS))
+              .withLeftGap()
+          }
         }
       }.largeGapAfter()
       blockRow {
