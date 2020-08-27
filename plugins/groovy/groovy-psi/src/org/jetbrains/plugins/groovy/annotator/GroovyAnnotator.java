@@ -609,7 +609,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     if (tupleConstructor == null) return;
     if (!Boolean.FALSE.equals(GrAnnotationUtil.inferBooleanAttribute(tupleConstructor, TupleConstructorAttributes.DEFAULTS))) return;
     AffectedMembersCache cache = new AffectedMembersCache(tupleConstructor);
-    if (!cache.arePropertiesHandledByUser() && cache.isMemberAffected(field)) {
+    if (!cache.arePropertiesHandledByUser() && cache.getAffectedMembers().contains(field)) {
       myHolder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("initializers.are.forbidden.with.defaults"))
         .range(initializer)
         .create();

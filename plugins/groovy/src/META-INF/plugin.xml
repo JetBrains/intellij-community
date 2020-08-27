@@ -1053,6 +1053,10 @@
                      key="inspection.display.name.clashing.trait.methods"
                      groupKey="inspection.confusing" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.ClashingTraitMethodsInspection"/>
+    <localInspection language="Groovy" groupPath="Groovy"
+                     key="inspection.display.name.annotation.references.unknown.identifier"
+                     groupKey="inspection.bugs" enabledByDefault="true"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.bugs.GrAnnotationReferencingUnknownIdentifiers"/>
 
     <localInspection language="Groovy" groupPath="Groovy"
                      key="inspection.display.name.overly.complex.boolean.expression"

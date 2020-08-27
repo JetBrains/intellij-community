@@ -7,7 +7,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.*
 import com.intellij.psi.util.PropertyUtilBase
 import com.intellij.psi.util.parentOfType
-import com.intellij.util.containers.BidirectionalMap
 import groovy.transform.Undefined
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
@@ -15,8 +14,9 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import java.util.*
+import kotlin.collections.ArrayList
 
-internal val constructorGeneratingAnnotations: List<String> = listOf(
+val constructorGeneratingAnnotations: List<String> = listOf(
   GroovyCommonClassNames.GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR,
   GroovyCommonClassNames.GROOVY_TRANSFORM_MAP_CONSTRUCTOR)
 
@@ -49,37 +49,36 @@ fun getIdentifierList(annotation: PsiAnnotation, @NlsSafe attributeName: String)
  */
 class AffectedMembersCache(anno: PsiAnnotation) {
   private val order: List<PsiNamedElement>
-  private val cache: BidirectionalMap<String, PsiElement>
-  private val hasPropertyOptions : Boolean
+  private val hasPropertyOptions: Boolean
+  private val referencedFromExcludes: List<PsiNamedElement>
+
+  private class FilteringList<T>(private val predicate: (T) -> Boolean) : ArrayList<T>() {
+    override fun add(element: T): Boolean {
+      if (!predicate(element)) return false
+      return super.add(element)
+    }
+  }
 
   init {
     val owner = (anno.owner as? PsiElement)
     val containingClass = owner?.parentOfType<GrTypeDefinition>()?.takeIf { it.modifierList === owner }
     if (containingClass != null) {
-      val (nameFilter, ordering) = collectNamesOrderInformation(anno)
+      val (nameFilter, excludesIdentifiers, ordering) = collectNamesOrderInformation(anno)
       val acceptFields = GrAnnotationUtil.inferBooleanAttribute(anno, TupleConstructorAttributes.INCLUDE_FIELDS) ?: true
       val acceptProperties = GrAnnotationUtil.inferBooleanAttribute(anno, TupleConstructorAttributes.INCLUDE_PROPERTIES) ?: true
       val includeBeans = GrAnnotationUtil.inferBooleanAttribute(anno, TupleConstructorAttributes.ALL_PROPERTIES) ?: false
       val acceptSuperProperties = GrAnnotationUtil.inferBooleanAttribute(anno, TupleConstructorAttributes.INCLUDE_SUPER_PROPERTIES) ?: false
       val acceptSuperFields = GrAnnotationUtil.inferBooleanAttribute(anno, TupleConstructorAttributes.INCLUDE_SUPER_FIELDS) ?: false
       val includeStatic = GrAnnotationUtil.inferBooleanAttribute(anno, "includeStatic") ?: false
-      val collector = mutableListOf<PsiNamedElement>()
+      val collector = FilteringList<PsiNamedElement> { it.name?.takeIf(nameFilter) != null }
+      val excludesCollector = FilteringList<PsiNamedElement> { it.name?.takeUnless(nameFilter) in excludesIdentifiers }
       if (acceptSuperFields || acceptSuperProperties) {
         val visited = mutableSetOf<PsiClass>()
         val superClass = containingClass.getSupers(false)[0]
-        collectSupers(superClass, acceptSuperFields, acceptSuperProperties, collector, nameFilter, visited)
+        collectSupers(superClass, acceptSuperFields, acceptSuperProperties, collector, excludesCollector, visited)
       }
-      accept(containingClass, acceptProperties, includeBeans, acceptFields, includeStatic, nameFilter, collector)
-      cache = BidirectionalMap()
-      for (prop in collector) {
-        if (prop is PsiMethod) {
-          val name = PropertyUtilBase.getPropertyName(prop) ?: continue
-          cache[name] = prop
-        }
-        else if (prop is PsiField) {
-          cache[prop.name] = prop
-        }
-      }
+      referencedFromExcludes = excludesCollector
+      accept(containingClass, acceptProperties, includeBeans, acceptFields, includeStatic, excludesCollector, collector)
       if (ordering != null) {
         val includeComparator = Comparator.comparingInt { param: PsiNamedElement -> ordering.indexOf(param.name) }
         collector.sortWith(includeComparator)
@@ -88,9 +87,9 @@ class AffectedMembersCache(anno: PsiAnnotation) {
       hasPropertyOptions = containingClass.hasAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_PROPERTY_OPTIONS)
     }
     else {
-      cache = EMPTY_MAP
       order = emptyList()
       hasPropertyOptions = false
+      referencedFromExcludes = emptyList()
     }
 
   }
@@ -99,30 +98,29 @@ class AffectedMembersCache(anno: PsiAnnotation) {
                             acceptSuperFields: Boolean,
                             acceptSuperProperties: Boolean,
                             collector: MutableList<PsiNamedElement>,
-                            nameFilter: (String) -> Boolean,
+                            excludesCollector: MutableList<PsiNamedElement>,
                             visited: MutableCollection<PsiClass>) {
     if (owner == null || !visited.add(owner) || GroovyCommonClassNames.GROOVY_OBJECT_SUPPORT == owner.qualifiedName) {
       return
     }
-    collectSupers(owner.superClass, acceptSuperFields, acceptSuperProperties, collector, nameFilter, visited)
-    accept(owner, acceptSuperProperties, false, acceptSuperFields, false, nameFilter, collector)
+    collectSupers(owner.superClass, acceptSuperFields, acceptSuperProperties, collector, excludesCollector, visited)
+    accept(owner, acceptSuperProperties, false, acceptSuperFields, false, excludesCollector, collector)
   }
 
   companion object {
-    private val EMPTY_MAP: BidirectionalMap<String, PsiElement> = BidirectionalMap()
 
     fun accept(clazz: PsiClass,
                includeProperties: Boolean,
                includeBeans: Boolean,
                includeFields: Boolean,
                includeStatic: Boolean,
-               nameFilter: (String) -> Boolean,
+               excludesCollector: MutableList<PsiNamedElement>,
                collector: MutableCollection<PsiNamedElement>) {
       val (properties, setters, fields) = getGroupedClassMembers(clazz)
 
       fun addParameter(origin: PsiField) {
-        val name = origin.name
-        if (!nameFilter(name) || (!includeStatic && origin.hasModifierProperty(PsiModifier.STATIC))) return
+        if (!includeStatic && origin.hasModifierProperty(PsiModifier.STATIC)) return
+        excludesCollector.add(origin)
         collector.add(origin)
       }
 
@@ -134,8 +132,8 @@ class AffectedMembersCache(anno: PsiAnnotation) {
 
       if (includeBeans) {
         for (method in setters) {
-          val name = PropertyUtilBase.getPropertyNameBySetter(method)
-          if (!nameFilter(name) || (!includeStatic && method.hasModifierProperty(PsiModifier.STATIC))) continue
+          if (!includeStatic && method.hasModifierProperty(PsiModifier.STATIC)) continue
+          excludesCollector.add(method)
           collector.add(method)
         }
       }
@@ -148,7 +146,7 @@ class AffectedMembersCache(anno: PsiAnnotation) {
       }
     }
 
-    private fun collectNamesOrderInformation(tupleConstructor: PsiAnnotation): Pair<(String) -> Boolean, List<String>?> {
+    private fun collectNamesOrderInformation(tupleConstructor: PsiAnnotation): Triple<(String) -> Boolean, List<String>, List<String>?> {
 
       val excludes: List<String> = getIdentifierList(tupleConstructor, TupleConstructorAttributes.EXCLUDES) ?: emptyList()
 
@@ -163,7 +161,7 @@ class AffectedMembersCache(anno: PsiAnnotation) {
         val includesFilter = includes == null || includes.contains(name)
         internalFilter && excludesFilter && includesFilter
       }
-      return filter to includes
+      return Triple(filter, excludes, includes)
     }
 
     private fun getGroupedClassMembers(psiClass: PsiClass): Triple<List<PsiField>, List<PsiMethod>, List<PsiField>> {
@@ -186,11 +184,15 @@ class AffectedMembersCache(anno: PsiAnnotation) {
 
   }
 
-  fun getAllAffectedMembers(): List<PsiNamedElement> = order
+  /**
+   * Returns all members that will be referenced in generated constructor's body
+   */
+  fun getAffectedMembers(): List<PsiNamedElement> = order
 
-  fun getAffectedMember(@NlsSafe identifier: String): PsiElement? = cache[identifier]
+  /**
+   * Returns all members that are referenced by annotation, including those ones that are excluded
+   */
+  fun getAllAffectedMembers(): List<PsiNamedElement> = order + referencedFromExcludes
 
-  fun isMemberAffected(element: PsiElement): Boolean = cache.containsValue(element)
-
-  fun arePropertiesHandledByUser() : Boolean = hasPropertyOptions
+  fun arePropertiesHandledByUser(): Boolean = hasPropertyOptions
 }

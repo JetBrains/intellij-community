@@ -137,7 +137,7 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
       Visibility visibility = getVisibility(tupleConstructor, fieldsConstructor, Visibility.PUBLIC);
       fieldsConstructor.addModifier(visibility.toString());
       AffectedMembersCache cache = new AffectedMembersCache(tupleConstructor);
-      for (PsiNamedElement element : cache.getAllAffectedMembers()) {
+      for (PsiNamedElement element : cache.getAffectedMembers()) {
         GrLightParameter parameter;
         if (element instanceof PsiField) {
           String name = element.getName();

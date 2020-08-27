@@ -370,7 +370,7 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
       return false;
     }
     AffectedMembersCache cache = new AffectedMembersCache(anno);
-    return !cache.arePropertiesHandledByUser() && cache.isMemberAffected(field);
+    return !cache.arePropertiesHandledByUser() && cache.getAffectedMembers().contains(field);
   }
 
   private static boolean isImmutableField(@NotNull GrField field) {
