@@ -316,7 +316,7 @@ dl dd {
 
 blockquote {
     padding: 10px 10px 10px 16px;
-    border-left: 2px solid rgba(88, 157, 246, 0.8);
+    border-left: 2px solid;
     border-radius: 0 3px 3px 0;
 }
 
@@ -409,7 +409,7 @@ kbd {
     font: 0.9em "JetBrains Mono", Consolas, "Liberation Mono", Menlo, Courier, monospace;
     padding: 0.2em 0.4em;
     margin: 2px;
-    border: solid 1px #d1d1d1 !important;
+    border: solid 1px;
     border-radius: 3px;
 }
 

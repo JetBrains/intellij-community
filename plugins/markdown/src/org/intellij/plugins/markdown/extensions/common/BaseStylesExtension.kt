@@ -4,7 +4,7 @@ package org.intellij.plugins.markdown.extensions.common
 import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
 import org.intellij.plugins.markdown.extensions.jcef.MarkdownJCEFPreviewExtension
 import org.intellij.plugins.markdown.settings.MarkdownApplicationSettings
-import org.intellij.plugins.markdown.ui.preview.PreviewColorThemeStyles
+import org.intellij.plugins.markdown.ui.preview.PreviewLAFThemeStyles
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
 import java.io.File
 
@@ -17,7 +17,7 @@ internal class BaseStylesExtension : MarkdownJCEFPreviewExtension, ResourceProvi
 
   override fun loadResource(resourceName: String): ResourceProvider.Resource? {
     if (resourceName == COLORS_CSS_FILENAME) {
-      return ResourceProvider.Resource(PreviewColorThemeStyles.createStylesheet().toByteArray())
+      return ResourceProvider.Resource(PreviewLAFThemeStyles.createStylesheet().toByteArray())
     }
     with(MarkdownApplicationSettings.getInstance().markdownCssSettings) {
       return if (isCustomStylesheetEnabled) {

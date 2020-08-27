@@ -3,28 +3,44 @@ package org.intellij.plugins.markdown.ui.preview
 
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.ex.util.EditorUtil
+import com.intellij.openapi.util.SystemInfo
+import com.intellij.ui.JBColor
+import com.intellij.ui.JBColor.namedColor
 import com.intellij.util.ui.UIUtil
 import java.awt.Color
 
 /**
  * Service to with utility functions to generate
- * style for Markdown preview from IntelliJ Color Theme
+ * style for Markdown preview from IntelliJ LAF Settings
  */
-internal object PreviewColorThemeStyles {
+internal object PreviewLAFThemeStyles {
   /**
-   * This method will generate stylesheet with color rules for markdown elements,
-   * matching current IDE colors. Generated rules will override base rules from the
-   * default.css, so the preview elements will have (almost*) correct colors.
-   *
-   * *There will be no dedicated color for code blocks, if current IDE color theme defines same
-   * colors for UI panels and editor background (seems fine, though).
-   *
+   * This method will generate stylesheet with colors and other attributes matching current LAF settings of the IDE.
+   * Generated CSS will override base rules from the default.css, so the preview elements will have correct colors.
+
    * @return String containing generated CSS rules.
    */
   @JvmStatic
   fun createStylesheet(): String {
-    val panelBackground = UIUtil.getPanelBackground()
     with(EditorColorsManager.getInstance().globalScheme) {
+      val contrastedForeground = defaultForeground.contrast(0.1)
+
+      val panelBackground = UIUtil.getPanelBackground()
+
+      val labelForeground = UIUtil.getLabelForeground()
+      val linkActiveForeground = namedColor("Link.activeForeground", getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR).foregroundColor)
+      val separatorColor = namedColor("Group.separatorColor", panelBackground)
+      val infoForeground = namedColor("Component.infoForeground", contrastedForeground)
+
+      val markdownFenceBackground = JBColor(Color(212, 222, 231, 255 / 4), Color(212, 222, 231, 25))
+
+      var fontSize = EditorUtil.getEditorFont().size
+      //Since Mac and Windows font is smaller than linux we increment it by 1pt
+      if (SystemInfo.isWindows || SystemInfo.isMac) {
+        fontSize += 1
+      }
+
       // For some reason background-color for ::-webkit-scrollbar-thumb
       // doesn't work with [0..255] alpha values. Fortunately it works fine with [0..1] values.
       // Default color from base stylesheets will be used, if the final value is null.
@@ -32,59 +48,39 @@ internal object PreviewColorThemeStyles {
       val scrollbarColor = getColor(EditorColors.SCROLLBAR_THUMB_COLOR)?.run {
         "rgba($red, $blue, $green, ${alpha / 255.0})"
       }
-      val contrastedForeground = defaultForeground.contrast(0.1)
-      val linkColor = getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR).foregroundColor
       // language=CSS
       return """
               body {
                   background-color: ${defaultBackground.webRgba()};
-                  color: ${defaultForeground.webRgba()};
+                  font-size: ${fontSize}pt !important;
               }
               
-              p, ul, ol, dl {
-                  color: ${defaultForeground.webRgba()};
+              body, p, blockquote, ul, ol, dl, table, pre, code, tr  {
+                  color: ${labelForeground.webRgba()};
               }
               
               a {
-                  color: ${linkColor.webRgba()};
+                  color: ${linkActiveForeground.webRgba()};
               }
               
-              hr {
-                  background-color: ${panelBackground.webRgba()};
+              hr, table, kbd, tr {
+                border: ${separatorColor.webRgba()};
               }
               
               h6 {
-                  color: ${contrastedForeground.webRgba()};
+                  color: ${infoForeground.webRgba()};
               }
               
-              pre, code, blockquote {
-                  background-color: ${panelBackground.webRgba(alpha = 0.6)};
-                  color: ${defaultForeground.webRgba()};
-              }
-              
-              table {
-                  color: ${defaultForeground.webRgba()};
-              }
-
-              table tr {
-                  border-top: ${panelBackground.webRgba()};  
-                  color: ${defaultForeground.webRgba()};
-              }
-              table th, table td, table tr {
-                  background-color: ${defaultBackground.webRgba()};
-                  border-color: ${defaultBackground.contrast(0.85).webRgba()};
-              }
-              
-              table tr:nth-child(even) td {
-                  background-color: ${defaultBackground.contrast(0.93).webRgba()};
-              }
-              
-              :checked {
-                  border-color: ${panelBackground.webRgba()};
+              blockquote {
+                border-left: 2px solid ${linkActiveForeground.webRgba(alpha = 0.6)};
               }
               
               ::-webkit-scrollbar-thumb {
                   background-color: $scrollbarColor;
+              }
+              
+              blockquote, code, pre {
+                background-color: ${markdownFenceBackground.webRgba(markdownFenceBackground.alpha / 255.0)};
               }
       """.trimIndent()
     }
