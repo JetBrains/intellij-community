@@ -17,6 +17,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -719,7 +720,7 @@ public class SMTestProxy extends AbstractTestProxy {
   }
 
   @NotNull
-  public String getPresentableName() {
+  public @NlsSafe String getPresentableName() {
     if (myPresentableName == null) {
       if (myPreservePresentableName) {
         myPresentableName = TestsPresentationUtil.getPresentableNameTrimmedOnly(this);
@@ -999,7 +1000,7 @@ public class SMTestProxy extends AbstractTestProxy {
     }
 
     @Override
-    public String getComment() {
+    public @NlsSafe String getComment() {
       return myComment;
     }
 

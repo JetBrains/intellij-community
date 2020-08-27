@@ -243,14 +243,14 @@ public abstract class AbstractImportTestsAction extends AnAction {
         }
         catch (Throwable e) {
           if (myTargetId != null && getTarget() == null) {
-            throw new ExecutionException("The target " + myTargetId + " does not exist");
+            throw new ExecutionException(SmRunnerBundle.message("dialog.message.target.does.not.exist", myTargetId));
           }
 
           LOG.info(e);
-          throw new ExecutionException("Unable to run the configuration: settings are corrupted");
+          throw new ExecutionException(SmRunnerBundle.message("dialog.message.unable.to.run.configuration.settings.are.corrupted"));
         }
       }
-      throw new ExecutionException("Unable to run the configuration: failed to detect test framework");
+      throw new ExecutionException(SmRunnerBundle.message("dialog.message.unable.to.run.configuration.failed.to.detect.test.framework"));
     }
 
     @NotNull
