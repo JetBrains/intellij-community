@@ -33,6 +33,7 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.project.stateStore
 import com.intellij.util.PathUtil
 import com.intellij.workspaceModel.ide.*
+import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.isExternalModuleFile
@@ -62,8 +63,9 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
     if (!project.isDefault) {
       ApplicationManager.getApplication().messageBus.connect(this).subscribe(ProjectLifecycleListener.TOPIC, object : ProjectLifecycleListener {
         override fun projectComponentsInitialized(project: Project) {
-          if (project === this@JpsProjectModelSynchronizer.project) {
-            loadInitialProject(project.configLocation!!)
+          if (project === this@JpsProjectModelSynchronizer.project
+              && !(WorkspaceModel.getInstance(project) as WorkspaceModelImpl).loadedFromCache) {
+            loadRealProject(project.configLocation!!)
           }
         }
       })
@@ -147,7 +149,7 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
     })
   }
 
-  internal fun loadInitialProject(configLocation: JpsProjectConfigLocation) {
+  internal fun loadRealProject(configLocation: JpsProjectConfigLocation) {
     LOG.debug { "Initial loading of project located at $configLocation" }
     moduleLoadingActivity = StartUpMeasurer.startMainActivity("module loading")
     val activity = StartUpMeasurer.startActivity("(wm) Load initial project")

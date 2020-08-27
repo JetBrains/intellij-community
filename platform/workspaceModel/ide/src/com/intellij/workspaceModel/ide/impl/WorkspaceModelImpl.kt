@@ -19,6 +19,7 @@ class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposa
 
   private val cacheEnabled = !ApplicationManager.getApplication().isUnitTestMode && LegacyBridgeProjectLifecycleListener.cacheEnabled
   private val cache = if (cacheEnabled) WorkspaceModelCacheImpl(project, this) else null
+  internal var loadedFromCache = false
 
   override val entityStorage: VersionedEntityStorageImpl
 
@@ -32,7 +33,10 @@ class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposa
       cache != null -> {
         val activity = StartUpMeasurer.startActivity("(wm) Loading cache")
         val previousStorage = cache.loadCache()
-        projectEntities = if (previousStorage != null) WorkspaceEntityStorageBuilder.from(previousStorage)
+        projectEntities = if (previousStorage != null) {
+          loadedFromCache = true
+          WorkspaceEntityStorageBuilder.from(previousStorage)
+        }
         else WorkspaceEntityStorageBuilder.create()
         activity.end()
       }

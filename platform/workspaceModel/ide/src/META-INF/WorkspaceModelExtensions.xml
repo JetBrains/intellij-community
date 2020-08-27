@@ -21,5 +21,7 @@
                         overrides="true"/>
 
     <statusBarWidgetFactory implementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelIndicator"/>
+
+    <postStartupActivity implementation="com.intellij.workspaceModel.ide.impl.jps.serialization.DelayedProjectSynchronizer"/>
   </extensions>
 </idea-plugin>
