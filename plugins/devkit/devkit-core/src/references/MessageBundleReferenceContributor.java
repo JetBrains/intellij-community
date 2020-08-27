@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.references;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInspection.unused.ImplicitPropertyUsageProvider;
@@ -8,6 +9,7 @@ import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.lang.properties.PropertiesFileType;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.psi.impl.PropertyKeyImpl;
+import com.intellij.openapi.components.State;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
@@ -18,10 +20,11 @@ import com.intellij.patterns.StandardPatterns;
 import com.intellij.patterns.VirtualFilePattern;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.search.ProjectScope;
-import com.intellij.util.CommonProcessors;
-import com.intellij.util.ProcessingContext;
-import com.intellij.util.SmartList;
+import com.intellij.psi.search.searches.AnnotatedElementsSearch;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.xml.DomTarget;
@@ -50,6 +53,8 @@ public class MessageBundleReferenceContributor extends PsiReferenceContributor {
   @NonNls private static final String BUNDLE_PROPERTIES = "Bundle.properties";
 
   @NonNls private static final String TOOLWINDOW_STRIPE_PREFIX = "toolwindow.stripe.";
+  @NonNls private static final String EXPORTABLE_PREFIX = "exportable.";
+  @NonNls private static final String EXPORTABLE_SUFFIX = ".presentable.name";
 
   public static final PsiElementResolveResult[] EMPTY_RESOLVE_RESULT = new PsiElementResolveResult[0];
 
@@ -71,7 +76,8 @@ public class MessageBundleReferenceContributor extends PsiReferenceContributor {
             createActionReference(element, text, ACTION, DESC),
             createActionReference(element, text, GROUP, TEXT),
             createActionReference(element, text, GROUP, DESC),
-            createToolwindowIdReference(element, text)
+            createToolwindowIdReference(element, text),
+            createExportableIdReference(element, text)
           ).filter(Objects::nonNull).toArray(PsiReference.EMPTY_ARRAY);
         }
 
@@ -89,6 +95,14 @@ public class MessageBundleReferenceContributor extends PsiReferenceContributor {
 
           String id = StringUtil.notNullize(StringUtil.substringAfter(text, TOOLWINDOW_STRIPE_PREFIX)).replace('_', ' ');
           return new ToolwindowIdReference(element, id);
+        }
+
+        @Nullable
+        private PsiReference createExportableIdReference(@NotNull PsiElement element, String text) {
+          if (!text.startsWith(EXPORTABLE_PREFIX) || !text.endsWith(EXPORTABLE_SUFFIX)) return null;
+
+          String id = text.replace(EXPORTABLE_PREFIX, "").replace(EXPORTABLE_SUFFIX, "");
+          return new ExportableIdReference(element, id);
         }
       });
   }
@@ -175,6 +189,64 @@ public class MessageBundleReferenceContributor extends PsiReferenceContributor {
   }
 
 
+  private static class ExportableIdReference extends PsiReferenceBase.Poly<PsiElement> {
+
+    private ExportableIdReference(PsiElement element, String id) {
+      super(element, TextRange.allOf(id).shiftRight(EXPORTABLE_PREFIX.length()), false);
+    }
+
+    @Override
+    public ResolveResult @NotNull [] multiResolve(boolean incompleteCode) {
+      String id = getValue();
+
+      List<PsiElement> resolves = new SmartList<>();
+      processStateAnnoClasses((psiClass, name) -> {
+        if (StringUtil.equals(id, name)) {
+          resolves.add(psiClass);
+        }
+        return true;
+      });
+
+      return PsiElementResolveResult.createResults(resolves);
+    }
+
+    @Override
+    public Object @NotNull [] getVariants() {
+      List<LookupElement> variants = new SmartList<>();
+      PairProcessor<PsiClass, String> variantProcessor = (psiClass, id) -> {
+        variants.add(LookupElementBuilder.create(psiClass, id)
+                       .withTypeText(psiClass.getQualifiedName()));
+        return true;
+      };
+      processStateAnnoClasses(variantProcessor);
+      return variants.toArray();
+    }
+
+    private void processStateAnnoClasses(PairProcessor<PsiClass, String> processor) {
+      final Project project = myElement.getProject();
+      final GlobalSearchScope searchScope = PsiUtil.isIdeaProject(project) ?
+                                            GlobalSearchScopesCore.projectProductionScope(project) : getElement().getResolveScope();
+      final PsiClass statePsiClass = JavaPsiFacade.getInstance(project).findClass(State.class.getName(), searchScope);
+      if (statePsiClass == null) {
+        return;
+      }
+
+      final Query<PsiClass> query = AnnotatedElementsSearch.searchPsiClasses(statePsiClass, searchScope);
+      query.forEach(psiClass -> {
+        final PsiAnnotation stateAnnotation = AnnotationUtil.findAnnotation(psiClass, true, State.class.getName());
+        assert stateAnnotation != null : psiClass;
+
+        if (AnnotationUtil.findDeclaredAttribute(stateAnnotation, "presentableName") != null) return true;
+
+        final String nameAttributeValue = AnnotationUtil.getDeclaredStringAttributeValue(stateAnnotation, "name");
+        if (StringUtil.isEmpty(nameAttributeValue)) return true;
+
+        return processor.process(psiClass, nameAttributeValue);
+      });
+    }
+  }
+
+
   public static class ImplicitUsageProvider extends ImplicitPropertyUsageProvider {
 
     @NonNls public static final String ICON_TOOLTIP_PREFIX = "icon.";
@@ -190,6 +262,7 @@ public class MessageBundleReferenceContributor extends PsiReferenceContributor {
 
       if ((name.startsWith(ACTION) || name.startsWith(GROUP)) &&
           (name.endsWith(TEXT) || name.endsWith(DESC)) ||
+          (name.startsWith(EXPORTABLE_PREFIX) && name.endsWith(EXPORTABLE_SUFFIX)) ||
           name.startsWith(TOOLWINDOW_STRIPE_PREFIX)) {
         PsiElement key = property.getFirstChild();
         PsiReference[] references = key == null ? PsiReference.EMPTY_ARRAY : key.getReferences();
