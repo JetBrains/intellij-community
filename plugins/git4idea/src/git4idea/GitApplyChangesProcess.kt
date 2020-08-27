@@ -277,7 +277,7 @@ class GitApplyChangesProcess(private val project: Project,
                                   getCommitsDetails(successfulCommits))
       }
       successfulCommits.isNotEmpty() -> {
-        val title = GitBundle.message("apply.changes.applied.for.commits", appliedWord, successfulCommits.size,
+        val title = GitBundle.message("apply.changes.applied.for.commits", appliedWord.capitalize(), successfulCommits.size,
                                       successfulCommits.size + skipped.size)
         val description = getCommitsDetails(successfulCommits) + UIUtil.HR + formSkippedDescription(skipped, true)
         vcsNotifier.notifySuccess(title, description)

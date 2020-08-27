@@ -57,7 +57,7 @@ class GitCherryPickAutoCommitTest : GitCherryPickTest() {
 
     `assert merge dialog was shown`()
     changeListManager.assertChangeListExists("on_master")
-    assertWarningNotification("Cherry-picked with conflicts", """
+    assertWarningNotification("Cherry-pick performed with conflicts", """
       ${shortHash(commit)} on_master
       Unresolved conflicts remain in the working tree. <a href='resolve'>Resolve them.<a/>
       """)
@@ -107,7 +107,7 @@ class GitCherryPickAutoCommitTest : GitCherryPickTest() {
 
     cherryPick(commit1, commit2, commit3)
 
-    assertErrorNotification("Cherry-pick Failed", """
+    assertErrorNotification("Cherry-pick failed", """
       ${shortHash(commit2)} appended common
       Your local changes would be overwritten by cherry-pick.
       Commit your changes or stash them to proceed.
@@ -157,7 +157,7 @@ class GitCherryPickAutoCommitTest : GitCherryPickTest() {
     cherryPick(commit1, emptyCommit, commit3)
 
     assertLogMessages("fix #2", "fix #1")
-    assertSuccessfulNotification("Cherry-picked 2 commits from 3","""
+    assertSuccessfulNotification("Applied 2 commits from 3","""
       ${shortHash(commit1)} fix #1
       ${shortHash(commit3)} fix #2
       ${shortHash(emptyCommit)} was skipped, because all changes have already been applied.""")
