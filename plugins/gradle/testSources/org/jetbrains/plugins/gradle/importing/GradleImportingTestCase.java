@@ -158,7 +158,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
           JdkVersionDetector.JdkVersionInfo jdkVersionInfo = JdkVersionDetector.getInstance().detectJdkVersionInfo(path);
           if (jdkVersionInfo == null) continue;
           int feature = jdkVersionInfo.version.feature;
-          if (feature > 6 && feature < 9) {
+          if (feature == 8) {
             return path;
           }
         }

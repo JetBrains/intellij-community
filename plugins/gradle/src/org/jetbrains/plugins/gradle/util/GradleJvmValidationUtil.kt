@@ -64,9 +64,8 @@ fun isSupported(gradleVersion: GradleVersion, javaVersion: JavaVersion): Boolean
     gradleVersion >= GradleVersion.version("6.0") -> javaVersion.feature in 8..13
     gradleVersion >= GradleVersion.version("5.4.1") -> javaVersion.feature in 8..12
     gradleVersion >= GradleVersion.version("5.0") -> javaVersion.feature in 8..11
-    gradleVersion >= GradleVersion.version("4.1") -> javaVersion.feature in 7..9
-    gradleVersion >= GradleVersion.version("4.0") -> javaVersion.feature in 7..8
-    else -> javaVersion.feature in 6..8
+    gradleVersion >= GradleVersion.version("4.1") -> javaVersion.feature in 8..9
+    else -> javaVersion.feature == 8
   }
 }
 
