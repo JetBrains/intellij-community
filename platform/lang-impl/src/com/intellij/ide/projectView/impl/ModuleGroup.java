@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleGrouper;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
@@ -113,12 +113,12 @@ public class ModuleGroup {
   }
 
   @NotNull
-  public String getQualifiedName() {
+  public @NlsSafe String getQualifiedName() {
     return StringUtil.join(myGroupPath, ".");
   }
 
   @Override
-  public @NlsContexts.ConfigurableName String toString() {
+  public @NlsSafe String toString() {
     return myGroupPath.get(myGroupPath.size() - 1);
   }
 }
