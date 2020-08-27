@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.dom.generate;
 
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.Function;
 import com.intellij.util.xml.DomElement;
 import org.jetbrains.annotations.NonNls;
@@ -45,7 +46,7 @@ public class MavenGenerateDomActionGroup extends DefaultActionGroup {
     add(new GenerateParentAction());
   }
 
-  private static MavenGenerateTemplateAction createAction(String actionDescription,
+  private static MavenGenerateTemplateAction createAction(@NlsContexts.DetailedDescription String actionDescription,
                                                           final Class<? extends DomElement> aClass,
                                                           @NonNls @Nullable String mappingId,
                                                           @NotNull Function<MavenDomProjectModel, DomElement> parentFunction) {

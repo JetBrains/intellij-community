@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -867,21 +868,12 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       return super.getPlainAttributes();
     }
 
+    @NlsContexts.DetailedDescription
     private String makeDescription() {
       StringBuilder desc = new StringBuilder();
-      desc.append("<html>" +
-                  "<table>" +
-                  "<tr>" +
-                  "<td nowrap>" +
-                  "<table>" +
-                  "<tr>" +
-                  "<td nowrap>Project:</td>" +
-                  "<td nowrap>").append(myMavenProject.getMavenId())
-        .append("</td>" +
-                "</tr>" +
-                "<tr>" +
-                "<td nowrap>Location:</td>" +
-                "<td nowrap>").append(myMavenProject.getPath())
+      desc.append("<html>" + "<table>" + "<tr>" + "<td nowrap>" + "<table>" + "<tr>" + "<td nowrap>")
+        .append(MavenProjectBundle.message("detailed.description.project")).append("</td>").append("<td nowrap>").append(myMavenProject.getMavenId()).append("</td>" + "</tr>" + "<tr>" + "<td nowrap>")
+        .append(MavenProjectBundle.message("detailed.description.location")).append(":</td>").append("<td nowrap>").append(myMavenProject.getPath())
         .append("</td>" +
                 "</tr>" +
                 "</table>" +
@@ -892,7 +884,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
       desc.append("</table></html>");
 
-      return desc.toString();
+      return desc.toString(); //NON-NLS
     }
 
     private void appendProblems(StringBuilder desc) {
@@ -908,7 +900,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
         desc.append("<tr>");
         if (first) {
           desc.append("<td nowrap valign=top>").append(MavenUtil.formatHtmlImage(ERROR_ICON_URL)).append("</td>");
-          desc.append("<td nowrap valign=top>Problems:</td>");
+          desc.append("<td nowrap valign=top>").append(MavenProjectBundle.message("detailed.description.problems")).append("</td>");
           first = false;
         }
         else {

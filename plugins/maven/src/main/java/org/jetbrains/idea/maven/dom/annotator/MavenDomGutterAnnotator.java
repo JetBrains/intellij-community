@@ -22,6 +22,7 @@ import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlTag;
@@ -188,6 +189,7 @@ public class MavenDomGutterAnnotator implements Annotator {
     return dependency.getParentOfType(MavenDomDependencyManagement.class, false) != null;
   }
 
+  @NlsContexts.DetailedDescription
   private static String generateTooltip(MavenDomDependency dependency) {
     StringBuilder res = new StringBuilder();
 
@@ -217,7 +219,7 @@ public class MavenDomGutterAnnotator implements Annotator {
 
     res.append("</dependency>");
 
-    return StringUtil.escapeXmlEntities(res.toString()).replace(" ", "&nbsp;");
+    return StringUtil.escapeXmlEntities(res.toString()).replace(" ", "&nbsp;"); //NON-NLS
   }
 
   private static class MyListCellRenderer extends PsiElementListCellRenderer<XmlTag> {

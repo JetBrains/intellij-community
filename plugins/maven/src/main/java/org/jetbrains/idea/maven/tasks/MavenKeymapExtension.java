@@ -25,6 +25,7 @@ import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.navigator.MavenProjectsStructure;
 import org.jetbrains.idea.maven.navigator.SelectMavenGoalDialog;
+import org.jetbrains.idea.maven.project.MavenConfigurableBundle;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
@@ -84,7 +85,7 @@ public final class MavenKeymapExtension implements ExternalSystemKeymapExtension
     }
 
     Icon icon = AllIcons.General.Add;
-    ((Group)result).addHyperlink(new Hyperlink(icon, "Choose a phase/goal to assign a shortcut") {
+    ((Group)result).addHyperlink(new Hyperlink(icon, MavenConfigurableBundle.message("link.label.choose.phase.goal.to.assign.shortcut")) {
       @Override
       public void onClick(MouseEvent e) {
         SelectMavenGoalDialog dialog = new SelectMavenGoalDialog(project);
