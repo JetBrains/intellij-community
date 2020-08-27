@@ -12,7 +12,6 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -59,7 +58,7 @@ public class GrChangeVariableType extends GroovyFix {
   @NotNull
   @Override
   public String getName() {
-    return GroovyInspectionBundle.message("change.lvalue.type", myName, myType);
+    return GroovyBundle.message("change.lvalue.type", myName, myType);
   }
 
   @Nls

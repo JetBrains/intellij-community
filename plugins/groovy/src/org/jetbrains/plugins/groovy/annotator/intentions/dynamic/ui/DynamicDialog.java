@@ -28,7 +28,6 @@ import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.DynamicManager;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.ParamInfo;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DClassElement;
 import org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements.DItemElement;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.debugger.fragments.GroovyCodeFragment;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
@@ -69,7 +68,7 @@ public abstract class DynamicDialog extends DialogWrapper {
       myTablePane.setVisible(false);
     }
 
-    setTitle(GroovyInspectionBundle.message("dynamic.element"));
+    setTitle(GroovyBundle.message("dynamic.element"));
     setUpTypeComboBox(typeConstraints);
     setUpContainingClassComboBox();
     setUpStaticComboBox();
@@ -89,12 +88,12 @@ public abstract class DynamicDialog extends DialogWrapper {
   protected ValidationInfo doValidate() {
     final GrTypeElement typeElement = getEnteredTypeName();
     if (typeElement == null) {
-      return new ValidationInfo(GroovyInspectionBundle.message("no.type.specified"), myTypeComboBox);
+      return new ValidationInfo(GroovyBundle.message("no.type.specified"), myTypeComboBox);
     }
 
     final PsiType type = typeElement.getType();
     if (type instanceof PsiClassType && ((PsiClassType)type).resolve() == null) {
-      return new ValidationInfo(GroovyInspectionBundle.message("unresolved.type.status", type.getPresentableText()), myTypeComboBox);
+      return new ValidationInfo(GroovyBundle.message("unresolved.type.status", type.getPresentableText()), myTypeComboBox);
     }
     return null;
   }
@@ -214,15 +213,15 @@ public abstract class DynamicDialog extends DialogWrapper {
           }
 
           if (itemElement == null) {
-            Messages.showWarningDialog(myProject, GroovyInspectionBundle.message("Cannot.perform.undo.operation"),
-                                       GroovyInspectionBundle.message("Undo.disable"));
+            Messages.showWarningDialog(myProject, GroovyBundle.message("Cannot.perform.undo.operation"),
+                                       GroovyBundle.message("Undo.disable"));
             return;
           }
           final DClassElement classElement = myDynamicManager.getClassElementByItem(itemElement);
 
           if (classElement == null) {
-            Messages.showWarningDialog(myProject, GroovyInspectionBundle.message("Cannot.perform.undo.operation"),
-                                       GroovyInspectionBundle.message("Undo.disable"));
+            Messages.showWarningDialog(myProject, GroovyBundle.message("Cannot.perform.undo.operation"),
+                                       GroovyBundle.message("Undo.disable"));
             return;
           }
 

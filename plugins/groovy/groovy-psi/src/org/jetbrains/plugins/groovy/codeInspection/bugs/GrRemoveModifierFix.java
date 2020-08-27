@@ -3,13 +3,13 @@ package org.jetbrains.plugins.groovy.codeInspection.bugs;
 
 import com.intellij.codeInspection.util.IntentionName;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier.GrModifierConstant;
 
 public class GrRemoveModifierFix extends GrModifierFix {
 
   public GrRemoveModifierFix(@NotNull @GrModifierConstant String modifier) {
-    this(modifier, GroovyInspectionBundle.message("unnecessary.modifier.remove", modifier));
+    this(modifier, GroovyBundle.message("unnecessary.modifier.remove", modifier));
   }
 
   public GrRemoveModifierFix(@NotNull @GrModifierConstant String modifier, @IntentionName @NotNull String text) {

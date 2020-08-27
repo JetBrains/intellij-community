@@ -26,7 +26,6 @@ import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory;
 import org.jetbrains.plugins.groovy.codeInspection.GroovySuppressableInspectionTool;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspection;
@@ -232,7 +231,7 @@ public class GroovyPostHighlightingPass extends TextEditorHighlightingPass {
     List<HighlightInfo> infos = new ArrayList<>(myUnusedDeclarations);
     for (GrImportStatement unusedImport : myUnusedImports) {
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.UNUSED_SYMBOL).range(calculateRangeToUse(unusedImport))
-        .descriptionAndTooltip(GroovyInspectionBundle.message("unused.import")).create();
+        .descriptionAndTooltip(GroovyBundle.message("unused.import")).create();
       QuickFixAction.registerQuickFixAction(info, GroovyQuickFixFactory.getInstance().createOptimizeImportsFix(false));
       infos.add(info);
     }

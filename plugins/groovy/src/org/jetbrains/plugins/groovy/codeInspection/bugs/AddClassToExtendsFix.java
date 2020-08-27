@@ -11,7 +11,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrReferenceList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -83,7 +82,7 @@ public class AddClassToExtendsFix extends GroovyFix {
   @NotNull
   @Override
   public String getName() {
-    return GroovyInspectionBundle.message("implement.class", myInterfaceName);
+    return GroovyBundle.message("implement.class", myInterfaceName);
   }
 
   @NotNull

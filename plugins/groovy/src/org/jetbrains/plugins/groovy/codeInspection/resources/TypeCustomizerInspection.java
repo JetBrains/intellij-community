@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.resources;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -16,9 +16,9 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -43,7 +43,7 @@ public class TypeCustomizerInspection extends BaseInspection {
         CompilerConfiguration configuration = CompilerConfiguration.getInstance(file.getProject());
         if (configuration != null && !configuration.isResourceFile(file.getVirtualFile()) && fileSeemsToBeTypeCustomizer(file)) {
           final LocalQuickFix[] fixes = {new AddToResourceFix(file)};
-          final String message = GroovyInspectionBundle.message("type.customizer.is.not.marked.as.a.resource.file");
+          final String message = GroovyBundle.message("type.customizer.is.not.marked.as.a.resource.file");
           registerError(file, message, fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
         }
       }
@@ -88,7 +88,7 @@ public class TypeCustomizerInspection extends BaseInspection {
     @NotNull
     @Override
     public String getName() {
-      return GroovyInspectionBundle.message("add.to.resources");
+      return GroovyBundle.message("add.to.resources");
     }
 
     @Override
@@ -99,7 +99,7 @@ public class TypeCustomizerInspection extends BaseInspection {
     @NotNull
     @Override
     public String getFamilyName() {
-      return GroovyInspectionBundle.message("add.type.customizer.to.resources");
+      return GroovyBundle.message("add.type.customizer.to.resources");
     }
 
     @Override

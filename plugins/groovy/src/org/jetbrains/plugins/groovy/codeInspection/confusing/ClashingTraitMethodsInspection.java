@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrTraitMethod;
 
@@ -28,7 +28,7 @@ public class ClashingTraitMethodsInspection extends ClashingTraitMethodsInspecti
     @NotNull
     @Override
     public String getFamilyName() {
-      return GroovyInspectionBundle.message("declare.explicit.implementations.of.trait");
+      return GroovyBundle.message("declare.explicit.implementations.of.trait");
     }
 
     @Override

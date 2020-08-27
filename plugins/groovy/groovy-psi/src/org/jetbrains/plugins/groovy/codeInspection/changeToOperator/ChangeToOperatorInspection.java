@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.changeToOperator;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -14,6 +12,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
@@ -27,7 +26,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import javax.swing.*;
 
 import static com.intellij.codeInspection.ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
-import static org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle.message;
 import static org.jetbrains.plugins.groovy.codeInspection.changeToOperator.transformations.Transformations.TRANSFORMATIONS;
 
 public class ChangeToOperatorInspection extends BaseInspection {
@@ -59,7 +57,7 @@ public class ChangeToOperatorInspection extends BaseInspection {
         if (transformation.couldApply(methodCall, getOptions())) {
           registerError(
             highlightElement,
-            message("replace.with.operator.message", methodName),
+            GroovyBundle.message("replace.with.operator.message", methodName),
             new LocalQuickFix[]{getFix(transformation, methodName)},
             GENERIC_ERROR_OR_WARNING
           );
@@ -75,7 +73,7 @@ public class ChangeToOperatorInspection extends BaseInspection {
       @NotNull
       @Override
       public String getFamilyName() {
-        return message("replace.with.operator.fix", methodName);
+        return GroovyBundle.message("replace.with.operator.fix", methodName);
       }
 
       @Override
@@ -106,9 +104,9 @@ public class ChangeToOperatorInspection extends BaseInspection {
   @Override
   public JComponent createOptionsPanel() {
     MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(message("replace.with.operator.double.negation.option"), "useDoubleNegation");
-    optionsPanel.addCheckbox(message("replace.with.operator.compareTo.equality.option"), "shouldChangeCompareToEqualityToEquals");
-    optionsPanel.addCheckbox(message("replace.with.operator.parentheses"), "withoutAdditionalParentheses");
+    optionsPanel.addCheckbox(GroovyBundle.message("replace.with.operator.double.negation.option"), "useDoubleNegation");
+    optionsPanel.addCheckbox(GroovyBundle.message("replace.with.operator.compareTo.equality.option"), "shouldChangeCompareToEqualityToEquals");
+    optionsPanel.addCheckbox(GroovyBundle.message("replace.with.operator.parentheses"), "withoutAdditionalParentheses");
     return optionsPanel;
   }
 

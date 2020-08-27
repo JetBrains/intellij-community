@@ -14,7 +14,7 @@ import com.intellij.psi.tree.IElementType;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyLocalInspectionBase;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -98,7 +98,7 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
     unusedDefs.forEach(num -> {
       final ReadWriteVariableInstruction instruction = (ReadWriteVariableInstruction)flow[num];
       final PsiElement element = instruction.getElement();
-      process(element, checked, problemsHolder, GroovyInspectionBundle.message("unused.assignment.tooltip"));
+      process(element, checked, problemsHolder, GroovyBundle.message("unused.assignment.tooltip"));
       return true;
     });
 
@@ -112,7 +112,7 @@ public class UnusedDefInspection extends GroovyLocalInspectionBase {
           GrVariable variable = (GrVariable)element;
           if (checked.contains(variable) || variable.getInitializerGroovy() != null) return;
           if (ReferencesSearch.search(variable, variable.getUseScope()).findFirst() == null) {
-            process(variable, checked, problemsHolder, GroovyInspectionBundle.message("unused.variable"));
+            process(variable, checked, problemsHolder, GroovyBundle.message("unused.variable"));
           }
         }
         else {

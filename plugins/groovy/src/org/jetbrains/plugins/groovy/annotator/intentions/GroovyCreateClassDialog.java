@@ -26,7 +26,7 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -64,7 +64,7 @@ public class GroovyCreateClassDialog extends DialogWrapper {
     myPackageChooseButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent event) {
-        PackageChooserDialog chooser = new PackageChooserDialog(GroovyInspectionBundle.message("dialog.create.class.package.chooser.title"), myProject);
+        PackageChooserDialog chooser = new PackageChooserDialog(GroovyBundle.message("dialog.create.class.package.chooser.title"), myProject);
         chooser.selectPackage(myPackageTextField.getText());
         chooser.show();
         PsiPackage aPackage = chooser.getSelectedPackage();
@@ -145,7 +145,7 @@ public class GroovyCreateClassDialog extends DialogWrapper {
       catch (IncorrectOperationException e) {
         errorStringRef.set(e.getMessage());
       }
-    }, GroovyInspectionBundle.message("create.directory.command"), null);
+    }, GroovyBundle.message("create.directory.command"), null);
 
     if (errorStringRef.get() != null) {
       if (!errorStringRef.get().isEmpty()) {

@@ -12,9 +12,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
@@ -97,13 +97,13 @@ public class GrUnusedIncDecInspection extends BaseInspection {
       if (allAreWrite) {
         if (expression.isPostfix() && PsiUtil.isExpressionUsed(expression)) {
           registerError(expression.getOperationToken(),
-                        GroovyInspectionBundle.message("unused.0", expression.getOperationToken().getText()),
+                        GroovyBundle.message("unused.0", expression.getOperationToken().getText()),
                         new LocalQuickFix[]{new ReplacePostfixIncWithPrefixFix(expression), new RemoveIncOrDecFix(expression)},
                         ProblemHighlightType.LIKE_UNUSED_SYMBOL);
         }
         else if (!PsiUtil.isExpressionUsed(expression)) {
           registerError(expression.getOperationToken(),
-                        GroovyInspectionBundle.message("unused.0", expression.getOperationToken().getText()), LocalQuickFix.EMPTY_ARRAY,
+                        GroovyBundle.message("unused.0", expression.getOperationToken().getText()), LocalQuickFix.EMPTY_ARRAY,
                         ProblemHighlightType.LIKE_UNUSED_SYMBOL);
         }
       }
@@ -113,7 +113,7 @@ public class GrUnusedIncDecInspection extends BaseInspection {
       private final @IntentionFamilyName String myMessage;
 
       RemoveIncOrDecFix(GrUnaryExpression expression) {
-        myMessage = GroovyInspectionBundle.message("remove.0", expression.getOperationToken().getText());
+        myMessage = GroovyBundle.message("remove.0", expression.getOperationToken().getText());
       }
 
       @NotNull
@@ -135,7 +135,7 @@ public class GrUnusedIncDecInspection extends BaseInspection {
       private final @IntentionFamilyName String myMessage;
 
       ReplacePostfixIncWithPrefixFix(GrUnaryExpression expression) {
-        myMessage = GroovyInspectionBundle.message("replace.postfix.0.with.prefix.0", expression.getOperationToken().getText());
+        myMessage = GroovyBundle.message("replace.postfix.0.with.prefix.0", expression.getOperationToken().getText());
       }
 
       @NotNull
@@ -161,7 +161,7 @@ public class GrUnusedIncDecInspection extends BaseInspection {
 
       ReplaceIncDecWithBinary(GrUnaryExpression expression) {
         String opToken = expression.getOperationToken().getText();
-        myMessage = GroovyInspectionBundle.message("replace.0.with.1", opToken, opToken.substring(0, 1));
+        myMessage = GroovyBundle.message("replace.0.with.1", opToken, opToken.substring(0, 1));
       }
 
       @NotNull

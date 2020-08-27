@@ -13,7 +13,6 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
@@ -31,7 +30,7 @@ public class GroovyPointlessArithmeticInspection extends BaseInspection {
 
   @Override
   public String buildErrorString(Object... args) {
-    return GroovyInspectionBundle.message("pointless.arithmetic.error.message", calculateReplacementExpression((GrExpression) args[0]));
+    return GroovyBundle.message("pointless.arithmetic.error.message", calculateReplacementExpression((GrExpression) args[0]));
   }
 
   private static String calculateReplacementExpression(GrExpression expression) {

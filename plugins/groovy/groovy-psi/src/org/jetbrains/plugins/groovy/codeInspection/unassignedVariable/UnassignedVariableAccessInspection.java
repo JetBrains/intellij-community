@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.unassignedVariable;
 
 import com.intellij.codeInspection.ProblemsHolder;
@@ -10,8 +10,8 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.GrInspectionUtil;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyLocalInspectionBase;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
@@ -49,7 +49,7 @@ public class UnassignedVariableAccessInspection extends GroovyLocalInspectionBas
   @Override
   public JComponent createOptionsPanel() {
     final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
-    optionsPanel.addCheckbox(GroovyInspectionBundle.message("ignore.boolean.expressions"), "myIgnoreBooleanExpressions");
+    optionsPanel.addCheckbox(GroovyBundle.message("ignore.boolean.expressions"), "myIgnoreBooleanExpressions");
     return optionsPanel;
   }
 
@@ -68,7 +68,7 @@ public class UnassignedVariableAccessInspection extends GroovyLocalInspectionBas
             PsiTreeUtil.isAncestor(owner, property, false) &&
             !(myIgnoreBooleanExpressions && isBooleanCheck(element))
           ) {
-          problemsHolder.registerProblem(element, GroovyInspectionBundle.message("unassigned.access.tooltip", name));
+          problemsHolder.registerProblem(element, GroovyBundle.message("unassigned.access.tooltip", name));
         }
       }
     }

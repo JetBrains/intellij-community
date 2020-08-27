@@ -17,7 +17,6 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyFix;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -86,7 +85,7 @@ public class AddMethodFix extends GroovyFix {
   @NotNull
   @Override
   public String getName() {
-    return GroovyInspectionBundle.message("add.method", myMethodName, myClassName);
+    return GroovyBundle.message("add.method", myMethodName, myClassName);
   }
 
   @NotNull

@@ -27,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrCatchClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
@@ -51,8 +50,8 @@ public class GroovyEmptyCatchBlockInspection extends BaseInspection {
   @Override
   public JComponent createOptionsPanel() {
     MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(GroovyInspectionBundle.message("comments.count.as.content"), "myCountCommentsAsContent");
-    panel.addCheckbox(GroovyInspectionBundle.message("ignore.when.catch.parameter.is.named.ignore.or.ignored"), "myIgnore");
+    panel.addCheckbox(GroovyBundle.message("comments.count.as.content"), "myCountCommentsAsContent");
+    panel.addCheckbox(GroovyBundle.message("ignore.when.catch.parameter.is.named.ignore.or.ignored"), "myIgnore");
     return panel;
   }
 

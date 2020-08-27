@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.confusing;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -7,9 +7,9 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiAnnotationMemberValue;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
@@ -59,7 +59,7 @@ public class DelegatesToInspection extends BaseInspection {
           }
         }
 
-        registerError(annotation.getClassReference(), GroovyInspectionBundle.message("target.annotation.is.unused"),
+        registerError(annotation.getClassReference(), GroovyBundle.message("target.annotation.is.unused"),
                       LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
       }
 
@@ -85,7 +85,7 @@ public class DelegatesToInspection extends BaseInspection {
           }
         }
 
-        registerError(targetPair, GroovyInspectionBundle.message("target.0.does.not.exist", targetName != null ? targetName : "?"),
+        registerError(targetPair, GroovyBundle.message("target.0.does.not.exist", targetName != null ? targetName : "?"),
                       LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
       }
     };

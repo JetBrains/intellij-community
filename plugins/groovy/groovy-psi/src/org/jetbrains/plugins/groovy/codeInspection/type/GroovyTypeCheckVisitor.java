@@ -11,7 +11,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
-import org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GrCastFix;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GrChangeVariableType;
 import org.jetbrains.plugins.groovy.codeInspection.type.highlighting.*;
@@ -552,7 +551,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
         if (fittingSignature == null) {
           registerError(
             parameterList,
-            GroovyInspectionBundle.message("no.applicable.signature.found"),
+            GroovyBundle.message("no.applicable.signature.found"),
             null,
             ProblemHighlightType.GENERIC_ERROR
           );
@@ -568,7 +567,7 @@ public class GroovyTypeCheckVisitor extends BaseInspectionVisitor {
           if (!TypesUtil.isAssignableByMethodCallConversion(actual, expected, parameterList)) {
             registerError(
               typeElement,
-              GroovyInspectionBundle.message("expected.type.0", expected.getCanonicalText(false), actual.getCanonicalText(false)),
+              GroovyBundle.message("expected.type.0", expected.getCanonicalText(false), actual.getCanonicalText(false)),
               null,
               ProblemHighlightType.GENERIC_ERROR
             );
