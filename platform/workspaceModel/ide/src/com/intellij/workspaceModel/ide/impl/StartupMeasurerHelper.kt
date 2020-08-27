@@ -4,3 +4,9 @@ package com.intellij.workspaceModel.ide.impl
 import com.intellij.diagnostic.Activity
 
 internal lateinit var moduleLoadingActivity: Activity
+
+fun finishModuleLoadingActivity() {
+  if (::moduleLoadingActivity.isInitialized) {
+    moduleLoadingActivity.end()
+  }
+}
