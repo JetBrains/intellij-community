@@ -2,7 +2,10 @@
 package org.jetbrains.idea.devkit.kotlin.inspections
 
 import com.intellij.codeInspection.i18n.I18nInspection
+import com.intellij.codeInspection.i18n.NlsInfo
+import com.intellij.psi.PsiClassOwner
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import org.jetbrains.annotations.Nls
 
 class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
 
@@ -55,7 +58,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     inspection.setIgnoreForAllButNls(true)
     myFixture.enableInspections(inspection)
     myFixture.configureByText("Foo.kt", """
-       fun foo(@org.jetbrains.annotations.Nls <warning descr="[UNUSED_PARAMETER] Parameter 'message' is never used">message</warning>: String) { }
+       fun foo(@org.jetbrains.annotations.Nls(capitalization=org.jetbrains.annotations.Nls.Capitalization.Title) <warning descr="[UNUSED_PARAMETER] Parameter 'message' is never used">message</warning>: String) { }
        fun bar() {
           var text = <warning descr="Hardcoded string literal: \"foo\""><warning descr="[VARIABLE_WITH_REDUNDANT_INITIALIZER] Variable 'text' initializer is redundant">"foo"</warning></warning>
           text = <warning descr="Hardcoded string literal: \"bar\"">"bar"</warning>
@@ -63,6 +66,9 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
           foo(text)
        }
     """.trimIndent())
+    val parameterNls = NlsInfo.forModifierListOwner((file as PsiClassOwner).classes[0].methods[0].parameterList.parameters[0])
+    assertTrue(parameterNls is NlsInfo.Localized)
+    assertEquals(Nls.Capitalization.Title, (parameterNls as NlsInfo.Localized).capitalization)
     myFixture.testHighlighting()
   }
   
@@ -109,6 +115,10 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
         fun foo(@org.jetbrains.annotations.NonNls nonNls: String, foo: String) {
           when (nonNls) {
             "foo bar" -> {}
+          }
+          @org.jetbrains.annotations.NonNls val <warning descr="[UNUSED_VARIABLE] Variable 'nonNls2' is never used">nonNls2</warning> = when (true) {
+            true -> "foo bar2"
+            else -> "foo bar3"
           }
           when (foo) {
             <warning descr="Hardcoded string literal: \"foo bar\"">"foo bar"</warning> -> {}

@@ -800,20 +800,18 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
         }
       }
     }
-    if (uVar != null) {
+    if (uVar != null && NlsInfo.fromUVariable(uVar).getNlsStatus() == ThreeState.UNSURE) {
       PsiElement psiVar = uVar.getSourcePsi();
       PsiElement psi = passThrough.getSourcePsi();
       if (psi != null && psiVar != null) {
         if (psiVar instanceof PsiLocalVariable) {
           // Java
           PsiLocalVariable local = (PsiLocalVariable)psiVar;
-          if (NlsInfo.forModifierListOwner(local).getNlsStatus() == ThreeState.UNSURE) {
-            PsiElement codeBlock = PsiUtil.getVariableCodeBlock(local, null);
-            if (codeBlock instanceof PsiCodeBlock) {
-              List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(local, codeBlock);
-              return ContainerUtil.mapNotNull(
-                refs, ref -> PsiUtil.isAccessedForWriting(ref) ? null : UastContextKt.toUElement(ref, UExpression.class));
-            }
+          PsiElement codeBlock = PsiUtil.getVariableCodeBlock(local, null);
+          if (codeBlock instanceof PsiCodeBlock) {
+            List<PsiReferenceExpression> refs = VariableAccessUtils.getVariableReferences(local, codeBlock);
+            return ContainerUtil.mapNotNull(
+              refs, ref -> PsiUtil.isAccessedForWriting(ref) ? null : UastContextKt.toUElement(ref, UExpression.class));
           }
         } else {
           // Kotlin

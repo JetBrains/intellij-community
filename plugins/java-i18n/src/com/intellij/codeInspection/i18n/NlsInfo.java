@@ -13,7 +13,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.siyeh.ig.psiutils.TypeUtils;
 import gnu.trove.THashSet;
-import kotlin.Pair;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nls.Capitalization;
 import org.jetbrains.annotations.NonNls;
@@ -97,7 +96,7 @@ public abstract class NlsInfo {
       return new Localized(myCapitalization, prefix, suffix, myAnnotationName);
     }
 
-    private @NotNull Localized withAnnotation(@NotNull PsiAnnotation annotation) {
+    private @NotNull Localized withAnnotation(@NotNull UAnnotation annotation) {
       String qualifiedName = annotation.getQualifiedName();
       if (Objects.equals(qualifiedName, myAnnotationName)) {
         return this;
@@ -234,6 +233,8 @@ public abstract class NlsInfo {
     PsiElement var = null;
     
     if (parent instanceof UVariable) {
+      NlsInfo info = fromUVariable((UVariable)parent);
+      if (info != Unspecified.UNKNOWN) return info;
       var = parent.getJavaPsi();
     }
     else if (parent instanceof UBinaryExpression) {
@@ -388,9 +389,19 @@ public abstract class NlsInfo {
           parentElement = elvis;
         }
       }
+      if (parentElement instanceof UExpressionList && parentElement.getUastParent() instanceof USwitchClauseExpression) {
+        // Kotlin has intermediate UExpressionList node
+        parentElement = parentElement.getUastParent();
+      }
       UExpression next = ObjectUtils.tryCast(parentElement, UExpression.class);
-      if (next == null || next instanceof USwitchClauseExpression || next instanceof UNamedExpression) {
-        return parent;
+      if (next == null || next instanceof UNamedExpression) return parent;
+      if (next instanceof USwitchClauseExpression) {
+        if (((USwitchClauseExpression)next).getCaseValues().contains(normalize(parent))) return parent;
+        UExpressionList switchBody = ObjectUtils.tryCast(next.getUastParent(), UExpressionList.class);
+        if (switchBody == null) return parent;
+        USwitchExpression switchExpression = ObjectUtils.tryCast(switchBody.getUastParent(), USwitchExpression.class);
+        if (switchExpression == null) return parent;
+        next = switchExpression;
       }
       ULambdaExpression lambda = ObjectUtils.tryCast(next, ULambdaExpression.class);
       if (next instanceof UReturnExpression) {
@@ -535,6 +546,19 @@ public abstract class NlsInfo {
     return new Unspecified(method);
   }
 
+  static @NotNull NlsInfo fromUVariable(@NotNull UVariable owner) {
+    for (UAnnotation annotation : owner.getUAnnotations()) {
+      NlsInfo info = fromAnnotation(annotation);
+      if (info != Unspecified.UNKNOWN) {
+        return info;
+      }
+      info = fromMetaAnnotation(annotation);
+      if (info != Unspecified.UNKNOWN) {
+        return info;
+      }
+    }
+    return Unspecified.UNKNOWN;
+  }
 
   private static @NotNull NlsInfo fromAnnotationOwner(@Nullable PsiAnnotationOwner owner) {
     if (owner == null) return Unspecified.UNKNOWN;
@@ -552,9 +576,12 @@ public abstract class NlsInfo {
       if (info != Unspecified.UNKNOWN) {
         return info;
       }
-      info = fromMetaAnnotation(annotation);
-      if (info != Unspecified.UNKNOWN) {
-        return info;
+      UAnnotation uAnnotation = UastContextKt.toUElement(annotation, UAnnotation.class);
+      if (uAnnotation != null) {
+        info = fromMetaAnnotation(uAnnotation);
+        if (info != Unspecified.UNKNOWN) {
+          return info;
+        }
       }
     }
     if (owner instanceof PsiModifierList) {
@@ -570,10 +597,8 @@ public abstract class NlsInfo {
     return Unspecified.UNKNOWN;
   }
 
-  private static @NotNull NlsInfo fromMetaAnnotation(@NotNull PsiAnnotation annotation) {
-    PsiJavaCodeReferenceElement element = annotation.getNameReferenceElement();
-    if (element == null) return Unspecified.UNKNOWN;
-    PsiClass annotationClass = ObjectUtils.tryCast(element.resolve(), PsiClass.class);
+  private static @NotNull NlsInfo fromMetaAnnotation(@NotNull UAnnotation annotation) {
+    PsiClass annotationClass = annotation.resolve();
     if (annotationClass == null) return Unspecified.UNKNOWN;
     NlsInfo baseInfo = Unspecified.UNKNOWN;
     String prefix = "";
@@ -597,28 +622,35 @@ public abstract class NlsInfo {
   }
 
   private static @NotNull NlsInfo fromAnnotation(@NotNull PsiAnnotation annotation) {
-    if (annotation.hasQualifiedName(AnnotationUtil.NON_NLS) ||
-        annotation.hasQualifiedName(AnnotationUtil.PROPERTY_KEY)) {
+    UAnnotation uAnnotation = UastContextKt.toUElement(annotation, UAnnotation.class);
+    return uAnnotation == null ? Unspecified.UNKNOWN : fromAnnotation(uAnnotation);
+  }
+
+  private static @NotNull NlsInfo fromAnnotation(@NotNull UAnnotation annotation) {
+    String qualifiedName = annotation.getQualifiedName();
+    if (qualifiedName == null) return Unspecified.UNKNOWN;
+    if (qualifiedName.equals(AnnotationUtil.NON_NLS) ||
+        qualifiedName.equals(AnnotationUtil.PROPERTY_KEY)) {
       return NonLocalized.INSTANCE;
     }
-    if (annotation.hasQualifiedName(NLS_SAFE) ||
-        annotation.hasQualifiedName("org.intellij.lang.annotations.RegExp")) {
+    if (qualifiedName.equals(NLS_SAFE) ||
+        qualifiedName.equals("org.intellij.lang.annotations.RegExp")) {
       return NlsSafe.INSTANCE;
     }
-    if (annotation.hasQualifiedName(AnnotationUtil.NLS)) {
-      PsiAnnotationMemberValue value = annotation.findAttributeValue("capitalization");
+    if (qualifiedName.equals(AnnotationUtil.NLS)) {
+      UExpression value = annotation.findAttributeValue("capitalization");
       String name = null;
-      if (value instanceof PsiReferenceExpression) {
+      if (value instanceof UReferenceExpression) {
         // Java plugin returns reference for enum constant in annotation value
-        name = ((PsiReferenceExpression)value).getReferenceName();
+        name = ((UReferenceExpression)value).getResolvedName();
       }
-      else if (value instanceof PsiLiteralExpression) {
-        // But Kotlin plugin returns kotlin.Pair (enumClass : ClassId, constantName : Name) for enum constant in annotation value!
-        Pair<?, ?> pair = ObjectUtils.tryCast(((PsiLiteralExpression)value).getValue(), Pair.class);
-        if (pair != null && pair.getSecond() != null) {
-          name = pair.getSecond().toString();
-        }
-      }
+      //else if (value instanceof PsiLiteralExpression) {
+      //  // But Kotlin plugin returns kotlin.Pair (enumClass : ClassId, constantName : Name) for enum constant in annotation value!
+      //  Pair<?, ?> pair = ObjectUtils.tryCast(((PsiLiteralExpression)value).getValue(), Pair.class);
+      //  if (pair != null && pair.getSecond() != null) {
+      //    name = pair.getSecond().toString();
+      //  }
+      //}
       if (name != null) {
         if (Capitalization.Title.name().equals(name)) {
           return Localized.NLS_TITLE;
