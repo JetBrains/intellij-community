@@ -7,6 +7,7 @@ import com.intellij.codeInsight.intention.impl.AddOnDemandStaticImportAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.actions.CleanupInspectionUtil;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.JavaVersionService;
@@ -179,10 +180,8 @@ public class JUnit5ConverterInspection extends BaseInspection {
               return true;
             });
             if (!inheritors.isEmpty()) {
-              @Nls final String problem = "Class " +
-                                   RefactoringUIUtil.getDescription(psiClass, true) +
-                                   " can't be converted to JUnit 5, cause there are incompatible inheritor(s): " +
-                                   StringUtil.join(inheritors, aClass -> aClass.getQualifiedName(), ", ");
+              @Nls final String problem =
+                JavaBundle.message("cant.be.junit5.conflict.message", RefactoringUIUtil.getDescription(psiClass, true), StringUtil.join(inheritors, aClass -> aClass.getQualifiedName(), ", "));
               conflicts.putValue(psiClass, problem);
             }
           }

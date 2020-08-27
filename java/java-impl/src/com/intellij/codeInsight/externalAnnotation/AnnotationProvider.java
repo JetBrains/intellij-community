@@ -4,6 +4,7 @@ package com.intellij.codeInsight.externalAnnotation;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.util.ArrayUtilRt;
 import org.jetbrains.annotations.NotNull;
@@ -12,6 +13,7 @@ public interface AnnotationProvider {
   ExtensionPointName<AnnotationProvider> KEY = ExtensionPointName.create("com.intellij.java.externalAnnotation");
 
   @NotNull
+  @NlsSafe
   String getName(Project project);
 
   boolean isAvailable(PsiModifierListOwner owner);

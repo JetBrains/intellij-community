@@ -1115,10 +1115,10 @@ public final class HighlightMethodUtil {
     return HtmlChunk.raw(HighlightUtil.createIncompatibleTypesTooltip(parameterType, expression.getType(), new HighlightUtil.IncompatibleTypesTooltipComposer() {
       @NotNull
       @Override
-      public String consume(@NotNull String lRawType,
-                            @NotNull String lTypeArguments,
-                            @NotNull String rRawType,
-                            @NotNull String rTypeArguments) {
+      public String consume(@NotNull @NlsSafe String lRawType,
+                            @NotNull @NlsSafe String lTypeArguments,
+                            @NotNull @NlsSafe String rRawType,
+                            @NotNull @NlsSafe String rTypeArguments) {
         return rRawType + rTypeArguments;
       }
 

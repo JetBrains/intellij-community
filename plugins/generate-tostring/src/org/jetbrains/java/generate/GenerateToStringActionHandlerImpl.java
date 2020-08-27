@@ -135,7 +135,7 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
                 // decide what to do if the method already exists
                 ConflictResolutionPolicy resolutionPolicy = worker.exitsMethodDialog(template);
                 try {
-                    WriteCommandAction.runWriteCommandAction(project, "Generate toString()", null,
+                    WriteCommandAction.runWriteCommandAction(project, JavaBundle.message("command.name.generate.tostring"), null,
                                                              () -> worker.execute(selectedMembers, template, resolutionPolicy));
                 }
                 catch (Exception e) {
@@ -143,7 +143,8 @@ public class GenerateToStringActionHandlerImpl implements GenerateToStringAction
                 }
             }
             else {
-                HintManager.getInstance().showErrorHint(editor, "toString() template '" + template.getFileName() + "' is invalid");
+                HintManager.getInstance().showErrorHint(editor,
+                                                        JavaBundle.message("hint.text.tostring.template.invalid", template.getFileName()));
             }
         }
 

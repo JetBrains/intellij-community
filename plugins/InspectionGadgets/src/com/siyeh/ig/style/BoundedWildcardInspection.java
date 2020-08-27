@@ -31,6 +31,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -77,13 +78,13 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
 
         boolean wildCardIsUseless = VarianceUtil.wildCardIsUseless(candidate, canBeExtends);
         ProblemHighlightType type = wildCardIsUseless ? ProblemHighlightType.WEAK_WARNING : ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
-        String msg = (canBeExtends
+        String msg = canBeExtends
                       ? InspectionGadgetsBundle.message("bounded.wildcard.covariant.descriptor")
-                      : InspectionGadgetsBundle.message("bounded.wildcard.contravariant.descriptor")) +
-                     (wildCardIsUseless ? " but decided against it" : "");
+                      : InspectionGadgetsBundle.message("bounded.wildcard.contravariant.descriptor");
         // show verbose message in debug mode only
         if (!wildCardIsUseless || LOG.isDebugEnabled()) {
-          holder.registerProblem(typeElement, msg, type, new ReplaceWithQuestionTFix(isOverriddenOrOverrides(candidate.method), canBeExtends));
+          @NonNls String verboseDebugMessage = " but decided against it";
+          holder.registerProblem(typeElement, msg + (wildCardIsUseless ? verboseDebugMessage : ""), type, new ReplaceWithQuestionTFix(isOverriddenOrOverrides(candidate.method), canBeExtends));
         }
       }
     };

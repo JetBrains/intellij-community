@@ -48,7 +48,7 @@ public class EliminateParenthesesIntention extends BaseElementAtCaretIntentionAc
   }
 
   private static @NlsContexts.Command String getName() {
-    return IntentionPowerPackBundle.defaultableMessage("eliminate.parentheses.intention.name");
+    return IntentionPowerPackBundle.message("eliminate.parentheses.intention.name");
   }
 
   @Override

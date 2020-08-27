@@ -62,7 +62,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.xml.util.XmlStringUtil;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.*;
@@ -2904,7 +2903,7 @@ public final class HighlightUtil {
 
   interface IncompatibleTypesTooltipComposer {
     @NotNull @NlsContexts.Tooltip
-    String consume(@NotNull String lRawType, @NotNull String lTypeArguments, @NotNull String rRawType, @NotNull String rTypeArguments);
+    String consume(@NotNull @NlsSafe String lRawType, @NotNull @NlsSafe String lTypeArguments, @NotNull @NlsSafe String rRawType, @NotNull @NlsSafe String rTypeArguments);
 
     /**
      * Override if expected/actual pair layout is a row
