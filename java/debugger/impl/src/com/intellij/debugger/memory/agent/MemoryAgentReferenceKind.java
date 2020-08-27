@@ -24,17 +24,17 @@ public enum MemoryAgentReferenceKind {
   OTHER(27),
   TRUNCATE(42); // Fake reference to truncate paths
 
-  private final int value;
+  private final int myValue;
 
   private static final Map<Integer, MemoryAgentReferenceKind> INT_TO_REFERENCE_KIND = new HashMap<>();
   static {
     for (MemoryAgentReferenceKind kind : values()) {
-      INT_TO_REFERENCE_KIND.put(kind.value, kind);
+      INT_TO_REFERENCE_KIND.put(kind.myValue, kind);
     }
   }
 
   MemoryAgentReferenceKind(int value) {
-    this.value = value;
+    this.myValue = value;
   }
 
   public static MemoryAgentReferenceKind valueOf(int value) {

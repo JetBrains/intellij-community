@@ -14,12 +14,12 @@ import javax.swing.*;
 import java.util.function.Function;
 
 public abstract class MemoryAgentReferringObject implements ReferringObject {
-  @NotNull protected final ObjectReference reference;
-  protected final boolean isWeakSoftReachable;
+  @NotNull protected final ObjectReference myReference;
+  protected final boolean myIsWeakSoftReachable;
 
   public MemoryAgentReferringObject(@NotNull ObjectReference reference, boolean isWeakSoftReachable) {
-    this.reference = reference;
-    this.isWeakSoftReachable = isWeakSoftReachable;
+    this.myReference = reference;
+    this.myIsWeakSoftReachable = isWeakSoftReachable;
   }
 
   @NotNull
@@ -43,7 +43,7 @@ public abstract class MemoryAgentReferringObject implements ReferringObject {
 
           @Override
           public void renderValue(@NotNull XValueTextRenderer renderer) {
-            if (isWeakSoftReachable) {
+            if (myIsWeakSoftReachable) {
               renderer.renderKeywordValue("Weak/Soft reachable ");
             }
 
@@ -64,7 +64,7 @@ public abstract class MemoryAgentReferringObject implements ReferringObject {
 
   @NotNull
   @Override
-  public ObjectReference getReference() { return reference; }
+  public ObjectReference getReference() { return myReference; }
 
   @NotNull
   public String getSeparator() { return " = "; }

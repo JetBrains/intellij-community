@@ -20,10 +20,10 @@ import javax.swing.*;
 import java.util.function.Function;
 
 public class GCRootReferringObject implements ReferringObject {
-  @NotNull private final MemoryAgentReferenceKind kind;
+  @NotNull private final MemoryAgentReferenceKind myKind;
 
   public GCRootReferringObject(@NotNull MemoryAgentReferenceKind kind) {
-    this.kind = kind;
+    this.myKind = kind;
   }
 
   @NotNull
@@ -69,7 +69,7 @@ public class GCRootReferringObject implements ReferringObject {
           @Override
           public void renderValue(@NotNull XValueTextRenderer renderer) {
             String additionalInfo = getAdditionalInfo();
-            renderer.renderValue(String.format("%s reference %s", kind.toString().replace('_', ' '),
+            renderer.renderValue(String.format("%s reference %s", myKind.toString().replace('_', ' '),
                                                additionalInfo == null ? "" : additionalInfo));
 
           }

@@ -5,19 +5,19 @@ import com.sun.jdi.ObjectReference;
 import org.jetbrains.annotations.NotNull;
 
 public class MemoryAgentTruncatedReferringObject extends MemoryAgentSimpleReferringObject {
-  private final int lengthToStartObject;
+  private final int myLengthToStartObject;
 
   public MemoryAgentTruncatedReferringObject(@NotNull ObjectReference reference,
                                              boolean isWeakSoftReachable,
                                              int lengthToStartObject) {
     super(reference, isWeakSoftReachable);
-    this.lengthToStartObject = lengthToStartObject;
+    this.myLengthToStartObject = lengthToStartObject;
   }
 
   @NotNull
   @Override
   public String getNodeName(int order) {
-    return String.format("... (%d referrers more)", lengthToStartObject);
+    return String.format("... (%d referrers more)", myLengthToStartObject);
   }
 
   @NotNull

@@ -12,22 +12,22 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class MemoryAgentFieldReferringObject extends MemoryAgentReferringObject {
-  @NotNull private final Field field;
+  @NotNull private final Field myField;
 
   public MemoryAgentFieldReferringObject(@NotNull ObjectReference reference,
                                          boolean isWeakSoftReachable,
                                          @NotNull Field field) {
     super(reference, isWeakSoftReachable);
-    this.field = field;
+    this.myField = field;
   }
 
   @NotNull
   @Override
   public ValueDescriptorImpl createValueDescription(@NotNull Project project, @NotNull Value referee) {
-    return new FieldDescriptorImpl(project, reference, field) {
+    return new FieldDescriptorImpl(project, myReference, myField) {
       @Override
       public Value calcValue(EvaluationContextImpl evaluationContext) {
-        return reference;
+        return myReference;
       }
     };
   }

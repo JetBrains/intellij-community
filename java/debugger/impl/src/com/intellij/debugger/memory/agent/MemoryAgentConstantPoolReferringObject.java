@@ -6,15 +6,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class MemoryAgentConstantPoolReferringObject extends MemoryAgentSimpleReferringObject {
-  private final int index;
+  private final int myIndex;
 
   public MemoryAgentConstantPoolReferringObject(@NotNull ObjectReference reference, int index) {
     super(reference, false);
-    this.index = index;
+    this.myIndex = index;
   }
 
   @Override
   public @Nullable String getNodeName(int order) {
-    return String.format("<constant pool> [%d]", index);
+    return String.format("<constant pool> [%d]", myIndex);
   }
 }

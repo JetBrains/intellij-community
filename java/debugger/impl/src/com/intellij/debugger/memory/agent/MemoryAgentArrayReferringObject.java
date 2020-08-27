@@ -11,22 +11,22 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class MemoryAgentArrayReferringObject extends MemoryAgentReferringObject {
-  private final int index;
+  private final int myIndex;
 
   public MemoryAgentArrayReferringObject(@NotNull ArrayReference reference,
                                          boolean isWeakSoftReachable,
                                          int index) {
     super(reference, isWeakSoftReachable);
-    this.index = index;
+    this.myIndex = index;
   }
 
   @NotNull
   @Override
   public ValueDescriptorImpl createValueDescription(@NotNull Project project, @NotNull Value referee) {
-    return new ArrayElementDescriptorImpl(project, (ArrayReference)reference, index) {
+    return new ArrayElementDescriptorImpl(project, (ArrayReference)myReference, myIndex) {
       @Override
       public Value calcValue(EvaluationContextImpl evaluationContext) {
-        return reference;
+        return myReference;
       }
     };
   }

@@ -2,27 +2,26 @@
 package com.intellij.debugger.memory.agent;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class StackLocalReferringObject extends GCRootReferringObject {
-  private final long tid;
-  private final long depth;
-  private final String methodName;
+  private final long myTid;
+  private final long myDepth;
+  private final String myMethodName;
 
   public StackLocalReferringObject(@NotNull MemoryAgentReferenceKind kind,
                                    String methodName,
                                    long tid, long depth) {
     super(kind);
-    this.tid = tid;
-    this.methodName = methodName;
-    this.depth = depth;
+    this.myTid = tid;
+    this.myMethodName = methodName;
+    this.myDepth = depth;
   }
 
   @NotNull
   @Override
   protected String getAdditionalInfo() {
     return String.format("%sTID: %d DEPTH: %d",
-                         methodName != null ? String.format("from method: \"%s\" ", methodName) : "",
-                         tid, depth);
+                         myMethodName != null ? String.format("from method: \"%s\" ", myMethodName) : "",
+                         myTid, myDepth);
   }
 }

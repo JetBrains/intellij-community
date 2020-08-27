@@ -19,7 +19,7 @@ public abstract class MemoryAgentSimpleReferringObject extends MemoryAgentReferr
   @NotNull
   @Override
   public final ValueDescriptorImpl createValueDescription(@NotNull Project project, @NotNull Value referee) {
-    return new ValueDescriptorImpl(project, reference) {
+    return new ValueDescriptorImpl(project, myReference) {
       @Override
       public Value calcValue(EvaluationContextImpl evaluationContext) {
         return getValue();
