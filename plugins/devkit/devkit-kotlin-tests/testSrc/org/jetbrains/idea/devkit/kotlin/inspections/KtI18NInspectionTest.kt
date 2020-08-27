@@ -178,6 +178,18 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
   
+  fun testException() {
+    myFixture.enableInspections(I18nInspection())
+    myFixture.configureByText("Foo.kt", """
+        public typealias UnsupportedOperationException = java.lang.UnsupportedOperationException
+      
+        fun test() {
+          throw UnsupportedOperationException("foo bar")
+        }
+    """.trimIndent())
+    myFixture.testHighlighting()
+  }
+  
   fun testFunctionParametersOnlyNls() {
     val inspection = I18nInspection()
     inspection.setIgnoreForAllButNls(true)

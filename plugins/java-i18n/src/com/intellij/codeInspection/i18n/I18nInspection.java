@@ -68,6 +68,11 @@ import java.util.regex.PatternSyntaxException;
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
 
 public class I18nInspection extends AbstractBaseUastLocalInspectionTool implements CustomSuppressableInspectionTool {
+  private static final CallMatcher ERROR_WRAPPER_METHODS = CallMatcher.anyOf(
+    CallMatcher.staticCall("kotlin.PreconditionsKt__PreconditionsKt", "error").parameterCount(1),
+    CallMatcher.staticCall("kotlin.StandardKt__StandardKt", "TODO").parameterCount(1)
+  );
+  
   private static final CallMatcher IGNORED_METHODS = CallMatcher.anyOf( 
     CallMatcher.exactInstanceCall(CommonClassNames.JAVA_LANG_STRING, "substring", "trim"),
     CallMatcher.staticCall(CommonClassNames.JAVA_LANG_STRING, "valueOf").parameterTypes("int"),
@@ -1162,8 +1167,18 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
       UastUtils.getParentOfType(expression, UCallExpression.class, true, UBlockExpression.class, UClass.class);
     if (newExpression != null) {
       if (UastExpressionUtils.isConstructorCall(newExpression)) {
-          PsiMethod ctor = newExpression.resolve();
-          return ctor != null && InheritanceUtil.isInheritor(ctor.getContainingClass(), CommonClassNames.JAVA_LANG_THROWABLE);
+        UReferenceExpression classReference = newExpression.getClassReference();
+        if (classReference != null) {
+          PsiClass ctor = ObjectUtils.tryCast(classReference.resolve(), PsiClass.class);
+          return InheritanceUtil.isInheritor(ctor, CommonClassNames.JAVA_LANG_THROWABLE);
+        }
+      }
+      PsiMethod method = newExpression.resolve();
+      if (method != null) {
+        if (method.isConstructor()) {
+          return InheritanceUtil.isInheritor(method.getContainingClass(), CommonClassNames.JAVA_LANG_THROWABLE);
+        }
+        return ERROR_WRAPPER_METHODS.methodMatches(method);
       }
     }
     return false;
