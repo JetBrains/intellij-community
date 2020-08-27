@@ -19,8 +19,12 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.impl.ProjectJdkImpl
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.HtmlBuilder
+import com.intellij.openapi.util.text.HtmlChunk.raw
+import com.intellij.openapi.util.text.HtmlChunk.tag
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.io.HttpRequests
@@ -111,7 +115,8 @@ internal abstract class PySdkToInstall internal constructor(name: String, versio
   abstract fun renderInList(renderer: PySdkListCellRenderer)
 
   @CalledInAny
-  abstract fun getInstallationWarning(defaultButtonName: String): String
+  @NlsContexts.DialogMessage
+  abstract fun getInstallationWarning(@NlsContexts.Button defaultButtonName: String): String
 
   @CalledInAwt
   abstract fun install(module: Module?, systemWideSdksDetector: () -> List<PyDetectedSdk>): PyDetectedSdk?
@@ -131,16 +136,16 @@ private class PySdkToInstallOnWindows(name: String,
     renderer.icon = AllIcons.Actions.Download
   }
 
-  override fun getInstallationWarning(defaultButtonName: String): String {
-    val header = "Python executable is not found. Choose one of the following options:"
-
-    val browseButtonName = "..." // ComponentWithBrowseButton
-    val firstOption = "Click <strong>$browseButtonName</strong> to specify a path to python.exe in your file system"
-
-    val size = StringUtil.formatFileSize(size)
-    val secondOption = "Click <strong>$defaultButtonName</strong> to download and install Python from python.org ($size)"
-
-    return "$header<ul><li>$firstOption</li><li>$secondOption</li></ul>"
+  @NlsContexts.DialogMessage
+  override fun getInstallationWarning(@NlsContexts.Button defaultButtonName: String): String {
+    val fileSize = StringUtil.formatFileSize(size)
+    return HtmlBuilder()
+      .append(PyBundle.message("python.sdk.executable.not.found.header"))
+      .append(tag("ul").children(
+        tag("li").children(raw(PyBundle.message("python.sdk.executable.not.found.option.specify.path", tag("strong").addText("...")))),
+        tag("li").children(raw(PyBundle.message("python.sdk.executable.not.found.option.download.and.install",
+                                                tag("strong").addText(defaultButtonName), fileSize)))
+      )).toString()
   }
 
   override fun install(module: Module?, systemWideSdksDetector: () -> List<PyDetectedSdk>): PyDetectedSdk? {
@@ -246,7 +251,7 @@ private class PySdkToInstallOnWindows(name: String,
           it,
           null,
           e.cause?.message,
-          "Try to install Python from https://www.python.org manually."
+          PyBundle.message("python.sdk.try.to.install.python.manually")
         )
       )
     }
@@ -273,10 +278,10 @@ private class PySdkToInstallOnWindows(name: String,
       PackagesNotificationPanel.showError(
         PyBundle.message("python.sdk.installation.has.been.cancelled.title", name),
         PackageManagementService.ErrorDescription(
-          "Some Python components that have been installed might get inconsistent after cancellation.",
+          PyBundle.message("python.sdk.some.installed.python.components.might.get.inconsistent.after.cancellation"),
           e.commandLine.commandLineString,
           listOf(processOutput.stderr, processOutput.stdout).firstOrNull { it.isNotBlank() },
-          "Consider installing Python from https://www.python.org manually."
+          PyBundle.message("python.sdk.consider.installing.python.manually")
         )
       )
     }
@@ -284,10 +289,11 @@ private class PySdkToInstallOnWindows(name: String,
       PackagesNotificationPanel.showError(
         PyBundle.message("python.sdk.failed.to.install.title", name),
         PackageManagementService.ErrorDescription(
-          if (processOutput.isTimeout) "Timed out" else "Exit code ${processOutput.exitCode}",
+          if (processOutput.isTimeout) PyBundle.message("python.sdk.failed.to.install.timed.out")
+          else PyBundle.message("python.sdk.failed.to.install.exit.code", processOutput.exitCode),
           e.commandLine.commandLineString,
           listOf(processOutput.stderr, processOutput.stdout).firstOrNull { it.isNotBlank() },
-          "Try to install Python from https://www.python.org manually."
+          PyBundle.message("python.sdk.try.to.install.python.manually")
         )
       )
     }
@@ -313,7 +319,7 @@ private class PySdkToInstallOnWindows(name: String,
           it,
           e.commandLine.commandLineString,
           null,
-          "Try to install Python from https://www.python.org manually."
+          PyBundle.message("python.sdk.try.to.install.python.manually")
         )
       )
     }

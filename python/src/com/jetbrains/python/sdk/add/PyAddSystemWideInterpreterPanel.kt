@@ -36,10 +36,7 @@ class PyAddSystemWideInterpreterPanel(private val module: Module?,
 
   init {
     layout = BorderLayout()
-    val permWarning = JBLabel(
-      """|<html><strong>Note:</strong> You'll need admin permissions to install packages for this interpreter. Consider
-         |creating a per-project virtual environment instead.</html>""".trimMargin()).apply {
-    }
+    val permWarning = JBLabel(PyBundle.message("python.sdk.admin.permissions.needed.consider.creating.venv"))
     Runnable {
       permWarning.isVisible = sdkComboBox.selectedSdk?.adminPermissionsNeeded() ?: false
     }.apply {
