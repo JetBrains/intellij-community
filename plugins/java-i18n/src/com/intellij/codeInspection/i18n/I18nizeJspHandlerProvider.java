@@ -90,7 +90,7 @@ public class I18nizeJspHandlerProvider extends I18nizeHandlerProvider {
       TextRange selectedRange = JavaI18nUtil.getSelectedRange(editor, psiFile);
       if (selectedRange == null) return null;
       String text = editor.getDocument().getText(selectedRange);
-      return new JavaI18nizeQuickFixDialog(project, jspFile, null, text, null, false, true){
+      return new JavaI18nizeQuickFixDialog(project, jspFile, null, text, null, false, true) {
         @Override
         protected String getTemplateName() {
           return JavaTemplateUtil.TEMPLATE_I18NIZED_JSP_EXPRESSION;

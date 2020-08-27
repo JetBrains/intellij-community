@@ -14,7 +14,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
-import org.jetbrains.uast.expressions.UInjectionHost;
 import org.jetbrains.uast.expressions.UStringConcatenationsFacade;
 import org.jetbrains.uast.generate.UastCodeGenerationPlugin;
 import org.jetbrains.uast.util.UastExpressionUtils;
@@ -24,7 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-public class I18nizeConcatenationQuickFix extends I18nizeQuickFix {
+public class I18nizeConcatenationQuickFix extends AbstractI18nizeQuickFix {
   @NonNls public static final String PARAMETERS_OPTION_KEY = "PARAMETERS";
 
   public I18nizeConcatenationQuickFix(NlsInfo.Localized info) {
@@ -63,7 +62,10 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix {
   }
 
   @Override
-  protected JavaI18nizeQuickFixDialog createDialog(final Project project, final PsiFile context, @NotNull UExpression concatenation) {
+  protected JavaI18nizeQuickFixDialog createDialog(final Project project,
+                                                   final PsiFile context,
+                                                   @NotNull UExpression rawConcatenation) {
+    UPolyadicExpression concatenation = UastUtils.getParentOfType(rawConcatenation, UPolyadicExpression.class, false);
     final List<UExpression> args = new ArrayList<>();
     String formatString = JavaI18nUtil
       .buildUnescapedFormatString(Objects.requireNonNull(UStringConcatenationsFacade.createFromTopConcatenation(concatenation)), args, project);
@@ -76,9 +78,16 @@ public class I18nizeConcatenationQuickFix extends I18nizeQuickFix {
       }
 
       @Override
-      protected String generateText(final I18nizedTextGenerator textGenerator, final @NotNull String propertyKey, final PropertiesFile propertiesFile,
+      protected String generateText(final I18nizedTextGenerator textGenerator,
+                                    final @NotNull String propertyKey,
+                                    final PropertiesFile propertiesFile,
                                     final PsiElement context) {
-        return textGenerator.getI18nizedConcatenationText(propertyKey, JavaI18nUtil.composeParametersText(args), propertiesFile, concatenation.getSourcePsi());
+        return textGenerator.getI18nizedConcatenationText(
+          propertyKey,
+          JavaI18nUtil.composeParametersText(args),
+          propertiesFile,
+          concatenation.getSourcePsi()
+        );
       }
 
       @Override
