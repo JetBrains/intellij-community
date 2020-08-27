@@ -28,6 +28,7 @@ import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.event.ActionEvent
@@ -236,7 +237,7 @@ abstract class Cell : BaseBuilder {
     return component(result)
   }
 
-  fun buttonFromAction(@Button text: String, actionPlace: String, action: AnAction): CellBuilder<JButton> {
+  fun buttonFromAction(@Button text: String, @NonNls actionPlace: String, action: AnAction): CellBuilder<JButton> {
     val button = JButton(BundleBase.replaceMnemonicAmpersand(text))
     button.addActionListener { ActionUtil.invokeAction(action, button, actionPlace, null, null) }
     return component(button)
@@ -250,7 +251,7 @@ abstract class Cell : BaseBuilder {
 
   inline fun checkBox(@Checkbox text: String,
                       isSelected: Boolean = false,
-                      comment: String? = null,
+                      @DetailedDescription comment: String? = null,
                       crossinline actionListener: (event: ActionEvent, component: JCheckBox) -> Unit): CellBuilder<JBCheckBox> {
     return checkBox(text, isSelected, comment)
       .applyToComponent {
@@ -261,22 +262,22 @@ abstract class Cell : BaseBuilder {
   @JvmOverloads
   fun checkBox(@Checkbox text: String,
                isSelected: Boolean = false,
-               comment: String? = null): CellBuilder<JBCheckBox> {
+               @DetailedDescription comment: String? = null): CellBuilder<JBCheckBox> {
     val result = JBCheckBox(text, isSelected)
     return result(comment = comment)
   }
 
-  fun checkBox(@Checkbox text: String, prop: KMutableProperty0<Boolean>, comment: String? = null): CellBuilder<JBCheckBox> {
+  fun checkBox(@Checkbox text: String, prop: KMutableProperty0<Boolean>, @DetailedDescription comment: String? = null): CellBuilder<JBCheckBox> {
     return checkBox(text, prop.toBinding(), comment)
   }
 
-  fun checkBox(@Checkbox text: String, getter: () -> Boolean, setter: (Boolean) -> Unit, comment: String? = null): CellBuilder<JBCheckBox> {
+  fun checkBox(@Checkbox text: String, getter: () -> Boolean, setter: (Boolean) -> Unit, @DetailedDescription comment: String? = null): CellBuilder<JBCheckBox> {
     return checkBox(text, PropertyBinding(getter, setter), comment)
   }
 
   private fun checkBox(@Checkbox text: String,
                        modelBinding: PropertyBinding<Boolean>,
-                       comment: String?): CellBuilder<JBCheckBox> {
+                       @DetailedDescription comment: String?): CellBuilder<JBCheckBox> {
     val component = JBCheckBox(text, modelBinding.get())
     return component(comment = comment).withSelectedBinding(modelBinding)
   }
