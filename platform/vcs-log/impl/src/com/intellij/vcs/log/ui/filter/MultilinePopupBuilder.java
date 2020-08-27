@@ -120,7 +120,7 @@ class MultilinePopupBuilder {
         s.append(separator);
       }
       else {
-        s.append(VcsLogBundle.message("vcs.log.filter.popup.advertisement.text.or.suffix", separator));
+        s.append(" ").append(VcsLogBundle.message("vcs.log.filter.popup.advertisement.text.or.suffix", separator));
       }
     }
     return s.toString();
