@@ -8,6 +8,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.ui.DialogWrapper.DoNotAskOption
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.IdeFocusManager
@@ -23,7 +24,7 @@ import java.awt.Window
 
 internal class MacMessageManagerProviderImpl : MacMessages.MacMessageManagerProvider {
   override fun getMessageManager(): MacMessages {
-    if (Registry.`is`("ide.mac.message.sheets.java.emulation.dialogs", true)) {
+    if (Registry.`is`("ide.mac.message.sheets.java.emulation.dialogs", true) || !SystemInfo.isJetBrainsJvm) {
       return service<JBMacMessages>()
     }
     else {
