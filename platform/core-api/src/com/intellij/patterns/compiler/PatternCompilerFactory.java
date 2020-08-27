@@ -27,4 +27,6 @@ public abstract class PatternCompilerFactory {
   public <T> PatternCompiler<T> getPatternCompiler(@Nullable final String alias) {
     return getPatternCompiler(getPatternClasses(alias));
   }
+
+  public abstract void clear();
 }

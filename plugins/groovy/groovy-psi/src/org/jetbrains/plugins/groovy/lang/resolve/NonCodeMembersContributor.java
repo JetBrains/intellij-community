@@ -5,6 +5,7 @@ import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.patterns.compiler.PatternCompilerFactory;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
@@ -124,6 +125,7 @@ public abstract class NonCodeMembersContributor {
 
   private static void dropCache() {
     cache = null;
+    PatternCompilerFactory.getFactory().clear();
   }
 
   private static void ensureInit() {

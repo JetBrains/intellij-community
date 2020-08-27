@@ -28,6 +28,7 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.patterns.compiler.PatternCompilerFactory;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -86,6 +87,8 @@ public class Configuration extends SimpleModificationTracker implements Persiste
 
     private void reloadInjections() {
       myDefaultInjections.clear();
+      PatternCompilerFactory.getFactory().clear();
+      loadState(getState());
       myDefaultInjections.addAll(Configuration.loadDefaultInjections());
     }
 
