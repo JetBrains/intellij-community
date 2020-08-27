@@ -9,6 +9,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.*;
@@ -259,7 +260,9 @@ public class ActionGroupPanelWrapper {
         createActionGroupPanel((ActionGroup)action, () -> goBack(createdPanel.get()), parentDisposable);
       createdPanel.set(panel.first);
       final Runnable onDone = () -> {
-        setTitle(action.getTemplateText());
+        if (action.getTemplateText() != null) {
+          setTitle(StringUtil.removeEllipsisSuffix(action.getTemplateText()));
+        }
         final JBList<AnAction> list = panel.second;
         ScrollingUtil.ensureSelectionExists(list);
         final ListSelectionListener[] listeners =
@@ -296,7 +299,7 @@ public class ActionGroupPanelWrapper {
       .detachComponent(parentComponent, null);
   }
 
-  static void setTitle(@Nullable @NlsActions.ActionText String title) {
+  static void setTitle(@Nullable @NlsContexts.DialogTitle String title) {
     JFrame frame = WindowManager.getInstance().findVisibleFrame();
     if (frame != null) {
       frame.setTitle(title);
