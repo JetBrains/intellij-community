@@ -5,6 +5,7 @@ import com.intellij.CommonBundle;
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.WelcomeWizardUtil;
 import com.intellij.ide.actions.QuickChangeLookAndFeel;
@@ -16,6 +17,7 @@ import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ide.ui.laf.darcula.DarculaLookAndFeelInfo;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -30,14 +32,11 @@ import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryValue;
-import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
@@ -49,7 +48,6 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.*;
 import org.intellij.lang.annotations.JdkConstants;
@@ -80,6 +78,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   @NonNls private static final String ELEMENT_LAF = "laf";
   @NonNls private static final String ELEMENT_PREFERRED_LIGHT_LAF = "preferred-light-laf";
   @NonNls private static final String ELEMENT_PREFERRED_DARK_LAF = "preferred-dark-laf";
+  @NonNls private static final String ATTRIBUTE_AUTODETECT = "autodetect";
   @NonNls private static final String ATTRIBUTE_CLASS_NAME = "class-name";
   @NonNls private static final String ATTRIBUTE_THEME_NAME = "themeId";
 
@@ -122,17 +121,23 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
   private static final Map<String, String> ourLafClassesAliases = new HashMap<>();
   private static final Map<String, Integer> lafNameOrder = new HashMap<>();
+  private static final int maxNameOrder;
 
   private final SynchronizedClearableLazy<CollectionComboBoxModel<LafReference>> myLafComboBoxModel =
-    new SynchronizedClearableLazy<>(() -> new CollectionComboBoxModel<>(getAllReferences()));
+    new SynchronizedClearableLazy<>(() -> new LafComboBoxModel());
 
-  private final SynchronizedClearableLazy<CollectionComboBoxModel<LafReference>> myPreferredLightComboBoxModel =
-    new SynchronizedClearableLazy<>(() -> new CollectionComboBoxModel<>(getLightReferences()));
-
-  private final SynchronizedClearableLazy<CollectionComboBoxModel<LafReference>> myPreferredDarkComboBoxModel =
-    new SynchronizedClearableLazy<>(() -> new CollectionComboBoxModel<>(getDarkReferences()));
+  private final SynchronizedClearableLazy<ActionToolbar> settingsToolbar =
+    new SynchronizedClearableLazy<>(() -> {
+      DefaultActionGroup group = new DefaultActionGroup(new PreferredLafsAction());
+      ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.TOOLBAR, group, true);
+      toolbar.getComponent().setOpaque(false);
+      return toolbar;
+    });
 
   private final SystemDarkThemeDetector lafDetector = SystemDarkThemeDetector.createDetector(this::syncLaf);
+  private final ListCellRenderer<LafReference> lafCellRenderer = new LafCellRenderer();
+
+  private static final LafReference SEPARATOR = new LafReference("", null, null);
 
   static {
     ourLafClassesAliases.put("idea.dark.laf.classname", DarculaLookAndFeelInfo.CLASS_NAME);
@@ -142,12 +147,14 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     lafNameOrder.put("Windows 10 Light", 1);
     lafNameOrder.put("Darcula", 2);
     lafNameOrder.put("High contrast", 3);
+
+    maxNameOrder = Collections.max(lafNameOrder.values());
   }
 
   private boolean myFirstSetup = true;
   private boolean myUpdatingPlugin = false;
   private @Nullable String myThemeIdBeforePluginUpdate = null;
-  private final SynchronizedClearableLazy<Boolean> autodetect = new SynchronizedClearableLazy<>(() -> Registry.is("ide.laf.autodetect"));
+  private boolean autodetect;
 
   private static UIManager.LookAndFeelInfo getDefaultLightTheme() {
     for(UIThemeProvider provider: UIThemeProvider.EP_NAME.getExtensionList()) {
@@ -230,14 +237,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
   @Override
   public void initializeComponent() {
-    Registry.get("ide.laf.autodetect").addListener(new RegistryValueListener() {
-      @Override
-      public void afterValueChanged(@NotNull RegistryValue value) {
-        autodetect.drop();
-        detectAndSyncLaf();
-      }
-    }, this);
-
     if (myCurrentLaf != null && !(myCurrentLaf instanceof UIThemeBasedLookAndFeelInfo)) {
       final UIManager.LookAndFeelInfo laf = findLaf(myCurrentLaf.getClassName());
       if (laf != null) {
@@ -279,7 +278,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   private void detectAndSyncLaf() {
-    if (lafDetector.getDetectionSupported() && isAutoDetect()) {
+    if (lafDetector.getDetectionSupported() && autodetect) {
       lafDetector.check();
     }
   }
@@ -316,6 +315,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   @Override
   public void loadState(@NotNull Element element) {
     myCurrentLaf = loadLafState(element, ELEMENT_LAF, getDefaultLaf());
+    autodetect = Boolean.valueOf(element.getAttributeValue(ATTRIBUTE_AUTODETECT));
     myPreferredLightLaf = loadLafState(element, ELEMENT_PREFERRED_LIGHT_LAF, myDefaultLightLaf);
     myPreferredDarkLaf = loadLafState(element, ELEMENT_PREFERRED_DARK_LAF, myDefaultDarkLaf);
   }
@@ -362,14 +362,16 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   @Override
   public Element getState() {
     Element element = new Element("state");
-    getLafState(element, ELEMENT_LAF, getCurrentLookAndFeel(LafType.ALL));
+    element.setAttribute(ATTRIBUTE_AUTODETECT, Boolean.toString(autodetect));
+
+    getLafState(element, ELEMENT_LAF, getCurrentLookAndFeel());
 
     if (myPreferredLightLaf != myDefaultLightLaf) {
-      getLafState(element, ELEMENT_PREFERRED_LIGHT_LAF, getCurrentLookAndFeel(LafType.LIGHT));
+      getLafState(element, ELEMENT_PREFERRED_LIGHT_LAF, myPreferredLightLaf);
     }
 
     if (myPreferredDarkLaf != myDefaultDarkLaf) {
-      getLafState(element, ELEMENT_PREFERRED_DARK_LAF, getCurrentLookAndFeel(LafType.DARK));
+      getLafState(element, ELEMENT_PREFERRED_DARK_LAF, myPreferredDarkLaf);
     }
 
     return element;
@@ -399,61 +401,36 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   @Override
-  public CollectionComboBoxModel<LafReference> getLafComboBoxModel(@NotNull LafType type) {
-    switch (type) {
-      case LIGHT:
-          return myPreferredLightComboBoxModel.getValue();
-
-      case DARK:
-        return myPreferredDarkComboBoxModel.getValue();
-
-      case ALL:
-        return myLafComboBoxModel.getValue();
-
-      default:
-        throw new IllegalStateException("Unknown LafType: " + type);
-    }
+  public CollectionComboBoxModel<LafReference> getLafComboBoxModel() {
+    return myLafComboBoxModel.getValue();
   }
 
   private List<LafReference> getAllReferences() {
-    return ContainerUtil.map(myLaFs.getValue(), LafManagerImpl::createLafReference);
-  }
-
-  private List<LafReference> getLightReferences() {
-    return ContainerUtil.map(ContainerUtil.filter(myLaFs.getValue(), info -> {
-     if (info instanceof UIThemeBasedLookAndFeelInfo) {
-       return !((UIThemeBasedLookAndFeelInfo)info).getTheme().isDark();
-     }
-     return info.getName().equals(IntelliJLaf.NAME);
-    }), LafManagerImpl::createLafReference);
-  }
-
-  private List<LafReference> getDarkReferences() {
-    return ContainerUtil.map(ContainerUtil.filter(myLaFs.getValue(), info -> {
-      if (info instanceof UIThemeBasedLookAndFeelInfo) {
-        return ((UIThemeBasedLookAndFeelInfo)info).getTheme().isDark();
+    List<LafReference> result = new ArrayList<>();
+    boolean addSeparator = false;
+    for (UIManager.LookAndFeelInfo info : myLaFs.getValue()) {
+      if (addSeparator) {
+        result.add(SEPARATOR);
+        addSeparator = false;
       }
-      return info.getName().equals(DarculaLaf.NAME);
-    }), LafManagerImpl::createLafReference);
+      result.add(createLafReference(info));
+
+      if (Objects.equals(lafNameOrder.get(info.getName()), maxNameOrder)) {
+        result.add(LafReference.SYNC_OS);
+        addSeparator = true;
+      }
+    }
+
+    return result;
   }
 
   private void updateLafComboboxModel() {
     myLafComboBoxModel.drop();
-    myPreferredLightComboBoxModel.drop();
-    myPreferredDarkComboBoxModel.drop();
   }
 
   private void selectComboboxModel() {
     if (myLafComboBoxModel.isInitialized()) {
-      myLafComboBoxModel.getValue().setSelectedItem(createLafReference(myCurrentLaf));
-    }
-
-    if (myPreferredLightComboBoxModel.isInitialized()) {
-      myPreferredLightComboBoxModel.getValue().setSelectedItem(createLafReference(myPreferredLightLaf));
-    }
-
-    if (myPreferredDarkComboBoxModel.isInitialized()) {
-      myPreferredDarkComboBoxModel.getValue().setSelectedItem(createLafReference(myPreferredDarkLaf));
+      myLafComboBoxModel.getValue().setSelectedItem(autodetect ? LafReference.SYNC_OS : createLafReference(myCurrentLaf));
     }
   }
 
@@ -473,43 +450,36 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
   @Override
   @Nullable
-  public UIManager.LookAndFeelInfo getCurrentLookAndFeel(@NotNull LafManager.LafType type) {
-    switch (type) {
-      case DARK:
-        return myPreferredDarkLaf;
+  public UIManager.LookAndFeelInfo getCurrentLookAndFeel() {
+      return myCurrentLaf;
+  }
 
-      case LIGHT:
-        return myPreferredLightLaf;
+  @Override
+  public LafReference getLookAndFeelReference() {
+    return autodetect ? LafReference.SYNC_OS : createLafReference(getCurrentLookAndFeel());
+  }
 
-      case ALL:
-        return myCurrentLaf;
-
-      default:
-        throw new IllegalStateException("Unknown LafType: " + type);
+  @Override
+  public void setLookAndFeelReference(LafReference reference) {
+    if (reference != LafManager.LafReference.SYNC_OS) {
+      autodetect = false;
+      QuickChangeLookAndFeel.switchLafAndUpdateUI(this, findLaf(reference), true);
+    }
+    else {
+      autodetect = true;
+      selectComboboxModel();
+      detectAndSyncLaf();
     }
   }
 
   @Override
-  public LafReference getLookAndFeelReference(@NotNull LafType type) {
-    return createLafReference(getCurrentLookAndFeel(type));
+  public ListCellRenderer<LafReference> getLookAndFeelCellRenderer() {
+    return lafCellRenderer;
   }
 
   @Override
-  public void setLookAndFeelReference(@NotNull LafType type, LafReference lafReference) {
-      switch (type) {
-        case DARK:
-          myPreferredDarkLaf = findLaf(lafReference.getClassName(), lafReference.getThemeId());
-          detectAndSyncLaf();
-          break;
-
-        case LIGHT:
-          myPreferredLightLaf = findLaf(lafReference.getClassName(), lafReference.getThemeId());
-          detectAndSyncLaf();
-          break;
-
-        default:
-          throw new UnsupportedOperationException("Can't set look and feel reference: " + type);
-      }
+  public JComponent getSettingsToolbar() {
+    return settingsToolbar.getValue().getComponent();
   }
 
   public UIManager.LookAndFeelInfo getDefaultLaf() {
@@ -993,7 +963,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   private void restoreOriginalFontDefaults(UIDefaults defaults) {
-    LafReference lf = myCurrentLaf == null ? null : getLookAndFeelReference(LafType.ALL);
+    LafReference lf = myCurrentLaf == null ? null : getLookAndFeelReference();
     HashMap<String, Object> lfDefaults = myStoredDefaults.get(lf);
     if (lfDefaults != null) {
       for (String resource : ourPatchableFontResources) {
@@ -1004,7 +974,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   private void storeOriginalFontDefaults(UIDefaults defaults) {
-    LafReference lf = myCurrentLaf == null ? null : getLookAndFeelReference(LafType.ALL);
+    LafReference lf = myCurrentLaf == null ? null : getLookAndFeelReference();
     HashMap<String, Object> lfDefaults = myStoredDefaults.get(lf);
     if (lfDefaults == null) {
       lfDefaults = new HashMap<>();
@@ -1036,7 +1006,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
   @Override
   public boolean isAutoDetect() {
-    return autodetect.getValue();
+    return autodetect;
   }
 
   private static void repaintUI(Window window) {
@@ -1259,7 +1229,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
         if (lookAndFeel instanceof UIThemeBasedLookAndFeelInfo) {
           UITheme theme = ((UIThemeBasedLookAndFeelInfo)lookAndFeel).getTheme();
           if (theme.getId().equals(provider.id)) {
-            if (lookAndFeel == getCurrentLookAndFeel(LafType.ALL)) {
+            if (lookAndFeel == getCurrentLookAndFeel()) {
               switchLafTo = theme.isDark() ? myDefaultDarkLaf : myDefaultLightLaf;
             }
             ((EditorColorsManagerImpl) EditorColorsManager.getInstance()).handleThemeRemoved(theme);
@@ -1275,6 +1245,138 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
         setLookAndFeelImpl(switchLafTo, false, true);
         JBColor.setDark(switchLafTo == myDefaultDarkLaf);
         updateUI();
+      }
+    }
+  }
+
+  private static class LafCellRenderer extends SimpleListCellRenderer<LafReference> {
+    private static final SeparatorWithText separator = new SeparatorWithText() {
+      @Override
+      protected void paintComponent(Graphics g) {
+        g.setColor(getForeground());
+
+        Rectangle bounds = new Rectangle(getWidth(), getHeight());
+        JBInsets.removeFrom(bounds, getInsets());
+
+        paintLine(g, bounds.x, bounds.y + bounds.height/2, bounds.width);
+      }
+    };
+
+    @Override
+    public Component getListCellRendererComponent(JList<? extends LafReference> list,
+                                                  LafReference value,
+                                                  int index,
+                                                  boolean isSelected,
+                                                  boolean cellHasFocus) {
+      return value == SEPARATOR ? separator : super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+    }
+
+    @Override
+    public void customize(@NotNull JList<? extends LafReference> list, LafReference value, int index, boolean selected, boolean hasFocus) {
+      setText(value.toString());
+    }
+  }
+
+  private class LafComboBoxModel extends CollectionComboBoxModel<LafReference> {
+    private LafComboBoxModel() {
+      super(getAllReferences());
+    }
+
+    @Override
+    public void setSelectedItem(@Nullable Object item) {
+      if (item == SEPARATOR) return;
+      super.setSelectedItem(item);
+    }
+  }
+
+  private class PreferredLafsAction extends DefaultActionGroup {
+    private PreferredLafsAction() {
+      setPopup(true);
+      getTemplatePresentation().setIcon(AllIcons.General.GearPlain);
+      getTemplatePresentation().setText("Preferred lafs");
+      getTemplatePresentation().setDescription("Preferred lafs action");
+    }
+
+    @Override
+    public boolean isDumbAware() {
+      return true;
+    }
+
+    @Override
+    public boolean canBePerformed(@NotNull DataContext context) {
+      return true;
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      ListPopup popup = JBPopupFactory.getInstance().
+        createActionGroupPopup(null, getLafGroups(), e.getDataContext(), true, null, Integer.MAX_VALUE);
+
+      HelpTooltip.setMasterPopup(e.getInputEvent().getComponent(), popup);
+      Component component = e.getInputEvent().getComponent();
+      if (component instanceof ActionButtonComponent) {
+        popup.showUnderneathOf(component);
+      }
+      else {
+        popup.showInCenterOf(component);
+      }
+    }
+
+    private ActionGroup getLafGroups() {
+      List<UIManager.LookAndFeelInfo> lightLafs = new ArrayList<>();
+      List<UIManager.LookAndFeelInfo> darkLafs = new ArrayList<>();
+
+      for(UIManager.LookAndFeelInfo lafInfo: myLaFs.getValue()) {
+        if (lafInfo instanceof UIThemeBasedLookAndFeelInfo && ((UIThemeBasedLookAndFeelInfo)lafInfo).getTheme().isDark() ||
+            lafInfo.getName().equals(DarculaLaf.NAME)) {
+          darkLafs.add(lafInfo);
+        }
+        else {
+          lightLafs.add(lafInfo);
+        }
+      }
+
+      DefaultActionGroup myGroup = new DefaultActionGroup();
+      //myGroup.addAll(createThemeActions("Preferred Light Theme", lightLafs, false));
+      //myGroup.addAll(createThemeActions("Preferred Dark Theme", darkLafs, true));
+      myGroup.addAll(createThemeActions("Preferred Light", lightLafs, false));
+      myGroup.addAll(createThemeActions("Preferred Dark", darkLafs, true));
+      return myGroup;
+    }
+
+    private Collection<AnAction> createThemeActions(@NotNull @NlsContexts.Separator String separatorText,
+                                 List<UIManager.LookAndFeelInfo> lafs, boolean isDark) {
+      List<AnAction> result = new ArrayList<>();
+      if (!lafs.isEmpty()) {
+        result.add(Separator.create(separatorText));
+        lafs.stream().map(l -> new LafToggleAction(l, isDark)).forEach(a -> result.add(a));
+      }
+      return result;
+    }
+  }
+
+  private class LafToggleAction extends ToggleAction {
+    private final UIManager.LookAndFeelInfo lafInfo;
+    private final boolean isDark;
+
+    private LafToggleAction(UIManager.LookAndFeelInfo lafInfo, boolean isDark) {
+      super(lafInfo.getName());
+      this.lafInfo = lafInfo;
+      this.isDark = isDark;
+    }
+
+    @Override
+    public boolean isSelected(@NotNull AnActionEvent e) {
+      return isDark ? lafInfo == myPreferredDarkLaf : lafInfo == myPreferredLightLaf;
+    }
+
+    @Override
+    public void setSelected(@NotNull AnActionEvent e, boolean state) {
+      if (isDark) {
+        myPreferredDarkLaf = lafInfo;
+      }
+      else {
+        myPreferredLightLaf = lafInfo;
       }
     }
   }

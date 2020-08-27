@@ -530,6 +530,16 @@ private class CellBuilderImpl<T : JComponent> internal constructor(
     return this
   }
 
+  override fun visible(isVisible: Boolean) {
+    component.isVisible = isVisible
+  }
+
+  override fun visibleIf(predicate: ComponentPredicate): CellBuilder<T> {
+    component.isVisible = predicate()
+    predicate.addListener { component.isVisible = it }
+    return this
+  }
+
   override fun applyIfEnabled(): CellBuilder<T> {
     applyIfEnabled = true
     return this
@@ -574,6 +584,13 @@ private class CellBuilderImpl<T : JComponent> internal constructor(
   override fun withLargeLeftGap(): CellBuilder<T> {
     builder.updateComponentConstraints(component) {
       horizontal.gapBefore = gapToBoundSize(builder.spacing.largeHorizontalGap, true)
+    }
+    return this
+  }
+
+  override fun withLeftGap(): CellBuilder<T> {
+    builder.updateComponentConstraints(component) {
+      horizontal.gapBefore = gapToBoundSize(builder.spacing.horizontalGap, true)
     }
     return this
   }

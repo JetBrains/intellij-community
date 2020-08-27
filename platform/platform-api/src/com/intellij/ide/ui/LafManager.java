@@ -3,6 +3,8 @@ package com.intellij.ide.ui;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.CollectionComboBoxModel;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -19,23 +21,24 @@ public abstract class LafManager {
   public abstract UIManager.LookAndFeelInfo @NotNull [] getInstalledLookAndFeels();
 
   @ApiStatus.Internal
-  public abstract CollectionComboBoxModel<LafReference> getLafComboBoxModel(@NotNull LafType type);
+  public abstract CollectionComboBoxModel<LafReference> getLafComboBoxModel();
 
   @ApiStatus.Internal
   public abstract UIManager.LookAndFeelInfo findLaf(LafReference reference);
 
-  public final UIManager.LookAndFeelInfo getCurrentLookAndFeel() {
-    return getCurrentLookAndFeel(LafType.ALL);
-  }
-
-  @Nullable
-  public abstract UIManager.LookAndFeelInfo getCurrentLookAndFeel(@NotNull LafType type);
+  public abstract UIManager.LookAndFeelInfo getCurrentLookAndFeel();
 
   @ApiStatus.Internal
-  public abstract LafReference getLookAndFeelReference(@NotNull LafType type);
+  public abstract LafReference getLookAndFeelReference();
 
   @ApiStatus.Internal
-  public abstract void setLookAndFeelReference(@NotNull LafType type, LafReference lafReference);
+  public abstract void setLookAndFeelReference(LafReference reference);
+
+  @ApiStatus.Internal
+  public abstract ListCellRenderer<LafReference> getLookAndFeelCellRenderer();
+
+  @ApiStatus.Internal
+  public abstract JComponent getSettingsToolbar();
 
   public void setCurrentLookAndFeel(@NotNull UIManager.LookAndFeelInfo lookAndFeelInfo) {
     setCurrentLookAndFeel(lookAndFeelInfo, false);
@@ -68,18 +71,20 @@ public abstract class LafManager {
   public abstract void removeLafManagerListener(@NotNull LafManagerListener listener);
 
   public static class LafReference {
+    public static final LafReference SYNC_OS = new LafReference("Sync with OS", null, null);
+
     private final String name;
     private final String className;
     private final String themeId;
 
-    public LafReference(@NotNull String name, @NotNull String className, @Nullable String themeId) {
+    public LafReference(@NotNull String name, @Nullable String className, @Nullable String themeId) {
       this.name = name;
       this.className = className;
       this.themeId = themeId;
     }
 
     @Override
-    public String toString() {
+    public @NlsSafe @NlsContexts.Label String toString() {
       return name;
     }
 
@@ -97,7 +102,7 @@ public abstract class LafManager {
       if (o == null || getClass() != o.getClass()) return false;
       LafReference reference = (LafReference)o;
       return name.equals(reference.name) &&
-             className.equals(reference.className) &&
+             Objects.equals(className, reference.className) &&
              Objects.equals(themeId, reference.themeId);
     }
 
@@ -105,12 +110,5 @@ public abstract class LafManager {
     public int hashCode() {
       return Objects.hash(name, className, themeId);
     }
-  }
-
-  @ApiStatus.Internal
-  public enum LafType {
-    ALL,
-    LIGHT,
-    DARK
   }
 }

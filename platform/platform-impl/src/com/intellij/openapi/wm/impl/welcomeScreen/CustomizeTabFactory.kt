@@ -65,7 +65,7 @@ private fun getEditorFont() = fontOptions.getSize(fontOptions.fontFamily)
 class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBundle.message("welcome.screen.customize.title")) {
   private val supportedColorBlindness = getColorBlindness()
   private val propertyGraph = PropertyGraph()
-  private val lafProperty = propertyGraph.graphProperty { laf.getLookAndFeelReference(LafManager.LafType.ALL) }
+  private val lafProperty = propertyGraph.graphProperty { laf.lookAndFeelReference }
   private val ideFontProperty = propertyGraph.graphProperty { getIdeFont() }
   private val editorFontProperty = propertyGraph.graphProperty { getEditorFont() }
   private val keymapProperty = propertyGraph.graphProperty { keymapManager.activeKeymap }
@@ -133,7 +133,14 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
       blockRow {
         header(IdeBundle.message("welcome.screen.color.theme.header"))
         row {
-          comboBox<LafManager.LafReference>(laf.getLafComboBoxModel(LafManager.LafType.ALL), lafProperty)
+          val theme = comboBox(laf.lafComboBoxModel,
+                               { laf.lookAndFeelReference },
+                               { laf.lookAndFeelReference = it },
+                               laf.lookAndFeelCellRenderer)
+
+          component(laf.settingsToolbar)
+            .visibleIf(theme.component.selectedValueIs(LafManager.LafReference.SYNC_OS))
+            .withLeftGap()
         }
       }.largeGapAfter()
       blockRow {
@@ -213,7 +220,7 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
 
   private fun Cell.fontComboBox(fontProperty: GraphProperty<Int>): CellBuilder<ComboBox<Int>> {
     val fontSizes = UIUtil.getStandardFontSizes().map { Integer.valueOf(it) }.toSortedSet()
-    fontSizes.add(fontProperty.get());
+    fontSizes.add(fontProperty.get())
     val model = DefaultComboBoxModel(fontSizes.toTypedArray())
     return comboBox(model, fontProperty).applyToComponent {
       isEditable = true

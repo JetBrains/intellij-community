@@ -139,6 +139,9 @@ interface CellBuilder<out T : JComponent> {
   fun enabled(isEnabled: Boolean)
   fun enableIf(predicate: ComponentPredicate): CellBuilder<T>
 
+  fun visible(isVisible: Boolean)
+  fun visibleIf(predicate: ComponentPredicate): CellBuilder<T>
+
   fun withErrorOnApplyIf(@DialogMessage message: String, callback: (T) -> Boolean): CellBuilder<T> {
     withValidationOnApply { if (callback(it)) error(message) else null }
     return this
@@ -148,6 +151,8 @@ interface CellBuilder<out T : JComponent> {
   fun shouldSaveOnApply(): Boolean
 
   fun withLargeLeftGap(): CellBuilder<T>
+
+  fun withLeftGap(): CellBuilder<T>
 
   @Deprecated("Prefer not to use hardcoded values")
   fun withLeftGap(gapLeft: Int): CellBuilder<T>
