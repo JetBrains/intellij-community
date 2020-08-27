@@ -272,11 +272,6 @@ public class JBCefBrowser implements JBCefDisposable {
         }
         KeyEvent javaKeyEvent = convertCefKeyEvent(cefKeyEvent, focusedWindow);
         Toolkit.getDefaultToolkit().getSystemEventQueue().postEvent(javaKeyEvent);
-
-        if (javaKeyEvent.getID() == KeyEvent.KEY_PRESSED && cefKeyEvent.modifiers == 0 && cefKeyEvent.character != 0) {
-          javaKeyEvent = javaKeyEventWithID(javaKeyEvent, KeyEvent.KEY_TYPED);
-          Toolkit.getDefaultToolkit().getSystemEventQueue().postEvent(javaKeyEvent);
-        }
         return consume;
       }
     }, myCefBrowser);
