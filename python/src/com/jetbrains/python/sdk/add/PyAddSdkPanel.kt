@@ -76,7 +76,7 @@ abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
 
   companion object {
     @JvmStatic
-    protected fun validateEnvironmentDirectoryLocation(field: TextFieldWithBrowseButton): ValidationInfo? {
+    fun validateEnvironmentDirectoryLocation(field: TextFieldWithBrowseButton): ValidationInfo? {
       val text = field.text
       val file = File(text)
       val message = when {
@@ -90,10 +90,15 @@ abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
 
     @JvmStatic
     protected fun validateSdkComboBox(field: PySdkPathChoosingComboBox, view: PyAddSdkView): ValidationInfo? {
+      return validateSdkComboBox(field, getDefaultButtonName(view))
+    }
+
+    @JvmStatic
+    fun validateSdkComboBox(field: PySdkPathChoosingComboBox, defaultButtonName: @NlsContexts.Button String): ValidationInfo? {
       return when (val sdk = field.selectedSdk) {
         null -> ValidationInfo(PyBundle.message("python.sdk.interpreter.field.is.empty"), field)
         is PySdkToInstall -> {
-          val message = sdk.getInstallationWarning(getDefaultButtonName(view))
+          val message = sdk.getInstallationWarning(defaultButtonName)
           ValidationInfo(message).asWarning().withOKEnabled()
         }
         else -> null

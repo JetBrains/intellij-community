@@ -10,8 +10,8 @@ val Module.rootManager: ModuleRootManager
 
 val Module.baseDir: VirtualFile?
   get() {
-    val moduleFile = moduleFile ?: return null
     val roots = rootManager.contentRoots
+    val moduleFile = moduleFile ?: return roots.firstOrNull()
     return roots.firstOrNull { VfsUtil.isAncestor(it, moduleFile, true) } ?: roots.firstOrNull()
   }
 

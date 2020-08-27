@@ -75,8 +75,7 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
 
   override fun getOrCreateSdk(): Sdk? {
     val root = pathField.text
-    val baseSdk = baseSdkField.selectedSdk
-      .let { if (it is PySdkToInstall) it.install(module) { detectSystemWideSdks(module, existingSdks, context) } else it }
+    val baseSdk = installSdkIfNeeded(baseSdkField.selectedSdk, module, existingSdks, context)
     if (baseSdk == null) return null
 
     val task = object : Task.WithResult<String, ExecutionException>(project, PyBundle.message("python.sdk.creating.virtualenv.title"), false) {
@@ -93,10 +92,7 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
       sdk.associateWithModule(module, newProjectPath)
     }
     moduleToExcludeSdkFrom(root, project)?.excludeInnerVirtualEnv(sdk)
-    with(PySdkSettings.instance) {
-      setPreferredVirtualEnvBasePath(FileUtil.toSystemIndependentName(pathField.text), projectBasePath)
-      preferredVirtualEnvBaseSdk = baseSdk.homePath
-    }
+    PySdkSettings.instance.onVirtualEnvCreated(baseSdk, FileUtil.toSystemIndependentName(root), projectBasePath)
     return sdk
   }
 

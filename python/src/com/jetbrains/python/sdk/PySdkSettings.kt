@@ -3,6 +3,7 @@ package com.jetbrains.python.sdk
 
 import com.intellij.application.options.ReplacePathToMacroMap
 import com.intellij.openapi.components.*
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.SystemProperties
@@ -44,6 +45,11 @@ class PySdkSettings : PersistentStateComponent<PySdkSettings.State> {
       state.PREFERRED_VIRTUALENV_BASE_SDK = value
     }
 
+  fun onVirtualEnvCreated(baseSdk: Sdk, location: @SystemIndependent String, projectPath: @SystemIndependent String?) {
+    setPreferredVirtualEnvBasePath(location, projectPath)
+    preferredVirtualEnvBaseSdk = baseSdk.homePath
+  }
+
   fun setPreferredVirtualEnvBasePath(value: @SystemIndependent String, projectPath: @SystemIndependent String?) {
     val pathMap = ReplacePathToMacroMap().apply {
       projectPath?.let {
@@ -78,7 +84,7 @@ class PySdkSettings : PersistentStateComponent<PySdkSettings.State> {
 
   override fun getState(): State = state
 
-  override fun loadState(state: PySdkSettings.State) {
+  override fun loadState(state: State) {
     XmlSerializerUtil.copyBean(state, this.state)
   }
 

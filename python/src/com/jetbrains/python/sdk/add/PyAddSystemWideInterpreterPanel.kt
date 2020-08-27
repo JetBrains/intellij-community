@@ -57,8 +57,7 @@ class PyAddSystemWideInterpreterPanel(private val module: Module?,
   override fun validateAll(): List<ValidationInfo> = listOfNotNull(validateSdkComboBox(sdkComboBox, this))
 
   override fun getOrCreateSdk(): Sdk? {
-    return when (val sdk = sdkComboBox.selectedSdk) {
-      is PySdkToInstall -> sdk.install(module) { detectSystemWideSdks(module, existingSdks, context) }?.setup(existingSdks)
+    return when (val sdk = installSdkIfNeeded(sdkComboBox.selectedSdk, module, existingSdks, context)) {
       is PyDetectedSdk -> sdk.setup(existingSdks)
       else -> sdk
     }
