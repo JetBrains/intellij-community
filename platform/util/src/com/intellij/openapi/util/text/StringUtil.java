@@ -1470,14 +1470,6 @@ public class StringUtil extends StringUtilRt {
   }
 
   /**
-   * Appends English ordinal suffix to the given number.
-   */
-  @Contract(pure = true)
-  public static @NotNull String formatOrdinal(long num) {
-    return Formats.formatOrdinal(num);
-  }
-
-  /**
    * Returns unpluralized variant using English based heuristics like properties -> property, names -> name, children -> child.
    * Returns {@code null} if failed to match appropriate heuristic.
    *

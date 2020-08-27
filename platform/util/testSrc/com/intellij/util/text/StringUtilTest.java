@@ -4,10 +4,7 @@ package com.intellij.util.text;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.CharFilter;
-import com.intellij.openapi.util.text.LineColumn;
-import com.intellij.openapi.util.text.NaturalComparator;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.*;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.TripleFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -866,13 +863,13 @@ public class StringUtilTest {
 
   @Test
   public void testEnglishOrdinals() {
-    assertEquals("100th", StringUtil.formatOrdinal(100));
-    assertEquals("101st", StringUtil.formatOrdinal(101));
-    assertEquals("111th", StringUtil.formatOrdinal(111));
-    assertEquals("122nd", StringUtil.formatOrdinal(122));
+    assertEquals("100th", OrdinalFormat.formatEnglish(100));
+    assertEquals("101st", OrdinalFormat.formatEnglish(101));
+    assertEquals("111th", OrdinalFormat.formatEnglish(111));
+    assertEquals("122nd", OrdinalFormat.formatEnglish(122));
 
-    assertEquals("-3rd", StringUtil.formatOrdinal(-3));
-    assertEquals("-9223372036854775808th", StringUtil.formatOrdinal(Long.MIN_VALUE));
+    assertEquals("-3rd", OrdinalFormat.formatEnglish(-3));
+    assertEquals("-9223372036854775808th", OrdinalFormat.formatEnglish(Long.MIN_VALUE));
   }
 
   @Test
