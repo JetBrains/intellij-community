@@ -234,8 +234,6 @@ public abstract class NlsInfo {
     PsiElement var = null;
     
     if (parent instanceof UVariable) {
-      NlsInfo info = fromUVariable((UVariable)parent);
-      if (info != Unspecified.UNKNOWN) return info;
       var = parent.getJavaPsi();
     }
     else if (parent instanceof UBinaryExpression) {
@@ -300,6 +298,11 @@ public abstract class NlsInfo {
       if (info != Unspecified.UNKNOWN) return info;
       if (var instanceof PsiField) {
         info = fromContainer((PsiField)var);
+        if (info != Unspecified.UNKNOWN) return info;
+      }
+      ULocalVariable uLocal = UastContextKt.toUElement(var, ULocalVariable.class);
+      if (uLocal != null) {
+        info = fromUVariable(uLocal);
         if (info != Unspecified.UNKNOWN) return info;
       }
       return parent instanceof UCallExpression ? Unspecified.UNKNOWN 

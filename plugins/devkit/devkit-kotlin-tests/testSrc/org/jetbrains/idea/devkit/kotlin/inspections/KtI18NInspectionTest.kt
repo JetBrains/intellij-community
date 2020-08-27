@@ -157,6 +157,17 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
   
+  fun testLocals() {
+    myFixture.enableInspections(I18nInspection())
+    myFixture.configureByText("Foo.kt", """
+        fun test() {
+          @org.jetbrains.annotations.NonNls var <warning descr="[ASSIGNED_BUT_NEVER_ACCESSED_VARIABLE] Variable 'x' is assigned but never accessed">x</warning>: String = "foo bar"
+          <warning descr="[UNUSED_VALUE] The value '\"bar foo\"' assigned to 'var x: String defined in test' is never used">x =</warning> "bar foo"
+        }
+    """.trimIndent())
+    myFixture.testHighlighting()
+  }
+  
   fun testFunctionParametersOnlyNls() {
     val inspection = I18nInspection()
     inspection.setIgnoreForAllButNls(true)
