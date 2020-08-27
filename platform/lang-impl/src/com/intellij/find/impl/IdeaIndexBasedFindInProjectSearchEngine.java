@@ -17,7 +17,6 @@ import com.intellij.util.Processors;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.indexing.FileBasedIndex;
-import com.intellij.util.indexing.FileBasedIndexImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -30,7 +29,6 @@ public final class IdeaIndexBasedFindInProjectSearchEngine implements FindInProj
 
   private static final class MyFindInProjectSearcher implements FindInProjectSearcher {
     private @NotNull final ProjectFileIndex myFileIndex;
-    private @NotNull final FileBasedIndexImpl myFileBasedIndex;
     private @NotNull final Project myProject;
     private @NotNull final FindModel myFindModel;
     private @NotNull final TextSearchService myTextSearchService;
@@ -42,7 +40,6 @@ public final class IdeaIndexBasedFindInProjectSearchEngine implements FindInProj
       myProject = project;
       myFindModel = findModel;
       myFileIndex = ProjectFileIndex.SERVICE.getInstance(myProject);
-      myFileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
       myTextSearchService = TextSearchService.getInstance();
       String stringToFind = findModel.getStringToFind();
 
