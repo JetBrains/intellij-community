@@ -55,18 +55,18 @@
                      level="WARNING"
                      implementationClass="com.intellij.codeInspection.duplicateStringLiteral.DuplicateStringLiteralInspection"/>
 
-    <localInspection groupPath="Java"  language="JAVA" shortName="DialogTitleCapitalization"
+    <localInspection groupPath="Java" language="JAVA" shortName="DialogTitleCapitalization"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.internationalization.issues"
-                     displayName="Incorrect string capitalization"
                      enabledByDefault="true"
                      level="WARNING"
-                     implementationClass="com.intellij.codeInspection.capitalization.TitleCapitalizationInspection"/>
+                     implementationClass="com.intellij.codeInspection.capitalization.TitleCapitalizationInspection"
+                     key="inspection.dialog.title.capitalization.display.name" bundle="messages.JavaI18nBundle"/>
     <localInspection language="Properties" shortName="SuspiciousLocalesLanguages"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.properties.files"
-                     displayName="Suspicious resource bundle locale languages"
                      enabledByDefault="false"
                      level="WARNING"
-                     implementationClass="com.intellij.codeInspection.SuspiciousLocalesLanguagesInspection"/>
+                     implementationClass="com.intellij.codeInspection.SuspiciousLocalesLanguagesInspection"
+                     key="inspection.suspicious.locales.languages.display.name" bundle="messages.JavaI18nBundle"/>
 
     <intentionAction>
       <className>com.intellij.codeInspection.capitalization.AnnotateCapitalizationIntention</className>
