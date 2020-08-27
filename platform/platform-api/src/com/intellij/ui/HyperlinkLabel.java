@@ -211,7 +211,7 @@ public class HyperlinkLabel extends HighlightableComponent {
     updateOnTextChange();
   }
 
-  public void setHyperlinkTarget(@Nullable final String url) {
+  public void setHyperlinkTarget(@Nls @Nullable final String url) {
     if (myHyperlinkListener != null) {
       removeHyperlinkListener(myHyperlinkListener);
     }
