@@ -55,8 +55,14 @@ class MethodExtractor {
           fun command() = PostprocessReformattingAspect.getInstance(project).postponeFormattingInside {
             val isStatic = extractOptions.isStatic
             val analyzer = CodeFragmentAnalyzer(extractOptions.elements)
-            val showStatic = ! isStatic && ExtractMethodPipeline.withForcedStatic(analyzer, extractOptions) != null
-            val defaultPanel = ExtractMethodPopupProvider(showStatic, isStatic, needsNullabilityAnnotations(project))
+            val optionsWithStatic = ExtractMethodPipeline.withForcedStatic(analyzer, extractOptions)
+            val makeStaticAndPassFields = optionsWithStatic?.inputParameters?.size != extractOptions.inputParameters.size
+            val showStatic = ! isStatic && optionsWithStatic != null
+            val defaultPanel = ExtractMethodPopupProvider(
+              annotateNullability = needsNullabilityAnnotations(project),
+              makeStatic = if (showStatic) false else null,
+              staticPassFields = makeStaticAndPassFields
+            )
 
             InplaceMethodExtractor(editor, extractOptions, defaultPanel).performInplaceRefactoring(linkedSetOf())
           }

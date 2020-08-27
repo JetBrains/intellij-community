@@ -80,7 +80,7 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
 
   override fun afterTemplateStart() {
     super.afterTemplateStart()
-    popupProvider.setStateListener(this::restartWithNewOptions)
+    popupProvider.setChangeListener { restartWithNewOptions(popupProvider.annotate, popupProvider.makeStatic) }
     val templateState = TemplateManagerImpl.getTemplateState(myEditor) ?: return
     val editor = templateState.editor as? EditorImpl ?: return
     val presentation = TemplateInlayUtil.createSettingsPresentation(editor)
@@ -89,8 +89,10 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     fragmentsToRevert.forEach { Disposer.register(templateState, it) }
   }
 
-  private fun restartWithNewOptions(state: ExtractMethodPopupProvider.PanelState) {
-    PropertiesComponent.getInstance(extractOptions.project).setValue(ExtractMethodDialog.EXTRACT_METHOD_GENERATE_ANNOTATIONS, state.annotate, true)
+  private fun restartWithNewOptions(annotate: Boolean?, makeStatic: Boolean?) {
+    if (annotate != null) {
+      PropertiesComponent.getInstance(extractOptions.project).setValue(ExtractMethodDialog.EXTRACT_METHOD_GENERATE_ANNOTATIONS, annotate, true)
+    }
 
     val methodNameRange = TemplateManagerImpl.getTemplateState(editor)?.currentVariableRange ?: return
     val methodName = editor.document.getText(methodNameRange)
@@ -101,7 +103,7 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     val analyzer = CodeFragmentAnalyzer(elements)
     var options = findExtractOptions(elements).copy(methodName = methodName)
     options = ExtractMethodPipeline.withTargetClass(analyzer, options, containingClass)!!
-    options = if (state.makeStatic) ExtractMethodPipeline.withForcedStatic(analyzer, options)!! else options
+    options = if (makeStatic == true) ExtractMethodPipeline.withForcedStatic(analyzer, options)!! else options
 
     WriteCommandAction.runWriteCommandAction(myProject) {
       InplaceMethodExtractor(editor, options, popupProvider).performInplaceRefactoring(linkedSetOf())

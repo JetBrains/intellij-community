@@ -3,35 +3,84 @@ package com.intellij.refactoring.extractMethod.newImpl.inplace
 
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.keymap.KeymapUtil
-import com.intellij.ui.components.JBCheckBox
+import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.layout.*
+import javax.swing.JComponent
+import javax.swing.LayoutFocusTraversalPolicy
 
-class ExtractMethodPopupProvider(showStatic: Boolean, isStatic: Boolean, isAnnotated: Boolean) {
-  data class PanelState(val annotate: Boolean, val makeStatic: Boolean)
+class ExtractMethodPopupProvider(annotateNullability: Boolean? = null,
+                                 makeStatic: Boolean? = null,
+                                 staticPassFields: Boolean = false) {
 
-  private val annotateCheckBox = JBCheckBox(JavaRefactoringBundle.message("extract.method.checkbox.annotate")).apply { isSelected = isAnnotated }
-  private val makeStaticCheckBox = JBCheckBox(JavaRefactoringBundle.message("extract.method.checkbox.make.static")).apply { isSelected = isStatic }
+  var annotate = annotateNullability
+    private set
 
-  val state
-    get() = PanelState(annotateCheckBox.isSelected, makeStaticCheckBox.isSelected)
+  var makeStatic = makeStatic
+    private set
 
-  fun setStateListener(listener: (PanelState) -> Unit) {
-    sequenceOf(annotateCheckBox, makeStaticCheckBox).forEach { checkBox ->
-      checkBox.actionListeners.forEach(checkBox::removeActionListener)
-      checkBox.addActionListener { listener(state) }
-    }
+  private var changeListener: () -> Unit = {}
+
+  fun setChangeListener(listener: () -> Unit) {
+    changeListener = listener
   }
 
-  val panel = panel {
-    row { annotateCheckBox() }
-    if (showStatic) row { makeStaticCheckBox() }
-    row {
-      link(JavaRefactoringBundle.message("extract.method.link.label.go.to.method"), null) {}
-      comment(KeymapUtil.getFirstKeyboardShortcutText("GotoDeclaration"))
-    }
-    row {
-      link(JavaRefactoringBundle.message("extract.method.link.label.show.dialog"), null) {}
-      comment(KeymapUtil.getFirstKeyboardShortcutText("ExtractMethod"))
-    }
+  val panel: DialogPanel by lazy { createPanel() }
+
+  val makeStaticLabel = if (staticPassFields) {
+    JavaRefactoringBundle.message("extract.method.checkbox.make.static.and.pass.fields")
+  } else {
+    JavaRefactoringBundle.message("extract.method.checkbox.make.static")
   }
+
+  private fun createPanel(): DialogPanel {
+    var hasFocusedElement = false
+    fun CellBuilder<JComponent>.setFocusIfEmpty() {
+      if (! hasFocusedElement) {
+        hasFocusedElement = true
+        focused()
+      }
+    }
+    val panel = panel {
+      if (annotate != null) {
+        row {
+          checkBox(JavaRefactoringBundle.message("extract.method.checkbox.annotate"), annotate ?: false) { _, checkBox -> annotate = checkBox.isSelected; changeListener.invoke() }
+            .setFocusIfEmpty()
+        }
+      }
+      if (makeStatic != null) {
+        row {
+          checkBox(makeStaticLabel, makeStatic ?: false) { _, checkBox -> makeStatic = checkBox.isSelected; changeListener.invoke() }
+            .setFocusIfEmpty()
+        }
+      }
+      row {
+        cell {
+          link(JavaRefactoringBundle.message("extract.method.link.label.go.to.method"), null) {}
+            .applyToComponent { isFocusable = true }
+            .setFocusIfEmpty()
+          comment(KeymapUtil.getFirstKeyboardShortcutText("GotoDeclaration"))
+        }
+      }
+      row {
+        cell {
+          link(JavaRefactoringBundle.message("extract.method.link.label.show.dialog"), null) {}
+            .applyToComponent { isFocusable = true }
+          comment(KeymapUtil.getFirstKeyboardShortcutText("ExtractMethod"))
+        }
+      }
+    }
+    panel.isFocusCycleRoot = true
+    panel.focusTraversalPolicy = LayoutFocusTraversalPolicy()
+
+    DumbAwareAction.create {
+      //action
+    }.registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts("ExtractMethod"), panel)
+
+    DumbAwareAction.create {
+      //action
+    }.registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts("ExtractMethod"), panel)
+    return panel
+  }
+
 }
