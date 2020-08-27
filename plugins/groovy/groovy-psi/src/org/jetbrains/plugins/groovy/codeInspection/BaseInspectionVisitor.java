@@ -20,6 +20,7 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -66,6 +67,11 @@ public abstract class BaseInspectionVisitor extends GroovyElementVisitor {
     String description = StringUtil.notNullize(inspection.buildErrorString(args));
 
     registerError(method.getNameIdentifierGroovy(), description, fixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+  }
+
+  protected void registerRangeError(@NotNull PsiElement element, @NotNull TextRange range, Object... args) {
+    String description = StringUtil.notNullize(inspection.buildErrorString(args));
+    problemsHolder.registerProblem(element, range, description, createFixes(element));
   }
 
   protected void registerVariableError(GrVariable variable, Object... args) {

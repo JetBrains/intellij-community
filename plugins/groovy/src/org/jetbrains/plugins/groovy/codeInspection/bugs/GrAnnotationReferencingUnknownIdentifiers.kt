@@ -1,13 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.bugs
 
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiAnnotationMemberValue
 import com.intellij.psi.PsiArrayInitializerMemberValue
-import com.intellij.psi.PsiLiteralValue
+import com.intellij.psi.PsiLiteral
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
+import org.jetbrains.plugins.groovy.lang.resolve.GroovyStringLiteralManipulator
 import org.jetbrains.plugins.groovy.lang.resolve.ast.AffectedMembersCache
 import org.jetbrains.plugins.groovy.lang.resolve.ast.constructorGeneratingAnnotations
 
@@ -18,15 +20,26 @@ class GrAnnotationReferencingUnknownIdentifiers : BaseInspection() {
   }
 
   companion object {
-    fun iterateOverIdentifierList(value: PsiAnnotationMemberValue): Iterable<PsiLiteralValue> {
-      if (value is PsiArrayInitializerMemberValue) {
-        val initializers = value.initializers
-        return initializers.mapNotNull {
-          it as? PsiLiteralValue
+    private val IDENTIFIER_MATCHER = Regex("\\w+")
+    private val DELIMITED_LIST_MATCHER = Regex("^(\\s*\\w+\\s*,)*\\s*\\w+\\s*\$")
+
+    private fun iterateOverIdentifierList(value: PsiAnnotationMemberValue, identifiers: Set<String>): Iterable<TextRange> {
+      when (value) {
+        is PsiArrayInitializerMemberValue -> {
+          val initializers = value.initializers
+          return initializers.mapNotNull {
+            (it as? PsiLiteral)?.takeUnless { literal -> literal.value in identifiers }?.textRangeInParent
+          }
         }
-      }
-      else {
-        return emptyList()
+        is PsiLiteral -> {
+          val stringText: String = value.text ?: return emptyList()
+          val internalRange = GroovyStringLiteralManipulator.getLiteralRange(stringText)
+          val content = internalRange.substring(stringText).takeIf(DELIMITED_LIST_MATCHER::matches) ?: return emptyList()
+          return IDENTIFIER_MATCHER.findAll(content)
+            .filter { it.value !in identifiers }
+            .map { TextRange(it.range.first + internalRange.startOffset, it.range.last + internalRange.startOffset + 1) }.asIterable()
+        }
+        else -> return emptyList()
       }
     }
   }
@@ -36,10 +49,8 @@ class GrAnnotationReferencingUnknownIdentifiers : BaseInspection() {
 
     private fun processAttribute(identifiers: Set<String>, annotation: GrAnnotation, attributeName: String) {
       val value = annotation.findAttributeValue(attributeName) ?: return
-      for (identifier in iterateOverIdentifierList(value)) {
-        val name = identifier.value as? String ?: continue
-        if (identifiers.contains(name)) continue
-        registerError(identifier)
+      for (range in iterateOverIdentifierList(value, identifiers)) {
+        registerRangeError(value, range)
       }
     }
 
