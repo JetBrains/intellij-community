@@ -182,9 +182,28 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.enableInspections(I18nInspection())
     myFixture.configureByText("Foo.kt", """
         public typealias UnsupportedOperationException = java.lang.UnsupportedOperationException
+        class Err(message:String): Throwable(message)
+
+        fun test2() {
+          throw Err("foo bar")
+        }
       
         fun test() {
           throw UnsupportedOperationException("foo bar")
+        }
+    """.trimIndent())
+    myFixture.testHighlighting()
+  }
+  
+  fun testNoException() {
+    val inspection = I18nInspection()
+    inspection.ignoreForExceptionConstructors = false
+    myFixture.enableInspections(inspection)
+    myFixture.configureByText("Foo.kt", """
+        class Err(message:String): Throwable(message)
+      
+        fun test() {
+          throw Err(<warning descr="Hardcoded string literal: \"foo bar\"">"foo bar"</warning>)
         }
     """.trimIndent())
     myFixture.testHighlighting()

@@ -1169,8 +1169,10 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
       if (UastExpressionUtils.isConstructorCall(newExpression)) {
         UReferenceExpression classReference = newExpression.getClassReference();
         if (classReference != null) {
-          PsiClass ctor = ObjectUtils.tryCast(classReference.resolve(), PsiClass.class);
-          return InheritanceUtil.isInheritor(ctor, CommonClassNames.JAVA_LANG_THROWABLE);
+          PsiClass cls = ObjectUtils.tryCast(classReference.resolve(), PsiClass.class);
+          if (cls != null) {
+            return InheritanceUtil.isInheritor(cls, CommonClassNames.JAVA_LANG_THROWABLE);
+          }
         }
       }
       PsiMethod method = newExpression.resolve();
