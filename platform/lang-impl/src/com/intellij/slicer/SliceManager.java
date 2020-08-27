@@ -11,7 +11,6 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -144,10 +143,9 @@ public final class SliceManager implements PersistentStateComponent<SliceManager
     }
     String desc = ElementDescriptionUtil.getElementDescription(element, RefactoringDescriptionLocation.WITHOUT_PARENT);
     String firstPartOfDescription = StringUtil.first(desc, 100, true);
-    return new HtmlBuilder()
-      .append((prefix == null ? firstPartOfDescription : BundleBase.format(prefix, firstPartOfDescription)) + (suffix == null ? "" : suffix))
-      .wrapWithHtmlBody()
-      .toString();
+    return "<html><body>" + 
+           ((prefix == null ? firstPartOfDescription : BundleBase.format(prefix, firstPartOfDescription)) + (suffix == null ? "" : suffix)) +
+           "</body></html>";
   }
 
   @Override
