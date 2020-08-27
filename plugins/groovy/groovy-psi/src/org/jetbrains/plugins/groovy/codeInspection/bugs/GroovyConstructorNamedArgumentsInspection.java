@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.bugs;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -83,7 +83,8 @@ public class GroovyConstructorNamedArgumentsInspection extends BaseInspection {
       for (GrNamedArgument arg : args) {
         final GrArgumentLabel label = arg.getLabel();
         if (label == null) continue;
-        if (label.getName() == null) {
+        String labelName = label.getName();
+        if (labelName == null) {
           final PsiElement nameElement = label.getNameElement();
           if (nameElement instanceof GrExpression) {
             final PsiType argType = ((GrExpression)nameElement).getType();
@@ -113,6 +114,10 @@ public class GroovyConstructorNamedArgumentsInspection extends BaseInspection {
 
             registerError(label, GroovyBundle.message("no.such.property", label.getName()), fixes.toArray(LocalQuickFix.EMPTY_ARRAY),
                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+          } else if (resolved instanceof PsiField) {
+             if (((PsiField)resolved).hasModifierProperty(PsiModifier.FINAL)) {
+               registerError(label, GroovyBundle.message("inspection.message.property.0.is.final", labelName), LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+             }
           }
         }
       }
