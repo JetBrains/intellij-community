@@ -3,6 +3,7 @@ package org.jetbrains.idea.devkit.actions.updateFromSources
 
 import com.intellij.CommonBundle
 import com.intellij.execution.configurations.JavaParameters
+import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessOutputTypes
@@ -15,6 +16,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
@@ -30,7 +32,9 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.task.ProjectTaskManager
+import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.PathUtil
 import com.intellij.util.Restarter
 import com.intellij.util.TimeoutUtil
@@ -104,6 +108,7 @@ internal open class UpdateIdeFromSourcesAction
     }
 
     val deployDir = "$devIdeaHome/out/deploy"
+    val logFilePath = "$deployDir/log/debug.log"
     val distRelativePath = "dist"
     val backupDir = "$devIdeaHome/out/backup-before-update-from-sources"
     val params = createScriptJavaParameters(devIdeaHome, project, deployDir, distRelativePath, scriptFile,
@@ -112,7 +117,7 @@ internal open class UpdateIdeFromSourcesAction
       .buildAllModules()
       .onSuccess {
         if (!it.isAborted && !it.hasErrors()) {
-          runUpdateScript(params, project, workIdeHome, "$deployDir/$distRelativePath", backupDir, restartAutomatically)
+          runUpdateScript(params, project, workIdeHome, "$deployDir/$distRelativePath", backupDir, logFilePath, restartAutomatically)
         }
       }
   }
@@ -136,6 +141,7 @@ internal open class UpdateIdeFromSourcesAction
                               workIdeHome: String,
                               builtDistPath: String,
                               backupDir: String,
+                              logFilePath: String,
                               restartAutomatically: Boolean) {
     object : Task.Backgroundable(project, DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.title"), true) {
       override fun run(indicator: ProgressIndicator) {
@@ -144,15 +150,14 @@ internal open class UpdateIdeFromSourcesAction
         indicator.text2 = "Deleting $builtDistPath"
         FileUtil.delete(File(builtDistPath))
         indicator.text2 = "Starting gant script"
-        val scriptHandler = params.createOSProcessHandler()
-        val errorLines = Collections.synchronizedList(ArrayList<@NlsSafe String>())
+        val commandLine = params.toCommandLine()
+        commandLine.isRedirectErrorStream = true
+        val scriptHandler = OSProcessHandler(commandLine)
+        val output = Collections.synchronizedList(ArrayList<@NlsSafe String>())
         scriptHandler.addProcessListener(object : ProcessAdapter() {
           override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
-            LOG.debug("script: ${event.text}")
-            if (outputType == ProcessOutputTypes.STDERR) {
-              errorLines.add(event.text)
-            }
-            else if (outputType == ProcessOutputTypes.STDOUT) {
+            output.add(event.text)
+            if (outputType == ProcessOutputTypes.STDOUT) {
               indicator.text2 = event.text
             }
           }
@@ -163,11 +168,19 @@ internal open class UpdateIdeFromSourcesAction
             }
 
             if (event.exitCode != 0) {
-              val errorText = errorLines.joinToString("\n")
               notificationGroup.createNotification(title = DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.failed.title"),
                                                    content = DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.failed.content",
-                                                                                  event.exitCode, errorText),
-                                                   type = NotificationType.ERROR).notify(project)
+                                                                                  event.exitCode),
+                                                   type = NotificationType.ERROR)
+                .addAction(NotificationAction.createSimple(DevKitBundle.message("action.UpdateIdeFromSourcesAction.notification.action.view.output")) {
+                  FileEditorManager.getInstance(project).openFile(LightVirtualFile("output.txt", output.joinToString("")), true)
+                })
+                .addAction(NotificationAction.createSimple(DevKitBundle.message("action.UpdateIdeFromSourcesAction.notification.action.view.debug.log")) {
+                  val logFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(logFilePath) ?: return@createSimple
+                  logFile.refresh(true, false)
+                  FileEditorManager.getInstance(project).openFile(logFile, true)
+                })
+                .notify(project)
               return
             }
 
@@ -353,6 +366,8 @@ internal open class UpdateIdeFromSourcesAction
     params.programParametersList.add(classpath.pathsString)
     params.programParametersList.add("--main")
     params.programParametersList.add("gant.Gant")
+    params.programParametersList.add("--debug")
+    params.programParametersList.add("-Dsome_unique_string_42_239")
     params.programParametersList.add("--file")
     params.programParametersList.add(scriptFile.absolutePath)
     params.programParametersList.add("update-from-sources")
