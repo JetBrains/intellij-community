@@ -50,7 +50,7 @@ public class LightVirtualFile extends LightVirtualFileBase {
 
   public LightVirtualFile(@NlsSafe @NotNull String name,
                           FileType fileType,
-                          @NotNull CharSequence text,
+                          @NlsSafe @NotNull CharSequence text,
                           Charset charset,
                           long modificationStamp) {
     super(name, fileType, modificationStamp);
@@ -58,7 +58,7 @@ public class LightVirtualFile extends LightVirtualFileBase {
     setCharset(charset);
   }
 
-  public LightVirtualFile(@NotNull String name, @NotNull Language language, @NotNull CharSequence text) {
+  public LightVirtualFile(@NlsSafe @NotNull String name, @NotNull Language language, @NlsSafe @NotNull CharSequence text) {
     super(name, null, LocalTimeCounter.currentTime());
     myContent = text;
     setLanguage(language);
