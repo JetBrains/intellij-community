@@ -220,7 +220,9 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
 
     myUseModulePath.getComponent().setText(ExecutionBundle.message("use.module.path.checkbox.label"));
     myUseModulePath.getComponent().setSelected(true);
-    myUseModulePath.setVisible(FilenameIndex.getFilesByName(project, PsiJavaModule.MODULE_INFO_FILE, GlobalSearchScope.projectScope(myProject)).length > 0);
+    if (!project.isDefault()) {
+      myUseModulePath.setVisible(FilenameIndex.getFilesByName(project, PsiJavaModule.MODULE_INFO_FILE, GlobalSearchScope.projectScope(myProject)).length > 0);
+    }
   }
 
   public static BrowseModuleValueActionListener[] createBrowsers(Project project,
