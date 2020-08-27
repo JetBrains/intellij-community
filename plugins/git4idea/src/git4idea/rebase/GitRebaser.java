@@ -104,11 +104,16 @@ public class GitRebaser {
   }
 
   public boolean continueRebase(@NotNull VirtualFile root) {
-    return continueRebase(root, "--continue");
+    return continueRebase(root, false);
+  }
+
+  private boolean skipCommitAndContinue(@NotNull VirtualFile root) {
+    return continueRebase(root, true);
   }
 
   /**
    * Runs 'git rebase --continue' on several roots consequently.
+   *
    * @return true if rebase successfully finished.
    */
   public boolean continueRebase(@NotNull Collection<? extends VirtualFile> rebasingRoots) {
@@ -122,18 +127,18 @@ public class GitRebaser {
   }
 
   // start operation may be "--continue" or "--skip" depending on the situation.
-  private boolean continueRebase(final @NotNull VirtualFile root, @NotNull String startOperation) {
-    LOG.info("continueRebase " + root + " " + startOperation);
+  private boolean continueRebase(final @NotNull VirtualFile root, boolean skip) {
+    LOG.info(String.format("continueRebase in %s, skip: %s", root, skip));
     final GitLineHandler rh = new GitLineHandler(myProject, root, GitCommand.REBASE);
     rh.setStdoutSuppressed(false);
-    rh.addParameters(startOperation);
+    rh.addParameters(skip ? "--skip" : "--continue");
     final GitRebaseProblemDetector rebaseConflictDetector = new GitRebaseProblemDetector();
     rh.addLineListener(rebaseConflictDetector);
 
     // TODO If interactive rebase with commit rewording was invoked, this should take the reworded message
     GitRebaser.TrivialEditor editor = new GitRebaser.TrivialEditor();
     try (GitHandlerRebaseEditorManager ignored = GitHandlerRebaseEditorManager.prepareEditor(rh, editor)) {
-      final GitTask rebaseTask = new GitTask(myProject, rh, "git rebase " + startOperation);
+      final GitTask rebaseTask = new GitTask(myProject, rh, GitBundle.message("rebase.progress.indicator.continue.title"));
       rebaseTask.setProgressAnalyzer(new GitStandardProgressAnalyzer());
       rebaseTask.setProgressIndicator(myProgressIndicator);
       return executeRebaseTaskInBackground(root, rh, rebaseConflictDetector, rebaseTask);
@@ -190,7 +195,7 @@ public class GitRebaser {
 
         @Override
         protected boolean proceedAfterAllMerged() {
-          return continueRebase(root, "--continue");
+          return continueRebase(root);
         }
       }.merge();
     }
@@ -210,7 +215,7 @@ public class GitRebaser {
           GitRebaseUtils.CommitInfo commit = GitRebaseUtils.getCurrentRebaseCommit(myProject, root);
           LOG.info("no changes confirmed. Skipping commit " + commit);
           mySkippedCommits.add(commit);
-          return continueRebase(root, "--skip");
+          return skipCommitAndContinue(root);
         }
       }
       catch (VcsException e) {
@@ -282,7 +287,8 @@ public class GitRebaser {
     else if (untrackedWouldBeOverwrittenDetector.wasMessageDetected()) {
       LOG.info("handleRebaseFailure: untracked files would be overwritten by checkout");
       GitUntrackedFilesHelper.notifyUntrackedFilesOverwrittenBy(myProject, root,
-                                                                untrackedWouldBeOverwrittenDetector.getRelativeFilePaths(), "rebase", null);
+                                                                untrackedWouldBeOverwrittenDetector.getRelativeFilePaths(),
+                                                                GitBundle.message("rebase.operation.name"), null);
       return GitUpdateResult.ERROR;
     }
     else if (localChangesDetector.wasMessageDetected()) {
