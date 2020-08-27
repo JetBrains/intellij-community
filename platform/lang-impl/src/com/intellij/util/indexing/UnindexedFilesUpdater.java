@@ -105,13 +105,15 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     indicator.setIndeterminate(true);
     indicator.setText(IndexingBundle.message("progress.indexing.scanning"));
 
-    projectIndexingHistory.getTimes().setPushPropertiesStart(Instant.now());
-
-    PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
-    myPusher.pushAllPropertiesNow();
     boolean trackResponsiveness = !ApplicationManager.getApplication().isUnitTestMode();
 
-    projectIndexingHistory.getTimes().setPushPropertiesEnd(Instant.now());
+    PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
+    projectIndexingHistory.getTimes().setPushPropertiesStart(Instant.now());
+    try {
+      myPusher.pushAllPropertiesNow();
+    } finally {
+      projectIndexingHistory.getTimes().setPushPropertiesEnd(Instant.now());
+    }
 
     if (trackResponsiveness) snapshot.logResponsivenessSinceCreation("Pushing properties");
 
@@ -120,14 +122,22 @@ public final class UnindexedFilesUpdater extends DumbModeTask {
     snapshot = PerformanceWatcher.takeSnapshot();
 
     projectIndexingHistory.getTimes().setIndexExtensionsStart(Instant.now());
-    FileBasedIndexInfrastructureExtension.EP_NAME.extensions().forEach(ex -> ex.processIndexingProject(myProject, indicator));
-    projectIndexingHistory.getTimes().setIndexExtensionsEnd(Instant.now());
+    try {
+      FileBasedIndexInfrastructureExtension.EP_NAME.extensions().forEach(ex -> ex.processIndexingProject(myProject, indicator));
+    } finally {
+      projectIndexingHistory.getTimes().setIndexExtensionsEnd(Instant.now());
+    }
 
     projectIndexingHistory.getTimes().setScanFilesStart(Instant.now());
-    List<IndexableFilesProvider> orderedProviders = getOrderedProviders();
-    Map<IndexableFilesProvider, List<VirtualFile>> providerToFiles = collectIndexableFilesConcurrently(myProject, indicator, orderedProviders);
-    myProject.putUserData(CONTENT_SCANNED, true);
-    projectIndexingHistory.getTimes().setScanFilesEnd(Instant.now());
+    List<IndexableFilesProvider> orderedProviders;
+    Map<IndexableFilesProvider, List<VirtualFile>> providerToFiles;
+    try {
+      orderedProviders = getOrderedProviders();
+      providerToFiles = collectIndexableFilesConcurrently(myProject, indicator, orderedProviders);
+      myProject.putUserData(CONTENT_SCANNED, true);
+    } finally {
+      projectIndexingHistory.getTimes().setScanFilesEnd(Instant.now());
+    }
 
     if (trackResponsiveness) snapshot.logResponsivenessSinceCreation("Indexable file iteration");
 
