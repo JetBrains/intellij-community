@@ -2010,7 +2010,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   @Contract(pure = true)
-  public static @NotNull String removeEllipsisSuffix(@NotNull String s) {
+  public static @NotNull @Nls String removeEllipsisSuffix(@NotNull @Nls String s) {
     String THREE_DOTS = "...";
     if (s.endsWith(THREE_DOTS)) {
       return s.substring(0, s.length() - THREE_DOTS.length());
