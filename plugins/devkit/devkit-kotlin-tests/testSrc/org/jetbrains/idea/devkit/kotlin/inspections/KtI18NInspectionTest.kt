@@ -139,6 +139,24 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
   
+  fun testExtensionMethod() {
+    myFixture.enableInspections(I18nInspection())
+    myFixture.configureByText("Foo.kt", """
+        class Test {}
+
+        fun Test.weigh(@org.jetbrains.annotations.NonNls <warning descr="[UNUSED_PARAMETER] Parameter 'id' is never used">id</warning>: String): Boolean = true
+
+        fun test() {
+          fun Test.weighLocal(@org.jetbrains.annotations.NonNls <warning descr="[UNUSED_PARAMETER] Parameter 'id' is never used">id</warning>: String): Boolean = true
+        
+          val <warning descr="[UNUSED_VARIABLE] Variable 'test' is never used">test</warning> = Test().weigh("priority")
+          // TODO: parameter for local function doesn't report annotations
+          val <warning descr="[UNUSED_VARIABLE] Variable 'test2' is never used">test2</warning> = Test().weighLocal(<warning descr="Hardcoded string literal: \"priority\"">"priority"</warning>)
+        }
+    """.trimIndent())
+    myFixture.testHighlighting()
+  }
+  
   fun testFunctionParametersOnlyNls() {
     val inspection = I18nInspection()
     inspection.setIgnoreForAllButNls(true)
