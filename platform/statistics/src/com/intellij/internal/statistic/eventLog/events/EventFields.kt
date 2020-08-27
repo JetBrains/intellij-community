@@ -16,7 +16,7 @@ object EventFields {
    */
   @JvmStatic
   fun StringValidatedByRegexp(@NonNls name: String, @NonNls regexpRef: String): StringEventField =
-    StringEventField.withRegexp(name, regexpRef)
+    StringEventField.ValidatedByRegexp(name, regexpRef)
 
   /**
    * Create field that will be validated by global enum rule
@@ -25,7 +25,7 @@ object EventFields {
    */
   @JvmStatic
   fun StringValidatedByEnum(@NonNls name: String, @NonNls enumRef: String): StringEventField =
-    StringEventField.withEnum(name, enumRef)
+    StringEventField.ValidatedByEnum(name, enumRef)
 
   /**
    * Create field that will be validated by [com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule]
@@ -35,7 +35,11 @@ object EventFields {
    */
   @JvmStatic
   fun StringValidatedByCustomRule(@NonNls name: String, @NonNls customRuleId: String): StringEventField =
-    StringEventField.withCustomRule(name, customRuleId)
+    StringEventField.ValidatedByCustomRule(name, customRuleId)
+
+  @JvmStatic
+  fun String(@NonNls name: String, allowedValues: List<String>): StringEventField =
+    StringEventField.ValidatedByAllowedValues(name, allowedValues)
 
   @JvmStatic
   fun Int(@NonNls name: String): IntEventField = IntEventField(name)

@@ -3,10 +3,7 @@ package com.intellij.ide;
 
 import com.intellij.ide.util.TipAndTrickBean;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
-import com.intellij.internal.statistic.eventLog.events.EventFields;
-import com.intellij.internal.statistic.eventLog.events.EventId;
-import com.intellij.internal.statistic.eventLog.events.EventId1;
-import com.intellij.internal.statistic.eventLog.events.EventId3;
+import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
@@ -16,20 +13,26 @@ import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+
 public class TipsOfTheDayUsagesCollector extends CounterUsagesCollector {
   private static final EventLogGroup GROUP = new EventLogGroup("ui.tips", 4);
 
-  public enum DialogType { automatically, manually }
+  public enum DialogType {automatically, manually}
 
   public static final EventId NEXT_TIP = GROUP.registerEvent("next.tip");
   public static final EventId PREVIOUS_TIP = GROUP.registerEvent("previous.tip");
   public static final EventId1<DialogType> DIALOG_SHOWN =
     GROUP.registerEvent("dialog.shown", EventFields.Enum("type", DialogType.class));
 
+  public static final StringEventField ALGORITHM_FIELD =
+    EventFields.String("algorithm",
+                       Arrays.asList("TOP", "MATRIX_ALS", "MATRIX_BPR", "PROB", "WIDE", "CODIS", "RANDOM", "WEIGHTS_LIN_REG",
+                                     "default_shuffle", "unknown", "ONE_TIP_SUMMER2020", "RANDOM_SUMMER2020"));
   private static final EventId3<String, String, String> TIP_SHOWN =
     GROUP.registerEvent("tip.shown",
                         EventFields.StringValidatedByCustomRule("filename", "tip_info"),
-                        EventFields.StringValidatedByEnum("algorithm", "tips_order_algorithm"),
+                        ALGORITHM_FIELD,
                         EventFields.Version);
 
   @Override

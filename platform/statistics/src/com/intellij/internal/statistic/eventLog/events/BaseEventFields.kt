@@ -21,64 +21,39 @@ data class EventPair<T>(val field: EventField<T>, val data: T) {
   fun addData(featureUsageData: FeatureUsageData) = field.addData(featureUsageData, data)
 }
 
-class StringEventField private constructor(override val name: String,
-                                           val customRuleId: String? = null,
-                                           val enumRef: String? = null,
-                                           val regexpRef: String? = null) : PrimitiveEventField<String?>() {
+abstract class StringEventField(override val name: String) : PrimitiveEventField<String?>() {
   override fun addData(fuData: FeatureUsageData, value: String?) {
     if (value != null) {
       fuData.addData(name, value)
     }
   }
 
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (javaClass != other?.javaClass) return false
-
-    other as StringEventField
-
-    if (name != other.name) return false
-    if (customRuleId != other.customRuleId) return false
-    if (enumRef != other.enumRef) return false
-    if (regexpRef != other.regexpRef) return false
-
-    return true
+  data class ValidatedByAllowedValues(@NonNls override val name: String,
+                                      val allowedValues: List<String>) : StringEventField(name) {
+    override val validationRule: List<String>
+      get() = allowedValues
   }
 
-  override fun hashCode(): Int {
-    var result = name.hashCode()
-    result = 31 * result + (customRuleId?.hashCode() ?: 0)
-    result = 31 * result + (enumRef?.hashCode() ?: 0)
-    result = 31 * result + (regexpRef?.hashCode() ?: 0)
-    return result
+  data class ValidatedByEnum(@NonNls override val name: String, @NonNls val enumRef: String) : StringEventField(name) {
+    override val validationRule: List<String>
+      get() = listOf("{enum#$enumRef}")
   }
 
-  override val validationRule: List<String>
-    get() = when {
-      customRuleId != null -> listOf("{util#$customRuleId}")
-      enumRef != null -> listOf("{enum#$enumRef}")
-      regexpRef != null -> listOf("{regexp#$regexpRef")
-      else -> emptyList()
-    }
+  data class ValidatedByCustomRule(@NonNls override val name: String,
+                                   @NonNls val customRuleId: String) : StringEventField(name) {
+    override val validationRule: List<String>
+      get() = listOf("{util#$customRuleId}")
+  }
 
-  companion object {
-    fun withEnum(@NonNls name: String, @NonNls id: String): StringEventField {
-      return StringEventField(name, enumRef = id)
-    }
-
-    fun withCustomRule(@NonNls name: String, @NonNls id: String): StringEventField {
-      return StringEventField(name, customRuleId = id)
-    }
-
-    fun withRegexp(@NonNls name: String, @NonNls id: String): StringEventField {
-      return StringEventField(name, regexpRef = id)
-    }
+  data class ValidatedByRegexp(@NonNls override val name: String, @NonNls val regexpRef: String) : StringEventField(name) {
+    override val validationRule: List<String>
+      get() = listOf("{regexp#$regexpRef}")
   }
 }
 
-data class IntEventField(override val name: String): PrimitiveEventField<Int>() {
+data class IntEventField(override val name: String) : PrimitiveEventField<Int>() {
   override val validationRule: List<String>
-    get() =  listOf("{regexp#integer}")
+    get() = listOf("{regexp#integer}")
 
   override fun addData(fuData: FeatureUsageData, value: Int) {
     fuData.addData(name, value)
