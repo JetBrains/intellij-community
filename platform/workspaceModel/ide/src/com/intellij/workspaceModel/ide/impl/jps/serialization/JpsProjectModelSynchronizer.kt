@@ -63,8 +63,10 @@ internal class JpsProjectModelSynchronizer(private val project: Project) : Dispo
     if (!project.isDefault) {
       ApplicationManager.getApplication().messageBus.connect(this).subscribe(ProjectLifecycleListener.TOPIC, object : ProjectLifecycleListener {
         override fun projectComponentsInitialized(project: Project) {
+          LOG.debug { "Project component initialized" }
           if (project === this@JpsProjectModelSynchronizer.project
               && !(WorkspaceModel.getInstance(project) as WorkspaceModelImpl).loadedFromCache) {
+            LOG.info("Workspace model loaded without cache. Loading real project state into workspace model. ${Thread.currentThread()}")
             loadRealProject(project.configLocation!!)
           }
         }
