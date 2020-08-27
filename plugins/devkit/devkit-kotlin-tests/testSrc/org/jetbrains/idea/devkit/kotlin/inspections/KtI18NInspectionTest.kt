@@ -178,6 +178,16 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
   
+  fun testCompareWithNonNls() {
+    myFixture.enableInspections(I18nInspection())
+    myFixture.configureByText("Foo.kt", """
+        fun test(@org.jetbrains.annotations.NonNls word: String): Boolean {
+          return word == "Set"
+        }
+    """.trimIndent())
+    myFixture.testHighlighting()
+  }
+  
   fun testException() {
     myFixture.enableInspections(I18nInspection())
     myFixture.configureByText("Foo.kt", """

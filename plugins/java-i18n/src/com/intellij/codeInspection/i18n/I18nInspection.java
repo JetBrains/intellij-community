@@ -64,6 +64,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import java.util.stream.Stream;
 
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
 
@@ -72,6 +73,9 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     CallMatcher.staticCall("kotlin.PreconditionsKt__PreconditionsKt", "error").parameterCount(1),
     CallMatcher.staticCall("kotlin.StandardKt__StandardKt", "TODO").parameterCount(1)
   );
+  private static final Set<UastBinaryOperator> STRING_COMPARISON_OPS =
+    Set.of(UastBinaryOperator.EQUALS, UastBinaryOperator.NOT_EQUALS, UastBinaryOperator.IDENTITY_EQUALS, 
+           UastBinaryOperator.IDENTITY_NOT_EQUALS);
   
   private static final CallMatcher IGNORED_METHODS = CallMatcher.anyOf( 
     CallMatcher.exactInstanceCall(CommonClassNames.JAVA_LANG_STRING, "substring", "trim"),
@@ -1026,6 +1030,17 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
 
   private static boolean isSafeStringMethod(UExpression expression, final Set<? super PsiModifierListOwner> nonNlsTargets) {
     UElement parent = UastUtils.skipParenthesizedExprUp(expression.getUastParent());
+    if (parent instanceof UBinaryExpression) {
+      UBinaryExpression binOp = (UBinaryExpression)parent;
+      if (STRING_COMPARISON_OPS.contains(binOp.getOperator())) {
+        UReferenceExpression left = ObjectUtils.tryCast(UastUtils.skipParenthesizedExprDown(binOp.getLeftOperand()), 
+                                                        UReferenceExpression.class);
+        UReferenceExpression right = ObjectUtils.tryCast(UastUtils.skipParenthesizedExprDown(binOp.getRightOperand()), 
+                                                         UReferenceExpression.class);
+        return left != null && isNonNlsCall(left, nonNlsTargets) || 
+               right != null && isNonNlsCall(right, nonNlsTargets);
+      }
+    }
     if (!(parent instanceof UQualifiedReferenceExpression)) return false;
     UExpression selector = ((UQualifiedReferenceExpression)parent).getSelector();
     if (!(selector instanceof UCallExpression)) return false;
