@@ -316,8 +316,8 @@ public final class PythonUiServiceImpl extends PythonUiService {
         i += 1;
       }
       UsageViewPresentation prsnt = new UsageViewPresentation();
-      prsnt.setTabText(PyBundle.message("CONFLICT.name.$0.obscured", obscured));
-      prsnt.setCodeUsagesString(PyBundle.message("CONFLICT.name.$0.obscured.cannot.convert", obscured));
+      prsnt.setTabText(PyBundle.message("CONFLICT.name.obscured.by.local.definitions", obscured));
+      prsnt.setCodeUsagesString(PyBundle.message("CONFLICT.name.obscured.cannot.convert", obscured));
       prsnt.setUsagesWord(PyBundle.message("CONFLICT.occurrence.sing"));
       prsnt.setUsagesString(PyBundle.message("CONFLICT.occurrence.pl"));
       UsageViewManager.getInstance(project).showUsages(UsageTarget.EMPTY_ARRAY, usages, prsnt);

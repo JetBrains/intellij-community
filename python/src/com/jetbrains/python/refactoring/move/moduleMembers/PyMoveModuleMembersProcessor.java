@@ -116,15 +116,15 @@ public class PyMoveModuleMembersProcessor extends BaseRefactoringProcessor {
         }
         if (e instanceof PyClass && destination.findTopLevelClass(name) != null) {
           throw new IncorrectOperationException(
-            PyBundle.message("refactoring.move.error.destination.file.contains.class.$0", name));
+            PyBundle.message("refactoring.move.error.destination.file.contains.class", name));
         }
         if (e instanceof PyFunction && destination.findTopLevelFunction(name) != null) {
           throw new IncorrectOperationException(
-            PyBundle.message("refactoring.move.error.destination.file.contains.function.$0", name));
+            PyBundle.message("refactoring.move.error.destination.file.contains.function", name));
         }
         if (e instanceof PyTargetExpression && destination.findTopLevelAttribute(name) != null) {
           throw new IncorrectOperationException(
-            PyBundle.message("refactoring.move.error.destination.file.contains.global.variable.$0", name));
+            PyBundle.message("refactoring.move.error.destination.file.contains.global.variable", name));
         }
         final Collection<UsageInfo> usageInfos = usagesByElement.get(e);
         final boolean usedFromOutside = ContainerUtil.exists(usageInfos, usageInfo -> {

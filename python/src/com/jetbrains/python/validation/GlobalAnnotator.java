@@ -52,7 +52,7 @@ public class GlobalAnnotator extends PyAnnotator {
       for (PyTargetExpression expr : node.getGlobals()) {
         final String expr_name = expr.getReferencedName();
         if (paramNames.contains(expr_name)) {
-          holder.newAnnotation(HighlightSeverity.ERROR, PyBundle.message("ANN.$0.both.global.and.param", expr_name)).range(expr).create();
+          holder.newAnnotation(HighlightSeverity.ERROR, PyBundle.message("ANN.name.used.both.as.global.and.param", expr_name)).range(expr).create();
         }
       }
     }

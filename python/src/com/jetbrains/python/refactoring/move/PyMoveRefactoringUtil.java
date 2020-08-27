@@ -42,7 +42,7 @@ public final class PyMoveRefactoringUtil {
   public static void checkValidImportableFile(@NotNull PsiElement anchor, @NotNull VirtualFile file) {
     final QualifiedName qName = QualifiedNameFinder.findShortestImportableQName(anchor, file);
     if (!PyPsiRefactoringUtil.isValidQualifiedName(qName)) {
-      throw new IncorrectOperationException(PyBundle.message("refactoring.move.error.cannot.use.module.name.$0", file.getName()));
+      throw new IncorrectOperationException(PyBundle.message("refactoring.move.error.cannot.use.module.name", file.getName()));
     }
   }
 

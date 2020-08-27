@@ -146,7 +146,7 @@ public final class PythonSdkType extends SdkType {
       public void validateSelectedFiles(VirtualFile @NotNull [] files) throws Exception {
         if (files.length != 0) {
           if (!isValidSdkHome(files[0].getPath())) {
-            throw new Exception(PyBundle.message("sdk.error.invalid.interpreter.name.$0", files[0].getName()));
+            throw new Exception(PyBundle.message("python.sdk.error.invalid.interpreter.name", files[0].getName()));
           }
         }
       }

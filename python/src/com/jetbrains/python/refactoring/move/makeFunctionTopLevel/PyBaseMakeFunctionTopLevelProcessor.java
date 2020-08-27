@@ -109,7 +109,7 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
     final PyFile targetFile = PyRefactoringUtil.getOrCreateFile(myDestinationPath, myProject);
     if (targetFile.findTopLevelFunction(myFunction.getName()) != null) {
       throw new IncorrectOperationException(
-        PyBundle.message("refactoring.move.error.destination.file.contains.function.$0", myFunction.getName()));
+        PyBundle.message("refactoring.move.error.destination.file.contains.function", myFunction.getName()));
     }
     if (importsRequired(usages, targetFile)) {
       PyMoveRefactoringUtil.checkValidImportableFile(targetFile, targetFile.getVirtualFile());
