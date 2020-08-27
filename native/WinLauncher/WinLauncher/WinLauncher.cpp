@@ -75,7 +75,7 @@ bool IsValidJRE(const char* path)
   {
     dllPath += "\\";
   }
-  return FileExists(dllPath + "bin\\server\\jvm.dll") || FileExists(dllPath + "bin\\client\\jvm.dll");
+  return FileExists(dllPath + "bin\\server\\jvm.dll") || FileExists(dllPath + "bin\\client\\jvm.dll") || FileExists(dllPath + "bin\\j9vm\\jvm.dll");
 }
 
 bool Is64BitJRE(const char* path)
@@ -577,10 +577,15 @@ bool LoadJVMLibrary()
   std::string binDir = dllName + "\\bin";
   std::string serverDllName = binDir + "\\server\\jvm.dll";
   std::string clientDllName = binDir + "\\client\\jvm.dll";
-  if ((bServerJVM && FileExists(serverDllName)) || !FileExists(clientDllName))
+  std::string j9DllName = binDir + "\\j9vm\\jvm.dll";
+  
+  if (FileExists(j9DllName)) {
+	  dllName = j9DllName;
+  }
+  else if ((bServerJVM && FileExists(serverDllName)) || !FileExists(clientDllName))
   {
     dllName = serverDllName;
-  }
+  }  
   else
   {
     dllName = clientDllName;
