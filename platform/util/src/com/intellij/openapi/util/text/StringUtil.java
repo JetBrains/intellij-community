@@ -438,6 +438,10 @@ public class StringUtil extends StringUtilRt {
               // filter out abbreviations like I18n, SQL and CSS
               continue;
             }
+            if (prevChar == '.' && i > 1 && s.charAt(i - 2) == ' ') {
+              // file extension like .java; don't change its capitalization
+              continue;
+            }
             if (!isPreposition(s, i, j - 1, prepositions)) {
               if (buffer == null) {
                 buffer = new StringBuilder(s);

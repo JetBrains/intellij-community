@@ -33,6 +33,10 @@ public class CapitalizationInspectionTest extends LightJavaCodeInsightFixtureTes
     doTest(true);
   }
 
+  public void testTitleCapitalizationExtension() {
+    doTest(true);
+  }
+
   public void testSentenceCapitalization() {
     doTest(true);
   }
