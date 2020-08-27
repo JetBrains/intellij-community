@@ -9,14 +9,15 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.util.text.StringUtil.pluralize
 import com.intellij.openapi.vcs.AbstractVcsHelper
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsFullCommitDetails
 import com.intellij.vcs.log.util.VcsUserUtil
@@ -36,6 +37,7 @@ import git4idea.merge.GitDefaultMergeDialogCustomizer
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.util.GitUntrackedFilesHelper
+import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.util.*
 import java.util.concurrent.Semaphore
@@ -50,8 +52,9 @@ import javax.swing.event.HyperlinkEvent
 class GitApplyChangesProcess(private val project: Project,
                              private val commits: List<VcsFullCommitDetails>,
                              private val autoCommit: Boolean,
-                             private val operationName: String,
-                             private val appliedWord: String,
+                             @NonNls private val operationName: String,
+                             @Nls val operationDisplayName: String,
+                             @Nls private val appliedWord: String,
                              private val command: (GitRepository, Hash, Boolean, List<GitLineHandlerListener>) -> GitCommandResult,
                              private val emptyCommitDetector: (GitCommandResult) -> Boolean,
                              private val defaultCommitMessageGenerator: (GitRepository, VcsFullCommitDetails) -> @NonNls String, // Do not i18n commit templates
@@ -118,7 +121,7 @@ class GitApplyChangesProcess(private val project: Project,
         else if (conflictDetector.hasHappened()) {
           val mergeCompleted = ConflictResolver(project, repository.root, commit.id.toShortString(),
                                                 VcsUserUtil.getShortPresentation(commit.author), commit.subject,
-                                                operationName).merge()
+                                                operationDisplayName).merge()
 
           refreshStagedVfs(repository.root) // `ConflictResolver` only refreshes conflicted files
           VcsDirtyScopeManager.getInstance(project).dirDirtyRecursively(repository.root)
@@ -139,12 +142,11 @@ class GitApplyChangesProcess(private val project: Project,
           val description = getSuccessfulCommitDetailsIfAny(successfulCommits)
 
           GitUntrackedFilesHelper.notifyUntrackedFilesOverwrittenBy(project, repository.root,
-                                                                    untrackedFilesDetector.relativeFilePaths, operationName, description)
+                                                                    untrackedFilesDetector.relativeFilePaths, operationDisplayName, description)
           return false
         }
         else if (localChangesOverwrittenDetector.hasHappened()) {
-          notifyError("Your local changes would be overwritten by $operationName.<br/>Commit your changes or stash them to proceed.",
-                      commit, successfulCommits)
+          notifyError(GitBundle.message("apply.changes.would.be.overwritten", operationDisplayName), commit, successfulCommits)
           return false
         }
         else if (emptyCommitDetector(result)) {
@@ -269,17 +271,21 @@ class GitApplyChangesProcess(private val project: Project,
   private fun createChangeListData(commit: VcsFullCommitDetails) = ChangeListData(commit.author, Date(commit.authorTime))
 
   private fun notifyResult(successfulCommits: List<VcsFullCommitDetails>, skipped: List<VcsFullCommitDetails>) {
-    if (skipped.isEmpty()) {
-      vcsNotifier.notifySuccess("${operationName.capitalize()} successful", getCommitsDetails(successfulCommits))
-    }
-    else if (successfulCommits.isNotEmpty()) {
-      val title = String.format("${operationName.capitalize()}ed %d commits from %d", successfulCommits.size,
-                                successfulCommits.size + skipped.size)
-      val description = getCommitsDetails(successfulCommits) + "<hr/>" + formSkippedDescription(skipped, true)
-      vcsNotifier.notifySuccess(title, description)
-    }
-    else {
-      vcsNotifier.notifyImportantWarning("Nothing to $operationName", formSkippedDescription(skipped, false))
+    when {
+      skipped.isEmpty() -> {
+        vcsNotifier.notifySuccess(GitBundle.message("apply.changes.operation.successful", operationDisplayName.capitalize()),
+                                  getCommitsDetails(successfulCommits))
+      }
+      successfulCommits.isNotEmpty() -> {
+        val title = GitBundle.message("apply.changes.applied.for.commits", appliedWord, successfulCommits.size,
+                                      successfulCommits.size + skipped.size)
+        val description = getCommitsDetails(successfulCommits) + UIUtil.HR + formSkippedDescription(skipped, true)
+        vcsNotifier.notifySuccess(title, description)
+      }
+      else -> {
+        vcsNotifier.notifyImportantWarning(GitBundle.message("apply.changes.nothing.to.do", operationDisplayName),
+                                           formSkippedDescription(skipped, false))
+      }
     }
   }
 
@@ -290,9 +296,11 @@ class GitApplyChangesProcess(private val project: Project,
                                                   commit.id.toShortString(),
                                                   VcsUserUtil.getShortPresentation(commit.author),
                                                   commit.subject)
-    var description = commitDetails(commit) + "<br/>Unresolved conflicts remain in the working tree. <a href='resolve'>Resolve them.<a/>"
+    var description = commitDetails(commit) + UIUtil.BR + GitBundle.message("apply.changes.unresolved.conflicts", RESOLVE)
     description += getSuccessfulCommitDetailsIfAny(successfulCommits)
-    vcsNotifier.notifyImportantWarning("${operationName.capitalize()}ed with conflicts", description, resolveLinkListener)
+    vcsNotifier.notifyImportantWarning(
+      GitBundle.message("apply.changes.operation.performed.with.conflicts", operationDisplayName.capitalize()),
+      description, resolveLinkListener)
   }
 
   private fun notifyCommitCancelled(commit: VcsFullCommitDetails, successfulCommits: List<VcsFullCommitDetails>) {
@@ -302,44 +310,48 @@ class GitApplyChangesProcess(private val project: Project,
     }
     var description = commitDetails(commit)
     description += getSuccessfulCommitDetailsIfAny(successfulCommits)
-    vcsNotifier.notifyMinorWarning("${operationName.capitalize()} cancelled", description)
+    vcsNotifier.notifyMinorWarning(GitBundle.message("apply.changes.operation.canceled", operationDisplayName.capitalize()), description)
   }
 
-  private fun notifyError(content: String,
+  private fun notifyError(@Nls content: String,
                           failedCommit: VcsFullCommitDetails,
                           successfulCommits: List<VcsFullCommitDetails>) {
-    var description = commitDetails(failedCommit) + "<br/>" + content
+    var description = commitDetails(failedCommit) + UIUtil.BR + content
     description += getSuccessfulCommitDetailsIfAny(successfulCommits)
-    vcsNotifier.notifyError("${operationName.capitalize()} Failed", description)
+    vcsNotifier.notifyError(GitBundle.message("apply.changes.operation.failed", operationDisplayName.capitalize()), description)
   }
 
+  @Nls
   private fun getSuccessfulCommitDetailsIfAny(successfulCommits: List<VcsFullCommitDetails>): String {
     var description = ""
     if (successfulCommits.isNotEmpty()) {
-      description += "<hr/>However ${operationName} succeeded for the following " + pluralize("commit", successfulCommits.size) + ":<br/>"
+      description += UIUtil.HR +
+                     GitBundle.message("apply.changes.operation.successful.for.commits", operationDisplayName, successfulCommits.size) +
+                     UIUtil.BR
       description += getCommitsDetails(successfulCommits)
     }
     return description
   }
 
+  @Nls
   private fun formSkippedDescription(skipped: List<VcsFullCommitDetails>, but: Boolean): String {
     val hashes = StringUtil.join(skipped, { commit -> commit.id.toShortString() }, ", ")
     if (but) {
-      val was = if (skipped.size == 1) "was" else "were"
-      val it = if (skipped.size == 1) "it" else "them"
-      return String.format("%s %s skipped, because all changes have already been ${appliedWord}.", hashes, was, it)
+      return GitBundle.message("apply.changes.skipped", hashes, skipped.size, appliedWord)
     }
-    return String.format("All changes from %s have already been ${appliedWord}", hashes)
+    return GitBundle.message("apply.changes.everything.applied", hashes, appliedWord)
   }
 
+  @NlsSafe
   private fun getCommitsDetails(successfulCommits: List<VcsFullCommitDetails>): String {
     var description = ""
     for (commit in successfulCommits) {
-      description += commitDetails(commit) + "<br/>"
+      description += commitDetails(commit) + UIUtil.BR
     }
-    return description.substring(0, description.length - "<br/>".length)
+    return description.substring(0, description.length - UIUtil.BR.length)
   }
 
+  @NlsSafe
   private fun commitDetails(commit: VcsFullCommitDetails): String {
     return commit.id.toShortString() + " " + StringUtil.escapeXmlEntities(commit.subject)
   }
@@ -358,8 +370,8 @@ class GitApplyChangesProcess(private val project: Project,
 
     override fun hyperlinkUpdate(notification: Notification, event: HyperlinkEvent) {
       if (event.eventType == HyperlinkEvent.EventType.ACTIVATED) {
-        if (event.description == "resolve") {
-          ConflictResolver(project, root, hash, author, message, operationName).mergeNoProceed()
+        if (event.description == RESOLVE) {
+          ConflictResolver(project, root, hash, author, message, operationDisplayName).mergeNoProceed()
         }
       }
     }
@@ -370,35 +382,45 @@ class GitApplyChangesProcess(private val project: Project,
                          commitHash: String,
                          commitAuthor: String,
                          commitMessage: String,
-                         operationName: String
-  ) : GitConflictResolver(project, setOf(root), makeParams(project, commitHash, commitAuthor, commitMessage, operationName)) {
+                         @Nls operationDisplayName: String
+  ) : GitConflictResolver(project, setOf(root),
+                          makeParams(project, commitHash, commitAuthor, commitMessage, operationDisplayName)) {
     override fun notifyUnresolvedRemain() {/* we show a [possibly] compound notification after applying all commits.*/
     }
   }
+
+  companion object {
+    private const val RESOLVE = "resolve"
+  }
 }
 
-private fun makeParams(project: Project, commitHash: String, commitAuthor: String, commitMessage: String, operationName: String): GitConflictResolver.Params {
+private fun makeParams(project: Project,
+                       commitHash: String,
+                       commitAuthor: String,
+                       commitMessage: String,
+                       @Nls operationDisplayName: String): GitConflictResolver.Params {
+
   val params = GitConflictResolver.Params(project)
-  params.setErrorNotificationTitle("${operationName.capitalize()}ed with conflicts")
-  params.setMergeDialogCustomizer(MergeDialogCustomizer(project, commitHash, commitAuthor, commitMessage, operationName))
+  params.setErrorNotificationTitle(GitBundle.message("apply.changes.operation.performed.with.conflicts", operationDisplayName.capitalize()))
+  params.setMergeDialogCustomizer(MergeDialogCustomizer(project, commitHash, commitAuthor, commitMessage, operationDisplayName))
   return params
 }
 
 private class MergeDialogCustomizer(
   project: Project,
-  private val commitHash: String,
+  @NlsSafe private val commitHash: String,
   private val commitAuthor: String,
-  private val commitMessage: String,
-  private val operationName: String
+  @NlsSafe private val commitMessage: String,
+  @Nls private val operationDisplayName: String
 ) : GitDefaultMergeDialogCustomizer(project) {
 
   override fun getMultipleFileMergeDescription(files: MutableCollection<VirtualFile>) = wrapInHtml(
     GitBundle.message(
       "apply.conflict.dialog.description.label.text",
-      operationName,
+      operationDisplayName,
       wrapInHtmlTag(commitHash, "code"),
       commitAuthor,
-      "<br/>" + wrapInHtmlTag(commitMessage, "code")
+      UIUtil.BR + wrapInHtmlTag(commitMessage, "code")
     )
   )
 }

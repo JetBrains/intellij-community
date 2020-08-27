@@ -358,7 +358,7 @@ public final class GitUtil {
     if (root != null) {
       return root;
     }
-    throw new VcsException("The file " + filePath + " is not under git.");
+    throw new VcsException(GitBundle.message("file.is.not.under.root", filePath));
   }
 
   /**
@@ -404,7 +404,7 @@ public final class GitUtil {
       return root;
     }
     else {
-      throw new VcsException("The file " + file.getPath() + " is not under git.");
+      throw new VcsException(GitBundle.message("file.is.not.under.root", file.getPath()));
     }
   }
 
@@ -868,14 +868,16 @@ public final class GitUtil {
   @Nls
   @NotNull
   public static String mention(@NotNull GitRepository repository) {
-    return getRepositoryManager(repository.getProject()).moreThanOneRoot() ? " in " + getShortRepositoryName(repository) : "";
+    return getRepositoryManager(repository.getProject()).moreThanOneRoot()
+           ? GitBundle.message("mention.in", getShortRepositoryName(repository))
+           : "";
   }
 
   @Nls
   @NotNull
   public static String mention(@NotNull Collection<? extends GitRepository> repositories) {
     if (repositories.isEmpty()) return "";
-    return " in " + joinShortNames(repositories, -1);
+    return GitBundle.message("mention.in", joinShortNames(repositories, -1));
   }
 
   public static void updateRepositories(@NotNull Collection<? extends GitRepository> repositories) {

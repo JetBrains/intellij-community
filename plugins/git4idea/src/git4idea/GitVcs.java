@@ -348,7 +348,7 @@ public final class GitVcs extends AbstractVcs {
 
     return VcsSynchronousProgressWrapper.compute(
       () -> GitCommittedChangeListProvider.getCommittedChangeList(myProject, repository.getRoot(), (GitRevisionNumber)number),
-      getProject(), "Load Revision Contents");
+      getProject(), GitBundle.message("revision.load.contents"));
   }
 
   @Override
