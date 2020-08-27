@@ -10,7 +10,7 @@ class JavaPluginLayout {
       mainJarName = "java-impl.jar"
       excludeFromModule("intellij.java.resources.en", "search/searchableOptions.xml")
       withModule("intellij.platform.jps.build.launcher", "jps-launcher.jar")
-      withModule("intellij.platform.jps.build", "jps-builders.jar")
+      withModule("intellij.platform.jps.build", "jps-builders.jar", null)
       withModule("intellij.platform.jps.build.javac.rt", "jps-builders-6.jar")
       withModule("intellij.java.aetherDependencyResolver", "aether-dependency-resolver.jar")
       withModule("intellij.java.jshell.protocol", "jshell-protocol.jar")
