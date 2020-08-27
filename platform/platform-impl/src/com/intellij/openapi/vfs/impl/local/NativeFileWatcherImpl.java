@@ -183,7 +183,7 @@ public class NativeFileWatcherImpl extends PluggableFileWatcher {
     }
 
     if (myStartAttemptCount.incrementAndGet() > MAX_PROCESS_LAUNCH_ATTEMPT_COUNT) {
-      notifyOnFailure(ApplicationBundle.message("watcher.failed.to.start"), null);
+      notifyOnFailure(ApplicationBundle.message("watcher.bailed.out.10x"), null);
       return;
     }
 
