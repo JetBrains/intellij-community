@@ -475,9 +475,7 @@ public abstract class NlsInfo {
     if ((method.getName().equals("let") || method.getName().equals("run")) &&
         method.getModifierList().textMatches("public inline")) {
       PsiParameter[] parameters = method.getParameterList().getParameters();
-      if (parameters.length == 2 && 
-          (parameters[0].getName().equals("$receiver") || parameters[0].getName().equals("$this$" + method.getName())) &&
-          parameters[1].getName().equals("block")) {
+      if (parameters.length == 2 && isReceiver(method, parameters[0]) && parameters[1].getName().equals("block")) {
         return true;
       }
     }
@@ -673,13 +671,17 @@ public abstract class NlsInfo {
       if (lastParam == null || !lastParam.isVarArgs()) return null;
       return lastParam;
     }
-    else if (params[0].getName().equals("$this$" + method.getName())) {
+    else if (isReceiver(method, params[0])) {
       if (idx + 1 == params.length) return null;
       return params[idx + 1];
     }
     else {
       return params[idx];
     }
+  }
+
+  private static boolean isReceiver(PsiMethod method, PsiParameter param) {
+    return param.getName().equals("$receiver") || param.getName().equals("$this$" + method.getName());
   }
 
   private static @NotNull NlsInfo fromMethodParameter(@NotNull PsiMethod method,
