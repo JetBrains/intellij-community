@@ -2,8 +2,6 @@
 
 package com.intellij.util;
 
-import com.intellij.concurrency.AsyncFuture;
-import com.intellij.concurrency.AsyncUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -33,13 +31,6 @@ public class ArrayQuery<T> implements Query<T> {
   public boolean forEach(@NotNull final Processor<? super T> consumer) {
     return ContainerUtil.process(myArray, consumer);
   }
-
-  @NotNull
-  @Override
-  public AsyncFuture<Boolean> forEachAsync(@NotNull final Processor<? super T> consumer) {
-    return AsyncUtil.wrapBoolean(forEach(consumer));
-  }
-
 
   @Override
   public T @NotNull [] toArray(final T @NotNull [] a) {

@@ -2,6 +2,7 @@
 package com.intellij.util;
 
 import com.intellij.concurrency.AsyncFuture;
+import com.intellij.concurrency.AsyncUtil;
 import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +39,9 @@ public interface Query<Result> extends Iterable<Result> {
   boolean forEach(@NotNull Processor<? super Result> consumer);
 
   @NotNull
-  AsyncFuture<Boolean> forEachAsync(@NotNull Processor<? super Result> consumer);
+  default AsyncFuture<Boolean> forEachAsync(@NotNull Processor<? super Result> consumer) {
+    return AsyncUtil.wrapBoolean(forEach(consumer));
+  }
 
   Result @NotNull [] toArray(Result @NotNull [] a);
 
