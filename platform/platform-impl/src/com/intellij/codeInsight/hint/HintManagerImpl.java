@@ -426,6 +426,10 @@ public class HintManagerImpl extends HintManager {
       p.x = Math.max(0, externalComponent.getWidth() - size.width);
     }
 
+    if(hint.isShouldBeReopen()){
+      hint.hide(true);
+    }
+
     if (hint.isVisible()) {
       if (updateSize) {
         hint.pack();

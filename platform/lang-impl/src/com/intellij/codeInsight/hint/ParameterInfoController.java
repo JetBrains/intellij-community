@@ -6,8 +6,8 @@ import com.intellij.codeInsight.AutoPopupController;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager;
-import com.intellij.codeInsight.lookup.Lookup;
-import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.*;
+import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.ASTNode;
@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -41,11 +42,14 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -61,6 +65,7 @@ import java.util.concurrent.locks.LockSupport;
 import java.util.function.Consumer;
 
 import static com.intellij.codeInsight.hint.ParameterInfoTaskRunnerUtil.runTask;
+import static com.intellij.ui.ScreenUtil.getScreenRectangle;
 
 public class ParameterInfoController extends UserDataHolderBase implements Disposable {
   private static final Logger LOG = Logger.getInstance(ParameterInfoController.class);
@@ -181,15 +186,40 @@ public class ParameterInfoController extends UserDataHolderBase implements Dispo
       updateWhenAllCommitted();
     });
 
-    PropertyChangeListener lookupListener = evt -> {
+
+    LookupListener lookupListener = new LookupListener() {
+      LookupImpl activeLookup = null;
+      final MergingUpdateQueue queue = new MergingUpdateQueue("Update parameter info position", 200, true, myComponent);
+
+      @Override
+      public void lookupShown(@NotNull LookupEvent event) {
+        activeLookup = (LookupImpl)event.getLookup();
+      }
+
+      @Override
+      public void uiRefreshed() {
+        queue.queue(new Update("PI update") {
+          @Override
+          public void run() {
+            if(activeLookup!=null){
+              updateComponent();
+            }
+          }
+        });
+      }
+    };
+
+
+    PropertyChangeListener lookupChangeListener = evt -> {
       if (LookupManager.PROP_ACTIVE_LOOKUP.equals(evt.getPropertyName())) {
-        Lookup lookup = (Lookup)evt.getNewValue();
+        Lookup lookup = (Lookup) evt.getNewValue();
         if (lookup != null) {
-          adjustPositionForLookup(lookup);
+          lookup.addLookupListener(lookupListener);
         }
       }
     };
-    LookupManager.getInstance(project).addPropertyChangeListener(lookupListener, this);
+
+    LookupManager.getInstance(project).addPropertyChangeListener(lookupChangeListener, this);
     EditorUtil.disposeWithEditor(myEditor, this);
 
     if (showHint) {
@@ -353,6 +383,7 @@ public class ParameterInfoController extends UserDataHolderBase implements Dispo
             Pair<Point, Short> pos = myProvider.getBestPointPosition(
               myHint, elementForUpdating,
               caretOffset, myEditor.getCaretModel().getVisualPosition(), position);
+
             HintManagerImpl.adjustEditorHintPosition(myHint, myEditor, pos.getFirst(), pos.getSecond());
           }
         });
@@ -619,7 +650,9 @@ public class ParameterInfoController extends UserDataHolderBase implements Dispo
   static Pair<Point, Short> chooseBestHintPosition(Editor editor,
                                                    VisualPosition pos,
                                                    LightweightHint hint,
-                                                   short preferredPosition, boolean showLookupHint) {
+                                                   LookupImpl activeLookup,
+                                                   short preferredPosition,
+                                                   boolean showLookupHint) {
     if (ApplicationManager.getApplication().isUnitTestMode() ||
         ApplicationManager.getApplication().isHeadlessEnvironment()) return Pair.pair(new Point(), HintManager.DEFAULT);
 
@@ -639,8 +672,53 @@ public class ParameterInfoController extends UserDataHolderBase implements Dispo
       p2 = HintManagerImpl.getHintPosition(hint, editor, pos, HintManager.ABOVE);
     }
 
-    boolean p1Ok = p1.y + hintSize.height < layeredPane.getHeight();
-    boolean p2Ok = p2.y >= 0;
+    boolean isRealPopup = hint.isRealPopup();
+
+    boolean p1Ok, p2Ok;
+
+
+    if (!showLookupHint && activeLookup != null && activeLookup.isShown()) {
+      p1Ok = p1.y + hintSize.height + 50 < layeredPane.getHeight();
+      p2Ok = p2.y - hintSize.height - 50 >= 0;
+      Rectangle lookupBounds = activeLookup.getBounds();
+
+      if (activeLookup.isPositionedAboveCaret()) {
+        if (!p1Ok) {
+          var abovePoint = new Point(lookupBounds.x, lookupBounds.y - hintSize.height - 10);
+          SwingUtilities.convertPointToScreen(abovePoint, layeredPane);
+          var screenRectangle = new Rectangle(abovePoint, hintSize);
+          if (isFitTheScreen(screenRectangle)) {
+            // calculate if hint can be shown above lookup
+            abovePoint.move(lookupBounds.x, lookupBounds.y - hintSize.height - 10);
+            hint.setForceShowAsPopup(true);
+            return new Pair<>(abovePoint, HintManager.DEFAULT);
+          }
+        }
+      } else {
+        if (!p2Ok) {
+          var underPoint = new Point(lookupBounds.x, lookupBounds.y + lookupBounds.height + 10);
+          SwingUtilities.convertPointToScreen(underPoint, layeredPane);
+          var screenRectangle = new Rectangle(underPoint, hintSize);
+          if (isFitTheScreen(screenRectangle)) {
+            // calculate if hint can be shown under lookup
+            underPoint.move(lookupBounds.x, lookupBounds.y + lookupBounds.height + 10);
+            hint.setForceShowAsPopup(true);
+            return new Pair<>(underPoint, HintManager.DEFAULT);
+          } else {
+            hint.setForceShowAsPopup(true);
+            var abovePoint = new Point(p2.x - hintSize.width / 2, p2.y - hintSize.height);
+            return new Pair<>(abovePoint, HintManager.ABOVE);
+          }
+        }
+      }
+    }
+
+    if (isRealPopup) {
+      hint.setForceShowAsPopup(false);
+    }
+
+    p1Ok = p1.y + hintSize.height < layeredPane.getHeight();
+    p2Ok = p2.y >= 0;
 
     if (!showLookupHint) {
       if (preferredPosition != HintManager.DEFAULT) {
@@ -660,6 +738,14 @@ public class ParameterInfoController extends UserDataHolderBase implements Dispo
     return aboveSpace > underSpace ? new Pair<>(new Point(p2.x, 0), HintManager.UNDER) : new Pair<>(p1,
                                                                                                     HintManager.ABOVE);
   }
+  private static boolean isFitTheScreen(Rectangle aRectangle){
+    int screenX = aRectangle.x + aRectangle.width / 2;
+    int screenY = aRectangle.y + aRectangle.height / 2;
+    Rectangle screen = ScreenUtil.getScreenRectangle(screenX, screenY);
+    return screen.contains(aRectangle);
+
+  }
+
 
   public static boolean areParameterTemplatesEnabledOnCompletion() {
     return Registry.is("java.completion.argument.live.template") && !CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION;
@@ -872,6 +958,8 @@ public class ParameterInfoController extends UserDataHolderBase implements Dispo
   private static class MyBestLocationPointProvider  {
     private final Editor myEditor;
     private int previousOffset = -1;
+    private Rectangle previousLookupBounds;
+    private Dimension previousHintSize;
     private Point previousBestPoint;
     private Short previousBestPosition;
 
@@ -893,14 +981,23 @@ public class ParameterInfoController extends UserDataHolderBase implements Dispo
           pos = null;
         }
       }
-      if (previousOffset == offset) return Pair.create(previousBestPoint, previousBestPosition);
+
+      LookupImpl activeLookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);
+      Rectangle lookupBounds = activeLookup != null && activeLookup.isShown() ? activeLookup.getBounds() : null;
+
+      Dimension hintSize = hint.getSize();
+
+      boolean lookupPositionChanged = lookupBounds != null && !lookupBounds.equals(previousLookupBounds);
+      boolean hintSizeChanged = !hintSize.equals(previousHintSize);
+
+      if (previousOffset == offset && !lookupPositionChanged && !hintSizeChanged) return Pair.create(previousBestPoint, previousBestPosition);
 
       final boolean isMultiline = list != null && StringUtil.containsAnyChar(list.getText(), "\n\r");
       if (pos == null) pos = EditorUtil.inlayAwareOffsetToVisualPosition(myEditor, offset);
       Pair<Point, Short> position;
 
       if (!isMultiline) {
-        position = chooseBestHintPosition(myEditor, pos, hint, preferredPosition, false);
+        position = chooseBestHintPosition(myEditor, pos, hint, activeLookup, preferredPosition, false);
       }
       else {
         Point p = HintManagerImpl.getHintPosition(hint, myEditor, pos, HintManager.ABOVE);
@@ -909,6 +1006,8 @@ public class ParameterInfoController extends UserDataHolderBase implements Dispo
       previousBestPoint = position.getFirst();
       previousBestPosition = position.getSecond();
       previousOffset = offset;
+      previousLookupBounds = lookupBounds;
+      previousHintSize = hintSize;
       return position;
     }
   }

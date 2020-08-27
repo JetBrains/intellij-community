@@ -42,6 +42,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
 
   private boolean myForceShowAsPopup = false;
   private @NlsContexts.PopupTitle String myTitle = null;
+  private boolean myShouldReopenPopup = false;
   private boolean myCancelOnClickOutside = true;
   private boolean myCancelOnOtherWindowOpen = true;
   private boolean myResizable;
@@ -63,6 +64,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
 
   public void setForceShowAsPopup(final boolean forceShowAsPopup) {
     myForceShowAsPopup = forceShowAsPopup;
+    myShouldReopenPopup = true;
   }
 
   public void setFocusRequestor(JComponent c) {
@@ -227,6 +229,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
   private void fixActualPoint(Point actualPoint) {
     if (!isAwtTooltip()) return;
     if (!myIsRealPopup) return;
+    if (myForceShowAsPopup) return;
 
     Dimension size = myComponent.getPreferredSize();
     Balloon.Position position = myHintHint.getPreferredPosition();
@@ -323,6 +326,10 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
     return myIsRealPopup || myForceShowAsPopup;
   }
 
+  public final boolean isShouldBeReopen(){
+    return myShouldReopenPopup;
+  }
+
   @Override
   public void hide() {
     hide(false);
@@ -362,6 +369,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
 
     TooltipController.getInstance().hide(this);
 
+    myShouldReopenPopup = false;
     fireHintHidden();
   }
 
