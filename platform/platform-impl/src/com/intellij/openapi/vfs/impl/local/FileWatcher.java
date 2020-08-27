@@ -26,7 +26,6 @@ import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -67,7 +66,6 @@ public final class FileWatcher {
 
   private final ManagingFS myManagingFS;
   private final MyFileWatcherNotificationSink myNotificationSink;
-  private final AtomicBoolean myFailureShown = new AtomicBoolean(false);
   private final ExecutorService myFileWatcherExecutor = executor();
   private final AtomicReference<Future<?>> myLastTask = new AtomicReference<>(null);
 
@@ -171,13 +169,11 @@ public final class FileWatcher {
   public void notifyOnFailure(@NotNull @NlsContexts.NotificationContent String cause, @Nullable NotificationListener listener) {
     LOG.warn(cause);
 
-    if (myFailureShown.compareAndSet(false, true)) {
-      NotificationGroup group = NotificationGroupManager.getInstance().requireNotificationGroup("File Watcher Messages");
-      String title = ApplicationBundle.message("watcher.slow.sync");
-      ApplicationManager.getApplication().invokeLater(
-        () -> Notifications.Bus.notify(group.createNotification(title, cause, NotificationType.WARNING, listener)),
-        ModalityState.NON_MODAL);
-    }
+    NotificationGroup group = NotificationGroupManager.getInstance().requireNotificationGroup("File Watcher Messages");
+    String title = ApplicationBundle.message("watcher.slow.sync");
+    ApplicationManager.getApplication().invokeLater(
+      () -> Notifications.Bus.notify(group.createNotification(title, cause, NotificationType.WARNING, listener)),
+      ModalityState.NON_MODAL);
   }
 
   boolean belongsToWatchRoots(@NotNull String reportedPath, boolean isFile) {
