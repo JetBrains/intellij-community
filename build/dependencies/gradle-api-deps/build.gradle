@@ -35,9 +35,6 @@ task expandGradleApiJar() {
       writer << """
 defaultTasks 'setupGradleApiDeps'
 
-// ensure generated jars are created from specified Gradle distribution
-project.delete(new File(project.gradle.gradleUserHomeDir, "caches/$gradleApiVersion/generated-gradle-jars"))
-
 configurations {
   gradleApiDeps
 }
