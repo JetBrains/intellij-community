@@ -38,7 +38,11 @@ public class ReferringObjectsInfo {
   @NotNull
   @TestOnly
   public List<ObjectReference> getAllReferrers(@NotNull ObjectReference value) {
-    return myReferrers.get(myReversedMap.get(value)).stream().distinct().map(ReferringObject::getReference).collect(Collectors.toList());
+    return myReferrers.get(myReversedMap.get(value)).stream()
+      .distinct()
+      .map(ReferringObject::getReference)
+      .filter(ref -> ref != null)
+      .collect(Collectors.toList());
   }
 
   @NotNull

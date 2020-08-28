@@ -21,10 +21,6 @@ public final class MemoryAgentCapabilities {
     return myIsLoaded;
   }
 
-  public boolean canGetReferringObjects() {
-    return check(Capability.GC_ROOTS);
-  }
-
   public boolean canEstimateObjectSize() {
     return check(Capability.OBJECT_SIZE);
   }
@@ -47,7 +43,6 @@ public final class MemoryAgentCapabilities {
   }
 
   private enum Capability {
-    GC_ROOTS,
     PATHS_TO_CLOSEST_GC_ROOTS,
     OBJECT_SIZE,
     OBJECTS_SIZES
@@ -55,10 +50,6 @@ public final class MemoryAgentCapabilities {
 
   static class Builder {
     private final EnumSet<Capability> myCapabilities = EnumSet.noneOf(Capability.class);
-
-    public Builder setCanFindGcRoots(boolean value) {
-      return update(Capability.GC_ROOTS, value);
-    }
 
     public Builder setCanEstimateObjectSize(boolean value) {
       return update(Capability.OBJECT_SIZE, value);
