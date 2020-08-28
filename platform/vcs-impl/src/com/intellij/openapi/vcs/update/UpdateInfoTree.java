@@ -380,14 +380,15 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton {
       if (hasEmptyCaches) {
         final StatusText statusText = myTreeBrowser.getEmptyText();
         statusText.clear();
-        statusText.appendText("Click ")
-          .appendText("Refresh", SimpleTextAttributes.LINK_ATTRIBUTES, new ActionListener() {
+        //noinspection DialogTitleCapitalization
+        statusText.appendText(VcsBundle.message("update.info.click.status.text.prefix")).appendText(" ")
+          .appendText(VcsBundle.message("update.info.refresh.link.status.text"), SimpleTextAttributes.LINK_ATTRIBUTES, new ActionListener() {
             @Override
             public void actionPerformed(final ActionEvent e) {
               RefreshIncomingChangesAction.doRefresh(myProject);
             }
           })
-          .appendText(" to initialize repository changes cache");
+          .appendText(" ").appendText(VcsBundle.message("update.info.to.initialize.status.text.suffix"));
       }
     }, myProject.getDisposed());
   }
