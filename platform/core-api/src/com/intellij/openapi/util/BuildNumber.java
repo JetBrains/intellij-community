@@ -70,6 +70,7 @@ public final class BuildNumber implements Comparable<BuildNumber> {
   }
 
   @NotNull
+  @NlsSafe
   public String asStringWithoutProductCode() {
     return asString(false, true);
   }
