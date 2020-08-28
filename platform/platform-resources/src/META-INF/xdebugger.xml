@@ -1,4 +1,11 @@
 <idea-plugin>
+  <applicationListeners>
+    <listener topic="com.intellij.execution.ExecutionListener"
+              class="com.intellij.xdebugger.impl.ui.DebuggerFocusManager"
+              os="windows"
+              activeInHeadlessMode="false"/>
+  </applicationListeners>
+
   <extensionPoints>
     <extensionPoint name="xdebugger.settings" interface="com.intellij.xdebugger.settings.XDebuggerSettings" dynamic="true"/>
     <extensionPoint name="xdebugger.breakpointType" interface="com.intellij.xdebugger.breakpoints.XBreakpointType" dynamic="true"/>
