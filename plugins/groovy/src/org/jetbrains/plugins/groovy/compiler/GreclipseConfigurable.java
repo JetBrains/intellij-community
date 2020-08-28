@@ -31,7 +31,7 @@ public class GreclipseConfigurable implements Configurable {
     mySettings = settings;
 
     FileChooserDescriptor descriptor = new FileChooserDescriptor(false, false, true, true, false, false);
-    myJarPath.addBrowseFolderListener(null, GroovyBundle.message("label.groovy.eclipse.batch.path"), null, descriptor);
+    myJarPath.addBrowseFolderListener(null, GroovyBundle.message("configurable.greclipse.path.chooser.description"), null, descriptor);
   }
 
   @Override

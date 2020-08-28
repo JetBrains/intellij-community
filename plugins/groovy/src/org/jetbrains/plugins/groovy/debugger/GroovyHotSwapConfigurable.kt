@@ -19,8 +19,8 @@ class GroovyHotSwapConfigurable(
   override fun createPanel(): DialogPanel = panel {
     row {
       checkBox(CheckboxDescriptor(
-        name = "Enable hot-swap agent for Groovy code",
-        comment = "May cause serialization issues in the debugged application",
+        name = GroovyBundle.message("configurable.hotswap.checkbox"),
+        comment = GroovyBundle.message("configurable.hotswap.checkbox.description"),
         mutableProperty = settings::ENABLE_GROOVY_HOTSWAP
       ))
     }

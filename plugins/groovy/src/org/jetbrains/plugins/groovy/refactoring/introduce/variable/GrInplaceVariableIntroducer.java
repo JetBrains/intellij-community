@@ -68,7 +68,7 @@ public abstract class GrInplaceVariableIntroducer extends GrAbstractInplaceIntro
 
   @Override
   protected JComponent getComponent() {
-    myCanBeFinalCb = new NonFocusableCheckBox(GroovyRefactoringBundle.message("declare.final"));
+    myCanBeFinalCb = new NonFocusableCheckBox(GroovyRefactoringBundle.message("declare.final.checkbox"));
     myCanBeFinalCb.setSelected(false);
     myCanBeFinalCb.setMnemonic('f');
     final GrFinalListener finalListener = new GrFinalListener(myEditor);
