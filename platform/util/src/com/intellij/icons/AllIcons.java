@@ -116,6 +116,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon OfflineMode = load("/actions/offlineMode.svg");
     /** 16x16 */ public static final @NotNull Icon OpenNewTab = load("/actions/openNewTab.svg");
     /** 16x16 */ public static final @NotNull Icon Pause = load("/actions/pause.svg");
+    /** 16x16 */ public static final @NotNull Icon PinTab = load("/actions/pinTab.svg");
     /** 16x16 */ public static final @NotNull Icon Play_back = load("/actions/play_back.svg");
     /** 16x16 */ public static final @NotNull Icon Play_first = load("/actions/play_first.svg");
     /** 16x16 */ public static final @NotNull Icon Play_forward = load("/actions/play_forward.svg");
