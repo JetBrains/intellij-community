@@ -296,7 +296,7 @@ public abstract class AbstractLayoutCodeProcessor {
       public void run(@NotNull ProgressIndicator indicator) {
         indicator.setText(myProgressText);
         try {
-          new ReformatFilesTask(indicator).performFileProcessing(file);
+          new ProcessingTask(indicator).performFileProcessing(file);
         }
         catch(IndexNotReadyException e) {
           LOG.warn(e);
@@ -334,12 +334,12 @@ public abstract class AbstractLayoutCodeProcessor {
   }
 
   public void runWithoutProgress() throws IncorrectOperationException {
-    new ReformatFilesTask(new EmptyProgressIndicator()).performFileProcessing(myFile);
+    new ProcessingTask(new EmptyProgressIndicator()).performFileProcessing(myFile);
   }
 
   public boolean processFilesUnderProgress(@NotNull ProgressIndicator indicator) {
     indicator.setIndeterminate(false);
-    ReformatFilesTask task = new ReformatFilesTask(indicator);
+    ProcessingTask task = new ProcessingTask(indicator);
     return task.process();
   }
 
@@ -354,7 +354,7 @@ public abstract class AbstractLayoutCodeProcessor {
     return all;
   }
 
-  private class ReformatFilesTask implements SequentialTask {
+  private class ProcessingTask implements SequentialTask {
     private final List<AbstractLayoutCodeProcessor> myProcessors;
 
     private final FileRecursiveIterator myFileTreeIterator;
@@ -367,7 +367,7 @@ public abstract class AbstractLayoutCodeProcessor {
     private boolean myStopFormatting;
     private PsiFile next;
 
-    ReformatFilesTask(@NotNull ProgressIndicator indicator) {
+    ProcessingTask(@NotNull ProgressIndicator indicator) {
       myFileTreeIterator = ReadAction.compute(() -> build());
       myCountingIterator = ReadAction.compute(() -> build());
       myProcessors = getAllProcessors();
