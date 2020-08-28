@@ -142,12 +142,16 @@ class GitMergeDialog(private val project: Project,
   fun shouldCommitAfterMerge() = GitMergeOption.NO_COMMIT !in selectedOptions
 
   private fun saveSettings() {
+    mergeSettings.branch = branchField.item
     mergeSettings.options = selectedOptions
   }
 
-  private fun loadSettings() = mergeSettings.options
-    .filter { option -> option != GitMergeOption.NO_VERIFY || isNoVerifySupported }
-    .forEach { option -> selectedOptions += option }
+  private fun loadSettings() {
+    branchField.item = mergeSettings.branch
+    mergeSettings.options
+      .filter { option -> option != GitMergeOption.NO_VERIFY || isNoVerifySupported }
+      .forEach { option -> selectedOptions += option }
+  }
 
   private fun collectAllBranches(): Map<GitRepository, List<String>?> {
     val branches = mutableMapOf<GitRepository, List<String>?>()
@@ -229,21 +233,25 @@ class GitMergeDialog(private val project: Project,
   }
 
   private fun updateBranchesField() {
+    var branchToSelect = branchField.item
+
     val branches = splitAndSortBranches(getBranches())
 
     val model = branchField.model as MutableCollectionComboBoxModel
     model.update(branches)
 
-    val repository = getSelectedRepository()
-    val currentRemoteBranch = repository.currentBranch?.findTrackedBranch(repository)?.nameForRemoteOperations
+    if (branchToSelect == null || branchToSelect !in branches) {
+      val repository = getSelectedRepository()
+      val currentRemoteBranch = repository.currentBranch?.findTrackedBranch(repository)?.nameForRemoteOperations
 
-    val matchingBranch = branches.find { branch -> branch == currentRemoteBranch } ?: branches.getOrElse(0) { "" }
+      branchToSelect = branches.find { branch -> branch == currentRemoteBranch } ?: branches.getOrElse(0) { "" }
+    }
 
-    if (matchingBranch.isEmpty()) {
+    if (branchToSelect.isEmpty()) {
       startTrackingValidation()
     }
 
-    model.selectedItem = matchingBranch
+    model.selectedItem = branchToSelect
   }
 
   private fun splitAndSortBranches(branches: List<String>): List<String> {
