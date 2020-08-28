@@ -25,10 +25,12 @@ public class WordPrefixMatcher implements Matcher {
 
   @NotNull
   private static String[] splitToWords(@NotNull String string) {
-    return string.split("[^a-zA-Z]+");
+    return string.split("[\\s-/]");
   }
 
   private static boolean matches(String[] patternWords, String[] nameWords) {
-    return Arrays.stream(patternWords).allMatch(pw -> Arrays.stream(nameWords).anyMatch(nw -> StringUtilRt.startsWithIgnoreCase(nw, pw)));
+    return Arrays.stream(patternWords).allMatch(
+      pw -> Arrays.stream(nameWords).anyMatch(nw -> StringUtilRt.startsWithIgnoreCase(nw, pw))
+    );
   }
 }

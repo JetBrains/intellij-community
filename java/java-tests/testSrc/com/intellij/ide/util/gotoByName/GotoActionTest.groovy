@@ -4,6 +4,7 @@ package com.intellij.ide.util.gotoByName
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.ui.OptionsSearchTopHitProvider
+import com.intellij.ide.ui.OptionsTopHitProvider
 import com.intellij.ide.ui.search.BooleanOptionDescription
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.ide.util.gotoByName.GotoActionModel.ActionWrapper
@@ -18,13 +19,11 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
-import com.intellij.psi.codeStyle.WordPrefixMatcher
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestApplicationManager
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.CollectConsumer
-import com.intellij.util.text.Matcher
 import gnu.trove.Equality
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NonNls
@@ -33,6 +32,7 @@ import org.jetbrains.annotations.NotNull
 import java.awt.*
 import java.util.List
 import java.util.concurrent.TimeUnit
+
 /**
  * @author peter
  */
@@ -143,13 +143,28 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
     def action2 = createAction("Simple Name", "CamelCase description")
     def action3 = createAction("Prefix-CamelCase Name", "none")
     def action4 = createAction("Non Camel Case Name", "none")
-    def action5 = createAction("Look4CamelCase Name", "none")
+    def action5 = createAction("Dash Camel-Case Name", "none")
     def pattern = "camelcase"
-    assert actionMatches(pattern, action1, new WordPrefixMatcher(pattern)) == MatchMode.NAME
-    assert actionMatches(pattern, action2, new WordPrefixMatcher(pattern)) == MatchMode.DESCRIPTION
-    assert actionMatches(pattern, action3, new WordPrefixMatcher(pattern)) == MatchMode.NAME
-    assert actionMatches(pattern, action4, new WordPrefixMatcher(pattern)) == MatchMode.NONE
-    assert actionMatches(pattern, action5, new WordPrefixMatcher(pattern)) == MatchMode.NAME
+    assert actionMatches(pattern, action1) == MatchMode.NAME
+    assert actionMatches(pattern, action2) == MatchMode.DESCRIPTION
+    assert actionMatches(pattern, action3) == MatchMode.NAME
+    assert actionMatches(pattern, action4) == MatchMode.NAME
+    assert actionMatches(pattern, action5) == MatchMode.NAME
+  }
+
+  void "test TopHit CamelCase options found in lower case"() {
+    ExtensionTestUtil.maskExtensions(GotoActionAliasMatcher.EP_NAME, Collections.emptyList(), testRootDisposable)
+    def option1 = new OptionDescription("CamelCase Name", null, null)
+    def option2 = new OptionDescription("Simple Name", null, null)
+    def option3 = new OptionDescription("Prefix-CamelCase Name", null, null)
+    def option4 = new OptionDescription("Non Camel Case Name", null, null)
+    def option5 = new OptionDescription("Dash Camel-Case Name", null, null)
+    def pattern = "camelcase"
+    assert optionMatches(pattern, option1)
+    assert !optionMatches(pattern, option2)
+    assert optionMatches(pattern, option3)
+    assert !optionMatches(pattern, option4)
+    assert !optionMatches(pattern, option5)
   }
 
   private static class TestBooleanOption extends BooleanOptionDescription {
@@ -386,7 +401,8 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
     } as List<ActionWrapper>
   }
 
-  private def actionMatches(String pattern, AnAction action, Matcher matcher = GotoActionItemProvider.buildMatcher(pattern)) {
+  private def actionMatches(String pattern, AnAction action) {
+    def matcher = GotoActionItemProvider.buildMatcher(pattern)
     return new GotoActionModel(project, null, null).actionMatches(pattern, matcher, action)
   }
 
@@ -425,6 +441,11 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
         e.presentation.setVisible(!hideByDefault || Boolean.valueOf(e.getData(SHOW_HIDDEN_KEY)))
       }
     }
+  }
+
+  private static boolean optionMatches(String pattern, OptionDescription optionDescription) {
+    def matcher = OptionsTopHitProvider.buildMatcher(pattern)
+    return matcher.matches(optionDescription.getOption())
   }
 
 

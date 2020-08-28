@@ -19,10 +19,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.WordPrefixMatcher;
 import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.text.Matcher;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.annotations.*;
 
 import java.util.Collection;
 import java.util.List;
@@ -94,7 +91,8 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
   }
 
   @NotNull
-  private static Matcher buildMatcher(String pattern) {
+  @VisibleForTesting
+  public static Matcher buildMatcher(String pattern) {
     return new WordPrefixMatcher(pattern);
   }
 
