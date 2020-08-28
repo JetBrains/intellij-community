@@ -15,6 +15,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.StringUtil.toLowerCase
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.PathUtil
 import com.intellij.util.ThreeState
 import java.io.File
@@ -28,6 +29,7 @@ class FilePredictionGeneralFeatures: FilePredictionFeatureProvider {
       "in_project",
       "in_ref",
       "in_source",
+      "light",
       "name_prefix",
       "path_prefix",
       "prev_file_type",
@@ -64,6 +66,7 @@ class FilePredictionGeneralFeatures: FilePredictionFeatureProvider {
           val newModule = fileIndex.getModuleForFile(newFile)
           result["same_module"] = binary(newModule != null && newModule == fileIndex.getModuleForFile(prevFile))
         }
+        result["light"] = binary(newFile is LightVirtualFile)
       }
     }
 

@@ -4,6 +4,7 @@ package com.intellij.filePrediction.candidates
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.testFramework.LightVirtualFile
 import org.jetbrains.annotations.ApiStatus
 
 private val EP_NAME = ExtensionPointName<FilePredictionCandidateProvider>("com.intellij.filePrediction.candidateProvider")
@@ -24,7 +25,7 @@ internal abstract class FilePredictionBaseCandidateProvider(private val weight: 
                             skip: VirtualFile?, limit: Int) {
     while (to.size < limit && from.hasNext()) {
       val next = from.next()
-      if (!next.isDirectory && skip != next) {
+      if (!next.isDirectory && skip != next && next !is LightVirtualFile) {
         to.add(FilePredictionCandidateFile(next, source))
       }
     }
