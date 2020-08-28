@@ -24,7 +24,7 @@
     <registryKey key="filePrediction.action.calculate.candidates" defaultValue="50" description="Number of candidates used to predict next file in 'Show Next File Candidates' action."/>
     <registryKey key="filePrediction.action.show.candidates" defaultValue="10" description="Number of next file candidates to show in 'Show Next File Candidates' action."/>
 
-    <statistics.counterUsagesCollector groupId="file.prediction" version="7"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.filePrediction.logger.FileNavigationLogger"/>
 
     <filePrediction.candidateProvider implementation="com.intellij.filePrediction.candidates.FilePredictionReferenceProvider"/>
     <filePrediction.candidateProvider implementation="com.intellij.filePrediction.candidates.FilePredictionNeighborFilesProvider"/>

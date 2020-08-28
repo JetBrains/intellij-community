@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.filePrediction.candidates
 
+import com.intellij.filePrediction.candidates.FilePredictionCandidateSource.NEIGHBOR
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.FileIndexFacade
@@ -17,7 +18,7 @@ internal class FilePredictionNeighborFilesProvider : FilePredictionBaseCandidate
     ApplicationManager.getApplication().runReadAction {
       var parent = file.parent
       while (parent != null && parent.isDirectory && result.size < limit && fileIndex.isInProjectScope(parent)) {
-        addWithLimit(parent.children.iterator(), result, "neighbor", file, limit)
+        addWithLimit(parent.children.iterator(), result, NEIGHBOR, file, limit)
         parent = parent.parent
       }
     }

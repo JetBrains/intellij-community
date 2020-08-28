@@ -20,7 +20,7 @@ internal abstract class FilePredictionBaseCandidateProvider(private val weight: 
 
   internal fun addWithLimit(from: Iterator<VirtualFile>,
                             to: MutableSet<FilePredictionCandidateFile>,
-                            source: String,
+                            source: FilePredictionCandidateSource,
                             skip: VirtualFile?, limit: Int) {
     while (to.size < limit && from.hasNext()) {
       val next = from.next()
@@ -51,7 +51,7 @@ open class CompositeCandidateProvider : FilePredictionCandidateProvider {
   }
 }
 
-data class FilePredictionCandidateFile(val file: VirtualFile, val source: String) {
+data class FilePredictionCandidateFile(val file: VirtualFile, val source: FilePredictionCandidateSource) {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false

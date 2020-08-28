@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.filePrediction
 
+import com.intellij.filePrediction.logger.FileUsagePredictionLogger
 import com.intellij.filePrediction.predictor.*
 import com.intellij.filePrediction.predictor.FilePredictionCompressedCandidatesHolder
 import com.intellij.filePrediction.references.FilePredictionReferencesHelper
@@ -72,18 +73,13 @@ internal class FilePredictionSessionManager(private val candidatesLimit: Int,
   private fun logSessionFinished(project: Project, currentSession: FilePredictionSession, openedFile: VirtualFile) {
     val candidates = currentSession.candidatesHolder?.getCandidates() ?: emptyList()
     if (candidates.isNotEmpty()) {
-      val prevPath = currentSession.prevPath
       val sessionId = currentSession.id
       val refsDuration = currentSession.refsDuration
       val totalDuration = currentSession.totalDuration
 
       val opened = currentSession.findOpenedCandidate(openedFile, candidates)
-      if (opened != null) {
-        logger.logOpenedFile(project, sessionId, prevPath, opened, totalDuration, refsDuration)
-      }
-
       val notOpened = candidates.filter { it != opened }
-      logger.logNotOpenedCandidates(project, sessionId, prevPath, notOpened, totalDuration, refsDuration)
+      logger.logCandidates(project, sessionId, opened, notOpened, totalDuration, refsDuration)
     }
   }
 }

@@ -1,5 +1,7 @@
 package com.intellij.filePrediction.features
 
+import com.intellij.filePrediction.candidates.FilePredictionCandidateSource
+import com.intellij.filePrediction.candidates.FilePredictionCandidateSource.OPEN
 import com.intellij.filePrediction.predictor.FilePredictionCandidate
 import com.intellij.filePrediction.predictor.FilePredictionCompressedCandidatesHolder
 import com.intellij.filePrediction.references.FilePredictionReferencesHelper
@@ -37,7 +39,7 @@ class FilePredictionFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtureBuild
     val features = FilePredictionFeaturesHelper.calculateFileFeatures(myFixture.project, candidateFile, result, prevFile)
     assertNotEmpty(features.value.keys)
 
-    val before = FilePredictionCandidate(candidateFile.path, "manual", features.value, 5, 10, 0.1)
+    val before = FilePredictionCandidate(candidateFile.path, OPEN, features.value, 5, 10, 0.1)
     val holder = FilePredictionCompressedCandidatesHolder.create(listOf(before))
     val after = holder.getCandidates()
     assertTrue(after.size == 1)

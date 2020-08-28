@@ -4,6 +4,7 @@ import com.intellij.filePrediction.FilePredictionTestDataHelper
 import com.intellij.filePrediction.FilePredictionTestProjectBuilder
 import com.intellij.filePrediction.references.FilePredictionReferencesHelper
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.builders.ModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.ModuleFixture
@@ -27,7 +28,7 @@ class FilePredictionCandidateProviderTest : CodeInsightFixtureTestCase<ModuleFix
   }
 
   private fun doTestRefs(builder: FilePredictionTestProjectBuilder, vararg expected: String) {
-    val expectedWithSource = expected.map { it to "ref" }.toTypedArray()
+    val expectedWithSource = expected.map { it to "reference" }.toTypedArray()
     doTestInternal(builder, FilePredictionReferenceProvider(), 5, *expectedWithSource)
   }
 
@@ -53,7 +54,9 @@ class FilePredictionCandidateProviderTest : CodeInsightFixtureTestCase<ModuleFix
     val result = FilePredictionReferencesHelper.calculateExternalReferences(myFixture.project, file!!).value
     val candidates = provider.provideCandidates(myFixture.project, file, result.references, limit)
 
-    val actual = candidates.map { FileUtil.getRelativePath(root.path, it.file.path, '/') to it.source }.toSet()
+    val actual = candidates.map {
+      FileUtil.getRelativePath(root.path, it.file.path, '/') to StringUtil.toLowerCase(it.source.name)
+    }.toSet()
     assertEquals(ContainerUtil.newHashSet(*expected), actual)
   }
 
@@ -318,7 +321,7 @@ class FilePredictionCandidateProviderTest : CodeInsightFixtureTestCase<ModuleFix
       )
     doTest(
       builder,
-      "com/test/Helper.java" to "ref",
+      "com/test/Helper.java" to "reference",
       "com/test/Foo.txt" to "neighbor"
     )
   }
@@ -338,9 +341,9 @@ class FilePredictionCandidateProviderTest : CodeInsightFixtureTestCase<ModuleFix
       )
     doTest(
       builder,
-      "com/test/Helper.java" to "ref",
-      "com/test/ui/Baz.java" to "ref",
-      "com/test/component/Foo.java" to "ref",
+      "com/test/Helper.java" to "reference",
+      "com/test/ui/Baz.java" to "reference",
+      "com/test/component/Foo.java" to "reference",
       "com/test/Foo.txt" to "neighbor"
     )
   }
@@ -361,9 +364,9 @@ class FilePredictionCandidateProviderTest : CodeInsightFixtureTestCase<ModuleFix
       )
     doTest(
       builder,
-      "com/test/Helper.java" to "ref",
-      "com/test/ui/Baz.java" to "ref",
-      "com/test/component/Foo.java" to "ref",
+      "com/test/Helper.java" to "reference",
+      "com/test/ui/Baz.java" to "reference",
+      "com/test/component/Foo.java" to "reference",
       "com/test/Foo.txt" to "neighbor",
       "com/Bar.txt" to "neighbor"
     )
@@ -386,9 +389,9 @@ class FilePredictionCandidateProviderTest : CodeInsightFixtureTestCase<ModuleFix
       )
     doTest(
       builder,
-      "com/test/Helper.java" to "ref",
-      "com/test/ui/Baz.java" to "ref",
-      "com/test/component/Foo.java" to "ref",
+      "com/test/Helper.java" to "reference",
+      "com/test/ui/Baz.java" to "reference",
+      "com/test/component/Foo.java" to "reference",
       "com/test/Foo.txt" to "neighbor",
       "com/Bar.txt" to "neighbor"
     )
@@ -423,9 +426,9 @@ class FilePredictionCandidateProviderTest : CodeInsightFixtureTestCase<ModuleFix
       )
     doTest(
       builder,
-      "com/test/component/Foo1.java" to "ref",
-      "com/test/component/Foo2.java" to "ref",
-      "com/test/component/Foo3.java" to "ref",
+      "com/test/component/Foo1.java" to "reference",
+      "com/test/component/Foo2.java" to "reference",
+      "com/test/component/Foo3.java" to "reference",
       "com/test/Neighbor.txt" to "neighbor"
     )
   }
@@ -452,7 +455,7 @@ class FilePredictionCandidateProviderTest : CodeInsightFixtureTestCase<ModuleFix
       )
     doTest(
       builder,
-      "com/test/ui/Baz.java" to "ref",
+      "com/test/ui/Baz.java" to "reference",
       "com/test/Foo1.txt" to "neighbor",
       "com/test/Foo2.txt" to "neighbor",
       "com/test/Foo3.txt" to "neighbor",
@@ -500,9 +503,9 @@ class FilePredictionCandidateProviderTest : CodeInsightFixtureTestCase<ModuleFix
       )
     doTest(
       builder,
-      "com/test/ui/Baz1.java" to "ref",
-      "com/test/ui/Baz2.java" to "ref",
-      "com/test/ui/Baz3.java" to "ref",
+      "com/test/ui/Baz1.java" to "reference",
+      "com/test/ui/Baz2.java" to "reference",
+      "com/test/ui/Baz3.java" to "reference",
       "com/test/Foo1.txt" to "neighbor",
       "com/test/Foo2.txt" to "neighbor",
       "com/test/Foo3.txt" to "neighbor"
