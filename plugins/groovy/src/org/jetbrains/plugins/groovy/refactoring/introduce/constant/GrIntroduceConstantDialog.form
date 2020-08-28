@@ -22,7 +22,7 @@
             </constraints>
             <properties>
               <labelFor value="19192"/>
-              <text resource-bundle="messages/GroovyRefactoringBundle" key="introduce.constant.type.label"/>
+              <text resource-bundle="messages/GroovyRefactoringBundle" key="type.label"/>
             </properties>
           </component>
           <component id="19192" class="org.jetbrains.plugins.groovy.refactoring.ui.GrTypeComboBox" binding="myTypeCombo" custom-create="true">
@@ -38,7 +38,7 @@
               </grid>
             </constraints>
             <properties>
-              <text resource-bundle="messages/GroovyRefactoringBundle" key="introduce.constant.name.label"/>
+              <text resource-bundle="messages/GroovyRefactoringBundle" key="name.label"/>
             </properties>
           </component>
           <component id="a27e1" class="com.intellij.refactoring.ui.NameSuggestionsField" binding="myNameField" custom-create="true">
