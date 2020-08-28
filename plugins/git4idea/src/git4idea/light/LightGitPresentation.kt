@@ -21,7 +21,8 @@ fun LightFileStatus.getPresentation(): String {
   }
 }
 
-private fun LightFileStatus.StatusRecord.getPresentation(): @Nls String {
+@Nls
+private fun LightFileStatus.StatusRecord.getPresentation(): String {
   val fileName = PathUtil.getFileName(path)
   if (index == '!' || workTree == '!' || index == '?' || workTree == '?') return "$fileName: ${getPresentation(index)}"
   if (isConflicted()) {
