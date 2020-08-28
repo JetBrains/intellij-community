@@ -179,7 +179,7 @@ public class TodoCheckinHandler extends CheckinHandler {
     ServiceManager.getService(myProject, TodoView.class).addCustomTodoView(new TodoTreeBuilderFactory() {
       @Override
       public TodoTreeBuilder createTreeBuilder(JTree tree, Project project) {
-        return new CustomChangelistTodosTreeBuilder(tree, myProject, title, worker.inOneList());
+        return new CustomChangelistTodosTreeBuilder(tree, myProject, worker.inOneList());
       }
     }, title, new TodoPanelSettings(myConfiguration.myTodoPanelSettings));
 
