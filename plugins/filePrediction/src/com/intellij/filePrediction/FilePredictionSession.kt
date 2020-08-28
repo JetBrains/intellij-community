@@ -5,6 +5,7 @@ import com.intellij.filePrediction.logger.FileUsagePredictionLogger
 import com.intellij.filePrediction.predictor.*
 import com.intellij.filePrediction.predictor.FilePredictionCompressedCandidatesHolder
 import com.intellij.filePrediction.references.FilePredictionReferencesHelper
+import com.intellij.ide.PowerSaveMode
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -12,9 +13,9 @@ import java.util.concurrent.atomic.AtomicInteger
 
 private val counter = AtomicInteger(0)
 
-internal class FilePredictionSession(val prevPath: String?, threshold: Double) {
+internal class FilePredictionSession(predict: Boolean, threshold: Double) {
   val id: Int = counter.incrementAndGet()
-  val shouldLog: Boolean = Math.random() < threshold
+  val shouldLog: Boolean = predict && Math.random() < threshold
 
   var candidatesHolder: FilePredictionCandidatesHolder? = null
   var totalDuration: Long = -1
@@ -57,7 +58,7 @@ internal class FilePredictionSessionManager(private val candidatesLimit: Int,
   }
 
   private fun startSession(project: Project, file: VirtualFile) {
-    val newSession = FilePredictionSession(file.path, threshold)
+    val newSession = FilePredictionSession(!PowerSaveMode.isEnabled(), threshold)
     if (newSession.shouldLog) {
       val start = System.currentTimeMillis()
       val refs = FilePredictionReferencesHelper.calculateExternalReferences(project, file)
