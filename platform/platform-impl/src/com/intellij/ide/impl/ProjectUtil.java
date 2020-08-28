@@ -470,10 +470,10 @@ public final class ProjectUtil {
 
   /**
    * Focuses the specified project's window. If {@code stealFocusIfAppInactive} is {@code true} and corresponding logic is supported by OS
-   * (this is not the case for Windows), the window will get the focus even if other application is currently active. Otherwise, there will
-   * be some indication that the target window requires user attention. Focus stealing behaviour (enabled by
-   * {@code stealFocusIfAppInactive}) is generally not considered a proper application behaviour, and should only be used in special cases,
-   * when we know that user definitely expects it.
+   * (making it work on Windows requires enabling focus stealing system-wise, see {@link com.intellij.ui.WinFocusStealer}), the window will
+   * get the focus even if other application is currently active. Otherwise, there will be some indication that the target window requires
+   * user attention. Focus stealing behaviour (enabled by {@code stealFocusIfAppInactive}) is generally not considered a proper application
+   * behaviour, and should only be used in special cases, when we know that user definitely expects it.
    */
   public static void focusProjectWindow(@Nullable Project project, boolean stealFocusIfAppInactive) {
     JFrame frame = WindowManager.getInstance().getFrame(project);

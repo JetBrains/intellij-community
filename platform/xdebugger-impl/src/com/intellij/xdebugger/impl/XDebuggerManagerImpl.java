@@ -56,6 +56,7 @@ import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
 import com.intellij.xdebugger.impl.pinned.items.XDebuggerPinToTopManager;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
+import com.intellij.xdebugger.impl.ui.DebuggerFocusManager;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
@@ -83,6 +84,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
   private final XDebuggerWatchesManager myWatchesManager;
   private final XDebuggerPinToTopManager myPinToTopManager;
   private final ExecutionPointHighlighter myExecutionPointHighlighter;
+  private final DebuggerFocusManager myFocusManager;
   private final Map<ProcessHandler, XDebugSessionImpl> mySessions = Collections.synchronizedMap(new LinkedHashMap<>());
   private final AtomicReference<XDebugSessionImpl> myActiveSession = new AtomicReference<>();
 
@@ -97,6 +99,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     myWatchesManager = new XDebuggerWatchesManager();
     myPinToTopManager = new XDebuggerPinToTopManager();
     myExecutionPointHighlighter = new ExecutionPointHighlighter(project);
+    myFocusManager = new DebuggerFocusManager(this);
 
     messageBusConnection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
       @Override
@@ -271,6 +274,8 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
 
     mySessions.put(session.getDebugProcess().getProcessHandler(), session);
 
+    myFocusManager.debugStarted();
+
     return session;
   }
 
@@ -287,6 +292,8 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
     if (myActiveSession.compareAndSet(session, null)) {
       onActiveSessionChanged(session, null);
     }
+
+    myFocusManager.debugFinished();
   }
 
   void updateExecutionPoint(@Nullable XSourcePosition position, boolean nonTopFrame, @Nullable GutterIconRenderer gutterIconRenderer) {

@@ -81,7 +81,7 @@ public abstract class AppIcon {
    * automatically.
    * <p>
    * This method might resort to requesting user attention to target window, if focus stealing is not supported by OS
-   * (this is the case on Windows).
+   * (this is the case on Windows, where focus stealing can only be enabled using {@link WinFocusStealer}).
    */
   public void requestFocus(IdeFrame frame) {
     Window window = frame == null ? null : SwingUtilities.getWindowAncestor(frame.getComponent());
@@ -647,6 +647,18 @@ public abstract class AppIcon {
         }
       }
       catch (Throwable e) {
+        LOG.error(e);
+      }
+    }
+
+    @Override
+    public void requestFocus() {
+      try {
+        // This is required for the focus stealing mechanism to work reliably,
+        // see WinFocusStealer.setFocusStealingEnabled's javadoc for details
+        Thread.sleep(Registry.intValue("win.request.focus.delay.ms"));
+      }
+      catch (InterruptedException e) {
         LOG.error(e);
       }
     }

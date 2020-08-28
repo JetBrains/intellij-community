@@ -210,6 +210,7 @@
         serviceInterface="com.intellij.openapi.ui.messages.MessagesService"
         serviceImplementation="com.intellij.ui.messages.MessagesServiceImpl"/>
 
+    <applicationService serviceImplementation="com.intellij.ui.WinFocusStealer" os="windows" preload="notHeadless"/>
 
     <applicationService serviceInterface="com.intellij.openapi.diff.DiffRequestFactory"
                         serviceImplementation="com.intellij.openapi.diff.impl.mergeTool.DiffRequestFactoryImpl"/>
