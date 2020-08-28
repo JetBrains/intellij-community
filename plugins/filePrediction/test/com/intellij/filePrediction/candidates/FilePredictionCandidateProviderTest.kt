@@ -38,7 +38,7 @@ class FilePredictionCandidateProviderTest : CodeInsightFixtureTestCase<ModuleFix
   }
 
   private fun doTest(builder: FilePredictionTestProjectBuilder, vararg expected: Pair<String, String>) {
-    doTestInternal(builder, CompositeCandidateProvider(), 10, *expected)
+    doTestInternal(builder, CompositeCandidateProvider(), 13, *expected)
   }
 
   private fun doTestInternal(builder: FilePredictionTestProjectBuilder,

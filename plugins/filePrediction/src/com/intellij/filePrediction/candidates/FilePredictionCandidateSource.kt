@@ -2,5 +2,5 @@
 package com.intellij.filePrediction.candidates
 
 enum class FilePredictionCandidateSource {
-  OPEN, RECENT, NEIGHBOR, REFERENCE, VCS
+  OPEN, RECENT, NEIGHBOR, REFERENCE, VCS, RECENT_SESSIONS
 }

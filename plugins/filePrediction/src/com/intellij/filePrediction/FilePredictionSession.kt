@@ -79,6 +79,8 @@ internal class FilePredictionSessionManager(private val candidatesLimit: Int,
 
       val opened = currentSession.findOpenedCandidate(openedFile, candidates)
       val notOpened = candidates.filter { it != opened }
+      FilePredictionSessionHistory.getInstance(project).onCandidatesCalculated(notOpened)
+
       logger.logCandidates(project, sessionId, opened, notOpened, totalDuration, refsDuration)
     }
   }

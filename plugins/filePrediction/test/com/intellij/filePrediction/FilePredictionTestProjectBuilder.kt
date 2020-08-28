@@ -38,6 +38,14 @@ internal class FilePredictionTestProjectBuilder(mainPath: String? = null, import
     return this
   }
 
+  fun addFileIfNeeded(path: String): FilePredictionTestProjectBuilder {
+    val unified = FileUtil.toSystemIndependentName(path)
+    if (!files.containsKey(unified)) {
+      addFile(path)
+    }
+    return this
+  }
+
   fun addFile(path: String, imports: String? = null): FilePredictionTestProjectBuilder {
     val unified = FileUtil.toSystemIndependentName(path)
     if (isMainFile(path)) {
@@ -116,11 +124,7 @@ internal class FilePredictionTestProjectBuilder(mainPath: String? = null, import
 
   private fun addFileAction(path: String, actionType: FileActionType): FilePredictionTestProjectBuilder {
     fileActions.add(FileAction(path, actionType))
-    val unified = FileUtil.toSystemIndependentName(path)
-    if (!files.containsKey(unified)) {
-      addFile(path)
-    }
-    return this
+    return addFileIfNeeded(path)
   }
 
   private fun findRootDirectory(path: String, file: PsiFile): PsiDirectory? {

@@ -30,6 +30,7 @@
     <filePrediction.candidateProvider implementation="com.intellij.filePrediction.candidates.FilePredictionReferenceProvider"/>
     <filePrediction.candidateProvider implementation="com.intellij.filePrediction.candidates.FilePredictionNeighborFilesProvider"/>
     <filePrediction.candidateProvider implementation="com.intellij.filePrediction.candidates.FilePredictionRecentFilesProvider"/>
+    <filePrediction.candidateProvider implementation="com.intellij.filePrediction.candidates.FilePredictionRecentSessionsProvider"/>
 
     <filePrediction.featureProvider implementation="com.intellij.filePrediction.features.FilePredictionGeneralFeatures"/>
     <filePrediction.featureProvider implementation="com.intellij.filePrediction.features.history.FilePredictionHistoryFeatures"/>
@@ -39,6 +40,7 @@
 
     <projectService serviceImplementation="com.intellij.filePrediction.FilePredictionHandler"/>
     <projectService serviceImplementation="com.intellij.filePrediction.features.history.FilePredictionHistory"/>
+    <projectService serviceImplementation="com.intellij.filePrediction.FilePredictionSessionHistory"/>
   </extensions>
 
   <projectListeners>
