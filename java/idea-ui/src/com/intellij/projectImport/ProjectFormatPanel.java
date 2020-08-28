@@ -7,7 +7,6 @@ import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.SimpleListCellRenderer;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,19 +15,19 @@ import javax.swing.*;
 public class ProjectFormatPanel {
   private static final String STORAGE_FORMAT_PROPERTY = "default.storage.format";
 
-  private JComboBox<String> myStorageFormatCombo;
+  private JComboBox<StorageFormat> myStorageFormatCombo;
   private JPanel myWholePanel;
 
   public ProjectFormatPanel() {
-    myStorageFormatCombo.insertItemAt(StorageFormat.DIR_BASED.id(), 0);
-    myStorageFormatCombo.insertItemAt(StorageFormat.FILE_BASED.id(), 1);
+    myStorageFormatCombo.insertItemAt(StorageFormat.DIR_BASED, 0);
+    myStorageFormatCombo.insertItemAt(StorageFormat.FILE_BASED, 1);
 
     final PropertiesComponent instance = PropertiesComponent.getInstance();
-    final String savedValue = instance.getValue(STORAGE_FORMAT_PROPERTY, StorageFormat.DIR_BASED.id());
-    myStorageFormatCombo.setSelectedItem(savedValue);
+    final String savedValue = instance.getValue(STORAGE_FORMAT_PROPERTY, StorageFormat.DIR_BASED.name());
+    myStorageFormatCombo.setSelectedItem(StorageFormat.of(savedValue));
 
-    final SimpleListCellRenderer<String> renderer = SimpleListCellRenderer.create(StorageFormat.FILE_BASED.id(),
-                                                                                  s -> StorageFormat.of(s).getTitle());
+    final SimpleListCellRenderer<StorageFormat> renderer = SimpleListCellRenderer.create(StorageFormat.FILE_BASED.getTitle(),
+                                                                                         LocalizationAware::getTitle);
     myStorageFormatCombo.setRenderer(renderer);
   }
 
@@ -37,15 +36,16 @@ public class ProjectFormatPanel {
   }
 
   @NotNull
-  public JComboBox<String> getStorageFormatComboBox() {
+  public JComboBox<StorageFormat> getStorageFormatComboBox() {
     return myStorageFormatCombo;
   }
 
   public void updateData(@NotNull WizardContext context) {
-    StorageScheme format = isDefault() ? StorageScheme.DEFAULT : StorageScheme.DIRECTORY_BASED;
+    final StorageScheme format = isDefault() ? StorageScheme.DEFAULT : StorageScheme.DIRECTORY_BASED;
     context.setProjectStorageFormat(format);
     final StorageFormat storageFormat = StorageFormat.of(format);
-    PropertiesComponent.getInstance().setValue(STORAGE_FORMAT_PROPERTY, storageFormat.id(), StorageFormat.DIR_BASED.id());
+    final PropertiesComponent instance = PropertiesComponent.getInstance();
+    instance.setValue(STORAGE_FORMAT_PROPERTY, storageFormat.name(), StorageFormat.DIR_BASED.name());
   }
 
   public void setVisible(boolean visible) {
@@ -53,24 +53,30 @@ public class ProjectFormatPanel {
   }
 
   public boolean isDefault() {
-    return StorageFormat.FILE_BASED.id().equals(myStorageFormatCombo.getSelectedItem());
+    final StorageFormat selectedItem = (StorageFormat)myStorageFormatCombo.getSelectedItem();
+    return StorageFormat.isDefault(selectedItem);
   }
 
-  private enum StorageFormat {
-    DIR_BASED(0), FILE_BASED(1);
+  private interface LocalizationAware {
+    @NlsContexts.Label String getTitle();
+  }
 
-    private final int myId;
+  public enum StorageFormat implements LocalizationAware {
+    DIR_BASED{
+      @Override public String getTitle(){
+        return JavaUiBundle.message("label.directory.based", Project.DIRECTORY_STORE_FOLDER);
+      }
+    },
+    FILE_BASED {
+      @Override public String getTitle(){
+        return JavaUiBundle.message("label.ipr.file.based");
+      }
+    };
 
-    StorageFormat(int id) {
-      myId = id;
-    }
-
-    private @NlsSafe String id() {
-      return Integer.toString(myId);
-    }
-
-    private static @NotNull StorageFormat of(@NotNull final String id) {
-      if (id.equals(DIR_BASED.id())) return DIR_BASED;
+    private static @NotNull StorageFormat of(@NotNull final String name) {
+      // due to the uncertainty of what might have been saved in `PropertiesComponent`
+      // the `StorageFormat::valueOf` method cannot be used here safely.
+      if (DIR_BASED.name().equals(name)) return DIR_BASED;
       return FILE_BASED;
     }
 
@@ -83,9 +89,8 @@ public class ProjectFormatPanel {
       }
     }
 
-    private @NlsContexts.Label String getTitle() {
-      if (myId == 0) return JavaUiBundle.message("label.directory.based", Project.DIRECTORY_STORE_FOLDER);
-      return JavaUiBundle.message("label.ipr.file.based");
+    public static boolean isDefault(StorageFormat storageFormat) {
+      return FILE_BASED == storageFormat;
     }
   }
 }
