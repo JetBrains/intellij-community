@@ -10,13 +10,17 @@ import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vfs.VirtualFile
 
 class FilePredictionVcsFeatures : FilePredictionFeatureProvider {
+  companion object {
+    private val FEATURES = arrayListOf(
+      "in_changelist",
+      "prev_in_changelist",
+      "related_prob"
+    )
+  }
+
   override fun getName(): String = "vcs"
 
-  override fun getFeatures(): Array<String> = arrayOf(
-    "prev_in_changelist",
-    "in_changelist",
-    "related_prob"
-  )
+  override fun getFeatures(): List<String> = FEATURES
 
   override fun calculateFileFeatures(project: Project,
                                      newFile: VirtualFile,

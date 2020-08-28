@@ -49,17 +49,17 @@ class FilePredictionFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtureBuild
   @Test
   fun `test composite feature provider is not empty`() {
     doTestFeatures(
-      "file_type",
-      "prev_file_type",
-      "in_source",
-      "in_project",
-      "in_library",
-      "excluded",
-      "same_dir",
-      "same_module",
-      "name_prefix",
-      "path_prefix",
-      "relative_path_prefix",
+      "core_file_type",
+      "core_prev_file_type",
+      "core_in_source",
+      "core_in_project",
+      "core_in_library",
+      "core_excluded",
+      "core_same_dir",
+      "core_same_module",
+      "core_name_prefix",
+      "core_path_prefix",
+      "core_relative_path_prefix",
       "history_size",
       "history_uni_mle",
       "history_bi_mle"
@@ -68,5 +68,16 @@ class FilePredictionFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtureBuild
 
   fun `test features do not change after encoding and decoding`() {
     doTestCandidatesEncoding()
+  }
+
+  fun `test features are ordered alphabetically`() {
+    val providers = FilePredictionFeaturesHelper.EP_NAME.extensionList
+    for (provider in providers) {
+      val features = provider.getFeatures()
+      val sortedFeatures = features.sorted()
+      for ((index, feature) in features.withIndex()) {
+        TestCase.assertEquals("Features should be sorted alphabetically", sortedFeatures[index], feature)
+      }
+    }
   }
 }

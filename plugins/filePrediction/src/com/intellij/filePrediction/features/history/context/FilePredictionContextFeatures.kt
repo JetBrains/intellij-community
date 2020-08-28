@@ -9,9 +9,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 
 internal class FilePredictionContextFeatures: FilePredictionFeatureProvider {
+  companion object {
+    private val FEATURES = arrayListOf("opened", "prev_opened")
+  }
+
   override fun getName(): String = "context"
 
-  override fun getFeatures(): Array<String> = arrayOf("opened", "prev_opened")
+  override fun getFeatures(): List<String> = FEATURES
 
   override fun calculateFileFeatures(project: Project,
                                      newFile: VirtualFile,

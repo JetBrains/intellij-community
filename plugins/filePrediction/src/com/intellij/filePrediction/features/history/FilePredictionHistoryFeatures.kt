@@ -9,22 +9,26 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 
 internal class FilePredictionHistoryFeatures : FilePredictionFeatureProvider {
+  companion object {
+    private val FEATURES = arrayListOf(
+      "bi_max",
+      "bi_min",
+      "bi_mle",
+      "bi_mle_to_max",
+      "bi_mle_to_min",
+      "position",
+      "size",
+      "uni_max",
+      "uni_min",
+      "uni_mle",
+      "uni_mle_to_max",
+      "uni_mle_to_min"
+    )
+  }
+
   override fun getName(): String = "history"
 
-  override fun getFeatures(): Array<String> = arrayOf(
-    "size",
-    "position",
-    "uni_mle",
-    "uni_min",
-    "uni_max",
-    "uni_mle_to_min",
-    "uni_mle_to_max",
-    "bi_mle",
-    "bi_min",
-    "bi_max",
-    "bi_mle_to_min",
-    "bi_mle_to_max"
-  )
+  override fun getFeatures(): List<String> = FEATURES
 
   override fun calculateFileFeatures(project: Project,
                                      newFile: VirtualFile,

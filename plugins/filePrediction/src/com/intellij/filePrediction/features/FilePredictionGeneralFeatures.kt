@@ -20,22 +20,26 @@ import com.intellij.util.ThreeState
 import java.io.File
 
 class FilePredictionGeneralFeatures: FilePredictionFeatureProvider {
-  override fun getName(): String = ""
+  companion object {
+    private val FEATURES = arrayListOf(
+      "excluded",
+      "file_type",
+      "in_library",
+      "in_project",
+      "in_ref",
+      "in_source",
+      "name_prefix",
+      "path_prefix",
+      "prev_file_type",
+      "relative_path_prefix",
+      "same_dir",
+      "same_module"
+    )
+  }
 
-  override fun getFeatures(): Array<String> = arrayOf(
-    "file_type",
-    "prev_file_type",
-    "in_project",
-    "in_source",
-    "in_library",
-    "excluded",
-    "same_module",
-    "name_prefix",
-    "path_prefix",
-    "relative_path_prefix",
-    "same_dir",
-    "in_ref"
-  )
+  override fun getName(): String = "core"
+
+  override fun getFeatures(): List<String> = FEATURES
 
   override fun calculateFileFeatures(project: Project,
                                      newFile: VirtualFile,

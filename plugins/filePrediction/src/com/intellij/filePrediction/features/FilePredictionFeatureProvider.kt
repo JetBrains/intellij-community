@@ -9,7 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
 
 internal object FilePredictionFeaturesHelper {
-  private val EP_NAME = ExtensionPointName<FilePredictionFeatureProvider>("com.intellij.filePrediction.featureProvider")
+  internal val EP_NAME = ExtensionPointName<FilePredictionFeatureProvider>("com.intellij.filePrediction.featureProvider")
 
   fun calculateFileFeatures(project: Project,
                             newFile: VirtualFile,
@@ -46,7 +46,7 @@ internal object FilePredictionFeaturesHelper {
 interface FilePredictionFeatureProvider {
   fun getName(): String
 
-  fun getFeatures(): Array<String>
+  fun getFeatures(): List<String>
 
   fun calculateFileFeatures(project: Project,
                             newFile: VirtualFile,
