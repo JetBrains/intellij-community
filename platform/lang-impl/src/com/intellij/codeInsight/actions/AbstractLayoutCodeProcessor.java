@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.actions;
 
@@ -291,7 +291,7 @@ public abstract class AbstractLayoutCodeProcessor {
       return;
     }
 
-    ProgressManager.getInstance().run(new Task.Backgroundable(myProject, myCommandName, true) {
+    ProgressManager.getInstance().run(new Task.Backgroundable(myProject, getProgressTitle(), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         indicator.setText(myProgressText);
@@ -313,11 +313,24 @@ public abstract class AbstractLayoutCodeProcessor {
     boolean isSuccess = ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
       ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
       return processFilesUnderProgress(indicator);
-    }, myCommandName, true, myProject);
+    }, getProgressTitle(), true, myProject);
 
     if (isSuccess && myPostRunnable != null) {
       myPostRunnable.run();
     }
+  }
+
+  private @NotNull @NlsContexts.ProgressTitle String getProgressTitle() {
+    AbstractLayoutCodeProcessor processor = getInitialProcessor();
+    return processor.myCommandName;
+  }
+
+  private @NotNull AbstractLayoutCodeProcessor getInitialProcessor() {
+    AbstractLayoutCodeProcessor current = this;
+    while (current.myPreviousCodeProcessor != null) {
+      current = current.myPreviousCodeProcessor;
+    }
+    return current;
   }
 
   private static boolean canBeFormatted(@NotNull PsiFile file) {
