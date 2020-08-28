@@ -21,7 +21,8 @@ public class GitMergeSettings implements PersistentStateComponent<GitMergeSettin
   private GitMergeSettings.State myState = new GitMergeSettings.State();
 
   public static class State {
-    public Set<GitMergeOption> OPTIONS = NO_OPTIONS;
+    @NotNull public Set<GitMergeOption> OPTIONS = NO_OPTIONS;
+    @Nullable public String BRANCH = null;
   }
 
   @Nullable
@@ -44,5 +45,14 @@ public class GitMergeSettings implements PersistentStateComponent<GitMergeSettin
     myState.OPTIONS = !options.isEmpty()
                       ? EnumSet.copyOf(options)
                       : NO_OPTIONS;
+  }
+
+  @Nullable
+  public String getBranch() {
+    return myState.BRANCH;
+  }
+
+  public void setBranch(@Nullable String branch) {
+    myState.BRANCH = branch;
   }
 }
