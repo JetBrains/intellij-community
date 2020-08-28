@@ -360,14 +360,15 @@ class DistributionJARsBuilder {
 
   static List<String> getModulesToCompile(BuildContext buildContext) {
     def productLayout = buildContext.productProperties.productLayout
-    productLayout.getIncludedPluginModules(productLayout.bundledPluginModules as Set<String>) +
-    CommunityRepositoryModules.PLATFORM_API_MODULES +
-    CommunityRepositoryModules.PLATFORM_IMPLEMENTATION_MODULES +
-    productLayout.productApiModules +
-    productLayout.productImplementationModules +
-    productLayout.additionalPlatformJars.values() +
-    toolModules + buildContext.productProperties.additionalModulesToCompile +
-    SVGPreBuilder.getModulesToInclude()
+    def modulesToInclude = productLayout.getIncludedPluginModules(productLayout.bundledPluginModules as Set<String>) +
+            CommunityRepositoryModules.PLATFORM_API_MODULES +
+            CommunityRepositoryModules.PLATFORM_IMPLEMENTATION_MODULES +
+            productLayout.productApiModules +
+            productLayout.productImplementationModules +
+            productLayout.additionalPlatformJars.values() +
+            toolModules + buildContext.productProperties.additionalModulesToCompile +
+            SVGPreBuilder.getModulesToInclude()
+    modulesToInclude - productLayout.excludedModuleNames
   }
 
   List<String> getModulesForPluginsToPublish() {
