@@ -27,7 +27,7 @@ public class I18nizeConcatenationQuickFix extends AbstractI18nizeQuickFix<UPolya
   @NonNls public static final String PARAMETERS_OPTION_KEY = "PARAMETERS";
 
   public I18nizeConcatenationQuickFix(NlsInfo.Localized info) {
-    super(info, UPolyadicExpression.class);
+    super(info);
   }
 
   @Override
@@ -65,6 +65,11 @@ public class I18nizeConcatenationQuickFix extends AbstractI18nizeQuickFix<UPolya
     assert concatenation != null;
     UastCodeGenerationPlugin generationPlugin = UastCodeGenerationPlugin.byLanguage(psiFile.getLanguage());
     doDocumentReplacement(psiFile, concatenation, i18nizedText, editor.getDocument(), generationPlugin);
+  }
+
+  @Override
+  protected Class<UPolyadicExpression> getClazz() {
+    return UPolyadicExpression.class;
   }
 
   @Override

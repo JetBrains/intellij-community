@@ -40,11 +40,9 @@ abstract class AbstractI18nizeQuickFix<T extends UExpression> implements LocalQu
   private static final Logger LOG = Logger.getInstance(I18nizeQuickFix.class);
   private static final Set<String> AUXILIARY_WORDS = Set.of("is", "the", "of", "and", "a", "an");
   private final NlsInfo.Localized myInfo;
-  private final Class<T> myClazz;
 
-  protected AbstractI18nizeQuickFix(NlsInfo.Localized info, Class<T> clazz) {
+  protected AbstractI18nizeQuickFix(NlsInfo.Localized info) {
     myInfo = info;
-    myClazz = clazz;
   }
 
   @Override
@@ -110,6 +108,8 @@ abstract class AbstractI18nizeQuickFix<T extends UExpression> implements LocalQu
     generationPlugin.replace(uElement, uElement, UElement.class);
   }
 
+  protected abstract Class<T> getClazz();
+
   @NotNull
   protected I18nizeQuickFixDialog.DialogCustomization getCustomization(String value) {
     return new I18nizeQuickFixDialog.DialogCustomization(null, true, false, null, getSuggestedName(value, myInfo));
@@ -117,7 +117,7 @@ abstract class AbstractI18nizeQuickFix<T extends UExpression> implements LocalQu
 
   private void doFix(final ProblemDescriptor descriptor, final Project project) {
     final PsiElement psi = descriptor.getPsiElement();
-    T uast = UastContextKt.getUastParentOfType(psi, myClazz, false);
+    T uast = UastContextKt.getUastParentOfType(psi, getClazz(), false);
     final PsiFile psiFile = descriptor.getPsiElement().getContainingFile();
     if (!JavaI18nizeQuickFixDialog.isAvailable(psiFile)) {
       return;

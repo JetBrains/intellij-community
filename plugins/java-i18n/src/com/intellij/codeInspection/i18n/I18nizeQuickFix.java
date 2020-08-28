@@ -27,7 +27,7 @@ public class I18nizeQuickFix extends AbstractI18nizeQuickFix<UInjectionHost> {
   private TextRange mySelectionRange;
 
   public I18nizeQuickFix(NlsInfo.Localized info) {
-    super(info, UInjectionHost.class);
+    super(info);
   }
 
   public I18nizeQuickFix() {
@@ -99,6 +99,11 @@ public class I18nizeQuickFix extends AbstractI18nizeQuickFix<UInjectionHost> {
       }
     }
     doDocumentReplacement(psiFile, literalExpression, i18nizedText, document, generationPlugin);
+  }
+
+  @Override
+  protected Class<UInjectionHost> getClazz() {
+    return UInjectionHost.class;
   }
 
   protected JavaI18nizeQuickFixDialog<UInjectionHost> createDialog(Project project,
