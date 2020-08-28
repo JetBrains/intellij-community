@@ -6,18 +6,20 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
 import org.jetbrains.plugins.groovy.codeInspection.GroovyQuickFixFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrNewExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.util.GrNamedArgumentsOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
@@ -52,16 +54,13 @@ public class GroovyConstructorNamedArgumentsInspection extends BaseInspection {
       final GroovyResolveResult constructorResolveResult = newExpression.advancedResolve();
       final PsiElement constructor = constructorResolveResult.getElement();
       if (constructor != null) {
-        final GrArgumentList argList = newExpression.getArgumentList();
-        if (argList != null &&
-            argList.getExpressionArguments().length == 0 &&
-            !PsiUtil.isConstructorHasRequiredParameters((PsiMethod)constructor)) {
-          checkDefaultMapConstructor(argList, constructor);
+        if (!PsiUtil.isConstructorHasRequiredParameters((PsiMethod)constructor)) {
+          GrNamedArgumentsOwner owner = getNamedArgumentsOwner(newExpression);
+          checkDefaultMapConstructor(owner, constructor);
         }
       }
       else {
         final GroovyResolveResult[] results = newExpression.multiResolve(false);
-        final GrArgumentList argList = newExpression.getArgumentList();
         final PsiElement element = refElement.resolve();
 
         if (results.length == 0 && element instanceof PsiClass) { //default constructor invocation
@@ -70,16 +69,33 @@ public class GroovyConstructorNamedArgumentsInspection extends BaseInspection {
               argumentTypes.length == 0 ||
               (argumentTypes.length == 1 &&
                InheritanceUtil.isInheritor(argumentTypes[0], CommonClassNames.JAVA_UTIL_MAP))) {
-            checkDefaultMapConstructor(argList, element);
+            GrNamedArgumentsOwner owner = getNamedArgumentsOwner(newExpression);
+            checkDefaultMapConstructor(owner, element);
           }
         }
       }
     }
 
-    private void checkDefaultMapConstructor(GrArgumentList argList, PsiElement element) {
-      if (argList == null) return;
+    private static @Nullable GrNamedArgumentsOwner getNamedArgumentsOwner(@NotNull GrNewExpression newExpression) {
+      var argList = newExpression.getArgumentList();
+      if (argList == null) return null;
+      var expressionArguments = argList.getExpressionArguments();
+      var namedArguments = argList.getNamedArguments();
+      if (expressionArguments.length == 1 && namedArguments.length == 0 && expressionArguments[0] instanceof GrListOrMap) {
+        return (GrNamedArgumentsOwner)expressionArguments[0];
+      }
+      else if (expressionArguments.length == 0) {
+        return argList;
+      }
+      else {
+        return null;
+      }
+    }
 
-      final GrNamedArgument[] args = argList.getNamedArguments();
+    private void checkDefaultMapConstructor(GrNamedArgumentsOwner owner, PsiElement element) {
+      if (owner == null) return;
+
+      final GrNamedArgument[] args = owner.getNamedArguments();
       for (GrNamedArgument arg : args) {
         final GrArgumentLabel label = arg.getLabel();
         if (label == null) continue;
@@ -88,7 +104,8 @@ public class GroovyConstructorNamedArgumentsInspection extends BaseInspection {
           final PsiElement nameElement = label.getNameElement();
           if (nameElement instanceof GrExpression) {
             final PsiType argType = ((GrExpression)nameElement).getType();
-            if (argType != null && !TypesUtil.isAssignableByMethodCallConversion(TypesUtil.createType(CommonClassNames.JAVA_LANG_STRING, arg), argType, arg)) {
+            if (argType != null &&
+                !TypesUtil.isAssignableByMethodCallConversion(TypesUtil.createType(CommonClassNames.JAVA_LANG_STRING, arg), argType, arg)) {
               registerError(nameElement, GroovyBundle.message("property.name.expected"));
             }
           }
@@ -97,7 +114,8 @@ public class GroovyConstructorNamedArgumentsInspection extends BaseInspection {
           }
         }
         else {
-          final PsiElement resolved = label.resolve();
+          var propertyReference = label.getConstructorPropertyReference();
+          final PsiElement resolved = propertyReference == null ? null : propertyReference.resolve();
           if (resolved == null) {
 
             if (element instanceof PsiMember && !(element instanceof PsiClass)) {
@@ -106,7 +124,8 @@ public class GroovyConstructorNamedArgumentsInspection extends BaseInspection {
 
             List<LocalQuickFix> fixes = new ArrayList<>(2);
             if (element instanceof GrTypeDefinition) {
-              fixes.add(GroovyQuickFixFactory.getInstance().createCreateFieldFromConstructorLabelFix((GrTypeDefinition)element, label.getNamedArgument()));
+              fixes.add(GroovyQuickFixFactory.getInstance()
+                          .createCreateFieldFromConstructorLabelFix((GrTypeDefinition)element, label.getNamedArgument()));
             }
             if (element instanceof PsiClass) {
               fixes.add(GroovyQuickFixFactory.getInstance().createDynamicPropertyFix(label, (PsiClass)element));
@@ -114,10 +133,12 @@ public class GroovyConstructorNamedArgumentsInspection extends BaseInspection {
 
             registerError(label, GroovyBundle.message("no.such.property", label.getName()), fixes.toArray(LocalQuickFix.EMPTY_ARRAY),
                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
-          } else if (resolved instanceof PsiField) {
-             if (((PsiField)resolved).hasModifierProperty(PsiModifier.FINAL)) {
-               registerError(label, GroovyBundle.message("inspection.message.property.0.is.final", labelName), LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
-             }
+          }
+          else if (resolved instanceof PsiModifierListOwner) {
+            if (((PsiModifierListOwner)resolved).hasModifierProperty(PsiModifier.FINAL)) {
+              registerError(label, GroovyBundle.message("inspection.message.property.0.is.final", labelName), LocalQuickFix.EMPTY_ARRAY,
+                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+            }
           }
         }
       }
