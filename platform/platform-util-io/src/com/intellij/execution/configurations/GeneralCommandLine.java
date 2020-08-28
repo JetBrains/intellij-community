@@ -125,18 +125,16 @@ public class GeneralCommandLine implements UserDataHolder {
     return LoadingState.COMPONENTS_LOADED.isOccurred() ? EncodingManager.getInstance().getDefaultConsoleEncoding() : Charset.defaultCharset();
   }
 
-  @NotNull
-  public String getExePath() {
+  public @NotNull @NlsSafe String getExePath() {
     return myExePath;
   }
 
-  @NotNull
-  public GeneralCommandLine withExePath(@NotNull String exePath) {
+  public @NotNull GeneralCommandLine withExePath(@NotNull @NlsSafe String exePath) {
     myExePath = exePath.trim();
     return this;
   }
 
-  public void setExePath(@NotNull String exePath) {
+  public void setExePath(@NotNull @NlsSafe String exePath) {
     withExePath(exePath);
   }
 
