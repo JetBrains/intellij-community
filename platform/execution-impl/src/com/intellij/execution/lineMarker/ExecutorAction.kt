@@ -34,7 +34,7 @@ class ExecutorAction private constructor(val origin: AnAction,
       val actionManager = ActionManager.getInstance()
       val createAction = actionManager.getAction("CreateRunConfiguration")
       val extensions = Executor.EXECUTOR_EXTENSION_NAME.extensionList
-      val result = ArrayList<AnAction>(extensions.size + (if (createAction == null) 0 else 1))
+      val result = ArrayList<AnAction>(extensions.size + (if (createAction == null) 0 else 2))
       extensions
         .mapNotNullTo(result) { executor ->
           actionManager.getAction(executor.contextActionId)?.let {
@@ -42,6 +42,7 @@ class ExecutorAction private constructor(val origin: AnAction,
           }
         }
       if (createAction != null) {
+        result.add(Separator.getInstance())
         result.add(createAction)
       }
       return result
