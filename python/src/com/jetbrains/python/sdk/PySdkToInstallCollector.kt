@@ -28,7 +28,7 @@ class PySdkToInstallCollector : CounterUsagesCollector() {
       lookupEvent.log(project, result, version)
     }
 
-    private val GROUP = EventLogGroup("python.sdk.install.events", 1)
+    private val GROUP = EventLogGroup("python.sdk.install.events", 2)
 
     private val downloadEvent = GROUP.registerEvent("install.download",
                                                     EventFields.Enum("download_result", DownloadResult::class.java),
