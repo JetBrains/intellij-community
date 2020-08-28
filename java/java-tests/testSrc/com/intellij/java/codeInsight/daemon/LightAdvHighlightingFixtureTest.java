@@ -14,22 +14,16 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
 import com.intellij.util.ArrayUtilRt;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class LightAdvHighlightingFixtureTest extends LightJavaCodeInsightFixtureTestCase {
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_8;
-  }
+  
 
   @Override
   protected String getBasePath() {
@@ -200,6 +194,11 @@ public class LightAdvHighlightingFixtureTest extends LightJavaCodeInsightFixture
                        "private Base() {}\n" +
                        "protected Base(int... i) {}\n" +
                        "}");
+    doTest();
+  }
+
+  public void testDiamondsWithAnonymousProtectedConstructor() {
+    myFixture.addClass("package a; public class Base<T> { protected Base() {}}");
     doTest();
   }
 
