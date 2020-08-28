@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options;
 
+import com.intellij.CommonBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
@@ -58,7 +59,7 @@ public abstract class ShowSettingsUtil {
   /**
    * OS-specific name.
    */
-  public static String getSettingsMenuName() {
-    return SystemInfo.isMac ? "Preferences" : "Settings";
+  public static @Nls String getSettingsMenuName() {
+    return SystemInfo.isMac ? CommonBundle.message("title.settings.mac") : CommonBundle.message("title.settings");
   }
 }
