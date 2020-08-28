@@ -1,10 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.internal.daemon
 
+import com.intellij.AbstractBundle
+import com.intellij.DynamicBundle
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.ExceptionUtil
+import com.intellij.util.Function
 import com.intellij.util.lang.UrlClassLoader
+import gnu.trove.TObjectHashingStrategy
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import org.gradle.internal.classpath.ClassPath
@@ -56,7 +60,15 @@ class GradleDaemonServices {
 
   private static Object runAction(Object daemonClientFactory, ConsumerConnection connection, Class actionClass, Object arg) {
     def daemonClientClassLoader = UrlClassLoader.build()
-      .urls(new File(PathManager.getJarPathForClass(actionClass)).toURI().toURL())
+      .urls(
+        new File(PathManager.getJarPathForClass(actionClass)).toURI().toURL(),
+
+        // jars required for i18n utils
+        new File(PathManager.getJarPathForClass(DynamicBundle)).toURI().toURL(),
+        new File(PathManager.getJarPathForClass(AbstractBundle)).toURI().toURL(),
+        new File(PathManager.getJarPathForClass(TObjectHashingStrategy)).toURI().toURL(),
+        new File(PathManager.getJarPathForClass(Function)).toURI().toURL()
+      )
       .parent(daemonClientFactory.class.classLoader)
       .allowLock(false)
       .get()
