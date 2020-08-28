@@ -30,11 +30,12 @@ public abstract class AbstractTraverseWindowAction extends AnAction {
       Component recentFocusOwner = mappedWindow.getMostRecentFocusOwner();
 
       (recentFocusOwner == null || !recentFocusOwner.isFocusable() ? mappedWindow : recentFocusOwner).requestFocus();
-    }
-    Window mappedWindow = mapWindow.fun(w);
-    Component recentFocusOwner = mappedWindow.getMostRecentFocusOwner();
+    } else {
+      Window mappedWindow = mapWindow.fun(w);
+      Component recentFocusOwner = mappedWindow.getMostRecentFocusOwner();
 
-    (recentFocusOwner == null || !recentFocusOwner.isFocusable() ? mappedWindow : recentFocusOwner).requestFocus();
+      (recentFocusOwner == null || !recentFocusOwner.isFocusable() ? mappedWindow : recentFocusOwner).requestFocus();
+    }
   }
 
   @Override
