@@ -476,11 +476,7 @@ class ChangelistsLocalLineStatusTracker(project: Project,
 
   @CalledInAwt
   override fun handlePartialCommit(side: Side, changelistIds: List<String>, honorExcludedFromCommit: Boolean): PartialCommitHelper {
-    val markers = changelistIds.mapTo(HashSet()) { ChangeListMarker(it) }
-    val toCommitCondition: (Block) -> Boolean = {
-      markers.contains(it.marker) &&
-      (!honorExcludedFromCommit || !it.excludedFromCommit)
-    }
+    val toCommitCondition = createToCommitCondition(changelistIds, honorExcludedFromCommit)
 
     val contentToCommit = documentTracker.getContentWithPartiallyAppliedBlocks(side, toCommitCondition)
 
@@ -505,13 +501,17 @@ class ChangelistsLocalLineStatusTracker(project: Project,
 
   @CalledInAwt
   override fun rollbackChanges(changelistsIds: List<String>, honorExcludedFromCommit: Boolean) {
+    val toCommitCondition = createToCommitCondition(changelistsIds, honorExcludedFromCommit)
+    runBulkRollback(toCommitCondition)
+  }
+
+  private fun createToCommitCondition(changelistsIds: List<String>, honorExcludedFromCommit: Boolean): (Block) -> Boolean {
     val idsSet = changelistsIds.toSet()
-    runBulkRollback {
+    return {
       idsSet.contains(it.marker.changelistId) &&
       (!honorExcludedFromCommit || !it.excludedFromCommit)
     }
   }
-
 
   protected class MyLineStatusMarkerRenderer(override val tracker: ChangelistsLocalLineStatusTracker) :
     LocalLineStatusTrackerImpl.LocalLineStatusMarkerRenderer(tracker) {
