@@ -346,7 +346,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
         g.setColor(foreground);
         Font labelFont = StartupUiUtil.getLabelFont();
         Font font = labelFont.deriveFont(labelFont.getSize() + 5.0f);
-        String drop = "Drop files here to open";
+        String drop = IdeBundle.message("welcome.screen.drop.files.to.open.text");
         g.setFont(font);
         int dropWidth = g.getFontMetrics().stringWidth(drop);
         int dropHeight = g.getFontMetrics().getHeight();
