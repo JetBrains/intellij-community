@@ -7,20 +7,20 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeProjectLifecycleListener
-import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
 import com.intellij.workspaceModel.storage.VersionedStorageChange
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
 import kotlin.system.measureTimeMillis
 
 class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposable {
 
   private val projectEntities: WorkspaceEntityStorageBuilder
 
-  private val cacheEnabled = !ApplicationManager.getApplication().isUnitTestMode && LegacyBridgeProjectLifecycleListener.cacheEnabled
+  private val cacheEnabled = (!ApplicationManager.getApplication().isUnitTestMode && LegacyBridgeProjectLifecycleListener.cacheEnabled) || forceEnableCaching
   private val cache = if (cacheEnabled) WorkspaceModelCacheImpl(project, this) else null
   internal var loadedFromCache = false
 
@@ -86,5 +86,7 @@ class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposa
 
   companion object {
     private val log = logger<WorkspaceModelImpl>()
+
+    var forceEnableCaching = false
   }
 }

@@ -38,9 +38,7 @@ internal data class LoadedProjectData(
 }
 
 internal fun copyAndLoadProject(originalProjectFile: File, virtualFileManager: VirtualFileUrlManager): LoadedProjectData {
-  val projectDir = FileUtil.createTempDirectory("jpsProjectTest", null)
-  val originalProjectDir = if (originalProjectFile.isFile) originalProjectFile.parentFile else originalProjectFile
-  FileUtil.copyDir(originalProjectDir, projectDir)
+  val (projectDir, originalProjectDir) = copyProjectFiles(originalProjectFile)
   val originalBuilder = WorkspaceEntityStorageBuilder.create()
   val projectFile = if (originalProjectFile.isFile) File(projectDir, originalProjectFile.name) else projectDir
   val configLocation = toConfigLocation(projectFile.toPath(), virtualFileManager)
@@ -48,6 +46,13 @@ internal fun copyAndLoadProject(originalProjectFile: File, virtualFileManager: V
   val loadedProjectData = LoadedProjectData(originalBuilder.toStorage(), serializers, configLocation, originalProjectDir)
   serializers.checkConsistency(loadedProjectData.projectDirUrl, loadedProjectData.storage, virtualFileManager)
   return loadedProjectData
+}
+
+internal fun copyProjectFiles(originalProjectFile: File): Pair<File, File> {
+  val projectDir = FileUtil.createTempDirectory("jpsProjectTest", null)
+  val originalProjectDir = if (originalProjectFile.isFile) originalProjectFile.parentFile else originalProjectFile
+  FileUtil.copyDir(originalProjectDir, projectDir)
+  return projectDir to originalProjectDir
 }
 
 internal fun   loadProject(configLocation: JpsProjectConfigLocation, originalBuilder: WorkspaceEntityStorageBuilder, virtualFileManager: VirtualFileUrlManager): JpsProjectSerializers {
