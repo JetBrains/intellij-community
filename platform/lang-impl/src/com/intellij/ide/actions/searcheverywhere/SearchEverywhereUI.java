@@ -163,7 +163,11 @@ public final class SearchEverywhereUI extends SearchEverywhereUIBase implements 
 
   @Override
   @NotNull
-  protected CompositeCellRenderer createCellRenderer() {
+  protected ListCellRenderer<Object> createCellRenderer() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return (list, value, index, isSelected, cellHasFocus) -> new JPanel();
+    }
+
     return new CompositeCellRenderer();
   }
 
