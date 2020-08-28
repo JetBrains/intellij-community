@@ -30,7 +30,7 @@ import java.io.IOException
 import java.nio.file.Path
 import java.util.*
 
-const val NOTIFICATION_GROUP_ID = "Load Error"
+@NonNls const val NOTIFICATION_GROUP_ID = "Load Error"
 
 @TestOnly
 @NonNls
