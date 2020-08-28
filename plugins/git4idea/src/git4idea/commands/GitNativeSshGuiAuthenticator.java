@@ -1,6 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands;
 
+import com.intellij.credentialStore.CredentialAttributes;
+import com.intellij.credentialStore.CredentialPromptDialog;
+import com.intellij.credentialStore.Credentials;
+import com.intellij.ide.passwordSafe.PasswordSafe;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
@@ -13,11 +17,13 @@ import com.intellij.ssh.SSHUtil;
 import com.intellij.util.PathUtil;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.Matcher;
 
+import static com.intellij.credentialStore.CredentialAttributesKt.generateServiceName;
 import static git4idea.commands.GitAuthenticationMode.FULL;
 
 class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
@@ -74,7 +80,7 @@ class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
       });
     }
     else {
-      return GitSSHGUIHandler.askPassphrase(myProject, keyPath, resetPassword, myAuthenticationMode);
+      return askPassphrase(myProject, keyPath, resetPassword, myAuthenticationMode);
     }
   }
 
@@ -98,7 +104,7 @@ class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
       });
     }
     else {
-      return GitSSHGUIHandler.askPassword(myProject, username, resetPassword, myAuthenticationMode);
+      return askPassword(myProject, username, resetPassword, myAuthenticationMode);
     }
   }
 
@@ -147,5 +153,55 @@ class GitNativeSshGuiAuthenticator implements GitNativeSshAuthenticator {
     Ref<String> answerRef = new Ref<>();
     ApplicationManager.getApplication().invokeAndWait(() -> answerRef.set(query.compute()), ModalityState.any());
     return answerRef.get();
+  }
+
+  @NonNls
+  @Nullable
+  private static String askPassphrase(@Nullable Project project,
+                                      @NotNull @NlsSafe String keyPath,
+                                      boolean resetPassword,
+                                      @NotNull GitAuthenticationMode authenticationMode) {
+    if (authenticationMode == GitAuthenticationMode.NONE) return null;
+    CredentialAttributes newAttributes = passphraseCredentialAttributes(keyPath);
+    Credentials credentials = PasswordSafe.getInstance().get(newAttributes);
+    if (credentials != null && !resetPassword) {
+      String password = credentials.getPasswordAsString();
+      if (password != null && !password.isEmpty()) return password;
+    }
+    if (authenticationMode == GitAuthenticationMode.SILENT) return null;
+    return CredentialPromptDialog.askPassword(project,
+                                              GitBundle.getString("ssh.ask.passphrase.title"),
+                                              GitBundle.message("ssh.ask.passphrase.message", PathUtil.getFileName(keyPath)),
+                                              newAttributes, true);
+  }
+
+  @NonNls
+  @Nullable
+  private static String askPassword(@Nullable Project project,
+                                    @NotNull @NlsSafe String username,
+                                    boolean resetPassword,
+                                    @NotNull GitAuthenticationMode authenticationMode) {
+    if (authenticationMode == GitAuthenticationMode.NONE) return null;
+    CredentialAttributes newAttributes = passwordCredentialAttributes(username);
+    Credentials credentials = PasswordSafe.getInstance().get(newAttributes);
+    if (credentials != null && !resetPassword) {
+      String password = credentials.getPasswordAsString();
+      if (password != null) return password;
+    }
+    if (authenticationMode == GitAuthenticationMode.SILENT) return null;
+    return CredentialPromptDialog.askPassword(project,
+                                              GitBundle.getString("ssh.password.title"),
+                                              GitBundle.message("ssh.password.message", username),
+                                              newAttributes, true);
+  }
+
+  @NotNull
+  private static CredentialAttributes passphraseCredentialAttributes(@NotNull @Nls String key) {
+    return new CredentialAttributes(generateServiceName(GitBundle.message("label.credential.store.key.ssh.passphrase"), key), key);
+  }
+
+  @NotNull
+  private static CredentialAttributes passwordCredentialAttributes(@NotNull @Nls String key) {
+    return new CredentialAttributes(generateServiceName(GitBundle.message("label.credential.store.key.ssh.password"), key), key);
   }
 }
