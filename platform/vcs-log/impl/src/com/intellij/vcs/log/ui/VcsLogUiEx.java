@@ -49,8 +49,6 @@ public interface VcsLogUiEx extends VcsLogUi, Disposable {
   @Nullable
   String getHelpId();
 
-  void jumpToRow(int row, boolean silently);
-
   /**
    * @deprecated use {@link VcsLog#jumpToReference(String)} instead
    */

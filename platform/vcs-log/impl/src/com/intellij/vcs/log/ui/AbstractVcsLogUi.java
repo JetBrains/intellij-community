@@ -125,14 +125,6 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
   }
 
   @Override
-  public void jumpToRow(int row, boolean silently) {
-    jumpTo(row, (model, r) -> {
-      if (model.getRowCount() <= r) return -1;
-      return r;
-    }, SettableFuture.create(), silently);
-  }
-
-  @Override
   public <T> void jumpTo(@NotNull final T commitId,
                          @NotNull final PairFunction<GraphTableModel, T, Integer> rowGetter,
                          @NotNull final SettableFuture<? super Boolean> future,
