@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 
 import com.intellij.openapi.application.WriteAction;
@@ -13,6 +13,7 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.PsiType;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduce.inplace.OccurrencesChooser;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBCheckBox;
@@ -46,7 +47,7 @@ public class GrInplaceParameterIntroducer extends GrAbstractInplaceIntroducer<Gr
   private final LinkedHashSet<String> mySuggestedNames;
 
   public GrInplaceParameterIntroducer(IntroduceParameterInfo info, GrIntroduceContext context, OccurrencesChooser.ReplaceChoice choice) {
-    super(GrIntroduceParameterHandler.getRefactoringName(), choice, context);
+    super(RefactoringBundle.message("introduce.parameter.title"), choice, context);
     myInfo = info;
 
     GrVariable localVar = GrIntroduceHandlerBase.resolveLocalVar(context);
@@ -57,7 +58,7 @@ public class GrInplaceParameterIntroducer extends GrAbstractInplaceIntroducer<Gr
 
   @Override
   protected String getActionName() {
-    return GrIntroduceParameterHandler.getRefactoringName();
+    return "IntroduceParameter";
   }
 
   @Override

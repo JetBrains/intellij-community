@@ -21,7 +21,7 @@ public class GrParameterTableModel extends ParameterTableModelBase<GrParameterIn
   public GrParameterTableModel(final PsiElement typeContext, PsiElement defaultValueContext, final GrChangeSignatureDialog dialog) {
     this(typeContext, defaultValueContext,
          new GrTypeColumn(typeContext.getProject()),
-         new NameColumn<GrParameterInfo, GrParameterTableModelItem>(typeContext.getProject(), "Name"),
+         new NameColumn<GrParameterInfo, GrParameterTableModelItem>(typeContext.getProject()),
          new GrInitializerColumn(typeContext.getProject()),
          new GrDefaultValueColumn(typeContext.getProject()),
          new AnyVarColumn<GrParameterInfo, GrParameterTableModelItem>() {

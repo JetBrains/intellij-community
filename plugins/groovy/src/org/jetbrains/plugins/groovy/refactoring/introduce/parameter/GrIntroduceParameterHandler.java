@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.introduce.parameter;
 
 import com.intellij.ide.util.SuperMethodWarningUtil;
@@ -180,9 +180,5 @@ public class GrIntroduceParameterHandler implements RefactoringActionHandler, Me
     GrVariable var = GroovyIntroduceParameterUtil.findVar(info);
     StringPartInfo stringPart = info.getStringPartInfo();
     return new GrIntroduceVariableHandler().getContext(info.getProject(), editor, expr, var, stringPart, info.getToReplaceIn());
-  }
-
-  static String getRefactoringName() {
-    return RefactoringBundle.message("introduce.parameter.title");
   }
 }
