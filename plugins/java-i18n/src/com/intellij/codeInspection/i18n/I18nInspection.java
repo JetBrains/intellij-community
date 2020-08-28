@@ -64,7 +64,6 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
-import java.util.stream.Stream;
 
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_EXTERNAL;
 
@@ -318,13 +317,11 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
         reportUnannotatedReferences = reportRefs.isSelected();
       }
     });
-    reportRefs.setEnabled(ignoreForAllButNls);
     final JCheckBox ignoreAllButNls = new JCheckBox(JavaI18nBundle.message("inspection.i18n.option.ignore.nls"), ignoreForAllButNls);
     ignoreAllButNls.addChangeListener(new ChangeListener() {
       @Override
       public void stateChanged(@NotNull ChangeEvent e) {
         ignoreForAllButNls = ignoreAllButNls.isSelected();
-        reportRefs.setEnabled(ignoreForAllButNls);
       }
     });
 
@@ -622,7 +619,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
       }
 
       UElement uElement;
-      if (ignoreForAllButNls && reportUnannotatedReferences) {
+      if (reportUnannotatedReferences) {
         uElement = UastContextKt.toUElementOfExpectedTypes(element, UInjectionHost.class, UAnnotation.class, UCallExpression.class,
                                                            UReferenceExpression.class);
       }
@@ -695,7 +692,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
       
       String value = target instanceof PsiVariable ? ObjectUtils.tryCast(((PsiVariable)target).computeConstantValue(), String.class) : null;
 
-      NlsInfo targetInfo = getExpectedNlsInfo(myManager.getProject(), ref, value, new THashSet<>(), myOnTheFly);
+      NlsInfo targetInfo = getExpectedNlsInfo(myManager.getProject(), ref, value, new THashSet<>(), myOnTheFly, true);
       if (targetInfo instanceof NlsInfo.Localized) {
         AddAnnotationFix fix =
           new AddAnnotationFix(((NlsInfo.Localized)targetInfo).suggestAnnotation(target), target, AnnotationUtil.NON_NLS);
@@ -717,7 +714,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
       }
 
       Set<PsiModifierListOwner> nonNlsTargets = new THashSet<>();
-      NlsInfo info = getExpectedNlsInfo(myManager.getProject(), expression, stringValue, nonNlsTargets, myOnTheFly);
+      NlsInfo info = getExpectedNlsInfo(myManager.getProject(), expression, stringValue, nonNlsTargets, myOnTheFly, ignoreForAllButNls);
       if (!(info instanceof NlsInfo.Localized)) {
         return;
       }
@@ -849,7 +846,8 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
                                      @NotNull UExpression expression,
                                      @Nullable String value,
                                      @NotNull Set<? super PsiModifierListOwner> nonNlsTargets,
-                                     boolean onTheFly) {
+                                     boolean onTheFly,
+                                     boolean ignoreForAllButNls) {
     if (ignoreForNonAlpha && value != null && !StringUtil.containsAlphaCharacters(value)) {
       return NlsInfo.nonLocalized();
     }
