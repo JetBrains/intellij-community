@@ -640,7 +640,7 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "jps-javac-extension", libraryName: "org.jetbrains.jps:jps-javac-extension:1", license: "Apache 2.0",
                        url: "https://github.com/JetBrains/jps-javac-extension/",
                        licenseUrl: "https://github.com/JetBrains/jps-javac-extension/blob/master/LICENSE.txt"),
-    new LibraryLicense(name: "blockmap", libraryName: "blockmap", license: "Apache 2.0",
+    new LibraryLicense(name: "blockmap", libraryName: "org.jetbrains.intellij:blockmap:1.0.2", license: "Apache 2.0",
                        url: "https://bintray.com/jetbrains/intellij-third-party-dependencies/blockmap-library"),
 
     jetbrainsLibrary("change-reminder-prediction-model"),
