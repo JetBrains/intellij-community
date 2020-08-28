@@ -2108,6 +2108,16 @@ new A([<warning>s</warning> : "abc"])
 ''', GroovyConstructorNamedArgumentsInspection
   }
 
+  void 'test map constructor with raw map assignment'() {
+    testHighlighting '''
+class A {
+  final String s
+}
+
+A a = [<warning>s</warning> : "asd"]
+''', GroovyConstructorNamedArgumentsInspection
+  }
+
   void testIllegalMethodName() {
     doTest()
   }

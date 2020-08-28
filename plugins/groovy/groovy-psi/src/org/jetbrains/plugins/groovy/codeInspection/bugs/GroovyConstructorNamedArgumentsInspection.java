@@ -4,7 +4,6 @@ package org.jetbrains.plugins.groovy.codeInspection.bugs;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -22,6 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrNamedArgumentsOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorReference;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,6 +44,15 @@ public class GroovyConstructorNamedArgumentsInspection extends BaseInspection {
   }
 
   private static class MyVisitor extends BaseInspectionVisitor {
+
+    @Override
+    public void visitListOrMap(@NotNull GrListOrMap listOrMap) {
+      super.visitListOrMap(listOrMap);
+      GroovyConstructorReference reference = listOrMap.getConstructorReference();
+      if (reference == null) return;
+      processConstructor(listOrMap, reference.advancedResolve());
+    }
+
     @Override
     public void visitNewExpression(@NotNull GrNewExpression newExpression) {
       super.visitNewExpression(newExpression);
@@ -52,26 +61,16 @@ public class GroovyConstructorNamedArgumentsInspection extends BaseInspection {
       if (refElement == null) return;
 
       final GroovyResolveResult constructorResolveResult = newExpression.advancedResolve();
+      GrNamedArgumentsOwner owner = getNamedArgumentsOwner(newExpression);
+      if (owner == null) return;
+      processConstructor(owner, constructorResolveResult);
+    }
+
+    public void processConstructor(@NotNull GrNamedArgumentsOwner owner, @NotNull GroovyResolveResult constructorResolveResult) {
       final PsiElement constructor = constructorResolveResult.getElement();
       if (constructor != null) {
         if (!PsiUtil.isConstructorHasRequiredParameters((PsiMethod)constructor)) {
-          GrNamedArgumentsOwner owner = getNamedArgumentsOwner(newExpression);
           checkDefaultMapConstructor(owner, constructor);
-        }
-      }
-      else {
-        final GroovyResolveResult[] results = newExpression.multiResolve(false);
-        final PsiElement element = refElement.resolve();
-
-        if (results.length == 0 && element instanceof PsiClass) { //default constructor invocation
-          PsiType[] argumentTypes = PsiUtil.getArgumentTypes(refElement, true);
-          if (argumentTypes == null ||
-              argumentTypes.length == 0 ||
-              (argumentTypes.length == 1 &&
-               InheritanceUtil.isInheritor(argumentTypes[0], CommonClassNames.JAVA_UTIL_MAP))) {
-            GrNamedArgumentsOwner owner = getNamedArgumentsOwner(newExpression);
-            checkDefaultMapConstructor(owner, element);
-          }
         }
       }
     }
