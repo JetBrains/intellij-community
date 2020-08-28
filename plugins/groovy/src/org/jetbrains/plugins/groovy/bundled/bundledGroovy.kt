@@ -5,6 +5,7 @@ package org.jetbrains.plugins.groovy.bundled
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.JarUtil.getJarAttribute
 import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VfsUtil
@@ -16,7 +17,7 @@ import org.jetbrains.plugins.groovy.config.AbstractConfigUtils.UNDEFINED_VERSION
 import java.io.File
 import java.util.jar.Attributes.Name.IMPLEMENTATION_VERSION
 
-val bundledGroovyVersion: String by lazy(::doGetBundledGroovyVersion)
+val bundledGroovyVersion: @NlsSafe String by lazy(::doGetBundledGroovyVersion)
 
 private fun doGetBundledGroovyVersion(): String = getJarAttribute(bundledGroovyFile, IMPLEMENTATION_VERSION) ?: UNDEFINED_VERSION
 
