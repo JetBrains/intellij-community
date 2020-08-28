@@ -1407,7 +1407,7 @@ public final class Switcher extends AnAction implements DumbAware {
           .append(HtmlChunk.font(RecentLocationsAction.Holder.SHORTCUT_HEX_COLOR)
                     .addText(KeymapUtil.getShortcutsText(shortcuts.getShortcuts())));
       }
-      return html.toString();
+      return html.wrapWithHtmlBody().toString();
     }
   }
 
