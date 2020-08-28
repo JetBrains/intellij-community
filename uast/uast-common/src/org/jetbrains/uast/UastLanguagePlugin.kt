@@ -110,6 +110,21 @@ interface UastLanguagePlugin {
   val analysisPlugin: UastAnalysisPlugin?
     @ApiStatus.Experimental
     get() = null
+
+  /**
+   * Serves for optimization purposes. Helps to filter PSI elements which in principle
+   * can be sources for UAST types of an interest.
+   *
+   * Note: it is already used inside [UastLanguagePlugin] conversion methods implementations
+   * for Java, Kotlin and Scala.
+   *
+   * @return types of possible source PSI elements, which instances in principle
+   *         can be converted to at least one of the specified [uastTypes]
+   *         (or to [UElement] if no type was specified)
+   */
+  @JvmDefault
+  fun getPossiblePsiSourceTypes(vararg uastTypes: Class<out UElement>): Set<Class<out PsiElement>> =
+    setOf(PsiElement::class.java)
 }
 
 inline fun <reified T : UElement> UastLanguagePlugin.convertOpt(element: PsiElement?, parent: UElement?): T? {

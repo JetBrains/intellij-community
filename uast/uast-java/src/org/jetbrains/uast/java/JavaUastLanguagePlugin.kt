@@ -8,8 +8,10 @@ import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef
 import com.intellij.psi.impl.source.tree.java.PsiLiteralExpressionImpl
 import com.intellij.psi.javadoc.PsiDocToken
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.util.containers.map2Array
 import org.jetbrains.uast.*
 import org.jetbrains.uast.analysis.UastAnalysisPlugin
+import org.jetbrains.uast.internal.SetListWrapper
 import org.jetbrains.uast.java.declarations.JavaLazyParentUIdentifier
 import org.jetbrains.uast.java.expressions.JavaUAnnotationCallExpression
 import org.jetbrains.uast.java.expressions.JavaUModuleReferenceExpression
@@ -139,6 +141,13 @@ class JavaUastLanguagePlugin : UastLanguagePlugin {
 
   override val analysisPlugin: UastAnalysisPlugin?
     get() = UastAnalysisPlugin.byLanguage(JavaLanguage.INSTANCE)
+
+  override fun getPossiblePsiSourceTypes(vararg uastTypes: Class<out UElement>): Set<Class<out PsiElement>> =
+    when (uastTypes.size) {
+      0 -> getPossibleSourceTypes(UElement::class.java)
+      1 -> getPossibleSourceTypes(uastTypes.single())
+      else -> SetListWrapper(*uastTypes.map2Array { getPossibleSourceTypes(it) })
+    }
 }
 
 internal inline fun <reified ActualT : UElement> Class<*>?.el(f: () -> UElement?): UElement? {
@@ -196,14 +205,16 @@ internal object JavaConverter {
         is PsiArrayInitializerMemberValue -> el<UCallExpression>(build(::JavaAnnotationArrayInitializerUCallExpression))
         is PsiTypeElement -> el<UTypeReferenceExpression>(build(::JavaUTypeReferenceExpression))
         is PsiJavaCodeReferenceElement -> convertReference(el, givenParent, requiredType)
-        is PsiJavaModuleReferenceElement -> el<UReferenceExpression> (build(::JavaUModuleReferenceExpression))
+        is PsiJavaModuleReferenceElement -> el<UReferenceExpression>(build(::JavaUModuleReferenceExpression))
         is PsiAnnotation -> el.takeIf { PsiTreeUtil.getParentOfType(it, PsiAnnotationMemberValue::class.java, true) != null }?.let {
           el<UExpression> { JavaUAnnotationCallExpression(it, givenParent) }
         }
         is PsiComment -> el<UComment>(build(::UComment))
-        is PsiDocToken -> el<USimpleNameReferenceExpression> { el.takeIf { it.tokenType == JavaDocTokenType.DOC_TAG_VALUE_TOKEN }?.let {
-          val methodOrFieldRef = el.parent as? PsiDocMethodOrFieldRef ?: return@let null
-          JavaUSimpleNameReferenceExpression(el, el.text, givenParent, methodOrFieldRef.reference) }
+        is PsiDocToken -> el<USimpleNameReferenceExpression> {
+          el.takeIf { it.tokenType == JavaDocTokenType.DOC_TAG_VALUE_TOKEN }?.let {
+            val methodOrFieldRef = el.parent as? PsiDocMethodOrFieldRef ?: return@let null
+            JavaUSimpleNameReferenceExpression(el, el.text, givenParent, methodOrFieldRef.reference)
+          }
         }
         is PsiCatchSection -> el<UCatchClause>(build(::JavaUCatchClause))
         else -> null
@@ -250,7 +261,7 @@ internal object JavaConverter {
         is PsiMethodCallExpression -> psiMethodCallConversionAlternatives(el, givenParent, requiredType).firstOrNull()
         is PsiArrayInitializerExpression -> expr<UCallExpression>(build(::JavaArrayInitializerUCallExpression))
         is PsiBinaryExpression -> expr<UBinaryExpression>(build(::JavaUBinaryExpression))
-      // Should go after PsiBinaryExpression since it implements PsiPolyadicExpression
+        // Should go after PsiBinaryExpression since it implements PsiPolyadicExpression
         is PsiPolyadicExpression -> expr<UPolyadicExpression>(build(::JavaUPolyadicExpression))
         is PsiParenthesizedExpression -> expr<UParenthesizedExpression>(build(::JavaUParenthesizedExpression))
         is PsiPrefixExpression -> expr<UPrefixExpression>(build(::JavaUPrefixExpression))
@@ -373,4 +384,5 @@ internal object JavaConverter {
 
 private fun elementTypes(requiredType: Class<out UElement>?) = requiredType?.let { arrayOf(it) } ?: DEFAULT_TYPES_LIST
 
-private fun <T : UElement> Array<out Class<out T>>.nonEmptyOr(default: Array<out Class<out UElement>>) = takeIf { it.isNotEmpty() } ?: default
+private fun <T : UElement> Array<out Class<out T>>.nonEmptyOr(default: Array<out Class<out UElement>>) = takeIf { it.isNotEmpty() }
+                                                                                                         ?: default

@@ -9,8 +9,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiRecursiveElementVisitor
 import com.intellij.psi.util.parents
-import org.jetbrains.uast.*
-import org.jetbrains.uast.expressions.UInjectionHost
+import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UastFacade
 import org.jetbrains.uast.test.common.UastMappingsAccountant.computeMappingsInSeveralViewsSimultaneously
 import java.nio.file.Path
 
@@ -67,81 +67,6 @@ object UastMappingsAccountant {
       .map { it.javaClass }
       .let { if (doIncludeElementItself) listOf(psiElement.javaClass) + it else it }
   }
-
-  @Suppress("DEPRECATION")
-  private val allUastTypes = setOf<Class<out UElement>>(
-    UAnchorOwner::class.java,
-    UAnnotated::class.java,
-    UAnnotation::class.java,
-    UAnnotationEx::class.java,
-    UAnnotationMethod::class.java,
-    UAnonymousClass::class.java,
-    UArrayAccessExpression::class.java,
-    UBinaryExpression::class.java,
-    UBinaryExpressionWithType::class.java,
-    UBlockExpression::class.java,
-    UBreakExpression::class.java,
-    UCallExpression::class.java,
-    UCallExpressionEx::class.java,
-    UCallableReferenceExpression::class.java,
-    UCatchClause::class.java,
-    UClass::class.java,
-    UClassLiteralExpression::class.java,
-    UClassTypeSpecific::class.java,
-    UContinueExpression::class.java,
-    UDeclaration::class.java,
-    UDeclarationEx::class.java,
-    UDeclarationsExpression::class.java,
-    UDoWhileExpression::class.java,
-    UElement::class.java,
-    UEnumConstant::class.java,
-    UEnumConstantEx::class.java,
-    UExpression::class.java,
-    UExpressionList::class.java,
-    UField::class.java,
-    UFieldEx::class.java,
-    UFile::class.java,
-    UForEachExpression::class.java,
-    UIdentifier::class.java,
-    UIfExpression::class.java,
-    UImportStatement::class.java,
-    UInjectionHost::class.java,
-    UInstanceExpression::class.java,
-    UJumpExpression::class.java,
-    ULabeled::class.java,
-    ULabeledExpression::class.java,
-    ULambdaExpression::class.java,
-    ULiteralExpression::class.java,
-    ULocalVariable::class.java,
-    ULocalVariableEx::class.java,
-    ULoopExpression::class.java,
-    UMethod::class.java,
-    UMethodTypeSpecific::class.java,
-    UObjectLiteralExpression::class.java,
-    UParameter::class.java,
-    UParameterEx::class.java,
-    UParenthesizedExpression::class.java,
-    UPolyadicExpression::class.java,
-    UPostfixExpression::class.java,
-    UPrefixExpression::class.java,
-    UQualifiedReferenceExpression::class.java,
-    UReferenceExpression::class.java,
-    UReturnExpression::class.java,
-    USimpleNameReferenceExpression::class.java,
-    USuperExpression::class.java,
-    USwitchClauseExpression::class.java,
-    USwitchClauseExpressionWithBody::class.java,
-    USwitchExpression::class.java,
-    UThisExpression::class.java,
-    UThrowExpression::class.java,
-    UTryExpression::class.java,
-    UTypeReferenceExpression::class.java,
-    UUnaryExpression::class.java,
-    UVariable::class.java,
-    UVariableEx::class.java,
-    UWhileExpression::class.java,
-    UastEmptyExpression::class.java
-  )
 
   private fun computeMappingsInSeveralViewsSimultaneously(
     sources: Iterable<Lazy<Pair<PsiFile, Path>?>>,
