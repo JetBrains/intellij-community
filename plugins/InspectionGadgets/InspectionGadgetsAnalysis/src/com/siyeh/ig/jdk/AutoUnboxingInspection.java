@@ -80,7 +80,7 @@ public class AutoUnboxingInspection extends BaseInspection {
     // Applying the quick fix in such a case would break the code
     // because the explicit unboxing code would split the expression in
     // multiple statements.
-    final PsiElement parent = location.getParent();
+    final PsiElement parent = PsiUtil.skipParenthesizedExprUp(location.getParent());
     if (!(parent instanceof PsiPostfixExpression)) {
       return true;
     }
@@ -427,7 +427,7 @@ public class AutoUnboxingInspection extends BaseInspection {
       if (!TypeConversionUtil.isPrimitiveAndNotNull(expectedType)) {
         return;
       }
-      if (!(expression.getParent() instanceof PsiTypeCastExpression)) {
+      if (!(PsiUtil.skipParenthesizedExprUp(expression.getParent()) instanceof PsiTypeCastExpression)) {
         final PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(expressionType);
         if (unboxedType == null || !expectedType.isAssignableFrom(unboxedType)) {
           return;
