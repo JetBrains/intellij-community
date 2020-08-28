@@ -83,7 +83,7 @@ open class TrackerModificationsTest(val tracker: LocalLineStatusTracker<*>) {
   fun runCommand(task: () -> Unit) {
     CommandProcessor.getInstance().executeCommand(tracker.project, {
       ApplicationManager.getApplication().runWriteAction(task)
-    }, "", "")
+    }, "", null)
   }
 
   fun insertAtStart(text: String) {
