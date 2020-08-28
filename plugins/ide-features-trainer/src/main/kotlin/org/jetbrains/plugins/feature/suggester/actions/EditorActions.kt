@@ -6,7 +6,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
-import org.jetbrains.plugins.feature.suggester.Selection
+import org.jetbrains.plugins.feature.suggester.TextFragment
 import java.lang.ref.WeakReference
 
 sealed class EditorAction : Action() {
@@ -35,7 +35,7 @@ sealed class EditorAction : Action() {
 
 //-------------------------------------EDITOR AFTER ACTIONS--------------------------------------------------------------------------------
 data class EditorBackspaceAction(
-    val selection: Selection?,
+    val textFragment: TextFragment?,
     val caretOffset: Int,
     override val editorRef: WeakReference<Editor>,
     override val timeMillis: Long
@@ -68,7 +68,7 @@ data class EditorTextInsertedAction(
 ) : EditorAction()
 
 data class EditorTextRemovedAction(
-    val text: String,
+    val textFragment: TextFragment,
     val caretOffset: Int,
     override val editorRef: WeakReference<Editor>,
     override val timeMillis: Long
@@ -105,7 +105,7 @@ data class EditorFocusGainedAction(
 
 //-------------------------------------EDITOR BEFORE ACTIONS-------------------------------------------------------------------------------
 data class BeforeEditorBackspaceAction(
-    val selection: Selection?,
+    val textFragment: TextFragment?,
     val caretOffset: Int,
     override val editorRef: WeakReference<Editor>,
     override val timeMillis: Long
@@ -118,7 +118,7 @@ data class BeforeEditorCopyAction(
 ) : EditorAction()
 
 data class BeforeEditorCutAction(
-    val selection: Selection?,
+    val textFragment: TextFragment?,
     override val editorRef: WeakReference<Editor>,
     override val timeMillis: Long
 ) : EditorAction()
@@ -138,7 +138,7 @@ data class BeforeEditorTextInsertedAction(
 ) : EditorAction()
 
 data class BeforeEditorTextRemovedAction(
-    val text: String,
+    val textFragment: TextFragment,
     val caretOffset: Int,
     override val editorRef: WeakReference<Editor>,
     override val timeMillis: Long

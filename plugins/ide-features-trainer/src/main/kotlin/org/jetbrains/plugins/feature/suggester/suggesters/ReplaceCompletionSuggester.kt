@@ -52,7 +52,7 @@ class ReplaceCompletionSuggester : FeatureSuggester {
     override fun getSuggestion(actions: UserActionsHistory): Suggestion {
         when (val action = actions.lastOrNull()) {
             is BeforeEditorTextRemovedAction -> {
-                if (action.text == ".") {
+                if (action.textFragment.text == ".") {
                     editedStatementData = createEditedStatementData(action, action.caretOffset)
                 }
             }
@@ -92,10 +92,14 @@ class ReplaceCompletionSuggester : FeatureSuggester {
             }
             is EditorTextRemovedAction -> {
                 if (editedStatementData?.isCompletionFinished != true) return NoSuggestion
-                editedStatementData!!.deletedText += action.text
+                editedStatementData!!.deletedText += action.textFragment.text
                 if (editedStatementData!!.isDeletedTooMuch()) {
                     editedStatementData = null
-                } else if (editedStatementData!!.isIdentifierNameDeleted(action.caretOffset, action.text)) {
+                } else if (editedStatementData!!.isIdentifierNameDeleted(
+                        action.caretOffset,
+                        action.textFragment.text
+                    )
+                ) {
                     editedStatementData = null
                     return createDocumentationSuggestion(
                         createMessageWithShortcut(SUGGESTING_ACTION_ID, POPUP_MESSAGE),

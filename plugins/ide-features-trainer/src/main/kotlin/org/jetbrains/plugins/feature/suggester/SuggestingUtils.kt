@@ -15,12 +15,12 @@ import org.jetbrains.plugins.feature.suggester.actions.Action
 import java.awt.datatransfer.DataFlavor
 import java.awt.datatransfer.Transferable
 
-data class Selection(val startOffset: Int, val endOffset: Int, val text: String)
+data class TextFragment(val startOffset: Int, val endOffset: Int, val text: String)
 
-internal fun Editor.getSelection(): Selection? {
+internal fun Editor.getSelection(): TextFragment? {
     with(selectionModel) {
         return if (selectedText != null) {
-            Selection(selectionStart, selectionEnd, selectedText!!)
+            TextFragment(selectionStart, selectionEnd, selectedText!!)
         } else {
             null
         }

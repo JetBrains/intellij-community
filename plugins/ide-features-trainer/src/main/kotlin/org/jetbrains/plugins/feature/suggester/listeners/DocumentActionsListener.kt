@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.guessProjectForFile
+import org.jetbrains.plugins.feature.suggester.TextFragment
 import org.jetbrains.plugins.feature.suggester.actions.*
 import org.jetbrains.plugins.feature.suggester.handleAction
 import java.lang.ref.WeakReference
@@ -33,7 +34,7 @@ object DocumentActionsListener : BulkAwareDocumentListener {
     private fun <T : Action> handleDocumentAction(
         event: DocumentEvent,
         textInsertedActionConstructor: (String, Int, WeakReference<Editor>, Long) -> T,
-        textRemovedActionConstructor: (String, Int, WeakReference<Editor>, Long) -> T
+        textRemovedActionConstructor: (TextFragment, Int, WeakReference<Editor>, Long) -> T
     ) {
         val document = event.source as? Document ?: return
         val virtualFile = FileDocumentManager.getInstance().getFile(document) ?: return
@@ -53,7 +54,11 @@ object DocumentActionsListener : BulkAwareDocumentListener {
             handleAction(
                 project,
                 textRemovedActionConstructor(
-                    event.oldFragment.toString(),
+                    TextFragment(
+                        event.offset,
+                        event.offset + event.oldLength,
+                        event.oldFragment.toString()
+                    ),
                     event.offset,
                     WeakReference(editor),
                     System.currentTimeMillis()

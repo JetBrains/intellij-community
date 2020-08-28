@@ -31,7 +31,7 @@ class CompletionPopupSuggester : FeatureSuggester {
     override fun getSuggestion(actions: UserActionsHistory): Suggestion {
         when (val action = actions.lastOrNull()) {
             is BeforeEditorTextRemovedAction -> {
-                if (action.text == ".") {
+                if (action.textFragment.text == ".") {
                     editedStatementData = createEditedStatementData(action, action.caretOffset)
                 }
             }

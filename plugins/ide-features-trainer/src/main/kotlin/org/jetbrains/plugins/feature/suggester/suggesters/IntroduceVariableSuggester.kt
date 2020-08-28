@@ -50,14 +50,14 @@ class IntroduceVariableSuggester : FeatureSuggester {
         when (action) {
             is BeforeEditorTextRemovedAction -> {
                 with(action) {
-                    val deletedText = getCopiedContent(text) ?: return NoSuggestion
+                    val deletedText = getCopiedContent(textFragment.text) ?: return NoSuggestion
                     val psiFile = this.psiFile ?: return NoSuggestion
-                    val contentOffset = caretOffset + text.indexOfFirst { it != ' ' && it != '\n' }
+                    val contentOffset = caretOffset + textFragment.text.indexOfFirst { it != ' ' && it != '\n' }
                     val curElement = psiFile.findElementAt(contentOffset) ?: return NoSuggestion
                     if (langSupport.isPartOfExpression(curElement)) {
                         val changedStatement =
                             curElement.getTopmostStatementWithText(deletedText) ?: return NoSuggestion
-                        extractedExprData = ExtractedExpressionData(text, changedStatement)
+                        extractedExprData = ExtractedExpressionData(textFragment.text, changedStatement)
                     }
                 }
             }

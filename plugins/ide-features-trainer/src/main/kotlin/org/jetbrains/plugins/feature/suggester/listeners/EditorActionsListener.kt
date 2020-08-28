@@ -63,7 +63,7 @@ object EditorActionsListener : AnActionListener {
                 handleAction(
                     project,
                     EditorBackspaceAction(
-                        selection = editor.getSelection(),
+                        textFragment = editor.getSelection(),
                         caretOffset = editor.getCaretOffset(),
                         editorRef = WeakReference(editor),
                         timeMillis = System.currentTimeMillis()
@@ -132,7 +132,7 @@ object EditorActionsListener : AnActionListener {
                 handleAction(
                     project,
                     BeforeEditorCutAction(
-                        selection = editor.getSelection(),
+                        textFragment = editor.getSelection(),
                         editorRef = WeakReference(editor),
                         timeMillis = System.currentTimeMillis()
                     )
@@ -155,7 +155,7 @@ object EditorActionsListener : AnActionListener {
                 handleAction(
                     project,
                     BeforeEditorBackspaceAction(
-                        selection = editor.getSelection(),
+                        textFragment = editor.getSelection(),
                         caretOffset = editor.getCaretOffset(),
                         editorRef = WeakReference(editor),
                         timeMillis = System.currentTimeMillis()
