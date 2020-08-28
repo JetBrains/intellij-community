@@ -371,4 +371,8 @@ public class TodoCheckinHandlerWorker {
     set.addAll(getInChangedTodos());
     return set;
   }
+
+  public List<Change> getChanges() {
+    return new ArrayList<>(myChanges);
+  }
 }
