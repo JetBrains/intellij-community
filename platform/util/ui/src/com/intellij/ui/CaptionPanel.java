@@ -21,9 +21,9 @@ public class CaptionPanel extends JPanel {
 
   /**
    * @deprecated use {@link JBUI.CurrentTheme.Popup#borderColor} instead,
-   * to be removed in 2019.1
+   * to be removed in 2020.1
    */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.1")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   @Deprecated public static final Color BND_ACTIVE_COLOR = new JBColor(() -> JBUI.CurrentTheme.Popup.borderColor(true));
 
   private boolean myActive = false;
@@ -83,10 +83,10 @@ public class CaptionPanel extends JPanel {
 
   /**
    * @deprecated use {@link JBUI.CurrentTheme.Popup#borderColor} instead,
-   * to be removed in 2019.1
+   * to be removed in 2020.1
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019.1")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2020.1")
   public static Color getBorderColor(boolean isActive) {
     return JBUI.CurrentTheme.Popup.borderColor(isActive);
   }
