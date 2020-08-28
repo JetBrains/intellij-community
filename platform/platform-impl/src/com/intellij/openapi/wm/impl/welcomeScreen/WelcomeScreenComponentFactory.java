@@ -117,9 +117,7 @@ public class WelcomeScreenComponentFactory {
     appName.setForeground(JBColor.foreground());
     appName.setFont(getProductFont(36).deriveFont(Font.PLAIN));
     appName.setHorizontalAlignment(SwingConstants.CENTER);
-    String appVersion = "Version ";
-
-    appVersion += appInfo.getFullVersion();
+    String appVersion = IdeBundle.message("welcome.screen.logo.version.label", appInfo.getFullVersion());
 
     if (appInfo.isEAP() && !appInfo.getBuild().isSnapshot()) {
       appVersion += " (" + appInfo.getBuild().asStringWithoutProductCode() + ")";

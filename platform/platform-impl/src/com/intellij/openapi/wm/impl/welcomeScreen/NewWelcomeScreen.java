@@ -14,6 +14,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.WelcomeScreen;
 import com.intellij.ui.ScreenUtil;
@@ -35,7 +36,7 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
   }
 
   private static WelcomePane createInnerPanel(WelcomeScreen screen) {
-    WelcomeScreenGroup root = new WelcomeScreenGroup(null, "Quick Start");
+    WelcomeScreenGroup root = new WelcomeScreenGroup(null, IdeBundle.message("welcome.screen.quick.start.action.text"));
 
     ActionManager actionManager = ActionManager.getInstance();
     ActionGroup quickStart = (ActionGroup)actionManager.getAction(IdeActions.GROUP_WELCOME_SCREEN_QUICKSTART);
@@ -43,8 +44,8 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
       root.add(child);
     }
 
-    root.add(buildRootGroup(AllIcons.General.Settings, "Configure", IdeActions.GROUP_WELCOME_SCREEN_CONFIGURE));
-    root.add(buildRootGroup(AllIcons.Actions.Help, "Docs and How-Tos", IdeActions.GROUP_WELCOME_SCREEN_DOC));
+    root.add(buildRootGroup(AllIcons.General.Settings, IdeBundle.message("welcome.screen.configure.action.text"), IdeActions.GROUP_WELCOME_SCREEN_CONFIGURE));
+    root.add(buildRootGroup(AllIcons.Actions.Help, IdeBundle.message("welcome.screen.action.docs.how.tos.action.text"), IdeActions.GROUP_WELCOME_SCREEN_DOC));
 
     // so, we sure this is the last action
     final AnAction register = actionManager.getAction("WelcomeScreen.Register");
@@ -54,7 +55,7 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
     return new WelcomePane(root, screen);
   }
 
-  private static WelcomeScreenGroup buildRootGroup(@NotNull Icon groupIcon, @NotNull String groupText, @NotNull String groupId) {
+  private static WelcomeScreenGroup buildRootGroup(@NotNull Icon groupIcon, @NotNull @NlsActions.ActionText String groupText, @NotNull String groupId) {
     WelcomeScreenGroup result = new WelcomeScreenGroup(groupIcon, groupText);
     ActionGroup docsActions = (ActionGroup)ActionManager.getInstance().getAction(groupId);
     for (AnAction child : docsActions.getChildren(null)) {
@@ -87,7 +88,7 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
         UpdateChecker.updateAndShowResult(null, null);
       }
     })));
-    footerPanel.add(makeSmallFont(new JLabel(" for updates now.")));
+    footerPanel.add(makeSmallFont(new JLabel(IdeBundle.message("welcome.screen.check.for.updates.comment"))));
     return footerPanel;
   }
 
@@ -149,7 +150,7 @@ public class NewWelcomeScreen extends JPanel implements WelcomeScreen {
   }
 
   private static final class WelcomeScreenGroup extends DefaultActionGroup {
-    private WelcomeScreenGroup(Icon icon, String text, AnAction... actions) {
+    private WelcomeScreenGroup(Icon icon, @NlsActions.ActionText String text, AnAction... actions) {
       super(text, true);
       for (AnAction action : actions) {
         add(action);
