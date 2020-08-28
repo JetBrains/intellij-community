@@ -227,9 +227,9 @@ class CompilationContextImpl implements CompilationContext {
     compilationData = new JpsCompilationData(new File(paths.buildOutputRoot, dataDirName), new File("$logDir/compilation.log"),
                                              System.getProperty("intellij.build.debug.logging.categories", ""), messages)
 
-    def classesDirName = "classes"
+    def classesDirName = CLASSES_DIR_NAME
     def projectArtifactsDirName = "project-artifacts"
-    def classesOutput = "$paths.buildOutputRoot/$classesDirName"
+    def classesOutput = classesOutputDirectory()
     List<String> outputDirectoriesToKeep = ["log"]
     if (options.pathToCompiledClassesArchivesMetadata != null) {
       fetchAndUnpackCompiledClasses(messages, classesOutput, options)
@@ -252,23 +252,37 @@ class CompilationContextImpl implements CompilationContext {
       outputDirectoriesToKeep.add(classesDirName)
       outputDirectoriesToKeep.add(projectArtifactsDirName)
     }
-    if (!options.useCompiledClassesFromProjectOutput) {
-      projectOutputDirectory = classesOutput
-    }
-    else {
-      def outputDir = getProjectOutputDirectory()
-      if (!outputDir.exists()) {
-        messages.error("$BuildOptions.USE_COMPILED_CLASSES_PROPERTY is enabled, but the project output directory $outputDir.absolutePath doesn't exist")
-      }
-    }
 
     suppressWarnings(project)
     exportModuleOutputProperties()
     cleanOutput(outputDirectoriesToKeep)
   }
 
+  static final String CLASSES_DIR_NAME = "classes"
+
+  private String classesOutputDirectory() {
+    String classesOutput
+    if (options.projectClassesOutputDirectory != null && !options.projectClassesOutputDirectory.isEmpty()) {
+      classesOutput = options.projectClassesOutputDirectory
+      projectOutputDirectory = classesOutput
+    }
+    else {
+      classesOutput = "$paths.buildOutputRoot/$CLASSES_DIR_NAME"
+      if (!options.useCompiledClassesFromProjectOutput) {
+        projectOutputDirectory = classesOutput
+      }
+    }
+    if (options.useCompiledClassesFromProjectOutput) {
+      def outputDir = getProjectOutputDirectory()
+      if (!outputDir.exists()) {
+        messages.error("$BuildOptions.USE_COMPILED_CLASSES_PROPERTY is enabled, but the project output directory $outputDir.absolutePath doesn't exist")
+      }
+    }
+    return classesOutput
+  }
+
   /**
-   * @return url attribute value of output tag from .idea/misc.xml
+   * @return directory with compiled project classes, url attribute value of output tag from .idea/misc.xml by default
    */
   File getProjectOutputDirectory() {
     JpsPathUtil.urlToFile(JpsJavaExtensionService.instance.getOrCreateProjectExtension(project).outputUrl)

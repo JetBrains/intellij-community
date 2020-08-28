@@ -46,6 +46,10 @@ final class PortableCompilationCache {
      */
     private static final String UPLOAD_URL_PROPERTY = 'intellij.jps.remote.cache.upload.url'
     /**
+     * If true then {@link RemoteCache} is configured to be used
+     */
+    private static final boolean IS_CONFIGURED = !StringUtil.isEmptyOrSpaces(System.getProperty(RemoteCache.URL_PROPERTY))
+    /**
      * URL for read-only operations
      */
     static final String URL_PROPERTY = 'intellij.jps.remote.cache.url'
@@ -55,11 +59,6 @@ final class PortableCompilationCache {
 
     @Lazy
     String uploadUrl = { require(UPLOAD_URL_PROPERTY, "Remote Cache upload url") }()
-
-    /**
-     * If true then {@link RemoteCache} is configured to be used
-     */
-    final boolean isConfigured = !StringUtil.isEmptyOrSpaces(System.getProperty(RemoteCache.URL_PROPERTY))
   }
 
   private final CompilationContext context
@@ -91,20 +90,12 @@ final class PortableCompilationCache {
    * Commit hash for which {@link PortableCompilationCache} is to be built/downloaded
    */
   private static final String COMMIT_HASH_PROPERTY = 'build.vcs.number'
-  /**
-   * System properties to be passed to child JVM process (like tests process) to enable {@link PortableCompilationCache} for it
-   */
-  static final List<String> PROPERTIES = [
-    COMMIT_HASH_PROPERTY, PortableCompilationCache.RemoteCache.URL_PROPERTY, GIT_REPOSITORY_URL_PROPERTY,
-    AVAILABLE_FOR_HEAD_PROPERTY, FORCE_DOWNLOAD_PROPERTY,
-    JavaBackwardReferenceIndexWriter.PROP_KEY,
-    ProjectStamps.PORTABLE_CACHES_PROPERTY
-  ]
+  static final boolean CAN_BE_USED = ProjectStamps.PORTABLE_CACHES && PortableCompilationCache.RemoteCache.IS_CONFIGURED
   private final boolean forceDownload = bool(FORCE_DOWNLOAD_PROPERTY, false)
   private final boolean forceRebuild = bool(FORCE_REBUILD_PROPERTY, false)
   private final RemoteCache remoteCache = new RemoteCache()
   private final JpsCaches jpsCaches = new JpsCaches(context)
-  final boolean canBeUsed = ProjectStamps.PORTABLE_CACHES && remoteCache.isConfigured
+  final boolean canBeUsed = CAN_BE_USED
 
   @Lazy
   private String remoteGitUrl = {
