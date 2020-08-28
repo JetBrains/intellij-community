@@ -10,6 +10,7 @@ import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.apache.tools.ant.AntClassLoader
 import org.apache.tools.ant.types.Path
+import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.CompilationTasks
 import org.jetbrains.intellij.build.TestingOptions
@@ -377,7 +378,11 @@ class TestingTasksImpl extends TestingTasks {
       }
     }
 
-    PortableCompilationCache.PROPERTIES.each { systemProperties.putIfAbsent(it, System.getProperty(it)) }
+    if (PortableCompilationCache.CAN_BE_USED) {
+      def compiledClassesDir = "$context.paths.buildOutputRoot/$CompilationContextImpl.CLASSES_DIR_NAME"
+      systemProperties[BuildOptions.PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY] = compiledClassesDir.toString()
+      systemProperties[BuildOptions.USE_COMPILED_CLASSES_PROPERTY] = "true"
+    }
 
     boolean suspendDebugProcess = options.suspendDebugProcess
     if (options.performanceTestsOnly) {
