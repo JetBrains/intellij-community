@@ -345,7 +345,6 @@ table th {
 table th,
 table td {
     padding: 6px 13px;
-    border: 1px solid;
     background: transparent;
 }
 
@@ -409,7 +408,6 @@ kbd {
     font: 0.9em "JetBrains Mono", Consolas, "Liberation Mono", Menlo, Courier, monospace;
     padding: 0.2em 0.4em;
     margin: 2px;
-    border: solid 1px;
     border-radius: 3px;
 }
 

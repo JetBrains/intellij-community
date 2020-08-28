@@ -35,11 +35,7 @@ internal object PreviewLAFThemeStyles {
 
       val markdownFenceBackground = JBColor(Color(212, 222, 231, 255 / 4), Color(212, 222, 231, 25))
 
-      var fontSize = EditorUtil.getEditorFont().size
-      //Since Mac and Windows font is smaller than linux we increment it by 1pt
-      if (SystemInfo.isWindows || SystemInfo.isMac) {
-        fontSize += 1
-      }
+      val fontSize = EditorUtil.getEditorFont().size + 1
 
       // For some reason background-color for ::-webkit-scrollbar-thumb
       // doesn't work with [0..255] alpha values. Fortunately it works fine with [0..1] values.
@@ -52,7 +48,7 @@ internal object PreviewLAFThemeStyles {
       return """
               body {
                   background-color: ${defaultBackground.webRgba()};
-                  font-size: ${fontSize}pt !important;
+                  font-size: ${fontSize}px !important;
               }
               
               body, p, blockquote, ul, ol, dl, table, pre, code, tr  {
@@ -63,8 +59,12 @@ internal object PreviewLAFThemeStyles {
                   color: ${linkActiveForeground.webRgba()};
               }
               
-              hr, table, kbd, tr {
-                border: ${separatorColor.webRgba()};
+              table td, table th {
+                border: 1px solid ${separatorColor.webRgba()};
+              }
+              
+              hr, kbd, tr {
+                border: 1px solid ${separatorColor.webRgba()};
               }
               
               h6 {
