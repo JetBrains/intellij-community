@@ -31,7 +31,7 @@ import java.lang.annotation.Target;
  * <p/>Aside from a documentation purpose, the annotation is processed by the <a href="">Threading Model Helper</a> plugin.
  * The plugin instruments annotated elements with {@link Application#assertIsDispatchThread()} calls
  * to ensure annotation's contract is not violated at runtime. The instrumentation can be disabled
- * by setting {@link RequiresEdt#instrument()} to {@code false}.
+ * by setting {@link RequiresEdt#generateAssertion()} to {@code false}.
  *
  * @see <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/general_threading_rules.html">General Threading Rules</a>
  * @see Application#assertIsDispatchThread()
@@ -42,7 +42,7 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD, ElementType.CONSTRUCTOR, ElementType.PARAMETER})
 public @interface RequiresEdt {
   /**
-   * @return {@code false} if code annotated with {@code RequiresEdt} must not be instrumented.
+   * @return {@code false} if annotated element must not be instrumented with the assertion.
    */
-  boolean instrument() default true;
+  boolean generateAssertion() default true;
 }
