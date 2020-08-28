@@ -8,7 +8,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
@@ -22,8 +21,10 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
 import org.jetbrains.uast.util.UastExpressionUtils;
 
-import java.util.*;
-import java.util.stream.IntStream;
+import java.util.Collection;
+import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * Contains information about localization status.
@@ -333,36 +334,29 @@ public abstract class NlsInfo {
     UCallExpression callExpression = UastUtils.getUCallExpression(parent, 1);
     if (callExpression == null) return Unspecified.UNKNOWN;
 
-    List<UExpression> arguments = callExpression.getValueArguments();
-    OptionalInt idx = IntStream.range(0, arguments.size())
-      .filter(i -> UastUtils.isUastChildOf(expression, UastLiteralUtils.wrapULiteral(arguments.get(i)), false))
-      .findFirst();
-
-    if (idx.isEmpty()) return Unspecified.UNKNOWN;
-
     PsiMethod method = callExpression.resolve();
     if (method == null) return Unspecified.UNKNOWN;
-    NlsInfo fromParameter = fromMethodParameter(method, idx.getAsInt(), null);
+    PsiParameter parameter = getParameter(method, callExpression, expression);
+    if (parameter == null) return Unspecified.UNKNOWN;
+    int index = method.getParameterList().getParameterIndex(parameter);
+    NlsInfo fromParameter = fromMethodParameter(method, index, null);
     if (fromParameter != Unspecified.UNKNOWN) {
       return fromParameter;
     }
-    PsiParameter parameter = getParameter(method, idx.getAsInt());
-    if (parameter != null) {
-      PsiType parameterType = parameter.getType();
-      PsiElement psi = callExpression.getSourcePsi();
-      if (psi instanceof PsiMethodCallExpression) {
-        PsiSubstitutor substitutor = ((PsiMethodCallExpression)psi).getMethodExpression().advancedResolve(false).getSubstitutor();
-        parameterType = substitutor.substitute(parameterType);
-      }
-      NlsInfo info = fromType(parameterType);
+    PsiType parameterType = parameter.getType();
+    PsiElement psi = callExpression.getSourcePsi();
+    if (psi instanceof PsiMethodCallExpression) {
+      PsiSubstitutor substitutor = ((PsiMethodCallExpression)psi).getMethodExpression().advancedResolve(false).getSubstitutor();
+      parameterType = substitutor.substitute(parameterType);
+    }
+    NlsInfo info = fromType(parameterType);
+    if (info != Unspecified.UNKNOWN) {
+      return info;
+    }
+    if (parameter.isVarArgs() && parameterType instanceof PsiEllipsisType) {
+      info = fromType(((PsiEllipsisType)parameterType).getComponentType());
       if (info != Unspecified.UNKNOWN) {
         return info;
-      }
-      if (parameter.isVarArgs() && parameterType instanceof PsiEllipsisType) {
-        info = fromType(((PsiEllipsisType)parameterType).getComponentType());
-        if (info != Unspecified.UNKNOWN) {
-          return info;
-        }
       }
     }
     return new Unspecified(parameter);
@@ -667,35 +661,39 @@ public abstract class NlsInfo {
     }
     return Unspecified.UNKNOWN;
   }
-  
-  private static PsiParameter getParameter(PsiMethod method, int idx) {
+
+  private static @Nullable PsiParameter getParameter(PsiMethod method, UCallExpression call, UExpression arg) {
     final PsiParameter[] params = method.getParameterList().getParameters();
-    if (idx >= params.length) {
-      PsiParameter lastParam = ArrayUtil.getLastElement(params);
-      if (lastParam == null || !lastParam.isVarArgs()) return null;
-      return lastParam;
+    while (true) {
+      UElement parent = arg.getUastParent();
+      if (call.equals(parent)) break;
+      if (!(parent instanceof UExpression)) return null;
+      arg = (UExpression)parent;
     }
-    else if (isReceiver(method, params[0])) {
-      if (idx + 1 == params.length) return null;
-      return params[idx + 1];
+    arg = normalize(arg);
+    for (int i = 0; i < params.length; i++) {
+      UExpression argument = call.getArgumentForParameter(i);
+      if (arg.equals(argument) ||
+          (argument instanceof UExpressionList &&
+           ((UExpressionList)argument).getKind() == UastSpecialExpressionKind.VARARGS &&
+           ((UExpressionList)argument).getExpressions().contains(arg))) {
+        return params[i];
+      }
     }
-    else {
-      return params[idx];
-    }
+    return null;
   }
 
   private static boolean isReceiver(PsiMethod method, PsiParameter param) {
     return param.getName().equals("$receiver") || param.getName().equals("$this$" + method.getName());
   }
 
-  private static @NotNull NlsInfo fromMethodParameter(@NotNull PsiMethod method,
-                                                      int idx,
+  private static @NotNull NlsInfo fromMethodParameter(@NotNull PsiMethod method, int idx,
                                                       @Nullable Collection<? super PsiMethod> processed) {
     if (processed != null && processed.contains(method)) {
       return Unspecified.UNKNOWN;
     }
 
-    PsiParameter param = getParameter(method, idx);
+    PsiParameter param = method.getParameterList().getParameter(idx);
     if (param == null) return Unspecified.UNKNOWN;
     NlsInfo explicit = fromAnnotationOwner(param.getModifierList());
     if (explicit != Unspecified.UNKNOWN) {

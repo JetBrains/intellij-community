@@ -109,6 +109,21 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
   
+  fun testNamedParameters() {
+    myFixture.enableInspections(I18nInspection())
+    myFixture.configureByText("Foo.kt", """
+        fun foo(<warning descr="[UNUSED_PARAMETER] Parameter 'a' is never used">a</warning>: Int = 0, 
+                @org.jetbrains.annotations.NonNls <warning descr="[UNUSED_PARAMETER] Parameter 'b' is never used">b</warning>: String, 
+                <warning descr="[UNUSED_PARAMETER] Parameter 'c' is never used">c</warning>: String) {}
+        
+        fun test() {
+          foo(b = "foo bar", c = <warning descr="Hardcoded string literal: \"violation\"">"violation"</warning>)
+          foo(c = <warning descr="Hardcoded string literal: \"violation\"">"violation"</warning>, b = "foo bar")
+        }
+    """.trimIndent())
+    myFixture.testHighlighting()
+  }
+
   fun testWhen() {
     myFixture.enableInspections(I18nInspection())
     myFixture.configureByText("Foo.kt", """
