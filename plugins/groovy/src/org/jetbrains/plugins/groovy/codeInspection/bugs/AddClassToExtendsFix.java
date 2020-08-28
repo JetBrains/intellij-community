@@ -88,6 +88,6 @@ public class AddClassToExtendsFix extends GroovyFix {
   @NotNull
   @Override
   public String getFamilyName() {
-    return GroovyBundle.message("add.class.to.extends.fammily.name");
+    return GroovyBundle.message("add.class.to.extends.family.name");
   }
 }
