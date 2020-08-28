@@ -2,6 +2,7 @@ package com.intellij.filePrediction.candidates
 
 import com.intellij.filePrediction.FilePredictionTestDataHelper
 import com.intellij.filePrediction.FilePredictionTestProjectBuilder
+import com.intellij.filePrediction.predictor.model.unregisterCandidateProvider
 import com.intellij.filePrediction.references.FilePredictionReferencesHelper
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
@@ -38,7 +39,8 @@ class FilePredictionCandidateProviderTest : CodeInsightFixtureTestCase<ModuleFix
   }
 
   private fun doTest(builder: FilePredictionTestProjectBuilder, vararg expected: Pair<String, String>) {
-    doTestInternal(builder, CompositeCandidateProvider(), 13, *expected)
+    unregisterCandidateProvider(FilePredictionRecentSessionsProvider())
+    doTestInternal(builder, CompositeCandidateProvider(), 10, *expected)
   }
 
   private fun doTestInternal(builder: FilePredictionTestProjectBuilder,
