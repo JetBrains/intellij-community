@@ -7,10 +7,11 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.NonNls
 import java.io.Writer
 import java.nio.file.Path
 
-private const val FILE_SPEC = "${APP_CONFIG}/project.default.xml"
+@NonNls private const val FILE_SPEC = "${APP_CONFIG}/project.default.xml"
 
 private class DefaultProjectStorage(file: Path, fileSpec: String, pathMacroManager: PathMacroManager) : FileBasedStorage(file, fileSpec, "defaultProject", pathMacroManager.createTrackingSubstitutor(), RoamingType.DISABLED) {
   override val configuration = object: FileBasedStorageConfiguration {
@@ -39,7 +40,7 @@ private class DefaultProjectStorage(file: Path, fileSpec: String, pathMacroManag
         else -> object : StringDataWriter() {
           override fun hasData(filter: DataWriterFilter) = dataWriter.hasData(filter)
 
-          override fun write(writer: Writer, lineSeparator: String, filter: DataWriterFilter?) {
+          override fun write(@NonNls writer: Writer, lineSeparator: String, filter: DataWriterFilter?) {
             val lineSeparatorWithIndent = "$lineSeparator    "
             writer.append("<application>").append(lineSeparator)
             writer.append("""  <component name="ProjectManager">""")

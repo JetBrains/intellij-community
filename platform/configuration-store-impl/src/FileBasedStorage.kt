@@ -23,6 +23,7 @@ import com.intellij.util.io.readCharSequence
 import com.intellij.util.io.systemIndependentPath
 import org.jdom.Element
 import org.jdom.JDOMException
+import org.jetbrains.annotations.NonNls
 import java.io.IOException
 import java.nio.ByteBuffer
 import java.nio.file.Files
@@ -377,4 +378,4 @@ private fun deleteFile(file: Path, requestor: StorageManagerFileWriteRequestor, 
 
 internal class ReadOnlyModificationException(val file: VirtualFile, val session: SaveSession?) : RuntimeException("File is read-only: $file")
 
-private data class BlockSaving(val reason: String)
+private data class BlockSaving(@NonNls val reason: String)
