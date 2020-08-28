@@ -11,9 +11,19 @@ class BuildOptions {
   /**
    * By default build scripts compile project classes to a special output directory (to not interfere with the default project output if
    * invoked on a developer machine). Pass 'true' to this system property to skip compilation step and use compiled classes from the project output instead.
+   *
+   * @see {@link org.jetbrains.intellij.build.impl.CompilationContextImpl#getProjectOutputDirectory}
    */
   public static final String USE_COMPILED_CLASSES_PROPERTY = "intellij.build.use.compiled.classes"
   boolean useCompiledClassesFromProjectOutput = SystemProperties.getBooleanProperty(USE_COMPILED_CLASSES_PROPERTY, false)
+
+  /**
+   * Use this property to change the project compiled classes output directory.
+   *
+   * @see {@link org.jetbrains.intellij.build.impl.CompilationContextImpl#getProjectOutputDirectory}
+   */
+  public static final String PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY = "intellij.project.classes.output.directory"
+  String projectClassesOutputDirectory = System.getProperty(PROJECT_CLASSES_OUTPUT_DIRECTORY_PROPERTY)
 
   /**
    * Specifies for which operating systems distributions should be built.
