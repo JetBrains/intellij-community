@@ -11,9 +11,9 @@ class UnwrapSuggesterJSTest : UnwrapSuggesterTest() {
     override val testingCodeFileName: String = "JavaScriptCodeExample.js"
 
     override fun `testUnwrap IF statement and get suggestion`() {
-        selectBetweenLogicalPositions(lineStartIndex = 20, columnStartIndex = 49, lineEndIndex = 20, columnEndIndex = 3)
-        deleteSymbolAtCaret()
         moveCaretToLogicalPosition(22, 9)
+        deleteSymbolAtCaret()
+        selectBetweenLogicalPositions(lineStartIndex = 20, columnStartIndex = 49, lineEndIndex = 20, columnEndIndex = 3)
         deleteSymbolAtCaret()
 
         invokeLater {

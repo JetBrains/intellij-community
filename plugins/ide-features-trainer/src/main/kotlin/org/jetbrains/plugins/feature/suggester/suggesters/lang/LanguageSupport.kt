@@ -35,7 +35,12 @@ interface LanguageSupport {
     fun getContainingCodeBlock(element: PsiElement): PsiElement?
 
     /**
-     * element must be a code block @see [getCodeBlock], [getContainingCodeBlock]
+     * element must be a code block @see [getCodeBlock], [getContainingCodeBlock], [isCodeBlock]
+     */
+    fun getParentStatementOfBlock(element: PsiElement): PsiElement?
+
+    /**
+     * element must be a code block @see [getCodeBlock], [getContainingCodeBlock], [isCodeBlock]
      */
     fun getStatements(element: PsiElement): List<PsiElement>
 

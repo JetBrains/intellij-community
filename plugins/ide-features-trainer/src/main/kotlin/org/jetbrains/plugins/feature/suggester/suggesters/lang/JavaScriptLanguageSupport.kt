@@ -33,6 +33,10 @@ class JavaScriptLanguageSupport : LanguageSupport {
         return element.getParentOfType<JSBlockStatement>()
     }
 
+    override fun getParentStatementOfBlock(element: PsiElement): PsiElement? {
+        return element.parent
+    }
+
     override fun getStatements(element: PsiElement): List<PsiElement> {
         return if (element is JSBlockStatement) {
             element.statements.toList()

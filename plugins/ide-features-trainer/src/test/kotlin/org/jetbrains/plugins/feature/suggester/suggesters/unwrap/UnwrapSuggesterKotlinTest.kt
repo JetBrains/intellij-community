@@ -11,9 +11,9 @@ class UnwrapSuggesterKotlinTest : UnwrapSuggesterTest() {
     override val testingCodeFileName = "KotlinCodeExample.kt"
 
     override fun `testUnwrap IF statement and get suggestion`() {
-        selectBetweenLogicalPositions(lineStartIndex = 9, columnStartIndex = 42, lineEndIndex = 9, columnEndIndex = 3)
-        deleteSymbolAtCaret()
         moveCaretToLogicalPosition(11, 9)
+        deleteSymbolAtCaret()
+        selectBetweenLogicalPositions(lineStartIndex = 9, columnStartIndex = 42, lineEndIndex = 9, columnEndIndex = 3)
         deleteSymbolAtCaret()
 
         invokeLater {

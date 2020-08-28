@@ -30,6 +30,10 @@ class JavaLanguageSupport : LanguageSupport {
         return element.getParentOfType<PsiCodeBlock>()
     }
 
+    override fun getParentStatementOfBlock(element: PsiElement): PsiElement? {
+        return element.parent?.parent
+    }
+
     override fun getStatements(element: PsiElement): List<PsiElement> {
         return if (element is PsiCodeBlock) {
             element.statements.toList()

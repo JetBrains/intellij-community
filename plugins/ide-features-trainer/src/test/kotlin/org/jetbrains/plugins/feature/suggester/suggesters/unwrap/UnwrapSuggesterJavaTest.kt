@@ -11,9 +11,9 @@ class UnwrapSuggesterJavaTest : UnwrapSuggesterTest() {
     override val testingCodeFileName = "JavaCodeExample.java"
 
     override fun `testUnwrap IF statement and get suggestion`() {
-        selectBetweenLogicalPositions(lineStartIndex = 9, columnStartIndex = 41, lineEndIndex = 9, columnEndIndex = 3)
-        deleteSymbolAtCaret()
         moveCaretToLogicalPosition(11, 9)
+        deleteSymbolAtCaret()
+        selectBetweenLogicalPositions(lineStartIndex = 9, columnStartIndex = 41, lineEndIndex = 9, columnEndIndex = 3)
         deleteSymbolAtCaret()
 
         invokeLater {

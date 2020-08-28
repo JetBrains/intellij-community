@@ -32,6 +32,10 @@ class PythonLanguageSupport : LanguageSupport {
         return element.getParentOfType<PyStatementList>()
     }
 
+    override fun getParentStatementOfBlock(element: PsiElement): PsiElement? {
+        return element.parent?.parent
+    }
+
     override fun getStatements(element: PsiElement): List<PsiElement> {
         return if (element is PyStatementList) {
             element.statements.toList()
