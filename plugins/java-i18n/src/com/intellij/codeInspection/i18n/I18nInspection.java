@@ -78,7 +78,6 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
            UastBinaryOperator.IDENTITY_NOT_EQUALS);
   
   private static final CallMatcher IGNORED_METHODS = CallMatcher.anyOf( 
-    CallMatcher.exactInstanceCall(CommonClassNames.JAVA_LANG_STRING, "substring", "trim"),
     CallMatcher.staticCall(CommonClassNames.JAVA_LANG_STRING, "valueOf").parameterTypes("int"),
     CallMatcher.staticCall(CommonClassNames.JAVA_LANG_STRING, "valueOf").parameterTypes("double"),
     CallMatcher.staticCall(CommonClassNames.JAVA_LANG_STRING, "valueOf").parameterTypes("long"),
@@ -658,6 +657,13 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
       PsiMethod target = ref.resolve();
       if (target == null) return;
       if (IGNORED_METHODS.methodMatches(target)) return;
+      if (!target.hasModifierProperty(PsiModifier.STATIC)) {
+        PsiClass containingClass = target.getContainingClass();
+        if (containingClass != null && (CommonClassNames.JAVA_LANG_STRING.equals(containingClass.getQualifiedName()) ||
+                                        CommonClassNames.JAVA_LANG_CHAR_SEQUENCE.equals(containingClass.getQualifiedName()))) {
+          return;
+        }
+      }
       if (ref.getUastParent() instanceof UQualifiedReferenceExpression) {
         UQualifiedReferenceExpression parent = (UQualifiedReferenceExpression)ref.getUastParent();
         if (STRING_BUILDER_TO_STRING.methodMatches(target)) {
@@ -682,7 +688,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
 
     private void processReferenceToNonLocalized(@NotNull PsiElement sourcePsi, @NotNull UExpression ref, PsiModifierListOwner target) {
       PsiType type = ref.getExpressionType();
-      if (!TypeUtils.isJavaLangString(type)) return;
+      if (!TypeUtils.isJavaLangString(type) && !TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_CHAR_SEQUENCE, type)) return;
       if (target instanceof PsiMethod && NlsInfo.isStringProcessingMethod((PsiMethod)target)) return;
       if (NlsInfo.forModifierListOwner(target).canBeUsedInLocalizedContext()) return;
       if (NlsInfo.forType(type).canBeUsedInLocalizedContext()) return;

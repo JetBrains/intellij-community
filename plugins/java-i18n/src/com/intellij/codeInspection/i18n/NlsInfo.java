@@ -420,7 +420,8 @@ public abstract class NlsInfo {
         if (method == null || !isPassthroughMethod(method)) return parent;
         next = uastParent;
       }
-      if (next instanceof UQualifiedReferenceExpression && !TypeUtils.isJavaLangString(next.getExpressionType())) {
+      if (next instanceof UQualifiedReferenceExpression && !TypeUtils.isJavaLangString(next.getExpressionType())
+          && !TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_CHAR_SEQUENCE, next.getExpressionType())) {
         return parent;
       }
       if (next instanceof UPolyadicExpression && ((UPolyadicExpression)next).getOperator() != UastBinaryOperator.PLUS) return parent;
