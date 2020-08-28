@@ -44,15 +44,15 @@ object WhitelistBuilder {
   @JvmStatic
   fun buildWhitelist(): List<WhitelistGroup> {
     val result = mutableListOf<WhitelistGroup>()
-    collectWhitelistFromExtensions(result, "counter", FUCounterUsageLogger.instantiateCounterCollectors())
-    collectWhitelistFromExtensions(result, "state", ApplicationUsagesCollector.EP_NAME.extensionList)
-    collectWhitelistFromExtensions(result, "state", ProjectUsagesCollector.EP_NAME.extensionList)
+    result.addAll(collectWhitelistFromExtensions("counter", FUCounterUsageLogger.instantiateCounterCollectors()))
+    result.addAll(collectWhitelistFromExtensions("state", ApplicationUsagesCollector.EP_NAME.extensionList))
+    result.addAll(collectWhitelistFromExtensions("state", ProjectUsagesCollector.EP_NAME.extensionList))
     return result
   }
 
-  private fun collectWhitelistFromExtensions(result: MutableList<WhitelistGroup>,
-                                             groupType: String,
-                                             collectors: Collection<FeatureUsagesCollector>) {
+  fun collectWhitelistFromExtensions(groupType: String,
+                                     collectors: Collection<FeatureUsagesCollector>): MutableList<WhitelistGroup> {
+    val result = mutableListOf<WhitelistGroup>()
     for (collector in collectors) {
       val group = collector.group ?: continue
       val whitelistEvents = group.events.groupBy { it.eventId }
@@ -61,6 +61,7 @@ object WhitelistBuilder {
       val whitelistGroup = WhitelistGroup(group.id, groupType, group.version, whitelistEvents)
       result.add(whitelistGroup)
     }
+    return result
   }
 
   private fun buildFields(events: List<BaseEventId>): HashSet<WhitelistField> {
