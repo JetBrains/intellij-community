@@ -1105,6 +1105,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     }
     ULocalVariable uVar = UastContextKt.toUElement(resolved, ULocalVariable.class);
     if (uVar != null) {
+      if (NlsInfo.fromUVariable(uVar).getNlsStatus() == ThreeState.NO) return true;
       UExpression initializer = uVar.getUastInitializer();
       if (initializer instanceof UResolvable) {
         PsiModifierListOwner method = ObjectUtils.tryCast(((UResolvable)initializer).resolve(), PsiModifierListOwner.class);
