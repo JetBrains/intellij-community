@@ -8,20 +8,18 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.appSystemDir
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.pooledThreadSingleAlarm
-import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.VersionedStorageChange
+import com.intellij.workspaceModel.storage.impl.EntityStorageSerializerImpl
 import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.nio.file.AtomicMoveNotSupportedException
@@ -31,8 +29,6 @@ import java.util.concurrent.atomic.AtomicBoolean
 
 @ApiStatus.Internal
 internal class WorkspaceModelCacheImpl(private val project: Project, parentDisposable: Disposable): Disposable {
-  private val LOG = Logger.getInstance(javaClass)
-
   private val cacheFile: File
   private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
   private val serializer: EntityStorageSerializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, virtualFileManager)
