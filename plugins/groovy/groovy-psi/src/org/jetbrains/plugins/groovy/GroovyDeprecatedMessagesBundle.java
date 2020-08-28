@@ -9,27 +9,21 @@ import org.jetbrains.annotations.PropertyKey;
 
 import java.util.function.Supplier;
 
-public final class GroovyBundle extends DynamicBundle {
+final class GroovyDeprecatedMessagesBundle extends DynamicBundle {
 
-  public static final @NonNls String BUNDLE = "messages.GroovyBundle";
-  private static final GroovyBundle INSTANCE = new GroovyBundle();
+  private static final @NonNls String BUNDLE = "messages.GroovyDeprecatedMessagesBundle";
+  private static final GroovyDeprecatedMessagesBundle INSTANCE = new GroovyDeprecatedMessagesBundle();
 
-  private GroovyBundle() {
+  private GroovyDeprecatedMessagesBundle() {
     super(BUNDLE);
   }
 
   public static @Nls @NotNull String message(@PropertyKey(resourceBundle = BUNDLE) @NotNull String key, Object @NotNull ... params) {
-    if (INSTANCE.containsKey(key)) {
-      return INSTANCE.getMessage(key, params);
-    }
-    return GroovyDeprecatedMessagesBundle.message(key, params);
+    return INSTANCE.getMessage(key, params);
   }
 
   public static @NotNull Supplier<@Nls @NotNull String> messagePointer(@PropertyKey(resourceBundle = BUNDLE) @NotNull String key,
                                                                        Object @NotNull ... params) {
-    if (INSTANCE.containsKey(key)) {
-      return INSTANCE.getLazyMessage(key, params);
-    }
-    return GroovyDeprecatedMessagesBundle.messagePointer(key, params);
+    return INSTANCE.getLazyMessage(key, params);
   }
 }
