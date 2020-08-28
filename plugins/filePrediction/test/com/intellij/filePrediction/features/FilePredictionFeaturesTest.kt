@@ -1,6 +1,5 @@
 package com.intellij.filePrediction.features
 
-import com.intellij.filePrediction.candidates.FilePredictionCandidateSource
 import com.intellij.filePrediction.candidates.FilePredictionCandidateSource.OPEN
 import com.intellij.filePrediction.predictor.FilePredictionCandidate
 import com.intellij.filePrediction.predictor.FilePredictionCompressedCandidatesHolder
@@ -40,10 +39,33 @@ class FilePredictionFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtureBuild
     assertNotEmpty(features.value.keys)
 
     val before = FilePredictionCandidate(candidateFile.path, OPEN, features.value, 5, 10, 0.1)
+    val beforeFeaturesSize = groupFeaturesByProviders(before).values
+
     val holder = FilePredictionCompressedCandidatesHolder.create(listOf(before))
-    val after = holder.getCandidates()
-    assertTrue(after.size == 1)
-    TestCase.assertEquals(before, after[0])
+    val afterCandidates = holder.getCandidates()
+    assertTrue(afterCandidates.size == 1)
+
+    val after = afterCandidates[0]
+    TestCase.assertEquals(before.features.size, after.features.flatten().filterNotNull().size)
+
+    val afterFeaturesSize = after.features.mapNotNull {
+      val filtered = it.filterNotNull()
+      if (filtered.isNotEmpty()) filtered.size else null
+    }
+    TestCase.assertEquals("Number of providers is different after encoding", beforeFeaturesSize.size, afterFeaturesSize.size)
+
+    val diff: MutableList<Int> = arrayListOf(*beforeFeaturesSize.toTypedArray())
+    diff.removeAll(afterFeaturesSize)
+    TestCase.assertTrue("Number of features in providers is different after encoding", diff.isEmpty())
+  }
+
+  private fun groupFeaturesByProviders(before: FilePredictionCandidate): Map<String, Int> {
+    val result: HashMap<String, Int> = hashMapOf()
+    for (feature in before.features) {
+      val provider = feature.key.subSequence(0, feature.key.indexOf('_')).toString()
+      result[provider] = result.getOrDefault(provider, 0) + 1
+    }
+    return result
   }
 
   @Test
@@ -66,7 +88,7 @@ class FilePredictionFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtureBuild
     )
   }
 
-  fun `test features do not change after encoding and decoding`() {
+  fun `test number of features do not change after encoding and decoding`() {
     doTestCandidatesEncoding()
   }
 
@@ -78,6 +100,15 @@ class FilePredictionFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtureBuild
       for ((index, feature) in features.withIndex()) {
         TestCase.assertEquals("Features should be sorted alphabetically", sortedFeatures[index], feature)
       }
+    }
+  }
+
+  fun `test providers are ordered alphabetically`() {
+    val featuresByProviders = FilePredictionFeaturesHelper.getFeaturesByProviders()
+    val features = featuresByProviders.flatten()
+    val sortedFeatures = features.sorted()
+    for ((index, feature) in features.withIndex()) {
+      TestCase.assertEquals("Features should be sorted alphabetically", sortedFeatures[index], feature)
     }
   }
 }

@@ -286,16 +286,8 @@ class FileUsagePredictorLoggerTest : CodeInsightFixtureTestCase<ModuleFixtureBui
 
     @Suppress("UNCHECKED_CAST")
     val validator = TestFileCandidatesValidatorBuilder()
-      .hasField("opened", 0) {
-        val features = it["features"] as List<Map<String, Any>>
-        val fileType = features.find { feature -> feature["name"] == "file_type" }
-        fileType != null && fileType["value"] != "JAVA"
-      }
-      .hasField("opened", 1) {
-        val features = it["features"] as List<Map<String, Any>>
-        val fileType = features.find { feature -> feature["name"] == "file_type" }
-        fileType != null && fileType["value"] == "JAVA"
-      }.build()
+      .hasField("opened", 0) { (it["features"] as String).contains("JAVA").not() }
+      .hasField("opened", 1) { (it["features"] as String).contains("JAVA") }.build()
     doTestOpenedFile(builder, "com/test/next_file.java", validator, 4)
   }
 

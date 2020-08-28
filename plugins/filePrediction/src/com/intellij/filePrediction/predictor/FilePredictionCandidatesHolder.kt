@@ -2,62 +2,44 @@
 package com.intellij.filePrediction.predictor
 
 import com.intellij.filePrediction.candidates.FilePredictionCandidateSource
-import com.intellij.filePrediction.features.FilePredictionFeature
 import com.intellij.filePrediction.features.FilePredictionFeaturesHelper
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap
 
 interface FilePredictionCandidatesHolder {
-  fun getCandidates(): List<FilePredictionCandidate>
+  fun getCandidates(): List<FilePredictionCompressedCandidate>
 }
 
 internal class FilePredictionCompressedCandidatesHolder(
-  private val candidates: List<FilePredictionCompressedCandidate>,
-  private val codes: Map<Int, String>
+  private val candidates: List<FilePredictionCompressedCandidate>
 ) : FilePredictionCandidatesHolder {
   companion object {
     fun create(candidates: List<FilePredictionCandidate>): FilePredictionCompressedCandidatesHolder {
-      val codes = FilePredictionFeaturesHelper.getFeatureCodes()
+      val codes = FilePredictionFeaturesHelper.getFeaturesByProviders()
       val encodedCandidates = candidates.map { encode(it, codes) }
-      val invertedCodes = Int2ObjectOpenHashMap<String>()
-      for (code in codes) {
-        invertedCodes[code.value] = code.key
-      }
-      return FilePredictionCompressedCandidatesHolder(encodedCandidates, invertedCodes)
+      return FilePredictionCompressedCandidatesHolder(encodedCandidates)
     }
 
-    private fun encode(candidate: FilePredictionCandidate, codes: Map<String, Int>): FilePredictionCompressedCandidate {
-      val features = Int2ObjectOpenHashMap<FilePredictionFeature>()
-      for (feature in candidate.features) {
-        val newKey = codes[feature.key]
-        if (newKey != null) {
-          features[newKey] = feature.value
-        }
+    private fun encode(candidate: FilePredictionCandidate, codesByProviders: List<List<String>>): FilePredictionCompressedCandidate {
+      val features = candidate.features
+      val compressed: Array<Array<Any?>> = Array(codesByProviders.size) {
+        return@Array codesByProviders[it].map { code -> features[code]?.value }.toTypedArray()
       }
 
       return FilePredictionCompressedCandidate(
-        candidate.path, candidate.source, features,
-        candidate.featuresComputation, candidate.duration, candidate.probability
-      )
-    }
-
-    private fun decode(candidate: FilePredictionCompressedCandidate, codes: Map<Int, String>): FilePredictionCandidate {
-      val features = candidate.features.mapKeys { codes.getOrDefault(it.key, "unknown") }
-      return FilePredictionCandidate(
-        candidate.path, candidate.source, features,
+        candidate.path, candidate.source, compressed,
         candidate.featuresComputation, candidate.duration, candidate.probability
       )
     }
   }
 
-  override fun getCandidates(): List<FilePredictionCandidate> {
-    return candidates.map { decode(it, codes) }
+  override fun getCandidates(): List<FilePredictionCompressedCandidate> {
+    return candidates
   }
 }
 
-internal class FilePredictionCompressedCandidate(
+class FilePredictionCompressedCandidate(
   val path: String,
   val source: FilePredictionCandidateSource,
-  val features: Map<Int, FilePredictionFeature>,
+  val features: Array<Array<Any?>>,
   val featuresComputation: Long,
   val duration: Long? = null,
   val probability: Double? = null

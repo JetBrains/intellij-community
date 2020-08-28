@@ -25,17 +25,17 @@ internal object FilePredictionFeaturesHelper {
     return FileFeaturesComputationResult(result, start)
   }
 
-  fun getFeatureCodes(): Map<String, Int> {
-    val codes = hashMapOf<String, Int>()
-    for ((index, provider) in EP_NAME.extensionList.withIndex()) {
+  fun getFeaturesByProviders(): List<List<String>> {
+    val orderedFeatures = arrayListOf<List<String>>()
+    for (provider in getOrderedFeatureProviders()) {
       val prefix = calculateProviderPrefix(provider)
-      for ((featureIndex, feature) in provider.getFeatures().withIndex()) {
-        val key = prefix + feature
-        val value = 100 * index + featureIndex
-        codes[key] = value
-      }
+      orderedFeatures.add(provider.getFeatures().map { prefix + it }.toList())
     }
-    return codes
+    return orderedFeatures
+  }
+
+  private fun getOrderedFeatureProviders(): List<FilePredictionFeatureProvider> {
+    return EP_NAME.extensionList.sortedBy { it.getName() }
   }
 
   private fun calculateProviderPrefix(provider: FilePredictionFeatureProvider) =

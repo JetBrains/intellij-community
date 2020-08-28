@@ -26,7 +26,7 @@ internal class FilePredictionSession(val prevPath: String?, threshold: Double) {
     refsDuration = refs
   }
 
-  fun findOpenedCandidate(file: VirtualFile, candidates: List<FilePredictionCandidate>): FilePredictionCandidate? {
+  fun findOpenedCandidate(file: VirtualFile, candidates: List<FilePredictionCompressedCandidate>): FilePredictionCompressedCandidate? {
     for (candidate in candidates) {
       if (StringUtil.equals(candidate.path, file.path)) {
         return candidate

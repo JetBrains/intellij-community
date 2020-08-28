@@ -2,8 +2,7 @@
 package com.intellij.filePrediction.logger
 
 import com.intellij.filePrediction.candidates.FilePredictionCandidateSource
-import com.intellij.filePrediction.features.FilePredictionFeature
-import com.intellij.filePrediction.predictor.FilePredictionCandidate
+import com.intellij.filePrediction.predictor.FilePredictionCompressedCandidate
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
@@ -16,23 +15,21 @@ internal class FileNavigationLogger : CounterUsagesCollector() {
     private var session: IntEventField = EventFields.Int("session")
     private var performance: LongListEventField = EventFields.LongList("performance")
 
+    private var anonymized_path: CandidateAnonymizedPath = CandidateAnonymizedPath()
     private var opened: CompressedBooleanEventField = CompressedBooleanEventField("opened")
-    private var source: CompressedEnumEventField<FilePredictionCandidateSource> =
-      CompressedEnumEventField("source", FilePredictionCandidateSource::class.java)
+    private var source: CompressedEnumEventField<FilePredictionCandidateSource> = CompressedEnumEventField("source")
 
     private var probability: CompressedDoubleEventField = CompressedDoubleEventField("prob")
 
-    private val featureName = EventFields.StringValidatedByEnum("name", "feature_name")
-    private val featureValue = EventFields.StringValidatedByEnum("value", "feature_value")
-    private var features: ObjectListEventField = ObjectListEventField("features", featureName, featureValue)
+    private var features: CandidateFeaturesField = CandidateFeaturesField("features")
 
     private var candidates: ObjectListEventField = ObjectListEventField(
       "candidates",
-      EventFields.AnonymizedPath,
+      anonymized_path,
       opened.field,
       source.field,
       probability.field,
-      features
+      features.field
     )
 
     private val cacheCandidates = GROUP.registerEvent("calculated", session, performance, candidates)
@@ -40,8 +37,8 @@ internal class FileNavigationLogger : CounterUsagesCollector() {
 
     fun logEvent(project: Project,
                  sessionId: Int,
-                 opened: FilePredictionCandidate?,
-                 candidates: List<FilePredictionCandidate>,
+                 opened: FilePredictionCompressedCandidate?,
+                 candidates: List<FilePredictionCompressedCandidate>,
                  totalDuration: Long,
                  refsComputation: Long) {
       val allCandidates: MutableList<ObjectEventData> = arrayListOf()
@@ -57,30 +54,22 @@ internal class FileNavigationLogger : CounterUsagesCollector() {
       cacheCandidates.log(project, sessionId, performanceMs, allCandidates)
     }
 
-    private fun toObject(candidate: FilePredictionCandidate, wasOpened: Boolean): ObjectEventData {
+    private fun toObject(candidate: FilePredictionCompressedCandidate, wasOpened: Boolean): ObjectEventData {
       val data = arrayListOf<EventPair<*>>(
-        EventFields.AnonymizedPath.with(candidate.path),
+        anonymized_path.with(candidate.path),
         opened.with(wasOpened),
         source.with(candidate.source)
       )
       if (candidate.probability != null) {
         data.add(probability.with(candidate.probability))
       }
-      data.add(features.with(candidate.features.map { toFeaturesList(it.key, it.value) }.toList()))
-      return ObjectEventData(*data.toTypedArray())
-    }
-
-    private fun toFeaturesList(name: String, value: FilePredictionFeature): ObjectEventData {
-      val data = arrayListOf<EventPair<*>>(
-        featureName.with(name),
-        featureValue.with(value.value.toString())
-      )
+      data.add(features.with(candidate.features))
       return ObjectEventData(*data.toTypedArray())
     }
 
     private fun toPerformanceMetrics(totalDuration: Long, refsComputation: Long,
-                                     openCandidate: FilePredictionCandidate?,
-                                     candidates: List<FilePredictionCandidate>): List<Long> {
+                                     openCandidate: FilePredictionCompressedCandidate?,
+                                     candidates: List<FilePredictionCompressedCandidate>): List<Long> {
       var featuresMs: Long = 0
       var predictionMs: Long = 0
       openCandidate?.let {
