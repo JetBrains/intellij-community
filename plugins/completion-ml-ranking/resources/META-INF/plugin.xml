@@ -20,6 +20,10 @@
     <extensionPoint name="policy" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.completion.ml.CompletionMLPolicy"/>
     </extensionPoint>
+
+    <extensionPoint qualifiedName="com.intellij.completion.ml.lookupFeatures" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.completion.ml.sorting.LookupFeatureProvider"/>
+    </extensionPoint>
   </extensionPoints>
 
   <resource-bundle>messages.MlCompletionBundle</resource-bundle>
@@ -73,6 +77,7 @@
     <completion.ml.elementFeatures language="" implementationClass="com.intellij.completion.ml.common.ContextSimilarityFeatures"/>
     <completion.ml.elementFeatures language="" implementationClass="com.intellij.completion.ml.common.RecentPlacesFeatures"/>
     <completion.ml.elementFeatures language="" implementationClass="com.intellij.codeInsight.completion.ml.VcsFeatureProvider"/>
+    <completion.ml.lookupFeatures language="JAVA" implementationClass="com.intellij.completion.ml.sorting.RecommendersLookupFeatureProvider"/>
 
     <lookup.usageDetails implementation="com.intellij.completion.ml.features.MLRankingLookupUsageDescriptor"/>
 
