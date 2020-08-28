@@ -2,7 +2,7 @@
 package com.intellij.filePrediction.features
 
 import com.intellij.filePrediction.features.FilePredictionFeature.Companion.binary
-import com.intellij.filePrediction.features.FilePredictionFeature.Companion.categorical
+import com.intellij.filePrediction.features.FilePredictionFeature.Companion.fileType
 import com.intellij.filePrediction.features.FilePredictionFeature.Companion.numerical
 import com.intellij.filePrediction.references.ExternalReferencesResult
 import com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector
@@ -92,10 +92,10 @@ class FilePredictionGeneralFeatures: FilePredictionFeatureProvider {
   }
 
   private fun addFileTypeFeatures(result: MutableMap<String, FilePredictionFeature>, newFile: VirtualFile, prevFile: VirtualFile?) {
-    result["file_type"] = categorical(FileTypeUsagesCollector.getSafeFileTypeName(newFile.fileType))
+    result["file_type"] = fileType(FileTypeUsagesCollector.getSafeFileTypeName(newFile.fileType))
 
     if (prevFile != null) {
-      result["prev_file_type"] = categorical(FileTypeUsagesCollector.getSafeFileTypeName(prevFile.fileType))
+      result["prev_file_type"] = fileType(FileTypeUsagesCollector.getSafeFileTypeName(prevFile.fileType))
     }
   }
 

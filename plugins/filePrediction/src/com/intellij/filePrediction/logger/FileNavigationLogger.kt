@@ -16,12 +16,12 @@ internal class FileNavigationLogger : CounterUsagesCollector() {
     private var performance: LongListEventField = EventFields.LongList("performance")
 
     private var anonymized_path: CandidateAnonymizedPath = CandidateAnonymizedPath()
-    private var opened: CompressedBooleanEventField = CompressedBooleanEventField("opened")
-    private var source: CompressedEnumEventField<FilePredictionCandidateSource> = CompressedEnumEventField("source")
+    private var opened: EncodedBooleanEventField = EncodedBooleanEventField("opened")
+    private var source: EncodedEnumEventField<FilePredictionCandidateSource> = EncodedEnumEventField("source")
 
-    private var probability: CompressedDoubleEventField = CompressedDoubleEventField("prob")
+    private var probability: EncodedDoubleEventField = EncodedDoubleEventField("prob")
 
-    private var features: CandidateFeaturesField = CandidateFeaturesField("features")
+    private var features: StringEventField = EventFields.StringValidatedByCustomRule("features", "file_features")
 
     private var candidates: ObjectListEventField = ObjectListEventField(
       "candidates",
@@ -29,7 +29,7 @@ internal class FileNavigationLogger : CounterUsagesCollector() {
       opened.field,
       source.field,
       probability.field,
-      features.field
+      features
     )
 
     private val cacheCandidates = GROUP.registerEvent("calculated", session, performance, candidates)

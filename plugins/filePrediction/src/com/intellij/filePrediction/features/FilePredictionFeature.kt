@@ -1,8 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.filePrediction.features
 
-import com.intellij.internal.statistic.eventLog.FeatureUsageData
-import kotlin.math.round
+import com.intellij.filePrediction.FilePredictionEventFieldEncoder
 
 sealed class FilePredictionFeature {
   companion object {
@@ -16,12 +15,12 @@ sealed class FilePredictionFeature {
     fun numerical(value: Double): FilePredictionFeature = DoubleValue(value)
 
     @JvmStatic
-    fun categorical(value: String): FilePredictionFeature = CategoricalValue(value)
+    fun fileType(value: String): FilePredictionFeature = FileTypeValue(value)
   }
 
   abstract val value: Any
 
-  abstract fun addToEventData(key: String, data: FeatureUsageData)
+  abstract fun appendTo(result: StringBuilder)
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -44,31 +43,26 @@ sealed class FilePredictionFeature {
       val FALSE = BinaryValue(false)
     }
 
-    override fun addToEventData(key: String, data: FeatureUsageData) {
-      data.addData(key, value)
+    override fun appendTo(result: StringBuilder) {
+      result.append(FilePredictionEventFieldEncoder.encodeBool(value))
     }
   }
 
   private class NumericalValue(override val value: Int) : FilePredictionFeature() {
-    override fun addToEventData(key: String, data: FeatureUsageData) {
-      data.addData(key, value)
+    override fun appendTo(result: StringBuilder) {
+      result.append(value)
     }
   }
 
   private class DoubleValue(override val value: Double) : FilePredictionFeature() {
-    override fun addToEventData(key: String, data: FeatureUsageData) {
-      data.addData(key, process(value))
-    }
-
-    private fun process(value: Double): Double {
-      if (!value.isFinite()) return -1.0
-      return round(value * 100000) / 100000
+    override fun appendTo(result: StringBuilder) {
+      result.append(FilePredictionEventFieldEncoder.encodeDouble(value))
     }
   }
 
-  private class CategoricalValue(override val value: String) : FilePredictionFeature() {
-    override fun addToEventData(key: String, data: FeatureUsageData) {
-      data.addData(key, value)
+  private class FileTypeValue(override val value: String) : FilePredictionFeature() {
+    override fun appendTo(result: StringBuilder) {
+      result.append(FilePredictionEventFieldEncoder.encodeFileType(value))
     }
   }
 }

@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.filePrediction.predictor
 
-import com.intellij.filePrediction.logger.FilePredictionsFeaturesValidator
+import com.intellij.filePrediction.logger.FilePredictionFeaturesValidator
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.testFramework.builders.ModuleFixtureBuilder
@@ -29,12 +29,12 @@ class FilePredictorFeaturesValidatorTest : CodeInsightFixtureTestCase<ModuleFixt
   }
 
   private fun doTestAccepted(features: String) {
-    val validator = FilePredictionsFeaturesValidator()
+    val validator = FilePredictionFeaturesValidator()
     TestCase.assertTrue(validator.validate(features, newContext(features)) == ValidationResultType.ACCEPTED)
   }
 
   private fun doTestRejected(features: String) {
-    val validator = FilePredictionsFeaturesValidator()
+    val validator = FilePredictionFeaturesValidator()
     TestCase.assertTrue(validator.validate(features, newContext(features)) == ValidationResultType.REJECTED)
   }
 
@@ -72,8 +72,8 @@ class FilePredictorFeaturesValidatorTest : CodeInsightFixtureTestCase<ModuleFixt
   }
 
   fun `test list of numbers from multiple providers accepted`() {
-    doTestAccepted("1,2,0;1,1")
-    doTestAccepted("1,2,0;1,1;;;")
+    doTestAccepted("1,-2,0;1,1")
+    doTestAccepted("1,2,0;1,-1;;;")
     doTestAccepted("1,2;,0;1,1;,,;,;")
   }
 

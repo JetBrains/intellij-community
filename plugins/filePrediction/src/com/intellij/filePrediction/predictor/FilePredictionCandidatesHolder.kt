@@ -2,6 +2,7 @@
 package com.intellij.filePrediction.predictor
 
 import com.intellij.filePrediction.candidates.FilePredictionCandidateSource
+import com.intellij.filePrediction.features.FilePredictionFeature
 import com.intellij.filePrediction.features.FilePredictionFeaturesHelper
 
 interface FilePredictionCandidatesHolder {
@@ -19,15 +20,23 @@ internal class FilePredictionCompressedCandidatesHolder(
     }
 
     private fun encode(candidate: FilePredictionCandidate, codesByProviders: List<List<String>>): FilePredictionCompressedCandidate {
-      val features = candidate.features
-      val compressed: Array<Array<Any?>> = Array(codesByProviders.size) {
-        return@Array codesByProviders[it].map { code -> features[code]?.value }.toTypedArray()
-      }
-
+      val encoded = encodeFeatures(candidate.features, codesByProviders)
       return FilePredictionCompressedCandidate(
-        candidate.path, candidate.source, compressed,
+        candidate.path, candidate.source, encoded,
         candidate.featuresComputation, candidate.duration, candidate.probability
       )
+    }
+    
+    internal fun encodeFeatures(features: Map<String, FilePredictionFeature>, codesByProviders: List<List<String>>): String {
+      val result = StringBuilder()
+      for ((providerIndex, codesByProvider) in codesByProviders.withIndex()) {
+        if (providerIndex > 0) result.append(';')
+        for ((featureIndex, code) in codesByProvider.withIndex()) {
+          if (featureIndex > 0) result.append(',')
+          features[code]?.appendTo(result)
+        }
+      }
+      return result.toString()
     }
   }
 
@@ -39,7 +48,7 @@ internal class FilePredictionCompressedCandidatesHolder(
 class FilePredictionCompressedCandidate(
   val path: String,
   val source: FilePredictionCandidateSource,
-  val features: Array<Array<Any?>>,
+  val features: String,
   val featuresComputation: Long,
   val duration: Long? = null,
   val probability: Double? = null
