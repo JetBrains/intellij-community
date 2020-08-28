@@ -138,10 +138,12 @@
          areChildrenValidMappings="true"/>
     <projectConfigurable id="vcs.Subversion" displayName="Subversion" instance="org.jetbrains.idea.svn.SvnConfigurable$General"
                          parentId="project.propVCSSupport.Mappings" groupWeight="-500">
-      <configurable id="vcs.Subversion.Presentation" displayName="Presentation"
-                    instance="org.jetbrains.idea.svn.SvnConfigurable$Presentation"/>
-      <configurable id="vcs.Subversion.Network" displayName="Network" instance="org.jetbrains.idea.svn.SvnConfigurable$Network"/>
-      <configurable id="vcs.Subversion.SSH" displayName="SSH" instance="org.jetbrains.idea.svn.SvnConfigurable$Ssh"/>
+      <configurable id="vcs.Subversion.Presentation" instance="org.jetbrains.idea.svn.SvnConfigurable$Presentation"
+                    bundle="messages.SvnBundle" key="configurable.name.svn.presentation"/>
+      <configurable id="vcs.Subversion.Network" instance="org.jetbrains.idea.svn.SvnConfigurable$Network"
+                    bundle="messages.SvnBundle" key="configurable.name.svn.network"/>
+      <configurable id="vcs.Subversion.SSH" instance="org.jetbrains.idea.svn.SvnConfigurable$Ssh"
+                    bundle="messages.SvnBundle" key="configurable.name.svn.ssh"/>
     </projectConfigurable>
     <vcsPopupProvider implementation="org.jetbrains.idea.svn.actions.SvnQuickListContentProvider"/>
 

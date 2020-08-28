@@ -12,6 +12,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
@@ -87,8 +88,9 @@ public final class SvnVcs extends AbstractVcs {
   private static final Logger REFRESH_LOG = Logger.getInstance("#svn_refresh");
   public static boolean ourListenToWcDb = !Boolean.getBoolean(DO_NOT_LISTEN_TO_WC_DB);
 
-  @NonNls public static final String VCS_NAME = "svn";
-  public static final String VCS_DISPLAY_NAME = "Subversion";
+  public static final @NonNls @NotNull String VCS_NAME = "svn";
+  public static final @NlsSafe @NotNull String VCS_DISPLAY_NAME = "Subversion";
+  private static final @NlsSafe @NotNull String VCS_SHORT_DISPLAY_NAME = "SVN";
 
   private static final VcsKey ourKey = createKey(VCS_NAME);
   public static final Topic<Runnable> WC_CONVERTED = new Topic<>("WC_CONVERTED", Runnable.class);
@@ -366,7 +368,7 @@ public final class SvnVcs extends AbstractVcs {
   @NotNull
   @Override
   public String getShortName() {
-    return "SVN";
+    return VCS_SHORT_DISPLAY_NAME;
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.config;
 
 import com.intellij.openapi.actionSystem.AnAction;
@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.MasterDetailsComponent;
-import com.intellij.openapi.util.Ref;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -93,7 +92,6 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
   }
 
   public boolean validate(final ValidationListener listener) {
-    final Ref<String> errorMessageRef = new Ref<>();
     final Set<String> checkSet = new HashSet<>();
     final AmbiguousPatternsFinder ambiguousPatternsFinder = new AmbiguousPatternsFinder();
 
@@ -110,25 +108,29 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
     }
 
     for (int i = 0; i < myRoot.getChildCount(); i++) {
-      final MyNode node = (MyNode) myRoot.getChildAt(i);
-      final GroupConfigurable groupConfigurable = (GroupConfigurable) node.getConfigurable();
+      final MyNode node = (MyNode)myRoot.getChildAt(i);
+      final GroupConfigurable groupConfigurable = (GroupConfigurable)node.getConfigurable();
       groupConfigurable.applyImpl();
-      if(! groupConfigurable.validate(errorMessageRef)) {
-        listener.onError(errorMessageRef.get(), myComponent, false);
+
+      String error = groupConfigurable.validate();
+      if (error != null) {
+        listener.onError(error, myComponent, false);
         return false;
       }
 
-      if (! groupConfigurable.getEditableObject().isDefault()) {
+      if (!groupConfigurable.getEditableObject().isDefault()) {
         final String groupName = groupConfigurable.getEditableObject().getName();
         final List<String> urls = groupConfigurable.getRepositories();
         ambiguousPatternsFinder.acceptUrls(groupName, urls);
       }
     }
 
-    if(! ambiguousPatternsFinder.isValid(errorMessageRef)) {
-      listener.onError(errorMessageRef.get(), myComponent, false);
+    String error = ambiguousPatternsFinder.validate();
+    if (error != null) {
+      listener.onError(error, myComponent, false);
       return false;
     }
+
     return true;
   }
 
