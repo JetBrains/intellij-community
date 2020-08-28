@@ -30,6 +30,7 @@ task expandGradleApiJar() {
     projectDir.mkdirs()
 
     // ensure generated jars are created from specified Gradle distribution
+    // ATTENTION! This might not work on some environments, e.g. on windows agents of teamcity
     project.delete(new File(project.gradle.gradleUserHomeDir, "caches/$gradleApiVersion/generated-gradle-jars"))
 
     // prevent discovering of the settings.gradle file from the parent dir
