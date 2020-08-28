@@ -795,7 +795,7 @@
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.exception.GroovyContinueOrBreakFromFinallyBlockInspection"/>
     <localInspection language="Groovy" groupPath="Groovy"
                      key="inspection.display.name.method.may.be.static"
-                     groupName="Declaration" enabledByDefault="true"
+                     groupKey="inspection.other" enabledByDefault="true"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.declaration.GrMethodMayBeStaticInspection"/>
     <localInspection language="Groovy" groupPath="Groovy"
                      key="inspection.display.name.return.from.finally.block" groupKey="inspection.error.handling"

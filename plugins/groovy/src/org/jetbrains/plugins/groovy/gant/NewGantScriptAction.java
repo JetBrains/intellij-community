@@ -9,7 +9,6 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
-import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -24,10 +23,6 @@ import java.util.Objects;
  * @author ilyas
  */
 public class NewGantScriptAction extends NewGroovyActionBase {
-
-  public NewGantScriptAction() {
-    super(GroovyBundle.message("new.gant.script.action.text"), GroovyBundle.message("new.gant.script.action.description"), JetgroovyIcons.Groovy.Gant_16x16);
-  }
 
   @Override
   protected String getActionName(PsiDirectory directory, String newName) {

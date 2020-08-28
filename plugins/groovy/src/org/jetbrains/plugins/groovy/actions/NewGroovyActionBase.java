@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.openapi.util.NlsContexts.DialogTitle;
 import com.intellij.psi.PsiDirectory;
@@ -27,11 +26,7 @@ public abstract class NewGroovyActionBase extends CreateElementActionBase {
   @NonNls
   public static final String GROOVY_EXTENSION = ".groovy";
 
-  public NewGroovyActionBase(@NlsActions.ActionText String text,
-                             @NlsActions.ActionDescription String description,
-                             Icon icon) {
-    super(text, description, icon);
-  }
+  protected NewGroovyActionBase() {}
 
   public NewGroovyActionBase(@NotNull Supplier<String> text, @NotNull Supplier<String> description, Icon icon) {
     super(text, description, icon);
