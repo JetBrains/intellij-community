@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.rollback;
 
 import com.intellij.openapi.util.Comparing;
@@ -13,7 +13,6 @@ import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.WorkingCopyFormat;
@@ -27,6 +26,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+
+import static org.jetbrains.idea.svn.SvnBundle.message;
 
 /**
  * @author yole
@@ -42,7 +43,7 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
   @Nls(capitalization = Nls.Capitalization.Title)
   @NotNull
   public String getRollbackOperationName() {
-    return SvnBundle.message("action.name.revert");
+    return message("action.name.revert");
   }
 
   @Override
@@ -114,7 +115,7 @@ public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
       }
     }
     else {
-      throw new VcsException("Can not get 'svn info' for " + file.getPath());
+      throw new VcsException(message("error.could.not.get.info.for.path", file.getPath()));
     }
   }
 

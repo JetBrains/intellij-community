@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions.ActionText;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.actions.VcsContext;
@@ -30,7 +31,7 @@ public class AutoSvnUpdater extends AbstractCommonUpdateAction {
     myRoots = roots;
   }
 
-  public static void run(@NotNull AutoSvnUpdater updater, @NotNull String title) {
+  public static void run(@NotNull AutoSvnUpdater updater, @ActionText @NotNull String title) {
     JComponent frame = WindowManager.getInstance().getIdeFrame(updater.myProject).getComponent();
 
     updater.getTemplatePresentation().setText(title);

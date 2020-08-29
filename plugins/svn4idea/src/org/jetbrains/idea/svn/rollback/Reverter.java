@@ -19,6 +19,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+import static org.jetbrains.idea.svn.SvnBundle.message;
+
 public class Reverter {
 
   @NotNull private final SvnVcs myVcs;
@@ -168,7 +170,7 @@ public class Reverter {
           }
         }
         if (event.getAction() == EventAction.FAILED_REVERT) {
-          exceptions.add(new VcsException("Revert failed"));
+          exceptions.add(new VcsException(message("error.revert.failed")));
         }
       }
 

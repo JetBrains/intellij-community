@@ -40,6 +40,8 @@ import java.io.File;
 import java.util.List;
 import java.util.*;
 
+import static org.jetbrains.idea.svn.SvnBundle.message;
+
 public class SvnCheckinEnvironment implements CheckinEnvironment {
 
   private static final Logger LOG = Logger.getInstance(SvnCheckinEnvironment.class);
@@ -106,7 +108,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
 
   private void reportCommittedRevisions(Set<? super String> feedback, String committedRevisions) {
     final Project project = mySvnVcs.getProject();
-    final String message = SvnBundle.message("status.text.comitted.revision", committedRevisions);
+    final String message = message("status.text.comitted.revision", committedRevisions);
     if (feedback == null) {
       ApplicationManager.getApplication().invokeLater(() -> new VcsBalloonProblemNotifier(project, message, MessageType.INFO).run(),
                                                       o -> (!project.isOpen()) || project.isDisposed());
@@ -158,7 +160,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
 
   @Override
   public String getCheckinOperationName() {
-    return SvnBundle.message("checkin.operation.name");
+    return message("checkin.operation.name");
   }
 
   @NotNull
@@ -176,8 +178,9 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     }
     else if (ApplicationManager.getApplication().isDispatchThread()) {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(
-        () -> doCommit(committables, commitMessage, exception, feedback), SvnBundle.message("progress.title.commit"), false,
-        mySvnVcs.getProject());
+        () -> doCommit(committables, commitMessage, exception, feedback),
+        message("progress.title.commit"), false, mySvnVcs.getProject()
+      );
     }
     else {
       doCommit(committables, commitMessage, exception, feedback);
@@ -223,7 +226,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
         File file = event.getFile();
 
         if (indicator != null && file != null) {
-          indicator.setText(SvnBundle.message("progress.text2.adding", file.getName() + " (" + file.getParent() + ")"));
+          indicator.setText(message("progress.text2.adding", file.getName() + " (" + file.getParent() + ")"));
         }
       }
     };
@@ -257,11 +260,10 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
     @NotNull private final JCheckBox myAutoUpdate;
 
     KeepLocksComponent() {
-
       myPanel = new JPanel(new BorderLayout());
-      myKeepLocksBox = new JCheckBox(SvnBundle.message("checkbox.chckin.keep.files.locked"));
+      myKeepLocksBox = new JCheckBox(message("checkbox.checkin.keep.files.locked"));
       myKeepLocksBox.setSelected(myIsKeepLocks);
-      myAutoUpdate = new JCheckBox("Auto-update after commit");
+      myAutoUpdate = new JCheckBox(message("checkbox.checkin.auto.update.after.commit"));
 
       myPanel.add(myAutoUpdate, BorderLayout.NORTH);
       myPanel.add(myKeepLocksBox, BorderLayout.CENTER);
