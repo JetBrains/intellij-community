@@ -61,21 +61,24 @@ public final class IdeaTextPatchBuilder {
   public static @NotNull List<FilePatch> buildPatch(Project project,
                                                     @NotNull Collection<? extends Change> changes,
                                                     @NotNull String basePath,
-                                                    boolean reversePatch) throws VcsException {
-    return buildPatch(project, changes, Paths.get(basePath), reversePatch, false);
+                                                    boolean reversePatch,
+                                                    boolean gitStyle) throws VcsException {
+    return buildPatch(project, changes, Paths.get(basePath), reversePatch, gitStyle, false);
   }
 
   public static @NotNull List<FilePatch> buildPatch(Project project,
                                                     @NotNull Collection<? extends Change> changes,
                                                     @NotNull Path basePath,
-                                                    boolean reversePatch) throws VcsException {
-    return buildPatch(project, changes, basePath, reversePatch, false);
+                                                    boolean reversePatch,
+                                                    boolean gitStyle) throws VcsException {
+    return buildPatch(project, changes, basePath, reversePatch, gitStyle, false);
   }
 
   public static @NotNull List<FilePatch> buildPatch(@Nullable Project project,
                                                     @NotNull Collection<? extends Change> changes,
                                                     @NotNull Path basePath,
                                                     boolean reversePatch,
+                                                    boolean gitStyle,
                                                     boolean honorExcludedFromCommit) throws VcsException {
     Collection<BeforeAfter<AirContentRevision>> revisions;
     if (project != null) {
@@ -88,7 +91,7 @@ public final class IdeaTextPatchBuilder {
                                         convertRevision(change.getAfterRevision())));
       }
     }
-    return TextPatchBuilder.buildPatch(revisions, basePath, reversePatch, () -> ProgressManager.checkCanceled());
+    return TextPatchBuilder.buildPatch(revisions, basePath, reversePatch, gitStyle, () -> ProgressManager.checkCanceled());
   }
 
   @Nullable

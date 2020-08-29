@@ -212,7 +212,7 @@ public final class MergeFromTheirsResolver extends BackgroundTaskGroup {
   }
 
   private void createPatches() throws VcsException {
-    List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(myVcs.getProject(), myTheirsChanges, Objects.requireNonNull(myBaseForPatch).toNioPath(), false);
+    List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(myVcs.getProject(), myTheirsChanges, Objects.requireNonNull(myBaseForPatch).toNioPath(), false, false);
     myTextPatches = map(patches, TextFilePatch.class::cast);
   }
 

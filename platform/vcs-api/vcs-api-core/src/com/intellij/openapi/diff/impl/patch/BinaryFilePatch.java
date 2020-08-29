@@ -8,7 +8,8 @@ public final class BinaryFilePatch extends FilePatch {
   private final byte[] myBeforeContent;
   private final byte[] myAfterContent;
 
-  public BinaryFilePatch(final byte[] beforeContent, final byte[] afterContent) {
+  public BinaryFilePatch(final byte[] beforeContent, final byte[] afterContent, boolean isGitStyled) {
+    super(isGitStyled);
     myBeforeContent = beforeContent;
     myAfterContent = afterContent;
   }
@@ -33,7 +34,7 @@ public final class BinaryFilePatch extends FilePatch {
 
   @NotNull
   public BinaryFilePatch copy() {
-    BinaryFilePatch copied = new BinaryFilePatch(this.getBeforeContent(), this.getAfterContent());
+    BinaryFilePatch copied = new BinaryFilePatch(this.getBeforeContent(), this.getAfterContent(), this.myIsGitStyled);
     copied.setBeforeName(this.getBeforeName());
     copied.setAfterName(this.getAfterName());
     return copied;

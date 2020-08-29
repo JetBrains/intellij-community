@@ -441,7 +441,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
       }
       else {
         Path file = Paths.get(p.getFileName());
-        PatchWriter.writePatches(myProject, file, base, patches, null, p.getEncoding(), false);
+        PatchWriter.writePatches(myProject, file, base, patches, null, p.getEncoding(), p.isGitStyled(), false);
         showNotification(message("message.patch.created"));
         RevealFileAction.openFile(file);
       }

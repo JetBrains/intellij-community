@@ -32,7 +32,7 @@ public final class PatchWriter {
                                   @NotNull Path basePath,
                                   @NotNull List<? extends FilePatch> patches,
                                   @Nullable CommitContext commitContext) throws IOException {
-    writePatches(project, file, basePath, patches, commitContext, StandardCharsets.UTF_8, false);
+    writePatches(project, file, basePath, patches, commitContext, StandardCharsets.UTF_8, false, false);
   }
 
   public static void writePatches(@NotNull Project project,
@@ -40,10 +40,12 @@ public final class PatchWriter {
                                   @Nullable Path basePath,
                                   @NotNull List<? extends FilePatch> patches,
                                   @Nullable CommitContext commitContext,
-                                  @NotNull Charset charset, boolean includeBinaries) throws IOException {
+                                  @NotNull Charset charset,
+                                  boolean gitStyled,
+                                  boolean includeBinaries) throws IOException {
     Files.createDirectories(file.getParent());
     try (Writer writer = new OutputStreamWriter(Files.newOutputStream(file), charset)) {
-      write(project, writer, basePath, patches, commitContext, includeBinaries);
+      write(project, writer, basePath, patches, commitContext, gitStyled, includeBinaries);
     }
   }
 
@@ -51,8 +53,10 @@ public final class PatchWriter {
                             @NotNull Writer writer,
                             @Nullable Path basePath,
                             @NotNull List<? extends FilePatch> patches,
-                            @Nullable CommitContext commitContext, boolean includeBinaries) throws IOException {
-    String lineSeparator = CodeStyle.getSettings(project).getLineSeparator();
+                            @Nullable CommitContext commitContext,
+                            boolean gitStyled,
+                            boolean includeBinaries) throws IOException {
+    String lineSeparator = gitStyled ? "\n" : CodeStyle.getSettings(project).getLineSeparator();
     UnifiedDiffWriter.write(project, basePath, patches, writer, lineSeparator, commitContext, null);
     if (includeBinaries) {
       BinaryPatchWriter.writeBinaries(basePath, ContainerUtil.findAll(patches, BinaryFilePatch.class), writer);
@@ -64,7 +68,7 @@ public final class PatchWriter {
                                              @NotNull Path basePath,
                                              @Nullable CommitContext commitContext) throws IOException {
     StringWriter writer = new StringWriter();
-    write(project, writer, basePath, patches, commitContext, true);
+    write(project, writer, basePath, patches, commitContext, false, true);
     CopyPasteManager.getInstance().setContents(new StringSelection(writer.toString()));
   }
 

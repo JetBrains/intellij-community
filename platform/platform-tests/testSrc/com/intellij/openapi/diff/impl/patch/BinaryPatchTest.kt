@@ -56,7 +56,7 @@ class BinaryPatchTest : HeavyPlatformTestCase() {
     val decodedContentBytes = FileUtil.loadFileBytes(dataFile)
     val encodedFile = testDataPath.resolve(filePatchName)
     val stringWriter = StringWriter()
-    val binaryPatch = if (reverse) BinaryFilePatch(decodedContentBytes, null) else BinaryFilePatch(null, decodedContentBytes)
+    val binaryPatch = if (reverse) BinaryFilePatch(decodedContentBytes, null, false) else BinaryFilePatch(null, decodedContentBytes, false)
     binaryPatch.beforeName = dataFileName
     binaryPatch.afterName = dataFileName
     writeBinaries(testDataPath, listOf(binaryPatch), stringWriter)

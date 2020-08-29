@@ -24,7 +24,6 @@ public final class GitPatchWriter {
   private final static @NonNls String FILE_RENAME_FROM_HEADER = "rename from %s";
   private final static @NonNls String FILE_RENAME_TO_HEADER = "rename to %s";
 
-
   @NotNull
   static String getFileModeHeader(@NotNull FileStatus fileStatus, int mode) {
     return String.format(FILE_MODE_HEADER, fileStatus == FileStatus.DELETED ? "deleted" : "new", mode); //NON-NLS NON-NLS
@@ -38,7 +37,7 @@ public final class GitPatchWriter {
   public static void writeGitHeader(@NotNull Writer writer, @Nullable Path basePath, @NotNull FilePatch filePatch)
     throws IOException {
     @NonNls String lineSeparator = "\n"; //use it for git headers&binary content, otherwise git won't parse&apply it properly
-    writer.write(String.format(GIT_DIFF_HEADER, filePatch.getBeforeName(), filePatch.getAfterName()));
+    writer.write(String.format(GIT_DIFF_HEADER, filePatch.getStyledBeforeName(), filePatch.getStyledAfterName()));
     writer.write(lineSeparator);
     if (filePatch.isDeletedFile()) {
       writer.write(getFileModeHeader(FileStatus.DELETED, REGULAR_FILE_MODE));

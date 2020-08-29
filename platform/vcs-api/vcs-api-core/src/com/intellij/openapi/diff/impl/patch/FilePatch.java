@@ -5,6 +5,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class FilePatch {
+  protected final boolean myIsGitStyled;
+
   private String myBeforeName;
   private String myAfterName;
   @Nullable private String myBeforeVersionId;
@@ -13,12 +15,24 @@ public abstract class FilePatch {
   // store file mode in 6 digit format a.e. 100655, -1 means file mode was not changed in the patch
   private int myNewFileMode = -1;
 
+  public FilePatch(boolean isGitStyled) {
+    myIsGitStyled = isGitStyled;
+  }
+
   public String getBeforeName() {
     return myBeforeName;
   }
 
   public String getAfterName() {
     return myAfterName;
+  }
+
+  public String getStyledBeforeName() {
+    return myIsGitStyled ? "a/" + myBeforeName : myBeforeName;
+  }
+
+  public String getStyledAfterName() {
+    return myIsGitStyled ? "b/" + myAfterName : myAfterName;
   }
 
   public String getBeforeFileName() {

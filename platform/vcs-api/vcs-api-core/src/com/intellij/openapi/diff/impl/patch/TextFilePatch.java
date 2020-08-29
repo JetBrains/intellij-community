@@ -33,10 +33,11 @@ public class TextFilePatch extends FilePatch {
   @Nullable private FileStatus myFileStatus;
 
   public TextFilePatch(@Nullable Charset charset) {
-    this(charset, null);
+    this(charset, null, false);
   }
 
-  public TextFilePatch(@Nullable Charset charset, @Nullable String lineSeparator) {
+  public TextFilePatch(@Nullable Charset charset, @Nullable String lineSeparator, boolean isGitStyled) {
+    super(isGitStyled);
     myCharset = charset;
     myLineSeparator = lineSeparator;
     myHunks = new ArrayList<>();
@@ -47,6 +48,7 @@ public class TextFilePatch extends FilePatch {
   }
 
   private TextFilePatch(final TextFilePatch patch) {
+    super(patch.myIsGitStyled);
     myCharset = patch.myCharset;
     setBeforeVersionId(patch.getBeforeVersionId());
     setAfterVersionId(patch.getAfterVersionId());

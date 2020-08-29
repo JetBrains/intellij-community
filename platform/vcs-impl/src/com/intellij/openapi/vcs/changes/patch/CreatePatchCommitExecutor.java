@@ -131,14 +131,15 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
       try {
         Path baseDir = Paths.get(myPanel.getBaseDirName());
         boolean isReverse = myPanel.isReversePatch();
+        boolean isGitStyled = myPanel.isGitStyled();
         String fileName = myPanel.getFileName();
         Charset encoding = myPanel.getEncoding();
 
         if (myPanel.isToClipboard()) {
-          writePatchToClipboard(myProject, baseDir, changes, isReverse, true, myPatchBuilder, myCommitContext);
+          writePatchToClipboard(myProject, baseDir, changes, isReverse, isGitStyled, true, myPatchBuilder, myCommitContext);
         }
         else {
-          validateAndWritePatchToFile(myProject, baseDir, changes, isReverse, Paths.get(fileName), encoding, myPatchBuilder, myCommitContext);
+          validateAndWritePatchToFile(myProject, baseDir, changes, isReverse, isGitStyled, Paths.get(fileName), encoding, myPatchBuilder, myCommitContext);
         }
       }
       catch (IOException | VcsException ex) {
@@ -153,6 +154,7 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
                                                    @NotNull Path baseDir,
                                                    @NotNull Collection<? extends Change> changes,
                                                    boolean reversePatch,
+                                                   boolean gitStyled,
                                                    @NotNull Path file,
                                                    @NotNull Charset encoding,
                                                    @NotNull PatchBuilder patchBuilder,
@@ -168,8 +170,8 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
       PropertiesComponent.getInstance(project).setValue(VCS_PATCH_PATH_KEY, valueToStore);
       VcsApplicationSettings.getInstance().PATCH_STORAGE_LOCATION = valueToStore;
 
-      List<FilePatch> patches = patchBuilder.buildPatches(baseDir, changes, reversePatch, true);
-      PatchWriter.writePatches(project, file, baseDir, patches, commitContext, encoding, true);
+      List<FilePatch> patches = patchBuilder.buildPatches(baseDir, changes, reversePatch, gitStyled, true);
+      PatchWriter.writePatches(project, file, baseDir, patches, commitContext, encoding, gitStyled, true);
 
       WaitForProgressToShow.runOrInvokeLaterAboveProgress(() -> {
         final VcsConfiguration configuration = VcsConfiguration.getInstance(project);
@@ -198,9 +200,10 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
     default boolean isReverseSupported() {return true;}
 
     List<FilePatch> buildPatches(@NotNull Path baseDir,
-                                 @NotNull Collection<? extends Change> changes,
-                                 boolean reversePatch,
-                                 boolean honorExcludedFromCommit) throws VcsException;
+                          @NotNull Collection<? extends Change> changes,
+                          boolean reversePatch,
+                          boolean gitStyle,
+                          boolean honorExcludedFromCommit) throws VcsException;
   }
 
   public static final class DefaultPatchBuilder implements PatchBuilder {
@@ -212,9 +215,11 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
 
     @Override
     public List<FilePatch> buildPatches(@NotNull Path baseDir,
-                                        @NotNull Collection<? extends Change> changes,
-                                        boolean reversePatch, boolean honorExcludedFromCommit) throws VcsException {
-      return IdeaTextPatchBuilder.buildPatch(myProject, changes, baseDir, reversePatch, honorExcludedFromCommit);
+                                 @NotNull Collection<? extends Change> changes,
+                                 boolean reversePatch,
+                                 boolean gitStyle,
+                                 boolean honorExcludedFromCommit) throws VcsException {
+      return IdeaTextPatchBuilder.buildPatch(myProject, changes, baseDir, reversePatch, gitStyle, honorExcludedFromCommit);
     }
   }
 
@@ -238,22 +243,23 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
 
     @Override
     public List<FilePatch> buildPatches(@NotNull Path baseDir,
-                                        @NotNull Collection<? extends Change> changes,
-                                        boolean reversePatch,
-                                        boolean honorExcludedFromCommit) throws VcsException {
-      List<FilePatch> result = new ArrayList<>(createFilePatchesFromShelf(myProject, baseDir, myShelvedChangeList, mySelectedPaths));
+                                 @NotNull Collection<? extends Change> changes,
+                                 boolean reversePatch,
+                                 boolean gitStyle,
+                                 boolean honorExcludedFromCommit) throws VcsException {
+      List<FilePatch> patches = new ArrayList<>(createFilePatchesFromShelf(myProject, baseDir, myShelvedChangeList, mySelectedPaths));
 
       List<ShelvedBinaryFile> binaries;
       if (ContainerUtil.isEmpty(mySelectedPaths)) {
         binaries = myShelvedChangeList.getBinaryFiles();
       }
       else {
-        binaries = ContainerUtil.filter(myShelvedChangeList.getBinaryFiles(), binary -> {
-          return mySelectedPaths.contains(ObjectUtils.chooseNotNull(binary.AFTER_PATH, binary.BEFORE_PATH));
-        });
+        binaries = ContainerUtil.filter(myShelvedChangeList.getBinaryFiles(),
+                                        binary -> mySelectedPaths.contains(ObjectUtils.chooseNotNull(binary.AFTER_PATH, binary.BEFORE_PATH)));
       }
-      result.addAll(IdeaTextPatchBuilder.buildPatch(myProject, ContainerUtil.map(binaries, b -> b.createChange(myProject)), baseDir, reversePatch, false));
-      return result;
+      patches.addAll(IdeaTextPatchBuilder.buildPatch(myProject, ContainerUtil.map(binaries, b -> b.createChange(myProject)), baseDir, reversePatch, gitStyle, false));
+
+      return patches;
     }
   }
 
@@ -333,10 +339,11 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
                                            @NotNull Path baseDir,
                                            @NotNull Collection<? extends Change> changes,
                                            boolean reversePatch,
+                                           boolean gitStyled,
                                            boolean honorExcludedFromCommit,
                                            @NotNull PatchBuilder patchBuilder,
                                            @NotNull CommitContext commitContext) throws VcsException, IOException {
-    List<FilePatch> patches = patchBuilder.buildPatches(baseDir, changes, reversePatch, honorExcludedFromCommit);
+    List<FilePatch> patches = patchBuilder.buildPatches(baseDir, changes, reversePatch, gitStyled, honorExcludedFromCommit);
     PatchWriter.writeAsPatchToClipboard(project, patches, baseDir, commitContext);
     VcsNotifier.getInstance(project).notifySuccess(VcsBundle.message("patch.copied.to.clipboard"));
   }

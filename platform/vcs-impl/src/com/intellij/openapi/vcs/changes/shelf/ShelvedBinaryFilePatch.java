@@ -10,13 +10,18 @@ public final class ShelvedBinaryFilePatch extends FilePatch {
   private final ShelvedBinaryFile myShelvedBinaryFile;
 
   public ShelvedBinaryFilePatch(@NotNull final ShelvedBinaryFile shelvedBinaryFile) {
+    this(shelvedBinaryFile, false);
+  }
+
+  public ShelvedBinaryFilePatch(@NotNull final ShelvedBinaryFile shelvedBinaryFile, boolean isGitStyled) {
+    super(isGitStyled);
     myShelvedBinaryFile = shelvedBinaryFile;
     setBeforeName(myShelvedBinaryFile.BEFORE_PATH);
     setAfterName(myShelvedBinaryFile.AFTER_PATH);
   }
 
   public static ShelvedBinaryFilePatch patchCopy(@NotNull final ShelvedBinaryFilePatch patch) {
-    return new ShelvedBinaryFilePatch(patch.getShelvedBinaryFile());
+    return new ShelvedBinaryFilePatch(patch.getShelvedBinaryFile(), patch.myIsGitStyled);
   }
 
   @Override

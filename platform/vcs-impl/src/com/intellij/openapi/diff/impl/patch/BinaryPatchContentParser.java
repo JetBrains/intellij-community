@@ -41,7 +41,8 @@ public final class BinaryPatchContentParser {
         }
       }
       return new BinaryFilePatch(parsedStatus == FileStatus.ADDED ? null : beforeStream.toByteArray(),
-                                 parsedStatus == FileStatus.DELETED ? null : afterStream.toByteArray());
+                                 parsedStatus == FileStatus.DELETED ? null : afterStream.toByteArray(),
+                                 false);
     }
     catch (Exception e) {
       throw new PatchSyntaxException(iterator.previousIndex(), e.getMessage());

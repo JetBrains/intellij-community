@@ -763,7 +763,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
     List<ShelvedBinaryFile> binaryFilesToUnshelve = getBinaryFilesToUnshelve(changeList, binaryFiles, remainingBinaries);
 
     for (ShelvedBinaryFile shelvedBinaryFile : binaryFilesToUnshelve) {
-      patches.add(new ShelvedBinaryFilePatch(shelvedBinaryFile));
+      patches.add(new ShelvedBinaryFilePatch(shelvedBinaryFile, false));
     }
 
     VirtualFile baseDir = LocalFileSystem.getInstance().findFileByNioFile(ProjectKt.getStateStore(myProject).getProjectBasePath());

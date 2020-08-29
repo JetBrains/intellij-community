@@ -168,7 +168,7 @@ public class PatchBuilderTest extends LightPlatformTestCase {
     String expected = FileUtil.loadFile(testDataPath.resolve("expected.patch").toFile());
 
     StringWriter writer = new StringWriter();
-    List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(project, changes, testDataPath, false);
+    List<FilePatch> patches = IdeaTextPatchBuilder.buildPatch(project, changes, testDataPath, false, false);
     UnifiedDiffWriter.write(project, patches, writer, forceLSeparator != null ? forceLSeparator : "\n", null);
     String result = writer.toString();
     if (forceLSeparator == null) {

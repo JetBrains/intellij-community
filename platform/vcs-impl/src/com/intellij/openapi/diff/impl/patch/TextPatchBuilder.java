@@ -38,21 +38,25 @@ public final class TextPatchBuilder {
 
   @NotNull private final Path myBasePath;
   private final boolean myIsReversePath;
+  private final boolean myIsGitStyled;
   @Nullable private final Runnable myCancelChecker;
 
   private TextPatchBuilder(@NotNull Path basePath,
                            boolean isReversePath,
+                           boolean isGitStyled,
                            @Nullable Runnable cancelChecker) {
     myBasePath = basePath;
     myIsReversePath = isReversePath;
+    myIsGitStyled = isGitStyled;
     myCancelChecker = cancelChecker;
   }
 
   public static @NotNull List<FilePatch> buildPatch(@NotNull Collection<BeforeAfter<AirContentRevision>> changes,
                                                     @NotNull Path basePath,
                                                     boolean reversePatch,
+                                                    boolean myIsGitStyled,
                                                     @Nullable Runnable cancelChecker) throws VcsException {
-    return new TextPatchBuilder(basePath, reversePatch, cancelChecker).build(changes);
+    return new TextPatchBuilder(basePath, reversePatch, myIsGitStyled, cancelChecker).build(changes);
   }
 
   @NotNull
@@ -64,7 +68,7 @@ public final class TextPatchBuilder {
       AirContentRevision beforeRevision = myIsReversePath ? c.getAfter() : c.getBefore();
       AirContentRevision afterRevision = myIsReversePath ? c.getBefore() : c.getAfter();
 
-      FilePatch patch = createPatch(beforeRevision, afterRevision);
+      FilePatch patch = createPatch(beforeRevision, afterRevision, myIsGitStyled);
       if (patch != null) result.add(patch);
     }
     return result;
@@ -72,7 +76,8 @@ public final class TextPatchBuilder {
 
   @Nullable
   private FilePatch createPatch(@Nullable AirContentRevision beforeRevision,
-                                @Nullable AirContentRevision afterRevision)
+                                @Nullable AirContentRevision afterRevision,
+                                boolean isGitStyled)
     throws VcsException {
     if (beforeRevision == null && afterRevision == null) return null;
 
@@ -81,26 +86,27 @@ public final class TextPatchBuilder {
 
     if (beforeRevision != null && beforeRevision.isBinary() ||
         afterRevision != null && afterRevision.isBinary()) {
-      return buildBinaryPatch(beforeRevision, afterRevision);
+      return buildBinaryPatch(beforeRevision, afterRevision, isGitStyled);
     }
 
     if (beforeRevision == null) {
-      return buildAddedFile(afterRevision);
+      return buildAddedFile(afterRevision, isGitStyled);
     }
     if (afterRevision == null) {
-      return buildDeletedFile(beforeRevision);
+      return buildDeletedFile(beforeRevision, isGitStyled);
     }
 
-    return buildModifiedFile(beforeRevision, afterRevision);
+    return buildModifiedFile(beforeRevision, afterRevision, isGitStyled);
   }
 
   @Nullable
   private TextFilePatch buildModifiedFile(@NotNull AirContentRevision beforeRevision,
-                                          @NotNull AirContentRevision afterRevision) throws VcsException {
+                                          @NotNull AirContentRevision afterRevision,
+                                          boolean isGitStyled) throws VcsException {
     String beforeContent = getContent(beforeRevision);
     String afterContent = getContent(afterRevision);
 
-    TextFilePatch patch = buildPatchHeading(beforeRevision, afterRevision);
+    TextFilePatch patch = buildPatchHeading(beforeRevision, afterRevision, isGitStyled);
 
     List<PatchHunk> hunks = buildPatchHunks(beforeContent, afterContent);
     for (PatchHunk hunk : hunks) {
@@ -264,20 +270,21 @@ public final class TextPatchBuilder {
 
   @NotNull
   private FilePatch buildBinaryPatch(@Nullable AirContentRevision beforeRevision,
-                                     @Nullable AirContentRevision afterRevision) throws VcsException {
+                                     @Nullable AirContentRevision afterRevision,
+                                     boolean isGitStyled) throws VcsException {
     assert beforeRevision != null || afterRevision != null;
     AirContentRevision headingBeforeRevision = beforeRevision != null ? beforeRevision : afterRevision;
     AirContentRevision headingAfterRevision = afterRevision != null ? afterRevision : beforeRevision;
     byte[] beforeContent = beforeRevision != null ? beforeRevision.getContentAsBytes() : null;
     byte[] afterContent = afterRevision != null ? afterRevision.getContentAsBytes() : null;
-    BinaryFilePatch patch = new BinaryFilePatch(beforeContent, afterContent);
+    BinaryFilePatch patch = new BinaryFilePatch(beforeContent, afterContent, isGitStyled);
     setPatchHeading(patch, headingBeforeRevision, headingAfterRevision);
     return patch;
   }
 
   @NotNull
-  private TextFilePatch buildAddedFile(@NotNull AirContentRevision afterRevision) throws VcsException {
-    TextFilePatch result = buildPatchHeading(afterRevision, afterRevision);
+  private TextFilePatch buildAddedFile(@NotNull AirContentRevision afterRevision, boolean isGitStyled) throws VcsException {
+    TextFilePatch result = buildPatchHeading(afterRevision, afterRevision, isGitStyled);
     result.setFileStatus(FileStatus.ADDED);
     String content = getContent(afterRevision);
     if(!content.isEmpty()) {
@@ -287,8 +294,8 @@ public final class TextPatchBuilder {
   }
 
   @NotNull
-  private TextFilePatch buildDeletedFile(@NotNull AirContentRevision beforeRevision) throws VcsException {
-    TextFilePatch result = buildPatchHeading(beforeRevision, beforeRevision);
+  private TextFilePatch buildDeletedFile(@NotNull AirContentRevision beforeRevision, boolean isGitStyled) throws VcsException {
+    TextFilePatch result = buildPatchHeading(beforeRevision, beforeRevision, isGitStyled);
     result.setFileStatus(FileStatus.DELETED);
     String content = getContent(beforeRevision);
     if (!content.isEmpty()) {
@@ -333,8 +340,10 @@ public final class TextPatchBuilder {
 
   @NotNull
   private TextFilePatch buildPatchHeading(@NotNull AirContentRevision beforeRevision,
-                                          @NotNull AirContentRevision afterRevision) {
-    TextFilePatch result = new TextFilePatch(afterRevision.getCharset(), afterRevision.getLineSeparator());
+                                          @NotNull AirContentRevision afterRevision,
+                                          boolean isGitStyled) {
+    String lineSeparator = isGitStyled ? "\n" : afterRevision.getLineSeparator();
+    TextFilePatch result = new TextFilePatch(afterRevision.getCharset(), lineSeparator, isGitStyled);
     setPatchHeading(result, beforeRevision, afterRevision);
     return result;
   }

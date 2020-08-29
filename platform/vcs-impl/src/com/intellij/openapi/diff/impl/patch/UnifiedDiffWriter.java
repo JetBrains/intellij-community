@@ -132,8 +132,8 @@ public final class UnifiedDiffWriter {
       }
     }
     writer.write(HEADER_SEPARATOR + lineSeparator);
-    writeRevisionHeading(writer, "---", patch.getBeforeName(), patch.getBeforeVersionId(), lineSeparator);
-    writeRevisionHeading(writer, "+++", patch.getAfterName(), patch.getAfterVersionId(), lineSeparator);
+    writeRevisionHeading(writer, "---", patch.getStyledBeforeName(), patch.getBeforeVersionId(), lineSeparator);
+    writeRevisionHeading(writer, "+++", patch.getStyledAfterName(), patch.getAfterVersionId(), lineSeparator);
   }
 
   private static void writeRevisionHeading(final Writer writer, final String prefix,

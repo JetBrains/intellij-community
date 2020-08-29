@@ -74,7 +74,7 @@ class CreateApplyPatchSymmetryTest : HeavyDiffTestCase() {
 
     val change = Change(SimpleContentRevision(text1, path, "1"),
                         SimpleContentRevision(text2, path, "2"))
-    val createdPatches = IdeaTextPatchBuilder.buildPatch(project, listOf(change), Paths.get(basePath), false)
+    val createdPatches = IdeaTextPatchBuilder.buildPatch(project, listOf(change), Paths.get(basePath), false, false)
 
     val writer = StringWriter()
     UnifiedDiffWriter.write(project, createdPatches, writer, "\n", null)

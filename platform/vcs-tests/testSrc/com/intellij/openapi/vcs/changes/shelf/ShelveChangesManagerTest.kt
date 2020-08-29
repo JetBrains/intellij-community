@@ -125,7 +125,7 @@ class ShelveChangesManagerTest {
     val shelvedChangeList = shelvedChangesManager.shelvedChangeLists[0]
     shelvedChangeList.loadChangesIfNeeded(project)
     val patchBuilder = ShelfPatchBuilder(project, shelvedChangeList, emptyList())
-    val patches = patchBuilder.buildPatches(project.stateStore.projectBasePath, emptyList(), false, false)
+    val patches = patchBuilder.buildPatches(project.stateStore.projectBasePath, emptyList(), false, false, false)
     val changeSize = shelvedChangeList.changes?.size ?: 0
     TestCase.assertTrue(patches.size == (changeSize + shelvedChangeList.binaryFiles.size))
   }
@@ -137,7 +137,7 @@ class ShelveChangesManagerTest {
     val selectedPaths = listOf(ShelvedWrapper(shelvedChangeList.changes!!.first()).path,
                                ShelvedWrapper(shelvedChangeList.binaryFiles!!.first()).path)
     val patchBuilder = ShelfPatchBuilder(project, shelvedChangeList, selectedPaths)
-    val patches = patchBuilder.buildPatches(project.stateStore.projectBasePath, emptyList(), false, false)
+    val patches = patchBuilder.buildPatches(project.stateStore.projectBasePath, emptyList(), false, false, false)
     TestCase.assertTrue(patches.size == selectedPaths.size)
   }
 

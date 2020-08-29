@@ -41,6 +41,7 @@ public final class CreatePatchConfigurationPanel {
   private TextFieldWithBrowseButton myFileNameField;
   private TextFieldWithBrowseButton myBasePathField;
   private JCheckBox myReversePatchCheckbox;
+  private JCheckBox myGitStyledCheckbox;
   private ComboBox<Charset> myEncoding;
   private JLabel myWarningLabel;
   private final Project myProject;
@@ -90,13 +91,14 @@ public final class CreatePatchConfigurationPanel {
 
   @NotNull
   public Charset getEncoding() {
-    return (Charset)myEncoding.getSelectedItem();
+    return myEncoding.getItem();
   }
 
   private void initMainPanel() {
     myFileNameField = new TextFieldWithBrowseButton();
     myBasePathField = new TextFieldWithBrowseButton();
     myReversePatchCheckbox = new JCheckBox(VcsBundle.message("create.patch.reverse.checkbox"));
+    myGitStyledCheckbox = new JCheckBox(VcsBundle.message("create.patch.git.styled.checkbox"));
     myEncoding = new ComboBox<>();
     myWarningLabel = new JLabel();
     myToFileButton = new JBRadioButton(VcsBundle.message("create.patch.file.path"), true);
@@ -117,6 +119,7 @@ public final class CreatePatchConfigurationPanel {
       .addVerticalGap(5)
       .addLabeledComponent(VcsBundle.message("patch.creation.base.path.field"), myBasePathField)
       .addComponent(myReversePatchCheckbox)
+      .addComponent(myGitStyledCheckbox)
       .addLabeledComponent(VcsBundle.message("create.patch.encoding"), myEncoding)
       .addComponent(myWarningLabel)
       .getPanel();
@@ -159,6 +162,10 @@ public final class CreatePatchConfigurationPanel {
   public void setReverseEnabledAndVisible(boolean isAvailable) {
     myReversePatchCheckbox.setVisible(isAvailable);
     myReversePatchCheckbox.setEnabled(isAvailable);
+  }
+
+  public boolean isGitStyled() {
+    return myGitStyledCheckbox.isSelected();
   }
 
   public boolean isToClipboard() {
