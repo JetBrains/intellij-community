@@ -79,7 +79,7 @@ public class PyIntroduceParameterHandler extends IntroduceHandler {
       }
       new PyRecursiveElementVisitor() {
         @Override
-        public void visitPyReferenceExpression(PyReferenceExpression node) {
+        public void visitPyReferenceExpression(@NotNull PyReferenceExpression node) {
           super.visitPyReferenceExpression(node);
 
           final String name = node.getName();

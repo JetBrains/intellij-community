@@ -44,7 +44,7 @@ final class PyFromImportPostFormatProcessor implements PostFormatProcessor {
     }
 
     @Override
-    public void visitPyFromImportStatement(PyFromImportStatement node) {
+    public void visitPyFromImportStatement(@NotNull PyFromImportStatement node) {
       if (myHelper.isElementFullyInRange(node)) {
         // If non-parenthesized "from" import ends with one or more of trailing commas, the array returned by getImportElements()
         // contains empty import elements at the end

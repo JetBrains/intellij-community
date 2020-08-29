@@ -102,7 +102,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyFile(PyFile node) {
+    public void visitPyFile(@NotNull PyFile node) {
       checkPackagesHaveBeenInstalled(node, ModuleUtilCore.findModuleForPsiElement(node));
     }
 
@@ -147,7 +147,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyFromImportStatement(PyFromImportStatement node) {
+    public void visitPyFromImportStatement(@NotNull PyFromImportStatement node) {
       final PyReferenceExpression expr = node.getImportSource();
       if (expr != null) {
         checkPackageNameInRequirements(expr);
@@ -155,7 +155,7 @@ public class PyPackageRequirementsInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyImportStatement(PyImportStatement node) {
+    public void visitPyImportStatement(@NotNull PyImportStatement node) {
       for (PyImportElement element : node.getImportElements()) {
         final PyReferenceExpression expr = element.getImportReferenceExpression();
         if (expr != null) {

@@ -49,13 +49,13 @@ public class PyCallingNonCallableInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyCallExpression(PyCallExpression node) {
+    public void visitPyCallExpression(@NotNull PyCallExpression node) {
       super.visitPyCallExpression(node);
       checkCallable(node, node.getCallee());
     }
 
     @Override
-    public void visitPyDecorator(PyDecorator decorator) {
+    public void visitPyDecorator(@NotNull PyDecorator decorator) {
       super.visitPyDecorator(decorator);
       final PyExpression callee = decorator.getCallee();
       checkCallable(decorator, callee);

@@ -26,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class TypeAnnotationTargetAnnotator extends PyAnnotator {
   @Override
-  public void visitPyAssignmentStatement(PyAssignmentStatement node) {
+  public void visitPyAssignmentStatement(@NotNull PyAssignmentStatement node) {
     if (node.getAnnotation() != null && LanguageLevel.forElement(node).isAtLeast(LanguageLevel.PYTHON36)) {
       if (node.getRawTargets().length > 1) {
         getHolder().newAnnotation(HighlightSeverity.ERROR,
@@ -40,7 +40,7 @@ public class TypeAnnotationTargetAnnotator extends PyAnnotator {
   }
 
   @Override
-  public void visitPyTypeDeclarationStatement(PyTypeDeclarationStatement node) {
+  public void visitPyTypeDeclarationStatement(@NotNull PyTypeDeclarationStatement node) {
     if (node.getAnnotation() != null && LanguageLevel.forElement(node).isAtLeast(LanguageLevel.PYTHON36)) {
       checkAnnotationTarget(node.getTarget());
     }

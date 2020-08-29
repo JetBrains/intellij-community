@@ -21,6 +21,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.ParamHelper;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -30,7 +31,7 @@ import java.util.Set;
  */
 public class GlobalAnnotator extends PyAnnotator {
   @Override
-  public void visitPyGlobalStatement(final PyGlobalStatement node) {
+  public void visitPyGlobalStatement(final @NotNull PyGlobalStatement node) {
     PyFunction function = PsiTreeUtil.getParentOfType(node, PyFunction.class);
     if (function != null) {
       PyParameterList paramList = function.getParameterList();

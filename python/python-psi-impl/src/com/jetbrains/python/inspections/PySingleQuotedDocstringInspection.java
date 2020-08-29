@@ -49,7 +49,7 @@ public class PySingleQuotedDocstringInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyStringLiteralExpression(final PyStringLiteralExpression string) {
+    public void visitPyStringLiteralExpression(final @NotNull PyStringLiteralExpression string) {
       String stringText = string.getText();
       int length = PyStringLiteralUtil.getPrefixLength(stringText);
       stringText = stringText.substring(length);

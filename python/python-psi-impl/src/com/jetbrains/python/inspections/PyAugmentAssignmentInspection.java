@@ -72,7 +72,7 @@ public class PyAugmentAssignmentInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyAssignmentStatement(final PyAssignmentStatement node) {
+    public void visitPyAssignmentStatement(final @NotNull PyAssignmentStatement node) {
       final PyExpression target = node.getLeftHandSideExpression();
       final PyBinaryExpression value = PyUtil.as(node.getAssignedValue(), PyBinaryExpression.class);
 

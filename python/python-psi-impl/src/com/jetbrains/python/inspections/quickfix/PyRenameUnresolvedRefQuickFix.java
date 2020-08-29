@@ -108,7 +108,7 @@ public class PyRenameUnresolvedRefQuickFix implements LocalQuickFix {
     final List<PyReferenceExpression> result = new ArrayList<>();
     PyRecursiveElementVisitor visitor = new PyRecursiveElementVisitor() {
       @Override
-      public void visitPyReferenceExpression(PyReferenceExpression node) {
+      public void visitPyReferenceExpression(@NotNull PyReferenceExpression node) {
         if (node.textMatches(expression) && !isValidReference(node.getReference())) {
           result.add(node);
         }

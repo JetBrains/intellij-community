@@ -268,13 +268,13 @@ public class PyQualifiedReference extends PyReferenceImpl {
     final Set<String> members = new HashSet<>();
     myElement.getContainingFile().accept(new PyRecursiveElementVisitor() {
       @Override
-      public void visitPyReferenceExpression(PyReferenceExpression node) {
+      public void visitPyReferenceExpression(@NotNull PyReferenceExpression node) {
         super.visitPyReferenceExpression(node);
         visitPyQualifiedExpression(node);
       }
 
       @Override
-      public void visitPyTargetExpression(PyTargetExpression node) {
+      public void visitPyTargetExpression(@NotNull PyTargetExpression node) {
         super.visitPyTargetExpression(node);
         visitPyQualifiedExpression(node);
       }

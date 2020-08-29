@@ -34,7 +34,7 @@ public class PyMissingTypeHintsInspection extends PyInspection {
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly, @NotNull LocalInspectionToolSession session) {
     return new PyInspectionVisitor(holder, session) {
       @Override
-      public void visitPyFunction(PyFunction function) {
+      public void visitPyFunction(@NotNull PyFunction function) {
         if (function.getTypeComment() == null &&
             !typeAnnotationsExist(function) &&
             PyiUtil.getOverloads(function, getResolveContext().getTypeEvalContext()).isEmpty()) {

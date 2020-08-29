@@ -627,18 +627,18 @@ public final class PyPsiUtils {
 
   private static abstract class TopLevelVisitor extends PyRecursiveElementVisitor {
     @Override
-    public void visitPyElement(final PyElement node) {
+    public void visitPyElement(final @NotNull PyElement node) {
       super.visitPyElement(node);
       checkAddElement(node);
     }
 
     @Override
-    public void visitPyClass(final PyClass node) {
+    public void visitPyClass(final @NotNull PyClass node) {
       checkAddElement(node);  // do not recurse into functions
     }
 
     @Override
-    public void visitPyFunction(final PyFunction node) {
+    public void visitPyFunction(final @NotNull PyFunction node) {
       checkAddElement(node);  // do not recurse into classes
     }
 

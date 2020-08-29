@@ -25,24 +25,20 @@ class PyOverloadsInspection : PyInspection() {
 
   private class Visitor(holder: ProblemsHolder, session: LocalInspectionToolSession) : PyInspectionVisitor(holder, session) {
 
-    override fun visitPyClass(node: PyClass?) {
-      if (node?.containingFile is PyiFile) return
+    override fun visitPyClass(node: PyClass) {
+      if (node.containingFile is PyiFile) return
 
       super.visitPyClass(node)
 
-      if (node != null) {
-        processScope(node, { node.visitMethods(it, false, myTypeEvalContext) })
-      }
+      processScope(node, { node.visitMethods(it, false, myTypeEvalContext) })
     }
 
-    override fun visitPyFile(node: PyFile?) {
+    override fun visitPyFile(node: PyFile) {
       if (node is PyiFile) return
 
       super.visitPyFile(node)
 
-      if (node != null) {
-        processScope(node, { processor -> node.topLevelFunctions.forEach { processor.process(it) } })
-      }
+      processScope(node, { processor -> node.topLevelFunctions.forEach { processor.process(it) } })
     }
 
     private fun processScope(owner: ScopeOwner, processorUsage: (GroupingFunctionsByNameProcessor) -> Unit) {

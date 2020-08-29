@@ -44,12 +44,12 @@ public class PyAssignmentToLoopOrWithParameterInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyWithStatement(final PyWithStatement node) {
+    public void visitPyWithStatement(final @NotNull PyWithStatement node) {
       checkNotReDeclaringUpperLoopOrStatement(node);
     }
 
     @Override
-    public void visitPyForStatement(final PyForStatement node) {
+    public void visitPyForStatement(final @NotNull PyForStatement node) {
       checkNotReDeclaringUpperLoopOrStatement(node);
     }
 

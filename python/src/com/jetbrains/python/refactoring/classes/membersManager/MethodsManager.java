@@ -219,7 +219,7 @@ class MethodsManager extends MembersManager<PyFunction> {
 
   private static class MyPyRecursiveElementVisitor extends PyRecursiveElementVisitorWithResult {
     @Override
-    public void visitPyCallExpression(final PyCallExpression node) {
+    public void visitPyCallExpression(final @NotNull PyCallExpression node) {
       // TODO: refactor, messy code
       final PyExpression callee = node.getCallee();
       if (callee != null) {

@@ -61,19 +61,19 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
   }
 
   @Override
-  public void visitPyFunction(final PyFunction node) {
+  public void visitPyFunction(final @NotNull PyFunction node) {
     if (!PyiUtil.isOverload(node, myTypeEvalContext)) {
       processScope(node);
     }
   }
 
   @Override
-  public void visitPyLambdaExpression(final PyLambdaExpression node) {
+  public void visitPyLambdaExpression(final @NotNull PyLambdaExpression node) {
     processScope(node);
   }
 
   @Override
-  public void visitPyClass(PyClass node) {
+  public void visitPyClass(@NotNull PyClass node) {
     processScope(node);
   }
 
@@ -88,7 +88,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
   }
 
   @Override
-  public void visitPyStringLiteralExpression(PyStringLiteralExpression pyString) {
+  public void visitPyStringLiteralExpression(@NotNull PyStringLiteralExpression pyString) {
     final ScopeOwner owner = ScopeUtil.getScopeOwner(pyString);
     if (owner != null && !(owner instanceof PsiFile)) {
       final PsiElement instrAnchor = getControlFlowAnchorForString(pyString);
@@ -102,7 +102,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         for (Pair<PsiElement, TextRange> pair : pairs) {
           pair.getFirst().accept(new PyRecursiveElementVisitor() {
             @Override
-            public void visitPyReferenceExpression(PyReferenceExpression expr) {
+            public void visitPyReferenceExpression(@NotNull PyReferenceExpression expr) {
               final PyExpression qualifier = expr.getQualifier();
               if (qualifier != null) {
                 qualifier.accept(this);
@@ -286,7 +286,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
     try {
       owner.acceptChildren(new PyRecursiveElementVisitor(){
         @Override
-        public void visitPyCallExpression(final PyCallExpression node) {
+        public void visitPyCallExpression(final @NotNull PyCallExpression node) {
           final PyExpression callee = node.getCallee();
           if (callee != null && "locals".equals(callee.getName())){
             throw new DontPerformException();
@@ -295,7 +295,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
         }
 
         @Override
-        public void visitPyFunction(final PyFunction node) {
+        public void visitPyFunction(final @NotNull PyFunction node) {
           // stop here
         }
       });

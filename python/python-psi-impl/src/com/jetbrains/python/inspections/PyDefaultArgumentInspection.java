@@ -45,7 +45,7 @@ public class PyDefaultArgumentInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyNamedParameter(PyNamedParameter node) {
+    public void visitPyNamedParameter(@NotNull PyNamedParameter node) {
       final PyExpression defaultValue = node.getDefaultValue();
       if (PyUtil.isForbiddenMutableDefault(defaultValue, myTypeEvalContext)) {
         registerProblem(defaultValue, PyPsiBundle.message("INSP.default.arguments.default.argument.value.mutable"),

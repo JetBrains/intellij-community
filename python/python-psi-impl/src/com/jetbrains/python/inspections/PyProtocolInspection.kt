@@ -30,20 +30,18 @@ class PyProtocolInspection : PyInspection() {
 
   private class Visitor(holder: ProblemsHolder, session: LocalInspectionToolSession) : PyInspectionVisitor(holder, session) {
 
-    override fun visitPyClass(node: PyClass?) {
+    override fun visitPyClass(node: PyClass) {
       super.visitPyClass(node)
 
-      val type = node?.let { myTypeEvalContext.getType(it) } as? PyClassType ?: return
+      val type = myTypeEvalContext.getType(node) as? PyClassType ?: return
       val superClassTypes = type.getSuperClassTypes(myTypeEvalContext)
 
       checkCompatibility(type, superClassTypes)
       checkProtocolBases(type, superClassTypes)
     }
 
-    override fun visitPyCallExpression(node: PyCallExpression?) {
+    override fun visitPyCallExpression(node: PyCallExpression) {
       super.visitPyCallExpression(node)
-
-      if (node == null) return
 
       checkRuntimeProtocolInIsInstance(node)
       checkNewTypeWithProtocols(node)

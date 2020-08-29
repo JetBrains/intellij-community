@@ -49,7 +49,7 @@ public class PyDeprecationInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyReferenceExpression(PyReferenceExpression node) {
+    public void visitPyReferenceExpression(@NotNull PyReferenceExpression node) {
       final PyExceptPart exceptPart = PsiTreeUtil.getParentOfType(node, PyExceptPart.class);
       if (exceptPart != null) {
         final PyExpression exceptClass = exceptPart.getExceptClass();
@@ -75,7 +75,7 @@ public class PyDeprecationInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyFunction(PyFunction node) {
+    public void visitPyFunction(@NotNull PyFunction node) {
       super.visitPyFunction(node);
 
       final PyDecoratorList decoratorList = node.getDecoratorList();

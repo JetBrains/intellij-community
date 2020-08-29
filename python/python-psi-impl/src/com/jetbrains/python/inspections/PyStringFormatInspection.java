@@ -667,7 +667,7 @@ public class PyStringFormatInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyBinaryExpression(final PyBinaryExpression node) {
+    public void visitPyBinaryExpression(final @NotNull PyBinaryExpression node) {
       if (node.getLeftExpression() instanceof PyStringLiteralExpression && node.isOperator("%")) {
         final Inspection inspection = new Inspection(this, myTypeEvalContext);
         final PyStringLiteralExpression literalExpression = (PyStringLiteralExpression)node.getLeftExpression();
@@ -680,7 +680,7 @@ public class PyStringFormatInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyCallExpression(PyCallExpression node) {
+    public void visitPyCallExpression(@NotNull PyCallExpression node) {
       final PyExpression callee = node.getCallee();
       if (callee != null && callee.getName() != null && callee.getName().equals(PyNames.FORMAT)) {
         final PyStringLiteralExpression literalExpression = PsiTreeUtil.getChildOfType(callee, PyStringLiteralExpression.class);

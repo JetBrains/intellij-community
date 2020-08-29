@@ -518,14 +518,14 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     private final Map<String, List<String>> myDunderLike = new HashMap<>();
 
     @Override
-    public void visitPyFile(PyFile node) {
+    public void visitPyFile(@NotNull PyFile node) {
       if (node.getText().contains(PyNames.ALL)) {
         super.visitPyFile(node);
       }
     }
 
     @Override
-    public void visitPyTargetExpression(PyTargetExpression node) {
+    public void visitPyTargetExpression(@NotNull PyTargetExpression node) {
       if (myDynamic) return;
 
       if (PyNames.ALL.equals(node.getName())) {
@@ -555,7 +555,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     }
 
     @Override
-    public void visitPyAugAssignmentStatement(PyAugAssignmentStatement node) {
+    public void visitPyAugAssignmentStatement(@NotNull PyAugAssignmentStatement node) {
       if (myDynamic || !myFoundDunderAll) return;
 
       if (PyNames.ALL.equals(node.getTarget().getName())) {
@@ -564,7 +564,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     }
 
     @Override
-    public void visitPyCallExpression(PyCallExpression node) {
+    public void visitPyCallExpression(@NotNull PyCallExpression node) {
       if (myDynamic || !myFoundDunderAll) return;
 
       final PyExpression callee = node.getCallee();
@@ -591,7 +591,7 @@ public class PyFileImpl extends PsiFileBase implements PyFile, PyExpression {
     }
 
     @Override
-    public void visitPyClass(PyClass node) {
+    public void visitPyClass(@NotNull PyClass node) {
     }
 
     @Nullable

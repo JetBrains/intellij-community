@@ -49,23 +49,23 @@ public class PyUnnecessaryBackslashInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyParameterList(final PyParameterList list) {
+    public void visitPyParameterList(final @NotNull PyParameterList list) {
       findProblem(list);
     }
 
     @Override
-    public void visitPyArgumentList(final PyArgumentList list) {
+    public void visitPyArgumentList(final @NotNull PyArgumentList list) {
       findProblem(list);
     }
 
     @Override
-    public void visitPyTupleExpression(PyTupleExpression node) {
+    public void visitPyTupleExpression(@NotNull PyTupleExpression node) {
       if (node.getParent() instanceof PyParenthesizedExpression)
         findProblem(node);
     }
 
     @Override
-    public void visitPyParenthesizedExpression(final PyParenthesizedExpression expression) {
+    public void visitPyParenthesizedExpression(final @NotNull PyParenthesizedExpression expression) {
       final Stack<PsiElement> stack = new Stack<>();
       stack.push(expression);
       while (!stack.isEmpty()) {
@@ -82,22 +82,22 @@ public class PyUnnecessaryBackslashInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyDictLiteralExpression(final PyDictLiteralExpression expression) {
+    public void visitPyDictLiteralExpression(final @NotNull PyDictLiteralExpression expression) {
       findProblem(expression);
     }
 
     @Override
-    public void visitPyListLiteralExpression(final PyListLiteralExpression expression) {
+    public void visitPyListLiteralExpression(final @NotNull PyListLiteralExpression expression) {
       findProblem(expression);
     }
 
     @Override
-    public void visitPySetLiteralExpression(final PySetLiteralExpression expression) {
+    public void visitPySetLiteralExpression(final @NotNull PySetLiteralExpression expression) {
       findProblem(expression);
     }
 
     @Override
-    public void visitPyStringLiteralExpression(final PyStringLiteralExpression stringLiteralExpression) {
+    public void visitPyStringLiteralExpression(final @NotNull PyStringLiteralExpression stringLiteralExpression) {
       PsiElement parent = stringLiteralExpression.getParent();
       if (parent instanceof PyListLiteralExpression || parent instanceof PyParenthesizedExpression ||
           parent instanceof PySetLiteralExpression || parent instanceof PyKeyValueExpression ||

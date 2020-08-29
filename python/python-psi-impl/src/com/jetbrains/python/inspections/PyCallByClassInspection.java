@@ -60,7 +60,7 @@ public class PyCallByClassInspection extends PyInspection {
 
 
     @Override
-    public void visitPyCallExpression(PyCallExpression call) {
+    public void visitPyCallExpression(@NotNull PyCallExpression call) {
       PyExpression callee = call.getCallee();
       if (callee instanceof PyQualifiedExpression) {
         PyExpression qualifier = ((PyQualifiedExpression)callee).getQualifier();

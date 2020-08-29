@@ -58,7 +58,7 @@ public class PyMandatoryEncodingInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyFile(PyFile node) {
+    public void visitPyFile(@NotNull PyFile node) {
       if (!(myAllPythons || LanguageLevel.forElement(node).isPython2())) return;
 
       final String charsetString = PythonFileType.getCharsetFromEncodingDeclaration(node);

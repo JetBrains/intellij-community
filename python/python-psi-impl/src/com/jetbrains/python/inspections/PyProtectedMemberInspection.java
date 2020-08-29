@@ -63,7 +63,7 @@ public class PyProtectedMemberInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyImportElement(PyImportElement node) {
+    public void visitPyImportElement(@NotNull PyImportElement node) {
       final PyStatement statement = node.getContainingImportStatement();
       if (!(statement instanceof PyFromImportStatement)) return;
       final PyReferenceExpression importReferenceExpression = node.getImportReferenceExpression();
@@ -93,7 +93,7 @@ public class PyProtectedMemberInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyReferenceExpression(PyReferenceExpression node) {
+    public void visitPyReferenceExpression(@NotNull PyReferenceExpression node) {
       final PyExpression qualifier = node.getQualifier();
       if (ignoreAnnotations && PsiTreeUtil.getParentOfType(node, PyAnnotation.class) != null) return;
       if (qualifier == null || ArrayUtil.contains(qualifier.getText(), PyNames.CANONICAL_SELF, PyNames.CANONICAL_CLS)) return;
@@ -186,7 +186,7 @@ public class PyProtectedMemberInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyFromImportStatement(PyFromImportStatement node) {
+    public void visitPyFromImportStatement(@NotNull PyFromImportStatement node) {
       final PyReferenceExpression source = node.getImportSource();
       if (source == null) return;
 

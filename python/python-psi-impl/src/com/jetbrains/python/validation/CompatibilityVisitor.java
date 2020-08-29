@@ -56,7 +56,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   }
 
   @Override
-  public void visitPyAnnotation(PyAnnotation node) {
+  public void visitPyAnnotation(@NotNull PyAnnotation node) {
     final PsiElement parent = node.getParent();
     if (!(parent instanceof PyFunction || parent instanceof PyNamedParameter)) {
       registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON36) && registerForLanguageLevel(level),
@@ -66,7 +66,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   }
 
   @Override
-  public void visitPyDictCompExpression(PyDictCompExpression node) {
+  public void visitPyDictCompExpression(@NotNull PyDictCompExpression node) {
     super.visitPyDictCompExpression(node);
 
     registerForAllMatchingVersions(level -> !level.supportsSetLiterals() && registerForLanguageLevel(level),
@@ -77,7 +77,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   }
 
   @Override
-  public void visitPySetLiteralExpression(PySetLiteralExpression node) {
+  public void visitPySetLiteralExpression(@NotNull PySetLiteralExpression node) {
     super.visitPySetLiteralExpression(node);
 
     registerForAllMatchingVersions(level -> !level.supportsSetLiterals() && registerForLanguageLevel(level),
@@ -88,7 +88,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   }
 
   @Override
-  public void visitPySetCompExpression(PySetCompExpression node) {
+  public void visitPySetCompExpression(@NotNull PySetCompExpression node) {
     super.visitPySetCompExpression(node);
 
     registerForAllMatchingVersions(level -> !level.supportsSetLiterals() && registerForLanguageLevel(level),
@@ -99,7 +99,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   }
 
   @Override
-  public void visitPyExceptBlock(PyExceptPart node) {
+  public void visitPyExceptBlock(@NotNull PyExceptPart node) {
     super.visitPyExceptBlock(node);
 
     final PyExpression exceptClass = node.getExceptClass();
@@ -119,7 +119,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   }
 
   @Override
-  public void visitPyImportStatement(PyImportStatement node) {
+  public void visitPyImportStatement(@NotNull PyImportStatement node) {
     super.visitPyImportStatement(node);
 
     final PyIfStatement ifParent = PsiTreeUtil.getParentOfType(node, PyIfStatement.class);
@@ -146,7 +146,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   }
 
   @Override
-  public void visitPyStarExpression(PyStarExpression node) {
+  public void visitPyStarExpression(@NotNull PyStarExpression node) {
     super.visitPyStarExpression(node);
 
     if (node.isAssignmentTarget()) {
@@ -182,7 +182,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   }
 
   @Override
-  public void visitPyDoubleStarExpression(PyDoubleStarExpression node) {
+  public void visitPyDoubleStarExpression(@NotNull PyDoubleStarExpression node) {
     super.visitPyDoubleStarExpression(node);
 
     registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON35) && registerForLanguageLevel(level),
@@ -191,7 +191,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   }
 
   @Override
-  public void visitPyBinaryExpression(PyBinaryExpression node) {
+  public void visitPyBinaryExpression(@NotNull PyBinaryExpression node) {
     super.visitPyBinaryExpression(node);
 
     if (node.isOperator("<>")) {
@@ -212,7 +212,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   }
 
   @Override
-  public void visitPyNumericLiteralExpression(final PyNumericLiteralExpression node) {
+  public void visitPyNumericLiteralExpression(final @NotNull PyNumericLiteralExpression node) {
     super.visitPyNumericLiteralExpression(node);
 
     final String text = node.getText();
@@ -246,7 +246,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   }
 
   @Override
-  public void visitPyStringLiteralExpression(final PyStringLiteralExpression node) {
+  public void visitPyStringLiteralExpression(final @NotNull PyStringLiteralExpression node) {
     super.visitPyStringLiteralExpression(node);
 
     boolean seenBytes = false;
@@ -289,7 +289,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   }
 
   @Override
-  public void visitPyListCompExpression(final PyListCompExpression node) {
+  public void visitPyListCompExpression(final @NotNull PyListCompExpression node) {
     super.visitPyListCompExpression(node);
 
     registerForAllMatchingVersions(
@@ -301,7 +301,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   }
 
   @Override
-  public void visitPyRaiseStatement(PyRaiseStatement node) {
+  public void visitPyRaiseStatement(@NotNull PyRaiseStatement node) {
     super.visitPyRaiseStatement(node);
 
     // empty raise under finally
@@ -325,7 +325,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   }
 
   @Override
-  public void visitPyReprExpression(PyReprExpression node) {
+  public void visitPyReprExpression(@NotNull PyReprExpression node) {
     super.visitPyReprExpression(node);
 
     registerForAllMatchingVersions(level -> level.isPy3K() && registerForLanguageLevel(level),
@@ -336,7 +336,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
 
 
   @Override
-  public void visitPyWithStatement(PyWithStatement node) {
+  public void visitPyWithStatement(@NotNull PyWithStatement node) {
     super.visitPyWithStatement(node);
 
     final PyWithItem[] items = node.getWithItems();
@@ -351,13 +351,13 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   }
 
   @Override
-  public void visitPyForStatement(PyForStatement node) {
+  public void visitPyForStatement(@NotNull PyForStatement node) {
     super.visitPyForStatement(node);
     checkAsyncKeyword(node);
   }
 
   @Override
-  public void visitPyPrintStatement(PyPrintStatement node) {
+  public void visitPyPrintStatement(@NotNull PyPrintStatement node) {
     super.visitPyPrintStatement(node);
 
     final PsiElement[] arguments = node.getChildren();
@@ -373,7 +373,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   }
 
   @Override
-  public void visitPyCallExpression(PyCallExpression node) {
+  public void visitPyCallExpression(@NotNull PyCallExpression node) {
     super.visitPyCallExpression(node);
 
     final PsiElement firstChild = node.getFirstChild();
@@ -387,13 +387,13 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   }
 
   @Override
-  public void visitPyFunction(PyFunction node) {
+  public void visitPyFunction(@NotNull PyFunction node) {
     super.visitPyFunction(node);
     checkAsyncKeyword(node);
   }
 
   @Override
-  public void visitPyPrefixExpression(PyPrefixExpression node) {
+  public void visitPyPrefixExpression(@NotNull PyPrefixExpression node) {
     super.visitPyPrefixExpression(node);
 
     if (node.getOperator() == PyTokenTypes.AWAIT_KEYWORD) {
@@ -404,7 +404,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   }
 
   @Override
-  public void visitPyYieldExpression(PyYieldExpression node) {
+  public void visitPyYieldExpression(@NotNull PyYieldExpression node) {
     super.visitPyYieldExpression(node);
 
     Optional
@@ -431,7 +431,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   }
 
   @Override
-  public void visitPyReturnStatement(PyReturnStatement node) {
+  public void visitPyReturnStatement(@NotNull PyReturnStatement node) {
     if (ContainerUtil.exists(myVersionsToProcess, level -> level.isPython2() && registerForLanguageLevel(level))) {
       final PyFunction function = PsiTreeUtil.getParentOfType(node, PyFunction.class, false, PyClass.class);
       if (function != null && node.getExpression() != null) {
@@ -446,7 +446,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   }
 
   @Override
-  public void visitPyNoneLiteralExpression(PyNoneLiteralExpression node) {
+  public void visitPyNoneLiteralExpression(@NotNull PyNoneLiteralExpression node) {
     if (node.isEllipsis()) {
       final PySubscriptionExpression subscription = PsiTreeUtil.getParentOfType(node, PySubscriptionExpression.class);
       if (subscription != null && PsiTreeUtil.isAncestor(subscription.getIndexExpression(), node, false)) {
@@ -463,7 +463,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   }
 
   @Override
-  public void visitPyAugAssignmentStatement(PyAugAssignmentStatement node) {
+  public void visitPyAugAssignmentStatement(@NotNull PyAugAssignmentStatement node) {
     super.visitPyAugAssignmentStatement(node);
     final PsiElement operation = node.getOperation();
     if (operation != null) {
@@ -494,19 +494,19 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
     }
 
     @Override
-    public void visitPyYieldExpression(final PyYieldExpression node) {
+    public void visitPyYieldExpression(final @NotNull PyYieldExpression node) {
       _haveYield = true;
     }
 
     @Override
-    public void visitPyElement(final PyElement node) {
+    public void visitPyElement(final @NotNull PyElement node) {
       if (!_haveYield) {
         node.acceptChildren(this);
       }
     }
 
     @Override
-    public void visitPyFunction(final PyFunction node) {
+    public void visitPyFunction(final @NotNull PyFunction node) {
       // do not go to nested functions
     }
   }
@@ -597,7 +597,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   }
 
   @Override
-  public void visitPyNonlocalStatement(final PyNonlocalStatement node) {
+  public void visitPyNonlocalStatement(final @NotNull PyNonlocalStatement node) {
     registerForAllMatchingVersions(level -> level.isPython2() && registerForLanguageLevel(level),
                                    PyPsiBundle.message("INSP.compatibility.feature.have.nonlocal.keyword"),
                                    node);
@@ -685,7 +685,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   }
 
   @Override
-  public void visitPyComprehensionElement(PyComprehensionElement node) {
+  public void visitPyComprehensionElement(@NotNull PyComprehensionElement node) {
     super.visitPyComprehensionElement(node);
 
     if (registerForLanguageLevel(LanguageLevel.PYTHON35) && myVersionsToProcess.contains(LanguageLevel.PYTHON35)) {
@@ -716,7 +716,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   }
 
   @Override
-  public void visitPySlashParameter(PySlashParameter node) {
+  public void visitPySlashParameter(@NotNull PySlashParameter node) {
     super.visitPySlashParameter(node);
 
     registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON38) && registerForLanguageLevel(level),
@@ -725,7 +725,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   }
 
   @Override
-  public void visitPyFStringFragment(PyFStringFragment node) {
+  public void visitPyFStringFragment(@NotNull PyFStringFragment node) {
     super.visitPyFStringFragment(node);
 
     final ASTNode equalitySignInFStringFragment = node.getNode().findChildByType(PyTokenTypes.EQ);
@@ -736,14 +736,14 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   }
 
   @Override
-  public void visitPyAssignmentExpression(PyAssignmentExpression node) {
+  public void visitPyAssignmentExpression(@NotNull PyAssignmentExpression node) {
     super.visitPyAssignmentExpression(node);
     registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON38) && registerForLanguageLevel(level),
                                    PyPsiBundle.message("INSP.compatibility.feature.support.assignment.expressions"), node);
   }
 
   @Override
-  public void visitPyContinueStatement(PyContinueStatement node) {
+  public void visitPyContinueStatement(@NotNull PyContinueStatement node) {
     super.visitPyContinueStatement(node);
 
     if (PsiTreeUtil.getParentOfType(node, PyFinallyPart.class, false, PyLoopStatement.class) != null) {
@@ -754,7 +754,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   }
 
   @Override
-  public void visitPyDecorator(PyDecorator decorator) {
+  public void visitPyDecorator(@NotNull PyDecorator decorator) {
     super.visitPyDecorator(decorator);
     if (PsiTreeUtil.getChildOfType(decorator, PsiErrorElement.class) == null && decorator.getQualifiedName() == null) {
       registerForAllMatchingVersions(level -> level.isOlderThan(LanguageLevel.PYTHON39) && registerForLanguageLevel(level),

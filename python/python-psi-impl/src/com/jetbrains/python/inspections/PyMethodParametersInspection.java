@@ -70,7 +70,7 @@ public class PyMethodParametersInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyFunction(final PyFunction node) {
+    public void visitPyFunction(final @NotNull PyFunction node) {
       for (PyInspectionExtension extension : PyInspectionExtension.EP_NAME.getExtensionList()) {
         if (extension.ignoreMethodParameters(node, myTypeEvalContext)) {
           return;

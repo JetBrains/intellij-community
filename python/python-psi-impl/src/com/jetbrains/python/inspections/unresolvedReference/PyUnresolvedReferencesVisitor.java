@@ -75,7 +75,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
   }
 
   @Override
-  public void visitPyTargetExpression(PyTargetExpression node) {
+  public void visitPyTargetExpression(@NotNull PyTargetExpression node) {
     checkSlotsAndProperties(node);
   }
 
@@ -93,7 +93,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
   }
 
   @Override
-  public void visitPyImportElement(PyImportElement node) {
+  public void visitPyImportElement(@NotNull PyImportElement node) {
     super.visitPyImportElement(node);
     final PyFromImportStatement fromImport = PsiTreeUtil.getParentOfType(node, PyFromImportStatement.class);
     if (isEnabled(node) && (fromImport == null || !fromImport.isFromFuture())) {
@@ -102,7 +102,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
   }
 
   @Override
-  public void visitPyStarImportElement(PyStarImportElement node) {
+  public void visitPyStarImportElement(@NotNull PyStarImportElement node) {
     super.visitPyStarImportElement(node);
     if (isEnabled(node)) {
       myAllImports.add(node);
@@ -118,7 +118,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
   }
 
   @Override
-  public void visitPyElement(final PyElement node) {
+  public void visitPyElement(final @NotNull PyElement node) {
     super.visitPyElement(node);
     final PsiFile file = node.getContainingFile();
     final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(node.getProject());
@@ -147,7 +147,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
       for (Pair<PsiElement, TextRange> pair : files) {
         new PyRecursiveElementVisitor() {
           @Override
-          public void visitPyElement(PyElement element) {
+          public void visitPyElement(@NotNull PyElement element) {
             super.visitPyElement(element);
             if (element instanceof PyReferenceOwner) {
               final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(myTypeEvalContext);

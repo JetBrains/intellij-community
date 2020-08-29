@@ -277,7 +277,7 @@ public final class PyPackageUtil {
     final Ref<PyCallExpression> result = new Ref<>(null);
     file.acceptChildren(new PyRecursiveElementVisitor() {
       @Override
-      public void visitPyCallExpression(PyCallExpression node) {
+      public void visitPyCallExpression(@NotNull PyCallExpression node) {
         final PyExpression callee = node.getCallee();
         final String name = PyUtil.getReadableRepr(callee, true);
         if ("setup".equals(name)) {
@@ -286,7 +286,7 @@ public final class PyPackageUtil {
       }
 
       @Override
-      public void visitPyElement(PyElement node) {
+      public void visitPyElement(@NotNull PyElement node) {
         if (!(node instanceof ScopeOwner)) {
           super.visitPyElement(node);
         }

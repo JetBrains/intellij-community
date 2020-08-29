@@ -48,7 +48,7 @@ public class PyComparisonWithNoneInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyBinaryExpression(PyBinaryExpression node) {
+    public void visitPyBinaryExpression(@NotNull PyBinaryExpression node) {
       final PyExpression rightExpression = node.getRightExpression();
       if ((rightExpression instanceof PyReferenceExpression && PyNames.NONE.equals(rightExpression.getText())) ||
           rightExpression instanceof PyNoneLiteralExpression) {

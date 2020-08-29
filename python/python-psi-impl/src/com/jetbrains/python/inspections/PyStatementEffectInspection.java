@@ -53,7 +53,7 @@ public class PyStatementEffectInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyExpressionStatement(final PyExpressionStatement node) {
+    public void visitPyExpressionStatement(final @NotNull PyExpressionStatement node) {
       if (ContainerUtil.exists(PyInspectionExtension.EP_NAME.getExtensionList(),
                                extension -> extension.ignoreNoEffectStatement(node))) {
         return;

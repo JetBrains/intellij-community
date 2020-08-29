@@ -39,7 +39,7 @@ public class PyAbstractClassInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyClass(PyClass pyClass) {
+    public void visitPyClass(@NotNull PyClass pyClass) {
       if (isAbstract(pyClass) || PyProtocolsKt.isProtocol(pyClass, myTypeEvalContext)) {
         return;
       }

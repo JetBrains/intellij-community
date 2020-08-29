@@ -190,7 +190,7 @@ public class PyPep8NamingInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyAssignmentStatement(PyAssignmentStatement node) {
+    public void visitPyAssignmentStatement(@NotNull PyAssignmentStatement node) {
       final PyFunction function = PsiTreeUtil.getParentOfType(node, PyFunction.class, true, PyClass.class);
       if (function == null) return;
       final Scope scope = ControlFlowCache.getScope(function);
@@ -219,7 +219,7 @@ public class PyPep8NamingInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyParameter(PyParameter node) {
+    public void visitPyParameter(@NotNull PyParameter node) {
       final String name = node.getName();
       if (name == null) return;
 
@@ -239,7 +239,7 @@ public class PyPep8NamingInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyFunction(PyFunction function) {
+    public void visitPyFunction(@NotNull PyFunction function) {
       final PyClass containingClass = function.getContainingClass();
       if (ignoreOverriddenFunctions && isOverriddenMethod(function)) return;
       final String name = function.getName();
@@ -280,7 +280,7 @@ public class PyPep8NamingInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyClass(PyClass node) {
+    public void visitPyClass(@NotNull PyClass node) {
       final String name = node.getName();
       if (name == null) return;
       final String errorCode = "N801";
@@ -306,7 +306,7 @@ public class PyPep8NamingInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyImportElement(PyImportElement node) {
+    public void visitPyImportElement(@NotNull PyImportElement node) {
       final String asName = node.getAsName();
       final QualifiedName importedQName = node.getImportedQName();
       if (importedQName == null) return;

@@ -128,22 +128,22 @@ public class PySmartStepIntoHandler extends XSmartStepIntoHandler<PySmartStepInt
 
     element.accept(new PyRecursiveElementVisitor() {
       @Override
-      public void visitPyBinaryExpression(PyBinaryExpression node) {
+      public void visitPyBinaryExpression(@NotNull PyBinaryExpression node) {
         storeElement(node);
       }
 
       @Override
-      public void visitPyCallExpression(PyCallExpression node) {
+      public void visitPyCallExpression(@NotNull PyCallExpression node) {
         storeElement(node);
       }
 
       @Override
-      public void visitPyComprehensionElement(PyComprehensionElement node) {
+      public void visitPyComprehensionElement(@NotNull PyComprehensionElement node) {
         storeElement(node);
       }
 
       @Override
-      public void visitPyElement(PyElement node) {
+      public void visitPyElement(@NotNull PyElement node) {
         if (node instanceof PyDecorator) {
           storeElement(node);
         }
@@ -151,7 +151,7 @@ public class PySmartStepIntoHandler extends XSmartStepIntoHandler<PySmartStepInt
       }
 
       @Override
-      public void visitPyDecoratorList(PyDecoratorList node) {
+      public void visitPyDecoratorList(@NotNull PyDecoratorList node) {
         storeElement(node);
         super.visitPyDecoratorList(node);
       }

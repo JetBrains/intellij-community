@@ -157,7 +157,7 @@ public class PyCompatibilityInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyCallExpression(PyCallExpression node) {
+    public void visitPyCallExpression(@NotNull PyCallExpression node) {
       super.visitPyCallExpression(node);
       PyExpression callee = node.getCallee();
       if (callee != null && importedFromCompatibilityLibs(callee)) {
@@ -211,7 +211,7 @@ public class PyCompatibilityInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyImportElement(PyImportElement importElement) {
+    public void visitPyImportElement(@NotNull PyImportElement importElement) {
       myUsedImports.add(importElement.getVisibleName());
 
       final PyIfStatement ifParent = PsiTreeUtil.getParentOfType(importElement, PyIfStatement.class);
@@ -254,7 +254,7 @@ public class PyCompatibilityInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyFromImportStatement(PyFromImportStatement node) {
+    public void visitPyFromImportStatement(@NotNull PyFromImportStatement node) {
       super.visitPyFromImportStatement(node);
 
       if (node.getRelativeLevel() > 0) return;
@@ -271,7 +271,7 @@ public class PyCompatibilityInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyArgumentList(final PyArgumentList node) { //PY-5588
+    public void visitPyArgumentList(final @NotNull PyArgumentList node) { //PY-5588
       if (node.getParent() instanceof PyClass) {
         final boolean isPython2 = LanguageLevel.forElement(node).isPython2();
         if (isPython2 || myVersionsToProcess.stream().anyMatch(LanguageLevel::isPython2)) {
@@ -288,7 +288,7 @@ public class PyCompatibilityInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyReferenceExpression(PyReferenceExpression node) {
+    public void visitPyReferenceExpression(@NotNull PyReferenceExpression node) {
       super.visitPyElement(node);
 
       if (myVersionsToProcess.stream().anyMatch(LanguageLevel::isPy3K)) {
@@ -328,19 +328,19 @@ public class PyCompatibilityInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyTargetExpression(PyTargetExpression node) {
+    public void visitPyTargetExpression(@NotNull PyTargetExpression node) {
       super.visitPyTargetExpression(node);
       warnAsyncAndAwaitAreBecomingKeywordsInPy37(node);
     }
 
     @Override
-    public void visitPyClass(PyClass node) {
+    public void visitPyClass(@NotNull PyClass node) {
       super.visitPyClass(node);
       warnAsyncAndAwaitAreBecomingKeywordsInPy37(node);
     }
 
     @Override
-    public void visitPyFunction(PyFunction node) {
+    public void visitPyFunction(@NotNull PyFunction node) {
       super.visitPyFunction(node);
       warnAsyncAndAwaitAreBecomingKeywordsInPy37(node);
     }

@@ -153,7 +153,7 @@ abstract class FieldsManager extends MembersManager<PyTargetExpression> {
   private static class MyPyRecursiveElementVisitor extends PyRecursiveElementVisitorWithResult {
 
     @Override
-    public void visitPyReferenceExpression(final PyReferenceExpression node) {
+    public void visitPyReferenceExpression(final @NotNull PyReferenceExpression node) {
       final PsiElement declaration = node.getReference().resolve();
       if (declaration instanceof PyElement) {
         final PyClass parent = PsiTreeUtil.getParentOfType(declaration, PyClass.class);

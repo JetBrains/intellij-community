@@ -89,7 +89,7 @@ public class PyChainedComparisonsInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyBinaryExpression(final PyBinaryExpression node) {
+    public void visitPyBinaryExpression(final @NotNull PyBinaryExpression node) {
       myIsLeft = false;
       myIsRight = false;
       myOperator = null;

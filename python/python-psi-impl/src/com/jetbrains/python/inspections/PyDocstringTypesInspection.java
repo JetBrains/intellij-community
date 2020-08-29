@@ -45,7 +45,7 @@ public class PyDocstringTypesInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyFunction(PyFunction function) {
+    public void visitPyFunction(@NotNull PyFunction function) {
       final String name = function.getName();
       if (name != null && !name.startsWith("_")) checkDocString(function);
     }

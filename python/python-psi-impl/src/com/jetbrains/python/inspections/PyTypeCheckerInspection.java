@@ -50,17 +50,17 @@ public class PyTypeCheckerInspection extends PyInspection {
 
     // TODO: Visit decorators with arguments
     @Override
-    public void visitPyCallExpression(PyCallExpression node) {
+    public void visitPyCallExpression(@NotNull PyCallExpression node) {
       checkCallSite(node);
     }
 
     @Override
-    public void visitPyBinaryExpression(PyBinaryExpression node) {
+    public void visitPyBinaryExpression(@NotNull PyBinaryExpression node) {
       checkCallSite(node);
     }
 
     @Override
-    public void visitPySubscriptionExpression(PySubscriptionExpression node) {
+    public void visitPySubscriptionExpression(@NotNull PySubscriptionExpression node) {
       // TODO: Support slice PySliceExpressions
       // Type check in TypedDict subscription expressions cannot be properly done because each key should have its own value type,
       // so this case is covered by PyTypedDictInspection
@@ -69,12 +69,12 @@ public class PyTypeCheckerInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyForStatement(PyForStatement node) {
+    public void visitPyForStatement(@NotNull PyForStatement node) {
       checkIteratedValue(node.getForPart().getSource(), node.isAsync());
     }
 
     @Override
-    public void visitPyReturnStatement(PyReturnStatement node) {
+    public void visitPyReturnStatement(@NotNull PyReturnStatement node) {
       final ScopeOwner owner = ScopeUtil.getScopeOwner(node);
       if (owner instanceof PyFunction) {
         final PyFunction function = (PyFunction)owner;
@@ -109,7 +109,7 @@ public class PyTypeCheckerInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyTargetExpression(PyTargetExpression node) {
+    public void visitPyTargetExpression(@NotNull PyTargetExpression node) {
       // TODO: Check types in class-level assignments
       final ScopeOwner owner = ScopeUtil.getScopeOwner(node);
       if (owner instanceof PyClass) return;
@@ -132,7 +132,7 @@ public class PyTypeCheckerInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyFunction(PyFunction node) {
+    public void visitPyFunction(@NotNull PyFunction node) {
       final PyAnnotation annotation = node.getAnnotation();
       final String typeCommentAnnotation = node.getTypeCommentAnnotation();
       if (annotation != null || typeCommentAnnotation != null) {
@@ -157,7 +157,7 @@ public class PyTypeCheckerInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyComprehensionElement(PyComprehensionElement node) {
+    public void visitPyComprehensionElement(@NotNull PyComprehensionElement node) {
       super.visitPyComprehensionElement(node);
 
       for (PyComprehensionForComponent forComponent : node.getForComponents()) {
@@ -174,7 +174,7 @@ public class PyTypeCheckerInspection extends PyInspection {
       }
 
       @Override
-      public void visitPyReturnStatement(PyReturnStatement node) {
+      public void visitPyReturnStatement(@NotNull PyReturnStatement node) {
         if (ScopeUtil.getScopeOwner(node) == myFunction) {
           myHasReturns = true;
         }

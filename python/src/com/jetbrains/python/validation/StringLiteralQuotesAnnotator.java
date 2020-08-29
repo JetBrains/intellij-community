@@ -24,7 +24,7 @@ public class StringLiteralQuotesAnnotator extends PyAnnotator {
   private static final String TRIPLE_APOS = "'''";
 
   @Override
-  public void visitPyStringLiteralExpression(final PyStringLiteralExpression node) {
+  public void visitPyStringLiteralExpression(final @NotNull PyStringLiteralExpression node) {
     final List<ASTNode> stringNodes = node.getStringNodes();
     for (ASTNode stringNode : stringNodes) {
       // TODO Migrate to newer PyStringElement API

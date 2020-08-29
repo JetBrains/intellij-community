@@ -191,7 +191,7 @@ public final class GenerateBinaryStubsFix implements LocalQuickFix {
     final List<String> result = new ArrayList<>();
     file.accept(new PyRecursiveElementVisitor() {
       @Override
-      public void visitPyCallExpression(PyCallExpression node) {
+      public void visitPyCallExpression(@NotNull PyCallExpression node) {
         super.visitPyCallExpression(node);
         // TODO: What if user loads it not by literal? We need to ask user for list of DLLs
         if (node.isCalleeText("AddReference", "AddReferenceByPartialName", "AddReferenceByName")) {

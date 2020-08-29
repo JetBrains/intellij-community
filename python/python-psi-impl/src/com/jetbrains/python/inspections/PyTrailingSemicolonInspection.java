@@ -34,7 +34,7 @@ public class PyTrailingSemicolonInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyStatement(final PyStatement statement) {
+    public void visitPyStatement(final @NotNull PyStatement statement) {
       ASTNode statementNode = statement.getNode();
       if (statementNode != null) {
         ASTNode[] nodes = statementNode.getChildren(TokenSet.create(PyTokenTypes.SEMICOLON));

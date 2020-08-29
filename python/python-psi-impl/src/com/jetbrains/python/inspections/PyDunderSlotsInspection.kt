@@ -19,10 +19,10 @@ class PyDunderSlotsInspection : PyInspection() {
 
   private class Visitor(holder: ProblemsHolder, session: LocalInspectionToolSession) : PyInspectionVisitor(holder, session) {
 
-    override fun visitPyClass(node: PyClass?) {
+    override fun visitPyClass(node: PyClass) {
       super.visitPyClass(node)
 
-      if (node != null && !LanguageLevel.forElement(node).isPython2) {
+      if (!LanguageLevel.forElement(node).isPython2) {
         val slots = findSlotsValue(node)
 
         when (slots) {
@@ -38,12 +38,10 @@ class PyDunderSlotsInspection : PyInspection() {
       }
     }
 
-    override fun visitPyTargetExpression(node: PyTargetExpression?) {
+    override fun visitPyTargetExpression(node: PyTargetExpression) {
       super.visitPyTargetExpression(node)
 
-      if (node != null) {
-        checkAttributeExpression(node)
-      }
+      checkAttributeExpression(node)
     }
 
     private fun findSlotsValue(pyClass: PyClass): PyExpression? {

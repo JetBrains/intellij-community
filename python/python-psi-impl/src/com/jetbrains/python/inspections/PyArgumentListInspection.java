@@ -56,12 +56,12 @@ public class PyArgumentListInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyArgumentList(final PyArgumentList node) {
+    public void visitPyArgumentList(final @NotNull PyArgumentList node) {
       inspectPyArgumentList(node, getHolder(), getResolveContext());
     }
 
     @Override
-    public void visitPyDecorator(PyDecorator deco) {
+    public void visitPyDecorator(@NotNull PyDecorator deco) {
       if (deco.hasArgumentList()) return;
       final PyCallableType callableType = ContainerUtil.getFirstItem(deco.multiResolveCallee(getResolveContext()));
       if (callableType != null) {

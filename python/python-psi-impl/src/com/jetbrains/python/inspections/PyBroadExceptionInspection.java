@@ -56,7 +56,7 @@ public class PyBroadExceptionInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyExceptBlock(final PyExceptPart node){
+    public void visitPyExceptBlock(final @NotNull PyExceptPart node){
       PyExpression exceptClass = node.getExceptClass();
       if (reRaised(node))
         return;

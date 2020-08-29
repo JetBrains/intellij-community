@@ -47,7 +47,7 @@ public class PyFromFutureImportInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyFromImportStatement(PyFromImportStatement node) {
+    public void visitPyFromImportStatement(@NotNull PyFromImportStatement node) {
       PyReferenceExpression importSource = node.getImportSource();
       if (importSource != null && PyNames.FUTURE_MODULE.equals(importSource.getName())) {
         PsiFile file = importSource.getContainingFile();

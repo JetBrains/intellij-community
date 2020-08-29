@@ -70,7 +70,7 @@ public final class PyInterpreterInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyFile(PyFile node) {
+    public void visitPyFile(@NotNull PyFile node) {
       Module module = guessModule(node);
       if (module == null || isFileIgnored(node)) return;
       final Sdk sdk = PythonSdkUtil.findPythonSdk(module);

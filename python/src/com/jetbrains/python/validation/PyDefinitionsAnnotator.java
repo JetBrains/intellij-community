@@ -18,12 +18,11 @@ package com.jetbrains.python.validation;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.highlighting.PyHighlighter;
 import com.jetbrains.python.psi.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
@@ -34,7 +33,7 @@ import java.util.Objects;
 public class PyDefinitionsAnnotator extends PyAnnotator {
 
   @Override
-  public void visitPyClass(PyClass node) {
+  public void visitPyClass(@NotNull PyClass node) {
     final ASTNode name_node = node.getNameNode();
     if (name_node != null) {
       addHighlightingAnnotation(name_node, PyHighlighter.PY_CLASS_DEFINITION);
@@ -42,7 +41,7 @@ public class PyDefinitionsAnnotator extends PyAnnotator {
   }
 
   @Override
-  public void visitPyFunction(PyFunction node) {
+  public void visitPyFunction(@NotNull PyFunction node) {
     ASTNode nameNode = node.getNameNode();
     if (nameNode != null) {
       final String name = node.getName();
@@ -76,7 +75,7 @@ public class PyDefinitionsAnnotator extends PyAnnotator {
   }
 
   @Override
-  public void visitPyDecorator(PyDecorator node) {
+  public void visitPyDecorator(@NotNull PyDecorator node) {
     final PsiElement atSign = node.getFirstChild();
     if (atSign != null) {
       addHighlightingAnnotation(atSign, PyHighlighter.PY_DECORATOR);

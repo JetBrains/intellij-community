@@ -853,7 +853,7 @@ public final class PyUtil {
       }
 
       @Override
-      public void visitPyReferenceExpression(PyReferenceExpression node) {
+      public void visitPyReferenceExpression(@NotNull PyReferenceExpression node) {
         if (!node.isQualified()) {
           variables.add(node.getReferencedName());
         }

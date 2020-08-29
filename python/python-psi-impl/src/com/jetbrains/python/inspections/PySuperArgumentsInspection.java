@@ -48,7 +48,7 @@ public class PySuperArgumentsInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyCallExpression(PyCallExpression node) {
+    public void visitPyCallExpression(@NotNull PyCallExpression node) {
       final PyExpression callee = node.getCallee();
       if (callee != null) {
         if (PyNames.SUPER.equals(callee.getName())) {

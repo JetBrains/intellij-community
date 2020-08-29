@@ -50,7 +50,7 @@ public class PyTupleAssignmentBalanceInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyAssignmentStatement(PyAssignmentStatement node) {
+    public void visitPyAssignmentStatement(@NotNull PyAssignmentStatement node) {
       final PyExpression lhsExpression = PyPsiUtils.flattenParens(node.getLeftHandSideExpression());
       final PyExpression assignedValue = node.getAssignedValue();
       if (!(lhsExpression instanceof PyTupleExpression) || assignedValue == null) return;

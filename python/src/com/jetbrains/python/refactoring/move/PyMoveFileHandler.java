@@ -129,7 +129,7 @@ public class PyMoveFileHandler extends MoveFileHandler {
         }
         scopeOwner.accept(new PyRecursiveElementVisitor() {
           @Override
-          public void visitPyReferenceExpression(PyReferenceExpression node) {
+          public void visitPyReferenceExpression(@NotNull PyReferenceExpression node) {
             if (Comparing.equal(node.asQualifiedName(), oldQualifiedName)) {
               replaceWithQualifiedExpression(node, newName);
             }

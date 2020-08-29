@@ -80,12 +80,12 @@ public class PyPropertyDefinitionInspection extends PyInspection {
 
 
     @Override
-    public void visitPyFile(PyFile node) {
+    public void visitPyFile(@NotNull PyFile node) {
       super.visitPyFile(node);
     }
 
     @Override
-    public void visitPyClass(final PyClass node) {
+    public void visitPyClass(final @NotNull PyClass node) {
       super.visitPyClass(node);
       // check property() and @property
       node.scanProperties(property -> {
@@ -176,7 +176,7 @@ public class PyPropertyDefinitionInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyFunction(PyFunction node) {
+    public void visitPyFunction(@NotNull PyFunction node) {
       super.visitPyFunction(node);
       // check @foo.setter and @foo.deleter
       PyClass cls = node.getContainingClass();

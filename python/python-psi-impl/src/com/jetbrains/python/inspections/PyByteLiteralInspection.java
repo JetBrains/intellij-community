@@ -52,7 +52,7 @@ public class PyByteLiteralInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyStringLiteralExpression(PyStringLiteralExpression node) {
+    public void visitPyStringLiteralExpression(@NotNull PyStringLiteralExpression node) {
       String value = node.getStringValue();
       PsiFile file = node.getContainingFile(); // can't cache this in the instance, alas
       if (file == null) return;

@@ -46,13 +46,13 @@ public class PyPropertyAccessInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyReferenceExpression(PyReferenceExpression node) {
+    public void visitPyReferenceExpression(@NotNull PyReferenceExpression node) {
       super.visitPyReferenceExpression(node);
       checkPropertyExpression(node);
     }
 
     @Override
-    public void visitPyTargetExpression(PyTargetExpression node) {
+    public void visitPyTargetExpression(@NotNull PyTargetExpression node) {
       super.visitPyTargetExpression(node);
       checkPropertyExpression(node);
     }

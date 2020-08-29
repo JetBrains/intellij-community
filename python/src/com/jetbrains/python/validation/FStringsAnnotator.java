@@ -38,7 +38,7 @@ import java.util.List;
 public class FStringsAnnotator extends PyAnnotator {
 
   @Override
-  public void visitPyFStringFragment(PyFStringFragment node) {
+  public void visitPyFStringFragment(@NotNull PyFStringFragment node) {
     final List<PyFStringFragment> enclosingFragments = PsiTreeUtil.collectParents(node, PyFStringFragment.class, false,
                                                                                   PyStringLiteralExpression.class::isInstance);
     if (enclosingFragments.size() > 1) {
@@ -75,7 +75,7 @@ public class FStringsAnnotator extends PyAnnotator {
   }
 
   @Override
-  public void visitPyFormattedStringElement(PyFormattedStringElement node) {
+  public void visitPyFormattedStringElement(@NotNull PyFormattedStringElement node) {
     final String wholeNodeText = node.getText();
     for (TextRange textRange : node.getLiteralPartRanges()) {
       int i = textRange.getStartOffset();

@@ -50,7 +50,7 @@ public class PyDictCreationInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyAssignmentStatement(PyAssignmentStatement node) {
+    public void visitPyAssignmentStatement(@NotNull PyAssignmentStatement node) {
       if (node.getAssignedValue() instanceof PyDictLiteralExpression) {
         if (node.getTargets().length != 1) {
           return;
@@ -104,7 +104,7 @@ public class PyDictCreationInspection extends PyInspection {
     final List<PsiElement> refs = new ArrayList<>();
     expression.accept(new PyRecursiveElementVisitor() {
       @Override
-      public void visitPyReferenceExpression(PyReferenceExpression node) {
+      public void visitPyReferenceExpression(@NotNull PyReferenceExpression node) {
         super.visitPyReferenceExpression(node);
         final PsiPolyVariantReference ref = node.getReference();
         if (ref.isReferenceTo(target)) {

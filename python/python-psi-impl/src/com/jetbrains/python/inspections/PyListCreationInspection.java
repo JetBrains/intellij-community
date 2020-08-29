@@ -44,7 +44,7 @@ public class PyListCreationInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyAssignmentStatement(PyAssignmentStatement node) {
+    public void visitPyAssignmentStatement(@NotNull PyAssignmentStatement node) {
       if (!(node.getAssignedValue() instanceof PyListLiteralExpression))return;
       final PyExpression[] targets = node.getTargets();
       if (targets.length != 1) return;

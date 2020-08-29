@@ -41,37 +41,33 @@ class PyTypeHintsInspection : PyInspection() {
 
     private val genericQName = QualifiedName.fromDottedString(PyTypingTypeProvider.GENERIC)
 
-    override fun visitPyCallExpression(node: PyCallExpression?) {
+    override fun visitPyCallExpression(node: PyCallExpression) {
       super.visitPyCallExpression(node)
 
-      if (node != null) {
-        val callee = node.callee as? PyReferenceExpression
-        val calleeQName = callee?.let { PyResolveUtil.resolveImportedElementQNameLocally(it) } ?: emptyList()
+      val callee = node.callee as? PyReferenceExpression
+      val calleeQName = callee?.let { PyResolveUtil.resolveImportedElementQNameLocally(it) } ?: emptyList()
 
-        if (QualifiedName.fromDottedString(PyTypingTypeProvider.TYPE_VAR) in calleeQName) {
-          val target = (node.parent as? PyAssignmentStatement)?.targetsToValuesMapping?.firstOrNull { it.second == node }?.first
+      if (QualifiedName.fromDottedString(PyTypingTypeProvider.TYPE_VAR) in calleeQName) {
+        val target = (node.parent as? PyAssignmentStatement)?.targetsToValuesMapping?.firstOrNull { it.second == node }?.first
 
-          checkTypeVarPlacement(node, target)
-          checkTypeVarArguments(node, target)
-          checkTypeVarRedefinition(target)
-        }
-
-        checkInstanceAndClassChecks(node)
-
-        checkParenthesesOnGenerics(node)
+        checkTypeVarPlacement(node, target)
+        checkTypeVarArguments(node, target)
+        checkTypeVarRedefinition(target)
       }
+
+      checkInstanceAndClassChecks(node)
+
+      checkParenthesesOnGenerics(node)
     }
 
-    override fun visitPyClass(node: PyClass?) {
+    override fun visitPyClass(node: PyClass) {
       super.visitPyClass(node)
 
-      if (node != null) {
-        val superClassExpressions = node.superClassExpressions.asList()
+      val superClassExpressions = node.superClassExpressions.asList()
 
-        checkPlainGenericInheritance(superClassExpressions)
-        checkGenericDuplication(superClassExpressions)
-        checkGenericCompleteness(node)
-      }
+      checkPlainGenericInheritance(superClassExpressions)
+      checkGenericDuplication(superClassExpressions)
+      checkGenericCompleteness(node)
     }
 
     override fun visitPySubscriptionExpression(node: PySubscriptionExpression) {
@@ -120,7 +116,7 @@ class PyTypeHintsInspection : PyInspection() {
       }
     }
 
-    override fun visitPyFile(node: PyFile?) {
+    override fun visitPyFile(node: PyFile) {
       super.visitPyFile(node)
 
       if (node is PyTypeHintFile) {
@@ -128,7 +124,7 @@ class PyTypeHintsInspection : PyInspection() {
       }
     }
 
-    override fun visitPyElement(node: PyElement?) {
+    override fun visitPyElement(node: PyElement) {
       super.visitPyElement(node)
 
       if (node is PyTypeCommentOwner &&

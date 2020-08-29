@@ -46,7 +46,7 @@ public class PyExceptionInheritInspection extends PyInspection {
     }
 
     @Override
-    public void visitPyRaiseStatement(PyRaiseStatement node) {
+    public void visitPyRaiseStatement(@NotNull PyRaiseStatement node) {
       PyExpression[] expressions = node.getExpressions();
       if (expressions.length == 0) {
         return;

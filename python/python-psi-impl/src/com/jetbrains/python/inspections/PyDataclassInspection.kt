@@ -48,102 +48,97 @@ class PyDataclassInspection : PyInspection() {
 
   private class Visitor(holder: ProblemsHolder, session: LocalInspectionToolSession) : PyInspectionVisitor(holder, session) {
 
-    override fun visitPyTargetExpression(node: PyTargetExpression?) {
+    override fun visitPyTargetExpression(node: PyTargetExpression) {
       super.visitPyTargetExpression(node)
 
-      if (node != null) checkMutatingFrozenAttribute(node)
+      checkMutatingFrozenAttribute(node)
     }
 
-    override fun visitPyDelStatement(node: PyDelStatement?) {
+    override fun visitPyDelStatement(node: PyDelStatement) {
       super.visitPyDelStatement(node)
 
-      if (node != null) {
-        node
-          .targets
-          .asSequence()
-          .filterIsInstance<PyReferenceExpression>()
-          .forEach { checkMutatingFrozenAttribute(it) }
-      }
+      node.targets
+        .asSequence()
+        .filterIsInstance<PyReferenceExpression>()
+        .forEach { checkMutatingFrozenAttribute(it) }
     }
 
-    override fun visitPyClass(node: PyClass?) {
+    override fun visitPyClass(node: PyClass) {
       super.visitPyClass(node)
 
-      if (node != null) {
-        val dataclassParameters = parseDataclassParameters(node, myTypeEvalContext)
+      val dataclassParameters = parseDataclassParameters(node, myTypeEvalContext)
 
-        if (dataclassParameters != null) {
-          if (dataclassParameters.type.asPredefinedType == PyDataclassParameters.PredefinedType.STD) {
-            processDataclassParameters(node, dataclassParameters)
+      if (dataclassParameters != null) {
+        if (dataclassParameters.type.asPredefinedType == PyDataclassParameters.PredefinedType.STD) {
+          processDataclassParameters(node, dataclassParameters)
 
-            val postInit = node.findMethodByName(DUNDER_POST_INIT, false, myTypeEvalContext)
-            val localInitVars = mutableListOf<PyTargetExpression>()
+          val postInit = node.findMethodByName(DUNDER_POST_INIT, false, myTypeEvalContext)
+          val localInitVars = mutableListOf<PyTargetExpression>()
 
-            node.processClassLevelDeclarations { element, _ ->
-              if (element is PyTargetExpression) {
-                if (!PyTypingTypeProvider.isClassVar(element, myTypeEvalContext)) {
-                  processDefaultFieldValue(element)
-                  processAsInitVar(element, postInit)?.let { localInitVars.add(it) }
-                }
-
-                processFieldFunctionCall(element)
+          node.processClassLevelDeclarations { element, _ ->
+            if (element is PyTargetExpression) {
+              if (!PyTypingTypeProvider.isClassVar(element, myTypeEvalContext)) {
+                processDefaultFieldValue(element)
+                processAsInitVar(element, postInit)?.let { localInitVars.add(it) }
               }
 
-              true
+              processFieldFunctionCall(element)
             }
 
-            if (postInit != null) {
-              processPostInitDefinition(node, postInit, dataclassParameters, localInitVars)
-            }
-          }
-          else if (dataclassParameters.type.asPredefinedType == PyDataclassParameters.PredefinedType.ATTRS) {
-            processAttrsParameters(node, dataclassParameters)
-
-            node
-              .findMethodByName(DUNDER_ATTRS_POST_INIT, false, myTypeEvalContext)
-              ?.also { processAttrsPostInitDefinition(it, dataclassParameters) }
-
-            processAttrsDefaultThroughDecorator(node)
-            processAttrsInitializersAndValidators(node)
-            processAttrIbFunctionCalls(node)
+            true
           }
 
-          processAnnotationsExistence(node, dataclassParameters)
-
-          PyNamedTupleInspection.inspectFieldsOrder(
-            node,
-            {
-              val parameters = parseDataclassParameters(it, myTypeEvalContext)
-              parameters != null && !parameters.kwOnly
-            },
-            dataclassParameters.type.asPredefinedType == PyDataclassParameters.PredefinedType.STD,
-            myTypeEvalContext,
-            this::registerProblem,
-            {
-              val stub = it.stub
-              val fieldStub = if (stub == null) PyDataclassFieldStubImpl.create(it)
-              else stub.getCustomStub(PyDataclassFieldStub::class.java)
-
-              (fieldStub == null || fieldStub.initValue() && !fieldStub.kwOnly()) &&
-              !(fieldStub == null && it.annotationValue == null) && // skip fields that are not annotated
-              !PyTypingTypeProvider.isClassVar(it, myTypeEvalContext) // skip classvars
-            },
-            {
-              val fieldStub = PyDataclassFieldStubImpl.create(it)
-
-              if (fieldStub != null) {
-                fieldStub.hasDefault() ||
-                fieldStub.hasDefaultFactory() ||
-                dataclassParameters.type.asPredefinedType == PyDataclassParameters.PredefinedType.ATTRS &&
-                node.methods.any { m -> m.decoratorList?.findDecorator("${it.name}.default") != null }
-              }
-              else {
-                val assignedValue = it.findAssignedValue()
-                assignedValue != null && !resolvesToOmittedDefault(assignedValue, dataclassParameters.type)
-              }
-            }
-          )
+          if (postInit != null) {
+            processPostInitDefinition(node, postInit, dataclassParameters, localInitVars)
+          }
         }
+        else if (dataclassParameters.type.asPredefinedType == PyDataclassParameters.PredefinedType.ATTRS) {
+          processAttrsParameters(node, dataclassParameters)
+
+          node
+            .findMethodByName(DUNDER_ATTRS_POST_INIT, false, myTypeEvalContext)
+            ?.also { processAttrsPostInitDefinition(it, dataclassParameters) }
+
+          processAttrsDefaultThroughDecorator(node)
+          processAttrsInitializersAndValidators(node)
+          processAttrIbFunctionCalls(node)
+        }
+
+        processAnnotationsExistence(node, dataclassParameters)
+
+        PyNamedTupleInspection.inspectFieldsOrder(
+          node,
+          {
+            val parameters = parseDataclassParameters(it, myTypeEvalContext)
+            parameters != null && !parameters.kwOnly
+          },
+          dataclassParameters.type.asPredefinedType == PyDataclassParameters.PredefinedType.STD,
+          myTypeEvalContext,
+          this::registerProblem,
+          {
+            val stub = it.stub
+            val fieldStub = if (stub == null) PyDataclassFieldStubImpl.create(it)
+            else stub.getCustomStub(PyDataclassFieldStub::class.java)
+
+            (fieldStub == null || fieldStub.initValue() && !fieldStub.kwOnly()) &&
+            !(fieldStub == null && it.annotationValue == null) && // skip fields that are not annotated
+            !PyTypingTypeProvider.isClassVar(it, myTypeEvalContext) // skip classvars
+          },
+          {
+            val fieldStub = PyDataclassFieldStubImpl.create(it)
+
+            if (fieldStub != null) {
+              fieldStub.hasDefault() ||
+              fieldStub.hasDefaultFactory() ||
+              dataclassParameters.type.asPredefinedType == PyDataclassParameters.PredefinedType.ATTRS &&
+              node.methods.any { m -> m.decoratorList?.findDecorator("${it.name}.default") != null }
+            }
+            else {
+              val assignedValue = it.findAssignedValue()
+              assignedValue != null && !resolvesToOmittedDefault(assignedValue, dataclassParameters.type)
+            }
+          }
+        )
       }
     }
 
@@ -184,41 +179,39 @@ class PyDataclassInspection : PyInspection() {
       }
     }
 
-    override fun visitPyCallExpression(node: PyCallExpression?) {
+    override fun visitPyCallExpression(node: PyCallExpression) {
       super.visitPyCallExpression(node)
 
-      if (node != null) {
-        val resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(myTypeEvalContext)
-        val callableType = node.multiResolveCallee(resolveContext).singleOrNull()
-        val callee = callableType?.callable
-        val calleeQName = callee?.qualifiedName
+      val resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(myTypeEvalContext)
+      val callableType = node.multiResolveCallee(resolveContext).singleOrNull()
+      val callee = callableType?.callable
+      val calleeQName = callee?.qualifiedName
 
-        if (callableType != null && callee != null) {
-          val dataclassType = when {
-            DATACLASSES_HELPERS.contains(calleeQName) -> PyDataclassParameters.PredefinedType.STD
-            ATTRS_HELPERS.contains(calleeQName) -> PyDataclassParameters.PredefinedType.ATTRS
-            else -> return
-          }
+      if (callableType != null && callee != null) {
+        val dataclassType = when {
+          DATACLASSES_HELPERS.contains(calleeQName) -> PyDataclassParameters.PredefinedType.STD
+          ATTRS_HELPERS.contains(calleeQName) -> PyDataclassParameters.PredefinedType.ATTRS
+          else -> return
+        }
 
-          val mapping = PyCallExpressionHelper.mapArguments(node, callableType, myTypeEvalContext)
+        val mapping = PyCallExpressionHelper.mapArguments(node, callableType, myTypeEvalContext)
 
-          val dataclassParameter = callee.getParameters(myTypeEvalContext).firstOrNull()
-          val dataclassArgument = mapping.mappedParameters.entries.firstOrNull { it.value == dataclassParameter }?.key
+        val dataclassParameter = callee.getParameters(myTypeEvalContext).firstOrNull()
+        val dataclassArgument = mapping.mappedParameters.entries.firstOrNull { it.value == dataclassParameter }?.key
 
-          if (dataclassType.asPredefinedType == PyDataclassParameters.PredefinedType.STD) {
-            processHelperDataclassArgument(dataclassArgument, calleeQName!!)
-          }
-          else if (dataclassType.asPredefinedType == PyDataclassParameters.PredefinedType.ATTRS) {
-            processHelperAttrsArgument(dataclassArgument, calleeQName!!)
-          }
+        if (dataclassType.asPredefinedType == PyDataclassParameters.PredefinedType.STD) {
+          processHelperDataclassArgument(dataclassArgument, calleeQName!!)
+        }
+        else if (dataclassType.asPredefinedType == PyDataclassParameters.PredefinedType.ATTRS) {
+          processHelperAttrsArgument(dataclassArgument, calleeQName!!)
         }
       }
     }
 
-    override fun visitPyReferenceExpression(node: PyReferenceExpression?) {
+    override fun visitPyReferenceExpression(node: PyReferenceExpression) {
       super.visitPyReferenceExpression(node)
 
-      if (node != null && node.isQualified) {
+      if (node.isQualified) {
         val cls = getInstancePyClass(node.qualifier) ?: return
         val resolved = node.getReference(resolveContext).multiResolve(false)
 
