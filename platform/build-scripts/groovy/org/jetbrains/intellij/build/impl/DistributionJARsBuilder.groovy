@@ -798,29 +798,32 @@ class DistributionJARsBuilder {
   void buildNonBundledPluginsBlockMaps(){
     def pluginsDirectoryName = "${buildContext.applicationInfo.productCode}-plugins"
     def nonBundledPluginsArtifacts = "$buildContext.paths.artifacts/$pluginsDirectoryName"
-    Files.walk(Paths.get(nonBundledPluginsArtifacts))
-      .filter({ it -> Files.isRegularFile(it)} )
-      .filter({ it -> it.toString().endsWith(".zip") })
-      .collect(Collectors.toList())
-      .each { it ->
-        def blockMapFileName = "${it.toString()}.blockmap.zip"
-        def hashFileName = "${it.toString()}.hash.json"
-        def blockMapJson = "blockmap.json"
-        def algorithm = "SHA-256"
-        def file = it.toFile()
-        file.withInputStream { input ->
-          def blockMap = new BlockMap(input, algorithm)
-          new File(blockMapFileName).withOutputStream { output ->
-            writeBlockMapToZip(output, JsonOutput.toJson(blockMap).bytes, blockMapJson)
+    def path = Paths.get(nonBundledPluginsArtifacts)
+    if(path.toFile().exists()){
+      Files.walk(path)
+        .filter({ it -> Files.isRegularFile(it)} )
+        .filter({ it -> it.toString().endsWith(".zip") })
+        .collect(Collectors.toList())
+        .each { it ->
+          def blockMapFileName = "${it.toString()}.blockmap.zip"
+          def hashFileName = "${it.toString()}.hash.json"
+          def blockMapJson = "blockmap.json"
+          def algorithm = "SHA-256"
+          def file = it.toFile()
+          file.withInputStream { input ->
+            def blockMap = new BlockMap(input, algorithm)
+            new File(blockMapFileName).withOutputStream { output ->
+              writeBlockMapToZip(output, JsonOutput.toJson(blockMap).bytes, blockMapJson)
+            }
+          }
+          file.withInputStream { input ->
+            def fileHash = new FileHash(input, algorithm)
+            new File(hashFileName).withWriter { writer ->
+              writer.writeLine(JsonOutput.toJson(fileHash).toString())
+            }
           }
         }
-        file.withInputStream { input ->
-          def fileHash = new FileHash(input, algorithm)
-          new File(hashFileName).withWriter { writer ->
-            writer.writeLine(JsonOutput.toJson(fileHash).toString())
-          }
-        }
-      }
+    }
   }
 
   private static void writeBlockMapToZip(OutputStream output, byte[] bytes, String blockMapJson){
