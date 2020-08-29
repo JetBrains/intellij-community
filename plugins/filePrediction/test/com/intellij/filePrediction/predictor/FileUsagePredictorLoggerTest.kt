@@ -135,13 +135,11 @@ class FileUsagePredictorLoggerTest : CodeInsightFixtureTestCase<ModuleFixtureBui
     }
   }
 
-  @Test
   fun `test no candidates in empty project`() {
     val builder = FilePredictionTestProjectBuilder("com")
     doTestWithConstant(builder, 0)
   }
 
-  @Test
   fun `test candidates less than limit`() {
     val builder =
       FilePredictionTestProjectBuilder("com/test").addFiles(
@@ -151,7 +149,6 @@ class FileUsagePredictorLoggerTest : CodeInsightFixtureTestCase<ModuleFixtureBui
     doTestWithConstant(builder, 2)
   }
 
-  @Test
   fun `test candidates more than log limit`() {
     val builder =
       FilePredictionTestProjectBuilder("com/test").addFiles(
@@ -163,7 +160,6 @@ class FileUsagePredictorLoggerTest : CodeInsightFixtureTestCase<ModuleFixtureBui
     doTestWithConstant(builder, 3)
   }
 
-  @Test
   fun `test candidates more than limit`() {
     val builder =
       FilePredictionTestProjectBuilder("com/test").addFiles(
@@ -178,7 +174,6 @@ class FileUsagePredictorLoggerTest : CodeInsightFixtureTestCase<ModuleFixtureBui
     doTestWithConstant(builder, 3)
   }
 
-  @Test
   fun `test candidates without model`() {
     val builder =
       FilePredictionTestProjectBuilder("com/test").addFiles(
@@ -188,7 +183,6 @@ class FileUsagePredictorLoggerTest : CodeInsightFixtureTestCase<ModuleFixtureBui
     doTestWithoutModel(builder, 2)
   }
 
-  @Test
   fun `test candidates more than log limit without model`() {
     val builder =
       FilePredictionTestProjectBuilder("com/test").addFiles(
@@ -201,7 +195,6 @@ class FileUsagePredictorLoggerTest : CodeInsightFixtureTestCase<ModuleFixtureBui
     doTestWithoutModel(builder, 3)
   }
 
-  @Test
   fun `test only top candidates logged`() {
     val builder =
       FilePredictionTestProjectBuilder("com/test").addFiles(
@@ -217,7 +210,6 @@ class FileUsagePredictorLoggerTest : CodeInsightFixtureTestCase<ModuleFixtureBui
     doTestWithPredefinedProbability(builder, 3, probabilities, validator, 5, 3, 3)
   }
 
-  @Test
   fun `test no top candidates logged`() {
     val builder =
       FilePredictionTestProjectBuilder("com/test").addFiles(
@@ -233,7 +225,6 @@ class FileUsagePredictorLoggerTest : CodeInsightFixtureTestCase<ModuleFixtureBui
     doTestWithPredefinedProbability(builder, 4, probabilities, validator, 5, 0, 4)
   }
 
-  @Test
   fun `test top and random candidates probabilities logged`() {
     val builder =
       FilePredictionTestProjectBuilder("com/test").addFiles(
@@ -249,7 +240,6 @@ class FileUsagePredictorLoggerTest : CodeInsightFixtureTestCase<ModuleFixtureBui
     doTestWithPredefinedProbability(builder, 3, probabilities, validator, 5, 1, 3)
   }
 
-  @Test
   fun `test multiple top and random candidates probabilities logged`() {
     val builder =
       FilePredictionTestProjectBuilder("com/test").addFiles(
@@ -267,7 +257,6 @@ class FileUsagePredictorLoggerTest : CodeInsightFixtureTestCase<ModuleFixtureBui
     doTestWithPredefinedProbability(builder, 5, probabilities, validator, 7, 2, 5)
   }
 
-  @Test
   fun `test opened file has opened field`() {
     val builder = FilePredictionTestProjectBuilder("com")
 
@@ -276,7 +265,6 @@ class FileUsagePredictorLoggerTest : CodeInsightFixtureTestCase<ModuleFixtureBui
     doTestOpenedFile(builder, "com/next_file.txt", validator, 1)
   }
 
-  @Test
   fun `test candidate and opened files has opened field`() {
     val builder = FilePredictionTestProjectBuilder("com/test").addFiles(
       "com/test/Foo1.txt",
@@ -291,7 +279,6 @@ class FileUsagePredictorLoggerTest : CodeInsightFixtureTestCase<ModuleFixtureBui
     doTestOpenedFile(builder, "com/test/next_file.java", validator, 4)
   }
 
-  @Test
   fun `test candidate and opened files with the same type has opened field`() {
     val builder = FilePredictionTestProjectBuilder("com/test").addFiles(
       "com/test/Foo1.java",

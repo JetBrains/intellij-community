@@ -77,7 +77,6 @@ class FilePredictionFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtureBuild
     TestCase.assertEquals("Features are not encoded correctly", expected, actual)
   }
 
-  @Test
   fun `test composite feature provider is not empty`() {
     doTestFeatures(
       "core_file_type",
