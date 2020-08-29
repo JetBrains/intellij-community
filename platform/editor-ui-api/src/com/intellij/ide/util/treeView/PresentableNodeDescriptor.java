@@ -8,6 +8,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -204,7 +205,7 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
     }
   }
 
-  public String getName() {
+  public @NlsSafe String getName() {
     if (!getPresentation().getColoredText().isEmpty()) {
       StringBuilder result = new StringBuilder();
       for (ColoredFragment each : getPresentation().getColoredText()) {
@@ -214,5 +215,4 @@ public abstract class PresentableNodeDescriptor<E> extends NodeDescriptor<E>  {
     }
     return myName;
   }
-
 }
