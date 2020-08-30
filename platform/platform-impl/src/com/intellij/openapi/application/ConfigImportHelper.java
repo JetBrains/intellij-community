@@ -70,6 +70,7 @@ import static com.intellij.openapi.util.Pair.pair;
 public final class ConfigImportHelper {
   private static final String FIRST_SESSION_KEY = "intellij.first.ide.session";
   private static final String CONFIG_IMPORTED_IN_CURRENT_SESSION_KEY = "intellij.config.imported.in.current.session";
+  public static final String CONFIG_IMPORTED_FROM_OTHER_PRODUCT_KEY = "intellij.config.imported.from.other.product";
 
   private static final String CONFIG = "config";
   private static final String[] OPTIONS = {
@@ -82,7 +83,7 @@ public final class ConfigImportHelper {
   private static final String PLUGINS = "plugins";
   private static final String SYSTEM = "system";
 
-  private static final Pattern SELECTOR_PATTERN = Pattern.compile("\\.?([^\\d]+)(\\d+(?:\\.\\d+)?)");
+  public static final Pattern SELECTOR_PATTERN = Pattern.compile("\\.?([^\\d]+)(\\d+(?:\\.\\d+)?)");
   private static final String SHOW_IMPORT_CONFIG_DIALOG_PROPERTY = "idea.initially.ask.config";
 
   // constant is used instead of util method to ensure that ConfigImportHelper class is not loaded by StartupUtil
@@ -158,12 +159,16 @@ public final class ConfigImportHelper {
       }
 
       if (oldConfigDirAndOldIdePath != null) {
+        Path oldConfigDir = oldConfigDirAndOldIdePath.first;
+        Path oldIdeHome = oldConfigDirAndOldIdePath.second;
+
         ConfigImportOptions configImportOptions = new ConfigImportOptions(log);
         if (!guessedOldConfigDirs.fromSameProduct) {
           // Don't import plugins from other product even if configs are imported
           configImportOptions.importPlugins = false;
+          System.setProperty(CONFIG_IMPORTED_FROM_OTHER_PRODUCT_KEY, oldConfigDir.getFileName().toString());
         }
-        doImport(oldConfigDirAndOldIdePath.first, newConfigDir, oldConfigDirAndOldIdePath.second, log, configImportOptions);
+        doImport(oldConfigDir, newConfigDir, oldIdeHome, log, configImportOptions);
 
         if (settings != null) {
           settings.importFinished(newConfigDir);
