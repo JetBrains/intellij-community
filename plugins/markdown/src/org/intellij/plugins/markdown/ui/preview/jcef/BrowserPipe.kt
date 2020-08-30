@@ -8,7 +8,7 @@ import com.intellij.ui.jcef.JBCefJSQuery
 
 /**
  * Message passing interface for the JCEF browser preview.
- * See [browserPipe.js] for the browser side support code.
+ * See [BrowserPipe.js] for the browser side support code.
  */
 class BrowserPipe(private val browser: JBCefBrowser) : Disposable {
   private val events = HashMap<String, JBCefJSQuery>()
