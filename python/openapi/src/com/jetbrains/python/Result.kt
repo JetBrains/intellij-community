@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NonNls
  * Can't be moved to core module because core modules do not support Kotlin and there is no sealed classes in java.
  */
 sealed class Result<SUCC, ERR> {
-  data class Failure<SUCC, ERR>(@Nls val error: ERR) : Result<SUCC, ERR>()
+  data class Failure<SUCC, ERR>(val error: ERR) : Result<SUCC, ERR>()
   data class Success<SUCC, ERR>(val result: SUCC) : Result<SUCC, ERR>()
 
   fun <RES> map(map: (SUCC) -> RES): Result<RES, ERR> =
