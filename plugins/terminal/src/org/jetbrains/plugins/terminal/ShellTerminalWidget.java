@@ -8,21 +8,27 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.terminal.JBTerminalPanel;
 import com.intellij.terminal.JBTerminalSystemSettingsProviderBase;
 import com.intellij.terminal.JBTerminalWidget;
+import com.intellij.terminal.actions.TerminalActionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.jediterm.terminal.ProcessTtyConnector;
 import com.jediterm.terminal.Terminal;
 import com.jediterm.terminal.TtyConnector;
 import com.jediterm.terminal.model.TerminalLine;
 import com.jediterm.terminal.model.TerminalTextBuffer;
+import com.jediterm.terminal.ui.TerminalAction;
 import com.pty4j.unix.UnixPtyProcess;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.terminal.action.RenameTerminalSessionActionKt;
 
 import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
@@ -186,5 +192,16 @@ public class ShellTerminalWidget extends JBTerminalWidget {
       }
     }
     super.terminateProcess();
+  }
+
+  @Override
+  public List<TerminalAction> getActions() {
+    List<TerminalAction> baseActions = super.getActions();
+    if (TerminalView.isInTerminalToolWindow(this)) {
+      List<TerminalAction> actions = new ArrayList<>();
+      ContainerUtil.addIfNotNull(actions, TerminalActionUtil.createTerminalAction(this, RenameTerminalSessionActionKt.ACTION_ID, true));
+      return ContainerUtil.concat(baseActions, actions);
+    }
+    return baseActions;
   }
 }

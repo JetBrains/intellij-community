@@ -10,3 +10,5 @@ class RenameTerminalSessionAction : ToolWindowTabRenameActionBase(
   TerminalToolWindowFactory.TOOL_WINDOW_ID,
   TerminalBundle.message("action.RenameSession.newSessionName.label")
 ), DumbAware
+
+const val ACTION_ID : String = "Terminal.RenameSession"

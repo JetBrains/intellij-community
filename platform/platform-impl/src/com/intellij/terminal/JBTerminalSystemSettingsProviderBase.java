@@ -171,7 +171,7 @@ public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsP
     });
   }
 
-  private static @NotNull List<KeyStroke> getKeyStrokesByActionId(@NotNull String actionId) {
+  public static @NotNull List<KeyStroke> getKeyStrokesByActionId(@NotNull String actionId) {
     List<KeyStroke> keyStrokes = new ArrayList<>();
     Shortcut[] shortcuts = KeymapUtil.getActiveKeymapShortcuts(actionId).getShortcuts();
     for (Shortcut sc : shortcuts) {

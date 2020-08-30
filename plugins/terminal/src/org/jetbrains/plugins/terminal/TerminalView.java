@@ -18,6 +18,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -467,6 +468,12 @@ public final class TerminalView {
       container.detachWidget();
     }
     content.putUserData(TERMINAL_WIDGET_KEY, null);
+  }
+
+  public static boolean isInTerminalToolWindow(@NotNull JBTerminalWidget widget) {
+    DataContext dataContext = DataManager.getInstance().getDataContext(widget.getTerminalPanel());
+    ToolWindow toolWindow = dataContext.getData(PlatformDataKeys.TOOL_WINDOW);
+    return toolWindow != null && TerminalToolWindowFactory.TOOL_WINDOW_ID.equals(toolWindow.getId());
   }
 
   private final class TerminalDockContainer implements DockContainer {
