@@ -17,16 +17,20 @@ import java.util.Map;
 /**
  * @author Konstantin Bulenkov
  */
-final class JBProtocolOpenProjectCommand extends JBProtocolCommand {
+public final class JBProtocolOpenProjectCommand extends JBProtocolCommand {
   JBProtocolOpenProjectCommand() {
     super("open");
   }
 
   @Override
   public void perform(String target, @NotNull Map<String, String> parameters) {
-    Path projectPath = Paths.get(StringUtil.trimStart(target, LocalFileSystem.PROTOCOL_PREFIX)).normalize();
+    Path projectPath = toPath(target);
     ApplicationManager.getApplication().invokeLater(() -> {
       ProjectUtil.openProject(projectPath, new OpenProjectTask());
     }, ModalityState.NON_MODAL);
+  }
+
+  public static Path toPath(String path) {
+    return Paths.get(StringUtil.trimStart(path, LocalFileSystem.PROTOCOL_PREFIX)).normalize();
   }
 }
