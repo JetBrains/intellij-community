@@ -9,6 +9,7 @@ import com.intellij.codeInsight.intention.choice.DefaultIntentionActionWithChoic
 import com.intellij.codeInsight.intention.impl.config.LazyEditor
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
+import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.grammar.Typo
 import com.intellij.grazie.ide.ui.components.dsl.msg
 import com.intellij.openapi.editor.Editor
@@ -17,7 +18,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.suggested.startOffset
-import org.jetbrains.annotations.Nls
 
 class GrazieReplaceTypoQuickFix(private val typo: Typo) : DefaultIntentionActionWithChoice {
 
@@ -35,7 +35,7 @@ class GrazieReplaceTypoQuickFix(private val typo: Typo) : DefaultIntentionAction
     : ChoiceVariantIntentionAction(), HighPriorityAction {
     override fun getName(): String = suggestion
 
-    override fun getTooltipText(): String = "Replace with '${suggestion}'"
+    override fun getTooltipText(): String = GrazieBundle.message("grazie.grammar.quickfix.replace.typo.tooltip", suggestion)
 
     override fun getFamilyName(): String = family
 

@@ -14,6 +14,7 @@ import com.intellij.lang.Language
 import com.intellij.lang.LanguageParserDefinitions
 import com.intellij.lang.ParserDefinition
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.TokenSet
 import org.jetbrains.annotations.ApiStatus
@@ -81,6 +82,7 @@ interface GrammarCheckingStrategy {
    * @return name of this strategy
    */
   @JvmDefault
+  @NlsSafe
   fun getName(): String {
     val extension = StrategyUtils.getStrategyExtensionPoint(this)
     return Language.findLanguageByID(extension.language)?.displayName ?: extension.language

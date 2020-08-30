@@ -35,11 +35,11 @@
     <!-- getDisplayName is overridden in GrazieInspection itself! Placeholder is required to suppress validation. -->
     <localInspection bundle="messages.GrazieBundle" groupKey="grazie.group.name" enabledByDefault="true" shortName="GrazieInspection"
                      implementationClass="com.intellij.grazie.ide.inspection.grammar.GrazieInspection"
-                     level="TYPO" displayName="Grammar"/>
+                     level="TYPO" key="grazie.grammar.inspection.grammar.text"/>
 
     <localInspection bundle="messages.GrazieBundle" groupKey="grazie.group.name" enabledByDefault="true" shortName="LanguageDetectionInspection"
                      implementationClass="com.intellij.grazie.ide.inspection.detection.LanguageDetectionInspection"
-                     level="WARNING" displayName="Natural language detection"/>
+                     level="WARNING" key="grazie.detection.inspection.text"/>
 
     <applicationConfigurable parentId="editor" instance="com.intellij.grazie.ide.ui.proofreading.ProofreadConfigurable" id="proofread"/>
 
