@@ -142,14 +142,6 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Ter
 
   @Override
   public void handleKeyEvent(@NotNull KeyEvent e) {
-    if (SystemInfo.isMac && SystemInfo.isJavaVersionAtLeast(11, 0, 0)) {
-      // Workaround for https://youtrack.jetbrains.com/issue/JBR-1098
-      // sun.lwawt.macosx.CPlatformResponder.mapNsCharsToCompatibleWithJava converts 0x0003 (NSEnterCharacter) to 0x000a
-      if (e.getKeyChar() == KeyEvent.VK_ENTER && e.getKeyCode() == KeyEvent.VK_C && e.getModifiersEx() == InputEvent.CTRL_DOWN_MASK) {
-        LOG.debug("Fixing Ctrl+C");
-        e.setKeyChar((char)3);
-      }
-    }
     myEscapeKeyListener.handleKeyEvent(e);
     for (Consumer<? super KeyEvent> preKeyEventConsumer : myPreKeyEventConsumers) {
       preKeyEventConsumer.accept(e);
