@@ -34,15 +34,11 @@ class TerminalCommandHandlerCustomizer : LocalTerminalCustomizer() {
   }
 
   class TerminalCommandHandlerConfigurable(project: Project) :
-    BeanConfigurable<TerminalCommandHandlerOptions>(TerminalCommandHandlerOptions(project)), Configurable {
+    BeanConfigurable<TerminalCommandHandlerOptions>(TerminalCommandHandlerOptions(project)) {
     init {
       checkBox(TerminalBundle.message("settings.terminal.smart.command.handling"),
                Getter { instance!!.enabled },
                Setter { instance!!.enabled = it })
-    }
-
-    override fun getDisplayName(): String {
-      return "TerminalCommandHandler"
     }
   }
 

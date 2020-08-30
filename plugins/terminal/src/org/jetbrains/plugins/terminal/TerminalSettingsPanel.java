@@ -2,7 +2,6 @@
 package org.jetbrains.plugins.terminal;
 
 import com.intellij.execution.configuration.EnvironmentVariablesTextFieldWithBrowseButton;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.Configurable;
@@ -65,8 +64,8 @@ public class TerminalSettingsPanel {
     myOptionsProvider = provider;
     myProjectOptionsProvider = projectOptionsProvider;
 
-    myProjectSettingsPanel.setBorder(IdeBorderFactory.createTitledBorder(IdeBundle.message("settings.terminal.project.settings")));
-    myGlobalSettingsPanel.setBorder(IdeBorderFactory.createTitledBorder(IdeBundle.message("settings.terminal.application.settings")));
+    myProjectSettingsPanel.setBorder(IdeBorderFactory.createTitledBorder(TerminalBundle.message("settings.terminal.project.settings")));
+    myGlobalSettingsPanel.setBorder(IdeBorderFactory.createTitledBorder(TerminalBundle.message("settings.terminal.application.settings")));
 
     configureShellPathField();
     configureStartDirectoryField();
@@ -102,7 +101,7 @@ public class TerminalSettingsPanel {
   private void configureStartDirectoryField() {
     myStartDirectoryField.addBrowseFolderListener(
       "",
-      "Starting directory",
+      TerminalBundle.message("settings.start.directory.browseFolder.description"),
       null,
       FileChooserDescriptorFactory.createSingleFolderDescriptor(),
       TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT
@@ -113,7 +112,7 @@ public class TerminalSettingsPanel {
   private void configureShellPathField() {
     myShellPathField.addBrowseFolderListener(
       "",
-      IdeBundle.message("settings.terminal.shell.executable.path"),
+      TerminalBundle.message("settings.terminal.shell.executable.path.browseFolder.description"),
       null,
       FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor(),
       TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT
