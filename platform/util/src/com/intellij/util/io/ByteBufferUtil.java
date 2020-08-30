@@ -35,7 +35,7 @@ public final class ByteBufferUtil {
       }
     }
     else {
-      //todo[nik]: check we really need this for Java 8 and older
+      //used in Kotlin and JPS
       try {
         Class<?> directBufferClass = Class.forName("sun.nio.ch.DirectBuffer");
         Class<?> cleanerClass = Class.forName("sun.misc.Cleaner");
