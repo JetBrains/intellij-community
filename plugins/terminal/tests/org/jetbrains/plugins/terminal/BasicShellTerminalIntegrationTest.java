@@ -2,20 +2,24 @@
 package org.jetbrains.plugins.terminal;
 
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.plugins.terminal.fixture.TestShellSession;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.concurrent.ExecutionException;
 
-public class BasicShellTerminalIntegrationTest extends BaseShellTerminalIntegrationTest {
+public class BasicShellTerminalIntegrationTest extends BasePlatformTestCase {
 
-  public void testEchoAndClear() throws IOException {
+  public void testEchoAndClear() throws IOException, ExecutionException {
     if (!SystemInfo.isUnix) {
       return;
     }
-    myWidget.executeCommand("_MY_FOO=test; echo -e \"1\n2\n3\n$_MY_FOO\"");
-    myWatcher.awaitScreenLinesEndWith(ContainerUtil.newArrayList("1", "2", "3", "test"), 10000);
-    myWidget.executeCommand("clear");
-    myWatcher.awaitScreenLinesAre(Collections.emptyList(), 10000);
+    TestShellSession session = new TestShellSession(getProject(), getTestRootDisposable());
+    session.executeCommand("_MY_FOO=test; echo -e \"1\n2\n3\n$_MY_FOO\"");
+    session.awaitScreenLinesEndWith(ContainerUtil.newArrayList("1", "2", "3", "test"), 10000);
+    session.executeCommand("clear");
+    session.awaitScreenLinesAre(Collections.emptyList(), 10000);
   }
 }
