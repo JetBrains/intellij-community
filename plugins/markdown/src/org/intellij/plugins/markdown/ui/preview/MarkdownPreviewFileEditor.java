@@ -185,7 +185,7 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
   @NotNull
   @Override
   public String getName() {
-    return "Markdown HTML Preview";
+    return MarkdownBundle.message("markdown.editor.preview.name");
   }
 
   @Override
