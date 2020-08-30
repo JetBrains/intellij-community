@@ -319,6 +319,7 @@ public final class SVGLoader {
    * @deprecated use {@link #setColorPatcherProvider(SvgElementColorPatcherProvider)} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public static void setColorPatcher(@Nullable final SvgColorPatcher colorPatcher) {
     if (colorPatcher == null) {
       setColorPatcherProvider(null);
@@ -391,6 +392,7 @@ public final class SVGLoader {
    * @deprecated use {@link SvgElementColorPatcherProvider instead}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
   public interface SvgColorPatcher {
 
     /**
