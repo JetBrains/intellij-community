@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.settings
 
+import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.extensions.MarkdownConfigurableExtension
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionWithExternalFiles
 import javax.swing.event.TableModelListener
@@ -65,8 +66,8 @@ internal class MarkdownScriptsTableModel(
 
   companion object {
     private val columnNames = arrayOf(
-      "Enabled",
-      "Extension Name"
+      MarkdownBundle.message("markdown.settings.download.extension.is.enabled.column"),
+      MarkdownBundle.message("markdown.settings.download.extension.extension.name.column")
     )
 
     const val ENABLED_COLUMN_INDEX = 0

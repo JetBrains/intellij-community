@@ -9,6 +9,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
+import org.intellij.plugins.markdown.MarkdownBundle;
 import org.intellij.plugins.markdown.settings.MarkdownApplicationSettings;
 import org.intellij.plugins.markdown.ui.split.SplitFileEditor;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +51,7 @@ public class MarkdownSplitEditor extends SplitFileEditor<TextEditor, MarkdownPre
   @NotNull
   @Override
   public String getName() {
-    return "Markdown split editor";
+    return MarkdownBundle.message("markdown.editor.name");
   }
 
   @Nullable
