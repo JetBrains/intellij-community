@@ -47,6 +47,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
   // when client property is put in toolwindow component, hides toolwindow label
   @NonNls public static final String HIDE_ID_LABEL = "HideIdLabel";
   @NonNls private static final String TOOLWINDOW_UI_INSTALLED = "ToolWindowUiInstalled";
+  public static final DataKey<BaseLabel> SELECTED_CONTENT_TAB_LABEL = DataKey.create("SELECTED_CONTENT_TAB_LABEL");
 
   private final @NotNull ContentManager contentManager;
 
@@ -553,6 +554,9 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
     else if (MorePopupAware.KEY.is(dataId)) {
       ContentLayout layout = getCurrentLayout();
       return  (layout instanceof TabContentLayout) ? layout : null;
+    }
+    else if (SELECTED_CONTENT_TAB_LABEL.is(dataId) && type == ToolWindowContentUiType.TABBED) {
+      return tabsLayout.findTabLabelByContent(contentManager.getSelectedContent());
     }
     return null;
   }

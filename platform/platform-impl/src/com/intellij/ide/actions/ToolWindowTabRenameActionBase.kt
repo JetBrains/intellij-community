@@ -11,6 +11,7 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowContextMenuActionBase
 import com.intellij.openapi.wm.impl.content.BaseLabel
+import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBLabel
@@ -32,6 +33,7 @@ private const val OUTLINE_PROPERTY = "JComponent.outline"
 private const val ERROR_VALUE = "error"
 
 
+@Suppress("ComponentNotRegistered")
 open class ToolWindowTabRenameActionBase(val toolWindowId: String, @NlsContexts.Label val labelText: String) : ToolWindowContextMenuActionBase() {
   override fun update(e: AnActionEvent, toolWindow: ToolWindow, selectedContent: Content?) {
     val id = toolWindow.id
@@ -39,9 +41,10 @@ open class ToolWindowTabRenameActionBase(val toolWindowId: String, @NlsContexts.
   }
 
   override fun actionPerformed(e: AnActionEvent, toolWindow: ToolWindow, content: Content?) {
-    val baseLabel = e.getData(PlatformDataKeys.CONTEXT_COMPONENT) as? BaseLabel
-    val contextContent = baseLabel?.content ?: return
-    showContentRenamePopup(baseLabel, contextContent)
+    val contextComponent = e.getData(PlatformDataKeys.CONTEXT_COMPONENT)
+    val tabLabel = if (contextComponent is BaseLabel) contextComponent else e.getData(ToolWindowContentUi.SELECTED_CONTENT_TAB_LABEL)
+    val tabLabelContent = tabLabel?.content ?: return
+    showContentRenamePopup(tabLabel, tabLabelContent)
   }
 
   private fun showContentRenamePopup(baseLabel: BaseLabel, content: Content) {
