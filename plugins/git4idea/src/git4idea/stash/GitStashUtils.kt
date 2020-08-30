@@ -67,7 +67,7 @@ fun unstash(project: Project,
         return
       }
       else if (localChangesDetector.wasMessageDetected()) {
-        LocalChangesWouldBeOverwrittenHelper.showErrorNotification(project, root, "unstash", localChangesDetector.relativeFilePaths)
+        LocalChangesWouldBeOverwrittenHelper.showErrorNotification(project, root, GitBundle.message("unstash.operation.name"), localChangesDetector.relativeFilePaths)
         return
       }
       else if (!result.success()) {

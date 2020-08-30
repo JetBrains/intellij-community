@@ -6,6 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.containers.ContainerUtil;
 import git4idea.GitUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -160,12 +161,12 @@ public class GitCommandResult {
   }
 
   @NotNull
-  static GitCommandResult startError(@NotNull String error) {
+  static GitCommandResult startError(@NotNull @Nls String error) {
     return new GitCommandResult(true, -1, Collections.singletonList(error), Collections.emptyList());
   }
 
   @NotNull
-  public static GitCommandResult error(@NotNull String error) {
+  public static GitCommandResult error(@NotNull @Nls String error) {
     return new GitCommandResult(false, 1, Collections.singletonList(error), Collections.emptyList());
   }
 

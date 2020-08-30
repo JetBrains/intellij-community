@@ -40,6 +40,7 @@ import git4idea.repo.GitRepository;
 import git4idea.repo.GitSubmodule;
 import git4idea.repo.GitSubmoduleKt;
 import git4idea.util.GitPreservingProcess;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,7 +74,7 @@ public final class GitUpdateProcess {
   @NotNull private final ProgressIndicator myProgressIndicator;
   @NotNull private final GitMerger myMerger;
 
-  @NotNull private final Map<GitRepository, String> mySkippedRoots = new LinkedHashMap<>();
+  @NotNull private final Map<GitRepository, @Nls String> mySkippedRoots = new LinkedHashMap<>();
   @Nullable private Map<GitRepository, HashRange> myUpdatedRanges;
 
   @SuppressWarnings("unused") //used in a 3-party plugin
@@ -381,7 +382,7 @@ public final class GitUpdateProcess {
     }
     else {
       for (GitRepository repo : detachedHeads) {
-        mySkippedRoots.put(repo, "detached HEAD");
+        mySkippedRoots.put(repo, GitBundle.message("update.skip.root.reason.detached.head"));
       }
     }
 
@@ -408,7 +409,7 @@ public final class GitUpdateProcess {
     }
     else {
       for (GitRepository repo : noTrackedBranch) {
-        mySkippedRoots.put(repo, "no tracked branch");
+        mySkippedRoots.put(repo, GitBundle.message("update.skip.root.reason.no.tracked.branch"));
       }
     }
 

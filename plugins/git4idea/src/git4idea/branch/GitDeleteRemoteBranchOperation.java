@@ -137,9 +137,8 @@ class GitDeleteRemoteBranchOperation extends GitBranchOperation {
       GitCommandResult res;
       GitRemote remote = getRemoteByName(repository, remoteName);
       if (remote == null) {
-        String error = "Couldn't find remote by name: " + remoteName;
-        LOG.error(error);
-        res = GitCommandResult.error(error);
+        LOG.error("Couldn't find remote by name: " + remoteName);
+        res = GitCommandResult.error(GitBundle.message("delete.remote.branch.operation.couldn.t.find.remote.by.name", remoteName));
       }
       else {
         res = pushDeletion(repository, remote, branch);
