@@ -47,6 +47,7 @@ import com.intellij.ui.tree.ui.DefaultTreeUI;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SVGLoader;
 import com.intellij.util.concurrency.SynchronizedClearableLazy;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.ui.*;
@@ -65,6 +66,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.net.URL;
 import java.util.List;
 import java.util.*;
 import java.util.function.BooleanSupplier;
@@ -552,6 +554,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     UIManager.getDefaults().clear();
     UIManager.getDefaults().putAll(ourDefaults);
+    SVGLoader.setColorPatcherForSelection(null);
 
     // Set L&F
     if (IdeaLookAndFeelInfo.CLASS_NAME.equals(lookAndFeelInfo.getClassName())) { // that is IDEA default LAF
@@ -559,6 +562,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       MetalLookAndFeel.setCurrentTheme(new IdeaBlueMetalTheme());
       try {
         UIManager.setLookAndFeel(laf);
+        updateIconsUnderSelection(false);
       }
       catch (Exception e) {
         Messages.showMessageDialog(
@@ -575,6 +579,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       try {
         UIManager.setLookAndFeel(laf);
         AppUIUtil.updateForDarcula(true);
+        if (lafNameOrder.containsKey(lookAndFeelInfo.getName())) {
+          updateIconsUnderSelection(true);
+        }
       }
       catch (Exception e) {
         Messages.showMessageDialog(
@@ -602,6 +609,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
             if (laf instanceof UserDataHolder) {
               UserDataHolder userDataHolder = (UserDataHolder)laf;
               userDataHolder.putUserData(UIUtil.LAF_WITH_THEME_KEY, Boolean.TRUE);
+            }
+            if (lafNameOrder.containsKey(lookAndFeelInfo.getName()) && lookAndFeelInfo.getName().endsWith("Light")) {
+              updateIconsUnderSelection(false);
             }
           }
         }
@@ -652,6 +662,31 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       }
     }
     myFirstSetup = false;
+  }
+
+  private static void updateIconsUnderSelection(boolean darcula) {
+    HashMap<String, String> map = new HashMap<>();
+    if (darcula) {
+      map.put("#5e5e5e", "#5778ad");
+      map.put("#c75450", "#a95768");
+      map.put("#6e6e6e", "#afb1b3");
+      map.put("#f26522", "#b76554");
+      map.put("#f2652299", "#ac818b");
+    } else {
+      map.put("#6e6e6e", "#afb1b3");
+      map.put("#db5860", "#b75e73");
+      map.put("#f26522", "#b56a51");
+      map.put("#f2652299", "#a88786");
+    }
+    HashMap<String, Integer> alpha = new HashMap<>();
+    map.forEach((key, value) -> alpha.put(value, 255));
+
+     SVGLoader.setColorPatcherForSelection(new SVGLoader.SvgElementColorPatcherProvider() {
+       @Override
+       public SVGLoader.@Nullable SvgElementColorPatcher forURL(@Nullable URL url) {
+         return SVGLoader.newPatcher(null, map, alpha);
+       }
+     });
   }
 
   private void updateEditorSchemeIfNecessary(UIManager.LookAndFeelInfo oldLaf, boolean processChangeSynchronously) {

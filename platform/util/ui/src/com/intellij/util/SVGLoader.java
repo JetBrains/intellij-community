@@ -245,14 +245,21 @@ public final class SVGLoader {
       }
     }
     if (isSelectionContext()) {
-      SvgElementColorPatcher selectionPatcher = getSelectionPatcher();
-      if (selectionPatcher != null) {
-        selectionPatcher.patchColors(document.getDocumentElement());
+      SvgElementColorPatcherProvider selectionPatcherProvider = getSelectionPatcherProvider();
+      if (selectionPatcherProvider != null) {
+        SvgElementColorPatcher selectionPatcher = selectionPatcherProvider.forURL(url);
+        if (selectionPatcher != null) {
+          selectionPatcher.patchColors(document.getDocumentElement());
+        }
       }
     }
   }
 
-  private static SvgElementColorPatcher getSelectionPatcher() {
+  public static void setColorPatcherForSelection(@Nullable SvgElementColorPatcherProvider provider) {
+    ourColorPatcherForSelection = provider;
+  }
+
+  private static SvgElementColorPatcherProvider getSelectionPatcherProvider() {
     //todo[kb] move this code to a common place for LaFs and themes.
     //HashMap<String, String> map = new HashMap<>();
     //map.put("#f26522", "#e2987c");
@@ -260,7 +267,7 @@ public final class SVGLoader {
     //alpha.put("#e2987c", 255);
     //
     //return newPatcher(null, map, alpha);
-    return null;
+    return ourColorPatcherForSelection;
   }
 
   @Nullable
@@ -293,8 +300,21 @@ public final class SVGLoader {
 
       private void patchColorAttribute(@NotNull Element svg, String attrName) {
         String color = svg.getAttribute(attrName);
+        String opacity = svg.getAttribute(attrName + "-opacity");
         if (!StringUtil.isEmpty(color)) {
-          String newColor = newPalette.get(toCanonicalColor(color));
+          int alpha = 255;
+          try {
+            alpha = (int)(255f * Float.valueOf(opacity));
+          }catch (Exception ignore){}
+          String newColor = null;
+          String key = toCanonicalColor(color);
+          if (alpha != 255) {
+            newColor = newPalette.get(key + Integer.toHexString(alpha));
+          }
+          if (newColor == null) {
+            newColor = newPalette.get(key);
+          }
+
           if (newColor != null) {
             svg.setAttribute(attrName, newColor);
             if (alphas.get(newColor) != null) {
@@ -362,7 +382,7 @@ public final class SVGLoader {
   }
 
   public static boolean isSelectionContext() {
-    return ourIsSelectionContext && Registry.is("ide.patch.icons.on.selection");
+    return ourColorPatcherForSelection != null && ourIsSelectionContext && Registry.is("ide.patch.icons.on.selection");
   }
 
   public static void paintIconWithSelection(Icon icon, Component c, Graphics g, int x, int y) {
