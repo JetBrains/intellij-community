@@ -9,6 +9,7 @@ import com.intellij.codeInspection.ex.GlobalInspectionContextEx
 import com.intellij.codeInspection.ex.GlobalInspectionContextUtil
 import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.codeInspection.ex.StaticAnalysisReportConverter
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.Project
@@ -19,6 +20,8 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 import java.util.concurrent.atomic.AtomicInteger
+
+private val LOG = Logger.getInstance(TargetsRunner::class.java)
 
 data class Targets(val targets: List<TargetDefinition>,
                    val inspections: List<InspectionMeta>
@@ -32,7 +35,8 @@ data class InspectionMeta(val id: String,
 
 data class TargetDefinition(val id: String,
                             val description: String,
-                            val inspections: Set<String>
+                            val inspections: Set<String>,
+                            val threshold: Int = -1
 )
 
 class TargetsRunner(val application: InspectionApplication,
@@ -59,12 +63,15 @@ class TargetsRunner(val application: InspectionApplication,
     Files.copy(targetsFile, Paths.get(application.myOutPath).resolve("targets.json"), StandardCopyOption.REPLACE_EXISTING)
 
     targetDefinitions.forEach { target ->
-      executeTarget(target)
+      if (!executeTarget(target)) {
+        LOG.warn("Analysis was stopped cause target ${target.description} reached threshold ${target.threshold}")
+        return
+      }
     }
   }
 
-  fun executeTarget(target: TargetDefinition) {
-    application.reportMessage(1, "Target ${target.id} (${target.description}) started")
+  fun executeTarget(target: TargetDefinition): Boolean {
+    application.reportMessage(1, "Target ${target.id} (${target.description}) started. Threshold ${target.threshold}")
     println("##teamcity[blockOpened name='Target ${target.id}' description='${target.description}']")
 
     val targetPath = Paths.get(application.myOutPath).resolve(target.id)
@@ -86,6 +93,7 @@ class TargetsRunner(val application: InspectionApplication,
     currentTarget = null
     println("##teamcity[blockClosed name='Target ${target.id}']")
     application.reportMessage(1, "Target ${target.id} (${target.description}) finished")
+    return target.threshold < 0 || counter.get() <= target.threshold
   }
 
 
@@ -168,7 +176,7 @@ private fun InspectionApplication.writeDescriptions(baseProfile: InspectionProfi
 private fun forgottenTarget(targetDefinitions: List<TargetDefinition>, baseProfile: InspectionProfileImpl): TargetDefinition {
   val usedInspections = targetDefinitions.flatMap { it.inspections }.toSet()
   val forgotten = baseProfile.allTools.map { it.tool.id }.toSet() - usedInspections
-  return TargetDefinition("Without targets", "All other inspections", forgotten)
+  return TargetDefinition("Without targets", "All other inspections", forgotten, -1)
 }
 
 private fun constructProfile(target: TargetDefinition, baseProfile: InspectionProfileImpl): InspectionProfileImpl {
