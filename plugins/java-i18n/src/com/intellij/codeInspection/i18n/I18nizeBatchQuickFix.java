@@ -204,7 +204,7 @@ public class I18nizeBatchQuickFix extends I18nizeQuickFix implements BatchQuickF
 
   @Nullable
   private static String suggestKeyByPlace(String value, @NotNull UExpression expression) {
-    List<UExpression> usages = I18nInspection.findIndirectUsages(expression);
+    List<UExpression> usages = I18nInspection.findIndirectUsages(expression, true);
     if (usages.isEmpty()) {
       usages = Collections.singletonList(expression);
     }

@@ -32,6 +32,10 @@ class X {
   void testSupplier(Supplier<@Nls(capitalization = Nls.Capitalization.Sentence) String> title) {
     
   }
+  
+  String getBlahBlah() {
+    return this.message("property.titlecase");
+  }
 
   void main(int x) {
     test(<warning descr="String 'hello world' is not properly capitalized. It should have title capitalization">message("property.lowercase")</warning>);
@@ -51,6 +55,7 @@ class X {
     test2(<warning descr="String 'Hello {0,choice,0#World|1#Universe}' is not properly capitalized. It should have sentence capitalization">message("property.choice.title", x)</warning>);
     test2(<warning descr="String 'Hello {0,choice,0#World|1#universe}' is not properly capitalized. It should have sentence capitalization">message("property.choice.mixed", x)</warning>);
     test2(message("property.choice.lower", x));
+    test2(<warning descr="String 'Hello World' is not properly capitalized. It should have sentence capitalization">getBlahBlah()</warning>);
 
     test2(message("property.sentence.with.quote"));
 
@@ -60,7 +65,7 @@ class X {
     test(message("property.titlecase.html"));
     test2(<warning descr="String '<html><b>Hello</b> World</html>' is not properly capitalized. It should have sentence capitalization">message("property.titlecase.html")</warning>);
     
-    testSupplier(<warning descr="String 'Hello World' is not properly capitalized. It should have sentence capitalization">messagePointer("property.titlecase")</warning>);
+    testSupplier(<warning descr="String 'Hello World' is not properly capitalized. It should have sentence capitalization">this.messagePointer("property.titlecase")</warning>);
     testSupplier(messagePointer("property.parameterized", "foo"));
   }
 }

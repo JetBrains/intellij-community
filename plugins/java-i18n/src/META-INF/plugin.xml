@@ -55,11 +55,13 @@
                      level="WARNING"
                      implementationClass="com.intellij.codeInspection.duplicateStringLiteral.DuplicateStringLiteralInspection"/>
 
-    <localInspection groupPath="Java" language="JAVA" shortName="DialogTitleCapitalization"
+    <registryKey key="java.i18n.title.capitalization.new" defaultValue="true"
+                 description="New implementation for capitalization inspection"/>
+    <localInspection groupPath="Java" language="UAST" shortName="DialogTitleCapitalization"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.internationalization.issues"
                      enabledByDefault="true"
                      level="WARNING"
-                     implementationClass="com.intellij.codeInspection.capitalization.TitleCapitalizationInspection"
+                     implementationClass="com.intellij.codeInspection.i18n.TitleCapitalizationInspection"
                      key="inspection.dialog.title.capitalization.display.name" bundle="messages.JavaI18nBundle"/>
     <localInspection language="Properties" shortName="SuspiciousLocalesLanguages"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.properties.files"

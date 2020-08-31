@@ -686,7 +686,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     private void processReferenceToNonLocalized(@NotNull PsiElement sourcePsi, @NotNull UExpression ref, PsiModifierListOwner target) {
       PsiType type = ref.getExpressionType();
       if (!TypeUtils.isJavaLangString(type) && !TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_CHAR_SEQUENCE, type)) return;
-      if (target instanceof PsiMethod && NlsInfo.isStringProcessingMethod((PsiMethod)target)) return;
+      if (target instanceof PsiMethod && NlsInfo.isStringProcessingMethod((PsiMethod)target, true)) return;
       if (NlsInfo.forModifierListOwner(target).canBeUsedInLocalizedContext()) return;
       if (NlsInfo.forType(type).canBeUsedInLocalizedContext()) return;
       
@@ -793,8 +793,8 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     }
   }
 
-  protected static List<UExpression> findIndirectUsages(UExpression expression) {
-    UExpression passThrough = NlsInfo.goUp(expression);
+  protected static List<UExpression> findIndirectUsages(UExpression expression, boolean allowStringModifications) {
+    UExpression passThrough = NlsInfo.goUp(expression, allowStringModifications);
     UElement uastParent = passThrough.getUastParent();
     ULocalVariable uVar = null;
     if (uastParent instanceof ULocalVariable) {
@@ -860,7 +860,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
       return NlsInfo.nonLocalized();
     }
 
-    List<UExpression> usages = findIndirectUsages(expression);
+    List<UExpression> usages = findIndirectUsages(expression, true);
     if (usages.isEmpty()) {
       usages = Collections.singletonList(expression);
     }

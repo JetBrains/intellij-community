@@ -17,7 +17,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.capitalization.AnnotateCapitalizationIntention;
-import com.intellij.codeInspection.capitalization.TitleCapitalizationInspection;
+import com.intellij.codeInspection.i18n.TitleCapitalizationInspection;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -66,6 +66,26 @@ public class CapitalizationInspectionTest extends LightJavaCodeInsightFixtureTes
   }
   
   public void testStripHtml() {
+    doTest(false);
+  }
+  
+  public void testCapitalizationMismatch() {
+    doTest(false);
+  }
+  
+  public void testCapitalizationMix() {
+    doTest(false);
+  }
+  
+  public void testLocalVar() {
+    doTest(false);
+  }
+
+  public void testField() {
+    doTest(false);
+  }
+
+  public void testIgnoreConcatFormat() {
     doTest(false);
   }
 

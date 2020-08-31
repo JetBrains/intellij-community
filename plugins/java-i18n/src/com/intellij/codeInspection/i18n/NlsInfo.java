@@ -11,6 +11,7 @@ import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.TypeUtils;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
@@ -35,6 +36,8 @@ public abstract class NlsInfo {
   private static final @NotNull String NLS_CONTEXT = "com.intellij.openapi.util.NlsContext";
   static final String NLS_SAFE = "com.intellij.openapi.util.NlsSafe";
   private static final @NotNull Set<String> ANNOTATION_NAMES = Set.of(AnnotationUtil.NLS, AnnotationUtil.NON_NLS, NLS_SAFE);
+  private static final CallMatcher GET_OR_DEFAULT =
+    CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_MAP, "getOrDefault").parameterCount(2);
 
   /**
    * Describes a string that should be localized
@@ -190,7 +193,16 @@ public abstract class NlsInfo {
    * @return localization status
    */
   public static @NotNull NlsInfo forExpression(@NotNull UExpression expression) {
-    expression = goUp(expression);
+    return forExpression(expression, true);
+  }
+
+  /**
+   * @param expression expression to determine the localization status for
+   * @param allowStringModifications whether string modifications are allowed
+   * @return localization status
+   */
+  static @NotNull NlsInfo forExpression(@NotNull UExpression expression, boolean allowStringModifications) {
+    expression = goUp(expression, allowStringModifications);
     NlsInfo info = fromMethodReturn(expression);
     if (info != Unspecified.UNKNOWN) return info;
     info = fromInitializer(expression);
@@ -376,7 +388,7 @@ public abstract class NlsInfo {
     return result.get();
   }
 
-  static @NotNull UExpression goUp(@NotNull UExpression expression) {
+  static @NotNull UExpression goUp(@NotNull UExpression expression, boolean allowStringTransformation) {
     UExpression parent = expression;
     while (true) {
       UElement parentElement = parent.getUastParent();
@@ -418,18 +430,30 @@ public abstract class NlsInfo {
           && !TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_CHAR_SEQUENCE, next.getExpressionType())) {
         return parent;
       }
-      if (next instanceof UPolyadicExpression && ((UPolyadicExpression)next).getOperator() != UastBinaryOperator.PLUS) return parent;
+      if (next instanceof UPolyadicExpression &&
+          (!allowStringTransformation || ((UPolyadicExpression)next).getOperator() != UastBinaryOperator.PLUS)) {
+        return parent;
+      }
       if (next instanceof UCallExpression) {
         if (!UastExpressionUtils.isArrayInitializer(next) && !UastExpressionUtils.isNewArrayWithInitializer(next)) {
           PsiMethod method = ((UCallExpression)next).resolve();
-          if (!(TypeUtils.isJavaLangString(next.getExpressionType()) && isStringProcessingMethod(method))) {
-            return parent;
-          }
+          boolean shouldGoThroughCall =
+            TypeUtils.isJavaLangString(next.getExpressionType()) &&
+            (isStringProcessingMethod(method, allowStringTransformation) || isPassthroughParameter(method, (UCallExpression)next, parent));
+          if (!shouldGoThroughCall) return parent;
         }
       }
       if (next instanceof UIfExpression && expressionsAreEquivalent(parent, ((UIfExpression)next).getCondition())) return parent;
       parent = next;
     }
+  }
+
+  private static boolean isPassthroughParameter(PsiMethod method, UCallExpression call, UExpression arg) {
+    if (GET_OR_DEFAULT.methodMatches(method)) {
+      UExpression argument = call.getArgumentForParameter(1);
+      if (expressionsAreEquivalent(argument, arg)) return true;
+    }
+    return false;
   }
 
   /**
@@ -440,15 +464,15 @@ public abstract class NlsInfo {
    *   <li>No parameters are marked using Nls annotations</li>
    *   <li>Return value is not marked using Nls annotations</li>
    * </ul>
-   * 
-   * @param method method to check
+   *
+   * @param method                    method to check
+   * @param allowStringTransformation whether string modifications are allowed
    * @return true if method is detected to be a string-processing method. A string processing method is a method that:
    */
-  static boolean isStringProcessingMethod(PsiMethod method) {
+  static boolean isStringProcessingMethod(PsiMethod method, boolean allowStringTransformation) {
     if (method == null) return false;
     if (!(forModifierListOwner(method) instanceof Unspecified)) return false;
-    if (!JavaMethodContractUtil.isPure(method) &&
-        !isPassthroughMethod(method)) return false;
+    if (!(allowStringTransformation && JavaMethodContractUtil.isPure(method) || isPassthroughMethod(method))) return false;
     PsiParameter[] parameters = method.getParameterList().getParameters();
     if (parameters.length == 0) return false;
     for (PsiParameter parameter : parameters) {
@@ -690,7 +714,7 @@ public abstract class NlsInfo {
     return Unspecified.UNKNOWN;
   }
 
-  private static @Nullable PsiParameter getParameter(PsiMethod method, UCallExpression call, UExpression arg) {
+  static @Nullable PsiParameter getParameter(PsiMethod method, UCallExpression call, UExpression arg) {
     final PsiParameter[] params = method.getParameterList().getParameters();
     while (true) {
       UElement parent = arg.getUastParent();
