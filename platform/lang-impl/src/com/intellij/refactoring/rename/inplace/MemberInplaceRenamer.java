@@ -125,7 +125,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
 
   @Override
   protected void showDialogAdvertisement(@NonNls String actionId) {
-    if (Registry.is("enable.rename.options.inplace", false)) {
+    if (Registry.is("enable.rename.options.inplace", true)) {
       setAdvertisementText(RefactoringBundle.message("inplace.refactoring.tab.advertisement.text"));
     }
     else {
@@ -169,7 +169,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
 
   @Override
   protected boolean appendAdditionalElement(Collection<PsiReference> refs, Collection<Pair<PsiElement, TextRange>> stringUsages) {
-    boolean showChooser = Registry.is("enable.rename.options.inplace", false) || super.appendAdditionalElement(refs, stringUsages);
+    boolean showChooser = Registry.is("enable.rename.options.inplace", true) || super.appendAdditionalElement(refs, stringUsages);
     PsiNamedElement variable = getVariable();
     if (variable != null) {
       final PsiElement substituted = getSubstituted();
@@ -282,7 +282,7 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
 
   @Override
   protected void collectAdditionalElementsToRename(@NotNull List<Pair<PsiElement, TextRange>> stringUsages) {
-    if (!Registry.is("enable.rename.options.inplace", false)) return;
+    if (!Registry.is("enable.rename.options.inplace", true)) return;
     if (!RenamePsiElementProcessor.forElement(myElementToRename).isToSearchInComments(myElementToRename)) {
       return;
     }
