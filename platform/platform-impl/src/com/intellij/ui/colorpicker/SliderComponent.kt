@@ -91,13 +91,7 @@ abstract class SliderComponent<T: Number>(initialValue: T) : JComponent() {
 
     addMouseWheelListener { e ->
       runAndUpdateIfNeeded {
-        val amount = when {
-          e.scrollType == MouseWheelEvent.WHEEL_UNIT_SCROLL -> e.unitsToScroll * e.scrollAmount
-          e.wheelRotation < 0 -> -e.scrollAmount
-          else -> e.scrollAmount
-        }
-        val newKnobPosition = Math.max(0, Math.min(_knobPosition + amount, sliderWidth))
-        knobPosition = newKnobPosition
+        value = slide(-e.preciseWheelRotation.toInt())
       }
       e.consume()
     }
