@@ -10,6 +10,8 @@ import com.intellij.codeInspection.ex.GlobalInspectionContextUtil
 import com.intellij.codeInspection.ex.InspectionProfileImpl
 import com.intellij.codeInspection.ex.StaticAnalysisReportConverter
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.Project
@@ -36,8 +38,11 @@ data class InspectionMeta(val id: String,
 data class TargetDefinition(val id: String,
                             val description: String,
                             val inspections: Set<String>,
-                            val threshold: Int = -1
-)
+                            val threshold: Int = -1) {
+  fun isAboveThreshold(count: Int): Boolean {
+    return threshold in 0 until count
+  }
+}
 
 class TargetsRunner(val application: InspectionApplication,
                     val projectPath: Path,
@@ -45,7 +50,7 @@ class TargetsRunner(val application: InspectionApplication,
                     val baseProfile: InspectionProfileImpl,
                     val scope: AnalysisScope) {
   val inspectionCounter = mutableMapOf<TargetDefinition, AtomicInteger>()
-  var currentTarget:TargetDefinition? = null
+  var currentTarget: TargetDefinition? = null
   val converter = StaticAnalysisReportConverter()
 
   fun run() {
@@ -64,7 +69,7 @@ class TargetsRunner(val application: InspectionApplication,
 
     targetDefinitions.forEach { target ->
       if (!executeTarget(target)) {
-        LOG.warn("Analysis was stopped cause target ${target.description} reached threshold ${target.threshold}")
+        LOG.warn("Inspection run was stopped cause target '${target.description}' reached threshold: ${target.threshold}")
         return
       }
     }
@@ -80,42 +85,52 @@ class TargetsRunner(val application: InspectionApplication,
     currentTarget = target
     val counter = AtomicInteger(0)
     inspectionCounter[target] = counter
+    val progressIndicator = createProgressIndicator()
 
     context.problemConsumer = object : AsyncInspectionToolResultWriter(targetPath) {
       override fun consume(element: Element) {
-        counter.incrementAndGet()
+        val count = counter.incrementAndGet()
+        if (target.isAboveThreshold(count)) {
+          progressIndicator.cancel()
+        }
         super.consume(element)
       }
     }
     context.setExternalProfile(constructProfile(target, baseProfile))
-    val syncResults = launchTarget(targetPath, context)
+    val syncResults = launchTarget(targetPath, context, progressIndicator)
     converter.convert(targetPath.toString(), targetPath.toString(), emptyMap(), syncResults.map { it.toFile() })
     currentTarget = null
     println("##teamcity[blockClosed name='Target ${target.id}']")
     application.reportMessage(1, "Target ${target.id} (${target.description}) finished")
-    return target.threshold < 0 || counter.get() <= target.threshold
+    return !target.isAboveThreshold(counter.get())
   }
 
 
-  private fun launchTarget(resultsPath: Path, context: GlobalInspectionContextEx): List<Path> {
+  private fun launchTarget(resultsPath: Path, context: GlobalInspectionContextEx, progressIndicator: ProgressIndicator): List<Path> {
     if (!GlobalInspectionContextUtil.canRunInspections(project, false) {}) {
       application.gracefulExit()
       return emptyList()
     }
     val inspectionsResults = mutableListOf<Path>()
 
-    ProgressManager.getInstance().runProcess(
-      {
+    val inspectionProcess = {
+      try {
         context.launchInspectionsOffline(scope, resultsPath, application.myRunGlobalToolsOnly, inspectionsResults)
-      },
-      createProcessIndicator()
+      } catch (e: ProcessCanceledException) {
+        LOG.warn("Inspection run was cancelled")
+      }
+    }
+
+    ProgressManager.getInstance().runProcess(
+      inspectionProcess,
+      progressIndicator
     )
 
     return inspectionsResults
   }
 
 
-  private fun createProcessIndicator(): ProgressIndicatorBase {
+  private fun createProgressIndicator(): ProgressIndicatorBase {
     return object : ProgressIndicatorBase() {
       private var myLastPercent = -1
 
@@ -145,7 +160,8 @@ class TargetsRunner(val application: InspectionApplication,
     return inspectionCounter.toList().joinToString { (target, count) ->
       if (target == currentTarget) {
         "Running \"${target.description}\" - (${count.get()} problems) - $percent% done"
-      } else {
+      }
+      else {
         "\"${target.description}\" - ($count problems)"
       }
     }
