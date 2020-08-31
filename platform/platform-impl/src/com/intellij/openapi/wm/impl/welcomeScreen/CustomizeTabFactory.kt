@@ -133,10 +133,7 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
       blockRow {
         header(IdeBundle.message("welcome.screen.color.theme.header"))
         row {
-          val theme = comboBox(laf.lafComboBoxModel,
-                               { laf.lookAndFeelReference },
-                               { laf.lookAndFeelReference = it },
-                               laf.lookAndFeelCellRenderer)
+          val theme = comboBox(laf.lafComboBoxModel, lafProperty, laf.lookAndFeelCellRenderer)
           laf.settingsToolbar?.let {
             component(it)
               .visibleIf(theme.component.selectedValueIs(LafManager.LafReference.SYNC_OS))
