@@ -5,6 +5,7 @@ import com.intellij.internal.ml.completion.RankingModelProvider
 import com.intellij.completion.ml.MLCompletionBundle
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.ui.ContextHelpLabel
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.layout.*
 
@@ -18,16 +19,20 @@ class MLRankingConfigurable(private val availableProviders: List<RankingModelPro
       var enableRankingCheckbox: CellBuilder<JBCheckBox>? = null
       titledRow(displayName) {
         row {
-          val enableRanking = checkBox(MLCompletionBundle.message("ml.completion.enable"), settings::isRankingEnabled,
-                                       { settings.isRankingEnabled = it })
+          cell {
+            enableRankingCheckbox = checkBox(MLCompletionBundle.message("ml.completion.enable"), settings::isRankingEnabled,
+                                         { settings.isRankingEnabled = it })
+            ContextHelpLabel.create(MLCompletionBundle.message("ml.completion.enable.help"))()
+          }
           for (ranker in providers) {
             row {
-              checkBox(ranker.displayNameInSettings, { settings.isLanguageEnabled(ranker.id) },
-                       { settings.setLanguageEnabled(ranker.id, it) })
-                .enableIf(enableRanking.selected)
+              enableRankingCheckbox?.let { enableRanking ->
+                checkBox(ranker.displayNameInSettings, { settings.isLanguageEnabled(ranker.id) },
+                         { settings.setLanguageEnabled(ranker.id, it) })
+                  .enableIf(enableRanking.selected)
+              }
             }.apply { if (ranker === providers.last()) largeGapAfter() }
           }
-          enableRankingCheckbox = enableRanking
           row {
             enableRankingCheckbox?.let { enableRanking ->
               checkBox(MLCompletionBundle.message("ml.completion.show.diff"),
