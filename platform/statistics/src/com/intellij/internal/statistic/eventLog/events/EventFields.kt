@@ -162,6 +162,9 @@ object EventFields {
     }
   }
 
+  @JvmField
+  val Count = Int("count")
+
   @JvmStatic
   fun createAdditionalDataField(groupId: String, eventId: String): ObjectEventField {
     val additionalFields = mutableListOf<EventField<*>>()
