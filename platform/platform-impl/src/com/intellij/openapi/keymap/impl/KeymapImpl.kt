@@ -36,6 +36,7 @@ import com.intellij.util.containers.mapSmart
 import com.intellij.util.containers.nullize
 import org.jdom.Element
 import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.KeyStroke
 import kotlin.collections.HashSet
 
@@ -747,9 +748,13 @@ private val vsCodeKeymap = "com.intellij.plugins.vscodekeymap"
 
 internal fun notifyAboutMissingKeymap(keymapName: String, @NlsContexts.NotificationContent message: String, isParent: Boolean) {
   val connection = ApplicationManager.getApplication().messageBus.connect()
+  val notificationScheduled = AtomicBoolean(false)
   connection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
     override fun projectOpened(project: Project) {
-      connection.disconnect()
+      if (!notificationScheduled.compareAndSet(false, true)) {
+        return
+      }
+
       ApplicationManager.getApplication().invokeLater(
         {
           // TODO remove when PluginAdvertiser implements that
@@ -829,6 +834,10 @@ internal fun notifyAboutMissingKeymap(keymapName: String, @NlsContexts.Notificat
           }
           KeymapImpl.NOTIFICATION_MANAGER.notify(IdeBundle.message("notification.group.missing.keymap"), message, action = action)
         }, ModalityState.NON_MODAL)
+    }
+
+    override fun projectClosed(project: Project) {
+      KeymapImpl.NOTIFICATION_MANAGER.clear()
     }
   }
   )
