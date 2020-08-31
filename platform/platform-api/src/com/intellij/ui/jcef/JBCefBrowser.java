@@ -108,6 +108,8 @@ public class JBCefBrowser implements JBCefDisposable {
     // This method may be deleted when JCEF API version check is included into JBCefApp#isSupported
     private static boolean isSupportedByJCefApi() {
       try {
+        /* getVersionDetails() was introduced alongside JCEF API versioning with first version of 1.1, which also added these necessary
+         * for shortcuts to work CefFrame methods. Therefore successful call to getVersionDetails() means our JCEF API is at least 1.1 */
         JCefAppConfig.getVersionDetails();
         return true;
       }
