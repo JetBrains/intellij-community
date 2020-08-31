@@ -54,7 +54,7 @@ public final class DependentGroovycRunner {
     config.setOutput(new PrintWriter(err));
     config.setWarningLevel(WarningMessage.PARANOIA);
 
-    final List<CompilerMessage> compilerMessages = new ArrayList<CompilerMessage>();
+    final List<GroovyCompilerMessage> compilerMessages = new ArrayList<GroovyCompilerMessage>();
     final List<CompilationUnitPatcher> patchers = new ArrayList<CompilationUnitPatcher>();
     final List<File> srcFiles = new ArrayList<File>();
     final Map<String, File> class2File = new HashMap<String, File>();
@@ -126,7 +126,7 @@ public final class DependentGroovycRunner {
     reportCompiledItems(out, compiledFiles);
 
     int errorCount = 0;
-    for (CompilerMessage message : compilerMessages) {
+    for (GroovyCompilerMessage message : compilerMessages) {
       if (message.getCategory() == GroovyCompilerMessageCategories.ERROR) {
         if (errorCount > 100) {
           continue;
@@ -194,7 +194,7 @@ public final class DependentGroovycRunner {
   private static void fillFromArgsFile(File argsFile,
                                        CompilerConfiguration compilerConfiguration,
                                        List<? super CompilationUnitPatcher> patchers,
-                                       List<? super CompilerMessage> compilerMessages,
+                                       List<? super GroovyCompilerMessage> compilerMessages,
                                        List<? super File> srcFiles,
                                        Map<String, File> class2File,
                                        String[] finalOutputs,
@@ -290,7 +290,7 @@ public final class DependentGroovycRunner {
   }
 
   private static void runPatchers(List<? extends CompilationUnitPatcher> patchers,
-                                  List<? super CompilerMessage> compilerMessages,
+                                  List<? super GroovyCompilerMessage> compilerMessages,
                                   CompilationUnit unit,
                                   final AstAwareResourceLoader loader,
                                   List<File> srcFiles) {
@@ -322,7 +322,7 @@ public final class DependentGroovycRunner {
     }
   }
 
-  private static void printMessage(@NotNull PrintStream out, @NotNull CompilerMessage message) {
+  private static void printMessage(@NotNull PrintStream out, @NotNull GroovyCompilerMessage message) {
     out.print(GroovyRtConstants.MESSAGES_START);
     out.print(message.getCategory());
     out.print(GroovyRtConstants.SEPARATOR);
@@ -338,10 +338,13 @@ public final class DependentGroovycRunner {
     out.println();
   }
 
-  private static void addExceptionInfo(List<? super CompilerMessage> compilerMessages, Throwable e, String message) {
+  private static void addExceptionInfo(List<? super GroovyCompilerMessage> compilerMessages, Throwable e, String message) {
     final StringWriter writer = new StringWriter();
     e.printStackTrace(new PrintWriter(writer));
-    compilerMessages.add(new CompilerMessage(GroovyCompilerMessageCategories.WARNING, message + ":\n" + writer, "<exception>", -1, -1));
+    compilerMessages.add(new GroovyCompilerMessage(
+      GroovyCompilerMessageCategories.WARNING, message + ":\n" + writer,
+      "<exception>", -1, -1
+    ));
   }
 
   private static CompilationUnit createCompilationUnit(final boolean forStubs,
