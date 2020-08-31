@@ -9,38 +9,45 @@ import com.intellij.internal.statistic.eventLog.events.StringEventField
 import com.intellij.internal.statistic.eventLog.validator.ValidationResultType
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
-object MLCompletionSettingsCollector {
-  private val COUNTER_GROUP = EventLogGroup("ml.completion", 1)
-  private val rankerIdField: StringEventField = EventFields.StringValidatedByCustomRule("ranker_id", "ml_completion_ranker_id")
-  private val enabledField: BooleanEventField = EventFields.Boolean("enabled")
-  private val enabledByDefaultField: BooleanEventField = EventFields.Boolean("enabled_by_default")
-  private val languageCheckboxUsedField: BooleanEventField = EventFields.Boolean("using_language_checkbox")
-
-  private val LANGUAGE_SETTINGS_CHANGED = COUNTER_GROUP.registerVarargEvent("ranking.settings.changed",
-                                                                            rankerIdField,
-                                                                            enabledField,
-                                                                            enabledByDefaultField,
-                                                                            languageCheckboxUsedField)
-
-  private val DECORATION_SETTINGS_CHANGED = COUNTER_GROUP.registerEvent("decorating.settings.changed", EventFields.Boolean("enabled"))
-
-  @JvmStatic
-  fun rankingSettingsChanged(rankerId: String,
-                             enabled: Boolean,
-                             enabledByDefault: Boolean,
-                             usingLanguageCheckbox: Boolean) {
-    LANGUAGE_SETTINGS_CHANGED.log(
-      rankerIdField.with(rankerId),
-      enabledField.with(enabled),
-      enabledByDefaultField.with(enabledByDefault),
-      languageCheckboxUsedField.with(usingLanguageCheckbox)
-    )
+class MLCompletionSettingsCollector : CounterUsagesCollector() {
+  override fun getGroup(): EventLogGroup {
+    return COUNTER_GROUP
   }
 
-  @JvmStatic
-  fun decorationSettingChanged(enabled: Boolean) {
-    DECORATION_SETTINGS_CHANGED.log(enabled)
+  companion object {
+    private val COUNTER_GROUP = EventLogGroup("ml.completion", 2)
+    private val rankerIdField: StringEventField = EventFields.StringValidatedByCustomRule("ranker_id", "ml_completion_ranker_id")
+    private val enabledField: BooleanEventField = EventFields.Boolean("enabled")
+    private val enabledByDefaultField: BooleanEventField = EventFields.Boolean("enabled_by_default")
+    private val languageCheckboxUsedField: BooleanEventField = EventFields.Boolean("using_language_checkbox")
+
+    private val LANGUAGE_SETTINGS_CHANGED = COUNTER_GROUP.registerVarargEvent("ranking.settings.changed",
+                                                                              rankerIdField,
+                                                                              enabledField,
+                                                                              enabledByDefaultField,
+                                                                              languageCheckboxUsedField)
+
+    private val DECORATION_SETTINGS_CHANGED = COUNTER_GROUP.registerEvent("decorating.settings.changed", EventFields.Boolean("enabled"))
+
+    @JvmStatic
+    fun rankingSettingsChanged(rankerId: String,
+                               enabled: Boolean,
+                               enabledByDefault: Boolean,
+                               usingLanguageCheckbox: Boolean) {
+      LANGUAGE_SETTINGS_CHANGED.log(
+        rankerIdField.with(rankerId),
+        enabledField.with(enabled),
+        enabledByDefaultField.with(enabledByDefault),
+        languageCheckboxUsedField.with(usingLanguageCheckbox)
+      )
+    }
+
+    @JvmStatic
+    fun decorationSettingChanged(enabled: Boolean) {
+      DECORATION_SETTINGS_CHANGED.log(enabled)
+    }
   }
 
   class MLRankingSettingsValidationRule : CustomValidationRule() {
