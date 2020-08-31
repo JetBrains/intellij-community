@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
-import com.intellij.codeInspection.LocalInspectionTool
 import groovy.transform.CompileStatic
 import org.intellij.lang.annotations.Language
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyConstructorNamedArgumentsInspection
@@ -12,7 +11,7 @@ import org.junit.Test
 @CompileStatic
 class MapConstructorTest extends GroovyLatestTest implements HighlightingTest {
 
-  private void doTest(String text, Class<? extends LocalInspectionTool>... inspections) {
+  private void doTest(String text) {
     @Language("Groovy") String newText = text
     if (text.contains("MapConstructor")) {
       newText = "import groovy.transform.MapConstructor\n" + newText
@@ -20,7 +19,7 @@ class MapConstructorTest extends GroovyLatestTest implements HighlightingTest {
     if (text.contains("CompileStatic")) {
       newText = "import groovy.transform.CompileStatic\n" + newText
     }
-    highlightingTest(newText, inspections)
+    highlightingTest(newText, GroovyConstructorNamedArgumentsInspection)
   }
 
   @Test
@@ -95,7 +94,7 @@ class Rr {
 @CompileStatic
 static void main(String[] args) {
     def x = new Rr(<warning>actionType</warning>: "abc")
-}""", GroovyConstructorNamedArgumentsInspection
+}"""
   }
 
   @Test
@@ -111,6 +110,37 @@ class Rr {
 @CompileStatic
 static void main(String[] args) {
     def x = new Rr(referrerCode: 10, <warning>referrerUrl</warning>: true)
-}""", GroovyConstructorNamedArgumentsInspection
+}"""
+  }
+
+  @Test
+  void 'bean property'() {
+    doTest """
+@MapConstructor(allProperties = true)
+class Rr {
+  void setFoo(String s) {
+  }
+}
+
+@CompileStatic
+static void main(String[] args) {
+  def x = new Rr(foo : "abc")
+}"""
+  }
+
+  @Test
+  void 'resolve super property'() {
+    doTest """
+class Nn {
+  String fff
+}
+
+@MapConstructor(includeSuperProperties = true)
+class Rr extends Nn {}
+
+@CompileStatic
+static void main(String[] args) {
+  def x = new Rr(fff : "abc")
+}"""
   }
 }

@@ -189,6 +189,13 @@ class AffectedMembersCache(anno: PsiAnnotation) {
 
     private fun String.isInternal(): Boolean = contains("$")
 
+    @JvmStatic
+    fun getExternalName(namedElement: PsiNamedElement) : String? = when(namedElement) {
+      is PsiField -> namedElement.name
+      is PsiMethod -> PropertyUtilBase.getPropertyName(namedElement)
+      else -> null
+    }
+
   }
 
   /**

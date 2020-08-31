@@ -58,7 +58,7 @@ class GrAnnotationReferencingUnknownIdentifiers : BaseInspection() {
       super.visitAnnotation(annotation)
       if (!constructorGeneratingAnnotations.contains(annotation.qualifiedName)) return
       val cache = AffectedMembersCache(annotation)
-      val affectedMembers = cache.getAllAffectedMembers().mapNotNullTo(mutableSetOf()) { it.name }
+      val affectedMembers = cache.getAllAffectedMembers().mapNotNullTo(mutableSetOf(), AffectedMembersCache.Companion::getExternalName)
       processAttribute(affectedMembers, annotation, "includes")
       processAttribute(affectedMembers, annotation, "excludes")
     }

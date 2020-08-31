@@ -140,7 +140,7 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
       for (PsiNamedElement element : cache.getAffectedMembers()) {
         GrLightParameter parameter;
         if (element instanceof PsiField) {
-          String name = element.getName();
+          String name = AffectedMembersCache.getExternalName(element);
           parameter = new GrLightParameter(name == null ? "arg" : name, ((PsiField)element).getType(), fieldsConstructor);
         } else if (element instanceof GrMethod) {
           String name = PropertyUtilBase.getPropertyName((PsiMember)element);
