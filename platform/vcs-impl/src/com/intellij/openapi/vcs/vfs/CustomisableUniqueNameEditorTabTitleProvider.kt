@@ -5,12 +5,15 @@ import com.intellij.ide.ui.UISettings.Companion.instance
 import com.intellij.openapi.fileEditor.impl.UniqueNameEditorTabTitleProvider
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.Nls
 
 abstract class CustomisableUniqueNameEditorTabTitleProvider : UniqueNameEditorTabTitleProvider(), DumbAware {
   abstract fun isApplicable(file: VirtualFile): Boolean
 
-  abstract fun getEditorTabTitle(file: VirtualFile, baseUniqueName: String): String
+  @NlsContexts.TabTitle
+  abstract fun getEditorTabTitle(file: VirtualFile, @Nls baseUniqueName: String): String
 
   override fun getEditorTabTitle(project: Project, file: VirtualFile): String? {
     if (isApplicable(file)) {
@@ -19,6 +22,7 @@ abstract class CustomisableUniqueNameEditorTabTitleProvider : UniqueNameEditorTa
     return null
   }
 
+  @Nls
   private fun getBaseUniqueName(project: Project, file: VirtualFile): String? {
     var baseName = super.getEditorTabTitle(project, file)
     if (baseName == null && instance.hideKnownExtensionInTabs && !file.isDirectory) {

@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.DeprecatedVirtualFileSystem;
 import com.intellij.openapi.vfs.NonPhysicalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 
@@ -76,6 +77,7 @@ public class VcsFileSystem extends DeprecatedVirtualFileSystem implements NonPhy
     super.fireBeforeContentsChange(requestor, file);
   }
 
+  @Nls
   public static String getCouldNotImplementMessage() {
     return VcsBundle.message("exception.text.internal.errror.could.not.implement.method");
   }
