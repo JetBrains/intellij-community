@@ -49,6 +49,7 @@ class UnknownSdkInspectionCommandLineConfigurator : CommandLineInspectionProject
     }
     if (problems.isEmpty()) return
 
+    LOG.info("Unknown sdk's problems $problems")
     indicator.text = "Building SDK resolvers..."
     val resolvers = UnknownSdkResolver.EP_NAME.extensions.mapNotNull {
       it.createResolver(project, indicator)
@@ -56,6 +57,8 @@ class UnknownSdkInspectionCommandLineConfigurator : CommandLineInspectionProject
 
     indicator.isIndeterminate = false
     for ((i, problem) in problems.withIndex()) {
+      LOG.info("Solving unknown sdk ${problem.sdkName}")
+
       indicator.fraction = i.toDouble() / problems.size
       indicator.text = "Configuring SDKs " + problem.sdkName + "..."
       indicator.pushState()
