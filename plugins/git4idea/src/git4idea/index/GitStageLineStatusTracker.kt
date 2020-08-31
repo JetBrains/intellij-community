@@ -33,9 +33,7 @@ import com.intellij.openapi.vcs.ex.*
 import com.intellij.openapi.vcs.ex.Range
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorTextField
-import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.PeekableIteratorWrapper
@@ -357,12 +355,10 @@ class GitStageLineStatusTracker(
     }
 
     private fun paintStageLines(g: Graphics2D, editor: Editor, block: List<ChangedLines<StageLineFlags>>) {
-      val stripeThickness = JBUIScale.scale(2)
-
-      editor as EditorImpl
       val area = LineStatusMarkerDrawUtil.getGutterArea(editor)
       val x = area.first
       val endX = area.second
+      val midX = (endX + x + 3) / 2
 
       for (change in block) {
         if (change.line1 != change.line2) {
@@ -370,12 +366,15 @@ class GitStageLineStatusTracker(
           val end = editor.visualLineToY(change.line2)
           val gutterColor = LineStatusMarkerDrawUtil.getGutterColor(change.type, editor)
 
-          LineStatusMarkerDrawUtil.paintRect(g, gutterColor, null, x, start, endX, end)
-          if (change.flags.isUnstaged) {
-            paintThickLine(g, JBColor.RED, x, start, end, stripeThickness)
+          if (change.flags.isUnstaged && change.flags.isStaged) {
+            LineStatusMarkerDrawUtil.paintRect(g, gutterColor, null, x, start, midX, end)
+            LineStatusMarkerDrawUtil.paintRect(g, null, gutterColor, x, start, endX, end)
           }
-          if (change.flags.isStaged) {
-            paintThickLine(g, JBColor.GREEN, endX - stripeThickness, start, end, stripeThickness)
+          else if (change.flags.isStaged) {
+            LineStatusMarkerDrawUtil.paintRect(g, null, gutterColor, x, start, endX, end)
+          }
+          else {
+            LineStatusMarkerDrawUtil.paintRect(g, gutterColor, null, x, start, endX, end)
           }
         }
       }
@@ -384,27 +383,38 @@ class GitStageLineStatusTracker(
         if (change.line1 == change.line2) {
           val start = editor.visualLineToY(change.line1)
           val gutterColor = LineStatusMarkerDrawUtil.getGutterColor(change.type, editor)
-          LineStatusMarkerDrawUtil.paintTriangle(g, editor, gutterColor, null, x, endX, start)
 
-          val editorScale = editor.scale
-          if (change.flags.isUnstaged) {
-            val size = JBUIScale.scale(4 * editorScale).toInt()
-            paintThickLine(g, JBColor.RED, x, start - size, start + size, stripeThickness)
+          if (change.flags.isUnstaged && change.flags.isStaged) {
+            paintStripeTriangle(g, editor, gutterColor, x, endX, start)
           }
-          if (change.flags.isStaged) {
-            val size = JBUIScale.scale(2 * editorScale).toInt()
-            paintThickLine(g, JBColor.GREEN, endX - stripeThickness, start - size, start + size, stripeThickness)
+          else if (change.flags.isStaged) {
+            LineStatusMarkerDrawUtil.paintTriangle(g, editor, null, gutterColor, x, endX, start)
+          }
+          else {
+            LineStatusMarkerDrawUtil.paintTriangle(g, editor, gutterColor, null, x, endX, start)
           }
         }
       }
     }
 
-    private fun paintThickLine(g: Graphics2D, color: Color?, x: Int, y1: Int, y2: Int, thickness: Int) {
-      val oldStroke = g.stroke
-      g.stroke = BasicStroke(thickness.toFloat())
-      g.color = color
-      LinePainter2D.paint(g, x.toDouble(), y1.toDouble(), x.toDouble(), y2 - 1.toDouble())
-      g.stroke = oldStroke
+    private fun paintStripeTriangle(g: Graphics2D, editor: Editor, color: Color?, x1: Int, x2: Int, y: Int) {
+      @Suppress("NAME_SHADOWING") var y = y
+      val editorScale = if (editor is EditorImpl) editor.scale else 1.0f
+      val size = JBUIScale.scale(5 * editorScale).toInt()
+      if (y < size) y = size
+      val xPoints = intArrayOf(x1, x1, x2)
+      val yPointsBorder = intArrayOf(y - size, y + size, y)
+      val yPointsFill = intArrayOf(y - size, y, y)
+
+      if (color != null) {
+        g.color = color
+        g.fillPolygon(xPoints, yPointsFill, xPoints.size)
+
+        val oldStroke = g.stroke
+        g.stroke = BasicStroke(JBUIScale.scale(1).toFloat())
+        g.drawPolygon(xPoints, yPointsBorder, xPoints.size)
+        g.stroke = oldStroke
+      }
     }
 
     class StageLineFlags(val isStaged: Boolean, val isUnstaged: Boolean)
@@ -457,7 +467,7 @@ class GitStageLineStatusTracker(
 
     private fun createEditorPane(editor: Editor, @Nls text: String, textField: EditorTextField, topBorder: Boolean): JComponent {
       val label = JBLabel(text)
-      label.border = JBUI.Borders.emptyBottom(2);
+      label.border = JBUI.Borders.emptyBottom(2)
       label.font = UIUtil.getLabelFont(UIUtil.FontSize.SMALL)
       label.foreground = UIUtil.getLabelDisabledForeground()
 
