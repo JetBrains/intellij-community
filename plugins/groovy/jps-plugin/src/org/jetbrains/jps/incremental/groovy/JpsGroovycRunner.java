@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.groovy;
 
-
 import com.intellij.compiler.instrumentation.FailSafeClassReader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
@@ -14,6 +13,7 @@ import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.groovy.compiler.rt.GroovyRtConstants;
+import org.jetbrains.groovy.compiler.rt.OutputItem;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
@@ -84,7 +84,7 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
 
       GroovycOutputParser parser = runGroovycOrContinuation(context, chunk, finalOutputs, compilerOutput, toCompile, hasStubExcludes.get());
 
-      MultiMap<T, GroovycOutputParser.OutputItem> compiled = processCompiledFiles(context, chunk, generationOutputs, compilerOutput, parser.getSuccessfullyCompiled());
+      MultiMap<T, OutputItem> compiled = processCompiledFiles(context, chunk, generationOutputs, compilerOutput, parser.getSuccessfullyCompiled());
 
       if (checkChunkRebuildNeeded(context, parser)) {
         clearContinuation(context, chunk);
@@ -119,7 +119,7 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
     return ExitCode.OK;
   }
 
-  protected void stubsGenerated(CompileContext context, Map<T, String> generationOutputs, MultiMap<T, GroovycOutputParser.OutputItem> compiled) {
+  protected void stubsGenerated(CompileContext context, Map<T, String> generationOutputs, MultiMap<T, OutputItem> compiled) {
   }
 
   protected Map<T, String> getGenerationOutputs(CompileContext context, ModuleChunk chunk, Map<T, String> finalOutputs) throws IOException {
@@ -259,14 +259,14 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
 
   protected abstract R findRoot(CompileContext context, File srcFile);
 
-  MultiMap<T, GroovycOutputParser.OutputItem> processCompiledFiles(CompileContext context,
-                                                                   ModuleChunk chunk,
-                                                                   Map<T, String> generationOutputs,
-                                                                   String compilerOutput,
-                                                                   List<GroovycOutputParser.OutputItem> successfullyCompiled)
+  MultiMap<T, OutputItem> processCompiledFiles(CompileContext context,
+                                               ModuleChunk chunk,
+                                               Map<T, String> generationOutputs,
+                                               String compilerOutput,
+                                               List<OutputItem> successfullyCompiled)
     throws IOException {
-    final MultiMap<T, GroovycOutputParser.OutputItem> compiled = MultiMap.createLinkedSet();
-    for (final GroovycOutputParser.OutputItem item : successfullyCompiled) {
+    final MultiMap<T, OutputItem> compiled = MultiMap.createLinkedSet();
+    for (final OutputItem item : successfullyCompiled) {
       if (Utils.IS_TEST_MODE || LOG.isDebugEnabled()) {
         LOG.info("compiled=" + item);
       }
@@ -275,7 +275,7 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
         //noinspection unchecked
         T target = (T)rd.getTarget();
         String outputPath = ensureCorrectOutput(chunk, item, generationOutputs, compilerOutput, target);
-        compiled.putValue(target, new GroovycOutputParser.OutputItem(outputPath, item.sourcePath));
+        compiled.putValue(target, new OutputItem(outputPath, item.sourcePath));
       }
       else {
         if (Utils.IS_TEST_MODE || LOG.isDebugEnabled()) {
@@ -292,10 +292,10 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
   protected abstract Set<T> getTargets(ModuleChunk chunk);
 
   private String ensureCorrectOutput(ModuleChunk chunk,
-                                            GroovycOutputParser.OutputItem item,
-                                            Map<T, String> generationOutputs,
-                                            String compilerOutput,
-                                            @NotNull T srcTarget) throws IOException {
+                                     OutputItem item,
+                                     Map<T, String> generationOutputs,
+                                     String compilerOutput,
+                                     @NotNull T srcTarget) throws IOException {
     if (chunk.getModules().size() > 1 && !srcTarget.equals(representativeTarget(generationOutputs))) {
       File output = new File(item.outputPath);
 
@@ -366,17 +366,17 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
 
   void updateDependencies(CompileContext context,
                           List<File> toCompile,
-                          MultiMap<T, GroovycOutputParser.OutputItem> successfullyCompiled,
+                          MultiMap<T, OutputItem> successfullyCompiled,
                           final GroovyOutputConsumer outputConsumer, Builder builder) {
     JavaBuilderUtil.registerFilesToCompile(context, toCompile);
     if (!successfullyCompiled.isEmpty()) {
 
       final Callbacks.Backend callback = JavaBuilderUtil.getDependenciesRegistrar(context);
 
-      for (Map.Entry<T, Collection<GroovycOutputParser.OutputItem>> entry : successfullyCompiled.entrySet()) {
+      for (Map.Entry<T, Collection<OutputItem>> entry : successfullyCompiled.entrySet()) {
         final T target = entry.getKey();
-        final Collection<GroovycOutputParser.OutputItem> compiled = entry.getValue();
-        for (GroovycOutputParser.OutputItem item : compiled) {
+        final Collection<OutputItem> compiled = entry.getValue();
+        for (OutputItem item : compiled) {
           final String sourcePath = FileUtil.toSystemIndependentName(item.sourcePath);
           final String outputPath = FileUtil.toSystemIndependentName(item.outputPath);
           final File outputFile = new File(outputPath);

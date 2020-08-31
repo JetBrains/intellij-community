@@ -1,19 +1,5 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.groovy.compiler.rt;
-
-/*
- * Copyright 2000-2007 JetBrains s.r.o.
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
 
 import groovy.lang.GroovyRuntimeException;
 import org.codehaus.groovy.GroovyBugError;
@@ -157,7 +143,7 @@ public class GroovyCompilerWrapper {
           }
         }
         OutputItem item = new OutputItem(stubDirectory, topLevel.replace('.', '/') + ".java", fileName);
-        if (new File(item.getOutputPath()).exists()) {
+        if (new File(item.outputPath).exists()) {
           compiledFiles.add(item);
         }
       }
@@ -286,23 +272,5 @@ public class GroovyCompilerWrapper {
 
   private void addErrorMessage(SimpleMessage message) {
     addMessageWithoutLocation(message.getMessage(), true);
-  }
-
-  public static class OutputItem {
-    private final String myOutputPath;
-    private final String mySourceFileName;
-
-    public OutputItem(File targetDirectory, String outputPath, String sourceFileName) {
-      myOutputPath = targetDirectory.getAbsolutePath().replace(File.separatorChar, '/') + "/" + outputPath;
-      mySourceFileName = sourceFileName;
-    }
-
-    public String getOutputPath() {
-      return myOutputPath;
-    }
-
-    public String getSourceFile() {
-      return mySourceFileName;
-    }
   }
 }

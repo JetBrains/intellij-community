@@ -19,7 +19,6 @@ import org.codehaus.groovy.tools.javac.JavaCompiler;
 import org.codehaus.groovy.tools.javac.JavaCompilerFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.groovy.compiler.rt.GroovyCompilerWrapper.OutputItem;
 
 import java.io.*;
 import java.nio.charset.Charset;
@@ -315,9 +314,9 @@ public final class DependentGroovycRunner {
        * output root directory
        */
       out.print(GroovyRtConstants.COMPILED_START);
-      out.print(compiledFile.getOutputPath());
+      out.print(compiledFile.outputPath);
       out.print(GroovyRtConstants.SEPARATOR);
-      out.print(compiledFile.getSourceFile());
+      out.print(compiledFile.sourcePath);
       out.print(GroovyRtConstants.COMPILED_END);
       out.println();
     }

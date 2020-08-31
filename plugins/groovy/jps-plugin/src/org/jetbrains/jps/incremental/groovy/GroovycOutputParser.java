@@ -1,5 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.groovy;
 
 import com.intellij.execution.process.ProcessOutputTypes;
@@ -12,6 +11,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.groovy.compiler.rt.GroovyCompilerMessageCategories;
 import org.jetbrains.groovy.compiler.rt.GroovyRtConstants;
+import org.jetbrains.groovy.compiler.rt.OutputItem;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.incremental.CompileContext;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
@@ -302,23 +302,4 @@ public class GroovycOutputParser {
     stdErr.setLength(0);
     outputBuffer.setLength(0);
   }
-
-  static class OutputItem {
-    public final String outputPath;
-    public final String sourcePath;
-
-    OutputItem(String outputPath, String sourceFileName) {
-      this.outputPath = outputPath;
-      sourcePath = sourceFileName;
-    }
-
-    @Override
-    public String toString() {
-      return "OutputItem{" +
-             "outputPath='" + outputPath + '\'' +
-             ", sourcePath='" + sourcePath + '\'' +
-             '}';
-    }
-  }
-
 }

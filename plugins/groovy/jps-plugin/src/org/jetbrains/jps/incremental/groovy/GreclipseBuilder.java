@@ -14,6 +14,7 @@ import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.groovy.compiler.rt.GroovyRtConstants;
+import org.jetbrains.groovy.compiler.rt.OutputItem;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
@@ -168,14 +169,14 @@ public class GreclipseBuilder extends ModuleLevelBuilder {
 
       boolean success = performCompilation(args, out, err, outputMap, context, chunk);
 
-      List<GroovycOutputParser.OutputItem> items = new ArrayList<>();
+      List<OutputItem> items = new ArrayList<>();
       for (String src : outputMap.keySet()) {
         for (String classFile : outputMap.get(src)) {
-          items.add(new GroovycOutputParser.OutputItem(FileUtil.toSystemIndependentName(mainOutputDir + classFile),
-                                                           FileUtil.toSystemIndependentName(src)));
+          items.add(new OutputItem(FileUtil.toSystemIndependentName(mainOutputDir + classFile),
+                                   FileUtil.toSystemIndependentName(src)));
         }
       }
-      MultiMap<ModuleBuildTarget, GroovycOutputParser.OutputItem> successfullyCompiled =
+      MultiMap<ModuleBuildTarget, OutputItem> successfullyCompiled =
         myHelper.processCompiledFiles(context, chunk, outputDirs, mainOutputDir, items);
 
       EclipseOutputParser parser = new EclipseOutputParser(getPresentableName(), chunk);
