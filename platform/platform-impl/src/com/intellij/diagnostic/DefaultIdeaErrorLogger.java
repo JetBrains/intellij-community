@@ -108,7 +108,7 @@ public class DefaultIdeaErrorLogger implements ErrorLogger {
     String message = t.getMessage();
 
     if (t instanceof OutOfMemoryError) {
-      if (message != null && message.contains("unable to create new native thread")) return null;
+      if (message != null && message.contains("unable to create") && message.contains("native thread")) return null;
       if (message != null && message.contains("Metaspace")) return MemoryKind.METASPACE;
       return MemoryKind.HEAP;
     }
