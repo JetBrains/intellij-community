@@ -171,7 +171,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
     };
     if (call instanceof PsiMethodCallExpression) {
       PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)call).getMethodExpression();
-      processor.setIsConstructor(true);
+      processor.setIsConstructor(false);
       processor.setName(methodExpression.getReferenceName());
       PsiScopesUtil.resolveAndWalk(processor, methodExpression, null);
     }
@@ -179,6 +179,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)call).getClassOrAnonymousClassReference();
       if (classReference != null) {
         processor.setIsConstructor(true);
+        processor.setName(classReference.getReferenceName());
         PsiScopesUtil.resolveAndWalk(processor, classReference, null);
       }
     }
