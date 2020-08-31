@@ -102,7 +102,8 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
                                  @NotNull DefaultActionGroup replaceFieldActions,
                                  @Nullable Runnable replaceAction,
                                  @Nullable Runnable closeAction,
-                                 @Nullable DataProvider dataProvider) {
+                                 @Nullable DataProvider dataProvider,
+                                 boolean showOnlySearchPanel) {
     myProject = project;
     myTargetComponent = targetComponent;
     mySearchToolbarModifiedFlagGetter = searchToolbar1ModifiedFlagGetter;
@@ -191,18 +192,22 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     myRightPanel.add(searchPair);
     myRightPanel.add(myReplaceToolbarWrapper);
 
-    OnePixelSplitter splitter = new OnePixelSplitter(false, .33F);
-    myRightPanel.setBorder(JBUI.Borders.emptyLeft(6));
-    splitter.setFirstComponent(myLeftPanel);
-    splitter.setSecondComponent(myRightPanel);
-    splitter.setHonorComponentsMinimumSize(true);
-    splitter.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_SECOND_MIN_SIZE);
-    splitter.setHonorComponentsPreferredSize(true);
-    splitter.setDividerPositionStrategy(Splitter.DividerPositionStrategy.KEEP_FIRST_SIZE);
-    splitter.setAndLoadSplitterProportionKey("FindSplitterProportion");
-    splitter.setOpaque(false);
-    splitter.getDivider().setOpaque(false);
-    add(splitter, BorderLayout.CENTER);
+    if (showOnlySearchPanel) {
+      add(myLeftPanel, BorderLayout.CENTER);
+    } else {
+      OnePixelSplitter splitter = new OnePixelSplitter(false, .33F);
+      myRightPanel.setBorder(JBUI.Borders.emptyLeft(6));
+      splitter.setFirstComponent(myLeftPanel);
+      splitter.setSecondComponent(myRightPanel);
+      splitter.setHonorComponentsMinimumSize(true);
+      splitter.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_SECOND_MIN_SIZE);
+      splitter.setHonorComponentsPreferredSize(true);
+      splitter.setDividerPositionStrategy(Splitter.DividerPositionStrategy.KEEP_FIRST_SIZE);
+      splitter.setAndLoadSplitterProportionKey("FindSplitterProportion");
+      splitter.setOpaque(false);
+      splitter.getDivider().setOpaque(false);
+      add(splitter, BorderLayout.CENTER);
+    }
 
     update("", "", false, false);
 
@@ -620,6 +625,8 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     private final DefaultActionGroup myExtraReplaceActions = DefaultActionGroup.createFlatGroup(() -> "replace bar 1");
     private final DefaultActionGroup myReplaceFieldActions = DefaultActionGroup.createFlatGroup(() -> "replace field actions");
 
+    private boolean myShowOnlySearchPanel = false;
+
     private Builder(@Nullable Project project, @NotNull JComponent component) {
       myProject = project;
       myTargetComponent = component;
@@ -694,6 +701,12 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     }
 
     @NotNull
+    public Builder withShowOnlySearchPanel() {
+      myShowOnlySearchPanel = true;
+      return this;
+    }
+
+    @NotNull
     public SearchReplaceComponent build() {
       return new SearchReplaceComponent(myProject,
                                         myTargetComponent,
@@ -706,7 +719,8 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
                                         myReplaceFieldActions,
                                         myReplaceAction,
                                         myCloseAction,
-                                        myDataProvider);
+                                        myDataProvider,
+                                        myShowOnlySearchPanel);
     }
   }
 
