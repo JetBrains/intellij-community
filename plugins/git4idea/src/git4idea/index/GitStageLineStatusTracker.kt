@@ -13,7 +13,9 @@ import com.intellij.diff.util.*
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteThread
@@ -26,14 +28,19 @@ import com.intellij.openapi.editor.markup.MarkupEditorFilter
 import com.intellij.openapi.editor.markup.MarkupEditorFilterFactory
 import com.intellij.openapi.editor.markup.RangeHighlighter
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.VerticalSeparatorComponent
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.ex.*
 import com.intellij.openapi.vcs.ex.Range
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.components.JBLabel
+import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.PeekableIteratorWrapper
@@ -44,11 +51,10 @@ import git4idea.i18n.GitBundle
 import git4idea.index.actions.GitAddOperation
 import git4idea.index.actions.GitResetOperation
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
 import java.awt.*
 import java.util.*
-import javax.swing.BorderFactory
-import javax.swing.JComponent
-import javax.swing.JPanel
+import javax.swing.*
 import kotlin.math.max
 
 class GitStageLineStatusTracker(
@@ -430,6 +436,10 @@ class GitStageLineStatusTracker(
                        flags1.isUnstaged || flags2.isUnstaged)
     }
 
+    override fun createAdditionalInfoPanel(editor: Editor, range: Range, mousePosition: Point?, disposable: Disposable): JComponent? {
+      return createStageLinksPanel(editor, range, mousePosition, disposable)
+    }
+
     override fun showHintAt(editor: Editor, range: Range, mousePosition: Point?) {
       if (!myTracker.isValid()) return
       myTracker as GitStageLineStatusTracker
@@ -451,7 +461,9 @@ class GitStageLineStatusTracker(
       val actions = createToolbarActions(editor, range, mousePosition)
       val toolbar = LineStatusMarkerPopupPanel.buildToolbar(editor, actions, disposable)
 
-      LineStatusMarkerPopupPanel.showPopupAt(editor, toolbar, editorsPanel, null, mousePosition, disposable)
+      val additionalPanel = createStageLinksPanel(editor, range, mousePosition, disposable)
+
+      LineStatusMarkerPopupPanel.showPopupAt(editor, toolbar, editorsPanel, additionalPanel, mousePosition, disposable)
     }
 
     fun createEditorComponent(editor: Editor, stagedTextField: EditorTextField, vcsTextField: EditorTextField): JComponent {
@@ -601,47 +613,76 @@ class GitStageLineStatusTracker(
       }
     }
 
+    private fun createStageLinksPanel(editor: Editor,
+                                      range: Range,
+                                      mousePosition: Point?,
+                                      disposable: Disposable): JComponent? {
+      if (range !is StagedRange) return null
+
+      val panel = JPanel()
+      panel.layout = BoxLayout(panel, BoxLayout.X_AXIS)
+      panel.border = JBUI.Borders.emptyRight(10)
+      panel.isOpaque = false
+
+      panel.add(VerticalSeparatorComponent())
+      panel.add(Box.createHorizontalStrut(JBUI.scale(10)))
+
+      if (range.hasUnstaged) {
+        val stageLink = createStageLinkButton(editor, disposable, "Git.Stage.Add",
+                                              GitBundle.message("action.label.add.unstaged.range"),
+                                              GitBundle.message("action.label.add.unstaged.range.tooltip")) {
+          tracker.stageChanges(range)
+          reopenRange(editor, range, mousePosition)
+        }
+        panel.add(stageLink)
+      }
+
+      if (range.hasStaged) {
+        if (range.hasUnstaged) panel.add(Box.createHorizontalStrut(JBUI.scale(16)))
+
+        val unstageLink = createStageLinkButton(editor, disposable, "Git.Stage.Reset",
+                                                GitBundle.message("action.label.reset.staged.range"),
+                                                GitBundle.message("action.label.reset.staged.range.tooltip")) {
+          tracker.unstageChanges(range)
+          reopenRange(editor, range, mousePosition)
+        }
+        panel.add(unstageLink)
+      }
+
+      return panel
+    }
+
+    private fun createStageLinkButton(editor: Editor,
+                                      disposable: Disposable,
+                                      actionId: @NonNls String,
+                                      text: @Nls String,
+                                      tooltipText: @Nls String,
+                                      callback: () -> Unit): LinkLabel<*> {
+      val shortcut = ActionManager.getInstance().getAction(actionId).shortcutSet
+      val shortcuts = shortcut.shortcuts
+
+      val link = LinkLabel.create(text, callback)
+      link.toolTipText = DiffUtil.createTooltipText(tooltipText, StringUtil.nullize(KeymapUtil.getShortcutsText(shortcuts)))
+
+      if (shortcuts.isNotEmpty()) {
+        object : DumbAwareAction() {
+          override fun actionPerformed(e: AnActionEvent) {
+            link.doClick()
+          }
+        }.registerCustomShortcutSet(shortcut, editor.component, disposable)
+      }
+      return link
+    }
+
     override fun createToolbarActions(editor: Editor, range: Range, mousePosition: Point?): List<AnAction> {
       val actions = ArrayList<AnAction>()
       actions.add(ShowPrevChangeMarkerAction(editor, range))
       actions.add(ShowNextChangeMarkerAction(editor, range))
       actions.add(RollbackLineStatusRangeAction(editor, range))
-      actions.add(AddLineStatusRangeAction(editor, range, mousePosition))
-      actions.add(ResetLineStatusRangeAction(editor, range, mousePosition))
       actions.add(StageShowDiffAction(editor, range))
       actions.add(CopyLineStatusRangeAction(editor, range))
       actions.add(ToggleByWordDiffAction(editor, range, mousePosition))
       return actions
-    }
-
-    private inner class AddLineStatusRangeAction(editor: Editor, range: Range, private val mousePosition: Point?) :
-      RangeMarkerAction(editor, range, null), LightEditCompatible {
-      init {
-        templatePresentation.setText(GitAddOperation.actionText)
-        templatePresentation.icon = GitAddOperation.icon
-      }
-
-      override fun isEnabled(editor: Editor, range: Range): Boolean = (range as StagedRange).hasUnstaged
-
-      override fun actionPerformed(editor: Editor, range: Range) {
-        tracker.stageChanges(range)
-        reopenRange(editor, range, mousePosition)
-      }
-    }
-
-    private inner class ResetLineStatusRangeAction(editor: Editor, range: Range, private val mousePosition: Point?) :
-      RangeMarkerAction(editor, range, null), LightEditCompatible {
-      init {
-        templatePresentation.setText(GitResetOperation.actionText)
-        templatePresentation.icon = GitResetOperation.icon
-      }
-
-      override fun isEnabled(editor: Editor, range: Range): Boolean = (range as StagedRange).hasStaged
-
-      override fun actionPerformed(editor: Editor, range: Range) {
-        tracker.unstageChanges(range)
-        reopenRange(editor, range, mousePosition)
-      }
     }
 
     private inner class RollbackLineStatusRangeAction(editor: Editor, range: Range)
