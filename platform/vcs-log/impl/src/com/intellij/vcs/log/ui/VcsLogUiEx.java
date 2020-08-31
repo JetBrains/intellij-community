@@ -58,6 +58,7 @@ public interface VcsLogUiEx extends VcsLogUi, Disposable {
     return ((ListenableFuture<Boolean>)getVcsLog().jumpToReference(commitHash));
   }
 
+  @ApiStatus.Internal
   <T> void jumpTo(@NotNull T commitId,
                   @NotNull PairFunction<GraphTableModel, T, Integer> rowGetter,
                   @NotNull SettableFuture<? super Boolean> future,
