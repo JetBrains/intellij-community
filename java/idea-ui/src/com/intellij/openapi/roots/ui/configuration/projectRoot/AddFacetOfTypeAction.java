@@ -20,13 +20,10 @@ import com.intellij.openapi.ui.Messages;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 class AddFacetOfTypeAction extends DumbAwareAction {
-  private final FacetType myFacetType;
+  private final FacetType<?, ?> myFacetType;
   private final StructureConfigurableContext myContext;
 
   AddFacetOfTypeAction(final FacetType type, final StructureConfigurableContext context) {
@@ -37,10 +34,10 @@ class AddFacetOfTypeAction extends DumbAwareAction {
 
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
-    final FacetType type = myFacetType;
+    final FacetType<?, ?> type = myFacetType;
     if (type == null) return;
 
-    final FacetTypeId underlyingFacetType = type.getUnderlyingFacetType();
+    final FacetTypeId<?> underlyingFacetType = type.getUnderlyingFacetType();
     if (underlyingFacetType == null) {
       addFacetToModule(type);
     }
@@ -49,7 +46,7 @@ class AddFacetOfTypeAction extends DumbAwareAction {
     }
   }
 
-  private void addSubFacet(FacetType type, FacetTypeId<?> underlyingType) {
+  private void addSubFacet(FacetType<?, ?> type, FacetTypeId<?> underlyingType) {
     final ProjectFacetsConfigurator facetsConfigurator = myContext.getModulesConfigurator().getFacetsConfigurator();
     List<Facet> suitableParents = new ArrayList<>();
     for (Module module : myContext.getModules()) {
@@ -60,7 +57,7 @@ class AddFacetOfTypeAction extends DumbAwareAction {
 
     final Iterator<Facet> iterator = suitableParents.iterator();
     while (iterator.hasNext()) {
-      Facet parent = iterator.next();
+      Facet<?> parent = iterator.next();
       if (type.isOnlyOneFacetAllowed() && facetsConfigurator.hasFacetOfType(parent.getModule(), parent, type.getId())) {
         iterator.remove();
       }
@@ -78,13 +75,13 @@ class AddFacetOfTypeAction extends DumbAwareAction {
     dialog.show();
     final List<Facet> chosen = dialog.getChosenElements();
     if (!dialog.isOK() || chosen.size() != 1) return;
-    final Facet parent = chosen.get(0);
-    final Facet facet =
+    final Facet<?> parent = chosen.get(0);
+    final Facet<?> facet =
       ModuleStructureConfigurable.getInstance(project).getFacetEditorFacade().createAndAddFacet(type, parent.getModule(), parent);
     ProjectStructureConfigurable.getInstance(project).select(facet, true);
   }
 
-  private void addFacetToModule(@NotNull FacetType type) {
+  private void addFacetToModule(@NotNull FacetType<?, ?> type) {
     final ProjectFacetsConfigurator facetsConfigurator = myContext.getModulesConfigurator().getFacetsConfigurator();
     List<Module> suitableModules = new ArrayList<>(Arrays.asList(myContext.getModules()));
     final Iterator<Module> iterator = suitableModules.iterator();
@@ -110,14 +107,14 @@ class AddFacetOfTypeAction extends DumbAwareAction {
     if (!dialog.isOK() || elements.size() != 1) return;
 
     final Module module = elements.get(0);
-    final Facet facet = ModuleStructureConfigurable.getInstance(project).getFacetEditorFacade().createAndAddFacet(type, module, null);
+    final Facet<?> facet = ModuleStructureConfigurable.getInstance(project).getFacetEditorFacade().createAndAddFacet(type, module, null);
     ProjectStructureConfigurable.getInstance(project).select(facet, true);
   }
 
   public static AnAction[] createAddFacetActions(FacetStructureConfigurable configurable) {
     final List<AnAction> result = new ArrayList<>();
     final StructureConfigurableContext context = configurable.myContext;
-    for (FacetType type : FacetTypeRegistry.getInstance().getSortedFacetTypes()) {
+    for (FacetType<?, ?> type : FacetTypeRegistry.getInstance().getSortedFacetTypes()) {
       if (hasSuitableModules(context, type)) {
         result.add(new AddFacetOfTypeAction(type, context));
       }
@@ -125,7 +122,7 @@ class AddFacetOfTypeAction extends DumbAwareAction {
     return result.toArray(AnAction.EMPTY_ARRAY);
   }
 
-  private static boolean hasSuitableModules(StructureConfigurableContext context, FacetType type) {
+  private static boolean hasSuitableModules(StructureConfigurableContext context, FacetType<?, ?> type) {
     for (Module module : context.getModules()) {
       if (type.isSuitableModuleType(ModuleType.get(module))) {
         return true;
@@ -142,7 +139,7 @@ class AddFacetOfTypeAction extends DumbAwareAction {
 
     @Override
     protected String getItemText(Facet item) {
-      return item.getName() + " (module " + item.getModule().getName() + ")";
+      return JavaUiBundle.message("item.name.with.module", item.getName(), item.getModule().getName());
     }
 
     @Override
