@@ -202,7 +202,9 @@ public class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
 
   private void createUIComponents() {
     myRightMarginField = new IntegerField(ApplicationBundle.message("editbox.right.margin.columns"), 0, CodeStyleConstraints.MAX_RIGHT_MARGIN);
-    myVisualGuides = new CommaSeparatedIntegersField(ApplicationBundle.message("settings.code.style.visual.guides"), 0, CodeStyleConstraints.MAX_RIGHT_MARGIN, "Optional");
+    myVisualGuides = new CommaSeparatedIntegersField(ApplicationBundle.message("settings.code.style.visual.guides"),
+                                                     0, CodeStyleConstraints.MAX_RIGHT_MARGIN,
+                                                     ApplicationBundle.message("settings.code.style.visual.guides.optional"));
     myExcludedFilesList = new ExcludedFilesList();
   }
 

@@ -62,21 +62,21 @@ public class SmartIndentOptionsEditor extends IndentOptionsEditor {
     myContinuationOption.setSupported(true);
 
     myDeclarationParameterIndentOption = createContinuationOption(
-      "Declaration parameter indent:",
+      ApplicationBundle.message("editbox.indent.declaration.parameter"),
       options -> options.DECLARATION_PARAMETER_INDENT, (options, value) -> options.DECLARATION_PARAMETER_INDENT = value, -1);
     myGenericTypeParameterIndentOption = createContinuationOption(
-      "Generic type parameter indent:",
+      ApplicationBundle.message("editbox.indent.generic.type"),
       options -> options.GENERIC_TYPE_PARAMETER_INDENT, (options, value) -> options.GENERIC_TYPE_PARAMETER_INDENT = value, -1);
     myCallParameterIndentOption = createContinuationOption(
-      "Call parameter indent:",
+      ApplicationBundle.message("editbox.indent.call.parameter"),
       options -> options.CALL_PARAMETER_INDENT, (options, value) -> options.CALL_PARAMETER_INDENT = value, -1
     );
     myChainedCallIndentOption = createContinuationOption(
-      "Chained call indent:",
+      ApplicationBundle.message("editbox.indent.chained.call"),
       options -> options.CHAINED_CALL_INDENT, (options, value) -> options.CHAINED_CALL_INDENT = value, -1
     );
     myArrayElementIndentOption = createContinuationOption(
-      "Array element indent:",
+      ApplicationBundle.message("editbox.indent.array.element"),
       options -> options.ARRAY_ELEMENT_INDENT, (options, value) -> options.ARRAY_ELEMENT_INDENT = value, -1
     );
   }
