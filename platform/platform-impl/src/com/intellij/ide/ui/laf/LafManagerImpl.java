@@ -292,7 +292,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     UIManager.LookAndFeelInfo expectedLaf = systemDark ? myPreferredDarkLaf : myPreferredLightLaf;
 
     if (currentDark != systemDark || myCurrentLaf != expectedLaf) {
-      QuickChangeLookAndFeel.switchLafAndUpdateUI(LafManager.getInstance(), expectedLaf, true);
+      QuickChangeLookAndFeel.switchLafAndUpdateUI(this, expectedLaf, true);
     }
   }
 
@@ -1409,10 +1409,16 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
       if (isDark) {
-        myPreferredDarkLaf = lafInfo;
+        if (myPreferredDarkLaf != lafInfo) {
+          myPreferredDarkLaf = lafInfo;
+          detectAndSyncLaf();
+        }
       }
       else {
-        myPreferredLightLaf = lafInfo;
+        if (myPreferredLightLaf != lafInfo) {
+          myPreferredLightLaf = lafInfo;
+          detectAndSyncLaf();
+        }
       }
     }
   }
