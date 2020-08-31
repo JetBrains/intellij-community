@@ -5,7 +5,7 @@
     <registryKey key="ide.new.project.model.cache" defaultValue="false" restartRequired="false"
                  description="Enable cache for the workspace model"/>
     <registryKey key="ide.new.project.model.strict.mode" defaultValue="false" restartRequired="true"
-                 description="Enable required registration for kryo serialization"/>
+                 description="Enable additional checks during work of workspace model"/>
     <registryKey key="ide.new.project.model.indicator" defaultValue="false" restartRequired="true"
                  description="Show an icon in the status bar indicating whether the workspace model is enabled or not"/>
 
