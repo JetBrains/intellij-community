@@ -937,7 +937,7 @@
     },
     {
       "key": "Window.border",
-      "description": "Dialog border. Format: \"top, left, bottom, right, hex\", e.g. \"1,1,1,1,FFFFFF\". Sizes in pixels"
+      "description": "Dialog border. Format: \"top,left,bottom,right,hex\", e.g. \"1,1,1,1,FFFFFF\". Sizes in pixels"
     },
     {
       "key": "DropArea.base",
