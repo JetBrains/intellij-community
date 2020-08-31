@@ -4,6 +4,10 @@ package org.jetbrains.plugins.groovy.codeInspection.bugs;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.psi.*;
+import com.intellij.util.SmartList;
+import kotlin.Lazy;
+import kotlin.LazyKt;
+import kotlin.LazyThreadSafetyMode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -20,11 +24,15 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrNamedArgumentsOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorReference;
+import org.jetbrains.plugins.groovy.lang.resolve.ast.AffectedMembersCache;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author Max Medvedev
@@ -71,8 +79,55 @@ public class GroovyConstructorNamedArgumentsInspection extends BaseInspection {
       if (constructor != null) {
         if (!PsiUtil.isConstructorHasRequiredParameters((PsiMethod)constructor)) {
           checkDefaultMapConstructor(owner, constructor);
+          return;
+        }
+        PsiClass containingClass = ((PsiMethod)constructor).getContainingClass();
+        if (containingClass != null) {
+          PsiAnnotation annotation = containingClass.getAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_MAP_CONSTRUCTOR);
+          if (annotation != null) {
+            checkGeneratedMapConstructor(owner, containingClass, annotation);
+          }
         }
       }
+    }
+
+    private void checkGeneratedMapConstructor(@NotNull GrNamedArgumentsOwner owner,
+                                              @NotNull PsiClass containingClass,
+                                              @NotNull PsiAnnotation annotation) {
+      Lazy<Set<String>> affectedMembers = LazyKt.lazy(LazyThreadSafetyMode.NONE, () -> new AffectedMembersCache(annotation)
+        .getAffectedMembers().stream()
+        .map(PsiNamedElement::getName)
+        .filter(Objects::nonNull)
+        .collect(Collectors.toSet()));
+      for (GrNamedArgument argument : owner.getNamedArguments()) {
+        GrArgumentLabel label = argument.getLabel();
+        if (label == null) continue;
+        var propertyReference = label.getConstructorPropertyReference();
+        final PsiElement resolved = propertyReference == null ? null : propertyReference.resolve();
+        if (resolved == null) {
+          String name = label.getName();
+          if (name != null && !affectedMembers.getValue().contains(name)) {
+            registerError(label, GroovyBundle.message("inspection.message.property.0.is.ignored.by.map.constructor", name),
+                          LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+          }
+        }
+        else {
+          registerAbsentIdentifierError(containingClass, label);
+        }
+      }
+    }
+
+    private void registerAbsentIdentifierError(@NotNull PsiClass clazz,
+                                               @NotNull GrArgumentLabel label) {
+      List<LocalQuickFix> fixes = new SmartList<>();
+      if (clazz instanceof GrTypeDefinition) {
+        fixes.add(GroovyQuickFixFactory.getInstance()
+                    .createCreateFieldFromConstructorLabelFix((GrTypeDefinition)clazz, label.getNamedArgument()));
+      }
+      fixes.add(GroovyQuickFixFactory.getInstance().createDynamicPropertyFix(label, clazz));
+
+      registerError(label, GroovyBundle.message("no.such.property", label.getName()), fixes.toArray(LocalQuickFix.EMPTY_ARRAY),
+                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
     }
 
     private static @Nullable GrNamedArgumentsOwner getNamedArgumentsOwner(@NotNull GrNewExpression newExpression) {
@@ -116,22 +171,12 @@ public class GroovyConstructorNamedArgumentsInspection extends BaseInspection {
           var propertyReference = label.getConstructorPropertyReference();
           final PsiElement resolved = propertyReference == null ? null : propertyReference.resolve();
           if (resolved == null) {
-
             if (element instanceof PsiMember && !(element instanceof PsiClass)) {
               element = ((PsiMember)element).getContainingClass();
             }
-
-            List<LocalQuickFix> fixes = new ArrayList<>(2);
-            if (element instanceof GrTypeDefinition) {
-              fixes.add(GroovyQuickFixFactory.getInstance()
-                          .createCreateFieldFromConstructorLabelFix((GrTypeDefinition)element, label.getNamedArgument()));
-            }
             if (element instanceof PsiClass) {
-              fixes.add(GroovyQuickFixFactory.getInstance().createDynamicPropertyFix(label, (PsiClass)element));
+              registerAbsentIdentifierError((PsiClass)element, label);
             }
-
-            registerError(label, GroovyBundle.message("no.such.property", label.getName()), fixes.toArray(LocalQuickFix.EMPTY_ARRAY),
-                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
           }
           else if (resolved instanceof PsiModifierListOwner) {
             if (((PsiModifierListOwner)resolved).hasModifierProperty(PsiModifier.FINAL)) {
