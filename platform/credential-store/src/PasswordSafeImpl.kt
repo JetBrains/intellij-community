@@ -16,6 +16,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.ShutDownTracker
 import com.intellij.serviceContainer.NonInjectable
 import com.intellij.util.concurrency.SynchronizedClearableLazy
@@ -181,14 +182,18 @@ private fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
     return InMemoryCredentialStore()
   }
 
-  fun showError(title: String) {
-    NOTIFICATION_MANAGER.notify(title = title, content = "In-memory password storage will be used.", action = object: NotificationAction("Passwords Settings") {
-      override fun actionPerformed(e: AnActionEvent, notification: Notification) {
-        // to hide before Settings open, otherwise dialog and notification are shown at the same time
-        notification.expire()
-        ShowSettingsUtil.getInstance().showSettingsDialog(e.project, PasswordSafeConfigurable::class.java)
-      }
-    })
+  fun showError(@NlsContexts.NotificationTitle title: String) {
+    NOTIFICATION_MANAGER.notify(title = title,
+                                content = CredentialStoreBundle.message("notification.content.in.memory.storage"),
+                                action = object: NotificationAction(
+                                  CredentialStoreBundle.message("notification.content.password.settings.action")
+                                ) {
+                                  override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+                                    // to hide before Settings open, otherwise dialog and notification are shown at the same time
+                                    notification.expire()
+                                    ShowSettingsUtil.getInstance().showSettingsDialog(e.project, PasswordSafeConfigurable::class.java)
+                                  }
+                                })
   }
 
   if (settings.providerType == ProviderType.KEEPASS) {
@@ -198,21 +203,22 @@ private fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
     }
     catch (e: IncorrectMasterPasswordException) {
       LOG.warn(e)
-      showError("KeePass master password is ${if (e.isFileMissed) "missing" else "incorrect"}")
+      showError(if (e.isFileMissed) CredentialStoreBundle.message("notification.title.password.missing")
+                else CredentialStoreBundle.message("notification.title.password.incorrect"))
     }
     catch (e: ProcessCanceledException) {
       throw e
     }
     catch (e: Throwable) {
       LOG.error(e)
-      showError("Failed opening KeePass database")
+      showError(CredentialStoreBundle.message("notification.title.database.error"))
     }
   }
   else {
     try {
       val store = createPersistentCredentialStore()
       if (store == null) {
-        showError("Native keychain is not available")
+        showError(CredentialStoreBundle.message("notification.title.keychain.not.available"))
       }
       else {
         return store
@@ -223,7 +229,7 @@ private fun computeProvider(settings: PasswordSafeSettings): CredentialStore {
     }
     catch (e: Throwable) {
       LOG.error(e)
-      showError("Cannot use native keychain")
+      showError(CredentialStoreBundle.message("notification.title.cannot.use.keychain"))
     }
   }
 
