@@ -102,9 +102,8 @@ public class GroovyConstructorNamedArgumentsInspection extends BaseInspection {
       for (GrNamedArgument argument : owner.getNamedArguments()) {
         GrArgumentLabel label = argument.getLabel();
         if (label == null) continue;
-        var propertyReference = label.getConstructorPropertyReference();
-        final PsiElement resolved = propertyReference == null ? null : propertyReference.resolve();
-        if (resolved == null) {
+        PsiElement resolved = label.resolve();
+        if (resolved != null) {
           String name = label.getName();
           if (name != null && !affectedMembers.getValue().contains(name)) {
             registerError(label, GroovyBundle.message("inspection.message.property.0.is.ignored.by.map.constructor", name),
