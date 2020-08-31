@@ -1207,6 +1207,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
     }
 
     private static void checkParametersToDelete(PsiMethod method, boolean[] toRemove, MultiMap<PsiElement, String> conflictDescriptions) {
+      if (method instanceof SyntheticElement) return;
       final PsiParameter[] parameters = method.getParameterList().getParameters();
       final PsiCodeBlock body = method.getBody();
       if (body != null) {

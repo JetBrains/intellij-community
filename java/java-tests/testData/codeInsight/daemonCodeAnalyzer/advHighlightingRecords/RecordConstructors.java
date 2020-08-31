@@ -74,3 +74,9 @@ record AssignmentInNonCanonical(int x, int y, long depth) {
     <error descr="Cannot assign a value to final variable 'x'">this.x</error> = 0;
   }
 }
+record DelegateInitializesField(int n) {
+  DelegateInitializesField(boolean b) {
+    this(b ? 1 : 0);
+    System.out.println(n);
+  }
+}
