@@ -80,6 +80,7 @@ final class ConfigurableGroupEP implements PluginAware {
    */
   @RequiredElement
   @Attribute("displayNameKey")
+  @NlsContexts.ConfigurableName
   public String displayNameKey;
 
   /**
@@ -88,6 +89,7 @@ final class ConfigurableGroupEP implements PluginAware {
    */
   @RequiredElement
   @Attribute("descriptionKey")
+  @NlsContexts.DetailedDescription
   public String descriptionKey;
 
   private PluginDescriptor myPluginDescriptor;
