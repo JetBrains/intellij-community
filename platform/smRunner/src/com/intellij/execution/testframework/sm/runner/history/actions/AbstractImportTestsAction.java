@@ -31,10 +31,7 @@ import org.xml.sax.helpers.DefaultHandler;
 
 import javax.swing.*;
 import javax.xml.parsers.SAXParserFactory;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.io.StringReader;
+import java.io.*;
 import java.util.Arrays;
 
 /**
@@ -140,13 +137,16 @@ public abstract class AbstractImportTestsAction extends AnAction {
       myFile = file;
       myProject = project;
       class TerminateParsingException extends SAXException { }
-      try (InputStream inputStream = new FileInputStream(VfsUtilCore.virtualToIoFile(myFile))) {
+      try (InputStream inputStream = new BufferedInputStream(new FileInputStream(VfsUtilCore.virtualToIoFile(myFile)))) {
         SAXParserFactory.newInstance().newSAXParser().parse(inputStream, new DefaultHandler() {
           boolean isConfigContent = false;
           final StringBuilder builder = new StringBuilder();
           
           @Override
-          public void startElement(String uri, String localName, String qName, Attributes attributes) {
+          public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
+            if (qName.equals("root")) {
+              throw new TerminateParsingException();
+            }
             if (qName.equals("config")) {
               isConfigContent = true;
             }
