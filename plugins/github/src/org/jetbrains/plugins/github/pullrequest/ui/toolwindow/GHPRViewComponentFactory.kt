@@ -16,7 +16,6 @@ import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.ui.*
-import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.tabs.JBTabs
 import com.intellij.ui.tabs.TabInfo
 import com.intellij.ui.tabs.TabsListener

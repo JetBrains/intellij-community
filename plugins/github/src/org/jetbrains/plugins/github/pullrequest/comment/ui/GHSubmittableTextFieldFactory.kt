@@ -21,6 +21,7 @@ import com.intellij.ui.EditorTextField
 import com.intellij.ui.ListFocusTraversalPolicy
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.ui.*
+import com.intellij.util.ui.codereview.InlineIconButton
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
 import icons.GithubIcons
@@ -30,7 +31,6 @@ import net.miginfocom.swing.MigLayout
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.github.api.data.GHUser
 import org.jetbrains.plugins.github.pullrequest.avatars.GHAvatarIconsProvider
-import com.intellij.util.ui.codereview.InlineIconButton
 import java.awt.Dimension
 import java.awt.event.*
 import java.util.function.Supplier

@@ -111,5 +111,6 @@
     <orderEntry type="library" scope="RUNTIME" name="jackson-datatype-joda" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="okhttp3" level="project" />
     <orderEntry type="library" name="Slf4j" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.codeReview" />
   </component>
 </module>

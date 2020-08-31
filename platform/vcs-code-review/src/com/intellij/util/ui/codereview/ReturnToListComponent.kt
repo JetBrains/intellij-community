@@ -11,14 +11,12 @@ import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 
 object ReturnToListComponent {
-  fun createReturnToListSideComponent(@Nls text: String, onClick: () -> Unit): JComponent {
-    return BorderLayoutPanel()
-      .addToRight(LinkLabel<Any>(text, AllIcons.Actions.Back) { _, _ ->
-        onClick()
-      }.apply {
-        border = JBUI.Borders.emptyRight(8)
-      })
-      .andTransparent()
-      .withBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM))
-  }
+  fun createReturnToListSideComponent(@Nls text: String, onClick: () -> Unit): JComponent = BorderLayoutPanel()
+    .addToRight(LinkLabel<Any>(text, AllIcons.Actions.Back) { _, _ ->
+      onClick()
+    }.apply {
+      border = JBUI.Borders.emptyRight(8)
+    })
+    .andTransparent()
+    .withBorder(IdeBorderFactory.createBorder(SideBorder.BOTTOM))
 }

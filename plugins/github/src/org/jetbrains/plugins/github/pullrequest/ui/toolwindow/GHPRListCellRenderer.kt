@@ -8,7 +8,6 @@ import com.intellij.util.ui.ListUiUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.codereview.OpenReviewButton
 import com.intellij.util.ui.codereview.OpenReviewButtonViewModel
-import icons.GithubIcons
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
