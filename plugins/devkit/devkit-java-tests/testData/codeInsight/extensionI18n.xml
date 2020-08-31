@@ -52,6 +52,13 @@
     <projectConfigurable key="<error descr="Cannot resolve property key">INVALID_KEY</error>"
                          bundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"/>
 
+    <projectConfigurable>
+       <configurable key="my.key" bundle="extensionI18nBundle"/>
+       <configurable key="<error descr="Cannot resolve property key">INVALID_KEY</error>"
+                     bundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"/>
+    </projectConfigurable>
+
+
     <generalOptionsProvider key="<error descr="Cannot resolve property key">INVALID_KEY</error>"
                             bundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"/>
 

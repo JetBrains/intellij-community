@@ -67,6 +67,9 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
     registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"key", "groupKey"},
                                                                   Holder.CONFIGURABLE_EP, Holder.INSPECTION_EP),
                                         new PropertyKeyReferenceProvider(false, "groupKey", "groupBundle"));
+    registrar.registerReferenceProvider(nestedExtensionAttributePattern(new String[]{"key", "groupKey"},
+                                                                        Holder.CONFIGURABLE_EP),
+                                        new PropertyKeyReferenceProvider(false, "groupKey", "groupBundle"));
 
     registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"groupPathKey"}, Holder.INSPECTION_EP),
                                         new PropertyKeyReferenceProvider(false, "groupPathKey", "groupBundle"));
@@ -128,6 +131,9 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
                                                                   Holder.CONFIGURABLE_EP, Holder.INSPECTION_EP,
                                                                   Holder.GROUP_CONFIGURABLE_EP),
                                         bundleReferenceProvider);
+    registrar.registerReferenceProvider(nestedExtensionAttributePattern(new String[]{"bundle", "groupBundle"},
+                                                                        Holder.CONFIGURABLE_EP),
+                                        bundleReferenceProvider);
 
     registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"resourceBundle"},
                                                                   Holder.TYPE_NAME_EP, Holder.ICON_DESCRIPTION_BUNDLE_EP),
@@ -144,20 +150,34 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
     //noinspection deprecation
     return xmlAttributeValue(attributeNames)
       .inFile(DomPatterns.inDomFile(IdeaPlugin.class))
-      .withSuperParent(2, xmlTag()
-        .and(DomPatterns.withDom(DomPatterns.domElement(Extension.class).with(new PatternCondition<>("relevantEP") {
-          @Override
-          public boolean accepts(@NotNull Extension extension,
-                                 ProcessingContext context) {
-            final ExtensionPoint extensionPoint = extension.getExtensionPoint();
-            assert extensionPoint != null;
-            final PsiClass beanClass = extensionPoint.getBeanClass().getValue();
-            for (String name : extensionPointClassNames) {
-              if (InheritanceUtil.isInheritor(beanClass, name)) return true;
-            }
-            return false;
+      .withSuperParent(2, extensionPointCapture(extensionPointClassNames));
+  }
+
+  // special case for nested EPs, ConfigurableEP#children
+  private static XmlAttributeValuePattern nestedExtensionAttributePattern(String[] attributeNames,
+                                                                          String... extensionPointClassNames) {
+    return xmlAttributeValue(attributeNames)
+      .inFile(DomPatterns.inDomFile(IdeaPlugin.class))
+      .withSuperParent(3, extensionPointCapture(extensionPointClassNames));
+  }
+
+  @NotNull
+  private static XmlTagPattern.Capture extensionPointCapture(String[] extensionPointClassNames) {
+    //noinspection deprecation
+    return xmlTag()
+      .and(DomPatterns.withDom(DomPatterns.domElement(Extension.class).with(new PatternCondition<>("relevantEP") {
+        @Override
+        public boolean accepts(@NotNull Extension extension,
+                               ProcessingContext context) {
+          final ExtensionPoint extensionPoint = extension.getExtensionPoint();
+          assert extensionPoint != null;
+          final PsiClass beanClass = extensionPoint.getBeanClass().getValue();
+          for (String name : extensionPointClassNames) {
+            if (InheritanceUtil.isInheritor(beanClass, name)) return true;
           }
-        }))));
+          return false;
+        }
+      })));
   }
 
   private static void registerLiveTemplateSetXml(PsiReferenceRegistrar registrar) {
