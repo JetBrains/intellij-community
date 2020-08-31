@@ -95,6 +95,8 @@ private fun suggestGradleVersion(javaVersion: JavaVersion): GradleVersion? {
   return when {
     isSupported(GradleVersion.current(), javaVersion) -> GradleVersion.current()
     javaVersion.feature >= 8 /* ..14 */ -> GradleVersion.version("6.5")
+    javaVersion.feature == 7 -> GradleVersion.version("4.1")
+    javaVersion.feature == 6 -> GradleVersion.version("3.0")
     else -> null
   }
 }
