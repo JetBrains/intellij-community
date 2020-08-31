@@ -62,7 +62,7 @@ class GitUpdateInfoAsLog(private val project: Project,
   @CalledInBackground
   fun calculateDataAndCreateLogTab(): NotificationData? {
     val commitsAndFiles = calculateDataFromGit() ?: return null
-    VcsProjectLog.getOrCreateLog(project) ?: return null
+    if (!VcsProjectLog.ensureLogCreated(project)) return null
 
     if (isPathFilterSet()) {
       return waitForLogRefreshAndCalculate(commitsAndFiles)

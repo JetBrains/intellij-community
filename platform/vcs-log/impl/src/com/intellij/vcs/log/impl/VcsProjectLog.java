@@ -293,22 +293,21 @@ public class VcsProjectLog implements Disposable {
     }
   }
 
+  @ApiStatus.Internal
   @CalledInBackground
-  @Nullable
-  public static VcsLogManager getOrCreateLog(@NotNull Project project) {
-    VcsProjectLog log = getInstance(project);
-    VcsLogManager manager = log.getLogManager();
-    if (manager == null) {
-      try {
-        manager = log.createLogInBackground(true).get();
-      }
-      catch (InterruptedException ignored) {
-      }
-      catch (ExecutionException e) {
-        LOG.error(e);
-      }
+  public static boolean ensureLogCreated(@NotNull Project project) {
+    if (getInstance(project).getLogManager() != null) return true;
+
+    try {
+      return getInstance(project).createLogInBackground(true).get() != null;
     }
-    return manager;
+    catch (InterruptedException ignored) {
+    }
+    catch (ExecutionException e) {
+      LOG.error(e);
+    }
+
+    return false;
   }
 
   private class LazyVcsLogManager {

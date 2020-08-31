@@ -213,12 +213,13 @@ public final class VcsLogContentUtil {
   }
 
   /**
-   * @deprecated replaced by {@link VcsProjectLog#getOrCreateLog(Project)}.
+   * @deprecated use {@link VcsProjectLog#runWhenLogIsReady(Project, Consumer)} instead.
    */
   @Deprecated
   @CalledInBackground
   @Nullable
   public static VcsLogManager getOrCreateLog(@NotNull Project project) {
-    return VcsProjectLog.getOrCreateLog(project);
+    VcsProjectLog.ensureLogCreated(project);
+    return VcsProjectLog.getInstance(project).getLogManager();
   }
 }
