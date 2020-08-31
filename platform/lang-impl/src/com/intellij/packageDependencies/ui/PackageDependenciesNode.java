@@ -19,6 +19,7 @@ package com.intellij.packageDependencies.ui;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
@@ -192,6 +193,13 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
 
   public boolean isSorted() {
     return mySorted;
+  }
+
+  @NlsSafe
+  @Override
+  public String toString() {
+    @NlsSafe String presentableName = super.toString();
+    return presentableName;
   }
 
   public void setSorted(boolean sorted) {
