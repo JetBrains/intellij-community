@@ -165,11 +165,6 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   }
 
   @Override
-  public boolean isHighlighterEnabled(@NotNull String id) {
-    return true;
-  }
-
-  @Override
   protected void onVisiblePackUpdated(boolean permGraphChanged) {
     ((FileHistoryColorManager)myColorManager).update(myVisiblePack);
     myFileHistoryPanel.updateDataPack(myVisiblePack, permGraphChanged);
