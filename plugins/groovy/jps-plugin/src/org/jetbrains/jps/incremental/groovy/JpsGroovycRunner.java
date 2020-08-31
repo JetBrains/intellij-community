@@ -45,7 +45,7 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends BuildTarget<R>> {
   private static final int ourOptimizeThreshold = Integer.parseInt(System.getProperty("groovyc.optimized.class.loading.threshold", "10"));
-  private static final Logger LOG = Logger.getInstance(JpsGroovycRunner.class);
+  static final Logger LOG = Logger.getInstance(JpsGroovycRunner.class);
   private static final Key<Boolean> CHUNK_REBUILD_ORDERED = Key.create("CHUNK_REBUILD_ORDERED");
   private static final Key<Map<ModuleChunk, GroovycContinuation>> CONTINUATIONS = Key.create("CONTINUATIONS");
   public static final String GROOVYC_IN_PROCESS = "groovyc.in.process";
@@ -60,7 +60,7 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
                    ModuleChunk chunk,
                    DirtyFilesHolder<R, T> dirtyFilesHolder,
                    Builder builder, GroovyOutputConsumer outputConsumer) throws ProjectBuildException {
-    List<CompilerMessage> messages;
+    List<? extends CompilerMessage> messages;
     long start = 0;
     try {
       Ref<Boolean> hasStubExcludes = Ref.create(false);
@@ -82,16 +82,16 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
       Map<T, String> generationOutputs = getGenerationOutputs(context, chunk, finalOutputs);
       String compilerOutput = generationOutputs.get(representativeTarget(generationOutputs));
 
-      GroovycOutputParser parser = runGroovycOrContinuation(context, chunk, finalOutputs, compilerOutput, toCompile, hasStubExcludes.get());
+      GroovyCompilerResult result = runGroovycOrContinuation(context, chunk, finalOutputs, compilerOutput, toCompile, hasStubExcludes.get());
 
-      MultiMap<T, OutputItem> compiled = processCompiledFiles(context, chunk, generationOutputs, compilerOutput, parser.getSuccessfullyCompiled());
+      MultiMap<T, OutputItem> compiled = processCompiledFiles(context, chunk, generationOutputs, compilerOutput, result.getSuccessfullyCompiled());
 
-      if (checkChunkRebuildNeeded(context, parser)) {
+      if (checkChunkRebuildNeeded(context, result)) {
         clearContinuation(context, chunk);
         return ExitCode.CHUNK_REBUILD_REQUIRED;
       }
 
-      messages = parser.getCompilerMessages();
+      messages = result.getCompilerMessages();
       for (CompilerMessage message : messages) {
         context.processMessage(message);
       }
@@ -128,10 +128,12 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
 
   protected abstract Map<T, String> getCanonicalOutputs(CompileContext context, ModuleChunk chunk, Builder builder);
 
-  private @NotNull GroovycOutputParser runGroovycOrContinuation(CompileContext context,
-                                                                ModuleChunk chunk,
-                                                                Map<T, String> finalOutputs,
-                                                                String compilerOutput, List<File> toCompile, boolean hasStubExcludes) throws Exception {
+  private @NotNull GroovyCompilerResult runGroovycOrContinuation(
+    CompileContext context,
+    ModuleChunk chunk,
+    Map<T, String> finalOutputs,
+    String compilerOutput, List<File> toCompile, boolean hasStubExcludes
+  ) throws Exception {
     if (myForStubs) {
       clearContinuation(context, chunk);
     }
@@ -179,7 +181,7 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
 
     continuation = groovyc.runGroovyc(classpath, myForStubs, context, tempFile, parser, getBytecodeTarget(context, chunk));
     setContinuation(context, chunk, continuation);
-    return parser;
+    return parser.result();
   }
 
   static @Nullable String getBytecodeTarget(CompileContext context, ModuleChunk chunk) {
@@ -240,7 +242,7 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
     return toCompilePaths;
   }
 
-  protected boolean checkChunkRebuildNeeded(CompileContext context, GroovycOutputParser parser) {
+  protected boolean checkChunkRebuildNeeded(CompileContext context, GroovyCompilerResult result) {
     if (CHUNK_REBUILD_ORDERED.get(context) != null) {
       if (!myForStubs) {
         CHUNK_REBUILD_ORDERED.set(context, null);
@@ -248,7 +250,7 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
       return false;
     }
 
-    if (JavaBuilderUtil.isForcedRecompilationAllJavaModules(context) || !parser.shouldRetry()) {
+    if (JavaBuilderUtil.isForcedRecompilationAllJavaModules(context) || !result.shouldRetry()) {
       return false;
     }
 

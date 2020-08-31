@@ -184,22 +184,7 @@ public class GroovycOutputParser {
     return ContainerUtil.map(StringUtil.split(compiled, GroovyRtConstants.SEPARATOR), s -> s.trim());
   }
 
-  public List<OutputItem> getSuccessfullyCompiled() {
-    return myCompiledItems;
-  }
-
-  public boolean shouldRetry() {
-    for (CompilerMessage message : compilerMessages) {
-      String text = message.getMessageText();
-      if (text.contains("java.lang.NoClassDefFoundError") || text.contains("java.lang.TypeNotPresentException") || text.contains("unable to resolve class")) {
-        LOG.debug("Resolve issue: " + message);
-        return true;
-      }
-    }
-    return false;
-  }
-
-  public List<CompilerMessage> getCompilerMessages() {
+  private List<CompilerMessage> getCompilerMessages() {
     ArrayList<CompilerMessage> messages = new ArrayList<>(compilerMessages);
     final StringBuffer unparsedBuffer = getStdErr();
     if (unparsedBuffer.length() != 0) {
@@ -301,5 +286,9 @@ public class GroovycOutputParser {
     compilerMessages.clear();
     stdErr.setLength(0);
     outputBuffer.setLength(0);
+  }
+
+  @NotNull GroovyCompilerResult result() {
+    return new GroovyCompilerResult(myCompiledItems, getCompilerMessages());
   }
 }
