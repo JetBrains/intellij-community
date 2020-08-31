@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
@@ -45,7 +46,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.*;
-import java.util.function.BiConsumer;
 
 import static com.intellij.vcs.log.VcsLogProvider.LOG_PROVIDER_EP;
 import static com.intellij.vcs.log.impl.CustomVcsLogUiFactoryProvider.LOG_CUSTOM_UI_FACTORY_PROVIDER_EP;
@@ -258,11 +258,11 @@ public class VcsProjectLog implements Disposable {
    * waits for it in a background task, and executes the action after the log is ready.
    */
   @CalledInAwt
-  public static void runWhenLogIsReady(@NotNull Project project, @NotNull BiConsumer<? super VcsProjectLog, ? super VcsLogManager> action) {
+  public static void runWhenLogIsReady(@NotNull Project project, @NotNull Consumer<? super VcsLogManager> action) {
     VcsProjectLog log = getInstance(project);
     VcsLogManager manager = log.getLogManager();
     if (manager != null) {
-      action.accept(log, manager);
+      action.consume(manager);
     }
     else { // schedule showing the log, wait its initialization, and then open the tab
       Future<VcsLogManager> futureLogManager = log.createLogInBackground(true);
@@ -286,7 +286,7 @@ public class VcsProjectLog implements Disposable {
         public void onSuccess() {
           VcsLogManager manager = log.getLogManager();
           if (manager != null) {
-            action.accept(log, manager);
+            action.consume(manager);
           }
         }
       }.queue();

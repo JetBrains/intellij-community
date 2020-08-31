@@ -59,7 +59,7 @@ internal class GitCompareBranchesUi @JvmOverloads constructor(internal val proje
   }
 
   fun open() {
-    VcsProjectLog.runWhenLogIsReady(project) { _, _ ->
+    VcsProjectLog.runWhenLogIsReady(project) {
       GitCompareBranchesFilesManager.getInstance(project).openFile(this, true)
     }
   }
