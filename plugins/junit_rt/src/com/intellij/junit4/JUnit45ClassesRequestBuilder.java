@@ -21,7 +21,6 @@ import org.junit.internal.builders.AllDefaultPossibilitiesBuilder;
 import org.junit.internal.builders.AnnotatedBuilder;
 import org.junit.internal.builders.IgnoredBuilder;
 import org.junit.internal.builders.JUnit4Builder;
-import org.junit.internal.requests.ClassRequest;
 import org.junit.internal.runners.model.EachTestNotifier;
 import org.junit.runner.Description;
 import org.junit.runner.Request;
@@ -46,7 +45,7 @@ public class JUnit45ClassesRequestBuilder {
 
   static Request createIgnoreIgnoredClassRequest(final Class<?> clazz, final boolean recursively) throws ClassNotFoundException {
     Class.forName("org.junit.runners.BlockJUnit4ClassRunner"); //ignore IgnoreIgnored for junit4.4 and <
-    return new ClassRequest(clazz) {
+    return new Request() {
       @Override
       public Runner getRunner() {
         try {
@@ -106,7 +105,7 @@ public class JUnit45ClassesRequestBuilder {
           }.runnerForClass(clazz);
         }
         catch (Throwable throwable) {
-          return super.getRunner();
+          return Request.aClass(clazz).getRunner();
         }
       }
     };
