@@ -488,7 +488,7 @@ class ColorValueField(private val hex: Boolean = false, private val showAlpha: B
         selectionEnd = size
       }
     })
-    addMouseWheelListener { e -> increaseValue(-e.unitsToScroll) }
+    addMouseWheelListener { e -> increaseValue((-e.preciseWheelRotation).toInt()) }
     if (!hex) {
       // Don't increase value for hex field.
       with(getInputMap(JComponent.WHEN_FOCUSED)) {
