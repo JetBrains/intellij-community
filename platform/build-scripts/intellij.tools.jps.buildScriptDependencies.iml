@@ -40,6 +40,7 @@
     </orderEntry>
     <orderEntry type="library" scope="RUNTIME" name="gant-groovy" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="gson" level="project" />
-    <orderEntry type="library" name="org.jetbrains.intellij:blockmap:1.0.2" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="org.jetbrains.intellij:blockmap:1.0.2" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="kotlin-stdlib-jdk8" level="project" />
   </component>
 </module>
