@@ -22,6 +22,7 @@ import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi;
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx;
 import com.intellij.vcs.log.ui.frame.MainFrame;
 import com.intellij.vcs.log.ui.frame.VcsLogEditorDiffPreview;
+import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
 import com.intellij.vcs.log.ui.table.GraphTableModel;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.ui.table.column.Date;
@@ -58,7 +59,8 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
     VcsLogFilterUiEx filterUi = createFilterUi(filters -> applyFiltersAndUpdateUi(filters), initialFilters, this);
     myMainFrame = createMainFrame(logData, uiProperties, filterUi);
 
-    VcsLogUiUtil.installHighlighters(this, f -> true);
+    LOG_HIGHLIGHTER_FACTORY_EP.addChangeListener(this::updateHighlighters, this);
+    updateHighlighters();
 
     myPropertiesListener = new MyVcsLogUiPropertiesListener();
     myUiProperties.addChangeListener(myPropertiesListener);
@@ -197,6 +199,13 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
   public void dispose() {
     myUiProperties.removeChangeListener(myPropertiesListener);
     super.dispose();
+  }
+
+  private void updateHighlighters() {
+    getTable().removeAllHighlighters();
+    for (VcsLogHighlighterFactory factory : LOG_HIGHLIGHTER_FACTORY_EP.getExtensionList()) {
+      getTable().addHighlighter(factory.createHighlighter(myLogData, this));
+    }
   }
 
   private class MyVcsLogUiPropertiesListener implements VcsLogUiProperties.PropertiesChangeListener {

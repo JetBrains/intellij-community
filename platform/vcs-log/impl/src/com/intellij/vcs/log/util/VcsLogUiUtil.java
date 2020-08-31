@@ -32,7 +32,6 @@ import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx;
 import com.intellij.vcs.log.ui.frame.ProgressStripe;
 import com.intellij.vcs.log.ui.frame.VcsLogCommitDetailsListPanel;
-import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.visible.VisiblePackRefresherImpl;
 import org.jetbrains.annotations.Nls;
@@ -44,9 +43,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Collection;
 import java.util.List;
-import java.util.function.Predicate;
-
-import static com.intellij.vcs.log.ui.AbstractVcsLogUi.LOG_HIGHLIGHTER_FACTORY_EP;
 
 public final class VcsLogUiUtil {
   @NotNull
@@ -183,22 +179,6 @@ public final class VcsLogUiUtil {
 
   public static boolean isDiffPreviewInEditor() {
     return Registry.is("vcs.log.show.diff.preview.as.editor.tab");
-  }
-
-  public static void installHighlighters(@NotNull AbstractVcsLogUi logUi, @NotNull Predicate<? super VcsLogHighlighterFactory> enabled) {
-    LOG_HIGHLIGHTER_FACTORY_EP.addChangeListener(() -> {
-      updateHighlighters(logUi, enabled);
-    }, logUi);
-    updateHighlighters(logUi, enabled);
-  }
-
-  private static void updateHighlighters(@NotNull AbstractVcsLogUi logUi, @NotNull Predicate<? super VcsLogHighlighterFactory> enabled) {
-    logUi.getTable().removeAllHighlighters();
-    for (VcsLogHighlighterFactory factory : LOG_HIGHLIGHTER_FACTORY_EP.getExtensionList()) {
-      if (enabled.test(factory)) {
-        logUi.getTable().addHighlighter(factory.createHighlighter(logUi.getLogData(), logUi));
-      }
-    }
   }
 
   @NotNull
