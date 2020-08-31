@@ -44,6 +44,7 @@ class UpdateOptions : BaseState() {
   var lastBuildChecked by string()
 
   @get:OptionTag("UPDATE_CHANNEL_TYPE")
+  @get:ReportValue
   var updateChannelType by string(ChannelStatus.RELEASE.code)
 
   @get:OptionTag("THIRD_PARTY_PLUGINS_ALLOWED")
