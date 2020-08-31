@@ -536,7 +536,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
     }
 
     // Assert consistency
-    this.assertConsistencyInStrictMode()
+    this.assertConsistencyInStrictModeForRbs()
 
     LOG.debug { "Replace by source finished" }
   }
@@ -1076,6 +1076,10 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
 
   internal fun assertConsistencyInStrictMode() {
     if (StrictMode.enabled) this.assertConsistency()
+  }
+
+  internal fun assertConsistencyInStrictModeForRbs() {
+    if (StrictMode.enabled || StrictMode.rbsEnabled) this.assertConsistency()
   }
 
   private fun assertResolvable(clazz: Int, id: Int) {
