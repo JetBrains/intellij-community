@@ -7,13 +7,17 @@ import com.intellij.json.psi.JsonProperty;
 import com.intellij.lang.documentation.AbstractDocumentationProvider;
 import com.intellij.lang.documentation.DocumentationMarkup;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.devkit.DevKitBundle;
 
 import java.util.function.Supplier;
 
@@ -25,8 +29,13 @@ public class ThemeJsonDocumentationProvider extends AbstractDocumentationProvide
     final Pair<UIThemeMetadata, UIThemeMetadata.UIKeyMetadata> resolve = resolve(element);
     if (resolve == null) return null;
 
-    return "<b>" + resolve.second.getKey() + "</b> [" + resolve.first.getName() + "]\n" +
-           StringUtil.notNullize(resolve.second.getDescription());
+    return new HtmlBuilder()
+      .append(HtmlChunk.text(resolve.second.getKey()).bold())
+      .nbsp()
+      .append("[" + resolve.first.getName() + "]")
+      .br()
+      .append(StringUtil.notNullize(resolve.second.getDescription()))
+      .toString();
   }
 
   @Override
@@ -37,52 +46,62 @@ public class ThemeJsonDocumentationProvider extends AbstractDocumentationProvide
     final UIThemeMetadata uiThemeMetadata = resolve.first;
     final UIThemeMetadata.UIKeyMetadata uiKeyMetadata = resolve.second;
 
-    StringBuilder sb = new StringBuilder(DocumentationMarkup.DEFINITION_START);
-    sb.append("<b>").append(uiKeyMetadata.getKey()).append("</b><br>");
-    sb.append("[").append(uiThemeMetadata.getName()).append("] - ");
-    sb.append("[").append(uiThemeMetadata.getPluginId()).append("]");
-    sb.append(DocumentationMarkup.DEFINITION_END);
+    HtmlBuilder builder = new HtmlBuilder();
 
-    sb.append(DocumentationMarkup.CONTENT_START);
+    HtmlBuilder definitionBuilder = new HtmlBuilder();
+    definitionBuilder.append(HtmlChunk.text(uiKeyMetadata.getKey()).bold());
+    definitionBuilder.br().append("[").append(uiThemeMetadata.getName()).append("] - ");
+    definitionBuilder.append("[").append(uiThemeMetadata.getPluginId()).append("]");
+    HtmlChunk.Element definition = definitionBuilder.wrapWith("pre").wrapWith(DocumentationMarkup.DEFINITION_ELEMENT);
+    builder.append(definition);
+
+
+    HtmlBuilder contentBuilder = new HtmlBuilder();
     if (uiKeyMetadata.isDeprecated()) {
-      sb.append("<font color='#").append(ColorUtil.toHex(JBColor.RED)).append("'><b>Deprecated</b></font><br>");
+      contentBuilder.append(
+        HtmlChunk.text(DevKitBundle.message("theme.json.documentation.key.deprecated"))
+          .bold()
+          .wrapWith(HtmlChunk.font("#" + ColorUtil.toHex(JBColor.RED))))
+        .append(HtmlChunk.br());
     }
+    contentBuilder.append(HtmlChunk.text(StringUtil.notNullize(uiKeyMetadata.getDescription(),
+                                                               DevKitBundle.message("theme.json.documentation.key.no.description"))));
+    contentBuilder.append(HtmlChunk.br()).append(HtmlChunk.br());
+    final HtmlChunk.Element content = contentBuilder.wrapWith(DocumentationMarkup.CONTENT_ELEMENT);
+    builder.append(content);
 
-    sb.append(StringUtil.notNullize(uiKeyMetadata.getDescription(), "(no description)"));
-    sb.append("<br><br>");
-    sb.append(DocumentationMarkup.CONTENT_END);
 
-    sb.append(DocumentationMarkup.SECTIONS_START);
+    HtmlBuilder sectionsBuilder = new HtmlBuilder();
 
     final String source = uiKeyMetadata.getSource();
     if (source != null) {
-      appendSection(sb, "Source", () -> {
+      appendSection(sectionsBuilder, DevKitBundle.message("theme.json.documentation.section.source.title"), () -> {
         final PsiClassType type = JavaPsiFacade.getElementFactory(element.getProject()).createTypeByFQClassName(source);
 
         StringBuilder typeBuilder = new StringBuilder();
         JavaDocInfoGenerator.generateType(typeBuilder, type, element);
-        return typeBuilder.toString();
+        return typeBuilder.toString(); //NON-NLS
       });
     }
 
     final String since = uiKeyMetadata.getSince();
     if (since != null) {
-      appendSection(sb, "Since", since);
+      appendSection(sectionsBuilder, DevKitBundle.message("theme.json.documentation.section.since.title"), since);
     }
+    final HtmlChunk.Element sections = sectionsBuilder.wrapWith(DocumentationMarkup.SECTIONS_TABLE);
+    builder.append(sections);
 
-    sb.append(DocumentationMarkup.SECTIONS_END);
-    return sb.toString();
+    return builder.toString();
   }
 
-  private static void appendSection(StringBuilder sb, String sectionName, String sectionContent) {
-    appendSection(sb, sectionName, () -> sectionContent);
+  private static void appendSection(HtmlBuilder builder, @Nls String sectionName, @Nls String sectionContent) {
+    appendSection(builder, sectionName, () -> sectionContent);
   }
 
-  private static void appendSection(StringBuilder sb, String sectionName, Supplier<String> content) {
-    sb.append(DocumentationMarkup.SECTION_HEADER_START).append(sectionName).append(":")
-      .append(DocumentationMarkup.SECTION_SEPARATOR);
-    sb.append(content.get());
-    sb.append(DocumentationMarkup.SECTION_END);
+  private static void appendSection(HtmlBuilder builder, @Nls String sectionName, Supplier<@Nls String> content) {
+    HtmlChunk headerCell = DocumentationMarkup.SECTION_HEADER_CELL.child(HtmlChunk.text(sectionName).wrapWith("p"));
+    HtmlChunk contentCell = DocumentationMarkup.SECTION_CONTENT_CELL.addText(content.get());
+    builder.append(HtmlChunk.tag("tr").children(headerCell, contentCell));
   }
 
   @Nullable
