@@ -14,6 +14,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -223,8 +224,8 @@ public class CertificateTreeBuilder extends AbstractTreeBuilder {
     }
   }
 
-  static final class OrganizationDescriptor extends MyNodeDescriptor<String> {
-    private OrganizationDescriptor(@Nullable NodeDescriptor parentDescriptor, @NotNull String object) {
+  static final class OrganizationDescriptor extends MyNodeDescriptor<@Nls String> {
+    private OrganizationDescriptor(@Nullable NodeDescriptor parentDescriptor, @Nls @NotNull String object) {
       super(parentDescriptor, object);
     }
 

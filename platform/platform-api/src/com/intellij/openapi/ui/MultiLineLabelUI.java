@@ -326,9 +326,9 @@ public class MultiLineLabelUI extends BasicLabelUI {
     }
   }
 
-  public static Dimension computeMultiLineDimension(FontMetrics fm, String[] strs) {
+  public static Dimension computeMultiLineDimension(FontMetrics fm, @Nls String [] strs) {
     int width = 0;
-    for (String str : strs) {
+    for (@Nls String str : strs) {
       width = Math.max(width, SwingUtilities.computeStringWidth(fm, str));
     }
     return new Dimension(width, fm.getHeight() * strs.length);

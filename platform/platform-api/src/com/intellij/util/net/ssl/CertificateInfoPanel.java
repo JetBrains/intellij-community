@@ -42,8 +42,8 @@ public class CertificateInfoPanel extends JPanel {
     updateBuilderWithTitle(builder, IdeBundle.message("section.title.issued.by"));
     updateBuilderWithPrincipalData(builder, myCertificateWrapper.getIssuerFields());
     updateBuilderWithTitle(builder, IdeBundle.message("section.title.validity.period"));
-    String notBefore = DATE_FORMAT.format(myCertificateWrapper.getNotBefore());
-    String notAfter = DATE_FORMAT.format(myCertificateWrapper.getNotAfter());
+    @SuppressWarnings("HardCodedStringLiteral") String notBefore = DATE_FORMAT.format(myCertificateWrapper.getNotBefore());
+    @SuppressWarnings("HardCodedStringLiteral") String notAfter = DATE_FORMAT.format(myCertificateWrapper.getNotAfter());
     builder = builder
       .setFormLeftIndent(IdeBorderFactory.TITLED_BORDER_INDENT)
       .addLabeledComponent(IdeBundle.message("label.valid.from"), createColoredComponent(notBefore, IdeBundle.message("label.certificate.not.yet.valid"), myCertificateWrapper.isNotYetValid()))

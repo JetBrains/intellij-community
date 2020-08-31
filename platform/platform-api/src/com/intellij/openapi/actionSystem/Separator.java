@@ -3,6 +3,7 @@ package com.intellij.openapi.actionSystem;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.NlsContext;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -17,7 +18,7 @@ import java.util.function.Supplier;
 public final class Separator extends AnAction implements DumbAware, LightEditCompatible {
 
   private static final Separator ourInstance = new Separator();
-  private final Supplier<String> myDynamicText;
+  private final Supplier<@NlsContexts.Separator String> myDynamicText;
 
   @NotNull
   public static Separator getInstance() {

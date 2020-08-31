@@ -16,7 +16,10 @@ import java.util.List;
 public interface Crumb {
   default Icon getIcon() { return null; }
 
-  default @Nls String getText() { return toString(); }
+  default @Nls String getText() {
+    //noinspection HardCodedStringLiteral
+    return toString();
+  }
 
   /**
    * @return synchronously calculated tooltip text
@@ -68,6 +71,12 @@ public interface Crumb {
       return tooltip;
     }
 
+    @Nls
+    @Override
+    public String getText() {
+      return text;
+    }
+
     @NotNull
     @Override
     public List<? extends Action> getContextActions() {
@@ -76,7 +85,7 @@ public interface Crumb {
 
     @Override
     public String toString() {
-      return text;
+      return getText();
     }
   }
 }

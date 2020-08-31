@@ -49,25 +49,25 @@ public class Messages {
   /**
    * @deprecated Use {@link #getOkButton()} instead
    */
-  @Deprecated
+  @SuppressWarnings("HardCodedStringLiteral") @Deprecated
   public static final String OK_BUTTON = "OK";
 
   /**
    * @deprecated Use {@link #getYesButton()} instead
    */
-  @Deprecated
+  @SuppressWarnings("HardCodedStringLiteral") @Deprecated
   public static final String YES_BUTTON = "&Yes";
 
   /**
    * @deprecated Use {@link #getNoButton()} instead
    */
-  @Deprecated
+  @SuppressWarnings("HardCodedStringLiteral") @Deprecated
   public static final String NO_BUTTON = "&No";
 
   /**
    * @deprecated Use {@link #getCancelButton()} instead
    */
-  @Deprecated
+  @SuppressWarnings("HardCodedStringLiteral") @Deprecated
   public static final String CANCEL_BUTTON = "Cancel";
 
   public static @Nls String getOkButton() { return CommonBundle.getOkButtonText(); }

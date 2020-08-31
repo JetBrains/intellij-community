@@ -2103,6 +2103,7 @@ public abstract class DialogWrapper {
       );
       sb.append("</html>");
 
+      //noinspection HardCodedStringLiteral
       myLabel.setText(sb.toString());
       setVisible(true);
       updateSize();

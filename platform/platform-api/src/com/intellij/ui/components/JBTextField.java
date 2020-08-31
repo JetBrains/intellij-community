@@ -111,7 +111,7 @@ public class JBTextField extends JTextField implements ComponentWithEmptyText, T
   @Override
   public String getToolTipText(MouseEvent event) {
     TextUI ui = getUI();
-    String text = ui == null ? null : ui.getToolTipText(this, event.getPoint());
+    @SuppressWarnings("HardCodedStringLiteral") String text = ui == null ? null : ui.getToolTipText(this, event.getPoint());
     return text != null ? text : getToolTipText();
   }
 }

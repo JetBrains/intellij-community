@@ -22,6 +22,7 @@ import java.util.function.Function;
 /**
  * @deprecated use {@link com.intellij.ui.components.DropDownLink} instead
  */
+@SuppressWarnings("HardCodedStringLiteral")
 @Deprecated
 @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
 public class DropDownLink<T> extends LinkLabel<Object> {
