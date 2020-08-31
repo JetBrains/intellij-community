@@ -24,8 +24,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Supplier;
+
 public abstract class ComplexPackagingElementType<E extends ComplexPackagingElement<?>> extends PackagingElementType<E> {
-  protected ComplexPackagingElementType(@NotNull @NonNls String id, @NotNull @Nls(capitalization = Nls.Capitalization.Title) String presentableName) {
+  protected ComplexPackagingElementType(@NotNull @NonNls String id,
+                                        @NotNull Supplier<@Nls(capitalization = Nls.Capitalization.Title) String> presentableName) {
     super(id, presentableName);
   }
 

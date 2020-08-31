@@ -23,15 +23,18 @@ import com.intellij.openapi.roots.ui.configuration.ChooseModulesDialog;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.packaging.artifacts.ArtifactTemplate;
 import com.intellij.packaging.artifacts.ArtifactType;
-import com.intellij.packaging.elements.*;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.javaFX.JavaFXBundle;
-
-import javax.swing.*;
+import com.intellij.packaging.elements.CompositePackagingElement;
+import com.intellij.packaging.elements.PackagingElement;
+import com.intellij.packaging.elements.PackagingElementFactory;
+import com.intellij.packaging.elements.PackagingElementOutputKind;
+import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import javax.swing.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.javaFX.JavaFXBundle;
 
 public class JavaFxApplicationArtifactType extends ArtifactType {
   public static JavaFxApplicationArtifactType getInstance() {
@@ -39,7 +42,7 @@ public class JavaFxApplicationArtifactType extends ArtifactType {
   }
   
   protected JavaFxApplicationArtifactType() {
-    super("javafx", JavaFXBundle.message("javafx.application.title"));
+    super("javafx", JavaFXBundle.messagePointer("javafx.application.title"));
   }
 
   @NotNull

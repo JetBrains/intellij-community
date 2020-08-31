@@ -34,7 +34,7 @@ import java.util.List;
 public class FileCopyElementType extends PackagingElementType<FileCopyPackagingElement> {
 
   FileCopyElementType() {
-    super("file-copy", JavaCompilerBundle.message("file.title"));
+    super("file-copy", JavaCompilerBundle.messagePointer("file.title"));
   }
 
   @Override

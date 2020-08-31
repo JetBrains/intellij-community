@@ -33,7 +33,7 @@ public class InvalidArtifactType extends ArtifactType {
   }
 
   public InvalidArtifactType() {
-    super("invalid", IdeBundle.message("invalid.node.text"));
+    super("invalid", IdeBundle.messagePointer("invalid.node.text"));
   }
 
   @NotNull

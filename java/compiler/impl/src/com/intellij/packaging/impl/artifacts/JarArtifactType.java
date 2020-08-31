@@ -31,7 +31,7 @@ import java.util.List;
 
 public class JarArtifactType extends ArtifactType {
   public JarArtifactType() {
-    super("jar", JavaCompilerBundle.message("jar.text"));
+    super("jar", JavaCompilerBundle.messagePointer("jar.text"));
   }
 
   public static JarArtifactType getInstance() {

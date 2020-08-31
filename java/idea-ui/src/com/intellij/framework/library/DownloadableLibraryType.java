@@ -29,11 +29,37 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.net.URL;
 import java.util.List;
+import java.util.function.Supplier;
 
 public abstract class DownloadableLibraryType extends LibraryType<LibraryVersionProperties> {
   private final Icon myIcon;
-  private final @Nls(capitalization = Nls.Capitalization.Title) String myLibraryCategoryName;
+  private final Supplier<@Nls(capitalization = Nls.Capitalization.Title) String> myLibraryCategoryName;
   private final DownloadableLibraryDescription myLibraryDescription;
+
+  /**
+   * @deprecated The constructor is meant to maintain the binary compatibility with external plugins.
+   * Please use the constructors with a messagePointer for {@link DownloadableLibraryType#myLibraryCategoryName}
+   */
+  @Deprecated
+  protected DownloadableLibraryType(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String libraryCategoryName,
+                                    @NotNull String libraryTypeId,
+                                    @NotNull String groupId,
+                                    URL @NotNull ... localUrls) {
+    this(() -> libraryCategoryName, libraryTypeId, groupId, localUrls);
+  }
+
+  /**
+   * @deprecated The constructor is meant to maintain the binary compatibility with external plugins.
+   * Please use the constructors with a messagePointer for {@link DownloadableLibraryType#myLibraryCategoryName}
+   */
+  @Deprecated
+  public DownloadableLibraryType(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String libraryCategoryName,
+                                 @NotNull String libraryTypeId,
+                                 @NotNull String groupId,
+                                 @Nullable Icon icon,
+                                 URL @NotNull ... localUrls) {
+    this(() -> libraryCategoryName, libraryTypeId, groupId, icon, localUrls);
+  }
 
   /**
    * Creates instance of library type. You also <strong>must</strong> override {@link #getLibraryTypeIcon()} method and return non-null value
@@ -44,7 +70,7 @@ public abstract class DownloadableLibraryType extends LibraryType<LibraryVersion
    * @param groupId             name of directory on https://frameworks.jetbrains.com site which contains information about available library versions
    * @param localUrls           URLs of xml files containing information about the library versions (see /contrib/osmorc/src/org/osmorc/facet/osgi.core.xml for example)
    */
-  protected DownloadableLibraryType(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String libraryCategoryName,
+  protected DownloadableLibraryType(@NotNull Supplier<@Nls(capitalization = Nls.Capitalization.Title) String> libraryCategoryName,
                                     @NotNull String libraryTypeId,
                                     @NotNull String groupId,
                                     URL @NotNull ... localUrls) {
@@ -55,7 +81,7 @@ public abstract class DownloadableLibraryType extends LibraryType<LibraryVersion
    * @deprecated use {@link #DownloadableLibraryType(String, String, String, URL...)} instead and override {@link #getLibraryTypeIcon()}
    */
   @Deprecated
-  public DownloadableLibraryType(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String libraryCategoryName,
+  public DownloadableLibraryType(@NotNull Supplier<@Nls(capitalization = Nls.Capitalization.Title) String> libraryCategoryName,
                                  @NotNull String libraryTypeId,
                                  @NotNull String groupId,
                                  @Nullable Icon icon,
@@ -99,7 +125,7 @@ public abstract class DownloadableLibraryType extends LibraryType<LibraryVersion
   }
 
   public String getLibraryCategoryName() {
-    return myLibraryCategoryName;
+    return myLibraryCategoryName.get();
   }
 
   @Override

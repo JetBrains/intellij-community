@@ -17,13 +17,23 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Supplier;
 
 public abstract class ArtifactType {
   public static final ExtensionPointName<ArtifactType> EP_NAME = ExtensionPointName.create("com.intellij.packaging.artifactType");
   private final String myId;
-  private final @Nls(capitalization = Nls.Capitalization.Sentence) String myTitle;
+  private final Supplier<@Nls(capitalization = Nls.Capitalization.Sentence) String> myTitle;
 
+  /**
+   * @deprecated This constructor is meant to provide the binary compatibility with the external plugins.
+   * Please use the constructor that accepts a messagePointer for {@link ArtifactType#myTitle}
+   */
+  @Deprecated
   protected ArtifactType(@NonNls String id, @Nls(capitalization = Nls.Capitalization.Sentence) String title) {
+    this(id, () -> title);
+  }
+
+  protected ArtifactType(@NonNls String id, Supplier<@Nls(capitalization = Nls.Capitalization.Sentence) String> title) {
     myId = id;
     myTitle = title;
   }
@@ -33,7 +43,7 @@ public abstract class ArtifactType {
   }
 
   public @Nls(capitalization = Nls.Capitalization.Sentence) String getPresentableName() {
-    return myTitle;
+    return myTitle.get();
   }
 
   @NotNull

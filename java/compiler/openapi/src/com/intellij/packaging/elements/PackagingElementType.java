@@ -13,13 +13,23 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.List;
+import java.util.function.Supplier;
 
 public abstract class PackagingElementType<E extends PackagingElement<?>> {
   public static final ExtensionPointName<PackagingElementType> EP_NAME = ExtensionPointName.create("com.intellij.packaging.elementType");
   private final String myId;
-  private final @Nls(capitalization = Nls.Capitalization.Title) String myPresentableName;
+  private final Supplier<@Nls(capitalization = Nls.Capitalization.Title) String> myPresentableName;
 
+  /**
+   * @deprecated This constructor is meant to provide the binary compatibility with the external plugins.
+   * Please use the constructor that accepts a messagePointer for {@link PackagingElementType#myPresentableName}
+   */
+  @Deprecated
   protected PackagingElementType(@NotNull @NonNls String id, @NotNull @Nls(capitalization = Nls.Capitalization.Title) String presentableName) {
+    this(id, () -> presentableName);
+  }
+
+  protected PackagingElementType(@NotNull @NonNls String id, @NotNull Supplier<@Nls(capitalization = Nls.Capitalization.Title) String> presentableName) {
     myId = id;
     myPresentableName = presentableName;
   }
@@ -29,7 +39,7 @@ public abstract class PackagingElementType<E extends PackagingElement<?>> {
   }
 
   public @Nls(capitalization = Nls.Capitalization.Title) String getPresentableName() {
-    return myPresentableName;
+    return myPresentableName.get();
   }
 
   @Nullable

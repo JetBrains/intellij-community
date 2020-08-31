@@ -35,9 +35,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 public abstract class ModuleElementTypeBase<E extends ModulePackagingElementBase> extends PackagingElementType<E> {
-  public ModuleElementTypeBase(String id, @Nls(capitalization = Nls.Capitalization.Title) String presentableName) {
+  public ModuleElementTypeBase(String id, Supplier<@Nls(capitalization = Nls.Capitalization.Title) String> presentableName) {
     super(id, presentableName);
   }
 

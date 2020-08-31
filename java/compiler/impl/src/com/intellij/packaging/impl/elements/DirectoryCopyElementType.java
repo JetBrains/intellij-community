@@ -35,7 +35,7 @@ import java.util.List;
 public class DirectoryCopyElementType extends PackagingElementType<DirectoryCopyPackagingElement> {
 
   DirectoryCopyElementType() {
-    super("dir-copy", JavaCompilerBundle.message("directory.copy.element.type.name"));
+    super("dir-copy", JavaCompilerBundle.messagePointer("directory.copy.element.type.name"));
   }
 
   @Override

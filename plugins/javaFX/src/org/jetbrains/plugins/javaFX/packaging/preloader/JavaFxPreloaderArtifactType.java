@@ -20,11 +20,10 @@ import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElementFactory;
 import com.intellij.packaging.elements.PackagingElementOutputKind;
+import javax.swing.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.JavaFXBundle;
-
-import javax.swing.*;
 
 public class JavaFxPreloaderArtifactType extends ArtifactType {
   public static JavaFxPreloaderArtifactType getInstance() {
@@ -32,7 +31,7 @@ public class JavaFxPreloaderArtifactType extends ArtifactType {
   }
   
   protected JavaFxPreloaderArtifactType() {
-    super("javafx-preloader", JavaFXBundle.message("javafx.preloader.title"));
+    super("javafx-preloader", JavaFXBundle.messagePointer("javafx.preloader.title"));
   }
 
   @NotNull

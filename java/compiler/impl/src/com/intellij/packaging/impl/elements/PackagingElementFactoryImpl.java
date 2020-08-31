@@ -323,7 +323,7 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
 
   private static class ArtifactRootElementType extends PackagingElementType<ArtifactRootElement<?>> {
     protected ArtifactRootElementType() {
-      super("root", "");
+      super("root", () -> "");
     }
 
     @Override

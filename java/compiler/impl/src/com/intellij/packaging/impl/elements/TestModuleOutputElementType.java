@@ -17,7 +17,7 @@ public final class TestModuleOutputElementType extends ModuleOutputElementTypeBa
   public static final TestModuleOutputElementType ELEMENT_TYPE = new TestModuleOutputElementType();
 
   private TestModuleOutputElementType() {
-    super("module-test-output", JavaCompilerBundle.message("element.type.name.module.test.output"));
+    super("module-test-output", JavaCompilerBundle.messagePointer("element.type.name.module.test.output"));
   }
 
   @NotNull

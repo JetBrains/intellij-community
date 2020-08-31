@@ -24,7 +24,7 @@ public class ArtifactElementType extends ComplexPackagingElementType<ArtifactPac
   public static final ArtifactElementType ARTIFACT_ELEMENT_TYPE = new ArtifactElementType();
 
   ArtifactElementType() {
-    super("artifact", JavaCompilerBundle.message("element.type.name.artifact"));
+    super("artifact", JavaCompilerBundle.messagePointer("element.type.name.artifact"));
   }
 
   @Override

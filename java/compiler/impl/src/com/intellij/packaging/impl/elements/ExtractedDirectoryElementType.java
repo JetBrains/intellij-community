@@ -36,7 +36,7 @@ import java.util.List;
 public class ExtractedDirectoryElementType extends PackagingElementType<ExtractedDirectoryPackagingElement> {
 
   ExtractedDirectoryElementType() {
-    super("extracted-dir", JavaCompilerBundle.message("extracted.directory.element.type.name"));
+    super("extracted-dir", JavaCompilerBundle.messagePointer("extracted.directory.element.type.name"));
   }
 
   @Override
