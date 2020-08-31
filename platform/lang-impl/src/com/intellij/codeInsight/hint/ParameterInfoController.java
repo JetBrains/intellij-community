@@ -949,7 +949,11 @@ public class ParameterInfoController extends UserDataHolderBase implements Dispo
       }
 
       LookupImpl activeLookup = (LookupImpl)LookupManager.getActiveLookup(myEditor);
-      Rectangle lookupBounds = activeLookup != null && activeLookup.isShown() ? activeLookup.getBounds() : null;
+      Rectangle lookupBounds = !ApplicationManager.getApplication().isUnitTestMode()
+              && activeLookup != null
+              && activeLookup.isShown()
+              ? activeLookup.getBounds()
+              : null;
 
       Dimension hintSize = hint.getSize();
 
