@@ -33,6 +33,10 @@ public final class MemoryAgentCapabilities {
     return check(Capability.OBJECTS_SIZES);
   }
 
+  public boolean canFindPathsToClosestGcRoots() {
+    return check(Capability.PATHS_TO_CLOSEST_GC_ROOTS);
+  }
+
   private boolean check(Capability capability) {
     return myCapabilities.contains(capability);
   }
@@ -44,6 +48,7 @@ public final class MemoryAgentCapabilities {
 
   private enum Capability {
     GC_ROOTS,
+    PATHS_TO_CLOSEST_GC_ROOTS,
     OBJECT_SIZE,
     OBJECTS_SIZES
   }
@@ -61,6 +66,10 @@ public final class MemoryAgentCapabilities {
 
     public Builder setCanEstimateObjectsSizes(boolean value) {
       return update(Capability.OBJECTS_SIZES, value);
+    }
+
+    public Builder setCanFindPathsToClosestGcRoots(boolean value) {
+      return update(Capability.PATHS_TO_CLOSEST_GC_ROOTS, value);
     }
 
     public MemoryAgentCapabilities buildLoaded() {

@@ -47,6 +47,17 @@ class MemoryAgentImpl implements MemoryAgent {
     return MemoryAgentOperations.findReferringObjects(evaluationContext, reference, limit);
   }
 
+  @Override
+  public @NotNull ReferringObjectsInfo findPathsToClosestGCRoots(@NotNull EvaluationContextImpl evaluationContext,
+                                                                 @NotNull ObjectReference reference,
+                                                                 int number) throws EvaluateException {
+    if (!myCapabilities.canFindPathsToClosestGcRoots()) {
+      throw new UnsupportedOperationException("Memory agent can't provide paths to closest gc roots");
+    }
+
+    return MemoryAgentOperations.findPathsToClosestGCRoots(evaluationContext, reference, number);
+  }
+
   @NotNull
   @Override
   public MemoryAgentCapabilities capabilities() {
