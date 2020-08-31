@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.MultiMap
 import com.jetbrains.plugin.blockmap.core.BlockMap
@@ -507,26 +508,27 @@ class DistributionJARsBuilder {
 
     def resultLines = new ArrayList<String>()
     for (def line : lines) {
-      List<String> split = StringUtil.split(line, ":")
-      if (!(split.size() == 2)) continue
-      String modulePath = split.get(1)
+      def i = line.indexOf(':')
+      if (-1 == i) continue
+      def className = line.substring(0, i)
+      def modulePath = line.substring(i + 1)
       if (modulePath.endsWith(".jar")) {
         String jarName = pathToToJarName.get(modulePath)
         //possible jar from a plugin
         if (jarName == null) continue
-        resultLines.add(split.get(0) + ":/lib/" + jarName)
+        resultLines.add(className + ":/lib/" + jarName)
       }
       else {
         def moduleName = pathToModuleName.get(modulePath)
         if (moduleName == null) continue
         def libJarName = libModulesToJar.get(moduleName)
         if (libJarName != null) {
-          resultLines.add(split.get(0) + ":/lib/" + libJarName)
+          resultLines.add(className + ":/lib/" + libJarName)
         }
         else {
           def moduleJarName = pluginModulesToJar.get(moduleName)
           if (moduleName == null) continue
-          resultLines.add("${split.get(0)}:$moduleJarName")
+          resultLines.add("${className}:$moduleJarName")
         }
       }
     }
@@ -551,7 +553,7 @@ class DistributionJARsBuilder {
     for (def moduleName in allModules) {
       def module = buildContext.findModule(moduleName)
       if (module == null) continue
-      def classpath = buildContext.getModuleOutputPath(module)
+      def classpath = (SystemInfo.isWindows) ? '/' + FileUtil.toSystemIndependentName(buildContext.getModuleOutputPath(module)) : buildContext.getModuleOutputPath(module);
       pathToModuleName.put(classpath, moduleName)
     }
     return pathToModuleName
@@ -571,7 +573,8 @@ class DistributionJARsBuilder {
             jarName = candidate
           }
         }
-        libraryJarPathToJarName.put(libFile.getPath(), jarName)
+        def jarPath = (SystemInfo.isWindows) ? '/' + FileUtil.toSystemIndependentName(libFile.getPath()) : libFile.getPath();
+        libraryJarPathToJarName.put(jarPath, jarName)
       }
     }
     return libraryJarPathToJarName
