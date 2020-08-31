@@ -167,6 +167,18 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
   
+  fun testFunctionReturn() {
+    myFixture.enableInspections(I18nInspection())
+    myFixture.configureByText("Foo.kt", """
+        fun debug(@org.jetbrains.annotations.NonNls <warning descr="[UNUSED_PARAMETER] Parameter 'lazyMessage' is never used">lazyMessage</warning>: () -> String) {}
+    
+        fun test() {
+            debug { "foo" }
+        }
+    """.trimIndent())
+    myFixture.testHighlighting()
+  }
+  
   fun testExtensionMethod() {
     myFixture.enableInspections(I18nInspection())
     myFixture.configureByText("Foo.kt", """

@@ -493,13 +493,20 @@ public abstract class NlsInfo {
       method = UastUtils.getAnnotationMethod(nameValuePair);
     }
     else {
-      UReturnExpression returnStmt = ObjectUtils.tryCast(expression.getUastParent(), UReturnExpression.class);
-      if (returnStmt == null) return Unspecified.UNKNOWN;
-      UElement jumpTarget = returnStmt.getJumpTarget();
+      UElement parent = expression.getUastParent();
+      UElement jumpTarget = null;
+      if (parent instanceof UReturnExpression) {
+        jumpTarget = ((UReturnExpression)parent).getJumpTarget();
+      }
+      else if (parent instanceof ULambdaExpression && expression instanceof UBlockExpression) {
+        jumpTarget = parent;
+      }
       if (jumpTarget instanceof UMethod) {
         method = ((UMethod)jumpTarget).getJavaPsi();
       }
       else if (jumpTarget instanceof ULambdaExpression) {
+        NlsInfo info = fromFunctionalParameter((ULambdaExpression)jumpTarget);
+        if (info != Unspecified.UNKNOWN) return info;
         PsiType type = ((ULambdaExpression)jumpTarget).getFunctionalInterfaceType();
         returnType = LambdaUtil.getFunctionalInterfaceReturnType(type);
         if (type == null) return Unspecified.UNKNOWN;
@@ -512,6 +519,22 @@ public abstract class NlsInfo {
     if (method == null) return Unspecified.UNKNOWN;
 
     return fromMethodReturn(method, returnType, null);
+  }
+
+  // Annotation on functional parameter is considered to be a return type annotation
+  // (at least until type annotations will be supported in Kotlin)
+  private static @NotNull NlsInfo fromFunctionalParameter(ULambdaExpression function) {
+    UCallExpression call = ObjectUtils.tryCast(function.getUastParent(), UCallExpression.class);
+    if (call != null) {
+      PsiMethod calledMethod = call.resolve();
+      if (calledMethod != null) {
+        PsiParameter parameter = getParameter(calledMethod, call, function);
+        if (parameter != null) {
+          return forModifierListOwner(parameter);
+        }
+      }
+    }
+    return Unspecified.UNKNOWN;
   }
 
   private static @NotNull NlsInfo fromMethodReturn(@NotNull PsiMethod method,
