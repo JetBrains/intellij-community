@@ -35,13 +35,13 @@ public class YAMLFindUsagesProvider implements FindUsagesProvider {
   @Override
   public String getType(@NotNull PsiElement element) {
     if (element instanceof YAMLScalarText) {
-      return "scalar";
+      return YAMLBundle.message("find.usages.scalar");
     } else if (element instanceof YAMLSequence) {
-      return "sequence";
+      return YAMLBundle.message("find.usages.sequence");
     } else if (element instanceof YAMLMapping) {
-      return "mapping";
+      return YAMLBundle.message("find.usages.mapping");
     } else if (element instanceof YAMLKeyValue) {
-      return "key-value";
+      return YAMLBundle.message("find.usages.key.value");
     } else {
       return "";
     }
@@ -51,14 +51,14 @@ public class YAMLFindUsagesProvider implements FindUsagesProvider {
   @Override
   public String getDescriptiveName(@NotNull PsiElement element) {
     if (element instanceof PsiNamedElement) {
-      return StringUtil.notNullize(((PsiNamedElement)element).getName(), "<unnamed>");
+      return StringUtil.notNullize(((PsiNamedElement)element).getName(), YAMLBundle.message("find.usages.unnamed"));
     }
 
     if (element instanceof YAMLScalar) {
       return ((YAMLScalar)element).getTextValue();
     }
 
-    return "<unnamed>";
+    return YAMLBundle.message("find.usages.unnamed");
   }
 
   @NotNull

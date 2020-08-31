@@ -60,7 +60,8 @@ public class YAMLLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
     }
     else if (settingsType == SettingsType.SPACING_SETTINGS) {
       consumer.showStandardOptions("SPACE_WITHIN_BRACES", "SPACE_WITHIN_BRACKETS");
-      consumer.showCustomOption(YAMLCodeStyleSettings.class, "SPACE_BEFORE_COLON", "Before ':'", getInstance().SPACES_OTHER);
+      consumer.showCustomOption(YAMLCodeStyleSettings.class, "SPACE_BEFORE_COLON", YAMLBundle.message(
+        "YAMLLanguageCodeStyleSettingsProvider.label.before"), getInstance().SPACES_OTHER);
     }
     else if (settingsType == SettingsType.WRAPPING_AND_BRACES_SETTINGS) {
       consumer.showStandardOptions("KEEP_LINE_BREAKS");
