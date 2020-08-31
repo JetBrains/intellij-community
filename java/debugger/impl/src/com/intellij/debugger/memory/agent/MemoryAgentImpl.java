@@ -4,6 +4,8 @@ package com.intellij.debugger.memory.agent;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.sun.jdi.ObjectReference;
+import com.sun.jdi.ReferenceType;
+import javafx.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -35,6 +37,36 @@ class MemoryAgentImpl implements MemoryAgent {
     return MemoryAgentOperations.estimateObjectsSizes(evaluationContext, references);
   }
 
+  @Override
+  public long[] getShallowSizeByClasses(@NotNull EvaluationContextImpl evaluationContext, @NotNull List<ReferenceType> classes)
+    throws EvaluateException {
+    if (!myCapabilities.canGetShallowSizeByClasses()) {
+      throw new UnsupportedOperationException("Memory agent can't get shallow size by classes");
+    }
+
+    return MemoryAgentOperations.getShallowSizeByClasses(evaluationContext, classes);
+  }
+
+  @Override
+  public long[] getRetainedSizeByClasses(@NotNull EvaluationContextImpl evaluationContext, @NotNull List<ReferenceType> classes)
+    throws EvaluateException {
+    if (!myCapabilities.canGetRetainedSizeByClasses()) {
+      throw new UnsupportedOperationException("Memory agent can't get retained size by classes");
+    }
+
+    return MemoryAgentOperations.getRetainedSizeByClasses(evaluationContext, classes);
+  }
+
+  @Override
+  public Pair<long[], long[]> getShallowAndRetainedSizeByClasses(@NotNull EvaluationContextImpl evaluationContext, @NotNull List<ReferenceType> classes)
+    throws EvaluateException {
+    if (!myCapabilities.canGetRetainedSizeByClasses() || !myCapabilities.canGetShallowSizeByClasses()) {
+      throw new UnsupportedOperationException("Memory agent can't get shallow and retained size by classes");
+    }
+
+    return MemoryAgentOperations.getShallowAndRetainedSizeByClasses(evaluationContext, classes);
+  }
+
   @NotNull
   @Override
   public ReferringObjectsInfo findReferringObjects(@NotNull EvaluationContextImpl evaluationContext,
@@ -45,6 +77,17 @@ class MemoryAgentImpl implements MemoryAgent {
     }
 
     return MemoryAgentOperations.findReferringObjects(evaluationContext, reference, limit);
+  }
+
+  @Override
+  public @NotNull ReferringObjectsInfo findPathsToClosestGCRoots(@NotNull EvaluationContextImpl evaluationContext,
+                                                                 @NotNull ObjectReference reference,
+                                                                 int number) throws EvaluateException {
+    if (!myCapabilities.canFindPathsToClosestGcRoots()) {
+      throw new UnsupportedOperationException("Memory agent can't provide paths to closest gc roots");
+    }
+
+    return MemoryAgentOperations.findPathsToClosestGCRoots(evaluationContext, reference, number);
   }
 
   @NotNull

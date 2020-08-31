@@ -9,13 +9,12 @@ import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.impl.ClassLoadingUtils;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.memory.agent.extractor.ProxyExtractor;
-import com.intellij.debugger.memory.agent.parsers.BooleanParser;
-import com.intellij.debugger.memory.agent.parsers.GcRootsPathsParser;
-import com.intellij.debugger.memory.agent.parsers.LongArrayParser;
-import com.intellij.debugger.memory.agent.parsers.LongValueParser;
+import com.intellij.debugger.memory.agent.parsers.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
+import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
+import javafx.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,11 +39,47 @@ final class MemoryAgentOperations {
     return LongArrayParser.INSTANCE.parse(result).stream().mapToLong(Long::longValue).toArray();
   }
 
+  static long @NotNull [] getShallowSizeByClasses(@NotNull EvaluationContextImpl evaluationContext, @NotNull List<ReferenceType> classes)
+    throws EvaluateException {
+    ArrayReference array = wrapWithArray(evaluationContext, ContainerUtil.map(classes, ReferenceType::classObject));
+    Value result = callMethod(evaluationContext, MemoryAgentNames.Methods.GET_SHALLOW_SIZE_BY_CLASSES, Collections.singletonList(array));
+    return LongArrayParser.INSTANCE.parse(result).stream().mapToLong(Long::longValue).toArray();
+  }
+
+  static long @NotNull [] getRetainedSizeByClasses(@NotNull EvaluationContextImpl evaluationContext, @NotNull List<ReferenceType> classes)
+    throws EvaluateException {
+    ArrayReference array = wrapWithArray(evaluationContext, ContainerUtil.map(classes, ReferenceType::classObject));
+    Value result = callMethod(evaluationContext, MemoryAgentNames.Methods.GET_RETAINED_SIZE_BY_CLASSES, Collections.singletonList(array));
+    return LongArrayParser.INSTANCE.parse(result).stream().mapToLong(Long::longValue).toArray();
+  }
+
+  @NotNull
+  static Pair<long[], long[]> getShallowAndRetainedSizeByClasses(@NotNull EvaluationContextImpl evaluationContext, @NotNull List<ReferenceType> classes)
+    throws EvaluateException {
+    ArrayReference array = wrapWithArray(evaluationContext, ContainerUtil.map(classes, ReferenceType::classObject));
+    Value result = callMethod(evaluationContext, MemoryAgentNames.Methods.GET_SHALLOW_AND_RETAINED_SIZE_BY_CLASSES, Collections.singletonList(array));
+    Pair<List<Long>, List<Long>> pair = ShallowAndRetainedSizeParser.INSTANCE.parse(result);
+    return new Pair<>(pair.getKey().stream().mapToLong(Long::longValue).toArray(),
+                      pair.getValue().stream().mapToLong(Long::longValue).toArray());
+  }
+
   @NotNull
   static ReferringObjectsInfo findReferringObjects(@NotNull EvaluationContextImpl evaluationContext,
                                                    @NotNull ObjectReference reference, int limit) throws EvaluateException {
     IntegerValue limitValue = evaluationContext.getDebugProcess().getVirtualMachineProxy().mirrorOf(limit);
     Value value = callMethod(evaluationContext, MemoryAgentNames.Methods.FIND_GC_ROOTS, Arrays.asList(reference, limitValue));
+    return GcRootsPathsParser.INSTANCE.parse(value);
+  }
+
+  @NotNull
+  static ReferringObjectsInfo findPathsToClosestGCRoots(@NotNull EvaluationContextImpl evaluationContext,
+                                                        @NotNull ObjectReference reference, int number) throws EvaluateException {
+    IntegerValue numberValue = evaluationContext.getDebugProcess().getVirtualMachineProxy().mirrorOf(number);
+    Value value = callMethod(
+      evaluationContext,
+      MemoryAgentNames.Methods.FIND_PATHS_TO_CLOSEST_GC_ROOTS,
+      Arrays.asList(reference, numberValue)
+    );
     return GcRootsPathsParser.INSTANCE.parse(value);
   }
 
@@ -78,6 +113,9 @@ final class MemoryAgentOperations {
         .setCanEstimateObjectSize(checkAgentCapability(context, proxyType, MemoryAgentNames.Methods.CAN_ESTIMATE_OBJECT_SIZE))
         .setCanEstimateObjectsSizes(checkAgentCapability(context, proxyType, MemoryAgentNames.Methods.CAN_ESTIMATE_OBJECTS_SIZES))
         .setCanFindGcRoots(checkAgentCapability(context, proxyType, MemoryAgentNames.Methods.CAN_FIND_GC_ROOTS))
+        .setCanGetShallowSizeByClasses(checkAgentCapability(context, proxyType, MemoryAgentNames.Methods.CAN_GET_SHALLOW_SIZE_BY_CLASSES))
+        .setCanGetRetainedSizeByClasses(checkAgentCapability(context, proxyType, MemoryAgentNames.Methods.CAN_GET_RETAINED_SIZE_BY_CLASSES))
+        .setCanFindPathsToClosestGcRoots(checkAgentCapability(context, proxyType, MemoryAgentNames.Methods.CAN_FIND_PATHS_TO_CLOSEST_GC_ROOTS))
         .buildLoaded();
     }
   }

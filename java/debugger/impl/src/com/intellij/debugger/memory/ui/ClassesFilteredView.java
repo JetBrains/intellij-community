@@ -4,8 +4,11 @@ package com.intellij.debugger.memory.ui;
 
 import com.intellij.debugger.DebuggerManager;
 import com.intellij.debugger.engine.*;
+import com.intellij.debugger.engine.evaluation.EvaluateException;
+import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
+import com.intellij.debugger.memory.agent.MemoryAgent;
 import com.intellij.debugger.memory.component.MemoryViewDebugProcessData;
 import com.intellij.debugger.memory.tracking.ConstructorInstancesTracker;
 import com.intellij.debugger.memory.tracking.TrackerForNewInstances;
@@ -34,6 +37,7 @@ import com.sun.jdi.ObjectReference;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.VirtualMachine;
 import com.sun.jdi.request.ClassPrepareRequest;
+import javafx.util.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -384,7 +388,19 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
         final VirtualMachine vm = classes.get(0).virtualMachine();
         if (vm.canGetInstanceInfo()) {
           final Map<TypeInfo, Long> counts = getInstancesCounts(classes, vm);
-          ApplicationManager.getApplication().invokeLater(() -> table.updateContent(counts));
+          MemoryAgent agent = MemoryAgent.get(suspendContext.getDebugProcess());
+          try {
+            EvaluationContextImpl context = new EvaluationContextImpl(suspendContext, suspendContext.getFrameProxy());
+            Pair<long[], long[]> sizes = agent.getShallowAndRetainedSizeByClasses(context, classes);
+            ApplicationManager.getApplication().invokeLater(() -> table.updateContent(
+              counts,
+              convert2TypeInfo2Long(classes, sizes.getKey()),
+              convert2TypeInfo2Long(classes, sizes.getValue())
+            ));
+          }
+          catch (EvaluateException ex) {
+            ApplicationManager.getApplication().invokeLater(() -> table.updateContent(counts));
+          }
         }
         else {
           ApplicationManager.getApplication().invokeLater(() -> table.updateClassesOnly(JavaTypeInfo.wrap(classes)));
@@ -403,6 +419,15 @@ public class ClassesFilteredView extends ClassesFilteredViewBase {
       else {
         commitAllTrackers();
       }
+    }
+
+    private Map<TypeInfo, Long> convert2TypeInfo2Long(@NotNull List<ReferenceType> classes, long[] sizes) {
+      Map<TypeInfo, Long> result = new LinkedHashMap<>();
+      for (int i = 0; i < classes.size(); i++) {
+        result.put(new JavaTypeInfo(classes.get(i)), sizes[i]);
+      }
+
+      return result;
     }
 
     private Map<TypeInfo, Long> getInstancesCounts(@NotNull List<ReferenceType> classes, @NotNull VirtualMachine vm) {

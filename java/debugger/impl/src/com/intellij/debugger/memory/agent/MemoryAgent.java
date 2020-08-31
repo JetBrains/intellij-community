@@ -6,6 +6,8 @@ import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.sun.jdi.ObjectReference;
+import com.sun.jdi.ReferenceType;
+import javafx.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -15,6 +17,11 @@ public interface MemoryAgent {
    * Maximal number of objects that will be retrieved by {@code findReferringObjects} call
    */
   int DEFAULT_GC_ROOTS_OBJECTS_LIMIT = 1000;
+
+  /**
+   * Maximal number of paths that will be retrieved by {@code findPathsToClosestGCRoots} call
+   */
+  int DEFAULT_GC_ROOTS_PATHS_LIMIT = 10;
 
   @NotNull
   static MemoryAgent get(@NotNull DebugProcessImpl debugProcess) {
@@ -31,7 +38,20 @@ public interface MemoryAgent {
   long[] estimateObjectsSizes(@NotNull EvaluationContextImpl evaluationContext, @NotNull List<ObjectReference> references)
     throws EvaluateException;
 
+  long[] getShallowSizeByClasses(@NotNull EvaluationContextImpl evaluationContext, @NotNull List<ReferenceType> classes)
+    throws EvaluateException;
+
+  long[] getRetainedSizeByClasses(@NotNull EvaluationContextImpl evaluationContext, @NotNull List<ReferenceType> classes)
+    throws EvaluateException;
+
+  Pair<long[], long[]> getShallowAndRetainedSizeByClasses(@NotNull EvaluationContextImpl evaluationContext, @NotNull List<ReferenceType> classes)
+    throws EvaluateException;
+
   @NotNull
   ReferringObjectsInfo findReferringObjects(@NotNull EvaluationContextImpl evaluationContext, @NotNull ObjectReference reference, int limit)
+    throws EvaluateException;
+
+  @NotNull
+  ReferringObjectsInfo findPathsToClosestGCRoots(@NotNull EvaluationContextImpl evaluationContext, @NotNull ObjectReference reference, int number)
     throws EvaluateException;
 }

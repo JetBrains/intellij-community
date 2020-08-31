@@ -2,6 +2,7 @@
 package com.intellij.debugger.memory.agent.parsers
 
 import com.intellij.debugger.memory.agent.UnexpectedValueFormatException
+import javafx.util.Pair
 import com.sun.jdi.*
 import java.util.*
 
@@ -75,5 +76,16 @@ object LongArrayParser : ResultParser<List<Long>> {
   override fun parse(value: Value): List<Long> {
     if (value !is ArrayReference) throw UnexpectedValueFormatException("Array expected")
     return value.values.map(LongValueParser::parse)
+  }
+}
+
+object ShallowAndRetainedSizeParser : ResultParser<Pair<List<Long>, List<Long>>> {
+  override fun parse(value: Value): Pair<List<Long>, List<Long>> {
+    if (value !is ArrayReference) throw UnexpectedValueFormatException("Array expected")
+    if (value.length() < 2) throw UnexpectedValueFormatException("Two arrays expected")
+    return Pair(
+      LongArrayParser.parse(value.getValue(0)),
+      LongArrayParser.parse(value.getValue(1))
+    )
   }
 }
