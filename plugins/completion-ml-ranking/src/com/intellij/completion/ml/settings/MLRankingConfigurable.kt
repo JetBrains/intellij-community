@@ -6,8 +6,13 @@ import com.intellij.completion.ml.MLCompletionBundle
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.ContextHelpLabel
+import com.intellij.ui.IconManager
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.JBLabel
+import com.intellij.ui.icons.RowIcon
 import com.intellij.ui.layout.*
+import icons.CompletionMlRankingIcons
+import javax.swing.Icon
 
 class MLRankingConfigurable(private val availableProviders: List<RankingModelProvider>) :
   BoundConfigurable(MLCompletionBundle.message("ml.completion.settings.group")) {
@@ -33,15 +38,25 @@ class MLRankingConfigurable(private val availableProviders: List<RankingModelPro
               }
             }.apply { if (ranker === providers.last()) largeGapAfter() }
           }
-          row {
+        }
+        row {
+          cell {
             enableRankingCheckbox?.let { enableRanking ->
               checkBox(MLCompletionBundle.message("ml.completion.show.diff"),
                        { settings.isShowDiffEnabled },
                        { settings.isShowDiffEnabled = it }).enableIf(enableRanking.selected)
+              JBLabel(createUpDownIcon())()
             }
           }
         }
       }
     }
+  }
+
+  private fun createUpDownIcon(): Icon {
+    val icon = IconManager.getInstance().createRowIcon(2, RowIcon.Alignment.CENTER)
+    icon.setIcon(CompletionMlRankingIcons.ProposalUp, 0)
+    icon.setIcon(CompletionMlRankingIcons.ProposalDown, 1)
+    return icon
   }
 }
