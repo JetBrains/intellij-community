@@ -378,14 +378,11 @@ public class ComponentValidator {
     public void focusLost(FocusEvent e) {
       hidePopup(false);
 
-      ValidationInfo info = null;
       if (focusValidator != null) {
-        info = focusValidator.get();
+        updateInfo(focusValidator.get());
       }
 
-      if (info != null) {
-        updateInfo(info);
-      } else if (disableValidation) {
+      if (disableValidation) {
         enableValidation();
         revalidate();
       }
