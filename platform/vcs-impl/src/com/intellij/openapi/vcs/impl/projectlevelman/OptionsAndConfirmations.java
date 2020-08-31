@@ -15,18 +15,20 @@
  */
 package com.intellij.openapi.vcs.impl.projectlevelman;
 
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.AbstractVcs;
+import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.VcsShowConfirmationOption;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class OptionsAndConfirmations {
-  private final Map<String, PersistentVcsShowSettingOption> myOptions;
-  private final Map<String, PersistentVcsShowConfirmationOption> myConfirmations;
+  private final Map<@NonNls String, Boolean> myOptionsValues = new HashMap<>();
+  private final Map<@NonNls String, VcsShowConfirmationOption.Value> myConfirmationsValues = new HashMap<>();
+
+  private final Map<@NonNls String, PersistentVcsShowSettingOption> myOptions;
+  private final Map<@NonNls String, PersistentVcsShowConfirmationOption> myConfirmations;
 
   public OptionsAndConfirmations() {
     myOptions = new LinkedHashMap<>();
@@ -43,22 +45,21 @@ public class OptionsAndConfirmations {
     createConfirmationFor(VcsConfiguration.StandardConfirmation.REMOVE);
   }
 
-  @NotNull
-  public PersistentVcsShowConfirmationOption getConfirmation(VcsConfiguration.StandardConfirmation option) {
-    return myConfirmations.get(option.getId());
-  }
-
   private void createSettingFor(final VcsConfiguration.StandardOption option) {
-    getOrCreateOption(option.getId());
+    myOptions.put(option.getId(), new PersistentVcsShowSettingOptionImpl(option, this));
   }
 
   private void createConfirmationFor(final VcsConfiguration.StandardConfirmation confirmation) {
-    String id = confirmation.getId();
-    myConfirmations.put(id, new VcsShowConfirmationOptionImpl(id));
+    myConfirmations.put(confirmation.getId(), new PersistentVcsShowConfirmationOptionImpl(confirmation, this));
   }
 
   @NotNull
-  public PersistentVcsShowSettingOption getOptions(VcsConfiguration.StandardOption option) {
+  public PersistentVcsShowConfirmationOption getConfirmation(@NotNull VcsConfiguration.StandardConfirmation option) {
+    return myConfirmations.get(option.getId());
+  }
+
+  @NotNull
+  public PersistentVcsShowSettingOption getOption(@NotNull VcsConfiguration.StandardOption option) {
     return myOptions.get(option.getId());
   }
 
@@ -71,32 +72,37 @@ public class OptionsAndConfirmations {
   }
 
   @NotNull
-  public VcsShowSettingOption getOrCreateCustomOption(@NotNull String vcsActionName, @NotNull AbstractVcs vcs) {
-    final PersistentVcsShowSettingOption option = getOrCreateOption(vcsActionName);
-    option.addApplicableVcs(vcs);
-    return option;
+  public PersistentVcsShowSettingOption getOrCreateCustomOption(@NotNull String vcsActionName, @NotNull AbstractVcs vcs) {
+    return myOptions.computeIfAbsent(vcsActionName, key -> new LegacyVcsShowOptionsSettingImpl(vcsActionName, this));
+  }
+
+
+  void setOptionValue(@NonNls @NotNull String id, boolean value) {
+    myOptionsValues.put(id, value);
+  }
+
+  void setConfirmationValue(@NonNls @NotNull String id, @NonNls VcsShowConfirmationOption.Value value) {
+    myConfirmationsValues.put(id, value);
+  }
+
+  boolean getOptionValue(@NonNls @NotNull String id) {
+    Boolean value = myOptionsValues.get(id);
+    if (value != null) return value;
+    return true;
   }
 
   @NotNull
-  PersistentVcsShowSettingOption getOrCreateOption(String actionName) {
-    if (!myOptions.containsKey(actionName)) {
-      myOptions.put(actionName, new VcsShowOptionsSettingImpl(actionName));
-    }
-    return myOptions.get(actionName);
+  VcsShowConfirmationOption.Value getConfirmationValue(@NonNls @NotNull String id) {
+    VcsShowConfirmationOption.Value value = myConfirmationsValues.get(id);
+    if (value != null) return value;
+    return VcsShowConfirmationOption.Value.SHOW_CONFIRMATION;
   }
 
-  @Nullable
-  PersistentVcsShowConfirmationOption getConfirmation(String id) {
-    return myConfirmations.get(id);
+  Map<String, Boolean> getOptionsValues() {
+    return myOptionsValues;
   }
 
-  // open for serialization purposes
-  Map<String, PersistentVcsShowSettingOption> getOptions() {
-    return myOptions;
-  }
-
-  // open for serialization purposes
-  Map<String, PersistentVcsShowConfirmationOption> getConfirmations() {
-    return myConfirmations;
+  Map<String, VcsShowConfirmationOption.Value> getConfirmationsValues() {
+    return myConfirmationsValues;
   }
 }

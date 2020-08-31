@@ -18,9 +18,7 @@ import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Property;
 import com.intellij.util.xmlb.annotations.Transient;
 import com.intellij.util.xmlb.annotations.XCollection;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 
@@ -76,38 +74,55 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public List<String> IGNORED_UNREGISTERED_ROOTS = new ArrayList<>();
 
   public enum StandardOption {
-    ADD(VcsBundle.message("vcs.command.name.add")),
-    REMOVE(VcsBundle.message("vcs.command.name.remove")),
-    EDIT(VcsBundle.message("vcs.command.name.edit")),
-    CHECKOUT(VcsBundle.message("vcs.command.name.checkout")),
-    STATUS(VcsBundle.message("vcs.command.name.status")),
-    UPDATE(VcsBundle.message("vcs.command.name.update"));
+    ADD("Add", "vcs.command.name.add"),
+    REMOVE("Remove", "vcs.command.name.remove"),
+    EDIT("Edit", "vcs.command.name.edit"),
+    CHECKOUT("Checkout", "vcs.command.name.checkout"),
+    STATUS("Status", "vcs.command.name.status"),
+    UPDATE("Update", "vcs.command.name.update");
 
-    StandardOption(final String id) {
+    StandardOption(@NonNls @NotNull String id,
+                   @NonNls @PropertyKey(resourceBundle = VcsBundle.BUNDLE) String key) {
       myId = id;
+      myKey = key;
     }
 
     private final String myId;
+    private final String myKey;
 
+    @NonNls
     public String getId() {
       return myId;
+    }
+
+    @Nls
+    public String getDisplayName() {
+      return VcsBundle.message(myKey);
     }
   }
 
   public enum StandardConfirmation {
-    ADD(VcsBundle.message("vcs.command.name.add")),
-    REMOVE(VcsBundle.message("vcs.command.name.remove"));
+    ADD("Add", "vcs.command.name.add"),
+    REMOVE("Remove", "vcs.command.name.remove");
 
-    StandardConfirmation(@NotNull String id) {
+    StandardConfirmation(@NonNls @NotNull String id,
+                         @NotNull @PropertyKey(resourceBundle = VcsBundle.BUNDLE) String key) {
       myId = id;
+      myKey = key;
     }
 
     @NotNull
     private final String myId;
+    private final String myKey;
 
     @NotNull
     public String getId() {
       return myId;
+    }
+
+    @Nls
+    public String getDisplayName() {
+      return VcsBundle.message(myKey);
     }
   }
 

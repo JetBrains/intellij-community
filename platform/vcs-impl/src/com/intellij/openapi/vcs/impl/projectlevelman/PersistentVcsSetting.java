@@ -3,6 +3,8 @@ package com.intellij.openapi.vcs.impl.projectlevelman;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.AbstractVcs;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,7 +12,9 @@ import java.util.Collection;
 import java.util.List;
 
 public interface PersistentVcsSetting {
-  @NotNull String getDisplayName();
+  @NonNls @NotNull String getId();
+
+  @Nls @NotNull String getDisplayName();
 
   void addApplicableVcs(@Nullable AbstractVcs vcs);
 

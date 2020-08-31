@@ -311,7 +311,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
 
   @Override
   public @NotNull PersistentVcsShowSettingOption getOptions(VcsConfiguration.StandardOption option) {
-    return myOptionsAndConfirmations.getOptions(option);
+    return myOptionsAndConfirmations.getOption(option);
   }
 
   @Override
@@ -327,7 +327,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   }
 
   @Override
-  public @NotNull VcsShowSettingOption getOrCreateCustomOption(@NotNull String vcsActionName, @NotNull AbstractVcs vcs) {
+  public @NotNull VcsShowSettingOption getOrCreateCustomOption(@NotNull @NonNls String vcsActionName, @NotNull AbstractVcs vcs) {
     return myOptionsAndConfirmations.getOrCreateCustomOption(vcsActionName, vcs);
   }
 

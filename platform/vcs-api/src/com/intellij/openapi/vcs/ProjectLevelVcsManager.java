@@ -138,7 +138,11 @@ public abstract class ProjectLevelVcsManager {
   public abstract @NotNull VcsShowConfirmationOption getStandardConfirmation(@NotNull VcsConfiguration.StandardConfirmation option,
                                                                              AbstractVcs vcs);
 
-  public abstract @NotNull VcsShowSettingOption getOrCreateCustomOption(@NotNull String vcsActionName,
+  /**
+   * @param vcsActionName is used both in interface and as a key in settings.
+   */
+  @Deprecated
+  public abstract @NotNull VcsShowSettingOption getOrCreateCustomOption(@NotNull @NonNls String vcsActionName,
                                                                         @NotNull AbstractVcs vcs);
 
   @RequiresEdt

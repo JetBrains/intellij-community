@@ -15,25 +15,18 @@
  */
 package com.intellij.openapi.vcs;
 
-import com.intellij.openapi.vcs.impl.projectlevelman.PersistentVcsShowConfirmationOption;
-
-public class VcsShowConfirmationOptionImpl extends VcsAbstractSetting implements PersistentVcsShowConfirmationOption {
+/**
+ * @deprecated Use {@link VcsShowConfirmationOption#STATIC_SHOW_CONFIRMATION}
+ */
+@Deprecated
+public class VcsShowConfirmationOptionImpl implements VcsShowConfirmationOption {
   private Value myValue = Value.SHOW_CONFIRMATION;
 
-  /**
-   * @deprecated Use {@link #VcsShowConfirmationOptionImpl(String)}
-   */
-  @Deprecated
   public VcsShowConfirmationOptionImpl(final String displayName,
                                        final String caption,
                                        final String doNothingCaption,
                                        final String showConfirmationCaption,
                                        final String doActionSilentlyCaption) {
-    this(displayName);
-  }
-
-  public VcsShowConfirmationOptionImpl(final String displayName) {
-    super(displayName);
   }
 
   @Override
