@@ -51,6 +51,7 @@ import com.intellij.rt.coverage.data.LineData;
 import com.intellij.rt.coverage.data.SwitchData;
 import com.intellij.testIntegration.TestFramework;
 import jetbrains.coverage.report.ReportGenerationFailedException;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
@@ -695,7 +696,7 @@ public class JavaCoverageEngine extends CoverageEngine {
   }
 
   @Override
-  public String getPresentableText() {
+  public @Nls String getPresentableText() {
     return JavaCoverageBundle.message("java.coverage.engine.presentable.text");
   }
 

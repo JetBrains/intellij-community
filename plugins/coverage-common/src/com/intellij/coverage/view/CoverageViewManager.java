@@ -12,6 +12,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.wm.RegisterToolWindowTask;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -77,7 +78,7 @@ public final class CoverageViewManager implements PersistentStateComponent<Cover
     return ServiceManager.getService(project, CoverageViewManager.class);
   }
 
-  public void createToolWindow(String displayName, boolean defaultFileProvider) {
+  public void createToolWindow(@NlsSafe String displayName, boolean defaultFileProvider) {
     final CoverageView coverageView = new CoverageView(myProject, CoverageDataManager.getInstance(myProject), myStateBean);
     myViews.put(displayName, coverageView);
     Content content = myContentManager.getFactory().createContent(coverageView, displayName, true);

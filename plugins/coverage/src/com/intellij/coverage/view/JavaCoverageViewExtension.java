@@ -14,6 +14,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ui.ColumnInfo;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,7 +44,7 @@ public class JavaCoverageViewExtension extends CoverageViewExtension {
                                    aPackage != null ? aPackage.getQualifiedName() : node.getName());
   }
 
-  private static String showSubCoverageNotification() {
+  private static @Nls String showSubCoverageNotification() {
     return JavaCoverageBundle.message("sub.coverage.notification");
   }
 

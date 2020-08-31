@@ -21,6 +21,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.rt.coverage.data.LineData;
 import com.intellij.util.Function;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -316,7 +317,7 @@ public abstract class CoverageEngine {
     return dialog;
   }
 
-  public abstract String getPresentableText();
+  public abstract @Nls String getPresentableText();
 
   public boolean coverageProjectViewStatisticsApplicableTo(VirtualFile fileOrDir) {
     return false;
