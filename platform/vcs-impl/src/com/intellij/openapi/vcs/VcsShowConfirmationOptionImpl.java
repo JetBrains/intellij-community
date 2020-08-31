@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.vcs;
 
-public class VcsShowConfirmationOptionImpl extends VcsAbstractSetting implements VcsShowConfirmationOption {
+import com.intellij.openapi.vcs.impl.projectlevelman.PersistentVcsShowConfirmationOption;
+
+public class VcsShowConfirmationOptionImpl extends VcsAbstractSetting implements PersistentVcsShowConfirmationOption {
   private Value myValue = Value.SHOW_CONFIRMATION;
 
   /**

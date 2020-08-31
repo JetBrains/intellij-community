@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.vcs;
 
-public class VcsShowOptionsSettingImpl extends VcsAbstractSetting implements VcsShowSettingOption {
+import com.intellij.openapi.vcs.impl.projectlevelman.PersistentVcsShowSettingOption;
+
+public class VcsShowOptionsSettingImpl extends VcsAbstractSetting implements PersistentVcsShowSettingOption {
   private boolean myValue = true;
 
   public VcsShowOptionsSettingImpl(final String displayName) {
@@ -23,7 +25,7 @@ public class VcsShowOptionsSettingImpl extends VcsAbstractSetting implements Vcs
   }
 
   @Override
-  public boolean getValue(){
+  public boolean getValue() {
     return myValue;
   }
 

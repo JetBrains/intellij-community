@@ -25,8 +25,8 @@ import java.util.List;
 import java.util.Map;
 
 public class OptionsAndConfirmations {
-  private final Map<String, VcsShowOptionsSettingImpl> myOptions;
-  private final Map<String, VcsShowConfirmationOptionImpl> myConfirmations;
+  private final Map<String, PersistentVcsShowSettingOption> myOptions;
+  private final Map<String, PersistentVcsShowConfirmationOption> myConfirmations;
 
   public OptionsAndConfirmations() {
     myOptions = new LinkedHashMap<>();
@@ -44,7 +44,7 @@ public class OptionsAndConfirmations {
   }
 
   @NotNull
-  public VcsShowConfirmationOptionImpl getConfirmation(VcsConfiguration.StandardConfirmation option) {
+  public PersistentVcsShowConfirmationOption getConfirmation(VcsConfiguration.StandardConfirmation option) {
     return myConfirmations.get(option.getId());
   }
 
@@ -58,27 +58,27 @@ public class OptionsAndConfirmations {
   }
 
   @NotNull
-  public VcsShowSettingOption getOptions(VcsConfiguration.StandardOption option) {
+  public PersistentVcsShowSettingOption getOptions(VcsConfiguration.StandardOption option) {
     return myOptions.get(option.getId());
   }
 
-  public List<VcsShowOptionsSettingImpl> getAllOptions() {
+  public List<PersistentVcsShowSettingOption> getAllOptions() {
     return new ArrayList<>(myOptions.values());
   }
 
-  public List<VcsShowConfirmationOptionImpl> getAllConfirmations() {
+  public List<PersistentVcsShowConfirmationOption> getAllConfirmations() {
     return new ArrayList<>(myConfirmations.values());
   }
 
   @NotNull
   public VcsShowSettingOption getOrCreateCustomOption(@NotNull String vcsActionName, @NotNull AbstractVcs vcs) {
-    final VcsShowOptionsSettingImpl option = getOrCreateOption(vcsActionName);
+    final PersistentVcsShowSettingOption option = getOrCreateOption(vcsActionName);
     option.addApplicableVcs(vcs);
     return option;
   }
 
   @NotNull
-  VcsShowOptionsSettingImpl getOrCreateOption(String actionName) {
+  PersistentVcsShowSettingOption getOrCreateOption(String actionName) {
     if (!myOptions.containsKey(actionName)) {
       myOptions.put(actionName, new VcsShowOptionsSettingImpl(actionName));
     }
@@ -86,17 +86,17 @@ public class OptionsAndConfirmations {
   }
 
   @Nullable
-  VcsShowConfirmationOptionImpl getConfirmation(String id) {
+  PersistentVcsShowConfirmationOption getConfirmation(String id) {
     return myConfirmations.get(id);
   }
 
   // open for serialization purposes
-  Map<String, VcsShowOptionsSettingImpl> getOptions() {
+  Map<String, PersistentVcsShowSettingOption> getOptions() {
     return myOptions;
   }
 
   // open for serialization purposes
-  Map<String, VcsShowConfirmationOptionImpl> getConfirmations() {
+  Map<String, PersistentVcsShowConfirmationOption> getConfirmations() {
     return myConfirmations;
   }
 }

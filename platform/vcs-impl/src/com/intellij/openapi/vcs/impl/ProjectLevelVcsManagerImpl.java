@@ -310,18 +310,18 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   }
 
   @Override
-  public @NotNull VcsShowSettingOption getOptions(VcsConfiguration.StandardOption option) {
+  public @NotNull PersistentVcsShowSettingOption getOptions(VcsConfiguration.StandardOption option) {
     return myOptionsAndConfirmations.getOptions(option);
   }
 
   @Override
-  public List<VcsShowOptionsSettingImpl> getAllOptions() {
+  public @NotNull List<PersistentVcsShowSettingOption> getAllOptions() {
     return myOptionsAndConfirmations.getAllOptions();
   }
 
   @Override
   public @NotNull VcsShowSettingOption getStandardOption(@NotNull VcsConfiguration.StandardOption option, @NotNull AbstractVcs vcs) {
-    final VcsShowOptionsSettingImpl options = (VcsShowOptionsSettingImpl)getOptions(option);
+    final PersistentVcsShowSettingOption options = getOptions(option);
     options.addApplicableVcs(vcs);
     return options;
   }
@@ -465,7 +465,7 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   @Override
   public @NotNull VcsShowConfirmationOption getStandardConfirmation(@NotNull VcsConfiguration.StandardConfirmation option,
                                                                     AbstractVcs vcs) {
-    final VcsShowConfirmationOptionImpl result = getConfirmation(option);
+    final PersistentVcsShowConfirmationOption result = getConfirmation(option);
     if (vcs != null) {
       result.addApplicableVcs(vcs);
     }
@@ -473,12 +473,12 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   }
 
   @Override
-  public List<VcsShowConfirmationOptionImpl> getAllConfirmations() {
+  public @NotNull List<PersistentVcsShowConfirmationOption> getAllConfirmations() {
     return myOptionsAndConfirmations.getAllConfirmations();
   }
 
   @Override
-  public @NotNull VcsShowConfirmationOptionImpl getConfirmation(VcsConfiguration.StandardConfirmation option) {
+  public @NotNull PersistentVcsShowConfirmationOption getConfirmation(VcsConfiguration.StandardConfirmation option) {
     return myOptionsAndConfirmations.getConfirmation(option);
   }
 

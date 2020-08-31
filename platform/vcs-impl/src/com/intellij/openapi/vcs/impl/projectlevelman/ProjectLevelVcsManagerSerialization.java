@@ -4,8 +4,6 @@ package com.intellij.openapi.vcs.impl.projectlevelman;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
-import com.intellij.openapi.vcs.VcsShowConfirmationOptionImpl;
-import com.intellij.openapi.vcs.VcsShowOptionsSettingImpl;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -23,7 +21,7 @@ public final class ProjectLevelVcsManagerSerialization {
       final String id = subElement.getAttributeValue(ID_ATTRIBUTE);
       final String value = subElement.getAttributeValue(VALUE_ATTTIBUTE);
       if (id != null && value != null) {
-        VcsShowOptionsSettingImpl option = optionsAndConfirmations.getOrCreateOption(id);
+        PersistentVcsShowSettingOption option = optionsAndConfirmations.getOrCreateOption(id);
         option.setValue(Boolean.parseBoolean(value));
       }
     }
@@ -32,7 +30,7 @@ public final class ProjectLevelVcsManagerSerialization {
       final String id = subElement.getAttributeValue(ID_ATTRIBUTE);
       final String value = subElement.getAttributeValue(VALUE_ATTTIBUTE);
       if (id != null && value != null) {
-        VcsShowConfirmationOptionImpl confirmation = optionsAndConfirmations.getConfirmation(id);
+        PersistentVcsShowConfirmationOption confirmation = optionsAndConfirmations.getConfirmation(id);
         if (confirmation != null) {
           confirmation.setValue(VcsShowConfirmationOption.Value.fromString(value));
         }
@@ -41,10 +39,10 @@ public final class ProjectLevelVcsManagerSerialization {
   }
 
   public void writeExternalUtil(@NotNull Element element, @NotNull OptionsAndConfirmations optionsAndConfirmations) throws WriteExternalException {
-    final Map<String, VcsShowOptionsSettingImpl> options = optionsAndConfirmations.getOptions();
-    final Map<String, VcsShowConfirmationOptionImpl> confirmations = optionsAndConfirmations.getConfirmations();
+    final Map<String, PersistentVcsShowSettingOption> options = optionsAndConfirmations.getOptions();
+    final Map<String, PersistentVcsShowConfirmationOption> confirmations = optionsAndConfirmations.getConfirmations();
 
-    for (VcsShowOptionsSettingImpl setting : options.values()) {
+    for (PersistentVcsShowSettingOption setting : options.values()) {
       if (!setting.getValue()) {
         Element settingElement = new Element(OPTIONS_SETTING);
         element.addContent(settingElement);
@@ -53,7 +51,7 @@ public final class ProjectLevelVcsManagerSerialization {
       }
     }
 
-    for (VcsShowConfirmationOptionImpl setting : confirmations.values()) {
+    for (PersistentVcsShowConfirmationOption setting : confirmations.values()) {
       if (setting.getValue() != VcsShowConfirmationOption.Value.SHOW_CONFIRMATION) {
         final Element settingElement = new Element(CONFIRMATIONS_SETTING);
         element.addContent(settingElement);
