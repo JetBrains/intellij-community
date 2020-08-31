@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -35,7 +36,7 @@ public class ShRunFileAction extends DumbAwareAction {
     runConfiguration.setScriptPath(virtualFile.getPath());
     runConfiguration.setScriptWorkingDirectory(virtualFile.getParent().getPath());
     if (file instanceof ShFile) {
-      String defaultShell = ObjectUtils.notNull(ShConfigurationType.getDefaultShell(), "/bin/sh");
+      @NlsSafe String defaultShell = ObjectUtils.notNull(ShConfigurationType.getDefaultShell(), "/bin/sh");
       runConfiguration.setInterpreterPath(ObjectUtils.notNull(ShShebangParserUtil.getShebangExecutable((ShFile)file), defaultShell));
     }
     else {

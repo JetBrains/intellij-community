@@ -51,7 +51,7 @@ public class ShellcheckSetupNotificationProvider extends EditorNotifications.Pro
       panel.createActionLabel(message("sh.install"), () -> ShShellcheckUtil.download(null, onSuccess, onFailure));
       //noinspection DialogTitleCapitalization
       panel.createActionLabel(message("sh.no.thanks"), () -> {
-        ShSettings.setShellcheckPath(ShSettings.I_DO_MIND);
+        ShSettings.setShellcheckPath(ShSettings.I_DO_MIND_SUPPLIER.get());
         EditorNotifications.getInstance(project).updateAllNotifications();
       });
       return panel;

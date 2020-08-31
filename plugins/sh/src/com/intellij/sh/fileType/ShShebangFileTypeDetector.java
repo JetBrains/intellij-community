@@ -15,6 +15,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -28,7 +29,7 @@ import java.util.Set;
 
 @Service
 public final class ShShebangFileTypeDetector implements DocumentListener, Disposable {
-  private static final Set<String> KNOWN_SHELLS = ContainerUtil.set("sh", "zsh", "bash");
+  private static final Set<@NlsSafe String> KNOWN_SHELLS = ContainerUtil.set("sh", "zsh", "bash"); //NON-NLS
 
   @Override
   public void documentChanged(@NotNull DocumentEvent event) {

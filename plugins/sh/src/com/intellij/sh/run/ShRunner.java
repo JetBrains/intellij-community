@@ -2,6 +2,7 @@
 package com.intellij.sh.run;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class ShRunner {
@@ -11,7 +12,7 @@ public abstract class ShRunner {
     myProject = project;
   }
 
-  public abstract void run(@NotNull String command, @NotNull String workingDirectory, @NotNull String title);
+  public abstract void run(@NotNull String command, @NotNull String workingDirectory, @NotNull @NlsContexts.TabTitle String title);
 
   public abstract boolean isAvailable(@NotNull Project project);
 }

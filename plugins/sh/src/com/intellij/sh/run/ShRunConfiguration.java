@@ -12,6 +12,7 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -216,7 +217,7 @@ public class ShRunConfiguration extends LocatableConfigurationBase implements Re
     return getWSLDistributionIfNeeded(null, null);
   }
 
-  public static WSLDistribution getWSLDistributionIfNeeded(@Nullable String interpreterPath, @Nullable String scriptPath) {
+  public static WSLDistribution getWSLDistributionIfNeeded(@Nullable String interpreterPath, @Nullable @NlsSafe String scriptPath) {
     if (!Experiments.getInstance().isFeatureEnabled("com.intellij.sh.run.with.wsl")) {
       return null;
     }

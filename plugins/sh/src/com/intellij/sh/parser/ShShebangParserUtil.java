@@ -4,6 +4,7 @@ package com.intellij.sh.parser;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.sh.ShTypes;
@@ -12,7 +13,6 @@ import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.util.Arrays;
@@ -44,7 +44,9 @@ public final class ShShebangParserUtil {
   }
 
   @NotNull
-  public static String getInterpreter(@NotNull ShFile file, @NotNull List<String> knownShells, @NotNull String defaultShell) {
+  public static @NlsSafe String getInterpreter(@NotNull ShFile file,
+                                               @NotNull List<@NlsSafe String> knownShells,
+                                               @NlsSafe @NotNull String defaultShell) {
     String shebang = ApplicationManager.getApplication().isDispatchThread() ? file.findShebang()
                                                                             : ReadAction.compute(() -> file.findShebang());
     String detectedInterpreter = shebang != null ? detectInterpreter(shebang) : null;

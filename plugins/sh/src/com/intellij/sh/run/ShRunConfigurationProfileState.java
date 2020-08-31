@@ -18,6 +18,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.sh.ShBundle;
 import com.intellij.terminal.TerminalExecutionConsole;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
@@ -91,7 +92,7 @@ public class ShRunConfigurationProfileState implements RunProfileState {
   private GeneralCommandLine createCommandLine() throws ExecutionException {
     VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(myRunConfiguration.getScriptPath());
     if (virtualFile == null || virtualFile.getParent() == null) {
-      throw new ExecutionException("Cannot determine shell script parent directory");
+      throw new ExecutionException(ShBundle.message("error.message.cannot.determine.shell.script.parent.directory"));
     }
 
     final WSLDistribution wslDistribution = ShRunConfiguration.getWSLDistributionIfNeeded(myRunConfiguration.getInterpreterPath(),
@@ -99,7 +100,7 @@ public class ShRunConfigurationProfileState implements RunProfileState {
 
     PtyCommandLine commandLine = new PtyCommandLine();
     if (!SystemInfo.isWindows || wslDistribution != null) {
-      commandLine.getEnvironment().put("TERM", "xterm-256color");
+      commandLine.getEnvironment().put("TERM", "xterm-256color"); //NON-NLS
     }
     commandLine.withConsoleMode(false);
     commandLine.withInitialColumns(120);

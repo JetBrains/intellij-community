@@ -19,6 +19,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -46,18 +47,18 @@ public class ShShfmtFormatterUtil {
   private static final Key<Boolean> UPDATE_NOTIFICATION_SHOWN = Key.create("SHFMT_UPDATE");
   private static final String FEATURE_ACTION_ID = "ExternalFormatterDownloaded";
 
-  private static final String SHFMT = "shfmt";
-  private static final String OLD_SHFMT = "old_shfmt";
-  private static final String SHFMT_VERSION = "v2.6.4";
-  private static final String DOWNLOAD_PATH = PathManager.getPluginsPath() + File.separator + ShLanguage.INSTANCE.getID();
+  private static final @NlsSafe String SHFMT = "shfmt";
+  private static final @NlsSafe String OLD_SHFMT = "old_shfmt";
+  private static final @NlsSafe String SHFMT_VERSION = "v2.6.4";
+  private static final @NlsSafe String DOWNLOAD_PATH = PathManager.getPluginsPath() + File.separator + ShLanguage.INSTANCE.getID();
 
-  private static final String ARCH_i386 = "_386";
-  private static final String ARCH_x86_64 = "_amd64";
-  private static final String WINDOWS = "_windows";
-  private static final String WINDOWS_EXTENSION = ".exe";
-  private static final String MAC = "_darwin";
-  private static final String LINUX = "_linux";
-  private static final String FREE_BSD = "_freebsd";
+  private static final @NlsSafe String ARCH_i386 = "_386";
+  private static final @NlsSafe String ARCH_x86_64 = "_amd64";
+  private static final @NlsSafe String WINDOWS = "_windows";
+  private static final @NlsSafe String WINDOWS_EXTENSION = ".exe";
+  private static final @NlsSafe String MAC = "_darwin";
+  private static final @NlsSafe String LINUX = "_linux";
+  private static final @NlsSafe String FREE_BSD = "_freebsd";
 
   public static void download(@Nullable Project project, @NotNull Runnable onSuccess, @NotNull Runnable onFailure) {
     download(project, onSuccess, onFailure, false);
@@ -161,7 +162,7 @@ public class ShShfmtFormatterUtil {
 
   public static boolean isValidPath(@Nullable String path) {
     if (path == null) return false;
-    if (ShSettings.I_DO_MIND.equals(path)) return true;
+    if (ShSettings.I_DO_MIND_SUPPLIER.get().equals(path)) return true;
     File file = new File(path);
     if (!file.canExecute()) return false;
     return file.getName().contains(SHFMT);
@@ -205,7 +206,7 @@ public class ShShfmtFormatterUtil {
 
   private static boolean isNewVersionAvailable() {
     String path = ShSettings.getShfmtPath();
-    if (ShSettings.I_DO_MIND.equals(path)) return false;
+    if (ShSettings.I_DO_MIND_SUPPLIER.get().equals(path)) return false;
     File file = new File(path);
     if (!file.canExecute()) return false;
     if (!file.getName().contains(SHFMT)) return false;
