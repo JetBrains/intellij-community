@@ -27,7 +27,9 @@ internal class ParagraphGeneratingProvider : TrimmingInlineHolderProvider() {
             var left = child.startOffset
             for (line in child.getTextInNode(text).split("\n")) {
               val right = left + line.length
-              visitor.consumeHtml("<span ${HtmlGenerator.SRC_ATTRIBUTE_NAME}='$left..$right'>$line</span>")
+              visitor.consumeHtml(
+                "<span ${HtmlGenerator.SRC_ATTRIBUTE_NAME}='$left..$right'>${MarkdownCodeFenceGeneratingProvider.escape(line)}</span>"
+              )
               left += right + 1
             }
           }

@@ -9,7 +9,6 @@ import com.intellij.ui.ColorUtil
 import org.intellij.markdown.MarkdownTokenTypes
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.html.HtmlGenerator
-import org.intellij.markdown.html.entities.EntityConverter
 import org.intellij.plugins.markdown.extensions.MarkdownCodeFencePluginGeneratingProvider
 import org.intellij.plugins.markdown.injection.alias.LanguageGuesser
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownCodeFenceGeneratingProvider
@@ -43,7 +42,7 @@ internal class MarkdownCodeFencePreviewHighlighter : MarkdownCodeFencePluginGene
   }
 
   override fun generateHtml(language: String, raw: String, node: ASTNode): String {
-    val lang = LanguageGuesser.guessLanguageForInjection(language) ?: return escape(raw)
+    val lang = LanguageGuesser.guessLanguageForInjection(language) ?: return MarkdownCodeFenceGeneratingProvider.escape(raw)
 
     val md5 = MarkdownUtil.md5(raw, language)
 
@@ -89,7 +88,7 @@ internal class MarkdownCodeFencePreviewHighlighter : MarkdownCodeFencePluginGene
       val right = left + line.length + 1
       lines.add(buildString {
         append("<span ${HtmlGenerator.SRC_ATTRIBUTE_NAME}='${left + baseOffset}..${right + baseOffset}'>")
-        replaceAll(line, targets, this)
+        appendWithReplacements(line, targets, this)
         append("</span>")
       })
       left = right
@@ -117,9 +116,9 @@ internal class MarkdownCodeFencePreviewHighlighter : MarkdownCodeFencePluginGene
       val color = highlights?.let {
         colorScheme.getAttributes(it)?.foregroundColor
       } ?: highlights?.defaultAttributes?.foregroundColor
-      color?.let {
+      if (color != null) {
         highlightTokens[lexer.tokenStart..lexer.tokenEnd] =
-          "<span style=\"color:${ColorUtil.toHtmlColor(it)}\">${escape(lexer.tokenText)}</span>"
+          "<span style=\"color:${ColorUtil.toHtmlColor(color)}\">${MarkdownCodeFenceGeneratingProvider.escape(lexer.tokenText)}</span>"
       }
       lexer.advance()
     }
@@ -128,17 +127,15 @@ internal class MarkdownCodeFencePreviewHighlighter : MarkdownCodeFencePluginGene
 
   private fun IntRange.shift(value: Int): IntRange = (first + value)..(last + value)
 
-  private fun replaceAll(line: String, targets: List<Pair<IntRange, String>>, builder: StringBuilder) {
+  private fun appendWithReplacements(line: String, targets: List<Pair<IntRange, String>>, builder: StringBuilder) {
     var actualLine = line
     var left = 0
     for ((range, replacement) in targets.sortedBy { it.first.first }) {
-      builder.append(actualLine.substring(0, range.first - left))
+      builder.append(MarkdownCodeFenceGeneratingProvider.escape(actualLine.substring(0, range.first - left)))
       builder.append(replacement)
       actualLine = actualLine.substring(range.last - left)
       left = range.last
     }
-    builder.append(actualLine)
+    builder.append(MarkdownCodeFenceGeneratingProvider.escape(actualLine))
   }
-
-  private fun escape(html: String) = EntityConverter.replaceEntities(html, processEntities = true, processEscapes = true)
 }

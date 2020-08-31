@@ -6,6 +6,7 @@ import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.ast.getTextInNode
 import org.intellij.markdown.html.GeneratingProvider
 import org.intellij.markdown.html.HtmlGenerator
+import org.intellij.markdown.html.entities.EntityConverter
 import org.intellij.plugins.markdown.extensions.MarkdownCodeFencePluginGeneratingProvider
 import java.util.*
 
@@ -84,7 +85,7 @@ internal class MarkdownCodeFenceGeneratingProvider(private val pluginCacheProvid
     var left = baseOffset
     for (line in content.lines()) {
       val right = left + line.length
-      lines.add("<span ${HtmlGenerator.SRC_ATTRIBUTE_NAME}='$left..${left + line.length}'>$line</span>")
+      lines.add("<span ${HtmlGenerator.SRC_ATTRIBUTE_NAME}='$left..${left + line.length}'>${escape(line)}</span>")
       left = right + 1
     }
     return lines.joinToString(
@@ -102,5 +103,11 @@ internal class MarkdownCodeFenceGeneratingProvider(private val pluginCacheProvid
                      ?: node.children.find { it.type == MarkdownTokenTypes.CODE_FENCE_START }
       return baseNode?.let { it.endOffset + 1 } ?: node.startOffset
     }
+
+    internal fun escape(html: String) = EntityConverter.replaceEntities(
+      html,
+      processEntities = true,
+      processEscapes = false
+    )
   }
 }
