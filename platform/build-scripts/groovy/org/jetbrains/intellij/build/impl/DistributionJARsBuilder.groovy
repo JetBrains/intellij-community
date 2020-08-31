@@ -275,7 +275,7 @@ class DistributionJARsBuilder {
     buildBundledPlugins()
     buildOsSpecificBundledPlugins()
     buildNonBundledPlugins()
-//    buildNonBundledPluginsBlockMaps() temporarily disable to fix installers
+    buildNonBundledPluginsBlockMaps()
     buildThirdPartyLibrariesList()
     reorderJARs()
   }
