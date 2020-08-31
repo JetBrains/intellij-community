@@ -1,20 +1,18 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal
 
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.BeanConfigurable
-import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Getter
 import com.intellij.openapi.util.Setter
 import com.intellij.util.messages.Topic
-import java.util.*
 
 class TerminalCommandHandlerCustomizer : LocalTerminalCustomizer() {
-  override fun getConfigurable(project: Project?): UnnamedConfigurable? {
-    if (project == null || !TerminalShellCommandHandlerHelper.isFeatureEnabled()) {
+  override fun getConfigurable(project: Project): UnnamedConfigurable? {
+    if (!TerminalShellCommandHandlerHelper.isFeatureEnabled()) {
       return null
     }
     return TerminalCommandHandlerConfigurable(project)
