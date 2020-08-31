@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.NlsContexts;
@@ -38,7 +39,7 @@ public abstract class LafManager {
   public abstract ListCellRenderer<LafReference> getLookAndFeelCellRenderer();
 
   @ApiStatus.Internal
-  public abstract @Nullable JComponent getSettingsToolbar();
+  public abstract @NotNull JComponent getSettingsToolbar();
 
   public void setCurrentLookAndFeel(@NotNull UIManager.LookAndFeelInfo lookAndFeelInfo) {
     setCurrentLookAndFeel(lookAndFeelInfo, false);
@@ -71,7 +72,7 @@ public abstract class LafManager {
   public abstract void removeLafManagerListener(@NotNull LafManagerListener listener);
 
   public static class LafReference {
-    public static final LafReference SYNC_OS = new LafReference("Sync with OS", null, null);
+    public static final LafReference SYNC_OS = new LafReference(IdeBundle.message("preferred.theme.autodetect.selector"), null, null);
 
     private final String name;
     private final String className;

@@ -99,11 +99,9 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
                    { lafManager.lookAndFeelReference = it },
                    lafManager.lookAndFeelCellRenderer).shouldUpdateLaF()
 
-          lafManager.settingsToolbar?.let {
-            component(it)
-              .visibleIf(theme.component.selectedValueIs(LafManager.LafReference.SYNC_OS))
-              .withLeftGap()
-          }
+          component(lafManager.settingsToolbar)
+            .visibleIf(theme.component.selectedValueIs(LafManager.LafReference.SYNC_OS))
+            .withLeftGap()
         }.largeGapAfter()
         fullRow {
           val overrideLaF = checkBox(cdOverrideLaFFont)

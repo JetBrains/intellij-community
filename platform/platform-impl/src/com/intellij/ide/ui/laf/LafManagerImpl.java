@@ -418,7 +418,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       result.add(createLafReference(info));
 
       if (Objects.equals(lafNameOrder.get(info.getName()), maxNameOrder)) {
-        result.add(LafReference.SYNC_OS);
+        if (lafDetector.getDetectionSupported()) {
+          result.add(LafReference.SYNC_OS);
+        }
         addSeparator = true;
       }
     }
@@ -480,6 +482,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   @Override
+  @NotNull
   public JComponent getSettingsToolbar() {
     return settingsToolbar.getValue().getComponent();
   }
@@ -1328,8 +1331,8 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     private PreferredLafsAction() {
       setPopup(true);
       getTemplatePresentation().setIcon(AllIcons.General.GearPlain);
-      getTemplatePresentation().setText("Preferred lafs");
-      getTemplatePresentation().setDescription("Preferred lafs action");
+      getTemplatePresentation().setText(IdeBundle.message("preferred.theme.text"));
+      getTemplatePresentation().setDescription(IdeBundle.message("preferred.theme.description"));
     }
 
     @Override
@@ -1345,7 +1348,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       ListPopup popup = JBPopupFactory.getInstance().
-        createActionGroupPopup(null, getLafGroups(), e.getDataContext(), true, null, Integer.MAX_VALUE);
+        createActionGroupPopup(IdeBundle.message("preferred.theme.text"), getLafGroups(), e.getDataContext(), true, null, Integer.MAX_VALUE);
 
       HelpTooltip.setMasterPopup(e.getInputEvent().getComponent(), popup);
       Component component = e.getInputEvent().getComponent();
@@ -1372,10 +1375,8 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       }
 
       DefaultActionGroup myGroup = new DefaultActionGroup();
-      //myGroup.addAll(createThemeActions("Preferred Light Theme", lightLafs, false));
-      //myGroup.addAll(createThemeActions("Preferred Dark Theme", darkLafs, true));
-      myGroup.addAll(createThemeActions("Preferred Light", lightLafs, false));
-      myGroup.addAll(createThemeActions("Preferred Dark", darkLafs, true));
+      myGroup.addAll(createThemeActions(IdeBundle.message("preferred.theme.light.header"), lightLafs, false));
+      myGroup.addAll(createThemeActions(IdeBundle.message("preferred.theme.dark.header"), darkLafs, true));
       return myGroup;
     }
 
