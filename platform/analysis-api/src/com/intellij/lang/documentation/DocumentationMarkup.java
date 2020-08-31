@@ -3,6 +3,9 @@ package com.intellij.lang.documentation;
 
 import com.intellij.openapi.util.text.HtmlChunk;
 
+/**
+ * HTML building blocks for content layout in {@link DocumentationProvider#generateDoc}.
+ */
 public interface DocumentationMarkup {
   String DEFINITION_START = "<div class='definition'><pre>";
   String DEFINITION_END = "</pre></div>";
