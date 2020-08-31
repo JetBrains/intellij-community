@@ -460,11 +460,12 @@ public abstract class NlsInfo {
   private static boolean isPassthroughMethod(PsiMethod method) {
     PsiType type = method.getReturnType();
     PsiTypeParameter typeParameter = ObjectUtils.tryCast(PsiUtil.resolveClassInClassTypeOnly(type), PsiTypeParameter.class);
-    if (typeParameter == null || typeParameter.getExtendsList().getReferencedTypes().length > 0) return false;
-    for (PsiParameter parameter : method.getParameterList().getParameters()) {
-      PsiType parameterType = parameter.getType();
-      PsiType returnType = GenericsUtil.getVariableTypeByExpressionType(LambdaUtil.getFunctionalInterfaceReturnType(parameterType));
-      if (type.equals(returnType)) return true;
+    if (typeParameter != null && typeParameter.getExtendsList().getReferencedTypes().length == 0) {
+      for (PsiParameter parameter : method.getParameterList().getParameters()) {
+        PsiType parameterType = parameter.getType();
+        PsiType returnType = GenericsUtil.getVariableTypeByExpressionType(LambdaUtil.getFunctionalInterfaceReturnType(parameterType));
+        if (type.equals(returnType)) return true;
+      }
     }
     return isKotlinPassthroughMethod(method);
   }
@@ -476,6 +477,10 @@ public abstract class NlsInfo {
       if (parameters.length == 2 && isReceiver(method, parameters[0]) && parameters[1].getName().equals("block")) {
         return true;
       }
+    }
+    if (method.getName().equals("joinToString")) {
+      PsiClass aClass = method.getContainingClass();
+      return aClass != null && "kotlin.collections.CollectionsKt___CollectionsKt".equals(aClass.getQualifiedName());
     }
     return false;
   }
