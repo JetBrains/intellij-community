@@ -32,7 +32,12 @@ public final class PluginDropHandler extends CustomFileDropHandler {
     if (file == null) {
       return false;
     }
-    return PluginInstaller.installFromDisk(new InstalledPluginsTableModel(), file, PluginInstallCallbackDataKt::installPluginFromCallbackData, null);
+    return PluginInstaller.installFromDisk(
+      new InstalledPluginsTableModel(project),
+      file,
+      PluginInstallCallbackDataKt::installPluginFromCallbackData,
+      null
+    );
   }
 
   private static @Nullable Path getFile(@NotNull Transferable t) {

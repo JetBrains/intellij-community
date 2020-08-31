@@ -115,7 +115,7 @@ public class PluginManagerConfigurable
   private final JLabel myUpdateCounter = new CountComponent();
   private final CountIcon myCountIcon = new CountIcon();
 
-  private final MyPluginModel myPluginModel = new MyPluginModel();
+  private final MyPluginModel myPluginModel;
 
   private PluginUpdatesService myPluginUpdatesService;
 
@@ -132,7 +132,12 @@ public class PluginManagerConfigurable
 
   private Collection<IdeaPluginDescriptor> myInitUpdates;
 
+  public PluginManagerConfigurable(@Nullable Project project) {
+    myPluginModel = new MyPluginModel(project);
+  }
+
   public PluginManagerConfigurable() {
+    this((Project)null);
   }
 
   /**
@@ -140,6 +145,7 @@ public class PluginManagerConfigurable
    */
   @Deprecated
   public PluginManagerConfigurable(PluginManagerUISettings uiSettings) {
+    this();
   }
 
   @NotNull
@@ -1390,12 +1396,12 @@ public class PluginManagerConfigurable
   }
 
   public static void showPluginConfigurable(@Nullable Project project, IdeaPluginDescriptor @NotNull ... descriptors) {
-    PluginManagerConfigurable configurable = new PluginManagerConfigurable();
+    PluginManagerConfigurable configurable = new PluginManagerConfigurable(project);
     ShowSettingsUtil.getInstance().editConfigurable(project, configurable, () -> configurable.select(descriptors));
   }
 
   public static void showPluginConfigurable(@Nullable Project project, @NotNull Collection<IdeaPluginDescriptor> updates) {
-    PluginManagerConfigurable configurable = new PluginManagerConfigurable();
+    PluginManagerConfigurable configurable = new PluginManagerConfigurable(project);
     configurable.setInitUpdates(updates);
     ShowSettingsUtil.getInstance().editConfigurable(project, configurable);
   }
