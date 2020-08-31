@@ -81,8 +81,7 @@ data class ClientId(val value: String) {
          */
         @JvmStatic
         fun overrideLocalId(newId: ClientId) {
-            require(
-                localId == defaultLocalId)
+            require(localId == defaultLocalId)
             localId = newId
         }
 
@@ -174,6 +173,19 @@ data class ClientId(val value: String) {
             val currentId = currentOrNull
             return Processor { withClientId(currentId) { processor.process(it) } }
         }
+
+        /** Sets current ClientId.
+         * Please, TRY NOT TO USE THIS METHOD except cases you sure you know what it does and there is no another ways.
+         * In most cases it's convenient and preferable to use [withClientId].
+         */
+        @JvmStatic
+        fun trySetCurrentClientId(clientId: ClientId?) {
+            val clientIdService = ClientIdService.tryGetInstance()
+            if (clientIdService != null) {
+                clientIdService.clientIdValue = clientId?.value
+            }
+        }
+
     }
 }
 
