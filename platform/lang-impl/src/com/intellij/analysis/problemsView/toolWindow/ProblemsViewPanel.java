@@ -222,7 +222,7 @@ class ProblemsViewPanel extends OnePixelSplitter implements Disposable, DataProv
   @NotNull @NlsContexts.TabTitle String getName(int count) {
     String name = myName.get();
     if (count <= 0) return name;
-    return new HtmlBuilder().append(
+    return new HtmlBuilder().append(name).append(" ").append(
       HtmlChunk.tag("font").attr("color", toHtmlColor(UIUtil.getInactiveTextColor())).addText(String.valueOf(count))
     ).wrapWithHtmlBody().toString();
   }
