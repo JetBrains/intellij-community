@@ -67,6 +67,8 @@ public class ConstructorAnnotationsProcessor implements AstTransformationSupport
         return Collections.emptyList();
       }
       GrLightMethodBuilder mapConstructor = new GrLightMethodBuilder(typeDefinition);
+      Visibility visibility = getVisibility(mapConstructorAnno, mapConstructor, Visibility.PUBLIC);
+      mapConstructor.addModifier(visibility.toString());
       var specialParamHandling = GrAnnotationUtil.inferBooleanAttribute(mapConstructorAnno, "specialNamedArgHandling");
       String parameterRepresentation;
       if (Boolean.TRUE.equals(specialParamHandling)) {

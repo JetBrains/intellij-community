@@ -143,4 +143,26 @@ static void main(String[] args) {
   def x = new Rr(fff : "abc")
 }"""
   }
+
+  @Test
+  void 'reduced visibility'() {
+    fixture.addFileToProject 'other.groovy', """
+@groovy.transform.CompileStatic
+@groovy.transform.MapConstructor
+@groovy.transform.VisibilityOptions(constructor = Visibility.PRIVATE)
+class Cde {
+    String actionType
+    long referrerCode
+    boolean referrerUrl
+}"""
+    doTest"""
+class X {
+
+    @CompileStatic
+    static void main(String[] args) {
+        def x = new <error>Cde</error>(referrerCode : 10)
+    }
+
+}"""
+  }
 }
