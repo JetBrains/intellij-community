@@ -93,8 +93,8 @@ public class ShExplainShellIntention extends BaseIntentionAction {
       List<ShCompositeElement> commands = ContainerUtil.filter(parents, e -> (e instanceof ShCommand || e instanceof ShCommandsList) && strings.add(e.getText()));
 
       if (commands.isEmpty()) {
-        CommonRefactoringUtil.showErrorHint(project, editor, ShBundle.message("sh.explain.nothing.to.explain"), ShBundle.message(
-          "sh.explain.nothing.to.explain"), "");
+        CommonRefactoringUtil.showErrorHint(project, editor, ShBundle.message("sh.explain.message.nothing.to.explain"),
+                                            ShBundle.message("sh.explain.title.nothing.to.explain"), "");
       }
       else {
         IntroduceTargetChooser.showChooser(editor, commands, new Pass<PsiElement>() {

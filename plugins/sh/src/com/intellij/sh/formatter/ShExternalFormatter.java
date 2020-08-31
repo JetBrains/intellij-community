@@ -78,18 +78,18 @@ public class ShExternalFormatter implements ExternalFormatProcessor {
     if (ShSettings.I_DO_MIND_SUPPLIER.get().equals(shFmtExecutable)) return;
 
     if (!ShShfmtFormatterUtil.isValidPath(shFmtExecutable)) {
-      Notification notification = new Notification(NOTIFICATION_GROUP_ID, message("sh.title.case"), message("sh.fmt.install.question"),
+      Notification notification = new Notification(NOTIFICATION_GROUP_ID, message("sh.shell.script"), message("sh.fmt.install.question"),
                                                    NotificationType.INFORMATION);
       notification.addAction(
         NotificationAction.createSimple(ShBundle.messagePointer("sh.install"), () -> {
           notification.expire();
           ShShfmtFormatterUtil.download(project,
                                         () -> Notifications.Bus
-                                          .notify(new Notification(NOTIFICATION_GROUP_ID, message("sh.title.case"),
+                                          .notify(new Notification(NOTIFICATION_GROUP_ID, message("sh.shell.script"),
                                                                    message("sh.fmt.success.install"),
                                                                    NotificationType.INFORMATION)),
                                         () -> Notifications.Bus
-                                          .notify(new Notification(NOTIFICATION_GROUP_ID, message("sh.title.case"),
+                                          .notify(new Notification(NOTIFICATION_GROUP_ID, message("sh.shell.script"),
                                                                    message("sh.fmt.cannot.download"),
                                                                    NotificationType.ERROR)));
         }));

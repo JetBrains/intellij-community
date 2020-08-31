@@ -183,17 +183,17 @@ public class ShShfmtFormatterUtil {
   private static void checkForUpdateInBackgroundThread(@NotNull Project project) {
     if (ApplicationManager.getApplication().isDispatchThread()) LOG.error("Must not be in event-dispatch thread");
     if (!isNewVersionAvailable()) return;
-    Notification notification = new Notification(NOTIFICATION_GROUP_ID, message("sh.title.case"), message("sh.fmt.update.question"),
+    Notification notification = new Notification(NOTIFICATION_GROUP_ID, message("sh.shell.script"), message("sh.fmt.update.question"),
                                                  NotificationType.INFORMATION);
     notification.addAction(
       NotificationAction.createSimple(messagePointer("sh.update"), () -> {
         notification.expire();
         download(project,
                  () -> Notifications.Bus
-                   .notify(new Notification(NOTIFICATION_GROUP_ID, message("sh.title.case"), message("sh.fmt.success.update"),
+                   .notify(new Notification(NOTIFICATION_GROUP_ID, message("sh.shell.script"), message("sh.fmt.success.update"),
                                             NotificationType.INFORMATION)),
                  () -> Notifications.Bus
-                   .notify(new Notification(NOTIFICATION_GROUP_ID, message("sh.title.case"), message("sh.fmt.cannot.update"),
+                   .notify(new Notification(NOTIFICATION_GROUP_ID, message("sh.shell.script"), message("sh.fmt.cannot.update"),
                                             NotificationType.ERROR)),
                  true);
       }));

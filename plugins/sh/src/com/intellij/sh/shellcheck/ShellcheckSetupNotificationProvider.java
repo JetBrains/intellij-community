@@ -42,10 +42,10 @@ public class ShellcheckSetupNotificationProvider extends EditorNotifications.Pro
         EditorNotifications.getInstance(project).updateAllNotifications();
         PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
         if (psiFile != null) DaemonCodeAnalyzer.getInstance(project).restart(psiFile);
-        Notifications.Bus.notify(new Notification(message("sh.shell.script"), message("sh.title.case"), message("sh.shellcheck.success.install"),
+        Notifications.Bus.notify(new Notification(message("sh.shell.script"), message("sh.shell.script"), message("sh.shellcheck.success.install"),
                                                   NotificationType.INFORMATION));
       };
-      Runnable onFailure = () -> Notifications.Bus.notify(new Notification(message("sh.shell.script"), message("sh.title.case"),
+      Runnable onFailure = () -> Notifications.Bus.notify(new Notification(message("sh.shell.script"), message("sh.shell.script"),
                                                                            message("sh.shellcheck.cannot.download"),
                                                                            NotificationType.ERROR));
       panel.createActionLabel(message("sh.install"), () -> ShShellcheckUtil.download(null, onSuccess, onFailure));

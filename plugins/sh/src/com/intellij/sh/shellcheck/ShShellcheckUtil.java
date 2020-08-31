@@ -201,17 +201,17 @@ public class ShShellcheckUtil {
   private static void checkForUpdateInBackgroundThread(@NotNull Project project) {
     if (ApplicationManager.getApplication().isDispatchThread()) LOG.error("Must not be in event-dispatch thread");
     if (!isNewVersionAvailable()) return;
-    Notification notification = new Notification(NOTIFICATION_GROUP_ID, message("sh.title.case"), message("sh.shellcheck.update.question"),
+    Notification notification = new Notification(NOTIFICATION_GROUP_ID, message("sh.shell.script"), message("sh.shellcheck.update.question"),
                                                  NotificationType.INFORMATION);
     notification.addAction(
       NotificationAction.createSimple(messagePointer("sh.update"), () -> {
         notification.expire();
         download(project,
                  () -> Notifications.Bus
-                   .notify(new Notification(NOTIFICATION_GROUP_ID, message("sh.title.case"), message("sh.shellcheck.success.update"),
+                   .notify(new Notification(NOTIFICATION_GROUP_ID, message("sh.shell.script"), message("sh.shellcheck.success.update"),
                                             NotificationType.INFORMATION)),
                  () -> Notifications.Bus
-                   .notify(new Notification(NOTIFICATION_GROUP_ID, message("sh.title.case"), message("sh.shellcheck.cannot.update"),
+                   .notify(new Notification(NOTIFICATION_GROUP_ID, message("sh.shell.script"), message("sh.shellcheck.cannot.update"),
                                             NotificationType.ERROR)),
                  true);
       }));
