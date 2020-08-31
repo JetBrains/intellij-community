@@ -610,7 +610,7 @@ public final class Foundation {
     return new ID(pointerType.getPointer().getLong(0));
   }
 
-  private static Object[] convertTypes(Object @NotNull [] v) {
+  public static Object[] convertTypes(Object @NotNull [] v) {
     final Object[] result = new Object[v.length + 1];
     for (int i = 0; i < v.length; i++) {
       result[i] = convertType(v[i]);
