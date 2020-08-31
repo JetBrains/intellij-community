@@ -23,7 +23,7 @@ public class ProjectFormatPanel {
     myStorageFormatCombo.insertItemAt(StorageFormat.FILE_BASED, 1);
 
     final PropertiesComponent instance = PropertiesComponent.getInstance();
-    final String savedValue = instance.getValue(STORAGE_FORMAT_PROPERTY, StorageFormat.DIR_BASED.name());
+    final String savedValue = instance.getValue(STORAGE_FORMAT_PROPERTY, StorageFormat.DIR_BASED.getTag());
     myStorageFormatCombo.setSelectedItem(StorageFormat.of(savedValue));
 
     final SimpleListCellRenderer<StorageFormat> renderer = SimpleListCellRenderer.create(StorageFormat.FILE_BASED.getTitle(),
@@ -45,7 +45,7 @@ public class ProjectFormatPanel {
     context.setProjectStorageFormat(format);
     final StorageFormat storageFormat = StorageFormat.of(format);
     final PropertiesComponent instance = PropertiesComponent.getInstance();
-    instance.setValue(STORAGE_FORMAT_PROPERTY, storageFormat.name(), StorageFormat.DIR_BASED.name());
+    instance.setValue(STORAGE_FORMAT_PROPERTY, storageFormat.getTag(), StorageFormat.DIR_BASED.getTag());
   }
 
   public void setVisible(boolean visible) {
@@ -62,21 +62,29 @@ public class ProjectFormatPanel {
   }
 
   public enum StorageFormat implements LocalizationAware {
-    DIR_BASED{
+    DIR_BASED(".idea (directory based)") {
       @Override public String getTitle(){
         return JavaUiBundle.message("label.directory.based", Project.DIRECTORY_STORE_FOLDER);
       }
     },
-    FILE_BASED {
+    FILE_BASED(".ipr (file based)") {
       @Override public String getTitle(){
         return JavaUiBundle.message("label.ipr.file.based");
       }
     };
 
-    private static @NotNull StorageFormat of(@NotNull final String name) {
-      // due to the uncertainty of what might have been saved in `PropertiesComponent`
-      // the `StorageFormat::valueOf` method cannot be used here safely.
-      if (DIR_BASED.name().equals(name)) return DIR_BASED;
+    private final String myTag;
+
+    StorageFormat(String tag) {
+      myTag = tag;
+    }
+
+    String getTag() {
+      return myTag;
+    }
+
+    private static @NotNull StorageFormat of(@NotNull final String tag) {
+      if (DIR_BASED.getTag().equals(tag)) return DIR_BASED;
       return FILE_BASED;
     }
 
