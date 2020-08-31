@@ -7,10 +7,13 @@ import com.intellij.execution.process.OSProcessHandler
 import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessOutputTypes
+import com.intellij.ide.plugins.PluginInstaller
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.notification.*
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationEx
@@ -38,10 +41,13 @@ import com.intellij.testFramework.LightVirtualFile
 import com.intellij.util.PathUtil
 import com.intellij.util.Restarter
 import com.intellij.util.TimeoutUtil
+import com.intellij.util.io.inputStream
+import com.intellij.util.io.isFile
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.util.PsiUtil
 import java.io.File
+import java.nio.file.Paths
 import java.util.*
 import kotlin.collections.LinkedHashSet
 
@@ -108,7 +114,6 @@ internal open class UpdateIdeFromSourcesAction
     }
 
     val deployDir = "$devIdeaHome/out/deploy"
-    val logFilePath = "$deployDir/log/debug.log"
     val distRelativePath = "dist"
     val backupDir = "$devIdeaHome/out/backup-before-update-from-sources"
     val params = createScriptJavaParameters(devIdeaHome, project, deployDir, distRelativePath, scriptFile,
@@ -117,7 +122,7 @@ internal open class UpdateIdeFromSourcesAction
       .buildAllModules()
       .onSuccess {
         if (!it.isAborted && !it.hasErrors()) {
-          runUpdateScript(params, project, workIdeHome, "$deployDir/$distRelativePath", backupDir, logFilePath, restartAutomatically)
+          runUpdateScript(params, project, workIdeHome, deployDir, distRelativePath, backupDir, restartAutomatically)
         }
       }
   }
@@ -139,10 +144,11 @@ internal open class UpdateIdeFromSourcesAction
   private fun runUpdateScript(params: JavaParameters,
                               project: Project,
                               workIdeHome: String,
-                              builtDistPath: String,
+                              deployDirPath: String,
+                              distRelativePath: String,
                               backupDir: String,
-                              logFilePath: String,
                               restartAutomatically: Boolean) {
+    val builtDistPath = "$deployDirPath/$distRelativePath"
     object : Task.Backgroundable(project, DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.title"), true) {
       override fun run(indicator: ProgressIndicator) {
         indicator.text = "Updating IDE from sources..."
@@ -176,7 +182,7 @@ internal open class UpdateIdeFromSourcesAction
                   FileEditorManager.getInstance(project).openFile(LightVirtualFile("output.txt", output.joinToString("")), true)
                 })
                 .addAction(NotificationAction.createSimple(DevKitBundle.message("action.UpdateIdeFromSourcesAction.notification.action.view.debug.log")) {
-                  val logFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(logFilePath) ?: return@createSimple
+                  val logFile = LocalFileSystem.getInstance().refreshAndFindFileByPath("$deployDirPath/log/debug.log") ?: return@createSimple
                   logFile.refresh(true, false)
                   FileEditorManager.getInstance(project).openFile(logFile, true)
                 })
@@ -191,10 +197,10 @@ internal open class UpdateIdeFromSourcesAction
 
             val command = generateUpdateCommand(builtDistPath, workIdeHome)
             if (restartAutomatically) {
-              ApplicationManager.getApplication().invokeLater { scheduleRestart(command, project) }
+              ApplicationManager.getApplication().invokeLater { scheduleRestart(command, deployDirPath, project) }
             }
             else {
-              showRestartNotification(command, project)
+              showRestartNotification(command, deployDirPath, project)
             }
           }
         })
@@ -207,13 +213,13 @@ internal open class UpdateIdeFromSourcesAction
     }.queue()
   }
 
-  private fun showRestartNotification(command: Array<String>, project: Project) {
+  private fun showRestartNotification(command: Array<String>, deployDirPath: String, project: Project) {
     notificationGroup.createNotification(title = DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.success.title"),
                                          content = DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.success.content"),
-                                         listener = NotificationListener { _, _ -> restartWithCommand(command) }).notify(project)
+                                         listener = NotificationListener { _, _ -> restartWithCommand(command, deployDirPath) }).notify(project)
   }
 
-  private fun scheduleRestart(command: Array<String>, project: Project) {
+  private fun scheduleRestart(command: Array<String>, deployDirPath: String, project: Project) {
     object : Task.Modal(project, DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.success.title"), true) {
       override fun run(indicator: ProgressIndicator) {
         indicator.isIndeterminate = false
@@ -226,11 +232,11 @@ internal open class UpdateIdeFromSourcesAction
             TimeoutUtil.sleep(100)
           }
         }
-        restartWithCommand(command)
+        restartWithCommand(command, deployDirPath)
       }
 
       override fun onCancel() {
-        showRestartNotification(command, project)
+        showRestartNotification(command, deployDirPath, project)
       }
     }.setCancelText(DevKitBundle.message("action.UpdateIdeFromSourcesAction.button.postpone")).queue()
   }
@@ -316,9 +322,38 @@ internal open class UpdateIdeFromSourcesAction
     return arrayOf("/bin/sh", "-c", command.joinToString(" && "))
   }
 
-  private fun restartWithCommand(command: Array<String>) {
+  private fun restartWithCommand(command: Array<String>, deployDirPath: String) {
+    updatePlugins(deployDirPath)
     Restarter.doNotLockInstallFolderOnRestart()
     (ApplicationManager.getApplication() as ApplicationImpl).restart(ApplicationEx.FORCE_EXIT or ApplicationEx.EXIT_CONFIRMED or ApplicationEx.SAVE, command)
+  }
+
+  private fun updatePlugins(deployDirPath: String) {
+    val pluginsDir = Paths.get(deployDirPath).resolve("artifacts/${ApplicationInfo.getInstance().build.productCode}-plugins")
+    val pluginsXml = pluginsDir.resolve("plugins.xml")
+    if (!pluginsXml.isFile()) {
+      LOG.warn("Cannot read non-bundled plugins from $pluginsXml, they won't be updated")
+      return
+    }
+    val plugins = try {
+      pluginsXml.inputStream().reader().use {
+        MarketplaceRequests.parsePluginList(it)
+      }
+    }
+    catch (e: Exception) {
+      LOG.error("Failed to parse $pluginsXml", e)
+      return
+    }
+    val existingCustomPlugins =
+      PluginManagerCore.getLoadedPlugins().asSequence().filter { !it.isBundled }.associateBy { it.pluginId.idString }
+    LOG.debug("Existing custom plugins: $existingCustomPlugins")
+    val pluginsToUpdate =
+      plugins.mapNotNull { node -> existingCustomPlugins[node.pluginId.idString]?.let { it to node } }
+    for ((existing, update) in pluginsToUpdate) {
+      val pluginFile = pluginsDir.resolve(update.downloadUrl)
+      LOG.debug("Adding update command: ${existing.pluginPath} to $pluginFile")
+      PluginInstaller.installAfterRestart(pluginFile, false, existing.pluginPath, update)
+    }
   }
 
   private fun createScriptJavaParameters(devIdeaHome: String,
