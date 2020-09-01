@@ -5,7 +5,7 @@ import com.intellij.execution.ExecutionListener;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
-import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -26,7 +26,7 @@ import java.util.Objects;
  * This class mutes focus stealing prevention mechanism on Windows, while at least one debug session is active, to make 'Focus application
  * on breakpoint' setting work as expected.
  */
-public class DebuggerFocusManager implements ExecutionListener, RegistryValueListener, ProjectManagerListener, Disposable {
+public class DebuggerFocusManager implements ExecutionListener, RegistryValueListener, ProjectManagerListener {
   private static final Logger LOG = Logger.getInstance(DebuggerFocusManager.class);
   private static final Key<List<ExecutionEnvironment>> ACTIVE_EXECUTIONS = Key.create("DebuggerFocusManager.active.executions");
   private final RegistryValue mySetting = Registry.get("debugger.mayBringFrameToFrontOnBreakpoint");
@@ -34,12 +34,10 @@ public class DebuggerFocusManager implements ExecutionListener, RegistryValueLis
   private boolean myFocusStealingEnabled;
 
   private DebuggerFocusManager() {
-    mySetting.addListener(this, this);
-    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(ProjectManager.TOPIC, this);
+    Application application = ApplicationManager.getApplication();
+    mySetting.addListener(this, application);
+    application.getMessageBus().connect().subscribe(ProjectManager.TOPIC, this);
   }
-
-  @Override
-  public void dispose() {}
 
   @Override
   public void processStartScheduled(@NotNull String executorId, @NotNull ExecutionEnvironment env) {
