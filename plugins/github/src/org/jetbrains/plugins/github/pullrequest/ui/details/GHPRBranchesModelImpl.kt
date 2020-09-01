@@ -33,10 +33,13 @@ internal class GHPRBranchesModelImpl(private val valueModel: SingleValueModel<GH
   }
 
   private fun registerVCSLogDataPackListener() {
-    VcsProjectLog.runWhenLogIsReady(localRepository.project) { _, logManager ->
+    val project = localRepository.project
+    VcsProjectLog.runWhenLogIsReady(project) {
+      val log = VcsProjectLog.getInstance(project)
+      val dataManager = log.dataManager ?: return@runWhenLogIsReady
       ApplicationManager.getApplication()
         .invokeLater({
-                       with(logManager.dataManager) {
+                       with(dataManager) {
                          addDataPackChangeListener(dataPackListener)
                          Disposer.register(parentDisposable, Disposable {
                            removeDataPackChangeListener(dataPackListener)
