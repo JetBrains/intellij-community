@@ -79,7 +79,7 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
 
     // sign in automatically on application startup.
     launch(wsLifetime, Ui) {
-      if (!autoSignIn(wsLifetime)) {
+      if (autoSignIn(wsLifetime) == AutoSignInResult.NOT_AUTHORIZED) {
         SpaceAuthNotifier.notifyDisconnected()
       }
     }
@@ -184,17 +184,20 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
     settings.serverSettings = settings.serverSettings.copy(enabled = false)
   }
 
-  private suspend fun autoSignIn(wsLifetime: Lifetime): Boolean {
+  private suspend fun autoSignIn(wsLifetime: Lifetime): AutoSignInResult {
     val serverSettings = SpaceSettings.getInstance().serverSettings
     val server = serverSettings.server
-    if (serverSettings.enabled && server.isNotBlank()) {
-      val newManager = createWorkspaceManager(wsLifetime, server)
-      if (newManager.signInNonInteractive()) {
-        manager.value = newManager
-        return true
-      }
+    if (!serverSettings.enabled || server.isBlank()) {
+      return AutoSignInResult.NOT_AUTHORIZED_BEFORE
     }
-    return false
+    val newManager = createWorkspaceManager(wsLifetime, server)
+    return if (newManager.signInNonInteractive()) {
+      manager.value = newManager
+      AutoSignInResult.AUTHORIZED
+    }
+    else {
+      AutoSignInResult.NOT_AUTHORIZED
+    }
   }
 
   private fun createWorkspaceManager(lifetime: Lifetime, server: String): WorkspaceManager {
@@ -209,6 +212,12 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
   private fun getInitialState(): SpaceLoginState {
     val workspace = workspace.value ?: return SpaceLoginState.Disconnected("")
     return SpaceLoginState.Connected(workspace.client.server, workspace)
+  }
+
+  private enum class AutoSignInResult {
+    NOT_AUTHORIZED_BEFORE,
+    NOT_AUTHORIZED,
+    AUTHORIZED
   }
 
   companion object {
