@@ -5,7 +5,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.WritingAccessProvider;
 import org.jetbrains.annotations.NotNull;
@@ -28,14 +28,15 @@ final class ChangelistConflictAccessProvider extends WritingAccessProvider {
   @NotNull
   @Override
   public Collection<VirtualFile> requestWriting(@NotNull Collection<? extends VirtualFile> files) {
-    ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
-    ChangelistConflictTracker.Options options = changeListManager.getConflictTracker().getOptions();
+    ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
+    ChangelistConflictTracker conflictTracker = ChangelistConflictTracker.getInstance(myProject);
+    ChangelistConflictTracker.Options options = conflictTracker.getOptions();
     if (!options.SHOW_DIALOG) {
       return Collections.emptyList();
     }
     ArrayList<VirtualFile> denied = new ArrayList<>();
     for (VirtualFile file : files) {
-      if (file != null && !changeListManager.getConflictTracker().isWritingAllowed(file)) {
+      if (file != null && !conflictTracker.isWritingAllowed(file)) {
         denied.add(file);
       }
     }

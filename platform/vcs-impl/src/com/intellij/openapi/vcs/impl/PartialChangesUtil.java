@@ -118,7 +118,7 @@ public final class PartialChangesUtil {
   public static <T> T computeUnderChangeList(@NotNull Project project,
                                              @Nullable LocalChangeList targetChangeList,
                                              @NotNull Computable<T> task) {
-    ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(project);
+    ChangeListManagerEx changeListManager = ChangeListManagerEx.getInstanceEx(project);
     LocalChangeList oldDefaultList = changeListManager.getDefaultChangeList();
 
     if (targetChangeList == null || targetChangeList.equals(oldDefaultList)) {
@@ -126,7 +126,7 @@ public final class PartialChangesUtil {
     }
 
     switchChangeList(changeListManager, targetChangeList, oldDefaultList);
-    ChangelistConflictTracker clmConflictTracker = changeListManager.getConflictTracker();
+    ChangelistConflictTracker clmConflictTracker = ChangelistConflictTracker.getInstance(project);
     try {
       clmConflictTracker.setIgnoreModifications(true);
       return task.compute();
@@ -140,7 +140,7 @@ public final class PartialChangesUtil {
   public static <T> T computeUnderChangeListSync(@NotNull Project project,
                                                  @Nullable LocalChangeList targetChangeList,
                                                  @NotNull Computable<T> task) {
-    ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(project);
+    ChangeListManagerEx changeListManager = ChangeListManagerEx.getInstanceEx(project);
     LocalChangeList oldDefaultList = changeListManager.getDefaultChangeList();
 
     if (targetChangeList == null) {
@@ -148,7 +148,7 @@ public final class PartialChangesUtil {
     }
 
     switchChangeList(changeListManager, targetChangeList, oldDefaultList);
-    ChangelistConflictTracker clmConflictTracker = changeListManager.getConflictTracker();
+    ChangelistConflictTracker clmConflictTracker = ChangelistConflictTracker.getInstance(project);
     try {
       clmConflictTracker.setIgnoreModifications(true);
       return task.compute();

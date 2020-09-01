@@ -8,9 +8,9 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.options.binding.BindControl;
 import com.intellij.openapi.options.binding.BindableConfigurable;
 import com.intellij.openapi.options.binding.ControlBinder;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsApplicationSettings;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.components.JBList;
@@ -48,11 +48,15 @@ public class ChangelistConflictConfigurable extends BindableConfigurable impleme
   private final ChangelistConflictTracker myConflictTracker;
   private final VcsApplicationSettings myVcsApplicationSettings;
 
-  public ChangelistConflictConfigurable(ChangeListManagerImpl manager) {
-    super(new ControlBinder(manager.getConflictTracker().getOptions()));
+  public ChangelistConflictConfigurable(Project project) {
+    this(ChangelistConflictTracker.getInstance(project));
+  }
+
+  public ChangelistConflictConfigurable(ChangelistConflictTracker conflictTracker) {
+    super(new ControlBinder(conflictTracker.getOptions()));
     myVcsApplicationSettings = VcsApplicationSettings.getInstance();
 
-    myConflictTracker = manager.getConflictTracker();
+    myConflictTracker = conflictTracker;
 
     myClearButton.addActionListener(new ActionListener() {
       @Override

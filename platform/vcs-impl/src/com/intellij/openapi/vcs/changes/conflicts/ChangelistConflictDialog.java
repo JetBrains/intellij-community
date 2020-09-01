@@ -6,7 +6,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.readOnlyHandler.FileListRenderer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.CollectionListModel;
@@ -50,8 +51,8 @@ public class ChangelistConflictDialog extends DialogWrapper {
     myFileList.setCellRenderer(new FileListRenderer());
     myFileList.setModel(new CollectionListModel<>(conflicts));
 
-    ChangeListManagerImpl manager = ChangeListManagerImpl.getInstanceImpl(myProject);
-    ChangelistConflictResolution resolution = manager.getConflictTracker().getOptions().LAST_RESOLUTION;
+    ChangelistConflictResolution resolution = ChangelistConflictTracker.getInstance(myProject).getOptions().LAST_RESOLUTION;
+    LocalChangeList defaultChangeList = ChangeListManager.getInstance(myProject).getDefaultChangeList();
 
     if (changeLists.size() > 1) {
       mySwitchToChangelistRadioButton.setEnabled(false);
@@ -60,7 +61,7 @@ public class ChangelistConflictDialog extends DialogWrapper {
       }
     }
     mySwitchToChangelistRadioButton.setText(VcsBundle.message("switch.to.changelist", changeLists.iterator().next().getName()));
-    myMoveChangesToActiveRadioButton.setText(VcsBundle.message("move.to.changelist", manager.getDefaultChangeList().getName()));
+    myMoveChangesToActiveRadioButton.setText(VcsBundle.message("move.to.changelist", defaultChangeList.getName()));
 
     switch (resolution) {
 
@@ -100,8 +101,7 @@ public class ChangelistConflictDialog extends DialogWrapper {
     return new Action[] { new AbstractAction(VcsBundle.message("changes.configure")) {
       @Override
       public void actionPerformed(ActionEvent e) {
-        ChangeListManagerImpl manager = ChangeListManagerImpl.getInstanceImpl(myProject);
-        ShowSettingsUtil.getInstance().editConfigurable(myPanel, new ChangelistConflictConfigurable(manager));
+        ShowSettingsUtil.getInstance().editConfigurable(myPanel, new ChangelistConflictConfigurable(myProject));
       }
     }};
   }

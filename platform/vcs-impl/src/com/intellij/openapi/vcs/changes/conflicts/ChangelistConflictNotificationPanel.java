@@ -5,7 +5,10 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.InplaceButton;
@@ -60,8 +63,7 @@ public final class ChangelistConflictNotificationPanel extends EditorNotificatio
       @Override
       public void actionPerformed(ActionEvent e) {
 
-        ShowSettingsUtil.getInstance().editConfigurable(myTracker.getProject(),
-                                                        new ChangelistConflictConfigurable((ChangeListManagerImpl)manager));
+        ShowSettingsUtil.getInstance().editConfigurable(myTracker.getProject(), new ChangelistConflictConfigurable(tracker));
       }
     }));
   }

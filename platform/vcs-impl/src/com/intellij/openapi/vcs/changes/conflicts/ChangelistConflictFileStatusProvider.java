@@ -6,7 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusFactory;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.impl.FileStatusProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ThreeState;
@@ -24,22 +24,22 @@ public final class ChangelistConflictFileStatusProvider implements FileStatusPro
   public static final FileStatus CHANGELIST_CONFLICT = FileStatusFactory.getInstance()
     .createFileStatus("changelistConflict", VcsBundle.messagePointer("settings.file.status.color.changelist.conflict"));
 
-  private final ChangeListManagerImpl myChangeListManager;
+  private final Project myProject;
 
   public ChangelistConflictFileStatusProvider(@NotNull Project project) {
-    myChangeListManager = ChangeListManagerImpl.getInstanceImpl(project);
+    myProject = project;
   }
 
   @Override
   @Nullable
   public FileStatus getFileStatus(@NotNull VirtualFile virtualFile) {
-    ChangelistConflictTracker conflictTracker = myChangeListManager.getConflictTracker();
+    ChangelistConflictTracker conflictTracker = ChangelistConflictTracker.getInstance(myProject);
     ChangelistConflictTracker.Options options = conflictTracker.getOptions();
     if (options.HIGHLIGHT_CONFLICTS && conflictTracker.hasConflict(virtualFile)) {
       return CHANGELIST_CONFLICT;
     }
     else if (options.HIGHLIGHT_NON_ACTIVE_CHANGELIST) {
-      FileStatus status = myChangeListManager.getStatus(virtualFile);
+      FileStatus status = ChangeListManager.getInstance(myProject).getStatus(virtualFile);
       if (status == FileStatus.MODIFIED || status == FileStatus.ADDED) {
         if (!conflictTracker.isFromActiveChangelist(virtualFile)) {
           return status == FileStatus.MODIFIED ? MODIFIED_OUTSIDE : ADDED_OUTSIDE;
