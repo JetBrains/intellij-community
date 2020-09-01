@@ -69,7 +69,7 @@ interface PartialLocalLineStatusTracker : LineStatusTracker<LocalRange> {
 
   fun hasPartialChangesToCommit(): Boolean
 
-  @CalledInAwt
+  @RequiresEdt
   fun handlePartialCommit(side: Side, changelistIds: List<String>, honorExcludedFromCommit: Boolean): PartialCommitHelper
   fun getPartialCommitContent(changelistIds: List<String>, honorExcludedFromCommit: Boolean): PartialCommitContent?
   fun rollbackChanges(changelistsIds: List<String>, honorExcludedFromCommit: Boolean)
