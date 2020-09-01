@@ -46,6 +46,11 @@ abstract class AbstractI18nizeQuickFix<T extends UExpression> implements LocalQu
   }
 
   @Override
+  public boolean startInWriteAction() {
+    return false;
+  }
+
+  @Override
   public final void performI18nization(final PsiFile psiFile,
                                        final Editor editor,
                                        T literalExpression,

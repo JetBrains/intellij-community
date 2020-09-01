@@ -35,11 +35,6 @@ public class I18nizeQuickFix extends AbstractI18nizeQuickFix<UInjectionHost> {
   }
 
   @Override
-  public boolean startInWriteAction() {
-    return false;
-  }
-
-  @Override
   @NotNull
   public String getFamilyName() {
     return JavaI18nBundle.message("inspection.i18n.quickfix");
