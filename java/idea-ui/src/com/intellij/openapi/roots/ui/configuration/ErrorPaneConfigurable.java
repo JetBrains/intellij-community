@@ -22,7 +22,7 @@ import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import com.intellij.xml.util.XmlStringUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -36,6 +36,7 @@ import java.awt.event.MouseEvent;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.IntStream;
 
 /**
  * @author Konstantin Bulenkov
@@ -165,38 +166,63 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
   @Contract(pure = true)
   private static HtmlChunk @NotNull[] getErrorDescriptions(final ConfigurationError @NotNull[] errors) {
     final int limit = Math.min(errors.length, 100);
-    final HtmlChunk[] liTags = new HtmlChunk[limit];
-    for (int i = 0; i < limit; i++) {
-      final ConfigurationError error = errors[i];
-      String description;
-      if (error instanceof ProjectConfigurationProblem) {
-        //todo[nik] pass ProjectStructureProblemDescription directly and get rid of ConfigurationError at all
-        ProjectStructureProblemDescription problemDescription = ((ProjectConfigurationProblem)error).getProblemDescription();
-        description = problemDescription.getDescription();
-        if (description == null) {
-          description = problemDescription.getMessage(false);
-          if (problemDescription.canShowPlace()) {
-            ProjectStructureElement place = problemDescription.getPlace().getContainingElement();
-            final String link = HtmlChunk.link("http://navigate/" + i, place.getPresentableName()).toString();
-            description = XmlStringUtil.convertToHtmlContent(description);
-            description = place.getTypeName() + " " + link + ": " + StringUtil.decapitalize(description);
-          }
-        }
-      }
-      else {
-        description = error.getDescription();
-      }
-      if (XmlStringUtil.isWrappedInHtml(description)) {
-        description = XmlStringUtil.stripHtml(description);
-      }
-      if (error.canBeFixed()) {
-        final String text = "[" + JavaUiBundle.message("fix.link.text") + "]";
-        description += " " + HtmlChunk.link("http://fix/" + i, text);
-      }
-      final HtmlChunk li = HtmlChunk.raw("<li>" + description + "</li>");
-      liTags[i] = li;
+
+    final Integer[] indices = IntStream.range(0, limit).boxed().toArray(Integer[]::new);
+
+    return StreamEx.zip(indices, errors, ConfigurationErrorWithIndex::new)
+      .map(ErrorPaneConfigurable::getErrorDescriptionTag)
+      .toArray(HtmlChunk[]::new);
+  }
+
+  private static final class ConfigurationErrorWithIndex {
+    private final int myIdx;
+    private final @NotNull ConfigurationError myError;
+
+    private ConfigurationErrorWithIndex(final int idx, @NotNull final ConfigurationError error) {
+      myIdx = idx;
+      myError = error;
     }
-    return liTags;
+  }
+
+  @Contract(pure = true)
+  @NotNull
+  private static HtmlChunk getErrorDescriptionTag(@NotNull final ConfigurationErrorWithIndex errorIndex) {
+    final int index = errorIndex.myIdx;
+    final ConfigurationError error = errorIndex.myError ;
+
+    final HtmlChunk description = getErrorDescription(index, error);
+
+    if (!error.canBeFixed()) return description.wrapWith("li");
+
+    final String text = "[" + JavaUiBundle.message("fix.link.text") + "]";
+
+    return new HtmlBuilder().append(description)
+      .append(HtmlChunk.link("http://fix/" + index, text))
+      .wrapWith("li");
+  }
+
+  @Contract(pure = true)
+  @NotNull
+  private static HtmlChunk getErrorDescription(final int index, @NotNull final ConfigurationError error) {
+    //todo[nik] pass ProjectStructureProblemDescription directly and get rid of ConfigurationError at all
+    if (!(error instanceof ProjectConfigurationProblem)) return error.getDescription();
+
+    final ProjectStructureProblemDescription problemDescription = ((ProjectConfigurationProblem)error).getProblemDescription();
+    if (problemDescription.getDescription() != null) return problemDescription.getDescription();
+
+    if (!problemDescription.canShowPlace()) return HtmlChunk.text(problemDescription.getMessage());
+
+    final String message = StringUtil.decapitalize(problemDescription.getMessage());
+
+    final ProjectStructureElement place = problemDescription.getPlace().getContainingElement();
+    final HtmlChunk link = HtmlChunk.link("http://navigate/" + index, place.getPresentableName());
+
+    return new HtmlBuilder().append(place.getTypeName())
+      .append(" ")
+      .append(link)
+      .append(": ")
+      .append(message)
+      .toFragment();
   }
 
   @Nls

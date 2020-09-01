@@ -16,24 +16,42 @@
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.intellij.openapi.util.NlsContexts.DetailedDescription;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.Comparator;
 
 public abstract class ConfigurationError implements Comparable<ConfigurationError> {
   private final String myPlainTextTitle;
-  private final @DetailedDescription String myDescription;
+  private final HtmlChunk myDescription;
   private boolean myIgnored;
 
+  protected ConfigurationError(final String plainTextTitle, final @NotNull HtmlChunk description) {
+    this(plainTextTitle, description, false);
+  }
+
+  protected ConfigurationError(final String plainTextTitle, final @NotNull HtmlChunk description, final boolean ignored) {
+    myPlainTextTitle = plainTextTitle;
+    myDescription = description;
+    myIgnored = ignored;
+  }
+
+  /**
+   * @deprecated Use the constructors with {@link HtmlChunk} for description
+   */
+  @Deprecated
   protected ConfigurationError(final String plainTextTitle, final @DetailedDescription String description) {
     this(plainTextTitle, description, false);
   }
 
+  /**
+   * @deprecated Use the constructors with {@link HtmlChunk} for description
+   */
+  @Deprecated
   protected ConfigurationError(final String plainTextTitle, final @DetailedDescription String description, final boolean ignored) {
-    myPlainTextTitle = plainTextTitle;
-    myDescription = description;
-    myIgnored = ignored;
+    this(plainTextTitle, HtmlChunk.raw(description), ignored);
   }
 
   @NotNull
@@ -42,7 +60,7 @@ public abstract class ConfigurationError implements Comparable<ConfigurationErro
   }
 
   @NotNull
-  public @DetailedDescription String getDescription() {
+  public HtmlChunk getDescription() {
     return myDescription;
   }
 
@@ -82,7 +100,7 @@ public abstract class ConfigurationError implements Comparable<ConfigurationErro
     final int titleResult = getPlainTextTitle().compareTo(o.getPlainTextTitle());
     if (titleResult != 0) return titleResult;
 
-    final int descriptionResult = getDescription().compareTo(o.getDescription());
+    final int descriptionResult = Comparator.comparing(e -> getDescription().toString()).compare(this, o);
     if (descriptionResult != 0) return descriptionResult;
 
     return 0;

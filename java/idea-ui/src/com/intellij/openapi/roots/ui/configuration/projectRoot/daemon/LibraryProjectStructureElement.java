@@ -19,7 +19,6 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.LibraryConfigurab
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
@@ -65,7 +64,7 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
                                   @NotNull OrderRootType type, String rootName, final ProjectStructureProblemType problemType) {
     final List<String> invalidUrls = library.getInvalidRootUrls(type);
     if (!invalidUrls.isEmpty()) {
-      final String description = createInvalidRootsDescription(invalidUrls, rootName, library.getName());
+      final HtmlChunk description = createInvalidRootsDescription(invalidUrls, rootName, library.getName());
       final PlaceInProjectStructure place = createPlace();
       final String message = JavaUiBundle.message("project.roots.error.message.invalid.roots", rootName, invalidUrls.size());
       ProjectStructureProblemDescription.ProblemLevel level = library.getTable().getTableLevel().equals(LibraryTablesRegistrar.PROJECT_LEVEL)
@@ -77,7 +76,7 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
     }
   }
 
-  private static @NlsContexts.DetailedDescription String createInvalidRootsDescription(List<String> invalidClasses, String rootName, @NlsSafe String libraryName) {
+  private static HtmlChunk createInvalidRootsDescription(List<String> invalidClasses, String rootName, @NlsSafe String libraryName) {
     HtmlBuilder buffer = new HtmlBuilder();
     final String name = StringUtil.escapeXmlEntities(libraryName);
     final HtmlChunk.Element link = HtmlChunk.link("http://library/" + name, name);
@@ -92,7 +91,7 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
       buffer.br().nbsp(2);
       buffer.append(PathUtil.toPresentableUrl(url));
     }
-    return buffer.wrapWith("html").toString();
+    return buffer.toFragment();
   }
 
   @NotNull
@@ -147,7 +146,7 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
 
     @Nls final String result = JavaUiBundle.message("library.0.is.not.used", libraryName);
     return new ProjectStructureProblemDescription(XmlStringUtil.wrapInHtml(result),
-                                                  null,
+                                                  (HtmlChunk) null,
                                                   createPlace(),
                                                   ProjectStructureProblemType.unused("unused-library"),
                                                   ProjectStructureProblemDescription.ProblemLevel.PROJECT,
