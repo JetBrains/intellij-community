@@ -92,9 +92,4 @@ public final class NotificationGroupManagerImpl implements NotificationGroupMana
   public boolean isRegisteredNotificationId(@NotNull String notificationId) {
     return myRegisteredNotificationIds.contains(notificationId);
   }
-
-  @Override
-  public boolean isRegisteredNotificationGroup(@NotNull String notificationId) {
-    return myRegisteredGroups.containsKey(notificationId);
-  }
 }

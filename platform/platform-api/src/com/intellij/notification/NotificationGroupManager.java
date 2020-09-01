@@ -16,8 +16,6 @@ public interface NotificationGroupManager {
 
   boolean isRegisteredNotificationId(@NotNull String notificationId);
 
-  boolean isRegisteredNotificationGroup(@NotNull String notificationId);
-
   static NotificationGroupManager getInstance() {
     return ApplicationManager.getApplication().getService(NotificationGroupManager.class);
   }
