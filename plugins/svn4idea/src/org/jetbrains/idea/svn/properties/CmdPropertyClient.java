@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.properties;
 
 import com.intellij.openapi.diagnostic.Attachment;
@@ -19,6 +19,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+
+import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
 
@@ -287,7 +289,7 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
     }
 
     if (result == -1) {
-      throw new SvnBindException("Could not determine revision number for file " + path + " and revision " + revision);
+      throw new SvnBindException(message("error.could.not.determine.revision.number.for.file.and.revision", path, revision));
     }
 
     return Revision.of(result);

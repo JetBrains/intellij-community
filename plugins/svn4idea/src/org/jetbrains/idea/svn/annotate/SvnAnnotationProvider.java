@@ -104,7 +104,7 @@ public class SvnAnnotationProvider implements AnnotationProvider, VcsCacheableAn
 
         info = myVcs.getInfo(ioFile);
         if (info == null) {
-          exception[0] = new SvnBindException("File '" + ioFile + "' is not under version control");
+          exception[0] = new SvnBindException(message("error.file.is.not.under.version.control", ioFile));
           return;
         }
         Url url = info.getUrl();

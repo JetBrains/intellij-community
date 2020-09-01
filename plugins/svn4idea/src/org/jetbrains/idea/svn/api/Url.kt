@@ -4,6 +4,7 @@ package org.jetbrains.idea.svn.api
 import com.google.common.net.UrlEscapers
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.io.URLUtil
+import org.jetbrains.idea.svn.SvnBundle.message
 import org.jetbrains.idea.svn.SvnUtil
 import org.jetbrains.idea.svn.commandLine.SvnBindException
 import java.net.URI
@@ -70,10 +71,10 @@ class Url private constructor(innerUri: URI) {
     fun parse(value: String, encoded: Boolean = true): Url = wrap {
       val uri = URI(prepareUri(value, encoded)).normalize()
 
-      if (!uri.isAbsolute) throw SvnBindException("$uri is not absolute")
-      if (uri.isOpaque) throw SvnBindException("$uri is not hierarchical")
-      if (uri.query != null) throw SvnBindException("$uri could not contain query")
-      if (uri.fragment != null) throw SvnBindException("$uri could not contain fragment")
+      if (!uri.isAbsolute) throw SvnBindException(message("error.url.is.not.absolute", uri))
+      if (uri.isOpaque) throw SvnBindException(message("error.url.is.not.hierarchical", uri))
+      if (uri.query != null) throw SvnBindException(message("error.url.could.not.contain.query", uri))
+      if (uri.fragment != null) throw SvnBindException(message("error.url.could.not.contain.fragment", uri))
       uri
     }
 

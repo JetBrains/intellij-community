@@ -33,6 +33,8 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.jetbrains.idea.svn.SvnBundle.message;
+
 public class CmdDiffClient extends BaseSvnClient implements DiffClient {
 
   private static final Logger LOG = Logger.getInstance(CmdDiffClient.class);
@@ -48,7 +50,8 @@ public class CmdDiffClient extends BaseSvnClient implements DiffClient {
 
       WorkingCopyFormat format = WorkingCopyFormat.from(myFactory.createVersionClient().getVersion());
       if (format.less(WorkingCopyFormat.ONE_DOT_EIGHT)) {
-        throw new SvnBindException("Could not compare local file and remote url with executable for svn " + format.getDisplayName());
+        throw new SvnBindException(
+          message("error.could.not.compare.local.file.and.remote.url.with.executable.for.svn.version", format.getDisplayName()));
       }
     }
 
@@ -138,7 +141,7 @@ public class CmdDiffClient extends BaseSvnClient implements DiffClient {
     String relativePath = SvnUtil.getRelativeUrl(target1, subTarget1);
 
     if (relativePath == null) {
-      throw new SvnBindException("Could not get relative path for " + target1 + " and " + subTarget1);
+      throw new SvnBindException(message("error.could.not.get.relative.path.for.parent.and.child", target1, subTarget1));
     }
 
     Target subTarget2 = SvnUtil.append(target2, FileUtil.toSystemIndependentName(relativePath));

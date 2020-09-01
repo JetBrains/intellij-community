@@ -122,7 +122,7 @@ public class SvnEditCommitMessageAction extends DumbAwareAction {
       try {
         root = SvnUtil.getRepositoryRoot(myVcs, createUrl(url));
         if (root == null) {
-          myException = new VcsException(message("error.can.not.determine.repository.root.for.url", url));
+          myException = new VcsException(message("error.can.not.find.repository.root.for.url", url));
           return;
         }
         Target target = Target.on(root);

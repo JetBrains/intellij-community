@@ -1,9 +1,11 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.commandLine;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.auth.AuthenticationService;
+
+import static org.jetbrains.idea.svn.SvnBundle.message;
 
 /**
  * @author Konstantin Kolosovsky.
@@ -40,7 +42,7 @@ public class CertificateCallbackCase extends AuthCallbackCase {
       accepted = true;
       return true;
     }
-    throw new SvnBindException("Server SSL certificate rejected");
+    throw new SvnBindException(message("error.server.ssl.certificate.rejected"));
   }
 
   @Override

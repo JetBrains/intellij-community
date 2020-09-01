@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.execution.ExecutionException;
@@ -8,6 +8,8 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts.DialogMessage;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -38,7 +40,7 @@ public class CommandExecutor {
   @Nullable private String myMessage;
   private boolean myIsDestroyed;
   private boolean myNeedsDestroy;
-  private volatile String myDestroyReason;
+  private volatile @DialogMessage String myDestroyReason;
   private volatile boolean myWasCancelled;
   @NotNull private final List<File> myTempFiles;
   @NotNull protected final GeneralCommandLine myCommandLine;
@@ -106,7 +108,7 @@ public class CommandExecutor {
     return myIsDestroyed;
   }
 
-  public String getDestroyReason() {
+  public @DialogMessage @Nullable String getDestroyReason() {
     return myDestroyReason;
   }
 
@@ -261,11 +263,11 @@ public class CommandExecutor {
     myHandler.startNotify();
   }
 
-  public String getOutput() {
+  public @NlsSafe @NotNull String getOutput() {
     return outputAdapter.getOutput().getStdout();
   }
 
-  public String getErrorOutput() {
+  public @NlsSafe @NotNull String getErrorOutput() {
     return outputAdapter.getOutput().getStderr();
   }
 
@@ -376,7 +378,7 @@ public class CommandExecutor {
     }
   }
 
-  public void destroyProcess(@Nullable String destroyReason) {
+  public void destroyProcess(@DialogMessage @Nullable String destroyReason) {
     synchronized (myLock) {
       myDestroyReason = destroyReason;
       myNeedsDestroy = true;
@@ -404,7 +406,7 @@ public class CommandExecutor {
     }
   }
 
-  public String getCommandText() {
+  public @NlsSafe @NotNull String getCommandText() {
     synchronized (myLock) {
       return StringUtil.join(myCommandLine.getExePath(), " ", myCommand.getText());
     }

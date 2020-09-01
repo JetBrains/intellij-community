@@ -32,10 +32,7 @@ import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.MultiMap;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 import org.jetbrains.idea.svn.api.*;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationManager;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
@@ -231,7 +228,7 @@ public final class SvnUtil {
       for (String file : failedFiles) {
         exceptions.add(new VcsException(SvnBundle.message("exception.text.locking.file.failed", file)));
       }
-      final StringBuilder sb = new StringBuilder(SvnBundle.message("message.text.files.lock.failed", failedFiles.length == 1 ? 0 : 1));
+      @Nls StringBuilder sb = new StringBuilder(SvnBundle.message("message.text.files.lock.failed", failedFiles.length == 1 ? 0 : 1));
       for (VcsException vcsException : exceptions) {
         if (sb.length() > 0) sb.append('\n');
         sb.append(vcsException.getMessage());
@@ -633,10 +630,10 @@ public final class SvnUtil {
     Info info = vcs.getInfo(url, Revision.HEAD);
 
     if (info == null) {
-      throw new SvnBindException("Could not get info for " + url);
+      throw new SvnBindException(SvnBundle.message("error.could.not.get.info.for.path", url));
     }
     if (!info.getRevision().isValid()) {
-      throw new SvnBindException("Could not get revision for " + url);
+      throw new SvnBindException(SvnBundle.message("error.could.not.get.revision.for.url", url));
     }
 
     return info.getRevision();
