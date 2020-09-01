@@ -28,7 +28,7 @@ public abstract class GroovyLibraryPresentationProviderBase extends LibraryPrese
       return GroovyBundle.message("framework.0.library", getLibraryCategoryName());
     }
     else {
-      return GroovyBundle.message("framework.0.library", getLibraryCategoryName(), version);
+      return GroovyBundle.message("framework.0.library.version.1", getLibraryCategoryName(), version);
     }
   }
 
