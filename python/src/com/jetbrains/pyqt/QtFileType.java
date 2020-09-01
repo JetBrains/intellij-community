@@ -73,10 +73,11 @@ public abstract class QtFileType extends LanguageFileType implements INativeFile
       return false;
     }
     try {
-      Runtime.getRuntime().exec(new String[] { qtTool, file.getPath() } );
+      Runtime.getRuntime().exec(new String[]{qtTool, file.getPath()});
     }
     catch (IOException e) {
-      Messages.showErrorDialog(project, PyBundle.message("qt.error.failed.run.qt.designer", e.getMessage()), PyBundle.message("qt.run.designer.error"));
+      Messages.showErrorDialog(project, PyBundle.message("qt.error.failed.run.qt.designer", e.getMessage()),
+                               PyBundle.message("qt.run.designer.error"));
     }
     return true;
   }
@@ -95,7 +96,7 @@ public abstract class QtFileType extends LanguageFileType implements INativeFile
         return tool;
       }
       return findToolInPackage(toolName, module, "PySide");
-   }
+    }
     // TODO
     return null;
   }
