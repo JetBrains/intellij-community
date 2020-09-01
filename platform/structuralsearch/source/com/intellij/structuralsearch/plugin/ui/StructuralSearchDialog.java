@@ -302,11 +302,10 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   private void initializeFilterPanel() {
     final MatchOptions matchOptions = getConfiguration().getMatchOptions();
     final CompiledPattern compiledPattern = PatternCompiler.compilePattern(getProject(), matchOptions, false, false);
+    if (compiledPattern == null) return;
     ApplicationManager.getApplication().invokeLater(() -> {
-      if (compiledPattern != null) {
-        SubstitutionShortInfoHandler.updateEditorInlays(mySearchCriteriaEdit.getEditor());
-        if (myReplace) SubstitutionShortInfoHandler.updateEditorInlays(myReplaceCriteriaEdit.getEditor());
-      }
+      SubstitutionShortInfoHandler.updateEditorInlays(mySearchCriteriaEdit.getEditor());
+      if (myReplace) SubstitutionShortInfoHandler.updateEditorInlays(myReplaceCriteriaEdit.getEditor());
       myFilterPanel.setCompiledPattern(compiledPattern);
       if (myFilterPanel.getVariable() == null) {
         myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(Configuration.CONTEXT_VAR_NAME, myConfiguration));
@@ -851,6 +850,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     return myConfiguration.copy();
   }
 
+  @Nullable
   private CompiledPattern compilePattern() {
     final MatchOptions matchOptions = getConfiguration().getMatchOptions();
     final Project project = getProject();
@@ -1023,9 +1023,11 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
       final MatchVariableConstraint constraint = matchOptions.getVariableConstraint(name);
       if (constraint.getScriptCodeConstraint().length() > 2) scripts++;
     }
-    final ReplaceOptions replaceOptions = myConfiguration.getReplaceOptions();
-    for (ReplacementVariableDefinition variableDefinition : replaceOptions.getVariableDefinitions()) {
-      if (variableDefinition.getScriptCodeConstraint().length() > 2) scripts++;
+    if (myConfiguration instanceof ReplaceConfiguration) {
+      final ReplaceOptions replaceOptions = myConfiguration.getReplaceOptions();
+      for (ReplacementVariableDefinition variableDefinition : replaceOptions.getVariableDefinitions()) {
+        if (variableDefinition.getScriptCodeConstraint().length() > 2) scripts++;
+      }
     }
     if (scripts > 0) {
       UIUtil.SSR_NOTIFICATION_GROUP.createNotification(NotificationType.WARNING)
