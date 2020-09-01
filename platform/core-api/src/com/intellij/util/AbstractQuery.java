@@ -68,6 +68,11 @@ public abstract class AbstractQuery<Result> implements Query<Result> {
       protected boolean processResults(@NotNull Processor<? super Result> consumer) {
         return AbstractQuery.this.doProcessResults(consumer);
       }
+
+      @Override
+      public boolean forEach(@NotNull Processor<? super Result> consumer) {
+        return processResults(consumer);
+      }
     };
   }
 

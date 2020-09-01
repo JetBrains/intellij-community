@@ -102,7 +102,7 @@ public interface Query<Result> extends Iterable<Result> {
   }
 
   /**
-   * @return an equivalent query whose {@link #forEach} accepts non-thread-safe consumers, so it may call the consumer in parallel.
+   * @return an equivalent query whose {@link #forEach} accepts thread-safe consumers, so it may call the consumer in parallel.
    */
   @NotNull
   @Contract(pure = true)
