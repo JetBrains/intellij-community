@@ -296,6 +296,8 @@ public class VcsProjectLog implements Disposable {
   @ApiStatus.Internal
   @CalledInBackground
   public static boolean ensureLogCreated(@NotNull Project project) {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+
     if (getInstance(project).getLogManager() != null) return true;
 
     try {
