@@ -7,15 +7,13 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Progressive;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NlsContexts;
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class CloudRuntimeTask<
@@ -26,12 +24,12 @@ public abstract class CloudRuntimeTask<
   private static final Logger LOG = Logger.getInstance(CloudRuntimeTask.class);
 
   private final Project myProject;
-  private final String myTitle;
+  private final @Nls String myTitle;
 
   private final AtomicReference<Boolean> mySuccess = new AtomicReference<>();
   private final AtomicReference<String> myErrorMessage = new AtomicReference<>();
 
-  public CloudRuntimeTask(Project project, @NlsContexts.DialogTitle String title) {
+  public CloudRuntimeTask(Project project, @Nls String title) {
     myProject = project;
     myTitle = title;
   }
@@ -140,17 +138,6 @@ public abstract class CloudRuntimeTask<
   protected void runtimeErrorOccurred(@NotNull String errorMessage) {
     myErrorMessage.set(errorMessage);
     LOG.info(errorMessage);
-  }
-
-  public void showMessageDialog(JComponent component, String successMessage, String title) {
-    if (mySuccess.get()) {
-      Messages.showInfoMessage(component, successMessage, title);
-      return;
-    }
-    String errorMessage = myErrorMessage.get();
-    if (errorMessage != null) {
-      Messages.showErrorDialog(component, errorMessage, title);
-    }
   }
 
   protected abstract SR getServerRuntime();

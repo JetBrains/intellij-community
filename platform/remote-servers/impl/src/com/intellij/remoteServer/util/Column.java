@@ -19,7 +19,7 @@ import com.intellij.openapi.util.NlsContexts;
 
 public abstract class Column<T> {
 
-  private final String myName;
+  private final @NlsContexts.ColumnName String myName;
 
   public Column(@NlsContexts.ColumnName String name) {
     myName = name;
