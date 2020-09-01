@@ -3,7 +3,6 @@ package org.jetbrains.jps.model.serialization;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.JpsDummyElement;
@@ -20,14 +19,10 @@ import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer;
 import org.jetbrains.jps.model.serialization.module.JpsModuleRootModelSerializer;
 
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
@@ -228,26 +223,6 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
     assertNotNull(properties);
     assertEquals(forGenerated, properties.isForGeneratedSources());
     assertEquals(relativeOutput, properties.getRelativeOutputPath());
-  }
-
-  public void testSaveProject() throws IOException {
-    loadProject(SAMPLE_PROJECT_PATH);
-    List<JpsModule> modules = myProject.getModules();
-    doTestSaveModule(modules.get(0), SAMPLE_PROJECT_PATH + "/main.iml");
-    doTestSaveModule(modules.get(1), SAMPLE_PROJECT_PATH + "/util/util.iml");
-    //tod[nik] remember that test output root wasn't specified and doesn't save it to avoid unnecessary modifications of iml files
-    //doTestSaveModule(modules.get(2), "xxx/xxx.iml");
-
-    try (Stream<Path> libraries = Files.list(getFileInSampleProject(".idea/libraries"))) {
-      List<Path> libs = libraries.collect(Collectors.toList());
-      assertNotNull(libs);
-      for (Path libFile : libs) {
-        String libName = FileUtilRt.getNameWithoutExtension(libFile.getFileName().toString());
-        JpsLibrary library = myProject.getLibraryCollection().findLibrary(libName);
-        assertNotNull(libName, library);
-        doTestSaveLibrary(libFile, libName, library);
-      }
-    }
   }
 
   public void testUnloadedModule() {

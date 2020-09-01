@@ -21,7 +21,8 @@ import java.util.List;
 public final class JpsLibraryTableSerializer {
   private static final JpsLibraryRootTypeSerializer[] PREDEFINED_ROOT_TYPES_SERIALIZERS = {
     new JpsLibraryRootTypeSerializer("CLASSES", JpsOrderRootType.COMPILED, true),
-    new JpsLibraryRootTypeSerializer("SOURCES", JpsOrderRootType.SOURCES, true)
+    new JpsLibraryRootTypeSerializer("SOURCES", JpsOrderRootType.SOURCES, true),
+    new JpsLibraryRootTypeSerializer("DOCUMENTATION", JpsOrderRootType.DOCUMENTATION, false)
   };
   public static final String NAME_ATTRIBUTE = "name";
   public static final String TYPE_ATTRIBUTE = "type";
