@@ -10,12 +10,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
-import com.intellij.openapi.vcs.changes.ChangesViewRefresher;
-import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.annotations.NotNull;
 
@@ -56,7 +51,7 @@ public class RefreshAction extends AnAction implements DumbAware {
   }
 
   private static void performRefreshAndTrackChanges(Project project) {
-    ChangeListManagerImpl changeListManager = (ChangeListManagerImpl)ChangeListManager.getInstance(project);
+    ChangeListManagerEx changeListManager = ChangeListManagerEx.getInstanceEx(project);
 
     Collection<Change> changesBeforeUpdate = changeListManager.getAllChanges();
     Collection<FilePath> unversionedBefore = changeListManager.getUnversionedFilesPaths();

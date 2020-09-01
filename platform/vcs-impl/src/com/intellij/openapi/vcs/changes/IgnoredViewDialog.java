@@ -16,7 +16,7 @@ import java.util.List;
 public class IgnoredViewDialog extends SpecificFilesViewDialog {
   public IgnoredViewDialog(@NotNull Project project) {
     super(project, VcsBundle.message("dialog.title.ignored.files"), ChangesListView.IGNORED_FILE_PATHS_DATA_KEY,
-          ChangeListManagerImpl.getInstanceImpl(project).getIgnoredFilePaths());
+          ChangeListManager.getInstance(project).getIgnoredFilePaths());
   }
 
   @Override
@@ -30,6 +30,6 @@ public class IgnoredViewDialog extends SpecificFilesViewDialog {
   @NotNull
   @Override
   protected List<FilePath> getFiles() {
-    return ChangeListManagerImpl.getInstanceImpl(myProject).getIgnoredFilePaths();
+    return ChangeListManager.getInstance(myProject).getIgnoredFilePaths();
   }
 }

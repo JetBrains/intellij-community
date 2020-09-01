@@ -119,10 +119,15 @@ public abstract class ChangeListManager implements ChangeListModification {
 
 
   @NotNull
+  public abstract FileStatus getStatus(@NotNull FilePath file);
+
+  @NotNull
   public abstract FileStatus getStatus(@NotNull VirtualFile file);
 
   public abstract boolean isUnversioned(VirtualFile file);
 
+  @NotNull
+  public abstract List<FilePath> getUnversionedFilesPaths();
 
   @NotNull
   public abstract Collection<Change> getChangesIn(@NotNull VirtualFile dir);
@@ -176,6 +181,9 @@ public abstract class ChangeListManager implements ChangeListModification {
   public abstract boolean isIgnoredFile(@NotNull VirtualFile file);
 
   public abstract boolean isIgnoredFile(@NotNull FilePath file);
+
+  @NotNull
+  public abstract List<FilePath> getIgnoredFilePaths();
 
   /**
    * @deprecated All potential ignores should be contributed to VCS native ignores by corresponding {@link IgnoredFileProvider}.

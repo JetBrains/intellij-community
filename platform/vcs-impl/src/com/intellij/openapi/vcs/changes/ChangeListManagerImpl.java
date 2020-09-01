@@ -759,6 +759,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
   }
 
   @NotNull
+  @Override
   public List<FilePath> getUnversionedFilesPaths() {
     return ReadAction.compute(() -> {
       synchronized (myDataLock) {
@@ -788,6 +789,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
   }
 
   @NotNull
+  @Override
   public List<FilePath> getIgnoredFilePaths() {
     return ReadAction.compute(() -> {
       synchronized (myDataLock) {
@@ -1102,6 +1104,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Change
   }
 
   @NotNull
+  @Override
   public FileStatus getStatus(@NotNull FilePath path) {
     return getStatus(path, path.getVirtualFile());
   }

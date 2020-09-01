@@ -6,7 +6,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcses
-import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcsesForFiles
+import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcsesForFilePaths
 import com.intellij.openapi.vcs.changes.CommitResultHandler
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
@@ -116,8 +116,8 @@ class SingleChangeListCommitWorkflowHandler(
   }
 
   private fun updateCommitOptionsVisibility() {
-    val unversionedFiles = ChangeListManagerImpl.getInstanceImpl(project).unversionedFiles
-    val vcses = getAffectedVcses(getChangeList().changes, project) + getAffectedVcsesForFiles(unversionedFiles, project)
+    val unversionedFiles = ChangeListManagerImpl.getInstanceImpl(project).unversionedFilesPaths
+    val vcses = getAffectedVcses(getChangeList().changes, project) + getAffectedVcsesForFilePaths(unversionedFiles, project)
 
     ui.commitOptionsUi.setVisible(vcses)
   }

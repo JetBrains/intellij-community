@@ -312,9 +312,7 @@ public final class VcsFacadeImpl extends VcsFacade {
     boolean isUnderVcs = VcsUtil.isFileUnderVcs(project, VcsUtil.getFilePath(file.getVirtualFile()));
     if (!isUnderVcs) return true;
 
-    ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(project);
-    List<VirtualFile> unversionedFiles = changeListManager.getUnversionedFiles();
-    if (unversionedFiles.contains(file.getVirtualFile())) {
+    if (ChangeListManager.getInstance(project).isUnversioned(file.getVirtualFile())) {
       return true;
     }
 

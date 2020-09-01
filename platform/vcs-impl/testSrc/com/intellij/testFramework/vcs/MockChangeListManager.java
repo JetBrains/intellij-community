@@ -183,6 +183,16 @@ public class MockChangeListManager extends ChangeListManagerEx {
     throw new UnsupportedOperationException();
   }
 
+  @Override
+  public @NotNull List<FilePath> getUnversionedFilesPaths() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public @NotNull FileStatus getStatus(@NotNull FilePath file) {
+    throw new UnsupportedOperationException();
+  }
+
   @NotNull
   @Override
   public FileStatus getStatus(@NotNull VirtualFile file) {
@@ -289,6 +299,11 @@ public class MockChangeListManager extends ChangeListManagerEx {
 
   @Override
   public boolean isIgnoredFile(@NotNull FilePath file) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public @NotNull List<FilePath> getIgnoredFilePaths() {
     throw new UnsupportedOperationException();
   }
 

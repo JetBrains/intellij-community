@@ -247,7 +247,7 @@ class MultipleLocalChangeListsBrowser extends CommitDialogChangesBrowser impleme
     myChanges.addAll(myChangeList.getChanges());
 
     if (myEnableUnversioned) {
-      List<FilePath> unversioned = ChangeListManagerImpl.getInstanceImpl(myProject).getUnversionedFilesPaths();
+      List<FilePath> unversioned = ChangeListManager.getInstance(myProject).getUnversionedFilesPaths();
       if (isShowUnversioned()) {
         myUnversioned.addAll(unversioned);
       }
