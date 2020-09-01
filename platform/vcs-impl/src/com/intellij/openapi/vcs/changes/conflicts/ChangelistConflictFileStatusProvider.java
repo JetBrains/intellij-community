@@ -18,11 +18,11 @@ import org.jetbrains.annotations.Nullable;
  */
 public final class ChangelistConflictFileStatusProvider implements FileStatusProvider {
   public static final FileStatus MODIFIED_OUTSIDE = FileStatusFactory.getInstance()
-    .createFileStatus("modifiedOutside", VcsBundle.message("settings.file.status.color.modified.in.not.active.changelist"));
+    .createFileStatus("modifiedOutside", VcsBundle.messagePointer("settings.file.status.color.modified.in.not.active.changelist"));
   public static final FileStatus ADDED_OUTSIDE = FileStatusFactory.getInstance()
-    .createFileStatus("addedOutside", VcsBundle.message("settings.file.status.color.added.in.not.active.changelist"));
+    .createFileStatus("addedOutside", VcsBundle.messagePointer("settings.file.status.color.added.in.not.active.changelist"));
   public static final FileStatus CHANGELIST_CONFLICT = FileStatusFactory.getInstance()
-    .createFileStatus("changelistConflict", VcsBundle.message("settings.file.status.color.changelist.conflict"));
+    .createFileStatus("changelistConflict", VcsBundle.messagePointer("settings.file.status.color.changelist.conflict"));
 
   private final ChangeListManagerImpl myChangeListManager;
 
