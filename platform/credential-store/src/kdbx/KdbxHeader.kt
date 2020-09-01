@@ -144,7 +144,7 @@ internal class KdbxHeader() {
     out.write(streamStartBytes)
     out = HashedBlockOutputStream(out)
     return when (compressionFlags) {
-      KdbxHeader.CompressionFlags.GZIP -> GZIPOutputStream(out, HashedBlockOutputStream.BLOCK_SIZE)
+      CompressionFlags.GZIP -> GZIPOutputStream(out, HashedBlockOutputStream.BLOCK_SIZE)
       else -> out
     }
   }

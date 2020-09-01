@@ -3,7 +3,7 @@
 
 package org.jetbrains.builtInWebServer
 
-import com.google.common.cache.CacheBuilder
+import com.github.benmanes.caffeine.cache.Caffeine
 import com.google.common.net.InetAddresses
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.ide.util.PropertiesComponent
@@ -127,7 +127,7 @@ private val STANDARD_COOKIE by lazy {
 }
 
 // expire after access because we reuse tokens
-private val tokens = CacheBuilder.newBuilder().expireAfterAccess(1, TimeUnit.MINUTES).build<String, Boolean>()
+private val tokens = Caffeine.newBuilder().expireAfterAccess(1, TimeUnit.MINUTES).build<String, Boolean>()
 
 fun acquireToken(): String {
   var token = tokens.asMap().keys.firstOrNull()
