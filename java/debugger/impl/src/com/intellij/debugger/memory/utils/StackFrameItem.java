@@ -33,6 +33,7 @@ import com.intellij.xdebugger.frame.presentation.XStringValuePresentation;
 import com.intellij.xdebugger.impl.frame.XDebuggerFramesList;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.sun.jdi.*;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -231,6 +232,7 @@ public class StackFrameItem {
     }
   }
 
+  @Nls
   public static String getAsyncStacktraceMessage() {
     return JavaDebuggerBundle.message("frame.panel.async.stacktrace");
   }

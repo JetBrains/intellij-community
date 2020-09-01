@@ -424,6 +424,7 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
       return "pid " + myPid;
     }
 
+    @NlsSafe
     abstract String getDebuggerName();
 
     @NlsSafe

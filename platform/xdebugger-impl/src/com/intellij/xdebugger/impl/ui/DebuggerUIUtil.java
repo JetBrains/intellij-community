@@ -441,7 +441,8 @@ public final class DebuggerUIUtil {
   }
 
   @NotNull
-  public static String getShortcutsAdText(@PropertyKey(resourceBundle = XDebuggerBundle.BUNDLE) String key, String... actionNames) {
+  public static @NlsContexts.PopupAdvertisement String getShortcutsAdText(@PropertyKey(resourceBundle = XDebuggerBundle.BUNDLE) String key,
+                                                                          String... actionNames) {
     String text = StreamEx.of(actionNames).map(DebuggerUIUtil::getActionShortcutText).nonNull()
       .joining(XDebuggerBundle.message("xdebugger.shortcuts.text.delimiter"));
     return StringUtil.isEmpty(text) ? "" : XDebuggerBundle.message(key, text);

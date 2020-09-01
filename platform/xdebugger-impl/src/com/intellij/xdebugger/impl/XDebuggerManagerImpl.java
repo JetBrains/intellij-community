@@ -225,14 +225,14 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
 
   @Override
   @NotNull
-  public XDebugSession startSessionAndShowTab(@NotNull String sessionName, @Nullable RunContentDescriptor contentToReuse,
+  public XDebugSession startSessionAndShowTab(@NotNull @Nls String sessionName, @Nullable RunContentDescriptor contentToReuse,
                                               @NotNull XDebugProcessStarter starter) throws ExecutionException {
     return startSessionAndShowTab(sessionName, contentToReuse, false, starter);
   }
 
   @NotNull
   @Override
-  public XDebugSession startSessionAndShowTab(@NotNull String sessionName, @Nullable RunContentDescriptor contentToReuse,
+  public XDebugSession startSessionAndShowTab(@NotNull @Nls String sessionName, @Nullable RunContentDescriptor contentToReuse,
                                               boolean showToolWindowOnSuspendOnly,
                                               @NotNull XDebugProcessStarter starter) throws ExecutionException {
     return startSessionAndShowTab(sessionName, null, contentToReuse, showToolWindowOnSuspendOnly, starter);

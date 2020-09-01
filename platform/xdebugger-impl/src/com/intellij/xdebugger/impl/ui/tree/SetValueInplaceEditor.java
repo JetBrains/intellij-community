@@ -4,6 +4,7 @@ package com.intellij.xdebugger.impl.ui.tree;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.ui.JBUI;
@@ -14,6 +15,7 @@ import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValuePresentationUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +29,7 @@ public final class SetValueInplaceEditor extends XDebuggerTreeInplaceEditor {
   private final XValueNodeImpl myValueNode;
   private final int myNameOffset;
 
-  private SetValueInplaceEditor(final XValueNodeImpl node, @NotNull final String nodeName) {
+  private SetValueInplaceEditor(final XValueNodeImpl node, @NotNull final @NlsSafe String nodeName) {
     super(node, "setValue");
     myValueNode = node;
     myModifier = myValueNode.getValueContainer().getModifier();
@@ -89,7 +91,7 @@ public final class SetValueInplaceEditor extends XDebuggerTreeInplaceEditor {
   public void doOKAction() {
     if (myModifier == null) return;
 
-    DebuggerUIUtil.setTreeNodeValue(myValueNode, getExpression(), errorMessage -> {
+    DebuggerUIUtil.setTreeNodeValue(myValueNode, getExpression(), (@Nls var errorMessage) -> {
       Editor editor = getEditor();
       if (editor != null) {
         HintManager.getInstance().showErrorHint(editor, errorMessage);

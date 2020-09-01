@@ -248,14 +248,9 @@ class XDebugSessionTab2(
       val topMiddleToolbar = DefaultActionGroup().apply {
         if (singleContent == null || headerVisible) return@apply
 
-        add(object : AnAction() {
+        add(object : AnAction(XDebuggerBundle.message("session.tab.close.debug.session"), null, AllIcons.Actions.Close) {
           override fun actionPerformed(e: AnActionEvent) {
             toolWindow.contentManager.removeContent(singleContent, true)
-          }
-
-          override fun update(e: AnActionEvent) {
-            e.presentation.text = "Close debug session"
-            e.presentation.icon = AllIcons.Actions.Close
           }
         })
         addSeparator()
@@ -295,10 +290,10 @@ class XDebugSessionTab2(
         override fun update(e: AnActionEvent) {
           e.presentation.icon = AllIcons.Actions.SplitVertically
           if (threadsIsVisible) {
-            e.presentation.text = "Hide threads view"
+            e.presentation.text = XDebuggerBundle.message("session.tab.hide.threads.view")
           }
           else {
-            e.presentation.text = "Show threads view"
+            e.presentation.text = XDebuggerBundle.message("session.tab.show.threads.view")
           }
 
           setSelected(e, threadsIsVisible)

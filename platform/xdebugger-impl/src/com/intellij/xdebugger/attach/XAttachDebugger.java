@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.xdebugger.XDebuggerBundle;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface XAttachDebugger {
   @NotNull
+  @Nls
   String getDebuggerDisplayName();
 
   /**

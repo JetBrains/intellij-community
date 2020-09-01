@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.breakpoints;
 
 import com.intellij.debugger.*;
@@ -31,6 +31,7 @@ import com.sun.jdi.Location;
 import com.sun.jdi.ReferenceType;
 import com.sun.jdi.request.BreakpointRequest;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.java.debugger.breakpoints.properties.JavaBreakpointProperties;
@@ -190,8 +191,8 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
     return mySourcePosition;
   }
 
-  @SuppressWarnings("HardCodedStringLiteral")
   @NotNull
+  @Nls
   public String getDescription() {
     final StringBuilder buf = new StringBuilder();
     buf.append(getDisplayName());
@@ -217,6 +218,7 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
         buf.append(instanceFilter.getId()).append(" ");
       }
     }
+    //noinspection HardCodedStringLiteral
     return buf.toString();
   }
 

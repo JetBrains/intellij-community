@@ -132,6 +132,7 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
     return AllIcons.Debugger.Db_dep_line_breakpoint;
   }
 
+  @Nls
   public abstract String getDisplayText(B breakpoint);
 
   @Nullable 
@@ -235,6 +236,7 @@ public abstract class XBreakpointType<B extends XBreakpoint<P>, P extends XBreak
     return null;
   }
 
+  @Nls
   public String getShortText(B breakpoint) {
     return getDisplayText(breakpoint);
   }
