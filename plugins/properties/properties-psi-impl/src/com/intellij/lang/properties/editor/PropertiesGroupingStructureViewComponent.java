@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
@@ -62,13 +63,13 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
       presentation.setIcon(EmptyIcon.ICON_16);
     }
 
-    private String getCurrentSeparator() {
+    private @NlsSafe String getCurrentSeparator() {
       return ((PropertiesGroupingStructureViewModel)getTreeModel()).getSeparator();
     }
 
     private void refillActionGroup() {
       removeAll();
-      for (final String separator : myPredefinedSeparators) {
+      for (final @NlsSafe String separator : myPredefinedSeparators) {
         if (separator.equals(getCurrentSeparator())) continue;
         AnAction action = new AnAction() {
           @Override

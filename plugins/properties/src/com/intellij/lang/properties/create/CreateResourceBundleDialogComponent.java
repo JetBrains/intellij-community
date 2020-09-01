@@ -19,6 +19,7 @@ import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiDirectory;
@@ -227,7 +228,7 @@ public final class CreateResourceBundleDialogComponent {
     return myResourceBundle == null ? myResourceBundleBaseNameTextField.getText() : myResourceBundle.getBaseName();
   }
 
-  private String canCreateAllFilesForAllLocales() {
+  private @NlsContexts.DialogMessage String canCreateAllFilesForAllLocales() {
     final String name = getBaseName();
     if (name.isEmpty()) {
       return PropertiesBundle.message("create.resource.bundle.base.name.is.empty.error");

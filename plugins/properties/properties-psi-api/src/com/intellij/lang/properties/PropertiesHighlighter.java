@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.StringEscapesTokenTypes;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
@@ -74,7 +75,7 @@ public class PropertiesHighlighter extends SyntaxHighlighterBase {
     return SyntaxHighlighterBase.pack(keys1.get(tokenType), keys2.get(tokenType));
   }
 
-  public static final Map<TextAttributesKey, Pair<String, HighlightSeverity>> DISPLAY_NAMES = ContainerUtil.<TextAttributesKey, Pair<String, HighlightSeverity>>immutableMapBuilder()
+  public static final Map<TextAttributesKey, Pair<@Nls String, HighlightSeverity>> DISPLAY_NAMES = ContainerUtil.<TextAttributesKey, Pair<@Nls String, HighlightSeverity>>immutableMapBuilder()
     .put(PROPERTY_KEY, new Pair<>(PropertiesBundle.message("options.properties.attribute.descriptor.property.key"), null))
     .put(PROPERTY_VALUE, new Pair<>(PropertiesBundle.message("options.properties.attribute.descriptor.property.value"), null))
     .put(PROPERTY_KEY_VALUE_SEPARATOR, new Pair<>(PropertiesBundle.message("options.properties.attribute.descriptor.key.value.separator"), null))

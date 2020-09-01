@@ -711,7 +711,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements Document
   @Override
   @NotNull
   public String getName() {
-    return "Resource Bundle";
+    return ResourceBundleEditorBundle.message("resource.bundle.editor.title");
   }
 
   @Override
