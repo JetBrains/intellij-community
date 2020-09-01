@@ -4,15 +4,19 @@ package com.intellij.ide.ui;
 import com.intellij.openapi.editor.PlatformEditorBundle;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.ui.GraphicsUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.awt.font.FontRenderContext;
+import java.util.function.Supplier;
+
+import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
 
 public enum AntialiasingType {
-  SUBPIXEL(PlatformEditorBundle.message("settings.editor.antialiasing.subpixel"), RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB, true),
-  GREYSCALE(PlatformEditorBundle.message("settings.editor.antialiasing.greyscale"), RenderingHints.VALUE_TEXT_ANTIALIAS_ON, true),
-  OFF(PlatformEditorBundle.message("settings.editor.antialiasing.no.antialiasing"), RenderingHints.VALUE_TEXT_ANTIALIAS_OFF, false);
+  SUBPIXEL(PlatformEditorBundle.messagePointer("settings.editor.antialiasing.subpixel"), RenderingHints.VALUE_TEXT_ANTIALIAS_LCD_HRGB, true),
+  GREYSCALE(PlatformEditorBundle.messagePointer("settings.editor.antialiasing.greyscale"), RenderingHints.VALUE_TEXT_ANTIALIAS_ON, true),
+  OFF(PlatformEditorBundle.messagePointer("settings.editor.antialiasing.no.antialiasing"), RenderingHints.VALUE_TEXT_ANTIALIAS_OFF, false);
 
   public static Object getAAHintForSwingComponent() {
     UISettings uiSettings = UISettings.getInstanceOrNull();
@@ -45,11 +49,11 @@ public enum AntialiasingType {
            ? context : new FontRenderContext(context.getTransform(), aaHint, context.getFractionalMetricsHint());
   }
 
-  private final String myName;
+  private final Supplier<@Nls(capitalization = Sentence) String> myName;
   private final Object myHint;
   private final boolean isEnabled;
 
-  AntialiasingType(String name, Object hint, boolean enabled) {
+  AntialiasingType(Supplier<@Nls(capitalization = Sentence) String> name, Object hint, boolean enabled) {
     myName = name;
     myHint = hint;
     isEnabled = enabled;
@@ -60,7 +64,8 @@ public enum AntialiasingType {
   }
 
   @Override
+  @Nls(capitalization = Sentence)
   public String toString() {
-    return myName;
+    return myName.get();
   }
  }
