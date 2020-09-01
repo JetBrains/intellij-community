@@ -58,7 +58,7 @@ public class ConfigFileMetaData {
     LOG.assertTrue(Arrays.asList(myVersions).contains(myDefaultVersion));
   }
 
-  public ConfigFileMetaData(final String title,
+  public ConfigFileMetaData(final @Nls String title,
                             final @NonNls String fileName,
                             final @NonNls String directoryPath,
                             final ConfigFileVersion[] versions,
