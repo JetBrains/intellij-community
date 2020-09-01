@@ -39,6 +39,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.Extensions;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
+import org.jetbrains.idea.devkit.module.PluginDescriptorConstants;
 import org.jetbrains.idea.devkit.module.PluginModuleType;
 import org.jetbrains.idea.devkit.util.DescriptorUtil;
 
@@ -237,7 +238,7 @@ public class PrepareToDeployAction extends AnAction {
     }
   }
 
-  private static String getZipPath(String pluginName, String entryName) {
+  private static @NonNls String getZipPath(String pluginName, String entryName) {
     return pluginName + "/lib/" + entryName;
   }
 
@@ -320,7 +321,7 @@ public class PrepareToDeployAction extends AnAction {
       }
 
       if (pluginXmlPath != null) {
-        jar.addFile("META-INF/plugin.xml", new File(pluginXmlPath));
+        jar.addFile(PluginDescriptorConstants.PLUGIN_XML_PATH, new File(pluginXmlPath));
       }
     }
 

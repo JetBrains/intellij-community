@@ -7,6 +7,8 @@ import com.intellij.navigation.GotoRelatedItem;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlTag;
@@ -26,7 +28,6 @@ import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.util.PointableCandidate;
 
-import java.text.MessageFormat;
 import java.util.Collection;
 import java.util.List;
 
@@ -103,8 +104,10 @@ final class LineMarkerInfoHelper {
       String fileDisplayName = file.getName();
       Module module = ModuleUtilCore.findModuleForPsiElement(file);
       if (module != null) {
-        fileDisplayName += MessageFormat.format(" <font color='" + ColorUtil.toHex(UIUtil.getInactiveTextColor()) + "'>[{0}]</font>",
-                                                module.getName());
+        fileDisplayName += new HtmlBuilder()
+          .append(" ")
+          .append(HtmlChunk.text("[" + module.getName() + "]")
+                    .wrapWith(HtmlChunk.font(ColorUtil.toHex(UIUtil.getInactiveTextColor()))));
       }
 
       return DevKitBundle.message(tooltipPatternPropertyName,

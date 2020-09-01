@@ -61,6 +61,7 @@ public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradl
   protected static final @NonNls String HELP_COMMENT = "// See https://github.com/JetBrains/gradle-intellij-plugin/\n";
 
   private static final @NonNls String TASK_NAME_RUN_IDE = ":runIde";
+  private static final @NonNls String META_INF_PATH = "/src/main/resources/META-INF";
 
   private static class Lazy {
     static final ExecutorService EXECUTOR = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("UPDATE_GRADLE_PLUGIN_VERSIONS");
@@ -117,8 +118,8 @@ public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradl
   }
 
   protected void configureBuildScript(@NotNull BuildScriptDataBuilder buildScriptData,
-                                      String pluginVersion,
-                                      String ideVersion) {
+                                      @NonNls String pluginVersion,
+                                      @NonNls String ideVersion) {
     buildScriptData
       .addPluginDefinitionInPluginsGroup("id 'org.jetbrains.intellij' version '" + pluginVersion + "'")
       .addOther(HELP_COMMENT +
@@ -164,7 +165,7 @@ public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradl
 
   private boolean createPluginXml(@NotNull ProjectId projectId, @NotNull Module module, @NotNull String contentRootPath) {
     try {
-      VirtualFile metaInf = VfsUtil.createDirectoryIfMissing(contentRootPath + "/src/main/resources/META-INF");
+      VirtualFile metaInf = VfsUtil.createDirectoryIfMissing(contentRootPath + META_INF_PATH);
       if (metaInf == null) {
         return false;
       }
@@ -176,7 +177,7 @@ public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradl
       FileTemplateManager templateManager = FileTemplateManager.getInstance(project);
       FileTemplate template = templateManager.getJ2eeTemplate("gradleBasedPlugin.xml");
 
-      Map<String, String> attributes = new HashMap<>();
+      @NonNls Map<String, String> attributes = new HashMap<>();
       String groupId = projectId.getGroupId();
       String artifactId = projectId.getArtifactId();
       if (StringUtil.isNotEmpty(artifactId)) {

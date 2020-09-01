@@ -108,7 +108,8 @@ public class ExtensionDomExtender extends DomExtender<Extension> {
           }
 
           if ("language".equals(attributeName) ||
-              StringUtil.endsWith(attributeName, "Language")) {
+              StringUtil.endsWith(attributeName, "Language")) // NON-NLS
+          {
             extension.setConverter(LANGUAGE_CONVERTER);
           }
           else if ("action".equals(attributeName)) {

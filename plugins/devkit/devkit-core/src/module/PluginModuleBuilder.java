@@ -46,7 +46,7 @@ public class PluginModuleBuilder extends JavaModuleBuilder {
     String contentEntryPath = getContentEntryPath();
     if (contentEntryPath == null) return;
 
-    String resourceRootPath = contentEntryPath + "/resources";
+    String resourceRootPath = contentEntryPath + "/resources"; //NON-NLS
     VirtualFile contentRoot = LocalFileSystem.getInstance().findFileByPath(contentEntryPath);
     if (contentRoot == null) return;
 

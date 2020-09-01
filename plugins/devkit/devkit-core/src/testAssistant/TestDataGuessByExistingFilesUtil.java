@@ -430,7 +430,7 @@ public final class TestDataGuessByExistingFilesUtil {
 
     @Override
     public String toString() {
-      return String.format("%s[...]%s", pathPrefix, pathSuffix);
+      return String.format("%s[...]%s", pathPrefix, pathSuffix); //NON-NLS
     }
   }
 

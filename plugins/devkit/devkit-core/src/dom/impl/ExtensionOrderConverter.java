@@ -12,6 +12,7 @@ import com.intellij.openapi.fileTypes.FileTypeExtensionPoint;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.references.PomService;
@@ -261,11 +262,11 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
           continue;
         }
 
-        String extensionMark = null; // to display {language} or {file type}
+        @NlsSafe String extensionMark = null; // to display {language} or {file type}
         if (currentExtensionLanguage != null) {
           String language = getSpecificExtensionAttribute(extension, languageEpClass, "language");
           if (language != null) {
-            if (!language.equals("any") && !language.isEmpty() && !language.equals(currentExtensionLanguage)) {
+            if (!language.equals("any") && !language.isEmpty() && !language.equals(currentExtensionLanguage)) { //NON-NLS
               continue;
             }
             extensionMark = language;
@@ -307,6 +308,7 @@ public class ExtensionOrderConverter implements CustomReferenceConverter<String>
     }
 
     @Nullable
+    @NlsSafe
     private static String getSpecificExtensionAttribute(@NotNull Extension e,
                                                         @NotNull PsiClass parentBeanClass,
                                                         @NotNull @NonNls String attribute) {

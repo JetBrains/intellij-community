@@ -27,6 +27,7 @@ import com.intellij.ui.IconDescriptionBundleEP;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.*;
@@ -41,11 +42,12 @@ import static com.intellij.patterns.XmlPatterns.xmlTag;
 
 public class I18nReferenceContributor extends PsiReferenceContributor {
 
-  private static final String INTENTION_ACTION_TAG = "intentionAction";
-  private static final String INTENTION_ACTION_BUNDLE_TAG = "bundleName";
+  @NonNls private static final String INTENTION_ACTION_TAG = "intentionAction";
+  @NonNls private static final String INTENTION_ACTION_BUNDLE_TAG = "bundleName";
 
-  private static final String SEPARATOR_TAG = "separator";
+  @NonNls private static final String SEPARATOR_TAG = "separator";
 
+  @NonNls
   private static class Holder {
     private static final String GROUP_CONFIGURABLE_EP = "com.intellij.openapi.options.ex.ConfigurableGroupEP";
     private static final String CONFIGURABLE_EP = ConfigurableEP.class.getName();
@@ -150,8 +152,8 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
     registrar.registerReferenceProvider(intentionActionBundleTagPattern, bundleReferenceProvider);
   }
 
-  private static XmlAttributeValuePattern extensionAttributePattern(String[] attributeNames,
-                                                                    String... extensionPointClassNames) {
+  private static XmlAttributeValuePattern extensionAttributePattern(@NonNls String[] attributeNames,
+                                                                    @NonNls String... extensionPointClassNames) {
     //noinspection deprecation
     return xmlAttributeValue(attributeNames)
       .inFile(DomPatterns.inDomFile(IdeaPlugin.class))
@@ -159,15 +161,15 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
   }
 
   // special case for nested EPs, ConfigurableEP#children
-  private static XmlAttributeValuePattern nestedExtensionAttributePattern(String[] attributeNames,
-                                                                          String... extensionPointClassNames) {
+  private static XmlAttributeValuePattern nestedExtensionAttributePattern(@NonNls String[] attributeNames,
+                                                                          @NonNls String... extensionPointClassNames) {
     return xmlAttributeValue(attributeNames)
       .inFile(DomPatterns.inDomFile(IdeaPlugin.class))
       .withSuperParent(3, extensionPointCapture(extensionPointClassNames));
   }
 
   @NotNull
-  private static XmlTagPattern.Capture extensionPointCapture(String[] extensionPointClassNames) {
+  private static XmlTagPattern.Capture extensionPointCapture(@NonNls String[] extensionPointClassNames) {
     //noinspection deprecation
     return xmlTag()
       .and(DomPatterns.withDom(DomPatterns.domElement(Extension.class).with(new PatternCondition<>("relevantEP") {

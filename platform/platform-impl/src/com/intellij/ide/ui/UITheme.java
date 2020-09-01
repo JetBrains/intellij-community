@@ -109,13 +109,13 @@ public final class UITheme {
   }
 
   @NotNull
-  public static UITheme loadFromJson(@NotNull InputStream stream, @NotNull String themeId, @Nullable ClassLoader provider) throws IllegalStateException {
+  public static UITheme loadFromJson(@NotNull InputStream stream, @NotNull @NonNls String themeId, @Nullable ClassLoader provider) throws IllegalStateException {
     return loadFromJson(stream, themeId, provider, s -> s);
   }
 
   @NotNull
   public static UITheme loadFromJson(@NotNull InputStream stream,
-                                     @NotNull String themeId,
+                                     @NotNull @NonNls String themeId,
                                      @Nullable ClassLoader provider,
                                      @NotNull Function<? super String, String> iconsMapper) throws IllegalStateException {
     UITheme theme = new Gson().fromJson(new InputStreamReader(stream, StandardCharsets.UTF_8), UITheme.class);
@@ -265,7 +265,7 @@ public final class UITheme {
     colorPalette.put("Tree.iconColor.Dark", "#AFB1B3");
   }
 
-  public String getId() {
+  public @NonNls String getId() {
     return id;
   }
 

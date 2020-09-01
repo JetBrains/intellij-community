@@ -61,7 +61,7 @@ public class ExtensionPointDeclarationRelatedItemLineMarkerProviderTest extends 
     int expectedTagPosition = file.getText().indexOf("<extensionPoint name=\"myStringEP\" interface=\"java.lang.String\"/>");
     String expectedTooltip = "<html><body>&nbsp;&nbsp;&nbsp;&nbsp;<a href=\"#navigation/" + path
                              + ":" + expectedTagPosition + "\">com.intellij.myStringEP</a> EP declaration in plugin.xml " +
-                             "<font color=" + color + ">[" + module.getName() + "]</font><br></body></html>";
+                             "<font color=\"" + color + "\">[" + module.getName() + "]</font><br></body></html>";
 
     final GutterMark gutter = myFixture.findGutter(filePath);
     DevKitGutterTargetsChecker.checkGutterTargets(gutter, expectedTooltip, DevkitIcons.Gutter.Plugin, "extensionPoint");

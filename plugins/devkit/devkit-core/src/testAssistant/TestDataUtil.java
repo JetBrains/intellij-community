@@ -269,7 +269,7 @@ public final class TestDataUtil {
       return relativePathPair.getSecond();
     }
     else {
-      return "<b>" + base + "</b>/" + relativePathPair.getSecond();
+      return "<b>" + base + "</b>/" + relativePathPair.getSecond(); // NON-NLS
     }
   }
 }

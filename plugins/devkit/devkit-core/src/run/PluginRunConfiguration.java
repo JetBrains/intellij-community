@@ -47,7 +47,9 @@ import java.util.Arrays;
 import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 
 public class PluginRunConfiguration extends RunConfigurationBase<Element> implements ModuleRunConfiguration {
-  private static final String IDEA_LOG = "idea.log";
+  @NonNls private static final String IDEA_LOG = "idea.log";
+  @NonNls private static final String LOG_DIR = "/system/log/";
+
   private Module myModule;
   private String myModuleName;
 
@@ -75,7 +77,7 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
       if (ideaJdk != null) {
         final String sandboxHome = ((Sandbox)ideaJdk.getSdkAdditionalData()).getSandboxHome();
         if (sandboxHome != null) {
-          return new LogFileOptions(IDEA_LOG, sandboxHome + "/system/log/" + IDEA_LOG, predefinedLogFile.isEnabled());
+          return new LogFileOptions(IDEA_LOG, sandboxHome + LOG_DIR + IDEA_LOG, predefinedLogFile.isEnabled());
         }
       }
     }
@@ -184,7 +186,8 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
         }
 
         if (SystemInfo.isXWindow) {
-          if (VM_PARAMETERS == null || !VM_PARAMETERS.contains("-Dsun.awt.disablegrab")) {
+          if (VM_PARAMETERS == null || !VM_PARAMETERS.contains("-Dsun.awt.disablegrab")) // NON-NLS
+          {
             vm.defineProperty("sun.awt.disablegrab", "true"); // See http://devnet.jetbrains.net/docs/DOC-1142
           }
         }

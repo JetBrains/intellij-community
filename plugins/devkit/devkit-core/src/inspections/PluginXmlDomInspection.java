@@ -408,7 +408,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
 
     @NonNls String id = ideaPlugin.getId().getStringValue();
     if (id != null &&
-        (StringUtil.startsWith(id, "com.android.") ||
+        (StringUtil.startsWith(id, "com.android.") || //NON-NLS
          id.equals("org.jetbrains.android"))) {
       return;
     }
@@ -566,8 +566,9 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
     }
     @NonNls String name = nameAttrValue.getValue();
 
-    if (name != null && StringUtil.startsWith(name, "Pythonid.") &&
-        PsiUtil.isIdeaProject(nameAttrValue.getManager().getProject())) {
+    if (name != null
+        && StringUtil.startsWith(name, "Pythonid.") // NON-NLS
+        && PsiUtil.isIdeaProject(nameAttrValue.getManager().getProject())) {
       return true;
     }
 

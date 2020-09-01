@@ -128,11 +128,11 @@ public class DomGenPanel {
     myUseQualifiedClassNames.setSelected(getValue("useFQNs", "false").equals("true"));
   }
 
-  private static String getValue(String name, @NonNls String defaultValue) {
+  private static @NonNls String getValue(@NonNls String name, @NonNls String defaultValue) {
     return PropertiesComponent.getInstance().getValue(PREFIX + name, defaultValue);
   }
 
-  private static void setValue(String name, @NonNls String value) {
+  private static void setValue(@NonNls String name, @NonNls String value) {
     PropertiesComponent.getInstance().setValue(PREFIX + name, value);
   }
 
