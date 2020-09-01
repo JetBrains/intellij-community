@@ -1037,10 +1037,8 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     if (parent instanceof UBinaryExpression) {
       UBinaryExpression binOp = (UBinaryExpression)parent;
       if (STRING_COMPARISON_OPS.contains(binOp.getOperator())) {
-        UReferenceExpression left = ObjectUtils.tryCast(UastUtils.skipParenthesizedExprDown(binOp.getLeftOperand()), 
-                                                        UReferenceExpression.class);
-        UReferenceExpression right = ObjectUtils.tryCast(UastUtils.skipParenthesizedExprDown(binOp.getRightOperand()), 
-                                                         UReferenceExpression.class);
+        UResolvable left = ObjectUtils.tryCast(UastUtils.skipParenthesizedExprDown(binOp.getLeftOperand()), UResolvable.class);
+        UResolvable right = ObjectUtils.tryCast(UastUtils.skipParenthesizedExprDown(binOp.getRightOperand()), UResolvable.class);
         return left != null && isNonNlsCall(left, nonNlsTargets) || 
                right != null && isNonNlsCall(right, nonNlsTargets);
       }

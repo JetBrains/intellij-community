@@ -228,6 +228,18 @@ public abstract class NlsInfo {
       }
     }
     if (owner instanceof PsiMethod) {
+      // If assignment target is Kotlin property, it resolves to the getter but annotation will be applied to the field
+      // (unless @get:Nls is used), so we have to navigate to the corresponding field.
+      UElement element = UastContextKt.toUElement(owner.getNavigationElement());
+      if (element instanceof UField) {
+        PsiElement javaPsi = element.getJavaPsi();
+        if (javaPsi instanceof PsiField) {
+          NlsInfo info = fromAnnotationOwner(((PsiField)javaPsi).getModifierList());
+          if (info != Unspecified.UNKNOWN) {
+            return info;
+          }
+        }
+      }
       PsiMethod method = (PsiMethod)owner;
       return fromMethodReturn(method, method.getReturnType(), null);
     }
@@ -277,17 +289,6 @@ public abstract class NlsInfo {
           if (parameters.length == 1) {
             PsiParameter parameter = parameters[0];
             return forModifierListOwner(parameter);
-          }
-        }
-        if (var instanceof PsiMethod) {
-          // If assignment target is Kotlin property, it resolves to the getter but annotation will be applied to the field
-          // (unless @get:Nls is used), so we have to navigate to the corresponding field.
-          UElement element = UastContextKt.toUElement(var.getNavigationElement());
-          if (element instanceof UField) {
-            PsiElement javaPsi = element.getJavaPsi();
-            if (javaPsi instanceof PsiField) {
-              return forModifierListOwner((PsiField)javaPsi);
-            }
           }
         }
       }

@@ -220,10 +220,28 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
   
   fun testCompareWithNonNls() {
     myFixture.enableInspections(I18nInspection())
+    myFixture.addClass("public interface Y {@org.jetbrains.annotations.NonNls String getNonNls();}")
     myFixture.configureByText("Foo.kt", """
-        fun test(@org.jetbrains.annotations.NonNls word: String): Boolean {
-          return word == "Set"
-        }
+       import org.jetbrains.annotations.*
+       
+       @NonNls
+       fun getLastWord(@NonNls string: String): String = string
+       
+       class X {
+         @NonNls
+         fun getNonNls() = "hello"
+
+         @NonNls
+         val prop = "hello"
+      
+         fun test(@NonNls word: String, x: Array<X>, y: Array<Y>): Boolean {
+           return word == "Hello world1" &&
+                  this.getNonNls() != "Hello world2" &&
+                  x[0].prop != "Hello world3" &&
+                  y[0].nonNls != "Hello world4" &&
+                  getLastWord(word) != "Hello world5"
+         }
+       }
     """.trimIndent())
     myFixture.testHighlighting()
   }
