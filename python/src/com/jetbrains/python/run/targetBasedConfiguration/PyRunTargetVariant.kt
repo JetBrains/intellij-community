@@ -19,7 +19,7 @@ import org.jetbrains.annotations.Nls
 /**
  * Types of target (symbol, path or custom) many python runners may have
  */
-enum class PyRunTargetVariant(private val customName: String? = null) {
+enum class PyRunTargetVariant(@Nls private val customName: String? = null) {
   PYTHON(PythonRunConfigurationForm.getModuleNameText()), PATH(PythonRunConfigurationForm.getScriptPathText()), CUSTOM;
 
   @Nls fun getCustomName(): String = customName ?: PythonRunConfigurationForm.getCustomNameText()
