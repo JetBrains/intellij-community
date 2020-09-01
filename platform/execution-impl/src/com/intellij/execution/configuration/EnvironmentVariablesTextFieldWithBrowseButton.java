@@ -9,14 +9,13 @@ import com.intellij.execution.util.EnvironmentVariable;
 import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.AnActionButton;
-import com.intellij.ui.AnActionButtonRunnable;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.UserActivityProviderComponent;
+import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ArrayUtil;
@@ -25,30 +24,23 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.IdeUtilIoBundle;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListTableModel;
-import java.awt.Component;
-import java.awt.Font;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.TreeMap;
-import javax.swing.Icon;
-import javax.swing.JCheckBox;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JTable;
+import net.miginfocom.swing.MigLayout;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableCellRenderer;
-import net.miginfocom.swing.MigLayout;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.InputEvent;
+import java.awt.event.KeyEvent;
+import java.util.List;
+import java.util.*;
 
 public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWithBrowseButton implements UserActivityProviderComponent {
 
@@ -263,6 +255,12 @@ public class EnvironmentVariablesTextFieldWithBrowseButton extends TextFieldWith
       setPassParentEnvs(myIncludeSystemVarsCb.isSelected());
       super.doOKAction();
     }
+  }
+
+  @Override
+  protected @NotNull @NlsContexts.Tooltip String getIconTooltip() {
+    return ExecutionBundle.message("specify.environment.variables.tooltip") + " (" +
+           KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK)) + ")";
   }
 
   private final class MyEnvVariablesTable extends EnvVariablesTable {
