@@ -134,11 +134,9 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
         header(IdeBundle.message("welcome.screen.color.theme.header"))
         row {
           val theme = comboBox(laf.lafComboBoxModel, lafProperty, laf.lookAndFeelCellRenderer)
-          laf.settingsToolbar?.let {
-            component(it)
-              .visibleIf(theme.component.selectedValueIs(LafManager.LafReference.SYNC_OS))
-              .withLeftGap()
-          }
+          component(laf.settingsToolbar)
+            .visibleIf(theme.component.selectedValueIs(LafManager.LafReference.SYNC_OS))
+            .withLeftGap()
         }
       }.largeGapAfter()
       blockRow {
