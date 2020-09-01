@@ -11,6 +11,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScopesCore
 import com.intellij.psi.xml.XmlFile
@@ -69,7 +70,7 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
   }
 
   private fun showReport(project: Project, result: List<PluginUnloadabilityStatus>) {
-    val report = buildString {
+    @NlsSafe val report = buildString {
       if (result.any { it.analysisErrors.isNotEmpty() }) {
         appendln("Analysis errors:")
         for (status in result.filter { it.analysisErrors.isNotEmpty() }) {
@@ -260,7 +261,7 @@ enum class UnloadabilityStatus {
 }
 
 private data class PluginUnloadabilityStatus(
-  val pluginId: String,
+  @NlsSafe val pluginId: String,
   val unspecifiedDynamicEPs: Set<String>,
   val nonDynamicEPs: Set<String>,
   val nonDynamicEPsInDependencies: Map<String, Set<String>>,
