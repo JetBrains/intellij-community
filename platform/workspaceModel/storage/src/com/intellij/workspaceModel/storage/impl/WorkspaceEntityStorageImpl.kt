@@ -14,6 +14,7 @@ import com.intellij.workspaceModel.storage.impl.exceptions.rbsFailed
 import com.intellij.workspaceModel.storage.impl.external.EmptyExternalEntityMapping
 import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
 import com.intellij.workspaceModel.storage.impl.external.MutableExternalEntityMappingImpl
+import it.unimi.dsi.fastutil.ints.IntSet
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
@@ -1042,16 +1043,18 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
     indexes.assertConsistency(this)
   }
 
-  private fun checkStrongConnection(connectionKeys: Set<Int>, entityFamilyClass: Int, connectionTo: Int) {
-    val keys = connectionKeys.toMutableSet()
+  private fun checkStrongConnection(connectionKeys: IntSet, entityFamilyClass: Int, connectionTo: Int) {
+
+    var counter = 0
     val entityFamily = entitiesByType.entityFamilies[entityFamilyClass]
                        ?: error("Entity family ${entityFamilyClass.findWorkspaceEntity()} doesn't exist")
     entityFamily.entities.forEachIndexed { i, entity ->
       if (entity == null) return@forEachIndexed
-      val removed = keys.remove(i)
-      assert(removed) { "Entity $entity doesn't have a correct connection to ${connectionTo.findWorkspaceEntity()}" }
+      assert(i in connectionKeys) { "Entity $entity doesn't have a correct connection to ${connectionTo.findWorkspaceEntity()}" }
+      counter++
     }
-    assert(keys.isEmpty()) { "Store is inconsistent" }
+
+    assert(counter == connectionKeys.size) { "Store is inconsistent" }
   }
 
   private fun checkStrongAbstractConnection(connectionKeys: Set<EntityId>, entityFamilyClasses: Set<Int>, debugInfo: String) {

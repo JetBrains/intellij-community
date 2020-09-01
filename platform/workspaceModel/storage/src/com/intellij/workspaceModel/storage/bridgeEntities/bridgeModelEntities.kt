@@ -25,13 +25,12 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
 
   @ExperimentalStdlibApi
   override fun getLinks(): Set<PersistentEntityId<*>> {
-    return buildSet {
-      dependencies.forEach { dependency ->
-        when (dependency) {
-          is ModuleDependencyItem.Exportable.ModuleDependency -> this.add(dependency.module)
-          is ModuleDependencyItem.Exportable.LibraryDependency -> this.add(dependency.library)
-          else -> Unit
-        }
+
+    return dependencies.mapNotNullTo(HashSet()) { dependency ->
+      when (dependency) {
+        is ModuleDependencyItem.Exportable.ModuleDependency -> dependency.module
+        is ModuleDependencyItem.Exportable.LibraryDependency -> dependency.library
+        else -> null
       }
     }
   }
