@@ -35,7 +35,7 @@ public class DeploymentStatus {
     this(icon, () -> presentableText, transition);
   }
 
-  private DeploymentStatus(Icon icon, @NotNull Supplier<@Nls String> presentableText, boolean transition) {
+  public DeploymentStatus(Icon icon, @NotNull Supplier<@Nls String> presentableText, boolean transition) {
     myIcon = icon;
     myPresentableText = presentableText;
     myTransition = transition;
