@@ -126,8 +126,6 @@
               class="com.intellij.space.vcs.review.list.SpaceReviewAuthorActionGroup"/>
 
     </group>
-    <action id="com.intellij.space.vcs.review.SpaceOpenCodeReviewDetailsAction"
-            class="com.intellij.space.vcs.review.SpaceOpenCodeReviewDetailsAction"/>
   </actions>
 
   <resource-bundle>messages.SpaceBundle</resource-bundle>

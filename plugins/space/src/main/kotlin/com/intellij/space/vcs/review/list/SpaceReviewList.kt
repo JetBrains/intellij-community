@@ -1,9 +1,15 @@
 package com.intellij.space.vcs.review.list
 
 import circlet.code.api.CodeReviewWithCount
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonShortcuts
+import com.intellij.openapi.actionSystem.CompositeShortcutSet
+import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.ui.SpaceAvatarProvider
 import com.intellij.space.vcs.review.ReviewUiSpec
+import com.intellij.space.vcs.review.SpaceReviewDataKeys
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.ListUtil
 import com.intellij.ui.ScrollingUtil
@@ -12,7 +18,6 @@ import com.intellij.util.ui.ListUiUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.codereview.OpenReviewButton
 import com.intellij.util.ui.codereview.OpenReviewButtonViewModel
-
 import libraries.coroutines.extra.Lifetime
 import java.awt.event.MouseEvent
 import javax.swing.JComponent
@@ -26,11 +31,13 @@ internal class SpaceReviewsList(
 
   private val openButtonViewModel = OpenReviewButtonViewModel()
 
+  private val openReviewDetailsAction = SpaceOpenCodeReviewDetailsAction()
+
   init {
     selectionModel.selectionMode = ListSelectionModel.SINGLE_SELECTION
 
     OpenReviewButton.installOpenButtonListeners(this, openButtonViewModel) {
-      ActionManager.getInstance().getAction(openDetailsActionId)
+      openReviewDetailsAction
     }
     val userAvatarProvider = SpaceAvatarProvider(lifetime, this, ReviewUiSpec.avatarSizeIntValue)
 
@@ -44,7 +51,7 @@ internal class SpaceReviewsList(
     ListUiUtil.Selection.installSelectionOnRightClick(this)
 
     val shortcuts = CompositeShortcutSet(CommonShortcuts.ENTER, CommonShortcuts.DOUBLE_CLICK_1)
-    EmptyAction.registerWithShortcutSet(openDetailsActionId, shortcuts, this)
+    openReviewDetailsAction.registerCustomShortcutSet(shortcuts, this)
   }
 
   override fun getToolTipText(event: MouseEvent?): String? {
@@ -64,4 +71,9 @@ internal class SpaceReviewsList(
   }
 }
 
-private const val openDetailsActionId = "com.intellij.space.vcs.review.SpaceOpenCodeReviewDetailsAction"
+private class SpaceOpenCodeReviewDetailsAction : DumbAwareAction(SpaceBundle.messagePointer("action.open.review.details.text")) {
+  override fun actionPerformed(e: AnActionEvent) {
+    val data = e.getData(SpaceReviewListDataKeys.SELECTED_REVIEW) ?: return
+    e.getData(SpaceReviewDataKeys.SELECTED_REVIEW_VM)?.selectedReview?.value = data
+  }
+}
