@@ -76,7 +76,9 @@ public class PythonDocumentationConfigurable implements SearchableConfigurable, 
 
     @Override
     public String getColumnName(int columnIndex) {
-      return columnIndex == 0 ? "Module Name" : "URL/Path Pattern";
+      return columnIndex == 0
+             ? PyBundle.message("external.documentation.column.name.module")
+             : PyBundle.message("external.documentation.column.name.url.path.pattern");
     }
 
     @Override
@@ -139,5 +141,4 @@ public class PythonDocumentationConfigurable implements SearchableConfigurable, 
       return showEditor(o);
     }
   }
-
 }
