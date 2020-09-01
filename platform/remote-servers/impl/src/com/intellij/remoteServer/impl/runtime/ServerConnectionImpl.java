@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.remoteServer.impl.runtime;
 
-import com.intellij.analysis.AnalysisBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -9,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.remoteServer.CloudBundle;
 import com.intellij.remoteServer.configuration.RemoteServer;
 import com.intellij.remoteServer.configuration.deployment.DeploymentConfiguration;
 import com.intellij.remoteServer.impl.runtime.deployment.DeploymentImpl;
@@ -214,7 +214,7 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
       public void errorOccurred(@NotNull String errorMessage) {
         myAllDeployments.replaceRemotesWith(Collections.emptyList());
 
-        myStatusText = AnalysisBundle.message("ServerConnectionimpl.error.cannot.obtain.deployments", errorMessage);
+        myStatusText = CloudBundle.message("ServerConnectionImpl.error.cannot.obtain.deployments", errorMessage);
         myEventDispatcher.queueConnectionStatusChanged(ServerConnectionImpl.this);
         myEventDispatcher.queueDeploymentsChanged(ServerConnectionImpl.this);
         onFinished.run();
