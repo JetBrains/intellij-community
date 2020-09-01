@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.impl.attach;
 
+import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.RemoteStateState;
 import com.intellij.debugger.impl.DebuggerManagerImpl;
 import com.intellij.debugger.impl.GenericDebuggerRunner;
@@ -500,13 +501,13 @@ public class JavaAttachDebuggerProvider implements XLocalAttachDebuggerProvider 
     @Nls
     @Override
     public String getDisplayName() {
-      return getId();
+      return JavaDebuggerBundle.message("process.attach.run.configuration.type.name");
     }
 
     @Nls
     @Override
     public String getConfigurationTypeDescription() {
-      return getId();
+      return getDisplayName();
     }
 
     @Override

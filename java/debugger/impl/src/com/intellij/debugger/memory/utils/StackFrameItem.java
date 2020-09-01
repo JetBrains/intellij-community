@@ -51,7 +51,8 @@ public class StackFrameItem {
     JavaStackFrame.createMessageNode(JavaDebuggerBundle.message("message.node.local.variables.not.captured"),
                                      XDebuggerUIConstants.INFORMATION_MESSAGE_ICON));
 
-  public static final XDebuggerTreeNodeHyperlink CAPTURE_SETTINGS_OPENER = new XDebuggerTreeNodeHyperlink(" settings") {
+  public static final XDebuggerTreeNodeHyperlink CAPTURE_SETTINGS_OPENER = new XDebuggerTreeNodeHyperlink(
+    JavaDebuggerBundle.message("capture.node.settings.link")) {
     @Override
     public void onClick(MouseEvent event) {
       ShowSettingsUtil.getInstance().showSettingsDialog(

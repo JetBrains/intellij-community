@@ -10,6 +10,7 @@ import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -165,7 +166,7 @@ public class MessageTreeNode extends XDebuggerTreeNode {
     private final HyperlinkListener hyperlinkListener;
     private final String href;
 
-    public HyperlinkListenerDelegator(@NotNull String linkText, @Nullable String href, @NotNull HyperlinkListener hyperlinkListener) {
+    public HyperlinkListenerDelegator(@NotNull @Nls String linkText, @Nullable String href, @NotNull HyperlinkListener hyperlinkListener) {
       super(linkText);
 
       this.hyperlinkListener = hyperlinkListener;
