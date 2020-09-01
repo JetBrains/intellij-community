@@ -5,13 +5,14 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public final class SortedConfigurableGroup
+public class SortedConfigurableGroup
   extends SearchableConfigurable.Parent.Abstract
   implements SearchableConfigurable, Weighted, ConfigurableGroup, Configurable.NoScroll {
 
@@ -23,7 +24,11 @@ public final class SortedConfigurableGroup
 
   List<Configurable> myList = new ArrayList<>();
 
-  SortedConfigurableGroup(String id, @NlsContexts.ConfigurableName String displayName, @NlsContexts.DetailedDescription String description, String helpTopic, int weight) {
+  public SortedConfigurableGroup(@NonNls @NotNull String id,
+                                 @NlsContexts.ConfigurableName @NotNull String displayName,
+                                 @NlsContexts.DetailedDescription @Nullable String description,
+                                 @NonNls @Nullable String helpTopic,
+                                 int weight) {
     myId = id;
     myDisplayName = displayName;
     myDescription = description;
@@ -40,15 +45,13 @@ public final class SortedConfigurableGroup
     return result;
   }
 
-  @NotNull
   @Override
-  public String getId() {
+  public @NonNls @NotNull String getId() {
     return myId;
   }
 
-  @Nullable
   @Override
-  public String getHelpTopic() {
+  public @NonNls @Nullable String getHelpTopic() {
     return myHelpTopic;
   }
 
@@ -58,7 +61,7 @@ public final class SortedConfigurableGroup
   }
 
   @Override
-  public String getDisplayName() {
+  public @NlsContexts.ConfigurableName String getDisplayName() {
     return myDisplayName;
   }
 
