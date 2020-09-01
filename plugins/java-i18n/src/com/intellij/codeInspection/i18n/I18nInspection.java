@@ -1066,15 +1066,15 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
   private static boolean isInNonNlsCallChain(@NotNull UExpression expression,
                                              final Set<? super PsiModifierListOwner> nonNlsTargets) {
     UExpression parent = UastUtils.skipParenthesizedExprDown(JavaI18nUtil.getTopLevelExpression(expression, true));
-    if (parent instanceof UQualifiedReferenceExpression) {
-      return isNonNlsCall((UQualifiedReferenceExpression)parent, nonNlsTargets);
+    if (parent instanceof UResolvable && isNonNlsCall((UResolvable)parent, nonNlsTargets)) {
+      return true;
     }
-    else if (parent != null && UastExpressionUtils.isAssignment(parent)) {
+    if (parent != null && UastExpressionUtils.isAssignment(parent)) {
       UExpression operand = ((UBinaryExpression)parent).getLeftOperand();
       if (operand instanceof UReferenceExpression &&
           isNonNlsCall((UReferenceExpression)operand, nonNlsTargets)) return true;
     }
-    else if (parent instanceof UCallExpression) {
+    if (parent instanceof UCallExpression) {
       UElement parentOfNew = UastUtils.skipParenthesizedExprUp(parent.getUastParent());
       if (parentOfNew instanceof ULocalVariable) {
         final ULocalVariable newVariable = (ULocalVariable)parentOfNew;
