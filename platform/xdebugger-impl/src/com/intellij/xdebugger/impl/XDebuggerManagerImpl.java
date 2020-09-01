@@ -61,7 +61,6 @@ import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -225,14 +224,14 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
 
   @Override
   @NotNull
-  public XDebugSession startSessionAndShowTab(@NotNull @Nls String sessionName, @Nullable RunContentDescriptor contentToReuse,
+  public XDebugSession startSessionAndShowTab(@NotNull String sessionName, @Nullable RunContentDescriptor contentToReuse,
                                               @NotNull XDebugProcessStarter starter) throws ExecutionException {
     return startSessionAndShowTab(sessionName, contentToReuse, false, starter);
   }
 
   @NotNull
   @Override
-  public XDebugSession startSessionAndShowTab(@NotNull @Nls String sessionName, @Nullable RunContentDescriptor contentToReuse,
+  public XDebugSession startSessionAndShowTab(@NotNull String sessionName, @Nullable RunContentDescriptor contentToReuse,
                                               boolean showToolWindowOnSuspendOnly,
                                               @NotNull XDebugProcessStarter starter) throws ExecutionException {
     return startSessionAndShowTab(sessionName, null, contentToReuse, showToolWindowOnSuspendOnly, starter);
@@ -240,7 +239,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
 
   @NotNull
   @Override
-  public XDebugSession startSessionAndShowTab(@NotNull @Nls String sessionName,
+  public XDebugSession startSessionAndShowTab(@NotNull String sessionName,
                                               Icon icon,
                                               @Nullable RunContentDescriptor contentToReuse,
                                               boolean showToolWindowOnSuspendOnly,
