@@ -49,10 +49,6 @@ public class JpsEncodingModelSerializerExtension extends JpsModelSerializerExten
       }
       JpsEncodingConfigurationService.getInstance().setEncodingConfiguration(project, projectEncoding, urlToEncoding);
     }
-
-    @Override
-    public void saveExtension(@NotNull JpsProject project, @NotNull Element componentTag) {
-    }
   }
 
   private static final class JpsGlobalEncodingSerializer extends JpsGlobalExtensionSerializer {
@@ -71,11 +67,6 @@ public class JpsEncodingModelSerializerExtension extends JpsModelSerializerExten
     @Override
     public void loadExtensionWithDefaultSettings(@NotNull JpsGlobal global) {
       JpsEncodingConfigurationService.getInstance().setGlobalEncoding(global, CharsetToolkit.UTF8);
-    }
-
-    @Override
-    public void saveExtension(@NotNull JpsGlobal global, @NotNull Element componentTag) {
-      componentTag.setAttribute(ENCODING_ATTRIBUTE, JpsEncodingConfigurationService.getInstance().getGlobalEncoding(global));
     }
   }
 }

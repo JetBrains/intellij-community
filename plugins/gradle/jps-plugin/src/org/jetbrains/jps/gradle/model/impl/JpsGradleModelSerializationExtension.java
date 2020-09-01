@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.gradle.model.impl;
 
-import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -75,12 +74,6 @@ public class JpsGradleModelSerializationExtension extends JpsModelSerializerExte
     public JpsGradleArtifactExtension loadExtension(@Nullable Element optionsTag) {
       return new JpsGradleArtifactExtensionImpl(
         optionsTag != null ? XmlSerializer.deserialize(optionsTag, GradleArtifactExtensionProperties.class) : null);
-    }
-
-    @Override
-    public void saveExtension(@NotNull JpsGradleArtifactExtension extension, @NotNull Element optionsTag) {
-      GradleArtifactExtensionProperties properties = extension.getProperties();
-      XmlSerializer.serializeInto(properties, optionsTag, new SkipDefaultValuesSerializationFilters());
     }
   }
 }

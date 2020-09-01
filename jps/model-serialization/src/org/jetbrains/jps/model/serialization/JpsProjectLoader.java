@@ -489,9 +489,6 @@ public final class JpsProjectLoader extends JpsLoaderBase {
       public JpsDummyElement loadProperties(@Nullable Element componentElement) {
         return JpsElementFactory.getInstance().createDummyElement();
       }
-
-      @Override
-      public void saveProperties(@NotNull JpsDummyElement properties, @NotNull Element componentElement) { }
     };
   }
 }
