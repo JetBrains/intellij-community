@@ -2,7 +2,6 @@
 package com.intellij.openapi.wm.impl.welcomeScreen
 
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.actions.QuickChangeLookAndFeel
 import com.intellij.ide.ui.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
@@ -73,7 +72,7 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
   private val adjustColorsProperty = propertyGraph.graphProperty { settings.colorBlindness != null }
 
   init {
-    lafProperty.afterChange({ QuickChangeLookAndFeel.switchLafAndUpdateUI(laf, laf.findLaf(it), true) }, parentDisposable)
+    lafProperty.afterChange({ laf.lookAndFeelReference = it }, parentDisposable)
     ideFontProperty.afterChange({
                                   settings.overrideLafFonts = true
                                   settings.fontSize = it
