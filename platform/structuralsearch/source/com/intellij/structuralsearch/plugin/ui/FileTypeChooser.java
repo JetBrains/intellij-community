@@ -30,13 +30,13 @@ import java.util.function.Consumer;
 /**
  * @author Bas Leijdekkers
  */
-public class FileTypeChooser extends ComboBoxAction implements DumbAware {
+class FileTypeChooser extends ComboBoxAction implements DumbAware {
 
   private final List<FileTypeInfo> myFileTypeInfos;
   private FileTypeInfo mySelectedItem;
   private Consumer<? super FileTypeInfo> myConsumer;
 
-  public FileTypeChooser() {
+  FileTypeChooser() {
     myFileTypeInfos = createFileTypeInfos();
     mySelectedItem = myFileTypeInfos.get(0);
     setSmallVariant(false);
