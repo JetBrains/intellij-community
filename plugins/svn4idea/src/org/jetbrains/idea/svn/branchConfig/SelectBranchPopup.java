@@ -246,6 +246,6 @@ public final class SelectBranchPopup {
   }
 
   private static String getConfigureMessage() {
-    return SvnBundle.message("configure.branches.item");
+    return SvnBundle.message("action.Subversion.ConfigureBranches.text");
   }
 }

@@ -264,22 +264,7 @@ public final class SvnVcs extends AbstractVcs {
 
     RootsToWorkingCopies.getInstance(myProject);
     ProjectLevelVcsManager.getInstance(myProject).runAfterInitialization(() -> setupChangeLists());
-    StartupManager.getInstance(myProject).runAfterOpened(() -> {
-      postStartup();
-
-      // for IDEA, it takes 2 minutes - and anyway this can be done in background, no sense...
-      // once it could be mistaken about copies for 2 minutes on start...
-
-      /*if (! myMapping.getAllWcInfos().isEmpty()) {
-        invokeRefreshSvnRoots();
-        return;
-      }
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
-        public void run() {
-          myCopiesRefreshManager.getCopiesRefresh().ensureInit();
-        }
-      }, SvnBundle.message("refreshing.working.copies.roots.progress.text"), true, myProject);*/
-    });
+    StartupManager.getInstance(myProject).runAfterOpened(() -> postStartup());
 
     SvnLoadedBranchesStorage.getInstance(myProject).activate();
   }

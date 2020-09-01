@@ -108,7 +108,7 @@ public class SvnCheckinEnvironment implements CheckinEnvironment {
 
   private void reportCommittedRevisions(Set<? super String> feedback, String committedRevisions) {
     final Project project = mySvnVcs.getProject();
-    final String message = message("status.text.comitted.revision", committedRevisions);
+    final String message = message("status.text.committed.revision", committedRevisions);
     if (feedback == null) {
       ApplicationManager.getApplication().invokeLater(() -> new VcsBalloonProblemNotifier(project, message, MessageType.INFO).run(),
                                                       o -> (!project.isOpen()) || project.isDisposed());

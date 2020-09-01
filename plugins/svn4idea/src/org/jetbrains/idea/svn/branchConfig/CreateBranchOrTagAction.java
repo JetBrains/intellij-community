@@ -111,7 +111,7 @@ public class CreateBranchOrTagAction extends BasicAction {
       StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
 
       if (statusBar != null) {
-        statusBar.setInfo(message("status.text.comitted.revision", revision));
+        statusBar.setInfo(message("status.text.committed.revision", revision));
       }
     }
   }
