@@ -212,7 +212,7 @@ public final class InspectionApplication implements CommandLineInspectionProgres
       }
     }
 
-    if (myOutputFormat.equals("sa")) {
+    if ("sa".equals(myOutputFormat)) {
       addRootChangesListener(parentDisposable);
     }
 
