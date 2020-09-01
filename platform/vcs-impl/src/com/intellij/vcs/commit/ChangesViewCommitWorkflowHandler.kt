@@ -43,7 +43,7 @@ internal class ChangesViewCommitWorkflowHandler(
 
   private val activityEventDispatcher = EventDispatcher.create(ActivityListener::class.java)
 
-  private val changeListManager = ChangeListManager.getInstance(project) as ChangeListManagerEx
+  private val changeListManager = ChangeListManagerEx.getInstanceEx(project)
   private var knownActiveChanges: Collection<Change> = emptyList()
 
   private val inclusionModel = PartialCommitInclusionModel(project)

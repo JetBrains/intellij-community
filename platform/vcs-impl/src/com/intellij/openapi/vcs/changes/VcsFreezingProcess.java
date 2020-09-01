@@ -31,7 +31,7 @@ public class VcsFreezingProcess {
     myOperationTitle = operationTitle;
     myRunnable = runnable;
 
-    myChangeListManager = (ChangeListManagerEx)ChangeListManager.getInstance(project);
+    myChangeListManager = ChangeListManagerEx.getInstanceEx(project);
   }
 
   public void execute() {

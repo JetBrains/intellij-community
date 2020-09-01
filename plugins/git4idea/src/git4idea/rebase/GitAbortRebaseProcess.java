@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsNotifier;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
 import com.intellij.vcs.log.Hash;
 import git4idea.DialogManager;
@@ -244,7 +243,7 @@ class GitAbortRebaseProcess {
     }).execute();
 
     if (success[0]) {
-      ((ChangeListManagerEx)ChangeListManager.getInstance(myProject)).waitForUpdate();
+      ChangeListManagerEx.getInstanceEx(myProject).waitForUpdate();
 
       if (mySaver != null) {
         mySaver.load();

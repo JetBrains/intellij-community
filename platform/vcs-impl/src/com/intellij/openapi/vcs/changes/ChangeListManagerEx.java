@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.Nls;
@@ -26,7 +26,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 public abstract class ChangeListManagerEx extends ChangeListManager {
-  private static final Logger LOG = Logger.getInstance(ChangeListManagerEx.class);
+  public static ChangeListManagerEx getInstanceEx(@NotNull Project project) {
+    return (ChangeListManagerEx)getInstance(project);
+  }
 
   public abstract boolean isInUpdate();
 

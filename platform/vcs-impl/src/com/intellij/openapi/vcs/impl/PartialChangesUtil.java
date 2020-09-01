@@ -160,7 +160,7 @@ public final class PartialChangesUtil {
         LOG.warn("Can't wait till changes are applied while holding read lock", new Throwable());
       }
       else {
-        ((ChangeListManagerEx)ChangeListManager.getInstance(project)).waitForUpdate();
+        ChangeListManagerEx.getInstanceEx(project).waitForUpdate();
       }
       restoreChangeList(changeListManager, targetChangeList, oldDefaultList);
     }

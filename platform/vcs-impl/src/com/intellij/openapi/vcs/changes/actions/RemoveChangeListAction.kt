@@ -11,7 +11,6 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.ChangeList
-import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ChangeListManagerEx
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.util.ArrayUtil
@@ -64,7 +63,7 @@ class RemoveChangeListAction : AbstractChangeListAction() {
   }
 
   private fun deleteLists(project: Project, lists: Collection<LocalChangeList>) {
-    val manager = ChangeListManager.getInstance(project) as ChangeListManagerEx
+    val manager = ChangeListManagerEx.getInstanceEx(project)
 
     val toRemove = mutableListOf<LocalChangeList>()
     val toAsk = mutableListOf<LocalChangeList>()

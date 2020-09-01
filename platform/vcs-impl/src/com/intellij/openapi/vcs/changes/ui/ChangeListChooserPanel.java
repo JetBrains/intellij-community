@@ -155,12 +155,12 @@ public class ChangeListChooserPanel extends JPanel {
    */
   @Nullable
   public LocalChangeList getSelectedList(Project project) {
-    ChangeListManager manager = ChangeListManager.getInstance(project);
+    ChangeListManagerEx manager = ChangeListManagerEx.getInstanceEx(project);
     String changeListName = myListPanel.getChangeListName();
     LocalChangeList localChangeList = manager.findChangeList(changeListName);
 
     if (localChangeList == null) {
-      localChangeList = ((ChangeListManagerEx)manager).addChangeList(changeListName, myListPanel.getDescription(), myData);
+      localChangeList = manager.addChangeList(changeListName, myListPanel.getDescription(), myData);
       myListPanel.changelistCreatedOrChanged(localChangeList);
     }
     else {

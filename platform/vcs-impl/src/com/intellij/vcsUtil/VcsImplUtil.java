@@ -107,7 +107,7 @@ public final class VcsImplUtil {
     ignoredFileGenerator.generateFile(ignoreFileRoot, vcs, notify);
   }
 
-  private static boolean isFileSharedInVcs(@NotNull Project project, @NotNull ChangeListManagerEx changeListManager, @NotNull String filePath) {
+  private static boolean isFileSharedInVcs(@NotNull Project project, @NotNull ChangeListManager changeListManager, @NotNull String filePath) {
     VirtualFile file = LocalFileSystem.getInstance().findFileByPath(filePath);
     if (file == null) return false;
     FileStatus fileStatus = changeListManager.getStatus(file);
@@ -119,7 +119,7 @@ public final class VcsImplUtil {
     return ReadAction.compute(() -> {
       if (project.isDisposed()) return false;
       @SystemIndependent String projectFilePath = project.getProjectFilePath();
-      ChangeListManagerEx changeListManager = (ChangeListManagerEx)ChangeListManager.getInstance(project);
+      ChangeListManagerEx changeListManager = ChangeListManagerEx.getInstanceEx(project);
       return !changeListManager.isInUpdate()
              && (projectFilePath != null && isFileSharedInVcs(project, changeListManager, projectFilePath));
     });

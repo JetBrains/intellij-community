@@ -10,7 +10,10 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -39,7 +42,7 @@ public class RollbackChangesDialog extends DialogWrapper {
   private final @Nls String myOperationName;
 
   public static void rollbackChanges(final Project project, final Collection<? extends Change> changes) {
-    final ChangeListManagerEx manager = (ChangeListManagerEx) ChangeListManager.getInstance(project);
+    final ChangeListManagerEx manager = ChangeListManagerEx.getInstanceEx(project);
 
     if (changes.isEmpty()) {
       showNoChangesDialog(project);

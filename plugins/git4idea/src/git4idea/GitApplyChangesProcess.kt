@@ -62,7 +62,7 @@ class GitApplyChangesProcess(private val project: Project,
   private val LOG = logger<GitApplyChangesProcess>()
   private val repositoryManager = GitRepositoryManager.getInstance(project)
   private val vcsNotifier = VcsNotifier.getInstance(project)
-  private val changeListManager = ChangeListManager.getInstance(project) as ChangeListManagerEx
+  private val changeListManager = ChangeListManagerEx.getInstanceEx(project)
   private val vcsHelper = AbstractVcsHelper.getInstance(project)
 
   fun execute() {
@@ -204,8 +204,8 @@ class GitApplyChangesProcess(private val project: Project,
     }
   }
 
-  private fun getAllChangesInLogFriendlyPresentation(changeListManagerEx: ChangeListManagerEx) =
-    changeListManagerEx.changeLists.map { "[${it.name}] ${it.changes}" }
+  private fun getAllChangesInLogFriendlyPresentation(changeListManager: ChangeListManager) =
+    changeListManager.changeLists.map { "[${it.name}] ${it.changes}" }
 
   private fun refreshStagedVfs(root: VirtualFile) {
     val staged = getStagedChanges(project, root)

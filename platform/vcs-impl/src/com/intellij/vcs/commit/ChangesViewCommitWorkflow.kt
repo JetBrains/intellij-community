@@ -13,7 +13,7 @@ private val LOG = logger<ChangesViewCommitWorkflow>()
 
 class ChangesViewCommitWorkflow(project: Project) : AbstractCommitWorkflow(project) {
   private val vcsManager = ProjectLevelVcsManager.getInstance(project)
-  private val changeListManager = ChangeListManager.getInstance(project) as ChangeListManagerEx
+  private val changeListManager = ChangeListManagerEx.getInstanceEx(project)
 
   override val isDefaultCommitEnabled: Boolean get() = true
 
