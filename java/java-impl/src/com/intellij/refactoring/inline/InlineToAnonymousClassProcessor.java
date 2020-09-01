@@ -20,7 +20,7 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
-import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.SealedUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -223,7 +223,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
         PsiReferenceList refList = (PsiReferenceList) element.getParent();
         PsiClass parentClass = tryCast(refList.getParent(), PsiClass.class);
         if (parentClass != null && refList == parentClass.getPermitsList()) {
-          ClassUtils.removeFromPermitsList(parentClass, myClass);
+          SealedUtils.removeFromPermitsList(parentClass, myClass);
         }
       }
       else {

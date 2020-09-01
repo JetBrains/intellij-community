@@ -55,7 +55,7 @@ public class CreateSubclassTest extends LightMultiFileTestCase {
   }
 
   public void testSealedWithSameFileInheritors() {
-    doTest();
+    doTestSameFileClass();
   }
 
   private void doTestInner() {
@@ -64,6 +64,15 @@ public class CreateSubclassTest extends LightMultiFileTestCase {
       final PsiClass inner = superClass.findInnerClassByName("Inner", false);
       assertNotNull(inner);
       CreateSubclassAction.createInnerClass(inner);
+      UIUtil.dispatchAllInvocationEvents();
+    });
+  }
+
+  private void doTestSameFileClass() {
+    doTest(() -> {
+      PsiClass superClass = myFixture.findClass("Superclass");
+      ApplicationManager.getApplication().invokeLater(
+        () -> CreateSubclassAction.createSameFileClass("Subclass", superClass));
       UIUtil.dispatchAllInvocationEvents();
     });
   }

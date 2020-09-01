@@ -15,14 +15,13 @@
  */
 package com.intellij.refactoring.safeDelete.usageInfo;
 
-import com.intellij.codeInsight.intention.impl.FillPermitsListFix;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
-import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.SealedUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,10 +63,10 @@ public class SafeDeleteExtendsClassUsageInfo extends SafeDeleteReferenceUsageInf
     getElement().delete();
 
     if (!refClass.hasModifierProperty(PsiModifier.SEALED)) return;
-    ClassUtils.removeFromPermitsList(refClass, myExtendingClass);
+    SealedUtils.removeFromPermitsList(refClass, myExtendingClass);
     final PsiModifierList modifiers = myExtendingClass.getModifierList();
     if (modifiers == null || !modifiers.hasModifierProperty(PsiModifier.NON_SEALED)) return;
-    if (!ClassUtils.hasSealedParent(myExtendingClass)) {
+    if (!SealedUtils.hasSealedParent(myExtendingClass)) {
       modifiers.setModifierProperty(PsiModifier.NON_SEALED, false);
     }
   }
@@ -89,13 +88,13 @@ public class SafeDeleteExtendsClassUsageInfo extends SafeDeleteReferenceUsageInf
           String extendingClassName = Objects.requireNonNull(myExtendingClass.getQualifiedName());
           if (classToExtend.getPermitsList() == null) {
             if (classToExtend.getContainingFile() != myExtendingClass.getContainingFile()) {
-              Collection<String> missingInheritors = ClassUtils.findSameFileInheritors(classToExtend, classToRemove);
+              Collection<String> missingInheritors = SealedUtils.findSameFileInheritors(classToExtend, classToRemove);
               missingInheritors.add(extendingClassName);
-              FillPermitsListFix.fillPermitsList(classToExtend, missingInheritors);
+              SealedUtils.fillPermitsList(classToExtend, missingInheritors);
             }
           }
           else {
-            FillPermitsListFix.fillPermitsList(classToExtend, Collections.singleton(extendingClassName));
+            SealedUtils.fillPermitsList(classToExtend, Collections.singleton(extendingClassName));
           }
         }
         CodeStyleManager.getInstance(myExtendingClass.getProject()).reformat(extendsRef);

@@ -3,3 +3,6 @@ public sealed class Superclass permits B, Subclass {
 }
 
 final class B extends Superclass {}
+
+class Subclass extends Superclass {
+}

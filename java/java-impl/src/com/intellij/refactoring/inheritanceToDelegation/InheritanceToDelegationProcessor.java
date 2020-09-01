@@ -53,7 +53,7 @@ import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
 import com.intellij.util.containers.MultiMap;
-import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.SealedUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -590,10 +590,10 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
 
   private void updateSealedHierarchy() {
     if (!myBaseClass.hasModifierProperty(PsiModifier.SEALED)) return;
-    ClassUtils.removeFromPermitsList(myBaseClass, myClass);
+    SealedUtils.removeFromPermitsList(myBaseClass, myClass);
     PsiModifierList modifiers = myClass.getModifierList();
     if (modifiers == null) return;
-    if (!modifiers.hasExplicitModifier(PsiModifier.NON_SEALED) || ClassUtils.hasSealedParent(myClass)) return;
+    if (!modifiers.hasExplicitModifier(PsiModifier.NON_SEALED) || SealedUtils.hasSealedParent(myClass)) return;
     modifiers.setModifierProperty(PsiModifier.NON_SEALED, false);
   }
 

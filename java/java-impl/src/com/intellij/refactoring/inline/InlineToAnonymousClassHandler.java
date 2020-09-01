@@ -39,7 +39,7 @@ import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
-import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.SealedUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -77,7 +77,7 @@ public class InlineToAnonymousClassHandler extends JavaInlineActionHandler {
     PsiClass psiClass = (PsiClass)element;
     if (!findClassInheritors(psiClass)) return false;
     boolean hasMethods = PsiTreeUtil.findChildOfType(psiClass, PsiMember.class) != null;
-    return !hasMethods && !ClassUtils.hasSealedParent(psiClass);
+    return !hasMethods && !SealedUtils.hasSealedParent(psiClass);
   }
 
   private static boolean findClassInheritors(final PsiClass element) {

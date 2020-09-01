@@ -50,6 +50,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.search.searches.DirectClassInheritorsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -57,11 +58,13 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.SmartHashSet;
-import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.SealedUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.intellij.util.ObjectUtils.tryCast;
 
 public class CreateSubclassAction extends BaseIntentionAction {
   private static final Logger LOG = Logger.getInstance(CreateSubclassAction.class);
@@ -156,6 +159,32 @@ public class CreateSubclassAction extends BaseIntentionAction {
     return psiClass.hasModifierProperty(PsiModifier.PRIVATE) && psiClass.getContainingClass() != null;
   }
 
+  public static void createSameFileClass(String newClassName, PsiClass psiClass) {
+    String actionTitle = getTitle(psiClass);
+    Project project = psiClass.getProject();
+    WriteCommandAction.writeCommandAction(project).withName(actionTitle).withGroupId(actionTitle).run(() -> {
+      final PsiJavaFile containingFile = tryCast(psiClass.getContainingFile(), PsiJavaFile.class);
+      LOG.assertTrue(containingFile != null);
+
+      PsiClass[] classes = containingFile.getClasses();
+      int nClasses = classes.length;
+      LOG.assertTrue(nClasses > 0);
+
+      final PsiTypeParameterList oldTypeParameterList = psiClass.getTypeParameterList();
+      PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
+      PsiClass newClass = factory.createClass(newClassName);
+      PsiModifierList modifiers = newClass.getModifierList();
+      LOG.assertTrue(modifiers != null);
+      modifiers.setModifierProperty(PsiModifier.PUBLIC, false);
+      newClass = (PsiClass)containingFile.addAfter(newClass, classes[nClasses - 1]);
+
+      PsiIdentifier newClassIdentifier = newClass.getNameIdentifier();
+      LOG.assertTrue(newClassIdentifier != null);
+      startTemplate(oldTypeParameterList, project, psiClass, newClass, false);
+      CodeInsightUtil.positionCursor(project, containingFile, newClassIdentifier);
+    });
+  }
+
   public static void createInnerClass(final PsiClass aClass) {
     WriteCommandAction.writeCommandAction(aClass.getProject()).withName(getTitle(aClass)).withGroupId(getTitle(aClass)).run(() -> {
       final PsiClass containingClass = aClass.getContainingClass();
@@ -172,8 +201,21 @@ public class CreateSubclassAction extends BaseIntentionAction {
   protected void createTopLevelClass(PsiClass psiClass) {
     final CreateClassDialog dlg = chooseSubclassToCreate(psiClass);
     if (dlg != null) {
-      createSubclass(psiClass, dlg.getTargetDirectory(), dlg.getClassName());
+      PsiDirectory targetDirectory = dlg.getTargetDirectory();
+      PsiJavaFile containingFile = tryCast(psiClass.getContainingFile(), PsiJavaFile.class);
+      boolean inSamePackage = containingFile != null && containingFile.getPackageName().equals(targetDirectory.getName());
+      if (inSamePackage && hasOnlySameFileInheritors(psiClass)) {
+        createSameFileClass(dlg.getClassName(), psiClass);
+      } else {
+        createSubclass(psiClass, targetDirectory, dlg.getClassName());
+      }
     }
+  }
+
+  private static boolean hasOnlySameFileInheritors(PsiClass psiClass) {
+    if (!psiClass.hasModifierProperty(PsiModifier.SEALED)) return false;
+    return DirectClassInheritorsSearch.search(psiClass)
+      .allMatch(inheritor -> inheritor.getContainingFile() == psiClass.getContainingFile());
   }
 
   @Nullable
@@ -268,9 +310,9 @@ public class CreateSubclassAction extends BaseIntentionAction {
         SmartHashSet<String> missingInheritors = new SmartHashSet<>();
         missingInheritors.add(createdClassName);
         if (psiClass.getPermitsList() == null) {
-          missingInheritors.addAll(ClassUtils.findSameFileInheritors(psiClass));
+          missingInheritors.addAll(SealedUtils.findSameFileInheritors(psiClass));
         }
-        FillPermitsListFix.fillPermitsList(psiClass, missingInheritors);
+        SealedUtils.fillPermitsList(psiClass, missingInheritors);
       }
       if (psiClass.hasTypeParameters() || includeClassName) {
         final Editor editor = CodeInsightUtil.positionCursorAtLBrace(project, targetClass.getContainingFile(), targetClass);

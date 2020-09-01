@@ -16,6 +16,7 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.codeInspection.concurrencyAnnotations.JCiPUtil;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -340,38 +341,6 @@ public final class ClassUtils {
     }
     final PsiField selfInstance = getIfOneStaticSelfInstance(aClass);
     return selfInstance != null && newOnlyAssignsToStaticSelfInstance(getIfOnlyInvisibleConstructors(aClass)[0], selfInstance);
-  }
-
-  /**
-   * Removes exChild class reference from permits list of a parent.
-   * If this was the last element in permits list then sealed modifier of parent class is removed.
-   */
-  public static void removeFromPermitsList(@NotNull PsiClass parent, @NotNull PsiClass exChild) {
-    PsiReferenceList permitsList = parent.getPermitsList();
-    if (permitsList == null) return;
-    PsiJavaCodeReferenceElement[] childRefs = permitsList.getReferenceElements();
-    PsiJavaCodeReferenceElement exChildRef = ContainerUtil.find(childRefs, ref -> ref.resolve() == exChild);
-    if (exChildRef == null) return;
-    exChildRef.delete();
-    if (childRefs.length != 1) return;
-    PsiModifierList modifiers = parent.getModifierList();
-    if (modifiers == null) return;
-    modifiers.setModifierProperty(PsiModifier.SEALED, false);
-  }
-
-  public static Collection<String> findSameFileInheritors(@NotNull PsiClass psiClass, PsiClass @NotNull ... classesToExclude) {
-    GlobalSearchScope fileScope = GlobalSearchScope.fileScope(psiClass.getContainingFile());
-    return DirectClassInheritorsSearch.search(psiClass, fileScope)
-      .filtering(inheritor -> !ArrayUtil.contains(inheritor, classesToExclude))
-      .mapping(inheritor -> inheritor.getQualifiedName())
-      .findAll();
-  }
-
-  public static boolean hasSealedParent(@NotNull PsiClass psiClass) {
-    return StreamEx.of(psiClass.getExtendsListTypes())
-      .append(psiClass.getImplementsListTypes())
-      .map(r -> r.resolve())
-      .anyMatch(parent -> parent != null && parent.hasModifierProperty(PsiModifier.SEALED));
   }
 
   private static PsiField getIfOneStaticSelfInstance(PsiClass aClass) {

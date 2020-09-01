@@ -6,7 +6,7 @@ import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.psi.PsiReferenceList;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.SealedUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
@@ -31,7 +31,7 @@ public class SafeDeletePermitsClassUsageInfo extends SafeDeleteReferenceUsageInf
   public void deleteElement() throws IncorrectOperationException {
     final PsiClass refClass = getReferencedElement();
     if (myChangeParentModifier) {
-      ClassUtils.removeFromPermitsList(myParentClass, refClass);
+      SealedUtils.removeFromPermitsList(myParentClass, refClass);
     }
     else {
       PsiJavaCodeReferenceElement exChildRef = findReference();
