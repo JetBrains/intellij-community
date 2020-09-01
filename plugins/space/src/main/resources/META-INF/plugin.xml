@@ -56,6 +56,10 @@
     <postStartupActivity implementation="com.intellij.space.vcs.PostStartupActivity"/>
     <postStartupActivity implementation="com.intellij.space.plugins.pipelines.services.SpaceKtsFileDetectorActivator"/>
 
+    <fileIconProvider implementation="com.intellij.space.chat.editor.SpaceChatIconProvider"/>
+    <fileEditorProvider implementation="com.intellij.space.chat.editor.SpaceChatEditorProvider"/>
+    <editorTabTitleProvider implementation="com.intellij.space.chat.editor.SpaceChatFileTabTitleProvider"/>
+
     <!--registry keys-->
     <!--suppress PluginXmlCapitalization -->
     <registryKey key="space.code.review.enabled"
