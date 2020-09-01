@@ -24,7 +24,6 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.util.xml.DomManager
-import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.IdeaPlugin
 import org.jetbrains.idea.devkit.module.PluginModuleType
@@ -82,11 +81,12 @@ class NewMessageBundleAction : CreateElementActionBase() {
 
   private fun getOrCreateResourcesRoot(module: Module): PsiDirectory? {
     fun reportError(message: String): Nothing? {
-      val notification = Notification("DevKit Errors", errorTitle,
-                                      DevKitBundle.message(
-                                        "action.DevKit.NewMessageBundle.notification.content.cannot.create.resources.root.for.properties.file",
-                                        message),
-                                      NotificationType.ERROR)
+      val notification =
+        Notification("DevKit Errors",
+                     DevKitBundle.message("action.DevKit.NewMessageBundle.notification.title.cannot.create.resources.root.for.properties.file"),
+                     DevKitBundle.message("action.DevKit.NewMessageBundle.notification.content.cannot.create.resources.root.for.properties.file",
+                                          message),
+                     NotificationType.ERROR)
       Notifications.Bus.notify(notification, module.project)
       return null
     }
