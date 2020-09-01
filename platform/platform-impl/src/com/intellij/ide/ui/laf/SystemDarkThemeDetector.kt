@@ -3,6 +3,7 @@ package com.intellij.ide.ui.laf
 
 import com.intellij.jna.JnaLoader
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.mac.foundation.Foundation
 import com.intellij.ui.mac.foundation.ID
@@ -41,7 +42,7 @@ internal abstract class SystemDarkThemeDetector {
       ApplicationManager.getApplication()?.let { application ->
         application.executeOnPooledThread {
           val isDark = isDark()
-          application.invokeLater { syncFunction.accept(isDark) }
+          application.invokeLater(Runnable { syncFunction.accept(isDark) }, ModalityState.any())
         }
       }
     }
