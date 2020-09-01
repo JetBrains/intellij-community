@@ -327,7 +327,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
                            "a:active {color:#" + ColorUtil.toHex(JBUI.CurrentTheme.Link.linkPressedColor()) + ";}\n" +
                            //"body {background-color:#" + ColorUtil.toHex(JBColor.YELLOW) + ";}\n" + // Left for visual debugging
                            "</style>\n</head>";
-      HtmlChunk text = HtmlChunk.text(commentText);
+      HtmlChunk text = HtmlChunk.raw(commentText);
       if (maxLineLength > 0 && commentText.length() > maxLineLength && isCommentBelow) {
         int width = component.getFontMetrics(component.getFont()).stringWidth(commentText.substring(0, maxLineLength));
         text = text.wrapWith(HtmlChunk.div().attr("width", width));
