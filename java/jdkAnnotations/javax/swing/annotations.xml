@@ -6,6 +6,12 @@
   <item name='javax.swing.AbstractAction void putValue(java.lang.String, java.lang.Object) 0'>
     <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
+  <item name='javax.swing.AbstractButton java.lang.String getActionCommand()'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='javax.swing.AbstractButton void setActionCommand(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
   <item name='javax.swing.Action java.lang.Object getValue(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
@@ -32,6 +38,12 @@
     <annotation name="org.intellij.lang.annotations.MagicConstant">
       <val name="valuesFromClass" val="javax.swing.BoxLayout.class" />
     </annotation>
+  </item>
+  <item name='javax.swing.ButtonModel java.lang.String getActionCommand()'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
+  <item name='javax.swing.ButtonModel void setActionCommand(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
   <item name='javax.swing.ImageIcon ImageIcon(java.lang.String) 0'>
     <annotation name='org.jetbrains.annotations.NonNls'/>
