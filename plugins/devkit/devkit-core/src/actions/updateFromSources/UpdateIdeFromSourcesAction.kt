@@ -151,11 +151,11 @@ internal open class UpdateIdeFromSourcesAction
     val builtDistPath = "$deployDirPath/$distRelativePath"
     object : Task.Backgroundable(project, DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.title"), true) {
       override fun run(indicator: ProgressIndicator) {
-        indicator.text = "Updating IDE from sources..."
+        indicator.text = DevKitBundle.message("action.UpdateIdeFromSourcesAction.update.progress.text")
         backupImportantFilesIfNeeded(workIdeHome, backupDir, indicator)
-        indicator.text2 = "Deleting $builtDistPath"
+        indicator.text2 = DevKitBundle.message("action.UpdateIdeFromSourcesAction.update.progress.delete", builtDistPath)
         FileUtil.delete(File(builtDistPath))
-        indicator.text2 = "Starting gant script"
+        indicator.text2 = DevKitBundle.message("action.UpdateIdeFromSourcesAction.update.progress.start.gant.script")
         val commandLine = params.toCommandLine()
         commandLine.isRedirectErrorStream = true
         val scriptHandler = OSProcessHandler(commandLine)
@@ -251,7 +251,7 @@ internal open class UpdateIdeFromSourcesAction
     }
 
     LOG.debug("Backing up files from $workIdeHome to $backupDir")
-    indicator.text2 = "Backing up files"
+    indicator.text2 = DevKitBundle.message("action.UpdateIdeFromSourcesAction.backup.progress.text")
     FileUtil.createDirectory(backupDir)
     File(workIdeHome, "bin").listFiles()
       ?.filter { it.name !in safeToDeleteFilesInBin && it.extension !in safeToDeleteExtensions }
@@ -265,11 +265,11 @@ internal open class UpdateIdeFromSourcesAction
   private fun startCopyingFiles(builtDistPath: String, workIdeHome: String, project: Project) {
     object : Task.Backgroundable(project, DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.title"), true) {
       override fun run(indicator: ProgressIndicator) {
-        indicator.text = "Copying files to IDE distribution..."
-        indicator.text2 = "Deleting old files"
+        indicator.text = DevKitBundle.message("action.UpdateIdeFromSourcesAction.copy.progress.text")
+        indicator.text2 = DevKitBundle.message("action.UpdateIdeFromSourcesAction.copy.delete.old.files.text")
         FileUtil.delete(File(workIdeHome))
         indicator.checkCanceled()
-        indicator.text2 = "Copying new files"
+        indicator.text2 = DevKitBundle.message("action.UpdateIdeFromSourcesAction.copy.copy.new.files.text")
         FileUtil.copyDir(File(builtDistPath), File(workIdeHome))
         indicator.checkCanceled()
         Notification("Update from Sources", DevKitBundle.message("action.UpdateIdeFromSourcesAction.notification.title"),
