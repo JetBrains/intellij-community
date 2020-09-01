@@ -3,6 +3,7 @@ package com.intellij.codeInspection;
 
 import com.google.common.base.Predicates;
 import com.google.common.collect.Lists;
+import com.intellij.ProjectTopics;
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefElement;
@@ -28,7 +29,11 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -59,6 +64,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.LockSupport;
 import java.util.function.Predicate;
 
@@ -206,6 +212,10 @@ public final class InspectionApplication implements CommandLineInspectionProgres
       }
     }
 
+    if (myOutputFormat.equals("sa")) {
+      addRootChangesListener(parentDisposable);
+    }
+
     Project project = ProjectUtil.openOrImport(projectPath);
     if (project == null) {
       reportError("Unable to open project");
@@ -216,7 +226,6 @@ public final class InspectionApplication implements CommandLineInspectionProgres
 
     MessageBusConnection connection = project.getMessageBus().connect();
     connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, () -> isMappingLoaded.setResult(null));
-
     Disposer.register(parentDisposable, () -> closeProject(project));
 
     ApplicationManager.getApplication().invokeAndWait(() -> VirtualFileManager.getInstance().refreshWithoutFileWatcher(false));
@@ -276,6 +285,33 @@ public final class InspectionApplication implements CommandLineInspectionProgres
         runAnalysisOnScope(projectPath, parentDisposable, project, myInspectionProfile, scope);
       }
     }
+  }
+
+  private void addRootChangesListener(Disposable parentDisposable) {
+    MessageBusConnection applicationBus = ApplicationManager.getApplication().getMessageBus().connect(parentDisposable);
+    applicationBus.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+      @Override
+      public void projectOpened(@NotNull Project project) {
+        subscribeToRootChanges(project);
+      }
+    });
+  }
+
+  private void subscribeToRootChanges(Project project) {
+    Path rootLogDir = Paths.get(myOutPath).resolve("projectStructureLog");
+    rootLogDir.toFile().mkdirs();
+    AtomicInteger counter = new AtomicInteger(0);
+    ProjectDescriptionUtilKt.writeProjectDescription(rootLogDir.resolve("projectStructure0.json"), project);
+
+    MessageBusConnection connection = project.getMessageBus().connect();
+    connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+      @Override
+      public void rootsChanged(@NotNull ModuleRootEvent event) {
+        int i = counter.incrementAndGet();
+        LOG.info("Project structure update written. Change number " + i);
+        ProjectDescriptionUtilKt.writeProjectDescription(rootLogDir.resolve("projectStructure" + i + ".json"), project);
+      }
+    });
   }
 
   private List<VirtualFile> getChangedFiles(@NotNull Project project) throws ExecutionException, InterruptedException {
