@@ -75,7 +75,7 @@ internal open class UpdateIdeFromSourcesAction
 
     val state = UpdateFromSourcesSettings.getState()
     val devIdeaHome = project.basePath ?: return
-    val workIdeHome = state.workIdePath ?: PathManager.getHomePath()
+    val workIdeHome = state.actualIdePath
     val restartAutomatically = state.restartAutomatically
     if (!ApplicationManager.getApplication().isRestartCapable && FileUtil.pathsEqual(workIdeHome, PathManager.getHomePath())) {
       return error("This IDE cannot restart itself so updating from sources isn't supported")
