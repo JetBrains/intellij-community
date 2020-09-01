@@ -234,11 +234,12 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
           for (XmlTag tag : tags) {
             psiFiles.add(tag.getContainingFile());
           }
-          WriteCommandAction.runWriteCommandAction(project, getFamilyName(), null, () -> {
-            for (XmlTag tag : tags) {
-              registerPropertyKey(project, tag, propertiesFile);
-            }
-          }, psiFiles.toArray(PsiFile.EMPTY_ARRAY));
+          WriteCommandAction.runWriteCommandAction(
+            project, DevKitBundle.message("inspections.plugin.xml.i18n.inspection.tag.command.name", "displayName"), null, () -> {
+              for (XmlTag tag : tags) {
+                registerPropertyKey(project, tag, propertiesFile);
+              }
+            }, psiFiles.toArray(PsiFile.EMPTY_ARRAY));
         }
       });
     }
@@ -338,7 +339,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
           psiFiles.add(t.getContainingFile());
         }
         WriteCommandAction
-          .runWriteCommandAction(project, getFamilyName(), null, () -> {
+          .runWriteCommandAction(project, DevKitBundle.message("inspections.plugin.xml.i18n.command.name"), null, () -> {
                                    if (attachResourceBundle) {
                                      createResourceBundleTag(project, tags, propertiesFile);
                                    }
@@ -447,7 +448,8 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
           for (XmlTag tag : tags) {
             psiFiles.add(tag.getContainingFile());
           }
-          WriteCommandAction.runWriteCommandAction(project, getFamilyName(), null, () -> {
+          WriteCommandAction.runWriteCommandAction(
+            project, DevKitBundle.message("inspections.plugin.xml.i18n.key.command.name"), null, () -> {
             for (XmlTag tag : tags) {
               registerPropertyKey(project, tag, propertiesFile);
             }
