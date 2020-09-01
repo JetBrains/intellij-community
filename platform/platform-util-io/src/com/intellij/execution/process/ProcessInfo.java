@@ -1,6 +1,7 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,16 +47,19 @@ public class ProcessInfo {
   }
 
   @NotNull
+  @NlsSafe
   public String getCommandLine() {
     return myCommandLine;
   }
 
   @NotNull
+  @NlsSafe
   public String getExecutableName() {
     return myExecutableName;
   }
 
   @NotNull
+  @NlsSafe
   public Optional<String> getExecutableCannonicalPath() {
     return myExecutablePath.map(s -> {
       try {
@@ -68,11 +72,13 @@ public class ProcessInfo {
   }
 
   @NotNull
+  @NlsSafe
   public String getExecutableDisplayName() {
     return StringUtil.trimEnd(myExecutableName, ".exe", true);
   }
 
   @NotNull
+  @NlsSafe
   public String getArgs() {
     return myArgs;
   }

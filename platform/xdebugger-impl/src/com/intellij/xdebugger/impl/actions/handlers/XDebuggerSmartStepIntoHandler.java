@@ -21,10 +21,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.Hint;
@@ -278,13 +275,15 @@ public class XDebuggerSmartStepIntoHandler extends XDebuggerSuspendedActionHandl
     }
   }
 
-  private static <V extends XSmartStepIntoVariant> Hint showHint(Editor editor, String message, SmartStepData<V>.VariantInfo myCurrentVariant) {
+  private static <V extends XSmartStepIntoVariant> Hint showHint(Editor editor,
+                                                                 @NlsContexts.HintText String message,
+                                                                 SmartStepData<V>.VariantInfo myCurrentVariant) {
     LightweightHint hint = new LightweightHint(HintUtil.createInformationLabel(message));
     JComponent component = HintManagerImpl.getExternalComponent(editor);
     Point convertedPoint = SwingUtilities.convertPoint(editor.getContentComponent(), myCurrentVariant.myStartPoint, component);
     HintManagerImpl.getInstanceImpl().showEditorHint(hint, editor, convertedPoint, HintManager.HIDE_BY_TEXT_CHANGE |
-        HintManager.HIDE_BY_SCROLLING,
-      0, false, HintManager.ABOVE);
+                                                                                   HintManager.HIDE_BY_SCROLLING,
+                                                     0, false, HintManager.ABOVE);
     return hint;
   }
 

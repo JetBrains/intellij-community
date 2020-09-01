@@ -61,6 +61,7 @@ import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -239,7 +240,7 @@ public final class XDebuggerManagerImpl extends XDebuggerManager implements Pers
 
   @NotNull
   @Override
-  public XDebugSession startSessionAndShowTab(@NotNull String sessionName,
+  public XDebugSession startSessionAndShowTab(@NotNull @Nls String sessionName,
                                               Icon icon,
                                               @Nullable RunContentDescriptor contentToReuse,
                                               boolean showToolWindowOnSuspendOnly,

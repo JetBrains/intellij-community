@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.xdebugger;
 
@@ -149,11 +149,11 @@ public interface XDebugSession extends AbstractDebuggerSession {
 
   void removeSessionListener(@NotNull XDebugSessionListener listener);
 
-  void reportError(@NotNull String message);
+  void reportError(@NotNull @NlsContexts.NotificationContent String message);
 
-  void reportMessage(@NotNull String message, @NotNull MessageType type);
+  void reportMessage(@NotNull @NlsContexts.NotificationContent String message, @NotNull MessageType type);
 
-  void reportMessage(@NotNull String message, @NotNull MessageType type, @Nullable HyperlinkListener listener);
+  void reportMessage(@NotNull @NlsContexts.NotificationContent String message, @NotNull MessageType type, @Nullable HyperlinkListener listener);
 
   @NotNull
   @NlsContexts.TabTitle
