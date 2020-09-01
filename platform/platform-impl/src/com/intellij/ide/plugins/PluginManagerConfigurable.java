@@ -691,14 +691,12 @@ public class PluginManagerConfigurable
                   pluginsFromMarketplace,
                   ContainerUtil.flatten(customRepositoriesMap.values()), false
                 ); // compare plugin versions between marketplace & custom repositories
-                result.descriptors.addAll(plugins);
+                result.descriptors.addAll(0, plugins);
 
                 if (parser.searchQuery != null) {
-                  String builtinUrl = ApplicationInfoEx.getInstanceEx().getBuiltinPluginsUrl();
-                  List<IdeaPluginDescriptor> builtinList = new ArrayList<>();
+                  List<IdeaPluginDescriptor> descriptors = new ArrayList<>();
 
                   for (Entry<String, List<IdeaPluginDescriptor>> entry : customRepositoriesMap.entrySet()) {
-                    List<IdeaPluginDescriptor> descriptors = entry.getKey().equals(builtinUrl) ? builtinList : result.descriptors;
                     for (IdeaPluginDescriptor descriptor : entry.getValue()) {
                       if (StringUtil.containsIgnoreCase(descriptor.getName(), parser.searchQuery)) {
                         descriptors.add(descriptor);
@@ -706,7 +704,7 @@ public class PluginManagerConfigurable
                     }
                   }
 
-                  result.descriptors.addAll(0, builtinList);
+                  result.descriptors.addAll(0, descriptors);
                 }
 
                 ContainerUtil.removeDuplicates(result.descriptors);
