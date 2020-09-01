@@ -43,10 +43,14 @@ fun <T : SemElement, U : UElement> SemRegistrar.registerUastSemProvider(
   })
 }
 
-fun <U : UElement, T : SemElement> uastSemElementProvider(cls: Class<U>, provider: (U, PsiElement) -> T?): UastSemProvider<T> {
-  return object : UastSemProvider<T>(cls) {
+fun <U : UElement, T : SemElement> uastSemElementProvider(cls: Class<U>, provider: (U, PsiElement) -> T?): UastSemProvider<T> =
+  uastSemElementProvider(listOf(cls), provider)
+
+fun <U : UElement, T : SemElement> uastSemElementProvider(supportedUElementTypes: List<Class<out U>>, provider: (U, PsiElement) -> T?): UastSemProvider<T> {
+  return object : UastSemProvider<T>(supportedUElementTypes) {
     override fun getSemElements(element: UElement, psi: PsiElement, context: ProcessingContext): Collection<T> {
-      return provider.invoke(cls.cast(element), psi)?.let { listOf(it) } ?: emptyList()
+      @Suppress("UNCHECKED_CAST")
+      return provider.invoke(element as U, psi)?.let { listOf(it) } ?: emptyList()
     }
   }
 }
