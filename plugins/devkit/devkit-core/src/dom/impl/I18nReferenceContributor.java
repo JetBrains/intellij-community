@@ -9,6 +9,7 @@ import com.intellij.ide.TypeNameEP;
 import com.intellij.lang.properties.PropertiesImplUtil;
 import com.intellij.lang.properties.PropertiesReferenceManager;
 import com.intellij.lang.properties.ResourceBundleReference;
+import com.intellij.notification.impl.NotificationGroupEP;
 import com.intellij.openapi.options.ConfigurableEP;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.project.Project;
@@ -50,6 +51,8 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
     private static final String CONFIGURABLE_EP = ConfigurableEP.class.getName();
     private static final String INSPECTION_EP = InspectionEP.class.getName();
 
+    private static final String NOTIFICATION_GROUP_EP = NotificationGroupEP.class.getName();
+
     private static final String ICON_DESCRIPTION_BUNDLE_EP = IconDescriptionBundleEP.class.getName();
     private static final String TYPE_NAME_EP = TypeNameEP.class.getName();
   }
@@ -65,7 +68,8 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
 
   private static void registerKeyProviders(PsiReferenceRegistrar registrar) {
     registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"key", "groupKey"},
-                                                                  Holder.CONFIGURABLE_EP, Holder.INSPECTION_EP),
+                                                                  Holder.CONFIGURABLE_EP, Holder.INSPECTION_EP,
+                                                                  Holder.NOTIFICATION_GROUP_EP),
                                         new PropertyKeyReferenceProvider(false, "groupKey", "groupBundle"));
     registrar.registerReferenceProvider(nestedExtensionAttributePattern(new String[]{"key", "groupKey"},
                                                                         Holder.CONFIGURABLE_EP),
@@ -129,7 +133,8 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
 
     registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"bundle", "groupBundle"},
                                                                   Holder.CONFIGURABLE_EP, Holder.INSPECTION_EP,
-                                                                  Holder.GROUP_CONFIGURABLE_EP),
+                                                                  Holder.GROUP_CONFIGURABLE_EP,
+                                                                  Holder.NOTIFICATION_GROUP_EP),
                                         bundleReferenceProvider);
     registrar.registerReferenceProvider(nestedExtensionAttributePattern(new String[]{"bundle", "groupBundle"},
                                                                         Holder.CONFIGURABLE_EP),
