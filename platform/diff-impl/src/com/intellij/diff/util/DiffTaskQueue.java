@@ -18,9 +18,9 @@ package com.intellij.diff.util;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.util.Function;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.RequiresEdt;
 
 public class DiffTaskQueue {
   @Nullable private ProgressIndicator myProgressIndicator;

@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.data
 
 import com.intellij.openapi.Disposable
-import org.jetbrains.annotations.RequiresEdt
+import com.intellij.util.concurrency.annotations.RequiresEdt
 
 interface GHPRListUpdatesChecker : Disposable {
 

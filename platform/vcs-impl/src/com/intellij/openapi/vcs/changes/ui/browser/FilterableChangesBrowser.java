@@ -12,10 +12,10 @@ import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
 import com.intellij.ui.components.ProgressBarLoadingDecorator;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.RequiresEdt;
 
 import javax.swing.*;
 import java.util.Collection;

@@ -14,11 +14,10 @@
  * limitations under the License.
  */
 
-package org.jetbrains.annotations;
+package com.intellij.util.concurrency.annotations;
 
 import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.util.ThrowableRunnable;
+import com.intellij.openapi.application.ModalityState;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -26,21 +25,22 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * Methods and constructors annotated with {@code RequiresWriteLock} must be called only with write lock held.
- * Parameters annotated with {@code RequiresWriteLock} must be callables and are guaranteed to be called with write lock held.
+ * Methods and constructors annotated with {@code RequiresEdt} must be called from the Event Dispatch Thread only.
+ * Parameters annotated with {@code RequiresEdt} must be callables and are guaranteed to be called from the Event Dispatch Thread.
  *
  * <p/>Aside from a documentation purpose, the annotation is processed by the <a href="">Threading Model Helper</a> plugin.
- * The plugin instruments annotated elements with {@link Application#assertWriteAccessAllowed()} calls
+ * The plugin instruments annotated elements with {@link Application#assertIsDispatchThread()} calls
  * to ensure annotation's contract is not violated at runtime. The instrumentation can be disabled
- * by setting {@link RequiresWriteLock#generateAssertion()} to {@code false}.
+ * by setting {@link RequiresEdt#generateAssertion()} to {@code false}.
  *
  * @see <a href="http://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview/general_threading_rules.html">General Threading Rules</a>
- * @see Application#assertWriteAccessAllowed()
- * @see WriteAction#run(ThrowableRunnable)
+ * @see Application#assertIsDispatchThread()
+ * @see Application#invokeLater(Runnable, ModalityState)
+ * @see Application#invokeAndWait(Runnable, ModalityState)
  */
 @Retention(RetentionPolicy.CLASS)
 @Target({ElementType.METHOD, ElementType.CONSTRUCTOR, ElementType.PARAMETER})
-public @interface RequiresWriteLock {
+public @interface RequiresEdt {
   /**
    * @return {@code false} if annotated element must not be instrumented with the assertion.
    */

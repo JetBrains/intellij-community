@@ -4,9 +4,9 @@ package git4idea.remote;
 import com.intellij.dvcs.hosting.RepositoryHostingService;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.RequiresBackgroundThread;
 
 public abstract class GitRepositoryHostingService implements RepositoryHostingService {
   public static final ExtensionPointName<GitRepositoryHostingService> EP_NAME =

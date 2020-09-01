@@ -6,14 +6,14 @@ import com.intellij.execution.process.ProcessOutput
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import git4idea.config.GitExecutableProblemsNotifier.getPrettyErrorMessage
 import git4idea.i18n.GitBundle
 import org.jetbrains.annotations.CalledInAny
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.Nls.Capitalization.Sentence
 import org.jetbrains.annotations.Nls.Capitalization.Title
-import org.jetbrains.annotations.RequiresBackgroundThread
-import org.jetbrains.annotations.RequiresEdt
 
 fun findGitExecutableProblemHandler(project: Project): GitExecutableProblemHandler {
   return when {

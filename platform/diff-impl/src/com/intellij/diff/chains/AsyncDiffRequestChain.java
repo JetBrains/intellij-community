@@ -9,10 +9,10 @@ import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.RequiresBackgroundThread;
-import org.jetbrains.annotations.RequiresEdt;
 
 import java.util.Collections;
 import java.util.EventListener;

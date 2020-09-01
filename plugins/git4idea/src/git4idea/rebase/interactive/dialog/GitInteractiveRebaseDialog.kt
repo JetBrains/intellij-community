@@ -18,6 +18,7 @@ import com.intellij.ui.PopupHandler
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -28,7 +29,6 @@ import git4idea.history.GitLogUtil
 import git4idea.i18n.GitBundle
 import git4idea.rebase.GitRebaseEntryWithDetails
 import git4idea.rebase.interactive.GitRebaseTodoModel
-import org.jetbrains.annotations.RequiresBackgroundThread
 import java.awt.BorderLayout
 import java.awt.Dimension
 import javax.swing.JComponent

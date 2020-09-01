@@ -15,12 +15,12 @@ import com.intellij.openapi.vcs.history.LimitHistoryCheck.VcsFileHistoryLimitRea
 import com.intellij.openapi.vcs.impl.BackgroundableActionLock;
 import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
 import com.intellij.util.Consumer;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.vcs.history.VcsHistoryProviderEx;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.RequiresBackgroundThread;
-import org.jetbrains.annotations.RequiresEdt;
 
 import java.io.Serializable;
 import java.util.List;

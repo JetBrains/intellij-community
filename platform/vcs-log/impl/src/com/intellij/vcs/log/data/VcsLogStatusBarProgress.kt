@@ -15,12 +15,12 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.util.Alarm
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.data.index.VcsLogBigRepositoriesList
 import com.intellij.vcs.log.data.index.VcsLogPersistentIndex
 import com.intellij.vcs.log.util.VcsLogUtil
-import org.jetbrains.annotations.RequiresEdt
 
 class VcsLogStatusBarProgress(project: Project, logProviders: Map<VirtualFile, VcsLogProvider>,
                               vcsLogProgress: VcsLogProgress) : Disposable {

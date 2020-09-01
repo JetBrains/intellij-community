@@ -16,8 +16,8 @@
 package com.intellij.cvsSupport2.connections.login;
 
 import com.intellij.util.ThreeState;
-import org.jetbrains.annotations.RequiresBackgroundThread;
-import org.jetbrains.annotations.RequiresEdt;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 
 // todo rename?

@@ -5,7 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.vcs.CheckoutProvider
 import com.intellij.util.EventDispatcher
-import org.jetbrains.annotations.RequiresEdt
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import javax.swing.JComponent
 
 /**

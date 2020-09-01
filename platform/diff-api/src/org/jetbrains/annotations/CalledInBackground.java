@@ -15,6 +15,8 @@
  */
 package org.jetbrains.annotations;
 
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

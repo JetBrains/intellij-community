@@ -4,7 +4,7 @@ package org.jetbrains.plugins.github.util
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.concurrency.EdtScheduledExecutorService
-import org.jetbrains.annotations.RequiresEdt
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.util.concurrent.ScheduledFuture
 import java.util.concurrent.TimeUnit
 

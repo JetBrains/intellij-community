@@ -16,8 +16,8 @@
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.RequiresEdt;
 
 import java.util.Arrays;
 import java.util.Objects;

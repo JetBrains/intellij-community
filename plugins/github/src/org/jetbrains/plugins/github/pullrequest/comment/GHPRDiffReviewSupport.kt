@@ -4,7 +4,7 @@ package org.jetbrains.plugins.github.pullrequest.comment
 import com.intellij.diff.tools.util.base.DiffViewerBase
 import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.util.Key
-import org.jetbrains.annotations.RequiresEdt
+import com.intellij.util.concurrency.annotations.RequiresEdt
 
 interface GHPRDiffReviewSupport {
 

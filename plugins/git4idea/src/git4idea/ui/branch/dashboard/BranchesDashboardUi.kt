@@ -20,6 +20,7 @@ import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SideBorder
 import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Panels.simplePanel
 import com.intellij.util.ui.StatusText.getDefaultEmptyText
@@ -53,7 +54,6 @@ import git4idea.ui.branch.dashboard.BranchesDashboardActions.ShowBranchDiffActio
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.ShowMyBranchesAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.ToggleFavoriteAction
 import git4idea.ui.branch.dashboard.BranchesDashboardActions.UpdateSelectedBranchAction
-import org.jetbrains.annotations.RequiresEdt
 import java.awt.Component
 import javax.swing.JComponent
 import javax.swing.event.TreeSelectionListener

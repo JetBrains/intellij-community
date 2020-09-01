@@ -27,8 +27,8 @@ import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.ui.DirtyUI
 import com.intellij.ui.InplaceButton
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.ui.JBUI
-import org.jetbrains.annotations.RequiresWriteLock
 import java.awt.BorderLayout
 import java.awt.Cursor
 import java.awt.Dimension

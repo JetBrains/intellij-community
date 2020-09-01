@@ -3,7 +3,7 @@ package org.jetbrains.plugins.github.ui.util
 
 import com.intellij.openapi.Disposable
 import com.intellij.util.EventDispatcher
-import org.jetbrains.annotations.RequiresEdt
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
 import org.jetbrains.plugins.github.util.GithubUtil
 

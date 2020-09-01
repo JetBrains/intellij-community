@@ -26,6 +26,7 @@ import com.intellij.ui.SideBorder
 import com.intellij.util.EditSourceOnDoubleClickHandler
 import com.intellij.util.OpenSourceUtil
 import com.intellij.util.Processor
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.commit.getDefaultCommitShortcut
 import com.intellij.vcs.commit.showEmptyCommitMessageConfirmation
 import com.intellij.vcs.log.runInEdt
@@ -48,7 +49,6 @@ import git4idea.merge.GitMergeUtil
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.status.GitChangeProvider
-import org.jetbrains.annotations.RequiresEdt
 import java.awt.BorderLayout
 import javax.swing.JPanel
 

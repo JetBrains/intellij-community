@@ -12,8 +12,8 @@ import com.intellij.openapi.vcs.VcsShowConfirmationOption
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction
 import com.intellij.openapi.vcs.changes.ui.ChangelistMoveOfferDialog
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.ConfirmationDialog.requestForConfirmation
-import org.jetbrains.annotations.RequiresEdt
 
 class ChangeListCommitState(val changeList: LocalChangeList, val changes: List<Change>, val commitMessage: String) {
   internal fun copy(commitMessage: String): ChangeListCommitState =

@@ -3,10 +3,9 @@ package git4idea.remote;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.util.AuthData;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.RequiresEdt;
-
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import java.awt.*;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Provides authentication information to the {@link git4idea.commands.GitHttpAuthenticator} for a single run.

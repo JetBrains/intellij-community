@@ -21,12 +21,12 @@ import com.intellij.openapi.vcs.changes.ByteBackedContentRevision
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ui.ChangesComparator
 import com.intellij.ui.GuiUtils
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NotNull
-import org.jetbrains.annotations.RequiresEdt
 
 class ChangesFilterer(val project: Project?, val listener: Listener) : Disposable {
   companion object {

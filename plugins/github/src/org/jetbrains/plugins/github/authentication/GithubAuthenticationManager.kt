@@ -4,8 +4,8 @@ package org.jetbrains.plugins.github.authentication
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.util.AuthData
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.CalledInAny
-import org.jetbrains.annotations.RequiresEdt
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount

@@ -15,7 +15,7 @@
  */
 package com.intellij.diff.tools.util.base;
 
-import org.jetbrains.annotations.RequiresEdt;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 
 /**
  * @see DiffViewerBase#addListener(DiffViewerListener)

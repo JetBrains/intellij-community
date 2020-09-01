@@ -5,9 +5,9 @@ import com.intellij.dvcs.hosting.RepositoryListLoader
 import com.intellij.dvcs.hosting.RepositoryListLoadingException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import git4idea.remote.GitRepositoryHostingService
 import git4idea.remote.InteractiveGitHttpAuthDataProvider
-import org.jetbrains.annotations.RequiresBackgroundThread
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
 import org.jetbrains.plugins.github.api.GithubApiRequests

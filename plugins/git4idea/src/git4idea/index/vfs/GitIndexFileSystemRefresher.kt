@@ -16,12 +16,12 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.concurrency.annotations.RequiresWriteLock
 import com.intellij.util.messages.MessageBusConnection
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepositoryManager
 import git4idea.repo.GitUntrackedFilesHolder
-import org.jetbrains.annotations.RequiresWriteLock
 
 class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
   private val cache get() = project.serviceIfCreated<GitIndexVirtualFileCache>()

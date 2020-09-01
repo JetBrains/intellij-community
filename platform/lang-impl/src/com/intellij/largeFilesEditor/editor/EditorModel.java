@@ -22,9 +22,9 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.wm.impl.status.PositionPanel;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.RequiresEdt;
 
 import javax.swing.*;
 import java.awt.*;

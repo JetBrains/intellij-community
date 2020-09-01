@@ -37,6 +37,7 @@ import com.intellij.ui.JBColor
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.paint.LinePainter2D
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.PeekableIteratorWrapper
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -45,7 +46,6 @@ import git4idea.i18n.GitBundle
 import git4idea.index.actions.GitAddOperation
 import git4idea.index.actions.GitResetOperation
 import org.jetbrains.annotations.Nls
-import org.jetbrains.annotations.RequiresEdt
 import java.awt.*
 import java.util.*
 import javax.swing.BorderFactory

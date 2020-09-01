@@ -34,8 +34,8 @@ import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.project.stateStore
 import com.intellij.util.SingleAlarm
 import com.intellij.util.concurrency.EdtScheduledExecutorService
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.*
-import org.jetbrains.annotations.RequiresEdt
 import java.beans.PropertyChangeListener
 import java.util.*
 import java.util.concurrent.TimeUnit

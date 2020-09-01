@@ -15,7 +15,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED
 import com.intellij.openapi.vcs.VcsListener
 import com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.idea.svn.SvnUtil.isAncestor
 import org.jetbrains.idea.svn.api.Url
 import org.jetbrains.idea.svn.auth.SvnAuthenticationNotifier

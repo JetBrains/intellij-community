@@ -5,9 +5,9 @@ import com.intellij.dvcs.push.*;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.progress.Task;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.RequiresEdt;
 
 import java.util.Collection;
 import java.util.Map;

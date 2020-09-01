@@ -2,9 +2,9 @@
 package git4idea.fetch
 
 import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
-import org.jetbrains.annotations.RequiresBackgroundThread
 
 interface GitRemoteOperationQueue {
 

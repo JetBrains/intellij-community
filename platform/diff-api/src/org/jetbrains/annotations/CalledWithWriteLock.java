@@ -16,6 +16,8 @@
 
 package org.jetbrains.annotations;
 
+import com.intellij.util.concurrency.annotations.RequiresWriteLock;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

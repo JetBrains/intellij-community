@@ -19,9 +19,9 @@ import com.intellij.diff.requests.DiffRequest;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.RequiresBackgroundThread;
 
 public interface DiffRequestProducer {
   @Nls

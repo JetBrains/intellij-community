@@ -27,6 +27,7 @@ import com.intellij.openapi.util.text.HtmlChunk.raw
 import com.intellij.openapi.util.text.HtmlChunk.tag
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.HttpRequests
 import com.intellij.webcore.packaging.PackageManagementService
 import com.intellij.webcore.packaging.PackagesNotificationPanel
@@ -37,7 +38,6 @@ import com.jetbrains.python.sdk.PySdkToInstallCollector.Companion.LookupResult
 import com.jetbrains.python.sdk.PySdkToInstallCollector.Companion.logSdkDownload
 import com.jetbrains.python.sdk.PySdkToInstallCollector.Companion.logSdkInstallation
 import org.jetbrains.annotations.CalledInAny
-import org.jetbrains.annotations.RequiresEdt
 import java.io.File
 import java.io.IOException
 import kotlin.math.absoluteValue

@@ -24,6 +24,7 @@ import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.popup.list.ListPopupImpl
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil.invokeLaterIfNeeded
@@ -46,7 +47,6 @@ import net.miginfocom.layout.AC
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
-import org.jetbrains.annotations.RequiresBackgroundThread
 import java.awt.BorderLayout
 import java.awt.Insets
 import java.awt.event.InputEvent

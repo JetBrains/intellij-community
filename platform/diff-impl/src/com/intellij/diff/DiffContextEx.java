@@ -16,8 +16,8 @@
 package com.intellij.diff;
 
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.RequiresEdt;
 
 public abstract class DiffContextEx extends DiffContext {
   /*

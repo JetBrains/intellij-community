@@ -25,9 +25,9 @@ import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotifications
 import com.intellij.ui.LightColors
 import com.intellij.util.Consumer
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.UIUtil
 import git4idea.i18n.GitBundle
-import org.jetbrains.annotations.RequiresEdt
 import javax.swing.JFrame
 
 object MergeConflictResolveUtil {

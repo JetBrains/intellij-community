@@ -21,8 +21,8 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.RequiresEdt;
 
 /**
  * Represents some data that probably can be compared with some other.

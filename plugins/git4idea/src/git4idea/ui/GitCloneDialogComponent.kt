@@ -16,13 +16,13 @@ import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListe
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.util.Alarm
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import git4idea.GitUtil
 import git4idea.checkout.GitCheckoutProvider
 import git4idea.commands.Git
 import git4idea.config.*
 import git4idea.i18n.GitBundle
 import git4idea.remote.GitRememberedInputs
-import org.jetbrains.annotations.RequiresEdt
 import java.nio.file.Paths
 
 class GitCloneDialogComponent(project: Project,

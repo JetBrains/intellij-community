@@ -4,9 +4,9 @@
 package com.intellij.dvcs.hosting;
 
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.RequiresBackgroundThread;
 
 import java.awt.*;
 import java.util.Collections;

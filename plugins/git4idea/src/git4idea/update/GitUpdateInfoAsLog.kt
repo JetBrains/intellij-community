@@ -12,6 +12,8 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.util.ContentUtilEx
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.VcsLogFilterCollection
@@ -36,8 +38,6 @@ import git4idea.GitRevisionNumber
 import git4idea.history.GitHistoryUtils
 import git4idea.merge.MergeChangeCollector
 import git4idea.repo.GitRepository
-import org.jetbrains.annotations.RequiresBackgroundThread
-import org.jetbrains.annotations.RequiresEdt
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.function.Supplier

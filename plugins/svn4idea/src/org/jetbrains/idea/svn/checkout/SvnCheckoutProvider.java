@@ -1,6 +1,15 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.checkout;
 
+import static com.intellij.openapi.application.ApplicationManager.getApplication;
+import static com.intellij.openapi.application.ModalityState.any;
+import static com.intellij.openapi.ui.Messages.showErrorDialog;
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+import static com.intellij.util.containers.ContainerUtil.getFirstItem;
+import static org.jetbrains.idea.svn.SvnBundle.message;
+import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
+import static org.jetbrains.idea.svn.WorkingCopyFormat.UNKNOWN;
+
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.ServiceManager;
@@ -21,35 +30,30 @@ import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogComponentStateListe
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.RequiresEdt;
-import org.jetbrains.idea.svn.SvnUtil;
-import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.WorkingCopyFormat;
-import org.jetbrains.idea.svn.actions.ExclusiveBackgroundVcsAction;
-import org.jetbrains.idea.svn.actions.SvnExcludingIgnoredOperation;
-import org.jetbrains.idea.svn.api.*;
-import org.jetbrains.idea.svn.checkin.CommitEventHandler;
-import org.jetbrains.idea.svn.checkin.IdeaCommitHandler;
-import org.jetbrains.idea.svn.dialogs.CheckoutDialog;
-import org.jetbrains.idea.svn.dialogs.SvnCloneDialogExtension;
-import org.jetbrains.idea.svn.dialogs.UpgradeFormatDialog;
-
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
-
-import static com.intellij.openapi.application.ApplicationManager.getApplication;
-import static com.intellij.openapi.application.ModalityState.any;
-import static com.intellij.openapi.ui.Messages.showErrorDialog;
-import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
-import static com.intellij.util.containers.ContainerUtil.getFirstItem;
-import static org.jetbrains.idea.svn.SvnBundle.message;
-import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
-import static org.jetbrains.idea.svn.WorkingCopyFormat.UNKNOWN;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.SvnUtil;
+import org.jetbrains.idea.svn.SvnVcs;
+import org.jetbrains.idea.svn.WorkingCopyFormat;
+import org.jetbrains.idea.svn.actions.ExclusiveBackgroundVcsAction;
+import org.jetbrains.idea.svn.actions.SvnExcludingIgnoredOperation;
+import org.jetbrains.idea.svn.api.ClientFactory;
+import org.jetbrains.idea.svn.api.Depth;
+import org.jetbrains.idea.svn.api.ProgressTracker;
+import org.jetbrains.idea.svn.api.Revision;
+import org.jetbrains.idea.svn.api.Target;
+import org.jetbrains.idea.svn.api.Url;
+import org.jetbrains.idea.svn.checkin.CommitEventHandler;
+import org.jetbrains.idea.svn.checkin.IdeaCommitHandler;
+import org.jetbrains.idea.svn.dialogs.CheckoutDialog;
+import org.jetbrains.idea.svn.dialogs.SvnCloneDialogExtension;
+import org.jetbrains.idea.svn.dialogs.UpgradeFormatDialog;
 
 public class SvnCheckoutProvider implements CheckoutProvider {
 

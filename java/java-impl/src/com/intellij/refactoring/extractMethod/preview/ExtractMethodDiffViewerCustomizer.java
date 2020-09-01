@@ -5,8 +5,8 @@ import com.intellij.diff.DiffContext;
 import com.intellij.diff.DiffExtension;
 import com.intellij.diff.FrameDiffTool;
 import com.intellij.diff.requests.DiffRequest;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.RequiresEdt;
 
 /**
  * @author Pavel.Dolgov

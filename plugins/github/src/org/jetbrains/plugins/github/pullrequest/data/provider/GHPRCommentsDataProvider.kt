@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.data.provider
 
 import com.intellij.openapi.progress.ProgressIndicator
-import org.jetbrains.annotations.RequiresEdt
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.plugins.github.api.data.GithubIssueCommentWithHtml
 import java.util.concurrent.CompletableFuture
 

@@ -7,13 +7,13 @@ import com.intellij.openapi.vcs.ex.ExclusionState
 import com.intellij.openapi.vcs.ex.LineStatusTracker
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil.canonicalStrategy
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import gnu.trove.THashMap
 import gnu.trove.THashSet
 import gnu.trove.TObjectHashingStrategy
-import org.jetbrains.annotations.RequiresEdt
 
 abstract class PartiallyExcludedFilesStateHolder<T>(
   project: Project,

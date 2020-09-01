@@ -19,6 +19,7 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.awt.RelativePoint
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBPoint
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.data.DataPack
@@ -39,7 +40,6 @@ import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import gnu.trove.TIntHashSet
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.annotations.RequiresEdt
 
 class DeepComparator(private val project: Project,
                      private val repositoryManager: GitRepositoryManager,

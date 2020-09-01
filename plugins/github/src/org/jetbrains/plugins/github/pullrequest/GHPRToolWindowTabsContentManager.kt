@@ -8,9 +8,9 @@ import com.intellij.openapi.util.Key
 import com.intellij.ui.content.*
 import com.intellij.util.EventDispatcher
 import com.intellij.util.IJSwingUtilities
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.UIUtil
 import com.intellij.vcsUtil.VcsImplUtil
-import org.jetbrains.annotations.RequiresEdt
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabComponentController
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabComponentFactory

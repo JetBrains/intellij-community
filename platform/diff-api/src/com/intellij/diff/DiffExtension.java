@@ -17,8 +17,8 @@ package com.intellij.diff;
 
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.RequiresEdt;
 
 /**
  * @see com.intellij.openapi.actionSystem.IdeActions#DIFF_VIEWER_TOOLBAR

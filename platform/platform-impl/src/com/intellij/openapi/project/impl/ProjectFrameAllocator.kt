@@ -31,9 +31,9 @@ import com.intellij.ui.ComponentUtil
 import com.intellij.ui.IdeUICustomization
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.scale.ScaleContext
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.RequiresEdt
 import java.awt.Dimension
 import java.awt.Frame
 import java.awt.Image

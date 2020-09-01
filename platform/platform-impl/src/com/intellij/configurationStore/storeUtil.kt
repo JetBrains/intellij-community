@@ -21,9 +21,9 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.processOpenedProjects
 import com.intellij.util.ExceptionUtil
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.runBlocking
 import org.jetbrains.annotations.CalledInAny
-import org.jetbrains.annotations.RequiresEdt
 import java.util.concurrent.CancellationException
 
 private val LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.StoreUtil")

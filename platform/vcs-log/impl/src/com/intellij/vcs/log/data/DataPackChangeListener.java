@@ -15,8 +15,8 @@
  */
 package com.intellij.vcs.log.data;
 
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.RequiresEdt;
 
 public interface DataPackChangeListener {
   /**

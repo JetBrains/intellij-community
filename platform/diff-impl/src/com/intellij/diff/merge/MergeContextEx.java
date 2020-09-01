@@ -15,8 +15,8 @@
  */
 package com.intellij.diff.merge;
 
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.RequiresEdt;
 
 public abstract class MergeContextEx extends MergeContext {
   /*

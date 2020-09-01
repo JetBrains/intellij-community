@@ -18,9 +18,9 @@ package com.intellij.openapi.vcs.impl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.vcs.ex.LineStatusTracker;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.RequiresEdt;
 
 public interface LineStatusTrackerManagerI {
   @Nullable

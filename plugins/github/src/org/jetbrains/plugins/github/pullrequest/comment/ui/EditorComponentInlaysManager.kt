@@ -9,8 +9,8 @@ import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.editor.impl.view.FontLayoutService
 import com.intellij.openapi.util.Disposer
 import com.intellij.ui.components.JBScrollPane
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBUI
-import org.jetbrains.annotations.RequiresEdt
 import java.awt.Dimension
 import java.awt.Font
 import java.awt.event.ComponentAdapter

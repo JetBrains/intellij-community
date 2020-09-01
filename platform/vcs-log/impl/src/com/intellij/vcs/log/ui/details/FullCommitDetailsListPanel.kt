@@ -19,6 +19,7 @@ import com.intellij.ui.SideBorder
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.util.Consumer
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.log.VcsCommitMetadata
@@ -27,7 +28,6 @@ import com.intellij.vcs.log.data.SingleTaskController
 import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.annotations.RequiresBackgroundThread
 import java.awt.BorderLayout
 import javax.swing.JPanel
 import javax.swing.border.Border

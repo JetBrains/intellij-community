@@ -4,7 +4,7 @@ package org.jetbrains.plugins.github.authentication.accounts
 import com.google.common.cache.CacheBuilder
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
-import org.jetbrains.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.data.GithubAuthenticatedUser
