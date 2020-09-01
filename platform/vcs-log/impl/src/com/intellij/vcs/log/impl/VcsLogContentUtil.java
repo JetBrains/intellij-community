@@ -216,6 +216,7 @@ public final class VcsLogContentUtil {
    * @deprecated use {@link VcsProjectLog#runWhenLogIsReady(Project, Consumer)} instead.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
   @CalledInBackground
   @Nullable
   public static VcsLogManager getOrCreateLog(@NotNull Project project) {
