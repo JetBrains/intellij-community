@@ -92,6 +92,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.*;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorReference;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.AffectedMembersCache;
+import org.jetbrains.plugins.groovy.lang.resolve.ast.GrGeneratedConstructorUtils;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.InheritConstructorContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.TupleConstructorAttributes;
 import org.jetbrains.plugins.groovy.transformations.immutable.GrImmutableUtils;
@@ -490,12 +491,23 @@ public class GroovyAnnotator extends GroovyElementVisitor {
       }
     }
 
-    PsiAnnotation anno = typeDefinition.getAnnotation(GroovyCommonClassNames.GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR);
-    if (anno != null) {
-      PsiNameValuePair preAttribute = AnnotationUtil.findDeclaredAttribute(anno, "pre");
-      if (preAttribute != null && !GeneratedConstructorAnnotationChecker.isSuperCalledInPre(anno)) {
-        holder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("there.is.no.default.constructor.available.in.class.0", qName))
-          .range(preAttribute).create();
+    List<PsiAnnotation> annotations = 
+      ContainerUtil.filter(typeDefinition.getAnnotations(),
+                           anno -> GrGeneratedConstructorUtils.getConstructorGeneratingAnnotations().contains(anno.getQualifiedName()));
+    for (PsiAnnotation anno : annotations) {
+      PsiNameValuePair preAttribute = AnnotationUtil.findDeclaredAttribute(anno, TupleConstructorAttributes.PRE);
+      TextRange errorRange;
+      if (preAttribute == null) {
+        errorRange = GrHighlightUtil.getClassHeaderTextRange(typeDefinition);
+      }
+      else if (!GeneratedConstructorAnnotationChecker.isSuperCalledInPre(anno)) {
+        errorRange = preAttribute.getTextRange();
+      }
+      else {
+        errorRange = null;
+      }
+      if (errorRange != null) {
+        holder.newAnnotation(HighlightSeverity.ERROR, GroovyBundle.message("there.is.no.default.constructor.available.in.class.0", qName)).range(errorRange).create();
       }
     }
   }
