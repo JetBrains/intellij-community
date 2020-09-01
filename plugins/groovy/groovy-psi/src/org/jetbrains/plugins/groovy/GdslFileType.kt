@@ -6,10 +6,6 @@ import javax.swing.Icon
 
 object GdslFileType : LanguageFileType(GroovyLanguage, true) {
 
-  init {
-    GroovyFileType.GROOVY_FILE_TYPES.add(this)
-  }
-
   override fun getIcon(): Icon? = GroovyFileType.GROOVY_FILE_TYPE.icon
   override fun getName(): String = "gdsl"
   override fun getDescription(): String = GroovyBundle.message("file.type.gdsl")

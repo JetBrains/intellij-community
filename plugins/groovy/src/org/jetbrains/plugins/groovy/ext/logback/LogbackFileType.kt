@@ -9,10 +9,6 @@ import javax.swing.Icon
 
 object LogbackFileType : LanguageFileType(GroovyLanguage, true) {
 
-  init {
-    GroovyFileType.GROOVY_FILE_TYPES.add(this)
-  }
-
   override fun getIcon(): Icon? = GroovyFileType.GROOVY_FILE_TYPE.icon
   override fun getName(): String = "logback"
   override fun getDescription(): String = GroovyBundle.message("file.type.logback")
