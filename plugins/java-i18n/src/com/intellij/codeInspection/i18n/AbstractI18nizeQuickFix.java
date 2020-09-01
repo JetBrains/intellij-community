@@ -108,8 +108,6 @@ abstract class AbstractI18nizeQuickFix<T extends UExpression> implements LocalQu
     generationPlugin.replace(uElement, uElement, UElement.class);
   }
 
-  protected abstract Class<T> getClazz();
-
   @NotNull
   protected I18nizeQuickFixDialog.DialogCustomization getCustomization(String value) {
     return new I18nizeQuickFixDialog.DialogCustomization(null, true, false, null, getSuggestedName(value, myInfo));
@@ -117,11 +115,11 @@ abstract class AbstractI18nizeQuickFix<T extends UExpression> implements LocalQu
 
   private void doFix(final ProblemDescriptor descriptor, final Project project) {
     final PsiElement psi = descriptor.getPsiElement();
-    T uast = UastContextKt.getUastParentOfType(psi, getClazz(), false);
     final PsiFile psiFile = descriptor.getPsiElement().getContainingFile();
     if (!JavaI18nizeQuickFixDialog.isAvailable(psiFile)) {
       return;
     }
+    T uast = getEnclosingLiteral(psiFile, PsiEditorUtil.findEditor(psiFile));
     final JavaI18nizeQuickFixDialog<T> dialog = createDialog(project, psiFile, uast);
     if (!dialog.showAndGet()) {
       return;

@@ -68,11 +68,6 @@ public class I18nizeConcatenationQuickFix extends AbstractI18nizeQuickFix<UPolya
   }
 
   @Override
-  protected Class<UPolyadicExpression> getClazz() {
-    return UPolyadicExpression.class;
-  }
-
-  @Override
   protected JavaI18nizeQuickFixDialog<UPolyadicExpression> createDialog(final Project project,
                                                                         final PsiFile context,
                                                                         @NotNull UPolyadicExpression concatenation) {
