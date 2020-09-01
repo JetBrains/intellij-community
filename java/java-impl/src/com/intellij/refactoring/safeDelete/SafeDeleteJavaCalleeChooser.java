@@ -103,7 +103,9 @@ abstract class SafeDeleteJavaCalleeChooser extends CallerChooserBase<PsiElement>
                   .map(result -> result.getElement())
                   .filter(e -> !(e instanceof PsiMember))
                   .toArray(PsiElement[]::new);
-                ContainerUtil.addAllNotNull(elementsToCheck, nonMembers);
+                if (nonMembers.length < 10) {
+                  ContainerUtil.addAllNotNull(elementsToCheck, nonMembers);
+                }
               }
               else {
                 PsiElement resolve = reference.resolve();
