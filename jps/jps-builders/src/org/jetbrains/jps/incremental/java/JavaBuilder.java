@@ -19,6 +19,7 @@ import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.io.PersistentEnumeratorBase;
 import com.intellij.util.lang.JavaVersion;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
@@ -52,8 +53,7 @@ import org.jetbrains.jps.model.serialization.PathMacroUtil;
 import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.service.SharedThreadPool;
 
-import javax.tools.Diagnostic;
-import javax.tools.JavaFileObject;
+import javax.tools.*;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.IOException;
@@ -529,7 +529,7 @@ public final class JavaBuilder extends ModuleLevelBuilder {
   }
 
   @Nullable
-  public static String validateCycle(CompileContext context, ModuleChunk chunk) {
+  public static @Nls String validateCycle(CompileContext context, ModuleChunk chunk) {
     final JpsJavaExtensionService javaExt = JpsJavaExtensionService.getInstance();
     final JpsJavaCompilerConfiguration compilerConfig = javaExt.getCompilerConfiguration(context.getProjectDescriptor().getProject());
     assert compilerConfig != null;

@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.groovy.compiler.rt.GroovyCompilerMessageCategories;
@@ -34,7 +35,6 @@ import java.util.Map;
  * @date: 16.04.2007
  */
 public class GroovycOutputParser {
-  private static final String GROOVY_COMPILER_IN_OPERATION = "Groovy compiler in operation...";
   public static final String GRAPE_ROOT = "grape.root";
   private final List<OutputItem> myCompiledItems = new ArrayList<>();
   private final List<CompilerMessage> compilerMessages = new ArrayList<>();
@@ -74,20 +74,23 @@ public class GroovycOutputParser {
 
   private final StringBuffer outputBuffer = new StringBuffer();
 
-  private void updateStatus(@NotNull String status) {
-    myContext.processMessage(new ProgressMessage(status + " [" + myChunk.getPresentableShortName() + "]"));
+  private void updateStatus(@Nls @NotNull String status) {
+    myContext.processMessage(new ProgressMessage(
+      GroovyJpsBundle.message("status.0.chunk.name.1", status, myChunk.getPresentableShortName())
+    ));
   }
 
   private void parseOutput(String text) {
     final String trimmed = text.trim();
 
     if (trimmed.startsWith(GroovyRtConstants.PRESENTABLE_MESSAGE)) {
-      updateStatus(trimmed.substring(GroovyRtConstants.PRESENTABLE_MESSAGE.length()));
+      String message = trimmed.substring(GroovyRtConstants.PRESENTABLE_MESSAGE.length());
+      updateStatus(message);
       return;
     }
 
     if (GroovyRtConstants.CLEAR_PRESENTABLE.equals(trimmed)) {
-      updateStatus(GROOVY_COMPILER_IN_OPERATION);
+      updateStatus(GroovyJpsBundle.message("groovy.compiler.in.operation"));
       return;
     }
 
@@ -150,10 +153,13 @@ public class GroovycOutputParser {
 
         if (StringUtil.isEmpty(url) || "null".equals(url)) {
           url = null;
-          message = "While compiling " + myChunk.getPresentableShortName() + ": " + message;
+          message = GroovyJpsBundle.message("while.compiling.chunk.0.message.1", myChunk.getPresentableShortName(), message);
         }
 
-        CompilerMessage compilerMessage = new CompilerMessage("Groovyc", kind, message, url, -1, -1, -1, lineInt, columnInt);
+        CompilerMessage compilerMessage = new CompilerMessage(
+          GroovyJpsBundle.message("compiler.name.groovyc"),
+          kind, message, url, -1, -1, -1, lineInt, columnInt
+        );
         if (LOG.isDebugEnabled()) {
           LOG.debug("Message: " + compilerMessage);
         }
@@ -192,7 +198,10 @@ public class GroovycOutputParser {
       if (msg.contains(GroovyRtConstants.NO_GROOVY)) {
         messages.add(reportNoGroovy(msg));
       } else {
-        messages.add(new CompilerMessage("Groovyc", BuildMessage.Kind.INFO, "While compiling " + myChunk.getPresentableShortName() + ":" + msg));
+        messages.add(new CompilerMessage(
+          GroovyJpsBundle.message("compiler.name.groovyc"), BuildMessage.Kind.INFO,
+          GroovyJpsBundle.message("while.compiling.chunk.0.message.1", myChunk.getPresentableShortName(), msg)
+        ));
       }
 
     }
@@ -203,7 +212,10 @@ public class GroovycOutputParser {
           return messages;
         }
       }
-      messages.add(new CompilerMessage("Groovyc", BuildMessage.Kind.ERROR, "Internal groovyc error: code " + myExitCode));
+      messages.add(new CompilerMessage(
+        GroovyJpsBundle.message("compiler.name.groovyc"), BuildMessage.Kind.ERROR,
+        GroovyJpsBundle.message("internal.groovyc.error.code.0", myExitCode)
+      ));
     }
 
     return messages;
@@ -215,13 +227,23 @@ public class GroovycOutputParser {
     String moduleName = module.getName();
     JpsSdk<JpsDummyElement> sdk = module.getSdk(JpsJavaSdkType.INSTANCE);
     if (fullOutput != null && fullOutput.contains("Bad version number")) {
-      return new CompilerMessage("", BuildMessage.Kind.ERROR,
-                                 "Cannot load Groovy compiler for module '" + moduleName + "': " +
-                                 "Groovy jars from dependencies contain class files of a version higher than the one supported by the module JDK" +
-                                 (sdk == null ? "" : " (" + sdk.getVersionString() + ")"));
+      if (sdk == null) {
+        return new CompilerMessage(
+          "", BuildMessage.Kind.ERROR,
+          GroovyJpsBundle.message("no.groovy.cannot.load.0", moduleName)
+        );
+      }
+      else {
+        return new CompilerMessage(
+          "", BuildMessage.Kind.ERROR,
+          GroovyJpsBundle.message("no.groovy.cannot.load.0.jdk.1", moduleName, sdk.getVersionString())
+        );
+      }
     }
-    return new CompilerMessage("", BuildMessage.Kind.ERROR,
-                               "Cannot compile Groovy files: no Groovy library is defined for module '" + moduleName + "'");
+    return new CompilerMessage(
+      "", BuildMessage.Kind.ERROR,
+      GroovyJpsBundle.message("no.groovy.library.0", moduleName)
+    );
   }
 
   public StringBuffer getStdErr() {

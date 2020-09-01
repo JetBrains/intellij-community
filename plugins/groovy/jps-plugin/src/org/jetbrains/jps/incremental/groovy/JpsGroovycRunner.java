@@ -393,11 +393,13 @@ public abstract class JpsGroovycRunner<R extends BuildRootDescriptor, T extends 
           }
           catch (Throwable e) {
             // need this to make sure that unexpected errors in, for example, ASM will not ruin the compilation
-            final String message = "Class dependency information may be incomplete! Error parsing generated class " + item.outputPath;
+            final String message = GroovyJpsBundle.message("incomplete.dependency.for.class.0", item.outputPath);
             LOG.info(message, e);
             context.processMessage(new CompilerMessage(
-              builder.getPresentableName(), BuildMessage.Kind.WARNING, message + "\n" + CompilerMessage.getTextFromThrowable(e), sourcePath)
-            );
+              builder.getPresentableName(), BuildMessage.Kind.WARNING,
+              message + "\n" + CompilerMessage.getTextFromThrowable(e),
+              sourcePath
+            ));
           }
           JavaBuilderUtil.registerSuccessfullyCompiled(context, srcFile);
         }

@@ -119,7 +119,7 @@ public class GreclipseBuilder extends ModuleLevelBuilder {
       JpsProject project = context.getProjectDescriptor().getProject();
       GreclipseSettings greclipseSettings = GreclipseJpsCompilerSettings.getSettings(project);
       if (greclipseSettings == null) {
-        String message = "Compiler settings component not initialized for " + project;
+        String message = GroovyJpsBundle.message("greclipse.not.initialized.for.project.0", project);
         LOG.error(message);
         context.processMessage(new CompilerMessage(getPresentableName(), BuildMessage.Kind.ERROR, message));
         return ExitCode.ABORT;
@@ -128,8 +128,9 @@ public class GreclipseBuilder extends ModuleLevelBuilder {
       ClassLoader loader = createGreclipseLoader(greclipseSettings.greclipsePath);
       if (loader == null) {
         context.processMessage(new CompilerMessage(
-          getPresentableName(), BuildMessage.Kind.ERROR, "Invalid jar path in the compiler settings: '" + greclipseSettings.greclipsePath + "'")
-        );
+          getPresentableName(), BuildMessage.Kind.ERROR,
+          GroovyJpsBundle.message("greclipse.invalid.jar.path.0", greclipseSettings.greclipsePath)
+        ));
         return ExitCode.ABORT;
       }
 
@@ -157,11 +158,11 @@ public class GreclipseBuilder extends ModuleLevelBuilder {
 
       Boolean notified = COMPILER_VERSION_INFO.get(context);
       if (notified != Boolean.TRUE) {
-        context.processMessage(new CompilerMessage("", BuildMessage.Kind.INFO, "Using Groovy-Eclipse to compile Java & Groovy sources"));
+        context.processMessage(new CompilerMessage("", BuildMessage.Kind.INFO, GroovyJpsBundle.message("greclipse.info")));
         COMPILER_VERSION_INFO.set(context, Boolean.TRUE);
       }
 
-      context.processMessage(new ProgressMessage("Compiling java & groovy [" + chunk.getPresentableShortName() + "]"));
+      context.processMessage(new ProgressMessage(GroovyJpsBundle.message("greclipse.compiling.chunk.0", chunk.getPresentableShortName())));
 
       StringWriter out = new StringWriter();
       StringWriter err = new StringWriter();
@@ -190,7 +191,10 @@ public class GreclipseBuilder extends ModuleLevelBuilder {
       }
 
       if (!success && !hasError) {
-        context.processMessage(new CompilerMessage(getPresentableName(), BuildMessage.Kind.ERROR, "Compilation failed"));
+        context.processMessage(new CompilerMessage(
+          getPresentableName(), BuildMessage.Kind.ERROR,
+          GroovyJpsBundle.message("greclipse.compilation.failed")
+        ));
       }
 
       myHelper.updateDependencies(context, toCompile, successfullyCompiled, new DefaultOutputConsumer(outputConsumer), this);
@@ -319,7 +323,7 @@ public class GreclipseBuilder extends ModuleLevelBuilder {
   @NotNull
   @Override
   public String getPresentableName() {
-    return ID;
+    return GroovyJpsBundle.message("compiler.name.greclipse");
   }
 
   @Override

@@ -32,7 +32,7 @@ public class GroovyResourceChecker extends TargetBuilder<GroovyResourceRootDescr
   @NotNull
   @Override
   public String getPresentableName() {
-    return "Groovy Resource Checker";
+    return GroovyJpsBundle.message("builder.resource.checker");
   }
 
   @Override
