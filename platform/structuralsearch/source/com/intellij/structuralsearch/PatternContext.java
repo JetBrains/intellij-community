@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Bas Leijdekkers
  */
-public final class PatternContext implements Comparable<PatternContext> {
+public final class PatternContext {
   @NotNull
   public final String myID;
   @NotNull
@@ -25,17 +25,12 @@ public final class PatternContext implements Comparable<PatternContext> {
     if (o == null || getClass() != o.getClass()) return false;
 
     final PatternContext other = (PatternContext)o;
-    return myID.equals(other.myID) && myDisplayName.equals(other.myDisplayName);
+    return myID.equals(other.myID);
   }
 
   @Override
   public int hashCode() {
-    return 31 * myID.hashCode() + myDisplayName.hashCode();
-  }
-
-  @Override
-  public int compareTo(@NotNull PatternContext o) {
-    return myDisplayName.compareTo(o.myDisplayName);
+    return myID.hashCode();
   }
 
   @NotNull
