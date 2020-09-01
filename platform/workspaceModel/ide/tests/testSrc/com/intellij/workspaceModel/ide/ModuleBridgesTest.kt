@@ -33,12 +33,14 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntitiesLoader
 import com.intellij.workspaceModel.ide.impl.jps.serialization.toConfigLocation
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.findModuleEntity
 import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.VirtualFileUrlManager
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.toBuilder
 import com.intellij.workspaceModel.storage.toVirtualFileUrl
 import org.jetbrains.jps.model.java.LanguageLevel
 import org.jetbrains.jps.model.module.UnknownSourceRootType
@@ -664,6 +666,35 @@ class ModuleBridgesTest {
 
     ModuleManager.getInstance(project).disposeModule(module)
   }
+
+  @Test
+  fun `creating module from modifiable model and removing it`() =
+    WriteCommandAction.runWriteCommandAction(project) {
+      val moduleManager = ModuleManager.getInstance(project) as ModuleManagerComponentBridge
+
+      moduleManager.modifiableModel.let { modifiableModel ->
+        modifiableModel.newModule(File(project.basePath, "xxx.iml").path, EmptyModuleType.getInstance().id) as ModuleBridge
+        modifiableModel.commit()
+      }
+
+      moduleManager.getModifiableModel(WorkspaceModel.getInstance(project).entityStorage.current.toBuilder()).let { modifiableModel ->
+        val existingModule = modifiableModel.modules.single { it.name == "xxx" }
+        modifiableModel.disposeModule(existingModule)
+        val module = modifiableModel.newModule(File(project.basePath, "xxx.iml").path, EmptyModuleType.getInstance().id) as ModuleBridge
+        // No commit
+
+        // This is an actual code that was broken
+        //   It tests that model listener inside of ModuleBridgeImpl correctly converts an instanse of the storage inside of it
+        WorkspaceModel.getInstance(project).updateProjectModel {
+          val moduleEntity: ModuleEntity = it.entities(ModuleEntity::class.java).single()
+          it.removeEntity(moduleEntity)
+        }
+
+        assertEquals("xxx", module.name)
+
+        modifiableModel.commit()
+      }
+    }
 }
 
 internal fun createEmptyTestProject(temporaryDirectory: TemporaryDirectory, disposableRule: DisposableRule): Project {

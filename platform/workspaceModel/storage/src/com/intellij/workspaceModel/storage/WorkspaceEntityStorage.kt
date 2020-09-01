@@ -155,6 +155,10 @@ interface WorkspaceEntityStorageBuilder : WorkspaceEntityStorage, WorkspaceEntit
   }
 }
 
+fun WorkspaceEntityStorage.toBuilder(): WorkspaceEntityStorageBuilder {
+  return WorkspaceEntityStorageBuilder.from(this)
+}
+
 sealed class EntityChange<T : WorkspaceEntity> {
   data class Added<T : WorkspaceEntity>(val entity: T) : EntityChange<T>()
   data class Removed<T : WorkspaceEntity>(val entity: T) : EntityChange<T>()
