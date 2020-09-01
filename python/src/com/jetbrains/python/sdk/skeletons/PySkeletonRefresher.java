@@ -246,7 +246,7 @@ public class PySkeletonRefresher {
       mySkeletonsPath = Objects.requireNonNull(PythonSdkUtil.getSkeletonsPath(mySdk));
       final File skeletonsDir = new File(mySkeletonsPath);
       if (!skeletonsDir.exists() && !skeletonsDir.mkdirs()) {
-        throw new InvalidSdkException("Can't create skeleton dir " + mySkeletonsPath);
+        throw new InvalidSdkException(PyBundle.message("sdk.gen.cannot.create.skeleton.dir", mySkeletonsPath));
       }
     }
     return mySkeletonsPath;
