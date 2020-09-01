@@ -23,7 +23,7 @@ class UpdateFromSourcesDialog(private val project: Project,
   }
 
   init {
-    title = "Update IDE from Sources"
+    title = DevKitBundle.message("action.UpdateIdeFromSourcesAction.settings.title")
     setOKButtonText(DevKitBundle.message("action.UpdateIdeFromSourcesAction.settings.ok.button"))
     init()
   }
@@ -46,7 +46,7 @@ class UpdateFromSourcesDialog(private val project: Project,
       }
       row {
         checkBox(UIBundle.message("dialog.options.do.not.show"), { !state.showSettings }, { state.showSettings = !it },
-                 "You can invoke 'Update From Sources Settings' action to change settings")
+                 DevKitBundle.message("action.UpdateIdeFromSourcesAction.settings.do.not.show.description"))
       }
     }
     return panel
