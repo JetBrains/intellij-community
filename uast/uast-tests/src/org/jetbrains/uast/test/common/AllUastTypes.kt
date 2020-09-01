@@ -3,10 +3,13 @@ package org.jetbrains.uast.test.common
 
 import org.jetbrains.uast.*
 import org.jetbrains.uast.expressions.UInjectionHost
+import org.jetbrains.uast.psi.UElementWithLocation
+
+val t = UElement::class.java.classes
 
 @JvmField
 @Suppress("DEPRECATION")
-val allUastTypes = setOf<Class<out UElement>>(
+val allUElementSubtypes = setOf<Class<out UElement>>(
   UAnchorOwner::class.java,
   UAnnotated::class.java,
   UAnnotation::class.java,
@@ -23,14 +26,18 @@ val allUastTypes = setOf<Class<out UElement>>(
   UCallableReferenceExpression::class.java,
   UCatchClause::class.java,
   UClass::class.java,
+  UClassInitializer::class.java,
+  UClassInitializerEx::class.java,
   UClassLiteralExpression::class.java,
   UClassTypeSpecific::class.java,
+  UComment::class.java,
   UContinueExpression::class.java,
   UDeclaration::class.java,
   UDeclarationEx::class.java,
   UDeclarationsExpression::class.java,
   UDoWhileExpression::class.java,
   UElement::class.java,
+  UElementWithLocation::class.java,
   UEnumConstant::class.java,
   UEnumConstantEx::class.java,
   UExpression::class.java,
@@ -39,6 +46,7 @@ val allUastTypes = setOf<Class<out UElement>>(
   UFieldEx::class.java,
   UFile::class.java,
   UForEachExpression::class.java,
+  UForExpression::class.java,
   UIdentifier::class.java,
   UIfExpression::class.java,
   UImportStatement::class.java,
@@ -54,6 +62,7 @@ val allUastTypes = setOf<Class<out UElement>>(
   ULoopExpression::class.java,
   UMethod::class.java,
   UMethodTypeSpecific::class.java,
+  UNamedExpression::class.java,
   UObjectLiteralExpression::class.java,
   UParameter::class.java,
   UParameterEx::class.java,
@@ -77,5 +86,6 @@ val allUastTypes = setOf<Class<out UElement>>(
   UVariable::class.java,
   UVariableEx::class.java,
   UWhileExpression::class.java,
+  UYieldExpression::class.java,
   UastEmptyExpression::class.java
 )

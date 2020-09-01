@@ -18,6 +18,10 @@ package org.jetbrains.uast
 import com.intellij.lang.Language
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
+import com.intellij.util.containers.map2Array
+import org.jetbrains.uast.util.ClassSet
+import org.jetbrains.uast.util.ClassSetImpl
+import org.jetbrains.uast.util.ClassSetsWrapper
 
 @Deprecated("use UastFacade or UastLanguagePlugin instead", ReplaceWith("UastFacade"))
 class UastContext(val project: Project) : UastLanguagePlugin by UastFacade {
@@ -96,10 +100,8 @@ object UastFacade : UastLanguagePlugin {
   override fun <T : UElement> convertToAlternatives(element: PsiElement, requiredTypes: Array<out Class<out T>>): Sequence<T> =
     findPlugin(element)?.convertToAlternatives(element, requiredTypes) ?: emptySequence()
 
-  @Deprecated(message = "UastFacade is unaware of the language so cannot report language dependent PSI sources",
-              replaceWith = ReplaceWith("UastFacade.findPlugin(psiElement).getPossiblePsiSourceTypes(uastTypes)"))
-  override fun getPossiblePsiSourceTypes(vararg uastTypes: Class<out UElement>): Set<Class<out PsiElement>> =
-    error("Use `UastFacade.findPlugin(psiElement).getPossibleSourceTypes(uastTypes)` instead")
+  override fun getPossiblePsiSourceTypes(vararg uastTypes: Class<out UElement>): ClassSet<PsiElement> =
+    ClassSetsWrapper(languagePlugins.map2Array { it.getPossiblePsiSourceTypes(*uastTypes) })
 }
 
 
@@ -158,18 +160,16 @@ val DEFAULT_TYPES_LIST: Array<Class<out UElement>> = arrayOf(UElement::class.jav
 val DEFAULT_EXPRESSION_TYPES_LIST: Array<Class<out UExpression>> = arrayOf(UExpression::class.java)
 
 /**
- * @receiver Is needed for [PsiElement.getLanguage] only, typically it is a [PsiFile]
- * @return types of possible source PSI elements, which in principle
+ * @return types of possible source PSI elements of [language], which instances in principle
  *         can be converted to at least one of the specified [uastTypes]
  *         (or to [UElement] if no type was specified)
  */
-fun PsiElement.getPossiblePsiSourceTypes(vararg uastTypes: Class<out UElement>): Set<Class<out PsiElement>> =
-  UastFacade.findPlugin(this)?.getPossiblePsiSourceTypes(*uastTypes) ?: emptySet()
+fun getPossiblePsiSourceTypes(language: Language, vararg uastTypes: Class<out UElement>): ClassSet<PsiElement> =
+  UastLanguagePlugin.byLanguage(language)?.getPossiblePsiSourceTypes(*uastTypes) ?: ClassSetImpl()
 
 /**
- * @receiver Is needed for [PsiElement.getLanguage] only, typically it is a [PsiFile]
- * @return types of possible source PSI elements, which in principle
+ * @return types of possible source PSI elements of [language], which instances in principle
  *         can be converted to the specified `U` type
  */
-inline fun <reified U : UElement> PsiElement.getPossiblePsiSourceTypesFor(): Set<Class<out PsiElement>> =
-  UastFacade.findPlugin(this)?.getPossiblePsiSourceTypes(U::class.java) ?: emptySet()
+inline fun <reified U : UElement> getPossiblePsiSourceTypesFor(language: Language): ClassSet<PsiElement> =
+  UastLanguagePlugin.byLanguage(language)?.getPossiblePsiSourceTypes(U::class.java) ?: ClassSetImpl()

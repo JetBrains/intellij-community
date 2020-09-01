@@ -5,6 +5,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiRecursiveElementVisitor
 import org.jetbrains.uast.UElement
+import org.jetbrains.uast.UastFacade
 import org.jetbrains.uast.getPossiblePsiSourceTypes
 import org.jetbrains.uast.toUElementOfExpectedTypes
 import org.junit.Assert
@@ -25,16 +26,30 @@ interface PossibleSourceTypesTestBase {
     return sources
   }
 
-  private fun PsiFile.getPsiSourcesBySmartVisitor(vararg uastTypes: Class<out UElement>): Set<PsiElement> {
-    val possibleSourceTypes = getPossiblePsiSourceTypes(*uastTypes)
+  private fun PsiFile.getPsiSourcesByLanguageAwareVisitor(vararg uastTypes: Class<out UElement>): Set<PsiElement> {
+    val possibleSourceTypes = getPossiblePsiSourceTypes(language, *uastTypes)
+    return getPsiSourcesByPlainVisitor(psiPredicate = { it.javaClass in possibleSourceTypes }, uastTypes = *uastTypes)
+  }
+
+  private fun PsiFile.getPsiSourcesByLanguageUnawareVisitor(vararg uastTypes: Class<out UElement>): Set<PsiElement> {
+    val possibleSourceTypes = UastFacade.getPossiblePsiSourceTypes(*uastTypes)
     return getPsiSourcesByPlainVisitor(psiPredicate = { it.javaClass in possibleSourceTypes }, uastTypes = *uastTypes)
   }
 
   fun checkConsistencyWithRequiredTypes(psiFile: PsiFile, vararg uastTypes: Class<out UElement>) {
+    val byPlain = psiFile.getPsiSourcesByPlainVisitor(uastTypes = *uastTypes)
+    val byLanguageAware = psiFile.getPsiSourcesByLanguageAwareVisitor(uastTypes = *uastTypes)
+    val byLanguageUnaware = psiFile.getPsiSourcesByLanguageUnawareVisitor(uastTypes = *uastTypes)
+
     Assert.assertEquals(
       "Filtering PSI elements with getPossiblePsiSourceTypes should not lost or add any conversions",
-      psiFile.getPsiSourcesByPlainVisitor(uastTypes = *uastTypes),
-      psiFile.getPsiSourcesBySmartVisitor(*uastTypes))
+      byPlain,
+      byLanguageUnaware)
+
+    Assert.assertEquals(
+      "UastFacade implementation should be in sync with language UastLanguagePlugin's one",
+      byLanguageAware,
+      byLanguageUnaware)
   }
 
 }

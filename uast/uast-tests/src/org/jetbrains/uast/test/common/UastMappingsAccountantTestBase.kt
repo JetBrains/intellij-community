@@ -158,7 +158,7 @@ class UastMappingsAccountantTest(
             psiClassPrinter,
             { psiContext -> psiContext.map { psiClassPrinter(it) } },
             UastClassToString.asIs,
-            { it.mapTo(mutableSetOf()) { PairWithFirstIdentity(uastClassPrinter(it.first) as String?, it.second) } },
+            { it.mapTo(mutableSetOf()) { (uClazz, loc) -> PairWithFirstIdentity(uastClassPrinter(uClazz) as String?, loc) } },
             { prev: MutableSet<PairWithFirstIdentity<String?, Location>>?, new ->
               (prev ?: mutableSetOf()).apply { addAll(new) }
             }
@@ -168,7 +168,7 @@ class UastMappingsAccountantTest(
             uastClassPrinter,
             { psiContext -> psiContext.map { psiClassPrinter(it) }.asIterable() },
             UastClassToString.asIs,
-            { it.mapTo(mutableSetOf()) { PairWithFirstIdentity(null as String?, it) } },
+            { it.mapTo(mutableSetOf()) { loc -> PairWithFirstIdentity(null as String?, loc) } },
             { prev: MutableSet<PairWithFirstIdentity<String?, Location>>?, new -> (prev ?: mutableSetOf()).apply { addAll(new) } }
           )
         )
@@ -181,7 +181,7 @@ class UastMappingsAccountantTest(
         AllRenderedUastMappings(
           byPsiWithNotFullyRenderedTargets
             .mapValues { (psiClass, innerMap) ->
-              innerMap.foldKeysByLevel(level = 0, keyBuilder = { it }, keyFolder = { _ ->
+              innerMap.foldKeysByLevel(level = 0, keyBuilder = { it }, keyFolder = {
                 when (byPsiInAnyContext.getValue(psiClass).size) {
                   1 -> listOf("ALWAYS")
                   else -> null
@@ -239,12 +239,10 @@ class UastMappingsAccountantTest(
 
   private fun span(cssClass: String, body: String) = """<span class="$cssClass">$body</span>"""
 
-  private fun detailsBegin(open: Boolean = true, cssClass: String) = """<details class="$cssClass" ${if (open) "open" else ""}>"""
+  private fun detailsBegin(open: Boolean = false, cssClass: String) = """<details class="$cssClass" ${if (open) "open" else ""}>"""
   private fun detailsEnd() = """</details>"""
 
   private fun summary(body: String) = """<summary>$body</summary>"""
-
-  private fun anchor(href: String, cssClass: String, body: String) = """<a href="$href" class="$cssClass">$body</a>"""
 
   private fun RenderedMappings.print(
     fileName: String,
@@ -335,11 +333,11 @@ class UastMappingsAccountantTest(
       )
 
       printMap(this@print, separator = "\n\n", keyComparator = Comparator.naturalOrder()) { source, contextMap ->
-        append(detailsBegin(cssClass = "details_marker", open = false))
+        append(detailsBegin(cssClass = "details_marker"))
         append(summary(span("source", "$source:")))
 
         val allPossibleTargets = contextMap.values
-          .flatMap { it.values.flatMap { it.map { it.first ?: "null" } } }
+          .flatMap { typeToTargets -> typeToTargets.values.flatMap { targets -> targets.map { it.first ?: "null" } } }
           .distinct().sorted()
         val allPossibleTypes = contextMap.values.flatMap { it.keys }.distinct().sorted()
         var overviewWasPrinted = false
@@ -350,17 +348,17 @@ class UastMappingsAccountantTest(
             overviewWasPrinted = true
             append(span("overview", "    All possible targets:    "))
             allPossibleTargets.joinTo(this) { span("targets", it) }
-            appendln()
+            append("\n")
           }
 
           if (contextMap.keys.size > 1) {
             overviewWasPrinted = true
             append(span("overview", "    All possible types  :    "))
             allPossibleTypes.joinTo(this) { span("type", it) }
-            appendln()
+            append("\n")
           }
 
-          if (overviewWasPrinted) appendln()
+          if (overviewWasPrinted) append("\n")
 
           this@m.contextPrinter(contextMap) { _, typeMap ->
 
@@ -439,8 +437,6 @@ class UastMappingsAccountantTest(
   private val childToParentOrder: (RenderedContext) -> List<String> = { context -> context.toList() }
   private val parentToChildOrder: (RenderedContext) -> List<String> = { context -> context.toList().asReversed() }
 
-  private val StringBuilder.currentLineLength get() = length - lastIndexOf("\n") - 1
-
   private val StringBuilder.currentLineLengthIgnoringTags
     get(): Int {
       var r = 0
@@ -514,28 +510,38 @@ class UastMappingsAccountantTest(
   }
 
   override fun `test compute mappings by UAST element and print as a priory lists of PSI elements`() {
-    val mappings = mutableMapOf<String, TreeSet<String>>().apply {
-      for ((uElement, mappingCases) in computedMappings.second) {
-        val psiSources = mappingCases.keys.map { it.first() }
-        uElement.getImplementedUastInterfaces().forEach { uInterface ->
-          this.getOrPut(UastClassToString.asIs(uInterface)) { TreeSet() }
-            .addAll(psiSources.asSequence().map { psiClassPrinter(it) })
-        }
+    val mappings = allUElementSubtypes.associateTo(mutableMapOf()) { Pair(UastClassToString.asIs(it), TreeSet<String>()) }
+    for ((uElement, mappingCases) in computedMappings.second) {
+      val psiSources = mappingCases.keys.map { it.first() }
+      uElement.getImplementedUElementInterfaces().forEach { uInterface ->
+        mappings.compute(UastClassToString.asIs(uInterface)) { _, old ->
+          if (old == null) {
+            logger?.warn("$uInterface is missed from ${allUElementSubtypes.javaClass.packageName}.allUElementSubtypes")
+            TreeSet()
+          }
+          else old
+        }!!
+          .addAll(psiSources.asSequence().map { psiClassPrinter(it) })
       }
     }
 
     into("by-uast-as-a-priory-lists-of-PSI-elements.kt") {
       append(
         """
+          |import org.jetbrains.uast.*
+          |import org.jetbrains.uast.expressions.UInjectionHost
+          |import org.jetbrains.uast.internal.ClassSet
+          |import org.jetbrains.uast.psi.UElementWithLocation
+          |
           |object UastAPrioryPsiLists {
-          |  val possibleSourceTypes = mapOf<Class<*>, Set<Class<out PsiElement>>>(
+          |  val possibleSourceTypes = mapOf<Class<out UElement>, ClassSet>(
           |""".trimMargin()
       )
 
       mappings.entries
         .sortedWith(compareBy { it.key })
         .joinTo(this, separator = ",\n") { (uTarget, psiSources) ->
-          appendln("    ${uTarget}::class.java to setOf<Class<out PsiElement>>(")
+          append("    ${uTarget}::class.java to ClassSet(\n")
           psiSources.joinTo(this, separator = ",\n") { "      $it::class.java" }
           append("\n    )")
           ""
@@ -617,8 +623,8 @@ fun sourcesFromLargeProject(fileType: FileType, project: Project, sourcesToProce
 
 private fun <T : Comparable<T>> lexicographicalOrder(): Comparator<Iterable<T>> =
   Comparator comparator@{ p1, p2 ->
-    var p1Iter = p1.iterator()
-    var p2Iter = p2.iterator()
+    val p1Iter = p1.iterator()
+    val p2Iter = p2.iterator()
     while (p1Iter.hasNext() && p2Iter.hasNext()) {
       val t = p1Iter.next().compareTo(p2Iter.next())
       if (t != 0) return@comparator t
@@ -646,14 +652,15 @@ object UastClassToString {
 object PsiClassToString {
   val asIs: PsiClazz?.() -> String = { this?.simpleName ?: "null" }
 
+  @Suppress("unused")
   val kotlinAsIs: PsiClazz?.() -> String = {
     if (this == null)
       "null"
     else {
-      val sname = simpleName
-      if (LightElement::class.java.isAssignableFrom(this) || sname.isBlank()) {
-        if (sname.startsWith("Uast"))
-          sname
+      val sName = simpleName
+      if (LightElement::class.java.isAssignableFrom(this) || sName.isBlank()) {
+        if (sName.startsWith("Uast"))
+          sName
         else {
           val baseClassesOfInterest = getBaseClassesAndInterfaces()
             .filter {
@@ -664,12 +671,12 @@ object PsiClassToString {
             }
 
           val baseInterfacesOfInterest = getBaseClassesAndInterfaces()
-            .filter { it.isInterface() && it.simpleName.startsWith("KtLight") }
+            .filter { it.isInterface && it.simpleName.startsWith("KtLight") }
 
           (baseClassesOfInterest.firstOrNull() ?: baseInterfacesOfInterest.firstOrNull())?.simpleName ?: "PsiElement"
         }
       }
-      else sname
+      else sName
     }
   }
 
@@ -699,8 +706,7 @@ private fun Class<*>.getBaseClassesAndInterfaces(): Sequence<Class<*>> =
     }
   }
 
-@Suppress("UNCHECKED_CAST")
-fun UastClazz.getImplementedUastInterfaces(): Sequence<UastClazz> =
+fun UastClazz.getImplementedUastInterfaces(): Sequence<Class<*>> =
   getBaseClassesAndInterfaces()
     .filter { clazz ->
       clazz.simpleName.startsWith("U") &&
@@ -708,7 +714,11 @@ fun UastClazz.getImplementedUastInterfaces(): Sequence<UastClazz> =
         it.isAssignableFrom(clazz)
       }
     }
-    as Sequence<UastClazz>
+
+@Suppress("UNCHECKED_CAST")
+fun UastClazz.getImplementedUElementInterfaces(): Sequence<Class<out UElement>> =
+  getImplementedUastInterfaces().filter { UElement::class.java.isAssignableFrom(it) }
+    as Sequence<Class<out UElement>>
 
 //endregion
 /* ------------------------------------------------------------------------------------------- */

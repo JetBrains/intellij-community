@@ -11,12 +11,13 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.containers.map2Array
 import org.jetbrains.uast.*
 import org.jetbrains.uast.analysis.UastAnalysisPlugin
-import org.jetbrains.uast.internal.SetListWrapper
 import org.jetbrains.uast.java.declarations.JavaLazyParentUIdentifier
 import org.jetbrains.uast.java.expressions.JavaUAnnotationCallExpression
 import org.jetbrains.uast.java.expressions.JavaUModuleReferenceExpression
 import org.jetbrains.uast.java.expressions.JavaUNamedExpression
 import org.jetbrains.uast.java.expressions.JavaUSynchronizedExpression
+import org.jetbrains.uast.util.ClassSet
+import org.jetbrains.uast.util.ClassSetsWrapper
 
 class JavaUastLanguagePlugin : UastLanguagePlugin {
 
@@ -142,11 +143,11 @@ class JavaUastLanguagePlugin : UastLanguagePlugin {
   override val analysisPlugin: UastAnalysisPlugin?
     get() = UastAnalysisPlugin.byLanguage(JavaLanguage.INSTANCE)
 
-  override fun getPossiblePsiSourceTypes(vararg uastTypes: Class<out UElement>): Set<Class<out PsiElement>> =
+  override fun getPossiblePsiSourceTypes(vararg uastTypes: Class<out UElement>): ClassSet<PsiElement> =
     when (uastTypes.size) {
       0 -> getPossibleSourceTypes(UElement::class.java)
       1 -> getPossibleSourceTypes(uastTypes.single())
-      else -> SetListWrapper(*uastTypes.map2Array { getPossibleSourceTypes(it) })
+      else -> ClassSetsWrapper<PsiElement>(uastTypes.map2Array { getPossibleSourceTypes(it) })
     }
 }
 

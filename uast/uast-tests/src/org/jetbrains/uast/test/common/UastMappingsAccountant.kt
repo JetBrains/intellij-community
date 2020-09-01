@@ -92,7 +92,7 @@ object UastMappingsAccountant {
                 done.add(currPsi)
 
                 try {
-                  for (uastType in allUastTypes) {
+                  for (uastType in allUElementSubtypes) {
                     val uElement = UastFacade.convertElementWithParent(currPsi, requiredType = uastType)
 
                     for (i in mappingsLists.indices) {
@@ -120,17 +120,6 @@ object UastMappingsAccountant {
     return mappingsLists
   }
 
-  @Suppress("UNCHECKED_CAST")
-  private fun <S, T> computeMappings(
-    sources: Iterable<Lazy<Pair<PsiFile, Path>?>>,
-    accumulator: UastMappingsAccumulator<S, T>
-  ): UastMappingsRepository<S, T> {
-    val (result) = computeMappingsInSeveralViewsSimultaneously(
-      sources,
-      listOf(accumulator as UastMappingsAccumulator<Any?, Any?>))
-    return result as UastMappingsRepository<S, T>
-  }
-
   private fun PsiElement.getLocation(path: Path, document: Document) =
     Location(path, textOffset.let { if (it >= 0) document.getLineNumber(it) else -1 })
 
@@ -154,18 +143,6 @@ object UastMappingsAccountant {
           .putIfAbsent(requiredType, mutableSetOf(psiElement.getLocation(path, document)))
       }
     }
-
-  fun computeMappingsByPsiElements(
-    sources: Iterable<Lazy<Pair<PsiFile, Path>?>>,
-    contextBuilder: PsiContextBuilder = makeDefaultContextBuilder()
-  ): UastMappingsRepository<PsiClazz, PairWithFirstIdentity<UastClazz?, Location>> =
-    computeMappings(sources, accumulatorByPsiElements(contextBuilder))
-
-  fun computeMappingsByUElements(
-    sources: Iterable<Lazy<Pair<PsiFile, Path>?>>,
-    contextBuilder: PsiContextBuilder = makeDefaultContextBuilder(doIncludeElementItself = true)
-  ): UastMappingsRepository<UastClazz, Location> =
-    computeMappings(sources, accumulatorByUElements(contextBuilder))
 
   @Suppress("UNCHECKED_CAST")
   fun computeMappingsByPsiElementsAndUElements(

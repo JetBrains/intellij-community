@@ -6,6 +6,8 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.psi.*
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.analysis.UastAnalysisPlugin
+import org.jetbrains.uast.util.ClassSet
+import org.jetbrains.uast.util.ClassSetImpl
 
 interface UastLanguagePlugin {
   companion object {
@@ -123,8 +125,8 @@ interface UastLanguagePlugin {
    *         (or to [UElement] if no type was specified)
    */
   @JvmDefault
-  fun getPossiblePsiSourceTypes(vararg uastTypes: Class<out UElement>): Set<Class<out PsiElement>> =
-    setOf(PsiElement::class.java)
+  fun getPossiblePsiSourceTypes(vararg uastTypes: Class<out UElement>): ClassSet<PsiElement> =
+    ClassSetImpl(PsiElement::class.java)
 }
 
 inline fun <reified T : UElement> UastLanguagePlugin.convertOpt(element: PsiElement?, parent: UElement?): T? {

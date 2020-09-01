@@ -31,7 +31,8 @@ class JavaUastMappingsAccountantTest :
         sources = sourcesFromDirRecursive(testData, javaFileMatcher, myFixture).asIterable(),
         storeResultsTo = testData.absoluteFile.parentFile.toPath(),
         resultsNamePrefix = "java-mappings",
-        psiClassPrinter = PsiClassToString.asClosestInterface
+        psiClassPrinter = PsiClassToString.asClosestInterface,
+        logger = LOG
       )
     }
   }

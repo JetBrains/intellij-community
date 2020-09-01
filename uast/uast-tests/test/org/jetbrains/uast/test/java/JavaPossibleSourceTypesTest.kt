@@ -3,7 +3,7 @@ package org.jetbrains.uast.test.java
 
 import org.jetbrains.uast.*
 import org.jetbrains.uast.test.common.PossibleSourceTypesTestBase
-import org.jetbrains.uast.test.common.allUastTypes
+import org.jetbrains.uast.test.common.allUElementSubtypes
 import org.junit.Test
 
 
@@ -11,7 +11,7 @@ class JavaPossibleSourceTypesTest : AbstractJavaUastTest(), PossibleSourceTypesT
 
   override fun check(testName: String, file: UFile) {
     val psiFile = file.sourcePsi
-    for (uastType in allUastTypes) {
+    for (uastType in allUElementSubtypes) {
       checkConsistencyWithRequiredTypes(psiFile, uastType)
     }
     checkConsistencyWithRequiredTypes(psiFile, UClass::class.java, UMethod::class.java, UField::class.java)
