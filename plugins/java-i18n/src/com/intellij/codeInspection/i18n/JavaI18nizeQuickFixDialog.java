@@ -33,8 +33,6 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.UExpression;
-import org.jetbrains.uast.UPolyadicExpression;
-import org.jetbrains.uast.expressions.UInjectionHost;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -269,7 +267,7 @@ public class JavaI18nizeQuickFixDialog<T extends UExpression> extends I18nizeQui
   }
 
   protected String generateText(final I18nizedTextGenerator textGenerator,
-                                @NotNull String propertyKey,
+                                @NotNull @NlsSafe String propertyKey,
                                 final PropertiesFile propertiesFile,
                                 final PsiElement context) {
     return textGenerator.getI18nizedText(propertyKey, propertiesFile, context);
