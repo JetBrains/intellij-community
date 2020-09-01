@@ -85,21 +85,12 @@ public final class ChangesUtil {
   }
 
   public static @Nullable AbstractVcs getVcsForChange(@NotNull Change change, @NotNull Project project) {
-    AbstractVcs result = ChangeListManager.getInstance(project).getVcsFor(change);
-    return result == null ? ProjectLevelVcsManager.getInstance(project).getVcsFor(getFilePath(change)) : result;
+    return ProjectLevelVcsManager.getInstance(project).getVcsFor(getFilePath(change));
   }
 
   public static @NotNull Set<AbstractVcs> getAffectedVcses(@NotNull Collection<? extends Change> changes, @NotNull Project project) {
-    if (changes.isEmpty()) {
-      return Collections.emptySet();
-    }
-
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
-    ChangeListManager changeListManager = ChangeListManager.getInstance(project);
-    return ContainerUtil.map2SetNotNull(changes, change -> {
-      AbstractVcs result = changeListManager.getVcsFor(change);
-      return result == null ? vcsManager.getVcsFor(getFilePath(change)) : result;
-    });
+    return ContainerUtil.map2SetNotNull(changes, change -> vcsManager.getVcsFor(getFilePath(change)));
   }
 
   @NotNull

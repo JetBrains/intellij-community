@@ -138,7 +138,11 @@ public abstract class ChangeListManager implements ChangeListModification {
   @NotNull
   public abstract ThreeState haveChangesUnder(@NotNull VirtualFile vf);
 
+  /**
+   * @deprecated Use {@link com.intellij.openapi.vcs.ProjectLevelVcsManager#getVcsFor}
+   */
   @Nullable
+  @Deprecated
   public abstract AbstractVcs getVcsFor(@NotNull Change change);
 
 
