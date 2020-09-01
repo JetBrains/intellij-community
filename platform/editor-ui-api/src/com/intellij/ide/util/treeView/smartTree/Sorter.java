@@ -59,6 +59,7 @@ public interface Sorter extends TreeAction {
       return true;
     }
 
+    @NonNls
     public String toString() {
       return getName();
     }

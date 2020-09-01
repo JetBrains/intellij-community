@@ -18,6 +18,8 @@ package com.intellij.openapi.vcs;
 import com.intellij.openapi.editor.PlatformEditorBundle;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.ui.Gray;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -70,6 +72,7 @@ public interface FileStatus {
   FileStatus SUPPRESSED = FileStatusFactory.getInstance().createFileStatus("SUPPRESSED", PlatformEditorBundle
     .message("file.status.name.suppressed"));
 
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   String getText();
 
   Color getColor();
@@ -78,5 +81,6 @@ public interface FileStatus {
   ColorKey getColorKey();
 
   @NotNull
+  @NonNls
   String getId();
 }

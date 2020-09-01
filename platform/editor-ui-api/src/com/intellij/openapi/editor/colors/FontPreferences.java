@@ -2,6 +2,7 @@
 package com.intellij.openapi.editor.colors;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
 import org.jetbrains.annotations.NonNls;
@@ -24,16 +25,17 @@ public class FontPreferences {
   public final static String WINDOWS_DEFAULT_FONT_FAMILY  = "Consolas";
 
   @NotNull
-  public List<String> getEffectiveFontFamilies() {
+  public List<@NlsSafe String> getEffectiveFontFamilies() {
     return Collections.emptyList();
   }
 
   @NotNull
-  public List<String> getRealFontFamilies() {
+  public List<@NlsSafe String> getRealFontFamilies() {
     return Collections.emptyList();
   }
 
   @NotNull
+  @NlsSafe
   public String getFontFamily() {
     return FALLBACK_FONT_FAMILY;
   }
@@ -71,6 +73,7 @@ public class FontPreferences {
    *                        {@code null} if font family with the given name is registered at the current environment
    */
   @Nullable
+  @NlsSafe
   public static String getFallbackName(@NotNull String fontName, int fontSize, @Nullable EditorColorsScheme fallbackScheme) {
     Font plainFont = new Font(fontName, Font.PLAIN, fontSize);
     if (plainFont.getFamily().equals("Dialog") && !("Dialog".equals(fontName) || fontName.startsWith("Dialog."))) {
@@ -79,6 +82,7 @@ public class FontPreferences {
     return null;
   }
 
+  @NlsSafe
   public static String getDefaultFontName() {
     if (SystemInfo.isJetBrainsJvm && SystemInfo.isJavaVersionAtLeast(11)) {
       return JETBRAINS_MONO;

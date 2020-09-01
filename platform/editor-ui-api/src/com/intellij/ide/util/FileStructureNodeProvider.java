@@ -18,6 +18,7 @@ package com.intellij.ide.util;
 import com.intellij.ide.util.treeView.smartTree.NodeProvider;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
 import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Konstantin Bulenkov
  */
 public interface FileStructureNodeProvider<T extends TreeElement> extends NodeProvider<T> {
-  @NotNull @Nls String getCheckBoxText();
+  @NotNull @NlsContexts.Checkbox String getCheckBoxText();
 
   Shortcut @NotNull [] getShortcut();
 }

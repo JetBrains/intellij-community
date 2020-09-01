@@ -9,6 +9,7 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.IconLoader
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.serviceContainer.NonInjectable
@@ -20,6 +21,7 @@ import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.annotations.Transient
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
+import org.jetbrains.annotations.NonNls
 import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.RenderingHints
@@ -140,7 +142,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.navigateToPreview = value
     }
 
-  var selectedTabsLayoutInfoId: String?
+  var selectedTabsLayoutInfoId: @NonNls String?
     get() = state.selectedTabsLayoutInfoId
     set(value) {
       state.selectedTabsLayoutInfoId = value
@@ -320,7 +322,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.overrideLafFonts = value
     }
 
-  var fontFace: String?
+  var fontFace: @NlsSafe String?
     get() = notRoamableOptions.state.fontFace
     set(value) {
       notRoamableOptions.state.fontFace = value

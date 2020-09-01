@@ -52,6 +52,7 @@ public final class FileStatusFactory {
       myText = text;
     }
 
+    @NonNls
     public String toString() {
       return myStatus;
     }

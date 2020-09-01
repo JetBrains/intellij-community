@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,6 +68,7 @@ public interface EditorCustomElementRenderer {
    * displayed upon corresponding mouse event.
    */
   @Nullable
+  @NonNls
   default String getContextMenuGroupId(@NotNull Inlay inlay) {
     return null;
   }

@@ -414,6 +414,7 @@ public final class Presentation implements Cloneable {
   }
 
   @Override
+  @Nls
   public String toString() {
     return getText() + " (" + myDescriptionSupplier.get() + ")";
   }

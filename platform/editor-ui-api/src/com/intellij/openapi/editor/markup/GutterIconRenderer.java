@@ -12,6 +12,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.RetrievableIcon;
 import com.intellij.ui.icons.CompositeIcon;
 import com.intellij.util.ui.accessibility.SimpleAccessible;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -125,6 +126,7 @@ public abstract class GutterIconRenderer implements GutterMark, PossiblyDumbAwar
     return getAccessibleName(getIcon(), "icon: ");
   }
 
+  @NonNls
   public final String getFeatureId() {
     return getAccessibleName(getIcon(), "");
   }
