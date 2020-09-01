@@ -21,7 +21,7 @@ import java.util.List;
  */
 public class ProjectAndLibrariesScope extends GlobalSearchScope {
   protected final ProjectFileIndex myProjectFileIndex;
-  private String myDisplayName;
+  private @Nls String myDisplayName;
 
   public ProjectAndLibrariesScope(@NotNull Project project) {
     super(project);
@@ -97,7 +97,7 @@ public class ProjectAndLibrariesScope extends GlobalSearchScope {
     return IndexingBundle.message("psi.search.scope.project.and.libraries");
   }
 
-  public void setDisplayName(@NotNull String displayName) {
+  public void setDisplayName(@NotNull @Nls String displayName) {
     myDisplayName = displayName;
   }
 
