@@ -129,4 +129,8 @@
       <member id="69317"/>
     </group>
   </buttonGroups>
+  <inspectionSuppressions>
+    <suppress inspection="I18nForm" id="48139"/>
+    <suppress inspection="I18nForm" id="c1f67"/>
+  </inspectionSuppressions>
 </form>
