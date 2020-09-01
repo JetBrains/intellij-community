@@ -14,6 +14,5 @@
     <orderEntry type="module" module-name="intellij.platform.lang" />
     <orderEntry type="library" name="Trove4j" level="project" />
     <orderEntry type="module" module-name="intellij.platform.indexing.impl" />
-    <orderEntry type="module" module-name="intellij.platform.util" />
   </component>
 </module>
