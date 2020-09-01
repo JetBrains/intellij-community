@@ -425,18 +425,20 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
             continue;
           }
 
+          // TODO: consider assignmentStatement.getRawTargets().length > 1 in PY-28782
           final PyAssignmentStatement assignmentStatement = PsiTreeUtil.getParentOfType(element, PyAssignmentStatement.class);
-          if (assignmentStatement != null && PsiTreeUtil.isAncestor(assignmentStatement.getLeftHandSideExpression(), element, false)) {
-            if (assignmentStatement.getRawTargets().length > 1) {
-              // TODO: consider assignmentStatement.getRawTargets().length > 1 in PY-28782
-              continue;
+          if (assignmentStatement != null && assignmentStatement.getRawTargets().length == 1 &&
+              PsiTreeUtil.isAncestor(assignmentStatement.getLeftHandSideExpression(), element, false)) {
+            if (assignmentStatement.getLeftHandSideExpression() == element) {
+              registerWarning(element, warningMsg, new PyRemoveAssignmentStatementTargetQuickFix(), new PyRemoveStatementQuickFix());
             }
-            if (assignmentStatement.getLeftHandSideExpression() != element) {
+            else {
               registerWarning(element, warningMsg, new ReplaceWithWildCard());
-              continue;
             }
-            registerWarning(element, warningMsg, new PyRemoveAssignmentStatementTargetQuickFix(), new PyRemoveStatementQuickFix());
+            continue;
           }
+
+          registerWarning(element, warningMsg);
         }
       }
     }
