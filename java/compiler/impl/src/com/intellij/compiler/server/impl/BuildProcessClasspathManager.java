@@ -190,7 +190,7 @@ public final class BuildProcessClasspathManager {
     OLD_TO_NEW_MODULE_NAME.put("maven-jps-plugin", "intellij.maven.jps");
     OLD_TO_NEW_MODULE_NAME.put("osmorc-jps-plugin", "intellij.osgi.jps");
     OLD_TO_NEW_MODULE_NAME.put("ruby-chef-jps-plugin", "intellij.ruby.chef.jps");
-    OLD_TO_NEW_MODULE_NAME.put("android-common", "intellij.android.common");
+    OLD_TO_NEW_MODULE_NAME.put("android-jps-model", "intellij.android.jps.model");
     OLD_TO_NEW_MODULE_NAME.put("build-common", "intellij.android.buildCommon");
     OLD_TO_NEW_MODULE_NAME.put("android-rt", "intellij.android.rt");
     OLD_TO_NEW_MODULE_NAME.put("sdk-common", "android.sdktools.sdk-common");

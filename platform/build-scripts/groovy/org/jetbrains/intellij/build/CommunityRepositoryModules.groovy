@@ -379,6 +379,7 @@ class CommunityRepositoryModules {
       withModuleLibrary("precompiled-usb-devices", "android.sdktools.usb-devices", "")
 
       withModule("intellij.android.jps", "jps/android-jps-plugin.jar", null)
+      withModule("intellij.android.jps.model")
 
       withProjectLibrary("kxml2") //todo[nik] move to module libraries
 
