@@ -22,6 +22,7 @@ import com.intellij.completion.ml.personalization.session.SessionFactorsUtils
 import com.intellij.completion.ml.storage.MutableLookupStorage
 import java.util.*
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 
 @Suppress("DEPRECATION")
@@ -95,7 +96,7 @@ class MLSorter : CompletionFinalSorter() {
     val itemsForScoring = if (element2score.size == elements.size) emptyList() else elements
     calculateScores(element2score, itemsForScoring, positionsBefore,
                     queryLength, prefix, lookup, lookupStorage, parameters)
-    val finalRanking = sortByMlScores(elements, element2score, positionsBefore, lookupStorage)
+    val finalRanking = sortByMlScores(elements, element2score, positionsBefore, lookupStorage, lookup)
 
     lookupStorage.performanceTracker.sortingPerformed(itemsForScoring.size, System.currentTimeMillis() - startedTimestamp)
 
@@ -171,7 +172,8 @@ class MLSorter : CompletionFinalSorter() {
   private fun sortByMlScores(items: List<LookupElement>,
                              element2score: Map<LookupElement, Double?>,
                              positionsBefore: Map<LookupElement, Int>,
-                             lookupStorage: MutableLookupStorage): Iterable<LookupElement> {
+                             lookupStorage: MutableLookupStorage,
+                             lookup: LookupImpl): Iterable<LookupElement> {
     val mlScoresUsed = element2score.values.none { it == null } && sortingRestrictions.shouldSort()
     if (LOG.isDebugEnabled) {
       LOG.debug("ML sorting in completion used=$mlScoresUsed for language=${lookupStorage.language.id}")
@@ -180,7 +182,7 @@ class MLSorter : CompletionFinalSorter() {
     if (mlScoresUsed) {
       lookupStorage.fireReorderedUsingMLScores()
       val topItemsCount = if (reorderOnlyTopItems) REORDER_ONLY_TOP_K else Int.MAX_VALUE
-      return items.reorderByMLScores(element2score, topItemsCount).addDiagnosticsIfNeeded(positionsBefore, topItemsCount)
+      return items.reorderByMLScores(element2score, topItemsCount).addDiagnosticsIfNeeded(positionsBefore, topItemsCount, lookup)
     }
 
     return items
@@ -211,14 +213,18 @@ class MLSorter : CompletionFinalSorter() {
     return result
   }
 
-  private fun Iterable<LookupElement>.addDiagnosticsIfNeeded(positionsBefore: Map<LookupElement, Int>, reordered: Int): Iterable<LookupElement> {
+  private fun Iterable<LookupElement>.addDiagnosticsIfNeeded(positionsBefore: Map<LookupElement, Int>, reordered: Int, lookup: LookupImpl): Iterable<LookupElement> {
     if (CompletionMLRankingSettings.getInstance().isShowDiffEnabled) {
+      var positionChanged = false
       this.forEachIndexed { position, element ->
         val before = positionsBefore.getValue(element)
         if (before < reordered || position < reordered) {
-          element.updateDiffValue(position - before)
+          val diff = position - before
+          positionChanged = diff != 0
+          element.updateDiffValue(diff)
         }
       }
+      lookup.setPositionChangedOnce(positionChanged)
     }
 
     return this
@@ -252,6 +258,13 @@ class MLSorter : CompletionFinalSorter() {
       .apply { putUserData(PositionDiffArrowInitializer.POSITION_DIFF_KEY, this) }
 
     diff.set(newValue)
+  }
+
+  private fun LookupImpl.setPositionChangedOnce(value: Boolean) {
+    val changed = getUserData(PositionDiffArrowInitializer.POSITION_CHANGED_KEY)
+    if (changed == null) {
+      putUserData(PositionDiffArrowInitializer.POSITION_CHANGED_KEY, AtomicBoolean(value))
+    }
   }
 
   /*

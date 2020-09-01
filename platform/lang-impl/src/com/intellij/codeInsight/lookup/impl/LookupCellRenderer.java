@@ -412,19 +412,35 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
   @NotNull
   private static Icon removeVisibilityIfNeeded(@Nullable Editor editor, @NotNull Icon icon, @NotNull Icon standard) {
     if (!Registry.is("ide.completion.show.visibility.icon")) {
-      if (icon instanceof RowIcon) {
-        RowIcon rowIcon = (RowIcon)icon;
-        if (rowIcon.getIconCount() >= 1) {
-          Icon firstIcon = rowIcon.getIcon(0);
-          if (firstIcon != null) {
-            return Registry.is("editor.scale.completion.icons") ?
-                   EditorUtil.scaleIconAccordingEditorFont(firstIcon, editor) : firstIcon;
-          }
+      if (icon instanceof LeftCustomizedIcon) {
+        LeftCustomizedIcon leftCustomizedIcon = (LeftCustomizedIcon)icon;
+        Icon baseIcon = leftCustomizedIcon.getBaseIcon();
+        if (baseIcon != null) {
+          icon = new LeftCustomizedIcon(leftCustomizedIcon.getLeftIcon(),
+                                        removeVisibility(editor, baseIcon, standard),
+                                        leftCustomizedIcon.getAlignment());
+        }
+      } else {
+        icon = removeVisibility(editor, icon, standard);
+      }
+    }
+    return icon;
+  }
+
+  @NotNull
+  private static Icon removeVisibility(@Nullable Editor editor, @NotNull Icon icon, @NotNull Icon standard) {
+    if (icon instanceof RowIcon) {
+      RowIcon rowIcon = (RowIcon)icon;
+      if (rowIcon.getIconCount() >= 1) {
+        Icon firstIcon = rowIcon.getIcon(0);
+        if (firstIcon != null) {
+          return Registry.is("editor.scale.completion.icons") ?
+                 EditorUtil.scaleIconAccordingEditorFont(firstIcon, editor) : firstIcon;
         }
       }
-      else if (icon.getIconWidth() > standard.getIconWidth() || icon.getIconHeight() > standard.getIconHeight()) {
-        icon = IconUtil.cropIcon(icon, new Rectangle(standard.getIconWidth(), standard.getIconHeight()));
-      }
+    }
+    else if (icon.getIconWidth() > standard.getIconWidth() || icon.getIconHeight() > standard.getIconHeight()) {
+      return IconUtil.cropIcon(icon, new Rectangle(standard.getIconWidth(), standard.getIconHeight()));
     }
     return icon;
   }
@@ -629,5 +645,32 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
     @NotNull
     LookupElementPresentation customizePresentation(@NotNull LookupElement item,
                                                     @NotNull LookupElementPresentation presentation);
+  }
+
+  public static final class LeftCustomizedIcon extends com.intellij.ui.RowIcon {
+    private final Icon myLeftIcon;
+    private final Icon myBaseIcon;
+    private final RowIcon.Alignment myAlignment;
+
+    public LeftCustomizedIcon(Icon leftIcon, Icon baseIcon, RowIcon.Alignment alignment) {
+      super(2, alignment);
+      setIcon(leftIcon, 0);
+      setIcon(baseIcon, 1);
+      myLeftIcon = leftIcon;
+      myBaseIcon = baseIcon;
+      myAlignment = alignment;
+    }
+
+    public Icon getBaseIcon() {
+      return myBaseIcon;
+    }
+
+    public Icon getLeftIcon() {
+      return myLeftIcon;
+    }
+
+    public RowIcon.Alignment getAlignment() {
+      return myAlignment;
+    }
   }
 }

@@ -6,23 +6,29 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupCellRenderer
 import com.intellij.codeInsight.lookup.impl.LookupImpl
-import com.intellij.completion.ml.tracker.LookupTracker
 import com.intellij.completion.ml.settings.CompletionMLRankingSettings
+import com.intellij.completion.ml.storage.LookupStorage
+import com.intellij.completion.ml.storage.MutableLookupStorage
+import com.intellij.completion.ml.tracker.LookupTracker
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.util.Key
-import com.intellij.completion.ml.storage.LookupStorage
-import com.intellij.completion.ml.storage.MutableLookupStorage
-import com.intellij.ui.JBColor
-import java.awt.Color
+import com.intellij.ui.IconManager
+import com.intellij.ui.icons.RowIcon
+import com.intellij.util.IconUtil
+import icons.CompletionMlRankingIcons
+import java.awt.Component
+import java.awt.Graphics
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import javax.swing.Icon
 
 class PositionDiffArrowInitializer : ProjectManagerListener {
   companion object {
-    val POSITION_DIFF_KEY = Key.create<AtomicInteger>("PositionChangingArrowsInitializer.POSITION_DIFF_KEY")
-    const val ARROW_UP = "↑"
-    const val ARROW_DOWN = "↓"
-    private val ML_RANK_DIFF_GREEN_COLOR = JBColor(JBColor.GREEN.darker(), JBColor.GREEN.brighter())
+    val POSITION_DIFF_KEY = Key.create<AtomicInteger>("PositionDiffArrowInitializer.POSITION_DIFF_KEY")
+    val POSITION_CHANGED_KEY = Key.create<AtomicBoolean>("PositionDiffArrowInitializer.POSITION_CHANGED_KEY")
+    private const val DIFF_ICON_RIGHT_MARGIN = 4
+    private val EMPTY_DIFF_ICON = IconManager.getInstance().createEmptyIcon(CompletionMlRankingIcons.ProposalUp)
   }
 
   override fun projectOpened(project: Project) {
@@ -38,21 +44,31 @@ class PositionDiffArrowInitializer : ProjectManagerListener {
         lookup.addPresentationCustomizer(object : LookupCellRenderer.ItemPresentationCustomizer {
           override fun customizePresentation(item: LookupElement,
                                              presentation: LookupElementPresentation): LookupElementPresentation {
-            val diff = item.getUserData(POSITION_DIFF_KEY)?.get()
-            if (diff == null || diff == 0) return presentation
+            val positionChanged = lookup.getUserData(POSITION_CHANGED_KEY)?.get()
+            if (positionChanged == null || !positionChanged) return presentation
             val newPresentation = LookupElementPresentation()
             newPresentation.copyFrom(presentation)
-            val text = if (diff < 0) " $ARROW_UP${-diff} " else " $ARROW_DOWN$diff "
-            val color: Color = if (diff < 0) ML_RANK_DIFF_GREEN_COLOR else JBColor.RED
-            val fragments = presentation.tailFragments
-            newPresentation.setTailText(text, color)
-            for (fragment in fragments) {
-              newPresentation.appendTailText(fragment.text, fragment.isGrayed)
+            val diff = item.getUserData(POSITION_DIFF_KEY)?.get()
+            val diffIcon = when {
+              diff == null || diff == 0 -> EMPTY_DIFF_ICON
+              diff < 0 -> CompletionMlRankingIcons.ProposalUp
+              else -> CompletionMlRankingIcons.ProposalDown
             }
+            val diffIconWithMargin = iconWithRightMargin(diffIcon)
+            newPresentation.icon = LookupCellRenderer.LeftCustomizedIcon(diffIconWithMargin, newPresentation.icon, RowIcon.Alignment.CENTER)
             return newPresentation
           }
         })
       }
     }, project)
+  }
+
+  private fun iconWithRightMargin(icon: Icon, margin: Int = DIFF_ICON_RIGHT_MARGIN): IconUtil.IconSizeWrapper {
+    return object : IconUtil.IconSizeWrapper(icon, icon.iconWidth + margin, icon.iconHeight) {
+      override fun paintIcon(icon: Icon?, c: Component?, g: Graphics?, x: Int, y: Int) {
+        if (icon == null) return
+        icon.paintIcon(c, g, x, y)
+      }
+    }
   }
 }
