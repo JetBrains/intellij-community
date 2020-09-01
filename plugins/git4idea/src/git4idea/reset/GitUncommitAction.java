@@ -13,7 +13,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.InvokeAfterUpdateMode;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.ui.ChangeListChooser;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcs.log.Hash;
@@ -107,7 +110,7 @@ public class GitUncommitAction extends GitSingleCommitEditingAction {
         // TODO change notification title
         new GitResetOperation(project, singletonMap(repository, commit.getParents().get(0)), SOFT, indicator).execute();
 
-        ChangeListManagerImpl changeListManager = ChangeListManagerImpl.getInstanceImpl(project);
+        ChangeListManager changeListManager = ChangeListManager.getInstance(project);
         changeListManager.invokeAfterUpdate(() -> {
           Collection<Change> changes = GitUtil.findCorrespondentLocalChanges(changeListManager, changesInCommit);
           changeListManager.moveChangesTo(changeList, changes.toArray(new Change[0]));

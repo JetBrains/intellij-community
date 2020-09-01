@@ -715,7 +715,7 @@ class LineStatusTrackerManager(private val project: Project) : LineStatusTracker
       val provider = getTrackerProvider(virtualFile)
       if (provider != ChangelistsLocalStatusTrackerProvider) return
 
-      val changeList = ChangeListManagerImpl.getInstanceImpl(project).getChangeList(virtualFile)
+      val changeList = ChangeListManager.getInstance(project).getChangeList(virtualFile)
       if (changeList != null && !changeList.isDefault) {
         log("Tracker install from DocumentListener: ", virtualFile)
 

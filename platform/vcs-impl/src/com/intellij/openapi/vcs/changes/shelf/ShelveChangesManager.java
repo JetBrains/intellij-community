@@ -1037,7 +1037,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
                              shouldUnshelveAllList ? null : binariesForChangelist,
                              forcePredefinedOneChangelist != null ? forcePredefinedOneChangelist : getChangeListUnshelveTo(changeList),
                              true, removeFilesFromShelf);
-          ChangeListManagerImpl.getInstanceImpl(myProject).waitForUpdate();
+          ChangeListManagerEx.getInstanceEx(myProject).waitForUpdate();
         }
       }
     });

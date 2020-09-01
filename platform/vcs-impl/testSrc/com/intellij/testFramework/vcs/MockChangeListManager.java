@@ -273,6 +273,11 @@ public class MockChangeListManager extends ChangeListManagerEx {
   }
 
   @Override
+  public void addUnversionedFiles(@NotNull LocalChangeList list, @NotNull List<? extends VirtualFile> unversionedFiles) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
   public void addDirectoryToIgnoreImplicitly(@NotNull String path) {
     throw new UnsupportedOperationException();
   }

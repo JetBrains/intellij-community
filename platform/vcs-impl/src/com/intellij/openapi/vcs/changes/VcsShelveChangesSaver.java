@@ -79,7 +79,7 @@ public class VcsShelveChangesSaver {
       myProgressIndicator.setText(VcsBundle.getString("vcs.unshelving.changes"));
       for (Map.Entry<String, ShelvedChangeList> listEntry : myShelvedLists.entrySet()) {
         VcsShelveUtils.doSystemUnshelve(project, listEntry.getValue(),
-                                        ChangeListManagerImpl.getInstanceImpl(project).findChangeList(listEntry.getKey()),
+                                        ChangeListManager.getInstance(project).findChangeList(listEntry.getKey()),
                                         ShelveChangesManager.getInstance(project),
                                         VcsBundle.getString("vcs.unshelving.conflict.left"),
                                         VcsBundle.getString("vcs.unshelving.conflict.right"));
@@ -91,7 +91,7 @@ public class VcsShelveChangesSaver {
   protected void doRollback(@NotNull Collection<? extends VirtualFile> rootsToSave) {
     Set<VirtualFile> rootsSet = new HashSet<>(rootsToSave);
     ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
-    List<Change> changes4Rollback = ContainerUtil.filter(ChangeListManagerImpl.getInstanceImpl(project).getAllChanges(), change -> {
+    List<Change> changes4Rollback = ContainerUtil.filter(ChangeListManager.getInstance(project).getAllChanges(), change -> {
       return rootsSet.contains(vcsManager.getVcsRootFor(ChangesUtil.getFilePath(change)));
     });
     new RollbackWorker(project, myStashMessage, true).doRollback(changes4Rollback, true);

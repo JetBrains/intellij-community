@@ -195,7 +195,7 @@ public abstract class CommitChangeListDialog extends DialogWrapper implements Si
       affectedVcses.addAll(ChangesUtil.getAffectedVcses(list.getChanges(), project));
     }
     if (showVcsCommit) {
-      List<FilePath> unversionedFiles = ChangeListManagerImpl.getInstanceImpl(project).getUnversionedFilesPaths();
+      List<FilePath> unversionedFiles = ChangeListManager.getInstance(project).getUnversionedFilesPaths();
       affectedVcses.addAll(ChangesUtil.getAffectedVcsesForFilePaths(unversionedFiles, project));
     }
 

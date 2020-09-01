@@ -4,7 +4,7 @@ package com.intellij.vcs.commit
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.CheckinProjectPanel
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
+import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcses
 import com.intellij.openapi.vcs.changes.ChangesUtil.getAffectedVcsesForFilePaths
 import com.intellij.openapi.vcs.changes.CommitResultHandler
@@ -116,7 +116,7 @@ class SingleChangeListCommitWorkflowHandler(
   }
 
   private fun updateCommitOptionsVisibility() {
-    val unversionedFiles = ChangeListManagerImpl.getInstanceImpl(project).unversionedFilesPaths
+    val unversionedFiles = ChangeListManager.getInstance(project).unversionedFilesPaths
     val vcses = getAffectedVcses(getChangeList().changes, project) + getAffectedVcsesForFilePaths(unversionedFiles, project)
 
     ui.commitOptionsUi.setVisible(vcses)

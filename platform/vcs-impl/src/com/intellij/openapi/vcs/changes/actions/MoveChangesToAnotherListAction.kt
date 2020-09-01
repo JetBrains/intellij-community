@@ -69,7 +69,7 @@ class MoveChangesToAnotherListAction : AbstractChangeListAction() {
 
       val targetList = askTargetList(project, changes)
       if (targetList != null) {
-        val changeListManager = ChangeListManagerImpl.getInstanceImpl(project)
+        val changeListManager = ChangeListManagerEx.getInstanceEx(project)
 
         changeListManager.moveChangesTo(targetList, *changes.toTypedArray())
         if (unversionedFiles.isNotEmpty()) {

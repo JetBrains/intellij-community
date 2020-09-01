@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.Nls;
@@ -24,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.List;
 
 public abstract class ChangeListManagerEx extends ChangeListManager {
   public static ChangeListManagerEx getInstanceEx(@NotNull Project project) {
@@ -45,6 +47,8 @@ public abstract class ChangeListManagerEx extends ChangeListManager {
    *                  4ex: This flag disables automatic empty changelist deletion.
    */
   public abstract void setDefaultChangeList(@NotNull LocalChangeList list, boolean automatic);
+
+  public abstract void addUnversionedFiles(@NotNull LocalChangeList list, @NotNull List<? extends VirtualFile> unversionedFiles);
 
   /**
    * Blocks modal dialogs that we don't want to popup during some process, for example, above the commit dialog.
