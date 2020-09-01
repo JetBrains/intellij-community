@@ -10,6 +10,7 @@ import com.intellij.openapi.wm.WelcomeScreenTab;
 import com.intellij.openapi.wm.WelcomeTabFactory;
 import com.intellij.ui.AncestorListenerAdapter;
 import com.intellij.ui.JBColor;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
@@ -29,6 +30,7 @@ public class PluginsTabFactory implements WelcomeTabFactory {
         PluginManagerConfigurable configurable = new PluginManagerConfigurable();
         BorderLayoutPanel pluginsPanel = UI.Panels.simplePanel(configurable.createComponent()).addToTop(configurable.getTopComponent())
           .withBorder(JBUI.Borders.customLine(JBColor.border(), 0, 1, 0, 0));
+        configurable.getTopComponent().setPreferredSize(new JBDimension(configurable.getTopComponent().getPreferredSize().width, 35));
         pluginsPanel.addAncestorListener(new AncestorListenerAdapter() {
           @Override
           public void ancestorRemoved(AncestorEvent event) {
