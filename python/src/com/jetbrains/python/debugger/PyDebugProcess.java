@@ -846,7 +846,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
           XValueNode node = value.getLastNode();
           if (node != null && !node.isObsolete()) {
             if (e.getMessage().startsWith("Timeout")) {
-              value.updateNodeValueAfterLoading(node, " ", "", PyVariableViewSettings.LOADING_TIMED_OUT);
+              value.updateNodeValueAfterLoading(node, " ", "", PyBundle.message("debugger.variables.view.loading.timed.out"));
               PyVariableViewSettings.showWarningMessage(getCurrentRootNode());
             }
             else {

@@ -549,7 +549,7 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
           XValueNode node = value.getLastNode();
           if (node != null && !node.isObsolete()) {
             if (e.getMessage().startsWith("Timeout") || e.getMessage().startsWith("Console already exited")) {
-              value.updateNodeValueAfterLoading(node, " ", "", PyVariableViewSettings.LOADING_TIMED_OUT);
+              value.updateNodeValueAfterLoading(node, " ", "", PyBundle.message("debugger.variables.view.loading.timed.out"));
             }
             else {
               LOG.error(e);
