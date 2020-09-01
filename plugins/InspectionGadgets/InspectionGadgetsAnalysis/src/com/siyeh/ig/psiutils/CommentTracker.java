@@ -201,7 +201,7 @@ public final class CommentTracker {
    * @return the string containing the element text and possibly some comments.
    */
   public String textWithComments(@NotNull PsiElement element) {
-    return commentsBefore(element)+element.getText();
+    return commentsBefore(element)+text(element);
   }
 
   /**
@@ -307,6 +307,13 @@ public final class CommentTracker {
   public @NotNull PsiElement replaceAndRestoreComments(@NotNull PsiElement element, @NotNull PsiElement replacement) {
     List<PsiElement> suffix = grabSuffixComments(element);
     PsiElement result = replace(element, replacement);
+    PsiElement anchor = findAnchor(result);
+    restoreSuffixComments(result, suffix);
+    insertCommentsBefore(anchor);
+    return result;
+  }
+
+  private static @NotNull PsiElement findAnchor(@NotNull PsiElement result) {
     PsiElement anchor = PsiTreeUtil
       .getNonStrictParentOfType(result, PsiStatement.class, PsiLambdaExpression.class, PsiVariable.class, PsiNameValuePair.class);
     if (anchor instanceof PsiLambdaExpression && anchor != result) {
@@ -318,10 +325,7 @@ public final class CommentTracker {
     if (anchor instanceof PsiStatement && (anchor.getParent() instanceof PsiIfStatement || anchor.getParent() instanceof PsiLoopStatement)) {
       anchor = anchor.getParent();
     }
-    if (anchor == null) anchor = result;
-    restoreSuffixComments(result, suffix);
-    insertCommentsBefore(anchor);
-    return result;
+    return anchor == null ? result : anchor;
   }
 
   /**
@@ -360,7 +364,11 @@ public final class CommentTracker {
       replacement.getParent().addAfter(element, replacement);
     }
     toDelete.forEach(this::delete);
-    insertCommentsBefore(replacement);
+    PsiElement anchor = replacement;
+    while (anchor.getParent() != null && anchor.getPrevSibling() == null) {
+      anchor = anchor.getParent();
+    }
+    insertCommentsBefore(anchor);
     return replacement;
   }
 
