@@ -7,11 +7,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.OnePixelSplitter
+import org.jetbrains.annotations.NonNls
 import javax.swing.SwingUtilities
 
 class NonProportionalOnePixelSplitter(
   vertical: Boolean,
-  private val proportionKey: String,
+  @NonNls private val proportionKey: String,
   private val defaultProportion: Float = 0.5f,
   disposable: Disposable,
   private val project: Project?
