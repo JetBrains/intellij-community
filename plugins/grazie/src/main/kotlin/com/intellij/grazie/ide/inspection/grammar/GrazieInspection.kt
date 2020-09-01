@@ -21,6 +21,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
+import com.intellij.psi.PsiLanguageInjectionHost
 import com.intellij.psi.util.elementType
 import com.intellij.util.containers.CollectionFactory
 import java.util.*
@@ -52,14 +53,30 @@ class GrazieInspection : LocalInspectionTool() {
     }
   }
 
-  private val CHECKED_ELEMENTS: Key<Set<PsiElement>> = Key.create("Grazie.Grammar.Checked")
+  private val CHECKED_ELEMENTS: Key<Set<PsiElement>> = Key.create("Grazie.CHECKED_ELEMENTS")
+  private val HAS_GRAMMAR_ERRORS: Key<Boolean> = Key.create("Grazie.HAS_GRAMMAR_ERRORS")
 
   override fun getDisplayName() = GrazieBundle.message("grazie.grammar.inspection.grammar.text")
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
-    if (InjectedLanguageManager.getInstance(holder.project).isInjectedFragment(holder.file)) return PsiElementVisitor.EMPTY_VISITOR
+    val injectedLanguageManager = InjectedLanguageManager.getInstance(holder.project)
+
+    if (injectedLanguageManager.isInjectedFragment(holder.file)) {
+      val host = injectedLanguageManager.getInjectionHost(holder.file)
+      if (host?.getUserData(HAS_GRAMMAR_ERRORS) == true) {
+        host.putUserData(HAS_GRAMMAR_ERRORS, false)
+        DaemonCodeAnalyzer.getInstance(holder.project).restart(host.containingFile)
+      }
+    }
+
     return object : PsiElementVisitor() {
       override fun visitElement(element: PsiElement) {
+        if (element is PsiLanguageInjectionHost) {
+          if (injectedLanguageManager.getCachedInjectedDocumentsInRange(element.containingFile, element.textRange).isNotEmpty()) {
+            return super.visitElement(element)
+          }
+        }
+
         val typos = CollectionFactory.createSmallMemoryFootprintSet<Typo>()
 
         val strategies = LanguageGrammarChecking.getStrategiesForElement(element, enabledStrategiesIDs, disabledStrategiesIDs)
@@ -96,6 +113,7 @@ class GrazieInspection : LocalInspectionTool() {
         }
 
         for (typo in typos.asSequence().filterNot { suppression.isSuppressed(it) }) {
+          typo.location.element!!.putUserData(HAS_GRAMMAR_ERRORS, true)
           holder.registerProblem(GrazieProblemDescriptor(typo, isOnTheFly))
         }
 
