@@ -5,13 +5,11 @@ import com.intellij.codeInsight.daemon.impl.JavaHighlightInfoTypes
 import com.intellij.codeInsight.intention.IntentionActionDelegate
 import com.intellij.codeInspection.deprecation.DeprecationInspection
 import com.intellij.codeInspection.deprecation.MarkedForRemovalInspection
-import com.intellij.idea.Bombed
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor
 import com.intellij.java.testFramework.fixtures.MultiModuleJava9ProjectDescriptor.ModuleDescriptor.*
 import com.intellij.openapi.util.TextRange
 import org.assertj.core.api.Assertions.assertThat
-import java.util.*
 import java.util.jar.JarFile
 
 class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
@@ -241,7 +239,6 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     fixes("module M { provides pkg.main.<caret>S with pkg.main.S; }", arrayOf("AddExportsDirectiveFix", "AddUsesDirectiveFix"))
   }
 
-  @Bombed(year = 2020, month = Calendar.SEPTEMBER, day = 1, user = "anet", description = "Zero tolerance good red code inspection")
   fun testPackageAccessibility() = doTestPackageAccessibility(moduleFileInTests = false, checkFileInTests = false)
   fun testPackageAccessibilityInNonModularTest() = doTestPackageAccessibility(moduleFileInTests = true, checkFileInTests = false)
   fun testPackageAccessibilityInModularTest() = doTestPackageAccessibility(moduleFileInTests = true, checkFileInTests = true)
@@ -262,7 +259,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     addFile("pkg/sub/C6X.java", "package pkg.sub;\npublic class C6X { }", M6)
 
     addFile("pkg/m6/C6_1.java", "package pkg.m6.inner;\npublic class C6_1 {}", M6)
-    //addFile("pkg/m6/C6_2.kt", "package pkg.m6.inner\nclass C6_2", M6)
+    //addFile("pkg/m6/C6_2.kt", "package pkg.m6.inner\nclass C6_2", M6) TODO: uncomment to fail the test
 
     addFile("module-info.java", "module M7 { exports pkg.m7; }", M7)
     addFile("pkg/m7/C7.java", "package pkg.m7;\npublic class C7 { }", M7)
