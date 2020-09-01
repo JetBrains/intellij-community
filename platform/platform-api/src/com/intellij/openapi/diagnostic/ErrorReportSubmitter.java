@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diagnostic;
 
 import com.intellij.openapi.extensions.PluginAware;
@@ -6,6 +6,7 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,6 +43,7 @@ public abstract class ErrorReportSubmitter implements PluginAware {
   /**
    * @return a text of a privacy notice to be shown in the dialog (in HTML; links are allowed).
    */
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   public @Nullable String getPrivacyNoticeText() {
     return null;
   }
