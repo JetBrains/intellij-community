@@ -58,6 +58,7 @@ public final class NotificationGroupEP implements PluginAware {
    * @see #bundle
    */
   @Attribute("key")
+  @NlsContexts.NotificationTitle
   public String key;
 
   /**
