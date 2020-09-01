@@ -25,6 +25,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBTreeTraverser;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -123,12 +124,6 @@ public final class CodeInsightUtil {
       PsiElement[] children = parent.getChildren();
       return getStatementsInRange(children, ((PsiCodeBlock)parent).getFirstBodyElement(), ((PsiCodeBlock)parent).getLastBodyElement());
     }
-
-/*
-    if(parent instanceof PsiCodeBlock && parent.getParent() instanceof PsiBlockStatement) {
-      return new PsiElement[]{parent.getParent()};
-    }
-*/
 
     PsiElement[] children = parent.getChildren();
     return getStatementsInRange(children, element1, element2);
@@ -299,13 +294,12 @@ public final class CodeInsightUtil {
     PsiClassType baseType = JavaCompletionUtil.originalize((PsiClassType)psiType);
     PsiClassType.ClassResolveResult baseResult = baseType.resolveGenerics();
     PsiClass baseClass = baseResult.getElement();
-    PsiSubstitutor baseSubstitutor = baseResult.getSubstitutor();
     if(baseClass == null) return;
 
     GlobalSearchScope scope = context.getResolveScope();
 
     Processor<PsiClass> inheritorsProcessor =
-      createInheritorsProcessor(context, baseType, arrayDim, getRawSubtypes, consumer, baseClass, baseSubstitutor);
+      createInheritorsProcessor(context, baseType, arrayDim, getRawSubtypes, consumer, baseClass);
 
     addContextTypeArguments(context, baseType, inheritorsProcessor);
 
@@ -364,13 +358,13 @@ public final class CodeInsightUtil {
     }
   }
 
+  @ApiStatus.Internal
   public static Processor<PsiClass> createInheritorsProcessor(PsiElement context,
                                                               PsiClassType baseType,
                                                               int arrayDim,
                                                               boolean getRawSubtypes,
                                                               Consumer<? super PsiType> result,
-                                                              @NotNull PsiClass baseClass,
-                                                              PsiSubstitutor baseSubstitutor) {
+                                                              @NotNull PsiClass baseClass) {
     PsiManager manager = context.getManager();
     JavaPsiFacade facade = JavaPsiFacade.getInstance(manager.getProject());
     PsiResolveHelper resolveHelper = facade.getResolveHelper();

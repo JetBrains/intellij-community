@@ -152,7 +152,8 @@ public class JavaInheritorsGetter {
             if (inferenceResult.getErrorMessage() == null &&
                 !psiClass.hasModifierProperty(PsiModifier.ABSTRACT) &&
                 areInferredTypesApplicable(inferenceResult.getTypes(), parameters.getPosition())) {
-              psiType = initializer.getType();
+              assert initializer != null;
+              psiType = Objects.requireNonNull(initializer.getType());
             }
           }
         }
@@ -226,10 +227,8 @@ public class JavaInheritorsGetter {
       final PsiClass baseClass = baseResult.getElement();
       if (baseClass == null) return false;
 
-      final PsiSubstitutor baseSubstitutor = baseResult.getSubstitutor();
-
       final Processor<PsiClass> processor = CodeInsightUtil.createInheritorsProcessor(context, type, 0, false,
-                                                                                      consumer, baseClass, baseSubstitutor);
+                                                                                      consumer, baseClass);
       final StatisticsInfo[] stats = StatisticsManager.getInstance().getAllValues(JavaStatisticsManager.getAfterNewKey(type));
       for (final StatisticsInfo statisticsInfo : stats) {
         final String value = statisticsInfo.getValue();
