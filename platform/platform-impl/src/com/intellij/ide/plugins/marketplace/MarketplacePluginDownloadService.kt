@@ -197,7 +197,7 @@ object MarketplacePluginDownloadService {
 
   private fun getPrevPluginArchive(prevPlugin: Path): Path {
     val suffix = if (prevPlugin.endsWith(".jar")) "" else ".zip"
-    return Paths.get("${PathManager.getPluginTempPath()}\\${prevPlugin.fileName}$suffix")
+    return Paths.get(PathManager.getPluginTempPath()).resolve("${prevPlugin.fileName}$suffix")
   }
 
   @Throws(IOException::class)
