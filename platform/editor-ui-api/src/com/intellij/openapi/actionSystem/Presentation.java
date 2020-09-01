@@ -19,7 +19,6 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.util.HashSet;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
 
@@ -158,16 +157,24 @@ public final class Presentation implements Cloneable {
   }
 
   @NotNull
-  public Supplier<TextWithMnemonic> getTextWithMnemonic(@Nls(capitalization = Nls.Capitalization.Title) @NotNull Supplier<String> text,
+  public Supplier<TextWithMnemonic> getTextWithMnemonic(@NotNull Supplier<@Nls(capitalization = Nls.Capitalization.Title) String> text,
                                                         boolean mayContainMnemonic) {
-    if (!mayContainMnemonic) return () -> Optional.ofNullable(text.get()).map(TextWithMnemonic::fromPlainText).orElse(null);
-
-    UISettings uiSettings = UISettings.getInstanceOrNull();
-    if (uiSettings != null && uiSettings.getDisableMnemonicsInControls()) {
-      return () -> Optional.ofNullable(text.get()).map(it -> TextWithMnemonic.parse(it).dropMnemonic(removeMnemonics.getValue()))
-        .orElse(null);
+    if (mayContainMnemonic) {
+      UISettings uiSettings = UISettings.getInstanceOrNull();
+      boolean mnemonicsDisabled = uiSettings != null && uiSettings.getDisableMnemonicsInControls();
+      return () -> {
+        String s = text.get();
+        if (s == null) return null;
+        TextWithMnemonic parsed = TextWithMnemonic.parse(s);
+        return mnemonicsDisabled ? parsed.dropMnemonic(removeMnemonics.getValue()) : parsed;
+      };
     }
-    return () -> Optional.ofNullable(text.get()).map(it -> TextWithMnemonic.parse(it)).orElse(null);
+    else {
+      return () -> {
+        String s = text.get();
+        return s == null ? null : TextWithMnemonic.fromPlainText(s);
+      };
+    }
   }
 
   /**
