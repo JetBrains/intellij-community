@@ -24,7 +24,10 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Factory;
+import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -1276,41 +1279,6 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
 
   @Override
   public void removeImplicitlyIgnoredDirectory(@NotNull String path) {
-  }
-
-  public void scheduleUnversionedUpdate() {
-    Couple<Collection<FilePath>> couple = ReadAction.compute(() -> {
-      synchronized (myDataLock) {
-        Collection<FilePath> unversioned = myComposite.getUnversionedFileHolder().getFiles();
-        Collection<FilePath> ignored = myComposite.getIgnoredFileHolder().values();
-        return Couple.of(unversioned, ignored);
-      }
-    });
-
-    Collection<FilePath> unversioned = couple.first;
-    Collection<FilePath> ignored = couple.second;
-
-    VcsDirtyScopeManager vcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
-
-    final int ourPiecesLimit = 100;
-    if (unversioned.size() + ignored.size() > ourPiecesLimit) {
-      vcsDirtyScopeManager.markEverythingDirty();
-    }
-    else {
-      List<FilePath> dirs = new ArrayList<>();
-      List<FilePath> files = new ArrayList<>();
-
-      for (FilePath filePath : ContainerUtil.concat(unversioned, ignored)) {
-        if (filePath.isDirectory()) {
-          dirs.add(filePath);
-        }
-        else {
-          files.add(filePath);
-        }
-      }
-
-      vcsDirtyScopeManager.filePathsDirty(files, dirs);
-    }
   }
 
   @Override
