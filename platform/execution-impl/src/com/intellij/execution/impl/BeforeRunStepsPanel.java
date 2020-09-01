@@ -274,7 +274,7 @@ public final class BeforeRunStepsPanel extends JPanel {
         }
       });
     }
-    ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(ExecutionBundle.message("add.new.run.configuration.action2.name"), actionGroup,
+    ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(ExecutionBundle.message("add.new.before.run.task.name"), actionGroup,
                                                                           SimpleDataContext.getProjectContext(myRunConfiguration.getProject()), false, false, false, null,
                                                                           -1, Conditions.alwaysTrue());
     popup.show(Objects.requireNonNull(button.getPreferredPopupPoint()));

@@ -113,7 +113,7 @@ public final class BeforeRunComponent extends JPanel implements DnDTarget {
     }
     ListPopup
       popup = JBPopupFactory
-      .getInstance().createActionGroupPopup(ExecutionBundle.message("add.new.run.configuration.action2.name"), group,
+      .getInstance().createActionGroupPopup(ExecutionBundle.message("add.new.before.run.task.name"), group,
                                             DataManager.getInstance().getDataContext(myAddButton), false, false, false, null,
                                             -1, Conditions.alwaysTrue());
     popup.showUnderneathOf(myAddButton);
