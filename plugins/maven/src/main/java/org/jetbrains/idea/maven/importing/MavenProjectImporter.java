@@ -57,7 +57,6 @@ import java.io.IOException;
 import java.util.*;
 import java.util.function.Predicate;
 
-import static com.intellij.openapi.module.impl.ModulePathKt.getModuleNameByFilePath;
 import static org.jetbrains.idea.maven.project.MavenProjectChanges.ALL;
 
 public class MavenProjectImporter {
@@ -617,21 +616,11 @@ public class MavenProjectImporter {
     // for some reason newModule opens the existing iml file, so we
     // have to remove it beforehand.
     deleteExistingImlFile(path);
-    deleteExistingModule(path);
 
     final Module module = myModuleModel.newModule(path, project.getModuleType().getId());
     myMavenProjectToModule.put(project, module);
     myCreatedModules.add(module);
     return true;
-  }
-
-  private void deleteExistingModule(String path) {
-    String moduleName = getModuleNameByFilePath(path);
-    final Module oldModule = myModuleModel.findModuleByName(moduleName);
-    if (oldModule != null) {
-      myModelsProvider.getModifiableRootModel(oldModule).dispose();
-      myModuleModel.disposeModule(oldModule);
-    }
   }
 
   private void deleteExistingImlFile(final String path) {

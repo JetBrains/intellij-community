@@ -32,7 +32,6 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetManagerBridge;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge;
@@ -44,8 +43,8 @@ import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.Map;
-import java.util.Set;
 
 public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModelsProvider {
   private LibraryTable.ModifiableModel myLibrariesModel;
@@ -145,13 +144,11 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
       }
       ((ProjectModifiableLibraryTableBridge)getModifiableProjectLibrariesModel()).prepareForCommit();
 
-      Set<Module> modules = ContainerUtil.set(myModifiableModuleModel.getModules());
-
-      ModifiableRootModel[] rootModels1 = myModifiableRootModels.entrySet().stream()
-        .filter(entry -> modules.contains(entry.getKey()))
-        .map(Map.Entry::getValue)
-        .toArray(ModifiableRootModel[]::new);
-
+      Collection<ModifiableRootModel> rootModels = myModifiableRootModels.values();
+      ModifiableRootModel[] rootModels1 = rootModels.toArray(new ModifiableRootModel[0]);
+      for (ModifiableRootModel model: rootModels1) {
+        assert !model.isDisposed() : "Already disposed: " + model;
+      }
       if (myModifiableModuleModel != null) ((ModifiableModuleModelBridge)myModifiableModuleModel).prepareForCommit();
       for (ModifiableRootModel model : rootModels1) {
         ((ModifiableRootModelBridge)model).prepareForCommit();
