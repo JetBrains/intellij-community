@@ -58,8 +58,8 @@ public class JavaStructuralSearchProfile extends StructuralSearchProfile {
   private static final Key<Map<String, ParameterInfo>> PARAMETER_CONTEXT = new Key<>("PARAMETER_CONTEXT");
   private static final Key<Integer> PARAMETER_LENGTH = new Key<>("PARAMETER_LENGTH");
 
-  public static final PatternContext DEFAULT_CONTEXT = new PatternContext("default", "Default");
-  public static final PatternContext MEMBER_CONTEXT = new PatternContext("member", "Class Member");
+  public static final PatternContext DEFAULT_CONTEXT = new PatternContext("default", () -> SSRBundle.message("pattern.context.default"));
+  public static final PatternContext MEMBER_CONTEXT = new PatternContext("member", () -> SSRBundle.message("pattern.context.class.member"));
   private static final List<PatternContext> PATTERN_CONTEXTS = ContainerUtil.immutableList(DEFAULT_CONTEXT, MEMBER_CONTEXT);
 
   private static final Set<String> PRIMITIVE_TYPES = ContainerUtil.set(

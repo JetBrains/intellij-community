@@ -5,6 +5,8 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.function.Supplier;
+
 /**
  * @author Bas Leijdekkers
  */
@@ -12,9 +14,9 @@ public final class PatternContext {
   @NotNull
   public final String myID;
   @NotNull
-  private final String myDisplayName;
+  private final Supplier<String> myDisplayName;
 
-  public PatternContext(@NonNls @NotNull String ID, @Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String displayName) {
+  public PatternContext(@NonNls @NotNull String ID, @NotNull Supplier<@Nls(capitalization = Nls.Capitalization.Title) @NotNull String> displayName) {
     myID = ID;
     myDisplayName = displayName;
   }
@@ -39,11 +41,11 @@ public final class PatternContext {
   }
 
   public @NotNull String getDisplayName() {
-    return myDisplayName;
+    return myDisplayName.get();
   }
 
   @Override
   public String toString() {
-    return myDisplayName + " (" + myID + ')';
+    return myDisplayName.get() + " (" + myID + ')';
   }
 }
