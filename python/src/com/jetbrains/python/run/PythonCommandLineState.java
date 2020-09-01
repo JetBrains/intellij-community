@@ -47,6 +47,7 @@ import com.intellij.remote.ProcessControlWithMappings;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.PyDebugConsoleBuilder;
 import com.jetbrains.python.debugger.PyDebugRunner;
@@ -117,7 +118,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
       serverSocket = new ServerSocket(0);
     }
     catch (IOException e) {
-      throw new ExecutionException("Failed to find free socket port", e);
+      throw new ExecutionException(PyBundle.message("runcfg.error.message.failed.to.find.free.socket.port"), e);
     }
     return serverSocket;
   }
@@ -923,7 +924,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
   protected String getInterpreterPath() throws ExecutionException {
     String interpreterPath = myConfig.getInterpreterPath();
     if (interpreterPath == null) {
-      throw new ExecutionException("Cannot find Python interpreter for this run configuration");
+      throw new ExecutionException(PyBundle.message("runcfg.error.message.cannot.find.python.interpreter"));
     }
     return interpreterPath;
   }
