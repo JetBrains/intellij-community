@@ -37,14 +37,14 @@ import java.util.Set;
  * @author gregsh
  */
 final class ProjectStructureUsageCollector extends ProjectUsagesCollector {
-  private final EventLogGroup GROUP = new EventLogGroup("project.structure", 3);
+  private final EventLogGroup GROUP = new EventLogGroup("project.structure", 4);
 
   private final EventId1<Integer> MODULES_TOTAL = GROUP.registerEvent("modules.total", EventFields.Count);
   private final EventId1<Integer> CONTENT_ROOTS_TOTAL = GROUP.registerEvent("content.roots.total", EventFields.Count);
   private final EventId1<Integer> SOURCE_ROOTS_TOTAL = GROUP.registerEvent("source.roots.total", EventFields.Count);
   private final EventId1<Integer> EXCLUDED_ROOTS_TOTAL = GROUP.registerEvent("excluded.roots.total", EventFields.Count);
   private final EventId2<Integer, String> SOURCE_ROOT = GROUP.registerEvent(
-    "excluded.roots.total", EventFields.Count,
+    "source.root", EventFields.Count,
     EventFields.String("type", Arrays.asList("cookbooks-root",
                                              "java-resource",
                                              "java-source",
