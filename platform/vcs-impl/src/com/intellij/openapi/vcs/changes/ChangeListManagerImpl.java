@@ -58,10 +58,7 @@ import com.intellij.vcsUtil.VcsUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import kotlin.text.StringsKt;
 import org.jdom.Element;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.io.File;
@@ -129,7 +126,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     myUpdater = new UpdateRequestsQueue(myProject, myScheduler, this::updateImmediately);
     myModifier = new Modifier(myWorker, myDelayedNotificator);
 
-    myProject.getMessageBus().connect().subscribe(ChangeListListener.TOPIC, myListeners.getMulticaster());
+    myProject.getMessageBus().connect(this).subscribe(ChangeListListener.TOPIC, myListeners.getMulticaster());
     myListeners.addListener(new ChangeListAdapter() {
       @Override
       public void defaultListChanged(ChangeList oldDefaultList, ChangeList newDefaultList, boolean automatic) {
@@ -144,11 +141,11 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
 
     VcsIgnoredFilesHolder.VCS_IGNORED_FILES_HOLDER_EP.addChangeListener(myProject, () -> {
       VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    }, myProject);
+    }, this);
     VcsEP.EP_NAME.addChangeListener(() -> {
       resetChangedFiles();
       VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    }, myProject);
+    }, this);
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       project.getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
@@ -305,8 +302,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
   private void startUpdater() {
     myUpdater.initialized();
     BackgroundTaskUtil.syncPublisher(myProject, LISTS_LOADED).processLoadedLists(getChangeListsCopy());
-    myProject.getMessageBus().connect().subscribe(VCS_CONFIGURATION_CHANGED,
-                                                  () -> VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty());
+    myProject.getMessageBus().connect(this).subscribe(VCS_CONFIGURATION_CHANGED,
+                                                      () -> VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty());
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       myConflictTracker.startTracking();
     }
@@ -324,12 +321,14 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     }
   }
 
+  @ApiStatus.Internal
   public void registerChangeTracker(@NotNull FilePath filePath, @NotNull ChangeListWorker.PartialChangeTracker tracker) {
     synchronized (myDataLock) {
       myWorker.registerChangeTracker(filePath, tracker);
     }
   }
 
+  @ApiStatus.Internal
   public void unregisterChangeTracker(@NotNull FilePath filePath, @NotNull ChangeListWorker.PartialChangeTracker tracker) {
     synchronized (myDataLock) {
       myWorker.unregisterChangeTracker(filePath, tracker);
@@ -447,7 +446,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
    * @return false if update was re-scheduled due to new 'markEverythingDirty' event, true otherwise.
    */
   private boolean updateImmediately() {
-    return BackgroundTaskUtil.runUnderDisposeAwareIndicator(myProject, () -> {
+    return BackgroundTaskUtil.runUnderDisposeAwareIndicator(this, () -> {
       final ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(myProject);
       if (!vcsManager.hasActiveVcss()) return true;
 
@@ -1025,6 +1024,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     }
   }
 
+  @ApiStatus.Internal
   public void notifyChangelistsChanged(@NotNull FilePath path,
                                        @NotNull List<String> beforeChangeListsIds,
                                        @NotNull List<String> afterChangeListsIds) {
