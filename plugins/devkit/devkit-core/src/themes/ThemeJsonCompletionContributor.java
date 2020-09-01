@@ -110,7 +110,7 @@ public class ThemeJsonCompletionContributor extends CompletionContributor {
           .withStrikeoutness(deprecated)
           .appendTailText(StringUtil.isEmpty(since) ? "" : " [" + since + "]", true)
           .appendTailText(StringUtil.isEmpty(description) ? "" : " (" + description + ")", true)
-          .appendTailText(StringUtil.isEmpty(source) ? "" : " in " + source, true)
+          .appendTailText(StringUtil.isEmpty(source) ? "" : " " + source, true)
           .withTypeText("[" + ObjectUtils.chooseNotNull(themeMetadata.getName(), themeMetadata.getPluginId()) + "]")
           .withInsertHandler(shouldSurroundWithQuotes ? MyInsertHandler.SURROUND_WITH_QUOTES : MyInsertHandler.INSTANCE);
 

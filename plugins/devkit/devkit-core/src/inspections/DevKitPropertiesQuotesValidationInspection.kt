@@ -8,6 +8,7 @@ import com.intellij.lang.properties.psi.Property
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.devkit.DevKitBundle
 import java.text.ChoiceFormat
 
@@ -78,7 +79,7 @@ class DevKitPropertiesQuotesValidationInspection : PropertiesInspectionBase() {
         else when (ch) {
           '{' -> level++
           ',' -> {
-            val prefix = "choice,"
+            @NonNls val prefix = "choice,"
             if (pattern.substring(i + 1).trim().startsWith(prefix)) {
               i += prefix.length + 1
               paramSB = StringBuilder()

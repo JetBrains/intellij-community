@@ -42,7 +42,7 @@ class IncorrectParentDisposableInspection : DevKitUastInspectionBase(UCallExpres
       val argumentSourcePsi = argumentForParameter.sourcePsi ?: return@forEachIndexed
       val argumentType = (argumentForParameter.getExpressionType() as? PsiClassType)?.resolve() ?: return@forEachIndexed
 
-      var typeName: @NlsSafe String? = null
+      @NlsSafe var typeName: String? = null
       when (argumentType.qualifiedName) {
         Project::class.java.name -> typeName = "Project"
         Application::class.java.name -> typeName = "Application"
