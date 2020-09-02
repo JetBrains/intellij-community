@@ -1231,6 +1231,8 @@
     <projectService serviceInterface="com.intellij.build.DebugTasksViewManager"
                     serviceImplementation="com.intellij.build.DebugTasksViewManager"
                     testServiceImplementation="com.intellij.build.internal.DummyTasksViewManager"/>
+    <projectService serviceInterface="com.intellij.build.BuildWorkspaceConfiguration"
+                    serviceImplementation="com.intellij.build.BuildWorkspaceConfigurationImpl"/>
 
     <moveLeftRightHandler language=""
                           implementationClass="com.intellij.codeInsight.editorActions.moveLeftRight.DefaultMoveElementLeftRightHandler"
