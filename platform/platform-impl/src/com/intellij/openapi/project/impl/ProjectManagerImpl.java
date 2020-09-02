@@ -155,7 +155,6 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
                                     @Nullable Project template,
                                     @Nullable ProgressIndicator indicator) {
     LOG.assertTrue(!project.isDefault());
-    boolean succeed = false;
     try {
       if (indicator != null) {
         indicator.setIndeterminate(false);
@@ -171,12 +170,15 @@ public abstract class ProjectManagerImpl extends ProjectManagerEx implements Dis
       ProjectLoadHelper.registerComponents(project);
       project.getStateStore().setPath(file, isRefreshVfsNeeded, template);
       project.init(preloadServices, indicator);
-      succeed = true;
     }
-    finally {
-      if (!succeed) {
+    catch (Throwable initThrowable) {
+      try {
         WriteAction.runAndWait(() -> Disposer.dispose(project));
       }
+      catch (Throwable disposeThrowable) {
+        initThrowable.addSuppressed(disposeThrowable);
+      }
+      throw initThrowable;
     }
   }
 
