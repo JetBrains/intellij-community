@@ -22,6 +22,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ig.psiutils.SealedUtils;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -105,17 +106,20 @@ public class SafeDeleteExtendsClassUsageInfo extends SafeDeleteReferenceUsageInf
   @Override
   public boolean isSafeDelete() {
     if (getElement() == null) return false;
-    final PsiClass refClass = getReferencedElement();
-    if (refClass.getExtendsListTypes().length > 0) {
-      final PsiReferenceList listToAddExtends = refClass.isInterface() == myExtendingClass.isInterface() ? myExtendingClass.getExtendsList() :
-                                                myExtendingClass.getImplementsList();
+    final PsiClass classToRemove = getReferencedElement();
+    PsiClass extendingClass = myExtendingClass;
+    if (classToRemove.getExtendsListTypes().length > 0) {
+      final PsiReferenceList listToAddExtends = classToRemove.isInterface() == extendingClass.isInterface() ? extendingClass.getExtendsList() :
+                                                extendingClass.getImplementsList();
       if (listToAddExtends == null) return false;
     }
 
-    if (refClass.getImplementsListTypes().length > 0) {
-      if (myExtendingClass.getImplementsList() == null) return false;
+    if (classToRemove.getImplementsListTypes().length > 0) {
+      if (extendingClass.getImplementsList() == null) return false;
     }
 
-    return true;
+    PsiResolveHelper resolveHelper = PsiResolveHelper.SERVICE.getInstance(getProject());
+    return StreamEx.of(classToRemove.getInterfaces()).prepend(classToRemove.getSuperClass()).nonNull()
+      .allMatch(grandParent -> resolveHelper.isAccessible(grandParent, extendingClass, null));
   }
 }

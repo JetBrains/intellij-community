@@ -398,6 +398,17 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doTest("Parent");
   }
 
+  public void testNonAccessibleGrandParent() {
+    try {
+      doTest("foo.Parent");
+      fail("Conflict was not detected");
+    }
+    catch (BaseRefactoringProcessor.ConflictsInTestsException e) {
+      String message = e.getMessage();
+      assertEquals("class <b><code>foo.Parent</code></b> has 1 usage that is not safe to delete.", message);
+    }
+  }
+
   private void doTest(@NonNls final String qClassName) {
     doTest((rootDir, rootAfter) -> this.performAction(qClassName));
   }
