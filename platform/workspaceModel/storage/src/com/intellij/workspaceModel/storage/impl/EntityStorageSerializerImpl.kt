@@ -272,7 +272,6 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
 
   override fun serializeCache(stream: OutputStream, storage: WorkspaceEntityStorage) {
     storage as WorkspaceEntityStorageImpl
-    storage.assertConsistencyInStrictMode()
 
     val output = Output(stream, KRYO_BUFFER_SIZE)
     try {

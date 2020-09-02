@@ -4,17 +4,20 @@ package com.intellij.workspaceModel.storage.impl
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.HashBiMap
 import com.google.common.collect.HashMultimap
+import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.ObjectUtils
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.exceptions.PersistentIdAlreadyExistsException
+import com.intellij.workspaceModel.storage.impl.exceptions.ReplaceBySourceException
 import com.intellij.workspaceModel.storage.impl.exceptions.adFailed
 import com.intellij.workspaceModel.storage.impl.exceptions.rbsFailed
 import com.intellij.workspaceModel.storage.impl.external.EmptyExternalEntityMapping
 import com.intellij.workspaceModel.storage.impl.external.ExternalEntityMappingImpl
 import com.intellij.workspaceModel.storage.impl.external.MutableExternalEntityMappingImpl
 import it.unimi.dsi.fastutil.ints.IntSet
+import java.io.ByteArrayOutputStream
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
@@ -294,6 +297,8 @@ internal class WorkspaceEntityStorageBuilderImpl(
   override fun replaceBySource(sourceFilter: (EntitySource) -> Boolean, replaceWith: WorkspaceEntityStorage) {
     replaceWith as AbstractEntityStorage
 
+    val initialStore = this.toStorage()
+
     this.assertConsistencyInStrictMode()
     replaceWith.assertConsistencyInStrictMode()
 
@@ -375,7 +380,9 @@ internal class WorkspaceEntityStorageBuilderImpl(
           if (localNode.hasPersistentId() && localNode != matchedEntityData) {
             // Entity exists in local store, but has changes. Generate replace operation
             val clonedEntity = matchedEntityData.clone()
-            val persistentIdBefore = matchedEntityData.persistentId(replaceWith) ?: rbsFailed("PersistentId expected for $matchedEntityData")
+            val persistentIdBefore = matchedEntityData.persistentId(replaceWith)
+                                     ?: rbsFailedAndReport("PersistentId expected for $matchedEntityData", sourceFilter, initialStore,
+                                                           replaceWith, this)
             clonedEntity.id = localNode.id
             this.entitiesByType.replaceById(clonedEntity as WorkspaceEntityData<WorkspaceEntity>, clonedEntity.createPid().clazz)
             val pid = clonedEntity.createPid()
@@ -450,7 +457,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
             if (connectionId.canRemoveParent()) {
               this.refs.removeParentToChildRef(connectionId, parentId, unmatchedId)
             }
-            else rbsFailed("Cannot remove link to parent entity. $connectionId")
+            else rbsFailedAndReport("Cannot remove link to parent entity. $connectionId", sourceFilter, initialStore, replaceWith, this)
           }
         }
         for ((connectionId, childIds) in this.refs.getChildrenRefsOfParentBy(unmatchedId)) {
@@ -460,7 +467,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
               if (connectionId.canRemoveChild()) {
                 this.refs.removeParentToChildRef(connectionId, unmatchedId, childId)
               }
-              else rbsFailed("Cannot remove link to child entity. $connectionId")
+              else rbsFailedAndReport("Cannot remove link to child entity. $connectionId", sourceFilter, initialStore, replaceWith, this)
             }
           }
         }
@@ -488,7 +495,8 @@ internal class WorkspaceEntityStorageBuilderImpl(
         // TODO: 05.06.2020 The similar logic should exist for children references
         // Check not restored connections
         for ((connectionId, parentId) in removedConnections) {
-          if (!connectionId.canRemoveParent()) rbsFailed("Cannot restore connection to $parentId; $connectionId")
+          if (!connectionId.canRemoveParent()) rbsFailedAndReport("Cannot restore connection to $parentId; $connectionId", sourceFilter,
+                                                                  initialStore, replaceWith, this)
         }
 
         // ----------------- Update children references -----------------------
@@ -519,7 +527,9 @@ internal class WorkspaceEntityStorageBuilderImpl(
           // replaceWith storage has a link to unmatched entity. We should check if we can "transfer" this link to the current storage
           if (!connectionId.isParentNullable) {
             val localParent = this.entityDataById(parentId)
-            if (localParent == null) rbsFailed("Cannot link entities. Child entity doesn't have a parent after operation; $connectionId")
+            if (localParent == null) rbsFailedAndReport(
+              "Cannot link entities. Child entity doesn't have a parent after operation; $connectionId", sourceFilter, initialStore,
+              replaceWith, this)
 
             val localChildId = replaceMap.inverse().getValue(nodeId)
 
@@ -536,9 +546,18 @@ internal class WorkspaceEntityStorageBuilderImpl(
     }
 
     // Assert consistency
-    this.assertConsistencyInStrictModeForRbs()
+    this.assertConsistencyInStrictModeForRbs("Check after replaceBySource", sourceFilter, initialStore, replaceWith, this)
 
     LOG.debug { "Replace by source finished" }
+  }
+
+  private fun rbsFailedAndReport(message: String,
+                                 sourceFilter: (EntitySource) -> Boolean,
+                                 left: WorkspaceEntityStorage,
+                                 right: WorkspaceEntityStorage,
+                                 resulting: WorkspaceEntityStorage): Nothing {
+    reportConsistencyIssue(message, ReplaceBySourceException(message), sourceFilter, left, right, resulting)
+    rbsFailed(message)
   }
 
   sealed class EntityDataChange<T : WorkspaceEntityData<out WorkspaceEntity>> {
@@ -596,12 +615,16 @@ internal class WorkspaceEntityStorageBuilderImpl(
   }
 
   override fun toStorage(): WorkspaceEntityStorageImpl {
+    return toStorage(true)
+  }
+
+  fun toStorage(assertConsistency: Boolean): WorkspaceEntityStorageImpl {
     val newEntities = entitiesByType.toImmutable()
     val newRefs = refs.toImmutable()
     val newIndexes = indexes.toImmutable()
     val storage = WorkspaceEntityStorageImpl(newEntities, newRefs, newIndexes)
 
-    storage.assertConsistencyInStrictMode()
+    if (assertConsistency) storage.assertConsistencyInStrictMode()
 
     return storage
   }
@@ -1078,8 +1101,45 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
     if (StrictMode.enabled) this.assertConsistency()
   }
 
-  internal fun assertConsistencyInStrictModeForRbs() {
-    if (StrictMode.enabled || StrictMode.rbsEnabled) this.assertConsistency()
+  internal fun assertConsistencyInStrictModeForRbs(message: String, sourceFilter: (EntitySource) -> Boolean, left: WorkspaceEntityStorage, right: WorkspaceEntityStorage, resulting: WorkspaceEntityStorage) {
+    if (StrictMode.enabled || StrictMode.rbsEnabled) {
+      try {
+        this.assertConsistency()
+      }
+      catch (e: Throwable) {
+        reportConsistencyIssue(message, e, sourceFilter, left, right, resulting)
+      }
+    }
+  }
+
+  internal fun reportConsistencyIssue(message: String, e: Throwable, sourceFilter: (EntitySource) -> Boolean, left: WorkspaceEntityStorage, right: WorkspaceEntityStorage, resulting: WorkspaceEntityStorage) {
+    val serializer = EntityStorageSerializerImpl(SimpleEntityTypesResolver, VirtualFileUrlManagerImpl())
+
+    val allEntitySources = (left as AbstractEntityStorage).indexes.entitySourceIndex.entries().toHashSet()
+    allEntitySources.addAll((right as AbstractEntityStorage).indexes.entitySourceIndex.entries())
+    val entitySourceFilter = allEntitySources.sortedBy { it.toString() }.fold("") { acc, source -> acc + if (sourceFilter(source)) "1" else "0" }
+
+    var stream = ByteArrayOutputStream()
+    serializer.serializeCache(stream, left.makeSureItsStore())
+    val leftBytes = stream.toByteArray()
+
+    stream = ByteArrayOutputStream()
+    serializer.serializeCache(stream, right.makeSureItsStore())
+    val rightBytes = stream.toByteArray()
+
+    stream = ByteArrayOutputStream()
+    serializer.serializeCache(stream, resulting.makeSureItsStore())
+    val resBytes = stream.toByteArray()
+
+    val displayText = "Content of the workspace model in binary format"
+    var _message = "$message\n\n!Please include all attachments to the report!"
+    _message += "\n\nEntity source filter: $entitySourceFilter"
+    LOG.error(_message, e, Attachment("Left_Store", leftBytes, displayText), Attachment("Right_Store", rightBytes, displayText),
+              Attachment("Res_Store", resBytes, displayText))
+  }
+
+  private fun WorkspaceEntityStorage.makeSureItsStore(): WorkspaceEntityStorage {
+    return if (this is WorkspaceEntityStorageBuilderImpl) this.toStorage(false) else this
   }
 
   private fun assertResolvable(clazz: Int, id: Int) {
@@ -1092,6 +1152,10 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
     assert(connectionClass.findEntityClass<WorkspaceEntity>().isAssignableFrom(entityId.clazz.findEntityClass<WorkspaceEntity>())) {
       "Entity storage with connection class ${connectionClass.findEntityClass<WorkspaceEntity>()} contains entity data of wrong type $entityId"
     }
+  }
+
+  companion object {
+    val LOG = logger<AbstractEntityStorage>()
   }
 }
 
