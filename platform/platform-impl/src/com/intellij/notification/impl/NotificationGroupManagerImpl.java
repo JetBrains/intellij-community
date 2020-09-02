@@ -11,7 +11,6 @@ import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -70,16 +69,7 @@ public final class NotificationGroupManagerImpl implements NotificationGroupMana
   }
 
   @Override
-  public @NotNull NotificationGroup requireNotificationGroup(@NotNull String groupId) {
-    NotificationGroup group = myRegisteredGroups.get(groupId);
-    if (group == null) {
-      throw new IllegalArgumentException("Notification group `" + groupId + "` is not registered in plugin.xml file");
-    }
-    return group;
-  }
-
-  @Override
-  public @Nullable NotificationGroup getNotificationGroup(@NotNull String groupId) {
+  public NotificationGroup getNotificationGroup(@NotNull String groupId) {
     return myRegisteredGroups.get(groupId);
   }
 

@@ -3,14 +3,11 @@ package com.intellij.notification;
 
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
 public interface NotificationGroupManager {
-  @NotNull NotificationGroup requireNotificationGroup(@NotNull String groupId);
-
-  @Nullable NotificationGroup getNotificationGroup(@NotNull String groupId);
+  NotificationGroup getNotificationGroup(@NotNull String groupId);
 
   Collection<NotificationGroup> getRegisteredNotificationGroups();
 

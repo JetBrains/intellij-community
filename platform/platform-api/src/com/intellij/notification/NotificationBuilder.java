@@ -43,7 +43,9 @@ public final class NotificationBuilder {
                              @NotNull @NlsContexts.NotificationTitle String title,
                              @NotNull @NlsContexts.NotificationContent String content,
                              @NotNull NotificationType type) {
-    NotificationGroupManager.getInstance().requireNotificationGroup(groupId);
+    if (NotificationGroupManager.getInstance().getNotificationGroup(groupId) == null) {
+      throw new IllegalArgumentException("Notification group `" + groupId + "` is not registered in plugin.xml file");
+    }
     myTitle = title;
     myGroupId = groupId;
     myType = type;

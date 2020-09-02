@@ -169,7 +169,7 @@ public final class FileWatcher {
   public void notifyOnFailure(@NotNull @NlsContexts.NotificationContent String cause, @Nullable NotificationListener listener) {
     LOG.warn(cause);
 
-    NotificationGroup group = NotificationGroupManager.getInstance().requireNotificationGroup("File Watcher Messages");
+    NotificationGroup group = NotificationGroupManager.getInstance().getNotificationGroup("File Watcher Messages");
     String title = ApplicationBundle.message("watcher.slow.sync");
     ApplicationManager.getApplication().invokeLater(
       () -> Notifications.Bus.notify(group.createNotification(title, cause, NotificationType.WARNING, listener)),
