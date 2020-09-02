@@ -594,6 +594,11 @@ public class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
     return ContainerUtil.find(myConstraints, t -> !t.isCorrectContext());
   }
 
+  /**
+   * Waits and pumps UI events until all submitted non-blocking read actions have completed. But only if they have chance to:
+   * in dumb mode, submissions with {@link #inSmartMode} are ignored, because dumbness works differently in tests,
+   * and a test might never switch to the smart mode at all.
+   */
   @TestOnly
   public static void waitForAsyncTaskCompletion() {
     assert !ApplicationManager.getApplication().isWriteAccessAllowed();
@@ -604,6 +609,12 @@ public class NonBlockingReadActionImpl<T> implements NonBlockingReadAction<T> {
 
   @TestOnly
   private static void waitForTask(@NotNull Submission<?> task) {
+    for (ContextConstraint constraint : task.builder.myConstraints) {
+      if (constraint instanceof InSmartMode && !constraint.isCorrectContext()) {
+        return;
+      }
+    }
+
     int iteration = 0;
     while (!task.isDone() && iteration++ < 60_000) {
       UIUtil.dispatchAllInvocationEvents();
