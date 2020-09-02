@@ -3,6 +3,10 @@ package com.intellij.grazie
 
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.remote.GrazieRemote
+import com.intellij.ide.plugins.CannotUnloadPluginException
+import com.intellij.ide.plugins.DynamicPluginListener
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.util.io.delete
 import com.intellij.util.io.isFile
@@ -17,7 +21,7 @@ import java.nio.file.Paths
 import java.util.*
 
 
-internal object GrazieDynamic {
+internal object GrazieDynamic : DynamicPluginListener {
   private val myDynClassLoaders by lazy {
     val oldFiles = Files.walk(dynamicFolder).filter { file ->
       file.isFile() && Lang.values().all { it.remote.file.toAbsolutePath() != file.toAbsolutePath() }
@@ -27,11 +31,26 @@ internal object GrazieDynamic {
       file.delete()
     }
 
+    ApplicationManager.getApplication().messageBus.connect()
+      .subscribe(DynamicPluginListener.TOPIC, this)
+
     hashSetOf<ClassLoader>(
       UrlClassLoader.build()
         .parent(GraziePlugin.classLoader)
         .urls(GrazieRemote.allAvailableLocally().map { it.remote.file.toUri().toURL() }).get()
     )
+  }
+
+  override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
+    if (pluginDescriptor.pluginId?.idString == GraziePlugin.id) {
+      myDynClassLoaders.clear()
+    }
+  }
+
+  override fun checkUnloadPlugin(pluginDescriptor: IdeaPluginDescriptor) {
+    if (pluginDescriptor.pluginId?.idString == GraziePlugin.id) {
+        if (Lang.isAnyLanguageLoadExceptEnglish()) throw CannotUnloadPluginException("Grazie can unload only English language")
+    }
   }
 
   fun addDynClassLoader(classLoader: ClassLoader) = myDynClassLoaders.add(classLoader)

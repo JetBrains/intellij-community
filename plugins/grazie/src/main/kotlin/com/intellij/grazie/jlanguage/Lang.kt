@@ -62,6 +62,7 @@ enum class Lang(val displayName: String, val className: String, val remote: Remo
 
   companion object {
     fun sortedValues() = values().sortedBy(Lang::nativeName)
+    internal fun isAnyLanguageLoadExceptEnglish() = values().any { if (!it.isEnglish()) it._jLanguage != null else false }
   }
 
   val iso: LanguageISO
