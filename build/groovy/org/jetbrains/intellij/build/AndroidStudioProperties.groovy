@@ -369,9 +369,11 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       }
     }
 
-    // App Inspection: Sqlite Inspector prebuilt
+    // App Inspection: Inspector prebuilts
     buildContext.ant.copy(todir: "$androidPluginLib/../resources/app-inspection/") {
       fileset(file: "$root/prebuilts/tools/common/app-inspection/androidx/sqlite/sqlite-inspection.jar")
+      // TODO(b/167608400): Remove after inspector bundling is implemented
+      fileset(file: "$root/prebuilts/tools/common/app-inspection/androidx/work/workmanager-inspection.jar")
     }
 
     // Trace agent. TODO(b/149320690): remove in 4.1 final release.
