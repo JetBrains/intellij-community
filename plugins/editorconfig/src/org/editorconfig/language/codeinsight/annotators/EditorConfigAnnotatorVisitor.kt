@@ -30,7 +30,7 @@ class EditorConfigAnnotatorVisitor(private val holder: AnnotationHolder) : Edito
           lastDot = it
         }
         firstDot != lastDot -> {
-          val message = EditorConfigBundle["annotator.error.multiple-dots"]
+          val message = EditorConfigBundle.get("annotator.error.multiple-dots")
           val start = firstDot!!.textRange.startOffset
           val end = lastDot!!.textRange.endOffset // + lastDot!!.textLength
           val range = TextRange.create(start, end)
@@ -49,7 +49,7 @@ class EditorConfigAnnotatorVisitor(private val holder: AnnotationHolder) : Edito
   private fun checkEdgeDots(edgeElement: PsiElement, neighbourElement: PsiElement?) {
     if (edgeElement.node.elementType != EditorConfigElementTypes.DOT) return
     if (neighbourElement?.node?.elementType == EditorConfigElementTypes.DOT) return
-    val message = EditorConfigBundle["annotator.error.key.dangling-dot"]
+    val message = EditorConfigBundle.get("annotator.error.key.dangling-dot")
     holder.newAnnotation(HighlightSeverity.ERROR, message).range(edgeElement).create()
   }
 

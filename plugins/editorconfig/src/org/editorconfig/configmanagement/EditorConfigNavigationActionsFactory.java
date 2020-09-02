@@ -16,6 +16,7 @@ import org.editorconfig.Utils;
 import org.editorconfig.configmanagement.editor.EditorConfigPreviewManager;
 import org.editorconfig.language.messages.EditorConfigBundle;
 import org.editorconfig.language.util.EditorConfigPresentationUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,6 +67,7 @@ public final class EditorConfigNavigationActionsFactory {
   }
 
   @NotNull
+  @Nls
   private static String getActionName(@NotNull VirtualFile file, boolean withFolder) {
     final String fileName = EditorConfigPresentationUtil.getFileName(file, withFolder);
     return !withFolder ? EditorConfigBundle.message("action.open.file") : fileName;

@@ -20,6 +20,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.editorconfig.Utils;
 import org.editorconfig.language.messages.EditorConfigBundle;
 import org.editorconfig.settings.EditorConfigSettings;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,7 +42,7 @@ public class EditorConfigActionUtil {
     return actions.toArray(AnAction.EMPTY_ARRAY);
   }
 
-  public static AnAction createDisableAction(@NotNull Project project, @NotNull String message) {
+  public static AnAction createDisableAction(@NotNull Project project, @NotNull @Nls String message) {
     return DumbAwareAction.create(
       message,
       e -> {
@@ -70,7 +71,7 @@ public class EditorConfigActionUtil {
 
 
   private static final class ShowEditorConfigOption extends DumbAwareAction {
-    private ShowEditorConfigOption(@Nullable String text) {
+    private ShowEditorConfigOption(@Nullable @Nls String text) {
       super(text);
     }
 
