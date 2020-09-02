@@ -8,7 +8,6 @@ import com.intellij.testFramework.builders.ModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.CodeInsightFixtureTestCase
 import com.intellij.testFramework.fixtures.ModuleFixture
 import junit.framework.TestCase
-import org.junit.Test
 
 /**
  * Smoke tests for a composite features provider, for provider specific checks use dedicated test class
@@ -81,15 +80,15 @@ class FilePredictionFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtureBuild
     doTestFeatures(
       "core_file_type",
       "core_prev_file_type",
-      "core_in_source",
-      "core_in_project",
-      "core_in_library",
-      "core_excluded",
-      "core_same_dir",
-      "core_same_module",
-      "core_name_prefix",
-      "core_path_prefix",
-      "core_relative_path_prefix",
+      "similarity_in_source",
+      "similarity_in_project",
+      "similarity_in_library",
+      "similarity_excluded",
+      "similarity_same_dir",
+      "similarity_same_module",
+      "similarity_name_prefix",
+      "similarity_path_prefix",
+      "similarity_relative_path_prefix",
       "history_size",
       "history_uni_mle",
       "history_bi_mle"

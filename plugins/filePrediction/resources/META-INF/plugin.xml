@@ -33,6 +33,7 @@
     <filePrediction.candidateProvider implementation="com.intellij.filePrediction.candidates.FilePredictionRecentSessionsProvider"/>
 
     <filePrediction.featureProvider implementation="com.intellij.filePrediction.features.FilePredictionGeneralFeatures"/>
+    <filePrediction.featureProvider implementation="com.intellij.filePrediction.features.FilePredictionSimilarityFeatures"/>
     <filePrediction.featureProvider implementation="com.intellij.filePrediction.features.history.FilePredictionHistoryFeatures"/>
     <filePrediction.featureProvider implementation="com.intellij.filePrediction.features.history.context.FilePredictionContextFeatures"/>
 
