@@ -37,7 +37,7 @@ public class TextMateBundlesListPanel implements Disposable {
   private Collection<TextMateBundlesChangeStateListener> myListeners = new ArrayList<>();
 
   public TextMateBundlesListPanel() {
-    myBundlesList = new CheckBoxList<BundleConfigBean>(new CheckBoxListListener() {
+    myBundlesList = new CheckBoxList<>(new CheckBoxListListener() {
       @Override
       public void checkBoxSelectionChanged(int index, boolean value) {
         BundleConfigBean itemAt = myBundlesList.getItemAt(index);

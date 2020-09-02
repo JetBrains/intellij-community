@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.textmate.bundles;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import org.jetbrains.annotations.NotNull;
@@ -31,6 +32,7 @@ public class Bundle {
     myType = type;
   }
 
+  @NlsSafe
   @NotNull
   public String getName() {
     return myName;
