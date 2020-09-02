@@ -48,7 +48,6 @@ import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.sdk.add.PyAddSdkDialog;
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
-import com.jetbrains.python.sdk.pipenv.PyPipEnvSdkAdditionalData;
 import icons.PythonIcons;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
@@ -284,12 +283,11 @@ public final class PythonSdkType extends SdkType {
       }
       // TODO we should have "remote" SDK data with unknown credentials anyway!
     }
-    // TODO: Extract loading additional SDK data into a Python SDK provider
-    final PyPipEnvSdkAdditionalData pipEnvData = PyPipEnvSdkAdditionalData.load(additional);
-    if (pipEnvData != null) {
-      return pipEnvData;
-    }
-    return PythonSdkAdditionalData.load(currentSdk, additional);
+    return PySdkAdditionalDataLoader.EP_NAME.extensions()
+      .map(ext -> ext.loadForSdk(additional))
+      .filter(data -> data != null)
+      .findFirst()
+      .orElseGet(() -> PythonSdkAdditionalData.load(currentSdk, additional));
   }
 
   /**
