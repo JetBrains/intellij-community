@@ -17,6 +17,15 @@
     <item name='javax.xml.bind.annotation.XmlElementRef java.lang.String namespace()'>
         <annotation name='org.jetbrains.annotations.NonNls'/>
     </item>
+    <item name='javax.xml.bind.annotation.XmlElementWrapper java.lang.String name()'>
+        <annotation name='org.jetbrains.annotations.NonNls'/>
+    </item>
+    <item name='javax.xml.bind.annotation.XmlElementWrapper java.lang.String namespace()'>
+        <annotation name='org.jetbrains.annotations.NonNls'/>
+    </item>
+    <item name='javax.xml.bind.annotation.XmlEnumValue java.lang.String value()'>
+        <annotation name='org.jetbrains.annotations.NonNls'/>
+    </item>
     <item name='javax.xml.bind.annotation.XmlRootElement java.lang.String name()'>
         <annotation name='org.jetbrains.annotations.NonNls'/>
     </item>
