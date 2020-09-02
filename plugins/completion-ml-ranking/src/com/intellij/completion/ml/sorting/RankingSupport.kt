@@ -18,6 +18,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.ShowSettingsUtil
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
+import com.jetbrains.completion.ranker.model.MLCompletionLocalModelsUtil
 import org.jetbrains.annotations.TestOnly
 
 object RankingSupport {
@@ -26,6 +27,7 @@ object RankingSupport {
   private var enabledInTests: Boolean = false
 
   fun getRankingModel(language: Language): RankingModelWrapper? {
+    MLCompletionLocalModelsUtil.getModel(language.id)?.let { return LanguageRankingModel(it) }
     val provider = findProviderSafe(language)
     return if (provider != null && shouldSortByML(language, provider)) tryGetModel(provider) else null
   }
