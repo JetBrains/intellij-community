@@ -45,7 +45,8 @@ public final class IndexingStamp {
   private static final long INDEX_DATA_OUTDATED_STAMP = -2L;
   private static final long HAS_NO_INDEXED_DATA_STAMP = 0L;
 
-  private static final int VERSION = 15;
+  private static volatile int VERSION = -1;
+  private static final int BASE_VERSION = 15;
   private static final ConcurrentMap<ID<?, ?>, IndexVersion> ourIndexIdToCreationStamp = new ConcurrentHashMap<>();
   private static final long ourVfsCreationStamp = FSRecords.getCreationTimestamp();
 
@@ -53,12 +54,28 @@ public final class IndexingStamp {
 
   private IndexingStamp() {}
 
-  public static void initPersistentIndexStamp(DataInput in) throws IOException {
+  static void initPersistentIndexStamp(DataInput in) throws IOException {
     IndexVersion.advanceIndexStamp(DataInputOutputUtil.readTIME(in));
   }
 
-  public static void savePersistentIndexStamp(DataOutput out) throws IOException {
+  static void savePersistentIndexStamp(DataOutput out) throws IOException {
     DataInputOutputUtil.writeTIME(out, IndexVersion.ourLastStamp);
+  }
+
+  private static int getVersion() {
+    if (VERSION == -1) {
+      int version = BASE_VERSION;
+      for (FileBasedIndexInfrastructureExtension ex : FileBasedIndexInfrastructureExtension.EP_NAME.getExtensions()) {
+        version = 31 * version + ex.getVersion();
+      }
+      VERSION = version;
+    }
+    return VERSION;
+  }
+
+  static void clearCachedIndexVersions() {
+    VERSION = -1;
+    ourIndexIdToCreationStamp.clear();
   }
 
   static class IndexVersion {
@@ -72,7 +89,7 @@ public final class IndexingStamp {
       myModificationCount = modificationCount;
       advanceIndexStamp(modificationCount);
       myIndexVersion = indexVersion;
-      myCommonIndicesVersion = VERSION;
+      myCommonIndicesVersion = getVersion();
       myVfsCreationStamp = vfsCreationStamp;
     }
 
@@ -156,8 +173,8 @@ public final class IndexingStamp {
       return new IndexVersionDiff.VersionChanged(version.myIndexVersion, currentIndexVersion, "index version");
     }
 
-    if (version.myCommonIndicesVersion != VERSION) {
-      return new IndexVersionDiff.VersionChanged(version.myCommonIndicesVersion, VERSION, "common index version");
+    if (version.myCommonIndicesVersion != getVersion()) {
+      return new IndexVersionDiff.VersionChanged(version.myCommonIndicesVersion, getVersion(), "common index version");
     }
 
     if (version.myVfsCreationStamp != ourVfsCreationStamp) {
