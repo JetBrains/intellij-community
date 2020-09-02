@@ -39,6 +39,7 @@ import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction;
 import com.intellij.openapi.vcs.changes.conflicts.ChangelistConflictTracker;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.ui.ChangeListDeltaListener;
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerListener;
 import com.intellij.openapi.vcs.impl.*;
 import com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
@@ -52,6 +53,7 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.lang.CompoundRuntimeException;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.commit.ChangeListCommitState;
@@ -303,10 +305,13 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
   }
 
   private void startUpdater() {
+    updateChangeListAvailability();
+
     myUpdater.initialized();
     BackgroundTaskUtil.syncPublisher(myProject, LISTS_LOADED).processLoadedLists(getChangeListsCopy());
-    myProject.getMessageBus().connect(this).subscribe(VCS_CONFIGURATION_CHANGED,
-                                                      () -> VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty());
+    MessageBusConnection connection = myProject.getMessageBus().connect(this);
+    connection.subscribe(VCS_CONFIGURATION_CHANGED, () -> VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty());
+    connection.subscribe(ChangesViewContentManagerListener.TOPIC, () -> updateChangeListAvailability());
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       myConflictTracker.startTracking();
     }
@@ -1406,6 +1411,32 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Persis
     }
     waitUntilRefreshed();
     return true;
+  }
+
+  private void updateChangeListAvailability() {
+    if (shouldEnableChangeLists() == areChangeListsEnabled()) return;
+
+    myScheduler.submit(() -> {
+      ReadAction.run(() -> {
+        boolean enabled = shouldEnableChangeLists();
+        synchronized (myDataLock) {
+          myWorker.setChangeListsEnabled(enabled);
+        }
+      });
+    });
+  }
+
+  private boolean shouldEnableChangeLists() {
+    AbstractVcs singleVCS = ProjectLevelVcsManager.getInstance(myProject).getSingleVCS();
+    if (singleVCS != null && singleVCS.isWithCustomLocalChanges()) return false;
+    return true;
+  }
+
+  @Override
+  public boolean areChangeListsEnabled() {
+    synchronized (myDataLock) {
+      return myWorker.areChangeListsEnabled();
+    }
   }
 
   @Override

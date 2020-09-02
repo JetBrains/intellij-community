@@ -64,6 +64,11 @@ public class MockChangeListManager extends ChangeListManagerEx {
   }
 
   @Override
+  public boolean areChangeListsEnabled() {
+    return true;
+  }
+
+  @Override
   public int getChangeListsNumber() {
     return getChangeListsCopy().size();
   }
