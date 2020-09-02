@@ -19,9 +19,12 @@
 package org.jetbrains.uast
 
 import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.psi.*
+import com.intellij.psi.impl.PsiModificationTrackerImpl
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.ArrayUtil
 import org.jetbrains.annotations.ApiStatus
@@ -245,3 +248,35 @@ fun UNamedExpression.getAnnotationMethod(): PsiMethod? {
 
 val UElement.textRange: TextRange?
   get() = sourcePsi?.textRange
+  
+@ApiStatus.Experimental
+fun getUastModificationTracker(project: Project): ModificationTracker {
+  return UastModificationTracker(project)
+}
+
+private class UastModificationTracker(val project: Project) : ModificationTracker {
+  private val languagesTracker: ModificationTracker
+
+  init {
+    val languages = UastLanguagePlugin.getInstances().map { it.language }.toSet()
+    val psiManager = PsiManager.getInstance(project)
+    languagesTracker = psiManager.modificationTracker.forLanguages { languages.contains(it) }
+  }
+
+  override fun getModificationCount(): Long = languagesTracker.modificationCount
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as UastModificationTracker
+
+    if (project != other.project) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    return project.hashCode()
+  }
+}
