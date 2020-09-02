@@ -25,8 +25,10 @@ import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.popup.list.ListPopupImpl
 import com.intellij.util.BooleanFunction
+import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.StartupUiUtil
 import git4idea.*
 import git4idea.branch.GitBranchUtil
 import git4idea.branch.GitRebaseParams
@@ -35,6 +37,7 @@ import git4idea.config.GitVersionSpecialty.REBASE_MERGES_REPLACES_PRESERVE_MERGE
 import git4idea.i18n.GitBundle
 import git4idea.merge.dialog.*
 import git4idea.rebase.ComboBoxPrototypeRenderer.Companion.COMBOBOX_VALUE_PROTOTYPE
+import git4idea.rebase.ComboBoxPrototypeRenderer.Companion.HELP_BUTTON_ICON_FOCUSED
 import git4idea.repo.GitRepositoryManager
 import git4idea.util.GitUIUtil.getTextField
 import net.miginfocom.layout.AC
@@ -46,10 +49,7 @@ import java.awt.BorderLayout
 import java.awt.Container
 import java.awt.Dimension
 import java.awt.Insets
-import java.awt.event.ActionEvent
-import java.awt.event.ActionListener
-import java.awt.event.InputEvent
-import java.awt.event.KeyEvent
+import java.awt.event.*
 import javax.swing.DefaultListCellRenderer
 import javax.swing.JComponent
 import javax.swing.JList
@@ -385,23 +385,38 @@ internal class GitRebaseDialog(private val project: Project,
   }
 
   private fun createOntoHelpButton() = InplaceButton(
-    IconButton(GitBundle.message("rebase.dialog.help"), AllIcons.General.ContextHelp),
+    IconButton(GitBundle.message("rebase.dialog.help"), AllIcons.General.ContextHelp, HELP_BUTTON_ICON_FOCUSED),
     ActionListener {
       showRebaseHelpPopup()
     }
   ).apply {
     border = JBUI.Borders.empty(1)
+    isFocusable = true
+
+    addFocusListener(object : FocusAdapter() {
+      override fun focusGained(e: FocusEvent?) = repaint()
+      override fun focusLost(e: FocusEvent?) = repaint()
+    })
+
+    addKeyListener(object : KeyAdapter() {
+      override fun keyPressed(e: KeyEvent?) {
+        if (e?.keyCode == KeyEvent.VK_SPACE) {
+          e.consume()
+          showRebaseHelpPopup()
+        }
+      }
+    })
   }
 
   private fun showRebaseHelpPopup() {
-    val helpPopup = GitRebaseHelpPopupPanel()
+    val helpPopupPanel = GitRebaseHelpPopupPanel()
     JBPopupFactory
       .getInstance()
-      .createComponentPopupBuilder(helpPopup, helpPopup.helpLink)
-      .setMayBeParent(true)
+      .createComponentPopupBuilder(helpPopupPanel, null)
+      .setAdText(GitBundle.message("rebase.help.popup.ad.text"))
       .setFocusable(true)
       .setRequestFocus(true)
-      .setCancelOnWindowDeactivation(false)
+      .setCancelOnWindowDeactivation(true)
       .setCancelOnClickOutside(true)
       .createPopup()
       .showUnderneathOf(rootPane)
@@ -721,6 +736,11 @@ internal abstract class ComboBoxPrototypeRenderer<E> private constructor(private
 
   companion object {
     const val COMBOBOX_VALUE_PROTOTYPE = "origin/quite-long-branch-name"
+
+    val HELP_BUTTON_ICON_FOCUSED = if (StartupUiUtil.isUnderDarcula())
+      IconUtil.brighter(AllIcons.General.ContextHelp, 3)
+    else
+      IconUtil.darker(AllIcons.General.ContextHelp, 3)
 
     fun <T> create(comboBox: ComboBox<T>,
                    renderer: (T) -> @NlsContexts.Label String): ComboBoxPrototypeRenderer<T> {
