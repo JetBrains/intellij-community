@@ -310,7 +310,7 @@ class GitApplyChangesProcess(private val project: Project,
     }
     var description = commitDetails(commit)
     description += getSuccessfulCommitDetailsIfAny(successfulCommits)
-    vcsNotifier.notifyMinorWarning(GitBundle.message("apply.changes.operation.canceled", operationName.capitalize()), description)
+    vcsNotifier.notifyMinorWarning(null, GitBundle.message("apply.changes.operation.canceled", operationName.capitalize()), description)
   }
 
   private fun notifyError(@Nls content: String,
