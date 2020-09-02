@@ -125,24 +125,28 @@ public final class BuildFSState {
     final BuildRootIndex rootIndex = context.getProjectDescriptor().getBuildRootIndex();
     try {
       delta.lockData();
+      final long now = System.currentTimeMillis();
       for (Set<File> files : delta.getSourcesToRecompile().values()) {
         files_loop:
         for (File file : files) {
-          if ((getEventRegistrationStamp(file) > targetBuildStart || FSOperations.lastModified(file) > targetBuildStart) && scope.isAffected(target, file)) {
-            for (BuildRootDescriptor rd : rootIndex.findAllParentDescriptors(file, context)) {
-              if (rd.isGenerated()) { // do not send notification for generated sources
-                continue files_loop;
+          final long fileStamp;
+          if (getEventRegistrationStamp(file) > targetBuildStart || (fileStamp = FSOperations.lastModified(file)) > targetBuildStart && fileStamp < now) {
+            if (scope.isAffected(target, file)) {
+              for (BuildRootDescriptor rd : rootIndex.findAllParentDescriptors(file, context)) {
+                if (rd.isGenerated()) { // do not send notification for generated sources
+                  continue files_loop;
+                }
               }
+              if (LOG.isDebugEnabled()) {
+                LOG.debug("Unprocessed changes detected for target " + target +
+                            "; file: " + file.getPath() +
+                            "; targetBuildStart=" + targetBuildStart +
+                            "; eventRegistrationStamp=" + getEventRegistrationStamp(file) +
+                            "; lastModified=" + FSOperations.lastModified(file)
+                );
+              }
+              return true;
             }
-            if (LOG.isDebugEnabled()) {
-              LOG.debug("Unprocessed changes detected for target " + target +
-                        "; file: " + file.getPath() +
-                        "; targetBuildStart=" + targetBuildStart +
-                        "; eventRegistrationStamp=" + getEventRegistrationStamp(file) +
-                        "; lastModified=" + FSOperations.lastModified(file)
-              );
-            }
-            return true;
           }
         }
       }
