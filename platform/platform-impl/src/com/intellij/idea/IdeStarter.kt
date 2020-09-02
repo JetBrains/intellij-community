@@ -177,23 +177,26 @@ open class IdeStarter : ApplicationStarter {
         lifecyclePublisher.welcomeScreenDisplayed()
       }
     }
-    wizardStepProvider?.let { wizardStepProvider ->
-      var done = false
-      runInEdt {
-        val wizardDialog = object : CustomizeIDEWizardDialog(wizardStepProvider, null, false, true) {
-          override fun doOKAction() {
-            super.doOKAction()
-            showWelcomeFrame?.run()
+    //do not show Customize IDE Wizard [IDEA-249516]
+    if (System.getProperty("idea.show.customize.ide.wizard")?.toBoolean() == true) {
+      wizardStepProvider?.let { wizardStepProvider ->
+        var done = false
+        runInEdt {
+          val wizardDialog = object : CustomizeIDEWizardDialog(wizardStepProvider, null, false, true) {
+            override fun doOKAction() {
+              super.doOKAction()
+              showWelcomeFrame?.run()
+            }
+          }
+
+          if (wizardDialog.showIfNeeded()) {
+            done = true
           }
         }
 
-        if (wizardDialog.showIfNeeded()) {
-          done = true
+        if (done) {
+          return false
         }
-      }
-
-      if (done) {
-        return false
       }
     }
 

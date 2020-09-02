@@ -716,7 +716,10 @@ public final class StartupUtil {
     }
 
     appStarter.beforeStartupWizard();
-    new CustomizeIDEWizardDialog(provider, appStarter, true, false).showIfNeeded();
+    //do not show Customize IDE Wizard [IDEA-249516]
+    if (Boolean.valueOf(System.getProperty("idea.show.customize.ide.wizard")).booleanValue()) {
+      new CustomizeIDEWizardDialog(provider, appStarter, true, false).showIfNeeded();
+    }
 
     PluginManagerCore.invalidatePlugins();
     appStarter.startupWizardFinished(provider);
