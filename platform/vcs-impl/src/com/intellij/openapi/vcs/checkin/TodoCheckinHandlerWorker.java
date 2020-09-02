@@ -109,6 +109,7 @@ public class TodoCheckinHandlerWorker {
           List<String> affectedChangelistIds = Collections.singletonList(changeListId);
           PartialCommitContent partialCommitContent = tracker.getPartialCommitContent(affectedChangelistIds, true);
           if (partialCommitContent == null) {
+            LOG.info(String.format("Can't check todo before commit for tracker %s, isOperational - %s", tracker, tracker.isOperational()));
             mySkipped.add(Pair.create(afterFilePath, VcsBundle.message("checkin.can.not.load.previous.revision")));
             return null;
           }
