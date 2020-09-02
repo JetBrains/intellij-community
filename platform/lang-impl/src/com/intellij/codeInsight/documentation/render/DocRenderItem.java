@@ -511,6 +511,11 @@ public final class DocRenderItem {
       return icon;
     }
 
+    @Override
+    public @NotNull String getAccessibleName() {
+      return CodeInsightBundle.message("doc.render.icon.accessible.name");
+    }
+
     @NotNull
     @Override
     public Alignment getAlignment() {
