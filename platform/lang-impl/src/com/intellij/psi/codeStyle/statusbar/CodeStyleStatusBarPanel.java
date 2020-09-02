@@ -5,6 +5,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.impl.status.TextPanel;
 import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,7 +30,7 @@ public class CodeStyleStatusBarPanel extends JPanel {
     setBorder(JBUI.Borders.empty(0));
   }
 
-  public void setText(@NotNull String text) {
+  public void setText(@NotNull @Nls String text) {
     myLabel.setText(text);
   }
 

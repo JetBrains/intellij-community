@@ -347,6 +347,7 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
       this.icon = icon;
     }
 
+    @Nls
     public String getText() {
       return text;
     }
