@@ -199,6 +199,7 @@ internal class PasswordSafeConfigurableUi(private val settings: PasswordSafeSett
         }
 
         row {
+          @Suppress("DialogTitleCapitalization") // KeePass is a proper noun
           keepassRadioButton = radioButton(CredentialStoreBundle.message("passwordSafeConfigurable.in.keepass"), ProviderType.KEEPASS).component
           row(CredentialStoreBundle.message("settings.password.database")) {
             val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor().withFileFilter {
