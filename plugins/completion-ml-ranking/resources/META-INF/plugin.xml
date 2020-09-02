@@ -41,7 +41,6 @@
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
-    <applicationInitializedListener implementation="com.intellij.completion.ml.tracker.FactorsTrackerInitializer"/>
     <applicationService serviceImplementation="com.intellij.completion.ml.settings.CompletionMLRankingSettings"/>
 
     <applicationService serviceInterface="com.intellij.codeInsight.completion.CompletionFinalSorter$Factory"
@@ -97,13 +96,14 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.completion.ml.settings.MLCompletionSettingsCollector"/>
   </extensions>
 
-  <applicationListeners>
-    <listener class="com.intellij.completion.ml.sorting.PositionDiffArrowInitializer"
-              topic="com.intellij.openapi.project.ProjectManagerListener"/>
-  </applicationListeners>
-
   <projectListeners>
     <listener class="com.intellij.completion.ml.common.RecentPlacesFeatures$StoreRecentPlacesListener"
               topic="com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl$RecentPlacesListener"/>
+    <listener class="com.intellij.completion.ml.tracker.CompletionFactorsInitializer"
+              topic="com.intellij.codeInsight.lookup.LookupManagerListener" />
+    <listener class="com.intellij.completion.ml.sorting.PositionDiffArrowInitializer"
+              topic="com.intellij.codeInsight.lookup.LookupManagerListener"/>
+    <listener class="com.intellij.completion.ml.ngram.NGramFileListener"
+              topic="com.intellij.openapi.fileEditor.FileEditorManagerListener$Before"/>
   </projectListeners>
 </idea-plugin>

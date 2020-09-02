@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.stats.completion.tracker
 
-import com.intellij.codeInsight.lookup.LookupManager
+import com.intellij.codeInsight.lookup.LookupManagerListener
 import com.intellij.ide.ApplicationInitializedListener
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.ApplicationManager
@@ -21,7 +21,7 @@ class CompletionTrackerInitializer : ApplicationInitializedListener {
       busConnection.subscribe(AnActionListener.TOPIC, actionListener)
       busConnection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
         override fun projectOpened(project: Project) {
-          LookupManager.getInstance(project).addPropertyChangeListener(CompletionLoggerInitializer(actionListener), project)
+          project.messageBus.connect().subscribe(LookupManagerListener.TOPIC, CompletionLoggerInitializer(actionListener))
         }
       })
     }
