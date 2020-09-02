@@ -151,6 +151,12 @@ public abstract class DebuggerSupport {
     return DisabledActionHandler.INSTANCE;
   }
 
+  @NotNull
+  public DebuggerActionHandler getAddToInlineWatchesActionHandler() {
+    return DisabledActionHandler.INSTANCE;
+  }
+
+
   public DebuggerActionHandler getEvaluateInConsoleActionHandler() {
     return DisabledActionHandler.INSTANCE;
   }

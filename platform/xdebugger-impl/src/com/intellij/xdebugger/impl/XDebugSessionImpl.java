@@ -39,11 +39,12 @@ import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.frame.XValueMarkerProvider;
 import com.intellij.xdebugger.impl.breakpoints.*;
-import com.intellij.xdebugger.impl.inline.DebuggerInlayListener;
 import com.intellij.xdebugger.impl.evaluate.XDebuggerEditorLinePainter;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueLookupManager;
 import com.intellij.xdebugger.impl.frame.XValueMarkers;
 import com.intellij.xdebugger.impl.frame.XWatchesViewImpl;
+import com.intellij.xdebugger.impl.inline.DebuggerInlayListener;
+import com.intellij.xdebugger.impl.inline.InlineWatch;
 import com.intellij.xdebugger.impl.inline.XDebuggerInlayUtil;
 import com.intellij.xdebugger.impl.settings.XDebuggerSettingManagerImpl;
 import com.intellij.xdebugger.impl.ui.XDebugSessionData;
@@ -135,7 +136,7 @@ public final class XDebugSessionImpl implements XDebugSession {
 
     String currentConfigurationName = getConfigurationName();
     if (oldSessionData == null || !oldSessionData.getConfigurationName().equals(currentConfigurationName)) {
-      oldSessionData = new XDebugSessionData(getWatchExpressions(), currentConfigurationName);
+      oldSessionData = new XDebugSessionData(getWatchExpressions(), getInlineWatchExpressions(), currentConfigurationName);
     }
     mySessionData = oldSessionData;
   }
@@ -1088,6 +1089,12 @@ public final class XDebugSessionImpl implements XDebugSession {
     return getSessionName();
   }
 
+
+  public void setInlineWatchExpressions(List<InlineWatch> expressions) {
+    mySessionData.setInlineWatchExpressions(expressions);
+    myDebuggerManager.getWatchesManager().setInlineWatches(getConfigurationName(), expressions);
+  }
+
   public void setWatchExpressions(@NotNull List<XExpression> watchExpressions) {
     mySessionData.setWatchExpressions(watchExpressions);
     myDebuggerManager.getWatchesManager().setWatches(getConfigurationName(), watchExpressions);
@@ -1095,6 +1102,10 @@ public final class XDebugSessionImpl implements XDebugSession {
 
   List<XExpression> getWatchExpressions() {
     return myDebuggerManager.getWatchesManager().getWatches(getConfigurationName());
+  }
+
+  List<InlineWatch> getInlineWatchExpressions() {
+    return myDebuggerManager.getWatchesManager().getInlineWatches(getConfigurationName());
   }
 
   @Nullable

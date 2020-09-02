@@ -1,69 +1,58 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.xdebugger.impl.ui.tree.nodes;
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.xdebugger.impl.inline;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.ThreeState;
 import com.intellij.xdebugger.Obsolescent;
 import com.intellij.xdebugger.XExpression;
+import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.evaluation.XDebuggerEvaluator;
-import com.intellij.xdebugger.evaluation.XInstanceEvaluator;
 import com.intellij.xdebugger.frame.*;
-import com.intellij.xdebugger.frame.presentation.XErrorValuePresentation;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
+import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNodeImpl;
+import com.intellij.xdebugger.impl.ui.tree.nodes.WatchesRootNode;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XEvaluationCallbackBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.concurrency.Promise;
-import org.jetbrains.concurrency.Promises;
 
-public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
-  private final XExpression myExpression;
+public class InlineWatchNodeImpl extends WatchNodeImpl implements InlineWatchNode {
+  private final InlineWatch myWatch;
 
-  public WatchNodeImpl(@NotNull XDebuggerTree tree,
-                       @NotNull WatchesRootNode parent,
-                       @NotNull XExpression expression,
-                       @Nullable XStackFrame stackFrame) {
-    this(tree, parent, expression, new XWatchValue(expression, tree, stackFrame));
-  }
-
-  protected WatchNodeImpl(XDebuggerTree tree, WatchesRootNode parent, XExpression expression, XNamedValue value) {
-    super(tree, parent, expression.getExpression(), value);
-    myExpression = expression;
-  }
-
-  @Override
-  @NotNull
-  public XExpression getExpression() {
-    return myExpression;
+  public InlineWatchNodeImpl(@NotNull XDebuggerTree tree,
+                             @NotNull WatchesRootNode parent,
+                             @NotNull InlineWatch watch,
+                             @Nullable XStackFrame stackFrame) {
+    super(tree, parent, watch.getExpression(), new XInlineWatchValue(watch.getExpression(), tree, stackFrame, watch.getPosition()));
+    myWatch = watch;
   }
 
   @NotNull
   @Override
   public XValue getValueContainer() {
-    XValue container = super.getValueContainer();
-    XValue value = ((XWatchValue)container).myValue;
-    return value != null ? value : container;
+    return myValueContainer;
   }
 
-  public void computePresentationIfNeeded() {
-    if (getValuePresentation() == null) {
-      getValueContainer().computePresentation(this, XValuePlace.TREE);
-    }
+  @Override
+  public @NotNull XSourcePosition getPosition() {
+    return myWatch.getPosition();
   }
 
-  private static class XWatchValue extends XNamedValue {
+  private static class XInlineWatchValue extends XNamedValue {
     private final XExpression myExpression;
     private final XDebuggerTree myTree;
     private final XStackFrame myStackFrame;
+    private final XSourcePosition myPosition;
     private volatile XValue myValue;
 
-    XWatchValue(XExpression expression, XDebuggerTree tree, XStackFrame stackFrame) {
+    XInlineWatchValue(XExpression expression, XDebuggerTree tree, XStackFrame frame, XSourcePosition position) {
       super(expression.getExpression());
       myExpression = expression;
       myTree = tree;
-      myStackFrame = stackFrame;
+      myStackFrame = frame;
+      myPosition = position;
     }
 
     @Override
@@ -113,7 +102,7 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
 
       @Override
       public void errorOccurred(@NotNull String errorMessage) {
-        myNode.setPresentation(XDebuggerUIConstants.ERROR_MESSAGE_ICON, new XErrorValuePresentation(errorMessage), false);
+        myNode.setPresentation(XDebuggerUIConstants.ERROR_MESSAGE_ICON, EMPTY_PRESENTATION, false);
       }
     }
 
@@ -130,63 +119,21 @@ public class WatchNodeImpl extends XValueNodeImpl implements WatchNode {
     };
 
     @Override
-    @Nullable
-    public String getEvaluationExpression() {
-      return myValue != null ? myValue.getEvaluationExpression() : null;
-    }
-
-    @Override
-    @NotNull
-    public Promise<XExpression> calculateEvaluationExpression() {
-      return Promises.resolvedPromise(myExpression);
-    }
-
-    @Override
-    @Nullable
-    public XInstanceEvaluator getInstanceEvaluator() {
-      return myValue != null ? myValue.getInstanceEvaluator() : null;
-    }
-
-    @Override
-    @Nullable
-    public XValueModifier getModifier() {
-      return myValue != null ? myValue.getModifier() : null;
-    }
-
-    @Override
     public void computeSourcePosition(@NotNull XNavigatable navigatable) {
-      if (myValue != null) {
-        myValue.computeSourcePosition(navigatable);
-      }
+      navigatable.setSourcePosition(myPosition);
     }
 
     @Override
     @NotNull
     public ThreeState computeInlineDebuggerData(@NotNull XInlineDebuggerDataCallback callback) {
-      return ThreeState.NO;
+      callback.computed(myPosition);
+      return ThreeState.YES;
     }
 
     @Override
     public boolean canNavigateToSource() {
-      return myValue != null && myValue.canNavigateToSource();
+      return true;
     }
 
-    @Override
-    public boolean canNavigateToTypeSource() {
-      return myValue != null && myValue.canNavigateToTypeSource();
-    }
-
-    @Override
-    public void computeTypeSourcePosition(@NotNull XNavigatable navigatable) {
-      if (myValue != null) {
-        myValue.computeTypeSourcePosition(navigatable);
-      }
-    }
-
-    @Override
-    @Nullable
-    public XReferrersProvider getReferrersProvider() {
-      return myValue != null ? myValue.getReferrersProvider() : null;
-    }
   }
 }

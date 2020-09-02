@@ -55,7 +55,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget, XWatchesView {
-  private WatchesRootNode myRootNode;
+  protected WatchesRootNode myRootNode;
 
   private final CompositeDisposable myDisposables = new CompositeDisposable();
   private final boolean myWatchesInVariables;
@@ -251,7 +251,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
   }
 
   @NotNull
-  private List<XExpression> getExpressions() {
+  protected List<XExpression> getExpressions() {
     XDebuggerTree tree = getTree();
     XDebugSession session = getSession(tree);
     List<XExpression> expressions;
