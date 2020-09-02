@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
@@ -225,22 +226,26 @@ public abstract class NlsInfo {
       }
     }
     if (owner instanceof PsiMethod) {
-      // If assignment target is Kotlin property, it resolves to the getter but annotation will be applied to the field
-      // (unless @get:Nls is used), so we have to navigate to the corresponding field.
-      UElement element = UastContextKt.toUElement(owner.getNavigationElement());
-      if (element instanceof UField) {
-        PsiElement javaPsi = element.getJavaPsi();
-        if (javaPsi instanceof PsiField) {
-          NlsInfo info = fromAnnotationOwner(((PsiField)javaPsi).getModifierList());
-          if (info != Unspecified.UNKNOWN) {
-            return info;
-          }
-        }
-      }
+      NlsInfo info = fromPropertyGetter(owner);
+      if (info != Unspecified.UNKNOWN) return info;
       PsiMethod method = (PsiMethod)owner;
       return fromMethodReturn(method, method.getReturnType(), null);
     }
     return fromAnnotationOwner(owner.getModifierList());
+  }
+
+  private static @NotNull NlsInfo fromPropertyGetter(@NotNull PsiModifierListOwner owner) {
+    if (!(owner instanceof PsiMethod)) return Unspecified.UNKNOWN;
+    // If assignment target is Kotlin property, it resolves to the getter but annotation will be applied to the field
+    // (unless @get:Nls is used), so we have to navigate to the corresponding field.
+    UElement element = UastContextKt.toUElement(owner.getNavigationElement());
+    if (element instanceof UField) {
+      PsiElement javaPsi = element.getJavaPsi();
+      if (javaPsi instanceof PsiField) {
+        return fromAnnotationOwner(((PsiField)javaPsi).getModifierList());
+      }
+    }
+    return Unspecified.UNKNOWN;
   }
 
   public static @NotNull Capitalization getCapitalization(@NotNull PsiModifierListOwner owner) {
@@ -521,12 +526,16 @@ public abstract class NlsInfo {
   private static @NotNull NlsInfo fromMethodReturn(@NotNull UExpression expression) {
     PsiMethod method;
     PsiType returnType = null;
-    UNamedExpression nameValuePair = UastUtils.getParentOfType(expression, UNamedExpression.class);
-    if (nameValuePair != null) {
-      method = UastUtils.getAnnotationMethod(nameValuePair);
+    UElement parent = expression.getUastParent();
+    if (parent instanceof UNamedExpression) {
+      method = UastUtils.getAnnotationMethod((UNamedExpression)parent);
+    }
+    else if (parent instanceof UAnnotation) {
+      PsiClass psiClass = ((UAnnotation)parent).resolve();
+      if (psiClass == null || !psiClass.isAnnotationType()) return Unspecified.UNKNOWN;
+      method = ArrayUtil.getFirstElement(psiClass.findMethodsByName("value", false));
     }
     else {
-      UElement parent = expression.getUastParent();
       UElement jumpTarget = null;
       if (parent instanceof UReturnExpression) {
         jumpTarget = ((UReturnExpression)parent).getJumpTarget();

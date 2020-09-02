@@ -110,6 +110,38 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
     myFixture.testHighlighting()
   }
   
+  fun testAnnotationValues() {
+    myFixture.enableInspections(I18nInspection())
+    myFixture.addClass("""
+       import org.jetbrains.annotations.*
+       @interface Foo {
+         @NonNls String value();
+         @NonNls String value2() default "test";
+       }
+
+       @interface Foos {
+         Foo[] value() default {};
+       }
+    """.trimIndent())
+    myFixture.configureByText("Foo.kt", """
+       import org.jetbrains.annotations.*
+
+       @Foo("Single param")
+       class X
+
+       @Foo(value = "Named param", value2 = "Named param2")
+       class Y
+
+       // TODO: nested annotation is not resolved in Kotlin
+       @Foos(Foo(<warning descr="Hardcoded string literal: \"Nested\"">"Nested"</warning>))
+       class Z
+
+       @Foos(value = [Foo(<warning descr="Hardcoded string literal: \"Nested named\"">"Nested named"</warning>)])
+       class T
+    """.trimIndent())
+    myFixture.testHighlighting()
+  }
+  
   fun testNamedParameters() {
     myFixture.enableInspections(I18nInspection())
     myFixture.configureByText("Foo.kt", """
