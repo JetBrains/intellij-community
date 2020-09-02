@@ -30,8 +30,20 @@ class EventSchemeBuilderTest : BasePlatformTestCase() {
     doFieldTest(EventFields.Enum("enum", TestEnum::class.java), hashSetOf("FOO", "BAR"))
   }
 
-  fun `test generate string list`() {
-    doFieldTest(EventFields.StringList("fields").withCustomRule("index_id"), hashSetOf("{util#index_id}"))
+  fun `test generate string list validated by custom rule`() {
+    doFieldTest(EventFields.StringValidatedByCustomRule("fields", "index_id"), hashSetOf("{util#index_id}"))
+  }
+
+  fun `test generate string list validated by regexp`() {
+    doFieldTest(EventFields.StringListValidatedByRegexp("fields", "index_id"), hashSetOf("{regexp#index_id}"))
+  }
+
+  fun `test generate string list validated by enum`() {
+    doFieldTest(EventFields.StringListValidatedByEnum("fields", "index_id"), hashSetOf("{enum#index_id}"))
+  }
+
+  fun `test generate string list validated by list of possible values`() {
+    doFieldTest(EventFields.StringList("fields", listOf("foo", "bar")), hashSetOf("foo", "bar"))
   }
 
   private fun doFieldTest(eventField: EventField<*>, values: Set<String>) {

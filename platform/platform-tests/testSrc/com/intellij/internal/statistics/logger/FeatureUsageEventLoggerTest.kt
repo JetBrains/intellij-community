@@ -291,7 +291,7 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
 
     class TestObjDescription : ObjectDescription() {
       var name by field(EventFields.StringValidatedByCustomRule("name", "name_rule"))
-      var versions by field(StringListEventField("versions").withCustomRule("version_rule"))
+      var versions by field(EventFields.StringListValidatedByCustomRule("versions", "version_rule"))
     }
 
     val group = EventLogGroup("newGroup", 1)
@@ -320,7 +320,7 @@ class FeatureUsageEventLoggerTest : HeavyPlatformTestCase() {
   fun testObjectVarargEvent() {
     class TestObjDescription : ObjectDescription() {
       var name by field(EventFields.StringValidatedByCustomRule("name", "name_rule"))
-      var versions by field(StringListEventField("versions").withCustomRule("version_rule"))
+      var versions by field(EventFields.StringListValidatedByCustomRule("versions", "version_rule"))
     }
 
     val group = EventLogGroup("newGroup", 1)

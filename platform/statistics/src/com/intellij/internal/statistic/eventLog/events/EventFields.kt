@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NonNls
 
 object EventFields {
   /**
-   * Create field that will be validated by global regexp rule
+   * Creates a field that will be validated by global regexp rule
    * @param name  name of the field
    * @param regexpRef reference to global regexp, e.g "integer" for "{regexp#integer}"
    */
@@ -19,7 +19,7 @@ object EventFields {
     StringEventField.ValidatedByRegexp(name, regexpRef)
 
   /**
-   * Create field that will be validated by global enum rule
+   * Creates a field that will be validated by global enum rule
    * @param name  name of the field
    * @param enumRef reference to global enum, e.g "os" for "{enum#os}"
    */
@@ -28,7 +28,7 @@ object EventFields {
     StringEventField.ValidatedByEnum(name, enumRef)
 
   /**
-   * Create field that will be validated by [com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule]
+   * Creates a field that will be validated by [com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule]
    * @param name  name of the field
    * @param customRuleId ruleId that is accepted by [com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule.acceptRuleId],
    * e.g "class_name" for "{util#class_name}"
@@ -37,6 +37,11 @@ object EventFields {
   fun StringValidatedByCustomRule(@NonNls name: String, @NonNls customRuleId: String): StringEventField =
     StringEventField.ValidatedByCustomRule(name, customRuleId)
 
+  /**
+   * Creates a field that allows only a specific list of values
+   * @param name  name of the field
+   * @param allowedValues list of allowed values, e.g [ "bool", "int", "float"]
+   */
   @JvmStatic
   fun String(@NonNls name: String, allowedValues: List<String>): StringEventField =
     StringEventField.ValidatedByAllowedValues(name, allowedValues)
@@ -64,8 +69,42 @@ object EventFields {
   inline fun <reified T : Enum<*>> Enum(@NonNls name: String, noinline transform: (T) -> String = { it.toString() }): EnumEventField<T> =
     EnumEventField(name, T::class.java, transform)
 
+  /**
+   * Creates a field for a list, each element of which will be validated by [com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule]
+   * @param name  name of the field
+   * @param customRuleId ruleId that is accepted by [com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule.acceptRuleId],
+   * e.g "class_name" for "{util#class_name}"
+   */
   @JvmStatic
-  fun StringList(@NonNls name: String): StringListEventField = StringListEventField(name)
+  fun StringListValidatedByCustomRule(@NonNls name: String, @NonNls customRuleId: String): StringListEventField =
+    StringListEventField.ValidatedByCustomRule(name, customRuleId)
+
+  /**
+   * Creates a field for a list, each element of which will be validated by global enum rule
+   * @param name  name of the field
+   * @param enumRef reference to global enum, e.g "os" for "{enum#os}"
+   */
+  @JvmStatic
+  fun StringListValidatedByEnum(@NonNls name: String, @NonNls enumRef: String): StringListEventField =
+    StringListEventField.ValidatedByEnum(name, enumRef)
+
+  /**
+   * Creates a field for a list, each element of which will be validated by global regexp
+   * @param name  name of the field
+   * @param regexpRef reference to global regexp, e.g "integer" for "{regexp#integer}"
+   */
+  @JvmStatic
+  fun StringListValidatedByRegexp(@NonNls name: String, @NonNls regexpRef: String): StringEventField =
+    StringEventField.ValidatedByRegexp(name, regexpRef)
+
+  /**
+   * Creates a field for a list in which only a specific values are allowed
+   * @param name  name of the field
+   * @param allowedValues list of allowed values, e.g [ "bool", "int", "float"]
+   */
+  @JvmStatic
+  fun StringList(@NonNls name: String, allowedValues: List<String>): StringEventField =
+    StringEventField.ValidatedByAllowedValues(name, allowedValues)
 
   @JvmStatic
   fun LongList(@NonNls name: String): LongListEventField = LongListEventField(name)

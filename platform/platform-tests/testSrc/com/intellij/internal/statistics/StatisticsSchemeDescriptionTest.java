@@ -67,7 +67,7 @@ public class StatisticsSchemeDescriptionTest extends BasePlatformTestCase {
 
     EventLogGroup group = new EventLogGroup("newGroup", 1);
     StringEventField nameField = EventFields.StringValidatedByEnum("name", "os");
-    StringListEventField versionsField = EventFields.StringList("versions");
+    StringListEventField versionsField = EventFields.StringListValidatedByCustomRule("versions", "version");
     IntEventField intEventField = EventFields.Int("intField");
     EventId2<Integer, ObjectEventData> event =
       group.registerEvent("testEvent", intEventField, new ObjectEventField("obj", nameField, versionsField));
@@ -165,7 +165,7 @@ public class StatisticsSchemeDescriptionTest extends BasePlatformTestCase {
 
   public void testStringListField() {
     doTestListField(
-      EventFields.StringList("errors"),
+      EventFields.StringListValidatedByCustomRule("errors", "validation_rules"),
       ContainerUtil.newArrayList("foo", "bar"),
       ContainerUtil.newArrayList("foo", "bar")
     );
