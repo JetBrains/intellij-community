@@ -14,7 +14,7 @@ import com.intellij.openapi.components.service
 import com.intellij.util.xmlb.annotations.Property
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
 
-@State(name = "GraziConfig", storages = [
+@State(name = "GraziConfig", presentableName = GrazieConfig.PresentableNameGetter::class, storages = [
   Storage("grazie_global.xml"),
   Storage(value = "grazi_global.xml", deprecated = true)
 ])
@@ -101,6 +101,10 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State> {
     /** Update Grazie config state */
     @Synchronized
     fun update(change: (State) -> State) = instance.loadState(change(get()))
+  }
+
+  class PresentableNameGetter : com.intellij.openapi.components.State.NameGetter() {
+    override fun get() = "Grazie Config"
   }
 
   private var myState = State()
