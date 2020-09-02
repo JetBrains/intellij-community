@@ -2216,4 +2216,6 @@ class Abc {
       assert !lookup
     }.assertTiming()
   }
+
+  void testNoExceptionsWhenCompletingInapplicableClassNameAfterNew() { doTest('\n') }
 }
