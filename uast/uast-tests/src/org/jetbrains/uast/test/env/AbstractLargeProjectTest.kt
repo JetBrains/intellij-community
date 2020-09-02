@@ -12,10 +12,8 @@ import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl
 import com.intellij.openapi.roots.OrderRootType
-import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
-import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEditor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.ChangeListManager
@@ -98,16 +96,12 @@ abstract class AbstractLargeProjectTest : UsefulTestCase() {
   }
 
   private fun addLibrary(tableModel: LibraryTable.ModifiableModel, libName: String, libRoots: List<File>) {
-    val editor = NewLibraryEditor()
-    editor.name = libName
-    for (libRoot in libRoots) {
-      editor.addRoot(VfsUtil.getUrlForLibraryRoot(libRoot), OrderRootType.CLASSES)
-    }
-
-    val library = tableModel.createLibrary(editor.name, null)
+    val library = tableModel.createLibrary(libName, null)
     val libModel = library.modifiableModel
     try {
-      editor.applyTo(libModel as LibraryEx.ModifiableModelEx)
+      for (libRoot in libRoots) {
+        libModel.addRoot(VfsUtil.getUrlForLibraryRoot(libRoot), OrderRootType.CLASSES)
+      }
     }
     finally {
       libModel.commit()
