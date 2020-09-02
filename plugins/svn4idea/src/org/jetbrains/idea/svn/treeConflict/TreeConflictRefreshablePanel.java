@@ -1,22 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.treeConflict;
 
-import static com.intellij.openapi.application.ModalityState.defaultModalityState;
-import static com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier.showOverChangesView;
-import static com.intellij.vcsUtil.VcsUtil.getFilePathOnNonLocal;
-import static org.jetbrains.idea.svn.SvnBundle.message;
-import static org.jetbrains.idea.svn.history.SvnHistorySession.getCurrentCommittedRevision;
-
 import com.intellij.openapi.CompositeDisposable;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.progress.BackgroundTaskQueue;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.PerformInBackgroundOption;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -36,12 +25,6 @@ import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.VcsBackgroundTask;
 import gnu.trove.TLongArrayList;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.Collections;
-import java.util.Objects;
-import javax.swing.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.ConflictedSvnChange;
@@ -53,6 +36,19 @@ import org.jetbrains.idea.svn.conflict.ConflictReason;
 import org.jetbrains.idea.svn.conflict.ConflictVersion;
 import org.jetbrains.idea.svn.conflict.TreeConflictDescription;
 
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.util.Collections;
+import java.util.Objects;
+
+import static com.intellij.openapi.application.ModalityState.defaultModalityState;
+import static com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier.showOverChangesView;
+import static com.intellij.vcsUtil.VcsUtil.getFilePathOnNonLocal;
+import static org.jetbrains.idea.svn.SvnBundle.message;
+import static org.jetbrains.idea.svn.history.SvnHistorySession.getCurrentCommittedRevision;
+
 public class TreeConflictRefreshablePanel implements Disposable {
   private final ConflictedSvnChange myChange;
   private final SvnVcs myVcs;
@@ -60,21 +56,16 @@ public class TreeConflictRefreshablePanel implements Disposable {
   private final FilePath myPath;
   private final CompositeDisposable myChildDisposables = new CompositeDisposable();
   private final TLongArrayList myRightRevisionsList;
-  @NotNull private final String myLoadingTitle;
   @NotNull private final JBLoadingPanel myDetailsPanel;
   @NotNull private final BackgroundTaskQueue myQueue;
   private volatile ProgressIndicator myIndicator = new EmptyProgressIndicator();
 
-  public TreeConflictRefreshablePanel(@NotNull Project project,
-                                      @NotNull String loadingTitle,
-                                      @NotNull BackgroundTaskQueue queue,
-                                      @NotNull ConflictedSvnChange change) {
+  public TreeConflictRefreshablePanel(@NotNull Project project, @NotNull BackgroundTaskQueue queue, @NotNull ConflictedSvnChange change) {
     myVcs = SvnVcs.getInstance(project);
     myChange = change;
     myPath = ChangesUtil.getFilePath(myChange);
     myRightRevisionsList = new TLongArrayList();
 
-    myLoadingTitle = loadingTitle;
     myQueue = queue;
     myDetailsPanel = new JBLoadingPanel(new BorderLayout(), this);
   }
@@ -183,7 +174,7 @@ public class TreeConflictRefreshablePanel implements Disposable {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     myDetailsPanel.startLoading();
-    Loader task = new Loader(myVcs.getProject(), myLoadingTitle);
+    Loader task = new Loader(myVcs.getProject());
     myIndicator = new BackgroundableProcessIndicator(task);
     myQueue.run(task, defaultModalityState(), myIndicator);
   }
@@ -419,8 +410,8 @@ public class TreeConflictRefreshablePanel implements Disposable {
     private BeforeAfter<BeforeAfter<ConflictSidePresentation>> myData;
     private VcsException myException;
 
-    private Loader(@Nullable Project project, @NotNull String title) {
-      super(project, title, false);
+    private Loader(@Nullable Project project) {
+      super(project, message("progress.title.loading.tree.conflict.details"), false);
     }
 
     @Override

@@ -599,7 +599,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
           cancelable = true;
         }
         ProgressManager.getInstance()
-          .runProcessWithProgressSynchronously(command, message("progress.computing.difference"), cancelable, myProject);
+          .runProcessWithProgressSynchronously(command, message("dialog.title.computing.difference"), cancelable, myProject);
       }
     }
   }
@@ -646,7 +646,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
               Messages.showOkCancelDialog(
                 myProject,
                 message("dialog.message.confirm.move.folder", lastFolder),
-                message(dialog.getTitle()),
+                dialog.getTitle(),
                 Messages.getWarningIcon()
               );
             if (Messages.OK != result) return;
@@ -1091,7 +1091,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
         revision = dialog.getRevision();
       }
       catch (ConfigurationException e) {
-        showErrorDialog(message("message.text.cannot.checkout", e.getMessage()), message("message.title.check.out"));
+        showErrorDialog(message("message.text.cannot.checkout", e.getMessage()), message("dialog.title.check.out"));
         return;
       }
 

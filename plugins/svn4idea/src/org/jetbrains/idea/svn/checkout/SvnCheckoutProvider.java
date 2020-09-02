@@ -111,8 +111,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
                               WorkingCopyFormat selectedFormat) {
     final Ref<Boolean> checkoutSuccessful = new Ref<>();
     final Exception[] exception = new Exception[1];
-    final Task.Backgroundable checkoutBackgroundTask = new Task.Backgroundable(project,
-                                                                               message("message.title.check.out"), true,
+    final Task.Backgroundable checkoutBackgroundTask = new Task.Backgroundable(project, message("progress.title.check.out"), true,
                                                                                VcsConfiguration.getInstance(project).getCheckoutOption()) {
       @Override
       public void run(@NotNull final ProgressIndicator indicator) {
@@ -139,7 +138,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
       @Override
       public void onSuccess() {
         if (exception[0] != null) {
-          showErrorDialog(message("message.text.cannot.checkout", exception[0].getMessage()), message("message.title.check.out"));
+          showErrorDialog(message("message.text.cannot.checkout", exception[0].getMessage()), message("dialog.title.check.out"));
         }
 
         VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(target);
@@ -313,7 +312,7 @@ public class SvnCheckoutProvider implements CheckoutProvider {
           if (errorMessage != null) {
             dialog.doCancelAction();
             showErrorDialog(message("message.text.cannot.load.supported.formats", errorMessage),
-                            message("message.title.check.out"));
+                            message("dialog.title.check.out"));
           }
           else {
             dialog.setSupported(formats);

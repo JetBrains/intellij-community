@@ -137,7 +137,7 @@ public class SvnEditCommitMessageAction extends DumbAwareAction {
     @Override
     public void onSuccess() {
       if (myException != null) {
-        AbstractVcsHelper.getInstance(myProject).showError(myException, myTitle);
+        AbstractVcsHelper.getInstance(myProject).showError(myException, message("tab.title.edit.revision.comment"));
       } else {
         if (myListener != null) {
           myListener.consume(myNewMessage);

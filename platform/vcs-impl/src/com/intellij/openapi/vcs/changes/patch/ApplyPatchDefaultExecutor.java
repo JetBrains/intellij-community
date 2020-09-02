@@ -48,7 +48,7 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor<AbstractFil
       applyAdditionalInfoBefore(myProject, additionalInfo, commitContext);
     }
     Collection<PatchApplier> appliers = getPatchAppliers(patchGroupsToApply, localList, commitContext);
-    new Task.Backgroundable(myProject, VcsBundle.getString("patch.apply.progress.title")) {
+    new Task.Backgroundable(myProject, VcsBundle.message("patch.apply.progress.title")) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         PatchApplier.executePatchGroup(appliers, localList);

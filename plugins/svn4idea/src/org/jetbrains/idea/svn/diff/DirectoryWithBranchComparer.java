@@ -8,7 +8,6 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.ClientFactory;
 import org.jetbrains.idea.svn.api.Target;
@@ -20,6 +19,7 @@ import java.util.List;
 
 import static com.intellij.openapi.util.NlsContexts.DialogTitle;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class DirectoryWithBranchComparer extends ElementWithBranchComparer {
 
@@ -35,8 +35,8 @@ public class DirectoryWithBranchComparer extends ElementWithBranchComparer {
 
   @Override
   protected void compare() throws VcsException {
-    titleBuilder.append(SvnBundle.message("repository.browser.compare.title", myElementUrl.toDecodedString(),
-                                          FileUtil.toSystemDependentName(myVirtualFile.getPresentableUrl())));
+    titleBuilder.append(message("repository.browser.compare.title", myElementUrl.toDecodedString(),
+                                FileUtil.toSystemDependentName(myVirtualFile.getPresentableUrl())));
 
     Target target1 = Target.on(myElementUrl);
     Target target2 = Target.on(virtualToIoFile(myVirtualFile));
@@ -63,6 +63,6 @@ public class DirectoryWithBranchComparer extends ElementWithBranchComparer {
 
   @Override
   public @NotNull String getTitle() {
-    return SvnBundle.message("progress.computing.difference");
+    return message("dialog.title.computing.difference");
   }
 }

@@ -14,6 +14,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.NlsContexts.ProgressTitle;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
@@ -675,7 +676,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
         final Collection<VirtualFile> filesToProcess = promptAboutAddition(addedVFiles, value, vcsHelper);
         if (filesToProcess != null && !filesToProcess.isEmpty()) {
           final List<VcsException> exceptions = new ArrayList<>();
-          runInBackground("Adding files to Subversion",
+          runInBackground(message("progress.title.adding.files.to.subversion"),
                           createAdditionRunnable(copyFromMap, filesToProcess, exceptions));
           if (!exceptions.isEmpty()) {
             vcsHelper.showErrors(exceptions, message("add.files.errors.title"));
@@ -695,7 +696,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
     }
   }
 
-  private void runInBackground(final String name, final Runnable runnable) {
+  private void runInBackground(@ProgressTitle @NotNull String name, @NotNull Runnable runnable) {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       ProgressManager.getInstance().runProcessWithProgressSynchronously(runnable, name, false, myVcs.getProject());
     }
@@ -819,7 +820,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
           }
         }
         if (!filesToProcess.isEmpty()) {
-          runInBackground("Deleting files from Subversion", createDeleteRunnable(filesToProcess, exceptions));
+          runInBackground(message("progress.title.deleting.files.from.subversion"), createDeleteRunnable(filesToProcess, exceptions));
         }
         List<FilePath> deletedFilesFiles = map(deletedFiles, Functions.pairFirst());
         for (FilePath file : deletedFilesFiles) {
@@ -926,7 +927,7 @@ public class SvnFileSystemListener implements LocalFileOperationsHandler, Dispos
         iterator.remove();
       }
     };
-    runInBackground("Moving files in Subversion", runnable);
+    runInBackground(message("progress.title.moving.files.in.subversion"), runnable);
   }
 
   @NotNull

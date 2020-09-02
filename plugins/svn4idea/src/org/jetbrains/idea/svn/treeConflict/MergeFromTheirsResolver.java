@@ -14,6 +14,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts.DialogMessage;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
@@ -180,7 +181,7 @@ public final class MergeFromTheirsResolver extends BackgroundTaskGroup {
                       @Nullable LocalChangeList localList,
                       @Nullable String fileName,
                       @Nullable ThrowableComputable<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo) {
-      new Task.Backgroundable(myVcs.getProject(), VcsBundle.getString("patch.apply.progress.title")) {
+      new Task.Backgroundable(myVcs.getProject(), VcsBundle.message("patch.apply.progress.title")) {
         VcsException myException = null;
 
         @Override
@@ -304,15 +305,14 @@ public final class MergeFromTheirsResolver extends BackgroundTaskGroup {
     );
   }
 
-  @NotNull
-  private static String getSingleBinaryFileMessage(@NotNull Change change) {
-    String singleMessageKey = FileStatus.DELETED.equals(change.getFileStatus())
-                              ? "dialog.message.merge.from.theirs.delete.binary.file"
-                              : FileStatus.ADDED.equals(change.getFileStatus())
-                                ? "dialog.message.merge.from.theirs.create.binary.file"
-                                : "dialog.message.merge.from.theirs.modify.binary.file";
+  private static @DialogMessage @NotNull String getSingleBinaryFileMessage(@NotNull Change change) {
+    String path = TreeConflictRefreshablePanel.filePath(getFilePath(change));
 
-    return message(singleMessageKey, TreeConflictRefreshablePanel.filePath(getFilePath(change)));
+    return FileStatus.DELETED.equals(change.getFileStatus())
+           ? message("dialog.message.merge.from.theirs.delete.binary.file", path)
+           : FileStatus.ADDED.equals(change.getFileStatus())
+             ? message("dialog.message.merge.from.theirs.create.binary.file", path)
+             : message("dialog.message.merge.from.theirs.modify.binary.file", path);
   }
 
   @RequiresEdt

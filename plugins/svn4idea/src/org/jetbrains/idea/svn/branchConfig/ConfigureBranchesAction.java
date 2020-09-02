@@ -18,9 +18,7 @@ import static org.jetbrains.idea.svn.SvnBundle.messagePointer;
 
 public class ConfigureBranchesAction extends DumbAwareAction {
   public ConfigureBranchesAction() {
-    super(messagePointer("action.Subversion.ConfigureBranches.text"),
-          messagePointer("action.Subversion.ConfigureBranches.text"),
-          null);
+    super(messagePointer("action.Subversion.ConfigureBranches.text"));
   }
 
   @Override
