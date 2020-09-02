@@ -17,7 +17,7 @@ public final class ConcurrentTasksProgressManager {
   private final int myTotalWeight;
   private final AtomicDouble myTotalFraction;
   private final Object myLock = new Object();
-  private final LinkedHashMap<SubTaskProgressIndicator, String> myText2Stack = new LinkedHashMap<>();
+  private final LinkedHashMap<SubTaskProgressIndicator, @NlsContexts.ProgressDetails String> myText2Stack = new LinkedHashMap<>();
   private final AtomicInteger myRemainingTotalWeight;
 
   public ConcurrentTasksProgressManager(ProgressIndicator parent, int totalWeight) {
