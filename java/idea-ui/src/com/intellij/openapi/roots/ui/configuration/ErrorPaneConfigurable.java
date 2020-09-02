@@ -167,20 +167,19 @@ public class ErrorPaneConfigurable extends JPanel implements Configurable, Dispo
   private static HtmlChunk @NotNull[] getErrorDescriptions(final ConfigurationError @NotNull[] errors) {
     final int limit = Math.min(errors.length, 100);
 
-    final Integer[] indices = IntStream.range(0, limit).boxed().toArray(Integer[]::new);
-
-    return StreamEx.zip(indices, errors, ConfigurationErrorWithIndex::new)
+    return StreamEx.of(errors)
+      .zipWith(IntStream.range(0, limit), ConfigurationErrorWithIndex::new)
       .map(ErrorPaneConfigurable::getErrorDescriptionTag)
       .toArray(HtmlChunk[]::new);
   }
 
   private static final class ConfigurationErrorWithIndex {
-    private final int myIdx;
     private final @NotNull ConfigurationError myError;
+    private final int myIdx;
 
-    private ConfigurationErrorWithIndex(final int idx, @NotNull final ConfigurationError error) {
-      myIdx = idx;
+    private ConfigurationErrorWithIndex(@NotNull final ConfigurationError error, final int idx) {
       myError = error;
+      myIdx = idx;
     }
   }
 
