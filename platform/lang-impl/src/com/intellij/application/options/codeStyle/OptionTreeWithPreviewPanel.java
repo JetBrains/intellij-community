@@ -38,7 +38,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
 
   private boolean myShowAllStandardOptions = false;
   private final Set<String> myAllowedOptions = new HashSet<>();
-  protected MultiMap<String, CustomBooleanOptionInfo> myCustomOptions = new MultiMap<>();
+  protected MultiMap<@Nls String, CustomBooleanOptionInfo> myCustomOptions = new MultiMap<>();
   protected boolean isFirstUpdate = true;
   private final Map<String, @NlsContexts.Label String> myRenamedFields = new THashMap<>();
   private final Map<String, @NlsContexts.Label String> myRemappedGroups = new THashMap<>();
@@ -611,7 +611,7 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
       }
     }
     result.addAll(myRenamedFields.values());
-    for (String groupName : myCustomOptions.keySet()) {
+    for (@Nls String groupName : myCustomOptions.keySet()) {
       result.add(groupName);
       for (CustomBooleanOptionInfo trinity : myCustomOptions.get(groupName)) {
         result.add(trinity.title);

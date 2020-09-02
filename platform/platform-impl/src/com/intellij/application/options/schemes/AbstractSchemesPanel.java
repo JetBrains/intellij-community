@@ -19,6 +19,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -190,7 +191,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
     mySchemesCombo.cancelEdit();
   }
 
-  public final void showInfo(@NotNull String message, @NotNull MessageType messageType) {
+  public final void showInfo(@NotNull @Nls String message, @NotNull MessageType messageType) {
     myToolbar.setVisible(false);
     showMessage(message, messageType);
   }
@@ -221,6 +222,7 @@ public abstract class AbstractSchemesPanel<T extends Scheme, InfoComponent exten
   }
 
   @NotNull
+  @Nls
   protected String getSchemeTypeName() {
     return ApplicationBundle.message("editbox.scheme.type.name");
   }

@@ -112,10 +112,10 @@ public class LayoutCodeDialog extends DialogWrapper {
   @Nullable
   private @NlsContexts.Tooltip String getChangesNotAvailableHint() {
     if (!VcsFacade.getInstance().isFileUnderVcs(myFile)) {
-      return "File not under VCS root";
+      return CodeInsightBundle.message("tooltip.file.not.under.vcs.root");
     }
     else if (!VcsFacade.getInstance().hasChanges(myFile)) {
-      return "File was not changed since last revision";
+      return CodeInsightBundle.message("tooltip.file.was.not.changed.since.last.revision");
     }
     return null;
   }

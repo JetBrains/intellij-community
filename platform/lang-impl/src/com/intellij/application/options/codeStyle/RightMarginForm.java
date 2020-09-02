@@ -72,7 +72,7 @@ public class RightMarginForm {
   void createUIComponents() {
     myRightMarginField = new IntegerField(ApplicationBundle.message("editbox.right.margin.columns"),
                                           0, CodeStyleConstraints.MAX_RIGHT_MARGIN);
-    myRightMarginField.getValueEditor().addListener(new ValueEditor.Listener<Integer>() {
+    myRightMarginField.getValueEditor().addListener(new ValueEditor.Listener<>() {
       @Override
       public void valueChanged(@NotNull Integer newValue) {
         myResetLink.setVisible(!newValue.equals(myRightMarginField.getDefaultValue()));
@@ -82,8 +82,10 @@ public class RightMarginForm {
     myRightMarginField.setCanBeEmpty(true);
     myRightMarginField.setDefaultValue(-1);
     myRightMarginField.setMinimumSize(new Dimension(JBUIScale.scale(120), myRightMarginField.getMinimumSize().height));
-    myVisualGuidesField = new CommaSeparatedIntegersField(ApplicationBundle.message("settings.code.style.visual.guides"), 0, CodeStyleConstraints.MAX_RIGHT_MARGIN, "Optional");
-    myVisualGuidesField.getValueEditor().addListener(new ValueEditor.Listener<List<Integer>>() {
+    myVisualGuidesField = new CommaSeparatedIntegersField(ApplicationBundle.message("settings.code.style.visual.guides"),
+                                                          0, CodeStyleConstraints.MAX_RIGHT_MARGIN,
+                                                          ApplicationBundle.message("settings.code.style.visual.guides.optional"));
+    myVisualGuidesField.getValueEditor().addListener(new ValueEditor.Listener<>() {
       @Override
       public void valueChanged(@NotNull List<Integer> newValue) {
         myResetGuidesLink.setVisible(!myVisualGuidesField.isEmpty());
