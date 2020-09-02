@@ -120,6 +120,7 @@ public abstract class GutterIconRenderer implements GutterMark, PossiblyDumbAwar
     return null;
   }
 
+  @SuppressWarnings("HardCodedStringLiteral") // subclasses should override this method to provide localized name
   @Override
   @NotNull
   public String getAccessibleName() {
