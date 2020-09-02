@@ -686,7 +686,10 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
     private void processReferenceToNonLocalized(@NotNull PsiElement sourcePsi, @NotNull UExpression ref, PsiModifierListOwner target) {
       PsiType type = ref.getExpressionType();
       if (!TypeUtils.isJavaLangString(type) && !TypeUtils.typeEquals(CommonClassNames.JAVA_LANG_CHAR_SEQUENCE, type)) return;
-      if (target instanceof PsiMethod && NlsInfo.isStringProcessingMethod((PsiMethod)target, true)) return;
+      if (target instanceof PsiMethod &&
+          (NlsInfo.isStringProcessingMethod((PsiMethod)target) || NlsInfo.isPassthroughMethod((PsiMethod)target, null, null))) {
+        return;
+      }
       if (NlsInfo.forModifierListOwner(target).canBeUsedInLocalizedContext()) return;
       if (NlsInfo.forType(type).canBeUsedInLocalizedContext()) return;
       

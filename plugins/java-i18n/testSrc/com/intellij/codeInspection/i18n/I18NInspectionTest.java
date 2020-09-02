@@ -149,6 +149,8 @@ public class I18NInspectionTest extends LightJavaCodeInsightFixtureTestCase {
   public void testRefsNonNlsMode() { doTest(); }
   
   public void testStringBuilderAppend() { doTest(); }
+  
+  public void testComputeIfAbsent() { doTest(); }
 
   @Override
   protected String getTestDataPath() {

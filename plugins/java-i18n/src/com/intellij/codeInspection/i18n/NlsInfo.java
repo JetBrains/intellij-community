@@ -11,7 +11,6 @@ import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.TypeUtils;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
@@ -36,8 +35,6 @@ public abstract class NlsInfo {
   private static final @NotNull String NLS_CONTEXT = "com.intellij.openapi.util.NlsContext";
   static final String NLS_SAFE = "com.intellij.openapi.util.NlsSafe";
   private static final @NotNull Set<String> ANNOTATION_NAMES = Set.of(AnnotationUtil.NLS, AnnotationUtil.NON_NLS, NLS_SAFE);
-  private static final CallMatcher GET_OR_DEFAULT =
-    CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_MAP, "getOrDefault").parameterCount(2);
 
   /**
    * Describes a string that should be localized
@@ -426,7 +423,7 @@ public abstract class NlsInfo {
         UCallExpression uastParent = ObjectUtils.tryCast(lambda.getUastParent(), UCallExpression.class);
         if (uastParent == null) return parent;
         PsiMethod method = uastParent.resolve();
-        if (method == null || !isPassthroughMethod(method)) return parent;
+        if (method == null || !isPassthroughMethod(method, uastParent, lambda)) return parent;
         next = uastParent;
       }
       if (next instanceof UQualifiedReferenceExpression && !TypeUtils.isJavaLangString(next.getExpressionType())
@@ -442,7 +439,8 @@ public abstract class NlsInfo {
           PsiMethod method = ((UCallExpression)next).resolve();
           boolean shouldGoThroughCall =
             TypeUtils.isJavaLangString(next.getExpressionType()) &&
-            (isStringProcessingMethod(method, allowStringTransformation) || isPassthroughParameter(method, (UCallExpression)next, parent));
+            (allowStringTransformation && isStringProcessingMethod(method) ||
+             isPassthroughMethod(method, (UCallExpression)next, parent));
           if (!shouldGoThroughCall) return parent;
         }
       }
@@ -451,12 +449,34 @@ public abstract class NlsInfo {
     }
   }
 
-  private static boolean isPassthroughParameter(PsiMethod method, UCallExpression call, UExpression arg) {
-    if (GET_OR_DEFAULT.methodMatches(method)) {
-      UExpression argument = call.getArgumentForParameter(1);
-      if (argument != null && expressionsAreEquivalent(argument, arg)) return true;
+  static boolean isPassthroughMethod(@Nullable PsiMethod method, @Nullable UCallExpression call, @Nullable UExpression arg) {
+    if (method == null) return false;
+    PsiType type = method.getReturnType();
+    PsiTypeParameter typeParameter = ObjectUtils.tryCast(PsiUtil.resolveClassInClassTypeOnly(type), PsiTypeParameter.class);
+    if (typeParameter != null && typeParameter.getExtendsList().getReferencedTypes().length == 0) {
+      PsiParameter[] parameters;
+      if (arg == null || call == null) {
+        parameters = method.getParameterList().getParameters();
+      } else {
+        PsiParameter parameter = getParameter(method, call, arg);
+        if (parameter == null) return false;
+        PsiType parameterType = parameter.getType();
+        PsiElement psi = call.getSourcePsi();
+        if (psi instanceof PsiMethodCallExpression) {
+          PsiSubstitutor substitutor = ((PsiMethodCallExpression)psi).getMethodExpression().advancedResolve(false).getSubstitutor();
+          parameterType = substitutor.substitute(parameterType);
+        }
+        if (fromType(parameterType) != Unspecified.UNKNOWN) return false;
+        parameters = new PsiParameter[]{parameter};
+      }
+      for (PsiParameter parameter : parameters) {
+        PsiType parameterType = parameter.getType();
+        if (type.equals(GenericsUtil.getVariableTypeByExpressionType(parameterType))) return true;
+        PsiType returnType = GenericsUtil.getVariableTypeByExpressionType(LambdaUtil.getFunctionalInterfaceReturnType(parameterType));
+        if (type.equals(returnType)) return true;
+      }
     }
-    return false;
+    return isKotlinPassthroughMethod(method);
   }
 
   /**
@@ -469,32 +489,18 @@ public abstract class NlsInfo {
    * </ul>
    *
    * @param method                    method to check
-   * @param allowStringTransformation whether string modifications are allowed
    * @return true if method is detected to be a string-processing method. A string processing method is a method that:
    */
-  static boolean isStringProcessingMethod(PsiMethod method, boolean allowStringTransformation) {
+  static boolean isStringProcessingMethod(PsiMethod method) {
     if (method == null) return false;
     if (!(forModifierListOwner(method) instanceof Unspecified)) return false;
-    if (!(allowStringTransformation && JavaMethodContractUtil.isPure(method) || isPassthroughMethod(method))) return false;
+    if (!JavaMethodContractUtil.isPure(method)) return false;
     PsiParameter[] parameters = method.getParameterList().getParameters();
     if (parameters.length == 0) return false;
     for (PsiParameter parameter : parameters) {
       if (!(forModifierListOwner(parameter) instanceof Unspecified)) return false;
     }
     return true;
-  }
-
-  private static boolean isPassthroughMethod(PsiMethod method) {
-    PsiType type = method.getReturnType();
-    PsiTypeParameter typeParameter = ObjectUtils.tryCast(PsiUtil.resolveClassInClassTypeOnly(type), PsiTypeParameter.class);
-    if (typeParameter != null && typeParameter.getExtendsList().getReferencedTypes().length == 0) {
-      for (PsiParameter parameter : method.getParameterList().getParameters()) {
-        PsiType parameterType = parameter.getType();
-        PsiType returnType = GenericsUtil.getVariableTypeByExpressionType(LambdaUtil.getFunctionalInterfaceReturnType(parameterType));
-        if (type.equals(returnType)) return true;
-      }
-    }
-    return isKotlinPassthroughMethod(method);
   }
 
   private static boolean isKotlinPassthroughMethod(PsiMethod method) {
