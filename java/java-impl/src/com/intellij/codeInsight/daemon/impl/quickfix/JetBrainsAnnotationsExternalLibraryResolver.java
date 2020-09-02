@@ -32,7 +32,7 @@ public class JetBrainsAnnotationsExternalLibraryResolver extends ExternalLibrary
    * It must be equal to version of jetbrains-annotations library which is bundled with the IDE, the both should refer to version of the library
    * which is fully supported by the current state of IDE's inspections.
    */
-  private static final String VERSION = "20.0.0";
+  private static final String VERSION = "20.1.0";
   private static final ExternalLibraryDescriptor JAVA5 = new ExternalLibraryDescriptor("org.jetbrains", "annotations-java5",
                                                                                        null, null, VERSION);
   private static final ExternalLibraryDescriptor JAVA8 = new ExternalLibraryDescriptor("org.jetbrains", "annotations",
