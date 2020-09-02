@@ -41,6 +41,7 @@ import com.intellij.util.Processor
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.xml.DomManager
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.dom.ExtensionPoint
@@ -73,8 +74,10 @@ private fun findQualifiedCall(element: UElement?): QualifiedCall? {
 }
 
 internal class LeakSearchContext(val project: Project, val epName: String?, val ignoreSafeClasses: Boolean) {
+  @NonNls
   private val SAFE_CLASSES = setOf(CommonClassNames.JAVA_LANG_STRING, "javax.swing.Icon", "java.net.URL", "java.io.File", "java.net.URI",
                                    "com.intellij.openapi.vfs.pointers.VirtualFilePointer", "com.intellij.openapi.vfs.VirtualFile")
+  @NonNls
   private val ANONYMOUS_PASS_THROUGH = mapOf("com.intellij.openapi.util.NotNullLazyValue" to "compute")
 
   private val searchScope = GlobalSearchScopesCore.filterScope(project, ProjectProductionScope.INSTANCE)
@@ -120,7 +123,7 @@ internal class LeakSearchContext(val project: Project, val epName: String?, val 
         return analyzeGetExtensionsCall(qualifiedCall.fullExpression)
       }
       if (methodName == "findExtension" || methodName == "forLanguage") {
-        return findObjectLeaks(qualifiedCall.callExpression, "Extension instance")
+        return findObjectLeaks(qualifiedCall.callExpression, DevKitBundle.message("extension.point.analyzer.reason.extension.instance"))
       }
       if (methodName == "getName") {
         return emptyList()
@@ -135,7 +138,7 @@ internal class LeakSearchContext(val project: Project, val epName: String?, val 
 
     if (parent is UQualifiedReferenceExpression) {
       val name = (parent.referenceNameElement as? UIdentifier)?.name
-      if (name == "extensions" || name == "extensionList") {
+      if (name == "extensions" || name == "extensionList") { // NON-NLS
         return analyzeGetExtensionsCall(parent)
       }
     }
@@ -148,10 +151,10 @@ internal class LeakSearchContext(val project: Project, val epName: String?, val 
     if (loop != null) {
       if (fullExpression != loop.iteratedValue) return listOf(
         Leak(DevKitBundle.message("extension.point.analyzer.reason.call.not.loop.value"), fullExpression.sourcePsi))
-      return findVariableUsageLeaks(loop.variable, "Extension instance")
+      return findVariableUsageLeaks(loop.variable, DevKitBundle.message("extension.point.analyzer.reason.extension.instance"))
     }
 
-    return findObjectLeaks(fullExpression, "Extension list")
+    return findObjectLeaks(fullExpression, DevKitBundle.message("extension.point.analyzer.reason.extension.list"))
   }
 
   private fun findEnclosingCall(expr: UElement?): UCallExpression? {
@@ -169,7 +172,8 @@ internal class LeakSearchContext(val project: Project, val epName: String?, val 
     if (isSafeCall(callee)) {
       val type = call.returnType
       if (type == null || isSafeType(type)) return emptyList()
-      return findObjectLeaks(call, "${text}: return value of '${callee.name}' (type: ${type.presentableText})")
+      return findObjectLeaks(call, DevKitBundle.message("extension.point.analyzer.reason.return.value",
+                                                        text, callee.name, type.presentableText))
     }
     return listOf(Leak(DevKitBundle.message("extension.point.analyzer.reason.impure.method", text), call.sourcePsi))
   }
@@ -228,14 +232,16 @@ internal class LeakSearchContext(val project: Project, val epName: String?, val 
     return effectiveClass != null && psiClass.isInheritor(effectiveClass, true)
   }
   
-  private fun findObjectLeaks(e: UElement, text: String): List<Leak> {
+  private fun findObjectLeaks(e: UElement, @Nls text: String): List<Leak> {
     val targetElement = e.sourcePsi
     if (e is UExpression && targetElement != null) {
       if (!processedObjects.add(e)) {
         return emptyList()
       }
-      WindowManager.getInstance().getStatusBar(project)?.info = 
-        "Analyzing '${StringUtil.shortenTextWithEllipsis(targetElement.text, 50, 5)}' (total: ${processedObjects.size})"
+      WindowManager.getInstance().getStatusBar(project)?.info =
+        DevKitBundle.message("extension.point.analyzer.analyze.status.bar.info",
+                             StringUtil.shortenTextWithEllipsis(targetElement.text, 50, 5),
+                             processedObjects.size)
       if (tooManyObjects()) {
         return listOf(Leak(DevKitBundle.message("extension.point.analyzer.reason.too.many.visited.objects"), targetElement))
       }
@@ -250,7 +256,7 @@ internal class LeakSearchContext(val project: Project, val epName: String?, val 
         return emptyList()
       }
       if (parent is UForEachExpression && parent.iteratedValue == e) {
-        return findVariableUsageLeaks(parent.variable, "Element of $text")
+        return findVariableUsageLeaks(parent.variable, DevKitBundle.message("extension.point.analyzer.reason.element.of", text))
       }
       if (parent is USwitchClauseExpression) {
         val switchExpr = parent.getParentOfType<USwitchExpression>()
@@ -312,7 +318,7 @@ internal class LeakSearchContext(val project: Project, val epName: String?, val 
                 }
               }
               if (uElement != null) {
-                result.addAll(findObjectLeaks(uElement, "${text}: returned from method '${psiMethod.name}'"))
+                result.addAll(findObjectLeaks(uElement, DevKitBundle.message("extension.point.analyzer.reason.returned.from.method", text, psiMethod.name)))
               }
               !tooManyObjects()
             })
@@ -337,7 +343,7 @@ internal class LeakSearchContext(val project: Project, val epName: String?, val 
 
   private fun tooManyObjects() = processedObjects.size > 500
 
-  private fun findVariableUsageLeaks(variable: UVariable, text: String): List<Leak> {
+  private fun findVariableUsageLeaks(variable: UVariable, @Nls text: String): List<Leak> {
     val sourcePsi = variable.sourcePsi
     if (sourcePsi == null) {
       return listOf(Leak(DevKitBundle.message("extension.point.analyzer.reason.uast.no.source.psi", text), null))
@@ -488,7 +494,7 @@ private fun batchAnalyzeEPTagUsages(xmlTag: XmlTag, file: PsiFile, editor: Edito
 
           val epName = extensionPoint.name.xmlAttributeValue ?: return@runReadAction
           if (!ReferencesSearch.search(epName).anyMatch { isInPluginModule(it.element) }) {
-            println("Skipping EP with no extensions in plugins: " + extensionPoint.effectiveQualifiedName)
+            println("Skipping EP with no extensions in plugins: " + extensionPoint.effectiveQualifiedName) // NON-NLS
             return@runReadAction
           }
 
@@ -510,8 +516,8 @@ private fun batchAnalyzeEPTagUsages(xmlTag: XmlTag, file: PsiFile, editor: Edito
         }
       }
       ApplicationManager.getApplication().invokeLater(Runnable {
-        showEPElementUsages(file.project, DummyUsageTarget("Safe EPs"), safeEPs.mapNotNull { it.xmlElement }.map { EPElementUsage(it) })
-        showEPElementUsages(file.project, DummyUsageTarget("Unsafe EP Usages"), allUnsafeUsages)
+        showEPElementUsages(file.project, DummyUsageTarget(DevKitBundle.message("extension.point.analyzer.usage.safe.eps")), safeEPs.mapNotNull { it.xmlElement }.map { EPElementUsage(it) })
+        showEPElementUsages(file.project, DummyUsageTarget(DevKitBundle.message("extension.point.analyzer.usage.unsafe.eps")), allUnsafeUsages)
       })
     }
   }
@@ -607,7 +613,7 @@ private class EPUsageTarget(private val field: PsiField) : UsageTarget {
   override fun isValid(): Boolean = field.isValid
 }
 
-private class DummyUsageTarget(val text: String) : UsageTarget {
+private class DummyUsageTarget(@Nls val text: String) : UsageTarget {
   override fun getPresentation(): ItemPresentation? {
     return object : ItemPresentation {
       override fun getLocationString(): String? = null

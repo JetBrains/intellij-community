@@ -91,7 +91,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
                                                  InspectionI18NQuickFix fix) {
     GenericAttributeValue displayNameAttr = getAttribute(element, attributeName);
     if (displayNameAttr != null && displayNameAttr.getStringValue() != null) {
-      holder.createProblem(element, 
+      holder.createProblem(element,
                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                            DevKitBundle.message("inspections.plugin.xml.i18n.inspection.tag.family.name", attributeName), null, fix);
     }
@@ -122,7 +122,8 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
 
     holder.createProblem(action, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                          DevKitBundle.message("inspections.plugin.xml.i18n.name"),
-                         null, new ActionQuickFixAction(propertiesFile != null ? propertiesFile.getVirtualFile() : null, action instanceof Action));
+                         null, new ActionQuickFixAction(propertiesFile != null ? propertiesFile.getVirtualFile() : null,
+                                                        action instanceof Action));
   }
 
   private static boolean isInternal(@NotNull DomElement action) {
@@ -256,7 +257,9 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
         }
         shortName = InspectionProfileEntry.getShortName(StringUtil.getShortName(implementationClass));
       }
-      String key = "inspection." + StringUtil.join(NameUtilCore.splitNameIntoWords(shortName), s -> StringUtil.decapitalize(s), ".") + ".display.name";
+      @NonNls String key =
+        "inspection." + StringUtil.join(NameUtilCore.splitNameIntoWords(shortName), s -> StringUtil.decapitalize(s), ".") +
+        ".display.name";
       xml.setAttribute("key", key);
       xml.setAttribute("bundle", getBundleQName(project, propertiesFile));
 
@@ -355,7 +358,9 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
         LOG.assertTrue(rootTag != null);
         if (rootTag.findFirstSubTag("resource-bundle") == null) {
           XmlElementFactory elementFactory = XmlElementFactory.getInstance(project);
-          XmlTag rbTag = elementFactory.createTagFromText("<resource-bundle>" + getBundleQName(project, propertiesFile) +"</resource-bundle>");
+          XmlTag rbTag = elementFactory.createTagFromText("<resource-bundle>" +
+                                                          getBundleQName(project, propertiesFile) +
+                                                          "</resource-bundle>");
 
           rootTag.addSubTag(rbTag, false);
         }
@@ -375,7 +380,7 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
         String id = tag.getAttributeValue("id");
 
         List<PropertiesFile> propertiesFiles = Collections.singletonList(propertiesFile);
-        String actionOrGroupPrefix = isAction ? "action." : "group.";
+        @NonNls String actionOrGroupPrefix = isAction ? "action." : "group.";
         if (text != null) {
           JavaI18nUtil.DEFAULT_PROPERTY_CREATION_HANDLER.createProperty(project,
                                                                         propertiesFiles,
@@ -450,10 +455,10 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
           }
           WriteCommandAction.runWriteCommandAction(
             project, DevKitBundle.message("inspections.plugin.xml.i18n.key.command.name"), null, () -> {
-            for (XmlTag tag : tags) {
-              registerPropertyKey(project, tag, propertiesFile);
-            }
-          }, psiFiles.toArray(PsiFile.EMPTY_ARRAY));
+              for (XmlTag tag : tags) {
+                registerPropertyKey(project, tag, propertiesFile);
+              }
+            }, psiFiles.toArray(PsiFile.EMPTY_ARRAY));
         }
       });
     }
@@ -465,8 +470,8 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
       Separator separator = (Separator)domElement;
 
       String text = StringUtil.defaultIfEmpty(separator.getText().getStringValue(), "noText");
-      String key = "separator." + StringUtil.join(NameUtilCore.splitNameIntoWords(text),
-                                                  s -> StringUtil.trim(StringUtil.decapitalize(s)), ".");
+      @NonNls String key = "separator." + StringUtil.join(NameUtilCore.splitNameIntoWords(text),
+                                                          s -> StringUtil.trim(StringUtil.decapitalize(s)), ".");
 
       JavaI18nUtil.DEFAULT_PROPERTY_CREATION_HANDLER.createProperty(project,
                                                                     Collections.singletonList(propertiesFile),

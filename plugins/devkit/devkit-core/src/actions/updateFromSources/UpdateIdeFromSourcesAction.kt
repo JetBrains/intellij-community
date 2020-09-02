@@ -32,6 +32,7 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.libraries.LibraryUtil
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
@@ -69,7 +70,7 @@ internal open class UpdateIdeFromSourcesAction
       if (!ok) return
     }
 
-    fun error(message: String) {
+    fun error(@NlsContexts.DialogMessage message : String) {
       Messages.showErrorDialog(project, message, CommonBundle.getErrorTitle())
     }
 
@@ -78,20 +79,21 @@ internal open class UpdateIdeFromSourcesAction
     val workIdeHome = state.actualIdePath
     val restartAutomatically = state.restartAutomatically
     if (!ApplicationManager.getApplication().isRestartCapable && FileUtil.pathsEqual(workIdeHome, PathManager.getHomePath())) {
-      return error("This IDE cannot restart itself so updating from sources isn't supported")
+      return error(DevKitBundle.message("action.UpdateIdeFromSourcesAction.error.ide.cannot.restart"))
     }
 
     val notIdeHomeMessage = checkIdeHome(workIdeHome)
     if (notIdeHomeMessage != null) {
-      return error("$workIdeHome is not a valid IDE home: $notIdeHomeMessage")
+      return error(DevKitBundle.message("action.UpdateIdeFromSourcesAction.error.work.home.not.valid.ide.home",
+                                        workIdeHome, notIdeHomeMessage))
     }
 
     val scriptFile = File(devIdeaHome, "build/scripts/idea_ultimate.gant")
     if (!scriptFile.exists()) {
-      return error("$scriptFile doesn't exist")
+      return error(DevKitBundle.message("action.UpdateIdeFromSourcesAction.error.build.scripts.not.exists", scriptFile))
     }
     if (!scriptFile.readText().contains(includeBinAndRuntimeProperty)) {
-      return error("The build scripts is out-of-date, please update to the latest 'master' sources.")
+      return error(DevKitBundle.message("action.UpdateIdeFromSourcesAction.error.build.scripts.out.of.date"))
     }
 
     val bundledPluginDirsToSkip: List<String>
@@ -113,9 +115,9 @@ internal open class UpdateIdeFromSourcesAction
       nonBundledPluginDirsToInclude = emptyList()
     }
 
-    val deployDir = "$devIdeaHome/out/deploy"
-    val distRelativePath = "dist"
-    val backupDir = "$devIdeaHome/out/backup-before-update-from-sources"
+    val deployDir = "$devIdeaHome/out/deploy" // NON-NLS
+    val distRelativePath = "dist" // NON-NLS
+    val backupDir = "$devIdeaHome/out/backup-before-update-from-sources" // NON-NLS
     val params = createScriptJavaParameters(devIdeaHome, project, deployDir, distRelativePath, scriptFile,
                                             buildEnabledPluginsOnly, bundledPluginDirsToSkip, nonBundledPluginDirsToInclude) ?: return
     ProjectTaskManager.getInstance(project)
@@ -131,11 +133,11 @@ internal open class UpdateIdeFromSourcesAction
     val homeDir = File(workIdeHome)
     if (!homeDir.exists()) return null
 
-    if (homeDir.isFile) return "it is not a directory"
-    val buildTxt = if (SystemInfo.isMac) "Resources/build.txt" else "build.txt"
+    if (homeDir.isFile) return DevKitBundle.message("action.UpdateIdeFromSourcesAction.error.work.home.not.valid.ide.home.not.directory")
+    val buildTxt = if (SystemInfo.isMac) "Resources/build.txt" else "build.txt" // NON-NLS
     for (name in listOf("bin", buildTxt)) {
       if (!File(homeDir, name).exists()) {
-        return "'$name' doesn't exist"
+        return DevKitBundle.message("action.UpdateIdeFromSourcesAction.error.work.home.not.valid.ide.home.not.exists", name)
       }
     }
     return null
@@ -182,7 +184,7 @@ internal open class UpdateIdeFromSourcesAction
                   FileEditorManager.getInstance(project).openFile(LightVirtualFile("output.txt", output.joinToString("")), true)
                 })
                 .addAction(NotificationAction.createSimple(DevKitBundle.message("action.UpdateIdeFromSourcesAction.notification.action.view.debug.log")) {
-                  val logFile = LocalFileSystem.getInstance().refreshAndFindFileByPath("$deployDirPath/log/debug.log") ?: return@createSimple
+                  val logFile = LocalFileSystem.getInstance().refreshAndFindFileByPath("$deployDirPath/log/debug.log") ?: return@createSimple // NON-NLS
                   logFile.refresh(true, false)
                   FileEditorManager.getInstance(project).openFile(logFile, true)
                 })
@@ -225,7 +227,8 @@ internal open class UpdateIdeFromSourcesAction
         indicator.isIndeterminate = false
         var progress = 0
         for (i in 10 downTo 1) {
-          indicator.text = DevKitBundle.message("action.UpdateIdeFromSourcesAction.progress.text.new.installation.prepared.ide.will.restart", i)
+          indicator.text = DevKitBundle.message(
+            "action.UpdateIdeFromSourcesAction.progress.text.new.installation.prepared.ide.will.restart", i)
           repeat(10) {
             indicator.fraction = 0.01 * progress++
             indicator.checkCanceled()
@@ -279,6 +282,7 @@ internal open class UpdateIdeFromSourcesAction
     }.queue()
   }
 
+  @Suppress("HardCodedStringLiteral")
   private fun generateUpdateCommand(builtDistPath: String, workIdeHome: String): Array<String> {
     if (SystemInfo.isWindows) {
       val restartLogFile = File(PathManager.getLogPath(), "update-from-sources.log")

@@ -69,7 +69,7 @@ public final class ShuffleNamesAction extends AnAction {
 
           boolean isQuoted = quote.length() > 0;
           boolean isNumber = false;
-          if (isQuoted || type.equals("ID") || type.equals("word") || type.contains("IDENT") && !"ts".equals(text) ||
+          if (isQuoted || type.equals("ID") || type.equals("word") || type.contains("IDENT") && !"ts".equals(text) || //NON-NLS
               (isNumber = text.matches("[0-9]+"))) {
             String replacement = map.get(text);
             if (replacement == null) {

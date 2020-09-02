@@ -26,6 +26,7 @@ import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 /**
  * @author yole
  */
+@Suppress("HardCodedStringLiteral")
 class AnalyzeUnloadablePluginsAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return

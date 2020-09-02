@@ -16,6 +16,7 @@ import com.intellij.psi.util.PsiUtil
 import com.intellij.psi.xml.XmlTag
 import com.intellij.util.SmartList
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.Extension
 import org.jetbrains.idea.devkit.dom.ExtensionPoint
@@ -108,6 +109,7 @@ class NonDefaultConstructorInspection : DevKitUastInspectionBase(UClass::class.j
     return errors?.toTypedArray()
   }
 
+  @Suppress("HardCodedStringLiteral")
   private fun getArea(extensionPoint: ExtensionPoint?): Area {
     val areaName = (extensionPoint ?: return Area.IDEA_APPLICATION).area.stringValue
     when (areaName) {
@@ -171,6 +173,7 @@ private fun findExtensionPointByImplementationClass(searchString: String, qualif
 }
 
 // todo can we use attribute `with`?
+@NonNls
 private val ignoredTagNames = HashSet(
   listOf("semContributor", "modelFacade", "scriptGenerator", "editorActionHandler", "editorTypedHandler", "dataImporter", "java.error.fix",
          "explainPlanProvider"))
@@ -191,6 +194,7 @@ private fun checkAttributes(tag: XmlTag, qualifiedName: String): Boolean {
   }
 }
 
+@NonNls
 private val allowedServiceQualifiedNames = setOf(
   "com.intellij.openapi.project.Project",
   "com.intellij.openapi.module.Module",
@@ -201,6 +205,7 @@ private val allowedServiceQualifiedNames = setOf(
 )
 private val allowedServiceNames = allowedServiceQualifiedNames.map { StringUtil.getShortName(it) }
 
+@Suppress("HardCodedStringLiteral")
 private fun isAllowedParameters(list: PsiParameterList,
                                 extensionPoint: ExtensionPoint?,
                                 isAppLevelExtensionPoint: Boolean,

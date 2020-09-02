@@ -44,7 +44,7 @@ class HttpDebugListener : HttpRequestHandler() {
       val executionManager = ExecutionManager.getInstance(project)
       if (executionManager.getRunningProcesses().any { !it.isProcessTerminated }) {
         ApplicationManager.getApplication().invokeAndWait {
-          JavaAttachDebuggerProvider.attach("dt_socket", port, name, project)
+          JavaAttachDebuggerProvider.attach("dt_socket", port, name, project) // NON-NLS
         }
         HttpResponseStatus.OK.send(context.channel(), request)
         return true

@@ -24,6 +24,8 @@ import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.util.xml.DomManager
+import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.dom.IdeaPlugin
 import org.jetbrains.idea.devkit.module.PluginModuleType
@@ -80,7 +82,7 @@ class NewMessageBundleAction : CreateElementActionBase() {
   }
 
   private fun getOrCreateResourcesRoot(module: Module): PsiDirectory? {
-    fun reportError(message: String): Nothing? {
+    fun reportError(@Nls message: String): Nothing? {
       val notification =
         Notification("DevKit Errors",
                      DevKitBundle.message("action.DevKit.NewMessageBundle.notification.title.cannot.create.resources.root.for.properties.file"),
@@ -92,13 +94,14 @@ class NewMessageBundleAction : CreateElementActionBase() {
     }
     fun createResourcesRoot(): VirtualFile? {
       val contentRoot = ModuleRootManager.getInstance(module).contentRoots.singleOrNull()
-                        ?: return reportError("multiple content roots for ${module.name}")
-      val resourcesDirName = "resources"
+                        ?: return reportError(DevKitBundle.message("action.DevKit.NewMessageBundle.error.message.multiple.content.roots.for.module", module.name))
+      @NonNls val resourcesDirName = "resources"
       if (contentRoot.findChild(resourcesDirName) != null) {
-        return reportError("'$resourcesDirName' folder already exists under ${contentRoot.path}")
+        return reportError(DevKitBundle.message("action.DevKit.NewMessageBundle.error.message.folder.already.exists",
+                                                resourcesDirName, contentRoot.path))
       }
       if (ProjectFileIndex.getInstance(module.project).isInSource(contentRoot)) {
-        return reportError("${contentRoot.path} is under sources roots")
+        return reportError(DevKitBundle.message("action.DevKit.NewMessageBundle.error.message.under.sources.root", contentRoot.path))
       }
       return runWriteAction {
         val resourcesDir = contentRoot.createChildDirectory(this, resourcesDirName)
@@ -138,6 +141,7 @@ class NewMessageBundleAction : CreateElementActionBase() {
   }
 }
 
+@Suppress("HardCodedStringLiteral")
 internal fun generateDefaultBundleName(module: Module): String {
   val nameWithoutPrefix = module.name.removePrefix("intellij.").removeSuffix(".impl")
   val commonGroupNames = listOf("platform", "vcs", "tools", "clouds")

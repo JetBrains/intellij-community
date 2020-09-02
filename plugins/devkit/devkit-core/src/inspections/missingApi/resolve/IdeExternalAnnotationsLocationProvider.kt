@@ -29,6 +29,7 @@ class IdeExternalAnnotationsLocationProvider : AnnotationsLocationProvider {
     return emptyList()
   }
 
+  @Suppress("HardCodedStringLiteral")
   private fun getAnnotationsLocations(ideVersion: String): List<AnnotationsLocation> {
     val annotationsVersion = if (ideVersion.endsWith("-SNAPSHOT")) {
       ideVersion

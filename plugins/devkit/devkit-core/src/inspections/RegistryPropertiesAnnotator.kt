@@ -41,6 +41,7 @@ class RegistryPropertiesAnnotator : Annotator {
     }
 
     val groupName = propertyName.substringBefore('.').toLowerCase()
+    @Suppress("HardCodedStringLiteral")
     if (PLUGIN_GROUP_NAMES.contains(groupName) ||
         propertyName.startsWith("editor.config.")) {
       holder.newAnnotation(HighlightSeverity.ERROR, DevKitBundle.message("registry.properties.annotator.plugin.keys.use.ep"))
@@ -69,7 +70,7 @@ class RegistryPropertiesAnnotator : Annotator {
       val propertiesFile = file as PropertiesFile
       val defaultValue = propertiesFile.findPropertyByKey(propertyName)!!.value
       val description = propertiesFile.findPropertyByKey(propertyName + DESCRIPTION_SUFFIX)?.value
-      var restartRequiredText = ""
+      @NonNls var restartRequiredText = ""
       if (propertiesFile.findPropertyByKey(propertyName + RESTART_REQUIRED_SUFFIX) != null) {
         restartRequiredText = "restartRequired=\"true\""
       }
@@ -95,6 +96,7 @@ class RegistryPropertiesAnnotator : Annotator {
 
     override fun isAvailable(project: Project, editor: Editor, file: PsiFile): Boolean = true
 
+    @Suppress("HardCodedStringLiteral")
     @Throws(IncorrectOperationException::class)
     override fun invoke(project: Project, editor: Editor, file: PsiFile) {
       val propertiesFile = file as PropertiesFile

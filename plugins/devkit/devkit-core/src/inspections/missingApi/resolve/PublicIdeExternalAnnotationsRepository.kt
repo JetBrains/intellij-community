@@ -6,6 +6,7 @@ import com.intellij.jarRepository.RemoteRepositoryDescription
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.maven.aether.ArtifactKind
 import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
 
@@ -15,6 +16,7 @@ import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
  */
 class PublicIdeExternalAnnotationsRepository(private val project: Project) : IdeExternalAnnotationsRepository {
 
+  @Suppress("HardCodedStringLiteral")
   companion object {
     const val RELEASES_REPO_URL = "https://www.jetbrains.com/intellij-repository/releases/"
     const val SNAPSHOTS_REPO_URL = "https://www.jetbrains.com/intellij-repository/snapshots/"
@@ -47,19 +49,20 @@ class PublicIdeExternalAnnotationsRepository(private val project: Project) : Ide
       return lastReleaseAnnotations
     }
 
-    val snapshotVersion = "${ideBuildNumber.baselineVersion}-SNAPSHOT"
+    @NonNls val snapshotVersion = "${ideBuildNumber.baselineVersion}-SNAPSHOT"
     val snapshotAnnotations = tryDownload(groupId, artifactId, snapshotVersion, listOf(SNAPSHOTS_REPO_DESCRIPTION))
     if (snapshotAnnotations != null && snapshotAnnotations.annotationsBuild >= ideBuildNumber) {
       return snapshotAnnotations
     }
 
-    val latestTrunkSnapshot = "LATEST-TRUNK-SNAPSHOT"
+    @NonNls val latestTrunkSnapshot = "LATEST-TRUNK-SNAPSHOT"
     val latestTrunkSnapshotAnnotations = tryDownload(groupId, artifactId, latestTrunkSnapshot, listOf(SNAPSHOTS_REPO_DESCRIPTION))
     if (latestTrunkSnapshotAnnotations != null && latestTrunkSnapshotAnnotations.annotationsBuild >= ideBuildNumber) {
       return latestTrunkSnapshotAnnotations
     }
 
-    return sequenceOf(lastReleaseAnnotations, snapshotAnnotations, latestTrunkSnapshotAnnotations).filterNotNull().maxBy { it.annotationsBuild }
+    return sequenceOf(lastReleaseAnnotations, snapshotAnnotations,
+                      latestTrunkSnapshotAnnotations).filterNotNull().maxBy { it.annotationsBuild }
   }
 
   private fun tryDownload(

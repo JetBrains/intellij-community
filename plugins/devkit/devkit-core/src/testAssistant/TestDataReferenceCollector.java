@@ -50,7 +50,7 @@ public class TestDataReferenceCollector {
     myContainingClass = ReadAction.compute(() -> method.getContainingClass());
     List<TestDataFile> result = collectTestDataReferences(method, new HashMap<>(), new HashSet<>());
     if (!myFoundTestDataParameters) {
-      myLogMessages.add("Found no parameters annotated with @TestDataFile");
+      myLogMessages.add("Found no parameters annotated with @TestDataFile"); //NON-NLS
     }
 
     if (collectByExistingFiles && result.isEmpty()) {
