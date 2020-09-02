@@ -12,22 +12,38 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.StringUtil.toLowerCase
+import com.intellij.openapi.util.text.Strings
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.LightVirtualFile
-import com.intellij.util.PathUtil
-import java.io.File
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.text.NameUtilCore
 
 class FilePredictionSimilarityFeatures : FilePredictionFeatureProvider {
   companion object {
     private val FEATURES = arrayListOf(
+      "ancestor",
+      "common",
+      "common_norm",
+      "common_words",
+      "common_words_norm",
+      "distance",
+      "distance_norm",
       "excluded",
       "in_library",
       "in_project",
       "in_source",
       "light",
       "name_prefix",
+      "name_prefix_norm",
       "path_prefix",
+      "path_prefix_norm",
+      "relative_common",
+      "relative_common_norm",
+      "relative_distance",
+      "relative_distance_norm",
       "relative_path_prefix",
+      "relative_path_prefix_norm",
       "same_dir",
       "same_module"
     )
@@ -60,26 +76,83 @@ class FilePredictionSimilarityFeatures : FilePredictionFeatureProvider {
 
     if (prevFile != null) {
       val newFileName = unify(newFile.name)
-      val newFilePath = unify(newFile.path)
       val prevFileName = unify(prevFile.name)
-      result["name_prefix"] = numerical(StringUtil.commonPrefixLength(newFileName, prevFileName))
+      addNameSimilarity(newFileName, prevFileName, result)
 
-      val prevFilePath = unify(prevFile.path)
-      result["path_prefix"] = numerical(StringUtil.commonPrefixLength(newFilePath, prevFilePath))
+      addPathSimilarity(newFile, prevFile, null, "", result)
 
       if (!project.isDisposed) {
-        val baseDir = project.guessProjectDir()?.path?.let { unify(it) }
-        if (baseDir != null) {
-          val newRelativePath = FileUtil.getRelativePath(baseDir, newFilePath, File.separatorChar, false)
-          val prevRelativePath = FileUtil.getRelativePath(baseDir, prevFilePath, File.separatorChar, false)
-          if (newRelativePath != null && prevRelativePath != null) {
-            result["relative_path_prefix"] = numerical(StringUtil.commonPrefixLength(newRelativePath, prevRelativePath))
-          }
+        val baseDir = project.guessProjectDir()
+        if (baseDir != null && VfsUtil.isAncestor(baseDir, newFile, false) && VfsUtil.isAncestor(baseDir, prevFile, false)) {
+          addPathSimilarity(newFile, prevFile, baseDir, "relative_", result)
         }
       }
-      result["same_dir"] = binary(PathUtil.getParentPath(newFilePath) == PathUtil.getParentPath(prevFilePath))
+
+      val newDir = newFile.parent
+      val prevDir = prevFile.parent
+      result["same_dir"] = binary(FileUtil.pathsEqual(newDir.path, prevDir.path))
+
+      val isAncestor =
+        FileUtil.isAncestor(newDir.path, prevDir.path, false) ||
+        FileUtil.isAncestor(prevDir.path, newDir.path, false)
+      result["ancestor"] = binary(isAncestor)
     }
     return result
+  }
+
+  private fun addPathSimilarity(newFile: VirtualFile,
+                                prevFile: VirtualFile,
+                                root: VirtualFile?,
+                                prefix: String,
+                                result: HashMap<String, FilePredictionFeature>) {
+    val newPath = getRelativePath(newFile, root)
+    val prevPath = getRelativePath(prevFile, root)
+    val commonPrefixLen = StringUtil.commonPrefixLength(newPath, prevPath)
+    result["${prefix}path_prefix"] = numerical(commonPrefixLen)
+    result["${prefix}path_prefix_norm"] = numerical((2 * commonPrefixLen.toDouble()) / (newPath.length + prevPath.length))
+
+    val newDirs = FileUtil.splitPath(newPath, '/')
+    val prevDirs = FileUtil.splitPath(prevPath, '/')
+    val common = findCommonAncestor(newDirs, prevDirs)
+
+    val maxDistance = newDirs.size + prevDirs.size - 2
+    result["${prefix}common"] = numerical(common)
+    result["${prefix}common_norm"] = numerical(if (maxDistance != 0) (2 * common.toDouble()) / maxDistance else 0.0)
+
+    val distance = maxDistance - 2 * common
+    result["${prefix}distance"] = numerical(distance)
+    result["${prefix}distance_norm"] = numerical(if (maxDistance != 0) (distance.toDouble() / maxDistance) else 0.0)
+  }
+
+  private fun findCommonAncestor(newDirs: List<String>, prevDirs: List<String>): Int {
+    var i = 0
+    while (i < newDirs.size - 1 && i < prevDirs.size - 1 && FileUtil.namesEqual(newDirs[i], prevDirs[i])) i++
+    return i
+  }
+
+  private fun getRelativePath(file: VirtualFile, ancestor: VirtualFile?): String {
+    if (ancestor != null) {
+      val relative = VfsUtil.getRelativePath(file, ancestor)
+      if (relative != null) {
+        return unify(relative)
+      }
+    }
+    return unify(file.path)
+  }
+
+  private fun addNameSimilarity(newFileName: String, prevFileName: String, result: HashMap<String, FilePredictionFeature>) {
+    val commonPrefixLen = StringUtil.commonPrefixLength(newFileName, prevFileName)
+    result["name_prefix"] = numerical(commonPrefixLen)
+    result["name_prefix_norm"] = numerical((2 * commonPrefixLen.toDouble()) / (newFileName.length + prevFileName.length))
+
+    var common = 0
+    val newWords = ContainerUtil.map2Set(NameUtilCore.nameToWords(newFileName), Strings::toLowerCase)
+    val prevWords = ContainerUtil.map2Set(NameUtilCore.nameToWords(prevFileName), Strings::toLowerCase)
+    for (prevWord in prevWords) {
+      if (newWords.contains(prevWord)) common++
+    }
+    result["common_words"] = numerical(common)
+    result["common_words_norm"] = numerical((2 * common.toDouble()) / (newWords.size + prevWords.size))
   }
 
   private fun unify(path: String): String {
