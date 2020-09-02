@@ -294,6 +294,10 @@ public final class Bookmark implements Navigatable, Comparable<Bookmark> {
     return targetLine;
   }
 
+  public boolean hasLine() {
+    return myTarget.getLine() >= 0;
+  }
+
   @NotNull
   private OpenFileDescriptor getTarget() {
     int line = getLine();

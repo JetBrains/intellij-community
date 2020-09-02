@@ -41,7 +41,7 @@ class BookmarkUsagesCollector : ProjectUsagesCollector() {
     val bookmarks = bookmarkManager.allBookmarks
 
     result += bookmarksTotal.metric(bookmarks.size)
-    result += bookmarksWithLine.metric(bookmarks.filter { it.line >= 0 }.size)
+    result += bookmarksWithLine.metric(bookmarks.filter { it.hasLine() }.size)
     result += bookmarksWithNumber.metric(bookmarks.filter { it.mnemonic in '0'..'9' }.size)
     result += bookmarksWithLetter.metric(bookmarks.filter { it.mnemonic in 'A'..'Z' }.size)
 
@@ -91,7 +91,7 @@ class BookmarkCounterCollector : CounterUsagesCollector() {
     val bookmarkNavigate = group.registerEvent("bookmark.navigate",
                                                EventFields.Boolean("numberMnemonicUsed"),
                                                EventFields.Boolean("letterMnemonicUsed"),
-                                               EventFields.Boolean("withLine"));
+                                               EventFields.Boolean("withLine"))
   }
 
   override fun getGroup(): EventLogGroup = Companion.group
