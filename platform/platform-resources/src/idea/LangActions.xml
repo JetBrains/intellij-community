@@ -1054,7 +1054,6 @@
     <group id="TestTreePopupMenu">
       <reference ref="RunContextGroup"/>
       <reference ref="EditSource"/>
-      <reference ref="ViewSource"/>
     </group>
 
     <group id="ConsoleView.PopupMenu">
