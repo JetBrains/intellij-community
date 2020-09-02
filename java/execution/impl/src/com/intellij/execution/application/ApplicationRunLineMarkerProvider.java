@@ -28,7 +28,7 @@ public class ApplicationRunLineMarkerProvider extends RunLineMarkerContributor {
       if (element instanceof PsiClass && PsiMethodUtil.findMainInClass((PsiClass)element) != null ||
           element instanceof PsiMethod && "main".equals(((PsiMethod)element).getName()) && PsiMethodUtil.isMainMethod((PsiMethod)element)) {
 
-        if (containingFile instanceof PsiJavaFile && HighlightClassUtil.isJavaHashBangScript((PsiJavaFile)containingFile)) {
+        if (HighlightClassUtil.isJavaHashBangScript(containingFile)) {
           return null;
         }
 
