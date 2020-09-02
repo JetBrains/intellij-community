@@ -95,6 +95,12 @@ class BuildOptions {
   boolean buildDmgWithoutBundledJre = SystemProperties.getBooleanProperty(BUILD_DMG_WITHOUT_BUNDLED_JRE, SystemProperties.getBooleanProperty("artifact.mac.no.jdk", false))
 
   /**
+   * Pass 'false' to this system property to skip building .dmg with bundled JRE.
+   */
+  public static final String BUILD_DMG_WITH_BUNDLED_JRE = "intellij.build.dmg.with.bundled.jre"
+  boolean buildDmgWithBundledJre = SystemProperties.getBooleanProperty(BUILD_DMG_WITH_BUNDLED_JRE, true)
+
+  /**
    * Pass 'true' to this system property to produce .snap packages.
    * A build configuration should have "docker.version >= 17" in requirements.
    */
