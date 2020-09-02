@@ -1,10 +1,10 @@
 package com.intellij.space.vcs.review
 
-import circlet.client.api.ProjectKey
 import com.intellij.openapi.project.Project
 import com.intellij.space.components.space
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.space.settings.SpaceSettingsPanel
+import com.intellij.space.vcs.SpaceProjectInfo
 import com.intellij.space.vcs.SpaceRepoInfo
 import com.intellij.space.vcs.review.list.SpaceReviewsListVmImpl
 import com.intellij.ui.components.labels.LinkLabel
@@ -13,11 +13,11 @@ import com.intellij.util.ui.UIUtil
 import libraries.coroutines.extra.Lifetime
 
 internal class ReviewLoginComponent(lifetime: Lifetime,
-                           project: Project,
-                           projectKey: ProjectKey,
-                           repoInfo: Set<SpaceRepoInfo>) {
+                                    project: Project,
+                                    spaceProjectInfo: SpaceProjectInfo,
+                                    repoInfo: Set<SpaceRepoInfo>) {
 
-  private val vm = ReviewVm(lifetime, project, projectKey)
+  private val vm = ReviewVm(lifetime, project, spaceProjectInfo.key)
 
   val view = Wrapper().apply {
     background = UIUtil.getListBackground()
@@ -38,7 +38,7 @@ internal class ReviewLoginComponent(lifetime: Lifetime,
                                                           space.workspace.value!!.client,
                                                           SpaceReviewsListVmImpl(lifetime,
                                                                                  space.workspace.value!!.client,
-                                                                                 projectKey,
+                                                                                 spaceProjectInfo.key,
                                                                                  space.workspace.value!!.me),
                                                           SpaceSelectedReviewVmImpl()
         )

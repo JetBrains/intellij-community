@@ -1,6 +1,5 @@
 package com.intellij.space.vcs.review
 
-import circlet.client.api.ProjectKey
 import circlet.workspaces.Workspace
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
@@ -9,6 +8,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.space.components.space
 import com.intellij.space.vcs.Context
 import com.intellij.space.vcs.SpaceProjectContext
+import com.intellij.space.vcs.SpaceProjectInfo
 import com.intellij.space.vcs.SpaceRepoInfo
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
@@ -17,8 +17,6 @@ import icons.SpaceIcons
 import libraries.coroutines.extra.LifetimeSource
 import runtime.reactive.Property
 import runtime.reactive.mapInit
-import javax.swing.JPanel
-import kotlin.collections.set
 
 @Service
 internal class SpaceCodeReviewTabManager(private val project: Project) {
@@ -39,23 +37,20 @@ internal class SpaceCodeReviewTabContentManager(private val project: Project, pr
   private val workspace: Property<Workspace?> = space.workspace
   private val context: Property<Context> = SpaceProjectContext.getInstance(project).context
 
-  private val contents: Property<MutableMap<String, Content>> =
-    lifetime.mapInit(workspace, context, HashMap()) { ws, context ->
+  private val contents: Property<MutableMap<SpaceProjectInfo, Content>> =
+    lifetime.mapInit(workspace, context, mutableMapOf()) { ws, context ->
       if (ws == null) {
-        return@mapInit HashMap<String, Content>()
+        return@mapInit mutableMapOf<SpaceProjectInfo, Content>()
       }
 
       if (!context.isAssociatedWithSpaceRepository) {
-        return@mapInit HashMap<String, Content>()
+        return@mapInit mutableMapOf<SpaceProjectInfo, Content>()
       }
 
-      val result = HashMap<String, Content>()
+      val result = HashMap<SpaceProjectInfo, Content>()
       context.reposInProject.forEach {
-        val (prKey, spaceProject) = it.key
-        val repoInfo = it.value
-        val key = prKey.key
-        val content = createContent(project, prKey, repoInfo)
-        result[key] = content
+        val content = createContent(project, it.key, it.value)
+        result[it.key] = content
       }
       result
     }
@@ -70,7 +65,6 @@ internal class SpaceCodeReviewTabContentManager(private val project: Project, pr
 
       next.keys.filter { key -> !(prev?.contains(key) ?: false) }
         .forEach {
-          println("content added ${it}")
           cm.addContent(next[it]!!)
           cm.setSelectedContent(next[it]!!)
         }
@@ -78,12 +72,12 @@ internal class SpaceCodeReviewTabContentManager(private val project: Project, pr
   }
 
   private fun createContent(project: Project,
-                            projectKey: ProjectKey,
-                            repoInfo: Set<SpaceRepoInfo>): Content {
+                            spaceProjectInfo: SpaceProjectInfo,
+                            projectRepos: Set<SpaceRepoInfo>): Content {
     val lifeTime = LifetimeSource()
     val factory = ContentFactory.SERVICE.getInstance()
 
-    return factory.createContent(JPanel(null), projectKey.key, false).apply {
+    return factory.createContent(null, spaceProjectInfo.project.name, false).apply {
       val disposable = Disposable {
         lifeTime.terminate()
       }
@@ -91,8 +85,8 @@ internal class SpaceCodeReviewTabContentManager(private val project: Project, pr
       setDisposer(disposable)
       icon = SpaceIcons.Main
 
-      component = ReviewLoginComponent(lifetime, project, projectKey, repoInfo).view
-      description = projectKey.key
+      component = ReviewLoginComponent(lifetime, project, spaceProjectInfo, projectRepos).view
+      description = spaceProjectInfo.key.key
     }
   }
 }
