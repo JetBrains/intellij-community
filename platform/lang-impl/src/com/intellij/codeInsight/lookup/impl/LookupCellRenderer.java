@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
@@ -118,6 +119,11 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
       myLookup.requestResize();
       myLookup.refreshUi(true, false);
     }, 50);
+    Disposer.register(lookup, () -> {
+      synchronized (myWidthChangeAlarm) {
+        Disposer.dispose(myWidthChangeAlarm);
+      }
+    });
   }
 
   private boolean myIsSelected = false;
@@ -504,7 +510,8 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
 
     int maxWidth = myLookupTextWidth;
     for (var item : visibleItems) {
-      LookupElementPresentation presentation = myAsyncRendering.getLastComputed(item);
+      LookupElementPresentation presentation = myAsyncRendering.tryGetLastComputed(item);
+      if (presentation == null) continue;
 
       final Font customFont = getFontAbleToDisplay(presentation);
       if (customFont != null) {
@@ -526,7 +533,9 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
   }
 
   private void scheduleLookupUpdate() {
-    myWidthChangeAlarm.cancelAndRequest();
+    if (!myWidthChangeAlarm.isDisposed()) {
+      myWidthChangeAlarm.cancelAndRequest();
+    }
   }
 
   void itemAdded(@NotNull LookupElement element, @NotNull LookupElementPresentation fastPresentation) {
