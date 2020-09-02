@@ -18,13 +18,13 @@ public abstract class PrevNextOccurrenceAction extends DumbAwareAction implement
                                                                                   LightEditCompatible {
   protected final boolean mySearch;
 
-  PrevNextOccurrenceAction(@NotNull String templateActionId, boolean search) {
+  public PrevNextOccurrenceAction(@NotNull String templateActionId, boolean search) {
     mySearch = search;
     ActionUtil.copyFrom(this, templateActionId);
   }
 
   @Override
-  public final void update(@NotNull AnActionEvent e) {
+  public void update(@NotNull AnActionEvent e) {
     SearchSession search = e.getData(SearchSession.KEY);
     e.getPresentation().setEnabled(search != null && !search.isSearchInProgress() && search.hasMatches());
   }
