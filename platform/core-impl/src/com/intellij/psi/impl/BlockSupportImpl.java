@@ -112,10 +112,11 @@ public class BlockSupportImpl extends BlockSupport {
     final CharTable charTable = fileElement.getCharTable();
     int lengthShift = newFileText.length() - fileElement.getTextLength();
 
-    if (fileElement.getElementType() instanceof ITemplateDataElementType || isTooDeep(file)) {
-      // unable to perform incremental reparse for template data in JSP, or in exceptionally deep trees
+    if (isTooDeep(file)) {
       return null;
     }
+
+    boolean isTemplateFile = fileElement.getElementType() instanceof ITemplateDataElementType;
 
     final ASTNode leafAtStart = fileElement.findLeafElementAt(Math.max(0, changedPsiRange.getStartOffset() - 1));
     final ASTNode leafAtEnd = fileElement.findLeafElementAt(Math.min(changedPsiRange.getEndOffset(), fileElement.getTextLength() - 1));
@@ -165,15 +166,19 @@ public class BlockSupportImpl extends BlockSupport {
     TextRange startLeafRange = leafAtStart == null ? null : leafAtStart.getTextRange();
     TextRange endLeafRange = leafAtEnd == null ? null : leafAtEnd.getTextRange();
 
-    if (PsiUtilCore.getElementType(leafAtStart) instanceof IReparseableLeafElementType &&
-        startLeafRange.getEndOffset() == changedPsiRange.getEndOffset()) {
+    IElementType startLeafType = PsiUtilCore.getElementType(leafAtStart);
+    if (startLeafType instanceof IReparseableLeafElementType &&
+        startLeafRange.getEndOffset() == changedPsiRange.getEndOffset() &&
+        (!isTemplateFile || startLeafType instanceof OuterLanguageElementType)) {
       Couple<ASTNode> reparseResult = reparseNodeFunction.apply(leafAtStart);
       if (reparseResult != null && reparseResult.first != null) {
         return reparseResult;
       }
     }
-    if (PsiUtilCore.getElementType(leafAtEnd) instanceof IReparseableLeafElementType &&
-        endLeafRange.getStartOffset() == changedPsiRange.getStartOffset()) {
+    IElementType endLeafType = PsiUtilCore.getElementType(leafAtEnd);
+    if (endLeafType instanceof IReparseableLeafElementType &&
+        endLeafRange.getStartOffset() == changedPsiRange.getStartOffset() &&
+        (!isTemplateFile || endLeafType instanceof OuterLanguageElementType)) {
       Couple<ASTNode> reparseResult = reparseNodeFunction.apply(leafAtEnd);
       if (reparseResult != null && reparseResult.first != null) {
         return reparseResult;
@@ -181,6 +186,9 @@ public class BlockSupportImpl extends BlockSupport {
     }
 
     while (node != null && !(node instanceof FileElement)) {
+      if (isTemplateFile && !(PsiUtilCore.getElementType(node) instanceof OuterLanguageElementType)) {
+        break;
+      }
       Couple<ASTNode> couple = reparseNodeFunction.apply(node);
       if (couple != null) {
         if (couple.first == null) {
