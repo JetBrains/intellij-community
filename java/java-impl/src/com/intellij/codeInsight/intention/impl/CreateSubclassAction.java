@@ -46,6 +46,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -57,6 +58,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.SmartHashSet;
 import com.siyeh.ig.psiutils.SealedUtils;
 import org.jetbrains.annotations.NotNull;
@@ -213,9 +215,16 @@ public class CreateSubclassAction extends BaseIntentionAction {
   }
 
   private static boolean hasOnlySameFileInheritors(PsiClass psiClass) {
-    if (!psiClass.hasModifierProperty(PsiModifier.SEALED)) return false;
-    return DirectClassInheritorsSearch.search(psiClass)
-      .allMatch(inheritor -> inheritor.getContainingFile() == psiClass.getContainingFile());
+    if (!psiClass.hasModifierProperty(PsiModifier.SEALED) || psiClass.getPermitsList() != null) return false;
+    Ref<Boolean> hasInheritors = Ref.create(false);
+    boolean hasOnlySameFileInheritors = DirectClassInheritorsSearch.search(psiClass).forEach((Processor<? super PsiClass>) inheritor -> {
+      if (inheritor.getContainingFile() != psiClass.getContainingFile()) {
+        return false;
+      }
+      hasInheritors.set(true);
+      return true;
+    });
+    return hasOnlySameFileInheritors && hasInheritors.get();
   }
 
   @Nullable
@@ -305,7 +314,7 @@ public class CreateSubclassAction extends BaseIntentionAction {
       else {
         ref = (PsiJavaCodeReferenceElement)targetClass.getExtendsList().add(ref);
       }
-      if (psiClass.hasModifierProperty(PsiModifier.SEALED)) {
+      if (psiClass.hasModifierProperty(PsiModifier.SEALED) && psiClass.getContainingFile() != targetClass.getContainingFile()) {
         String createdClassName = Objects.requireNonNull(targetClass.getQualifiedName());
         SmartHashSet<String> missingInheritors = new SmartHashSet<>();
         missingInheritors.add(createdClassName);

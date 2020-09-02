@@ -1,4 +1,4 @@
-public sealed class Superclass permits B, Subclass {
+public sealed class Superclass {
   public void foo() {}
 }
 
