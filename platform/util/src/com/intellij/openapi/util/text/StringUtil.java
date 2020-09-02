@@ -438,8 +438,13 @@ public class StringUtil extends StringUtilRt {
               // filter out abbreviations like I18n, SQL and CSS
               continue;
             }
-            if (prevChar == '.' && i > 1 && s.charAt(i - 2) == ' ') {
-              // file extension like .java; don't change its capitalization
+            char prevPrevChar = i > 1 ? s.charAt(i - 2) : 0;
+            if (prevChar == '.' && (prevPrevChar == ' ' || prevPrevChar == '*')) {
+              // file extension like .java or *.java; don't change its capitalization
+              continue;
+            }
+            if (prevChar == '~' && prevPrevChar == ' ') {
+              // special string like ~java or _java; keep it as is
               continue;
             }
             if (!isPreposition(s, i, j - 1, prepositions)) {
