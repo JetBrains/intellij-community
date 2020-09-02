@@ -328,7 +328,7 @@ public abstract class NlsInfo {
     return Unspecified.UNKNOWN;
   }
 
-  static boolean expressionsAreEquivalent(UExpression expr1, UExpression expr2) {
+  static boolean expressionsAreEquivalent(@NotNull UExpression expr1, @NotNull UExpression expr2) {
     return normalize(expr1).equals(normalize(expr2));
   }
 
@@ -400,10 +400,12 @@ public abstract class NlsInfo {
           parentElement = elvis;
         }
       }
-      if (parentElement instanceof UExpressionList &&
-          expressionsAreEquivalent(parent, ContainerUtil.getLastItem(((UExpressionList)parentElement).getExpressions()))) {
-        // Result of expression list is the last expression in the list in Kotlin
-        parentElement = parentElement.getUastParent();
+      if (parentElement instanceof UExpressionList) {
+        UExpression lastExpression = ContainerUtil.getLastItem(((UExpressionList)parentElement).getExpressions());
+        if (lastExpression != null && expressionsAreEquivalent(parent, lastExpression)) {
+          // Result of expression list is the last expression in the list in Kotlin
+          parentElement = parentElement.getUastParent();
+        }
       }
       UExpression next = ObjectUtils.tryCast(parentElement, UExpression.class);
       if (next == null || next instanceof UNamedExpression) return parent;
@@ -452,7 +454,7 @@ public abstract class NlsInfo {
   private static boolean isPassthroughParameter(PsiMethod method, UCallExpression call, UExpression arg) {
     if (GET_OR_DEFAULT.methodMatches(method)) {
       UExpression argument = call.getArgumentForParameter(1);
-      if (expressionsAreEquivalent(argument, arg)) return true;
+      if (argument != null && expressionsAreEquivalent(argument, arg)) return true;
     }
     return false;
   }
