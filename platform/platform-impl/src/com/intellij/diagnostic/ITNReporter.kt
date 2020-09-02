@@ -122,7 +122,7 @@ private fun onError(project: Project?,
   ApplicationManager.getApplication().invokeLater {
     if (e is UpdateAvailableException) {
       val message = DiagnosticBundle.message("error.report.new.eap.build.message", e.message)
-      val title = "Report Exception"
+      val title = DiagnosticBundle.message("dialog.title.report.exception")
       val icon = Messages.getWarningIcon()
       if (parentComponent.isShowing) Messages.showMessageDialog(parentComponent, message, title, icon)
       else Messages.showMessageDialog(project, message, title, icon)

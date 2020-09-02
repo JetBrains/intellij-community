@@ -272,7 +272,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     if (myAssigneeVisible) {
       myAssigneeCombo = new ComboBox<>();
-      myAssigneeCombo.setRenderer(SimpleListCellRenderer.create("<none>", Developer::getDisplayText));
+      myAssigneeCombo.setRenderer(SimpleListCellRenderer.create(DiagnosticBundle.message("errors.dialog.assignee.none"), Developer::getDisplayText));
       myAssigneeCombo.setPrototypeDisplayValue(new Developer(0, StringUtil.repeatSymbol('-', 30)));
       myAssigneeCombo.addItemListener(e -> {
         if (e.getStateChange() == ItemEvent.SELECTED) {
@@ -286,6 +286,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       myAssigneePanel.add(myAssigneeCombo);
     }
 
+    //noinspection HardCodedStringLiteral,DialogTitleCapitalization
     myCredentialsLabel = ComponentsKt.htmlComponent("height sample", null, null, null, false, e -> {
       if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
         ErrorReportSubmitter submitter = selectedCluster().submitter;

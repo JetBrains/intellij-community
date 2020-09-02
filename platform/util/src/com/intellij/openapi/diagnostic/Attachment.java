@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diagnostic;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ExceptionUtil;
@@ -55,11 +56,13 @@ public class Attachment {
   }
 
   @NotNull
+  @NlsSafe
   public String getPath() {
     return myPath;
   }
 
   @NotNull
+  @NlsSafe
   public String getName() {
     return PathUtilRt.getFileName(myPath);
   }
