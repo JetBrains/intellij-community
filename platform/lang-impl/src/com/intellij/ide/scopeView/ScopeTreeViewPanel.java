@@ -50,17 +50,14 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.packageDependencies.ui.*;
-import com.intellij.problems.ProblemListener;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.psi.*;
-import com.intellij.psi.search.scope.ProblemsScope;
 import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
-import com.intellij.util.Function;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
@@ -172,7 +169,6 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
     final MessageBusConnection connection = myProject.getMessageBus().connect(this);
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyModuleRootListener());
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(myPsiTreeChangeAdapter, this);
-    connection.subscribe(ProblemListener.TOPIC, new MyProblemListener());
     FileStatusManager.getInstance(myProject).addFileStatusListener(myFileStatusListener, this);
   }
 
@@ -455,24 +451,23 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
         }
         final PsiElement psiElement = node.getPsiElement();
         textAttributes.setForegroundColor(CopyPasteManager.getInstance().isCutElement(psiElement) ? CopyPasteManager.CUT_COLOR : node.getColor());
-        if (getCurrentScope() != ProblemsScope.INSTANCE) {
-          final PsiFile containingFile = psiElement != null ? psiElement.getContainingFile() : null;
-          final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(psiElement);
-          boolean isProblem;
-          if (containingFile != null) {
-            isProblem = virtualFile != null && myWolfTheProblemSolver.isProblemFile(virtualFile);
-          }
-          else if (virtualFile != null) {
-            isProblem = myWolfTheProblemSolver.hasProblemFilesBeneath(file -> VfsUtilCore.isAncestor(virtualFile, file, false));
-          }
-          else {
-            final Module module =  node instanceof ModuleNode ? ((ModuleNode)node).getModule() : null;
-            isProblem = module != null && myWolfTheProblemSolver.hasProblemFilesBeneath(module);
-          }
-          if (isProblem) {
-            textAttributes.setEffectColor(JBColor.RED);
-            textAttributes.setEffectType(EffectType.WAVE_UNDERSCORE);
-          }
+
+        final PsiFile containingFile = psiElement != null ? psiElement.getContainingFile() : null;
+        final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(psiElement);
+        boolean isProblem;
+        if (containingFile != null) {
+          isProblem = virtualFile != null && myWolfTheProblemSolver.isProblemFile(virtualFile);
+        }
+        else if (virtualFile != null) {
+          isProblem = myWolfTheProblemSolver.hasProblemFilesBeneath(file -> VfsUtilCore.isAncestor(virtualFile, file, false));
+        }
+        else {
+          final Module module =  node instanceof ModuleNode ? ((ModuleNode)node).getModule() : null;
+          isProblem = module != null && myWolfTheProblemSolver.hasProblemFilesBeneath(module);
+        }
+        if (isProblem) {
+          textAttributes.setEffectColor(JBColor.RED);
+          textAttributes.setEffectType(EffectType.WAVE_UNDERSCORE);
         }
         append(node.toString(), SimpleTextAttributes.fromTextAttributes(textAttributes));
 
@@ -811,51 +806,6 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
 
   public DnDAwareTree getTree() {
     return myTree;
-  }
-
-  private class MyProblemListener implements ProblemListener {
-    @Override
-    public void problemsAppeared(@NotNull VirtualFile file) {
-      addNode(file, ProblemsScope.getNameText());
-    }
-
-    @Override
-    public void problemsDisappeared(@NotNull VirtualFile file) {
-      removeNode(file, ProblemsScope.getNameText());
-    }
-  }
-
-  private void addNode(VirtualFile file, final String scopeName) {
-    queueUpdate(file, psiFile -> myBuilder.addFileNode(psiFile), scopeName);
-  }
-
-  private void removeNode(VirtualFile file, final String scopeName) {
-    queueUpdate(file, psiFile -> myBuilder.removeNode(psiFile, psiFile.getContainingDirectory()), scopeName);
-  }
-
-  private void queueUpdate(final VirtualFile fileToRefresh,
-                           final Function<? super PsiFile, ? extends DefaultMutableTreeNode> rootToReloadGetter, final String scopeName) {
-    if (myProject.isDisposed()) return;
-    AbstractProjectViewPane pane = ProjectView.getInstance(myProject).getCurrentProjectViewPane();
-    if (pane == null || !ScopeViewPane.ID.equals(pane.getId()) ||
-        !scopeName.equals(pane.getSubId())) {
-      return;
-    }
-    myUpdateQueue.queue(new Update(fileToRefresh) {
-      @Override
-      public void run() {
-        if (myProject.isDisposed() || !fileToRefresh.isValid()) return;
-        final PsiFile psiFile = PsiManager.getInstance(myProject).findFile(fileToRefresh);
-        if (psiFile != null) {
-          reload(rootToReloadGetter.fun(psiFile));
-        }
-      }
-
-      @Override
-      public boolean isExpired() {
-        return !isTreeShowing();
-      }
-    });
   }
 
   private boolean isTreeShowing() {

@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.scopeChooser;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -6,7 +6,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.packageDependencies.DependencyValidationManager;
-import com.intellij.psi.search.scope.ProblemsScope;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.PackageSet;
 import com.intellij.ui.SimpleListCellRenderer;
@@ -138,7 +137,6 @@ public class PackageSetChooserCombo extends ComponentWithBrowseButton<JComponent
     for (PackageSet unnamedScope : manager.getUnnamedScopes().values()) {
       model.add(new NamedScope.UnnamedScope(unnamedScope));
     }
-    model.remove(ProblemsScope.INSTANCE);
     return model.toArray(NamedScope.EMPTY_ARRAY);
   }
 

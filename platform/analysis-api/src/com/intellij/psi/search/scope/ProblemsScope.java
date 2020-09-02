@@ -6,14 +6,17 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.problems.WolfTheProblemSolver;
-import com.intellij.psi.search.scope.packageSet.CustomScopesProvider;
 import com.intellij.psi.search.scope.packageSet.FilteredPackageSet;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
-import java.util.List;
-
+/**
+ * @see com.intellij.codeInsight.problems.WolfTheProblemSolverImpl#processProblemFiles
+ * @deprecated this scope is obsolete and will be removed soon
+ */
+@ScheduledForRemoval(inVersion = "2022.2")
+@Deprecated
 public final class ProblemsScope extends NamedScope {
   public static final ProblemsScope INSTANCE = new ProblemsScope();
 
@@ -25,14 +28,6 @@ public final class ProblemsScope extends NamedScope {
         return solver != null && solver.isProblemFile(file);
       }
     });
-  }
-
-  public static final class Provider implements CustomScopesProvider {
-    @NotNull
-    @Override
-    public List<NamedScope> getCustomScopes() {
-      return Collections.singletonList(INSTANCE);
-    }
   }
 
   public static String getNameText() {
