@@ -59,7 +59,9 @@ import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.Activatable;
+import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,6 +73,7 @@ import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -823,6 +826,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         setLookupFocusDegree(LookupFocusDegree.FOCUSED);
         markSelectionTouched();
+        myCellRenderer.updateLookupWidth();
 
         if (clickCount == 2){
           CommandProcessor.getInstance().executeCommand(myProject, () -> finishLookup(NORMAL_SELECT_CHAR), "", null, myEditor.getDocument());
@@ -830,6 +834,8 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
         return true;
       }
     }.installOn(myList);
+
+    myList.addListSelectionListener(e -> myCellRenderer.updateLookupWidth());
   }
 
   protected boolean suppressHidingOnDocumentChanged() {
@@ -1038,6 +1044,25 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   public int getLastVisibleIndex() {
     return myList.getLastVisibleIndex();
   }
+
+  List<LookupElement> getVisibleItems() {
+    var itemsCount = myList.getItemsCount();
+    if (itemsCount == 0) return Collections.emptyList();
+
+    synchronized (myUiLock) {
+      Rectangle visibleRect = myList.getVisibleRect();
+      int height = UIManager.getInt("List.rowHeight");
+
+      int lowerItemIndex = visibleRect.y / height;
+      int higherItemIndex = (int) Math.ceil((visibleRect.y + visibleRect.height) * 1.0 / height);
+
+      higherItemIndex = Math.min(higherItemIndex, itemsCount);
+      if (higherItemIndex == 0) return Collections.emptyList();
+
+      return getListModel().toList().subList(lowerItemIndex, higherItemIndex);
+    }
+  }
+
 
   @Override
   public List<String> getAdvertisements() {
