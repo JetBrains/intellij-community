@@ -222,11 +222,13 @@ public abstract class NlsInfo {
         if (index < 0) {
           return Unspecified.UNKNOWN;
         }
-        return fromMethodParameter(method, index, null);
+        NlsInfo info = fromMethodParameter(method, index, null);
+        if (info != Unspecified.UNKNOWN) return info;
+        return fromKotlinProperty(method);
       }
     }
     if (owner instanceof PsiMethod) {
-      NlsInfo info = fromPropertyGetter(owner);
+      NlsInfo info = fromKotlinProperty(owner);
       if (info != Unspecified.UNKNOWN) return info;
       PsiMethod method = (PsiMethod)owner;
       return fromMethodReturn(method, method.getReturnType(), null);
@@ -234,7 +236,7 @@ public abstract class NlsInfo {
     return fromAnnotationOwner(owner.getModifierList());
   }
 
-  private static @NotNull NlsInfo fromPropertyGetter(@NotNull PsiModifierListOwner owner) {
+  private static @NotNull NlsInfo fromKotlinProperty(@NotNull PsiModifierListOwner owner) {
     if (!(owner instanceof PsiMethod)) return Unspecified.UNKNOWN;
     // If assignment target is Kotlin property, it resolves to the getter but annotation will be applied to the field
     // (unless @get:Nls is used), so we have to navigate to the corresponding field.
