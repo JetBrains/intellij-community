@@ -175,7 +175,7 @@ public final class AboutPopup {
       String buildInfo = IdeBundle.message("about.box.build.number", appInfo.getBuild().asString());
       Date timestamp = appInfo.getBuildDate().getTime();
       if (appInfo.getBuild().isSnapshot()) {
-        buildInfo += IdeBundle.message("about.box.build.date.time", DateFormatUtil.formatAboutDialogDate(timestamp), new SimpleDateFormat("HH:mm, ").format(timestamp));
+        buildInfo += IdeBundle.message("about.box.build.date.time", DateFormatUtil.formatAboutDialogDate(timestamp), new SimpleDateFormat("HH:mm").format(timestamp));
       }
       else {
         buildInfo += IdeBundle.message("about.box.build.date", DateFormatUtil.formatAboutDialogDate(timestamp));
