@@ -3,6 +3,7 @@ package org.jetbrains.plugins.terminal.fixture;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.jediterm.pty.PtyProcessTtyConnector;
 import com.jediterm.terminal.TtyConnector;
 import com.pty4j.PtyProcess;
@@ -26,7 +27,9 @@ public class TestShellSession {
     LocalTerminalDirectRunner runner = LocalTerminalDirectRunner.createTerminalRunner(project);
     PtyProcess process = runner.createProcess(project.getBasePath());
     TtyConnector connector = new PtyProcessTtyConnector(process, StandardCharsets.UTF_8);
-    myWidget = new ShellTerminalWidget(project, new JBTerminalSystemSettingsProvider(), parentDisposable);
+    JBTerminalSystemSettingsProvider settingsProvider = new JBTerminalSystemSettingsProvider();
+    myWidget = new ShellTerminalWidget(project, settingsProvider, parentDisposable);
+    Disposer.register(myWidget, settingsProvider);
     myWidget.start(connector);
     myWatcher = new TestTerminalBufferWatcher(myWidget.getTerminalTextBuffer(), myWidget.getTerminal());
   }
