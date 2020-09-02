@@ -933,7 +933,8 @@ public final class HighlightMethodUtil {
     MethodReturnFixFactory.INSTANCE.registerCastActions(methodCandidates, methodCall, highlightInfo, fixRange);
     WrapWithAdapterMethodCallFix.registerCastActions(methodCandidates, methodCall, highlightInfo, fixRange);
     registerMethodAccessLevelIntentions(methodCandidates, methodCall, list, highlightInfo);
-    if (!PermuteArgumentsFix.registerFix(highlightInfo, methodCall, methodCandidates, fixRange)) {
+    if (!PermuteArgumentsFix.registerFix(highlightInfo, methodCall, methodCandidates, fixRange) &&
+        !MoveParenthesisFix.registerFix(highlightInfo, methodCall, methodCandidates)) {
       registerChangeMethodSignatureFromUsageIntentions(methodCandidates, list, highlightInfo, fixRange);
     }
     RemoveRedundantArgumentsFix.registerIntentions(methodCandidates, list, highlightInfo, fixRange);
