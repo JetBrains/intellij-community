@@ -17,6 +17,7 @@ import com.intellij.openapi.options.ex.SingleConfigurableEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.containers.ContainerUtil;
@@ -151,8 +152,7 @@ public final class ProgramRunnerUtil {
     return IconLoader.getTransparentIcon(rawIcon, 0.3f);
   }
 
-  @NotNull
-  public static String shortenName(@Nullable String name, final int toBeAdded) {
+  public static @NotNull @NlsSafe String shortenName(@Nullable @NlsSafe String name, int toBeAdded) {
     if (name == null) {
       return "";
     }
