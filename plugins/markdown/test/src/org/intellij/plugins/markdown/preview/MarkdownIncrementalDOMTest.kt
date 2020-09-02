@@ -22,6 +22,8 @@ class MarkdownIncrementalDOMTest : BasePlatformTestCase() {
 
   fun testSpecialCharactersEscape() = doTest()
 
+  fun testHtmlAttributes() = doTest()
+
   fun doTest() {
     val name = getTestName(true)
 

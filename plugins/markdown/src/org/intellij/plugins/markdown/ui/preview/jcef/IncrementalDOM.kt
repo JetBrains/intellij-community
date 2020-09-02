@@ -82,5 +82,5 @@ internal object IncrementalDOM {
   private fun escapeTagContent(string: String): String =
     StringUtil.escapeChars(string, '\\', '`', '$')
 
-  private fun escapeAttributeContent(string: String): String = StringUtil.escapeQuotes(string)
+  private fun escapeAttributeContent(string: String): String = StringUtil.escapeChar(string, '\'')
 }
