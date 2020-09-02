@@ -26,7 +26,6 @@ import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnChangeProvider;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
@@ -41,6 +40,7 @@ import java.util.Collection;
 import java.util.List;
 
 import static com.intellij.openapi.vcs.update.ActionInfo.INTEGRATE;
+import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class SvnIntegrateChangesTask extends Task.Backgroundable {
   private final ProjectLevelVcsManagerEx myProjectLevelVcsManager;
@@ -88,7 +88,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
 
     if (indicator != null) {
       indicator.setIndeterminate(true);
-      indicator.setText(SvnBundle.message("action.Subversion.integrate.changes.progress.integrating.text"));
+      indicator.setText(message("action.Subversion.integrate.changes.progress.integrating.text"));
     }
   }
 
@@ -125,17 +125,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
   }
 
   @NotNull
-  private static VcsException createError(String @NotNull ... messages) {
-    return createException(false, messages);
-  }
-
-  @NotNull
-  private static VcsException createWarning(String @NotNull ... messages) {
-    return createException(true, messages);
-  }
-
-  @NotNull
-  private static VcsException createException(boolean isWarning, String @NotNull ... messages) {
+  private static VcsException createException(boolean isWarning, @Nls @Nullable String @NotNull ... messages) {
     Collection<String> notEmptyMessages = ContainerUtil.mapNotNull(messages, message -> StringUtil.nullize(message, true));
 
     return new VcsException(notEmptyMessages).setIsWarning(isWarning);
@@ -147,7 +137,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
       myMerger.mergeNext();
     }
     catch (VcsException e) {
-      myExceptions.add(createError(e.getMessage(), myMerger.getInfo(), myMerger.getSkipped()));
+      myExceptions.add(createException(false, e.getMessage(), myMerger.getInfo(), myMerger.getSkipped()));
     }
     finally {
       myHandler.finishUpdate();
@@ -190,14 +180,14 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
     if ((!myMerger.hasNext()) || haveConflicts || (!myExceptions.isEmpty()) || myAccumulatedFiles.containErrors() || wasCanceled) {
       initMergeTarget();
       if (myAccumulatedFiles.isEmpty() && myExceptions.isEmpty() && (myMergeTarget == null) && (!wasCanceled)) {
-        Messages.showMessageDialog(SvnBundle.message("action.Subversion.integrate.changes.message.files.up.to.date.text"), myTitle,
+        Messages.showMessageDialog(message("action.Subversion.integrate.changes.message.files.up.to.date.text"), myTitle,
                                    Messages.getInformationIcon());
       } else {
         if (haveConflicts) {
-          myExceptions.add(createWarning(SvnBundle.message("svn.integrate.changelist.warning.unresolved.conflicts.text")));
+          myExceptions.add(createException(true, message("svn.integrate.changelist.warning.unresolved.conflicts.text")));
         }
         if (wasCanceled) {
-          myExceptions.add(createWarning("Integration was canceled", myMerger.getSkipped()));
+          myExceptions.add(createException(true, message("error.integration.was.canceled"), myMerger.getSkipped()));
         }
         finishActions(wasCanceled);
       }
@@ -307,7 +297,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
 
   private void showAlienCommit(@NotNull final AlienDirtyScope dirtyScope) {
     new Task.Backgroundable(myVcs.getProject(),
-                            SvnBundle.message("action.Subversion.integrate.changes.collecting.changes.to.commit.task.title")) {
+                            message("action.Subversion.integrate.changes.collecting.changes.to.commit.task.title")) {
 
       private final GatheringChangelistBuilder changesBuilder = new GatheringChangelistBuilder(myVcs, myAccumulatedFiles);
       private final Ref<@Nls String> caughtError = new Ref<>();
@@ -321,7 +311,7 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
             new SvnChangeProvider(myVcs).getChanges(dirtyScope, changesBuilder, indicator, new FakeGate());
           }
           catch (VcsException e) {
-            caughtError.set(SvnBundle.message("action.Subversion.integrate.changes.error.unable.to.collect.changes.text", e.getMessage()));
+            caughtError.set(message("action.Subversion.integrate.changes.error.unable.to.collect.changes.text", e.getMessage()));
           }
         }
       }
