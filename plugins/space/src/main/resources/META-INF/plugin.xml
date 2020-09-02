@@ -32,7 +32,7 @@
                 factoryClass="com.intellij.space.tools.SpaceToolWindowFactory"/>
 
     <toolWindow id="Space Code Reviews"
-                icon="SpaceIcons.Main"
+                icon="SpaceIcons.MainToolwindow"
                 anchor="left"
                 canCloseContents="true"
                 doNotActivateOnStart="true"
