@@ -792,13 +792,6 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
     return enabled == null || enabled;
   }
 
-  @NotNull @Nls
-  String getEnabledTitle(@NotNull IdeaPluginDescriptor plugin) {
-    return isEnabled(plugin)
-           ? IdeBundle.message("plugins.configurable.disable.button")
-           : IdeBundle.message("plugins.configurable.enable.button");
-  }
-
   void changeEnableDisable(@NotNull IdeaPluginDescriptor plugin) {
     changeEnableDisable(new IdeaPluginDescriptor[]{plugin}, !isEnabled(plugin));
   }
