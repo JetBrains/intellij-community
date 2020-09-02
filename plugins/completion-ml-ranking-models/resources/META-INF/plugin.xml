@@ -17,5 +17,6 @@
     <completion.ml.model implementation="com.jetbrains.completion.ml.ranker.ExperimentKotlinMLRankingProvider"/>
     <completion.ml.model implementation="com.jetbrains.completion.ml.ranker.ExperimentScalaMLRankingProvider"/>
     <completion.ml.model implementation="com.jetbrains.completion.ml.ranker.ExperimentJavaMLRankingProvider"/>
+    <completion.ml.model implementation="com.jetbrains.completion.ml.ranker.ExperimentRustMLRankingProvider"/>
   </extensions>
 </idea-plugin>
