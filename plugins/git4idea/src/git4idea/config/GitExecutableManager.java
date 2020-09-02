@@ -1,8 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.config;
 
-import static git4idea.config.GitExecutableProblemHandlersKt.showUnsupportedVersionError;
-
 import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.execution.wsl.WSLUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -26,13 +24,16 @@ import git4idea.commands.GitCommand;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandler;
 import git4idea.i18n.GitBundle;
+import org.jetbrains.annotations.CalledInAny;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 import java.io.File;
 import java.nio.file.NoSuchFileException;
 import java.text.ParseException;
 import java.util.Collections;
-import org.jetbrains.annotations.CalledInAny;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
+import static git4idea.config.GitExecutableProblemHandlersKt.showUnsupportedVersionError;
 
 /**
  * Manager for "current git executable".
@@ -264,7 +265,7 @@ public class GitExecutableManager {
     }
   }
 
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false)
   @NotNull
   public GitVersion identifyVersion(@NotNull String pathToGit) throws GitVersionIdentificationException {
     return identifyVersion(getExecutable(pathToGit));
@@ -275,7 +276,7 @@ public class GitExecutableManager {
    *
    * @throws GitVersionIdentificationException if there is a problem running executable or parsing version output
    */
-  @RequiresBackgroundThread
+  @RequiresBackgroundThread(generateAssertion = false)
   @NotNull
   public GitVersion identifyVersion(@NotNull GitExecutable executable) throws GitVersionIdentificationException {
     CachingFileTester<GitVersion>.TestResult result = myVersionCache.getResultFor(executable);
