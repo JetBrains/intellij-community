@@ -33,7 +33,7 @@ internal class DumpProjectPortableRootsAction : DumbAwareAction() {
           }, ConcurrentBitSet())
         }
 
-        val text = result.serializeToText()
+        val text = result.dumpToText()
         ApplicationManager.getApplication().invokeLater(Runnable {
           val file = ScratchRootType.getInstance().createScratchFile(
             project,
