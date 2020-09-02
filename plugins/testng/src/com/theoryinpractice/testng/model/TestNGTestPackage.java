@@ -53,7 +53,7 @@ public class TestNGTestPackage extends TestNGTestObject {
       TestClassFilter filter = projectFilter.intersectionWith(PackageScope.packageScope(psiPackage, true));
       calculateDependencies(null, classes, getSearchScope(), TestNGUtil.getAllTestClasses(filter, false));
       if (classes.size() == 0) {
-        throw new CantRunException("No tests found in the package \"" + packageName + '\"');
+        throw new CantRunException(TestngBundle.message("dialog.message.no.tests.found.in.package", packageName));
       }
     }
   }

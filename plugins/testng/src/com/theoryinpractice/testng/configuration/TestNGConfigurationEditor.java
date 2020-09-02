@@ -135,7 +135,7 @@ public class TestNGConfigurationEditor<T extends TestNGConfiguration> extends Se
       }
     }
     myTestKind.setModel(testKindModel);
-    myTestKind.addActionListener(e -> TestNGConfigurationEditor.this.model.setType((TestType)myTestKind.getSelectedItem()));
+    myTestKind.addActionListener(e -> this.model.setType((TestType)myTestKind.getSelectedItem()));
     myTestKind.setRenderer(SimpleListCellRenderer.create("", value -> value.getPresentableName()));
     registerListener(new JRadioButton[]{packagesInProject, packagesInModule, packagesAcrossModules}, null);
     packagesInProject.addChangeListener(e -> evaluateModuleClassPath());

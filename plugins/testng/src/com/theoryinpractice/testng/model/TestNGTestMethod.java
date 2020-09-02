@@ -44,10 +44,10 @@ public class TestNGTestMethod extends TestNGTestObject {
       .findPsiClass(PsiManager.getInstance(myConfig.getProject()), data.getMainClassName().replace('/', '.'), null, true,
                     getSearchScope()));
     if (psiClass == null) {
-      throw new CantRunException("No tests found in the class \"" + data.getMainClassName() + '\"');
+      throw new CantRunException(TestngBundle.message("dialog.message.no.tests.found.in.class", data.getMainClassName()));
     }
     if (null == ReadAction.compute(() -> psiClass.getQualifiedName())) {
-      throw new CantRunException("Cannot test anonymous or local class \"" + data.getMainClassName() + '\"');
+      throw new CantRunException(TestngBundle.message("dialog.message.cannot.test.anonymous.or.local.class", data.getMainClassName()));
     }
     collectTestMethods(classes, psiClass, data.getMethodName(), getSearchScope());
   }

@@ -29,7 +29,7 @@ public class ConvertOldAnnotationInspectionTest extends BaseTestNGInspectionsTes
 
   @Override
   protected String getActionName() {
-    return ConvertOldAnnotationInspection.FIX_NAME;
+    return "Convert old @Configuration TestNG annotations";
   }
 
   @Override

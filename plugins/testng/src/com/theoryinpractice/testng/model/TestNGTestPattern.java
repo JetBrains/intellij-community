@@ -83,7 +83,7 @@ public class TestNGTestPattern extends TestNGTestObject {
             collectTestMethods(classes, psiClass, methodName, searchScope);
           }
         } else {
-          throw new CantRunException("No tests found in class " + className);
+          throw new CantRunException(TestngBundle.message("dialog.message.no.tests.found.in.class", className));
         }
       }
     }
@@ -117,7 +117,7 @@ public class TestNGTestPattern extends TestNGTestObject {
         };
       calculateDependencies(null, classes, searchScope, TestNGUtil.getAllTestClasses(projectFilter, false));
       if (classes.size() == 0) {
-        throw new CantRunException("No tests found in for patterns \"" + StringUtil.join(patterns, " || ") + '\"');
+        throw new CantRunException(TestngBundle.message("dialog.message.no.tests.found.in.for.patterns", StringUtil.join(patterns, " || ")));
       }
     }
   }
