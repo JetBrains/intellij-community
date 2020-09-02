@@ -29,8 +29,10 @@ import java.io.OutputStream
 import java.util.*
 import java.util.HashMap
 import kotlin.collections.ArrayList
+import kotlin.reflect.KClass
 import kotlin.reflect.KVisibility
 import kotlin.reflect.full.memberProperties
+import kotlin.reflect.jvm.jvmErasure
 import kotlin.reflect.jvm.jvmName
 
 class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver,
@@ -226,16 +228,7 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
    */
   private fun recursiveClassFinder(kryo: Kryo, entity: Any, simpleClasses: MutableSet<TypeInfo>, objectClasses: MutableSet<TypeInfo>) {
     val kClass = entity::class
-    val typeInfo = TypeInfo(kClass.jvmName, typesResolver.getPluginId(kClass.java))
-    if (kryo.classResolver.getRegistration(kClass.java) != null) return
-
-    val objectInstance = kClass.objectInstance
-    if (objectInstance != null) {
-      objectClasses += typeInfo
-    }
-    else {
-      simpleClasses += typeInfo
-    }
+    if (registerKClass(kClass, kryo, objectClasses, simpleClasses)) return
 
     kClass.memberProperties.forEach {
       val retType = (it.returnType as Any).toString()
@@ -246,7 +239,10 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
       ) return@forEach
 
       if (it.visibility != KVisibility.PUBLIC) return@forEach
-      val property = it.getter.call(entity) ?: return@forEach
+      val property = it.getter.call(entity) ?: run {
+        registerKClass(it.returnType.jvmErasure, kryo, objectClasses, simpleClasses)
+        return@forEach
+      }
       recursiveClassFinder(kryo, property, simpleClasses, objectClasses)
 
       if (property is List<*>) {
@@ -255,6 +251,23 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
         }
       }
     }
+  }
+
+  private fun registerKClass(kClass: KClass<out Any>,
+                             kryo: Kryo,
+                             objectClasses: MutableSet<TypeInfo>,
+                             simpleClasses: MutableSet<TypeInfo>): Boolean {
+    val typeInfo = TypeInfo(kClass.jvmName, typesResolver.getPluginId(kClass.java))
+    if (kryo.classResolver.getRegistration(kClass.java) != null) return true
+
+    val objectInstance = kClass.objectInstance
+    if (objectInstance != null) {
+      objectClasses += typeInfo
+    }
+    else {
+      simpleClasses += typeInfo
+    }
+    return false
   }
 
   override fun serializeCache(stream: OutputStream, storage: WorkspaceEntityStorage) {
