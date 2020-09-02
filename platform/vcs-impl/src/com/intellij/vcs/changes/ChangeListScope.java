@@ -52,8 +52,4 @@ public final class ChangeListScope extends FilteredNamedScope implements Weighed
   public int getWeight() {
     return AllIcons.Scope.ChangedFilesAll == getIcon() ? 0 : 1;
   }
-
-  public static String getNameText() {
-    return "All Changed Files";
-  }
 }
