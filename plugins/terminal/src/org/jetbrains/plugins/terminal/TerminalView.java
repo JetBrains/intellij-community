@@ -51,6 +51,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.terminal.action.MoveTerminalToolWindowTabLeftAction;
@@ -151,7 +152,7 @@ public final class TerminalView {
   }
 
   @NotNull
-  public ShellTerminalWidget createLocalShellWidget(@Nullable String workingDirectory, @Nullable String tabName) {
+  public ShellTerminalWidget createLocalShellWidget(@Nullable String workingDirectory, @Nullable @Nls String tabName) {
     TerminalTabState tabState = new TerminalTabState();
     tabState.myTabName = tabName;
     tabState.myWorkingDirectory = workingDirectory;
@@ -206,7 +207,7 @@ public final class TerminalView {
     return content;
   }
 
-  private static String generateUniqueName(String suggestedName, List<String> tabs) {
+  private static @Nls String generateUniqueName(@Nls String suggestedName, List<@Nls String> tabs) {
     final Set<String> names = Sets.newHashSet(tabs);
 
     return UniqueNameGenerator.generateUniqueName(suggestedName, "", "", " (", ")", o -> !names.contains(o));
@@ -265,8 +266,7 @@ public final class TerminalView {
       @Override
       public void onTerminalStarted() {
         if (updateContentDisplayName && (tabState == null || StringUtil.isEmpty(tabState.myTabName))) {
-          String name = terminalWidget.getSettingsProvider().tabName(terminalWidget.getTtyConnector(),
-                                                                     terminalWidget.getSessionName());
+          String name = ((JBTerminalSystemSettingsProvider)terminalWidget.getSettingsProvider()).getTabName(terminalWidget);
           List<Content> contents = ContainerUtil.newArrayList(toolWindow.getContentManager().getContents());
           contents.remove(content);
           content.setDisplayName(generateUniqueName(name, ContainerUtil.map(contents, c -> c.getDisplayName())));

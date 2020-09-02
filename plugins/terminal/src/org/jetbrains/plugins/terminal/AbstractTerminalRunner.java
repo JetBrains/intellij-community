@@ -137,7 +137,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     ProcessHandler processHandler = createProcessHandler(process);
 
     final RunContentDescriptor contentDescriptor =
-      new RunContentDescriptor(null, processHandler, panel, getTerminalConnectionName(process));
+      new RunContentDescriptor(null, processHandler, panel, getTerminalConnectionName(process)); //NON-NLS
 
     contentDescriptor.setAutoFocusContent(true);
 

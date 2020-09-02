@@ -12,6 +12,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.IdeBorderFactory;
@@ -120,7 +121,7 @@ public class TerminalSettingsPanel {
     setupTextFieldDefaultValue(myShellPathField.getTextField(), () -> myProjectOptionsProvider.defaultShellPath());
   }
 
-  private void setupTextFieldDefaultValue(@NotNull JTextField textField, @NotNull Supplier<String> defaultValueSupplier) {
+  private void setupTextFieldDefaultValue(@NotNull JTextField textField, @NotNull Supplier<@NlsSafe String> defaultValueSupplier) {
     String defaultShellPath = defaultValueSupplier.get();
     if (StringUtil.isEmptyOrSpaces(defaultShellPath)) return;
     textField.getDocument().addDocumentListener(new DocumentAdapter() {
