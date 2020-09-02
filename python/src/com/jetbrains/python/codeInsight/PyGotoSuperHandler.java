@@ -45,7 +45,7 @@ public class PyGotoSuperHandler implements CodeInsightActionHandler {
         }
         else {
           final TypeEvalContext context = TypeEvalContext.codeAnalysis(project, file);
-          navigateOrChoose(editor, pyClass.getAncestorClasses(context), "Choose superclass");
+          navigateOrChoose(editor, pyClass.getAncestorClasses(context), PyBundle.message("goto.superclass.choose"));
         }
       }
     }
