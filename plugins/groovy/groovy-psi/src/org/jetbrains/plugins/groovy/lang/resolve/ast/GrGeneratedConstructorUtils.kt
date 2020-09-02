@@ -163,7 +163,7 @@ class AffectedMembersCache(anno: PsiAnnotation) {
       val allowInternalNames = GrAnnotationUtil.inferBooleanAttribute(tupleConstructor, TupleConstructorAttributes.ALL_NAMES) ?: false
 
       val filter: (String) -> Boolean = { name: String ->
-        val internalFilter = allowInternalNames || !name.isInternal()
+        val internalFilter = allowInternalNames || !isInternal(name)
         val excludesFilter = !excludes.contains(name)
         val includesFilter = includes == null || includes.contains(name)
         internalFilter && excludesFilter && includesFilter
@@ -187,7 +187,8 @@ class AffectedMembersCache(anno: PsiAnnotation) {
       return Triple(properties, setters, fields)
     }
 
-    private fun String.isInternal(): Boolean = contains("$")
+    @JvmStatic
+    fun isInternal(name : String): Boolean = name.contains("$")
 
     @JvmStatic
     fun getExternalName(namedElement: PsiNamedElement) : String? = when(namedElement) {

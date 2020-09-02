@@ -106,8 +106,8 @@ public class GroovyConstructorNamedArgumentsInspection extends BaseInspection {
         if (resolved != null) {
           String name = label.getName();
           if (name != null && !affectedMembers.getValue().contains(name)) {
-            registerError(label, GroovyBundle.message("inspection.message.property.0.is.ignored.by.map.constructor", name),
-                          LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+            var fix = new LocalQuickFix[]{GroovyQuickFixFactory.getInstance().createMapConstructorFix()};
+            registerError(label, GroovyBundle.message("inspection.message.property.0.is.ignored.by.map.constructor", name), fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
           }
         }
         else {

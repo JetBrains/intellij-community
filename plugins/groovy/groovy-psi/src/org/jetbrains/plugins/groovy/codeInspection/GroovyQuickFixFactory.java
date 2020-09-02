@@ -71,4 +71,6 @@ public abstract class GroovyQuickFixFactory {
   public abstract GroovyFix createMultipleAssignmentFix(int size);
 
   public abstract GroovyFix createSpreadArgumentFix(int size);
+
+  public abstract GroovyFix createMapConstructorFix();
 }
