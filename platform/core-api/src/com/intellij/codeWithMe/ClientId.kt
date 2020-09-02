@@ -28,7 +28,6 @@ data class ClientId(val value: String) {
 
     companion object {
 
-        val logger = Logger.getInstance(ClientId::class.java)
         /**
          * Default client id for local application
          */
@@ -129,7 +128,7 @@ data class ClientId(val value: String) {
                     val result = action()
                     val delta = System.currentTimeMillis() - beforeActionTime
                     if (delta > 300) {
-                        logger.warn("LONG MAIN THREAD ACTIVITY by ${clientId?.value}. Stack trace:\n${getStackTrace()}")
+                        Logger.getInstance(ClientId::class.java).warn("LONG MAIN THREAD ACTIVITY by ${clientId?.value}. Stack trace:\n${getStackTrace()}")
                     }
                     return result
                 } else
