@@ -14,10 +14,10 @@ import com.jetbrains.python.sdk.add.PyAddNewEnvPanel
 import com.jetbrains.python.sdk.add.PyAddNewVirtualEnvPanel
 import com.jetbrains.python.sdk.add.PyAddSdkPanel
 import com.jetbrains.python.sdk.conda.PyCondaSdkCustomizer
-import com.jetbrains.python.sdk.pipenv.PyAddPipEnvPanel
 import java.awt.BorderLayout
 import java.awt.event.ItemEvent
 import javax.swing.JComboBox
+import kotlin.streams.toList
 
 /**
  * @author vlan
@@ -93,13 +93,16 @@ class PyAddNewEnvironmentPanel(existingSdks: List<Sdk>, newProjectPath: String?,
   private fun createPanels(existingSdks: List<Sdk>, newProjectPath: String?): List<PyAddNewEnvPanel> {
     val condaPanel = PyAddNewCondaEnvPanel(null, null, existingSdks, newProjectPath, context)
     val venvPanel = PyAddNewVirtualEnvPanel(null, null, existingSdks, newProjectPath, context)
-    val pipEnvPanel = PyAddPipEnvPanel(null, null, existingSdks, newProjectPath, context)
+
+    val envPanelsFromProviders = PyAddNewEnvironmentPanelProvider.EP_NAME.extensions()
+      .map { it.createPanel(null, null, existingSdks, newProjectPath, context) }
+      .toList().toTypedArray()
 
     return if (PyCondaSdkCustomizer.instance.preferCondaEnvironments) {
-      listOf(condaPanel, venvPanel, pipEnvPanel)
+      listOf(condaPanel, venvPanel, *envPanelsFromProviders)
     }
     else {
-      listOf(venvPanel, pipEnvPanel, condaPanel)
+      listOf(venvPanel, *envPanelsFromProviders, condaPanel)
     }
   }
 }
