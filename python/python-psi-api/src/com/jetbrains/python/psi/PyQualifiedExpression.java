@@ -16,6 +16,7 @@
 package com.jetbrains.python.psi;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.util.QualifiedName;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,6 +69,7 @@ public interface PyQualifiedExpression extends PyExpression {
    * @return the name referenced by the expression.
    */
   @Nullable
+  @NlsSafe
   String getReferencedName();
 
   /**

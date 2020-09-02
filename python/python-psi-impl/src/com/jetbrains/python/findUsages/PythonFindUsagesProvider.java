@@ -3,6 +3,7 @@ package com.jetbrains.python.findUsages;
 
 import com.intellij.lang.cacheBuilder.WordsScanner;
 import com.intellij.lang.findUsages.FindUsagesProvider;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -134,6 +135,7 @@ public class PythonFindUsagesProvider implements FindUsagesProvider {
    * @return text (if found) or null
    */
   @Nullable
+  @NlsSafe
   private static String tryFindMagicLiteralString(@NotNull final PsiElement element, final boolean obtainValue) {
     if (element instanceof PyStringLiteralExpression) {
       final PyMagicLiteralExtensionPoint point = PyMagicLiteralTools.getPoint((PyStringLiteralExpression)element);
