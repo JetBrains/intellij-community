@@ -96,13 +96,14 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
         |native void setFoo(@org.jetbrains.annotations.Nls String s);
         |}""".trimMargin())
     myFixture.configureByText("Foo.kt", """
-       class Foo {
+       class Foo : X() {
           @org.jetbrains.annotations.Nls var prop = "";
        
           fun foo(x : X) {
-            // but Kotlin properties do not propagate annotations to getter ultra-light method 
-            prop = <warning descr="Hardcoded string literal: \"value\"">"value"</warning>
-            x.foo = <warning descr="Hardcoded string literal: \"value\"">"value"</warning>
+            prop = <warning descr="Hardcoded string literal: \"kotlin setter\"">"kotlin setter"</warning>
+            x.foo = <warning descr="Hardcoded string literal: \"java qualified setter\"">"java qualified setter"</warning>
+            foo = "java superclass setter"
+            this.foo = "java superclass qualified setter"
           }
         }
     """.trimIndent())
@@ -214,6 +215,23 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
         fun test() {
           @org.jetbrains.annotations.NonNls val <warning descr="[UNUSED_VARIABLE] Variable 'id' is never used">id</warning> = "foo:" + "bar"
         }
+    """.trimIndent())
+    myFixture.testHighlighting()
+  }
+  
+  fun testList() {
+    myFixture.enableInspections(I18nInspection())
+    myFixture.configureByText("Foo.kt", """
+       import org.jetbrains.annotations.*
+       import java.util.*
+       
+       public fun <T> listOf(vararg elements: T): List<T> = Arrays.asList(*elements)
+       
+       class X {
+         companion object {
+           @NonNls private val LIST: List<String> = listOf("Foo bar", "Boo far")
+         }
+       }
     """.trimIndent())
     myFixture.testHighlighting()
   }
