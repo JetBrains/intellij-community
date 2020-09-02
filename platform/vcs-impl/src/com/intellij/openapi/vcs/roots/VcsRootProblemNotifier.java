@@ -135,8 +135,8 @@ public final class VcsRootProblemNotifier {
       VcsNotifier notifier = VcsNotifier.getInstance(myProject);
 
       myNotification = invalidRoots.isEmpty()
-                       ? notifier.notifyMinorInfo(title, description, notificationActions)
-                       : notifier.notifyError(title, description, getConfigureNotificationAction());
+                       ? notifier.notifyMinorInfo("vcs.roots.registered", title, description, notificationActions)
+                       : notifier.notifyError("vcs.roots.invalid", title, description, getConfigureNotificationAction());
     }
   }
 

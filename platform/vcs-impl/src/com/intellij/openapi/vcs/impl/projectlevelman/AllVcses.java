@@ -270,7 +270,7 @@ public final class AllVcses implements AllVcsesI, Disposable {
 
   private void proposeToInstallPlugin(@NotNull ObsoleteVcs vcs) {
     String message = VcsBundle.message("impl.notification.content.plugin.was.unbundled.needs.to.be.installed.manually", vcs);
-    Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification("", message, NotificationType.WARNING, null);
+    Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification("", message, NotificationType.WARNING, null, "vcs.obsolete.plugin.unbundled");
     notification
       .addAction(NotificationAction.createSimple(VcsBundle.messagePointer("action.NotificationAction.AllVcses.text.install"), () -> {
       notification.expire();
@@ -308,7 +308,7 @@ public final class AllVcses implements AllVcsesI, Disposable {
 
       private void showErrorNotification(@NotNull ObsoleteVcs vcs, @NotNull @NlsContexts.NotificationContent String message) {
         String title = VcsBundle.message("impl.notification.title.failed.to.install.plugin");
-        Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification(title, message, NotificationType.ERROR, null);
+        Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification(title, message, NotificationType.ERROR, null, "plugin.install.failed");
         notification.addAction(
           NotificationAction.createSimple(VcsBundle.messagePointer("action.NotificationAction.AllVcses.text.open.plugin.page"), () -> {
           BrowserUtil.browse(vcs.pluginUrl);

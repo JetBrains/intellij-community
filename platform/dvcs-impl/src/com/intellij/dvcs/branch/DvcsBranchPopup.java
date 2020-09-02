@@ -87,7 +87,10 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
   }
 
   private void notifyAboutSyncedBranches() {
-    Notification notification = STANDARD_NOTIFICATION.createNotification(DvcsBundle.message("notification.message.branch.operations.are.executed.on.all.roots"), NotificationType.INFORMATION);
+    Notification notification = STANDARD_NOTIFICATION.createNotification(
+      DvcsBundle.message("notification.message.branch.operations.are.executed.on.all.roots"),
+      NotificationType.INFORMATION,
+      "vcs.branch.operations.are.executed.on.all.roots");
     notification
       .addAction(NotificationAction.createSimple(DvcsBundle.messagePointer("action.NotificationAction.DvcsBranchPopup.text.disable"), () -> {
       ShowSettingsUtil.getInstance().showSettingsDialog(myProject, myVcs.getDisplayName());

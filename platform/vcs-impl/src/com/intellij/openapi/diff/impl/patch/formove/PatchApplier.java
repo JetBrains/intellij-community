@@ -247,11 +247,14 @@ public final class PatchApplier {
       try {
         labelToRevert.revert(project, project.getBaseDir());
         VcsNotifier.getInstance(project)
-          .notifyImportantWarning(VcsBundle.message("patch.apply.aborted.title"), VcsBundle.message("patch.apply.aborted.message"));
+          .notifyImportantWarning("vcs.patch.apply.aborted",
+                                  VcsBundle.message("patch.apply.aborted.title"),
+                                  VcsBundle.message("patch.apply.aborted.message"));
       }
       catch (LocalHistoryException e) {
         VcsNotifier.getInstance(project)
-          .notifyImportantWarning(VcsBundle.message("patch.apply.rollback.failed.title"),
+          .notifyImportantWarning("vcs.patch.apply.rollback.failed",
+                                  VcsBundle.message("patch.apply.rollback.failed.title"),
                                   VcsBundle.message("patch.apply.rollback.failed.message"));
       }
     };
@@ -412,13 +415,14 @@ public final class PatchApplier {
   private static void showApplyStatus(@NotNull Project project, final ApplyPatchStatus status) {
     VcsNotifier vcsNotifier = VcsNotifier.getInstance(project);
     if (status == ApplyPatchStatus.ALREADY_APPLIED) {
-      vcsNotifier.notifyMinorInfo(VcsBundle.message("patch.apply.notification.title"), VcsBundle.message("patch.apply.already.applied"));
+      vcsNotifier.notifyMinorInfo("vcs.patch.apply.already.applied", VcsBundle.message("patch.apply.notification.title"), VcsBundle.message("patch.apply.already.applied"));
     }
     else if (status == ApplyPatchStatus.PARTIAL) {
-      vcsNotifier.notifyMinorInfo(VcsBundle.message("patch.apply.notification.title"), VcsBundle.message("patch.apply.partially.applied"));
+      vcsNotifier.notifyMinorInfo("vcs.patch.apply.partially.applied", VcsBundle.message("patch.apply.notification.title"), VcsBundle.message("patch.apply.partially.applied"));
     }
     else if (status == ApplyPatchStatus.SUCCESS) {
-      vcsNotifier.notifySuccess(VcsBundle.message("patch.apply.success.applied.text"));
+      vcsNotifier.notifySuccess("vcs.patch.apply.success.applied", "",
+                                VcsBundle.message("patch.apply.success.applied.text"));
     }
   }
 

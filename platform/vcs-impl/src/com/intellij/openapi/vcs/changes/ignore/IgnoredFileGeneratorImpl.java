@@ -156,6 +156,7 @@ public class IgnoredFileGeneratorImpl implements IgnoredFileGenerator {
 
       myIgnoreFileRootNotificationShowFor = ignoreFileRoot;
       myNotification = VcsNotifier.getInstance(project).notifyMinorInfo(
+        "vcs.manage.ignored.files",
         true,
         "",
         VcsBundle.message("ignored.file.manage.message",

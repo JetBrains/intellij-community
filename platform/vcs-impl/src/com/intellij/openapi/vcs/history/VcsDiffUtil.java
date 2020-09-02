@@ -163,7 +163,7 @@ public final class VcsDiffUtil {
           String title = VcsBundle.message("history.notification.title.compare.with.failed", getShortRevisionString(targetRevNumber));
           String message =
             VcsBundle.message("history.notification.content.couldn.t.compare.with.revision", file,getShortRevisionString(targetRevNumber));
-          VcsNotifier.getInstance(project).notifyError(title, message + "\n " + e.getMessage());
+          VcsNotifier.getInstance(project).notifyError("vcs.compare.failed", title, message + "\n " + e.getMessage());
         }
       }
 

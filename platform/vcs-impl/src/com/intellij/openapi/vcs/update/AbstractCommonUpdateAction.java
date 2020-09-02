@@ -449,7 +449,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
         content += additionalContent;
       }
 
-      return STANDARD_NOTIFICATION.createNotification(title, content, type, null);
+      return STANDARD_NOTIFICATION.createNotification(title, content, type, null, "vcs.project.partially.updated");
     }
 
     private int getUpdatedFilesCount() {
@@ -556,7 +556,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction imple
           content = getAllFilesAreUpToDateMessage(myRoots);
           type = NotificationType.INFORMATION;
         }
-        VcsNotifier.getInstance(myProject).notify(STANDARD_NOTIFICATION.createNotification(content, type));
+        VcsNotifier.getInstance(myProject).notify(STANDARD_NOTIFICATION.createNotification(content, type, "vcs.project.update.finished"));
       }
       else if (!myUpdatedFiles.isEmpty()) {
 

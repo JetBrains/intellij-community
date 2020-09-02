@@ -96,7 +96,7 @@ public final class VcsCherryPickManager {
     }
 
     public void showError(@Nls @NotNull String message) {
-      VcsNotifier.getInstance(myProject).notifyWeakError(message);
+      VcsNotifier.getInstance(myProject).notifyWeakError("vcs.cherry.pick.error", message);
       LOG.warn(message);
     }
 

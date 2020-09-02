@@ -338,7 +338,8 @@ public final class CreatePatchCommitExecutor extends LocalCommitExecutor {
                                            @NotNull CommitContext commitContext) throws VcsException, IOException {
     List<FilePatch> patches = patchBuilder.buildPatches(baseDir, changes, reversePatch, honorExcludedFromCommit);
     PatchWriter.writeAsPatchToClipboard(project, patches, baseDir, commitContext);
-    VcsNotifier.getInstance(project).notifySuccess(VcsBundle.message("patch.copied.to.clipboard"));
+    VcsNotifier.getInstance(project).notifySuccess("vcs.patch.copied.to.clipboard", "",
+                                                   VcsBundle.message("patch.copied.to.clipboard"));
   }
 
   private static @NotNull List<? extends FilePatch> createFilePatchesFromShelf(@NotNull Project project,

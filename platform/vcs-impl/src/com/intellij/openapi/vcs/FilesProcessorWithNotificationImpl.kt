@@ -54,8 +54,8 @@ abstract class FilesProcessorWithNotificationImpl(
           add(muteAction())
         }
         notification = VcsNotifier.getInstance(project).notifyMinorInfo(
-          true,
           notificationDisplayId,
+          true,
           notificationTitle(),
           notificationMessage(),
           *notificationActions.toTypedArray()

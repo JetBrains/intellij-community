@@ -28,7 +28,7 @@ class ShowNotificationCommitResultHandler(private val committer: AbstractCommitt
 
   override fun onSuccess(commitMessage: String) = reportResult()
   override fun onCancel() {
-    notifier.notifyMinorWarning("", message("vcs.commit.canceled"))
+    notifier.notifyMinorWarning("vcs.commit.canceled", "", message("vcs.commit.canceled"))
   }
   override fun onFailure(errors: List<VcsException>) = reportResult()
 
@@ -42,13 +42,13 @@ class ShowNotificationCommitResultHandler(private val committer: AbstractCommitt
     when {
       errorsSize > 0 -> {
         val title = message("message.text.commit.failed.with.error", errorsSize)
-        notifier.notifyError(title, message)
+        notifier.notifyError("vcs.commit.failed", title, message)
       }
       warningsSize > 0 -> {
         val title = message("message.text.commit.finished.with.warning", warningsSize)
-        notifier.notifyImportantWarning(title, message)
+        notifier.notifyImportantWarning("vcs.commit.finished.with.warnings", title, message)
       }
-      else -> notifier.notifySuccess(message)
+      else -> notifier.notifySuccess("vcs.commit.finished", "", message)
     }
   }
 

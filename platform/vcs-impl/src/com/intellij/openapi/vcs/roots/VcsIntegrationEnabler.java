@@ -77,7 +77,7 @@ public abstract class VcsIntegrationEnabler {
 
   protected void notifyAddedRoots(Collection<? extends VirtualFile> roots) {
     String message = VcsBundle.message("roots.notification.content.added.vcs.name.roots", myVcs.getName(), roots.size(), joinRootsPaths(roots));
-    VcsNotifier.getInstance(myProject).notifySuccess(message);
+    VcsNotifier.getInstance(myProject).notifySuccess("vcs.root.added", "", message);
   }
 
   private void addVcsRoots(@NotNull Collection<? extends VirtualFile> roots) {

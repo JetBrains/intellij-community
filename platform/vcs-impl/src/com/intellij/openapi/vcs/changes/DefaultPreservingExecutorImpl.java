@@ -75,6 +75,7 @@ class DefaultPreservingExecutorImpl {
                                           myOperationTitle,
                                           join(e.getMessages()));
         VcsNotifier.getInstance(myProject).notifyError(
+          "vcs.uncommitted.changes.saving.error",
           VcsBundle.message("notification.title.couldn.t.save.uncommitted.changes"),
           format);
         return false;

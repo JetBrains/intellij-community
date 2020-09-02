@@ -97,6 +97,7 @@ public abstract class DvcsCompareWithBranchAction<T extends Repository> extends 
         }
         catch (VcsException e) {
           VcsNotifier.getInstance(project).notifyImportantWarning(
+            "vcs.could.not.compare.with.branch",
             DvcsBundle.message("notification.title.couldn.t.compare.with.branch"),
             DvcsBundle.message("notification.message.couldn.t.compare.with.branch",
                                file.isDirectory() ? 1 : 0, file.getPresentableUrl(), compare, e.getMessage()));

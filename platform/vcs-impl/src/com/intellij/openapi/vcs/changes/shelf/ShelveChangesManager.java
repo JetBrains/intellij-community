@@ -917,7 +917,8 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
 
       @Override
       public void onSuccess() {
-        VcsNotifier.getInstance(myProject).notifySuccess(VcsBundle.message("shelve.successful.message"));
+        VcsNotifier.getInstance(myProject).notifySuccess("vcs.shelve.successful", "",
+                                                         VcsBundle.message("shelve.successful.message"));
         if (result.size() == 1 && isShelfContentActive()) {
           ShelvedChangesViewManager.getInstance(myProject).startEditing(result.get(0));
         }
@@ -990,8 +991,10 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
     rollbackChangesAfterShelve(shelvedChanges, false);
 
     if (!failedChangeLists.isEmpty()) {
-      VcsNotifier.getInstance(myProject).notifyError(VcsBundle.message("shelve.failed.title"), VcsBundle
-        .message("shelve.failed.message", failedChangeLists.size(), StringUtil.join(failedChangeLists, ",")));
+      VcsNotifier.getInstance(myProject).notifyError(
+        "vcs.shelve.failed",
+        VcsBundle.message("shelve.failed.title"),
+        VcsBundle.message("shelve.failed.message", failedChangeLists.size(), StringUtil.join(failedChangeLists, ",")));
     }
     return result;
   }
