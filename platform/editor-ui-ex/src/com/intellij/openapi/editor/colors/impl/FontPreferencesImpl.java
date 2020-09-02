@@ -5,6 +5,7 @@ import com.intellij.application.options.EditorFontsConstants;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.FontPreferences;
 import com.intellij.openapi.editor.colors.ModifiableFontPreferences;
+import com.intellij.openapi.util.NlsSafe;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NonNls;
@@ -107,7 +108,7 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
    */
   @Override
   @NotNull
-  public List<String> getEffectiveFontFamilies() {
+  public List<@NlsSafe String> getEffectiveFontFamilies() {
     return myEffectiveFontFamilies;
   }
 
@@ -117,7 +118,7 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
    */
   @Override
   @NotNull
-  public List<String> getRealFontFamilies() {
+  public List<@NlsSafe String> getRealFontFamilies() {
     return myRealFontFamilies;
   }
 
@@ -140,6 +141,7 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
    */
   @Override
   @NotNull
+  @NlsSafe
   public String getFontFamily() {
     return myEffectiveFontFamilies.isEmpty() ? DEFAULT_FONT_NAME : myEffectiveFontFamilies.get(0);
   }
@@ -245,6 +247,7 @@ public class FontPreferencesImpl extends ModifiableFontPreferences {
   }
 
   @Override
+  @NonNls
   public String toString() {
     return "Effective font families: " + myEffectiveFontFamilies;
   }

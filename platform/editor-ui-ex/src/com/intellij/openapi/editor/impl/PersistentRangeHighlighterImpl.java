@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,6 +47,7 @@ final class PersistentRangeHighlighterImpl extends RangeHighlighterImpl {
   }
 
   @Override
+  @NonNls
   public String toString() {
     return "PersistentRangeHighlighter" +
            (isGreedyToLeft() ? "[" : "(") +

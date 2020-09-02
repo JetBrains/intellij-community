@@ -14,7 +14,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class FontPreferences {
-  public final static @NonNls @NotNull String DEFAULT_FONT_NAME = getDefaultFontName();
+  public final static @NlsSafe @NotNull String DEFAULT_FONT_NAME = getDefaultFontName();
   public static final String JETBRAINS_MONO = "JetBrains Mono";
   public final static int DEFAULT_FONT_SIZE = SystemInfo.isWindows || JETBRAINS_MONO.equalsIgnoreCase(DEFAULT_FONT_NAME) ? 13 : 12;
 

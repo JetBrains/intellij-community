@@ -15,6 +15,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
@@ -59,7 +60,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   private int myVersion = CURR_VERSION;
 
   Map<ColorKey, Color> myColorsMap = new HashMap<>();
-  Map<String, TextAttributes> myAttributesMap = new HashMap<>();
+  Map<@NonNls String, TextAttributes> myAttributesMap = new HashMap<>();
 
   @NonNls private static final String EDITOR_FONT       = "font";
   @NonNls private static final String CONSOLE_FONT      = "console-font";
@@ -181,7 +182,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
    */
   @SuppressWarnings("unused")  // for Rider
   @NotNull
-  public Map<String, TextAttributes> getDirectlyDefinedAttributes() {
+  public Map<@NonNls String, TextAttributes> getDirectlyDefinedAttributes() {
     return new HashMap<>(myAttributesMap);
   }
 
@@ -243,6 +244,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   }
 
   @Override
+  @NlsSafe
   public String getEditorFontName() {
     return getFont(EditorFontType.PLAIN).getFamily();
   }
@@ -266,6 +268,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     return this;
   }
 
+  @NonNls
   public String toString() {
     return getName();
   }
@@ -771,6 +774,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
 
   @Override
   @NotNull
+  @NlsSafe
   public String getConsoleFontName() {
     return myConsoleFontPreferences.getFontFamily();
   }
@@ -1009,6 +1013,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
       myParentName = parentName;
     }
 
+    @NonNls
     public String getParentName() {
       return myParentName;
     }
