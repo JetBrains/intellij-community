@@ -49,7 +49,7 @@ public final class ContentUtilEx extends ContentsUtil {
 
   public static void addTabbedContent(@NotNull ContentManager manager, @NotNull TabGroupId tabGroupId, @NotNull TabDescriptor tab,
                                       boolean select) {
-    if (isSplitMode(tabGroupId.getId())) {
+    if (isSplitMode(tabGroupId)) {
       addSplitTabbedContent(manager, tabGroupId, tab, select);
     }
     else {
@@ -253,8 +253,12 @@ public final class ContentUtilEx extends ContentsUtil {
     mergedContent.forEach(Disposer::dispose);
   }
 
-  public static boolean isSplitMode(@NonNls @NotNull String groupId) {
-    return PropertiesComponent.getInstance().getBoolean(TabbedContent.SPLIT_PROPERTY_PREFIX + groupId, false);
+  public static boolean isSplitMode(@NotNull TabGroupId tabGroupId) {
+    return isSplitMode(tabGroupId.getId(), tabGroupId.getSplitByDefault());
+  }
+
+  public static boolean isSplitMode(@NonNls @NotNull String groupId, boolean defaultValue) {
+    return PropertiesComponent.getInstance().getBoolean(TabbedContent.SPLIT_PROPERTY_PREFIX + groupId, defaultValue);
   }
 
   public static void setSplitMode(@NonNls @NotNull String groupId, boolean value) {

@@ -23,7 +23,7 @@ class TabDescriptor(val component: JComponent, private val displayNamePointer: S
   }
 
   override fun dispose() = Unit
-  
+
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
@@ -40,7 +40,9 @@ class TabDescriptor(val component: JComponent, private val displayNamePointer: S
   }
 }
 
-class TabGroupId(@NonNls val id: String, private val displayNamePointer: Supplier<@TabTitle String>) {
+class TabGroupId @JvmOverloads constructor(@NonNls val id: String,
+                                           private val displayNamePointer: Supplier<@TabTitle String>,
+                                           val splitByDefault: Boolean = false) {
   @get:TabTitle
   val displayName: @TabTitle String
     get() = displayNamePointer.get()
