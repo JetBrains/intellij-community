@@ -55,6 +55,19 @@ public class PyFindUsagesHandlerFactory extends FindUsagesHandlerFactory impleme
         public PsiElement @NotNull [] getPrimaryElements() {
           return base.getPrimaryElements();
         }
+
+        @Override
+        public @NotNull AbstractFindUsagesDialog getFindUsagesDialog(boolean isSingleFile,
+                                                                     boolean toShowInNewTab,
+                                                                     boolean mustOpenInNewTab) {
+
+          if (base instanceof FindUsagesHandlerUi) {
+            return ((FindUsagesHandlerUi)base).getFindUsagesDialog(isSingleFile, toShowInNewTab, mustOpenInNewTab);
+          }
+          else {
+            return super.getFindUsagesDialog(isSingleFile, toShowInNewTab, mustOpenInNewTab);
+          }
+        }
       };
     }
     else {
