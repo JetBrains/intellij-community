@@ -4,6 +4,8 @@ package com.intellij.util.indexing;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.model.ModelBranch;
 import com.intellij.model.ModelBranchImpl;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
@@ -16,16 +18,14 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.RecursionGuard;
-import com.intellij.openapi.util.RecursionManager;
-import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.*;
 import com.intellij.util.containers.ConcurrentBitSet;
 import com.intellij.util.containers.ContainerUtil;
@@ -559,17 +559,24 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   @Override
   public <T, E extends Throwable> T ignoreDumbMode(@NotNull DumbModeAccessType dumbModeAccessType,
                                                    @NotNull ThrowableComputable<T, E> computable) throws E {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
+    Application app = ApplicationManager.getApplication();
+    app.assertReadAccessAllowed();
     if (FileBasedIndex.isIndexAccessDuringDumbModeEnabled()) {
       Stack<DumbModeAccessType> dumbModeAccessTypeStack = ourDumbModeAccessTypeStack.get();
       boolean preventCaching = dumbModeAccessTypeStack.empty();
       dumbModeAccessTypeStack.push(dumbModeAccessType);
+      Disposable disposable = Disposer.newDisposable();
+      if (app.isWriteThread()) {
+        app.getMessageBus().connect(disposable).subscribe(PsiModificationTracker.TOPIC,
+                () -> RecursionManager.dropCurrentMemoizationCache());
+      }
       try {
         return preventCaching
                ? ourIgnoranceGuard.computePreventingRecursion(dumbModeAccessType, false, computable)
                : computable.compute();
       }
       finally {
+        Disposer.dispose(disposable);
         DumbModeAccessType type = dumbModeAccessTypeStack.pop();
         assert dumbModeAccessType == type;
       }

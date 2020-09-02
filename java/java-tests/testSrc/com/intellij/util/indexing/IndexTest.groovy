@@ -1418,4 +1418,28 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
       assert indexQueries > 0 && indexQueries < 5
     }
   }
+
+  void 'test no caching on write action inside ignoreDumbMode'() {
+    RecursionManager.disableMissedCacheAssertions(testRootDisposable)
+
+    def clazz = myFixture.addClass('class Foo {}')
+    assert clazz == myFixture.findClass('Foo')
+
+    DumbServiceImpl.getInstance(project).setDumb(true)
+
+    def stubQuery = CachedValuesManager.getManager(project).createCachedValue {
+      CachedValueProvider.Result.create(myFixture.javaFacade.findClass('Foo', GlobalSearchScope.allScope(project)),
+                                        PsiModificationTracker.MODIFICATION_COUNT)
+    }
+
+    FileBasedIndex.instance.ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY) {
+      assert clazz == stubQuery.getValue()
+      WriteCommandAction.runWriteCommandAction(project) {
+        clazz.setName('Bar')
+      }
+      assert null == stubQuery.getValue()
+    }
+
+  }
+
 }

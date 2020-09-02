@@ -5,10 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -153,6 +150,18 @@ public final class RecursionManager {
       }
 
     };
+  }
+
+  /**
+   * Clears the memoization cache for the current thread. This can be invoked when a side effect happens
+   * inside a {@link #doPreventingRecursion} call that may affect results of nested memoizing {@code doPreventingRecursion} calls,
+   * whose memoized results should not be reused on that point.<p></p>
+   *
+   * Please avoid this method at all cost and try to restructure your code to avoid side effects inside {@code doPreventingRecursion}.
+   */
+  @ApiStatus.Internal
+  public static void dropCurrentMemoizationCache() {
+    ourStack.get().intermediateCache.clear();
   }
 
   /**
