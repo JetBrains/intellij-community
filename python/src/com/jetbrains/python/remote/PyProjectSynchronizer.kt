@@ -52,7 +52,7 @@ interface PyProjectSynchronizer {
    * @return null if sync is available or error message if something prevents project from sync.
    */
 
-  fun checkSynchronizationAvailable(syncCheckStrategy: PySyncCheckStrategy): @Nls String?
+  @Nls fun checkSynchronizationAvailable(syncCheckStrategy: PySyncCheckStrategy): String?
 
   /**
    * if remote box allows user to configure remote path, this method returns default path

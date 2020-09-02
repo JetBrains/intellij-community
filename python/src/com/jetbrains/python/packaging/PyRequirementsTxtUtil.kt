@@ -16,6 +16,7 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -49,9 +50,11 @@ data class PyRequirementsAnalysisResult(val currentFileOutput: List<String>,
   }
 }
 
-private class PyCollectImportsTask(private val module: Module,
-                                   private val psiManager: PsiManager,
-                                   title: String) : Task.WithResult<Set<String>, Exception>(module.project, title, true) {
+private class PyCollectImportsTask(
+  private val module: Module,
+  private val psiManager: PsiManager,
+  @NlsContexts.ProgressTitle title: String
+) : Task.WithResult<Set<String>, Exception>(module.project, title, true) {
 
   override fun compute(indicator: ProgressIndicator): Set<String> {
     val imported = mutableSetOf<String>()
@@ -126,7 +129,7 @@ internal fun syncWithImports(module: Module) {
 
 private fun showNotification(notificationGroup: NotificationGroup,
                              type: NotificationType,
-                             text: String,
+                             @NlsContexts.NotificationContent text: String,
                              project: Project,
                              action: NotificationAction? = null) {
   val notification = notificationGroup.createNotification(PyBundle.message("python.requirements.balloon"), text, type)
