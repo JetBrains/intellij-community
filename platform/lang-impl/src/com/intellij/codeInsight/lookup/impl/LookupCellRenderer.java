@@ -117,13 +117,9 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
 
     myWidthChangeAlarm = new SingleAlarm(() -> {
       myLookup.requestResize();
-      myLookup.refreshUi(true, false);
-    }, 50);
-    Disposer.register(lookup, () -> {
-      synchronized (myWidthChangeAlarm) {
-        Disposer.dispose(myWidthChangeAlarm);
-      }
-    });
+      myLookup.refreshUi(false, false);
+    }, 100);
+    Disposer.register(lookup, () -> Disposer.dispose(myWidthChangeAlarm));
   }
 
   private boolean myIsSelected = false;
@@ -484,7 +480,7 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
     return font == null ? null : bold ? font.deriveFont(Font.BOLD) : font;
   }
 
-  boolean updateLookupWidth(LookupElement item, LookupElementPresentation presentation) {
+  boolean updateLookupWidthFromVisibleItems(LookupElement item, LookupElementPresentation presentation) {
     List<LookupElement> visibleItems = myLookup.getVisibleItems();
     if (!visibleItems.contains(item)) return false;
 
@@ -505,13 +501,12 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
   /**
    * Update lookup width due to visible in lookup items
    */
-  void updateLookupWidth() {
+  void updateLookupWidthFromVisibleItems() {
     List<LookupElement> visibleItems = myLookup.getVisibleItems();
 
     int maxWidth = myLookupTextWidth;
     for (var item : visibleItems) {
-      LookupElementPresentation presentation = myAsyncRendering.tryGetLastComputed(item);
-      if (presentation == null) continue;
+      LookupElementPresentation presentation = myAsyncRendering.getLastComputed(item);
 
       final Font customFont = getFontAbleToDisplay(presentation);
       if (customFont != null) {
@@ -539,7 +534,7 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
   }
 
   void itemAdded(@NotNull LookupElement element, @NotNull LookupElementPresentation fastPresentation) {
-    updateLookupWidth(element, fastPresentation);
+    updateLookupWidthFromVisibleItems(element, fastPresentation);
     AsyncRendering.rememberPresentation(element, fastPresentation);
 
     updateItemPresentation(element);

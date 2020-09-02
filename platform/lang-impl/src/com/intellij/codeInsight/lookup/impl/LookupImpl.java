@@ -302,7 +302,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
   }
 
   public void updateLookupWidth(LookupElement item) {
-    myCellRenderer.updateLookupWidth(item, LookupElementPresentation.renderElement(item));
+    myCellRenderer.updateLookupWidthFromVisibleItems(item, LookupElementPresentation.renderElement(item));
   }
 
   public void requestResize() {
@@ -826,7 +826,6 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       public boolean onClick(@NotNull MouseEvent e, int clickCount) {
         setLookupFocusDegree(LookupFocusDegree.FOCUSED);
         markSelectionTouched();
-        myCellRenderer.updateLookupWidth();
 
         if (clickCount == 2){
           CommandProcessor.getInstance().executeCommand(myProject, () -> finishLookup(NORMAL_SELECT_CHAR), "", null, myEditor.getDocument());
@@ -835,7 +834,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       }
     }.installOn(myList);
 
-    myList.addListSelectionListener(e -> myCellRenderer.updateLookupWidth());
+    myList.addListSelectionListener(e -> myCellRenderer.updateLookupWidthFromVisibleItems());
   }
 
   protected boolean suppressHidingOnDocumentChanged() {
@@ -1047,19 +1046,14 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
   List<LookupElement> getVisibleItems() {
     var itemsCount = myList.getItemsCount();
-    if (itemsCount == 0) return Collections.emptyList();
+    if (!myShown || itemsCount == 0) return Collections.emptyList();
 
     synchronized (myUiLock) {
-      Rectangle visibleRect = myList.getVisibleRect();
-      int height = UIManager.getInt("List.rowHeight");
+      int lowerItemIndex = myList.getFirstVisibleIndex();
+      int higherItemIndex = myList.getLastVisibleIndex();
+      if (lowerItemIndex < 0 || higherItemIndex <= 0) return Collections.emptyList();
 
-      int lowerItemIndex = visibleRect.y / height;
-      int higherItemIndex = (int) Math.ceil((visibleRect.y + visibleRect.height) * 1.0 / height);
-
-      higherItemIndex = Math.min(higherItemIndex, itemsCount);
-      if (higherItemIndex == 0) return Collections.emptyList();
-
-      return getListModel().toList().subList(lowerItemIndex, higherItemIndex);
+      return getListModel().toList().subList(lowerItemIndex, Math.min(higherItemIndex + 1, itemsCount));
     }
   }
 

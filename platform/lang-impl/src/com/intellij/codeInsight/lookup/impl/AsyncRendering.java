@@ -14,7 +14,6 @@ import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.indexing.FileBasedIndex;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.CancellablePromise;
 
 import java.util.Objects;
@@ -45,14 +44,9 @@ public class AsyncRendering {
     });
   }
 
-  @Nullable
-  LookupElementPresentation tryGetLastComputed(@NotNull LookupElement element) {
-    return element.getUserData(LAST_COMPUTED_PRESENTATION);
-  }
-
   @NotNull
   LookupElementPresentation getLastComputed(@NotNull LookupElement element) {
-    return Objects.requireNonNull(tryGetLastComputed(element));
+    return Objects.requireNonNull(element.getUserData(LAST_COMPUTED_PRESENTATION));
   }
 
   static void rememberPresentation(LookupElement element, LookupElementPresentation presentation) {
@@ -93,7 +87,7 @@ public class AsyncRendering {
   }
 
   private void scheduleLookupUpdate(LookupElement element, LookupElementPresentation presentation) {
-    if (myLookup.myCellRenderer.updateLookupWidth(element, presentation)) {
+    if (myLookup.myCellRenderer.updateLookupWidthFromVisibleItems(element, presentation)) {
       myToResize.set(true);
     }
     synchronized (myAlarm) {
