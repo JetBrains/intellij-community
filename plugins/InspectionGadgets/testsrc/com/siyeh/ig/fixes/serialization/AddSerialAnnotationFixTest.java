@@ -22,7 +22,7 @@ public class AddSerialAnnotationFixTest extends LightJavaInspectionTestCase {
   public void testAdditionToField() {
     doTest("import java.io.*;\n" +
            "class Test implements Serializable {\n" +
-           "  private static final long <warning descr=\"The 'serialVersionUID' can be annotated with @Serial annotation\"><caret>serialVersionUID</warning> = 7874493593505141603L;\n" +
+           "  private static final long /*'serialVersionUID' can be annotated with @Serial annotation*//*_*/serialVersionUID/**/ = 7874493593505141603L;\n" +
            "}");
     checkQuickFix("Annotate field 'serialVersionUID' as @Serial", "import java.io.*;\n" +
                                     "class Test implements Serializable {\n" +
@@ -34,7 +34,7 @@ public class AddSerialAnnotationFixTest extends LightJavaInspectionTestCase {
   public void testAdditionToMethod() {
     doTest("import java.io.*;\n" +
            "class Test implements Serializable {\n" +
-           "  protected Object <warning descr=\"The 'readResolve' can be annotated with @Serial annotation\"><caret>readResolve</warning>() throws ObjectStreamException {\n" +
+           "  protected Object /*'readResolve()' can be annotated with @Serial annotation*//*_*/readResolve/**/() throws ObjectStreamException {\n" +
            "    return 1;\n" +
            "  }\n" +
            "}");

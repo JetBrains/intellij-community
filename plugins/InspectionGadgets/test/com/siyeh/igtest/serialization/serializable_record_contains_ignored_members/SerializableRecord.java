@@ -4,18 +4,18 @@ record R1() implements Serializable {
   @Serial
   private static final long serialVersionUID = 7874493593505141603L;
   @Serial
-  private static final ObjectStreamField[] <warning descr="The 'serialPersistentFields' is ignored during record serialization">serialPersistentFields</warning> = new ObjectStreamField[0];
+  private static final ObjectStreamField[] <warning descr="'serialPersistentFields' will be ignored during record serialization">serialPersistentFields</warning> = new ObjectStreamField[0];
 
   @Serial
-  private void <warning descr="The 'writeObject' is ignored during record serialization">writeObject</warning>(ObjectOutputStream out) throws IOException {
+  private void <warning descr="'writeObject()' will be ignored during record serialization">writeObject</warning>(ObjectOutputStream out) throws IOException {
   }
 
   @Serial
-  private void <warning descr="The 'readObject' is ignored during record serialization">readObject</warning>(ObjectInputStream in) throws IOException, ClassNotFoundException {
+  private void <warning descr="'readObject()' will be ignored during record serialization">readObject</warning>(ObjectInputStream in) throws IOException, ClassNotFoundException {
   }
 
   @Serial
-  private void <warning descr="The 'readObjectNoData' is ignored during record serialization">readObjectNoData</warning>() throws ObjectStreamException {
+  private void <warning descr="'readObjectNoData()' will be ignored during record serialization">readObjectNoData</warning>() throws ObjectStreamException {
   }
 
   @Serial

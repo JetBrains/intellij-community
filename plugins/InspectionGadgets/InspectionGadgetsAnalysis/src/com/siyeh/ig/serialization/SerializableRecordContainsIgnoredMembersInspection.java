@@ -19,7 +19,13 @@ public class SerializableRecordContainsIgnoredMembersInspection extends BaseInsp
 
   @Override
   protected @NotNull @InspectionMessage String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("serializable.record.contains.ignored.members.problem.descriptor", infos[0]);
+    final Object member = infos[0];
+    if (member instanceof PsiField) {
+      return InspectionGadgetsBundle.message("serializable.record.contains.ignored.field.problem.descriptor", member);
+    }
+    else {
+      return InspectionGadgetsBundle.message("serializable.record.contains.ignored.method.problem.descriptor", member);
+    }
   }
 
   @Override
@@ -40,7 +46,7 @@ public class SerializableRecordContainsIgnoredMembersInspection extends BaseInsp
 
       if (SerializationUtils.isExternalizable(psiClass)) return;
       if (SerializationUtils.isSerialPersistentFields(field)) {
-        registerError(field.getNameIdentifier(), field);
+        registerFieldError(field, field);
       }
     }
 
@@ -50,19 +56,16 @@ public class SerializableRecordContainsIgnoredMembersInspection extends BaseInsp
       PsiClass psiClass = MissingSerialAnnotationInspection.getSerializablePsiClass(method);
       if (psiClass == null || !psiClass.isRecord()) return;
 
-      PsiIdentifier methodIdentifier = method.getNameIdentifier();
-      if (methodIdentifier == null) return;
-
       if (SerializationUtils.isExternalizable(psiClass) && method.hasModifierProperty(PsiModifier.PUBLIC) &&
           (SerializationUtils.isReadExternal(method) ||
            SerializationUtils.isWriteExternal(method))) {
-        registerError(methodIdentifier, method);
+        registerMethodError(method, method);
       }
       else if (SerializationUtils.isSerializable(psiClass) && method.hasModifierProperty(PsiModifier.PRIVATE) &&
                (SerializationUtils.isWriteObject(method) ||
                 SerializationUtils.isReadObject(method) ||
                 SerializationUtils.isReadObjectNoData(method))) {
-        registerError(methodIdentifier, method);
+        registerMethodError(method, method);
       }
     }
   }

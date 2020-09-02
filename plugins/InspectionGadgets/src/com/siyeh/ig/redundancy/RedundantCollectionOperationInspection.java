@@ -266,10 +266,10 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
         myReplacementMethod = "clone()";
       }
       else if (ExpressionUtils.isZero(from)) {
-        myReplacementMethod = "Arrays.copyOf";
+        myReplacementMethod = "Arrays.copyOf()";
       }
       else {
-        myReplacementMethod = "Arrays.copyOfRange";
+        myReplacementMethod = "Arrays.copyOfRange()";
       }
     }
 
@@ -367,7 +367,7 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
   private static class ContainsAllSingletonHandler implements RedundantCollectionOperationHandler {
     @Override
     public @NotNull @NlsSafe String getReplacement() {
-      return "contains";
+      return "contains()";
     }
 
     @Override
@@ -394,7 +394,7 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
     @NotNull
     @Override
     public String getReplacement() {
-      return "Objects.equals";
+      return "Objects.equals()";
     }
 
     @Override

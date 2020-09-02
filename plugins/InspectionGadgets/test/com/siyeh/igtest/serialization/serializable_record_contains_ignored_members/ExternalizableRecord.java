@@ -7,11 +7,11 @@ record R1() implements Externalizable {
   private static final ObjectStreamField[] serialPersistentFields = new ObjectStreamField[0];
 
   @Override
-  public void <warning descr="The 'writeExternal' is ignored during record serialization">writeExternal</warning>(ObjectOutput out) throws IOException {
+  public void <warning descr="'writeExternal()' will be ignored during record serialization">writeExternal</warning>(ObjectOutput out) throws IOException {
   }
 
   @Override
-  public void <warning descr="The 'readExternal' is ignored during record serialization">readExternal</warning>(ObjectInput in) throws IOException, ClassNotFoundException {
+  public void <warning descr="'readExternal()' will be ignored during record serialization">readExternal</warning>(ObjectInput in) throws IOException, ClassNotFoundException {
   }
 
   @Serial

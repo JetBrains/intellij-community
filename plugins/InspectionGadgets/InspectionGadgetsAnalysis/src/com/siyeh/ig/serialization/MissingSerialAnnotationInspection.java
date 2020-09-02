@@ -27,7 +27,13 @@ public class MissingSerialAnnotationInspection extends BaseInspection {
 
   @Override
   protected @NotNull @InspectionMessage String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message("missing.serial.annotation.problem.descriptor", infos[0]);
+    final Object member = infos[0];
+    if (member instanceof PsiField) {
+      return InspectionGadgetsBundle.message("missing.serial.annotation.on.field.problem.descriptor", member);
+    }
+    else {
+      return InspectionGadgetsBundle.message("missing.serial.annotation.on.method.problem.descriptor", member);
+    }
   }
 
   @Override
@@ -55,7 +61,7 @@ public class MissingSerialAnnotationInspection extends BaseInspection {
                                                                                SerializationUtils.isSerialPersistentFields(field);
       }
       if (candidateToBeAnnotated) {
-        registerError(field.getNameIdentifier(), field);
+        registerFieldError(field, field);
       }
     }
 
@@ -76,9 +82,7 @@ public class MissingSerialAnnotationInspection extends BaseInspection {
                                                                              : isSerialMethodInSerializable(method);
       }
       if (candidateToBeAnnotated) {
-        PsiIdentifier methodIdentifier = method.getNameIdentifier();
-        if (methodIdentifier == null) return;
-        registerError(methodIdentifier, method);
+        registerMethodError(method, method);
       }
     }
   }
