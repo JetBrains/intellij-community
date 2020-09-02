@@ -4,6 +4,7 @@ package com.intellij.util.indexing.diagnostic.dump
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.Base64
 import com.intellij.util.containers.ConcurrentBitSet
 import com.intellij.util.indexing.*
 import com.intellij.util.indexing.diagnostic.dump.paths.IndexedFilePath
@@ -24,6 +25,7 @@ object IndexContentDiagnosticDumper {
     val indexedFilePaths = arrayListOf<IndexedFilePath>()
     val providerNameToOriginalFileIds = hashMapOf<String, MutableSet<Int>>()
     val filesFromUnsupportedFileSystem = arrayListOf<IndexedFilePath>()
+    val indexedFileHashes = hashMapOf<Int, String>()
 
     for ((index, provider) in providers.withIndex()) {
       indicator.text2 = provider.debugName
@@ -41,6 +43,8 @@ object IndexContentDiagnosticDumper {
             filesFromUnsupportedFileSystem += indexedFilePath
             return@iterateFiles true
           }
+          val contentHash = IndexedHashesSupport.getOrInitIndexedHash(FileContentImpl.createByFile(fileOrDir, project))
+          indexedFileHashes[indexedFilePath.originalFileSystemId] = Base64.encode(contentHash)
         }
         true
       }, visitedFiles)
@@ -49,7 +53,8 @@ object IndexContentDiagnosticDumper {
     return IndexContentDiagnostic(
       indexedFilePaths,
       filesFromUnsupportedFileSystem,
-      providerNameToOriginalFileIds
+      providerNameToOriginalFileIds,
+      indexedFileHashes
     )
   }
 

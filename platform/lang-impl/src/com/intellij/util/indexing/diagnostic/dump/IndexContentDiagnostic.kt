@@ -12,5 +12,9 @@ data class IndexContentDiagnostic(
    * Keys - debug name of indexable file provider that schedules a set of files for indexing.
    * Values - IDs of files that were scheduled for indexing by a provider.
    */
-  val projectIndexedFileProviderDebugNameToFileIds: Map<String, Set<Int>>
+  val projectIndexedFileProviderDebugNameToFileIds: Map<String, Set<Int>>,
+  /**
+   * Hashes of contents of indexed files in Base64 format.
+   */
+  val indexedFileHashes: Map</* IndexedFilePath.originalFileSystemId */ Int, String>
 )
