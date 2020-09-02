@@ -58,6 +58,7 @@
 
   <extensions defaultExtensionNs="com.intellij.grazie">
     <grammar.strategy language="TEXT" implementationClass="com.intellij.grazie.ide.language.plain.PlainTextGrammarCheckingStrategy"/>
+    <grammar.strategy language="TEXT" implementationClass="com.intellij.grazie.ide.language.commit.CommitMessageGrammarCheckingStrategy"/>
   </extensions>
 
   <extensionPoints>

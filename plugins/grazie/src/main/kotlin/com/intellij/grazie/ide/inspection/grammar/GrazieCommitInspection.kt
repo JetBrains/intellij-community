@@ -9,6 +9,7 @@ import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.config.SuppressingContext
 import com.intellij.grazie.grammar.GrammarChecker
 import com.intellij.grazie.ide.inspection.grammar.problem.GrazieProblemDescriptor
+import com.intellij.grazie.ide.language.LanguageGrammarChecking
 import com.intellij.grazie.ide.language.commit.CommitMessageGrammarCheckingStrategy
 import com.intellij.grazie.ide.msg.GrazieStateLifecycle
 import com.intellij.grazie.utils.lazyConfig
@@ -22,7 +23,7 @@ import com.intellij.vcs.commit.message.CommitMessageInspectionProfile
 class GrazieCommitInspection : BaseCommitMessageInspection() {
   companion object : GrazieStateLifecycle {
     private const val TOOL_SHORT_NAME = "GrazieCommit"
-    private val strategy = CommitMessageGrammarCheckingStrategy()
+    private val strategy = LanguageGrammarChecking.getStrategyByID(CommitMessageGrammarCheckingStrategy.ID)!!
     private var suppression: SuppressingContext by lazyConfig(this::init)
 
     override fun init(state: GrazieConfig.State) {

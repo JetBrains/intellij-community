@@ -50,7 +50,7 @@ class GrazieStrategiesComponent : CheckBoxListListener, GrazieUIComponent {
     myDisabledStrategyIDs.clear()
     myDisabledStrategyIDs.addAll(disabledStrategiesIDs)
 
-    val strategies = LanguageGrammarChecking.getLanguageExtensionPoints().map { it.instance }.sortedBy { it.getName() }
+    val strategies = LanguageGrammarChecking.getStrategies()
 
     list.clear()
     for (strategy in strategies) {
