@@ -355,4 +355,10 @@ final class DefaultProjectImpl extends ComponentManagerImpl implements Project {
   public boolean isOpen() {
     return false;
   }
+
+  @Override
+  public void dispose() {
+    beforeTreeDispose();
+    super.dispose();
+  }
 }
