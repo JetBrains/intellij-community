@@ -7,6 +7,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrNamedArgumentsOwner
@@ -17,9 +18,8 @@ import org.jetbrains.plugins.groovy.lang.resolve.ast.TupleConstructorAttributes
 class MapConstructorAttributesFix : SetAnnotationAttributesFix() {
 
   override fun getNecessaryAttributes(place: PsiElement): Pair<GrAnnotation, Map<String, Any?>>? {
-    val annotatedClass = (place as? GrArgumentLabel)?.resolve()?.parentOfType<GrTypeDefinition>() ?: return null
+    val annotatedClass = place.parentOfType<GrCall>()?.resolveMethod()?.containingClass as? GrTypeDefinition ?: return null
     val mapConstructorAnno = annotatedClass.getAnnotation(GROOVY_TRANSFORM_MAP_CONSTRUCTOR) as? GrAnnotation ?: return null
-    // todo: proper annotation extraction
     val affectedIdentifiers: Set<String> = run {
       val cache = AffectedMembersCache(mapConstructorAnno)
       cache.getAffectedMembers().mapNotNullTo(LinkedHashSet(), AffectedMembersCache.Companion::getExternalName)
