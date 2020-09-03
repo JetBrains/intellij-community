@@ -22,6 +22,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.icons.CompositeIcon;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
@@ -412,13 +413,11 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
   @NotNull
   private static Icon removeVisibilityIfNeeded(@Nullable Editor editor, @NotNull Icon icon, @NotNull Icon standard) {
     if (!Registry.is("ide.completion.show.visibility.icon")) {
-      if (icon instanceof LeftCustomizedIcon) {
-        LeftCustomizedIcon leftCustomizedIcon = (LeftCustomizedIcon)icon;
-        Icon baseIcon = leftCustomizedIcon.getBaseIcon();
-        if (baseIcon != null) {
-          icon = new LeftCustomizedIcon(leftCustomizedIcon.getLeftIcon(),
-                                        removeVisibility(editor, baseIcon, standard),
-                                        leftCustomizedIcon.getAlignment());
+      if (icon instanceof ItemPresentationCustomizer.IconDecorator) {
+        ItemPresentationCustomizer.IconDecorator decoratorIcon = (ItemPresentationCustomizer.IconDecorator)icon;
+        Icon delegateIcon = decoratorIcon.getDelegate();
+        if (delegateIcon != null) {
+          icon = decoratorIcon.withDelegate(removeVisibility(editor, delegateIcon, standard));
         }
       } else {
         icon = removeVisibility(editor, icon, standard);
@@ -645,32 +644,10 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
     @NotNull
     LookupElementPresentation customizePresentation(@NotNull LookupElement item,
                                                     @NotNull LookupElementPresentation presentation);
-  }
 
-  public static final class LeftCustomizedIcon extends com.intellij.ui.RowIcon {
-    private final Icon myLeftIcon;
-    private final Icon myBaseIcon;
-    private final RowIcon.Alignment myAlignment;
-
-    public LeftCustomizedIcon(Icon leftIcon, Icon baseIcon, RowIcon.Alignment alignment) {
-      super(2, alignment);
-      setIcon(leftIcon, 0);
-      setIcon(baseIcon, 1);
-      myLeftIcon = leftIcon;
-      myBaseIcon = baseIcon;
-      myAlignment = alignment;
-    }
-
-    public Icon getBaseIcon() {
-      return myBaseIcon;
-    }
-
-    public Icon getLeftIcon() {
-      return myLeftIcon;
-    }
-
-    public RowIcon.Alignment getAlignment() {
-      return myAlignment;
+    interface IconDecorator extends CompositeIcon {
+      Icon getDelegate();
+      IconDecorator withDelegate(Icon icon);
     }
   }
 }
