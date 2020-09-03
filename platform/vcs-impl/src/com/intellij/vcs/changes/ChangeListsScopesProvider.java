@@ -38,7 +38,7 @@ public final class ChangeListsScopesProvider extends CustomScopesProviderEx {
     List<LocalChangeList> changeLists = changeListManager.getChangeListsCopy();
     boolean skipSingleDefaultCL = Registry.is("vcs.skip.single.default.changelist") &&
                                   changeLists.size() == 1 && changeLists.get(0).isBlank();
-    if (!skipSingleDefaultCL) {
+    if (!skipSingleDefaultCL && changeListManager.areChangeListsEnabled()) {
       for (ChangeList list : changeLists) {
         result.add(new ChangeListScope(changeListManager, list.getName()));
       }
