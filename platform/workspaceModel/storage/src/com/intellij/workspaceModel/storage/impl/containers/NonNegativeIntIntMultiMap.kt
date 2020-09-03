@@ -140,7 +140,14 @@ sealed class MutableNonNegativeIntIntMultiMap(
         }
       }
 
-      return ImmutableNonNegativeIntIntMultiMap.ByList(resultingList.toIntArray(), newLinks)
+      val newValues = resultingList.toIntArray()
+
+      modifiableValues.clear()
+      this.values = newValues
+      this.links = newLinks
+      this.freezed = true
+
+      return ImmutableNonNegativeIntIntMultiMap.ByList(newValues, newLinks)
     }
   }
 
