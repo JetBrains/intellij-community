@@ -396,7 +396,7 @@ public class ComponentPanelTestAction extends DumbAwareAction {
                            Arrays.asList("Label 1",
                                          "Label 2 long long long long long long label",
                                          "Label 3", "Label 4", "Label 5", "Label 6"),
-                           t -> System.out.println("[" + t + "] selected"), false);
+                           t -> System.out.println("[" + t + "] selected"));
 
       JPanel p1 = UI.PanelFactory.grid().
       add(UI.PanelFactory.panel(new JTextField()).
