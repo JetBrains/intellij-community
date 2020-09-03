@@ -887,7 +887,7 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
   private boolean isPassedToNonNls(@NotNull UExpression expression,
                                    final Set<? super PsiModifierListOwner> nonNlsTargets) {
     NlsInfo info = NlsInfo.forExpression(JavaI18nUtil.getTopLevelExpression(expression, false));
-    if (info == NlsInfo.nonLocalized()) return true;
+    if (info.getNlsStatus() == ThreeState.NO) return true;
     if (info instanceof NlsInfo.Unspecified) {
       PsiModifierListOwner candidate = ((NlsInfo.Unspecified)info).getAnnotationCandidate();
       if (candidate instanceof PsiVariable &&
