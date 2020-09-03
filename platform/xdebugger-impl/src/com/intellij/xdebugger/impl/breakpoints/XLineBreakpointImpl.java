@@ -262,8 +262,8 @@ public final class XLineBreakpointImpl<P extends XBreakpointProperties> extends 
       }
 
       @Override
-      public Cursor getCursor(int line, int actionId) {
-        if (canMoveTo(line, getFile())) {
+      public Cursor getCursor(int line, VirtualFile file, int actionId) {
+        if (canMoveTo(line, file)) {
           return isCopyAction(actionId) ? DragSource.DefaultCopyDrop : DragSource.DefaultMoveDrop;
         }
 

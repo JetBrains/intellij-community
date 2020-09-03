@@ -244,7 +244,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
             final int line = convertPointToLineNumber(e.getPoint());
             if (line != -1) {
               e.setDropPossible(true);
-              e.setCursor(draggableObject.getCursor(line, e.getAction().getActionId()));
+              e.setCursor(draggableObject.getCursor(line, myEditor.getVirtualFile(), e.getAction().getActionId()));
             }
           }
         }
