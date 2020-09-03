@@ -593,7 +593,7 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     restoreTree();
   }
 
-  protected String getAllContainersNodeName() {
+  protected @Nls(capitalization = Nls.Capitalization.Sentence) String getAllContainersNodeName() {
     return IdeBundle.message("node.memberchooser.all.classes");
   }
 

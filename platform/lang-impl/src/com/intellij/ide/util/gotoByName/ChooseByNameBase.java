@@ -1520,11 +1520,9 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     myAlwaysHasMore = enabled;
   }
 
-  private static final String ACTION_NAME = "Show All in View";
-
   private abstract class ShowFindUsagesAction extends DumbAwareAction {
     ShowFindUsagesAction() {
-      super(() -> ACTION_NAME, AllIcons.General.Pin_tab);
+      super(LangBundle.messagePointer("action.show.all.in.view.text"), AllIcons.General.Pin_tab);
     }
 
     @Override

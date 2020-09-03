@@ -5,6 +5,7 @@ import com.google.common.util.concurrent.UncheckedTimeoutException;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -14,6 +15,7 @@ import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -51,7 +53,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   private final ChooseByNamePopup myOldPopup;
   private ActionMap myActionMap;
   private InputMap myInputMap;
-  private String myAdText;
+  private @NlsContexts.PopupAdvertisement String myAdText;
   private final MergingUpdateQueue myRepaintQueue = new MergingUpdateQueue("ChooseByNamePopup repaint", 50, true, myList, this);
 
   protected ChooseByNamePopup(@Nullable final Project project,
@@ -67,9 +69,9 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
       myOldFocusOwner = oldPopup.myPreviouslyFocusedComponent;
     }
     myMayRequestCurrentWindow = mayRequestOpenInCurrentWindow;
-    myAdText = myMayRequestCurrentWindow ? "Press " +
-                                           KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_MASK)) +
-                                           " to open in current window" : null;
+    myAdText = myMayRequestCurrentWindow ? LangBundle.message("popup.advertisement.press.to.open.in.current.window",
+                                                              KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_MASK)))
+                                         : null;
   }
 
   public String getEnteredText() {
@@ -426,11 +428,12 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
     myActionMap.put(aActionName, aAction);
   }
 
+  @NlsContexts.PopupAdvertisement
   public String getAdText() {
     return myAdText;
   }
 
-  public void setAdText(final String adText) {
+  public void setAdText(final @NlsContexts.PopupAdvertisement String adText) {
     myAdText = adText;
   }
 

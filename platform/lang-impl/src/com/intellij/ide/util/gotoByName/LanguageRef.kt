@@ -8,9 +8,10 @@ import com.intellij.navigation.NavigationItem
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.Nls
 import javax.swing.Icon
 
-data class LanguageRef(val id: String, val displayName: String, val icon: Icon?) {
+data class LanguageRef(val id: String, @field:Nls val displayName: String, val icon: Icon?) {
   companion object {
     @JvmStatic
     fun forLanguage(lang: Language): LanguageRef = LanguageRef(lang.id, lang.displayName, lang.associatedFileType?.icon)
