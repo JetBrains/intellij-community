@@ -34,7 +34,7 @@ class ClassSetImpl<out T>(vararg val initialClasses: Class<out T>) : ClassSet<T>
       ?: initialClasses.any { it.isAssignableFrom(element) }.also { internalMapping[element] = it }
 }
 
-inline class ClassSetsWrapper<out T>(val sets: Array<ClassSet<@UnsafeVariance T>>) : ClassSet<T> {
+class ClassSetsWrapper<out T>(val sets: Array<ClassSet<@UnsafeVariance T>>) : ClassSet<T> {
   override fun isEmpty(): Boolean = sets.all { it.isEmpty() }
   override operator fun contains(element: Class<out @UnsafeVariance T>): Boolean = sets.any { it.contains(element) }
 }
