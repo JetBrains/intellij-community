@@ -55,8 +55,6 @@
                      level="WARNING"
                      implementationClass="com.intellij.codeInspection.duplicateStringLiteral.DuplicateStringLiteralInspection"/>
 
-    <registryKey key="java.i18n.title.capitalization.new" defaultValue="true"
-                 description="New implementation for capitalization inspection"/>
     <localInspection groupPath="Java" language="UAST" shortName="DialogTitleCapitalization"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.internationalization.issues"
                      enabledByDefault="true"

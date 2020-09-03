@@ -6,18 +6,14 @@ import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.lang.properties.psi.Property;
 import com.intellij.lang.properties.references.PropertyReference;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtilBase;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -29,15 +25,11 @@ import java.text.ChoiceFormat;
 import java.text.Format;
 import java.text.MessageFormat;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspectionTool {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-    if (!Registry.is("java.i18n.title.capitalization.new")) {
-      return new OldVisitor(holder);
-    }
     return new PsiElementVisitor() {
       @Override
       public void visitElement(@NotNull PsiElement element) {
@@ -115,18 +107,6 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
     }
   }
 
-  private static void checkCapitalization(PsiExpression e,
-                                          Value titleValue,
-                                          @NotNull ProblemsHolder holder,
-                                          Nls.Capitalization capitalization) {
-    if (titleValue != null && !titleValue.isSatisfied(capitalization)) {
-      holder.registerProblem(e, JavaI18nBundle
-                               .message("inspection.title.capitalization.description", titleValue, getCapitalizationName(capitalization)),
-                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                             titleValue.canFix() ? new TitleCapitalizationFix(titleValue, capitalization) : null);
-    }
-  }
-
   @Nullable
   private static Value getTitleValue(@Nullable UExpression arg, Set<? super UExpression> processed) {
     if (arg instanceof UInjectionHost) {
@@ -165,44 +145,6 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
           return value;
         }
       }
-    }
-    return null;
-  }
-
-  @Nullable
-  private static Value getTitleValue(@Nullable PsiExpression arg, Set<? super PsiElement> processed) {
-    if (arg instanceof PsiLiteralExpression) {
-      return Value.of((PsiLiteralExpression)arg);
-    }
-    if (arg instanceof PsiMethodCallExpression) {
-      PsiMethodCallExpression call = (PsiMethodCallExpression)arg;
-      PsiMethod psiMethod = call.resolveMethod();
-      PsiExpression returnValue = PropertyUtilBase.getGetterReturnExpression(psiMethod);
-      if (arg == returnValue) {
-        return null;
-      }
-      if (returnValue != null && processed.add(returnValue)) {
-        return getTitleValue(returnValue, processed);
-      }
-      return Value.of(getPropertyArgument(call), call.getArgumentList().getExpressionCount() > 1);
-    }
-    if (arg instanceof PsiReferenceExpression) {
-      PsiElement result = ((PsiReferenceExpression)arg).resolve();
-      if (result instanceof PsiVariable && ((PsiVariable)result).hasModifierProperty(PsiModifier.FINAL)) {
-        PsiExpression initializer = ((PsiVariable)result).getInitializer();
-        if (processed.add(initializer)) {
-          return getTitleValue(initializer, processed);
-        }
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  private static Property getPropertyArgument(PsiMethodCallExpression arg) {
-    PsiExpression[] args = arg.getArgumentList().getExpressions();
-    if (args.length > 0) {
-      return getProperty(args[0]);
     }
     return null;
   }
@@ -295,6 +237,15 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
           doFix(project, variable.getInitializer());
         }
       }
+    }
+
+    @Nullable
+    private static Property getPropertyArgument(PsiMethodCallExpression arg) {
+      PsiExpression[] args = arg.getArgumentList().getExpressions();
+      if (args.length > 0) {
+        return getProperty(args[0]);
+      }
+      return null;
     }
 
     @NotNull
@@ -432,62 +383,6 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
     @Override
     public boolean canFix() {
       return ContainerUtil.findInstance(myFormat.getFormats(), ChoiceFormat.class) == null;
-    }
-  }
-
-  private static class OldVisitor extends JavaElementVisitor {
-    private @NotNull final ProblemsHolder myHolder;
-
-    OldVisitor(@NotNull ProblemsHolder holder) {myHolder = holder;}
-
-    @Override
-    public void visitMethod(PsiMethod method) {
-      PsiType type = method.getReturnType();
-      if (!InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_STRING)) return;
-      Collection<PsiReturnStatement> statements = PsiTreeUtil.findChildrenOfType(method, PsiReturnStatement.class);
-      Nls.Capitalization capitalization = null;
-      for (PsiReturnStatement returnStatement : statements) {
-        PsiExpression expression = returnStatement.getReturnValue();
-        if (expression == null) continue;
-        List<PsiExpression> children = ExpressionUtils.nonStructuralChildren(expression).collect(Collectors.toList());
-        for (PsiExpression e : children) {
-          if (capitalization == null) {
-            capitalization = NlsInfo.getCapitalization(method);
-            if (capitalization == Nls.Capitalization.NotSpecified) return;
-          }
-          Value titleValue = getTitleValue(e, new HashSet<>());
-          if (titleValue == null) continue;
-          checkCapitalization(e, titleValue, myHolder, capitalization);
-        }
-      }
-    }
-
-    @Override
-    public void visitCallExpression(PsiCallExpression expression) {
-      PsiMethod psiMethod = expression.resolveMethod();
-      if (psiMethod != null) {
-        PsiExpressionList argumentList = expression.getArgumentList();
-        if (argumentList != null) {
-          PsiExpression[] args = argumentList.getExpressions();
-          PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
-          for (int i = 0; i < Math.min(parameters.length, args.length); i++) {
-            PsiParameter parameter = parameters[i];
-            Nls.Capitalization capitalization = getCapitalization(parameter);
-            if (capitalization == Nls.Capitalization.NotSpecified) continue;
-            ExpressionUtils.nonStructuralChildren(args[i])
-              .forEach(e -> checkCapitalization(e, getTitleValue(e, new HashSet<>()), myHolder, capitalization));
-          }
-        }
-      }
-    }
-
-    @NotNull
-    private static Nls.Capitalization getCapitalization(PsiParameter parameter) {
-      Nls.Capitalization capitalization = NlsInfo.getCapitalization(parameter);
-      if (capitalization != Nls.Capitalization.NotSpecified) {
-        return capitalization;
-      }
-      return getSupplierCapitalization(parameter);
     }
   }
 
