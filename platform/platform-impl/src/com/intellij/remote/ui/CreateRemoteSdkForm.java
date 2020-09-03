@@ -29,10 +29,7 @@ import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.event.AncestorEvent;
@@ -444,7 +441,7 @@ abstract public class CreateRemoteSdkForm<T extends RemoteSdkAdditionalData> ext
     return myCredentialsType2Handler.get(connectionType).getRadioButton().isSelected(); // TODO: may encapsutate
   }
 
-  public String getValidationError() {
+  public @NlsContexts.DialogMessage String getValidationError() {
     return myStatusPanel.getError();
   }
 

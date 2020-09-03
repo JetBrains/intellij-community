@@ -10,6 +10,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.util.ui.AsyncProcessIcon;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,7 +22,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class StatusPanel extends JBPanel {
   private final ReentrantLock myLock = new ReentrantLock();
-  @Nullable private String myError;
+  @Nullable private @Nls String myError;
   /**
    * Guarded by {@link #myLock}.
    */
@@ -151,7 +152,7 @@ public class StatusPanel extends JBPanel {
   }
 
   @Nullable
-  public String getError() {
+  public @NlsContexts.DialogMessage String getError() {
     return myError;
   }
 
