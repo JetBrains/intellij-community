@@ -56,4 +56,33 @@ static void main(String[] args) {
 }
 """
   }
+
+  void 'test no fix'() {
+    doAntiTest """
+@groovy.transform.MapConstructor(includes = "a")
+class Rr {
+    private static String actionType
+}
+
+static void main(String[] args) {
+    def x = new Rr(actio<caret>nType: "")
+}
+"""
+  }
+
+  void 'test no fix 2'() {
+    doAntiTest """
+class Nn {
+  void setFoo(String s) {}
+}
+
+@groovy.transform.MapConstructor
+class Rr extends Nn {
+}
+
+static void main(String[] args) {
+    def x = new Rr(fo<caret>o: "")
+}
+"""
+  }
 }

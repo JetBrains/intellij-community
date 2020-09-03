@@ -19,7 +19,7 @@ class MapConstructorAttributesFix : SetAnnotationAttributesFix() {
   override fun getNecessaryAttributes(place: PsiElement): Pair<GrAnnotation, Map<String, Any?>>? {
     val annotatedClass = (place as? GrArgumentLabel)?.resolve()?.parentOfType<GrTypeDefinition>() ?: return null
     val mapConstructorAnno = annotatedClass.getAnnotation(GROOVY_TRANSFORM_MAP_CONSTRUCTOR) as? GrAnnotation ?: return null
-    // todo: includes and excludes
+    // todo: proper annotation extraction
     val affectedIdentifiers: Set<String> = run {
       val cache = AffectedMembersCache(mapConstructorAnno)
       cache.getAffectedMembers().mapNotNullTo(LinkedHashSet(), AffectedMembersCache.Companion::getExternalName)

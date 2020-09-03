@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.codeInspection.bugs;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightElement;
 import com.intellij.util.SmartList;
 import kotlin.Lazy;
 import kotlin.LazyKt;
@@ -28,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorReference;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.AffectedMembersCache;
+import org.jetbrains.plugins.groovy.lang.resolve.ast.TupleConstructorAttributes;
 
 import java.util.List;
 import java.util.Objects;
@@ -106,14 +108,36 @@ public class GroovyConstructorNamedArgumentsInspection extends BaseInspection {
         if (resolved != null) {
           String name = label.getName();
           if (name != null && !affectedMembers.getValue().contains(name)) {
-            var fix = new LocalQuickFix[]{GroovyQuickFixFactory.getInstance().createMapConstructorFix()};
-            registerError(label, GroovyBundle.message("inspection.message.property.0.is.ignored.by.map.constructor", name), fix, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+            var fix = generateMapConstructorFix(resolved, containingClass, annotation);
+            registerError(label, GroovyBundle.message("inspection.message.property.0.is.ignored.by.map.constructor", name), fix,
+                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
           }
         }
         else {
           registerAbsentIdentifierError(containingClass, label);
         }
       }
+    }
+
+    private static LocalQuickFix @NotNull [] generateMapConstructorFix(@NotNull PsiElement resolvedElement,
+                                                                       @NotNull PsiClass containingClass,
+                                                                       @NotNull PsiAnnotation annotation) {
+      if (annotation instanceof LightElement) {
+        return LocalQuickFix.EMPTY_ARRAY;
+      }
+      if (!(containingClass instanceof GrTypeDefinition)) {
+        return LocalQuickFix.EMPTY_ARRAY;
+      }
+      if (!(resolvedElement instanceof PsiMember)) {
+        return LocalQuickFix.EMPTY_ARRAY;
+      }
+      if (((PsiMember)resolvedElement).getContainingClass() != containingClass && resolvedElement instanceof PsiMethod) {
+        return LocalQuickFix.EMPTY_ARRAY;
+      }
+      if (annotation.hasAttribute(TupleConstructorAttributes.INCLUDES) || annotation.hasAttribute(TupleConstructorAttributes.EXCLUDES)) {
+        return LocalQuickFix.EMPTY_ARRAY;
+      }
+      return new LocalQuickFix[]{GroovyQuickFixFactory.getInstance().createMapConstructorFix()};
     }
 
     private void registerAbsentIdentifierError(@NotNull PsiClass clazz,
