@@ -806,7 +806,7 @@ public class PyIntentionTest extends PyTestCase {
     TestDialogManager.setTestInputDialog(new TestInputDialog() {
       @Override
       public String show(String message) {
-        return "mc";
+        return "mc"; //NON-NLS
       }
     });
     doMultiFileTest(PyPsiBundle.message("INTN.add.import.alias.to.name", "MyClass"));
