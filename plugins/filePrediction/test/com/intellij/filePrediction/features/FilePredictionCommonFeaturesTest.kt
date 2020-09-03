@@ -50,12 +50,10 @@ class FilePredictionCommonFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtur
 
       if (feature.value.value is Double) {
         val expectedValue = feature.value.value as Double
-        println(feature.key)
         val actualValue = actual[feature.key]!!.value as Double
-        val diff = abs(expectedValue - actualValue)
         assertTrue(
           "The value of feature '${feature.key}' is different from expected. Expected: $expectedValue, Actual: $actualValue",
-          diff < 0.0001
+          abs(expectedValue - actualValue) < 0.0001
         )
       }
       else {
