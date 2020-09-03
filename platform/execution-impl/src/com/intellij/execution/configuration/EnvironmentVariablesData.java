@@ -5,9 +5,11 @@ import com.google.common.collect.ImmutableMap;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Holds environment variables configuration:
@@ -18,7 +20,7 @@ import java.util.Map;
  * Instances of this class are immutable objects, so it can be safely passed across threads.
  */
 public final class EnvironmentVariablesData {
-  public static final EnvironmentVariablesData DEFAULT = new EnvironmentVariablesData(ImmutableMap.of(), true);
+  public static final EnvironmentVariablesData DEFAULT = new EnvironmentVariablesData(ImmutableMap.of(), true, null);
 
   private static final String ENVS = "envs";
   private static final String PASS_PARENT_ENVS = "pass-parent-envs";
@@ -27,11 +29,13 @@ public final class EnvironmentVariablesData {
   private static final String VALUE = EnvironmentVariablesComponent.VALUE;
 
   private final ImmutableMap<String, String> myEnvs;
+  private final String myEnvironmentFile;
   private final boolean myPassParentEnvs;
 
-  private EnvironmentVariablesData(@NotNull Map<String, String> envs, boolean passParentEnvs) {
+  private EnvironmentVariablesData(@NotNull Map<String, String> envs, boolean passParentEnvs, @Nullable String environmentFile) {
     myEnvs = ImmutableMap.copyOf(envs);
     myPassParentEnvs = passParentEnvs;
+    myEnvironmentFile = environmentFile;
   }
 
   /**
@@ -40,6 +44,11 @@ public final class EnvironmentVariablesData {
   @NotNull
   public Map<String, String> getEnvs() {
     return myEnvs;
+  }
+
+  @Nullable
+  public String getEnvironmentFile() {
+    return myEnvironmentFile;
   }
 
   public boolean isPassParentEnvs() {
@@ -51,19 +60,22 @@ public final class EnvironmentVariablesData {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     EnvironmentVariablesData data = (EnvironmentVariablesData)o;
-    return myPassParentEnvs == data.myPassParentEnvs && myEnvs.equals(data.myEnvs);
+    return myPassParentEnvs == data.myPassParentEnvs && myEnvs.equals(data.myEnvs) && Objects.equals(myEnvironmentFile, data.myEnvironmentFile);
   }
 
   @Override
   public int hashCode() {
+    final int prime = 31;
     int result = myEnvs.hashCode();
-    result = 31 * result + (myPassParentEnvs ? 1 : 0);
+    result = prime * result + (myPassParentEnvs ? 1 : 0);
+    if (myEnvironmentFile != null)
+      result = prime * result + myEnvironmentFile.hashCode();
     return result;
   }
 
   @Override
   public String toString() {
-    return "envs=" + myEnvs + ", passParentEnvs=" + myPassParentEnvs;
+    return "envs=" + myEnvs + ", passParentEnvs=" + myPassParentEnvs + ", environmentFile=" + myEnvironmentFile;
   }
 
   @NotNull
@@ -115,6 +127,21 @@ public final class EnvironmentVariablesData {
    */
   @NotNull
   public static EnvironmentVariablesData create(@NotNull Map<String, String> envs, boolean passParentEnvs) {
-    return passParentEnvs && envs.isEmpty() ? DEFAULT : new EnvironmentVariablesData(envs, passParentEnvs);
+    return passParentEnvs && envs.isEmpty() ? DEFAULT : new EnvironmentVariablesData(envs, passParentEnvs, null);
+  }
+
+  @NotNull
+  public EnvironmentVariablesData with(@NotNull Map<String, String> envs) {
+    return new EnvironmentVariablesData(envs, myPassParentEnvs, myEnvironmentFile);
+  }
+
+  @NotNull
+  public EnvironmentVariablesData with(boolean passParentEnvs) {
+    return new EnvironmentVariablesData(myEnvs, passParentEnvs, myEnvironmentFile);
+  }
+
+  @NotNull
+  public EnvironmentVariablesData with(@Nullable String environmentFile) {
+    return new EnvironmentVariablesData(myEnvs, myPassParentEnvs, environmentFile);
   }
 }
