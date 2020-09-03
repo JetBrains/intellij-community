@@ -2,6 +2,8 @@
 package com.intellij.internal.statistic.eventLog.whitelist
 
 import com.google.gson.GsonBuilder
+import com.intellij.ide.plugins.DisabledPluginsState
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
@@ -77,6 +79,7 @@ class WhitelistBuilderAppStarter : ApplicationStarter {
   override fun getCommandName(): String = "buildWhitelist"
 
   override fun main(args: List<String>) {
+    logInstalledPlugins()
     val groups = WhitelistBuilder.buildWhitelist()
     val text = GsonBuilder().setPrettyPrinting().create().toJson(groups)
     if (args.size == 2) {
@@ -86,5 +89,20 @@ class WhitelistBuilderAppStarter : ApplicationStarter {
       println(text)
     }
     exitProcess(0)
+  }
+
+  private fun logInstalledPlugins() {
+    println("Disabled plugins:")
+    for (id in DisabledPluginsState.disabledPlugins()) {
+      println(id.toString())
+    }
+
+    println("\nEnabled plugins:")
+    for (descriptor in PluginManagerCore.getLoadedPlugins()) {
+      val bundled = descriptor.isBundled
+      if (descriptor.isEnabled) {
+        println("${descriptor.name} (bundled=$bundled)")
+      }
+    }
   }
 }
