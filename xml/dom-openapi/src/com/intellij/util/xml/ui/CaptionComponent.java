@@ -72,6 +72,7 @@ public class CaptionComponent extends JPanel implements Committable, Highlightab
     myCaptionLabel.setText(text);
   }
 
+  @Nls
   public String getText() {
     return myCaptionLabel.getText();
   }
