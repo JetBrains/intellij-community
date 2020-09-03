@@ -26,4 +26,5 @@ public class DataFlowInspection14Test extends DataFlowInspectionTestCase {
     doTest();
   }
   public void testSwitchExpressionAndLambdaInlining() { doTest(); }
+  public void testRecordAccessorStability() { doTest(); }
 }
