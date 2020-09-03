@@ -52,7 +52,7 @@ public class AddList implements ChangeListCommand {
     if (myWasListCreated) {
       listener.changeListAdded(myNewListCopy);
     }
-    else if (myOldComment != null) {
+    else if (myNewListCopy != null && myOldComment != null) {
       listener.changeListCommentChanged(myNewListCopy, myOldComment);
     }
   }

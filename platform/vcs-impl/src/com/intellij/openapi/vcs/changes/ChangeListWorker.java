@@ -398,9 +398,10 @@ public class ChangeListWorker {
   }
 
 
-  public boolean setDefaultList(@NotNull String name) {
+  @Nullable
+  public String setDefaultList(@NotNull String name) {
     ListData newDefault = getDataByName(name);
-    if (newDefault == null || newDefault.isDefault) return false;
+    if (newDefault == null || newDefault.isDefault) return null;
 
     ListData oldDefault = myDefault;
 
@@ -414,7 +415,7 @@ public class ChangeListWorker {
       LOG.debug(String.format("[setDefaultList %s] name: %s id: %s", myMainWorker ? "" : "- updater", name, newDefault.id));
     }
 
-    return true;
+    return oldDefault.name;
   }
 
   public boolean setReadOnly(@NotNull String name, boolean value) {
@@ -483,13 +484,14 @@ public class ChangeListWorker {
     return toChangeList(list);
   }
 
-  public boolean removeChangeList(@NotNull String name) {
+  @Nullable
+  public List<Change> removeChangeList(@NotNull String name) {
     ListData removedList = getDataByName(name);
-    if (removedList == null) return false;
+    if (removedList == null) return null;
 
     if (removedList.isDefault) {
       LOG.error("Cannot remove default changelist");
-      return false;
+      return null;
     }
 
     List<Change> movedChanges = new ArrayList<>();
@@ -504,17 +506,13 @@ public class ChangeListWorker {
     fireChangeListRemoved(removedList.id);
     myReadOnlyChangesCache = null;
 
-    if (myMainWorker && !movedChanges.isEmpty()) {
-      myDelayedNotificator.changesMoved(movedChanges, toChangeList(removedList), toChangeList(myDefault));
-    }
-
     myLists.remove(removedList);
 
     if (LOG.isDebugEnabled()) {
       LOG.debug(String.format("[removeChangeList %s] name: %s id: %s", myMainWorker ? "" : "- updater", name, removedList.id));
     }
 
-    return true;
+    return movedChanges;
   }
 
   @Nullable
