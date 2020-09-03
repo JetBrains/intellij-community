@@ -48,7 +48,7 @@ public abstract class ChangeListManagerEx extends ChangeListManager {
    */
   public abstract void setDefaultChangeList(@NotNull LocalChangeList list, boolean automatic);
 
-  public abstract void addUnversionedFiles(@NotNull LocalChangeList list, @NotNull List<? extends VirtualFile> unversionedFiles);
+  public abstract void addUnversionedFiles(@Nullable LocalChangeList list, @NotNull List<? extends VirtualFile> unversionedFiles);
 
   /**
    * Blocks modal dialogs that we don't want to popup during some process, for example, above the commit dialog.

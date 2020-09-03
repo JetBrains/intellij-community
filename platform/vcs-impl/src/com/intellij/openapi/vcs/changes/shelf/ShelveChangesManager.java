@@ -1046,9 +1046,10 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
     });
   }
 
-  @NotNull
+  @Nullable
   private LocalChangeList getChangeListUnshelveTo(@NotNull ShelvedChangeList list) {
     ChangeListManager manager = ChangeListManager.getInstance(myProject);
+    if (!manager.areChangeListsEnabled()) return null;
     LocalChangeList localChangeList = getPredefinedChangeList(list, manager);
     return localChangeList != null ? localChangeList : manager.addChangeList(getChangeListNameForUnshelve(list), "");
   }
