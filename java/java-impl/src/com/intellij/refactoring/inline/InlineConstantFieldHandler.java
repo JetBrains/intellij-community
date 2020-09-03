@@ -24,7 +24,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -113,15 +112,14 @@ public class InlineConstantFieldHandler extends JavaInlineActionHandler {
     if (!BaseRefactoringProcessor.processConflicts(project, conflicts)) return;
 
     PsiElement referenceElement = reference != null ? reference.getElement() : null;
-    if (referenceElement != null && 
+    if (referenceElement != null &&
         referenceElement.getLanguage() == JavaLanguage.INSTANCE &&
         !(referenceElement instanceof PsiReferenceExpression)) {
-      referenceElement = null; 
+      referenceElement = null;
     }
     InlineFieldDialog dialog = new InlineFieldDialog(project, field, referenceElement);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      dialog.doAction();
-      dialog.close(DialogWrapper.OK_EXIT_CODE, true);
+      dialog.performOKAction();
     }
     else {
       dialog.show();
@@ -143,7 +141,7 @@ public class InlineConstantFieldHandler extends JavaInlineActionHandler {
     }
     return false;
   }
-  
+
   @Nullable
   public static PsiExpression getInitializer(PsiField field) {
     if (field.hasInitializer()) {

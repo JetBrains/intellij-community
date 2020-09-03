@@ -9,7 +9,6 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -146,8 +145,7 @@ public final class InlineMethodHandler extends JavaInlineActionHandler {
     }
     InlineMethodDialog dialog = new InlineMethodDialog(project, method, reference, editor, allowInlineThisOnly);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      dialog.doAction();
-      dialog.close(DialogWrapper.OK_EXIT_CODE, true);
+      dialog.performOKAction();
     }
     else {
       dialog.show();
