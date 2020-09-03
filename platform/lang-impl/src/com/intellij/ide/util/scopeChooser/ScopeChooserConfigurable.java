@@ -408,7 +408,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
     private final int myDirection;
 
     protected MyMoveAction(String text, Icon icon, int direction) {
-      super(text, text, icon);
+      super(() -> text, icon);
       ShortcutSet shortcutSet = direction < 0 ? CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.UP)
                                               : CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.DOWN);
       registerCustomShortcutSet(shortcutSet, myTree);
@@ -441,8 +441,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
 
   private class MyCopyAction extends AnAction {
     MyCopyAction() {
-      super(ExecutionBundle.message("copy.configuration.action.name"), ExecutionBundle.message("copy.configuration.action.name"),
-            COPY_ICON);
+      super(ExecutionBundle.messagePointer("copy.configuration.action.name"), COPY_ICON);
       registerCustomShortcutSet(CommonShortcuts.getDuplicate(), myTree);
     }
 
@@ -466,8 +465,7 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
 
   private class MySaveAsAction extends AnAction {
     MySaveAsAction() {
-      super(ExecutionBundle.messagePointer("action.name.save.as.configuration"),
-            ExecutionBundle.messagePointer("action.name.save.as.configuration"), AllIcons.Actions.Menu_saveall);
+      super(ExecutionBundle.messagePointer("action.name.save.as.configuration"), AllIcons.Actions.Menu_saveall);
     }
 
     @Override

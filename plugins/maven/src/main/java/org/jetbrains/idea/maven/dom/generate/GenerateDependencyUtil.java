@@ -40,7 +40,7 @@ public final class GenerateDependencyUtil {
       new MemberChooser<MavenDomProjectModelMember>(memberCandidates, true, true, project) {
         @Override
         protected ShowContainersAction getShowContainersAction() {
-          return new ShowContainersAction(MavenDomBundle.message("chooser.show.project.files"), MavenIcons.MavenProject);
+          return new ShowContainersAction(MavenDomBundle.messagePointer("chooser.show.project.files"), MavenIcons.MavenProject);
         }
 
         @Override
