@@ -132,7 +132,7 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
    * "C:\Users\builduser\.gradle\caches\jars-1\cache.properties (The system cannot find the file specified)"
    */
   private void cleanScriptsCacheIfNeeded() {
-    if (SystemInfo.isWindows && GradleVersion.version(gradleVersion).compareTo(GradleVersion.version("3.5")) < 0) {
+    if (SystemInfo.isWindows && isGradleOlderThan("3.5")) {
       String serviceDirectory = GradleSettings.getInstance(myProject).getServiceDirectoryPath();
       File gradleUserHome = serviceDirectory != null ? new File(serviceDirectory) : new BuildLayoutParameters().getGradleUserHomeDir();
       File scriptsCacheFolder = new File(gradleUserHome, "caches\\" + gradleVersion + "\\scripts");
