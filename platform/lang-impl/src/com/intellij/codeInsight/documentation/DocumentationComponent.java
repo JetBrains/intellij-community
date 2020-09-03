@@ -973,7 +973,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       List<String> urls = provider.getUrlFor(element, originalElement);
       if (urls != null) {
         boolean hasBadUrl = false;
-        StringBuilder result = new StringBuilder();
+        @Nls StringBuilder result = new StringBuilder();
         for (String url : urls) {
           String link = getLink(title, url);
           if (link == null) {

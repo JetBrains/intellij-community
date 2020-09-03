@@ -22,6 +22,7 @@ import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBValue;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -500,6 +501,7 @@ public class HelpTooltip {
            deriveHeaderFont(font);
   }
 
+  @Contract(pure = true)
   public static @NotNull String getShortcutAsHtml(@Nullable String shortcut) {
     return StringUtil.isEmpty(shortcut)
            ? ""

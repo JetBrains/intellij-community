@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.PowerSaveMode;
@@ -49,6 +50,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.TIntArrayList;
 import gnu.trove.TObjectIntHashMap;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -174,8 +176,10 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     List<ProgressableTextEditorHighlightingPass> passes = Collections.emptyList();
     public int[] errorCount = ArrayUtilRt.EMPTY_INT_ARRAY;
     // Used in Rider
+    @Nls
     public String reasonWhyDisabled;
     // Used in Rider
+    @Nls
     public String reasonWhySuspended;
 
     private HeavyProcessLatch.Type heavyProcessType;
@@ -247,7 +251,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     }
 
     if (HeavyProcessLatch.INSTANCE.isRunning()) {
-      Map.Entry<String, HeavyProcessLatch.Type> processEntry = HeavyProcessLatch.INSTANCE.getRunningOperation();
+      Map.Entry<@Nls String, HeavyProcessLatch.Type> processEntry = HeavyProcessLatch.INSTANCE.getRunningOperation();
       if (processEntry != null) {
         status.reasonWhySuspended = processEntry.getKey();
         status.heavyProcessType = processEntry.getValue();
@@ -359,7 +363,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     }
 
     int currentSeverityErrors = 0;
-    StringBuilder text = new StringBuilder();
+    @Nls StringBuilder text = new StringBuilder();
     for (int i = lastNotNullIndex; i >= 0; i--) {
       int count = status.errorCount[i];
       if (count > 0) {
@@ -399,7 +403,9 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
   public AnalyzerStatus getStatus(@NotNull Editor editor) {
     if (PowerSaveMode.isEnabled()) {
       return new AnalyzerStatus(AllIcons.General.InspectionsPowerSaveMode,
-                                  "Code analysis is disabled in power save mode", "", () -> createUIController(editor));
+                                InspectionsBundle.message("code.analysis.is.disabled.in.power.save.mode"),
+                                "",
+                                () -> createUIController(editor));
     }
     else {
       DaemonCodeAnalyzerStatus status = getDaemonCodeAnalyzerStatus(mySeverityRegistrar);

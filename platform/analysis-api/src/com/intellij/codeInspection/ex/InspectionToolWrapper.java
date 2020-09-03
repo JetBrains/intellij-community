@@ -158,15 +158,16 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
     }
   }
 
-  public String getStaticDescription() {
+  public @Nls String getStaticDescription() {
     return myEP == null || myEP.hasStaticDescription ? getTool().getStaticDescription() : null;
   }
 
-  public String loadDescription() {
+  public @Nls String loadDescription() {
     final String description = getStaticDescription();
     if (description != null) return description;
     try {
       InputStream descriptionStream = getDescriptionStream();
+      //noinspection HardCodedStringLiteral(IDEA-249976)
       return descriptionStream != null ? ResourceUtil.loadText(descriptionStream) : null;
     }
     catch (IOException ignored) { }

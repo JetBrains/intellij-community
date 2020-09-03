@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hints
 
 import com.intellij.codeInsight.CodeInsightBundle
@@ -29,6 +27,7 @@ import com.intellij.openapi.editor.impl.ImaginaryEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -85,7 +84,8 @@ fun showParameterHintsDialog(e: AnActionEvent, getPattern: (HintInfo) -> String?
   val selectedLanguage = (info as? MethodInfo)?.language ?: fileLanguage
 
   when (val pattern = getPattern(info)) {
-    null -> InlayHintsConfigurable.showSettingsDialogForLanguage(file.project, fileLanguage, Predicate { it is ParameterInlayProviderSettingsModel })
+    null -> InlayHintsConfigurable.showSettingsDialogForLanguage(file.project, fileLanguage,
+                                                                 Predicate { it is ParameterInlayProviderSettingsModel })
     else -> ExcludeListDialog(selectedLanguage, pattern).show()
   }
 }
@@ -199,6 +199,7 @@ class DisableCustomHintsOption: IntentionAction, LowPriorityAction {
 }
 
 class EnableCustomHintsOption: IntentionAction, HighPriorityAction {
+  @IntentionName
   private var lastOptionName = ""
   
   override fun getText(): String {
@@ -253,10 +254,11 @@ private fun InlayParameterHintsProvider.hasDisabledOptionHintInfo(element: PsiEl
 
 
 class ToggleInlineHintsAction : AnAction() {
-  
+
   companion object {
-    private val disableText = CodeInsightBundle.message("inlay.hints.disable.action.text").capitalize()
-    private val enableText = CodeInsightBundle.message("inlay.hints.enable.action.text").capitalize()
+
+    private val disableText: @NlsActions.ActionText String = CodeInsightBundle.message("inlay.hints.disable.action.text")
+    private val enableText: @NlsActions.ActionText String = CodeInsightBundle.message("inlay.hints.enable.action.text")
   }
   
   override fun update(e: AnActionEvent) {
@@ -322,6 +324,4 @@ private fun getHintInfoFromProvider(offset: Int, file: PsiFile, editor: Editor):
 
 fun MethodInfo.toPattern(): String = this.fullyQualifiedName + '(' + this.paramNames.joinToString(",") + ')'
 
-
-private fun String.capitalize() = StringUtil.capitalizeWords(this, true)
 private fun String.capitalizeFirstLetter() = StringUtil.capitalize(this)

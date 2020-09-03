@@ -21,7 +21,7 @@ public final class HeavyProcessLatch {
   private static final Logger LOG = Logger.getInstance(HeavyProcessLatch.class);
   public static final HeavyProcessLatch INSTANCE = new HeavyProcessLatch();
 
-  private final Map<String, Type> myHeavyProcesses = new ConcurrentHashMap<>();
+  private final Map<@Nls String, Type> myHeavyProcesses = new ConcurrentHashMap<>();
   private final EventDispatcher<HeavyProcessListener> myEventDispatcher = EventDispatcher.create(HeavyProcessListener.class);
 
   private final Deque<Runnable> toExecuteOutOfHeavyActivity = new ConcurrentLinkedDeque<>();
@@ -42,6 +42,7 @@ public final class HeavyProcessLatch {
       this.bundleKey = bundleKey;
     }
 
+    @Nls
     @Override
     public String toString() {
       return UtilBundle.message(bundleKey);
@@ -63,7 +64,7 @@ public final class HeavyProcessLatch {
     };
   }
 
-  private void processFinished(@NotNull String operationName) {
+  private void processFinished(@NotNull @Nls String operationName) {
     myHeavyProcesses.remove(operationName);
     myEventDispatcher.getMulticaster().processFinished();
     if (isRunning()) {
@@ -85,17 +86,17 @@ public final class HeavyProcessLatch {
     return !myHeavyProcesses.isEmpty();
   }
 
-  public @Nullable String getRunningOperationName() {
-    Map.Entry<String, Type> runningOperation = getRunningOperation();
+  public @Nullable @Nls String getRunningOperationName() {
+    Map.Entry<@Nls String, Type> runningOperation = getRunningOperation();
     return runningOperation != null ? runningOperation.getKey() : null;
   }
 
-  public @Nullable Map.Entry<String, Type> getRunningOperation() {
+  public @Nullable Map.Entry<@Nls String, Type> getRunningOperation() {
     if (myHeavyProcesses.isEmpty()) {
       return null;
     }
     else {
-      Iterator<Map.Entry<String, Type>> iterator = myHeavyProcesses.entrySet().iterator();
+      Iterator<Map.Entry<@Nls String, Type>> iterator = myHeavyProcesses.entrySet().iterator();
       return iterator.hasNext() ? iterator.next() : null;
     }
   }

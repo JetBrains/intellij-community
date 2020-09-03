@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.util.NlsContexts.Tooltip;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.util.ui.GridBag;
@@ -21,6 +22,7 @@ import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.ComparableObject;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -303,6 +305,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
   // Java text components don't support specifying color for 'hr' tag, so we need to replace it with something else,
   // if we need a separator with custom color
   @NotNull
+  @Contract(pure = true)
   private static String colorizeSeparators(@NotNull String html) {
     String body = UIUtil.getHtmlBody(html);
     List<String> parts = StringUtil.split(body, UIUtil.BORDER_LINE, true, false);
@@ -456,7 +459,7 @@ public class LineTooltipRenderer extends ComparableObject.Impl implements Toolti
   }
 
   @NotNull
-  protected String dressDescription(@NotNull final Editor editor, @NotNull String tooltipText, boolean expanded) {
+  protected @Tooltip String dressDescription(@NotNull final Editor editor, @NotNull @Tooltip String tooltipText, boolean expanded) {
     return tooltipText;
   }
 

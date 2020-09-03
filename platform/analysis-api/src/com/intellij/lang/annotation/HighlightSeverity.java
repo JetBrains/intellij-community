@@ -3,6 +3,7 @@ package com.intellij.lang.annotation;
 
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
  * @see Annotation
  */
 public final class HighlightSeverity implements Comparable<HighlightSeverity> {
+  @NlsSafe
   public final String myName;
   public final int myVal;
 
@@ -76,6 +78,7 @@ public final class HighlightSeverity implements Comparable<HighlightSeverity> {
   }
 
   @NotNull
+  @NlsSafe
   public String getName() {
     return myName;
   }
@@ -108,6 +111,7 @@ public final class HighlightSeverity implements Comparable<HighlightSeverity> {
   }
 
   @Override
+  @NlsSafe
   public String toString() {
     return myName;
   }

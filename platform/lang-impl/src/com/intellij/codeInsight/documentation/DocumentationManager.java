@@ -304,7 +304,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
                               @NotNull PsiElement element,
                               @NotNull PsiElement original,
                               @Nullable Runnable closeCallback,
-                              @Nullable String documentation,
+                              @Nullable @Nls String documentation,
                               boolean closeOnSneeze,
                               boolean useStoredPopupSize) {
     myEditor = editor;
@@ -329,7 +329,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
                               PsiElement original,
                               boolean requestFocus,
                               @Nullable Runnable closeCallback,
-                              @Nullable String documentation,
+                              @Nullable @Nls String documentation,
                               boolean useStoredPopupSize) {
     if (!element.isValid()) {
       return;

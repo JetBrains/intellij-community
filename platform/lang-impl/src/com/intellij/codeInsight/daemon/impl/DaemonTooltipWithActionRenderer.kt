@@ -31,6 +31,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
 import com.intellij.util.ui.*
+import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
@@ -52,7 +53,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
                                                comparable: Array<Any>) : DaemonTooltipRenderer(text, width, comparable) {
 
 
-  override fun dressDescription(editor: Editor, tooltipText: String, expand: Boolean): String {
+  override fun dressDescription(editor: Editor, tooltipText: @NlsContexts.Tooltip String, expand: Boolean): String {
     if (!LineTooltipRenderer.isActiveHtml(myText!!) || expand) {
       return super.dressDescription(editor, tooltipText, expand)
     }
@@ -72,7 +73,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
     return text.toString()
   }
 
-  override fun getHtmlForProblemWithLink(problem: String): String {
+  override fun getHtmlForProblemWithLink(@NlsContexts.Tooltip problem: String): @NlsContexts.Tooltip String {
     //remove "more... (keymap)" info
 
     val html = Html(problem).setKeepFont(true)

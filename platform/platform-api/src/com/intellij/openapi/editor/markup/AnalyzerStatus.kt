@@ -21,6 +21,7 @@ enum class InspectionsLevel(@PropertyKey(resourceBundle = EditorBundle.BUNDLE) p
   SYNTAX("iw.level.syntax"),
   ALL("iw.level.all");
 
+  @Nls
   override fun toString(): String = EditorBundle.message(bundleKey)
 }
 

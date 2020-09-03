@@ -3,7 +3,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.actions.CodeCleanupAction;
+import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -47,7 +47,7 @@ public final class EditCleanupProfileIntentionAction implements IntentionAction 
 
         @Override
         public String getDisplayName() {
-          return CodeCleanupAction.CODE_CLEANUP_INSPECTIONS_DISPLAY_NAME;
+          return InspectionsBundle.message("configurable.name.code.cleanup.inspections");
         }
       };
     ShowSettingsUtil.getInstance().editConfigurable(project, configurable);

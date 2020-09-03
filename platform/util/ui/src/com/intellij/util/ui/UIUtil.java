@@ -81,7 +81,7 @@ public final class UIUtil {
     LoadingState.LAF_INITIALIZED.checkOccurred();
   }
 
-  public static final String BORDER_LINE = "<hr size=1 noshade>";
+  public static final @NonNls String BORDER_LINE = "<hr size=1 noshade>";
   @NlsSafe public static final String BR = "<br/>";
   @NlsSafe public static final String HR = "<hr/>";
   @NlsSafe public static final String LINE_SEPARATOR = "\n";

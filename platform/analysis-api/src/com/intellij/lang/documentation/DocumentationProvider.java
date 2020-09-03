@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.documentation;
 
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
@@ -14,6 +14,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -117,7 +118,7 @@ public interface DocumentationProvider {
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  default @Nullable String generateRenderedDoc(@NotNull PsiElement element) {
+  default @Nullable @Nls String generateRenderedDoc(@NotNull PsiElement element) {
     return null;
   }
 
@@ -127,7 +128,7 @@ public interface DocumentationProvider {
    * @see #collectDocComments(PsiFile, Consumer)
    */
   @ApiStatus.Experimental
-  default @Nullable String generateRenderedDoc(@NotNull PsiDocCommentBase comment) {
+  default @Nullable @Nls String generateRenderedDoc(@NotNull PsiDocCommentBase comment) {
     PsiElement target = comment.getOwner();
     return generateRenderedDoc(target == null ? comment : target);
   }

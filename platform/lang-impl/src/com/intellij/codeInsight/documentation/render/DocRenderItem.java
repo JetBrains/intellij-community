@@ -41,6 +41,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,7 +59,7 @@ public final class DocRenderItem {
 
   final Editor editor;
   final RangeHighlighter highlighter;
-  String textToRender;
+  @Nls String textToRender;
   private FoldRegion foldRegion;
   Inlay<DocRenderer> inlay;
 
@@ -227,11 +228,12 @@ public final class DocRenderItem {
   }
 
   public static EditorCustomElementRenderer createDemoRenderer(@NotNull Editor editor) {
-    DocRenderItem item = new DocRenderItem(editor, new TextRange(0, 0), "Rendered documentation with <a href='''>link</a>");
+    DocRenderItem item = new DocRenderItem(editor, new TextRange(0, 0), CodeInsightBundle.message(
+      "documentation.rendered.documentation.with.href.link"));
     return new DocRenderer(item);
   }
 
-  private DocRenderItem(@NotNull Editor editor, @NotNull TextRange textRange, @Nullable String textToRender) {
+  private DocRenderItem(@NotNull Editor editor, @NotNull TextRange textRange, @Nullable @Nls String textToRender) {
     this.editor = editor;
     this.textToRender = textToRender;
     highlighter = editor.getMarkupModel()
