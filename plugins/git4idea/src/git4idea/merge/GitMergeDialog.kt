@@ -137,7 +137,8 @@ class GitMergeDialog(private val project: Project,
 
   fun getSelectedRoot(): VirtualFile = rootsByNames[rootField.item] ?: defaultRoot
 
-  fun getSelectedBranches() = listOf(branchField.item)
+  fun getSelectedBranch() = getSelectedRepository().branches.findBranchByName(branchField.item)
+                            ?: error("Unable to find branch: ${branchField.item}")
 
   fun shouldCommitAfterMerge() = GitMergeOption.NO_COMMIT !in selectedOptions
 
