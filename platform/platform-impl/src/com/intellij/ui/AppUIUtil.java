@@ -76,6 +76,9 @@ public final class AppUIUtil {
         @SuppressWarnings("deprecation") String fallback = appInfo.getBigIconUrl();
         ContainerUtil.addIfNotNull(images, loadApplicationIconImage(svgIconUrl, ctx, 128, fallback));
       }
+      else if (SystemInfo.isWindows) {
+        ContainerUtil.addIfNotNull(images, loadApplicationIconImage(svgIconUrl, ctx, 32, null));
+      }
 
       @SuppressWarnings("deprecation") String fallback = appInfo.getIconUrl();
       ContainerUtil.addIfNotNull(images, loadApplicationIconImage(smallSvgIconUrl, ctx, 32, fallback));
