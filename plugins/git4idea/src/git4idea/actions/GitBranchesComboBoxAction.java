@@ -10,22 +10,21 @@ import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.StringUtil;
-import git4idea.branch.GitBranchIncomingOutgoingManager;
 import git4idea.branch.GitBranchUtil;
+import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.ui.branch.GitBranchPopup;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 
-public class VCSBranchesComboBoxAction extends ComboBoxAction implements Disposable {
+public class GitBranchesComboBoxAction extends ComboBoxAction implements Disposable {
   private Project project;
 
-  public VCSBranchesComboBoxAction() {}
+  public GitBranchesComboBoxAction() {
+    getTemplatePresentation().setText(GitBundle.message("git.show.branches"));
+  }
 
   @Override
   public void update(@NotNull AnActionEvent e) {

@@ -30,6 +30,7 @@ public class VcsQuickListPopupAction extends QuickSwitchSchemeAction implements 
 
   public VcsQuickListPopupAction() {
     myActionPlace = ActionPlaces.ACTION_PLACE_VCS_QUICK_LIST_POPUP_ACTION;
+    getTemplatePresentation().setText(VcsBundle.message("vcs.quicklist.popup.title"));
   }
 
   @Override
