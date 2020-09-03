@@ -4,6 +4,7 @@ package com.intellij.openapi.roots.ui.util;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.roots.ui.ModifiableCellAppearanceEx;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -105,7 +106,7 @@ public class CompositeAppearance implements ModifiableCellAppearanceEx {
     return new DequeSuffix();
   }
 
-  public static CompositeAppearance textComment(@Nls String text, String comment) {
+  public static CompositeAppearance textComment(@Nls String text, @Nls String comment) {
     DequeEnd ending = new CompositeAppearance().getEnding();
     ending.addText(text);
     ending.addComment(comment);
@@ -179,7 +180,10 @@ public class CompositeAppearance implements ModifiableCellAppearanceEx {
       addSection(new TextSection(text, attributes));
     }
 
-    public void addSurrounded(@NlsSafe String text, @NlsSafe String prefix, @NlsSafe String suffix, SimpleTextAttributes textAttributes) {
+    public void addSurrounded(@Nls String text,
+                              @NlsContexts.Separator String prefix,
+                              @NlsContexts.Separator String suffix,
+                              SimpleTextAttributes textAttributes) {
       if (text != null && !text.trim().isEmpty()) {
         addText(prefix + text + suffix, textAttributes);
       }
@@ -189,11 +193,11 @@ public class CompositeAppearance implements ModifiableCellAppearanceEx {
       return CompositeAppearance.this;
     }
 
-    public void addComment(String comment, SimpleTextAttributes commentAttributes) {
+    public void addComment(@Nls String comment, SimpleTextAttributes commentAttributes) {
       addSurrounded(comment, " (", ")", commentAttributes);
     }
 
-    public void addComment(String comment) {
+    public void addComment(@Nls String comment) {
       addComment(comment, SimpleTextAttributes.GRAY_ATTRIBUTES);
     }
   }

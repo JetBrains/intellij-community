@@ -1,9 +1,6 @@
 package com.intellij.dupLocator.treeHash;
 
-import com.intellij.dupLocator.DupInfo;
-import com.intellij.dupLocator.DuplicatesProfile;
-import com.intellij.dupLocator.DuplocatorState;
-import com.intellij.dupLocator.NodeSpecificHasher;
+import com.intellij.dupLocator.*;
 import com.intellij.dupLocator.util.DuplocatorUtil;
 import com.intellij.dupLocator.util.PsiFragment;
 import com.intellij.openapi.components.PathMacroManager;
@@ -24,6 +21,7 @@ import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -254,14 +252,14 @@ public class DuplocatorHashCallback implements FragmentsCollector {
         final PsiFile psiFile = occurrences[0].getFile();
         DuplicatesProfile profile = DuplicatesProfile.findProfileForDuplicate(this, pattern);
         String comment = profile != null ? profile.getComment(this, pattern) : "";
-        final GroupNodeDescription description = new GroupNodeDescription(fileCount, psiFile != null ? psiFile.getName() : "unknown", comment);
+        String filename = psiFile != null ? psiFile.getName() : DupLocatorBundle.message("duplicates.unknown.file.node.title");
+        final GroupNodeDescription description = new GroupNodeDescription(fileCount, filename, comment);
         myPattern2Description.put(pattern, description);
         return description;
       }
 
       @Override
-      @Nullable
-      public String getTitle(int pattern) {
+      public @Nullable @Nls String getTitle(int pattern) {
         if (getFileCount(pattern) == 1) {
           if (myPattern2Description.containsKey(pattern)) {
             return myPattern2Description.get(pattern).getTitle();
@@ -272,8 +270,7 @@ public class DuplocatorHashCallback implements FragmentsCollector {
       }
 
       @Override
-      @Nullable
-      public String getComment(int pattern) {
+      public @Nullable @Nls String getComment(int pattern) {
         if (getFileCount(pattern) == 1) {
           if (myPattern2Description.containsKey(pattern)) {
             return myPattern2Description.get(pattern).getComment();
