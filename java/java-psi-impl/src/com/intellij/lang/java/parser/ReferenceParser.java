@@ -91,6 +91,7 @@ public class ReferenceParser {
     if (tokenType == JavaTokenType.IDENTIFIER &&
         isSet(flags, VAR_TYPE) &&
         builder.lookAhead(1) != JavaTokenType.DOT &&
+        builder.lookAhead(1) != JavaTokenType.COLON &&
         PsiKeyword.VAR.equals(builder.getTokenText()) &&
         getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_10)) {
       builder.remapCurrentToken(tokenType = JavaTokenType.VAR_KEYWORD);
