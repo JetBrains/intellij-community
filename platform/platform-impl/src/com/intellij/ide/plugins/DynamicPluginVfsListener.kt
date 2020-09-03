@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins
 
 import com.intellij.ide.FrameStateListener
+import com.intellij.ide.IdeBundle
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -74,15 +75,15 @@ class DynamicPluginVfsListener : AsyncFileListener {
             DynamicPlugins.loadPlugin(pluginDescriptor)
           }
           if (unloadFailed.isNotEmpty()) {
-            DynamicPlugins.notify("Failed to unload modified plugins: ${unloadFailed.joinToString()}", NotificationType.INFORMATION,
-              object : AnAction("Restart") {
+            DynamicPlugins.notify(IdeBundle.message("failed.to.unload.modified.plugins", unloadFailed.joinToString()), NotificationType.INFORMATION,
+              object : AnAction(IdeBundle.message("ide.restart.action")) {
                 override fun actionPerformed(e: AnActionEvent) {
                   ApplicationManager.getApplication().restart()
                 }
               })
           }
           else if (reloaded.isNotEmpty()) {
-            DynamicPlugins.notify("${reloaded.joinToString()} reloaded successfully", NotificationType.INFORMATION)
+            DynamicPlugins.notify(IdeBundle.message("plugins.reloaded.successfully", reloaded.joinToString()), NotificationType.INFORMATION)
           }
         }
       }

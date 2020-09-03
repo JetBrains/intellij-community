@@ -34,6 +34,7 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.openapi.util.text.StringUtil;
@@ -799,7 +800,7 @@ public class PluginManagerConfigurable
           PluginsGroup downloaded = new PluginsGroup(IdeBundle.message("plugins.configurable.downloaded"));
           downloaded.descriptors.addAll(InstalledPluginsState.getInstance().getInstalledPlugins());
 
-          Map<String, List<IdeaPluginDescriptor>> bundledGroups = new HashMap<>();
+          Map<@NlsSafe String, List<IdeaPluginDescriptor>> bundledGroups = new HashMap<>();
           ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
           int downloadedEnabled = 0;
           boolean hideImplDetails = PluginManager.getInstance().hideImplementationDetails();
@@ -854,7 +855,7 @@ public class PluginManagerConfigurable
 
           List<PluginsGroup> groups = new ArrayList<>();
 
-          for (Entry<String, List<IdeaPluginDescriptor>> entry : bundledGroups.entrySet()) {
+          for (Entry<@NlsSafe String, List<IdeaPluginDescriptor>> entry : bundledGroups.entrySet()) {
             PluginsGroup group = new PluginsGroup(entry.getKey()) {
               @Override
               public void titleWithCount(int enabled) {
@@ -1400,7 +1401,15 @@ public class PluginManagerConfigurable
   }
 
   private enum SortBySearchOption {
-    Downloads, Name, Rating, Relevance, Updated
+    Downloads(IdeBundle.messagePointer("plugins.configurable.SortBySearchOption.Downloads")),
+    Name(IdeBundle.messagePointer("plugins.configurable.SortBySearchOption.Name")),
+    Rating(IdeBundle.messagePointer("plugins.configurable.SortBySearchOption.Rating")),
+    Relevance(IdeBundle.messagePointer("plugins.configurable.SortBySearchOption.Relevance")),
+    Updated(IdeBundle.messagePointer("plugins.configurable.SortBySearchOption.Updated"));
+
+    private final Supplier<@Nls String> myPresentableNameSupplier;
+
+    SortBySearchOption(Supplier<@Nls String> supplier) {myPresentableNameSupplier = supplier;}
   }
 
   private final class MarketplaceSortByAction extends ToggleAction implements DumbAware {
@@ -1408,7 +1417,7 @@ public class PluginManagerConfigurable
     private boolean myState;
 
     private MarketplaceSortByAction(@NotNull SortBySearchOption option) {
-      super(option.name());
+      super(option.myPresentableNameSupplier);
       myOption = option;
     }
 

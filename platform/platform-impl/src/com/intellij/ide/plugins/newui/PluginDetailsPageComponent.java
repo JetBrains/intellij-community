@@ -11,6 +11,7 @@ import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BrowserHyperlinkListener;
@@ -29,6 +30,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.ui.*;
 import com.intellij.xml.util.XmlStringUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -696,7 +698,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
   }
 
   private void updateErrors() {
-    Ref<String> enableAction = new Ref<>();
+    Ref<@Nls String> enableAction = new Ref<>();
     String message = myPluginModel.getErrorMessage(myPlugin, enableAction);
     if (message != null) {
       ErrorComponent.show(myErrorComponent, message, enableAction.get(), enableAction.isNull() ? null : () -> handleErrors());
@@ -814,6 +816,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
   }
 
   @Nullable
+  @NlsSafe
   private String getChangeNotes() {
     if (myUpdateDescriptor != null) {
       String notes = myUpdateDescriptor.getChangeNotes();

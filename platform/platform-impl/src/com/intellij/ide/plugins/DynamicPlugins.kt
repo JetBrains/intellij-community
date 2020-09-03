@@ -10,6 +10,7 @@ import com.intellij.diagnostic.MessagePool
 import com.intellij.diagnostic.hprof.action.SystemTempFilenameSupplier
 import com.intellij.diagnostic.hprof.analysis.AnalyzeClassloaderReferencesGraph
 import com.intellij.diagnostic.hprof.analysis.HProfAnalysis
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.SaveAndSyncHandler
 import com.intellij.ide.impl.ProjectUtil
@@ -51,6 +52,7 @@ import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.objectTree.ThrowableInterner
 import com.intellij.openapi.util.registry.Registry
@@ -431,7 +433,7 @@ object DynamicPlugins {
         }
       }
     }
-    val indicator = PotemkinProgress("Unloading plugin ${pluginDescriptor.name}", project, parentComponent, null)
+    val indicator = PotemkinProgress(IdeBundle.message("unloading.plugin.progress.title", pluginDescriptor.name), project, parentComponent, null)
     indicator.runInSwingThread {
       result = unloadPlugin(pluginDescriptor, options.withSave(false))
     }
@@ -594,7 +596,7 @@ object DynamicPlugins {
             }
           }
           if (!classLoaderUnloaded) {
-            notify("Captured memory snapshot on plugin unload fail: $snapshotPath", NotificationType.WARNING)
+            notify(IdeBundle.message("captured.memory.snapshot.on.plugin.unload.fail", snapshotPath), NotificationType.WARNING)
             LOG.info("Plugin ${pluginDescriptor.pluginId} is not unload-safe because class loader cannot be unloaded. Memory snapshot created at $snapshotPath")
           }
         }

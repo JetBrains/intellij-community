@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.ui.cellvalidators.*;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.ui.AnimatedIcon;
@@ -287,7 +288,7 @@ public class PluginHostsConfigurable implements Configurable.NoScroll, Configura
   }
 
   private static class UrlInfo {
-    String name;
+    @NlsSafe String name;
     boolean progress;
     @Nls String errorTooltip;
 

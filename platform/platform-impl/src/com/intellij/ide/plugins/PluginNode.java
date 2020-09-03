@@ -25,7 +25,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
   private boolean licenseOptional;
   private String version;
   private String vendor;
-  private String description;
+  private @NlsSafe String description;
   private String sinceBuild;
   private String untilBuild;
   private String changeNotes;
@@ -179,7 +179,7 @@ public final class PluginNode implements IdeaPluginDescriptor {
     return description;
   }
 
-  public void setDescription(String description) {
+  public void setDescription(@NlsSafe String description) {
     this.description = description;
   }
 

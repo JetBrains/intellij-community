@@ -1018,7 +1018,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginM
   }
 
   @Nullable
-  public @Nls String getErrorMessage(@NotNull IdeaPluginDescriptor pluginDescriptor, @Nullable Ref<? super String> enableAction) {
+  public @Nls String getErrorMessage(@NotNull IdeaPluginDescriptor pluginDescriptor, @Nullable Ref<? super @Nls String> enableAction) {
     if (InstalledPluginsState.getInstance().wasInstalledWithoutRestart(pluginDescriptor.getPluginId())) {
       // we'll actually install the plugin when the configurable is closed; at this time we don't know if there's any error
       return null;
