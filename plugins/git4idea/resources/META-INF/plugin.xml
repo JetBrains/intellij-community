@@ -196,7 +196,7 @@
       <add-to-group group-id="VcsGroup" anchor="last"/>
     </group>
 
-    <action id="Vcs.ShowBranches" class="git4idea.actions.VCSBranchesComboBoxAction" icon="AllIcons.Vcs.Branch">
+    <action id="Vcs.ShowBranches" class="git4idea.actions.GitBranchesComboBoxAction" icon="AllIcons.Vcs.Branch">
       <add-to-group group-id="VcsNavBarToolbarActionsLight" anchor="first"/>
     </action>
 

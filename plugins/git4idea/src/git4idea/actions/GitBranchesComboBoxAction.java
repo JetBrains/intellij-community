@@ -23,7 +23,7 @@ public class GitBranchesComboBoxAction extends ComboBoxAction implements Disposa
   private Project project;
 
   public GitBranchesComboBoxAction() {
-    getTemplatePresentation().setText(GitBundle.message("git.show.branches"));
+    getTemplatePresentation().setText(GitBundle.messagePointer("git.show.branches"));
   }
 
   @Override
@@ -56,7 +56,7 @@ public class GitBranchesComboBoxAction extends ComboBoxAction implements Disposa
         presentation.setIcon(AllIcons.Vcs.Branch);
       }
       else {
-        presentation.setText(ExecutionBundle.messagePointer("action.presentation.VCSBranchesComboBoxAction.text"));
+        presentation.setText(ExecutionBundle.messagePointer("action.presentation.GitBranchesComboBoxAction.text"));
         presentation.setIcon(AllIcons.Vcs.Clone);
       }
       presentation.setEnabled(true);
