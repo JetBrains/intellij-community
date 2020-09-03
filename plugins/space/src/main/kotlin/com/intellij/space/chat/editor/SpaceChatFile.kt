@@ -1,6 +1,7 @@
 package com.intellij.space.chat.editor
 
 import circlet.client.api.M2ChannelRecord
+import circlet.m2.ChannelsVm
 import circlet.platform.api.Ref
 import com.intellij.ide.FileIconProvider
 import com.intellij.ide.actions.SplitAction
@@ -12,22 +13,19 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.space.messages.SpaceBundle
 import com.intellij.testFramework.LightVirtualFile
-import com.intellij.util.ui.components.BorderLayoutPanel
 import icons.SpaceIcons
 import javax.swing.Icon
-import javax.swing.JComponent
 
 internal class SpaceChatFile(
   @NlsSafe path: String,
   @NlsContexts.TabTitle val displayName: String,
-  private val chatVm: Ref<M2ChannelRecord>
+  val channelsVm: ChannelsVm,
+  val chatRecord: Ref<M2ChannelRecord>
 ) : LightVirtualFile(path, SpaceChatFileType.instance, "") {
   init {
     putUserData(SplitAction.FORBID_TAB_SPLIT, true)
     isWritable = false
   }
-
-  fun createMainComponent(project: Project): JComponent = BorderLayoutPanel()
 }
 
 internal class SpaceChatFileTabTitleProvider : EditorTabTitleProvider {

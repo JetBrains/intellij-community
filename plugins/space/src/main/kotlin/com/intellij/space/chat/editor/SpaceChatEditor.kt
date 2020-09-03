@@ -1,20 +1,29 @@
 package com.intellij.space.chat.editor
 
 import com.intellij.diff.util.FileEditorBase
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorPolicy
 import com.intellij.openapi.fileEditor.FileEditorProvider
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.space.chat.createSpaceChatPanel
 import com.intellij.space.messages.SpaceBundle
-import com.intellij.util.ui.components.BorderLayoutPanel
+import libraries.coroutines.extra.LifetimeSource
 import javax.swing.JComponent
 
-private class SpaceChatEditor(project: Project, private val spaceChatFile: SpaceChatFile) : FileEditorBase() {
-  private val rootComponent: JComponent = BorderLayoutPanel().addToCenter(spaceChatFile.createMainComponent(project))
+private class SpaceChatEditor(private val project: Project, private val spaceChatFile: SpaceChatFile) : FileEditorBase() {
+  private val editorLifetime = LifetimeSource()
 
-  override fun getComponent(): JComponent = rootComponent
+  init {
+    Disposer.register(this, Disposable { editorLifetime.terminate() })
+  }
+
+  override fun getComponent(): JComponent =
+    createSpaceChatPanel(project, editorLifetime, this, spaceChatFile.channelsVm, spaceChatFile.chatRecord)
 
   override fun getPreferredFocusedComponent(): JComponent? = null
 
@@ -31,4 +40,12 @@ internal class SpaceChatEditorProvider : FileEditorProvider, DumbAware {
   override fun getEditorTypeId(): String = "SpaceChatEditor"
 
   override fun getPolicy(): FileEditorPolicy = FileEditorPolicy.HIDE_DEFAULT_EDITOR
+
+  override fun disposeEditor(editor: FileEditor) {
+    if (editor.file?.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN) != true) {
+      Disposer.dispose(editor)
+    }
+
+    super.disposeEditor(editor)
+  }
 }
