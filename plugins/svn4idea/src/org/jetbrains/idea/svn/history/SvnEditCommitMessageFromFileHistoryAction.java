@@ -21,8 +21,8 @@ import static org.jetbrains.idea.svn.SvnBundle.messagePointer;
 public class SvnEditCommitMessageFromFileHistoryAction extends DumbAwareAction {
   public SvnEditCommitMessageFromFileHistoryAction() {
     super(
-      messagePointer("action.Subversion.EditCommitMessage.text"),
-      messagePointer("action.Subversion.EditCommitMessage.description"),
+      messagePointer("action.EditCommitMessage.text"),
+      messagePointer("action.EditCommitMessage.description"),
       AllIcons.Actions.Edit
     );
   }
