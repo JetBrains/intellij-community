@@ -93,7 +93,7 @@ public class EnvironmentVariablesDialog extends DialogWrapper {
     mySystemTable.getTableView().setEnabled(myIncludeSystemVarsCb.isSelected());
   }
 
-  @Nullable
+  @NotNull
   @Override
   protected JComponent createCenterPanel() {
     return myWholePanel;
