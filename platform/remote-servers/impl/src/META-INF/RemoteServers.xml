@@ -1,6 +1,5 @@
 <idea-plugin>
   <module value="com.intellij.modules.remoteServers"/>
-  <resource-bundle>messages.CloudBundle</resource-bundle>
 
   <extensionPoints>
     <extensionPoint name="remoteServer.type" interface="com.intellij.remoteServer.ServerType" dynamic="true"/>
@@ -50,7 +49,7 @@
               topic="com.intellij.remoteServer.configuration.RemoteServerListener"/>
   </applicationListeners>
 
-  <actions>
+  <actions resource-bundle="messages.CloudBundle">
     <group id="RemoteServersViewToolbar">
       <action id="RemoteServers.ConnectServer" class="com.intellij.remoteServer.impl.runtime.ui.tree.actions.RemoteServerConnectAction"
               icon="AllIcons.Actions.Execute"/>
