@@ -16,6 +16,7 @@ import cucumber.runtime.io.ResourceLoaderClassFinder;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -36,18 +37,30 @@ public class CucumberMain {
     int exitStatus;
     try {
       ClassLoader original = Thread.currentThread().getContextClassLoader();
-      List<@NotNull URL> urls = ContainerUtil.mapNotNull(System.getProperty("java.class.path").split(File.pathSeparator), CucumberMain::fileToEncodedURL);
+      List<@NotNull URL> urls =
+        ContainerUtil.mapNotNull(System.getProperty("java.class.path").split(File.pathSeparator), CucumberMain::fileToEncodedURL);
       UrlClassLoader loader = UrlClassLoader.build().urls(
         urls).parent(original.getParent()).allowLock().useCache()
         .usePersistentClasspathIndexForLocalClassDirectories()
         .useLazyClassloadingCaches(Boolean.parseBoolean(System.getProperty("idea.lazy.classloading.caches", "false")))
         .autoAssignUrlsWithProtectionDomain().get();
       Thread.currentThread().setContextClassLoader(loader);
-      exitStatus = (Integer)loader.loadClass(CucumberMain.class.getName()).getMethod("run", String[].class, ClassLoader.class).invoke(null, args, loader);
+      exitStatus = (Integer)loader.loadClass(CucumberMain.class.getName()).getMethod("run", String[].class, ClassLoader.class)
+        .invoke(null, args, loader);
+    }
+    catch (InvocationTargetException e) {
+      LOG.warn(e);
+      var targetException = e.getTargetException();
+      if (targetException instanceof AssertionError) {
+        exitStatus = 0;
+      }
+      else {
+        exitStatus = 1;
+      }
     }
     catch (Throwable e) {
       LOG.warn(e);
-      exitStatus = 0;
+      exitStatus = 1;
     }
     System.exit(exitStatus);
   }
