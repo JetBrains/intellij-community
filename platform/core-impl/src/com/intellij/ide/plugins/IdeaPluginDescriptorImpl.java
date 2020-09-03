@@ -282,6 +282,11 @@ public final class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
 
         case "resource-bundle":
           String value = StringUtil.nullize(child.getTextTrim());
+          if (PluginManagerCore.CORE_ID.equals(mainDescriptor.getPluginId())) {
+            DescriptorListLoadingContext.LOG.warn("<resource-bundle>" + value + "</resource-bundle> tag is found in an xml descriptor included into the platform part of the IDE " +
+                                                  "but the platform part uses predefined bundles (e.g. ActionsBundle for actions) anyway; " +
+                                                  "this tag must be replaced by a corresponding attribute in some inner tags (e.g. by 'resource-bundle' attribute in 'actions' tag)");
+          }
           if (myResourceBundleBaseName != null && !Objects.equals(myResourceBundleBaseName, value)) {
             DescriptorListLoadingContext.LOG.warn("Resource bundle redefinition for plugin '" + mainDescriptor.getPluginId() + "'. " +
                      "Old value: " + myResourceBundleBaseName + ", new value: " + value);
