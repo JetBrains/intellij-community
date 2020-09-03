@@ -122,10 +122,14 @@ public interface PsiModificationTracker extends ModificationTracker {
   @NotNull
   ModificationTracker getJavaStructureModificationTracker();
 
-  @ApiStatus.Experimental
+  /**
+   * @return modification tracker incremented on changes in files with the passed language.
+   */
   @NotNull ModificationTracker forLanguage(@NotNull Language language);
 
-  @ApiStatus.Experimental
+  /**
+   * @return modification tracker incremented on changes in files with language that matches the passed condition.
+   */
   @NotNull ModificationTracker forLanguages(@NotNull Predicate<? super Language> condition);
 
   /**
