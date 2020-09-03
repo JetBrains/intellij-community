@@ -189,7 +189,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
   @Override
   public boolean differsFromDefault(@NotNull EditorColorsScheme scheme) {
     if (scheme.getName().startsWith(Scheme.EDITABLE_COPY_PREFIX)) {
-      String displayName = SchemeManager.getBaseName(scheme);
+      String displayName = Scheme.getBaseName(scheme.getName());
       EditorColorsScheme defaultScheme = DefaultColorSchemesManager.getInstance().getScheme(displayName);
       if (defaultScheme == null) {
         defaultScheme = EditorColorsManager.getInstance().getScheme(displayName);
@@ -590,7 +590,7 @@ public class ColorAndFontOptions extends SearchableConfigurable.Parent.Abstract
 
 
   private static void initScopesDescriptors(@NotNull List<? super EditorSchemeAttributeDescriptor> descriptions, @NotNull MyColorScheme scheme) {
-    Set<Pair<NamedScope,NamedScopesHolder>> namedScopes = new ObjectOpenCustomHashSet<>(new Hash.Strategy<Pair<NamedScope, NamedScopesHolder>>() {
+    Set<Pair<NamedScope,NamedScopesHolder>> namedScopes = new ObjectOpenCustomHashSet<>(new Hash.Strategy<>() {
       @Override
       public int hashCode(@Nullable Pair<NamedScope, NamedScopesHolder> object) {
         return object == null ? 0 : object.getFirst().getScopeId().hashCode();

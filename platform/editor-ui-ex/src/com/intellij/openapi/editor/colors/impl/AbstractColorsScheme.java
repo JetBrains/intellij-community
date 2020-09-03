@@ -2,6 +2,8 @@
 
 package com.intellij.openapi.editor.colors.impl;
 
+import com.intellij.AbstractBundle;
+import com.intellij.DynamicBundle;
 import com.intellij.application.options.EditorFontsConstants;
 import com.intellij.configurationStore.SerializableScheme;
 import com.intellij.ide.ui.ColorBlindness;
@@ -12,18 +14,19 @@ import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.options.SchemeState;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.JdomKt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.JBIterable;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,6 +45,9 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   public static final Color NULL_COLOR_MARKER = ColorUtil.marker("NULL_COLOR_MARKER");
 
   public static final int CURR_VERSION = 142;
+
+  public static final String NAME_BUNDLE_PROPERTY = "lcNameBundle";
+  public static final String NAME_KEY_PROPERTY    = "lcNameKey";
 
   protected EditorColorsScheme myParentScheme;
 
@@ -142,8 +148,26 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   @NotNull
   @Override
   public String getDisplayName() {
-    String name = StringUtil.trimStart(getName(), EDITABLE_COPY_PREFIX);
-    return DEFAULT_SCHEME_NAME.equals(name) ? DEFAULT_SCHEME_ALIAS : name;
+    if (!(this instanceof ReadOnlyColorsScheme)) {
+      EditorColorsScheme original = getOriginal();
+      if (original instanceof ReadOnlyColorsScheme) {
+        return original.getDisplayName();
+      }
+    }
+    String baseName = Scheme.getBaseName(getName()); //NON-NLS
+    return ObjectUtils.chooseNotNull(getLocalizedName(), baseName);
+  }
+
+  @Nullable
+  @Nls
+  protected String getLocalizedName() {
+    String bundlePath = getMetaProperties().getProperty(NAME_BUNDLE_PROPERTY);
+    String bundleKey = getMetaProperties().getProperty(NAME_KEY_PROPERTY);
+    if (bundlePath != null && bundleKey != null) {
+      ResourceBundle bundle = DynamicBundle.INSTANCE.getResourceBundle(bundlePath, getClass().getClassLoader());
+      return AbstractBundle.message(bundle, bundleKey);
+    }
+    return null;
   }
 
   @Override

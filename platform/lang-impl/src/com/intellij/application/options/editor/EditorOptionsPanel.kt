@@ -25,7 +25,7 @@ import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.options.BoundCompositeConfigurable
 import com.intellij.openapi.options.Configurable.WithEpDependencies
-import com.intellij.openapi.options.SchemeManager
+import com.intellij.openapi.options.Scheme
 import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.project.ProjectManager
@@ -211,7 +211,7 @@ class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(messa
           cell(isFullWidth = true) {
             label(message("combobox.richcopy.color.scheme"))
             val schemes = listOf(RichCopySettings.ACTIVE_GLOBAL_SCHEME_MARKER) +
-                          EditorColorsManager.getInstance().allSchemes.map { SchemeManager.getBaseName(it) }
+                          EditorColorsManager.getInstance().allSchemes.map { Scheme.getBaseName(it.name) }
             comboBox<String>(
               DefaultComboBoxModel(schemes.toTypedArray()), richCopySettings::getSchemeName, richCopySettings::setSchemeName,
               renderer = SimpleListCellRenderer.create("") {
