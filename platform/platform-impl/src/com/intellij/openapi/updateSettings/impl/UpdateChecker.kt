@@ -34,7 +34,6 @@ import com.intellij.util.Urls
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.URLUtil
-import com.intellij.util.text.VersionComparatorUtil
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.UIUtil
 import com.intellij.xml.util.XmlStringUtil
@@ -320,7 +319,8 @@ object UpdateChecker {
     val updates = MarketplaceRequests.getInstance().getLastCompatiblePluginUpdate(idsToUpdate, buildNumber)
     for ((id, descriptor) in updateable) {
       val lastUpdate = updates.find { it.pluginId == id.idString } ?: continue
-      val isOutdated = descriptor == null || VersionComparatorUtil.compare(lastUpdate.version, descriptor.version) > 0
+      val isOutdated = descriptor == null ||
+                       PluginDownloader.compareVersionsSkipBrokenAndIncompatible(lastUpdate.version, descriptor, buildNumber) > 0
       if (isOutdated) {
         val newDescriptor = try {
           MarketplaceRequests.getInstance().loadPluginDescriptor(id.idString, lastUpdate, indicator)
@@ -346,7 +346,7 @@ object UpdateChecker {
   ) {
     val downloader = PluginDownloader.createDownloader(descriptor, host, buildNumber)
     state.onDescriptorDownload(descriptor)
-    checkAndPrepareToInstall(downloader, state, if (PluginManagerCore.isDisabled(downloader.id)) toUpdateDisabled else toUpdate, indicator)
+    checkAndPrepareToInstall(downloader, state, if (PluginManagerCore.isDisabled(downloader.id)) toUpdateDisabled else toUpdate, buildNumber, indicator)
   }
 
   /**
@@ -427,7 +427,7 @@ object UpdateChecker {
     incompatiblePlugins: MutableCollection<IdeaPluginDescriptor>?,
     indicator: ProgressIndicator?
   ) {
-    checkAndPrepareToInstall(downloader, state, toUpdate, indicator)
+    checkAndPrepareToInstall(downloader, state, toUpdate, null as BuildNumber?, indicator)
 
     val pluginId = downloader.id
     if (PluginManagerCore.isDisabled(pluginId)) return
@@ -468,6 +468,7 @@ object UpdateChecker {
     downloader: PluginDownloader,
     state: InstalledPluginsState,
     toUpdate: MutableMap<PluginId, PluginDownloader>,
+    buildNumber: BuildNumber?,
     indicator: ProgressIndicator?
   ) {
     @Suppress("NAME_SHADOWING")
@@ -476,7 +477,8 @@ object UpdateChecker {
 
     val pluginVersion = downloader.pluginVersion
     val installedPlugin = PluginManagerCore.getPlugin(pluginId)
-    if (installedPlugin == null || pluginVersion == null || PluginDownloader.compareVersionsSkipBrokenAndIncompatible(pluginVersion, installedPlugin) > 0) {
+    if (installedPlugin == null || pluginVersion == null ||
+        PluginDownloader.compareVersionsSkipBrokenAndIncompatible(pluginVersion, installedPlugin, buildNumber) > 0) {
       var descriptor: IdeaPluginDescriptor?
 
       if (PluginManagerCore.isDisabled(pluginId)) {
