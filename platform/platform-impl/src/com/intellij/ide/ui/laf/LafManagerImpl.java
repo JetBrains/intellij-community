@@ -286,13 +286,15 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   private void syncLaf(boolean systemDark) {
-    boolean currentDark = myCurrentLaf instanceof UIThemeBasedLookAndFeelInfo && ((UIThemeBasedLookAndFeelInfo)myCurrentLaf).getTheme().isDark() ||
-                          UIUtil.isUnderDarcula();
+    if (autodetect) {
+      boolean currentDark = myCurrentLaf instanceof UIThemeBasedLookAndFeelInfo && ((UIThemeBasedLookAndFeelInfo)myCurrentLaf).getTheme().isDark() ||
+                            UIUtil.isUnderDarcula();
 
-    UIManager.LookAndFeelInfo expectedLaf = systemDark ? myPreferredDarkLaf : myPreferredLightLaf;
+      UIManager.LookAndFeelInfo expectedLaf = systemDark ? myPreferredDarkLaf : myPreferredLightLaf;
 
-    if (currentDark != systemDark || myCurrentLaf != expectedLaf) {
-      QuickChangeLookAndFeel.switchLafAndUpdateUI(this, expectedLaf, true);
+      if (currentDark != systemDark || myCurrentLaf != expectedLaf) {
+        QuickChangeLookAndFeel.switchLafAndUpdateUI(this, expectedLaf, true);
+      }
     }
   }
 
@@ -1420,6 +1422,11 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
           detectAndSyncLaf();
         }
       }
+    }
+
+    @Override
+    public boolean isDumbAware() {
+      return true;
     }
   }
 }

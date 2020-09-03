@@ -8,13 +8,11 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.mac.foundation.Foundation
 import com.intellij.ui.mac.foundation.ID
 import com.sun.jna.Callback
-import com.sun.jna.Pointer
 import com.sun.jna.platform.win32.Advapi32Util
 import com.sun.jna.platform.win32.WinReg
 import org.jetbrains.annotations.NonNls
 import java.awt.Toolkit
 import java.beans.PropertyChangeEvent
-import java.lang.RuntimeException
 import java.util.function.Consumer
 
 internal abstract class SystemDarkThemeDetector {
@@ -51,11 +49,6 @@ internal abstract class SystemDarkThemeDetector {
   private class MacOSDetector(override val syncFunction: Consumer<Boolean>) : AsyncDetector() {
     override val detectionSupported: Boolean = SystemInfo.isMacOSMojave && JnaLoader.isLoaded()
 
-    companion object {
-      const val AQUA_THEME_NAME      = "NSAppearanceNameAqua"
-      const val DARK_AQUA_THEME_NAME = "NSAppearanceNameDarkAqua"
-    }
-
     val themeChangedCallback = object : Callback {
       @Suppress("unused")
       fun callback() { // self: ID, selector: Pointer, id: ID
@@ -88,13 +81,14 @@ internal abstract class SystemDarkThemeDetector {
 
     override fun isDark(): Boolean {
       val pool = Foundation.NSAutoreleasePool()
-      try {
-        val appearanceID = Foundation.invoke(Foundation.invoke("NSApplication", "sharedApplication"), "effectiveAppearance")
-        val themes = Foundation.invokeVarArg("NSArray", "arrayWithObjects:",
-                                             *Foundation.convertTypes(arrayOf(AQUA_THEME_NAME, DARK_AQUA_THEME_NAME)))
+      try { // https://developer.apple.com/forums/thread/118974
+        val userDefaults = Foundation.invoke("NSUserDefaults", "standardUserDefaults")
+        val appleInterfaceStyle = Foundation.toStringViaUTF8(Foundation.invoke(userDefaults, "objectForKey:", Foundation.nsString("AppleInterfaceStyle")))
 
-        val appearanceName = Foundation.invoke(appearanceID, "bestMatchFromAppearancesWithNames:", themes)
-        return Foundation.invoke(appearanceName, "isEqualToString:", Foundation.nsString(DARK_AQUA_THEME_NAME)).toInt() == 1
+        //val autoMode = SystemInfo.isMacOSCatalina &&
+        //               Foundation.invoke(userDefaults, "boolForKey:", Foundation.nsString("AppleInterfaceStyleSwitchesAutomatically")).booleanValue()
+
+        return appleInterfaceStyle?.toLowerCase()?.contains("dark") ?: false
       }
       finally{
         pool.drain()
