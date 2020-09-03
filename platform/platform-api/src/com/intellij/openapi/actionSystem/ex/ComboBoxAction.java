@@ -138,7 +138,7 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
     return 1;
   }
 
-  protected class ComboBoxButton extends JButton implements UserActivityProviderComponent {
+  public class ComboBoxButton extends JButton implements UserActivityProviderComponent {
     private final Presentation myPresentation;
     private boolean myForcePressed;
     private @TooltipTitle String myTooltipText;
@@ -371,6 +371,10 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
 
     @Override public void updateUI() {
       super.updateUI();
+      updateMargin();
+    }
+
+    protected void updateMargin() {
       setMargin(JBUI.insets(0, 8, 0, 5));
     }
 
