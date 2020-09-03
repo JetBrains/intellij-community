@@ -1,6 +1,7 @@
 package com.intellij.tasks.youtrack;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.TaskState;
 import com.intellij.tasks.config.TaskRepositoryEditor;
 import com.intellij.tasks.impl.BaseRepositoryType;
@@ -32,7 +33,7 @@ public class YouTrackRepositoryType extends BaseRepositoryType<YouTrackRepositor
   @Nullable
   @Override
   public String getAdvertiser() {
-    return "<html>Not YouTrack customer yet? Get <a href='https://www.jetbrains.com/youtrack/download/get_youtrack.html?idea_integration'>YouTrack</a></html>";
+    return TaskBundle.message("html.not.youtrack.customer.yet.get.a.href.https.www.jetbrains.com.youtrack.download.get.youtrack.html.idea.integration.youtrack.a.html");
   }
 
   @Override

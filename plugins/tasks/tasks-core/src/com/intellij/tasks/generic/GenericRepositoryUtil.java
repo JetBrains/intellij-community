@@ -15,6 +15,7 @@
  */
 package com.intellij.tasks.generic;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.apache.commons.httpclient.HttpMethod;
@@ -89,7 +90,7 @@ public class GenericRepositoryUtil {
     return ContainerUtil.map2List(variables, variable -> String.format("{%s}", variable.getName()));
   }
 
-  public static String prettifyVariableName(String variableName) {
+  public static @NlsContexts.Label String prettifyVariableName(@NlsContexts.Label String variableName) {
     String prettyName = variableName.replace('_', ' ');
     return StringUtil.capitalizeWords(prettyName, true);
   }

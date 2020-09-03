@@ -16,6 +16,7 @@
 
 package com.intellij.tasks;
 
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nls;
@@ -120,7 +121,7 @@ public abstract class Task {
     return StringUtil.first(text, 60, true);
   }
 
-  public String getPresentableName() {
+  public @NlsContexts.Label String getPresentableName() {
     return toString();
   }
 

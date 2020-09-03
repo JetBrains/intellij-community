@@ -25,6 +25,7 @@ import com.intellij.openapi.vcs.VcsTaskHandler;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.Task;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.config.TaskSettings;
 import com.intellij.tasks.impl.TaskManagerImpl;
@@ -178,7 +179,8 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
 
   private void updateFields(boolean initial) {
     if (!initial && myBranchFrom.getItemCount() == 0 && myCreateBranch.isSelected()) {
-      Messages.showWarningDialog(myPanel, "Can't create branch if no commit exists.\nCreate a commit first.", "Cannot Create Branch");
+      Messages.showWarningDialog(myPanel, TaskBundle.message("dialog.message.can.t.create.branch.if.no.commit.exists.create.commit.first"),
+                                 TaskBundle.message("dialog.title.cannot.create.branch"));
       myCreateBranch.setSelected(false);
     }
     myBranchName.setEnabled(myCreateBranch.isSelected());
@@ -239,15 +241,15 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
     if (myCreateBranch.isSelected()) {
       String branchName = myBranchName.getText().trim();
       if (branchName.isEmpty()) {
-        return new ValidationInfo("Branch name should not be empty", myBranchName);
+        return new ValidationInfo(TaskBundle.message("dialog.message.branch.name.should.not.be.empty"), myBranchName);
       }
       else if (myVcsTaskHandler != null) {
         return myVcsTaskHandler.isBranchNameValid(branchName)
                ? null
-               : new ValidationInfo("Branch name is not valid; check your vcs branch name restrictions.", myBranchName);
+               : new ValidationInfo(TaskBundle.message("dialog.message.branch.name.not.valid.check.your.vcs.branch.name.restrictions"), myBranchName);
       }
       else if (branchName.contains(" ")) {
-        return new ValidationInfo("Branch name should not contain spaces", myBranchName);
+        return new ValidationInfo(TaskBundle.message("dialog.message.branch.name.should.not.contain.spaces"), myBranchName);
       }
       else {
         return null;
@@ -255,7 +257,7 @@ public class VcsOpenTaskPanel extends TaskDialogPanel {
     }
     if (myCreateChangelist.isSelected()) {
       if (myChangelistName.getText().trim().isEmpty()) {
-        return new ValidationInfo("Changelist name should not be empty", myChangelistName);
+        return new ValidationInfo(TaskBundle.message("dialog.message.changelist.name.should.not.be.empty"), myChangelistName);
       }
     }
     return null;

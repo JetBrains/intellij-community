@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.tasks.BranchInfo;
 import com.intellij.tasks.ChangeListInfo;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.TaskManager;
 import com.intellij.tasks.impl.LocalTaskImpl;
 import com.intellij.ui.CollectionComboBoxModel;
@@ -58,7 +59,7 @@ public class EditTaskDialog extends DialogWrapper {
   protected EditTaskDialog(Project project, LocalTaskImpl task) {
     super(project);
     myTask = task;
-    setTitle("Edit Task " + (task.isIssue() ? task.getPresentableId() : ""));
+    setTitle(TaskBundle.message("dialog.title.edit.task.choice", task.getPresentableId(), task.isIssue() ? 0 : 1));
 
 //    mySummary.putClientProperty(DialogWrapperPeer.HAVE_INITIAL_SELECTION, "");
     mySummary.setText(task.getSummary());
@@ -110,7 +111,7 @@ public class EditTaskDialog extends DialogWrapper {
 
   @Override
   protected void doOKAction() {
-    myTask.setSummary(mySummary.getText());
+    myTask.setSummary(mySummary.getText()); //NON-NLS
     if (myChangelist.isVisible()) {
       List<ChangeListInfo> changeLists = myTask.getChangeLists();
       changeLists.clear();

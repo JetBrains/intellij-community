@@ -16,8 +16,8 @@
 
 package com.intellij.tasks;
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.text.DateFormatUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
@@ -29,9 +29,9 @@ public abstract class Comment {
 
   public static final Comment[] EMPTY_ARRAY = new Comment[0];
 
-  public abstract @Nls String getText();
+  public abstract @NlsSafe String getText();
 
-  public abstract @Nullable @Nls String getAuthor();
+  public abstract @Nullable @NlsSafe String getAuthor();
 
   @Nullable
   public abstract Date getDate();

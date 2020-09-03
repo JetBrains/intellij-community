@@ -22,6 +22,7 @@ import com.intellij.tasks.impl.TaskManagerImpl;
 import com.intellij.tasks.impl.TaskUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IconUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -209,8 +210,8 @@ public class GotoTaskAction extends GotoActionBase implements DumbAware {
   public static class CreateNewTaskAction {
     private String taskName;
 
-    public String getActionText() {
-      return "Create New Task '" + taskName + "'";
+    public @Nls String getActionText() {
+      return TaskBundle.message("create.new.task.0", taskName);
     }
 
     public void setTaskName(final String taskName) {

@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.tasks.config.TaskRepositoryEditor;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -38,11 +39,11 @@ public final class TaskUiUtil {
     /**
      * Should be called only from EDT, so current modality state can be captured.
      */
-    protected RemoteFetchTask(@Nullable Project project, @NotNull String title) {
+    protected RemoteFetchTask(@Nullable Project project, @NotNull @NlsContexts.ProgressTitle String title) {
       this(project, title, ModalityState.current());
     }
 
-    protected RemoteFetchTask(@Nullable Project project, @NotNull String title, @NotNull ModalityState modalityState) {
+    protected RemoteFetchTask(@Nullable Project project, @NotNull @NlsContexts.ProgressTitle String title, @NotNull ModalityState modalityState) {
       super(project, title);
       myModalityState = modalityState;
     }
@@ -82,7 +83,7 @@ public final class TaskUiUtil {
   public static abstract class ComboBoxUpdater<T> extends RemoteFetchTask<Collection<T>> {
     protected final JComboBox<T> myComboBox;
 
-    public ComboBoxUpdater(@Nullable Project project, @NotNull String title, @NotNull JComboBox<T> comboBox) {
+    public ComboBoxUpdater(@Nullable Project project, @NotNull @NlsContexts.ProgressTitle String title, @NotNull JComboBox<T> comboBox) {
       super(project, title, ModalityState.any());
       myComboBox = comboBox;
     }

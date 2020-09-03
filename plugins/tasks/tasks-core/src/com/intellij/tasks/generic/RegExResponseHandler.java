@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.Task;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.LanguageTextField;
 import com.intellij.ui.components.JBScrollPane;
@@ -75,8 +76,8 @@ public final class RegExResponseHandler extends ResponseHandler {
         myTaskRegex = taskPatternText.getText();
       }
     });
-    String tooltip = "<html>Task pattern should be a regexp with two matching groups: ({id}.+?) and ({summary}.+?)";
-    builder.addLabeledComponent("Task Pattern:", new JBScrollPane(taskPatternText)).addTooltip(tooltip);
+    String tooltip = TaskBundle.message("label.html.task.pattern.should.be.regexp.with.two.matching.groups.id.summary");
+    builder.addLabeledComponent(TaskBundle.message("label.task.pattern"), new JBScrollPane(taskPatternText)).addTooltip(tooltip);
     return builder.getPanel();
   }
 

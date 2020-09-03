@@ -4,6 +4,7 @@ package com.intellij.tasks.mantis;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.config.BaseRepositoryEditor;
 import com.intellij.tasks.impl.TaskUiUtil;
 import com.intellij.ui.SimpleListCellRenderer;
@@ -35,7 +36,7 @@ public class MantisRepositoryEditor extends BaseRepositoryEditor<MantisRepositor
   public MantisRepositoryEditor(Project project, MantisRepository repository, Consumer<? super MantisRepository> changeListener) {
     super(project, repository, changeListener);
 
-    myTestButton.setText("Login");
+    myTestButton.setText(TaskBundle.message("login"));
     myTestButton.setEnabled(myRepository.isConfigured());
 
     // Populate filters list on project selection
@@ -102,12 +103,12 @@ public class MantisRepositoryEditor extends BaseRepositoryEditor<MantisRepositor
   @Nullable
   @Override
   protected JComponent createCustomPanel() {
-    myProjectLabel = new JBLabel("Project:", SwingConstants.RIGHT);
+    myProjectLabel = new JBLabel(TaskBundle.message("label.project"), SwingConstants.RIGHT);
     myProjectCombobox = new ComboBox<>(200);
-    myProjectCombobox.setRenderer(SimpleListCellRenderer.create("Login first", MantisProject::getName));
-    myFilterLabel = new JBLabel("Filter:", SwingConstants.RIGHT);
+    myProjectCombobox.setRenderer(SimpleListCellRenderer.create(TaskBundle.message("label.login.first"), MantisProject::getName));
+    myFilterLabel = new JBLabel(TaskBundle.message("label.filter"), SwingConstants.RIGHT);
     myFilterCombobox = new ComboBox<>(200);
-    myFilterCombobox.setRenderer(SimpleListCellRenderer.create("Login first", MantisFilter::getName));
+    myFilterCombobox.setRenderer(SimpleListCellRenderer.create(TaskBundle.message("label.login.first"), MantisFilter::getName));
     return FormBuilder.createFormBuilder()
       .addLabeledComponent(myProjectLabel, myProjectCombobox)
       .addLabeledComponent(myFilterLabel, myFilterCombobox)
@@ -116,7 +117,7 @@ public class MantisRepositoryEditor extends BaseRepositoryEditor<MantisRepositor
 
   private final class FetchMantisProjects extends TaskUiUtil.ComboBoxUpdater<MantisProject> {
     private FetchMantisProjects() {
-      super(MantisRepositoryEditor.this.myProject, "Downloading Mantis Projects...", myProjectCombobox);
+      super(MantisRepositoryEditor.this.myProject, TaskBundle.message("progress.title.downloading.mantis.projects"), myProjectCombobox);
     }
 
     @NotNull

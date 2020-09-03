@@ -20,6 +20,7 @@ import com.intellij.ide.BrowserUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.TaskManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,7 +49,8 @@ public class OpenTaskInBrowserAction extends BaseTaskAction {
       if (project == null || !TaskManager.getManager(project).getActiveTask().isIssue()) {
         presentation.setText(getTemplatePresentation().getText());
       } else {
-        presentation.setText("Open '" + TaskManager.getManager(project).getActiveTask().getPresentableName() + "' In _Browser");
+        presentation.setText(
+          TaskBundle.message("action.open.in.browser.text", TaskManager.getManager(project).getActiveTask().getPresentableName()));
       }
     }
   }

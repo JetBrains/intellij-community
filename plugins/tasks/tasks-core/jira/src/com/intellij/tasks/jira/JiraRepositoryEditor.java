@@ -16,6 +16,7 @@
 package com.intellij.tasks.jira;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.config.BaseRepositoryEditor;
 import com.intellij.tasks.jira.jql.JqlLanguage;
 import com.intellij.ui.EditorTextField;
@@ -60,7 +61,7 @@ public class JiraRepositoryEditor extends BaseRepositoryEditor<JiraRepository> {
   protected JComponent createCustomPanel() {
     mySearchQueryField = new LanguageTextField(JqlLanguage.INSTANCE, myProject, myRepository.getSearchQuery());
     installListener(mySearchQueryField);
-    mySearchLabel = new JBLabel("Search:", SwingConstants.RIGHT);
+    mySearchLabel = new JBLabel(TaskBundle.message("label.search"), SwingConstants.RIGHT);
     myNoteLabel = new JBLabel();
     myNoteLabel.setComponentStyle(UIUtil.ComponentStyle.SMALL);
     adjustSettingsForServerProperties();
@@ -83,17 +84,18 @@ public class JiraRepositoryEditor extends BaseRepositoryEditor<JiraRepository> {
     }
     else {
       mySearchQueryField.setEnabled(false);
-      myNoteLabel.setText("JQL search cannot be used in JIRA versions prior 4.2. Your version: " + myRepository.getPresentableVersion());
+      myNoteLabel.setText(
+        TaskBundle.message("label.jql.search.cannot.be.used.in.jira.versions.prior.your.version", myRepository.getPresentableVersion()));
       myNoteLabel.setVisible(true);
     }
 
     if (myRepository.isInCloud()) {
-      myUsernameLabel.setText("Email:");
-      myPasswordLabel.setText("API Token:");
+      myUsernameLabel.setText(TaskBundle.message("label.email"));
+      myPasswordLabel.setText(TaskBundle.message("label.api.token"));
     }
     else {
-      myUsernameLabel.setText("Username:");
-      myPasswordLabel.setText("Password:");
+      myUsernameLabel.setText(TaskBundle.message("label.username"));
+      myPasswordLabel.setText(TaskBundle.message("label.password"));
     }
   }
 }
