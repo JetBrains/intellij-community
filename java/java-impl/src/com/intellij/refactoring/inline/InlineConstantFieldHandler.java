@@ -24,6 +24,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
@@ -120,6 +121,7 @@ public class InlineConstantFieldHandler extends JavaInlineActionHandler {
     InlineFieldDialog dialog = new InlineFieldDialog(project, field, referenceElement);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       dialog.doAction();
+      dialog.close(DialogWrapper.OK_EXIT_CODE, true);
     }
     else {
       dialog.show();
