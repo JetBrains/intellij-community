@@ -936,27 +936,17 @@ public class PsiSearchHelperImpl implements PsiSearchHelper {
     return new BulkOccurrenceProcessor() {
       @Override
       public boolean execute(@NotNull PsiElement scope, int @NotNull [] offsetsInScope, @NotNull StringSearcher searcher) {
-        try {
-          ProgressManager.checkCanceled();
-          if (wrapped instanceof RequestResultProcessor.BulkResultProcessor) {
-            return ((RequestResultProcessor.BulkResultProcessor)wrapped).processTextOccurrences(scope, offsetsInScope, consumer);
-          }
+        ProgressManager.checkCanceled();
+        if (wrapped instanceof RequestResultProcessor.BulkResultProcessor) {
+          return ((RequestResultProcessor.BulkResultProcessor)wrapped).processTextOccurrences(scope, offsetsInScope, consumer);
+        }
 
-          return LowLevelSearchUtil.processElementsAtOffsets(scope, searcher, !ignoreInjectedPsi,
-                                                             getOrCreateIndicator(), offsetsInScope,
-                                                             (element, offsetInElement) -> {
+        return LowLevelSearchUtil.processElementsAtOffsets(scope, searcher, !ignoreInjectedPsi,
+                                                           getOrCreateIndicator(), offsetsInScope,
+                                                           (element, offsetInElement) -> {
             if (ignoreInjectedPsi && element instanceof PsiLanguageInjectionHost) return true;
             return wrapped.processTextOccurrence(element, offsetInElement, consumer);
           });
-        }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
-        catch (Exception | Error e) {
-          PsiFile file = scope.getContainingFile();
-          LOG.error("Error during processing of: " + (file != null ? file.getName() : scope), e);
-          return true;
-        }
       }
 
       @Override

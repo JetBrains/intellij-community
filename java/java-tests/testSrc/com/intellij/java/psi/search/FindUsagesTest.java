@@ -18,13 +18,13 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.patterns.PlatformPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.PsiReferenceRegistrarImpl;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.PsiReferenceProcessorAdapter;
+import com.intellij.psi.search.*;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -43,6 +43,7 @@ import it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -355,5 +356,29 @@ public class FindUsagesTest extends JavaPsiTestCase {
     finally {
       registrar.unregisterReferenceProvider(PsiLiteralExpression.class, hardProvider);
     }
+  }
+
+  public void testFindUsagesMustNotSwallow/*IndexNotReadyException*/() throws ExecutionException, InterruptedException {
+    PsiClass aClass = myJavaFacade.findClass("x.Ref", GlobalSearchScope.allScope(myProject));
+    PsiField field = Objects.requireNonNull(aClass).findFieldByName("ref", false);
+    SearchScope scope = new LocalSearchScope(aClass);
+    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(() ->
+        ProgressManager.getInstance().runProcess(() ->
+          {
+            try {
+              SearchRequestCollector collector = new SearchRequestCollector(new SearchSession(field));
+              collector.searchWord(field.getName(), scope, true, field);
+              PsiSearchHelper.getInstance(getProject()).processRequests(collector, reference -> {
+                  throw IndexNotReadyException.create();
+                });
+              fail("must throw INRE");
+            }
+            catch (IndexNotReadyException ignored) {
+            }
+          },
+          new EmptyProgressIndicator())
+      );
+
+    future.get();
   }
 }
