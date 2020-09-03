@@ -28,6 +28,26 @@ class Demo {
     testAnnotations(text)
   }
 
+  fun `test cast`() {
+    val text = """
+class Demo {
+  private static void pure(Object object) {
+    var x = (String)object;
+  }
+}"""
+    testAnnotations(text)
+  }
+
+  fun `test unknown type`() {
+    val text = """
+class Demo {
+  private static void pure(Object object) {
+    var x = unresolved;
+  }
+}"""
+    testAnnotations(text)
+  }
+
 
   private fun testAnnotations(
     text: String
