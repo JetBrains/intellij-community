@@ -36,7 +36,9 @@ import com.intellij.util.indexing.memory.InMemoryIndexStorage;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.VoidDataExternalizer;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntIterator;
+import it.unimi.dsi.fastutil.ints.IntLinkedOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -453,15 +455,13 @@ public final class StubIndexImpl extends StubIndexEx {
     final UpdatableIndex<Key, Void, FileContent> index = getIndex(indexKey);   // wait for initialization to finish
     if (index == null || !fileBasedIndex.ensureUpToDate(stubUpdatingIndexId, project, scope, null)) return IdIterator.EMPTY;
 
-    if (idFilter == null) {
-      idFilter = ((FileBasedIndexEx)FileBasedIndex.getInstance()).projectIndexableFiles(project);
-    }
+    IdFilter finalIdFilter = idFilter != null ? idFilter : ((FileBasedIndexEx)FileBasedIndex.getInstance()).projectIndexableFiles(project);
 
     UpdatableIndex<Integer, SerializedStubTree, FileContent> stubUpdatingIndex = fileBasedIndex.getIndex(stubUpdatingIndexId);
 
     try {
-      IntArrayList result = new IntArrayList();
-      IdFilter finalIdFilter = idFilter;
+      IntSet result = new IntLinkedOpenHashSet(); // workaround duplicates keys
+
       myAccessValidator.validate(stubUpdatingIndexId, ()-> {
         // disable up-to-date check to avoid locks on attempt to acquire index write lock while holding at the same time the readLock for this index
         //noinspection Convert2Lambda (workaround for JBR crash, JBR-2349),Convert2Diamond
@@ -478,16 +478,16 @@ public final class StubIndexImpl extends StubIndexEx {
         ));
       });
       return new IdIterator() {
-        int cursor;
+        final IntIterator iterator = result.iterator();
 
         @Override
         public boolean hasNext() {
-          return cursor < result.size();
+          return iterator.hasNext();
         }
 
         @Override
         public int next() {
-          return result.getInt(cursor++);
+          return iterator.nextInt();
         }
 
         @Override
