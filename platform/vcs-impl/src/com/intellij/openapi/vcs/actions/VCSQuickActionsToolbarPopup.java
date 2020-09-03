@@ -26,6 +26,7 @@ public class VCSQuickActionsToolbarPopup extends QuickSwitchSchemeAction impleme
   public enum SupportedVCS {VCS, NOT_IN_VCS}
 
   public VCSQuickActionsToolbarPopup() {
+    getTemplatePresentation().setText(VcsBundle.messagePointer("vcs.quicklist.popup.title"));
     myActionPlace = ActionPlaces.MAIN_TOOLBAR;
   }
 
