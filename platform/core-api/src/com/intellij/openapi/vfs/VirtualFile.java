@@ -129,12 +129,13 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * Gets the path of this file. Path is a string that uniquely identifies a file within a given
    * {@link VirtualFileSystem}. Format of the path depends on the concrete file system.
    * For {@link LocalFileSystem} it is an absolute file path with file separator characters
-   * ({@link File#separatorChar}) replaced to the forward slash ({@code '/'}).
+   * ({@link File#separatorChar}) replaced to the forward slash ({@code '/'}). If you need to show path in UI, use {@link #getPresentableUrl()}
+   * instead.
    *
    * @return the path
    * @see #toNioPath()
    */
-  public abstract @NotNull @NlsSafe String getPath();
+  public abstract @NonNls @NotNull String getPath();
 
   /**
    * @return a related {@link Path} for a given virtual file where possible otherwise an
@@ -167,7 +168,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @see VirtualFile#getPath
    * @see VirtualFileSystem#getProtocol
    */
-  public @NotNull @NlsSafe String getUrl() {
+  public @NotNull String getUrl() {
     return VirtualFileManager.constructUrl(getFileSystem().getProtocol(), getPath());
   }
 
@@ -262,7 +263,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * {@code getCanonicalFile().getPath()} if the link was successfully resolved;
    * {@code null} otherwise
    */
-  public @Nullable @NlsSafe String getCanonicalPath() {
+  public @Nullable String getCanonicalPath() {
     return getPath();
   }
 

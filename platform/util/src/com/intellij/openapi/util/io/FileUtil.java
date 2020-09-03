@@ -80,15 +80,15 @@ public class FileUtil extends FileUtilRt {
   }
 
   @Nullable
-  public static @NlsSafe String getRelativePath(@NotNull String basePath, @NotNull String filePath, final char separator) {
+  public static String getRelativePath(@NotNull String basePath, @NotNull String filePath, final char separator) {
     return FileUtilRt.getRelativePath(basePath, filePath, separator);
   }
 
   @Nullable
-  public static @NlsSafe String getRelativePath(@NotNull String basePath,
-                                                @NotNull String filePath,
-                                                final char separator,
-                                                final boolean caseSensitive) {
+  public static String getRelativePath(@NotNull String basePath,
+                                       @NotNull String filePath,
+                                       final char separator,
+                                       final boolean caseSensitive) {
     return FileUtilRt.getRelativePath(basePath, filePath, separator, caseSensitive);
   }
 
@@ -566,14 +566,23 @@ public class FileUtil extends FileUtilRt {
     return candidate;
   }
 
+  /**
+   * Converts {@code filePath} to file system dependent form which uses forward slashes ('/') on Linux and Mac OS, and use back slashes ('\')
+   * on Windows. Such paths are shown in UI. They must be converted to {@link #toSystemIndependentName file system independent form} to
+   * store in configuration files.
+   */
   @NotNull
-  public static @NlsSafe String toSystemDependentName(@NotNull String aFileName) {
-    return FileUtilRt.toSystemDependentName(aFileName);
+  public static @NlsSafe String toSystemDependentName(@NotNull String filePath) {
+    return FileUtilRt.toSystemDependentName(filePath);
   }
 
+  /**
+   * Converts {@code filePath} to file system independent form which uses forward slashes ('/'). Such paths can be stored in internal structures
+   * and configuration files. They must be converted to {@link #toSystemDependentName file system dependenct form} to show in UI.
+   */
   @NotNull
-  public static @NlsSafe String toSystemIndependentName(@NotNull String aFileName) {
-    return FileUtilRt.toSystemIndependentName(aFileName);
+  public static @NonNls String toSystemIndependentName(@NotNull String filePath) {
+    return FileUtilRt.toSystemIndependentName(filePath);
   }
 
   /**
@@ -584,7 +593,7 @@ public class FileUtil extends FileUtilRt {
    * If the path may contain symlinks, use {@link FileUtil#toCanonicalPath(String, boolean)} instead.
    */
   @Contract("null -> null; !null->!null")
-  public static @NlsSafe String toCanonicalPath(@Nullable String path) {
+  public static String toCanonicalPath(@Nullable String path) {
     return toCanonicalPath(path, File.separatorChar, true);
   }
 
@@ -604,17 +613,17 @@ public class FileUtil extends FileUtilRt {
    * 'root/dir1/link_to_dir1/../dir2' should be resolved to 'root/dir2'
    */
   @Contract("null, _ -> null; !null,_->!null")
-  public static @NlsSafe String toCanonicalPath(@Nullable String path, boolean resolveSymlinksIfNecessary) {
+  public static String toCanonicalPath(@Nullable String path, boolean resolveSymlinksIfNecessary) {
     return toCanonicalPath(path, File.separatorChar, true, resolveSymlinksIfNecessary);
   }
 
   @Contract("null, _ -> null; !null,_->!null")
-  public static @NlsSafe String toCanonicalPath(@Nullable String path, char separatorChar) {
+  public static String toCanonicalPath(@Nullable String path, char separatorChar) {
     return toCanonicalPath(path, separatorChar, true);
   }
 
   @Contract("null -> null; !null->!null")
-  public static @NlsSafe String toCanonicalUriPath(@Nullable String path) {
+  public static String toCanonicalUriPath(@Nullable String path) {
     return toCanonicalPath(path, '/', false);
   }
 
@@ -638,10 +647,10 @@ public class FileUtil extends FileUtilRt {
   };
 
   @Contract("null, _, _, _ -> null; !null,_,_,_->!null")
-  private static @NlsSafe String toCanonicalPath(@Nullable String path,
-                                                 final char separatorChar,
-                                                 final boolean removeLastSlash,
-                                                 final boolean resolveSymlinks) {
+  private static String toCanonicalPath(@Nullable String path,
+                                        final char separatorChar,
+                                        final boolean removeLastSlash,
+                                        final boolean resolveSymlinks) {
     SymlinkResolver symlinkResolver = resolveSymlinks ? SYMLINK_RESOLVER : null;
     return toCanonicalPath(path, separatorChar, removeLastSlash, symlinkResolver);
   }
@@ -651,7 +660,7 @@ public class FileUtil extends FileUtilRt {
    * removes double slashes inside the path, e.g. "x/y//z" => "x/y/z"
    */
   @NotNull
-  public static @NlsSafe String normalize(@NotNull String path) {
+  public static String normalize(@NotNull String path) {
     int start = 0;
     boolean separator = false;
     if (SystemInfo.isWindows) {
@@ -684,7 +693,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   @NotNull
-  private static @NlsSafe String normalizeTail(int prefixEnd, @NotNull String path, boolean separator) {
+  private static String normalizeTail(int prefixEnd, @NotNull String path, boolean separator) {
     final StringBuilder result = new StringBuilder(path.length());
     result.append(path, 0, prefixEnd);
     int start = prefixEnd;
@@ -1251,8 +1260,9 @@ public class FileUtil extends FileUtilRt {
     return path;
   }
 
+  @Contract(pure = true)
   @NotNull
-  public static @NlsSafe String expandUserHome(@NotNull String path) {
+  public static String expandUserHome(@NotNull String path) {
     if (path.startsWith("~/") || path.startsWith("~\\")) {
       path = SystemProperties.getUserHome() + path.substring(1);
     }
@@ -1478,7 +1488,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   @NotNull
-  public static @NlsSafe String getUrl(@NotNull File file) {
+  public static String getUrl(@NotNull File file) {
     try {
       return file.toURI().toURL().toExternalForm();
     }
