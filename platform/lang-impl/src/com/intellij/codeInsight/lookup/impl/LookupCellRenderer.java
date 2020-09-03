@@ -82,6 +82,7 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
   private volatile int myLookupTextWidth = 50;
   private final Object myWidthLock = ObjectUtils.sentinel("lookup width lock");
   private final SingleAlarm myWidthChangeAlarm;
+  private final boolean myShrinkLookup;
 
   private final AsyncRendering myAsyncRendering;
 
@@ -120,6 +121,8 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
       myLookup.refreshUi(false, false);
     }, 100);
     Disposer.register(lookup, () -> Disposer.dispose(myWidthChangeAlarm));
+
+    myShrinkLookup = Registry.is("ide.lookup.shrink");
   }
 
   private boolean myIsSelected = false;
@@ -504,7 +507,7 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
   void updateLookupWidthFromVisibleItems() {
     List<LookupElement> visibleItems = myLookup.getVisibleItems();
 
-    int maxWidth = myLookupTextWidth;
+    int maxWidth = myShrinkLookup ? 0 : myLookupTextWidth;
     for (var item : visibleItems) {
       LookupElementPresentation presentation = myAsyncRendering.getLastComputed(item);
 
@@ -520,7 +523,7 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
     }
 
     synchronized (myWidthLock) {
-      if (maxWidth > myLookupTextWidth) {
+      if (myShrinkLookup || maxWidth > myLookupTextWidth) {
         myLookupTextWidth = maxWidth;
         scheduleLookupUpdate();
       }
