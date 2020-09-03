@@ -30,9 +30,14 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
 
   public EnvironmentVariablesComponent() {
     super();
-    myEnvVars = new EnvironmentVariablesTextFieldWithBrowseButton();
+    myEnvVars = createBrowseComponent();
     setComponent(myEnvVars);
     setText(ExecutionBundle.message("environment.variables.component.title"));
+  }
+
+  @NotNull
+  protected EnvironmentVariablesTextFieldWithBrowseButton createBrowseComponent() {
+    return new EnvironmentVariablesTextFieldWithBrowseButton();
   }
 
   public void setEnvs(@NotNull Map<String, String> envs) {
