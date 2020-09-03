@@ -529,6 +529,12 @@ public abstract class NlsInfo {
     PsiMethod method;
     PsiType returnType = null;
     UElement parent = expression.getUastParent();
+    if (parent instanceof UCallExpression) {
+      UAnnotation anno = UastContextKt.toUElement(parent.getSourcePsi(), UAnnotation.class);
+      if (anno != null) {
+        parent = anno;
+      }
+    }
     if (parent instanceof UNamedExpression) {
       method = UastUtils.getAnnotationMethod((UNamedExpression)parent);
     }

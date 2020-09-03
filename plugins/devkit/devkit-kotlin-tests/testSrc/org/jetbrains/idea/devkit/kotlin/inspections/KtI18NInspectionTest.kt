@@ -113,7 +113,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
   fun testAnnotationValues() {
     myFixture.enableInspections(I18nInspection())
     myFixture.addClass("""
-       import org.jetbrains.annotations.*
+       import org.jetbrains.annotations.*;
        @interface Foo {
          @NonNls String value();
          @NonNls String value2() default "test";
@@ -124,20 +124,42 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
        }
     """.trimIndent())
     myFixture.configureByText("Foo.kt", """
-       import org.jetbrains.annotations.*
-
        @Foo("Single param")
        class X
 
        @Foo(value = "Named param", value2 = "Named param2")
        class Y
 
-       // TODO: nested annotation is not resolved in Kotlin
-       @Foos(Foo(<warning descr="Hardcoded string literal: \"Nested\"">"Nested"</warning>))
+       @Foos(Foo("Nested"))
        class Z
 
-       @Foos(value = [Foo(<warning descr="Hardcoded string literal: \"Nested named\"">"Nested named"</warning>)])
+       @Foos(value = [Foo("Nested named")])
        class T
+    """.trimIndent())
+    myFixture.testHighlighting()
+  }
+  
+  fun testKotlinAnnotationValues() {
+    myFixture.enableInspections(I18nInspection())
+    myFixture.configureByText("Foo.kt", """
+      import org.jetbrains.annotations.*
+
+      // TODO: support annotations without @get: prefix
+      annotation class Foo(@get:NonNls val value: String, @get:NonNls val value2: String = "test")
+
+      annotation class Foos(vararg val value: Foo = [])
+
+      @Foo("Single param")
+      class X
+      
+      @Foo(value = "Named param", value2 = "Named param2")
+      class Y
+      
+      @Foos(Foo("Nested"))
+      class Z
+      
+      @Foos(value = [Foo("Nested named")])
+      class T
     """.trimIndent())
     myFixture.testHighlighting()
   }
