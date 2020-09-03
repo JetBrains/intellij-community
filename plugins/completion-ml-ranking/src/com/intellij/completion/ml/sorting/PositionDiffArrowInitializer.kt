@@ -19,14 +19,13 @@ import com.intellij.util.IconUtil
 import icons.CompletionMlRankingIcons
 import java.awt.Component
 import java.awt.Graphics
-import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.Icon
 
 class PositionDiffArrowInitializer : ProjectManagerListener {
   companion object {
     val POSITION_DIFF_KEY = Key.create<AtomicInteger>("PositionDiffArrowInitializer.POSITION_DIFF_KEY")
-    val POSITION_CHANGED_KEY = Key.create<AtomicBoolean>("PositionDiffArrowInitializer.POSITION_CHANGED_KEY")
+    val POSITION_CHANGED_KEY = Key.create<Boolean>("PositionDiffArrowInitializer.POSITION_CHANGED_KEY")
     private const val DIFF_ICON_RIGHT_MARGIN = 4
     private val EMPTY_DIFF_ICON = IconManager.getInstance().createEmptyIcon(CompletionMlRankingIcons.ProposalUp)
   }
@@ -44,7 +43,7 @@ class PositionDiffArrowInitializer : ProjectManagerListener {
         lookup.addPresentationCustomizer(object : LookupCellRenderer.ItemPresentationCustomizer {
           override fun customizePresentation(item: LookupElement,
                                              presentation: LookupElementPresentation): LookupElementPresentation {
-            val positionChanged = lookup.getUserData(POSITION_CHANGED_KEY)?.get()
+            val positionChanged = lookup.getUserData(POSITION_CHANGED_KEY)
             if (positionChanged == null || !positionChanged) return presentation
             val newPresentation = LookupElementPresentation()
             newPresentation.copyFrom(presentation)

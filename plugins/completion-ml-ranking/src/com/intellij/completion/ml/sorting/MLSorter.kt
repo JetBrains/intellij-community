@@ -263,7 +263,7 @@ class MLSorter : CompletionFinalSorter() {
   private fun LookupImpl.setPositionChangedOnce(value: Boolean) {
     val changed = getUserData(PositionDiffArrowInitializer.POSITION_CHANGED_KEY)
     if (changed == null) {
-      putUserData(PositionDiffArrowInitializer.POSITION_CHANGED_KEY, AtomicBoolean(value))
+      putUserData(PositionDiffArrowInitializer.POSITION_CHANGED_KEY, value)
     }
   }
 
