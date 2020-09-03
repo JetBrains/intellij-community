@@ -193,7 +193,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
 
     updateArgsText(vi);
 
-    DropDownLink<JDKVersionItem> ddl = new DropDownLink<>(vi, Arrays.asList(JDKVersionItem.values()), i -> updateArgsText(i));
+    DropDownLink<JDKVersionItem> ddl = new DropDownLink<>(vi, Arrays.asList(JDKVersionItem.values()), i -> updateArgsText(i), true);
     ddl.setToolTipText(ExecutionBundle.message("jvm.arguments.format"));
 
     gc.gridx = 0;

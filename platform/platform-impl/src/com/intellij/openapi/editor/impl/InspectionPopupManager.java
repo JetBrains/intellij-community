@@ -337,7 +337,8 @@ class InspectionPopupManager {
                                   addData("level", inspectionsLevel.toString());
 
                                 FUCounterUsageLogger.getInstance().logEvent("inspection.widget", "highlight.level.changed", data);
-                              });
+                              },
+                              true);
   }
 
 
