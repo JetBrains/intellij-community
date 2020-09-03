@@ -88,7 +88,7 @@ public final class JavaFileManagerImpl implements JavaFileManager, Disposable {
     List<Pair<PsiClass, VirtualFile>> result = new ArrayList<>(classes.size());
     for (PsiClass aClass : classes) {
       final String qualifiedName = aClass.getQualifiedName();
-      if (qualifiedName == null || !qualifiedName.equals(qName)) continue;
+      if (!qName.equals(qualifiedName)) continue;
 
       PsiFile file = aClass.getContainingFile();
       if (file == null) {

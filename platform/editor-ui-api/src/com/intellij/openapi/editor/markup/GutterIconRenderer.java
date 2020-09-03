@@ -128,11 +128,11 @@ public abstract class GutterIconRenderer implements GutterMark, PossiblyDumbAwar
   }
 
   @NonNls
-  public final String getFeatureId() {
+  public final @NotNull String getFeatureId() {
     return getAccessibleName(getIcon(), "");
   }
 
-  private static String getAccessibleName(@Nullable Icon icon, @NotNull String prefix) {
+  private static @NotNull String getAccessibleName(@Nullable Icon icon, @NotNull String prefix) {
     if (icon instanceof RetrievableIcon) {
       return getAccessibleName(((RetrievableIcon)icon).retrieveIcon(), prefix);
     }
