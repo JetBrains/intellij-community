@@ -44,7 +44,7 @@ class SliceBackwardHandler extends SliceHandler {
       private JBTextField field;
       
       private BackwardHandlerDialog() {
-        super(dialogTitle, "Analyze Scope", myProject, items, analysisUIOptions, true);
+        super(dialogTitle, LangBundle.message("separator.analyze.scope"), myProject, items, analysisUIOptions, true);
       }
 
       @Override

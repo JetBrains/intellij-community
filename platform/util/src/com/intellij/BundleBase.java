@@ -188,6 +188,7 @@ public abstract class BundleBase {
   }
 
   @NotNull
+  @Contract(pure = true)
   public static String format(@NotNull String value, Object @NotNull ... params) {
     return params.length > 0 && value.indexOf('{') >= 0 ? MessageFormat.format(value, params) : value;
   }

@@ -1,7 +1,8 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.slicer;
 
 import com.intellij.ide.projectView.PresentationData;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -57,9 +58,9 @@ public class SliceLeafValueRootNode extends SliceNode implements MyColoredTreeCe
       text = element == null ? "" : element.getText();
     }
     else {
-      text = "Other";
+      text = LangBundle.message("node.slice.other");
     }
-    return "Value: " + text;
+    return LangBundle.message("node.slice.value",  text);
   }
 
   @Override
@@ -72,7 +73,7 @@ public class SliceLeafValueRootNode extends SliceNode implements MyColoredTreeCe
                                     int row,
                                     boolean hasFocus) {
     SliceUsage usage = getValue();
-    renderer.append("Value: ", SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    renderer.append(LangBundle.message("node.slice.value"), SimpleTextAttributes.REGULAR_ATTRIBUTES);
 
     if (usage != null) {
       PsiElement element = usage.getElement();
@@ -84,7 +85,7 @@ public class SliceLeafValueRootNode extends SliceNode implements MyColoredTreeCe
       }
     }
     else {
-      renderer.append("Other", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+      renderer.append(LangBundle.message("node.slice.other"), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
     }
   }
 
