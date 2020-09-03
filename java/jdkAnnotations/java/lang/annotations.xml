@@ -1292,6 +1292,9 @@
   <item name="java.lang.String void getChars(int, int, char[], int) 2">
     <annotation name="org.jetbrains.annotations.NotNull"/>
   </item>
+  <item name='java.lang.SuppressWarnings java.lang.String[] value()'>
+    <annotation name='org.jetbrains.annotations.NonNls'/>
+  </item>
   <item name='java.lang.System java.lang.String getProperty(java.lang.String)'>
     <annotation name='org.jetbrains.annotations.NonNls'/>
   </item>
