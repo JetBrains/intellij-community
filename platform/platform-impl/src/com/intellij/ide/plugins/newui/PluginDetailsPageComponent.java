@@ -769,11 +769,19 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
   private void updateEnabledForProject() {
     boolean isEnabled = myPluginModel.isEnabled(myPlugin);
+    boolean isEnabledForProject = myPluginModel.isEnabledForProject(myPlugin);
 
     String text = isEnabled ?
-                  IdeBundle.message("plugins.configurable.enabled.for.all.projects") :
+                  (isEnabledForProject ?
+                   IdeBundle.message("plugins.configurable.enabled.for.current.project") :
+                   IdeBundle.message("plugins.configurable.enabled.for.all.projects")) :
                   null;
     myEnabledForProject.setText(text);
+
+    Icon icon = isEnabled && isEnabledForProject ?
+                AllIcons.General.ProjectConfigurable :
+                null;
+    myEnabledForProject.setIcon(icon);
   }
 
   public void startLoading() {
@@ -825,12 +833,22 @@ public class PluginDetailsPageComponent extends MultiPanel {
     return StringUtil.isEmptyOrSpaces(notes) ? null : notes;
   }
 
+  private void enablePlugin() {
+    myPluginModel.enablePlugins(Set.of(myPlugin));
+  }
+
+  private void disablePlugin() {
+    myPluginModel.disablePlugins(Set.of(myPlugin));
+  }
+
   private @NotNull DefaultActionGroup createGearActions() {
     DefaultActionGroup result = new DefaultActionGroup();
 
     result.add(new EnableForAllProjectsAction());
+    result.add(new EnableForCurrentProjectAction());
     result.addSeparator();
     result.add(new DisableForAllProjectsAction());
+    result.add(new DisableForCurrentProjectAction());
     result.addSeparator();
     result.add(new UninstallAction());
 
@@ -857,7 +875,33 @@ public class PluginDetailsPageComponent extends MultiPanel {
           .unregisterProjectPlugin(myPlugin);
       }
 
-      myPluginModel.enablePlugins(Set.of(myPlugin));
+      enablePlugin();
+    }
+  }
+
+  private final class EnableForCurrentProjectAction extends DumbAwareAction {
+
+    private EnableForCurrentProjectAction() {
+      super(IdeBundle.message("plugins.configurable.enable.for.current.project"));
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      boolean isVisible = e.getProject() != null &&
+                          !myPluginModel.isEnabled(myPlugin) &&
+                          !myPluginModel.isEnabledForProject(myPlugin);
+      e.getPresentation().setVisible(isVisible);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      Project project = e.getProject();
+      assert project != null;
+
+      ProjectPluginTracker.getInstance(project)
+        .registerProjectPlugin(myPlugin);
+
+      enablePlugin();
     }
   }
 
@@ -880,6 +924,32 @@ public class PluginDetailsPageComponent extends MultiPanel {
         ProjectPluginTracker.getInstance(project)
           .unregisterProjectPlugin(myPlugin);
       }
+
+      disablePlugin();
+    }
+  }
+
+  private final class DisableForCurrentProjectAction extends DumbAwareAction {
+
+    private DisableForCurrentProjectAction() {
+      super(IdeBundle.message("plugins.configurable.disable.for.current.project"));
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      boolean visible = e.getProject() != null &&
+                        myPluginModel.isEnabled(myPlugin) &&
+                        myPluginModel.isEnabledForProject(myPlugin);
+      e.getPresentation().setVisible(visible);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      Project project = e.getProject();
+      assert project != null;
+
+      ProjectPluginTracker.getInstance(project)
+        .unregisterProjectPlugin(myPlugin);
 
       myPluginModel.disablePlugins(Set.of(myPlugin));
     }

@@ -32,6 +32,9 @@ class ProjectPluginTracker(private val project: Project) : PersistentStateCompon
       fun getEnabledPlugins() = projectPluginReferences
         .mapNotNull { PluginId.findId(it) }
 
+      fun isEnabled(id: PluginId) =
+        projectPluginReferences.contains(id.idString)
+
       operator fun plus(id: PluginId): State {
         projectPluginReferences.add(id.idString)
         return this
@@ -104,4 +107,7 @@ class ProjectPluginTracker(private val project: Project) : PersistentStateCompon
   fun getEnabledPlugins(): List<IdeaPluginDescriptor> = state
     .getEnabledPlugins()
     .mapNotNull { PluginManagerCore.getPlugin(it) }
+
+  fun isRegistered(plugin: IdeaPluginDescriptor) =
+    state.isEnabled(plugin.pluginId)
 }

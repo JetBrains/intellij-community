@@ -21,15 +21,18 @@ public class InstalledPluginsTableModel {
   private static final InstalledPluginsState ourState = InstalledPluginsState.getInstance();
 
   protected final List<IdeaPluginDescriptor> view = new ArrayList<>();
-
   private final Map<PluginId, Boolean> myEnabled = new HashMap<>();
   private final Map<PluginId, Set<PluginId>> myDependentToRequiredListMap = new HashMap<>();
+  private final @Nullable Project myProject;
 
   public InstalledPluginsTableModel(@Nullable Project project) {
+    myProject = project;
+
     ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
     for (IdeaPluginDescriptor plugin : PluginManagerCore.getPlugins()) {
-      if (appInfo.isEssentialPlugin(plugin.getPluginId())) {
-        myEnabled.put(plugin.getPluginId(), true);
+      PluginId pluginId = plugin.getPluginId();
+      if (appInfo.isEssentialPlugin(pluginId)) {
+        myEnabled.put(pluginId, true);
       }
       else {
         view.add(plugin);
@@ -38,12 +41,16 @@ public class InstalledPluginsTableModel {
     view.addAll(ourState.getInstalledPlugins());
 
     for (IdeaPluginDescriptor descriptor : view) {
-      setEnabled(descriptor, descriptor.isEnabled());
+      setEnabled(descriptor);
     }
     updatePluginDependencies();
   }
 
-  public List<IdeaPluginDescriptor> getAllPlugins() {
+  protected final @Nullable Project getProject() {
+    return myProject;
+  }
+
+  protected @NotNull List<IdeaPluginDescriptor> getAllPlugins() {
     return new ArrayList<>(view);
   }
 
@@ -56,14 +63,25 @@ public class InstalledPluginsTableModel {
     return myEnabled.get(pluginId) != null;
   }
 
-  protected void setEnabled(IdeaPluginDescriptor ideaPluginDescriptor, boolean enabled) {
+  protected final void setEnabled(@NotNull IdeaPluginDescriptor ideaPluginDescriptor) {
     PluginId pluginId = ideaPluginDescriptor.getPluginId();
-    if (!enabled && !PluginManagerCore.isDisabled(pluginId)) {
-      myEnabled.put(pluginId, null);
-    }
-    else {
-      myEnabled.put(pluginId, enabled);
-    }
+    boolean enabled = ideaPluginDescriptor.isEnabled() ||
+                      isEnabledForProject(ideaPluginDescriptor);
+
+    setEnabled(
+      pluginId,
+      enabled || PluginManagerCore.isDisabled(pluginId) ? enabled : null
+    );
+  }
+
+  public boolean isEnabledForProject(@NotNull IdeaPluginDescriptor ideaPluginDescriptor) {
+    return myProject != null &&
+           ProjectPluginTracker.getInstance(myProject).isRegistered(ideaPluginDescriptor);
+  }
+
+  protected final void setEnabled(@NotNull PluginId pluginId,
+                                  @Nullable Boolean enabled) {
+    myEnabled.put(pluginId, enabled);
   }
 
   public Map<PluginId, Set<PluginId>> getDependentToRequiredListMap() {
@@ -149,7 +167,7 @@ public class InstalledPluginsTableModel {
     return enabled != null && !enabled;
   }
 
-  public Map<PluginId, Boolean> getEnabledMap() {
+  protected final @NotNull Map<PluginId, Boolean> getEnabledMap() {
     return myEnabled;
   }
 
