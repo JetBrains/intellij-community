@@ -2,6 +2,7 @@
 package com.intellij.refactoring.extractMethod.newImpl.inplace
 
 import com.intellij.java.refactoring.JavaRefactoringBundle
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DialogPanel
@@ -24,6 +25,18 @@ class ExtractMethodPopupProvider(annotateNullability: Boolean? = null,
   fun setChangeListener(listener: () -> Unit) {
     changeListener = listener
   }
+
+  private var showDialogAction: () -> Unit = {}
+  fun setShowDialogAction(action: () -> Unit) {
+    showDialogAction = action
+  }
+
+  private var navigateMethodAction: () -> Unit = {}
+  fun setNavigateMethodAction(action: () -> Unit) {
+    navigateMethodAction = action
+  }
+
+  private val ACTION_EXTRACT_METHOD = "ExtractMethod"
 
   val panel: DialogPanel by lazy { createPanel() }
 
@@ -56,30 +69,30 @@ class ExtractMethodPopupProvider(annotateNullability: Boolean? = null,
       }
       row {
         cell {
-          link(JavaRefactoringBundle.message("extract.method.link.label.go.to.method"), null) {}
+          link(JavaRefactoringBundle.message("extract.method.link.label.go.to.declaration"), null) { navigateMethodAction() }
             .applyToComponent { isFocusable = true }
             .setFocusIfEmpty()
-          comment(KeymapUtil.getFirstKeyboardShortcutText("GotoDeclaration"))
+          comment(KeymapUtil.getFirstKeyboardShortcutText(IdeActions.ACTION_GOTO_DECLARATION))
         }
       }
       row {
         cell {
-          link(JavaRefactoringBundle.message("extract.method.link.label.show.dialog"), null) {}
+          link(JavaRefactoringBundle.message("extract.method.link.label.more.options"), null) { showDialogAction() }
             .applyToComponent { isFocusable = true }
-          comment(KeymapUtil.getFirstKeyboardShortcutText("ExtractMethod"))
+          comment(KeymapUtil.getFirstKeyboardShortcutText(ACTION_EXTRACT_METHOD))
         }
       }
     }
     panel.isFocusCycleRoot = true
     panel.focusTraversalPolicy = LayoutFocusTraversalPolicy()
+    DumbAwareAction.create {
+      navigateMethodAction()
+    }.registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_GOTO_DECLARATION), panel)
 
     DumbAwareAction.create {
-      //action
-    }.registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts("ExtractMethod"), panel)
+      showDialogAction()
+    }.registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts(ACTION_EXTRACT_METHOD), panel)
 
-    DumbAwareAction.create {
-      //action
-    }.registerCustomShortcutSet(KeymapUtil.getActiveKeymapShortcuts("ExtractMethod"), panel)
     return panel
   }
 

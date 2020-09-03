@@ -2,6 +2,7 @@
 package com.intellij.refactoring.extractMethod.newImpl.inplace
 
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
+import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -18,10 +19,12 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.injected.changesHandler.range
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.extractMethod.ExtractMethodDialog
+import com.intellij.refactoring.extractMethod.ExtractMethodHandler
 import com.intellij.refactoring.extractMethod.newImpl.*
 import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring
 import com.intellij.refactoring.rename.inplace.TemplateInlayUtil
+import com.intellij.util.PsiNavigateUtil
 
 class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOptions, private val popupProvider: ExtractMethodPopupProvider)
   : InplaceRefactoring(editor, null, extractOptions.project) {
@@ -81,6 +84,18 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
   override fun afterTemplateStart() {
     super.afterTemplateStart()
     popupProvider.setChangeListener { restartWithNewOptions(popupProvider.annotate, popupProvider.makeStatic) }
+    popupProvider.setShowDialogAction {
+      val newOptions = revertAndFindNewOptions(popupProvider.annotate, popupProvider.makeStatic)
+      MethodExtractor().doDialogExtract(newOptions)
+    }
+    popupProvider.setNavigateMethodAction {
+      val template = TemplateManagerImpl.getTemplateState(editor)
+      if (template != null) {
+        IdeEventQueue.getInstance().popupManager.closeAllPopups()
+        template.gotoEnd(false)
+        PsiNavigateUtil.navigate(myElementToRename.navigationElement)
+      }
+    }
     val templateState = TemplateManagerImpl.getTemplateState(myEditor) ?: return
     val editor = templateState.editor as? EditorImpl ?: return
     val presentation = TemplateInlayUtil.createSettingsPresentation(editor)
@@ -89,14 +104,14 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     fragmentsToRevert.forEach { Disposer.register(templateState, it) }
   }
 
-  private fun restartWithNewOptions(annotate: Boolean?, makeStatic: Boolean?) {
+  private fun revertAndFindNewOptions(annotate: Boolean?, makeStatic: Boolean?): ExtractOptions {
     if (annotate != null) {
       PropertiesComponent.getInstance(extractOptions.project).setValue(ExtractMethodDialog.EXTRACT_METHOD_GENERATE_ANNOTATIONS, annotate, true)
     }
 
-    val methodNameRange = TemplateManagerImpl.getTemplateState(editor)?.currentVariableRange ?: return
+    val methodNameRange = TemplateManagerImpl.getTemplateState(editor)?.currentVariableRange ?: throw IllegalStateException()
     val methodName = editor.document.getText(methodNameRange)
-    val containingClass = extractOptions.anchor.containingClass ?: return
+    val containingClass = extractOptions.anchor.containingClass ?: throw IllegalStateException()
     performCleanup()
 
     val elements = ExtractSelector().suggestElementsToExtract(containingClass.containingFile, extractedRange)
@@ -104,9 +119,13 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
     var options = findExtractOptions(elements).copy(methodName = methodName)
     options = ExtractMethodPipeline.withTargetClass(analyzer, options, containingClass)!!
     options = if (makeStatic == true) ExtractMethodPipeline.withForcedStatic(analyzer, options)!! else options
+    return options
+  }
 
+  private fun restartWithNewOptions(annotate: Boolean?, makeStatic: Boolean?) {
+    val newOptions = revertAndFindNewOptions(annotate, makeStatic)
     WriteCommandAction.runWriteCommandAction(myProject) {
-      InplaceMethodExtractor(editor, options, popupProvider).performInplaceRefactoring(linkedSetOf())
+      InplaceMethodExtractor(editor, newOptions, popupProvider).performInplaceRefactoring(linkedSetOf())
     }
   }
 
@@ -122,7 +141,7 @@ class InplaceMethodExtractor(val editor: Editor, val extractOptions: ExtractOpti
 
   override fun shouldSelectAll(): Boolean = false
 
-  override fun getCommandName(): String = "TODO"
+  override fun getCommandName(): String = ExtractMethodHandler.getRefactoringName()
 
   private data class FragmentState(val range: RangeMarker, val text: String) : Disposable {
     override fun dispose() {

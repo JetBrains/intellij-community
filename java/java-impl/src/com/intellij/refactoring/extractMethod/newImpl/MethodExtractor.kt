@@ -16,7 +16,6 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleManager
-import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.psi.util.PsiEditorUtil
 import com.intellij.refactoring.HelpID
 import com.intellij.refactoring.RefactoringBundle
@@ -50,30 +49,12 @@ class MethodExtractor {
         throw ExtractException(RefactoringBundle.message("selected.block.should.represent.a.set.of.statements.or.an.expression"), file)
       }
       val extractOptions = findExtractOptions(statements)
-      selectTargetClass(extractOptions) { targetOptions ->
+      selectTargetClass(extractOptions) { options ->
         if (Registry.`is`("java.refactoring.extractMethod.inplace")) {
-          fun command() = PostprocessReformattingAspect.getInstance(project).postponeFormattingInside {
-            val isStatic = extractOptions.isStatic
-            val analyzer = CodeFragmentAnalyzer(extractOptions.elements)
-            val optionsWithStatic = ExtractMethodPipeline.withForcedStatic(analyzer, extractOptions)
-            val makeStaticAndPassFields = optionsWithStatic?.inputParameters?.size != extractOptions.inputParameters.size
-            val showStatic = ! isStatic && optionsWithStatic != null
-            val defaultPanel = ExtractMethodPopupProvider(
-              annotateNullability = needsNullabilityAnnotations(project),
-              makeStatic = if (showStatic) false else null,
-              staticPassFields = makeStaticAndPassFields
-            )
-
-            InplaceMethodExtractor(editor, extractOptions, defaultPanel).performInplaceRefactoring(linkedSetOf())
-          }
-          CommandProcessor.getInstance().executeCommand(project, ::command, ExtractMethodHandler.getRefactoringName(), null)
+          doInplaceExtract(editor, options)
         }
         else {
-          val options = mapFromDialog(targetOptions, refactoringName, helpId)
-          if (options != null) {
-            fun command() = PostprocessReformattingAspect.getInstance(project).postponeFormattingInside { doRefactoring(options) }
-            CommandProcessor.getInstance().executeCommand(project, ::command, ExtractMethodHandler.getRefactoringName(), null)
-          }
+          doDialogExtract(options)
         }
       }
     }
@@ -82,6 +63,34 @@ class MethodExtractor {
       CommonRefactoringUtil.showErrorHint(project, editor, message, refactoringName, HelpID.EXTRACT_METHOD)
       showError(editor, e.problems)
     }
+  }
+
+  fun doInplaceExtract(editor: Editor, options: ExtractOptions) {
+    executeRefactoringCommand(options.project) {
+      val isStatic = options.isStatic
+      val analyzer = CodeFragmentAnalyzer(options.elements)
+      val optionsWithStatic = ExtractMethodPipeline.withForcedStatic(analyzer, options)
+      val makeStaticAndPassFields = optionsWithStatic?.inputParameters?.size != options.inputParameters.size
+      val showStatic = ! isStatic && optionsWithStatic != null
+      val defaultPanel = ExtractMethodPopupProvider(
+        annotateNullability = needsNullabilityAnnotations(options.project),
+        makeStatic = if (showStatic) false else null,
+        staticPassFields = makeStaticAndPassFields
+      )
+
+      InplaceMethodExtractor(editor, options, defaultPanel).performInplaceRefactoring(linkedSetOf())
+    }
+  }
+
+  fun doDialogExtract(options: ExtractOptions){
+    val dialogOptions = mapFromDialog(options, RefactoringBundle.message("extract.method.title"), HelpID.EXTRACT_METHOD)
+    if (dialogOptions != null) {
+      executeRefactoringCommand(dialogOptions.project) { doRefactoring(options) }
+    }
+  }
+
+  private fun executeRefactoringCommand(project: Project, command: () -> Unit){
+    CommandProcessor.getInstance().executeCommand(project, command, ExtractMethodHandler.getRefactoringName(), null)
   }
 
   private fun doRefactoring(options: ExtractOptions) {
