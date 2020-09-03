@@ -125,11 +125,11 @@ final class UpdateCheckerComponent {
     }
 
     String title = IdeBundle.message("update.whats.new.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
-    UpdateChecker.getNotificationGroup().createNotification(title, null, NotificationType.INFORMATION, null, "ide.update.installed")
+    UpdateChecker.getNotificationGroup().createNotification(title, NotificationType.INFORMATION, "ide.update.installed")
       .addAction(new NotificationAction(IdeBundle.message("update.whats.new.notification.action")) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-          String title = IdeBundle.message("update.whats.new.file.name", ApplicationInfo.getInstance().getFullVersion());
+          String title = IdeBundle.message("update.whats.new", ApplicationInfo.getInstance().getFullVersion());
           HTMLEditorProvider.Companion.openEditor(project, title, null, updateHtmlMessage, updateHtmlMessage);
           IdeUpdateUsageTriggerCollector.trigger("update.whats.new");
           notification.expire();

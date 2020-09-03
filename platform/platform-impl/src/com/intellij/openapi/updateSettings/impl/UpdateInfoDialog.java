@@ -85,6 +85,7 @@ final class UpdateInfoDialog extends AbstractUpdateDialog {
     IdeUpdateUsageTriggerCollector.triggerUpdateDialog(myPatches, ApplicationManager.getApplication().isRestartCapable());
   }
 
+  @SuppressWarnings("HardCodedStringLiteral")
   UpdateInfoDialog(@Nullable Project project, UpdateChannel channel, BuildInfo newBuild, UpdateChain patches, @Nullable File patchFile) {
     super(true);
     myUpdatedChannel = channel;
@@ -95,17 +96,16 @@ final class UpdateInfoDialog extends AbstractUpdateDialog {
     myLicenseInfo = initLicensingInfo(myUpdatedChannel, myNewBuild);
     myTestPatch = patchFile;
     if (project != null) {
-      myWhatsNewAction = new AbstractAction(IdeBundle.message("button.what.s.new")) {
+      myWhatsNewAction = new AbstractAction("What's new") {
         @Override
         public void actionPerformed(ActionEvent e) {
-          String title = IdeBundle.message("update.whats.new.file.name", ApplicationInfo.getInstance().getFullVersion());
+          String title = "What's new in " + ApplicationInfo.getInstance().getFullVersion();
           HTMLEditorProvider.Companion.openEditor(project, title, myNewBuild.getBlogPost() + WhatsNewAction.getEmbeddedSuffix(), null, myNewBuild.getMessage());
           close(OK_EXIT_CODE);
         }
       };
     }
     init();
-    //noinspection HardCodedStringLiteral
     setTitle("[TEST] " + getTitle());
   }
 
