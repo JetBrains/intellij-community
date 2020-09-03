@@ -520,7 +520,12 @@ public final class PsiImplUtil {
 
         boolean allowNoName = attributes.length == 0 && ("value".equals(attributeName) || null == attributeName);
         final String namePrefix = allowNoName ? "" : attributeName + "=";
-        psiAnnotation.getParameterList().addBefore(createNameValuePair(value, namePrefix, annotationCreator), null);
+        if (attributes.length > 0) {
+          PsiAnnotation anno = annotationCreator.fun(value.getProject(), "@A(,)");
+          PsiElement comma = anno.getParameterList().getFirstChild().getNextSibling().getNextSibling();
+          psiAnnotation.getParameterList().addAfter(comma, psiAnnotation.getParameterList().getFirstChild());
+        }
+        psiAnnotation.getParameterList().addAfter(createNameValuePair(value, namePrefix, annotationCreator), psiAnnotation.getParameterList().getFirstChild());
       }
     }
     return psiAnnotation.findDeclaredAttributeValue(attributeName);

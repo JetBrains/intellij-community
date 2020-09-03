@@ -10,10 +10,10 @@ class MapConstructorAttributesFixTest extends GrIntentionTestCase {
   final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_2_5_REAL_JDK
 
   MapConstructorAttributesFixTest() {
-    super("Add necessary", GroovyConstructorNamedArgumentsInspection)
+    super("Add required", GroovyConstructorNamedArgumentsInspection)
   }
 
-  void 'test apply'() {
+  void 'test field completion'() {
     doTextTest """
 @groovy.transform.MapConstructor
 class Rr {
@@ -27,6 +27,28 @@ static void main(String[] args) {
 @groovy.transform.MapConstructor(includeFields = true)
 class Rr {
     private String actionType
+}
+
+static void main(String[] args) {
+    def x = new Rr(actio<caret>nType: "")
+}
+"""
+  }
+
+  void 'test two attributes'() {
+    doTextTest """
+@groovy.transform.MapConstructor
+class Rr {
+    private static String actionType
+}
+
+static void main(String[] args) {
+    def x = new Rr(actio<caret>nType: "")
+}
+""", """
+@groovy.transform.MapConstructor(includeFields = true, includeStatic = true)
+class Rr {
+    private static String actionType
 }
 
 static void main(String[] args) {

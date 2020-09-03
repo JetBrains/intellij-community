@@ -22,7 +22,7 @@ class MapConstructorAttributesFix : SetAnnotationAttributesFix() {
     // todo: includes and excludes
     val affectedIdentifiers: Set<String> = run {
       val cache = AffectedMembersCache(mapConstructorAnno)
-      cache.getAffectedMembers().mapNotNullTo(HashSet(), AffectedMembersCache.Companion::getExternalName)
+      cache.getAffectedMembers().mapNotNullTo(LinkedHashSet(), AffectedMembersCache.Companion::getExternalName)
     }
     val collector = mutableMapOf<String, Any?>()
     val labels = run {
