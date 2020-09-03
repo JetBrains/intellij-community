@@ -115,7 +115,7 @@ public class LargeFileEditorImpl extends UserDataHolderBase implements LargeFile
   @NotNull
   @Override
   public String getName() {
-    return "Large File Editor";
+    return EditorBundle.message("large.file.editor.title");
   }
 
   @Override

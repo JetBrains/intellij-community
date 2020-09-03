@@ -23,6 +23,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.SingleSelectionModel;
 import com.intellij.ui.*;
@@ -220,7 +221,7 @@ public class RangeSearch implements RangeSearchTask.Callback {
     callScheduledUpdate();
   }
 
-  public void setAdditionalStatusText(@Nullable String statusText) {
+  public void setAdditionalStatusText(@Nullable @NlsContexts.StatusText String statusText) {
     lblSearchStatusCenter.clear();
     if (statusText != null) {
       lblSearchStatusCenter.append(statusText);

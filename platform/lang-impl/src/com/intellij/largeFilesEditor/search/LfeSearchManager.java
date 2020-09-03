@@ -6,6 +6,7 @@ import com.intellij.largeFilesEditor.editor.LargeFileEditor;
 import com.intellij.largeFilesEditor.editor.Page;
 import com.intellij.largeFilesEditor.search.searchTask.CloseSearchTask;
 import com.intellij.openapi.editor.event.CaretEvent;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,7 +31,7 @@ public interface LfeSearchManager {
 
   void onEscapePressed();
 
-  String getStatusText();
+  @NlsContexts.StatusText String getStatusText();
 
   void updateStatusText();
 

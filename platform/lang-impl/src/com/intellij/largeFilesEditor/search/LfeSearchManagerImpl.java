@@ -25,6 +25,9 @@ import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -70,7 +73,7 @@ public class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.C
   private LargeFileToggleAction myToggleRegularExpression;
   private LargeFileStatusTextAction myStatusTextAction;
 
-  private String myStatusText;
+  private @NlsContexts.StatusText String myStatusText;
   private boolean myIsStatusTextHidden;
   private long myLastTimeStatusTextWasChanged;
 
@@ -342,7 +345,7 @@ public class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.C
     });
   }
 
-  private static void showSimpleHintInEditor(String message, Editor editor) {
+  private static void showSimpleHintInEditor(@NlsContexts.HintText String message, Editor editor) {
     JComponent hintComponent = HintUtil.createInformationLabel(message);
     final LightweightHint hint = new LightweightHint(hintComponent);
     HintManagerImpl.getInstanceImpl().showEditorHint(hint,
@@ -390,7 +393,7 @@ public class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.C
   }
 
   @Override
-  public String getStatusText() {
+  public @NlsContexts.StatusText String getStatusText() {
     return myStatusText;
   }
 
@@ -543,7 +546,9 @@ public class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.C
                              myToggleWholeWordsAction,
                              myToggleRegularExpression,
                              new DefaultCustomComponentAction(
-                               () -> RegExHelpPopup.createRegExLink("<html><body><b>?</b></body></html>", null, null, "FindInFile")),
+                               () -> RegExHelpPopup.createRegExLink(
+                                 new HtmlBuilder().append(HtmlChunk.text("?").bold()).wrapWithHtmlBody().toString(),
+                                 null, null, "FindInFile")),
                              myStatusTextAction)
       //.addSearchFieldActions(new RestorePreviousSettingsAction())
       .withCloseAction(this::onEscapePressed)
@@ -580,7 +585,7 @@ public class LfeSearchManagerImpl implements LfeSearchManager, CloseSearchTask.C
     }
   }
 
-  private void setNewStatusText(String newStatusText) {
+  private void setNewStatusText(@NlsContexts.StatusText String newStatusText) {
     myStatusText = newStatusText;
     myLastTimeStatusTextWasChanged = System.currentTimeMillis();
 
