@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.StringPattern;
@@ -54,11 +55,11 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
 
   public static final Key<BaseInjection> INJECTION_KEY = Key.create("INJECTION_KEY");
 
-  @NotNull private final String mySupportId;
+  @NotNull private final @NlsSafe  String mySupportId;
 
-  private String myDisplayName = "";
+  private @Nls String myDisplayName = "";
 
-  private String myInjectedLanguageId = "";
+  private @NlsSafe String myInjectedLanguageId = "";
   private String myPrefix = "";
   private String mySuffix = "";
 
@@ -100,13 +101,13 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
   }
 
   @NotNull
-  public String getSupportId() {
+  public @NlsSafe String getSupportId() {
     return mySupportId;
   }
 
   @Override
   @NotNull
-  public String getInjectedLanguageId() {
+  public @NlsSafe String getInjectedLanguageId() {
     return myInjectedLanguageId;
   }
 
@@ -297,7 +298,7 @@ public class BaseInjection implements Injection, PersistentStateComponent<Elemen
   @Override
   public void loadState(@NotNull Element element) {
     final PatternCompiler<PsiElement> helper = getCompiler();
-    myDisplayName = StringUtil.notNullize(element.getChildText("display-name"));
+    myDisplayName = StringUtil.notNullize(element.getChildTextTrim("display-name"));
     myInjectedLanguageId = StringUtil.notNullize(element.getAttributeValue("language"));
     myPrefix = StringUtil.notNullize(element.getChildText("prefix"));
     mySuffix = StringUtil.notNullize(element.getChildText("suffix"));

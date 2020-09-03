@@ -8,6 +8,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
@@ -31,9 +32,7 @@ public abstract class LanguageInjectionSupport {
   public static final Key<LanguageInjectionSupport> INJECTOR_SUPPORT = Key.create("INJECTOR_SUPPORT");
   public static final Key<LanguageInjectionSupport> SETTINGS_EDITOR = Key.create("SETTINGS_EDITOR");
 
-  @NonNls
-  @NotNull
-  public abstract String getId();
+  public abstract @NlsSafe @NotNull String getId();
 
   public abstract Class<?> @NotNull [] getPatternClasses();
 
