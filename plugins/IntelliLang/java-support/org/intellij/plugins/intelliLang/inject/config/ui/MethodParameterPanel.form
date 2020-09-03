@@ -22,7 +22,7 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithoutIndent"/>
         </clientProperties>
-        <border type="none" title="Class Methods"/>
+        <border type="none" title-resource-bundle="messages/IntelliLangBundle" title-key="method.parameter.panel.class.methods"/>
         <children>
           <grid id="5081f" binding="myClassPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
             <constraints>
