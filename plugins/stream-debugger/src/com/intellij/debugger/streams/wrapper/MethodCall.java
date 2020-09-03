@@ -12,8 +12,7 @@ import java.util.List;
  */
 public interface MethodCall {
   @NotNull
-  @NlsSafe
-  String getName();
+  @NlsSafe String getName();
 
   @NotNull
   List<CallArgument> getArguments();
