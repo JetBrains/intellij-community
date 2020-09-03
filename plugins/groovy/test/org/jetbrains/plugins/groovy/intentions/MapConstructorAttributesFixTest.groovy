@@ -85,4 +85,26 @@ static void main(String[] args) {
 }
 """
   }
+
+  void 'test two labels'() {
+    doTextTest """
+@groovy.transform.MapConstructor
+class Rr {
+    private String \$actionType
+    static int b
+}
+
+static void main(String[] args) {
+    def x = new Rr(\$ac<caret>tionType: "", b: 2)
+}""", """
+@groovy.transform.MapConstructor(includeStatic = true, includeFields = true, allNames = true)
+class Rr {
+    private String \$actionType
+    static int b
+}
+
+static void main(String[] args) {
+    def x = new Rr(\$actionType: "", b: 2)
+}"""
+  }
 }
