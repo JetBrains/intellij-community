@@ -32,9 +32,9 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -1211,10 +1211,10 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
     FindInProjectUtil.setupViewPresentation(myUsageViewPresentation, findModel);
     myUsageViewPresentation.setUsagesWord(FindBundle.message("result"));
 
-    ProgressIndicatorUtils.scheduleWithWriteActionPriority(myResultsPreviewSearchProgress, new ReadTask() {
+    ProgressManager.getInstance().runProcessWithProgressAsynchronously(new Task.Backgroundable(myProject,
+                                                                                               FindBundle.message("find.usages.progress.title")) {
       @Override
-      public Continuation performInReadAction(@NotNull ProgressIndicator indicator) {
-
+      public void run(@NotNull ProgressIndicator indicator) {
         final FindUsagesProcessPresentation processPresentation =
           FindInProjectUtil.setupProcessPresentation(myProject, myUsageViewPresentation);
         ThreadLocal<String> lastUsageFileRef = new ThreadLocal<>();
@@ -1291,8 +1291,22 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
           }
           return continueSearch;
         });
+      }
 
-        return new Continuation(() -> {
+      @Override
+      public void onCancel() {
+        if (isShowing() && progressIndicatorWhenSearchStarted == myResultsPreviewSearchProgress) {
+          scheduleResultsUpdate();
+        }
+      }
+
+      boolean isCancelled() {
+        return progressIndicatorWhenSearchStarted != myResultsPreviewSearchProgress || progressIndicatorWhenSearchStarted.isCanceled();
+      }
+
+      @Override
+      public void onFinished() {
+        ApplicationManager.getApplication().invokeLater(() -> {
           if (!isCancelled()) {
             if (resultsCount.get() == 0) {
               showEmptyText(null);
@@ -1301,18 +1315,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
           onStop(hash);
         }, state);
       }
-
-      boolean isCancelled() {
-        return progressIndicatorWhenSearchStarted != myResultsPreviewSearchProgress || progressIndicatorWhenSearchStarted.isCanceled();
-      }
-
-      @Override
-      public void onCanceled(@NotNull ProgressIndicator indicator) {
-        if (isShowing() && progressIndicatorWhenSearchStarted == myResultsPreviewSearchProgress) {
-          scheduleResultsUpdate();
-        }
-      }
-    });
+    }, myResultsPreviewSearchProgress);
   }
 
   private void reset() {
