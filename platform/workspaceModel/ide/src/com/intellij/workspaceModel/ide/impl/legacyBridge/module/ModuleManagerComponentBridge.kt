@@ -36,10 +36,12 @@ import com.intellij.workspaceModel.ide.impl.executeOrQueueOnDispatchThread
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetEntityChangeListener
 import com.intellij.workspaceModel.ide.impl.legacyBridge.filePointer.RootsChangeWatcher
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootsChangeListener
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
+import com.intellij.workspaceModel.ide.legacyBridge.ProjectLibraryTableBridge
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import java.io.File
@@ -85,6 +87,9 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
       manager.loadModules(entities)
       activity.end()
       activity.setDescription("(wm) module count: ${manager.modules.size}")
+      val librariesActivity = StartUpMeasurer.startMainActivity("(wm) project libraries loading")
+      (LibraryTablesRegistrar.getInstance().getLibraryTable(project) as ProjectLibraryTableBridgeImpl).loadLibraries()
+      librariesActivity.end()
       WorkspaceModelTopics.getInstance(project).notifyModulesAreLoaded()
     }
   }
@@ -192,7 +197,6 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
           }
         }
       })
-      LibraryTablesRegistrar.getInstance().getLibraryTable(project)
     }
   }
 
