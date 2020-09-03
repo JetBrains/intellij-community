@@ -323,8 +323,8 @@ public class BreakpointsDialog extends DialogWrapper {
         }
         return false;
       });
-    JPanel decoratorPanel = decorator.createPanel();
     myToggleRuleActions.forEach(decorator::addExtraAction);
+    JPanel decoratorPanel = decorator.createPanel();
 
     myTreeController.setTreeView(tree);
 
