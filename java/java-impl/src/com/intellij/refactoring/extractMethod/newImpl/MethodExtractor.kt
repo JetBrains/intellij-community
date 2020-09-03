@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod.newImpl
 
+import com.intellij.codeInsight.Nullability
 import com.intellij.codeInsight.highlighting.HighlightManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.java.refactoring.JavaRefactoringBundle
@@ -72,8 +73,9 @@ class MethodExtractor {
       val optionsWithStatic = ExtractMethodPipeline.withForcedStatic(analyzer, options)
       val makeStaticAndPassFields = optionsWithStatic?.inputParameters?.size != options.inputParameters.size
       val showStatic = ! isStatic && optionsWithStatic != null
+      val hasAnnotation = options.dataOutput.nullability != Nullability.UNKNOWN && options.dataOutput.type !is PsiPrimitiveType
       val defaultPanel = ExtractMethodPopupProvider(
-        annotateNullability = needsNullabilityAnnotations(options.project),
+        annotateNullability = if (hasAnnotation) needsNullabilityAnnotations(options.project) else null,
         makeStatic = if (showStatic) false else null,
         staticPassFields = makeStaticAndPassFields
       )
