@@ -37,11 +37,11 @@ class FileLoggerTest : HeavyPlatformTestCase() {
       `when`(getUniqueFile()).thenReturn(logFile)
     }
 
-    CompletionTrackerInitializer.isEnabledInTests = true
+    CompletionLoggerInitializer.isEnabledInTests = true
   }
 
   override fun tearDown() {
-    CompletionTrackerInitializer.isEnabledInTests = false
+    CompletionLoggerInitializer.isEnabledInTests = false
     try {
       dir.deleteRecursively()
     }

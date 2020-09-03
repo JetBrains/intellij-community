@@ -62,12 +62,12 @@ abstract class CompletionLoggingTestBase : LightFixtureCompletionTestCase() {
     myFixture.addClass(runnableInterface)
     myFixture.configureByText(JavaFileType.INSTANCE, testText)
 
-    CompletionTrackerInitializer.isEnabledInTests = true
+    CompletionLoggerInitializer.isEnabledInTests = true
     CompletionFactorsInitializer.isEnabledInTests = true
   }
 
   override fun tearDown() {
-    CompletionTrackerInitializer.isEnabledInTests = false
+    CompletionLoggerInitializer.isEnabledInTests = false
     CompletionFactorsInitializer.isEnabledInTests = false
 
     super.tearDown()

@@ -33,12 +33,12 @@ class Test {
         super.setUp()
         val container = ApplicationManager.getApplication().picoContainer as MutablePicoContainer
         pathProvider = container.getComponentInstance(FilePathProvider::class.java.name) as FilePathProvider
-        CompletionTrackerInitializer.isEnabledInTests = true
+        CompletionLoggerInitializer.isEnabledInTests = true
     }
 
     override fun tearDown() {
         try {
-            CompletionTrackerInitializer.isEnabledInTests = false
+            CompletionLoggerInitializer.isEnabledInTests = false
             CompletionLoggerProvider.getInstance().dispose()
             val statsDir = pathProvider.getStatsDataDirectory()
             statsDir.deleteRecursively()
