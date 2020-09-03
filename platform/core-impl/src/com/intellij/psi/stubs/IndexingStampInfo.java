@@ -60,10 +60,15 @@ class IndexingStampInfo {
            contentLengthMatches(file.getLength(), document.getTextLength());
   }
 
+  @SuppressWarnings("unused")
   public boolean contentLengthMatches(long byteContentLength, int charContentLength) {
     if (this.indexingCharLength >= 0 && charContentLength >= 0) {
       return this.indexingCharLength == charContentLength;
     }
-    return this.indexingByteLength == byteContentLength;
+    //
+    // Due to VFS implementation reasons we cannot guarantee file.getLength() and VFS events consistency.
+    // In this case we prefer to skip this check and leave `indexingByteLength` value only for informational reasons.
+    //
+    return true; //this.indexingByteLength == byteContentLength;
   }
 }
