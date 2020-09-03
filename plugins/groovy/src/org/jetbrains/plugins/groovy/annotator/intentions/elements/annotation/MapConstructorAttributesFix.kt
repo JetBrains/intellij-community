@@ -7,18 +7,20 @@ import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentLabel
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCall
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrNamedArgumentsOwner
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_TRANSFORM_MAP_CONSTRUCTOR
 import org.jetbrains.plugins.groovy.lang.resolve.ast.AffectedMembersCache
 import org.jetbrains.plugins.groovy.lang.resolve.ast.TupleConstructorAttributes
+import org.jetbrains.plugins.groovy.lang.resolve.references.GrMapConstructorPropertyReference
 
 class MapConstructorAttributesFix : SetAnnotationAttributesFix() {
 
   override fun getNecessaryAttributes(place: PsiElement): Pair<GrAnnotation, Map<String, Any?>>? {
-    val annotatedClass = place.parentOfType<GrCall>()?.resolveMethod()?.containingClass as? GrTypeDefinition ?: return null
+    val namedArgument = place.parentOfType<GrNamedArgument>() ?: return null
+    val annotatedClass = GrMapConstructorPropertyReference.getConstructorReference(namedArgument)?.resolveClass()?.element as? GrTypeDefinition ?: return null
     val mapConstructorAnno = annotatedClass.getAnnotation(GROOVY_TRANSFORM_MAP_CONSTRUCTOR) as? GrAnnotation ?: return null
     val affectedIdentifiers: Set<String> = run {
       val cache = AffectedMembersCache(mapConstructorAnno)
@@ -41,7 +43,7 @@ class MapConstructorAttributesFix : SetAnnotationAttributesFix() {
                              label: GrArgumentLabel,
                              annotationOwner: GrTypeDefinition): Unit = with(TupleConstructorAttributes) {
       val name = label.name ?: return
-      val resolved = label.resolve() ?: return
+      val resolved = label.constructorPropertyReference?.resolve() ?: return
       if (AffectedMembersCache.isInternal(name)) collector[ALL_NAMES] = true
       if (resolved is PsiModifierListOwner && resolved.hasModifierProperty(PsiModifier.STATIC)) {
         collector["includeStatic"] = true

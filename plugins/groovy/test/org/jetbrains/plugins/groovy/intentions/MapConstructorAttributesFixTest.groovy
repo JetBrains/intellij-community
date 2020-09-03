@@ -107,4 +107,28 @@ static void main(String[] args) {
     def x = new Rr(\$actionType: "", b: 2)
 }"""
   }
+
+  void 'test raw construction'() {
+    doTextTest """
+@groovy.transform.MapConstructor
+class Rr {
+    private String actionType
+}
+
+
+static void main(String[] args) {
+    def x = [actio<caret>nType: "kik"] as Rr
+    println x.actionType
+}""", """
+@groovy.transform.MapConstructor(includeFields = true)
+class Rr {
+    private String actionType
+}
+
+
+static void main(String[] args) {
+    def x = [actio<caret>nType: "kik"] as Rr
+    println x.actionType
+}"""
+  }
 }
