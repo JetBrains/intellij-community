@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.diagnostic.dump
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -43,7 +44,8 @@ object IndexContentDiagnosticDumper {
             filesFromUnsupportedFileSystem += indexedFilePath
             return@iterateFiles true
           }
-          val contentHash = IndexedHashesSupport.getOrInitIndexedHash(FileContentImpl.createByFile(fileOrDir, project))
+          val fileContent = FileContentImpl.createByFile(fileOrDir, project)
+          val contentHash = runReadAction { IndexedHashesSupport.getOrInitIndexedHash(fileContent) }
           indexedFileHashes[indexedFilePath.originalFileSystemId] = Base64.encode(contentHash)
         }
         true
