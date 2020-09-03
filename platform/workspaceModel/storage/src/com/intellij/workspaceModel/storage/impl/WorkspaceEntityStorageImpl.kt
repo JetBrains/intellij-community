@@ -263,15 +263,15 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
   override fun <E : WorkspaceEntity> createReference(e: E): EntityReference<E> = EntityReferenceImpl((e as WorkspaceEntityBase).id)
 
-  private fun ArrayListMultimap<Any, WorkspaceEntityData<out WorkspaceEntity>>.find(entity: WorkspaceEntityData<out WorkspaceEntity>,
-                                                                                    storage: AbstractEntityStorage): WorkspaceEntityData<out WorkspaceEntity>? {
+  private fun ArrayListMultimap<Any, Pair<WorkspaceEntityData<out WorkspaceEntity>, EntityId>>.find(entity: WorkspaceEntityData<out WorkspaceEntity>,
+                                                                                    storage: AbstractEntityStorage): Pair<WorkspaceEntityData<out WorkspaceEntity>, EntityId>? {
     val possibleValues = this[entity.identificator(storage)]
     val persistentId = entity.persistentId(storage)
     return if (persistentId != null) {
       possibleValues.singleOrNull()
     }
     else {
-      possibleValues.find { it == entity }
+      possibleValues.find { it.first == entity }
     }
   }
 
@@ -305,12 +305,12 @@ internal class WorkspaceEntityStorageBuilderImpl(
     LOG.debug { "Performing replace by source" }
 
     // Map of entities in THIS builder with the entitySource that matches the predicate. Key is either hashCode or PersistentId
-    val localMatchedEntities = ArrayListMultimap.create<Any, WorkspaceEntityData<out WorkspaceEntity>>()
+    val localMatchedEntities = ArrayListMultimap.create<Any, Pair<WorkspaceEntityData<out WorkspaceEntity>, EntityId>>()
     // Map of entities in replaceWith store with the entitySource that matches the predicate. Key is either hashCode or PersistentId
-    val replaceWithMatchedEntities = ArrayListMultimap.create<Any, WorkspaceEntityData<out WorkspaceEntity>>()
+    val replaceWithMatchedEntities = ArrayListMultimap.create<Any, EntityId>()
 
     // Map of entities in THIS builder that have a reference to matched entity. Key is either hashCode or PersistentId
-    val localUnmatchedReferencedNodes = ArrayListMultimap.create<Any, WorkspaceEntityData<out WorkspaceEntity>>()
+    val localUnmatchedReferencedNodes = ArrayListMultimap.create<Any, EntityId>()
 
     // Association of the PId in the local store to the PId in the remote store
     val replaceMap = HashBiMap.create<EntityId, EntityId>()
@@ -319,15 +319,14 @@ internal class WorkspaceEntityStorageBuilderImpl(
     this.indexes.entitySourceIndex.entries().filter { sourceFilter(it) }.forEach { entitySource ->
       this.indexes.entitySourceIndex.getIdsByEntry(entitySource)?.forEach {
         val entityData = this.entityDataByIdOrDie(it)
-        localMatchedEntities.put(entityData.identificator(this), entityData)
+        localMatchedEntities.put(entityData.identificator(this), entityData to it)
       }
     }
 
     LOG.debug { "1.1) Cleanup references" }
     //   If the reference leads to the matched entity, we can safely remove this reference.
     //   If the reference leads to the unmatched entity, we should save the entity to try to restore the reference later.
-    for (matchedEntityData in localMatchedEntities.values()) {
-      val entityId = matchedEntityData.createPid()
+    for ((matchedEntityData, entityId) in localMatchedEntities.values()) {
       // Traverse parents of the entity
       for ((connectionId, parentId) in this.refs.getParentRefsOfChild(entityId)) {
         val parentEntity = this.entityDataByIdOrDie(parentId)
@@ -337,7 +336,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
         }
         else {
           // Save the entity for restoring reference to it later
-          localUnmatchedReferencedNodes.put(parentEntity.identificator(this), parentEntity)
+          localUnmatchedReferencedNodes.put(parentEntity.identificator(this), parentId)
         }
       }
 
@@ -352,7 +351,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
           }
           else {
             // Save the entity for restoring reference to it later
-            localUnmatchedReferencedNodes.put(childEntity.identificator(this), childEntity)
+            localUnmatchedReferencedNodes.put(childEntity.identificator(this), childId)
           }
         }
       }
@@ -367,16 +366,16 @@ internal class WorkspaceEntityStorageBuilderImpl(
     for (replaceWithEntitySource in replaceWith.indexes.entitySourceIndex.entries().filter { sourceFilter(it) }) {
       val entityDataList = replaceWith.indexes.entitySourceIndex
                              .getIdsByEntry(replaceWithEntitySource)
-                             ?.map { replaceWith.entityDataByIdOrDie(it) } ?: continue
-      for (matchedEntityData in entityDataList) {
-        replaceWithMatchedEntities.put(matchedEntityData.identificator(replaceWith), matchedEntityData)
+                             ?.map { replaceWith.entityDataByIdOrDie(it) to it } ?: continue
+      for ((matchedEntityData, matchedEntityId) in entityDataList) {
+        replaceWithMatchedEntities.put(matchedEntityData.identificator(replaceWith), matchedEntityId)
 
         // Find if the entity exists in local store
-        val localNode = localMatchedEntities.find(matchedEntityData, replaceWith)
-        val oldPid = matchedEntityData.createPid()
-        if (localNode != null) {
+        val localNodeAndId = localMatchedEntities.find(matchedEntityData, replaceWith)
+        if (localNodeAndId != null) {
+          val (localNode, localNodePid) = localNodeAndId
           // This entity already exists. Store the association of pids
-          replaceMap[localNode.createPid()] = oldPid
+          replaceMap[localNodePid] = matchedEntityId
           if (localNode.hasPersistentId() && localNode != matchedEntityData) {
             // Entity exists in local store, but has changes. Generate replace operation
             val clonedEntity = matchedEntityData.clone()
@@ -384,42 +383,43 @@ internal class WorkspaceEntityStorageBuilderImpl(
                                      ?: rbsFailedAndReport("PersistentId expected for $matchedEntityData", sourceFilter, initialStore,
                                                            replaceWith, this)
             clonedEntity.id = localNode.id
-            this.entitiesByType.replaceById(clonedEntity as WorkspaceEntityData<WorkspaceEntity>, clonedEntity.createPid().clazz)
-            val pid = clonedEntity.createPid()
+            val clonedEntityId = matchedEntityId.copy(arrayId = clonedEntity.id)
+            this.entitiesByType.replaceById(clonedEntity as WorkspaceEntityData<WorkspaceEntity>, clonedEntityId.clazz)
+            val pid = clonedEntityId
 
             updatePersistentIdIndexes(clonedEntity.createEntity(this), persistentIdBefore, clonedEntity)
-            replaceWith.indexes.virtualFileIndex.getVirtualFileUrlInfoByEntityId(oldPid)
+            replaceWith.indexes.virtualFileIndex.getVirtualFileUrlInfoByEntityId(matchedEntityId)
               .groupBy({ it.propertyName }, { it.vfu })
               .forEach { (property, vfus) ->
                 this.indexes.virtualFileIndex.index(pid, property, vfus)
               }
-            replaceWith.indexes.entitySourceIndex.getEntryById(oldPid)?.also { this.indexes.entitySourceIndex.index(pid, it) }
-            this.indexes.updateExternalMappingForEntityId(oldPid, pid, replaceWith.indexes)
+            replaceWith.indexes.entitySourceIndex.getEntryById(matchedEntityId)?.also { this.indexes.entitySourceIndex.index(pid, it) }
+            this.indexes.updateExternalMappingForEntityId(matchedEntityId, pid, replaceWith.indexes)
 
             updateChangeLog { it.add(ChangeEntry.ReplaceEntity(clonedEntity, emptyList(), emptyList(), emptyMap())) }
           }
 
           if (localNode == matchedEntityData) {
-            this.indexes.updateExternalMappingForEntityId(oldPid, localNode.createPid(), replaceWith.indexes)
+            this.indexes.updateExternalMappingForEntityId(matchedEntityId, localNodePid, replaceWith.indexes)
           }
           // Remove added entity
-          localMatchedEntities.remove(localNode.identificator(this), localNode)
+          localMatchedEntities.remove(localNode.identificator(this), localNodeAndId)
         }
         else {
           // This is a new entity for this store. Perform add operation
           val entityClass = ClassConversion.entityDataToEntity(matchedEntityData.javaClass).toClassId()
           val newEntity = this.entitiesByType.cloneAndAdd(matchedEntityData as WorkspaceEntityData<WorkspaceEntity>, entityClass)
-          val newPid = newEntity.createPid()
-          replaceMap[newPid] = oldPid
+          val newPid = matchedEntityId.copy(arrayId = newEntity.id)
+          replaceMap[newPid] = matchedEntityId
 
-          replaceWith.indexes.virtualFileIndex.getVirtualFileUrlInfoByEntityId(oldPid)
+          replaceWith.indexes.virtualFileIndex.getVirtualFileUrlInfoByEntityId(matchedEntityId)
             .groupBy({ it.propertyName }, { it.vfu })
             .forEach { (property, vfus) ->
               this.indexes.virtualFileIndex.index(newPid, property, vfus)
             }
-          replaceWith.indexes.entitySourceIndex.getEntryById(oldPid)?.also { this.indexes.entitySourceIndex.index(newPid, it) }
-          replaceWith.indexes.persistentIdIndex.getEntryById(oldPid)?.also { this.indexes.persistentIdIndex.index(newPid, it) }
-          this.indexes.updateExternalMappingForEntityId(oldPid, newPid, replaceWith.indexes)
+          replaceWith.indexes.entitySourceIndex.getEntryById(matchedEntityId)?.also { this.indexes.entitySourceIndex.index(newPid, it) }
+          replaceWith.indexes.persistentIdIndex.getEntryById(matchedEntityId)?.also { this.indexes.persistentIdIndex.index(newPid, it) }
+          this.indexes.updateExternalMappingForEntityId(matchedEntityId, newPid, replaceWith.indexes)
           if (newEntity is SoftLinkable) indexes.updateSoftLinksIndex(newEntity)
 
           createAddEvent(newEntity)
@@ -430,10 +430,9 @@ internal class WorkspaceEntityStorageBuilderImpl(
     LOG.debug { "3) Remove old entities" }
     //   After previous operation localMatchedEntities contain only entities that exist in local store, but don't exist in replaceWith store.
     //   Those entities should be just removed.
-    for (localEntity in localMatchedEntities.values()) {
+    for ((localEntity, entityId) in localMatchedEntities.values()) {
       val entityClass = ClassConversion.entityDataToEntity(localEntity.javaClass).toClassId()
       this.entitiesByType.remove(localEntity.id, entityClass)
-      val entityId = localEntity.createPid()
       indexes.removeFromIndices(entityId)
       if (localEntity is SoftLinkable) indexes.removeFromSoftLinksIndex(localEntity)
       updateChangeLog { it.add(ChangeEntry.RemoveEntity(entityId)) }
@@ -443,8 +442,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
     //    At this moment the operation may fail because of inconsistency.
     //    E.g. after this operation we can't have non-null references without corresponding entity.
     //      This may happen if we remove the matched entity, but don't have a replacement for it.
-    for (localUnmatchedEntity in localUnmatchedReferencedNodes.values()) {
-      val unmatchedId = localUnmatchedEntity.createPid()
+    for (unmatchedId in localUnmatchedReferencedNodes.values()) {
       val replaceWithUnmatchedEntity = replaceWith.entityDataById(unmatchedId)
       if (replaceWithUnmatchedEntity == null) {
         // Okay, replaceWith storage doesn't have this "unmatched" entity at all.
@@ -520,8 +518,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
     }
 
     LOG.debug { "5) Restore references in matching ids" }
-    for (rightMatchedNode in replaceWithMatchedEntities.values()) {
-      val nodeId = rightMatchedNode.createPid()
+    for (nodeId in replaceWithMatchedEntities.values()) {
       for ((connectionId, parentId) in replaceWith.refs.getParentRefsOfChild(nodeId)) {
         if (!sourceFilter(replaceWith.entityDataByIdOrDie(parentId).entitySource)) {
           // replaceWith storage has a link to unmatched entity. We should check if we can "transfer" this link to the current storage
