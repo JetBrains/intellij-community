@@ -343,6 +343,7 @@ private class FileColorsTableModel(val manager: FileColorManagerImpl) : Abstract
 
     this.table = table
 
+    table.tableHeader.defaultRenderer = TableHeaderRenderer()
     table.setDefaultRenderer(String::class.java, TableScopeRenderer(manager))
     // configure color renderer and its editor
     val editor = ComboBox<String>(getColors().toTypedArray())
@@ -419,6 +420,17 @@ private class TableColorRenderer(val manager: FileColorManagerImpl) : DefaultTab
     icon.paintIcon(this, g,
                    bounds.x + bounds.width - icon.iconWidth,
                    bounds.y + (bounds.height - icon.iconHeight) / 2)
+  }
+}
+
+private class TableHeaderRenderer : DefaultTableCellRenderer() {
+  override fun getTableCellRendererComponent(table: JTable?, value: Any?,
+                                             selected: Boolean, focused: Boolean, row: Int, column: Int): Component {
+    val component = super.getTableCellRendererComponent(table, value, selected, focused, row, column)
+    horizontalTextPosition = SwingConstants.LEFT
+    toolTipText = if (column == 2) message("settings.file.color.column.shared.help") else null
+    icon = if (column == 2) AllIcons.General.ContextHelp else null
+    return component
   }
 }
 
