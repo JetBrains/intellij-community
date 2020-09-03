@@ -26,7 +26,6 @@ import com.intellij.ui.components.DropDownLink;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -39,17 +38,13 @@ import java.util.Arrays;
 
 public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
   private enum Mode {
-    ATTACH("Attach to remote JVM"),
-    LISTEN("Listen to remote JVM");
-
-    private final String text;
-    Mode(String text) {
-      this.text = text;
-    }
+    ATTACH, LISTEN;
 
     @Override
     public String toString() {
-      return text;
+      return this == ATTACH
+             ? ExecutionBundle.message("combo.attach.to.remote")
+             : ExecutionBundle.message("combo.listen.to.remote");
     }
   }
 
@@ -81,7 +76,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
 
       @Override
       public String toString() {
-        return "JDK 9 or later";
+        return ExecutionBundle.message("combo.java.version.9+");
       }
     },
     JDK5to8(JavaSdkVersion.JDK_1_5)  {
@@ -92,7 +87,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
 
       @Override
       public String toString() {
-        return "JDK 5 - 8";
+        return ExecutionBundle.message("combo.java.version.5.to.8");
       }
     },
     JDK1_4(JavaSdkVersion.JDK_1_4) {
@@ -103,7 +98,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
 
       @Override
       public String toString() {
-        return "JDK 1.4.x";
+        return ExecutionBundle.message("combo.java.version.1.4");
       }
     },
     JDK1_3(JavaSdkVersion.JDK_1_3) {
@@ -114,7 +109,7 @@ public class RemoteConfigurable extends SettingsEditor<RemoteConfiguration> {
 
       @Override
       public String toString() {
-        return "JDK 1.3.x or earlier";
+        return ExecutionBundle.message("combo.java.version.1.3");
       }
     };
 
