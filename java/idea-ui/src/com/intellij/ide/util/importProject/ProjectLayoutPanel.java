@@ -61,7 +61,7 @@ abstract class ProjectLayoutPanel<T> extends JPanel {
     setBorder(BorderFactory.createEmptyBorder(5, 5, 0, 5));
     myInsight = insight;
 
-    myEntriesChooser = new ElementsChooser<T>(true) {
+    myEntriesChooser = new ElementsChooser<>(true) {
       @Override
       public String getItemText(@NotNull T element) {
         return getElementText(element);

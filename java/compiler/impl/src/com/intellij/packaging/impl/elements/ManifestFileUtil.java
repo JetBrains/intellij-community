@@ -78,25 +78,27 @@ public final class ManifestFileUtil {
 
     final Ref<VirtualFile> sourceDir = Ref.create(null);
     final Ref<VirtualFile> sourceFile = Ref.create(null);
-    ArtifactUtil.processElementsWithSubstitutions(root.getChildren(), context, artifactType, PackagingElementPath.EMPTY, new PackagingElementProcessor<PackagingElement<?>>() {
-      @Override
-      public boolean process(@NotNull PackagingElement<?> element, @NotNull PackagingElementPath path) {
-        if (element instanceof FileCopyPackagingElement) {
-          final VirtualFile file = ((FileCopyPackagingElement)element).findFile();
-          if (file != null) {
-            sourceFile.set(file);
-          }
-        }
-        else if (element instanceof DirectoryCopyPackagingElement) {
-          final VirtualFile file = ((DirectoryCopyPackagingElement)element).findFile();
-          if (file != null) {
-            sourceDir.set(file);
-            return false;
-          }
-        }
-        return true;
-      }
-    });
+    ArtifactUtil.processElementsWithSubstitutions(root.getChildren(), context, artifactType, PackagingElementPath.EMPTY,
+                                                  new PackagingElementProcessor<>() {
+                                                    @Override
+                                                    public boolean process(@NotNull PackagingElement<?> element,
+                                                                           @NotNull PackagingElementPath path) {
+                                                      if (element instanceof FileCopyPackagingElement) {
+                                                        final VirtualFile file = ((FileCopyPackagingElement)element).findFile();
+                                                        if (file != null) {
+                                                          sourceFile.set(file);
+                                                        }
+                                                      }
+                                                      else if (element instanceof DirectoryCopyPackagingElement) {
+                                                        final VirtualFile file = ((DirectoryCopyPackagingElement)element).findFile();
+                                                        if (file != null) {
+                                                          sourceDir.set(file);
+                                                          return false;
+                                                        }
+                                                      }
+                                                      return true;
+                                                    }
+                                                  });
 
     if (!sourceDir.isNull()) {
       return sourceDir.get();
@@ -206,7 +208,7 @@ public final class ManifestFileUtil {
 
   public static List<String> getClasspathForElements(List<? extends PackagingElement<?>> elements, PackagingElementResolvingContext context, final ArtifactType artifactType) {
     final List<String> classpath = new ArrayList<>();
-    final PackagingElementProcessor<PackagingElement<?>> processor = new PackagingElementProcessor<PackagingElement<?>>() {
+    final PackagingElementProcessor<PackagingElement<?>> processor = new PackagingElementProcessor<>() {
       @Override
       public boolean process(@NotNull PackagingElement<?> element, @NotNull PackagingElementPath path) {
         if (element instanceof FileCopyPackagingElement) {

@@ -23,7 +23,7 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 public class BlockMarkerCommentsInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final PsiJavaElementPattern.Capture<PsiElement> ANONYMOUS_CLASS_MARKER_PATTERN = psiElement().
     withParent(psiElement(PsiDeclarationStatement.class, PsiExpressionStatement.class))
-    .afterSiblingSkipping(or(psiElement(PsiWhiteSpace.class), psiElement(PsiJavaToken.class).with(new PatternCondition<PsiJavaToken>(null) {
+    .afterSiblingSkipping(or(psiElement(PsiWhiteSpace.class), psiElement(PsiJavaToken.class).with(new PatternCondition<>(null) {
                             @Override
                             public boolean accepts(@NotNull final PsiJavaToken psiJavaToken, final ProcessingContext context) {
                               return psiJavaToken.getTokenType().equals(JavaTokenType.SEMICOLON);
@@ -33,7 +33,7 @@ public class BlockMarkerCommentsInspection extends AbstractBaseJavaLocalInspecti
                             .withChild(psiElement(PsiNewExpression.class).withChild(psiElement(PsiAnonymousClass.class))));
   private static final PsiJavaElementPattern.Capture<PsiElement> CLASS_MARKER_PATTERN = psiElement().
     withParent(PsiClass.class).
-    afterSiblingSkipping(psiElement(PsiWhiteSpace.class), psiElement(PsiJavaToken.class).with(new PatternCondition<PsiJavaToken>(null) {
+    afterSiblingSkipping(psiElement(PsiWhiteSpace.class), psiElement(PsiJavaToken.class).with(new PatternCondition<>(null) {
       @Override
       public boolean accepts(@NotNull final PsiJavaToken token, final ProcessingContext context) {
         return JavaTokenType.RBRACE.equals(token.getTokenType());

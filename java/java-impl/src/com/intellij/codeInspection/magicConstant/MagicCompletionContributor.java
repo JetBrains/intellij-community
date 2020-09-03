@@ -183,7 +183,7 @@ public class MagicCompletionContributor extends CompletionContributor implements
                                             @NotNull final CompletionResultSet result,
                                             PsiElement pos,
                                             MagicConstantUtils.AllowedValues allowedValues) {
-    final Set<PsiElement> allowed = new THashSet<>(new TObjectHashingStrategy<PsiElement>() {
+    final Set<PsiElement> allowed = new THashSet<>(new TObjectHashingStrategy<>() {
       @Override
       public int computeHashCode(PsiElement object) {
         return 0;

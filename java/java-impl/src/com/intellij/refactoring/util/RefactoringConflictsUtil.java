@@ -245,7 +245,7 @@ public final class RefactoringConflictsUtil {
     if (targetModule == null) return;
     final GlobalSearchScope resolveScope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(targetModule);
     final HashSet<PsiElement> reported = new HashSet<>();
-    Consumer<PsiJavaCodeReferenceElement> processor = new Consumer<PsiJavaCodeReferenceElement>() {
+    Consumer<PsiJavaCodeReferenceElement> processor = new Consumer<>() {
       @Override
       public void accept(PsiJavaCodeReferenceElement reference) {
         final PsiElement resolved = reference.resolve();
@@ -271,7 +271,7 @@ public final class RefactoringConflictsUtil {
       }
 
       private boolean haveElementInScope(PsiElement resolved) {
-        if (PsiSearchScopeUtil.isInScope(resolveScope, resolved)){
+        if (PsiSearchScopeUtil.isInScope(resolveScope, resolved)) {
           return true;
         }
         if (!resolved.getManager().isInProject(resolved)) {
@@ -285,7 +285,7 @@ public final class RefactoringConflictsUtil {
                   if (resolved instanceof PsiMethod) {
                     return classFromTarget.findMethodsBySignature((PsiMethod)resolved, true).length > 0;
                   }
-                  if (resolved instanceof PsiField ) {
+                  if (resolved instanceof PsiField) {
                     return classFromTarget.findFieldByName(((PsiField)resolved).getName(), false) != null;
                   }
                   if (resolved instanceof PsiClass) {

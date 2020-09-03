@@ -57,7 +57,7 @@ public final class ChainCompletionContext {
   @NotNull
   private final CompilerReferenceServiceEx myRefServiceEx;
 
-  private final NotNullLazyValue<Set<CompilerRef>> myContextClassReferences = new NotNullLazyValue<Set<CompilerRef>>() {
+  private final NotNullLazyValue<Set<CompilerRef>> myContextClassReferences = new NotNullLazyValue<>() {
     @NotNull
     @Override
     protected Set<CompilerRef> compute() {

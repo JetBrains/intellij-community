@@ -30,7 +30,7 @@ public abstract class LanguageLevelCombo extends ComboBox<Object> {
       addItem(level);
     }
 
-    setRenderer(new ColoredListCellRenderer<Object>() {
+    setRenderer(new ColoredListCellRenderer<>() {
       @Override
       protected void customizeCellRenderer(@NotNull JList<?> list, Object value, int index, boolean selected, boolean hasFocus) {
         if (value instanceof LanguageLevel) {

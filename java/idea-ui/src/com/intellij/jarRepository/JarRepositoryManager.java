@@ -274,22 +274,25 @@ public final class JarRepositoryManager {
   @Nullable
   public static ArtifactDependencyNode loadDependenciesTree(@NotNull RepositoryLibraryDescription description, @NotNull String version, Project project) {
     List<RemoteRepositoryDescription> repositories = RemoteRepositoriesConfiguration.getInstance(project).getRepositories();
-    return submitModalJob(project, JavaUiBundle.message("jar.repository.manager.dialog.resolving.dependencies.title", 0), new AetherJob<ArtifactDependencyNode>(repositories) {
-      @Override
-      protected String getProgressText() {
-        return JavaUiBundle.message("jar.repository.manager.progress.text.loading.dependencies", description.getMavenCoordinates(version));
-      }
+    return submitModalJob(project, JavaUiBundle.message("jar.repository.manager.dialog.resolving.dependencies.title", 0),
+                          new AetherJob<>(repositories) {
+                            @Override
+                            protected String getProgressText() {
+                              return JavaUiBundle.message("jar.repository.manager.progress.text.loading.dependencies",
+                                                          description.getMavenCoordinates(version));
+                            }
 
-      @Override
-      protected ArtifactDependencyNode perform(ProgressIndicator progress, @NotNull ArtifactRepositoryManager manager) throws Exception {
-        return manager.collectDependencies(description.getGroupId(), description.getArtifactId(), version);
-      }
+                            @Override
+                            protected ArtifactDependencyNode perform(ProgressIndicator progress, @NotNull ArtifactRepositoryManager manager)
+                              throws Exception {
+                              return manager.collectDependencies(description.getGroupId(), description.getArtifactId(), version);
+                            }
 
-      @Override
-      protected ArtifactDependencyNode getDefaultResult() {
-        return null;
-      }
-    });
+                            @Override
+                            protected ArtifactDependencyNode getDefaultResult() {
+                              return null;
+                            }
+                          });
   }
 
   private static void notifyArtifactsDownloaded(Project project, Collection<OrderRoot> roots) {

@@ -60,7 +60,7 @@ import static com.intellij.psi.impl.source.tree.JavaElementType.*;
 public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<FunctionalExpressionKey, List<JavaFunctionalExpressionIndex.IndexEntry>> {
   private static final Logger LOG = Logger.getInstance(JavaFunctionalExpressionIndex.class);
   public static final ID<FunctionalExpressionKey, List<IndexEntry>> INDEX_ID = ID.create("java.fun.expression");
-  private static final KeyDescriptor<FunctionalExpressionKey> KEY_DESCRIPTOR = new KeyDescriptor<FunctionalExpressionKey>() {
+  private static final KeyDescriptor<FunctionalExpressionKey> KEY_DESCRIPTOR = new KeyDescriptor<>() {
     @Override
     public int getHashCode(FunctionalExpressionKey value) {
       return value.hashCode();
@@ -386,8 +386,9 @@ public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<Funct
       LighterAST tree = ((PsiDependentFileContent)inputData).getLighterAST();
       FileLocalResolver resolver = new FileLocalResolver(tree);
 
-      LightTreeUtil.processLeavesAtOffsets(offsets, tree, new BiConsumer<LighterASTTokenNode, Integer>() {
+      LightTreeUtil.processLeavesAtOffsets(offsets, tree, new BiConsumer<>() {
         int index = 0;
+
         @Override
         public void accept(LighterASTTokenNode leaf, Integer offset) {
           LighterASTNode element = tree.getParent(leaf);
@@ -435,7 +436,7 @@ public class JavaFunctionalExpressionIndex extends FileBasedIndexExtension<Funct
   @NotNull
   @Override
   public DataExternalizer<List<IndexEntry>> getValueExternalizer() {
-    return new DataExternalizer<List<IndexEntry>>() {
+    return new DataExternalizer<>() {
       @Override
       public void save(@NotNull DataOutput out, List<IndexEntry> value) throws IOException {
         DataInputOutputUtilRt.writeSeq(out, value, entry -> entry.serialize(out));

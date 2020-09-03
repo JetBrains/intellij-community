@@ -60,41 +60,46 @@ public class UncheckedWarningLocalInspection extends AbstractBaseJavaLocalInspec
     final GridBagConstraints gc = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
                                                          JBUI.emptyInsets(), 0, 0);
 
-    panel.add(createSetting(JavaBundle.message("unchecked.warning.inspection.settings.ignore.unchecked.assignment"), IGNORE_UNCHECKED_ASSIGNMENT, new Pass<JCheckBox>() {
-      @Override
-      public void pass(JCheckBox cb) {
-        IGNORE_UNCHECKED_ASSIGNMENT = cb.isSelected();
-      }
-    }), gc);
+    panel.add(createSetting(JavaBundle.message("unchecked.warning.inspection.settings.ignore.unchecked.assignment"), IGNORE_UNCHECKED_ASSIGNMENT,
+                            new Pass<>() {
+                              @Override
+                              public void pass(JCheckBox cb) {
+                                IGNORE_UNCHECKED_ASSIGNMENT = cb.isSelected();
+                              }
+                            }), gc);
 
     panel.add(createSetting(
-      JavaBundle.message("unchecked.warning.inspection.settings.ignore.unchecked.generics.array.creation.for.vararg.parameter"), IGNORE_UNCHECKED_GENERICS_ARRAY_CREATION, new Pass<JCheckBox>() {
-      @Override
-      public void pass(JCheckBox cb) {
+      JavaBundle.message("unchecked.warning.inspection.settings.ignore.unchecked.generics.array.creation.for.vararg.parameter"), IGNORE_UNCHECKED_GENERICS_ARRAY_CREATION,
+      new Pass<>() {
+        @Override
+        public void pass(JCheckBox cb) {
           IGNORE_UNCHECKED_GENERICS_ARRAY_CREATION = cb.isSelected();
-      }
-    }), gc);
+        }
+      }), gc);
 
-    panel.add(createSetting(JavaBundle.message("unchecked.warning.inspection.settings.ignore.unchecked.call.as.member.of.raw.type"), IGNORE_UNCHECKED_CALL, new Pass<JCheckBox>() {
-      @Override
-      public void pass(JCheckBox cb) {
-        IGNORE_UNCHECKED_CALL = cb.isSelected();
-      }
-    }), gc);
+    panel.add(createSetting(JavaBundle.message("unchecked.warning.inspection.settings.ignore.unchecked.call.as.member.of.raw.type"), IGNORE_UNCHECKED_CALL,
+                            new Pass<>() {
+                              @Override
+                              public void pass(JCheckBox cb) {
+                                IGNORE_UNCHECKED_CALL = cb.isSelected();
+                              }
+                            }), gc);
 
-    panel.add(createSetting(JavaBundle.message("unchecked.warning.inspection.settings.ignore.unchecked.cast"), IGNORE_UNCHECKED_CAST, new Pass<JCheckBox>() {
-      @Override
-      public void pass(JCheckBox cb) {
-        IGNORE_UNCHECKED_CAST = cb.isSelected();
-      }
-    }), gc);
+    panel.add(createSetting(JavaBundle.message("unchecked.warning.inspection.settings.ignore.unchecked.cast"), IGNORE_UNCHECKED_CAST,
+                            new Pass<>() {
+                              @Override
+                              public void pass(JCheckBox cb) {
+                                IGNORE_UNCHECKED_CAST = cb.isSelected();
+                              }
+                            }), gc);
 
-    panel.add(createSetting(JavaBundle.message("unchecked.warning.inspection.settings.ignore.unchecked.overriding"), IGNORE_UNCHECKED_OVERRIDING, new Pass<JCheckBox>() {
-      @Override
-      public void pass(JCheckBox cb) {
-        IGNORE_UNCHECKED_OVERRIDING = cb.isSelected();
-      }
-    }), gc);
+    panel.add(createSetting(JavaBundle.message("unchecked.warning.inspection.settings.ignore.unchecked.overriding"), IGNORE_UNCHECKED_OVERRIDING,
+                            new Pass<>() {
+                              @Override
+                              public void pass(JCheckBox cb) {
+                                IGNORE_UNCHECKED_OVERRIDING = cb.isSelected();
+                              }
+                            }), gc);
 
     gc.fill = GridBagConstraints.BOTH;
     gc.weighty = 1;

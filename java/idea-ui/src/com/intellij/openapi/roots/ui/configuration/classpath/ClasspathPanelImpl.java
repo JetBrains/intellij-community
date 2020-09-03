@@ -109,12 +109,12 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
 
     JComboBox<DependencyScope> scopeEditor = new ComboBox<>(new EnumComboBoxModel<>(DependencyScope.class));
     myEntryTable.setDefaultEditor(DependencyScope.class, new DefaultCellEditor(scopeEditor));
-    myEntryTable.setDefaultRenderer(DependencyScope.class, new ComboBoxTableRenderer<DependencyScope>(DependencyScope.values()) {
-        @Override
-        protected String getTextFor(@NotNull final DependencyScope value) {
-          return value.getDisplayName();
-        }
-      });
+    myEntryTable.setDefaultRenderer(DependencyScope.class, new ComboBoxTableRenderer<>(DependencyScope.values()) {
+      @Override
+      protected String getTextFor(@NotNull final DependencyScope value) {
+        return value.getDisplayName();
+      }
+    });
 
     myEntryTable.setTransferHandler(new TransferHandler() {
       @Nullable
@@ -135,7 +135,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
 
     myEntryTable.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 
-    new SpeedSearchBase<JBTable>(myEntryTable) {
+    new SpeedSearchBase<>(myEntryTable) {
       @Override
       public int getSelectedIndex() {
         return myEntryTable.getSelectedRow();
@@ -360,7 +360,7 @@ public class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
       public void run(AnActionButton button) {
         initPopupActions();
         final JBPopup popup = JBPopupFactory.getInstance().createListPopup(
-          new BaseListPopupStep<AddItemPopupAction<?>>(null, myPopupActions) {
+          new BaseListPopupStep<>(null, myPopupActions) {
             @Override
             public Icon getIconFor(AddItemPopupAction<?> aValue) {
               return aValue.getIcon();

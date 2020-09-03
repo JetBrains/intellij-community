@@ -198,7 +198,7 @@ public class TypeMigrationLabeler {
 
   private TypeMigrationUsageInfo[] sortMigratedUsages(TypeMigrationUsageInfo[] infos) {
     final DFSTBuilder<TypeMigrationUsageInfo> builder = new DFSTBuilder<>(GraphGenerator.generate(
-      new InboundSemiGraph<TypeMigrationUsageInfo>() {
+      new InboundSemiGraph<>() {
         @NotNull
         @Override
         public Collection<TypeMigrationUsageInfo> getNodes() {
@@ -279,7 +279,7 @@ public class TypeMigrationLabeler {
 
   final class MigrationProducer {
     private final Map<UsageInfo, Object> myRemainConversions;
-    private final MultiMap<PsiTypeElement, TypeMigrationUsageInfo> myVariableMigration = new MultiMap<PsiTypeElement, TypeMigrationUsageInfo>();
+    private final MultiMap<PsiTypeElement, TypeMigrationUsageInfo> myVariableMigration = new MultiMap<>();
 
     private MigrationProducer(Map<UsageInfo, Object> conversions) {
       myRemainConversions = conversions;

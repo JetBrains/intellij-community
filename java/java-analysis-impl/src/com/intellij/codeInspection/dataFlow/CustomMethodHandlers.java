@@ -185,7 +185,7 @@ final class CustomMethodHandlers {
   }
 
   private static Method toJvmMethod(PsiMethod method) {
-    return CachedValuesManager.getCachedValue(method, new CachedValueProvider<Method>() {
+    return CachedValuesManager.getCachedValue(method, new CachedValueProvider<>() {
       @Override
       public @NotNull Result<Method> compute() {
         Method reflection = getMethod();

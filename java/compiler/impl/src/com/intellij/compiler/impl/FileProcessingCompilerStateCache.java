@@ -33,7 +33,7 @@ public class FileProcessingCompilerStateCache {
   private final StateCache<MyState> myCache;
 
   public FileProcessingCompilerStateCache(File storeDirectory, final ValidityStateFactory stateFactory) throws IOException {
-    myCache = new StateCache<MyState>(new File(storeDirectory, "timestamps")) {
+    myCache = new StateCache<>(new File(storeDirectory, "timestamps")) {
       @Override
       public MyState read(DataInput stream) throws IOException {
         return new MyState(stream.readLong(), stateFactory.createValidityState(stream));

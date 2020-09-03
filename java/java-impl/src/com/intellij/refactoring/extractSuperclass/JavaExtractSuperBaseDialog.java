@@ -83,7 +83,7 @@ public abstract class JavaExtractSuperBaseDialog extends ExtractSuperBaseDialog<
     final JBLabel label = new JBLabel(RefactoringBundle.message("target.destination.folder"));
     panel.add(label, BorderLayout.NORTH);
     label.setLabelFor(myDestinationFolderComboBox);
-    myDestinationFolderComboBox.setData(myProject, myTargetDirectory, new Pass<String>() {
+    myDestinationFolderComboBox.setData(myProject, myTargetDirectory, new Pass<>() {
       @Override
       public void pass(String s) {
       }

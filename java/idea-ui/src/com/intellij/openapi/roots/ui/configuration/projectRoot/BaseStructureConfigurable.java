@@ -29,7 +29,6 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -315,7 +314,7 @@ public abstract class BaseStructureConfigurable extends MasterDetailsComponent i
   protected class MyRemoveAction extends MyDeleteAction {
     public MyRemoveAction() {
       //noinspection Convert2Lambda
-      super(new Condition<Object[]>() {
+      super(new Condition<>() {
         @Override
         public boolean value(final Object[] objects) {
           List<MyNode> nodes = new ArrayList<>();

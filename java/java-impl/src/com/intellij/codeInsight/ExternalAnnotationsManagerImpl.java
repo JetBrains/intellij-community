@@ -216,7 +216,7 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
     
     if (annotationsByFiles.isEmpty()) return;
 
-    WriteCommandAction.writeCommandAction(project).run(new ThrowableRunnable<RuntimeException>() {
+    WriteCommandAction.writeCommandAction(project).run(new ThrowableRunnable<>() {
       @Override
       public void run() throws RuntimeException {
         if (project.isDisposed()) return;
@@ -503,7 +503,7 @@ public final class ExternalAnnotationsManagerImpl extends ReadableExternalAnnota
 
   private void chooseRootAndAnnotateExternally(VirtualFile @NotNull [] roots, @NotNull ExternalAnnotation annotation) {
     if (roots.length > 1) {
-      JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<VirtualFile>(JavaBundle.message("external.annotations.roots"), roots) {
+      JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<>(JavaBundle.message("external.annotations.roots"), roots) {
         @Override
         public void canceled() {
           notifyAfterAnnotationChanging(annotation.getOwner(), annotation.getAnnotationFQName(), false);

@@ -82,7 +82,7 @@ public class JavaCompletionContributor extends CompletionContributor implements 
     psiElement().withSuperParent(2, psiElement(PsiExpressionList.class).withParent(psiElement(PsiSwitchLabelStatementBase.class).withSuperParent(2, PsiSwitchBlock.class)));
   private static final ElementPattern<PsiElement> IN_ENUM_SWITCH_LABEL =
     psiElement().withSuperParent(2, psiElement(PsiExpressionList.class).withParent(psiElement(PsiSwitchLabelStatementBase.class).withSuperParent(2,
-      psiElement(PsiSwitchBlock.class).with(new PatternCondition<PsiSwitchBlock>("enumExpressionType") {
+      psiElement(PsiSwitchBlock.class).with(new PatternCondition<>("enumExpressionType") {
         @Override
         public boolean accepts(@NotNull PsiSwitchBlock psiSwitchBlock, ProcessingContext context) {
           PsiExpression expression = psiSwitchBlock.getExpression();
@@ -721,7 +721,7 @@ public class JavaCompletionContributor extends CompletionContributor implements 
     String lookupString = annoMethod.getName() + (value == null ? "" : space + "=" + space + value);
     return LookupElementBuilder.create(annoMethod, lookupString).withIcon(annoMethod.getIcon(0))
       .withStrikeoutness(PsiImplUtil.isDeprecated(annoMethod))
-      .withInsertHandler(new InsertHandler<LookupElement>() {
+      .withInsertHandler(new InsertHandler<>() {
         @Override
         public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElement item) {
           final Editor editor = context.getEditor();

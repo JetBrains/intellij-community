@@ -1571,7 +1571,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     @Override
     public String toString() {
       final StringBuilder s = new StringBuilder("{");
-      forEachEntry(new TIntObjectProcedure<Integer>() {
+      forEachEntry(new TIntObjectProcedure<>() {
         @Override
         public boolean execute(int id, Integer index) {
           DfaValue value = myFactory.getValue(id);

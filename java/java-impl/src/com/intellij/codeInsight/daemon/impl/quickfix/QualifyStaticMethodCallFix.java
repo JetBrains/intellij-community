@@ -41,7 +41,7 @@ public class QualifyStaticMethodCallFix extends StaticImportMethodFix {
   protected StaticImportMethodQuestionAction<PsiMethod> createQuestionAction(@NotNull List<? extends PsiMethod> methodsToImport,
                                                                              @NotNull Project project,
                                                                              Editor editor) {
-    return new StaticImportMethodQuestionAction<PsiMethod>(project, editor, methodsToImport, myRef) {
+    return new StaticImportMethodQuestionAction<>(project, editor, methodsToImport, myRef) {
       @Override
       protected void doImport(PsiMethod toImport) {
         PsiMethodCallExpression element = myRef.getElement();

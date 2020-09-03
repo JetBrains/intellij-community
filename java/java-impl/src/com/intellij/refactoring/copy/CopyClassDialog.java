@@ -63,7 +63,7 @@ class CopyClassDialog extends RefactoringDialog implements DumbAware {
     myInformationLabel.setFont(myInformationLabel.getFont().deriveFont(Font.BOLD));
     init();
     myDestinationCB.setData(myProject, defaultTargetDirectory,
-                            new Pass<String>() {
+                            new Pass<>() {
                               @Override
                               public void pass(@NlsContexts.DialogMessage String s) {
                                 setErrorText(s, myDestinationCB);

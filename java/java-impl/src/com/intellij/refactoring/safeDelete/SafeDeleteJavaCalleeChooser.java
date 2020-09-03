@@ -205,7 +205,7 @@ abstract class SafeDeleteJavaCalleeChooser extends CallerChooserBase<PsiElement>
   }
 
   private static boolean usedOnlyIn(@NotNull PsiElement explored, @NotNull PsiMember place) {
-    CommonProcessors.FindProcessor<PsiReference> findProcessor = new CommonProcessors.FindProcessor<PsiReference>() {
+    CommonProcessors.FindProcessor<PsiReference> findProcessor = new CommonProcessors.FindProcessor<>() {
       @Override
       protected boolean accept(PsiReference reference) {
         final PsiElement element = reference.getElement();

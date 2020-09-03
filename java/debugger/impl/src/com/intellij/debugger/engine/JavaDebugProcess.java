@@ -95,7 +95,7 @@ public class JavaDebugProcess extends XDebugProcess {
       .map(factory -> factory.createHandler(process))
       .toArray(XBreakpointHandler[]::new);
 
-    JavaBreakpointHandlerFactory.EP_NAME.addExtensionPointListener(new ExtensionPointListener<JavaBreakpointHandlerFactory>() {
+    JavaBreakpointHandlerFactory.EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull JavaBreakpointHandlerFactory extension, @NotNull PluginDescriptor pluginDescriptor) {
         //noinspection NonAtomicOperationOnVolatileField

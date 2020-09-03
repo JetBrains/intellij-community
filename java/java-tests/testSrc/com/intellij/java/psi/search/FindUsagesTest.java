@@ -312,7 +312,7 @@ public class FindUsagesTest extends JavaPsiTestCase {
       public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
         String text = String.valueOf(((PsiLiteralExpression)element).getValue());
         if (text.equals("ref")) {
-          return new PsiReference[]{new PsiReferenceBase<PsiElement>(element, false) {
+          return new PsiReference[]{new PsiReferenceBase<>(element, false) {
             @Override
             public PsiElement resolve() {
               return field;

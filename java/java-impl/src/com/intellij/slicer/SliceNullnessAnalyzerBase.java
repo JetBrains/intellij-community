@@ -150,7 +150,7 @@ public abstract class SliceNullnessAnalyzerBase {
                                                         @NotNull AbstractTreeStructure treeStructure,
                                                         final @NotNull Map<SliceNode, NullAnalysisResult> map) {
     final SliceLeafAnalyzer.SliceNodeGuide guide = new SliceLeafAnalyzer.SliceNodeGuide(treeStructure);
-    WalkingState<SliceNode> walkingState = new WalkingState<SliceNode>(guide) {
+    WalkingState<SliceNode> walkingState = new WalkingState<>(guide) {
       @Override
       public void visit(final @NotNull SliceNode element) {
         element.calculateDupNode();

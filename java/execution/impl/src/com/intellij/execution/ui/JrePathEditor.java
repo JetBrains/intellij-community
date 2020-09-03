@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.ui;
 
-import com.intellij.core.JavaPsiBundle;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.util.BrowseFilesListener;
@@ -58,7 +57,7 @@ public class JrePathEditor extends LabeledComponent<ComboBox> implements PanelWi
   }
 
   public JrePathEditor(boolean editable) {
-    myComboBoxModel = new SortedComboBoxModel<JreComboBoxItem>((o1, o2) -> {
+    myComboBoxModel = new SortedComboBoxModel<>((o1, o2) -> {
       int result = Comparing.compare(o1.getOrder(), o2.getOrder());
       if (result != 0) {
         return result;
@@ -71,8 +70,9 @@ public class JrePathEditor extends LabeledComponent<ComboBox> implements PanelWi
           getComponent().hidePopup();
           getBrowseRunnable().run();
         }
-        else
+        else {
           super.setSelectedItem(anItem);
+        }
       }
     };
     myDefaultJreItem = new DefaultJreItem();
@@ -113,7 +113,7 @@ public class JrePathEditor extends LabeledComponent<ComboBox> implements PanelWi
 
     ComboBox<JreComboBoxItem> comboBox = new ComboBox<>(myComboBoxModel);
     comboBox.setEditable(editable);
-    comboBox.setRenderer(new ColoredListCellRenderer<JreComboBoxItem>() {
+    comboBox.setRenderer(new ColoredListCellRenderer<>() {
       {
         setIpad(JBInsets.create(1, 0));
         setMyBorder(null);

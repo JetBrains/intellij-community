@@ -62,7 +62,7 @@ public class JdkChooserPanel extends JPanel {
     myListModel = new DefaultListModel<>();
     myList = new JBList<>(myListModel);
     myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    myList.setCellRenderer(new ColoredListCellRenderer<Sdk>() {
+    myList.setCellRenderer(new ColoredListCellRenderer<>() {
       @Override
       protected void customizeCellRenderer(@NotNull JList<? extends Sdk> list, Sdk value, int index, boolean selected, boolean hasFocus) {
         OrderEntryAppearanceService.getInstance().forJdk(value, false, selected, true).customize(this);

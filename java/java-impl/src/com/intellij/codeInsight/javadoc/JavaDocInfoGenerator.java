@@ -80,7 +80,7 @@ public class JavaDocInfoGenerator {
   private static final Pattern ourWhitespaces = Pattern.compile("[ \\n\\r\\t]+");
   private static final Pattern ourRelativeHtmlLinks = Pattern.compile("<A.*?HREF=\"([^\":]*)\"", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
 
-  private static final InheritDocProvider<PsiDocTag> ourEmptyProvider = new InheritDocProvider<PsiDocTag>() {
+  private static final InheritDocProvider<PsiDocTag> ourEmptyProvider = new InheritDocProvider<>() {
     @Override
     public Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> getInheritDoc() {
       return null;
@@ -107,7 +107,7 @@ public class JavaDocInfoGenerator {
   }
 
   private static InheritDocProvider<PsiElement[]> mapProvider(InheritDocProvider<PsiDocTag> i, boolean dropFirst) {
-    return new InheritDocProvider<PsiElement[]>() {
+    return new InheritDocProvider<>() {
       @Override
       public Pair<PsiElement[], InheritDocProvider<PsiElement[]>> getInheritDoc() {
         Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> pair = i.getInheritDoc();
@@ -609,7 +609,7 @@ public class JavaDocInfoGenerator {
                                                                                    boolean rendered) {
     PsiDocTag tag = locator.find(psiClass, getDocComment(psiClass));
     if (tag != null) {
-      return new Pair<>(tag, new InheritDocProvider<PsiDocTag>() {
+      return new Pair<>(tag, new InheritDocProvider<>() {
         @Override
         public Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> getInheritDoc() {
           return rendered ? null : findInHierarchy(psiClass, locator);
@@ -1024,7 +1024,7 @@ public class JavaDocInfoGenerator {
     PsiDocComment comment = getMethodDocComment(method);
     if (comment != null && !isEmptyDescription(comment)) {
       buffer.append(DocumentationMarkup.CONTENT_START);
-      generateValue(buffer, comment.getDescriptionElements(), new InheritDocProvider<PsiElement[]>() {
+      generateValue(buffer, comment.getDescriptionElements(), new InheritDocProvider<>() {
         @Override
         public Pair<PsiElement[], InheritDocProvider<PsiElement[]>> getInheritDoc() {
           return findInheritDocTag(method, descriptionLocator);
@@ -1580,7 +1580,7 @@ public class JavaDocInfoGenerator {
                                boolean rendered) {
     PsiDocTag localTag = getTagByName(localTags, paramName);
     if (localTag != null) {
-      return new ParamInfo(paramName, localTag, new InheritDocProvider<PsiDocTag>() {
+      return new ParamInfo(paramName, localTag, new InheritDocProvider<>() {
         @Override
         public Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> getInheritDoc() {
           return rendered ? null : findInheritDocTag(method, tagLocator);
@@ -1610,7 +1610,7 @@ public class JavaDocInfoGenerator {
 
   private void generateReturnsSection(StringBuilder buffer, PsiMethod method, PsiDocComment comment, boolean rendered) {
     PsiDocTag tag = comment == null ? null : comment.findTagByName("return");
-    Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> pair = tag == null ? null : new Pair<>(tag, new InheritDocProvider<PsiDocTag>() {
+    Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> pair = tag == null ? null : new Pair<>(tag, new InheritDocProvider<>() {
       @Override
       public Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> getInheritDoc() {
         return rendered ? null : findInheritDocTag(method, new ReturnTagLocator());
@@ -1693,7 +1693,7 @@ public class JavaDocInfoGenerator {
 
         Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> tag = rendered ? null
                                                                       : findInheritDocTag(method, exceptionLocator(valueElement.getText()));
-        collectedTags.addFirst(new Pair<>(thrownTags[i], new InheritDocProvider<PsiDocTag>() {
+        collectedTags.addFirst(new Pair<>(thrownTags[i], new InheritDocProvider<>() {
           @Override
           public Pair<PsiDocTag, InheritDocProvider<PsiDocTag>> getInheritDoc() {
             return tag;
@@ -2070,7 +2070,7 @@ public class JavaDocInfoGenerator {
       if (overridden != null) {
         T tag = loc.find(overridden, getDocComment(overridden));
         if (tag != null) {
-          return new Pair<>(tag, new InheritDocProvider<T>() {
+          return new Pair<>(tag, new InheritDocProvider<>() {
             @Override
             public Pair<T, InheritDocProvider<T>> getInheritDoc() {
               return findInheritDocTag(overridden, loc);
@@ -2159,7 +2159,7 @@ public class JavaDocInfoGenerator {
     T tag = loc.find(delegateMethod, getDocComment(delegateMethod));
     if (tag == null) return null;
 
-    return Pair.create(tag, new InheritDocProvider<T>() {
+    return Pair.create(tag, new InheritDocProvider<>() {
       @Override
       public Pair<T, InheritDocProvider<T>> getInheritDoc() {
         return findInheritDocTag(delegateMethod, loc);

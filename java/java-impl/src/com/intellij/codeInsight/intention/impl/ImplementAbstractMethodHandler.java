@@ -131,10 +131,10 @@ public class ImplementAbstractMethodHandler {
       final LinkedHashSet<PsiClass> classes = new LinkedHashSet<>();
       for (final Object o : selection) {
         if (o instanceof PsiEnumConstant) {
-          classes.add(ApplicationManager.getApplication().runWriteAction(new Computable<PsiClass>(){
+          classes.add(ApplicationManager.getApplication().runWriteAction(new Computable<>() {
             @Override
             public PsiClass compute() {
-              return ((PsiEnumConstant) o).getOrCreateInitializingClass();
+              return ((PsiEnumConstant)o).getOrCreateInitializingClass();
             }
           }));
         }

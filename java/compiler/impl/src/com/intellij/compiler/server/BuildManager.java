@@ -90,8 +90,7 @@ import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.storage.ProjectStamps;
 import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 
-import javax.tools.JavaCompiler;
-import javax.tools.ToolProvider;
+import javax.tools.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -1402,7 +1401,7 @@ public final class BuildManager implements Disposable {
     BuiltInServerManager builtInServerManager = BuiltInServerManager.getInstance();
     builtInServerManager.waitForStart();
     ServerBootstrap bootstrap = ((BuiltInServerManagerImpl)builtInServerManager).createServerBootstrap();
-    bootstrap.childHandler(new ChannelInitializer<Channel>() {
+    bootstrap.childHandler(new ChannelInitializer<>() {
       @Override
       protected void initChannel(@NotNull Channel channel) {
         channel.pipeline().addLast(myChannelRegistrar,

@@ -41,7 +41,7 @@ public interface TestDiscoveryProducer {
                                      byte frameworkId,
                                      @NotNull List<String> filePaths,
                                      @NotNull TestProcessor processor) {
-    MultiMap<String, String> visitedTests = new MultiMap<String, String>() {
+    MultiMap<String, String> visitedTests = new MultiMap<>() {
       @NotNull
       @Override
       protected Collection<String> createCollection() {

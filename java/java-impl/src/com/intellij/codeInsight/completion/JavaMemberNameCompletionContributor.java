@@ -463,7 +463,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor i
   }
 
   private static LookupElementDecorator<LookupElement> withInsertHandler(final SuggestedNameInfo callback, LookupElement element) {
-    return LookupElementDecorator.withInsertHandler(element, new InsertHandler<LookupElementDecorator<LookupElement>>() {
+    return LookupElementDecorator.withInsertHandler(element, new InsertHandler<>() {
       @Override
       public void handleInsert(@NotNull InsertionContext context, @NotNull LookupElementDecorator<LookupElement> item) {
         TailType tailType = LookupItem.getDefaultTailType(context.getCompletionChar());

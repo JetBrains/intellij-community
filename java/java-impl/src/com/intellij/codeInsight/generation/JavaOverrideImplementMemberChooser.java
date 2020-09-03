@@ -66,7 +66,7 @@ public final class JavaOverrideImplementMemberChooser extends MemberChooser<PsiM
     allCandidates.addAll(secondary);
     final PsiMethodMember[] all = convertToMethodMembers(allCandidates);
     final NotNullLazyValue<PsiMethodWithOverridingPercentMember[]> lazyElementsWithPercent =
-      new NotNullLazyValue<PsiMethodWithOverridingPercentMember[]>() {
+      new NotNullLazyValue<>() {
         @Override
         protected PsiMethodWithOverridingPercentMember @NotNull [] compute() {
           final PsiMethodWithOverridingPercentMember[] elements =

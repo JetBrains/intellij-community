@@ -107,7 +107,7 @@ public class Java15APIUsageInspection extends AbstractBaseJavaLocalInspectionToo
     gr.add(projectRb);
     gr.add(customRb);
 
-    JComboBox<LanguageLevel> llCombo = new ComboBox<LanguageLevel>(LanguageLevel.values()) {
+    JComboBox<LanguageLevel> llCombo = new ComboBox<>(LanguageLevel.values()) {
       @Override
       public void setEnabled(boolean b) {
         if (b == customRb.isSelected()) {

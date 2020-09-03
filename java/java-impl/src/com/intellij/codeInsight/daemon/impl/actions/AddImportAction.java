@@ -87,7 +87,7 @@ public class AddImportAction implements QuestionAction {
     CodeInsightUtil.sortIdenticalShortNamedMembers(myTargetClasses, myReference);
 
     final BaseListPopupStep<PsiClass> step =
-      new BaseListPopupStep<PsiClass>(QuickFixBundle.message("class.to.import.chooser.title"), myTargetClasses) {
+      new BaseListPopupStep<>(QuickFixBundle.message("class.to.import.chooser.title"), myTargetClasses) {
         @Override
         public boolean isAutoSelectionEnabled() {
           return false;
@@ -154,7 +154,7 @@ public class AddImportAction implements QuestionAction {
 
     List<String> toExclude = getAllExcludableStrings(qname);
 
-    return new BaseListPopupStep<String>(null, toExclude) {
+    return new BaseListPopupStep<>(null, toExclude) {
       @NotNull
       @Override
       public String getTextFor(String value) {

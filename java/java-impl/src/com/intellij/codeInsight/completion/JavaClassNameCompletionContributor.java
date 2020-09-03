@@ -133,7 +133,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor im
     }
 
     final boolean pkgContext = JavaCompletionUtil.inSomePackage(insertedElement);
-    AllClassesGetter.processJavaClasses(parameters, matcher, filterByScope, new Consumer<PsiClass>() {
+    AllClassesGetter.processJavaClasses(parameters, matcher, filterByScope, new Consumer<>() {
       @Override
       public void consume(PsiClass psiClass) {
         processClass(psiClass, null, "");
@@ -150,7 +150,8 @@ public class JavaClassNameCompletionContributor extends CompletionContributor im
             JavaPsiClassReferenceElement element = AllClassesGetter.createLookupItem(psiClass, AllClassesGetter.TRY_SHORTENING);
             element.setLookupString(prefix + element.getLookupString());
             consumer.consume(element);
-          } else {
+          }
+          else {
             Condition<PsiClass> condition = eachClass ->
               filter.isAcceptable(eachClass, insertedElement) &&
               AllClassesGetter.isAcceptableInContext(insertedElement, eachClass, filterByScope, pkgContext);
@@ -161,7 +162,8 @@ public class JavaClassNameCompletionContributor extends CompletionContributor im
                 e -> consumer.consume(JavaCompletionUtil.highlightIfNeeded(null, e, e.getObject(), insertedElement)));
             }
           }
-        } else {
+        }
+        else {
           String name = psiClass.getName();
           if (name != null) {
             PsiClass[] innerClasses = psiClass.getInnerClasses();

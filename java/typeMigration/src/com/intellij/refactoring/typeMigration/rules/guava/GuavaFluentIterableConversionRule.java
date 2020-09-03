@@ -286,7 +286,7 @@ public class GuavaFluentIterableConversionRule extends BaseGuavaTypeConversionRu
                                                                           TypeMigrationLabeler labeler) {
     List<TypeConversionDescriptorBase> methodDescriptors = new SmartList<>();
 
-    NotNullLazyValue<TypeConversionRule> optionalDescriptor = new NotNullLazyValue<TypeConversionRule>() {
+    NotNullLazyValue<TypeConversionRule> optionalDescriptor = new NotNullLazyValue<>() {
       @NotNull
       @Override
       protected TypeConversionRule compute() {

@@ -34,7 +34,7 @@ public class ShortenCommandLineModeCombo extends ComboBox<ShortenCommandLine> {
                                      Consumer<? super ActionListener> listenerConsumer) {
     myProject = project;
     initModel(null, pathEditor, component.compute());
-    setRenderer(new ColoredListCellRenderer<ShortenCommandLine>() {
+    setRenderer(new ColoredListCellRenderer<>() {
       @Override
       protected void customizeCellRenderer(@NotNull JList<? extends ShortenCommandLine> list,
                                            ShortenCommandLine value,
@@ -43,7 +43,8 @@ public class ShortenCommandLineModeCombo extends ComboBox<ShortenCommandLine> {
                                            boolean hasFocus) {
         if (value == null) {
           ShortenCommandLine defaultMode = ShortenCommandLine.getDefaultMethod(myProject, getJdkRoot(pathEditor, component.compute()));
-          append("user-local default: " + defaultMode.getPresentableName()).append(" - " + defaultMode.getDescription(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
+          append("user-local default: " + defaultMode.getPresentableName())
+            .append(" - " + defaultMode.getDescription(), SimpleTextAttributes.GRAYED_ATTRIBUTES);
         }
         else {
           append(value.getPresentableName()).append(" - " + value.getDescription(), SimpleTextAttributes.GRAYED_ATTRIBUTES);

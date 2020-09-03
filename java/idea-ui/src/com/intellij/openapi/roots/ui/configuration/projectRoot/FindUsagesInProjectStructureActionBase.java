@@ -39,7 +39,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -77,7 +76,7 @@ public abstract class FindUsagesInProjectStructureActionBase extends AnAction im
     Arrays.sort(usagesArray, (o1, o2) -> o1.getPresentableName().compareToIgnoreCase(o2.getPresentableName()));
 
     BaseListPopupStep<ProjectStructureElementUsage> step =
-      new BaseListPopupStep<ProjectStructureElementUsage>(JavaUiBundle.message("dependencies.used.in.popup.title"), usagesArray) {
+      new BaseListPopupStep<>(JavaUiBundle.message("dependencies.used.in.popup.title"), usagesArray) {
         @Override
         public PopupStep onChosen(final ProjectStructureElementUsage selected, final boolean finalChoice) {
           PlaceInProjectStructure place = selected.getPlace();

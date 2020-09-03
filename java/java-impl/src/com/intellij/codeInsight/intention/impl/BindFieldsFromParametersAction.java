@@ -124,7 +124,7 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
     Map<SmartPsiElementPointer<PsiParameter>, Boolean> params = psiMethod.getUserData(PARAMS);
     if (params == null) psiMethod.putUserData(PARAMS, params = ContainerUtil.createConcurrentWeakMap());
     Map<SmartPsiElementPointer<PsiParameter>, Boolean> finalParams = params;
-    return new AbstractCollection<SmartPsiElementPointer<PsiParameter>>() {
+    return new AbstractCollection<>() {
       @Override
       public boolean add(SmartPsiElementPointer<PsiParameter> psiVariable) {
         return finalParams.put(psiVariable, Boolean.TRUE) == null;

@@ -43,7 +43,7 @@ public interface StreamApiConstants {
 
   @NlsSafe String JAVA_UTIL_STREAM_COLLECTORS = "java.util.stream.Collectors";
 
-  SoftLazyValue<Set<String>> STREAM_STREAM_API_METHODS = new SoftLazyValue<Set<String>>() {
+  SoftLazyValue<Set<String>> STREAM_STREAM_API_METHODS = new SoftLazyValue<>() {
     @NotNull
     @Override
     protected Set<String> compute() {

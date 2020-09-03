@@ -100,7 +100,7 @@ public final class DfTypes {
    * A special value that represents a contract failure after method return (the control flow should immediately proceed
    * with exception handling). This value is like a constant but it's type doesn't correspond to any JVM type.
    */
-  public static final DfType FAIL = new DfConstantType<Object>(ObjectUtils.sentinel("FAIL")) {
+  public static final DfType FAIL = new DfConstantType<>(ObjectUtils.sentinel("FAIL")) {
     @NotNull
     @Override
     public PsiType getPsiType() {

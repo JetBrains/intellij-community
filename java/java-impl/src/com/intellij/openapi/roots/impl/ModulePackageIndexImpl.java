@@ -20,7 +20,7 @@ public final class ModulePackageIndexImpl extends ModulePackageIndex {
     myDirectoryIndex = DirectoryIndex.getInstance(module.getProject());
   }
 
-  private final Condition<VirtualFile> myDirCondition = new Condition<VirtualFile>() {
+  private final Condition<VirtualFile> myDirCondition = new Condition<>() {
     @Override
     public boolean value(final VirtualFile dir) {
       return dir.isValid() && myModuleFileIndex.getOrderEntryForFile(dir) != null;

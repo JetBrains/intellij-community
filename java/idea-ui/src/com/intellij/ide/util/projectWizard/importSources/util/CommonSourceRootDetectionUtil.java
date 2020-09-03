@@ -74,7 +74,7 @@ public abstract class CommonSourceRootDetectionUtil<F> {
 
   protected abstract boolean isFile(final F file);
 
-  public static final CommonSourceRootDetectionUtil<File> IO_FILE = new CommonSourceRootDetectionUtil<File>() {
+  public static final CommonSourceRootDetectionUtil<File> IO_FILE = new CommonSourceRootDetectionUtil<>() {
 
     @Override
     protected String getName(final File file) {
@@ -114,7 +114,7 @@ public abstract class CommonSourceRootDetectionUtil<F> {
     }
   }
 
-  public static final CommonSourceRootDetectionUtil<VirtualFile> VIRTUAL_FILE = new CommonSourceRootDetectionUtil<VirtualFile>() {
+  public static final CommonSourceRootDetectionUtil<VirtualFile> VIRTUAL_FILE = new CommonSourceRootDetectionUtil<>() {
 
     @Override
     protected String getName(VirtualFile file) {

@@ -125,7 +125,7 @@ public final class ElementToWorkOn {
           }
           else {
             final int selection = IntroduceVariableBase.preferredSelection(statementsInRange, expressions);
-            IntroduceTargetChooser.showChooser(editor, expressions, new Pass<PsiExpression>() {
+            IntroduceTargetChooser.showChooser(editor, expressions, new Pass<>() {
               @Override
               public void pass(final PsiExpression selectedValue) {
                 PsiLocalVariable var = null; //replace var if selected expression == var initializer

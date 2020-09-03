@@ -82,7 +82,7 @@ class JrtHandler extends ArchiveHandler {
     Path root = getFileSystem().getPath("/modules");
     if (!Files.exists(root)) throw new FileNotFoundException("JRT root missing");
 
-    Files.walkFileTree(root, new SimpleFileVisitor<Path>() {
+    Files.walkFileTree(root, new SimpleFileVisitor<>() {
       @Override
       public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
         process(dir, attrs);

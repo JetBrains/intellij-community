@@ -42,7 +42,7 @@ public final class MethodChainCompletionContributor extends CompletionContributo
 
   public MethodChainCompletionContributor() {
     ElementPattern<PsiElement> pattern = or(patternForMethodCallArgument(), patternForVariableAssignment(), patternForReturnExpression());
-    extend(CompletionType.SMART, pattern, new CompletionProvider<CompletionParameters>() {
+    extend(CompletionType.SMART, pattern, new CompletionProvider<>() {
       @Override
       protected void addCompletions(@NotNull CompletionParameters parameters,
                                     @NotNull ProcessingContext context,
@@ -180,7 +180,7 @@ public final class MethodChainCompletionContributor extends CompletionContributo
   @NotNull
   private static ElementPattern<PsiElement> patternForMethodCallArgument() {
     return psiElement().withSuperParent(3, PsiMethodCallExpression.class).withParent(psiReferenceExpression().with(
-      new PatternCondition<PsiReferenceExpression>("QualifierIsNull") {
+      new PatternCondition<>("QualifierIsNull") {
         @Override
         public boolean accepts(@NotNull PsiReferenceExpression referenceExpression, ProcessingContext context) {
           return referenceExpression.getQualifierExpression() == null;

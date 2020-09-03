@@ -355,7 +355,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
         .filter(Objects::nonNull)
         .forEach(this::appendPositionManager);
 
-      PositionManagerFactory.EP_NAME.getPoint(getProject()).addExtensionPointListener(new ExtensionPointListener<PositionManagerFactory>() {
+      PositionManagerFactory.EP_NAME.getPoint(getProject()).addExtensionPointListener(new ExtensionPointListener<>() {
         @Override
         public void extensionAdded(@NotNull PositionManagerFactory extension, @NotNull PluginDescriptor pluginDescriptor) {
           PositionManager manager = extension.createPositionManager(DebugProcessEvents.this);

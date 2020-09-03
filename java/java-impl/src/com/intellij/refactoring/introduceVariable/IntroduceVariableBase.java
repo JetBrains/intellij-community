@@ -195,12 +195,13 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
         }
         else {
           IntroduceTargetChooser.showChooser(editor, expressions,
-            new Pass<PsiExpression>(){
-              @Override
-              public void pass(final PsiExpression selectedValue) {
-                invoke(project, editor, file, selectedValue.getTextRange().getStartOffset(), selectedValue.getTextRange().getEndOffset());
-              }
-            },
+                                             new Pass<>() {
+                                               @Override
+                                               public void pass(final PsiExpression selectedValue) {
+                                                 invoke(project, editor, file, selectedValue.getTextRange().getStartOffset(),
+                                                        selectedValue.getTextRange().getEndOffset());
+                                               }
+                                             },
             new PsiExpressionTrimRenderer.RenderFunction(), RefactoringBundle.message("introduce.target.chooser.expressions.title"), preferredSelection(statementsInRange, expressions), ScopeHighlighter.NATURAL_RANGER);
           return;
         }

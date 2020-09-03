@@ -41,7 +41,7 @@ public abstract class SelectImportedProjectsStep<T> extends ProjectImportWizardS
 
   public SelectImportedProjectsStep(WizardContext context) {
     super(context);
-    fileChooser = new ElementsChooser<T>(true) {
+    fileChooser = new ElementsChooser<>(true) {
       @Override
       protected String getItemText(@NotNull T item) {
         return getElementText(item);
@@ -49,7 +49,7 @@ public abstract class SelectImportedProjectsStep<T> extends ProjectImportWizardS
 
       @Override
       protected Icon getItemIcon(@NotNull final T item) {
-        return getElementIcon (item);
+        return getElementIcon(item);
       }
     };
 

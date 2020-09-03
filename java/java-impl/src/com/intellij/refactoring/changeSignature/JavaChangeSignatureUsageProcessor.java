@@ -1280,7 +1280,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
 
     public static void searchForHierarchyConflicts(PsiMethod method, MultiMap<PsiElement, @Nls String> conflicts, final String modifier) {
       SuperMethodsSearch.search(method, ReadAction.compute(method::getContainingClass), true, false).forEach(
-        new ReadActionProcessor<MethodSignatureBackedByPsiMethod>() {
+        new ReadActionProcessor<>() {
           @Override
           public boolean processInReadAction(MethodSignatureBackedByPsiMethod methodSignature) {
             final PsiMethod superMethod = methodSignature.getMethod();
@@ -1293,7 +1293,7 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
             return true;
           }
         });
-      OverridingMethodsSearch.search(method).forEach(new ReadActionProcessor<PsiMethod>() {
+      OverridingMethodsSearch.search(method).forEach(new ReadActionProcessor<>() {
         @Override
         public boolean processInReadAction(PsiMethod overridingMethod) {
           if (!isVisibleFromOverridingMethod(method, overridingMethod, modifier)) {

@@ -56,7 +56,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
   public void setData(final Project project,
                     final PsiDirectory initialTargetDirectory,
                     final EditorComboBox editorComboBox) {
-    setData(project, initialTargetDirectory, new Pass<String>() {
+    setData(project, initialTargetDirectory, new Pass<>() {
       @Override
       public void pass(String s) {
       }

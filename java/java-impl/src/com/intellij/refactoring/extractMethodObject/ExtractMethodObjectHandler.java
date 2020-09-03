@@ -46,7 +46,7 @@ public class ExtractMethodObjectHandler implements RefactoringActionHandler, Con
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, final DataContext dataContext) {
-    ExtractMethodHandler.selectAndPass(project, editor, file, new Pass<PsiElement[]>() {
+    ExtractMethodHandler.selectAndPass(project, editor, file, new Pass<>() {
       @Override
       public void pass(final PsiElement[] selectedValue) {
         invokeOnElements(project, editor, file, selectedValue);

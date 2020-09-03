@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Objects;
 
 public class EqualsHashCodeTemplatesPanel extends NamedItemsListEditor<Couple<TemplateResource>> {
-  private static final Namer<Couple<TemplateResource>> NAMER = new Namer<Couple<TemplateResource>>() {
+  private static final Namer<Couple<TemplateResource>> NAMER = new Namer<>() {
 
     @Override
     public String getName(Couple<TemplateResource> couple) {
@@ -49,7 +49,7 @@ public class EqualsHashCodeTemplatesPanel extends NamedItemsListEditor<Couple<Te
 
   private static final Factory<Couple<TemplateResource>> FACTORY = () -> Couple.of(new TemplateResource(), new TemplateResource());
 
-  private static final Cloner<Couple<TemplateResource>> CLONER = new Cloner<Couple<TemplateResource>>() {
+  private static final Cloner<Couple<TemplateResource>> CLONER = new Cloner<>() {
     @Override
     public Couple<TemplateResource> cloneOf(Couple<TemplateResource> couple) {
       if (couple.first.isDefault()) return couple;
@@ -70,7 +70,7 @@ public class EqualsHashCodeTemplatesPanel extends NamedItemsListEditor<Couple<Te
     }
   };
 
-  private static final Equality<Couple<TemplateResource>> COMPARER = new Equality<Couple<TemplateResource>>() {
+  private static final Equality<Couple<TemplateResource>> COMPARER = new Equality<>() {
     @Override
     public boolean equals(Couple<TemplateResource> o1, Couple<TemplateResource> o2) {
       return equals(o1.first, o2.first) && equals(o1.second, o2.second);

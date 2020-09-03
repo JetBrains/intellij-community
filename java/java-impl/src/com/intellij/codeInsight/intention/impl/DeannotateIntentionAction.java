@@ -88,23 +88,24 @@ public class DeannotateIntentionAction implements IntentionAction, LowPriorityAc
       deannotate(externalAnnotations[0], project, file, annotationsManager, listOwner);
       return;
     }
-    JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<PsiAnnotation>(JavaBundle.message("deannotate.intention.chooser.title"), externalAnnotations) {
-      @Override
-      public PopupStep<?> onChosen(final PsiAnnotation selectedValue, final boolean finalChoice) {
-        if (finalChoice) {
-          doFinalStep(() -> deannotate(selectedValue, project, file, annotationsManager, listOwner));
+    JBPopupFactory.getInstance().createListPopup(
+      new BaseListPopupStep<>(JavaBundle.message("deannotate.intention.chooser.title"), externalAnnotations) {
+        @Override
+        public PopupStep<?> onChosen(final PsiAnnotation selectedValue, final boolean finalChoice) {
+          if (finalChoice) {
+            doFinalStep(() -> deannotate(selectedValue, project, file, annotationsManager, listOwner));
+          }
+          return PopupStep.FINAL_CHOICE;
         }
-        return PopupStep.FINAL_CHOICE;
-      }
 
-      @Override
-      @NotNull
-      public String getTextFor(final PsiAnnotation value) {
-        final String qualifiedName = value.getQualifiedName();
-        LOG.assertTrue(qualifiedName != null);
-        return qualifiedName;
-      }
-    }).showInBestPositionFor(editor);
+        @Override
+        @NotNull
+        public String getTextFor(final PsiAnnotation value) {
+          final String qualifiedName = value.getQualifiedName();
+          LOG.assertTrue(qualifiedName != null);
+          return qualifiedName;
+        }
+      }).showInBestPositionFor(editor);
   }
 
   private void deannotate(final PsiAnnotation annotation,

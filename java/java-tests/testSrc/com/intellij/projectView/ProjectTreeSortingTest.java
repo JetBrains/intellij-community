@@ -276,7 +276,7 @@ public class ProjectTreeSortingTest extends BaseProjectViewTestCase {
         if (o instanceof PsiFileSystemItem) {
           final Integer order = myOrder.get(((PsiFileSystemItem)o).getVirtualFile().getName());
 
-          treeNode = new ProjectViewNode<PsiFileSystemItem>(myProject, (PsiFileSystemItem)o, settings) {
+          treeNode = new ProjectViewNode<>(myProject, (PsiFileSystemItem)o, settings) {
             @Override
             @NotNull
             public Collection<AbstractTreeNode<?>> getChildren() {

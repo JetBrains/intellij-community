@@ -139,7 +139,7 @@ public class VariableAccessFromInnerClassFix implements IntentionAction {
     Map<PsiVariable, Boolean> vars = myContext.getUserData(VARS[myFixType]);
     if (vars == null) myContext.putUserData(VARS[myFixType], vars = ContainerUtil.createConcurrentWeakMap());
     final Map<PsiVariable, Boolean> finalVars = vars;
-    return new AbstractCollection<PsiVariable>() {
+    return new AbstractCollection<>() {
       @Override
       public boolean add(PsiVariable psiVariable) {
         return finalVars.put(psiVariable, Boolean.TRUE) == null;

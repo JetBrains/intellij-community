@@ -52,7 +52,7 @@ public final class DiscoveredTestsIndex extends MapReduceIndex<Integer, IntList,
     }
   }
 
-  private static final IndexExtension<Integer, IntList, UsedSources> INDEX_EXTENSION = new IndexExtension<Integer, IntList, UsedSources>() {
+  private static final IndexExtension<Integer, IntList, UsedSources> INDEX_EXTENSION = new IndexExtension<>() {
     @NotNull
     @Override
     public IndexId<Integer, IntList> getName() {

@@ -33,7 +33,7 @@ import java.util.*;
 public class JavaDuplicatesExtractMethodProcessor extends ExtractMethodProcessor {
   private static final Logger LOG = Logger.getInstance(JavaDuplicatesExtractMethodProcessor.class);
 
-  private static final Pass<ExtractMethodProcessor> USE_SNAPSHOT_TARGET_CLASS = new Pass<ExtractMethodProcessor>() {
+  private static final Pass<ExtractMethodProcessor> USE_SNAPSHOT_TARGET_CLASS = new Pass<>() {
     @Override
     public void pass(ExtractMethodProcessor processor) {} // it's a dummy but it's required to select the target class
   };

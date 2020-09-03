@@ -130,7 +130,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
       }
       NavigationUtil.getPsiElementPopup(classes.toArray(PsiClass.EMPTY_ARRAY), new PsiClassListCellRenderer(),
                                         title,
-                                        new PsiElementProcessor<PsiClass>() {
+                                        new PsiElementProcessor<>() {
                                           @Override
                                           public boolean execute(@NotNull PsiClass aClass) {
                                             AnonymousTargetClassPreselectionUtil.rememberSelection(aClass, myParentClass);
@@ -449,7 +449,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
   protected abstract boolean accept(ElementToWorkOn elementToWorkOn);
 
   protected ElementToWorkOn.ElementsProcessor<ElementToWorkOn> getElementProcessor(final Project project, final Editor editor) {
-    return new ElementToWorkOn.ElementsProcessor<ElementToWorkOn>() {
+    return new ElementToWorkOn.ElementsProcessor<>() {
       @Override
       public boolean accept(ElementToWorkOn el) {
         return BaseExpressionToFieldHandler.this.accept(el);

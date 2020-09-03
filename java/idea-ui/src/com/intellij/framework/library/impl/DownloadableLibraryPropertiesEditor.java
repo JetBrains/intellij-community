@@ -52,7 +52,7 @@ public class DownloadableLibraryPropertiesEditor extends LibraryPropertiesEditor
   @Override
   protected void edit() {
     final ModalityState current = ModalityState.current();
-    myDescription.fetchVersions(new DownloadableFileSetVersions.FileSetVersionsCallback<FrameworkLibraryVersion>() {
+    myDescription.fetchVersions(new DownloadableFileSetVersions.FileSetVersionsCallback<>() {
       @Override
       public void onSuccess(@NotNull final List<? extends FrameworkLibraryVersion> versions) {
         ApplicationManager.getApplication().invokeLater(() -> {

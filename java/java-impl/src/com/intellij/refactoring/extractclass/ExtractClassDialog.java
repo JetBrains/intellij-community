@@ -85,7 +85,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
     myDestinationFolderComboBox.setData(myProject, sourceClass.getContainingFile().getContainingDirectory(),
                                         packageTextField.getChildComponent());
     classNameField.getDocument().addDocumentListener(docListener);
-    final MemberInfo.Filter<PsiMember> filter = new MemberInfo.Filter<PsiMember>() {
+    final MemberInfo.Filter<PsiMember> filter = new MemberInfo.Filter<>() {
       @Override
       public boolean includeMember(PsiMember element) {
         if (element instanceof PsiMethod) {
@@ -280,7 +280,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
       }
     };
 
-    table.setMemberInfoModel(new DelegatingMemberInfoModel<PsiMember, MemberInfo>(table.getMemberInfoModel()) {
+    table.setMemberInfoModel(new DelegatingMemberInfoModel<>(table.getMemberInfoModel()) {
 
       @Override
       public int checkForProblems(@NotNull final MemberInfo member) {

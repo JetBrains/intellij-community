@@ -339,7 +339,7 @@ public class BuildArtifactAction extends DumbAwareAction {
         actions.add(new EditArtifactItem(selectedValues, myProject, mySettingsService));
       }
       String title = JavaCompilerBundle.message("popup.title.chosen.artifact.action", selectedValues.size());
-      return new BaseListPopupStep<ArtifactActionItem>(title, actions) {
+      return new BaseListPopupStep<>(title, actions) {
         @NotNull
         @Override
         public String getTextFor(ArtifactActionItem value) {

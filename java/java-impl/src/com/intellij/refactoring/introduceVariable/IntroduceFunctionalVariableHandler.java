@@ -44,15 +44,17 @@ public class IntroduceFunctionalVariableHandler extends IntroduceVariableHandler
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, DataContext dataContext) {
-    ExtractMethodHandler.selectAndPass(project, editor, file, new Pass<PsiElement[]>() {
+    ExtractMethodHandler.selectAndPass(project, editor, file, new Pass<>() {
       @Override
       public void pass(PsiElement[] elements) {
         if (elements.length == 0) {
-          String message = RefactoringBundle.getCannotRefactorMessage(RefactoringBundle.message("selected.block.should.represent.a.set.of.statements.or.an.expression"));
-          showErrorMessage(project , editor, message);
+          String message = RefactoringBundle
+            .getCannotRefactorMessage(RefactoringBundle.message("selected.block.should.represent.a.set.of.statements.or.an.expression"));
+          showErrorMessage(project, editor, message);
           return;
         }
-        PsiElement anchorStatement = elements[0] instanceof PsiComment ? elements[0] : RefactoringUtil.getParentStatement(elements[0], false);
+        PsiElement anchorStatement =
+          elements[0] instanceof PsiComment ? elements[0] : RefactoringUtil.getParentStatement(elements[0], false);
         PsiElement tempContainer = checkAnchorStatement(project, editor, anchorStatement);
         if (tempContainer == null) return;
 

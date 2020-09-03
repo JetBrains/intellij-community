@@ -158,27 +158,27 @@ public final class LibraryEditingUtil {
 
   public static BaseListPopupStep<LibraryType> createChooseTypeStep(final ClasspathPanel classpathPanel,
                                                                     final ParameterizedRunnable<? super LibraryType> action) {
-    return new BaseListPopupStep<LibraryType>(JavaUiBundle.message("popup.title.select.library.type"), getSuitableTypes(classpathPanel)) {
-          @NotNull
-          @Override
-          public String getTextFor(LibraryType value) {
-            if (value != null) {
-              final String name = value.getCreateActionName();
-              if (name != null) return name;
-            }
-            return JavaUiBundle.message("create.default.library.type.action.name");
-          }
+    return new BaseListPopupStep<>(JavaUiBundle.message("popup.title.select.library.type"), getSuitableTypes(classpathPanel)) {
+      @NotNull
+      @Override
+      public String getTextFor(LibraryType value) {
+        if (value != null) {
+          final String name = value.getCreateActionName();
+          if (name != null) return name;
+        }
+        return JavaUiBundle.message("create.default.library.type.action.name");
+      }
 
-          @Override
-          public Icon getIconFor(LibraryType aValue) {
-            return aValue != null ? aValue.getIcon(null) : PlatformIcons.LIBRARY_ICON;
-          }
+      @Override
+      public Icon getIconFor(LibraryType aValue) {
+        return aValue != null ? aValue.getIcon(null) : PlatformIcons.LIBRARY_ICON;
+      }
 
-          @Override
-          public PopupStep onChosen(final LibraryType selectedValue, boolean finalChoice) {
-            return doFinalStep(() -> action.run(selectedValue));
-          }
-        };
+      @Override
+      public PopupStep onChosen(final LibraryType selectedValue, boolean finalChoice) {
+        return doFinalStep(() -> action.run(selectedValue));
+      }
+    };
   }
 
   public static List<Module> getSuitableModules(@NotNull ModuleStructureConfigurable rootConfigurable,

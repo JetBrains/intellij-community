@@ -54,7 +54,7 @@ public class TestFilesIndex extends MapReduceIndex<Integer, Void, UsedSources> {
     }
   }
 
-  private static final IndexExtension<Integer, Void, UsedSources> INDEX_EXTENSION = new IndexExtension<Integer, Void, UsedSources>() {
+  private static final IndexExtension<Integer, Void, UsedSources> INDEX_EXTENSION = new IndexExtension<>() {
     @NotNull
     @Override
     public IndexId<Integer, Void> getName() {

@@ -26,10 +26,10 @@ public class InterfaceDependencyMemberInfoModel<T extends PsiMember, M extends M
 
   public InterfaceDependencyMemberInfoModel(PsiClass aClass) {
     super(new InterfaceMemberDependencyGraph<>(aClass), WARNING);
-    setTooltipProvider(new MemberInfoTooltipManager.TooltipProvider<T, M>() {
+    setTooltipProvider(new MemberInfoTooltipManager.TooltipProvider<>() {
       @Override
       public String getTooltip(M memberInfo) {
-        return ((InterfaceMemberDependencyGraph<?, ?>) myMemberDependencyGraph).getElementTooltip(memberInfo.getMember());
+        return ((InterfaceMemberDependencyGraph<?, ?>)myMemberDependencyGraph).getElementTooltip(memberInfo.getMember());
       }
     });
   }

@@ -66,7 +66,7 @@ public final class MethodChainLookupRangingHelper {
 
   @NotNull
   private static LookupElementDecorator<LookupElement> decorateWithIteratorAccess(PsiMethod method, LookupElement chainLookupElement) {
-    return new LookupElementDecorator<LookupElement>(chainLookupElement) {
+    return new LookupElementDecorator<>(chainLookupElement) {
       @Override
       public void handleInsert(@NotNull InsertionContext context) {
         super.handleInsert(context);
@@ -76,17 +76,21 @@ public final class MethodChainLookupRangingHelper {
         if (tailReturnType instanceof PsiArrayType) {
           document.insertString(tail, "[0]");
           context.getEditor().getCaretModel().moveToOffset(tail + 1);
-        } else {
+        }
+        else {
           PsiClass returnClass = Objects.requireNonNull(PsiUtil.resolveClassInClassTypeOnly(tailReturnType));
           PsiDocumentManager.getInstance(context.getProject()).doPostponedOperationsAndUnblockDocument(document);
           if (InheritanceUtil.isInheritor(returnClass, CommonClassNames.JAVA_UTIL_LIST)) {
             document.insertString(tail, ".get(0)");
             context.getEditor().getCaretModel().moveToOffset(tail + 5);
-          } else if (InheritanceUtil.isInheritor(returnClass, CommonClassNames.JAVA_UTIL_COLLECTION)) {
+          }
+          else if (InheritanceUtil.isInheritor(returnClass, CommonClassNames.JAVA_UTIL_COLLECTION)) {
             document.insertString(tail, ".iterator().next()");
-          } else if (InheritanceUtil.isInheritor(returnClass, CommonClassNames.JAVA_UTIL_ITERATOR)) {
+          }
+          else if (InheritanceUtil.isInheritor(returnClass, CommonClassNames.JAVA_UTIL_ITERATOR)) {
             document.insertString(tail, ".next()");
-          } else if (InheritanceUtil.isInheritor(returnClass, CommonClassNames.JAVA_UTIL_STREAM_STREAM)) {
+          }
+          else if (InheritanceUtil.isInheritor(returnClass, CommonClassNames.JAVA_UTIL_STREAM_STREAM)) {
             document.insertString(tail, ".findFirst().get()");
           }
         }

@@ -51,7 +51,7 @@ public class RemoveMiddlemanDialog extends RefactoringDialog {
       JavaRefactoringBundle.message("remove.middleman.methods.to.inline.title"), delegateMethods,
       JavaRefactoringBundle.message("remove.middleman.column.header"));
     final MemberSelectionTable table = selectionPanel.getTable();
-    table.setMemberInfoModel(new DelegatingMemberInfoModel<PsiMember, MemberInfo>(table.getMemberInfoModel()) {
+    table.setMemberInfoModel(new DelegatingMemberInfoModel<>(table.getMemberInfoModel()) {
       @Override
       public int checkForProblems(@NotNull final MemberInfo member) {
         return hasSuperMethods(member) ? ERROR : OK;

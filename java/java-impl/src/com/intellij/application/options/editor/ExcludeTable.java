@@ -45,7 +45,7 @@ class ExcludeTable extends ListTableWithButtons<ExcludeTable.Item> {
       null : new ValidationInfo(JavaBundle.message("illegal.name.validation.info", value.toString()), component);
 
   private static final Disposable validatorsDisposable = Disposer.newDisposable();
-  private static final ColumnInfo<Item, String> NAME_COLUMN = new ColumnInfo<Item, String>(JavaBundle.message("exclude.table.mask")) {
+  private static final ColumnInfo<Item, String> NAME_COLUMN = new ColumnInfo<>(JavaBundle.message("exclude.table.mask")) {
 
     @Nullable
     @Override
@@ -90,7 +90,7 @@ class ExcludeTable extends ListTableWithButtons<ExcludeTable.Item> {
     }
   };
 
-  private static final ColumnInfo<Item, ExclusionScope> SCOPE_COLUMN = new ColumnInfo<Item, ExclusionScope>(JavaBundle.message(
+  private static final ColumnInfo<Item, ExclusionScope> SCOPE_COLUMN = new ColumnInfo<>(JavaBundle.message(
     "exclude.table.scope.column")) {
     @Nullable
     @Override

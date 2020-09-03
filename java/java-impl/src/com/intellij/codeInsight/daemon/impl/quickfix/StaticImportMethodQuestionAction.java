@@ -105,7 +105,7 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
       return;
     }
     final BaseListPopupStep<T> step =
-      new BaseListPopupStep<T>(getPopupTitle(), myCandidates) {
+      new BaseListPopupStep<>(getPopupTitle(), myCandidates) {
 
         @Override
         public boolean isAutoSelectionEnabled() {

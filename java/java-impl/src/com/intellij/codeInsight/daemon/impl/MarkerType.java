@@ -404,16 +404,17 @@ public class MarkerType {
     @Override
     public void run(@NotNull final ProgressIndicator indicator) {
       super.run(indicator);
-      ClassInheritorsSearch.search(myClass, ReadAction.compute(myClass::getUseScope), true).forEach(new CommonProcessors.CollectProcessor<PsiClass>() {
-        @Override
-        public boolean process(final PsiClass o) {
-          if (!updateComponent(o)) {
-            indicator.cancel();
+      ClassInheritorsSearch.search(myClass, ReadAction.compute(myClass::getUseScope), true).forEach(
+        new CommonProcessors.CollectProcessor<>() {
+          @Override
+          public boolean process(final PsiClass o) {
+            if (!updateComponent(o)) {
+              indicator.cancel();
+            }
+            ProgressManager.checkCanceled();
+            return super.process(o);
           }
-          ProgressManager.checkCanceled();
-          return super.process(o);
-        }
-      });
+        });
 
       collectFunctionalInheritors(indicator, myClass);
     }
@@ -449,7 +450,7 @@ public class MarkerType {
       super.run(indicator);
       GlobalSearchScope scope = GlobalSearchScope.allScope(PsiUtilCore.getProjectInReadAction(myMethod));
       OverridingMethodsSearch.search(myMethod, scope, true).forEach(
-        new CommonProcessors.CollectProcessor<PsiMethod>() {
+        new CommonProcessors.CollectProcessor<>() {
           @Override
           public boolean process(PsiMethod psiMethod) {
             if (!updateComponent(psiMethod)) {

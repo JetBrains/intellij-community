@@ -38,7 +38,7 @@ import java.util.Set;
  * @author Dmitry Batkovich
  */
 public abstract class BaseGuavaTypeConversionRule extends TypeConversionRule {
-  private final SoftLazyValue<Map<String, TypeConversionDescriptorBase>> mySimpleDescriptors = new SoftLazyValue<Map<String, TypeConversionDescriptorBase>>() {
+  private final SoftLazyValue<Map<String, TypeConversionDescriptorBase>> mySimpleDescriptors = new SoftLazyValue<>() {
     @NotNull
     @Override
     protected Map<String, TypeConversionDescriptorBase> compute() {

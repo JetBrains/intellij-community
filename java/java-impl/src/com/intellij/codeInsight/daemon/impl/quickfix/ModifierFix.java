@@ -223,7 +223,7 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
         final List<PsiModifierList> modifierLists = new ArrayList<>();
         ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
           OverridingMethodsSearch.search((PsiMethod)owner, owner.getResolveScope(), true).forEach(
-            new PsiElementProcessorAdapter<>(new PsiElementProcessor<PsiMethod>() {
+            new PsiElementProcessorAdapter<>(new PsiElementProcessor<>() {
               @Override
               public boolean execute(@NotNull PsiMethod inheritor) {
                 PsiModifierList list = inheritor.getModifierList();

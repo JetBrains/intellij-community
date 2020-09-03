@@ -59,7 +59,7 @@ public class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
     }
     return new JavaElementVisitor() {
       private final AtomicNotNullLazyValue<Map<String, PsiClass>> myGuavaClassConversions =
-        new AtomicNotNullLazyValue<Map<String, PsiClass>>() {
+        new AtomicNotNullLazyValue<>() {
           @NotNull
           @Override
           protected Map<String, PsiClass> compute() {

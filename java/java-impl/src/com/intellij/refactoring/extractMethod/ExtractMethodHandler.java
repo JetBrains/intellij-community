@@ -56,7 +56,6 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.duplicates.DuplicatesImpl;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -79,7 +78,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, DataContext dataContext) {
-    final Pass<PsiElement[]> callback = new Pass<PsiElement[]>() {
+    final Pass<PsiElement[]> callback = new Pass<>() {
       @Override
       public void pass(final PsiElement[] selectedValue) {
         invokeOnElements(project, editor, file, selectedValue);
@@ -101,7 +100,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
         return;
       }
       else {
-        IntroduceTargetChooser.showChooser(editor, expressions, new Pass<PsiExpression>() {
+        IntroduceTargetChooser.showChooser(editor, expressions, new Pass<>() {
           @Override
           public void pass(PsiExpression psiExpression) {
             callback.pass(new PsiElement[]{psiExpression});
@@ -176,7 +175,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler, ContextAw
       return;
     }
 
-    getProcessor(elements, project, file, editor, true, new Pass<ExtractMethodProcessor>(){
+    getProcessor(elements, project, file, editor, true, new Pass<>() {
       @Override
       public void pass(ExtractMethodProcessor processor) {
         invokeOnElements(project, editor, processor, true);
