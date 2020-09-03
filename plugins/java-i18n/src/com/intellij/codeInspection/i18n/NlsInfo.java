@@ -530,12 +530,18 @@ public abstract class NlsInfo {
     PsiType returnType = null;
     UElement parent = expression.getUastParent();
     if (parent instanceof UCallExpression) {
+      // Nested annotations in Kotlin
       UAnnotation anno = UastContextKt.toUElement(parent.getSourcePsi(), UAnnotation.class);
       if (anno != null) {
         parent = anno;
       }
     }
-    if (parent instanceof UNamedExpression) {
+    if (parent instanceof UAnnotationMethod) {
+      UExpression defaultValue = ((UAnnotationMethod)parent).getUastDefaultValue();
+      if (defaultValue == null || !expressionsAreEquivalent(defaultValue, expression)) return Unspecified.UNKNOWN;
+      method = ((UAnnotationMethod)parent).getPsi();
+    }
+    else if (parent instanceof UNamedExpression) {
       method = UastUtils.getAnnotationMethod((UNamedExpression)parent);
     }
     else if (parent instanceof UAnnotation) {

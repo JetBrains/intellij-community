@@ -410,7 +410,7 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
         }
         
         @Nls
-        fun localize(name: String) = <warning descr="Hardcoded string literal: \"Hello ${'$'}name\"">"Hello ${'$'}name"</warning>
+        fun localize(name: String) = <warning descr="Hardcoded string literal: \"Hello ${'$'}name\"">"Hello ${'$'}<warning descr="Reference to non-localized string is used where localized string is expected">name</warning>"</warning>
         
         fun mainFunction() {
           val window = Window()
@@ -425,6 +425,17 @@ class KtI18NInspectionTest : LightJavaCodeInsightFixtureTestCase() {
           showMessage(resultWithLet)
           showMessage(resultWithLetNonLocalized)
         }
+        """.trimIndent())
+    myFixture.testHighlighting()
+  }
+  
+  fun testDefaultValues() {
+    myFixture.enableInspections(I18nInspection())
+    myFixture.configureByText("Foo.kt", """
+        import org.jetbrains.annotations.NonNls
+        
+        fun foo1(<warning descr="[UNUSED_PARAMETER] Parameter 'message' is never used">message</warning>: String = <warning descr="Hardcoded string literal: \"Hello World\"">"Hello World"</warning>) {}
+        fun foo2(@NonNls <warning descr="[UNUSED_PARAMETER] Parameter 'message' is never used">message</warning>: String = "Hello World") {}
         """.trimIndent())
     myFixture.testHighlighting()
   }
