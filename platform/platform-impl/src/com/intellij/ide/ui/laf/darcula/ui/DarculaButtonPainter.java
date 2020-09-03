@@ -88,16 +88,6 @@ public class DarculaButtonPainter implements Border, UIResource {
     }
   }
 
-  private static void paintFocusTag(Graphics2D g2, float width, float height) {
-    Outline.focus.setGraphicsColor(g2, true);
-    float bw = BW.getFloat();
-    Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
-    border.append(new RoundRectangle2D.Float(0, 0, width, height, height, height), false);
-    float inner = height - bw * 2;
-    border.append(new RoundRectangle2D.Float(bw, bw, width - bw * 2, inner, inner, inner), false);
-    g2.fill(border);
-  }
-
   public Paint getBorderPaint(Component button) {
     AbstractButton b = (AbstractButton)button;
     Color borderColor = (Color)b.getClientProperty("JButton.borderColor");
