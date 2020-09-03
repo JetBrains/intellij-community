@@ -11,6 +11,7 @@ import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiElement;
@@ -190,7 +191,7 @@ public abstract class CompletionContributor {
    * @return hint text to be shown if no variants are found, typically "No suggestions"
    */
   @Nullable
-  public String handleEmptyLookup(@NotNull CompletionParameters parameters, final Editor editor) {
+  public @NlsContexts.HintText String handleEmptyLookup(@NotNull CompletionParameters parameters, final Editor editor) {
     return null;
   }
 

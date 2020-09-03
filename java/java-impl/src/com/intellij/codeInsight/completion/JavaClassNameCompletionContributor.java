@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiJavaElementPattern;
@@ -247,7 +248,7 @@ public class JavaClassNameCompletionContributor extends CompletionContributor im
 
 
   @Override
-  public String handleEmptyLookup(@NotNull final CompletionParameters parameters, final Editor editor) {
+  public @NlsContexts.HintText String handleEmptyLookup(@NotNull final CompletionParameters parameters, final Editor editor) {
     if (!(parameters.getOriginalFile() instanceof PsiJavaFile)) return null;
 
     if (shouldShowSecondSmartCompletionHint(parameters)) {

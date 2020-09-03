@@ -763,7 +763,7 @@ public class HighlightInfo implements Segment {
     private volatile HighlightDisplayKey myKey;
     private final ProblemGroup myProblemGroup;
     private final HighlightSeverity mySeverity;
-    private final String myDisplayName;
+    private final @Nls String myDisplayName;
     private final Icon myIcon;
     private Boolean myCanCleanup;
 
@@ -909,7 +909,7 @@ public class HighlightInfo implements Segment {
     }
 
     @Nullable
-    public String getDisplayName() {
+    public @Nls String getDisplayName() {
       return myDisplayName;
     }
 

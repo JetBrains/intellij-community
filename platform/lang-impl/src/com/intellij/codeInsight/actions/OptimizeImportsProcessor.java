@@ -13,6 +13,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsContexts.HintText;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl;
@@ -148,7 +149,8 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
       }
     }
 
-    collector.setOptimizeImportsNotification(atLeastOneOptimizerChangedSomething ? "imports optimized" : null);
+    String hint = atLeastOneOptimizerChangedSomething ? CodeInsightBundle.message("hint.text.imports.optimized") : null;
+    collector.setOptimizeImportsNotification(hint);
   }
 
   static class NotificationInfo {
@@ -156,9 +158,10 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
     static final NotificationInfo SOMETHING_CHANGED_WITHOUT_MESSAGE_NOTIFICATION = new NotificationInfo(true, null);
 
     private final boolean mySomethingChanged;
+    @HintText
     private final String myMessage;
 
-    NotificationInfo(@NotNull String message) {
+    NotificationInfo(@NotNull @HintText String message) {
       this(true, message);
     }
 
@@ -166,11 +169,11 @@ public class OptimizeImportsProcessor extends AbstractLayoutCodeProcessor {
       return mySomethingChanged;
     }
 
-    public String getMessage() {
+    public @HintText String getMessage() {
       return myMessage;
     }
 
-    private NotificationInfo(boolean isSomethingChanged, @Nullable String message) {
+    private NotificationInfo(boolean isSomethingChanged, @Nullable @HintText String message) {
       mySomethingChanged = isSomethingChanged;
       myMessage = message;
     }

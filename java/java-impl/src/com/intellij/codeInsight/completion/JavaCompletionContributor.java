@@ -24,6 +24,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -806,7 +807,7 @@ public class JavaCompletionContributor extends CompletionContributor implements 
   }
 
   @Override
-  public String handleEmptyLookup(@NotNull final CompletionParameters parameters, final Editor editor) {
+  public @NlsContexts.HintText String handleEmptyLookup(@NotNull final CompletionParameters parameters, final Editor editor) {
     if (!(parameters.getOriginalFile() instanceof PsiJavaFile)) return null;
 
     final String ad = advertise(parameters);

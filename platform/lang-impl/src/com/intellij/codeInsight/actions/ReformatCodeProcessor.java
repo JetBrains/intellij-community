@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.actions;
 
@@ -158,7 +158,7 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
     LOG.assertTrue(getInfoCollector() != null);
     int number = VcsFacade.getInstance().calculateChangedLinesNumber(document, before);
     if (number > 0) {
-      String message = "formatted " + number + " line" + (number > 1 ? "s" : "");
+      String message = CodeInsightBundle.message("hint.text.formatted.line", number);
       getInfoCollector().setReformatCodeNotification(message);
     }
   }

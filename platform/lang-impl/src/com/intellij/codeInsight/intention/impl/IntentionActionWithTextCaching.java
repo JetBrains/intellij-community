@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.intention.impl;
 
@@ -13,6 +13,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.PossiblyDumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
@@ -33,7 +34,7 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
   private final List<IntentionAction> myOptionInspectionFixes = new ArrayList<>();
   private final @IntentionName String myText;
   private final IntentionAction myAction;
-  private final String myDisplayName;
+  private final @NlsContexts.PopupTitle String myDisplayName;
   private final Icon myIcon;
 
   IntentionActionWithTextCaching(@NotNull IntentionAction action){
@@ -44,7 +45,7 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
     this(descriptor.getAction(), descriptor.getDisplayName(), descriptor.getIcon(), markInvoked);
   }
 
-  private IntentionActionWithTextCaching(@NotNull IntentionAction action, String displayName, @Nullable Icon icon, @NotNull BiConsumer<? super IntentionActionWithTextCaching, ? super IntentionAction> markInvoked) {
+  private IntentionActionWithTextCaching(@NotNull IntentionAction action, @NlsContexts.PopupTitle String displayName, @Nullable Icon icon, @NotNull BiConsumer<? super IntentionActionWithTextCaching, ? super IntentionAction> markInvoked) {
     myIcon = icon;
     myText = action.getText();
     // needed for checking errors in user written actions
@@ -94,7 +95,7 @@ public class IntentionActionWithTextCaching implements Comparable<IntentionActio
     return ContainerUtil.concat(myOptionIntentions, myOptionErrorFixes, myOptionInspectionFixes);
   }
 
-  String getToolName() {
+  @NlsContexts.PopupTitle String getToolName() {
     return myDisplayName;
   }
 

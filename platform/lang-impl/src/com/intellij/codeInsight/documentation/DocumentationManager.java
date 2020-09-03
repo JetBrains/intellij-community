@@ -70,6 +70,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -126,7 +127,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   public static final Key<SmartPsiElementPointer<?>> ORIGINAL_ELEMENT_KEY = Key.create("Original element");
 
   private boolean myCloseOnSneeze;
-  private String myPrecalculatedDocumentation;
+  private @Nls String myPrecalculatedDocumentation;
 
   private ActionCallback myLastAction;
   private DocumentationComponent myTestDocumentationComponent;
@@ -432,7 +433,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
                                  @NotNull PopupUpdateProcessor updateProcessor,
                                  PsiElement originalElement,
                                  @Nullable Runnable closeCallback,
-                                 @Nullable String documentation,
+                                 @Nullable @Nls String documentation,
                                  boolean useStoredPopupSize) {
     if (!myProject.isOpen()) return;
 
@@ -826,7 +827,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         Throwable finalFail = fail;
         GuiUtils.invokeLaterIfNeeded(() -> {
           String message = finalFail instanceof IndexNotReadyException
-                           ? "Documentation is not available until indices are built."
+                           ? CodeInsightBundle.message("documentation.message.documentation.is.not.available")
                            : CodeInsightBundle.message("javadoc.external.fetch.error.message");
           component.setText(message, null, collector.provider);
           component.clearHistory();

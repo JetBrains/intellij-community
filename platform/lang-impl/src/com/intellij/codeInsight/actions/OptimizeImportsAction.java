@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.actions;
 
@@ -30,7 +30,6 @@ import java.util.Arrays;
 
 public class OptimizeImportsAction extends AnAction {
   private static final @NonNls String HELP_ID = "editing.manageImports";
-  private static final String NO_IMPORTS_OPTIMIZED = "No unused imports found";
   private static boolean myProcessVcsChangedFilesInTests;
 
   public OptimizeImportsAction() {
@@ -138,7 +137,7 @@ public class OptimizeImportsAction extends AnAction {
           if (collector != null) {
             String info = collector.getOptimizeImportsNotification();
             if (!editor.isDisposed() && EditorActivityManager.getInstance().isVisible(editor)) {
-              String message = info != null ? info : NO_IMPORTS_OPTIMIZED;
+              String message = info != null ? info : CodeInsightBundle.message("hint.text.no.unused.imports.found");
               FileInEditorProcessor.showHint(editor, StringUtil.capitalize(message), null);
             }
           }

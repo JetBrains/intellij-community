@@ -36,10 +36,8 @@ import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.NlsContexts.HintText;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.ElementPattern;
@@ -795,6 +793,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
   }
 
+  @HintText
   private String getNoSuggestionsMessage(CompletionParameters parameters) {
     return FileBasedIndex.getInstance().ignoreDumbMode(DumbModeAccessType.RELIABLE_DATA_ONLY, () -> {
       return CompletionContributor.forParameters(parameters)
@@ -806,7 +805,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     });
   }
 
-  private LightweightHint showErrorHint(Project project, Editor editor, String text) {
+  private LightweightHint showErrorHint(Project project, Editor editor, @HintText String text) {
     LightweightHint[] result = {null};
     EditorHintListener listener = (project1, hint, flags) -> result[0] = hint;
     SimpleMessageBusConnection connection = project.getMessageBus().simpleConnect();
@@ -924,7 +923,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   private static class ProjectEmptyCompletionNotifier implements EmptyCompletionNotifier {
     @Override
-    public void showIncompleteHint(@NotNull Editor editor, @NotNull String text, boolean isDumbMode) {
+    public void showIncompleteHint(@NotNull Editor editor, @NotNull @HintText String text, boolean isDumbMode) {
       String message = isDumbMode ?
                        text + CodeInsightBundle.message("completion.incomplete.during.indexing.suffix") : text;
       HintManager.getInstance().showInformationHint(editor, StringUtil.escapeXmlEntities(message), HintManager.UNDER);

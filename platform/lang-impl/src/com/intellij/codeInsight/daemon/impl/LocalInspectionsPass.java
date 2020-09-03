@@ -48,6 +48,7 @@ import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -838,7 +839,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     }
   }
 
-  private static String getPresentableNameText() {
+  private static @Nls String getPresentableNameText() {
     return DaemonBundle.message("pass.inspection");
   }
 }
