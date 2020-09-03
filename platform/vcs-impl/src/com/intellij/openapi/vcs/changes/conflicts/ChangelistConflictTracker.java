@@ -58,7 +58,7 @@ public final class ChangelistConflictTracker {
     myDocumentListener = new BulkAwareDocumentListener.Simple() {
       @Override
       public void afterDocumentChange(@NotNull Document document) {
-        if (!myOptions.isTrackingEnabled() || myShouldIgnoreModifications.get()) {
+        if (!myOptions.isTrackingEnabled() || myShouldIgnoreModifications.get() || !myChangeListManager.areChangeListsEnabled()) {
           return;
         }
         VirtualFile file = FileDocumentManager.getInstance().getFile(document);
@@ -94,6 +94,11 @@ public final class ChangelistConflictTracker {
       @Override
       public void defaultListChanged(ChangeList oldDefaultList, ChangeList newDefaultList) {
         clearChanges(newDefaultList.getChanges());
+      }
+
+      @Override
+      public void changeListAvailabilityChanged() {
+        optionsChanged();
       }
     };
   }
@@ -246,7 +251,7 @@ public final class ChangelistConflictTracker {
   }
 
   public boolean hasConflict(@NotNull VirtualFile file) {
-    if (!myOptions.isTrackingEnabled()) {
+    if (!myOptions.isTrackingEnabled() || !myChangeListManager.areChangeListsEnabled()) {
       return false;
     }
     String path = file.getPath();
