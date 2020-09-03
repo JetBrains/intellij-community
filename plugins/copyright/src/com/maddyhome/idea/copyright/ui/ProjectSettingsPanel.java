@@ -13,6 +13,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
@@ -218,7 +219,7 @@ public class ProjectSettingsPanel {
       myScope = scope;
     }
 
-    public String getProfileName() {
+    public @NlsSafe String getProfileName() {
       return myProfile != null ? myProfile.getName() : myProfileName;
     }
   }
