@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.psi.PsiDirectory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -127,7 +128,7 @@ public class CreateFromTemplateGroup extends ActionGroup implements DumbAware {
 
   private static class CreateFromTemplatesAction extends CreateFromTemplateActionBase{
 
-    CreateFromTemplatesAction(String title){
+    CreateFromTemplatesAction(@NlsActions.ActionText String title){
       super(title,null,null);
     }
 

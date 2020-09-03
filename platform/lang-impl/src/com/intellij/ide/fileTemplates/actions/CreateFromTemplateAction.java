@@ -7,6 +7,7 @@ import com.intellij.ide.fileTemplates.FileTemplateUtil;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.PsiDirectory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +27,7 @@ public class CreateFromTemplateAction extends CreateFromTemplateActionBase {
     this(template.getName(), FileTemplateUtil.getIcon(template), () -> template);
   }
 
-  public CreateFromTemplateAction(String templateName, @Nullable Icon icon, @NotNull Supplier<? extends FileTemplate> template){
+  public CreateFromTemplateAction(@NlsSafe String templateName, @Nullable Icon icon, @NotNull Supplier<? extends FileTemplate> template){
     super(templateName, null, icon);
     myTemplate = template;
   }
