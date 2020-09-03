@@ -32,7 +32,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literal
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ElementResolveResult;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyCallReference;
-import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyConstructorResult;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyPropertyWriteReference;
 import org.jetbrains.plugins.groovy.lang.resolve.references.GrMapConstructorPropertyReference;
 
@@ -299,6 +298,6 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
       return false;
     }
     GroovyResolveResult result = constructorReference.advancedResolve();
-    return result instanceof GroovyConstructorResult;
+    return PsiUtil.isMapConstructorResult(result);
   }
 }
