@@ -21,9 +21,6 @@ import com.intellij.completion.ml.common.PrefixMatchingType
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.completion.ml.personalization.UserFactor
 import com.intellij.completion.ml.personalization.UserFactorsManager
-import com.intellij.stats.personalization.impl.AverageSelectedItemPosition
-import com.intellij.stats.personalization.impl.MaxSelectedItemPosition
-import com.intellij.stats.personalization.impl.MostFrequentSelectedItemPosition
 
 /**
  * @author Vitaliy.Bibaev

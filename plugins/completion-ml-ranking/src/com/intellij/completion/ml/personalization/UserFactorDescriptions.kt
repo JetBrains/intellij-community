@@ -17,7 +17,6 @@
 package com.intellij.completion.ml.personalization
 
 import com.intellij.completion.ml.personalization.impl.*
-import com.intellij.stats.personalization.impl.*
 
 /**
  * @author Vitaliy.Bibaev

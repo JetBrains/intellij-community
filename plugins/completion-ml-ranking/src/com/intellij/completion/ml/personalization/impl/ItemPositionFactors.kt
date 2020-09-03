@@ -14,15 +14,12 @@
  * limitations under the License.
  */
 
-package com.intellij.stats.personalization.impl
+package com.intellij.completion.ml.personalization.impl
 
 import com.intellij.completion.ml.personalization.UserFactorBase
 import com.intellij.completion.ml.personalization.UserFactorDescriptions
 import com.intellij.completion.ml.personalization.UserFactorReaderBase
 import com.intellij.completion.ml.personalization.UserFactorUpdaterBase
-import com.intellij.completion.ml.personalization.impl.DailyAggregatedDoubleFactor
-import com.intellij.completion.ml.personalization.impl.MutableDoubleFactor
-import com.intellij.completion.ml.personalization.impl.aggregateSum
 
 /**
  * @author Vitaliy.Bibaev
