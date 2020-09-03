@@ -6,7 +6,7 @@ package com.intellij.find.usages.impl
 import com.intellij.find.usages.SearchTarget
 import com.intellij.find.usages.SymbolTextSearcher
 import com.intellij.model.Symbol
-import com.intellij.model.psi.impl.allReferencesInElement
+import com.intellij.model.psi.impl.hasReferencesInElement
 import com.intellij.model.search.SearchContext
 import com.intellij.model.search.SearchService
 import com.intellij.openapi.project.Project
@@ -56,7 +56,7 @@ internal fun buildTextQuery(project: Project, searchString: String, searchScope:
 
 private fun hasReferences(start: PsiElement, offsetInStart: Int): Boolean {
   for ((element, offsetInElement) in walkUp(start, offsetInStart)) {
-    if (allReferencesInElement(element, offsetInElement).any()) {
+    if (hasReferencesInElement(element, offsetInElement)) {
       return true
     }
   }
