@@ -111,7 +111,7 @@ public class JUnitTestKindFragment extends SettingsEditorFragment<JUnitConfigura
                           @Nullable BrowseModuleValueActionListener<?> browser,
                           @Nls String hint) {
     GridBagConstraints constraints = new GridBagConstraints();
-    constraints.fill = GridBagConstraints.HORIZONTAL;
+    constraints.fill = GridBagConstraints.BOTH;
     constraints.weightx = 1;
     component().add(field, constraints);
     myFields[kind] = field;
