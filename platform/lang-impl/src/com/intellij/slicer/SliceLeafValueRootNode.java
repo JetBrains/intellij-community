@@ -60,7 +60,7 @@ public class SliceLeafValueRootNode extends SliceNode implements MyColoredTreeCe
     else {
       text = LangBundle.message("node.slice.other");
     }
-    return LangBundle.message("node.slice.value",  text);
+    return LangBundle.message("node.slice.value.2", text);
   }
 
   @Override
