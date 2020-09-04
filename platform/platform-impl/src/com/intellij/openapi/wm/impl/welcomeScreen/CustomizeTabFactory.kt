@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl.welcomeScreen
 
 import com.intellij.ide.IdeBundle
+import com.intellij.ide.actions.ShowSettingsUtilImpl
 import com.intellij.ide.ui.*
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
@@ -25,7 +26,7 @@ import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.options.ShowSettingsUtil
-import com.intellij.openapi.options.ShowSettingsUtil.getSettingsMenuName
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.wm.WelcomeTabFactory
@@ -49,6 +50,7 @@ import javax.swing.plaf.LabelUI
 
 private val settings get() = UISettings.instance
 private val fontOptions get() = AppEditorFontOptions.getInstance().fontPreferences as FontPreferencesImpl
+private val defaultProject get() = ProjectManager.getInstance().defaultProject
 
 private val laf get() = LafManager.getInstance()
 private val keymapManager get() = KeymapManager.getInstance() as KeymapManagerImpl
@@ -165,8 +167,10 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
         val action = ActionManager.getInstance().getAction("WelcomeScreen.Configure.Import")
         component(ActionLink(action.templateText, null, action).apply { isFocusable = true })
         row {
-          component(focusableLink(IdeBundle.message("welcome.screen.all.settings.link"))
-                    { ShowSettingsUtil.getInstance().showSettingsDialog(null, getSettingsMenuName()) })
+          component(focusableLink(IdeBundle.message("welcome.screen.all.settings.link")) {
+            ShowSettingsUtil.getInstance().showSettingsDialog(defaultProject,
+                                                              *ShowSettingsUtilImpl.getConfigurableGroups(defaultProject, true))
+          })
         }
       }
     }.withBorder(JBUI.Borders.empty(23, 30, 20, 20))
