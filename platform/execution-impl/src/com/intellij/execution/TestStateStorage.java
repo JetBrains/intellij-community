@@ -36,7 +36,7 @@ public class TestStateStorage implements Disposable {
 
   private final File myFile;
 
-  public static File getTestHistoryRoot(Project project) {
+  public static File getTestHistoryRoot(@NotNull Project project) {
     return new File(TEST_HISTORY_PATH, project.getLocationHash());
   }
 
