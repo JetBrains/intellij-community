@@ -65,7 +65,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
     @NotNull
     @Override
     public String getName() {
-      return "Install packaging tools";
+      return PyBundle.message("python.packaging.install.packaging.tools");
     }
 
     @Override
