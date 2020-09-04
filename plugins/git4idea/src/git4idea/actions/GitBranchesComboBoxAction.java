@@ -22,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class GitBranchesComboBoxAction extends ComboBoxAction implements Disposable {
-  private Project project;
 
   public GitBranchesComboBoxAction() {
     getTemplatePresentation().setText(GitBundle.messagePointer("git.show.branches"));
@@ -30,7 +29,7 @@ public class GitBranchesComboBoxAction extends ComboBoxAction implements Disposa
 
   @Override
   public void update(@NotNull AnActionEvent e) {
-    this.project = e.getProject();
+    var project = e.getProject();
     Presentation presentation = e.getPresentation();
     if (project == null || project.isDisposed() || !project.isOpen()) {
       updatePresentation(null, null, null, presentation, e.getPlace());
@@ -78,11 +77,11 @@ public class GitBranchesComboBoxAction extends ComboBoxAction implements Disposa
 
   @Override
   public void dispose() {
-    project = null;
   }
 
   @NotNull
   protected ListPopup createActionPopup(@NotNull DataContext context, @NotNull JComponent component, @Nullable Runnable disposeCallback) {
+    Project project = context.getData(CommonDataKeys.PROJECT);
     ListPopup popup = JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep(""));
     if(project != null) {
       GitRepository repo = GitBranchUtil.getCurrentRepository(project);
