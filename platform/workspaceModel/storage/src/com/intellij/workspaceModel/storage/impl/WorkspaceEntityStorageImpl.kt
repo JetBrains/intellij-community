@@ -473,13 +473,13 @@ internal class WorkspaceEntityStorageBuilderImpl(
       else {
         // ----------------- Update parent references ---------------
 
-        val removedConnections = ArrayList<Pair<ConnectionId, EntityId>>()
+        val removedConnections = HashMap<ConnectionId, EntityId>()
         // Remove parents in local store
         for ((connectionId, parentId) in this.refs.getParentRefsOfChild(unmatchedId)) {
           val parentData = this.entityDataById(parentId)
           if (parentData != null && !sourceFilter(parentData.entitySource)) continue
           this.refs.removeParentToChildRef(connectionId, parentId, unmatchedId)
-          removedConnections.add(connectionId to parentId)
+          removedConnections[connectionId] = parentId
         }
 
         // Transfer parents from replaceWith storage
@@ -487,7 +487,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
           if (!sourceFilter(replaceWith.entityDataByIdOrDie(parentId).entitySource)) continue
           val localParentId = replaceMap.inverse().getValue(parentId)
           this.refs.updateParentOfChild(connectionId, unmatchedId, localParentId)
-          removedConnections.remove(connectionId to parentId)
+          removedConnections.remove(connectionId)
         }
 
         // TODO: 05.06.2020 The similar logic should exist for children references

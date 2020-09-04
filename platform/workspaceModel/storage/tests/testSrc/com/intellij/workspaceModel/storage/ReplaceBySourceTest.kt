@@ -466,4 +466,19 @@ class ReplaceBySourceTest {
 
     builder.replaceBySource({ it is MySource }, replacement)
   }
+
+  @Test
+  fun `changing parent`() {
+    val parentEntity = builder.addParentEntity()
+    val childEntity = builder.addChildEntity(parentEntity, source = AnotherSource)
+
+    val replacement = WorkspaceEntityStorageBuilderImpl.from(builder)
+
+    val anotherParent = replacement.addParentEntity("Another")
+    replacement.modifyEntity(ModifiableChildEntity::class.java, childEntity) {
+      this.parent = anotherParent
+    }
+
+    builder.replaceBySource({ it is MySource }, replacement)
+  }
 }
