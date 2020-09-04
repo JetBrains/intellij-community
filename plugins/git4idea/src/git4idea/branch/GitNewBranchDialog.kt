@@ -103,7 +103,7 @@ internal class GitNewBranchDialog @JvmOverloads constructor(project: Project,
       }
       else if (showResetOption) {
         error(HtmlBuilder().append(localBranchConflict.message + ".").br()
-                .append(GitBundle.message("new.branch.dialog.overwrite.existing.branch.warning")))
+                .append(GitBundle.message("new.branch.dialog.overwrite.existing.branch.warning")).toString())
       }
       else error(localBranchConflict.message)
     }
