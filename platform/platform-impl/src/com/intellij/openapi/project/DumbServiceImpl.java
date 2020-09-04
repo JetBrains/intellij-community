@@ -49,6 +49,8 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.LockSupport;
 
@@ -95,9 +97,9 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
   }
 
   void queueStartupActivitiesRequiredForSmartMode() {
-    LOG.assertTrue(myState.compareAndSet(State.WAITING_PROJECT_SMART_MODE_STARTUP_TASKS,
-                                         State.RUNNING_PROJECT_SMART_MODE_STARTUP_TASKS),
-                   "actual state: " + myState.get() + ", project " + getProject());
+    boolean changed = myState.compareAndSet(State.WAITING_PROJECT_SMART_MODE_STARTUP_TASKS,
+                                          State.RUNNING_PROJECT_SMART_MODE_STARTUP_TASKS);
+    LOG.assertTrue(changed, "actual state: " + myState.get() + ", project " + getProject());
 
     List<StartupActivity.RequiredForSmartMode> activities = REQUIRED_FOR_SMART_MODE_STARTUP_ACTIVITY.getExtensionList();
     if (activities.isEmpty()) {
@@ -179,6 +181,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   @TestOnly
   public void setDumb(boolean dumb) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (dumb) {
       myState.set(State.RUNNING_DUMB_TASKS);
       myPublisher.enteredDumbMode();
@@ -394,9 +397,21 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     if (application.isReadAccessAllowed() || application.isDispatchThread()) {
       throw new AssertionError("Don't invoke waitForSmartMode from inside read action in dumb mode");
     }
+    CountDownLatch switched;
+    synchronized (myRunWhenSmartQueue) {
+      if (!isDumb()) {
+        return;
+      }
+      switched = new CountDownLatch(1);
+      myRunWhenSmartQueue.addLast(() -> switched.countDown());
+    }
 
     while (myState.get() != State.SMART && !myProject.isDisposed()) {
-      LockSupport.parkNanos(50_000_000);
+      try {
+        switched.await(50, TimeUnit.MILLISECONDS);
+      }
+      catch (InterruptedException ignored) {
+      }
       ProgressManager.checkCanceled();
     }
   }
