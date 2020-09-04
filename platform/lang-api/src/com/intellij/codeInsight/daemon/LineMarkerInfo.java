@@ -219,7 +219,7 @@ public class LineMarkerInfo<T extends PsiElement> {
     return myNavigationHandler;
   }
 
-  public @Nullable Supplier<@NotNull @Nls String> getAccessibleNameProvider() {
+  @Nullable Supplier<@NotNull @Nls String> getAccessibleNameProvider() {
     return myAccessibleNameProvider;
   }
 

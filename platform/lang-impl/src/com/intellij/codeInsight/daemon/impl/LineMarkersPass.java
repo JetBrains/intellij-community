@@ -230,15 +230,13 @@ public class LineMarkersPass extends TextEditorHighlightingPass {
           TextRange hostRange = manager.injectedToHost(injectedPsi, editable);
           Icon icon = gutterRenderer == null ? null : gutterRenderer.getIcon();
           GutterIconNavigationHandler<PsiElement> navigationHandler = (GutterIconNavigationHandler<PsiElement>)injectedMarker.getNavigationHandler();
-          Supplier<@NotNull @Nls String> accessibleNameProvider = injectedMarker.getAccessibleNameProvider();
           //noinspection deprecation
-          LineMarkerInfo<PsiElement> converted
-            = icon == null ? new LineMarkerInfo<>(injectedElement, hostRange)
-                           : accessibleNameProvider == null
-                             ? new LineMarkerInfo<>(injectedElement, hostRange, icon, e -> injectedMarker.getLineMarkerTooltip(),
-                                                    navigationHandler, GutterIconRenderer.Alignment.RIGHT)
-                             : new LineMarkerInfo<>(injectedElement, hostRange, icon, e -> injectedMarker.getLineMarkerTooltip(),
-                                                    navigationHandler, GutterIconRenderer.Alignment.RIGHT, accessibleNameProvider);
+          LineMarkerInfo<PsiElement> converted = icon == null
+                                                 ? new LineMarkerInfo<>(injectedElement, hostRange)
+                                                 : new LineMarkerInfo<>(injectedElement, hostRange, icon,
+                                                                        e -> injectedMarker.getLineMarkerTooltip(),
+                                                                        navigationHandler, GutterIconRenderer.Alignment.RIGHT,
+                                                                        () -> gutterRenderer.getAccessibleName());
           consumer.consume(injectedElement, converted);
         }
       });
