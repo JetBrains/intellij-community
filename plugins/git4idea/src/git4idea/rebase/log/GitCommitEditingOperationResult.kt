@@ -3,6 +3,8 @@ package git4idea.rebase.log
 
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.impl.HashImpl
+import git4idea.GitUtil
 import git4idea.commands.Git
 import git4idea.findProtectedRemoteBranchContainingCommit
 import git4idea.history.GitLogUtil
@@ -44,6 +46,7 @@ internal sealed class GitCommitEditingOperationResult {
       val res = Git.getInstance().reset(repository, GitResetMode.KEEP, oldHead)
       repository.update()
       return if (res.success()) {
+        GitUtil.updateAndRefreshChangedVfs(repository, HashImpl.build(newHead))
         UndoResult.Success
       }
       else {

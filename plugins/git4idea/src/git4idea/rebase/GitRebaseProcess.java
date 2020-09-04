@@ -183,9 +183,7 @@ public class GitRebaseProcess {
 
         latestRepository = repository;
         statuses.put(repository, rebaseStatus);
-        if (shouldBeRefreshed(rebaseStatus)) {
-          refreshChangedVfs(repository, startHash);
-        }
+        refreshChangedVfs(repository, startHash);
         if (rebaseStatus.getType() != GitRebaseStatus.Type.SUCCESS) {
           break;
         }
@@ -351,10 +349,6 @@ public class GitRebaseProcess {
   @NotNull
   protected Collection<GitRepository> getDirtyRoots(@NotNull Collection<GitRepository> repositories) {
     return findRootsWithLocalChanges(repositories);
-  }
-
-  private static boolean shouldBeRefreshed(@NotNull GitRebaseStatus rebaseStatus) {
-    return rebaseStatus.getType() != GitRebaseStatus.Type.SUCCESS;
   }
 
   private boolean saveDirtyRootsInitially(@NotNull List<? extends GitRepository> repositories) {
