@@ -161,7 +161,8 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    *
    * <p>File can be found by its URL using {@link VirtualFileManager#findFileByUrl} method.</p>
    *
-   * <p>Please note these URLs are intended for use withing VFS - meaning they are not necessarily RFC-compliant.</p>
+   * <p>Please note these URLs are intended for use withing VFS - meaning they are not necessarily RFC-compliant. Also it's better not to
+   * show them in UI, use {@link #getPresentableUrl()} for that.</p>
    *
    * @return the URL consisting of protocol and path
    * @see VirtualFileManager#findFileByUrl
