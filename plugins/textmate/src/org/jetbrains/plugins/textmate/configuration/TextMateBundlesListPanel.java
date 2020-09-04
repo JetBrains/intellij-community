@@ -53,7 +53,7 @@ public class TextMateBundlesListPanel implements Disposable {
         if (isBuiltin(bean)) {
           return TextMateBundle.message("title.built.in");
         }
-        return bean != null ? bean.getPath() : null;
+        return bean != null ? FileUtil.toSystemDependentName(bean.getPath()) : null;
       }
     };
     myBundlesList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);

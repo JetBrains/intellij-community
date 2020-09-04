@@ -25,7 +25,6 @@ public class BundleConfigBean implements Cloneable {
     this.name = name;
   }
 
-  @NlsSafe
   public String getPath() {
     return path;
   }
