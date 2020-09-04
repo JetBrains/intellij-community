@@ -42,7 +42,7 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
    * Returns path to the module .iml file. This method isn't supposed to be used from plugins, see {@link #getModuleFile()} details.
    */
   @ApiStatus.Internal
-  @SystemIndependent
+  @SystemIndependent @NonNls 
   default @NotNull String getModuleFilePath() {
     return getModuleNioFile().toString().replace(File.separatorChar, '/');
   }

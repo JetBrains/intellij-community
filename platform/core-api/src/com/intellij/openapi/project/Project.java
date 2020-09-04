@@ -48,7 +48,7 @@ public interface Project extends ComponentManager, AreaInstance {
    * @see com.intellij.openapi.project.ProjectUtil#guessProjectDir
    */
   @Nullable
-  @SystemIndependent @NlsSafe
+  @SystemIndependent @NonNls
   String getBasePath();
 
   /**
@@ -68,7 +68,7 @@ public interface Project extends ComponentManager, AreaInstance {
    * @return a path to project file (see {@linkplain #getProjectFile()}) or {@code null} for default project.
    */
   @Nullable
-  @SystemIndependent @NlsSafe
+  @SystemIndependent @NonNls
   String getProjectFilePath();
 
   /**
@@ -78,7 +78,7 @@ public interface Project extends ComponentManager, AreaInstance {
    * <b>Note:</b> the word "presentable" here implies file system presentation, not a UI one.
    */
   @Nullable
-  @SystemDependent @NlsSafe
+  @SystemDependent @NonNls
   default String getPresentableUrl() {
     return null;
   }
