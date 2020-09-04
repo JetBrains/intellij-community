@@ -117,7 +117,7 @@
     <fileBasedIndex implementation="com.intellij.uiDesigner.binding.FormClassIndex"/>
 
     <compiler implementation="com.intellij.uiDesigner.make.Form2SourceCompiler"/>
-    <compileServer.plugin classpath="jps/ui-designer-jps-plugin.jar"/>
+    <compileServer.plugin classpath="jps/java-guiForms-jps.jar"/>
     <compilableFileTypesProvider implementation="com.intellij.uiDesigner.make.FormTypeRegistrar" />
 
     <psi.referenceContributor language="TEXT" implementation="com.intellij.uiDesigner.binding.FormReferenceContributor"/>

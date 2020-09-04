@@ -32,7 +32,7 @@ To use the <b>Ant</b> tool window, select <b>View > Tool Windows > Ant Build</b>
     <stepsBeforeRunProvider implementation="com.intellij.lang.ant.config.impl.AntBeforeRunTaskProvider"/>
     <packaging.artifactPropertiesProvider implementation="com.intellij.lang.ant.config.impl.artifacts.AntArtifactPostprocessingPropertiesProvider"/>
     <packaging.artifactPropertiesProvider implementation="com.intellij.lang.ant.config.impl.artifacts.AntArtifactPreProcessingPropertiesProvider"/>
-    <compileServer.plugin classpath="ant-jps-plugin.jar"/>
+    <compileServer.plugin classpath="ant-jps.jar"/>
 
     <keymapExtension implementation="com.intellij.lang.ant.config.impl.AntKeymapExtension"/>
     <highlightRangeExtension implementation="com.intellij.lang.ant.AntHighlightRangeExtension"/>

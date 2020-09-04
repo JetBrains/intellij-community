@@ -100,7 +100,7 @@ class CommunityRepositoryModules {
     plugin("intellij.java.guiForms.designer") {
       directoryName = "uiDesigner"
       mainJarName = "uiDesigner.jar"
-      withModule("intellij.java.guiForms.jps", "jps/ui-designer-jps-plugin.jar")
+      withModule("intellij.java.guiForms.jps", "jps/java-guiForms-jps.jar")
     },
     plugin("intellij.properties") {
       withModule("intellij.properties.psi", "properties.jar")
@@ -205,7 +205,7 @@ class CommunityRepositoryModules {
       withModule("intellij.devkit.jps")
     },
     plugin("intellij.eclipse") {
-      withModule("intellij.eclipse.jps", "eclipse-jps-plugin.jar", null)
+      withModule("intellij.eclipse.jps", "eclipse-jps.jar", null)
       withModule("intellij.eclipse.common")
     },
     plugin("intellij.java.coverage") {
@@ -213,7 +213,7 @@ class CommunityRepositoryModules {
       withProjectLibrary("JaCoCo") //todo[nik] convert to module library
     },
     plugin("intellij.errorProne") {
-      withModule("intellij.errorProne.jps", "jps/error-prone-jps-plugin.jar")
+      withModule("intellij.errorProne.jps", "jps/errorProne-jps.jar")
     },
     plugin("intellij.cucumber.java") {
       withModule("intellij.cucumber.jvmFormatter")

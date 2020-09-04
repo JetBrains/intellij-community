@@ -173,27 +173,11 @@ public final class BuildProcessClasspathManager {
   static {
     OLD_TO_NEW_MODULE_NAME = new LinkedHashMap<>();
     OLD_TO_NEW_MODULE_NAME.put("android-jps-plugin", "intellij.android.jps");
-    OLD_TO_NEW_MODULE_NAME.put("ant-jps-plugin", "intellij.ant.jps");
     OLD_TO_NEW_MODULE_NAME.put("aspectj-jps-plugin", "intellij.aspectj.jps");
-    OLD_TO_NEW_MODULE_NAME.put("devkit-jps-plugin", "intellij.devkit.jps");
-    OLD_TO_NEW_MODULE_NAME.put("eclipse-jps-plugin", "intellij.eclipse.jps");
-    OLD_TO_NEW_MODULE_NAME.put("error-prone-jps-plugin", "intellij.errorProne.jps");
     OLD_TO_NEW_MODULE_NAME.put("flex-jps-plugin", "intellij.flex.jps");
-    OLD_TO_NEW_MODULE_NAME.put("gradle-jps-plugin", "intellij.gradle.jps");
-    OLD_TO_NEW_MODULE_NAME.put("grails-jps-plugin", "intellij.groovy.grails.jps");
     OLD_TO_NEW_MODULE_NAME.put("groovy-jps-plugin", "intellij.groovy.jps");
-    OLD_TO_NEW_MODULE_NAME.put("gwt-jps-plugin", "intellij.gwt.jps");
-    OLD_TO_NEW_MODULE_NAME.put("google-app-engine-jps-plugin", "intellij.java.googleAppEngine.jps");
-    OLD_TO_NEW_MODULE_NAME.put("ui-designer-jps-plugin", "intellij.java.guiForms.jps");
     OLD_TO_NEW_MODULE_NAME.put("intellilang-jps-plugin", "intellij.java.langInjection.jps");
-    OLD_TO_NEW_MODULE_NAME.put("dmServer-jps-plugin", "intellij.javaee.appServers.dmServer.jps");
-    OLD_TO_NEW_MODULE_NAME.put("weblogic-jps-plugin", "intellij.javaee.appServers.weblogic.jps");
-    OLD_TO_NEW_MODULE_NAME.put("webSphere-jps-plugin", "intellij.javaee.appServers.websphere.jps");
-    OLD_TO_NEW_MODULE_NAME.put("jpa-jps-plugin", "intellij.javaee.jpa.jps");
-    OLD_TO_NEW_MODULE_NAME.put("javaee-jps-plugin", "intellij.javaee.jps");
     OLD_TO_NEW_MODULE_NAME.put("javaFX-jps-plugin", "intellij.javaFX.jps");
-    OLD_TO_NEW_MODULE_NAME.put("maven-jps-plugin", "intellij.maven.jps");
-    OLD_TO_NEW_MODULE_NAME.put("osmorc-jps-plugin", "intellij.osgi.jps");
     OLD_TO_NEW_MODULE_NAME.put("ruby-chef-jps-plugin", "intellij.ruby.chef.jps");
     OLD_TO_NEW_MODULE_NAME.put("android-jps-model", "intellij.android.jps.model");
     OLD_TO_NEW_MODULE_NAME.put("build-common", "intellij.android.buildCommon");
@@ -203,11 +187,8 @@ public final class BuildProcessClasspathManager {
     OLD_TO_NEW_MODULE_NAME.put("layoutlib-api", "android.sdktools.layoutlib-api");
     OLD_TO_NEW_MODULE_NAME.put("repository", "android.sdktools.repository");
     OLD_TO_NEW_MODULE_NAME.put("manifest-merger", "android.sdktools.manifest-merger");
-    OLD_TO_NEW_MODULE_NAME.put("common-eclipse-util", "intellij.eclipse.common");
     OLD_TO_NEW_MODULE_NAME.put("flex-shared", "intellij.flex.shared");
     OLD_TO_NEW_MODULE_NAME.put("groovy-rt-constants", "intellij.groovy.constants.rt");
-    OLD_TO_NEW_MODULE_NAME.put("grails-compiler-patch", "intellij.groovy.grails.compilerPatch");
-    OLD_TO_NEW_MODULE_NAME.put("appEngine-runtime", "intellij.java.googleAppEngine.runtime");
     OLD_TO_NEW_MODULE_NAME.put("common-javaFX-plugin", "intellij.javaFX.common");
   }
 }

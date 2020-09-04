@@ -20,7 +20,7 @@
   <depends>com.intellij.modules.java</depends>
   <extensions defaultExtensionNs="com.intellij">
     <classpathStorageProvider implementation="org.jetbrains.idea.eclipse.config.EclipseClasspathStorageProvider"/>
-    <compileServer.plugin classpath="eclipse-jps-plugin.jar;common-eclipse-util.jar"/>
+    <compileServer.plugin classpath="eclipse-jps.jar;eclipse-common.jar"/>
     <projectImportProvider implementation="org.jetbrains.idea.eclipse.importWizard.EclipseProjectImportProvider"/>
     <projectOpenProcessor id="EclipseProjectOpenProcessor" implementation="org.jetbrains.idea.eclipse.importWizard.EclipseProjectOpenProcessor"/>
     <projectImportBuilder implementation="org.jetbrains.idea.eclipse.importWizard.EclipseImportBuilder"/>

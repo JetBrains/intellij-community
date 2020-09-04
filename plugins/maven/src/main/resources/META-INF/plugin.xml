@@ -102,7 +102,7 @@
 
     <programRunner implementation="org.jetbrains.idea.maven.execution.build.DelegateBuildRunner" id="mavenDelegateBuildRunner"/>
 
-    <compileServer.plugin classpath="maven-jps-plugin.jar"/>
+    <compileServer.plugin classpath="maven-jps.jar"/>
 
     <languageInjector implementation="org.jetbrains.idea.maven.plugins.api.MavenPluginConfigurationLanguageInjector"/>
 

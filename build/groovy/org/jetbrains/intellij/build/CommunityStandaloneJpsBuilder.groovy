@@ -62,18 +62,16 @@ class CommunityStandaloneJpsBuilder {
         jar("groovy-rt-constants.jar") {
           module("intellij.groovy.constants.rt")
         }
-        jar("ui-designer-jps-plugin.jar") { module("intellij.java.guiForms.jps") }
+        jar("java-guiForms-jps.jar") { module("intellij.java.guiForms.jps") }
 
 
-        jar("maven-jps-plugin.jar") { module("intellij.maven.jps") }
+        jar("maven-jps.jar") { module("intellij.maven.jps") }
         jar("aether-dependency-resolver.jar") { module("intellij.java.aetherDependencyResolver") }
-        jar("gradle-jps-plugin.jar") { module("intellij.gradle.jps") }
+        jar("gradle-jps.jar") { module("intellij.gradle.jps") }
 
-        jar("eclipse-jps-plugin.jar") {
-          module("intellij.eclipse.common")
-          module("intellij.eclipse.jps")
-        }
-        jar("devkit-jps-plugin.jar") { module("intellij.devkit.jps") }
+        jar("eclipse-jps.jar") { module("intellij.eclipse.jps") }
+        jar("eclipse-common.jar") { module("intellij.eclipse.common") }
+        jar("devkit-jps.jar") { module("intellij.devkit.jps") }
         jar("intellilang-jps-plugin.jar") { module("intellij.java.langInjection.jps") }
 
         [
@@ -87,7 +85,7 @@ class CommunityStandaloneJpsBuilder {
           jpsLibrary(it)
         }
 
-        jar("ant-jps-plugin.jar") { module("intellij.ant.jps") }
+        jar("ant-jps.jar") { module("intellij.ant.jps") }
         include(additionalJars)
       }
       jar("jps-build-test-${buildNumber}.jar") {
