@@ -16,6 +16,8 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Function;
+
 /**
  * Tracks the correspondence between {@link VirtualFile} instances and corresponding {@link Document} instances.
  * Manages the saving of changes to disk.
@@ -72,6 +74,16 @@ public abstract class FileDocumentManager implements SavingRequestor {
    * Should be invoked on the event dispatch thread.
    */
   public abstract void saveAllDocuments();
+
+  /**
+   * Saves unsaved documents which pass provided filter to disk. This operation can modify documents that will be saved
+   * (due to 'Strip trailing spaces on Save' functionality). When saving, {@code \n} line separators are converted into
+   * the ones used normally on the system, or the ones explicitly specified by the user. Encoding settings are honored.<p/>
+   *
+   * Should be invoked on the event dispatch thread.
+   * @param filter the filter for documents to save. If it returns `true`, the document will be saved.
+   */
+  public abstract void saveDocuments(@NotNull Function<Document, Boolean> filter);
 
   /**
    * Saves the specified document to disk. This operation can modify the document (due to 'Strip

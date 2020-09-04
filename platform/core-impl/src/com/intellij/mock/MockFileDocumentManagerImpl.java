@@ -62,6 +62,10 @@ public class MockFileDocumentManagerImpl extends FileDocumentManager {
   }
 
   @Override
+  public void saveDocuments(java.util.function.@NotNull Function<Document, Boolean> filter) {
+  }
+
+  @Override
   public void saveDocument(@NotNull Document document) {
   }
 
