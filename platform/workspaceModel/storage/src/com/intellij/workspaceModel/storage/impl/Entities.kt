@@ -271,3 +271,16 @@ class EntityDataDelegation<A : ModifiableWorkspaceEntityBase<*>, B> : ReadWriteP
   }
 }
 
+/**
+ * This interface is a solution for checking consistency of some entities that can't be checked automatically
+ *
+ * For example, we can mark LibraryPropertiesEntityData with this interface and check that entity source of properties is the same as
+ *  entity source of the library itself.
+ *
+ * Interface should be applied to *entity data*.
+ *
+ * [assertConsistency] method is called during [WorkspaceEntityStorageBuilderImpl.assertConsistency].
+ */
+interface WithAssertableConsistency {
+  fun assertConsistency(storage: WorkspaceEntityStorage)
+}

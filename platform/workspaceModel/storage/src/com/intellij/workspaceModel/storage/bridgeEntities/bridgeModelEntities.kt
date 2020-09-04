@@ -2,10 +2,7 @@
 package com.intellij.workspaceModel.storage.bridgeEntities
 
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.workspaceModel.storage.impl.SoftLinkable
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import com.intellij.workspaceModel.storage.impl.*
 import com.intellij.workspaceModel.storage.impl.indices.VirtualFileUrlListProperty
 import com.intellij.workspaceModel.storage.impl.references.*
 import java.io.Serializable
@@ -435,12 +432,24 @@ data class LibraryRoot(
 }
 
 @Suppress("unused")
-class LibraryPropertiesEntityData : WorkspaceEntityData<LibraryPropertiesEntity>() {
+class LibraryPropertiesEntityData : WorkspaceEntityData<LibraryPropertiesEntity>(), WithAssertableConsistency {
   lateinit var libraryType: String
   var propertiesXmlTag: String? = null
 
   override fun createEntity(snapshot: WorkspaceEntityStorage): LibraryPropertiesEntity {
     return LibraryPropertiesEntity(libraryType, propertiesXmlTag).also { addMetaData(it, snapshot) }
+  }
+
+  override fun assertConsistency(storage: WorkspaceEntityStorage) {
+    val propertiesEntity = this.createEntity(storage)
+    val attachedLibrary = propertiesEntity.library
+    assert(attachedLibrary.entitySource == this.entitySource) { """
+      |Entity source of library and it's properties differs. 
+      |   Library entity source: ${attachedLibrary.entitySource}
+      |   Properties entity source: ${this.entitySource}
+      |   Library entity: $attachedLibrary
+      |   Properties entity: $propertiesEntity
+    """.trimMargin() }
   }
 }
 

@@ -976,7 +976,7 @@ internal sealed class AbstractEntityStorage : WorkspaceEntityStorage {
   }
 
   internal fun assertConsistency() {
-    entitiesByType.assertConsistency()
+    entitiesByType.assertConsistency(this)
     // Rules:
     //  1) Refs should not have links without a corresponding entity
     //    1.1) For abstract containers: PId has the class of ConnectionId

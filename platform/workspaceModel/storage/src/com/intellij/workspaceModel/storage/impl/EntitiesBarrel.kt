@@ -88,7 +88,7 @@ internal sealed class EntitiesBarrel {
 
   fun size() = entityFamilies.size
 
-  fun assertConsistency() {
+  fun assertConsistency(abstractEntityStorage: AbstractEntityStorage) {
     val persistentIds = HashSet<PersistentEntityId<*>>()
     entityFamilies.forEachIndexed { i, family ->
       val clazz = i.findEntityClass<WorkspaceEntity>()
@@ -109,6 +109,10 @@ internal sealed class EntitiesBarrel {
           assert(persistentId != null) { "Persistent id expected for $clazz" }
           assert(persistentId !in persistentIds) { "Duplicated persistent ids: $persistentId" }
           persistentIds.add(persistentId!!)
+        }
+
+        if (entityData is WithAssertableConsistency) {
+          entityData.assertConsistency(abstractEntityStorage)
         }
       }
     }
