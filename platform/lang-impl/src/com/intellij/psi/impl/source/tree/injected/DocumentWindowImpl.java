@@ -27,11 +27,13 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.ImmutableCharSequence;
+import com.intellij.util.text.StringOperation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 class DocumentWindowImpl extends UserDataHolderBase implements Disposable, DocumentWindow, DocumentEx {
@@ -306,7 +308,7 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
   }
 
   @Override
-  public void replaceString(int startOffset, int endOffset, @NotNull CharSequence s) {
+  public @NotNull Collection<@NotNull StringOperation> prepareReplaceString(int startOffset, int endOffset, @NotNull CharSequence s) {
     if (isOneLine()) {
       s = StringUtil.replace(s.toString(), "\n", "");
     }
@@ -320,10 +322,10 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
     endOffset -= suffixLength;
     s = s.subSequence(prefixLength, s.length() - suffixLength);
 
-    doReplaceString(startOffset, endOffset, s);
+    return doPrepareReplaceString(startOffset, endOffset, s);
   }
 
-  private void doReplaceString(int startOffset, int endOffset, CharSequence s) {
+  private @NotNull Collection<@NotNull StringOperation> doPrepareReplaceString(int startOffset, int endOffset, CharSequence s) {
     assert intersectWithEditable(new TextRange(startOffset, startOffset)) != null;
     assert intersectWithEditable(new TextRange(endOffset, endOffset)) != null;
 
@@ -356,10 +358,16 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
       }
     }
 
+    return ContainerUtil.map(hostRangesToModify, pair -> StringOperation.replace(pair.getFirst(), pair.getSecond()));
+  }
+
+  @Override
+  public void replaceString(int startOffset, int endOffset, @NotNull CharSequence s) {
+    Collection<StringOperation> operations = prepareReplaceString(startOffset, endOffset, s);
     int delta = 0;
-    for (Pair<TextRange, CharSequence> pair : hostRangesToModify) {
-      TextRange hostRange = pair.getFirst();
-      CharSequence replace = pair.getSecond();
+    for (StringOperation stringOperation : operations) {
+      TextRange hostRange = stringOperation.getRange();
+      CharSequence replace = stringOperation.getReplacement();
 
       myDelegate.replaceString(hostRange.getStartOffset() + delta, hostRange.getEndOffset() + delta, replace);
       delta -= hostRange.getLength() - replace.length();
