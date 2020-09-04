@@ -9,6 +9,7 @@ import java.util.Collection;
 public interface NotificationGroupManager {
   NotificationGroup getNotificationGroup(@NotNull String groupId);
 
+  @NotNull
   Collection<NotificationGroup> getRegisteredNotificationGroups();
 
   boolean isRegisteredNotificationId(@NotNull String notificationId);
