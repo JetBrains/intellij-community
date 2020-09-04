@@ -22,7 +22,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.icons.CompositeIcon;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
@@ -645,8 +644,18 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
     LookupElementPresentation customizePresentation(@NotNull LookupElement item,
                                                     @NotNull LookupElementPresentation presentation);
 
-    interface IconDecorator extends CompositeIcon {
+    /**
+     * Allows to extend the original icon
+     */
+    interface IconDecorator extends Icon {
+      /**
+       * Returns the original icon
+       */
       Icon getDelegate();
+
+      /**
+       * Returns a new decorator with {@code icon} instead of the original icon
+       */
       IconDecorator withDelegate(Icon icon);
     }
   }
