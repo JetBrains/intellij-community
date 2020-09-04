@@ -220,11 +220,11 @@ class MLSorter : CompletionFinalSorter() {
         val before = positionsBefore.getValue(element)
         if (before < reordered || position < reordered) {
           val diff = position - before
-          positionChanged = diff != 0
-          element.updateDiffValue(diff)
+          positionChanged = positionChanged || diff != 0
+          PositionDiffArrowInitializer.itemPositionChanged(element, diff)
         }
       }
-      lookup.setPositionChangedOnce(positionChanged)
+      PositionDiffArrowInitializer.markAsReordered(lookup, positionChanged)
     }
 
     return this
@@ -251,20 +251,6 @@ class MLSorter : CompletionFinalSorter() {
     cachedScore[element] = info
 
     return info.mlRank
-  }
-
-  private fun LookupElement.updateDiffValue(newValue: Int) {
-    val diff = getUserData(PositionDiffArrowInitializer.POSITION_DIFF_KEY) ?: AtomicInteger()
-      .apply { putUserData(PositionDiffArrowInitializer.POSITION_DIFF_KEY, this) }
-
-    diff.set(newValue)
-  }
-
-  private fun LookupImpl.setPositionChangedOnce(value: Boolean) {
-    val changed = getUserData(PositionDiffArrowInitializer.POSITION_CHANGED_KEY)
-    if (changed == null) {
-      putUserData(PositionDiffArrowInitializer.POSITION_CHANGED_KEY, value)
-    }
   }
 
   /*

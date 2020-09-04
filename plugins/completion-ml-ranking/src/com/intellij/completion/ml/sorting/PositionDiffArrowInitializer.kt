@@ -24,10 +24,24 @@ import javax.swing.Icon
 
 class PositionDiffArrowInitializer : ProjectManagerListener {
   companion object {
-    val POSITION_DIFF_KEY = Key.create<AtomicInteger>("PositionDiffArrowInitializer.POSITION_DIFF_KEY")
-    val POSITION_CHANGED_KEY = Key.create<Boolean>("PositionDiffArrowInitializer.POSITION_CHANGED_KEY")
     private const val DIFF_ICON_RIGHT_MARGIN = 4
+    private val POSITION_DIFF_KEY = Key.create<AtomicInteger>("PositionDiffArrowInitializer.POSITION_DIFF_KEY")
+    private val POSITION_CHANGED_KEY = Key.create<Boolean>("PositionDiffArrowInitializer.POSITION_CHANGED_KEY")
     private val EMPTY_DIFF_ICON = IconManager.getInstance().createEmptyIcon(CompletionMlRankingIcons.ProposalUp)
+
+    fun markAsReordered(lookup: LookupImpl, value: Boolean) {
+      val changed = lookup.getUserData(POSITION_CHANGED_KEY)
+      if (changed == null) {
+        lookup.putUserData(POSITION_CHANGED_KEY, value)
+      }
+    }
+
+    fun itemPositionChanged(element: LookupElement, diffValue: Int) {
+      val diff = element.getUserData(POSITION_DIFF_KEY) ?: AtomicInteger()
+        .apply { element.putUserData(POSITION_DIFF_KEY, this) }
+
+      diff.set(diffValue)
+    }
   }
 
   override fun projectOpened(project: Project) {
@@ -62,7 +76,7 @@ class PositionDiffArrowInitializer : ProjectManagerListener {
     }, project)
   }
 
-  private class ArrowDecoratedIcon(private val arrowIcon: Icon, private val baseIcon: Icon?) :
+  class ArrowDecoratedIcon(private val arrowIcon: Icon, private val baseIcon: Icon?) :
     com.intellij.ui.RowIcon(2, RowIcon.Alignment.CENTER), LookupCellRenderer.ItemPresentationCustomizer.IconDecorator {
 
     init {

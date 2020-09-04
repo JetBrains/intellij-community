@@ -69,15 +69,9 @@ class ChangeArrowsDrawingTest : LightFixtureCompletionTestCase() {
   private class ArrowPresenceChecker : LookupCellRenderer.ItemPresentationCustomizer {
     var invokedCount: Int = 0
     private var arrowsFound: Boolean = false
-    private var diffKeyFound = false
     override fun customizePresentation(item: LookupElement, presentation: LookupElementPresentation): LookupElementPresentation {
       invokedCount += 1
-      diffKeyFound = diffKeyFound || (item.getUserData(PositionDiffArrowInitializer.POSITION_DIFF_KEY) != null)
-      val tailFragments = presentation.tailFragments
-      if (tailFragments.isNotEmpty()) {
-        val textAfterLookupString = tailFragments[0].text.trim()
-        arrowsFound = arrowsFound || (textAfterLookupString.startsWith("↑") || textAfterLookupString.startsWith("↓"))
-      }
+      arrowsFound = arrowsFound || presentation.icon is PositionDiffArrowInitializer.ArrowDecoratedIcon
 
       return presentation
     }
@@ -85,7 +79,6 @@ class ChangeArrowsDrawingTest : LightFixtureCompletionTestCase() {
     fun assertArrowsAvailable() {
       TestCase.assertTrue(invokedCount > 1)
       TestCase.assertTrue(arrowsFound)
-      TestCase.assertTrue(diffKeyFound)
     }
   }
 
