@@ -488,8 +488,12 @@
           <separator/>
           <action id="FindWordAtCaret" class="com.intellij.openapi.editor.actions.FindWordAtCaretAction"/>
           <separator/>
-          <action id="FindInPath" class="com.intellij.find.actions.FindInPathAction"/>
-          <action id="ReplaceInPath" class="com.intellij.find.actions.ReplaceInPathAction"/>
+          <action id="FindInPath" class="com.intellij.find.actions.FindInPathAction">
+            <synonym key="action.FindInPath.synonym1"/>
+          </action>
+          <action id="ReplaceInPath" class="com.intellij.find.actions.ReplaceInPathAction">
+            <synonym key="action.ReplaceInPath.synonym1"/>
+          </action>
         </group>
         <separator/>
         <reference ref="EditorToggleColumnMode"/>
