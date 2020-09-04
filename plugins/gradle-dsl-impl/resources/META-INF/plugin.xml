@@ -1,0 +1,22 @@
+<idea-plugin implementation-detail="true">
+  <id>org.jetbrains.idea.gradle.dsl</id>
+  <name>Gradle DSL API</name>
+  <vendor>JetBrains, Google</vendor>
+  <description>
+    <![CDATA[
+    Technical plugin, provides Gradle dsl API
+    ]]>
+  </description>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="com.android.tools.idea.gradle.dsl.api.ProjectBuildModelHandler" serviceImplementation="com.android.tools.idea.gradle.dsl.ProjectBuildModelHandlerImpl" />
+  </extensions>
+
+  <extensionPoints>
+    <extensionPoint name="parserFactory" interface="com.android.tools.idea.gradle.dsl.parser.GradleDslConverterFactory" dynamic="true"/>
+  </extensionPoints>
+
+  <depends optional="true" config-file="groovy-support.xml">org.intellij.groovy</depends>
+  <depends optional="true" config-file="kotlin-support.xml">org.jetbrains.kotlin</depends>
+
+</idea-plugin>
