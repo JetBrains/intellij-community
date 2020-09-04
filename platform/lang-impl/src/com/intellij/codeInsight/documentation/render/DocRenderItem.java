@@ -16,6 +16,7 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.EditorInlayFoldingMapper;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -676,6 +677,20 @@ public final class DocRenderItem {
     public void dispose() {
       myCurrentItem = null;
       myQueuedEditor = null;
+    }
+  }
+
+  private static class InlayFoldingMapper implements EditorInlayFoldingMapper {
+    @Override
+    public @Nullable FoldRegion getAssociatedFoldRegion(@NotNull Inlay<?> inlay) {
+      EditorCustomElementRenderer renderer = inlay.getRenderer();
+      return renderer instanceof DocRenderer ? ((DocRenderer)renderer).myItem.foldRegion : null;
+    }
+
+    @Override
+    public @Nullable Inlay<?> getAssociatedInlay(@NotNull FoldRegion foldRegion) {
+      DocRenderItem item = foldRegion.getUserData(OUR_ITEM);
+      return item == null ? null : item.inlay;
     }
   }
 }

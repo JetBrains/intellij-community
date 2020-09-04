@@ -22,10 +22,8 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
-import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.editor.impl.FontInfo;
-import com.intellij.openapi.editor.impl.ScrollingModelImpl;
+import com.intellij.openapi.editor.ex.EditorInlayFoldingMapper;
+import com.intellij.openapi.editor.impl.*;
 import com.intellij.openapi.editor.impl.view.VisualLinesIterator;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.editor.textarea.TextComponentEditor;
@@ -668,6 +666,106 @@ public final class EditorUtil {
     return visualPosition.line;
   }
 
+  /**
+   * Returns the range of {@code y} coordinates in editor coordinate space (relative to {@code editor.getContentComponent()}), corresponding
+   * to a given logical line in a document. Most often, a logical line corresponds to a single visual line, in that case the returned range
+   * has a height of {@code editor.getLineHeight()}. This will be not the case, if the line is soft-wrapped. Then the vertical range will be
+   * larger, as it will include several visual lines. Also, the range's height can differ from {@code editor.getLineHeight()}, if the target
+   * visual line is part of the comment, which is currently displayed in a rendered form (using inlay). In that case returned range will be
+   * that of the corresponding inlay. Other block inlays displayed on either side of the calculated range, are not included in the result.
+   *
+   * @see #yToLogicalLineRange(Editor, int)
+   */
+  @NotNull
+  public static Interval logicalLineToYRange(@NotNull Editor editor, int logicalLine) {
+    if (logicalLine < 0) throw new IllegalArgumentException("Logical line is negative: " + logicalLine);
+    Document document = editor.getDocument();
+    int startVisualLine;
+    int endVisualLine;
+    if (logicalLine >= document.getLineCount()) {
+      startVisualLine = endVisualLine = logicalToVisualLine(editor, logicalLine);
+    }
+    else {
+      int lineStartOffset = document.getLineStartOffset(logicalLine);
+      int lineEndOffset = document.getLineEndOffset(logicalLine);
+      FoldRegion foldRegion = editor.getFoldingModel().getCollapsedRegionAtOffset(document.getLineStartOffset(logicalLine));
+      if (foldRegion != null) {
+        Inlay<?> inlay = EditorInlayFoldingMapper.getInstance().getAssociatedInlay(foldRegion);
+        if (inlay != null) {
+          // special case of rendered doc comment
+          Rectangle bounds = inlay.getBounds();
+          if (bounds != null) {
+            return new OurInterval(bounds.y, bounds.y + bounds.height);
+          }
+        }
+      }
+      startVisualLine = editor.offsetToVisualLine(lineStartOffset, false);
+      endVisualLine = startVisualLine + editor.getSoftWrapModel().getSoftWrapsForRange(lineStartOffset + 1, lineEndOffset - 1).size();
+    }
+    int startY = editor.visualLineToY(startVisualLine);
+    int endY = endVisualLine == startVisualLine ? startY : editor.visualLineToY(endVisualLine);
+    return new OurInterval(startY, endY + editor.getLineHeight());
+  }
+
+  /**
+   * Returns the range of logical lines corresponding to a given {@code y} coordinate in editor coordinate space (relative to
+   * {@code editor.getContentComponent()}), with both ends of the interval inclusive. Most often, a given {@code y} coordinate corresponds
+   * to only one logical line. This might be not the case due to the presence of folded regions in editor, or when comment is shown in a
+   * rendered form. In the former case, all logical lines corresponding to the visual line will be returned, in the latter case - all
+   * logical lines of the rendered comment.
+   *
+   * @see #logicalLineToYRange(Editor, int)
+   */
+  @NotNull
+  public static Interval yToLogicalLineRange(@NotNull Editor editor, int y) {
+    int visualLine = editor.yToVisualLine(y);
+    int visualLineStartY = editor.visualLineToY(visualLine);
+    int visualLineEndY = visualLineStartY + editor.getLineHeight();
+    Inlay<?> blockInlay = null;
+    if (y < visualLineStartY) {
+      List<Inlay<?>> inlays = editor.getInlayModel().getBlockElementsForVisualLine(visualLine, true);
+      int yDiff = visualLineStartY - y;
+      for (int i = inlays.size() - 1; i >= 0; i--) {
+        Inlay<?> inlay = inlays.get(i);
+        int height = inlay.getHeightInPixels();
+        if (yDiff <= height) {
+          blockInlay = inlay;
+          break;
+        }
+        yDiff -= height;
+      }
+    }
+    else if (y >= visualLineEndY) {
+      List<Inlay<?>> inlays = editor.getInlayModel().getBlockElementsForVisualLine(visualLine, false);
+      int yDiff = y - visualLineEndY;
+      for (Inlay<?> inlay : inlays) {
+        int height = inlay.getHeightInPixels();
+        if (yDiff < height) {
+          blockInlay = inlay;
+          break;
+        }
+        yDiff -= height;
+      }
+    }
+    if (blockInlay != null) {
+      FoldRegion foldRegion = EditorInlayFoldingMapper.getInstance().getAssociatedFoldRegion(blockInlay);
+      if (foldRegion != null) {
+        // special case of rendered doc comment
+        Document document = editor.getDocument();
+        return new OurInterval(document.getLineNumber(foldRegion.getStartOffset()), document.getLineNumber(foldRegion.getEndOffset() - 1));
+      }
+    }
+    if (editor instanceof EditorImpl) {
+      VisualLinesIterator iterator = new VisualLinesIterator((EditorImpl)editor, visualLine);
+      if (!iterator.atEnd()) {
+        return new OurInterval(iterator.getStartLogicalLine(), iterator.getEndLogicalLine());
+      }
+    }
+    int startLogicalLine = editor.visualToLogicalPosition(new VisualPosition(visualLine, 0, false)).line;
+    int endLogicalLine= editor.visualToLogicalPosition(new VisualPosition(visualLine, Integer.MAX_VALUE, true)).line;
+    return new OurInterval(startLogicalLine, endLogicalLine);
+  }
+
   public static int yPositionToLogicalLine(@NotNull Editor editor, @NotNull MouseEvent event) {
     return yPositionToLogicalLine(editor, event.getY());
   }
@@ -1020,5 +1118,25 @@ public final class EditorUtil {
     private static final NotificationGroup GROUP = NotificationGroup.balloonGroup("Editor notifications");
     private static final Key<Long> LAST_MAX_CARETS_NOTIFY_TIMESTAMP = Key.create("last.max.carets.notify.timestamp");
     private static final long MAX_CARETS_NOTIFY_INTERVAL_MS = 10_000;
+  }
+
+  private static class OurInterval implements Interval {
+    private final int intervalStart;
+    private final int intervalEnd;
+
+    private OurInterval(int intervalStart, int intervalEnd) {
+      this.intervalStart = intervalStart;
+      this.intervalEnd = intervalEnd;
+    }
+
+    @Override
+    public int intervalStart() {
+      return intervalStart;
+    }
+
+    @Override
+    public int intervalEnd() {
+      return intervalEnd;
+    }
   }
 }

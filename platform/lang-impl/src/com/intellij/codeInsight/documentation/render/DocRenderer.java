@@ -78,7 +78,7 @@ class DocRenderer implements EditorCustomElementRenderer {
   private static String ourCachedStyleSheetLinkColor = "non-existing";
   private static String ourCachedStyleSheetMonoFont = "non-existing";
 
-  private final DocRenderItem myItem;
+  final DocRenderItem myItem;
   private boolean myContentUpdateNeeded;
   private EditorPane myPane;
 
