@@ -22,8 +22,11 @@ private class SpaceChatEditor(private val project: Project, private val spaceCha
     Disposer.register(this, Disposable { editorLifetime.terminate() })
   }
 
-  override fun getComponent(): JComponent =
+  val component by lazy {
     createSpaceChatPanel(project, editorLifetime, this, spaceChatFile.channelsVm, spaceChatFile.chatRecord)
+  }
+
+  override fun getComponent(): JComponent = component
 
   override fun getPreferredFocusedComponent(): JComponent? = null
 

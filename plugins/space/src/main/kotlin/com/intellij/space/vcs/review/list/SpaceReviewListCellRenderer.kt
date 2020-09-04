@@ -140,7 +140,7 @@ internal class SpaceReviewListCellRenderer(
 
     val review = reviewRef.resolve()
     val title = review.title
-    val author = review.createdBy.resolve()
+    val author = review.createdBy!!.resolve()
     val key = review.key ?: ""
     val localDateTime = review.createdAt.toLocalDateTime()
     val info = "$key by ${author.englishFullName()} ${localDateTime.formatAbsolute()}"

@@ -48,7 +48,8 @@ class SpaceReviewAuthorActionGroup : ActionGroup() {
     val data = e.getData(SELECTED_REVIEW) ?: return
     val review = data.review.resolve()
 
-    val profile = review.createdBy.resolve()
+    // TODO: fix review created by Space service
+    val profile = review.createdBy!!.resolve()
     e.presentation.text = profile.englishFullName()
   }
 
@@ -58,7 +59,7 @@ class SpaceReviewAuthorActionGroup : ActionGroup() {
     val server = space.workspace.value!!.client.server
 
     val actions: MutableList<ActionGroup> = mutableListOf()
-    actions += UserActionGroup(review.createdBy.resolve(), server)
+    actions += UserActionGroup(review.createdBy!!.resolve(), server)
     actions += review.participants.map { it.user.resolve() }
       .map { UserActionGroup(it, server) }.toList()
     return actions.toTypedArray()

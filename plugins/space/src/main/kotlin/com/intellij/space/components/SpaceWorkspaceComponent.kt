@@ -211,7 +211,7 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
   private fun createWorkspaceManager(lifetime: Lifetime, server: String): WorkspaceManager {
     val persistenceConfig = PersistenceConfiguration(
       FeatureFlagsVmPersistenceKey,
-      PersistenceKey.Arena
+      PersistenceKey.AllArenas
     )
     val workspaceConfig = WorkspaceConfiguration(server, IdeaOAuthConfig.clientId, IdeaOAuthConfig.clientSecret)
     return WorkspaceManager(lifetime, null, this, InMemoryPersistence(), IdeaPasswordSafePersistence, persistenceConfig, workspaceConfig)

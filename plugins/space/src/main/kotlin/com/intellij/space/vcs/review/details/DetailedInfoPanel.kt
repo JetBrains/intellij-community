@@ -40,7 +40,7 @@ internal class DetailedInfoPanel(detailsVm: CrDetailsVm<out CodeReviewRecord>) {
     }
 
     detailsVm.createdBy.forEach(detailsVm.lifetime) {
-      infoLabel.text = "created by ${it.englishFullName()} ${detailsVm.createdAt.value.toLocalDateTime().formatAbsolute()}"
+      infoLabel.text = "created by ${it!!.englishFullName()} ${detailsVm.createdAt.value.toLocalDateTime().formatAbsolute()}"
     }
 
     detailsVm.title.forEach(detailsVm.lifetime) {
