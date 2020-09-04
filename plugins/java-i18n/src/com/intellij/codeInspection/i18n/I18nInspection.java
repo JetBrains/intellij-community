@@ -458,6 +458,10 @@ public class I18nInspection extends AbstractBaseUastLocalInspectionTool implemen
 
   @Override
   public @NotNull PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
+    final PsiDirectory directory = holder.getFile().getContainingDirectory();
+    if (directory != null && isPackageNonNls(JavaDirectoryService.getInstance().getPackage(directory))) {
+      return PsiElementVisitor.EMPTY_VISITOR;
+    }
     return UastHintedVisitorAdapter.create(holder.getFile().getLanguage(), new StringI18nVisitor(holder, isOnTheFly), getHints());
   }
 
