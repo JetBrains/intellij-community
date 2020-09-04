@@ -53,6 +53,7 @@ public class EmptyStateProjectsPanel extends JPanel {
     DefaultActionGroup moreActionGroup = mainAndMore.getSecond();
     if (moreActionGroup.getChildrenCount() > 0) {
       LinkLabel<String> moreLink = createLinkWithPopup(moreActionGroup);
+      moreLink.setFocusable(true);
       JPanel moreLinkPanel = new Wrapper(new FlowLayout(), moreLink);
       mainPanel.add(moreLinkPanel);
     }
