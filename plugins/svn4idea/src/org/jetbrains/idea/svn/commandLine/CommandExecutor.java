@@ -147,11 +147,10 @@ public class CommandExecutor {
   }
 
   @NotNull
-  private File ensureCommandFile(@NotNull String prefix,
-                                 @NotNull String extension,
+  private File ensureCommandFile(@NonNls @NotNull String prefix,
                                  @NotNull String data,
                                  @NotNull String parameterName) throws SvnBindException {
-    File result = createTempFile(prefix, extension);
+    File result = createTempFile(prefix, ".txt");
     myTempFiles.add(result);
 
     try {
@@ -168,7 +167,7 @@ public class CommandExecutor {
 
   private void ensureMessageFile() throws SvnBindException {
     if (myMessage != null) {
-      ensureCommandFile("commit-message", ".txt", myMessage, "-F");
+      ensureCommandFile("commit-message", myMessage, "-F");
 
       myCommandLine.addParameters("--config-option", "config:miscellany:log-encoding=" + CharsetToolkit.UTF8);
     }
@@ -181,7 +180,7 @@ public class CommandExecutor {
       String targetsValue = StringUtil.join(targetsPaths, SystemProperties.getLineSeparator());
 
       if (myCommandLine.getCommandLineString().length() + targetsValue.length() > VcsFileUtil.FILE_PATH_LIMIT) {
-        ensureCommandFile("command-targets", ".txt", targetsValue, "--targets");
+        ensureCommandFile("command-targets", targetsValue, "--targets");
       }
       else {
         myCommandLine.addParameters(targetsPaths);
@@ -193,7 +192,7 @@ public class CommandExecutor {
     PropertyValue propertyValue = myCommand.getPropertyValue();
 
     if (propertyValue != null) {
-      ensureCommandFile("property-value", ".txt", PropertyValue.toString(propertyValue), "-F");
+      ensureCommandFile("property-value", PropertyValue.toString(propertyValue), "-F");
     }
   }
 
@@ -211,7 +210,7 @@ public class CommandExecutor {
   }
 
   @NotNull
-  protected static File createTempFile(@NotNull String prefix, @NotNull String extension) throws SvnBindException {
+  protected static File createTempFile(@NonNls @NotNull String prefix, @NonNls @NotNull String extension) throws SvnBindException {
     try {
       return FileUtil.createTempFile(getSvnFolder(), prefix, extension);
     }

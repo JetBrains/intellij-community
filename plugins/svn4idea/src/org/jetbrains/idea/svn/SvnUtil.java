@@ -86,6 +86,8 @@ public final class SvnUtil {
 
   private static final Pair<Url, WorkingCopyFormat> UNKNOWN_REPOSITORY_AND_FORMAT = Pair.create(null, WorkingCopyFormat.UNKNOWN);
 
+  private static final @NonNls String NOT_VERSIONED_RESOURCE = "(not a versioned resource)";
+
   private SvnUtil() { }
 
   @Nullable
@@ -706,7 +708,7 @@ public final class SvnUtil {
            // thrown when getting info from repository for non-existent item - like HEAD revision for deleted file
            e.contains(ErrorCode.ILLEGAL_TARGET) ||
            // for svn 1.6
-           StringUtil.containsIgnoreCase(e.getMessage(), "(not a versioned resource)");
+           StringUtil.containsIgnoreCase(e.getMessage(), NOT_VERSIONED_RESOURCE);
   }
 
   public static boolean isAuthError(@NotNull SvnBindException e) {
@@ -760,7 +762,9 @@ public final class SvnUtil {
 
   private static class SqLiteJdbcWorkingCopyFormatOperation
     implements FileUtilRt.RepeatableIOOperation<WorkingCopyFormat, RuntimeException> {
+
     private static final String SQLITE_JDBC_TEMP_DIR_PROPERTY = "org.sqlite.tmpdir";
+    private static final @NonNls String USER_VERSION_QUERY = "pragma user_version";
 
     @NotNull private final File myDbFile;
 
@@ -781,7 +785,7 @@ public final class SvnUtil {
       try {
         Class.forName("org.sqlite.JDBC");
         connection = DriverManager.getConnection("jdbc:sqlite:" + FileUtil.toSystemIndependentName(myDbFile.getPath()));
-        ResultSet resultSet = connection.createStatement().executeQuery("pragma user_version");
+        ResultSet resultSet = connection.createStatement().executeQuery(USER_VERSION_QUERY);
 
         if (resultSet.next()) {
           userVersion = resultSet.getInt(1);

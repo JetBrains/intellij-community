@@ -67,13 +67,13 @@ public class Change {
     return FileStatus.MODIFIED;
   }
 
-  public void addAdditionalLayerElement(final String name, final Change change) {
+  public void addAdditionalLayerElement(@NonNls String name, final Change change) {
     if (myOtherLayers == null) myOtherLayers = new HashMap<>(1);
     myOtherLayers.put(name, change);
   }
 
   @NotNull
-  public Map<String, Change> getOtherLayers() {
+  public Map<@NonNls String, Change> getOtherLayers() {
     return ContainerUtil.notNullize(myOtherLayers);
   }
 

@@ -32,7 +32,6 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.mergeinfo.ListMergeStatus;
@@ -534,7 +533,7 @@ public class ToBeMergedDialog extends DialogWrapper {
     }
   }
 
-  @NonNls private static final ColumnInfo FAKE_COLUMN = new ColumnInfo<SvnChangeList, SvnChangeList>("Fake Column") {
+  private static final ColumnInfo<SvnChangeList, SvnChangeList> FAKE_COLUMN = new ColumnInfo<>("") {
     @Override
     public SvnChangeList valueOf(SvnChangeList changeList) {
       return changeList;

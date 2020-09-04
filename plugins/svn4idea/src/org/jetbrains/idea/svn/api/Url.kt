@@ -4,6 +4,7 @@ package org.jetbrains.idea.svn.api
 import com.google.common.net.UrlEscapers
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.io.URLUtil
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.svn.SvnBundle.message
 import org.jetbrains.idea.svn.SvnUtil
 import org.jetbrains.idea.svn.commandLine.SvnBindException
@@ -63,8 +64,9 @@ class Url private constructor(innerUri: URI) {
   companion object {
     @JvmField
     val EMPTY: Url = Url(URI(""))
-    @JvmField
-    val DEFAULT_PORTS: Map<String, Int> = mapOf("http" to 80, "https" to 443, "svn" to 3690, "svn+ssh" to 22)
+
+    @NonNls
+    private val DEFAULT_PORTS: Map<String, Int> = mapOf("http" to 80, "https" to 443, "svn" to 3690, "svn+ssh" to 22)
 
     @JvmStatic
     @Throws(SvnBindException::class)

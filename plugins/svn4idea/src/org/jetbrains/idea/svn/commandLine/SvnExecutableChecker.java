@@ -17,6 +17,7 @@ import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnApplicationSettings;
@@ -35,7 +36,7 @@ public final class SvnExecutableChecker extends ExecutableValidator implements D
   private static final Logger LOG = Logger.getInstance(SvnExecutableChecker.class);
 
   public static final String SVN_EXECUTABLE_LOCALE_REGISTRY_KEY = "svn.executable.locale";
-  private static final String SVN_VERSION_ENGLISH_OUTPUT = "The following repository access (RA) modules are available";
+  private static final @NonNls String SVN_VERSION_ENGLISH_OUTPUT = "The following repository access (RA) modules are available";
   private static final Pattern INVALID_LOCALE_WARNING_PATTERN = Pattern.compile(
     "^.*cannot set .* locale.*please check that your locale name is correct$",
     Pattern.CASE_INSENSITIVE | Pattern.MULTILINE | Pattern.DOTALL);

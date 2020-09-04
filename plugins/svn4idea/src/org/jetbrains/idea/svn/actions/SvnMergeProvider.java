@@ -8,6 +8,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.merge.MergeData;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.SvnPropertyKeys;
 import org.jetbrains.idea.svn.SvnRevisionNumber;
@@ -30,6 +31,8 @@ import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 
 public class SvnMergeProvider implements MergeProvider {
+  private static final @NonNls String TEXT_MIME_TYPE_PREFIX = "text/";
+  private static final @NonNls String WORKING_MARKER = "working";
 
   private final Project myProject;
   private static final Logger LOG = Logger.getInstance(SvnMergeProvider.class);
@@ -53,7 +56,7 @@ public class SvnMergeProvider implements MergeProvider {
       oldFile = info.getConflictOldFile();
       newFile = info.getConflictNewFile();
       workingFile = info.getConflictWrkFile();
-      mergeCase = workingFile == null || workingFile.getName().contains("working");
+      mergeCase = workingFile == null || workingFile.getName().contains(WORKING_MARKER);
       // for debug
       if (workingFile == null) {
         LOG
@@ -154,6 +157,6 @@ public class SvnMergeProvider implements MergeProvider {
   }
 
   private static boolean isBinaryMimeType(@NotNull String mimeType) {
-    return !mimeType.startsWith("text/");
+    return !mimeType.startsWith(TEXT_MIME_TYPE_PREFIX);
   }
 }

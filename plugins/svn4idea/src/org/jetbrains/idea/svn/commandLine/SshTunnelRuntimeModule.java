@@ -7,6 +7,7 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnConfiguration;
@@ -24,6 +25,7 @@ import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 public class SshTunnelRuntimeModule extends BaseCommandRuntimeModule {
 
   public static final @NlsSafe String DEFAULT_SSH_TUNNEL_VALUE = "$SVN_SSH ssh -q";
+  private static final @NonNls String PUTTY_LINK_CLIENT_NAME = "plink";
 
   public SshTunnelRuntimeModule(@NotNull CommandRuntime runtime) {
     super(runtime);
@@ -60,7 +62,7 @@ public class SshTunnelRuntimeModule extends BaseCommandRuntimeModule {
   @NotNull
   private GeneralCommandLine buildTunnelCommandLine(@NotNull String sshPath) {
     GeneralCommandLine result = new GeneralCommandLine(sshPath);
-    boolean isPuttyLinkClient = endsWithIgnoreCase(FileUtilRt.getNameWithoutExtension(sshPath), "plink");
+    boolean isPuttyLinkClient = endsWithIgnoreCase(FileUtilRt.getNameWithoutExtension(sshPath), PUTTY_LINK_CLIENT_NAME);
     SvnConfigurationState state = getState();
 
     // quiet mode

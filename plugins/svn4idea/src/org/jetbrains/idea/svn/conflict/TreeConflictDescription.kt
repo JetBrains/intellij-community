@@ -2,6 +2,7 @@
 package org.jetbrains.idea.svn.conflict
 
 import org.jetbrains.annotations.Nls
+import org.jetbrains.annotations.NonNls
 import org.jetbrains.idea.svn.SvnBundle.message
 import org.jetbrains.idea.svn.SvnUtil.createUrl
 import org.jetbrains.idea.svn.SvnUtil.resolvePath
@@ -76,10 +77,15 @@ class TreeConflictDescription private constructor(builder: Builder, base: File) 
     @XmlElement(name = "version")
     private val versions = mutableListOf<ConflictVersionWithSide>()
 
-    val sourceLeftVersion get() = versions.find { it.side == "source-left" }?.build()
-    val sourceRightVersion get() = versions.find { it.side == "source-right" }?.build()
+    val sourceLeftVersion get() = versions.find { it.side == SOURCE_LEFT_SIDE }?.build()
+    val sourceRightVersion get() = versions.find { it.side == SOURCE_RIGHT_SIDE }?.build()
 
     fun build(base: File) = TreeConflictDescription(this, base)
+
+    companion object {
+      @NonNls private const val SOURCE_LEFT_SIDE = "source-left"
+      @NonNls private const val SOURCE_RIGHT_SIDE = "source-right"
+    }
   }
 }
 
