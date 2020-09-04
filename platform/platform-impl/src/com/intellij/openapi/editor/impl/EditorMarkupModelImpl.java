@@ -489,7 +489,8 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
     boolean resetAnalyzingStatus = analyzerStatus != null &&
                             analyzerStatus.isTextStatus() && analyzerStatus.getAnalyzingType() == AnalyzingType.COMPLETE;
     analyzerStatus = newStatus;
-    smallIconLabel.setIcon(analyzerStatus.getAnalyzingType() == AnalyzingType.COMPLETE ? analyzerStatus.getIcon() : AllIcons.General.InspectionsEye);
+    AnalyzingType type = analyzerStatus.getAnalyzingType();
+    smallIconLabel.setIcon(type == AnalyzingType.COMPLETE || type == AnalyzingType.SUSPENDED ? analyzerStatus.getIcon() : AllIcons.General.InspectionsEye);
 
     if (showToolbar != analyzerStatus.getController().enableToolbar()) {
       showToolbar = EditorSettingsExternalizable.getInstance().isShowInspectionWidget() &&
