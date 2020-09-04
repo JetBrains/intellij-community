@@ -72,6 +72,7 @@ import java.lang.reflect.Proxy;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.*;
+import java.util.function.Function;
 
 public class FileDocumentManagerImpl extends FileDocumentManager implements SafeWriteRequestor {
   private static final Logger LOG = Logger.getInstance(FileDocumentManagerImpl.class);
@@ -317,6 +318,15 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
    * @param isExplicit caused by user directly (Save action) or indirectly (e.g. Compile)
    */
   public void saveAllDocuments(boolean isExplicit) {
+    saveDocuments(null, isExplicit);
+  }
+
+  @Override
+  public void saveDocuments(@NotNull Function<Document, Boolean> filter) {
+    saveDocuments(filter, true);
+  }
+
+  private void saveDocuments(@Nullable Function<Document, Boolean> filter, boolean isExplicit) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
 
@@ -329,6 +339,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Safe
       int count = 0;
 
       for (Document document : myUnsavedDocuments) {
+        if (filter != null && !filter.apply(document)) continue;
         if (failedToSave.containsKey(document)) continue;
         if (vetoed.contains(document)) continue;
         try {
