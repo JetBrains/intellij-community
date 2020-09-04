@@ -18,7 +18,7 @@ import com.intellij.util.PathUtilRt;
 import com.intellij.util.io.ZipUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.javaFX.JavaFXBundle;
+import org.jetbrains.plugins.javaFX.JavaFXCommonBundle;
 
 import java.io.File;
 import java.io.IOException;
@@ -103,7 +103,7 @@ public abstract class AbstractJavaFxPackager {
     try {
       final String taskDefJar = homePath + "/lib/ant-javafx.jar";
       if (!new File(taskDefJar).exists()) {
-        registerJavaFxPackagerError(JavaFXBundle.message("cant.build.artifact.fx.deploy.is.not.available.in.this.jdk"));
+        registerJavaFxPackagerError(JavaFXCommonBundle.message("cant.build.artifact.fx.deploy.is.not.available.in.this.jdk"));
         return;
       }
       final StringBuilder buf = new StringBuilder();
@@ -127,7 +127,7 @@ public abstract class AbstractJavaFxPackager {
         }
       }
       else {
-        registerJavaFxPackagerError(JavaFXBundle.message("fx.deploy.task.has.failed"));
+        registerJavaFxPackagerError(JavaFXCommonBundle.message("fx.deploy.task.has.failed"));
       }
     }
     finally {
@@ -152,7 +152,7 @@ public abstract class AbstractJavaFxPackager {
 
   private boolean checkNotEmpty(final String text, final String title) {
     if (StringUtil.isEmptyOrSpaces(text)) {
-      registerJavaFxPackagerError(JavaFXBundle.message("unable.to.build.javafx.artifact.not.specified", title));
+      registerJavaFxPackagerError(JavaFXCommonBundle.message("unable.to.build.javafx.artifact.not.specified", title));
       return false;
     }
     return true;
@@ -171,7 +171,7 @@ public abstract class AbstractJavaFxPackager {
         }
       }
     } else {
-      registerJavaFxPackagerError(JavaFXBundle.message("javafx.generate.certificate.task.has.failed"));
+      registerJavaFxPackagerError(JavaFXCommonBundle.message("javafx.generate.certificate.task.has.failed"));
     }
   }
 
@@ -186,7 +186,7 @@ public abstract class AbstractJavaFxPackager {
 
     final int signedResult = startProcess(signCommandLine);
     if (signedResult != 0) {
-      registerJavaFxPackagerError(JavaFXBundle.message("javafx.sign.task.has.failed.for.0", jar2Sign));
+      registerJavaFxPackagerError(JavaFXCommonBundle.message("javafx.sign.task.has.failed.for.0", jar2Sign));
     }
   }
 
@@ -317,7 +317,7 @@ public abstract class AbstractJavaFxPackager {
   private int startAntTarget(String buildText, String javaHome) {
     final String antHome = getAntHome();
     if (antHome == null) {
-      registerJavaFxPackagerError(JavaFXBundle.message("bundled.ant.not.found"));
+      registerJavaFxPackagerError(JavaFXCommonBundle.message("bundled.ant.not.found"));
       return -1;
     }
     final ArrayList<String> commands = new ArrayList<>();
