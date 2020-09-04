@@ -44,6 +44,19 @@ class SaveProjectTest {
   }
 
   @Test
+  fun `save module with group`() = runBlocking {
+    val module = projectModel.createModule("foo")
+    runWriteActionAndWait {
+      val model = projectModel.moduleManager.modifiableModel
+      model.setModuleGroupPath(module, arrayOf("group"))
+      model.commit()
+    }
+
+    saveProjectState()
+    projectModel.baseProjectDir.root.assertMatches(directoryContentOf(testDataRoot.resolve("module-in-group")))
+  }
+
+  @Test
   fun `save detached module`() = runBlocking {
     projectModel.createModule("foo")
     val module = projectModel.createModule("bar")

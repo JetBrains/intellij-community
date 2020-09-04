@@ -58,6 +58,16 @@ class LoadProjectTest : LoadProjectBase() {
   }
 
   @Test
+  fun `load module with group`() {
+    loadProjectAndCheckResults("module-in-group") { project ->
+      val module = ModuleManager.getInstance(project).modules.single()
+      assertThat(module.name).isEqualTo("foo")
+      assertThat(module.moduleTypeName).isEqualTo("EMPTY_MODULE")
+      assertThat(ModuleManager.getInstance(project).getModuleGroupPath(module)).containsExactly("group")
+    }
+  }
+
+  @Test
   fun `load detached module`() {
     loadProjectAndCheckResults("detached-module") { project ->
       val fooModule = ModuleManager.getInstance(project).modules.single()

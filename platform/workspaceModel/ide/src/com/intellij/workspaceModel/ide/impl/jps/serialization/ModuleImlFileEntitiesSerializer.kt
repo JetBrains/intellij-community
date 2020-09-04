@@ -8,7 +8,6 @@ import com.intellij.openapi.module.impl.ModulePath
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.isEmpty
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
@@ -61,7 +60,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       val moduleEntity = loadModuleEntity(reader, builder, virtualFileManager)
       if (moduleEntity != null) createFacetSerializer().loadFacetEntities(builder, moduleEntity, reader)
     } else {
-      val externalSerializer = externalModuleListSerializer?.createSerializer(internalEntitySource, fileUrl) as ModuleImlFileEntitiesSerializer?
+      val externalSerializer = externalModuleListSerializer?.createSerializer(internalEntitySource, fileUrl, modulePath.group) as ModuleImlFileEntitiesSerializer?
       val moduleEntity = externalSerializer?.loadModuleEntity(reader, builder, virtualFileManager)
                          ?: loadModuleEntity(reader, builder, virtualFileManager)
       if (moduleEntity != null) {
@@ -83,6 +82,10 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     val (externalSystemOptions, externalSystemId) = readExternalSystemOptions(reader, moduleOptions)
     val entitySource = createEntitySource(externalSystemId)
     val moduleEntity = builder.addModuleEntity(modulePath.moduleName, listOf(ModuleDependencyItem.ModuleSourceDependency), entitySource)
+    val moduleGroup = modulePath.group
+    if (moduleGroup != null) {
+      builder.addModuleGroupPathEntity(moduleGroup.split('/'), moduleEntity, entitySource)
+    }
 
     val moduleType = moduleOptions["type"]
     if (moduleType != null) {
@@ -560,10 +563,11 @@ internal open class ModuleListSerializerImpl(override val fileUrl: String,
   : JpsModuleListSerializer {
   companion object {
     internal fun createModuleEntitiesSerializer(fileUrl: VirtualFileUrl,
+                                                moduleGroup: String?,
                                                 source: JpsFileEntitySource,
                                                 externalModuleListSerializer: JpsModuleListSerializer? = null,
                                                 externalStorageConfigurationManager: ExternalStorageConfigurationManager? = null) =
-      ModuleImlFileEntitiesSerializer(ModulePath(JpsPathUtil.urlToPath(fileUrl.filePath), null), fileUrl, source,
+      ModuleImlFileEntitiesSerializer(ModulePath(JpsPathUtil.urlToPath(fileUrl.filePath), moduleGroup), fileUrl, source,
                                       externalModuleListSerializer,
                                       externalStorageConfigurationManager)
   }
@@ -581,15 +585,14 @@ internal open class ModuleListSerializerImpl(override val fileUrl: String,
     return "${entity.name}.iml"
   }
 
-  override fun createSerializer(internalSource: JpsFileEntitySource, fileUrl: VirtualFileUrl): JpsFileEntitiesSerializer<ModuleEntity> {
-    return createModuleEntitiesSerializer(fileUrl, internalSource, externalModuleListSerializer, externalStorageConfigurationManager)
+  override fun createSerializer(internalSource: JpsFileEntitySource, fileUrl: VirtualFileUrl, moduleGroup: String?): JpsFileEntitiesSerializer<ModuleEntity> {
+    return createModuleEntitiesSerializer(fileUrl, moduleGroup, internalSource, externalModuleListSerializer, externalStorageConfigurationManager)
   }
 
-  override fun loadFileList(reader: JpsFileContentReader, virtualFileManager: VirtualFileUrlManager): List<VirtualFileUrl> {
+  override fun loadFileList(reader: JpsFileContentReader, virtualFileManager: VirtualFileUrlManager): List<Pair<VirtualFileUrl, String?>> {
     val moduleManagerTag = reader.loadComponent(fileUrl, componentName) ?: return emptyList()
     return ModuleManagerImpl.getPathsToModuleFiles(moduleManagerTag).map {
-      //todo load module groups
-      Paths.get(it.path).toVirtualFileUrl(virtualFileManager)
+      Paths.get(it.path).toVirtualFileUrl(virtualFileManager) to it.group
     }
   }
 
