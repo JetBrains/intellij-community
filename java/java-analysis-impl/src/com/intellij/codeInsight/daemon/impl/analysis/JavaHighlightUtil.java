@@ -167,7 +167,7 @@ public final class JavaHighlightUtil {
   }
 
   @Nullable
-  public static String checkPsiTypeUseInContext(@NotNull PsiType type, @NotNull PsiElement context) {
+  public static @Nls String checkPsiTypeUseInContext(@NotNull PsiType type, @NotNull PsiElement context) {
     if (type instanceof PsiPrimitiveType) return null;
     if (type instanceof PsiArrayType) return checkPsiTypeUseInContext(((PsiArrayType) type).getComponentType(), context);
     if (PsiUtil.resolveClassInType(type) != null) return null;
@@ -182,7 +182,7 @@ public final class JavaHighlightUtil {
   }
 
   @NotNull
-  private static String checkClassType(@NotNull PsiClassType type, @NotNull PsiElement context) {
+  private static @Nls String checkClassType(@NotNull PsiClassType type, @NotNull PsiElement context) {
     String className = PsiNameHelper.getQualifiedClassName(type.getCanonicalText(false), true);
     if (classExists(context, className)) {
       return getClassInaccessibleMessage(context, className);
