@@ -9,7 +9,9 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
+import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.popup.list.ListPopupImpl;
 import git4idea.branch.GitBranchUtil;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
@@ -81,18 +83,21 @@ public class GitBranchesComboBoxAction extends ComboBoxAction implements Disposa
 
   @NotNull
   protected ListPopup createActionPopup(@NotNull DataContext context, @NotNull JComponent component, @Nullable Runnable disposeCallback) {
-    GitRepository repo = GitBranchUtil.getCurrentRepository(project);
-    ListPopup popup = GitBranchPopup.getInstance(project, repo).asListPopup();
-    popup.addListener(new JBPopupListener() {
-      @Override
-      public void beforeShown(@NotNull LightweightWindowEvent event) {
-      }
+    ListPopup popup = JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep(""));
+    if(project != null) {
+      GitRepository repo = GitBranchUtil.getCurrentRepository(project);
+      popup = GitBranchPopup.getInstance(project, repo).asListPopup();
+      popup.addListener(new JBPopupListener() {
+        @Override
+        public void beforeShown(@NotNull LightweightWindowEvent event) {
+        }
 
-      @Override
-      public void onClosed(@NotNull LightweightWindowEvent event) {
-        disposeCallback.run();
-      }
-    });
+        @Override
+        public void onClosed(@NotNull LightweightWindowEvent event) {
+          disposeCallback.run();
+        }
+      });
+    }
     return popup;
   }
 }
