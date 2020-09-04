@@ -137,7 +137,6 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     });
 
   private final SystemDarkThemeDetector lafDetector = SystemDarkThemeDetector.createDetector(this::syncLaf);
-  private final ListCellRenderer<LafReference> lafCellRenderer = new LafCellRenderer();
 
   private static final LafReference SEPARATOR = new LafReference("", null, null);
 
@@ -480,7 +479,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
   @Override
   public ListCellRenderer<LafReference> getLookAndFeelCellRenderer() {
-    return lafCellRenderer;
+    return new LafCellRenderer();
   }
 
   @Override
@@ -605,7 +604,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
           laf = ((PluggableLafInfo)lookAndFeelInfo).createLookAndFeel();
         }
         else {
-          laf = ((LookAndFeel)Class.forName(lookAndFeelInfo.getClassName()).newInstance());
+          laf = (LookAndFeel)Class.forName(lookAndFeelInfo.getClassName()).getConstructor().newInstance();
 
           if (laf instanceof MetalLookAndFeel) {
             MetalLookAndFeel.setCurrentTheme(new DefaultMetalTheme());
@@ -1065,13 +1064,13 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     String pasteActionKey = useSimpleActionKeys ? "paste" : DefaultEditorKit.pasteAction;
     String cutActionKey = useSimpleActionKeys ? "cut" : DefaultEditorKit.cutAction;
     // Ctrl+Ins, Shift+Ins, Shift+Del
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, InputEvent.CTRL_MASK | InputEvent.CTRL_DOWN_MASK), copyActionKey);
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, InputEvent.SHIFT_MASK | InputEvent.SHIFT_DOWN_MASK), pasteActionKey);
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, InputEvent.SHIFT_MASK | InputEvent.SHIFT_DOWN_MASK), cutActionKey);
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, InputEvent.CTRL_DOWN_MASK), copyActionKey);
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, InputEvent.SHIFT_DOWN_MASK), pasteActionKey);
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, InputEvent.SHIFT_DOWN_MASK), cutActionKey);
     // Ctrl+C, Ctrl+V, Ctrl+X
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_MASK | InputEvent.CTRL_DOWN_MASK), copyActionKey);
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_V, InputEvent.CTRL_MASK | InputEvent.CTRL_DOWN_MASK), pasteActionKey);
-    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.CTRL_MASK | InputEvent.CTRL_DOWN_MASK), DefaultEditorKit.cutAction);
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_C, InputEvent.CTRL_DOWN_MASK), copyActionKey);
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_V, InputEvent.CTRL_DOWN_MASK), pasteActionKey);
+    inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_X, InputEvent.CTRL_DOWN_MASK), DefaultEditorKit.cutAction);
   }
 
   public static void initInputMapDefaults(UIDefaults defaults) {
