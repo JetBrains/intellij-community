@@ -612,9 +612,8 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
       return; //canceled or empty
     }
     HashBangConflict conflict = checkHashBangConflict(hashbang);
-    if (conflict != null) {
+    if (conflict != null && conflict.fileType != type) {
       FileType existingFileType = conflict.fileType;
-      if (existingFileType == type) return; // ignore duplicate
       if (!conflict.writeable) {
         String message = conflict.exact ? FileTypesBundle.message("filetype.edit.hashbang.exists.exact.error", existingFileType.getDescription())
                          : FileTypesBundle.message("filetype.edit.hashbang.exists.similar.error", existingFileType.getDescription(), conflict.existingHashBang);
