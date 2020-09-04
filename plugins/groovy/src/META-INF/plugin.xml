@@ -612,7 +612,7 @@
 
     <quoteHandler fileType="Groovy" className="org.jetbrains.plugins.groovy.editor.GroovyQuoteHandler"/>
 
-    <compileServer.plugin classpath="groovy-jps-plugin.jar;groovy-rt-constants.jar"/>
+    <compileServer.plugin classpath="groovy-jps.jar;groovy-constants-rt.jar"/>
     <compiler.buildTargetScopeProvider implementation="org.jetbrains.plugins.groovy.compiler.GroovyTargetScopeProvider"/>
 
     <indexPatternBuilder implementation="org.jetbrains.plugins.groovy.util.GroovyIndexPatternBuilder"/>

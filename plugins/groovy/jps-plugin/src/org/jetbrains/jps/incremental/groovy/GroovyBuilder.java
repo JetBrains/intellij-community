@@ -129,8 +129,8 @@ public class GroovyBuilder extends ModuleLevelBuilder {
 
   @NotNull
   static List<String> getGroovyRtRoots(File jpsPluginRoot) {
-    return Arrays.asList(getGroovyRtJarPath(jpsPluginRoot, "groovy_rt.jar", "intellij.groovy.rt", "groovy-rt"),
-                         getGroovyRtJarPath(jpsPluginRoot, "groovy-rt-constants.jar", "intellij.groovy.constants.rt", "groovy-constants-rt"));
+    return Arrays.asList(getGroovyRtJarPath(jpsPluginRoot, "groovy-rt.jar", "intellij.groovy.rt", "groovy-rt"),
+                         getGroovyRtJarPath(jpsPluginRoot, "groovy-constants-rt.jar", "intellij.groovy.constants.rt", "groovy-constants-rt"));
   }
 
   @NotNull
@@ -140,7 +140,7 @@ public class GroovyBuilder extends ModuleLevelBuilder {
     String fileName;
     File parentDir = jpsPluginClassesRoot.getParentFile();
     if (jpsPluginClassesRoot.isFile()) {
-      if (jpsPluginClassesRoot.getName().equals("groovy-jps-plugin.jar")) {
+      if (jpsPluginClassesRoot.getName().equals("groovy-jps.jar")) {
         fileName = jarNameInDistribution;
       }
       else {

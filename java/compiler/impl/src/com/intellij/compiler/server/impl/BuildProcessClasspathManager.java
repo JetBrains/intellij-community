@@ -173,12 +173,6 @@ public final class BuildProcessClasspathManager {
   static {
     OLD_TO_NEW_MODULE_NAME = new LinkedHashMap<>();
     OLD_TO_NEW_MODULE_NAME.put("android-jps-plugin", "intellij.android.jps");
-    OLD_TO_NEW_MODULE_NAME.put("aspectj-jps-plugin", "intellij.aspectj.jps");
-    OLD_TO_NEW_MODULE_NAME.put("flex-jps-plugin", "intellij.flex.jps");
-    OLD_TO_NEW_MODULE_NAME.put("groovy-jps-plugin", "intellij.groovy.jps");
-    OLD_TO_NEW_MODULE_NAME.put("intellilang-jps-plugin", "intellij.java.langInjection.jps");
-    OLD_TO_NEW_MODULE_NAME.put("javaFX-jps-plugin", "intellij.javaFX.jps");
-    OLD_TO_NEW_MODULE_NAME.put("ruby-chef-jps-plugin", "intellij.ruby.chef.jps");
     OLD_TO_NEW_MODULE_NAME.put("android-jps-model", "intellij.android.jps.model");
     OLD_TO_NEW_MODULE_NAME.put("build-common", "intellij.android.buildCommon");
     OLD_TO_NEW_MODULE_NAME.put("android-rt", "intellij.android.rt");
@@ -187,8 +181,5 @@ public final class BuildProcessClasspathManager {
     OLD_TO_NEW_MODULE_NAME.put("layoutlib-api", "android.sdktools.layoutlib-api");
     OLD_TO_NEW_MODULE_NAME.put("repository", "android.sdktools.repository");
     OLD_TO_NEW_MODULE_NAME.put("manifest-merger", "android.sdktools.manifest-merger");
-    OLD_TO_NEW_MODULE_NAME.put("flex-shared", "intellij.flex.shared");
-    OLD_TO_NEW_MODULE_NAME.put("groovy-rt-constants", "intellij.groovy.constants.rt");
-    OLD_TO_NEW_MODULE_NAME.put("common-javaFX-plugin", "intellij.javaFX.common");
   }
 }

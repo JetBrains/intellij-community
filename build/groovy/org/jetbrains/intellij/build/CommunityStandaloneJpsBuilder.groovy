@@ -53,15 +53,9 @@ class CommunityStandaloneJpsBuilder {
           module("intellij.platform.jps.build.javac.rt")
         }
         //layout of groovy jars must be consistent with GroovyBuilder.getGroovyRtRoots method
-        jar("groovy-jps-plugin.jar") {
-          module("intellij.groovy.jps")
-        }
-        jar("groovy_rt.jar") {
-          module("intellij.groovy.rt")
-        }
-        jar("groovy-rt-constants.jar") {
-          module("intellij.groovy.constants.rt")
-        }
+        jar("groovy-jps.jar") { module("intellij.groovy.jps") }
+        jar("groovy-rt.jar") { module("intellij.groovy.rt") }
+        jar("groovy-constants-rt.jar") { module("intellij.groovy.constants.rt") }
         jar("java-guiForms-jps.jar") { module("intellij.java.guiForms.jps") }
 
 
@@ -72,7 +66,7 @@ class CommunityStandaloneJpsBuilder {
         jar("eclipse-jps.jar") { module("intellij.eclipse.jps") }
         jar("eclipse-common.jar") { module("intellij.eclipse.common") }
         jar("devkit-jps.jar") { module("intellij.devkit.jps") }
-        jar("intellilang-jps-plugin.jar") { module("intellij.java.langInjection.jps") }
+        jar("java-langInjection-jps.jar") { module("intellij.java.langInjection.jps") }
 
         [
           "JDOM", "jna", "OroMatcher", "Trove4j", "ASM", "NanoXML", "protobuf", "cli-parser", "Log4J", "jgoodies-forms", "Eclipse",

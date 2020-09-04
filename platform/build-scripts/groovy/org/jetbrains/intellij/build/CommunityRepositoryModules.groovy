@@ -123,7 +123,7 @@ class CommunityRepositoryModules {
     plugin("intellij.platform.langInjection") {
       withModule("intellij.java.langInjection", "IntelliLang.jar")
       withModule("intellij.xml.langInjection", "IntelliLang.jar")
-      withModule("intellij.java.langInjection.jps", "intellilang-jps-plugin.jar")
+      withModule("intellij.java.langInjection.jps")
       doNotCreateSeparateJarForLocalizableResources()
     },
     plugin("intellij.tasks.core") {
