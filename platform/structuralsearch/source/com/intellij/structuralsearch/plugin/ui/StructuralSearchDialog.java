@@ -168,6 +168,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   private JCheckBox myOpenInNewTab;
 
   private JComponent myReplacePanel;
+  private SwitchAction mySwitchAction;
 
   public StructuralSearchDialog(@NotNull SearchContext searchContext, boolean replace) {
     this(searchContext, replace, false);
@@ -667,6 +668,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
         }
       });
     templateActionGroup.addSeparator();
+    mySwitchAction = new SwitchAction();
     templateActionGroup.addAll(
       new CopyConfigurationAction(),
       new PasteConfigurationAction(),
@@ -684,7 +686,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
         }
       },
       Separator.getInstance(),
-      new SwitchAction()
+      mySwitchAction
     );
 
 
@@ -1098,6 +1100,10 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
       final Configuration configuration = ConfigurationUtil.fromXml(text);
       if (configuration == null) {
         return false;
+      }
+      if (configuration instanceof ReplaceConfiguration) {
+        mySwitchAction.actionPerformed(
+          AnActionEvent.createFromAnAction(mySwitchAction, null, ActionPlaces.UNKNOWN, DataContext.EMPTY_CONTEXT));
       }
       loadConfiguration(configuration);
       securityCheck();
