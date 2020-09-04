@@ -14,7 +14,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -118,7 +117,7 @@ public interface DocumentationProvider {
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  default @Nullable @Nls String generateRenderedDoc(@NotNull PsiElement element) {
+  default @Nullable @NlsSafe String generateRenderedDoc(@NotNull PsiElement element) {
     return null;
   }
 
@@ -128,7 +127,7 @@ public interface DocumentationProvider {
    * @see #collectDocComments(PsiFile, Consumer)
    */
   @ApiStatus.Experimental
-  default @Nullable @Nls String generateRenderedDoc(@NotNull PsiDocCommentBase comment) {
+  default @Nullable @NlsSafe String generateRenderedDoc(@NotNull PsiDocCommentBase comment) {
     PsiElement target = comment.getOwner();
     return generateRenderedDoc(target == null ? comment : target);
   }

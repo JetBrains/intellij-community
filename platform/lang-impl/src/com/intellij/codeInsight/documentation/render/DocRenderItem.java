@@ -326,7 +326,7 @@ public final class DocRenderItem {
       return DocRenderPassFactory.calcText(getComment());
     }).withDocumentsCommitted(Objects.requireNonNull(editor.getProject()))
       .coalesceBy(this)
-      .finishOnUiThread(ModalityState.any(), html -> {
+      .finishOnUiThread(ModalityState.any(), (@Nls String html) -> {
         textToRender = html;
         toggle(null);
       }).submit(AppExecutorUtil.getAppExecutorService());

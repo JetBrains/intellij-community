@@ -728,7 +728,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return null;
   }
 
-  public String generateDocumentation(@NotNull PsiElement element, @Nullable PsiElement originalElement, boolean onHover) {
+  public @NlsSafe String generateDocumentation(@NotNull PsiElement element, @Nullable PsiElement originalElement, boolean onHover) {
     return new MyCollector(myProject, CompletableFuture.completedFuture(element), originalElement, null, onHover).getDocumentation();
   }
 
