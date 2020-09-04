@@ -538,10 +538,22 @@
         <group id="ViewAppearanceGroup" popup="true">
           <group id="ToggleFullScreenGroup">
             <separator/>
-            <action id="TogglePresentationMode" class="com.intellij.ide.actions.TogglePresentationModeAction"/>
-            <action id="ToggleDistractionFreeMode" class="com.intellij.ide.actions.ToggleDistractionFreeModeAction"/>
-            <action id="ToggleFullScreen" class="com.intellij.ide.actions.ToggleFullScreenAction"/>
-            <action id="ToggleZenMode" class="com.intellij.ide.actions.ToggleZenModeAction"/>
+            <action id="TogglePresentationMode" class="com.intellij.ide.actions.TogglePresentationModeAction">
+              <synonym key="action.TogglePresentationMode.text.enter"/>
+              <synonym key="action.TogglePresentationMode.text.exit"/>
+            </action>
+            <action id="ToggleDistractionFreeMode" class="com.intellij.ide.actions.ToggleDistractionFreeModeAction">
+              <synonym key="action.ToggleDistractionFreeMode.enter"/>
+              <synonym key="action.ToggleDistractionFreeMode.exit"/>
+            </action>
+            <action id="ToggleFullScreen" class="com.intellij.ide.actions.ToggleFullScreenAction">
+              <synonym key="action.ToggleFullScreen.text.enter"/>
+              <synonym key="action.ToggleFullScreen.text.exit"/>
+            </action>
+            <action id="ToggleZenMode" class="com.intellij.ide.actions.ToggleZenModeAction">
+              <synonym key="action.ToggleZenMode.exit"/>
+              <synonym key="action.ToggleZenMode.enter"/>
+            </action>
           </group>
           <group id="UIToggleActions">
             <separator/>
