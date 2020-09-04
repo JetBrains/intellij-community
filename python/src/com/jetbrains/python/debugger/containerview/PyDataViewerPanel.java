@@ -142,9 +142,11 @@ public class PyDataViewerPanel extends JPanel {
   }
 
   protected void createUIComponents() {
-    myFormatTextField = createEditorField();
     mySliceTextField = createEditorField();
+    mySliceTextField.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
     addCompletion();
+    myFormatTextField = createEditorField();
+    myFormatTextField.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 7));
 
     myTable = createMainTable();
     myScrollPane = myTable.getScrollPane();

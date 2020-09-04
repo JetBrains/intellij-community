@@ -10,13 +10,13 @@ public class ColumnFilter {
     REGEX
   }
 
-  public static final String VAR_ALIAS = "_x";
+  public static final String VAR_ALIAS = "x";
 
   private final int myColumn;
   @NotNull private final String myFilter;
 
   private final Mode myMode;
-  @NotNull private String myStrFormat;
+  @NotNull private final String myStrFormat;
 
   public ColumnFilter(int column, @NotNull String filter, Mode mode, @NotNull String strFormat) {
     myColumn = column;
