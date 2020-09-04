@@ -126,6 +126,7 @@ public class QuickChangeLookAndFeel extends QuickSwitchSchemeAction {
     private final UIManager.LookAndFeelInfo myLookAndFeelInfo;
 
     private LafChangeAction(UIManager.LookAndFeelInfo lf, boolean currentLaf) {
+      //noinspection HardCodedStringLiteral
       super(lf.getName(), null, getIcon(currentLaf));
       myLookAndFeelInfo = lf;
     }

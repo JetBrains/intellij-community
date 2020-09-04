@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -288,7 +289,8 @@ public final class CommonProxy extends ProxySelector {
       authenticator.setRequestingSite(getRequestingSite());
       authenticator.setRequestingPort(getRequestingPort());
       authenticator.setRequestingProtocol(getRequestingProtocol());//http
-      authenticator.setRequestingPrompt(getRequestingPrompt());
+      @NlsSafe String requestingPrompt = getRequestingPrompt();
+      authenticator.setRequestingPrompt(requestingPrompt);
       authenticator.setRequestingScheme(getRequestingScheme());//ntlm
       authenticator.setRequestingURL(getRequestingURL());
       authenticator.setRequestorType(getRequestorType());

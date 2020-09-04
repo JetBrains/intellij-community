@@ -6,6 +6,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -150,7 +151,7 @@ public final class ExceptionUtil extends ExceptionUtilRt {
   }
 
   @NotNull
-  public static String getNonEmptyMessage(@NotNull Throwable t, @NotNull String defaultMessage) {
+  public static @NlsSafe String getNonEmptyMessage(@NotNull Throwable t, @NotNull @Nls String defaultMessage) {
     String message = t.getMessage();
     return !StringUtil.isEmptyOrSpaces(message) ? message : defaultMessage;
   }

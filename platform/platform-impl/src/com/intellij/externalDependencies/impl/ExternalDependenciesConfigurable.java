@@ -16,6 +16,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLabel;
@@ -160,7 +161,7 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable 
     }
   }
 
-  private @NlsContexts.ListItem String getPluginNameById(@NotNull String pluginId) {
+  private @NlsContexts.ListItem String getPluginNameById(@NotNull @NlsSafe String pluginId) {
     return ObjectUtils.notNull(getPluginNameByIdMap().get(pluginId), pluginId);
   }
 

@@ -32,7 +32,7 @@ public class DependencyOnPlugin implements ProjectExternalDependency, Comparable
     myMaxVersion = maxVersion;
   }
 
-  public String getPluginId() {
+  public @NlsSafe String getPluginId() {
     return myPluginId;
   }
 

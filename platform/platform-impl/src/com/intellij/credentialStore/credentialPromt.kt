@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("CredentialPromptDialog")
 package com.intellij.credentialStore
 
@@ -32,7 +32,7 @@ fun askPassword(project: Project?,
                 @NlsContexts.Label passwordFieldLabel: String,
                 attributes: CredentialAttributes,
                 resetPassword: Boolean = false,
-                error: String? = null): String? {
+                @NlsContexts.DialogMessage error: String? = null): String? {
   return askCredentials(project, dialogTitle, passwordFieldLabel, attributes,
                         isResetPassword = resetPassword,
                         error = error,
@@ -47,7 +47,7 @@ fun askCredentials(project: Project?,
                    isSaveOnOk: Boolean = true,
                    isCheckExistingBeforeDialog: Boolean = false,
                    isResetPassword: Boolean = false,
-                   error: String? = null): CredentialRequestResult? {
+                   @NlsContexts.DialogMessage error: String? = null): CredentialRequestResult? {
   val store = PasswordSafe.instance
   if (isResetPassword) {
     store.set(attributes, null)

@@ -5,6 +5,7 @@ import com.intellij.designer.model.PropertiesContainer;
 import com.intellij.designer.model.PropertyContext;
 import com.intellij.designer.propertyTable.PropertyRenderer;
 import com.intellij.designer.propertyTable.PropertyTable;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,6 +56,7 @@ public class LabelPropertyRenderer extends JLabel implements PropertyRenderer {
    * set.
    */
   protected void customize(@NotNull Object value) {
-    setText(myStaticText != null ? myStaticText : value.toString());
+    @NlsSafe String stringValue = value.toString();
+    setText(myStaticText != null ? myStaticText : stringValue);
   }
 }
