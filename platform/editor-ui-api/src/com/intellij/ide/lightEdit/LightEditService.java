@@ -64,4 +64,9 @@ public interface LightEditService {
    * Prompt a user to save all new documents which haven't been written to files yet.
    */
   void saveNewDocuments();
+
+  @NotNull
+  LightEditFilePatterns getSupportedFilePatterns();
+
+  void setSupportedFilePatterns(@NotNull LightEditFilePatterns filePatterns);
 }

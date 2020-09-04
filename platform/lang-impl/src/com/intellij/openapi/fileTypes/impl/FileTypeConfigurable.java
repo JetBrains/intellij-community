@@ -4,6 +4,8 @@ package com.intellij.openapi.fileTypes.impl;
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.highlighter.custom.SyntaxTable;
+import com.intellij.ide.lightEdit.LightEditFilePatterns;
+import com.intellij.ide.lightEdit.LightEditService;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
@@ -22,6 +24,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,6 +64,10 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     myHashBangs = new HashBangPanel(myFileTypePanel.myHashBangPanel);
     myRecognizedFileType.myFileTypesList.addListSelectionListener(__ -> updateExtensionList());
     myFileTypePanel.myIgnoreFilesField.setColumns(30);
+    myFileTypePanel.myOpenWithLightEditPanel.setBorder(
+      IdeBorderFactory.createTitledBorder(IdeBundle.message("editbox.open.in.light.edit.mode"), false, TITLE_INSETS).setShowLine(false));
+    myFileTypePanel.myLightEditHintLabel.setForeground(JBColor.GRAY);
+    myFileTypePanel.myLightEditHintLabel.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
     return myFileTypePanel.myWholePanel;
   }
 
@@ -91,6 +98,9 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
       fileTypeManager.setPatternsTable(myTempFileTypes, myTempPatternsTable);
       TemplateDataLanguagePatterns.getInstance().setAssocTable(myTempTemplateDataLanguages);
     });
+
+    LightEditService.getInstance().setSupportedFilePatterns(
+      LightEditFilePatterns.parse(myFileTypePanel.myLightEditPatternsField.getText()));
   }
 
   @Override
@@ -109,6 +119,9 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     if (myFileTypeToPreselect != null) {
       myRecognizedFileType.selectFileType(myFileTypeToPreselect);
     }
+
+    myFileTypePanel.myLightEditPatternsField.setText(
+      LightEditService.getInstance().getSupportedFilePatterns().toString());
   }
 
   @Override
@@ -120,7 +133,8 @@ public final class FileTypeConfigurable implements SearchableConfigurable, Confi
     return !myTempPatternsTable.equals(fileTypeManager.getExtensionMap()) ||
            !myTempFileTypes.equals(getRegisteredFilesTypes()) ||
            !myOriginalToEditedMap.isEmpty() ||
-           !myTempTemplateDataLanguages.equals(TemplateDataLanguagePatterns.getInstance().getAssocTable());
+           !myTempTemplateDataLanguages.equals(TemplateDataLanguagePatterns.getInstance().getAssocTable()) ||
+           !LightEditFilePatterns.parse(myFileTypePanel.myLightEditPatternsField.getText()).equals(LightEditService.getInstance().getSupportedFilePatterns());
   }
 
   @Override

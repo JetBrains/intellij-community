@@ -57,15 +57,20 @@ public final class LightEditServiceImpl implements LightEditService,
   private final LightEditConfiguration myConfiguration = new LightEditConfiguration();
   private final LightEditProjectManager myLightEditProjectManager = new LightEditProjectManager();
   private boolean myEditorWindowClosing = false;
+  private LightEditFilePatterns myFilePatterns = new LightEditFilePatterns();
 
   @Override
   public @NotNull LightEditConfiguration getState() {
+    myConfiguration.supportedFilePatterns = myFilePatterns.getPatterns();
     return myConfiguration;
   }
 
   @Override
   public void loadState(@NotNull LightEditConfiguration state) {
     XmlSerializerUtil.copyBean(state, myConfiguration);
+    if (myConfiguration.supportedFilePatterns != null) {
+      myFilePatterns.setPatterns(myConfiguration.supportedFilePatterns);
+    }
   }
 
   public LightEditServiceImpl() {
@@ -120,7 +125,7 @@ public final class LightEditServiceImpl implements LightEditService,
 
   @Override
   public boolean openFile(@NotNull VirtualFile file) {
-    if (LightEditUtil.isLightEditEnabled()) {
+    if (LightEditUtil.isLightEditEnabled() && myFilePatterns.match(file)) {
       doWhenActionManagerInitialized(() -> {
         doOpenFile(file);
       });
@@ -495,4 +500,13 @@ public final class LightEditServiceImpl implements LightEditService,
     }
   }
 
+  @Override
+  public @NotNull LightEditFilePatterns getSupportedFilePatterns() {
+    return myFilePatterns;
+  }
+
+  @Override
+  public void setSupportedFilePatterns(@NotNull LightEditFilePatterns filePatterns) {
+    myFilePatterns = filePatterns;
+  }
 }

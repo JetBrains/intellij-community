@@ -7,4 +7,7 @@ import java.util.List;
 class LightEditConfiguration {
   public boolean      autosaveMode = false;
   public List<String> sessionFiles = new ArrayList<>();
+
+  public List<String> supportedFilePatterns = null;
+
 }
