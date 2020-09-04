@@ -367,12 +367,14 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     for (int i = lastNotNullIndex; i >= 0; i--) {
       int count = status.errorCount[i];
       if (count > 0) {
-        final HighlightSeverity severity = mySeverityRegistrar.getSeverityByIndex(i);
-        String name = count > 1 ? StringUtil.pluralize(StringUtil.toLowerCase(severity.getName())) : StringUtil.toLowerCase(severity.getName());
-        text.append(status.errorAnalyzingFinished
-                ? DaemonBundle.message("errors.found", count, name)
-                : DaemonBundle.message("errors.found.so.far", count, name)).append("<br/>");
-        currentSeverityErrors += count;
+        HighlightSeverity severity = mySeverityRegistrar.getSeverityByIndex(i);
+        if (severity != null) {
+          String name = count > 1 ? StringUtil.pluralize(StringUtil.toLowerCase(severity.getName())) : StringUtil.toLowerCase(severity.getName());
+          text.append(status.errorAnalyzingFinished
+                      ? DaemonBundle.message("errors.found", count, name)
+                      : DaemonBundle.message("errors.found.so.far", count, name)).append("<br/>");
+          currentSeverityErrors += count;
+        }
       }
     }
     if (currentSeverityErrors == 0) {
@@ -430,16 +432,18 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
         int count = errorCount[i];
         if (count > 0) {
           HighlightSeverity severity = mySeverityRegistrar.getSeverityByIndex(i);
-          String name = StringUtil.toLowerCase(severity.getName());
-          if (count > 1) {
-            name = StringUtil.pluralize(name);
-          }
+          if (severity != null) {
+            String name = StringUtil.toLowerCase(severity.getName());
+            if (count > 1) {
+              name = StringUtil.pluralize(name);
+            }
 
-          Icon icon = mySeverityRegistrar.getRendererIconByIndex(i);
-          statusItems.add(new StatusItem(Integer.toString(count), icon, name));
+            Icon icon = mySeverityRegistrar.getRendererIconByIndex(i);
+            statusItems.add(new StatusItem(Integer.toString(count), icon, name));
 
-          if (mainIcon == null) {
-            mainIcon = icon;
+            if (mainIcon == null) {
+              mainIcon = icon;
+            }
           }
         }
       }
