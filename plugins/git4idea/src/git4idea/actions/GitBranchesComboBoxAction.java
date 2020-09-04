@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class GitBranchesComboBoxAction extends ComboBoxAction implements Disposable {
+public class GitBranchesComboBoxAction extends ComboBoxAction {
 
   public GitBranchesComboBoxAction() {
     getTemplatePresentation().setText(GitBundle.messagePointer("git.show.branches"));
@@ -75,9 +75,6 @@ public class GitBranchesComboBoxAction extends ComboBoxAction implements Disposa
     return new DefaultActionGroup();
   }
 
-  @Override
-  public void dispose() {
-  }
 
   @NotNull
   protected ListPopup createActionPopup(@NotNull DataContext context, @NotNull JComponent component, @Nullable Runnable disposeCallback) {
