@@ -3,6 +3,8 @@ package git4idea.index.actions
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsActions
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsException
@@ -16,10 +18,10 @@ import java.util.function.Supplier
 import javax.swing.Icon
 
 interface StagingAreaOperation {
-  val actionText: Supplier<String>
-  val progressTitle: String
+  val actionText: Supplier<@NlsActions.ActionText String>
+  val progressTitle: @NlsContexts.ProgressTitle String
   val icon: Icon?
-  val errorMessage: String
+  val errorMessage: @NlsContexts.NotificationContent String
 
   fun matches(statusNode: GitFileStatusNode): Boolean
 

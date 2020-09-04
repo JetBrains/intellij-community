@@ -7,6 +7,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsContexts.NotificationContent
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
@@ -53,7 +54,7 @@ fun <T> runProcess(project: Project, @NlsContexts.ProgressTitle title: String, c
                                                                                          title, canBeCancelled, project)
 }
 
-private fun showErrorMessage(project: Project, messageTitle: String, exceptions: Collection<Exception>) {
+private fun showErrorMessage(project: Project, @NotificationContent messageTitle: String, exceptions: Collection<Exception>) {
   val message = HtmlBuilder().append(HtmlChunk.text("$messageTitle:").bold())
     .br()
     .appendWithSeparators(HtmlChunk.br(), exceptions.map { HtmlChunk.text(it.localizedMessage) })
