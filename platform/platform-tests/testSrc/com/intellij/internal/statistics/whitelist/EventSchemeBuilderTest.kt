@@ -23,11 +23,11 @@ class EventSchemeBuilderTest : BasePlatformTestCase() {
   }
 
   fun `test generate string field validated by list of possible values`() {
-    doFieldTest(EventFields.String("class", listOf("foo", "bar")), hashSetOf("foo", "bar"))
+    doFieldTest(EventFields.String("class", listOf("foo", "bar")), hashSetOf("{enum:foo|bar}"))
   }
 
   fun `test generate enum field`() {
-    doFieldTest(EventFields.Enum("enum", TestEnum::class.java), hashSetOf("FOO", "BAR"))
+    doFieldTest(EventFields.Enum("enum", TestEnum::class.java), hashSetOf("{enum:FOO|BAR}"))
   }
 
   fun `test generate string list validated by custom rule`() {
@@ -43,10 +43,10 @@ class EventSchemeBuilderTest : BasePlatformTestCase() {
   }
 
   fun `test generate string list validated by list of possible values`() {
-    doFieldTest(EventFields.StringList("fields", listOf("foo", "bar")), hashSetOf("foo", "bar"))
+    doFieldTest(EventFields.StringList("fields", listOf("foo", "bar")), hashSetOf("{enum:foo|bar}"))
   }
 
-  private fun doFieldTest(eventField: EventField<*>, values: Set<String>) {
+  private fun doFieldTest(eventField: EventField<*>, expectedValues: Set<String>) {
     val eventLogGroup = EventLogGroup("test.group.id", 1)
     eventLogGroup.registerEvent("test_event", eventField)
     val groups = WhitelistBuilder.collectWhitelistFromExtensions("count", listOf(TestCounterCollector(eventLogGroup)))
@@ -54,7 +54,7 @@ class EventSchemeBuilderTest : BasePlatformTestCase() {
     val group = groups.first()
     assertNotNull(group)
     val event = group.schema.first()
-    assertSameElements(event.fields.first().value, values)
+    assertSameElements(event.fields.first().value, expectedValues)
   }
 
   enum class TestEnum { FOO, BAR }
