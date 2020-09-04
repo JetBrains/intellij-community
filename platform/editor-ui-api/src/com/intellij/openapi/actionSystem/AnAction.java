@@ -72,6 +72,7 @@ public abstract class AnAction implements PossiblyDumbAware {
   private boolean myIsDefaultIcon = true;
   private boolean myWorksInInjected;
   private SmartFMap<String, Supplier<String>> myActionTextOverrides = SmartFMap.emptyMap();
+  private SmartList<Supplier<String>> mySynonyms = new SmartList<>();
 
   /**
    * Creates a new action with its text, description and icon set to {@code null}.
@@ -389,6 +390,14 @@ public abstract class AnAction implements PossiblyDumbAware {
     if (override != null) {
       e.getPresentation().setText(override);
     }
+  }
+
+  public void addSynonym(@NotNull Supplier<String> text) {
+    mySynonyms.add(text);
+  }
+
+  public List<Supplier<String>> getSynonyms() {
+    return mySynonyms;
   }
 
   public interface TransparentUpdate {

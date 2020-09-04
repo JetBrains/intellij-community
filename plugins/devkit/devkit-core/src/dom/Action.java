@@ -52,6 +52,10 @@ public interface Action extends ActionOrGroup {
   OverrideText addOverrideText();
 
   @NotNull
+  List<Synonym> getSynonyms();
+  Synonym addSynonym();
+
+  @NotNull
   @Convert(KeymapConverter.class)
   GenericAttributeValue<XmlFile> getKeymap();
 

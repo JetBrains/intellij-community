@@ -123,6 +123,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private static final String PROJECT_TYPE = "project-type";
   private static final String UNREGISTER_ELEMENT_NAME = "unregister";
   private static final String OVERRIDE_TEXT_ELEMENT_NAME = "override-text";
+  private static final String SYNONYM_ELEMENT_NAME = "synonym";
   private static final String PLACE_ATTR_NAME = "place";
   private static final String USE_TEXT_OF_PLACE_ATTR_NAME = "use-text-of-place";
   private static final String RESOURCE_BUNDLE_ATTR_NAME = "resource-bundle";
@@ -671,6 +672,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       else if (OVERRIDE_TEXT_ELEMENT_NAME.equals(e.getName())) {
         processOverrideTextNode(stub, e, plugin.getPluginId(), bundle);
       }
+      else if (SYNONYM_ELEMENT_NAME.equals(e.getName())) {
+        processSynonymNode(stub, e, plugin.getPluginId(), bundle);
+      }
       else {
         reportActionError(plugin.getPluginId(), "unexpected name of element \"" + e.getName() + "\"");
         return null;
@@ -946,6 +950,26 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       }
       else {
         stub.addActionTextOverride(place, () -> text);
+      }
+    }
+  }
+
+  private static void processSynonymNode(ActionStub stub, Element element, PluginId pluginId, @Nullable ResourceBundle bundle) {
+    if (!SYNONYM_ELEMENT_NAME.equals(element.getName())) {
+      reportActionError(pluginId, "unexpected name of element \"" + element.getName() + "\"");
+      return;
+    }
+    String text = element.getAttributeValue(TEXT_ATTR_NAME, "");
+    if (!text.isEmpty()) {
+      stub.addSynonym(() -> text);
+    }
+    else {
+      String key = element.getAttributeValue(KEY_ATTR_NAME);
+      if (key != null && bundle != null) {
+        stub.addSynonym(() -> BundleBase.message(bundle, key));
+      }
+      else {
+        reportActionError(pluginId, "Can't process synonym: neither text nor resource bundle key is specified");
       }
     }
   }
