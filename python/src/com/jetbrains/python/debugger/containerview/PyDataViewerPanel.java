@@ -57,7 +57,7 @@ public class PyDataViewerPanel extends JPanel {
   protected JPanel bottomPanel;
   private boolean myColored;
   List<Listener> myListeners;
-  private String myOriginalVarName;
+  private @NlsSafe String myOriginalVarName;
   private String myModifiedVarName;
 
   private static final String MODIFIED_VARIABLE_FORMAT = "%s*";
@@ -263,9 +263,7 @@ public class PyDataViewerPanel extends JPanel {
       PyDebugValue value = myFrameAccessor.evaluate(expression, false, true);
       if (value == null || value.isErrorOnEval()) {
 
-        Runnable runnable = () -> setError(
-          value != null ? value.getValue() : PyBundle.message("debugger.data.view.failed.to.evaluate.expression", expression),
-          modifier); //NON-NLS
+        Runnable runnable = () -> setError(value != null ? value.getValue() : PyBundle.message("debugger.data.view.failed.to.evaluate.expression", expression), modifier);
         if (pooledThread) {
           ApplicationManager.getApplication().invokeLater(runnable);
         }

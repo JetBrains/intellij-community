@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.util.NlsContexts.ProgressTitle;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ui.UIUtil;
@@ -26,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.event.TableModelEvent;
 import javax.swing.table.AbstractTableModel;
 import javax.swing.table.TableModel;
-import java.util.Arrays;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
 
@@ -119,7 +119,7 @@ public class AsyncArrayTableModel extends AbstractTableModel {
     }
   }
 
-  public void loadValues(@NotNull String updateMessage,
+  public void loadValues(@NotNull @ProgressTitle String updateMessage,
                          int fromRow,
                          int toRow,
                          int fromCol,
