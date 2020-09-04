@@ -21,6 +21,14 @@ public final class PatternContext {
     myDisplayName = displayName;
   }
 
+  /**
+   * @deprecated Use {@link com.intellij.structuralsearch.PatternContext#PatternContext(java.lang.String, java.util.function.Supplier)} instead.
+   */
+  @Deprecated
+  public PatternContext(@NonNls @NotNull String ID, @Nls(capitalization = Nls.Capitalization.Title) @NotNull String displayName) {
+    this(ID, () -> displayName);
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
