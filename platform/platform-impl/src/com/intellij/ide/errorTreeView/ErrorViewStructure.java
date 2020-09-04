@@ -530,7 +530,7 @@ public class ErrorViewStructure extends AbstractTreeStructure {
           final Icon icon = myVf.getFileType().getIcon();
           renderer.setIcon(icon);
           final String[] messages = getText();
-          final String text = messages == null || messages.length == 0 ? vf.getPath() : messages[0];
+          final String text = messages == null || messages.length == 0 ? vf.getPresentableUrl() : messages[0];
           renderer.append(text);
         }
       };

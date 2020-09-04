@@ -13,7 +13,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -726,7 +725,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
                   MavenDomProfile mavenDomProfile = (MavenDomProfile)value;
                   XmlElement xmlElement = mavenDomProfile.getXmlElement();
                   if (xmlElement != null) {
-                    setText(xmlElement.getContainingFile().getVirtualFile().getPath());
+                    setText(xmlElement.getContainingFile().getVirtualFile().getPresentableUrl());
                   }
                   return result;
                 }

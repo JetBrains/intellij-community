@@ -231,7 +231,7 @@ public final class PatchDiffRequestFactory {
   @Nls
   @NotNull
   private static String getPresentablePath(@NotNull VirtualFile file) {
-    String fullPath = file.getParent() == null ? file.getPath() : file.getParent().getPath();
+    String fullPath = file.getParent() == null ? file.getPresentableUrl() : file.getParent().getPresentableUrl();
     return file.getName() + " (" + fullPath + ")";
   }
 }

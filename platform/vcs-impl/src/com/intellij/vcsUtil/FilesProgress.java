@@ -53,7 +53,7 @@ public class FilesProgress {
   @Nls
   private static String getFileDescriptionForProgress(final VirtualFile file) {
     final VirtualFile parent = file.getParent();
-    return file.getName() + " (" + (parent == null ? file.getPath() : parent.getPath()) + ")";
+    return file.getName() + " (" + (parent == null ? file.getPresentableUrl() : parent.getPresentableUrl()) + ")";
   }
 
   public void setInText2(boolean inText2) {
