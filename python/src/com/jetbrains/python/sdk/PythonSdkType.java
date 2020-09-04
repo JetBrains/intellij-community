@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -375,9 +376,10 @@ public final class PythonSdkType extends SdkType {
             restartAction.run();
           }
         };
-      @NonNls final String before = "\n<a href=\"#\">";
-      @NonNls final String after = "</a>";
-      notificationMessage = e.getMessage() + before + PyBundle.message("python.vagrant.refresh.skeletons") + after;
+      notificationMessage = new HtmlBuilder()
+        .append(e.getMessage())
+        .appendLink("#", PyBundle.message("python.vagrant.refresh.skeletons"))
+        .toString();
     }
     else if (ExceptionUtil.causedBy(e, ExceptionFix.class)) {
       final ExceptionFix fix = ExceptionUtil.findCause(e, ExceptionFix.class);
