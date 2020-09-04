@@ -83,30 +83,23 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable 
           append(getPluginNameById(value.getPluginId()), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
           String minVersion = value.getMinVersion();
           String maxVersion = value.getMaxVersion();
-          if (minVersion != null || maxVersion != null) {
-            append(", version ");
-          }
           if (minVersion != null && minVersion.equals(maxVersion)) {
-            append(minVersion, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+            append(IdeBundle.message("required.plugin.exact.version", minVersion));
           }
           else if (minVersion != null && maxVersion != null) {
-            append("between ");
-            append(minVersion, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
-            append(" and ");
-            append(maxVersion, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+            append(IdeBundle.message("required.plugin.between.versions", minVersion, maxVersion));
           }
           else if (minVersion != null) {
-            append("at least ");
-            append(minVersion, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+            append(IdeBundle.message("required.plugin.at.least.versions", minVersion));
           }
           else if (maxVersion != null) {
-            append("at most ");
-            append(maxVersion, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+            append(IdeBundle.message("required.plugin.at.most.versions", maxVersion));
           }
         }
         else {
           LOG.error("Unsupported external dependency: " + dependency.getClass());
-          append(dependency.toString());
+          @NlsSafe String dependencyDescription = dependency.toString();
+          append(dependencyDescription);
         }
       }
     });
