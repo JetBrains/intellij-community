@@ -104,6 +104,11 @@ public abstract class ProjectLevelVcsManager {
   public abstract boolean checkVcsIsActive(@NonNls String vcsName);
 
   /**
+   * Returns the list of VCSes supported by plugins.
+   */
+  public abstract AbstractVcs @NotNull [] getAllSupportedVcss();
+
+  /**
    * Returns the list of VCSes used by at least one module in the project.
    */
   public abstract AbstractVcs @NotNull [] getAllActiveVcss();

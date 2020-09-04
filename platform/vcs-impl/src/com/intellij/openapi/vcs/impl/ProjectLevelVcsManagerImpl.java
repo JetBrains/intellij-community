@@ -35,7 +35,6 @@ import com.intellij.openapi.vcs.checkout.CompositeCheckoutListener;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
 import com.intellij.openapi.vcs.history.VcsHistoryCache;
 import com.intellij.openapi.vcs.impl.projectlevelman.*;
-import com.intellij.openapi.vcs.roots.VcsRootScanner;
 import com.intellij.openapi.vcs.update.ActionInfo;
 import com.intellij.openapi.vcs.update.UpdateInfoTree;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
@@ -135,6 +134,11 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   @Override
   public VcsDescriptor[] getAllVcss() {
     return AllVcses.getInstance(myProject).getAll();
+  }
+
+  @Override
+  public AbstractVcs @NotNull [] getAllSupportedVcss() {
+    return AllVcses.getInstance(myProject).getSupportedVcses();
   }
 
   public boolean haveVcses() {
