@@ -767,4 +767,32 @@ public class AnnotationUtil {
     }
     return ContainerUtil.createMaybeSingletonList(attributeValue);
   }
+
+  /**
+   * @param annotation annotation
+   * @return type that relates to that annotation
+   */
+  public static @Nullable PsiType getRelatedType(PsiAnnotation annotation) {
+    PsiAnnotationOwner owner = annotation.getOwner();
+    if (owner instanceof PsiType) {
+      return (PsiType)owner;
+    }
+    PsiType type = null;
+    if (owner instanceof PsiModifierList) {
+      PsiElement parent = ((PsiModifierList)owner).getParent();
+      if (parent instanceof PsiVariable) {
+        type = ((PsiVariable)parent).getType();
+      }
+      if (parent instanceof PsiMethod) {
+        type = ((PsiMethod)parent).getReturnType();
+      }
+      if (type != null) {
+        if (AnnotationTargetUtil.isTypeAnnotation(annotation)) {
+          return type.getDeepComponentType();
+        }
+        return type;
+      }
+    }
+    return null;
+  }
 }

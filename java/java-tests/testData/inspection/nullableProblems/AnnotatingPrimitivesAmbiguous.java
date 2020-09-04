@@ -1,5 +1,5 @@
 class Y {
-    public static @withTypeUse.Nullable byte @withTypeUse.Nullable [] getData3() {
+    public static <warning descr="Primitive type members cannot be annotated">@withTypeUse.Nullable</warning> byte @withTypeUse.Nullable [] getData3() {
         return null;
     }
 }
