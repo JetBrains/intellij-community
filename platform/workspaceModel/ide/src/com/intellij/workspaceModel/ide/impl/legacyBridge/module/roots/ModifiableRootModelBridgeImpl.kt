@@ -41,6 +41,22 @@ class ModifiableRootModelBridgeImpl(
   cacheStorageResult: Boolean = true
 ) : LegacyBridgeModifiableBase(diff, cacheStorageResult), ModifiableRootModelBridge, ModuleRootModelBridge {
 
+  /*
+    We save the module entity for the following case:
+    - Modifiable model created
+    - module disposed
+    - modifiable model used
+
+    This case can appear, for example, during maven import
+
+    moduleEntity would be removed from this diff after module disposing
+  */
+  private var savedModuleEntity: ModuleEntity
+
+  init {
+    savedModuleEntity = entityStorageOnDiff.current.findModuleEntity(module) ?: error("Cannot find module entity for '$moduleBridge'")
+  }
+
   override fun getModificationCount(): Long = diff.modificationCount
 
   private val extensionsDisposable = Disposer.newDisposable()
@@ -57,7 +73,11 @@ class ModifiableRootModelBridgeImpl(
   private val sourceRootPropertiesMap = ConcurrentHashMap<VirtualFileUrl, JpsModuleSourceRoot>()
 
   internal val moduleEntity: ModuleEntity
-    get() = entityStorageOnDiff.current.findModuleEntity(module) ?: error("Cannot find module entity for '$moduleBridge'")
+    get() {
+      val actualModuleEntity = entityStorageOnDiff.current.findModuleEntity(module) ?: return savedModuleEntity
+      savedModuleEntity = actualModuleEntity
+      return actualModuleEntity
+    }
 
   private val moduleLibraryTable = ModifiableModuleLibraryTableBridge(this)
 
