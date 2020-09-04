@@ -76,7 +76,7 @@ public class GitBranchesComboBoxAction extends ComboBoxAction implements Disposa
 
   @Override
   public void dispose() {
-    Disposer.dispose(this);
+    project = null;
   }
 
   @NotNull
