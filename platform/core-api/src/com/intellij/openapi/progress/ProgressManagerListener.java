@@ -5,8 +5,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface ProgressManagerListener {
-  void beforeExecuteUnderProgress(@NotNull Runnable process, ProgressIndicator progress);
-  void afterExecuteUnderProgress(@NotNull Runnable process, ProgressIndicator progress);
   void onTaskRunnableCreated(@NotNull Task task, @NotNull ProgressIndicator indicator, @Nullable Runnable continuation);
   void onTaskFinished(@NotNull Task task, boolean canceled, @Nullable Throwable error);
 }
