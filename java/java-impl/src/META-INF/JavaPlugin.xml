@@ -1373,6 +1373,12 @@
                      bundle="messages.JavaBundle"
                      key="inspection.redundant.explicit.close"
                      implementationClass="com.intellij.codeInspection.RedundantExplicitCloseInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="RedundantFileCreation"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
+                     bundle="messages.JavaBundle"
+                     key="inspection.redundant.file.creation.display.name"
+                     implementationClass="com.intellij.codeInspection.RedundantFileCreationInspection"/>
     <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA" shortName="TextBlockMigration"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.language.level.specific.issues.and.migration.aids15" enabledByDefault="true" level="WARNING"
