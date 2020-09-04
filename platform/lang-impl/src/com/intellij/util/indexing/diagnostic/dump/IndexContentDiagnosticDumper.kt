@@ -4,6 +4,7 @@ package com.intellij.util.indexing.diagnostic.dump
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.io.FileTooBigException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Base64
 import com.intellij.util.containers.ConcurrentBitSet
@@ -35,18 +36,29 @@ object IndexContentDiagnosticDumper {
       provider.iterateFiles(project, { fileOrDir ->
         if (!fileOrDir.isDirectory) {
           val indexedFilePath = IndexedFilePaths.createIndexedFilePath(fileOrDir, project)
+          val originalFileId = indexedFilePath.originalFileSystemId
           if (PortableFilePaths.isSupportedFileSystem(fileOrDir)) {
             indexedFilePaths += indexedFilePath
-            providerFileIds += indexedFilePath.originalFileSystemId
+            providerFileIds += originalFileId
           }
           else {
             // TODO: consider not excluding any file systems.
             filesFromUnsupportedFileSystem += indexedFilePath
             return@iterateFiles true
           }
-          val fileContent = FileContentImpl.createByFile(fileOrDir, project)
-          val contentHash = runReadAction { IndexedHashesSupport.getOrInitIndexedHash(fileContent) }
-          indexedFileHashes[indexedFilePath.originalFileSystemId] = Base64.encode(contentHash)
+          try {
+            val fileContent = FileContentImpl.createByFile(fileOrDir) as FileContentImpl
+            val contentHash = runReadAction {
+              IndexedHashesSupport.getOrInitIndexedHash(fileContent)
+            }
+            indexedFileHashes[originalFileId] = Base64.encode(contentHash)
+          }
+          catch (e: FileTooBigException) {
+            indexedFileHashes[originalFileId] = IndexContentDiagnostic.TOO_LARGE_FILE
+          }
+          catch (e: Throwable) {
+            indexedFileHashes[originalFileId] = IndexContentDiagnostic.FAILED_TO_LOAD.format(e.javaClass.simpleName)
+          }
         }
         true
       }, visitedFiles)
