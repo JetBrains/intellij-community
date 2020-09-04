@@ -9,12 +9,11 @@ import circlet.code.codeReview
 import circlet.platform.api.BatchInfo
 import circlet.platform.api.Ref
 import circlet.platform.api.TID
-import circlet.platform.client.KCircletClient
-import circlet.platform.client.property
-import circlet.platform.client.resolve
-import circlet.platform.client.resolveRefsOrFetch
+import circlet.platform.client.*
 import com.intellij.openapi.project.Project
 import com.intellij.space.settings.SpaceSettings
+import com.intellij.space.vcs.SpaceProjectInfo
+import com.intellij.space.vcs.SpaceRepoInfo
 import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.Lifetimed
 import runtime.reactive.*
@@ -22,6 +21,8 @@ import runtime.reactive.*
 internal open class CrDetailsVm<R : CodeReviewRecord>(
   final override val lifetime: Lifetime,
   val ideaProject: Project,
+  val spaceProjectInfo: SpaceProjectInfo,
+  val spaceReposInfo: Set<SpaceRepoInfo>,
   private val reviewRef: Ref<R>,
   val client: KCircletClient
 ) : Lifetimed {
@@ -67,9 +68,11 @@ internal open class CrDetailsVm<R : CodeReviewRecord>(
 internal class MergeRequestDetailsVm(
   lifetime: Lifetime,
   ideaProject: Project,
+  spaceProjectInfo: SpaceProjectInfo,
+  spaceReposInfo: Set<SpaceRepoInfo>,
   refMrRecord: Ref<MergeRequestRecord>,
   client: KCircletClient
-) : CrDetailsVm<MergeRequestRecord>(lifetime, ideaProject, refMrRecord, client) {
+) : CrDetailsVm<MergeRequestRecord>(lifetime, ideaProject, spaceProjectInfo, spaceReposInfo, refMrRecord, client) {
 
   private val branchPair: Property<MergeRequestBranchPair> = cellProperty { review.live.branchPair }
 
@@ -94,9 +97,11 @@ internal class MergeRequestDetailsVm(
 internal class CommitSetReviewDetailsVm(
   lifetime: Lifetime,
   ideaProject: Project,
+  spaceProjectInfo: SpaceProjectInfo,
+  spaceReposInfo: Set<SpaceRepoInfo>,
   refMrRecord: Ref<CommitSetReviewRecord>,
   client: KCircletClient
-) : CrDetailsVm<CommitSetReviewRecord>(lifetime, ideaProject, refMrRecord, client) {
+) : CrDetailsVm<CommitSetReviewRecord>(lifetime, ideaProject, spaceProjectInfo, spaceReposInfo, refMrRecord, client) {
   val commitsByRepos = mapInit(detailedInfo, null) { _detailedInfo ->
     _detailedInfo?.commits?.associateBy(
       RevisionsInReview::repository,
@@ -131,3 +136,31 @@ fun buildReviewUrl(projectKey: ProjectKey, reviewNumber: Int): String {
     .absoluteHref(SpaceSettings.getInstance().serverSettings.server)
 }
 
+
+
+internal fun createReviewDetailsVm(lifetime: Lifetime,
+                                   project: Project,
+                                   client: KCircletClient,
+                                   spaceProjectInfo: SpaceProjectInfo,
+                                   spaceReposInfo: Set<SpaceRepoInfo>,
+                                   ref: Ref<CodeReviewRecord>): CrDetailsVm<out CodeReviewRecord> {
+  return when (val codeReviewRecord = ref.resolve()) {
+    is MergeRequestRecord -> MergeRequestDetailsVm(
+      lifetime,
+      project,
+      spaceProjectInfo,
+      spaceReposInfo,
+      codeReviewRecord.toRef(client.arena),
+      client
+    )
+    is CommitSetReviewRecord -> CommitSetReviewDetailsVm(
+      lifetime,
+      project,
+      spaceProjectInfo,
+      spaceReposInfo,
+      codeReviewRecord.toRef(client.arena),
+      client
+    )
+    else -> throw IllegalArgumentException("Unable to resolve CodeReviewRecord")
+  }
+}

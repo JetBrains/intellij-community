@@ -11,13 +11,14 @@ import circlet.code.codeReview
 import circlet.platform.client.KCircletClient
 import circlet.platform.client.XPagedListOnFlux
 import circlet.platform.client.xPagedListOnFlux
+import com.intellij.space.vcs.SpaceProjectInfo
 import libraries.coroutines.extra.Lifetime
 import runtime.reactive.*
 
 
 internal class SpaceReviewsListVmImpl(override val lifetime: Lifetime,
                                       val client: KCircletClient,
-                                      override val spaceProjectKey: ProjectKey,
+                                      override val spaceProjectInfo: SpaceProjectInfo,
                                       val me: Property<TD_MemberProfile>) : SpaceReviewsListVm {
   private val codeReviewService: CodeReviewService = client.codeReview
 
@@ -26,9 +27,8 @@ internal class SpaceReviewsListVmImpl(override val lifetime: Lifetime,
   override val sorting: MutableProperty<ReviewSorting> = mutableProperty(ReviewSorting.CreatedAtDesc)
 
   override val quickFiltersMap: Property<Map<ReviewListQuickFilter, ReviewListFilters>> = lifetime.cellProperty {
-    defaultQuickFiltersMap(spaceProjectKey, me)
+    defaultQuickFiltersMap(spaceProjectInfo.key, me)
   }
-
 
   override val spaceReviewsFilterSettings: MutableProperty<ReviewListFilters> = mutableProperty(
     quickFiltersMap.value[DEFAULT_QUICK_FILTER] ?: error("Unable to find quick filter settings")
@@ -50,7 +50,7 @@ internal class SpaceReviewsListVmImpl(override val lifetime: Lifetime,
     ) { batch ->
       codeReviewService.listReviews(
         batchInfo = batch,
-        project = spaceProjectKey.identifier,
+        project = spaceProjectInfo.key.identifier,
         state = filterSettings.state,
         sort = sorting.value,
         text = filterSettings.text,
