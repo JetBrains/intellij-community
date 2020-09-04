@@ -794,7 +794,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
     if (myProject != null && myVirtualFile != null) {
       for (EditorLinePainter painter : EditorLinePainter.EP_NAME.getExtensions()) {
-        //noinspection InstanceofIncompatibleInterface
         if (LightEdit.owns(myProject) && !(painter instanceof LightEditCompatible)) {
           continue;
         }
@@ -4101,7 +4100,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
 
     private boolean isPointAfterSelectionEnd(Point p) {
-      VisualPosition selectionEndPosition = mySelectionModel.getSelectionEndPosition();
+      VisualPosition selectionEndPosition = myCaretModel.getCurrentCaret().getSelectionEndPosition();
       Point selectionEnd = visualPositionToXY(selectionEndPosition);
       return p.y >= selectionEnd.y + getLineHeight() ||
              p.y >= selectionEnd.y && p.x > selectionEnd.x && xyToVisualPosition(p).column > selectionEndPosition.column;

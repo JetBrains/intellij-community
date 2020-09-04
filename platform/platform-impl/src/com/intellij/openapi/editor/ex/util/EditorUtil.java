@@ -5,7 +5,7 @@ import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.injected.editor.EditorWindow;
-import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -914,8 +914,7 @@ public final class EditorUtil {
 
   @NotNull
   public static String displayCharInEditor(char c, @NotNull TextAttributesKey textAttributesKey, @NotNull String fallback) {
-    int codePoint = c;
-    if (!Character.isValidCodePoint(codePoint)) {
+    if (!Character.isValidCodePoint(c)) {
       return fallback;
     }
 
@@ -923,7 +922,7 @@ public final class EditorUtil {
     TextAttributes textAttributes = scheme.getAttributes(textAttributesKey);
     int style = textAttributes != null ? textAttributes.getFontType() : Font.PLAIN;
     FontInfo fallbackFont = ComplementaryFontsRegistry.getFontAbleToDisplay(c, style, scheme.getFontPreferences(), null);
-    return fallbackFont.canDisplay(codePoint) ? String.valueOf(c) : fallback;
+    return fallbackFont.canDisplay(c) ? String.valueOf(c) : fallback;
   }
 
   /**
@@ -1094,7 +1093,7 @@ public final class EditorUtil {
     long currentTimeStamp = System.currentTimeMillis();
     if (lastTimeStamp != null && (currentTimeStamp - lastTimeStamp) < EditorNotification.MAX_CARETS_NOTIFY_INTERVAL_MS) return;
     editor.putUserData(EditorNotification.LAST_MAX_CARETS_NOTIFY_TIMESTAMP, currentTimeStamp);
-    EditorNotification.GROUP
+    NotificationGroupManager.getInstance().getNotificationGroup("Editor notifications")
             .createNotification(
                     EditorBundle.message("editor.max.carets.hint", editor.getCaretModel().getMaxCaretCount()),
                     NotificationType.INFORMATION)
@@ -1115,7 +1114,6 @@ public final class EditorUtil {
   }
 
   private static class EditorNotification {
-    private static final NotificationGroup GROUP = NotificationGroup.balloonGroup("Editor notifications");
     private static final Key<Long> LAST_MAX_CARETS_NOTIFY_TIMESTAMP = Key.create("last.max.carets.notify.timestamp");
     private static final long MAX_CARETS_NOTIFY_INTERVAL_MS = 10_000;
   }
