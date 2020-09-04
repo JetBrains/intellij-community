@@ -834,7 +834,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
       }
     }.installOn(myList);
 
-    myList.addListSelectionListener(e -> myCellRenderer.updateLookupWidthFromVisibleItems());
+    myList.addListSelectionListener(e -> {
+      markSelectionTouched();
+
+      myCellRenderer.updateLookupWidthFromVisibleItems();
+    });
   }
 
   protected boolean suppressHidingOnDocumentChanged() {

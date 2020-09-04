@@ -119,7 +119,7 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
     myWidthChangeAlarm = new SingleAlarm(() -> {
       myLookup.requestResize();
       myLookup.refreshUi(false, false);
-    }, 100);
+    }, 50);
     Disposer.register(lookup, () -> Disposer.dispose(myWidthChangeAlarm));
 
     myShrinkLookup = Registry.is("ide.lookup.shrink");
