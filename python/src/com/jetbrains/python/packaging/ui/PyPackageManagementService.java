@@ -16,6 +16,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.webcore.packaging.InstalledPackage;
 import com.intellij.webcore.packaging.PackageManagementServiceEx;
 import com.intellij.webcore.packaging.RepoPackage;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PySdkBundle;
 import com.jetbrains.python.packaging.*;
 import com.jetbrains.python.packaging.PyPIPackageUtil.PackageDetails;
@@ -147,7 +148,7 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
   @NotNull
   @Override
   public String getInstallToUserText() {
-    String userSiteText = "Install to user's site packages directory";
+    String userSiteText = PyBundle.message("button.install.to.user.site.packages.directory");
     if (!PythonSdkUtil.isRemote(mySdk))
       userSiteText += " (" + PythonSdkUtil.getUserSite() + ")";
     return userSiteText;

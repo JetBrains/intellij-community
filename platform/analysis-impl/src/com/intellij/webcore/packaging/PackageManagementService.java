@@ -1,8 +1,10 @@
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.webcore.packaging;
 
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.CatchingConsumer;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -103,7 +105,7 @@ public abstract class PackageManagementService {
    *
    * @return the text of the 'install to user' checkbox.
    */
-  public String getInstallToUserText() {
+  public @NlsContexts.Button String getInstallToUserText() {
     return "";
   }
 
@@ -144,7 +146,7 @@ public abstract class PackageManagementService {
 
   public abstract void fetchPackageVersions(String packageName, CatchingConsumer<List<String>, Exception> consumer);
 
-  public abstract void fetchPackageDetails(String packageName, CatchingConsumer<String, Exception> consumer);
+  public abstract void fetchPackageDetails(String packageName, CatchingConsumer<@Nls String, Exception> consumer);
 
   /**
    * @return identifier of this service for reported usage data (sent for JetBrains implementations only).

@@ -4,6 +4,7 @@ package com.intellij.webcore.packaging;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.PluginManagerMain;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -25,7 +26,7 @@ import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.SwingHelper;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
-import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +39,6 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
-import java.text.MessageFormat;
 import java.util.List;
 import java.util.*;
 
@@ -430,9 +430,6 @@ public class ManagePackagesDialog extends DialogWrapper {
   }
 
   private class MyPackageSelectionListener implements ListSelectionListener {
-    @NonNls
-    private static final String DESCRIPTION_TEXT_HTML_TEMPLATE = "<html><body style='text-align: center;padding-top:20px;'>{0}</body></html>";
-
     @Override
     public void valueChanged(ListSelectionEvent event) {
       myOptionsCheckBox.setEnabled(myPackages.getSelectedIndex() >= 0);
@@ -441,7 +438,7 @@ public class ManagePackagesDialog extends DialogWrapper {
       myVersionCheckBox.setSelected(false);
       myVersionComboBox.setEnabled(false);
       myOptionsField.setEnabled(false);
-      myDescriptionTextArea.setText(MessageFormat.format(DESCRIPTION_TEXT_HTML_TEMPLATE, IdeBundle.message("loading.in.progress")));
+      myDescriptionTextArea.setText(IdeBundle.message("loading.in.progress"));
       final Object pyPackage = myPackages.getSelectedValue();
       if (pyPackage instanceof RepoPackage) {
         final String packageName = ((RepoPackage)pyPackage).getName();
@@ -469,9 +466,9 @@ public class ManagePackagesDialog extends DialogWrapper {
         }
         myInstallButton.setEnabled(!myCurrentlyInstalling.contains(packageName));
 
-        myController.fetchPackageDetails(packageName, new CatchingConsumer<String, Exception>() {
+        myController.fetchPackageDetails(packageName, new CatchingConsumer<@Nls String, Exception>() {
           @Override
-          public void consume(final String details) {
+          public void consume(final @Nls String details) {
             UIUtil.invokeLaterIfNeeded(() -> {
               if (myPackages.getSelectedValue() == pyPackage) {
                 myDescriptionTextArea.setText(details);
@@ -527,7 +524,7 @@ public class ManagePackagesDialog extends DialogWrapper {
       SimpleTextAttributes defaultText = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, defaultForeground);
       myNameComponent.append(packageName, myInstalledPackages.contains(packageName) ? blueText : defaultText, true);
       if (myCurrentlyInstalling.contains(packageName)) {
-        myNameComponent.append("(installing)", blueText, false);
+        myNameComponent.append(LangBundle.message("package.component.installing.suffix"), blueText, false);
       }
       String repoUrl = repoPackage.getRepoUrl();
       if (StringUtil.isNotEmpty(repoUrl)) {

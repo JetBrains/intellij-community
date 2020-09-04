@@ -28,6 +28,7 @@ import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -242,13 +243,13 @@ public class ToolEditorDialog extends DialogWrapper {
   /**
    * Initialize controls
    */
-  protected void setData(Tool tool, String[] existingGroups) {
+  protected void setData(Tool tool, String @Nls [] existingGroups) {
     myNameField.setText(tool.getName());
     myDescriptionField.setText(tool.getDescription());
     if (myGroupCombo.getItemCount() > 0) {
       myGroupCombo.removeAllItems();
     }
-    for (String existingGroup : existingGroups) {
+    for (@Nls String existingGroup : existingGroups) {
       if (existingGroup != null) {
         myGroupCombo.addItem(existingGroup);
       }

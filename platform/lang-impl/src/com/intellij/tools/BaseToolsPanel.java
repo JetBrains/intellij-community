@@ -2,6 +2,7 @@
 
 package com.intellij.tools;
 
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.CompoundScheme;
 import com.intellij.openapi.ui.Messages;
@@ -11,6 +12,7 @@ import com.intellij.ui.*;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.tree.TreeUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -207,7 +209,7 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
           getTextRenderer().append(groupName, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
         }
         else {
-          getTextRenderer().append("[unnamed group]", SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
+          getTextRenderer().append(ToolsBundle.message("tools.node.group.name.unnamed.group"), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
         }
       }
       else if (object instanceof Tool) {
@@ -487,7 +489,7 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
     return null;
   }
 
-  private String[] getGroups() {
+  private String @Nls [] getGroups() {
     List<String> result = new ArrayList<>();
     for (ToolsGroup group : getGroupList()) {
       result.add(group.getName());
