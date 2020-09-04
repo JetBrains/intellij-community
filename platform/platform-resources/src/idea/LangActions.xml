@@ -333,7 +333,9 @@
       </group>
 
       <group id="CodeFormatGroup">
-        <action id="ReformatCode" class="com.intellij.codeInsight.actions.ReformatCodeAction"/>
+        <action id="ReformatCode" class="com.intellij.codeInsight.actions.ReformatCodeAction">
+          <synonym key="action.ReformatCode.synonym1"/>
+        </action>
         <action id="ShowReformatFileDialog" class="com.intellij.codeInsight.actions.ShowReformatFileDialog"/>
         <action id="AutoIndentLines" class="com.intellij.codeInsight.generation.actions.AutoIndentLinesAction"/>
         <action id="OptimizeImports" class="com.intellij.codeInsight.actions.OptimizeImportsAction"/>
