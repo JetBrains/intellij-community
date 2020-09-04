@@ -15,6 +15,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,7 +29,7 @@ public class JsonSchemaComplianceChecker {
   @NotNull private final JsonLikePsiWalker myWalker;
   private final LocalInspectionToolSession mySession;
   @NotNull private final JsonComplianceCheckerOptions myOptions;
-  @Nullable private final String myMessagePrefix;
+  @Nullable private final @Nls String myMessagePrefix;
 
   public JsonSchemaComplianceChecker(@NotNull JsonSchemaObject rootSchema,
                                      @NotNull ProblemsHolder holder,
@@ -43,7 +44,7 @@ public class JsonSchemaComplianceChecker {
                                      @NotNull JsonLikePsiWalker walker,
                                      @NotNull LocalInspectionToolSession session,
                                      @NotNull JsonComplianceCheckerOptions options,
-                                     @Nullable String messagePrefix) {
+                                     @Nullable @Nls String messagePrefix) {
     myRootSchema = rootSchema;
     myHolder = holder;
     myWalker = walker;

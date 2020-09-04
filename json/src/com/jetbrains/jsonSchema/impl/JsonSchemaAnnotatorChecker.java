@@ -1,8 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl;
 
+import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.json.JsonBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -104,7 +106,7 @@ public final class JsonSchemaAnnotatorChecker implements JsonValidationHost {
   }
 
   @Override
-  public void error(final String error, final PsiElement holder,
+  public void error(@InspectionMessage String error, final PsiElement holder,
                     JsonErrorPriority priority) {
     error(error, holder, JsonValidationError.FixableIssueKind.None, null, priority);
   }
@@ -115,7 +117,7 @@ public final class JsonSchemaAnnotatorChecker implements JsonValidationHost {
   }
 
   @Override
-  public void error(final String error, final PsiElement holder,
+  public void error(@InspectionMessage String error, final PsiElement holder,
                     JsonValidationError.FixableIssueKind fixableIssueKind,
                     JsonValidationError.IssueData data,
                     JsonErrorPriority priority) {
@@ -550,15 +552,14 @@ public final class JsonSchemaAnnotatorChecker implements JsonValidationHost {
 
     if (commonIssueKind == JsonValidationError.FixableIssueKind.NonEnumValue) {
       String prefix = JsonBundle.message("schema.validation.enum.mismatch", "");
-      return new JsonValidationError(prefix
-                                     + errors
-                                       .stream()
-                                       // todo remove this ugly textual cutting
-                                       .map(e -> StringUtil.trimEnd(StringUtil.trimStart(e.getMessage(), prefix), prefix) /*ltr and rtl*/)
-                                       .map(e -> StringUtil.split(e, ", "))
-                                       .flatMap(e -> e.stream())
-                                       .distinct()
-                                       .collect(Collectors.joining(", ")), commonIssueKind, null, errors.iterator().next().getPriority());
+      @NlsSafe String text = errors.stream()
+        // todo remove this ugly textual cutting
+        .map(e -> StringUtil.trimEnd(StringUtil.trimStart(e.getMessage(), prefix), prefix) /*ltr and rtl*/)
+        .map(e -> StringUtil.split(e, ", "))
+        .flatMap(e -> e.stream())
+        .distinct()
+        .collect(Collectors.joining(", "));
+      return new JsonValidationError(prefix + text, commonIssueKind, null, errors.iterator().next().getPriority());
     }
 
     if (commonIssueKind == JsonValidationError.FixableIssueKind.MissingProperty) {

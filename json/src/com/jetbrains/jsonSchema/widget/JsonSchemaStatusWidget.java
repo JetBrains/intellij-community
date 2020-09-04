@@ -17,6 +17,9 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.util.NlsContexts.StatusBarText;
+import com.intellij.openapi.util.NlsContexts.Tooltip;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
@@ -35,6 +38,7 @@ import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaServiceImpl;
 import com.jetbrains.jsonSchema.remote.JsonFileResolver;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,7 +82,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
   private static class MyWidgetState extends WidgetState {
     boolean warning = false;
     boolean conflict = false;
-    MyWidgetState(String toolTip, String text, boolean actionEnabled) {
+    MyWidgetState(@Tooltip String toolTip, @StatusBarText String text, boolean actionEnabled) {
       super(toolTip, text, actionEnabled);
     }
 
@@ -95,7 +99,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
       this.conflict = true;
     }
 
-    private String getTooltip() {
+    private @Tooltip String getTooltip() {
       return this.toolTip;
     }
   }
@@ -242,7 +246,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
   }
 
   @Nullable
-  private static String extractNpmPackageName(@Nullable String path) {
+  private static @NlsSafe String extractNpmPackageName(@Nullable String path) {
     if (path == null) return null;
     int idx = path.indexOf("node_modules");
     if (idx != -1) {
@@ -265,7 +269,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
   }
 
   @NotNull
-  private static String getPresentableNameForFile(@NotNull VirtualFile schemaFile) {
+  private static @Nls String getPresentableNameForFile(@NotNull VirtualFile schemaFile) {
     if (schemaFile instanceof HttpVirtualFile) {
       return new JsonSchemaInfo(schemaFile.getUrl()).getDescription();
     }
@@ -280,8 +284,9 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
   }
 
   @NotNull
-  private static WidgetState getDownloadErrorState(@Nullable String message) {
-    MyWidgetState state = new MyWidgetState(JsonBundle.message("schema.widget.error.cant.download") + (message == null ? "" : (": <br/>" + message)),
+  private static WidgetState getDownloadErrorState(@Nullable @Nls String message) {
+    String s = message == null ? "" : (": " + HtmlChunk.br().toString() + message);
+    MyWidgetState state = new MyWidgetState(JsonBundle.message("schema.widget.error.cant.download") + s,
                                             JsonBundle.message("schema.widget.error.label"), true);
     state.setWarning(true);
     return state;
@@ -293,7 +298,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
   }
 
   @NotNull
-  private static String getSchemaFileDesc(@NotNull VirtualFile schemaFile) {
+  private static @Nls String getSchemaFileDesc(@NotNull VirtualFile schemaFile) {
     if (schemaFile instanceof HttpVirtualFile) {
       return schemaFile.getPresentableUrl();
     }
@@ -367,12 +372,12 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
   }
 
   @SuppressWarnings("SameParameterValue")
-  private static String createMessage(@NotNull final Collection<? extends VirtualFile> schemaFiles,
-                                      @NotNull JsonSchemaService jsonSchemaService,
-                                      @NotNull String separator,
-                                      @NotNull String prefix,
-                                      @NotNull String suffix) {
-    final List<Pair<Boolean, String>> pairList = schemaFiles.stream()
+  private static @Tooltip String createMessage(@NotNull final Collection<? extends VirtualFile> schemaFiles,
+                                               @NotNull JsonSchemaService jsonSchemaService,
+                                               @NotNull String separator,
+                                               @NotNull @Nls String prefix,
+                                               @NotNull @Nls String suffix) {
+    final List<Pair<Boolean, @Nls String>> pairList = schemaFiles.stream()
       .map(file -> jsonSchemaService.getSchemaProvider(file))
       .filter(Objects::nonNull)
       .map(provider -> Pair.create(SchemaType.userSchema.equals(provider.getSchemaType()), provider.getName()))
@@ -383,10 +388,11 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
     if (pairList.size() == 2 && numOfSystemSchemas == 1) return null;
 
     final boolean withTypes = numOfSystemSchemas > 0;
-    return pairList.stream().map(pair -> formatName(withTypes, pair)).collect(Collectors.joining(separator, prefix, suffix));
+    return pairList.stream().map(pair -> formatName(withTypes, pair)).collect(Collectors.joining(separator, prefix, suffix)); //NON-NLS
   }
 
-  private static String formatName(boolean withTypes, Pair<Boolean, String> pair) {
+  @SuppressWarnings("HardCodedStringLiteral")
+  private static @Nls String formatName(boolean withTypes, Pair<Boolean, String> pair) {
     return "&nbsp;&nbsp;- " + (withTypes
            ? String.format("%s schema '%s'", Boolean.TRUE.equals(pair.getFirst()) ? "user" : "system", pair.getSecond())
            : pair.getSecond());

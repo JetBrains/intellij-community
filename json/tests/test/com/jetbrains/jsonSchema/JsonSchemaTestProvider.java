@@ -1,6 +1,7 @@
 package com.jetbrains.jsonSchema;
 
 
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.Predicate;
 import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
@@ -24,7 +25,7 @@ public class JsonSchemaTestProvider implements JsonSchemaFileProvider {
 
   @NotNull
   @Override
-  public String getName() {
+  public @NlsSafe String getName() {
     return "test";
   }
 

@@ -9,6 +9,9 @@ import com.intellij.openapi.ui.popup.ListPopupStepEx;
 import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
+import com.intellij.openapi.util.NlsContexts.PopupTitle;
+import com.intellij.openapi.util.text.HtmlBuilder;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,6 +31,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+import static com.intellij.openapi.util.NlsContexts.Tooltip;
 import static com.jetbrains.jsonSchema.widget.JsonSchemaStatusPopup.*;
 
 public class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> implements ListPopupStepEx<JsonSchemaInfo> {
@@ -37,7 +41,7 @@ public class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> i
   private static final Icon EMPTY_ICON = JBUIScale.scaleIcon(EmptyIcon.create(AllIcons.General.Add.getIconWidth()));
 
   public JsonSchemaInfoPopupStep(@NotNull List<JsonSchemaInfo> allSchemas, @NotNull Project project, @Nullable VirtualFile virtualFile,
-                                 @NotNull JsonSchemaService service, @Nullable String title) {
+                                 @NotNull JsonSchemaService service, @Nullable @PopupTitle String title) {
     super(title, allSchemas);
     myProject = project;
     myVirtualFile = virtualFile;
@@ -127,16 +131,19 @@ public class JsonSchemaInfoPopupStep extends BaseListPopupStep<JsonSchemaInfo> i
 
   @Nullable
   @Override
-  public String getTooltipTextFor(JsonSchemaInfo value) {
+  public @Tooltip String getTooltipTextFor(JsonSchemaInfo value) {
     return getDoc(value);
   }
 
   @Nullable
-  private static String getDoc(JsonSchemaInfo schema) {
+  private static @Tooltip String getDoc(JsonSchemaInfo schema) {
     if (schema == null) return null;
     if (schema.getName() == null) return schema.getDocumentation();
     if (schema.getDocumentation() == null) return schema.getName();
-    return "<b>" + schema.getName() + "</b><br/>" + schema.getDocumentation();
+    return new HtmlBuilder()
+      .append(HtmlChunk.tag("b").addText(schema.getName()))
+      .append(HtmlChunk.br())
+      .appendRaw(schema.getDocumentation()).toString();
   }
 
   @Override
