@@ -6,9 +6,9 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent
 import com.intellij.ui.CardLayoutPanel
+import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.labels.ActionLink
-import com.intellij.ui.components.labels.DropDownLink
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI
@@ -20,6 +20,7 @@ import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.util.GithubUIUtil
 import org.jetbrains.plugins.github.util.GithubUtil.Delegates.equalVetoingObservable
+import java.util.function.Consumer
 import javax.swing.JComponent
 import javax.swing.JLabel
 
@@ -123,12 +124,12 @@ internal class GHPRDirectionPanel : NonOpaquePanel() {
         }
 
         override fun createUi(): JComponent {
-          dropDownLink = DropDownLink(State.MULTIPLE_ACTIONS, listOf(State.CHECKOUT_ACTION, State.UPDATE_ACTION), { state ->
+          dropDownLink = DropDownLink(State.MULTIPLE_ACTIONS, listOf(State.CHECKOUT_ACTION, State.UPDATE_ACTION), Consumer { state ->
             when (state) {
               State.CHECKOUT_ACTION -> dropDownLink.invokeAction("Github.PullRequest.Branch.Create")
               State.UPDATE_ACTION -> dropDownLink.invokeAction("Github.PullRequest.Branch.Update")
             }
-          }, false)
+          })
             .apply { border = JBUI.Borders.emptyLeft(8) }
           return dropDownLink
         }
