@@ -16,7 +16,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.function.Function;
+import java.util.function.Predicate;
 
 /**
  * Tracks the correspondence between {@link VirtualFile} instances and corresponding {@link Document} instances.
@@ -83,7 +83,7 @@ public abstract class FileDocumentManager implements SavingRequestor {
    * Should be invoked on the event dispatch thread.
    * @param filter the filter for documents to save. If it returns `true`, the document will be saved.
    */
-  public abstract void saveDocuments(@NotNull Function<Document, Boolean> filter);
+  public abstract void saveDocuments(@NotNull Predicate<Document> filter);
 
   /**
    * Saves the specified document to disk. This operation can modify the document (due to 'Strip

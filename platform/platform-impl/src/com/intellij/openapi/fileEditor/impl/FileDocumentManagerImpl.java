@@ -72,7 +72,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.List;
 import java.util.*;
-import java.util.function.Function;
+import java.util.function.Predicate;
 
 public class FileDocumentManagerImpl extends FileDocumentManagerBase implements SafeWriteRequestor {
   private static final Logger LOG = Logger.getInstance(FileDocumentManagerImpl.class);
@@ -257,11 +257,11 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
   }
 
   @Override
-  public void saveDocuments(@NotNull Function<Document, Boolean> filter) {
+  public void saveDocuments(@NotNull Predicate<Document> filter) {
     saveDocuments(filter, true);
   }
 
-  private void saveDocuments(@Nullable Function<Document, Boolean> filter, boolean isExplicit) {
+  private void saveDocuments(@Nullable Predicate<Document> filter, boolean isExplicit) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     ((TransactionGuardImpl)TransactionGuard.getInstance()).assertWriteActionAllowed();
 
@@ -274,7 +274,7 @@ public class FileDocumentManagerImpl extends FileDocumentManagerBase implements 
       int count = 0;
 
       for (Document document : myUnsavedDocuments) {
-        if (filter != null && !filter.apply(document)) continue;
+        if (filter != null && !filter.test(document)) continue;
         if (failedToSave.containsKey(document)) continue;
         if (vetoed.contains(document)) continue;
         try {
