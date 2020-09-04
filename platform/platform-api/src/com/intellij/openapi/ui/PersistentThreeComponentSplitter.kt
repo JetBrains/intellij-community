@@ -3,6 +3,7 @@ package com.intellij.openapi.ui
 
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import org.jetbrains.annotations.NonNls
@@ -13,11 +14,18 @@ class PersistentThreeComponentSplitter(
   vertical: Boolean,
   onePixelDivider: Boolean,
   proportionKey: String,
-  disposable: Disposable,
+  private val disposable: Disposable,
   private val project: Project?,
   private val defaultFirstProportion: Float = 0.3f,
   private val defaultLastProportion: Float = 0.5f
 ) : ThreeComponentsSplitter(vertical, onePixelDivider, disposable) {
+
+  companion object {
+    private val logger = logger<PersistentThreeComponentSplitter>()
+  }
+
+  // hack
+  var maxRetryCount = 100
 
   @NonNls private val firstProportionKey = "${proportionKey}_PTCS_FirstProportionKey"
   @NonNls private val lastProportionKey = "${proportionKey}_PTCS_LastProportionKey"
@@ -48,6 +56,8 @@ class PersistentThreeComponentSplitter(
 
   private val shouldLayout get() = addNotifyCalled && !layoutIsRunning
 
+  private var addNotifyTimestamp: Long = 0
+
   init {
     Disposer.register(disposable, Disposable {
       saveProportions()
@@ -69,18 +79,25 @@ class PersistentThreeComponentSplitter(
   override fun addNotify() {
     super.addNotify()
     addNotifyCalled = true
-    invokeLaterWhen({ checkSize() }) {
+    invokeLaterWhen({ checkSize() }, ++addNotifyTimestamp) {
       addNotifyCalled = false
       restoreProportions()
     }
   }
 
-  private fun invokeLaterWhen(condition: () -> Boolean, action: () -> Unit) {
+  private fun invokeLaterWhen(condition: () -> Boolean, timestamp: Long, count: Int = 0, action: () -> Unit) {
+    if (addNotifyTimestamp != timestamp) return
+
     SwingUtilities.invokeLater {
-      if (condition()) {
-        action()
-      } else {
-        invokeLaterWhen(condition, action)
+      when {
+        Disposer.isDisposed(disposable) -> return@invokeLater
+
+        condition() -> action()
+        count > maxRetryCount -> {
+          logger.error("Could not restore proportions in $maxRetryCount times. ${dump()}")
+          action()
+        }
+        else -> invokeLaterWhen(condition, timestamp, count + 1, action)
       }
     }
   }
@@ -117,7 +134,11 @@ class PersistentThreeComponentSplitter(
     lastSize = (lastProportion * (totalSize - 2 * dividerWidth)).roundToInt()
   }
 
+  private fun dump(): String {
+    return "totalMinSize=$totalMinSize, totalSize=$totalSize, firstSize=($firstSize, visible=${firstVisible()}), lastSize=($lastSize, visible=${lastVisible()})"
+  }
+
   private fun checkSize(): Boolean {
-    return totalMinSize < totalSize && firstSize > 0 && lastSize > 0
+    return totalMinSize < totalSize && (firstSize > 0 || !firstVisible()) && (lastSize > 0 || !lastVisible())
   }
 }
