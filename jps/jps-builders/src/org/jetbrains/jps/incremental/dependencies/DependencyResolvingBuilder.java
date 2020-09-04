@@ -144,7 +144,7 @@ public class DependencyResolvingBuilder extends ModuleLevelBuilder{
   ) throws Exception {
     String key = "org.jetbrains.jps.incremental.dependencies.resolution.parallelism";
     int parallelism = SystemProperties.getIntProperty(key, 1);
-    if (parallelism < 2) {
+    if (parallelism < 2 || libs.size() < 2) {
       libs.forEach(resolveAction);
     }
     else {
