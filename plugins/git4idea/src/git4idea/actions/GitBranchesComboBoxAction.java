@@ -3,15 +3,11 @@ package git4idea.actions;
 
 import com.intellij.execution.*;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.HelpTooltip;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.ui.popup.list.ListPopupImpl;
 import git4idea.branch.GitBranchUtil;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
@@ -32,22 +28,17 @@ public class GitBranchesComboBoxAction extends ComboBoxAction {
     var project = e.getProject();
     Presentation presentation = e.getPresentation();
     if (project == null || project.isDisposed() || !project.isOpen()) {
-      updatePresentation(null, null, null, presentation, e.getPlace());
+      updatePresentation(null, presentation);
     }
     else {
-      updatePresentation(ExecutionTargetManager.getActiveTarget(project),
-                         RunManager.getInstance(project).getSelectedConfiguration(),
-                         project,
-                         presentation,
-                         e.getPlace());
+      updatePresentation(project, presentation);
     }
   }
 
-  private void updatePresentation(ExecutionTarget target,
-                                  RunnerAndConfigurationSettings configuration,
-                                  Project project,
-                                  Presentation presentation,
-                                  String place) {
+  private static void updatePresentation(
+    Project project,
+    Presentation presentation
+  ) {
     if (project != null) {
       GitRepository repo = GitBranchUtil.getCurrentRepository(project);
       if (repo != null) {
@@ -79,8 +70,9 @@ public class GitBranchesComboBoxAction extends ComboBoxAction {
   @NotNull
   protected ListPopup createActionPopup(@NotNull DataContext context, @NotNull JComponent component, @Nullable Runnable disposeCallback) {
     Project project = context.getData(CommonDataKeys.PROJECT);
-    ListPopup popup = JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep(""));
-    if(project != null) {
+    ListPopup popup = JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<>() {
+    });
+    if (project != null) {
       GitRepository repo = GitBranchUtil.getCurrentRepository(project);
       popup = GitBranchPopup.getInstance(project, repo).asListPopup();
       popup.addListener(new JBPopupListener() {
@@ -90,7 +82,9 @@ public class GitBranchesComboBoxAction extends ComboBoxAction {
 
         @Override
         public void onClosed(@NotNull LightweightWindowEvent event) {
-          disposeCallback.run();
+          if (disposeCallback != null) {
+            disposeCallback.run();
+          }
         }
       });
     }
