@@ -68,7 +68,7 @@ public interface Sorter extends TreeAction {
     @NotNull
     public ActionPresentation getPresentation() {
       return new ActionPresentationData(PlatformEditorBundle.message("action.sort.alphabetically"),
-                                        PlatformEditorBundle.message("action.sort.alphabetically.description"),
+                                        null,
                                         AllIcons.ObjectBrowser.Sorted);
     }
 
