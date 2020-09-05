@@ -231,8 +231,8 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
       .reduce((b1, b2) -> b1.getStartTime() <= b2.getStartTime() ? b1 : b2)
       .orElse(null);
     if (buildInfo != null) {
-      String title = buildInfo.getTitle();
-      String viewName = getViewName().split(" ")[0];
+      @BuildEventsNls.Title String title = buildInfo.getTitle();
+      @NlsContexts.TabTitle String viewName = getViewName().split(" ")[0];
       String tabName = viewName + ": " + StringUtil.trimStart(title, viewName);
       if (buildsMap.size() > 1) {
         return LangBundle.message("tab.title.more", tabName, buildsMap.size() - 1);
