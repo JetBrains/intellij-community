@@ -16,6 +16,7 @@
 package com.intellij.openapi.util.io;
 
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.EnvironmentUtil;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +26,7 @@ import java.io.File;
 public class PathExecLazyValue extends AtomicNotNullLazyValue<Boolean> {
   private final String myName;
 
-  public PathExecLazyValue(@NotNull String name) {
+  public PathExecLazyValue(@NlsSafe @NotNull String name) {
     if (StringUtil.containsAnyChar(name, "/\\")) {
       throw new IllegalArgumentException(name);
     }

@@ -326,16 +326,10 @@ public class GeneralCommandLine implements UserDataHolder {
 
   @NotNull
   public List<String> getCommandLineList(@Nullable String exeName) {
-    List<String> commands = new ArrayList<>();
-    if (exeName != null) {
-      commands.add(exeName);
-    }
-    else if (myExePath != null) {
-      commands.add(myExePath);
-    }
-    else {
-      commands.add("<null>");
-    }
+    List<@NlsSafe String> commands = new ArrayList<>();
+    String exe = StringUtil.notNullize(exeName, StringUtil.notNullize(myExePath, "<null>"));
+    commands.add(exe);
+
     commands.addAll(myProgramParams.getList());
     return commands;
   }

@@ -4,6 +4,7 @@ package com.intellij.util.net;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.SystemProperties;
@@ -38,7 +39,7 @@ public final class NetUtils {
     return InetAddress.getLoopbackAddress();
   }
 
-  public static boolean isLocalhost(@NotNull String hostName) {
+  public static boolean isLocalhost(@NotNull @NlsSafe String hostName) {
     return hostName.equalsIgnoreCase("localhost") || hostName.equals("127.0.0.1") || hostName.equals("::1");
   }
 
@@ -129,7 +130,7 @@ public final class NetUtils {
 
   public static String getLocalHostString() {
     // HACK for Windows with ipv6
-    String localHostString = "localhost";
+    @NlsSafe String localHostString = "localhost";
     try {
       final InetAddress localHost = InetAddress.getByName(localHostString);
       if ((localHost.getAddress().length != 4 && SystemInfo.isWindows) ||
@@ -192,7 +193,7 @@ public final class NetUtils {
     }
 
     if (bytesRead < expectedContentLength) {
-      throw new IOException(String.format("Connection closed at byte %d. Expected %d bytes.", bytesRead, expectedContentLength));
+      throw new IOException("Connection closed at byte " + bytesRead + ". Expected " + expectedContentLength + " bytes.");
     }
 
     return bytesWritten;

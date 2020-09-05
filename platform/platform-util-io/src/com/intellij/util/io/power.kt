@@ -9,6 +9,7 @@ import com.sun.jna.Native
 import com.sun.jna.Pointer
 import com.sun.jna.Structure
 import com.sun.jna.win32.StdCallLibrary
+import org.jetbrains.annotations.NonNls
 import java.io.BufferedReader
 import java.io.File
 import java.io.FileReader
@@ -163,12 +164,13 @@ private class MacPowerService : PowerService {
   private val kIOPSBatteryPowerValue = CFSTR("Battery Power")
   private val kCFCompareEqualTo = 0L
 
-  private fun CFSTR(str: String) = ioKit.CFStringCreateWithCharacters(null, str.toCharArray(), str.length.toLong())
+  private fun CFSTR(@NonNls str: String) = ioKit.CFStringCreateWithCharacters(null, str.toCharArray(), str.length.toLong())
 
   private fun isTrue(p: Pointer?) = p !== null && ioKit.CFBooleanGetValue(p).toInt() != 0
 
   private fun strEquals(p: Pointer?, str: Pointer) = p !== null && ioKit.CFStringCompare(p, str, 0L) == kCFCompareEqualTo
 
+  @NonNls
   private fun str(str: Pointer?): String =
     if (str === null) "<null>"
     else {
@@ -228,7 +230,8 @@ private class LinuxPowerService : PowerService {
     if (!classDirectory.isDirectory) throw IOException("not a directory: ${classDirectory}")
   }
 
-  private fun read(device: File, key: String) =
+  @NonNls
+  private fun read(device: File, @NonNls key: String) =
     try { BufferedReader(FileReader(File(device, key))).use { it.readLine() } }
     catch (e: IOException) { "-" }
 }

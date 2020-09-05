@@ -111,7 +111,7 @@ object Urls {
   }
 
   private fun parseUrl(url: CharSequence): Url? {
-    val urlToParse = if (StringUtil.startsWith(url, "jar:file://")) url.subSequence("jar:".length, url.length) else url
+    val urlToParse = if (StringUtil.startsWith(url, "jar:file://")) url.subSequence("jar:".length, url.length) else url//NON-NLS
 
     val matcher = URI_PATTERN.matcher(urlToParse)
     if (!matcher.matches()) {
@@ -120,7 +120,7 @@ object Urls {
 
     var scheme = matcher.group(1)
     if (urlToParse !== url) {
-      scheme = "jar:$scheme"
+      scheme = "jar:$scheme"//NON-NLS
     }
 
     var authority = StringUtil.nullize(matcher.group(3))

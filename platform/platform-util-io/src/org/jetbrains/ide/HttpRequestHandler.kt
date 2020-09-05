@@ -72,7 +72,7 @@ abstract class HttpRequestHandler {
     val response = DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK)
     response.headers().set(HttpHeaderNames.CONTENT_TYPE, FileResponses.getContentType(name))
     response.addCommonHeaders()
-    response.headers().set(HttpHeaderNames.CACHE_CONTROL, "private, must-revalidate")
+    response.headers().set(HttpHeaderNames.CACHE_CONTROL, "private, must-revalidate") //NON-NLS
     response.headers().set(HttpHeaderNames.LAST_MODIFIED, Date(Calendar.getInstance().timeInMillis))
     response.headers().add(extraHeaders)
 
