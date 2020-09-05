@@ -25,6 +25,9 @@ class AndroidStudioLibraryLicenses {
     new LibraryLicense(name: "AAPT Protos", libraryName: "aapt-proto", license: "Apache 2.0", url: "http://source.android.com/"),
     new LibraryLicense(name: "Am Instrument Data proto", libraryName: "libam-instrumentation-data-proto",
                        license: "Apache 2.0", url: "http://source.android.com/"),
+    // for android-core-proto module library in intellij.android.core
+    new LibraryLicense(name: "Android Core Protos", libraryName: "android-core-proto",
+                       license: "Apache 2.0", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
     new LibraryLicense(name: "Android Emulator gRPC API", libraryName: "emulator-proto", license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
     // for game-tools-protos module library in android.game-tools.main
