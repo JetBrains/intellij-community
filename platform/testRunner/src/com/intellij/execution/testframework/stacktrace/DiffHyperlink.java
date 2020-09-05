@@ -28,6 +28,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,7 +45,7 @@ public class DiffHyperlink implements Printable {
   protected final String myActualFilePath;
   private final boolean myPrintOneLine;
   private final HyperlinkInfo myDiffHyperlink = new DiffHyperlinkInfo();
-  private String myTestProxyName;
+  private @NlsSafe String myTestProxyName;
 
 
   public DiffHyperlink(final String expected, final String actual, final String filePath) {
@@ -70,7 +71,7 @@ public class DiffHyperlink implements Printable {
     myPrintOneLine = printOneLine;
   }
 
-  public void setTestProxyName(String name) {
+  public void setTestProxyName(@NlsSafe String name) {
     myTestProxyName = name;
   }
 
@@ -79,7 +80,9 @@ public class DiffHyperlink implements Printable {
   }
 
   protected @NlsContexts.DialogTitle String getTitle() {
-    return ExecutionBundle.message("strings.equal.failed.dialog.title", myTestProxyName != null ? " (" + myTestProxyName + ")" : "");
+    return myTestProxyName != null
+           ? ExecutionBundle.message("strings.equal.failed.with.test.name.dialog.title", myTestProxyName)
+           : ExecutionBundle.message("strings.equal.failed.dialog.title");
   }
 
   public @NlsContexts.DialogTitle String getDiffTitle() {

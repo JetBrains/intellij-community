@@ -65,7 +65,7 @@ public abstract class AppIcon {
 
   public abstract boolean setProgress(Project project, @NonNls Object processId, AppIconScheme.Progress scheme, double value, boolean isOk);
 
-  public abstract boolean hideProgress(Project project, Object processId);
+  public abstract boolean hideProgress(Project project, @NonNls Object processId);
 
   public abstract void setErrorBadge(Project project, String text);
 

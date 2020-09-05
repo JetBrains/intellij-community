@@ -21,6 +21,7 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.AppIcon;
 import com.intellij.ui.SystemNotifications;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,7 +35,7 @@ public final class TestsUIUtil {
   public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.logOnlyGroup("Test Runner");
 
   public static final Color PASSED_COLOR = new Color(0, 128, 0);
-  private static final String TESTS = "tests";
+  private static final @NonNls String TESTS = "tests";
 
   static {
     //pre-register notification group for Run ToolWindow to show it in notifications settings
@@ -150,7 +151,7 @@ public final class TestsUIUtil {
     SystemNotifications.getInstance().notify("TestRunner", title, text);
   }
 
-  private static String getTestResultsNotificationDisplayId(@NotNull String toolWindowId) {
+  private static @NonNls String getTestResultsNotificationDisplayId(@NotNull String toolWindowId) {
     return "Test Results: " + toolWindowId;
   }
 
@@ -288,33 +289,39 @@ public final class TestsUIUtil {
         myIgnoredCount = ignoredCount;
 
         if (failedCount > 0) {
-          myTitle = ExecutionBundle.message("junit.runing.info.tests.failed.label");
+          myTitle = ExecutionBundle.message("junit.running.info.tests.failed.label");
           myBalloonText = TestRunnerBundle.message("tests.failed.0.passed.1.ignored.2.not.started.3",
                                                    failedCount, passedCount, ignoredCount, ignoredCount > 0 ? 0 : notStartedCount);
-          myText = TestRunnerBundle.message("0.failed.1.passed.2.ignored.3.not.started",
-                                            failedCount, passedCount, ignoredCount, ignoredCount > 0 ? 0: notStartedCount);
+          myText = myComment == null
+                   ? TestRunnerBundle.message("0.failed.1.passed.2.ignored.3.not.started",
+                                              failedCount, passedCount, ignoredCount, ignoredCount > 0 ? 0 : notStartedCount)
+                   : TestRunnerBundle.message("0.failed.1.passed.2.ignored.3.not.started.with.comment",
+                                              failedCount, passedCount, ignoredCount, ignoredCount > 0 ? 0 : notStartedCount, myComment);
           myType = MessageType.ERROR;
         }
         else if (ignoredCount > 0) {
           myTitle = TestRunnerBundle.message("tests.ignored.error.message");
           myBalloonText = TestRunnerBundle.message("tests.ignored.0.passed.1", ignoredCount, passedCount);
-          myText = TestRunnerBundle.message("0.ignored.1.passed", ignoredCount, passedCount);
+          myText = myComment == null
+                   ? TestRunnerBundle.message("0.ignored.1.passed", ignoredCount, passedCount)
+                   : TestRunnerBundle.message("0.ignored.1.passed.with.comment", ignoredCount, passedCount, myComment);
           myType = MessageType.WARNING;
         }
         else if (notStartedCount > 0) {
           myTitle = ExecutionBundle.message("junit.running.info.failed.to.start.error.message");
           myBalloonText = TestRunnerBundle.message("failed.to.start.0.passed.1", notStartedCount, passedCount);
-          myText = TestRunnerBundle.message("0.not.started.1.passed", notStartedCount, passedCount);
+          myText = myComment == null
+                   ? TestRunnerBundle.message("0.not.started.1.passed", notStartedCount, passedCount)
+                   : TestRunnerBundle.message("0.not.started.1.passed.with.comment", notStartedCount, passedCount, myComment);
           myType = MessageType.ERROR;
         }
         else {
-          myTitle = ExecutionBundle.message("junit.runing.info.tests.passed.label");
+          myTitle = ExecutionBundle.message("junit.running.info.tests.passed.label");
           myBalloonText = TestRunnerBundle.message("tests.passed.0", passedCount);
-          myText = TestRunnerBundle.message("0.passed", passedCount);
+          myText = myComment == null
+                   ? TestRunnerBundle.message("0.passed", passedCount)
+                   : TestRunnerBundle.message("0.passed.with.comment", passedCount, myComment);
           myType = MessageType.INFO;
-        }
-        if (myComment != null) {
-          myText += " " + myComment;
         }
       }
       return this;

@@ -175,7 +175,7 @@ class NotificationGroup private constructor(@param:NonNls val displayId: String,
     }
 
     @JvmStatic
-    fun findRegisteredGroup(displayId: String): NotificationGroup? {
+    fun findRegisteredGroup(@NonNls displayId: String): NotificationGroup? {
       var notificationGroup = findRegisteredNotificationGroup(displayId)
       if (notificationGroup == null) {
         notificationGroup = registeredGroups.get(displayId)

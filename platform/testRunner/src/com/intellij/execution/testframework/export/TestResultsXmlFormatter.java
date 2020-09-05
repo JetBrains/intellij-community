@@ -12,6 +12,7 @@ import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
@@ -27,31 +28,31 @@ import java.util.*;
 
 public final class TestResultsXmlFormatter {
 
-  private static final String ELEM_RUN = "testrun";
-  public static final String ELEM_TEST = "test";
-  public static final String ELEM_SUITE = "suite";
-  public static final String ATTR_NAME = "name";
-  public static final String ATTR_DURATION = "duration";
-  public static final String ATTR_LOCATION = "locationUrl";
-  public static final String ATTR_METAINFO = "metainfo";
-  public static final String ELEM_COUNT = "count";
-  public static final String ATTR_VALUE = "value";
-  public static final String ELEM_OUTPUT = "output";
-  public static final String DIFF = "diff";
-  public static final String EXPECTED = "expected";
-  public static final String ACTUAL = "actual";
-  public static final String ATTR_OUTPUT_TYPE = "type";
-  public static final String ATTR_STATUS = "status";
-  public static final String TOTAL_STATUS = "total";
-  private static final String ATTR_FOORTER_TEXT = "footerText";
-  public static final String ATTR_CONFIG = "isConfig";
-  public static final String STATUS_PASSED = "passed";
-  public static final String STATUS_FAILED = "failed";
-  public static final String STATUS_ERROR = "error";
-  public static final String STATUS_IGNORED = "ignored";
-  public static final String STATUS_SKIPPED = "skipped";
+  private static final @NlsSafe String ELEM_RUN = "testrun";
+  public static final @NlsSafe String ELEM_TEST = "test";
+  public static final @NlsSafe String ELEM_SUITE = "suite";
+  public static final @NlsSafe String ATTR_NAME = "name";
+  public static final @NlsSafe String ATTR_DURATION = "duration";
+  public static final @NlsSafe String ATTR_LOCATION = "locationUrl";
+  public static final @NlsSafe String ATTR_METAINFO = "metainfo";
+  public static final @NlsSafe String ELEM_COUNT = "count";
+  public static final @NlsSafe String ATTR_VALUE = "value";
+  public static final @NlsSafe String ELEM_OUTPUT = "output";
+  public static final @NlsSafe String DIFF = "diff";
+  public static final @NlsSafe String EXPECTED = "expected";
+  public static final @NlsSafe String ACTUAL = "actual";
+  public static final @NlsSafe String ATTR_OUTPUT_TYPE = "type";
+  public static final @NlsSafe String ATTR_STATUS = "status";
+  public static final @NlsSafe String TOTAL_STATUS = "total";
+  private static final @NlsSafe String ATTR_FOORTER_TEXT = "footerText";
+  public static final @NlsSafe String ATTR_CONFIG = "isConfig";
+  public static final @NlsSafe String STATUS_PASSED = "passed";
+  public static final @NlsSafe String STATUS_FAILED = "failed";
+  public static final @NlsSafe String STATUS_ERROR = "error";
+  public static final @NlsSafe String STATUS_IGNORED = "ignored";
+  public static final @NlsSafe String STATUS_SKIPPED = "skipped";
 
-  public static final String ROOT_ELEM = "root";
+  public static final @NlsSafe String ROOT_ELEM = "root";
 
 
   private final RunConfiguration myRuntimeConfiguration;
@@ -294,7 +295,7 @@ public final class TestResultsXmlFormatter {
     endElement(ELEM_OUTPUT);
   }
 
-  private static String getTypeString(ConsoleViewContentType type) {
+  private static @NlsSafe String getTypeString(ConsoleViewContentType type) {
     return type == ConsoleViewContentType.ERROR_OUTPUT ? "stderr" : "stdout";
   }
 
