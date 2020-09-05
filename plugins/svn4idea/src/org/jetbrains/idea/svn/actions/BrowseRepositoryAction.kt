@@ -10,9 +10,11 @@ import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.util.ui.components.BorderLayoutPanel
+import org.jetbrains.annotations.NonNls
+import org.jetbrains.idea.svn.SvnBundle.messagePointer
 import org.jetbrains.idea.svn.dialogs.RepositoryBrowserDialog
 
-private const val REPOSITORY_BROWSER_TOOLWINDOW_ID = "SVN Repositories"
+@NonNls private const val REPOSITORY_BROWSER_TOOLWINDOW_ID = "SVN Repositories"
 
 private fun getRepositoryBrowserToolWindow(project: Project): ToolWindow? =
   ToolWindowManager.getInstance(project).getToolWindow(REPOSITORY_BROWSER_TOOLWINDOW_ID)
@@ -33,7 +35,8 @@ class BrowseRepositoryAction : DumbAwareAction() {
   private fun registerRepositoryBrowserToolWindow(project: Project): ToolWindow =
     ToolWindowManager.getInstance(project).registerToolWindow(RegisterToolWindowTask(
       id = REPOSITORY_BROWSER_TOOLWINDOW_ID,
-      component = RepositoryToolWindowPanel(project)
+      component = RepositoryToolWindowPanel(project),
+      stripeTitle = messagePointer("toolwindow.stripe.SVN_Repositories")
     )).apply {
       helpId = "reference.svn.repository"
     }
