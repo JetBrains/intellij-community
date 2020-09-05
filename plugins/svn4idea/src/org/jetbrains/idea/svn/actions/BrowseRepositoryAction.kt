@@ -1,70 +1,57 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.svn.actions;
+package org.jetbrains.idea.svn.actions
 
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowAnchor;
-import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentFactory;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.dialogs.RepositoryBrowserDialog;
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.ui.content.ContentFactory
+import org.jetbrains.idea.svn.dialogs.RepositoryBrowserDialog
+import java.awt.BorderLayout
+import javax.swing.JPanel
 
-import javax.swing.*;
-import java.awt.*;
+private const val REPOSITORY_BROWSER_TOOLWINDOW = "SVN Repositories"
 
-public class BrowseRepositoryAction extends AnAction implements DumbAware {
-  public static final String REPOSITORY_BROWSER_TOOLWINDOW = "SVN Repositories";
-
-  @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    Project project = e.getData(CommonDataKeys.PROJECT);
+class BrowseRepositoryAction : AnAction(), DumbAware {
+  override fun actionPerformed(e: AnActionEvent) {
+    val project = e.getData(CommonDataKeys.PROJECT)
     if (project == null) {
-      RepositoryBrowserDialog dialog = new RepositoryBrowserDialog(ProjectManager.getInstance().getDefaultProject());
-      dialog.show();
+      val dialog = RepositoryBrowserDialog(ProjectManager.getInstance().defaultProject)
+      dialog.show()
     }
     else {
-      ToolWindowManager manager = ToolWindowManager.getInstance(project);
-      ToolWindow w = manager.getToolWindow(REPOSITORY_BROWSER_TOOLWINDOW);
+      val manager = ToolWindowManager.getInstance(project)
+      var w = manager.getToolWindow(REPOSITORY_BROWSER_TOOLWINDOW)
       if (w == null) {
-        RepositoryToolWindowPanel component = new RepositoryToolWindowPanel(project);
-        w = manager.registerToolWindow(REPOSITORY_BROWSER_TOOLWINDOW, true, ToolWindowAnchor.BOTTOM, project, true);
-        w.setHelpId("reference.svn.repository");
-        final Content content = ContentFactory.SERVICE.getInstance().createContent(component, "", false);
-        Disposer.register(content, component);
-        w.getContentManager().addContent(content);
+        val component = RepositoryToolWindowPanel(project)
+        w = manager.registerToolWindow(REPOSITORY_BROWSER_TOOLWINDOW, true, ToolWindowAnchor.BOTTOM, project, true)
+        w.helpId = "reference.svn.repository"
+        val content = ContentFactory.SERVICE.getInstance().createContent(component, "", false)
+        Disposer.register(content, component)
+        w.contentManager.addContent(content)
       }
-      w.show(null);
-      w.activate(null);
+      w.show(null)
+      w.activate(null)
     }
   }
+}
 
-  private static final class RepositoryToolWindowPanel extends JPanel implements Disposable {
-    private final RepositoryBrowserDialog myDialog;
-    private final Project myProject;
+private class RepositoryToolWindowPanel(private val project: Project) : JPanel(BorderLayout()), Disposable {
+  private val dialog = RepositoryBrowserDialog(project)
 
-    private RepositoryToolWindowPanel(final Project project) {
-      super(new BorderLayout());
-      myProject = project;
+  init {
+    add(dialog.createBrowserComponent(true), BorderLayout.CENTER)
+    add(dialog.createToolbar(false), BorderLayout.WEST)
+  }
 
-      myDialog = new RepositoryBrowserDialog(project);
-      JComponent component = myDialog.createBrowserComponent(true);
-
-      add(component, BorderLayout.CENTER);
-      add(myDialog.createToolbar(false), BorderLayout.WEST);
-    }
-
-    @Override
-    public void dispose() {
-      myDialog.disposeRepositoryBrowser();
-      ToolWindowManager.getInstance(myProject).unregisterToolWindow(REPOSITORY_BROWSER_TOOLWINDOW);
-    }
+  override fun dispose() {
+    dialog.disposeRepositoryBrowser()
+    ToolWindowManager.getInstance(project).unregisterToolWindow(REPOSITORY_BROWSER_TOOLWINDOW)
   }
 }
