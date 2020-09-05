@@ -143,10 +143,7 @@ public class PropertiesComponent extends JPanel {
       PropertyConsumer handler = new PropertyConsumer() {
         @Override
         public void handleProperty(File path, PropertyData property) {
-          final PropertyValue value = property.getValue();
-          if (value != null) {
-            props.put(property.getName(), PropertyValue.toString(property.getValue()));
-          }
+          props.put(property.getName(), property.getValue().toString());
         }
 
         @Override

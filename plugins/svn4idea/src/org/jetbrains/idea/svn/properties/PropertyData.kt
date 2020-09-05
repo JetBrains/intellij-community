@@ -3,9 +3,7 @@ package org.jetbrains.idea.svn.properties
 
 import org.jetbrains.annotations.Contract
 
-// TODO: Actually value is always not null for command line integration. But it is not clear enough if not null property value is always
-// TODO: provided by SVNKit. So currently value is @Nullable.
-class PropertyData(val name: String, val value: PropertyValue?)
+class PropertyData(val name: String, val value: PropertyValue)
 
 class PropertiesMap : HashMap<String, PropertyValue?>()
 

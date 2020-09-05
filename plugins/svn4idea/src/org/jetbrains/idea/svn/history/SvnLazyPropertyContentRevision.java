@@ -5,7 +5,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -20,7 +19,6 @@ import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 import org.jetbrains.idea.svn.properties.PropertyConsumer;
 import org.jetbrains.idea.svn.properties.PropertyData;
-import org.jetbrains.idea.svn.properties.PropertyValue;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -153,6 +151,6 @@ public class SvnLazyPropertyContentRevision extends SvnBaseContentRevision imple
     if (sb.length() != 0) {
       sb.append(ourPropertiesDelimiter);
     }
-    sb.append(property.getName()).append("=").append(StringUtil.notNullize(PropertyValue.toString(property.getValue())));
+    sb.append(property.getName()).append("=").append(property.getValue());
   }
 }

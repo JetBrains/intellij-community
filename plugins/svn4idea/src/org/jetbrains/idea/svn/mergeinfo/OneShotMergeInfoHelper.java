@@ -172,7 +172,7 @@ public class OneShotMergeInfoHelper implements MergeChecker {
       @Override
       public void handleProperty(@NotNull File path, @NotNull PropertyData property) throws SvnBindException {
         String workingCopyRelativePath = getWorkingCopyRelativePath(path);
-        Map<String, MergeRangeList> mergeInfo = MergeRangeList.parseMergeInfo(Objects.requireNonNull(property.getValue()).toString());
+        Map<String, MergeRangeList> mergeInfo = MergeRangeList.parseMergeInfo(property.getValue().toString());
 
         synchronized (myMergeInfoLock) {
           myMergeInfoMap.put(toKey(workingCopyRelativePath), mergeInfo);
