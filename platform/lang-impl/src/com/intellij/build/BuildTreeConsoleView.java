@@ -22,6 +22,7 @@ import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -318,7 +319,6 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
 
           if (isMessageEvent) {
             currentNode.setAlwaysLeaf(event instanceof FileMessageEvent);
-            //noinspection CastConflictsWithInstanceof
             MessageEvent messageEvent = (MessageEvent)event;
             currentNode.setStartTime(messageEvent.getEventTime());
             addIfNotNull(structureChanged, currentNode.setEndTime(messageEvent.getEventTime()));
@@ -417,7 +417,9 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       myFinishedBuildEventReceived.set(true);
       String aHint = event.getHint();
       String time = DateFormatUtil.formatDateTime(event.getEventTime());
-      aHint = aHint == null ? "at " + time : aHint + " at " + time;
+      aHint = aHint == null ?
+              LangBundle.message("build.event.message.at", time) :
+              LangBundle.message("build.event.message.0.at.1", aHint, time);
       currentNode.setHint(aHint);
       myDeferredEvents.forEach(buildEvent -> onEventInternal(buildId, buildEvent));
       if (myConsoleViewHandler.myExecutionNode == null) {
@@ -795,7 +797,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
                                                          String nodeId,
                                                          ExecutionNode parentNode,
                                                          String nodeName,
-                                                         @Nullable String hint,
+                                                         @Nullable @BuildEventsNls.Hint String hint,
                                                          @Nullable Supplier<? extends Icon> iconProvider,
                                                          @Nullable Navigatable navigatable,
                                                          Map<Object, ExecutionNode> nodesMap,
@@ -851,7 +853,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       myViewSettingsProvider = buildViewSettingsProvider;
       myExecutionConsoleFilters = executionConsoleFilters;
       Disposer.register(parentDisposable, this);
-      myView = new CompositeView<ExecutionConsole>(null) {
+      myView = new CompositeView<>(null) {
         @Override
         public void addView(@NotNull ExecutionConsole view, @NotNull String viewName) {
           super.addView(view, viewName);

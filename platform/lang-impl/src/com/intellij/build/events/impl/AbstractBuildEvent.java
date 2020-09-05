@@ -3,6 +3,7 @@ package com.intellij.build.events.impl;
 
 import com.intellij.build.events.BuildEvent;
 import com.intellij.build.events.BuildEventsNls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -67,17 +68,16 @@ public abstract class AbstractBuildEvent implements BuildEvent {
     myDescription = description;
   }
 
+  @NonNls
   @Override
   public String toString() {
-    final StringBuilder sb = new StringBuilder(getClass().getSimpleName());
-    sb.append("{");
-    sb.append("myEventId=").append(myEventId);
-    sb.append(", myParentId=").append(myParentId);
-    sb.append(", myEventTime=").append(myEventTime);
-    sb.append(", myMessage='").append(myMessage).append('\'');
-    sb.append(", myHint='").append(myHint).append('\'');
-    sb.append(", myDescription='").append(myDescription).append('\'');
-    sb.append('}');
-    return sb.toString();
+    return getClass().getSimpleName() + "{" +
+           "myEventId=" + myEventId +
+           ", myParentId=" + myParentId +
+           ", myEventTime=" + myEventTime +
+           ", myMessage='" + myMessage + '\'' +
+           ", myHint='" + myHint + '\'' +
+           ", myDescription='" + myDescription + '\'' +
+           '}';
   }
 }

@@ -5,6 +5,7 @@ import com.intellij.build.events.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
@@ -21,6 +22,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -153,13 +155,11 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
   public String getDuration() {
     if (startTime == endTime) return null;
     if (isRunning()) {
-      final long duration = startTime == 0 ? 0 : System.currentTimeMillis() - startTime;
-      String durationText = StringUtil.formatDurationApproximate(duration);
-      int index = durationText.indexOf("s ");
-      if (index != -1) {
-        durationText = durationText.substring(0, index + 1);
+      long duration = startTime == 0 ? 0 : System.currentTimeMillis() - startTime;
+      if (duration > 1000) {
+        duration -= duration % 1000;
       }
-      return durationText;
+      return StringUtil.formatDurationApproximate(duration);
     }
     else {
       return isSkipped(myResult) ? null : StringUtil.formatDuration(endTime - startTime);
@@ -216,12 +216,7 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
   public List<ExecutionNode> getChildList() {
     assert myIsCorrectThread.get();
     List<ExecutionNode> visibleList = myVisibleChildrenList;
-    if (visibleList != null) {
-      return visibleList;
-    }
-    else {
-      return myChildrenList;
-    }
+    return Objects.requireNonNullElse(visibleList, myChildrenList);
   }
 
   @Nullable
@@ -332,7 +327,7 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
   }
 
   public void setIconProvider(Supplier<? extends Icon> iconProvider) {
-    myPreferredIconValue = new NullableLazyValue<Icon>() {
+    myPreferredIconValue = new NullableLazyValue<>() {
       @Nullable
       @Override
       protected Icon compute() {
@@ -363,31 +358,34 @@ public class ExecutionNode extends PresentableNodeDescriptor<ExecutionNode> {
   @ApiStatus.Experimental
   ExecutionNode findFirstChild(@NotNull Predicate<? super ExecutionNode> filter) {
     assert myIsCorrectThread.get();
+    //noinspection SSBasedInspection
     return myChildrenList.stream().filter(filter).findFirst().orElse(null);
   }
 
   private @BuildEventsNls.Hint String getCurrentHint() {
     assert myIsCorrectThread.get();
-    String hint = myHint;
     int warnings = myWarnings.get();
     int errors = myErrors.get();
     if (warnings > 0 || errors > 0) {
-      if (hint == null) {
-        hint = "";
-      }
+      String errorHint = errors > 0 ? LangBundle.message("build.event.message.errors", errors) : "";
+      String warningHint = warnings > 0 ? LangBundle.message("build.event.message.warnings", warnings) : "";
+      String issuesHint = !errorHint.isEmpty() && !warningHint.isEmpty() ? errorHint + ", " + warningHint : errorHint + warningHint;
       ExecutionNode parent = getParent();
-      hint += parent == null || parent.getParent() == null ? (isRunning() ? "  " : " with ") : " ";
-      if (errors > 0) {
-        hint += (errors + " " + StringUtil.pluralize("error", errors));
-        if (warnings > 0) {
-          hint += ", ";
+      if (parent == null || parent.getParent() == null) {
+        if (isRunning()) {
+          return StringUtil.notNullize(myHint) + "  " + issuesHint;
+        }
+        else {
+          return LangBundle.message("build.event.message.with", StringUtil.notNullize(myHint), issuesHint);
         }
       }
-      if (warnings > 0) {
-        hint += (warnings + " " + StringUtil.pluralize("warning", warnings));
+      else {
+        return StringUtil.notNullize(myHint) + " " + issuesHint;
       }
     }
-    return hint;
+    else {
+      return myHint;
+    }
   }
 
   private Icon getCurrentIcon() {

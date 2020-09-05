@@ -18,7 +18,7 @@ private val WARNINGS_FILTER = Predicate { node: ExecutionNode -> node.hasWarning
 
 @ApiStatus.Experimental
 fun createFilteringActionsGroup(filterable: Filterable<ExecutionNode>): DefaultActionGroup {
-  val actionGroup = DefaultActionGroup("Filters", true)
+  val actionGroup = DefaultActionGroup(LangBundle.message("action.filters.text"), true)
   actionGroup.templatePresentation.icon = AllIcons.Actions.Show
   actionGroup.add(WarningsToggleAction(filterable))
   actionGroup.add(SuccessfulStepsToggleAction(filterable))

@@ -9,6 +9,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.ide.startup.StartupManagerEx;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ModalityState;
@@ -27,16 +28,17 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.TabbedContent;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
 
 import static com.intellij.util.ContentUtilEx.getFullName;
 
@@ -44,11 +46,21 @@ import static com.intellij.util.ContentUtilEx.getFullName;
  * @author Vladislav.Soroka
  */
 public final class BuildContentManagerImpl implements BuildContentManager {
-  public static final String Build = "Build";
-  public static final String Sync = "Sync";
-  public static final String Run = "Run";
-  public static final String Debug = "Debug";
-  private static final String[] ourPresetOrder = {Sync, Build, Run, Debug};
+  /**
+   * @deprecated use Build_Tab_Title_Supplier instead
+   */
+  @SuppressWarnings("SSBasedInspection") @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
+  @Deprecated
+  public static final @NlsContexts.TabTitle String Build = LangBundle.message("tab.title.build");
+
+  public static final Supplier<@NlsContexts.TabTitle String> Build_Tab_Title_Supplier = LangBundle.messagePointer("tab.title.build");
+
+  private static final List<Supplier<@NlsContexts.TabTitle String>> ourPresetOrder = Arrays.asList(
+    LangBundle.messagePointer("tab.title.sync"),
+    Build_Tab_Title_Supplier,
+    LangBundle.messagePointer("tab.title.run"),
+    LangBundle.messagePointer("tab.title.debug")
+  );
   private static final Key<Map<Object, CloseListener>> CONTENT_CLOSE_LISTENERS = Key.create("CONTENT_CLOSE_LISTENERS");
 
   private final Project myProject;
@@ -103,8 +115,8 @@ public final class BuildContentManagerImpl implements BuildContentManager {
       final String name = content.getTabName();
       final String category = StringUtil.trimEnd(StringUtil.split(name, " ").get(0), ':');
       int idx = -1;
-      for (int i = 0; i < ourPresetOrder.length; i++) {
-        final String s = ourPresetOrder[i];
+      for (int i = 0; i < ourPresetOrder.size(); i++) {
+        final String s = ourPresetOrder.get(i).get();
         if (s.equals(category)) {
           idx = i;
           break;
@@ -120,7 +132,7 @@ public final class BuildContentManagerImpl implements BuildContentManager {
 
         int place = 0;
         for (int i = 0; i <= idx; i++) {
-          String key = ourPresetOrder[i];
+          String key = ourPresetOrder.get(i).get();
           Collection<String> tabNames = existingCategoriesNames.get(key);
           place += tabNames.size();
         }
@@ -179,7 +191,7 @@ public final class BuildContentManagerImpl implements BuildContentManager {
 
   @Override
   public Content addTabbedContent(@NotNull JComponent contentComponent,
-                                  @NotNull String groupPrefix,
+                                  @NotNull @NlsContexts.TabTitle String groupPrefix,
                                   @NotNull String tabName,
                                   @Nullable Icon icon,
                                   @Nullable Disposable childDisposable) {

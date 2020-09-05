@@ -4,6 +4,7 @@ package com.intellij.build;
 import com.intellij.build.events.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.lang.LangBundle;
 import com.intellij.notification.Notification;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -57,7 +58,7 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
   public AbstractViewManager(Project project) {
     myProject = project;
     myBuildContentManager = project.getService(BuildContentManager.class);
-    myBuildsViewValue = new AtomicClearableLazyValue<MultipleBuildsView>() {
+    myBuildsViewValue = new AtomicClearableLazyValue<>() {
       @Override
       protected @NotNull MultipleBuildsView compute() {
         MultipleBuildsView buildsView = new MultipleBuildsView(myProject, myBuildContentManager, AbstractViewManager.this);
@@ -117,9 +118,7 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
   private @Nullable MultipleBuildsView getMultipleBuildsView(@NotNull Object buildId) {
     MultipleBuildsView buildsView = myBuildsViewValue.getValue();
     if (!buildsView.shouldConsume(buildId)) {
-      buildsView = myPinnedViews.stream()
-        .filter(pinnedView -> pinnedView.shouldConsume(buildId))
-        .findFirst().orElse(null);
+      buildsView = ContainerUtil.find(myPinnedViews, pinnedView -> pinnedView.shouldConsume(buildId));
     }
     return buildsView;
   }
@@ -236,7 +235,7 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
       String viewName = getViewName().split(" ")[0];
       String tabName = viewName + ": " + StringUtil.trimStart(title, viewName);
       if (buildsMap.size() > 1) {
-        tabName += String.format(" and %d more", buildsMap.size() - 1);
+        return LangBundle.message("tab.title.more", tabName, buildsMap.size() - 1);
       }
       return tabName;
     }
