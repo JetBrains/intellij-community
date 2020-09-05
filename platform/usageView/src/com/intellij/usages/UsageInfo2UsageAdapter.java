@@ -49,17 +49,15 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
   public static final NotNullFunction<UsageInfo, Usage> CONVERTER = UsageInfo2UsageAdapter::new;
   private static final Comparator<UsageInfo> BY_NAVIGATION_OFFSET = Comparator.comparingInt(UsageInfo::getNavigationOffset);
 
-  @NotNull
-  private final UsageInfo myUsageInfo;
-  @NotNull
-  private Object myMergedUsageInfos; // contains all merged infos, including myUsageInfo. Either UsageInfo or UsageInfo[]
+  private final @NotNull UsageInfo myUsageInfo;
+  private @NotNull Object myMergedUsageInfos; // contains all merged infos, including myUsageInfo. Either UsageInfo or UsageInfo[]
   private final int myLineNumber;
   private final int myOffset;
   protected Icon myIcon;
   private volatile Reference<TextChunk[]> myTextChunks; // allow to be gced and recreated on-demand because it requires a lot of memory
   private volatile UsageType myUsageType;
 
-  public UsageInfo2UsageAdapter(@NotNull final UsageInfo usageInfo) {
+  public UsageInfo2UsageAdapter(final @NotNull UsageInfo usageInfo) {
     myUsageInfo = usageInfo;
     myMergedUsageInfos = usageInfo;
 

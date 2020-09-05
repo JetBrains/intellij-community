@@ -39,7 +39,8 @@ abstract class ModuleGrouper {
   /**
    * Returns name which should be used for a module when it's shown under its group
    */
-  @NlsSafe abstract fun getShortenedName(module: Module): String
+  @NlsSafe
+  abstract fun getShortenedName(module: Module): String
 
   /**
    * Returns name which should be used for a module when it's shown under its ancestor group which qualified name is [parentGroupName].

@@ -6,6 +6,7 @@ import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.*;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.usages.rules.SingleParentUsageGroupingRule;
@@ -127,7 +128,7 @@ public class UsageTypeGroupingRule extends SingleParentUsageGroupingRule impleme
 
     @Override
     public String toString() {
-      return "Type:" + myUsageType.toString(new UsageViewPresentation());
+      return UsageViewBundle.message("type.0", myUsageType.toString(new UsageViewPresentation()));
     }
   }
 }

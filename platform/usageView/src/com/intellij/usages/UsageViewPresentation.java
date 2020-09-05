@@ -2,6 +2,8 @@
 package com.intellij.usages;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.usageView.UsageViewBundle;
 import org.jetbrains.annotations.Nls;
@@ -18,38 +20,38 @@ public class UsageViewPresentation {
 
   private static final Logger LOG = Logger.getInstance(UsageViewPresentation.class);
 
-  private String myTabText;
+  private @NlsContexts.TabTitle String myTabText;
   private String myScopeText = ""; // Default value. to be overwritten in most cases.
-  private String myUsagesString;
-  private String mySearchString;
+  private @NlsSafe String myUsagesString;
+  private @NlsSafe String mySearchString;
   private String myTargetsNodeText = UsageViewBundle.message("node.targets"); // Default value. to be overwritten in most cases.
-  private String myNonCodeUsagesString = UsageViewBundle.message("node.non.code.usages");
-  private String myCodeUsagesString = UsageViewBundle.message("node.found.usages");
-  private String myUsagesInGeneratedCodeString = UsageViewBundle.message("node.usages.in.generated.code");
+  private @NlsContexts.ListItem String myNonCodeUsagesString = UsageViewBundle.message("node.non.code.usages");
+  private @NlsContexts.ListItem String myCodeUsagesString = UsageViewBundle.message("node.found.usages");
+  private @NlsContexts.ListItem String myUsagesInGeneratedCodeString = UsageViewBundle.message("node.usages.in.generated.code");
   private boolean myShowReadOnlyStatusAsRed = false;
   private boolean myShowCancelButton = false;
   private boolean myOpenInNewTab = true;
   private int myRerunHash = 0;//this value shouldn't be copied and doesn't affect equals/hashcode methods
   private boolean myCodeUsages = true;
   private boolean myUsageTypeFilteringAvailable;
-  private IntFunction<String> myUsagesWordSupplier = count -> UsageViewBundle.message("usage.name", count);
+  private IntFunction<@Nls String> myUsagesWordSupplier = count -> UsageViewBundle.message("usage.name", count);
 
-  private String myTabName;
-  private String myToolwindowTitle;
+  private @NlsContexts.TabTitle String myTabName;
+  private @NlsContexts.TabTitle String myToolwindowTitle;
 
   private boolean myDetachedMode; // no UI will be shown
-  private String myDynamicCodeUsagesString;
+  private @NlsContexts.ListItem String myDynamicCodeUsagesString;
   private boolean myMergeDupLinesAvailable = true;
   private boolean myExcludeAvailable = true;
   private Pattern mySearchPattern;
   private Pattern myReplacePattern;
   private boolean myReplaceMode;
 
-  public String getTabText() {
+  public @NlsContexts.TabTitle String getTabText() {
     return myTabText;
   }
 
-  public void setTabText(String tabText) {
+  public void setTabText(@NlsContexts.TabTitle String tabText) {
     myTabText = tabText;
   }
 
@@ -121,20 +123,20 @@ public class UsageViewPresentation {
   }
 
   @NotNull
-  public String getNonCodeUsagesString() {
+  public @NlsContexts.ListItem String getNonCodeUsagesString() {
     return myNonCodeUsagesString;
   }
 
-  public void setNonCodeUsagesString(@NotNull String nonCodeUsagesString) {
+  public void setNonCodeUsagesString(@NotNull @NlsContexts.ListItem String nonCodeUsagesString) {
     myNonCodeUsagesString = nonCodeUsagesString;
   }
 
   @NotNull
-  public String getCodeUsagesString() {
+  public @NlsContexts.ListItem String getCodeUsagesString() {
     return myCodeUsagesString;
   }
 
-  public void setCodeUsagesString(@NotNull String codeUsagesString) {
+  public void setCodeUsagesString(@NotNull @NlsContexts.ListItem String codeUsagesString) {
     myCodeUsagesString = codeUsagesString;
   }
 
@@ -166,7 +168,7 @@ public class UsageViewPresentation {
    * Please avoid using this method in string concatenations that are shown in UI
    */
   @NotNull
-  public String getUsagesWord() {
+  public @Nls String getUsagesWord() {
     return myUsagesWordSupplier.apply(1);
   }
 
@@ -174,27 +176,27 @@ public class UsageViewPresentation {
    * Use {@link #setUsagesWord(IntFunction)} instead
    */
   @Deprecated
-  public void setUsagesWord(@NotNull String usagesWord) {
+  public void setUsagesWord(@NotNull @Nls String usagesWord) {
     myUsagesWordSupplier = count -> usagesWord;
   }
 
-  public void setUsagesWord(@NotNull IntFunction<String> usagesWordSupplier) {
+  public void setUsagesWord(@NotNull IntFunction<@Nls String> usagesWordSupplier) {
     myUsagesWordSupplier = usagesWordSupplier;
   }
 
-  public String getTabName() {
+  public @NlsContexts.TabTitle String getTabName() {
     return myTabName;
   }
 
-  public void setTabName(final String tabName) {
+  public void setTabName(final @NlsContexts.TabTitle String tabName) {
     myTabName = tabName;
   }
 
-  public String getToolwindowTitle() {
+  public @NlsContexts.TabTitle String getToolwindowTitle() {
     return myToolwindowTitle;
   }
 
-  public void setToolwindowTitle(final String toolwindowTitle) {
+  public void setToolwindowTitle(final @NlsContexts.TabTitle String toolwindowTitle) {
     myToolwindowTitle = toolwindowTitle;
   }
 
@@ -206,20 +208,20 @@ public class UsageViewPresentation {
     myDetachedMode = detachedMode;
   }
 
-  public void setDynamicUsagesString(String dynamicCodeUsagesString) {
+  public void setDynamicUsagesString(@NlsContexts.ListItem String dynamicCodeUsagesString) {
     myDynamicCodeUsagesString = dynamicCodeUsagesString;
   }
 
-  public String getDynamicCodeUsagesString() {
+  public @NlsContexts.ListItem String getDynamicCodeUsagesString() {
     return myDynamicCodeUsagesString;
   }
 
   @NotNull
-  public String getUsagesInGeneratedCodeString() {
+  public @NlsContexts.ListItem String getUsagesInGeneratedCodeString() {
     return myUsagesInGeneratedCodeString;
   }
 
-  public void setUsagesInGeneratedCodeString(@NotNull String usagesInGeneratedCodeString) {
+  public void setUsagesInGeneratedCodeString(@NotNull @NlsContexts.ListItem String usagesInGeneratedCodeString) {
     myUsagesInGeneratedCodeString = usagesInGeneratedCodeString;
   }
 

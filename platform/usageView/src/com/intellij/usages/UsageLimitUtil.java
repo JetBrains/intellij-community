@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.usageView.UsageViewBundle;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,7 +17,7 @@ public final class UsageLimitUtil {
   }
 
   @NotNull
-  public static Result showTooManyUsagesWarning(@NotNull final Project project, @NotNull final String message) {
+  public static Result showTooManyUsagesWarning(@NotNull final Project project, @NotNull final @NlsContexts.DialogMessage String message) {
     int result = runOrInvokeAndWait(() -> {
       String title = UsageViewBundle.message("find.excessive.usages.title");
       return Messages.showOkCancelDialog(project, message, title,

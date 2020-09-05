@@ -214,7 +214,7 @@ public class UsageInfo {
   /**
    * Override this method if you want a tooltip to be displayed for this usage
    */
-  public String getTooltipText() {
+  public @NlsContexts.Tooltip String getTooltipText() {
     return null;
   }
 
