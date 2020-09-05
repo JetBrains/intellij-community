@@ -246,7 +246,7 @@ public class WelcomeScreenComponentFactory {
     return panel;
   }
 
-  static JComponent createErrorsLink(Disposable parent) {
+  public static JComponent createErrorsLink(Disposable parent) {
     IdeMessagePanel panel = new IdeMessagePanel(null, MessagePool.getInstance());
     panel.setBorder(JBUI.Borders.emptyRight(13));
     panel.setOpaque(false);
@@ -255,7 +255,7 @@ public class WelcomeScreenComponentFactory {
   }
 
   @NotNull
-  static Component createEventLink(@NotNull @Nls String linkText, @NotNull Disposable parentDisposable) {
+  public static Component createEventLink(@NotNull @Nls String linkText, @NotNull Disposable parentDisposable) {
     final Ref<ActionLink> actionLinkRef = new Ref<>();
     final JComponent panel = createActionLink(linkText, AllIcons.Ide.Notification.NoEvents, actionLinkRef, new AnAction() {
       @Override
