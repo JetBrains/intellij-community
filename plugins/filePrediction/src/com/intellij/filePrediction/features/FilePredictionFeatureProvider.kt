@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.filePrediction.features
 
-import com.intellij.filePrediction.references.ExternalReferencesResult
 import com.intellij.filePrediction.FileFeaturesComputationResult
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
@@ -13,13 +12,13 @@ internal object FilePredictionFeaturesHelper {
 
   fun calculateFileFeatures(project: Project,
                             newFile: VirtualFile,
-                            refs: ExternalReferencesResult,
+                            cache: FilePredictionFeaturesCache,
                             prevFile: VirtualFile?): FileFeaturesComputationResult {
     val start = System.currentTimeMillis()
     val result = HashMap<String, FilePredictionFeature>()
     for (provider in EP_NAME.extensionList) {
       val prefix = calculateProviderPrefix(provider)
-      val features = provider.calculateFileFeatures(project, newFile, prevFile, refs).mapKeys { prefix + it.key }
+      val features = provider.calculateFileFeatures(project, newFile, prevFile, cache).mapKeys { prefix + it.key }
       result.putAll(features)
     }
     return FileFeaturesComputationResult(result, start)
@@ -51,5 +50,5 @@ interface FilePredictionFeatureProvider {
   fun calculateFileFeatures(project: Project,
                             newFile: VirtualFile,
                             prevFile: VirtualFile?,
-                            refs: ExternalReferencesResult): Map<String, FilePredictionFeature>
+                            cache: FilePredictionFeaturesCache): Map<String, FilePredictionFeature>
 }

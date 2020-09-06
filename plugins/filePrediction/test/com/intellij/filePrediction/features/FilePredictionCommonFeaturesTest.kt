@@ -36,10 +36,11 @@ class FilePredictionCommonFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtur
     val prevFile = myFixture.addFileToProject(prevPath, "PREVIOUS FILE")
     val nextFile = myFixture.addFileToProject(newPath, "NEXT FILE")
 
+    val emptyCache = FilePredictionFeaturesCache(FAILED_COMPUTATION)
     val actual: MutableMap<String, FilePredictionFeature> = hashMapOf()
     for (provider in providers) {
       val features = provider.calculateFileFeatures(
-        myFixture.project, nextFile.virtualFile, prevFile.virtualFile, FAILED_COMPUTATION
+        myFixture.project, nextFile.virtualFile, prevFile.virtualFile, emptyCache
       )
       actual.putAll(features)
     }
@@ -72,8 +73,9 @@ class FilePredictionCommonFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtur
     val nextFile = myFixture.addFileToProject(newPath, "NEXT FILE")
     configurator.configure(myFixture.project, myModule)
 
+    val emptyCache = FilePredictionFeaturesCache(FAILED_COMPUTATION)
     val actual = provider.calculateFileFeatures(
-      myFixture.project, nextFile.virtualFile, null, FAILED_COMPUTATION
+      myFixture.project, nextFile.virtualFile, null, emptyCache
     )
     val expected = expectedFeaturesProvider.produce(myFixture.project)
     for (feature in expected.entries) {

@@ -25,9 +25,9 @@ class FilePredictionGeneralFeatures : FilePredictionFeatureProvider {
   override fun calculateFileFeatures(project: Project,
                                      newFile: VirtualFile,
                                      prevFile: VirtualFile?,
-                                     refs: ExternalReferencesResult): Map<String, FilePredictionFeature> {
+                                     cache: FilePredictionFeaturesCache): Map<String, FilePredictionFeature> {
     val result = HashMap<String, FilePredictionFeature>()
-    val isInRef = refs.contains(newFile)
+    val isInRef = cache.refs.contains(newFile)
     if (isInRef != ThreeState.UNSURE) {
       result["in_ref"] = binary(isInRef == ThreeState.YES)
     }

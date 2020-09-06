@@ -56,7 +56,7 @@ class FilePredictionSimilarityFeatures : FilePredictionFeatureProvider {
   override fun calculateFileFeatures(project: Project,
                                      newFile: VirtualFile,
                                      prevFile: VirtualFile?,
-                                     refs: ExternalReferencesResult): Map<String, FilePredictionFeature> {
+                                     cache: FilePredictionFeaturesCache): Map<String, FilePredictionFeature> {
     val result = HashMap<String, FilePredictionFeature>()
     ApplicationManager.getApplication().runReadAction {
       if (newFile.isValid) {

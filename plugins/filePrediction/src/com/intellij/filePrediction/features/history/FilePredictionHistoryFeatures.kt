@@ -4,7 +4,7 @@ package com.intellij.filePrediction.features.history
 import com.intellij.filePrediction.features.FilePredictionFeature
 import com.intellij.filePrediction.features.FilePredictionFeature.Companion.numerical
 import com.intellij.filePrediction.features.FilePredictionFeatureProvider
-import com.intellij.filePrediction.references.ExternalReferencesResult
+import com.intellij.filePrediction.features.FilePredictionFeaturesCache
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 
@@ -33,7 +33,7 @@ internal class FilePredictionHistoryFeatures : FilePredictionFeatureProvider {
   override fun calculateFileFeatures(project: Project,
                                      newFile: VirtualFile,
                                      prevFile: VirtualFile?,
-                                     refs: ExternalReferencesResult): Map<String, FilePredictionFeature> {
+                                     cache: FilePredictionFeaturesCache): Map<String, FilePredictionFeature> {
     val result = HashMap<String, FilePredictionFeature>()
     val history = FilePredictionHistory.getInstance(project)
     result["size"] = numerical(history.size())

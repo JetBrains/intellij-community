@@ -18,7 +18,7 @@ class FilePredictionFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtureBuild
     val prevFile = myFixture.addFileToProject("prevFile.txt", "PREVIOUS FILE").virtualFile
     val candidate = myFixture.addFileToProject("candidate.txt", "CANDIDATE").virtualFile
 
-    val result = FilePredictionReferencesHelper.calculateExternalReferences(myFixture.project, prevFile).value
+    val result = FilePredictionFeaturesCache(FilePredictionReferencesHelper.calculateExternalReferences(myFixture.project, prevFile).value)
     val actual = FilePredictionFeaturesHelper.calculateFileFeatures(myFixture.project, candidate, result, prevFile)
     assertNotEmpty(actual.value.keys)
 
@@ -33,7 +33,7 @@ class FilePredictionFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtureBuild
     val candidateFile = myFixture.addFileToProject("candidate.txt", "CANDIDATE").virtualFile
 
 
-    val result = FilePredictionReferencesHelper.calculateExternalReferences(myFixture.project, prevFile).value
+    val result = FilePredictionFeaturesCache(FilePredictionReferencesHelper.calculateExternalReferences(myFixture.project, prevFile).value)
     val features = FilePredictionFeaturesHelper.calculateFileFeatures(myFixture.project, candidateFile, result, prevFile)
     assertNotEmpty(features.value.keys)
 
