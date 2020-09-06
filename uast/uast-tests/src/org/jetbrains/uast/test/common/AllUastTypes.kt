@@ -5,7 +5,6 @@ import org.jetbrains.uast.*
 import org.jetbrains.uast.expressions.UInjectionHost
 import org.jetbrains.uast.psi.UElementWithLocation
 
-val t = UElement::class.java.classes
 
 @JvmField
 @Suppress("DEPRECATION")
