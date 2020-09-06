@@ -6,10 +6,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.NewActionGroup;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.lang.Language;
-import com.intellij.lang.LanguageUtil;
-import com.intellij.lang.PerFileMappings;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.*;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Caret;
@@ -30,6 +27,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.*;
 import com.intellij.util.containers.JBIterable;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,7 +58,7 @@ public final class ScratchFileActions {
 
     @NonNls private static final String ACTION_ID = "NewScratchFile";
 
-    private final NotNullLazyValue<String> myActionText = NotNullLazyValue.createValue(
+    private final NotNullLazyValue<@Nls String> myActionText = NotNullLazyValue.createValue(
       () -> NewActionGroup.isActionInNewPopupMenu(this) ? ActionsBundle.actionText(ACTION_ID) : ActionsBundle.message("action.NewScratchFile.text.with.new")
     );
 
@@ -244,13 +242,26 @@ public final class ScratchFileActions {
         .filter(notNull())
         .addAllTo(new LinkedHashSet<>());
       String langName = languages.size() == 1 ? languages.iterator().next().getDisplayName() : languages.size() + " different";
-      e.getPresentation().setText(String.format("Change %s (%s)...", getLanguageTerm(), langName));
+      e.getPresentation().setText(getChangeLanguageActionName(langName));
       e.getPresentation().setEnabledAndVisible(true);
     }
 
-    @NotNull
+    /**
+     * @deprecated use internationalized string instead.
+     */
+    @NotNull @Deprecated
     protected String getLanguageTerm() {
       return "Language";
+    }
+
+    @NotNull @Nls
+    protected String getChangeLanguageActionName(@NotNull String languageName) {
+      return LangBundle.message("scratch.file.action.change.language.action", languageName);
+    }
+
+    @NotNull @Nls
+    protected String getChangeLanguageTitle() {
+      return LangBundle.message("scratch.file.action.change.language.title");
     }
 
     @Override
@@ -259,7 +270,7 @@ public final class ScratchFileActions {
       JBIterable<VirtualFile> files = JBIterable.of(e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)).
         filter(fileFilter(project));
       if (project == null || files.isEmpty()) return;
-      actionPerformedImpl(e, project, "Change " + getLanguageTerm(), files);
+      actionPerformedImpl(e, project, getChangeLanguageTitle(), files);
     }
 
     @NotNull
