@@ -2,14 +2,12 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.SystemIndependent;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -17,7 +15,8 @@ import java.util.List;
  */
 public final class ProjectGroup {
   private @NotNull @NlsSafe String myName = "";
-  private String myProjectPaths = "";
+  private String myProjectPaths;
+  private List<String> myProjects = new ArrayList<>();
   private boolean myExpanded = false;
   //used in different places, i.e. closing tutorials group should hide all nested items too
   private boolean myTutorials = false;
@@ -37,28 +36,33 @@ public final class ProjectGroup {
     myName = name;
   }
 
+  public void setProjects(List<String> projects) {
+    myProjects = projects;
+  }
+
   //do not remove. bean getter
   public String getProjectPaths() {
-    return myProjectPaths;
+    return null;
   }
 
   //do not remove. bean setter
   public void setProjectPaths(String projectPaths) {
-    myProjectPaths = projectPaths;
+    ArrayList<String> paths = new ArrayList<>(StringUtil.split(projectPaths, File.pathSeparator));
+    paths.forEach(this::addProject);
   }
 
   public void addProject(@SystemIndependent String path) {
-    List<String> projects = new ArrayList<>(StringUtil.split(myProjectPaths, File.pathSeparator));
-    projects.add(FileUtilRt.toSystemIndependentName(path));
-    save(projects);
+    if (!myProjects.contains(path)) {
+      myProjects.add(path);
+    }
   }
 
   public boolean markProjectFirst(@SystemIndependent String path) {
-    if (!myProjectPaths.contains(path)) {
+    if (!myProjects.contains(path)) {
       return false;
     }
 
-    List<String> existing = StringUtil.split(myProjectPaths, File.pathSeparator);
+    List<String> existing = new ArrayList<>(myProjects);
     int index = existing.indexOf(path);
     if (index <= 0) {
       return false;
@@ -73,22 +77,17 @@ public final class ProjectGroup {
   }
 
   private void save(@NotNull List<String> projects) {
-    myProjectPaths = String.join(File.pathSeparator, projects);
+    //myProjectPaths = String.join(File.pathSeparator, projects);
+    myProjects = projects;
   }
 
   @NotNull
   public List<String> getProjects() {
-    return new ArrayList<>(new HashSet<>(StringUtil.split(myProjectPaths, File.pathSeparator)));
+    return myProjects;
   }
 
   public boolean removeProject(@SystemIndependent String path) {
-    List<String> projects = StringUtil.split(myProjectPaths, File.pathSeparator);
-    if (!projects.remove(path)) {
-      return false;
-    }
-
-    save(projects);
-    return true;
+    return myProjects.remove(path);
   }
 
   public boolean isExpanded() {
