@@ -9,7 +9,6 @@ import com.intellij.openapi.diff.LineStatusMarkerDrawUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
-import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.IntPair;
@@ -132,8 +131,6 @@ public abstract class LineStatusMarkerRenderer {
     if (ranges == null) return emptyList();
 
     int lineHeight = editor.getLineHeight();
-    int visibleLineCount = ((EditorImpl)editor).getVisibleLineCount();
-    boolean lastLineSelected = editor.yToVisualLine(y) == visibleLineCount - 1;
     int triangleGap = lineHeight / 3;
 
     Rectangle clip = new Rectangle(0, y - lineHeight, editor.getComponent().getWidth(), lineHeight * 2);
@@ -144,25 +141,18 @@ public abstract class LineStatusMarkerRenderer {
       ChangedLines<Unit> firstChange = block.changes.get(0);
       ChangedLines<Unit> lastChange = block.changes.get(block.changes.size() - 1);
 
-      int line1 = firstChange.line1;
-      int line2 = lastChange.line2;
-
-      int startY = editor.visualLineToY(line1);
-      int endY = editor.visualLineToY(line2);
+      int startY = firstChange.y1;
+      int endY = lastChange.y2;
 
       // "empty" range for deleted block
-      if (firstChange.line1 == firstChange.line2) {
+      if (firstChange.y1 == firstChange.y2) {
         startY -= triangleGap;
       }
-      if (lastChange.line1 == lastChange.line2) {
+      if (lastChange.y1 == lastChange.y2) {
         endY += triangleGap;
       }
 
       if (startY <= y && endY > y) {
-        result.addAll(block.ranges);
-      }
-      else if (lastLineSelected && line2 == visibleLineCount) {
-        // special handling for deletion at the end of file
         result.addAll(block.ranges);
       }
     }
@@ -189,42 +179,20 @@ public abstract class LineStatusMarkerRenderer {
     List<? extends Range> ranges = myTracker.getRanges();
     if (ranges == null) return null;
 
-    List<ChangesBlock<Unit>> blocks = VisibleRangeMerger.merge(editor, ranges, bounds);
+    int yStart = editor.visualLineToY(lineNum);
+    Rectangle clip = new Rectangle(bounds.x, yStart, bounds.width, editor.getLineHeight());
+
+    List<ChangesBlock<Unit>> blocks = VisibleRangeMerger.merge(editor, ranges, clip);
     if (blocks.isEmpty()) return null;
 
-    int visibleLineCount = ((EditorImpl)editor).getVisibleLineCount();
-    boolean lastLineSelected = lineNum == visibleLineCount - 1;
-
-    ChangesBlock<Unit> lineBlock = null;
-    for (ChangesBlock<Unit> block : blocks) {
-      ChangedLines<Unit> firstChange = block.changes.get(0);
-      ChangedLines<Unit> lastChange = block.changes.get(block.changes.size() - 1);
-
-      int line1 = firstChange.line1;
-      int line2 = lastChange.line2;
-
-      int endLine = line1 == line2 ? line2 + 1 : line2;
-      if (line1 <= lineNum && endLine > lineNum) {
-        lineBlock = block;
-        break;
-      }
-      if (lastLineSelected && line2 == visibleLineCount) {
-        // special handling for deletion at the end of file
-        lineBlock = block;
-        break;
-      }
-      if (line1 > lineNum) break;
+    List<ChangedLines<Unit>> changes = blocks.get(0).changes;
+    int y = changes.get(0).y1;
+    int endY = changes.get(changes.size() - 1).y2;
+    if (y == endY) {
+      endY += editor.getLineHeight();
     }
 
-    if (lineBlock == null) return null;
-
-    List<ChangedLines<Unit>> changes = lineBlock.changes;
-    int startLine = changes.get(0).line1;
-    int endLine = changes.get(changes.size() - 1).line2;
-
     IntPair area = LineStatusMarkerDrawUtil.getGutterArea(editor);
-    int y = editor.visualLineToY(startLine);
-    int endY = editor.visualLineToY(endLine);
     return new Rectangle(area.first, y, area.second - area.first, endY - y);
   }
 

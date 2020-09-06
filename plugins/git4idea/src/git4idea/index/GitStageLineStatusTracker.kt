@@ -48,8 +48,6 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import git4idea.GitUtil
 import git4idea.i18n.GitBundle
-import git4idea.index.actions.GitAddOperation
-import git4idea.index.actions.GitResetOperation
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import java.awt.*
@@ -367,9 +365,9 @@ class GitStageLineStatusTracker(
       val midX = (endX + x + 3) / 2
 
       for (change in block) {
-        if (change.line1 != change.line2) {
-          val start = editor.visualLineToY(change.line1)
-          val end = editor.visualLineToY(change.line2)
+        if (change.y1 != change.y2) {
+          val start = change.y1
+          val end = change.y2
           val gutterColor = LineStatusMarkerDrawUtil.getGutterColor(change.type, editor)
 
           if (change.flags.isUnstaged && change.flags.isStaged) {
@@ -386,8 +384,8 @@ class GitStageLineStatusTracker(
       }
 
       for (change in block) {
-        if (change.line1 == change.line2) {
-          val start = editor.visualLineToY(change.line1)
+        if (change.y1 == change.y2) {
+          val start = change.y1
           val gutterColor = LineStatusMarkerDrawUtil.getGutterColor(change.type, editor)
 
           if (change.flags.isUnstaged && change.flags.isStaged) {

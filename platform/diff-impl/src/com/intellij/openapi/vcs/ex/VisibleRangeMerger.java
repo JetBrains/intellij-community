@@ -1,10 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.ex;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.Interval;
 import com.intellij.util.containers.ContainerUtil;
 import kotlin.Unit;
 import org.jetbrains.annotations.NotNull;
@@ -14,12 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
-import static com.intellij.diff.util.DiffDrawUtil.yToLine;
-import static com.intellij.diff.util.DiffUtil.getLineCount;
-
 public class VisibleRangeMerger<T> {
-  private static final Logger LOG = Logger.getInstance(VisibleRangeMerger.class);
-
   @NotNull private final Editor myEditor;
   @NotNull private final FlagsProvider<T> myFlagsProvider;
 
@@ -47,15 +41,15 @@ public class VisibleRangeMerger<T> {
 
   @NotNull
   private List<ChangesBlock<T>> run(@NotNull List<? extends Range> ranges, @NotNull Rectangle clip) {
-    int visibleLineStart = yToLine(myEditor, clip.y);
-    int visibleLineEnd = yToLine(myEditor, clip.y + clip.height) + 1;
+    int visibleLinesStart = EditorUtil.yToLogicalLineRange(myEditor, clip.y).intervalStart();
+    int visibleLinesEnd = EditorUtil.yToLogicalLineRange(myEditor, clip.y + Math.max(clip.height - 1, 0)).intervalEnd() + 1;
 
     for (Range range : ranges) {
       int line1 = range.getLine1();
       int line2 = range.getLine2();
 
-      if (line2 < visibleLineStart) continue;
-      if (line1 > visibleLineEnd) break;
+      if (line2 < visibleLinesStart) continue;
+      if (line1 > visibleLinesEnd) break;
 
       T flags = myFlagsProvider.getFlags(range);
       List<Range.InnerRange> innerRanges = range.getInnerRanges();
@@ -79,62 +73,45 @@ public class VisibleRangeMerger<T> {
   }
 
   private void processLine(@NotNull Range range, int start, int end, byte type, @NotNull T flags) {
-    EditorImpl editorImpl = (EditorImpl)myEditor;
-    Document document = myEditor.getDocument();
-    int lineCount = getLineCount(document);
+    Interval interval1 = EditorUtil.logicalLineToYRange(myEditor, start);
+    int visualStart = interval1.intervalStart();
 
-    int visualStart;
-    boolean startHasFolding;
-    if (start < lineCount) {
-      int startOffset = document.getLineStartOffset(start);
-      visualStart = editorImpl.offsetToVisualLine(startOffset);
-      startHasFolding = startOffset > 0 && myEditor.getFoldingModel().isOffsetCollapsed(startOffset - 1);
-    }
-    else {
-      LOG.assertTrue(start == lineCount);
-      int lastVisualLine = editorImpl.offsetToVisualLine(document.getTextLength());
-      visualStart = lastVisualLine + start - lineCount + 1;
-      startHasFolding = false;
+    int sharedPrefixHeight = 0;
+    if (start > 0) {
+      Interval intervalBefore = EditorUtil.logicalLineToYRange(myEditor, start - 1);
+      sharedPrefixHeight = Math.max(0, intervalBefore.intervalEnd() - interval1.intervalStart());
     }
 
     if (start == end) {
-      if (startHasFolding) {
-        appendChange(range, new ChangedLines<>(visualStart, visualStart + 1, Range.MODIFIED, flags));
+      if (sharedPrefixHeight != 0) {
+        appendChange(range, new ChangedLines<>(visualStart, visualStart + sharedPrefixHeight, Range.MODIFIED, flags));
       }
       else {
         appendChange(range, new ChangedLines<>(visualStart, visualStart, type, flags));
       }
     }
     else {
-      int visualEnd;
-      boolean endHasFolding;
-      if (end < lineCount) {
-        int endOffset = document.getLineEndOffset(end - 1);
-        visualEnd = editorImpl.offsetToVisualLine(endOffset) + 1;
-        endHasFolding = myEditor.getFoldingModel().isOffsetCollapsed(endOffset);
-      }
-      else {
-        LOG.assertTrue(end == lineCount);
-        int lastVisualLine = editorImpl.offsetToVisualLine(document.getTextLength());
-        visualEnd = lastVisualLine + end - lineCount + 1;
-        endHasFolding = false;
-      }
+      Interval interval2 = EditorUtil.logicalLineToYRange(myEditor, end - 1);
+      int visualEnd = interval2.intervalEnd() + 1;
+
+      Interval intervalAfter = EditorUtil.logicalLineToYRange(myEditor, end);
+      int sharedSuffixHeight = Math.max(0, interval2.intervalEnd() - intervalAfter.intervalStart());
 
       if (type == Range.EQUAL || type == Range.MODIFIED) {
         appendChange(range, new ChangedLines<>(visualStart, visualEnd, type, flags));
       }
       else {
-        if (startHasFolding && visualEnd - visualStart > 1) {
-          appendChange(range, new ChangedLines<>(visualStart, visualStart + 1, Range.MODIFIED, flags));
-          startHasFolding = false;
-          visualStart++;
+        if (sharedPrefixHeight != 0 && visualEnd - visualStart > sharedPrefixHeight) {
+          appendChange(range, new ChangedLines<>(visualStart, visualStart + sharedPrefixHeight, Range.MODIFIED, flags));
+          visualStart += sharedPrefixHeight;
+          sharedPrefixHeight = 0;
         }
-        if (endHasFolding && visualEnd - visualStart > 1) {
-          appendChange(range, new ChangedLines<>(visualStart, visualEnd - 1, type, flags));
-          appendChange(range, new ChangedLines<>(visualEnd - 1, visualEnd, Range.MODIFIED, flags));
+        if (sharedSuffixHeight != 0 && visualEnd - visualStart > sharedSuffixHeight) {
+          appendChange(range, new ChangedLines<>(visualStart, visualEnd - sharedSuffixHeight, type, flags));
+          appendChange(range, new ChangedLines<>(visualEnd - sharedSuffixHeight, visualEnd, Range.MODIFIED, flags));
         }
         else {
-          byte bodyType = startHasFolding || endHasFolding ? Range.MODIFIED : type;
+          byte bodyType = sharedPrefixHeight != 0 || sharedSuffixHeight != 0 ? Range.MODIFIED : type;
           appendChange(range, new ChangedLines<>(visualStart, visualEnd, bodyType, flags));
         }
       }
@@ -143,7 +120,7 @@ public class VisibleRangeMerger<T> {
 
   private void appendChange(@NotNull Range range, @NotNull ChangedLines<T> newChange) {
     ChangedLines<T> lastItem = ContainerUtil.getLastItem(myBlock.changes);
-    if (lastItem != null && lastItem.line2 < newChange.line1) {
+    if (lastItem != null && lastItem.y2 < newChange.y1) {
       finishBlock();
     }
 
@@ -161,30 +138,30 @@ public class VisibleRangeMerger<T> {
 
     ChangedLines<T> lastChange = changes.remove(changes.size() - 1);
 
-    if (lastChange.line1 == lastChange.line2 &&
-        newChange.line1 == newChange.line2) {
-      assert lastChange.line1 == newChange.line1;
+    if (lastChange.y1 == lastChange.y2 &&
+        newChange.y1 == newChange.y2) {
+      assert lastChange.y1 == newChange.y1;
       byte type = mergeTypes(lastChange, newChange);
       T flags = myFlagsProvider.mergeFlags(lastChange.flags, newChange.flags);
-      changes.add(new ChangedLines<>(lastChange.line1, lastChange.line2, type, flags));
+      changes.add(new ChangedLines<>(lastChange.y1, lastChange.y2, type, flags));
     }
-    else if (lastChange.line1 == lastChange.line2 && newChange.type == Range.EQUAL ||
-             newChange.line1 == newChange.line2 && lastChange.type == Range.EQUAL) {
+    else if (lastChange.y1 == lastChange.y2 && newChange.type == Range.EQUAL ||
+             newChange.y1 == newChange.y2 && lastChange.type == Range.EQUAL) {
       changes.add(lastChange);
       changes.add(newChange);
     }
     else if (lastChange.type == newChange.type &&
              Objects.equals(lastChange.flags, newChange.flags)) {
-      int union1 = Math.min(lastChange.line1, newChange.line1);
-      int union2 = Math.max(lastChange.line2, newChange.line2);
+      int union1 = Math.min(lastChange.y1, newChange.y1);
+      int union2 = Math.max(lastChange.y2, newChange.y2);
       changes.add(new ChangedLines<>(union1, union2, lastChange.type, lastChange.flags));
     }
     else {
-      int intersection1 = Math.max(lastChange.line1, newChange.line1);
-      int intersection2 = Math.min(lastChange.line2, newChange.line2);
+      int intersection1 = Math.max(lastChange.y1, newChange.y1);
+      int intersection2 = Math.min(lastChange.y2, newChange.y2);
 
-      if (lastChange.line1 != intersection1) {
-        changes.add(new ChangedLines<>(lastChange.line1, intersection1, lastChange.type, lastChange.flags));
+      if (lastChange.y1 != intersection1) {
+        changes.add(new ChangedLines<>(lastChange.y1, intersection1, lastChange.type, lastChange.flags));
       }
 
       if (intersection1 != intersection2) {
@@ -193,8 +170,8 @@ public class VisibleRangeMerger<T> {
         changes.add(new ChangedLines<>(intersection1, intersection2, type, flags));
       }
 
-      if (newChange.line2 != intersection2) {
-        changes.add(new ChangedLines<>(intersection2, newChange.line2, newChange.type, newChange.flags));
+      if (newChange.y2 != intersection2) {
+        changes.add(new ChangedLines<>(intersection2, newChange.y2, newChange.type, newChange.flags));
       }
     }
   }

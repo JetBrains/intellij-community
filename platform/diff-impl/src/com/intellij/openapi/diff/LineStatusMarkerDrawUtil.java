@@ -76,15 +76,12 @@ public class LineStatusMarkerDrawUtil {
     Color borderColor = getGutterBorderColor(editor);
     Color gutterBackgroundColor = ((EditorEx)editor).getGutterComponentEx().getBackground();
 
-    int line1 = block.get(0).line1;
-    int line2 = block.get(block.size() - 1).line2;
-
     IntPair area = getGutterArea(editor);
     final int x = area.first;
     final int endX = area.second;
 
-    final int y = editorImpl.visualLineToY(line1);
-    final int endY = editorImpl.visualLineToY(line2);
+    final int y = block.get(0).y1;
+    final int endY = block.get(block.size() - 1).y2;
 
 
     if (framingBorder > 0) {
@@ -96,11 +93,10 @@ public class LineStatusMarkerDrawUtil {
     }
 
     for (ChangedLines<DefaultLineFlags> change : block) {
-      if (change.line1 != change.line2 &&
+      if (change.y1 != change.y2 &&
           !change.flags.isIgnored) {
-        int start = editorImpl.visualLineToY(change.line1);
-        int end = editorImpl.visualLineToY(change.line2);
-
+        int start = change.y1;
+        int end = change.y2;
         Color gutterColor = getGutterColor(change.type, editor);
         paintRect(g, gutterColor, null, x, start, endX, end);
       }
@@ -108,24 +104,22 @@ public class LineStatusMarkerDrawUtil {
 
     if (borderColor == null) {
       for (ChangedLines<DefaultLineFlags> change : block) {
-        if (change.line1 != change.line2 &&
+        if (change.y1 != change.y2 &&
             change.flags.isIgnored) {
-          int start = editorImpl.visualLineToY(change.line1);
-          int end = editorImpl.visualLineToY(change.line2);
-
+          int start = change.y1;
+          int end = change.y2;
           Color ignoredBorderColor = getIgnoredGutterBorderColor(change.type, editor);
           paintRect(g, null, ignoredBorderColor, x, start, endX, end);
         }
       }
     }
-    else if (line1 != line2) {
+    else if (y != endY) {
       paintRect(g, null, borderColor, x, y, endX, endY);
     }
 
     for (ChangedLines<DefaultLineFlags> change : block) {
-      if (change.line1 == change.line2) {
-        int start = editorImpl.visualLineToY(change.line1);
-
+      if (change.y1 == change.y2) {
+        int start = change.y1;
         if (!change.flags.isIgnored) {
           Color gutterColor = getGutterColor(change.type, editor);
           paintTriangle(g, editor, gutterColor, borderColor, x, endX, start);
