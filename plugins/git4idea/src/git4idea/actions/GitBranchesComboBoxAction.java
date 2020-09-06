@@ -9,7 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import git4idea.branch.GitBranchUtil;
-import git4idea.i18n.GitBundle;
+
 import git4idea.repo.GitRepository;
 import git4idea.ui.branch.GitBranchPopup;
 import org.jetbrains.annotations.NotNull;
@@ -18,10 +18,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class GitBranchesComboBoxAction extends ComboBoxAction {
-
-  public GitBranchesComboBoxAction() {
-    getTemplatePresentation().setText(GitBundle.messagePointer("git.show.branches"));
-  }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
@@ -36,8 +32,8 @@ public class GitBranchesComboBoxAction extends ComboBoxAction {
   }
 
   private static void updatePresentation(
-    Project project,
-    Presentation presentation
+    @Nullable Project project,
+    @NotNull Presentation presentation
   ) {
     if (project != null) {
       GitRepository repo = GitBranchUtil.getCurrentRepository(project);
@@ -53,41 +49,40 @@ public class GitBranchesComboBoxAction extends ComboBoxAction {
       }
       presentation.setEnabled(true);
     }
+    else {
+      presentation.setEnabled(false);
+    }
   }
-
-  @Override
-  public void actionPerformed(@NotNull AnActionEvent e) {
-    super.actionPerformed(e);
-  }
-
 
   @Override
   protected @NotNull DefaultActionGroup createPopupActionGroup(JComponent button) {
     return new DefaultActionGroup();
   }
 
-
+  @Override
   @NotNull
   protected ListPopup createActionPopup(@NotNull DataContext context, @NotNull JComponent component, @Nullable Runnable disposeCallback) {
     Project project = context.getData(CommonDataKeys.PROJECT);
     ListPopup popup = JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<>() {
     });
-    if (project != null) {
-      GitRepository repo = GitBranchUtil.getCurrentRepository(project);
-      popup = GitBranchPopup.getInstance(project, repo).asListPopup();
-      popup.addListener(new JBPopupListener() {
-        @Override
-        public void beforeShown(@NotNull LightweightWindowEvent event) {
-        }
-
-        @Override
-        public void onClosed(@NotNull LightweightWindowEvent event) {
-          if (disposeCallback != null) {
-            disposeCallback.run();
-          }
-        }
-      });
+    if (project == null) {
+      return popup;
     }
+
+    GitRepository repo = GitBranchUtil.getCurrentRepository(project);
+    if (repo == null) {
+      return popup;
+    }
+    popup = GitBranchPopup.getInstance(project, repo).asListPopup();
+    popup.addListener(new JBPopupListener() {
+      @Override
+      public void onClosed(@NotNull LightweightWindowEvent event) {
+        if (disposeCallback != null) {
+          disposeCallback.run();
+        }
+      }
+    });
+
     return popup;
   }
 }
