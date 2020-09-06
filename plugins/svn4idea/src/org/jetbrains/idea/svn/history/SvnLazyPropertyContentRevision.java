@@ -119,11 +119,6 @@ public class SvnLazyPropertyContentRevision extends SvnBaseContentRevision imple
         registerProperty(property);
       }
 
-      @Override
-      public void handleProperty(long revision, PropertyData property) {
-        // revision properties here
-      }
-
       private void registerProperty(@NotNull PropertyData property) {
         if (indicator != null) {
           indicator.checkCanceled();

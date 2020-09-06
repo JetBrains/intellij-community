@@ -194,14 +194,6 @@ public class SetPropertyDialog extends DialogWrapper {
           public void handleProperty(File path, PropertyData property) {
             names.add(property.getName());
           }
-
-          @Override
-          public void handleProperty(Url url, PropertyData property) {
-          }
-
-          @Override
-          public void handleProperty(long revision, PropertyData property) {
-          }
         };
 
         PropertyClient client = myVCS.getFactory(file).createPropertyClient();

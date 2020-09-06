@@ -137,14 +137,6 @@ public class CmdPropertyClient extends BaseSvnClient implements PropertyClient {
         // null indicates property will be deleted
         result.put(property.getName(), null);
       }
-
-      @Override
-      public void handleProperty(Url url, PropertyData property) {
-      }
-
-      @Override
-      public void handleProperty(long revision, PropertyData property) {
-      }
     });
 
     return result;

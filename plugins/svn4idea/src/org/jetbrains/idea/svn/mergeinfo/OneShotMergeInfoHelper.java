@@ -178,14 +178,6 @@ public class OneShotMergeInfoHelper implements MergeChecker {
           myMergeInfoMap.put(toKey(workingCopyRelativePath), mergeInfo);
         }
       }
-
-      @Override
-      public void handleProperty(Url url, PropertyData property) {
-      }
-
-      @Override
-      public void handleProperty(long revision, PropertyData property) {
-      }
     };
   }
 

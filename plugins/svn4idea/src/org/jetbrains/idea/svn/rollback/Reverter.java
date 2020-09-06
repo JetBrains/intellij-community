@@ -195,14 +195,6 @@ public class Reverter {
           properties.get(info.getTo()).put(property.getName(), property.getValue());
         }
       }
-
-      @Override
-      public void handleProperty(Url url, PropertyData property) {
-      }
-
-      @Override
-      public void handleProperty(long revision, PropertyData property) {
-      }
     };
   }
 }

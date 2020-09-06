@@ -145,14 +145,6 @@ public class PropertiesComponent extends JPanel {
         public void handleProperty(File path, PropertyData property) {
           props.put(property.getName(), property.getValue().toString());
         }
-
-        @Override
-        public void handleProperty(Url url, PropertyData property) {
-        }
-
-        @Override
-        public void handleProperty(long revision, PropertyData property) {
-        }
       };
       vcs.getFactory(file).createPropertyClient().list(Target.on(file, Revision.UNDEFINED), Revision.WORKING, Depth.EMPTY,
                                                        handler);
