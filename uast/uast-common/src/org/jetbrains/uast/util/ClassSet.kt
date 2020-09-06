@@ -10,7 +10,7 @@ interface ClassSet<out T> {
   operator fun contains(element: Class<out @UnsafeVariance T>): Boolean
 }
 
-class ClassSetImpl<out T>(vararg val initialClasses: Class<out T>) : ClassSet<T> {
+private class ClassSetImpl<out T>(vararg val initialClasses: Class<out T>) : ClassSet<T> {
 
   private val isSimple = initialClasses.size <= SIMPLE_CLASS_SET_LIMIT
 
@@ -33,6 +33,16 @@ class ClassSetImpl<out T>(vararg val initialClasses: Class<out T>) : ClassSet<T>
       internalMapping[element]
       ?: initialClasses.any { it.isAssignableFrom(element) }.also { internalMapping[element] = it }
 }
+
+fun <T> classSetOf(vararg classes: Class<out T>): ClassSet<T> =
+  if (classes.isNotEmpty()) ClassSetImpl(*classes) else emptyClassSet
+
+private val emptyClassSet: ClassSet<Nothing> = object : ClassSet<Nothing> {
+  override fun isEmpty() = true
+  override fun contains(element: Class<out Nothing>): Boolean = false
+}
+
+fun <T> emptyClassSet(): ClassSet<T> = emptyClassSet
 
 class ClassSetsWrapper<out T>(val sets: Array<ClassSet<@UnsafeVariance T>>) : ClassSet<T> {
   override fun isEmpty(): Boolean = sets.all { it.isEmpty() }
