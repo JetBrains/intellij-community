@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.customize;
 
 import com.intellij.ide.IdeBundle;
@@ -60,7 +60,7 @@ public class CustomizeLauncherScriptStep extends AbstractCustomizeWizardStep {
         CreateLauncherScriptAction.createLauncherScript(myScriptPathTextField.getText());
       }
       catch (Exception e) {
-        Messages.showErrorDialog(ExceptionUtil.getNonEmptyMessage(e, "Internal error"),
+        Messages.showErrorDialog(ExceptionUtil.getNonEmptyMessage(e, IdeBundle.message("notification.content.internal error")),
                                  IdeBundle.message("dialog.title.launcher.script.creation.failed"));
         return false;
       }

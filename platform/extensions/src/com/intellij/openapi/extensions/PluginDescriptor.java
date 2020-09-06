@@ -68,7 +68,7 @@ public interface PluginDescriptor {
 
   String getResourceBundleBaseName();
 
-  String getCategory();
+  @NlsSafe String getCategory();
 
   String getVendorEmail();
 

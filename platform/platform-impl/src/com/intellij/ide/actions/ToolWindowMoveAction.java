@@ -52,7 +52,7 @@ public final class ToolWindowMoveAction extends DumbAwareAction implements FusAw
         case TopLeft:
           return top + " " + left;
       }
-      return super.toString();
+      throw new IllegalStateException("Should not be invoked");
     }
 
     @NotNull

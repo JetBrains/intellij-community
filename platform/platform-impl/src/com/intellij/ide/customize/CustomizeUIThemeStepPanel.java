@@ -12,6 +12,7 @@ import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.IconUtil;
@@ -80,7 +81,8 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
     final ThemeInfo myDefaultTheme = getDefaultTheme();
 
     for (final ThemeInfo theme : myThemes) {
-      final JRadioButton radioButton = new JRadioButton(theme.name, myDefaultTheme == theme);
+      @NlsSafe String themName = theme.name;
+      final JRadioButton radioButton = new JRadioButton(themName, myDefaultTheme == theme);
       radioButton.setOpaque(false);
       final JPanel panel = createBigButtonPanel(createSmallBorderLayout(), radioButton, () -> {
         CustomizeIDEWizardInteractions.INSTANCE.record(CustomizeIDEWizardInteractionType.UIThemeChanged);

@@ -70,7 +70,7 @@ public class CustomizeDesktopEntryStep extends AbstractCustomizeWizardStep {
         CreateDesktopEntryAction.createDesktopEntry(myGlobalEntryCheckBox.isSelected());
       }
       catch (Exception e) {
-        Messages.showErrorDialog(ExceptionUtil.getNonEmptyMessage(e, "Internal error"),
+        Messages.showErrorDialog(ExceptionUtil.getNonEmptyMessage(e, IdeBundle.message("dialog.message.internal.error")),
                                  IdeBundle.message("dialog.title.desktop.entry.creation.failed"));
         return false;
       }

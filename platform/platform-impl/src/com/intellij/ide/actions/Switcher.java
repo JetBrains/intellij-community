@@ -141,7 +141,6 @@ public final class Switcher extends AnAction implements DumbAware {
     }, null);
   }
 
-  @NonNls private static final String SWITCHER_TITLE = "Switcher";
   @NonNls private static InputEvent INIT_EVENT;
 
   @Override
@@ -165,7 +164,7 @@ public final class Switcher extends AnAction implements DumbAware {
         isNewSwitcher = true;
         // Assigns SWITCHER field
         boolean moveBack = e.getInputEvent() != null && e.getInputEvent().isShiftDown();
-        createAndShowSwitcher(project, SWITCHER_TITLE, IdeActions.ACTION_SWITCHER, false, false, !moveBack);
+        createAndShowSwitcher(project, IdeBundle.message("window.title.switcher"), IdeActions.ACTION_SWITCHER, false, false, !moveBack);
         FeatureUsageTracker.getInstance().triggerFeatureUsed(SWITCHER_FEATURE_ID);
       }
     }
@@ -188,11 +187,11 @@ public final class Switcher extends AnAction implements DumbAware {
    */
   @Deprecated
   @Nullable
-  public static SwitcherPanel createAndShowSwitcher(@NotNull AnActionEvent e, @NotNull String title, boolean pinned, final VirtualFile @Nullable [] vFiles) {
+  public static SwitcherPanel createAndShowSwitcher(@NotNull AnActionEvent e, @NotNull @Nls String title, boolean pinned, final VirtualFile @Nullable [] vFiles) {
     return createAndShowSwitcher(e, title, "RecentFiles", pinned, vFiles != null);
   }
 
-  public static SwitcherPanel createAndShowSwitcher(@NotNull AnActionEvent e, @NotNull String title, @NonNls @NotNull String actionId, boolean onlyEdited, boolean pinned) {
+  public static SwitcherPanel createAndShowSwitcher(@NotNull AnActionEvent e, @NotNull @Nls String title, @NonNls @NotNull String actionId, boolean onlyEdited, boolean pinned) {
     if (SWITCHER != null && Objects.equals(SWITCHER.myTitle, title)) return null;
 
     Project project = e.getProject();
@@ -202,7 +201,7 @@ public final class Switcher extends AnAction implements DumbAware {
 
   @Nullable
   private static SwitcherPanel createAndShowSwitcher(@NotNull Project project,
-                                                     @NotNull String title,
+                                                     @NotNull @Nls String title,
                                                      @NotNull String actionId,
                                                      boolean onlyEdited,
                                                      boolean pinned,
