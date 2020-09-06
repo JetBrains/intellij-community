@@ -17,7 +17,6 @@ package com.intellij.openapi.vcs.impl;
 
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.vcs.AbstractVcs;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -34,7 +33,6 @@ public class VcsDescriptor {
   private final boolean myAreChildrenValidMappings;
   private final String myDisplayName;
   private final List<String> myAdministrativePatterns;
-  private boolean myIsNone;
 
   public VcsDescriptor(String administrativePattern,
                        String displayName,
@@ -116,16 +114,6 @@ public class VcsDescriptor {
 
     VcsDescriptor that = (VcsDescriptor)o;
     return Objects.equals(myName, that.myName);
-  }
-
-  public boolean isNone() {
-    return myIsNone;
-  }
-
-  public static VcsDescriptor createFictive() {
-    final VcsDescriptor vcsDescriptor = new VcsDescriptor(null, VcsBundle.message("none.vcs.presentation"), null, false, false);
-    vcsDescriptor.myIsNone = true;
-    return vcsDescriptor;
   }
 
   @Override
