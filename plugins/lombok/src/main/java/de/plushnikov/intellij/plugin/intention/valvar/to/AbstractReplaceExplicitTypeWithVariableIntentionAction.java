@@ -27,7 +27,7 @@ public abstract class AbstractReplaceExplicitTypeWithVariableIntentionAction ext
   @Override
   public boolean isAvailableOnDeclarationStatement(PsiDeclarationStatement context) {
     PsiElement[] declaredElements = context.getDeclaredElements();
-    if (declaredElements.length > 1) {
+    if (declaredElements.length != 1) {
       return false;
     }
     PsiElement declaredElement = declaredElements[0];
