@@ -52,16 +52,16 @@ import java.util.stream.Collectors;
 public class DefaultInspectionToolResultExporter implements InspectionToolResultExporter {
   protected static final Logger LOG = Logger.getInstance(DefaultInspectionToolResultExporter.class);
 
-  public static final String INSPECTION_RESULTS_PROBLEM_CLASS_ELEMENT = "problem_class";
-  public static final String INSPECTION_RESULTS_SEVERITY_ATTRIBUTE = "severity";
-  public static final String INSPECTION_RESULTS_ATTRIBUTE_KEY_ATTRIBUTE = "attribute_key";
-  public static final String INSPECTION_RESULTS_ID_ATTRIBUTE = "id";
-  public static final String INSPECTION_RESULTS_DESCRIPTION_ELEMENT = "description";
-  public static final String INSPECTION_RESULTS_HINTS_ELEMENT = "hints";
-  public static final String INSPECTION_RESULTS_HINT_ELEMENT = "hint";
-  public static final String INSPECTION_RESULTS_VALUE_ATTRIBUTE = "value";
-  @NotNull protected final InspectionToolWrapper myToolWrapper;
-  @NotNull protected final GlobalInspectionContextEx myContext;
+  public static final @NonNls String INSPECTION_RESULTS_PROBLEM_CLASS_ELEMENT = "problem_class";
+  public static final @NonNls String INSPECTION_RESULTS_SEVERITY_ATTRIBUTE = "severity";
+  public static final @NonNls String INSPECTION_RESULTS_ATTRIBUTE_KEY_ATTRIBUTE = "attribute_key";
+  public static final @NonNls String INSPECTION_RESULTS_ID_ATTRIBUTE = "id";
+  public static final @NonNls String INSPECTION_RESULTS_DESCRIPTION_ELEMENT = "description";
+  public static final @NonNls String INSPECTION_RESULTS_HINTS_ELEMENT = "hints";
+  public static final @NonNls String INSPECTION_RESULTS_HINT_ELEMENT = "hint";
+  public static final @NonNls String INSPECTION_RESULTS_VALUE_ATTRIBUTE = "value";
+  protected final @NotNull InspectionToolWrapper myToolWrapper;
+  protected final @NotNull GlobalInspectionContextEx myContext;
 
   private final SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> myExcludedElements = createBidiMap();
 

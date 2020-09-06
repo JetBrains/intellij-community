@@ -19,6 +19,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.search.scope.packageSet.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -128,7 +129,7 @@ public final class GlobalSearchScopesCore {
     }
 
     @Override
-    public String toString() {
+    public @NonNls String toString() {
       return "FilterScope adapted from "+mySet;
     }
   }
@@ -253,7 +254,7 @@ public final class GlobalSearchScopesCore {
     }
 
     @Override
-    public String toString() {
+    public @NonNls String toString() {
       return "directory scope: " + myDirectory + "; withSubdirs:"+myWithSubdirectories;
     }
 
@@ -337,7 +338,7 @@ public final class GlobalSearchScopesCore {
     }
 
     @Override
-    public String toString() {
+    public @NonNls String toString() {
       return "Directories scope: directories " + myDirectories + ", directories with subdirectories " + myDirectoriesWithSubdirectories;
     }
 
@@ -412,11 +413,11 @@ public final class GlobalSearchScopesCore {
     }
   }
 
-  public static @NotNull @Nls String getProjectProductionFilesScopeName() {
+  public static @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String getProjectProductionFilesScopeName() {
     return AnalysisBundle.message("psi.search.scope.production.files");
   }
 
-  public static @NotNull @Nls String getProjectTestFilesScopeName() {
+  public static @NotNull @Nls(capitalization = Nls.Capitalization.Sentence) String getProjectTestFilesScopeName() {
     return AnalysisBundle.message("psi.search.scope.test.files");
   }
 }

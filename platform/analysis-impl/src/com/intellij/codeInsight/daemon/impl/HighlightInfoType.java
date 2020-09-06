@@ -17,12 +17,15 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Set;
+
+import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
 
 public interface HighlightInfoType {
   @NonNls String UNUSED_SYMBOL_SHORT_NAME = "unused";
@@ -237,7 +240,7 @@ public interface HighlightInfoType {
     boolean needsUpdateOnTyping();
   }
 
-  static String getUnusedSymbolDisplayName() {
+  static @Nls(capitalization = Sentence) String getUnusedSymbolDisplayName() {
     return AnalysisBundle.message("inspection.dead.code.display.name");
   }
 }

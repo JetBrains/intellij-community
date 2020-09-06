@@ -1064,7 +1064,7 @@ public class GeneratedParserUtilBase {
     }
 
     @Override
-    public String toString() {
+    public @NonNls String toString() {
       String mod = modifiers == _NONE_ ? "_NONE_, " :
         ((modifiers & _COLLAPSE_) != 0? "_CAN_COLLAPSE_, ": "") +
         ((modifiers & _LEFT_) != 0? "_LEFT_, ": "") +

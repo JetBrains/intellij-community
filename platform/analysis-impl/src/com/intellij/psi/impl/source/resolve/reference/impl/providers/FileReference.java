@@ -228,12 +228,12 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
   }
 
   @NotNull
-  public String getFileNameToCreate() {
+  public @NlsSafe String getFileNameToCreate() {
     return decode(getCanonicalText());
   }
 
   @Nullable
-  public String getNewFileTemplateName() {
+  public @NlsSafe String getNewFileTemplateName() {
     FileType fileType = FileTypeRegistry.getInstance().getFileTypeByFileName(myText);
     if (fileType != UnknownFileType.INSTANCE) {
       return fileType.getName() + " File." + fileType.getDefaultExtension();

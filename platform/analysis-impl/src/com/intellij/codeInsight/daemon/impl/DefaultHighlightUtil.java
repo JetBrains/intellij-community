@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.analysis.AnalysisBundle;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.TokenType;
@@ -16,7 +17,7 @@ public final class DefaultHighlightUtil {
     if (node != null && node.getElementType() == TokenType.BAD_CHARACTER) {
       char c = element.textToCharArray()[0];
       boolean printable = StringUtil.isPrintableUnicode(c) && !Character.isSpaceChar(c);
-      String hex = String.format("U+%04X", (int)c);
+      @NlsSafe String hex = String.format("U+%04X", (int)c);
       String text = AnalysisBundle.message("text.illegal.character", printable ? c + " (" + hex + ")" : hex);
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(element).descriptionAndTooltip(text).create();
     }

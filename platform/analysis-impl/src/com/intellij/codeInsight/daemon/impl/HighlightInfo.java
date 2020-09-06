@@ -363,7 +363,7 @@ public class HighlightInfo implements Segment {
   }
 
   @Override
-  public String toString() {
+  public @NonNls String toString() {
     String s = "HighlightInfo(" + startOffset + "," + endOffset+")";
     if (getActualStartOffset() != startOffset || getActualEndOffset() != endOffset) {
       s += "; actual: (" + getActualStartOffset() + "," + getActualEndOffset() + ")";
@@ -767,7 +767,7 @@ public class HighlightInfo implements Segment {
     private final Icon myIcon;
     private Boolean myCanCleanup;
 
-    IntentionActionDescriptor(@NotNull IntentionAction action, List<IntentionAction> options, String displayName) {
+    IntentionActionDescriptor(@NotNull IntentionAction action, List<IntentionAction> options, @Nls String displayName) {
       this(action, options, displayName, null);
     }
 
@@ -777,14 +777,14 @@ public class HighlightInfo implements Segment {
 
     IntentionActionDescriptor(@NotNull IntentionAction action,
                               @Nullable List<IntentionAction> options,
-                              @Nullable String displayName,
+                              @Nullable @Nls String displayName,
                               @Nullable Icon icon) {
       this(action, options, displayName, icon, null, null, null);
     }
 
     public IntentionActionDescriptor(@NotNull IntentionAction action,
                                      @Nullable List<IntentionAction> options,
-                                     @Nullable String displayName,
+                                     @Nullable @Nls String displayName,
                                      @Nullable Icon icon,
                                      @Nullable HighlightDisplayKey key,
                                      @Nullable ProblemGroup problemGroup,
@@ -961,7 +961,7 @@ public class HighlightInfo implements Segment {
 
   public void registerFix(@Nullable IntentionAction action,
                           @Nullable List<IntentionAction> options,
-                          @Nullable String displayName,
+                          @Nullable @Nls String displayName,
                           @Nullable TextRange fixRange,
                           @Nullable HighlightDisplayKey key) {
     if (action == null) return;

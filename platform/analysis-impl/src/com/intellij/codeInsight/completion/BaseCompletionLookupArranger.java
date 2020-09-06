@@ -256,7 +256,7 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
     }
   }
 
-  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  @SuppressWarnings({"UseOfSystemOutOrSystemErr", "HardCodedStringLiteral"})
   private void printTestWarning() {
     System.err.println("Your test might miss some lookup items, because only " + (myLimit / 2) + " most relevant items are guaranteed to be shown in the lookup. You can:");
     System.err.println("1. Make the prefix used for completion longer, so that there are less suggestions.");

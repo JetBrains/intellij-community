@@ -25,6 +25,7 @@ import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.psi.PsiElement;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -64,7 +65,7 @@ class B implements AnnotationBuilder {
                            ThrowableInterner.intern(new Throwable()) : null;
   }
 
-  private void assertNotSet(Object o, String description) {
+  private void assertNotSet(Object o, @NonNls String description) {
     if (o != null) {
       markNotAbandoned(); // it crashed, not abandoned
       throw new IllegalStateException(description + " was set already");
@@ -141,7 +142,7 @@ class B implements AnnotationBuilder {
     }
 
     @Override
-    public String toString() {
+    public @NonNls String toString() {
       return fix+(range==null?"":" at "+range)+(batch == null ? "" : " batch")+(universal == null ? "" : " universal");
     }
   }
@@ -343,8 +344,9 @@ class B implements AnnotationBuilder {
   private static String omitIfEmpty(Object o, String name) {
     return o == null ? "" : ", " + name + "=" + o;
   }
+
   @Override
-  public String toString() {
+  public @NonNls String toString() {
     return "Builder{" +
            "message='" + message + '\'' +
            ", myCurrentElement=" + myCurrentElement +
