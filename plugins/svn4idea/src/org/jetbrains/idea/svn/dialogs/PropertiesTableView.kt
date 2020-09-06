@@ -5,6 +5,7 @@ import com.intellij.openapi.util.text.StringUtil.ELLIPSIS
 import com.intellij.ui.table.TableView
 import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.ListTableModel
+import org.jetbrains.idea.svn.SvnBundle.message
 import org.jetbrains.idea.svn.properties.PropertyData
 import org.jetbrains.idea.svn.properties.PropertyValue
 import javax.swing.table.DefaultTableCellRenderer
@@ -18,11 +19,11 @@ private class PropertiesTableView : TableView<PropertyData>(PropertiesTableModel
 
 private class PropertiesTableModel : ListTableModel<PropertyData>(PropertyNameColumn, PropertyValueColumn)
 
-private object PropertyNameColumn : ColumnInfo<PropertyData, String>("Name") {
+private object PropertyNameColumn : ColumnInfo<PropertyData, String>(message("column.name.property.name")) {
   override fun valueOf(item: PropertyData): String = item.name
 }
 
-private object PropertyValueColumn : ColumnInfo<PropertyData, PropertyValue>("Value") {
+private object PropertyValueColumn : ColumnInfo<PropertyData, PropertyValue>(message("column.name.property.value")) {
   override fun valueOf(item: PropertyData): PropertyValue = item.value
 
   override fun getRenderer(item: PropertyData): TableCellRenderer = PropertyValueRenderer
