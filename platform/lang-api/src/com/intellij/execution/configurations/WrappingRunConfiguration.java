@@ -15,11 +15,21 @@
  */
 package com.intellij.execution.configurations;
 
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Allow to get before/after steps from wrapped configuration: e.g. to rerun tests with initial tests before options
  */
 public interface WrappingRunConfiguration<T extends RunConfiguration> extends WithoutOwnBeforeRunSteps {
   @NotNull T getPeer();
+
+  @Contract("null -> null; !null -> !null")
+  static @Nullable RunProfile unwrapRunProfile(@Nullable RunProfile runProfile) {
+    if (runProfile instanceof WrappingRunConfiguration) {
+      return ((WrappingRunConfiguration<?>)runProfile).getPeer();
+    }
+    return runProfile;
+  }
 }
