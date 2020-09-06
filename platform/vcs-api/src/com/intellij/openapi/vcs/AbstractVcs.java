@@ -117,7 +117,9 @@ public abstract class AbstractVcs extends StartedActivated {
     return null;
   }
 
-  public abstract Configurable getConfigurable();
+  public Configurable getConfigurable() {
+    return null;
+  }
 
   @Nullable
   public TransactionProvider getTransactionProvider() {
