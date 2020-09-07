@@ -32,6 +32,7 @@ import com.intellij.util.SVGLoader;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.ui.*;
 import com.twelvemonkeys.imageio.stream.ByteArrayImageInputStream;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -101,7 +102,7 @@ public final class TipUIUtil {
     browser.setText(getTipText(tip, browser));
   }
 
-  private static String getTipText(@Nullable TipAndTrickBean tip, Component component) {
+  private static @NlsSafe String getTipText(@Nullable TipAndTrickBean tip, Component component) {
     if (tip == null) return "";
     try {
       StringBuilder text = new StringBuilder();
@@ -335,6 +336,9 @@ public final class TipUIUtil {
   public interface Browser extends TextAccessor {
     void load(String url) throws IOException;
     JComponent getComponent();
+
+    @Override
+    void setText(@Nls String text);
   }
 
   private static class SwingBrowser extends JEditorPane implements Browser {
@@ -480,7 +484,8 @@ public final class TipUIUtil {
 
     @Override
     public void load(String url) throws IOException{
-      setText(IOUtil.readString(new DataInputStream(new URL(url).openStream())));
+      @NlsSafe String text = IOUtil.readString(new DataInputStream(new URL(url).openStream()));
+      setText(text);
     }
 
     @Override

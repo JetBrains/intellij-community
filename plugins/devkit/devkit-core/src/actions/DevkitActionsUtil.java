@@ -22,6 +22,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.devkit.DevKitBundle;
@@ -190,7 +191,7 @@ public final class DevkitActionsUtil {
     }
 
     @Override
-    protected String getItemLocation(Module item) {
+    protected @Nls String getItemLocation(Module item) {
       XmlFile pluginXml = PluginModuleType.getPluginXml(item);
       if (pluginXml == null) {
         return null;

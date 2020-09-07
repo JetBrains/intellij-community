@@ -7,6 +7,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -100,7 +101,7 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
    * Override this method and return non-null value to specify location of {@code item}.
    * It will be shown as grayed text next to the {@link #getItemText(T) item text}.
    */
-  protected String getItemLocation(T item) {
+  protected @Nls String getItemLocation(T item) {
     return null; // default implementation
   }
 
@@ -163,7 +164,7 @@ public abstract class ChooseElementsDialog<T> extends DialogWrapper {
 
       @Override
       @Nullable
-      public String getLocation() {
+      public @Nls String getLocation() {
         return getItemLocation(item);
       }
     };

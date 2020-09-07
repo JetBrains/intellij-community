@@ -75,14 +75,14 @@ public final class CommandLineProcessor {
         return new CommandLineProcessorResult(LightEditUtil.getProject(), OK_FUTURE);
       }
       else {
-        return CommandLineProcessorResult.createError("Can not open file " + ioFile.toString());
+        return CommandLineProcessorResult.createError(IdeBundle.message("dialog.message.can.not.open.file", ioFile.toString()));
       }
     }
 
     if (projects.length == 0) {
       Project project = CommandLineProjectOpenProcessor.getInstance().openProjectAndFile(ioFile, line, column, tempProject);
       if (project == null) {
-        return CommandLineProcessorResult.createError("No project found to open file in");
+        return CommandLineProcessorResult.createError(IdeBundle.message("dialog.message.no.project.found.to.open.file.in"));
       }
 
       return new CommandLineProcessorResult(project, shouldWait ? CommandLineWaitingManager.getInstance().addHookForFile(file) : OK_FUTURE);
@@ -155,7 +155,8 @@ public final class CommandLineProcessor {
         return new CommandLineProcessorResult(null, starter.processExternalCommandLineAsync(args, currentDirectory));
       }
       else {
-        return CommandLineProcessorResult.createError("Only one instance of " + ApplicationNamesInfo.getInstance().getProductName() + " can be run at a time.");
+        return CommandLineProcessorResult.createError(
+          IdeBundle.message("dialog.message.only.one.instance.can.be.run.at.time", ApplicationNamesInfo.getInstance().getProductName()));
       }
     });
     if (result != null) {
@@ -223,7 +224,7 @@ public final class CommandLineProcessor {
         LOG.warn(e);
       }
       if (file == null) {
-        return CommandLineProcessorResult.createError("Invalid path '" + arg + "'");
+        return CommandLineProcessorResult.createError(IdeBundle.message("dialog.message.invalid.path", arg));
       }
 
       if (line != -1 || tempProject) {
@@ -242,7 +243,10 @@ public final class CommandLineProcessor {
     }
 
     if (shouldWait && projectAndCallback == null) {
-      return new CommandLineProcessorResult(null, CliResult.error(1, "--wait must be supplied with file or project to wait for"));
+      return new CommandLineProcessorResult(
+        null,
+        CliResult.error(1, IdeBundle.message("dialog.message.wait.must.be.supplied.with.file.or.project.to.wait.for"))
+      );
     }
 
     return projectAndCallback == null ? new CommandLineProcessorResult(null, OK_FUTURE) : projectAndCallback;
