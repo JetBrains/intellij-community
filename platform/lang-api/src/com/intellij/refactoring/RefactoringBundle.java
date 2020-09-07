@@ -32,7 +32,10 @@ public final class RefactoringBundle extends DynamicBundle {
 
   @NotNull
   public static @Nls String message(@NotNull @PropertyKey(resourceBundle = BUNDLE) String key) {
-    return INSTANCE.getMessage(key);
+    if (INSTANCE.containsKey(key)) {
+      return INSTANCE.getMessage(key);
+    }
+    return IdeDeprecatedMessagesBundle.message(key);
   }
 
   public static @NlsContexts.Label String getSearchInCommentsAndStringsText() {
