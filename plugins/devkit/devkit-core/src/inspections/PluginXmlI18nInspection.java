@@ -11,6 +11,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
+import com.intellij.openapi.options.ConfigurableEP;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
@@ -24,6 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.LeafPsiElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlTokenType;
@@ -64,31 +66,39 @@ public class PluginXmlI18nInspection extends DevKitPluginXmlInspectionBase {
     else if (element instanceof Extension) {
       ExtensionPoint extensionPoint = ((Extension)element).getExtensionPoint();
       if (extensionPoint != null) {
-        highlightInspectionTag(holder, element, extensionPoint);
+        highlightExtension(holder, (Extension)element, extensionPoint);
       }
     }
   }
 
-  private static void highlightInspectionTag(DomElementAnnotationHolder holder, DomElement element, ExtensionPoint extensionPoint) {
+  private static void highlightExtension(DomElementAnnotationHolder holder, Extension extension, ExtensionPoint extensionPoint) {
     String epName = extensionPoint.getEffectiveQualifiedName();
     if (LocalInspectionEP.LOCAL_INSPECTION.getName().equals(epName) || InspectionEP.GLOBAL_INSPECTION.getName().equals(epName)) {
-      if (isInternal(element)) {
+      if (isInternal(extension)) {
         return;
       }
-      GenericAttributeValue implementationClass = getAttribute(element, "implementationClass");
+      GenericAttributeValue implementationClass = getAttribute(extension, "implementationClass");
       if (implementationClass == null || implementationClass.getStringValue() == null) {
         return;
       }
-      checkInspectionDisplayName(holder, element, "displayName", new InspectionI18NQuickFix());
-      checkInspectionDisplayName(holder, element, "groupName", null);
-      //checkInspectionDisplayName(holder, element, "groupPath", null);
+      checkNonLocalizableAttribute(holder, extension, "displayName", new InspectionI18NQuickFix());
+      checkNonLocalizableAttribute(holder, extension, "groupName", null);
+      //checkNonLocalizableAttribute(holder, element, "groupPath", null);
+    }
+    else if (InheritanceUtil.isInheritor(extensionPoint.getEffectiveClass(), ConfigurableEP.class.getName())) {
+      checkNonLocalizableAttribute(holder, extension, "displayName", null);
+
+      // ConfigurableEP#children
+      for (DomElement nestedConfigurable : DomUtil.getDefinedChildren(extension, true, false)) {
+        checkNonLocalizableAttribute(holder, nestedConfigurable, "displayName", null);
+      }
     }
   }
 
-  private static void checkInspectionDisplayName(DomElementAnnotationHolder holder,
-                                                 DomElement element,
-                                                 @NonNls String attributeName,
-                                                 InspectionI18NQuickFix fix) {
+  private static void checkNonLocalizableAttribute(DomElementAnnotationHolder holder,
+                                                   DomElement element,
+                                                   @NonNls String attributeName,
+                                                   InspectionI18NQuickFix fix) {
     GenericAttributeValue displayNameAttr = getAttribute(element, attributeName);
     if (displayNameAttr != null && displayNameAttr.getStringValue() != null) {
       holder.createProblem(element,
