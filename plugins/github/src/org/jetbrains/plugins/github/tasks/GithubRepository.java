@@ -10,23 +10,13 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.PasswordUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.tasks.Comment;
-import com.intellij.tasks.Task;
-import com.intellij.tasks.TaskRepository;
-import com.intellij.tasks.TaskState;
-import com.intellij.tasks.TaskType;
+import com.intellij.tasks.*;
 import com.intellij.tasks.impl.BaseRepository;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Objects;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import javax.swing.Icon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor;
@@ -42,6 +32,14 @@ import org.jetbrains.plugins.github.exceptions.GithubJsonException;
 import org.jetbrains.plugins.github.exceptions.GithubRateLimitExceededException;
 import org.jetbrains.plugins.github.exceptions.GithubStatusCodeException;
 import org.jetbrains.plugins.github.issue.GithubIssuesLoadingHelper;
+
+import javax.swing.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author Dennis.Ushakov
@@ -186,9 +184,8 @@ public class GithubRepository extends BaseRepository {
         return issue.getHtmlUrl();
       }
 
-      @NotNull
       @Override
-      public String getId() {
+      public @NlsSafe @NotNull String getId() {
         return myRepoName + "-" + issue.getNumber();
       }
 
@@ -301,8 +298,7 @@ public class GithubRepository extends BaseRepository {
     return new GithubRepository(this);
   }
 
-  @NotNull
-  public String getRepoName() {
+  public @NlsSafe @NotNull String getRepoName() {
     return myRepoName;
   }
 
@@ -311,8 +307,7 @@ public class GithubRepository extends BaseRepository {
     myPattern = Pattern.compile("(" + StringUtil.escapeToRegexp(repoName) + "\\-\\d+)");
   }
 
-  @NotNull
-  public String getRepoAuthor() {
+  public @NlsSafe @NotNull String getRepoAuthor() {
     return myRepoAuthor;
   }
 
@@ -320,8 +315,7 @@ public class GithubRepository extends BaseRepository {
     myRepoAuthor = repoAuthor;
   }
 
-  @NotNull
-  public String getUser() {
+  public @NlsSafe @NotNull String getUser() {
     return myUser;
   }
 

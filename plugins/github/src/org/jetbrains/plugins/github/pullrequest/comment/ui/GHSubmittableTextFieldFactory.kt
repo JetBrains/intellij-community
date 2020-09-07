@@ -16,6 +16,7 @@ import com.intellij.openapi.ui.ComponentValidator
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsActions
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.ListFocusTraversalPolicy
@@ -47,7 +48,7 @@ class GHSubmittableTextFieldFactory(private val model: GHSubmittableTextFieldMod
     private val CANCEL_SHORTCUT_SET = CommonShortcuts.ESCAPE
   }
 
-  fun create(@Nls(capitalization = Nls.Capitalization.Title) actionName: String = "Comment",
+  fun create(@NlsActions.ActionText actionName: String = "Comment",
              onCancel: (() -> Unit)? = null): JComponent {
 
     val textField = createTextField(actionName)
@@ -58,7 +59,7 @@ class GHSubmittableTextFieldFactory(private val model: GHSubmittableTextFieldMod
   }
 
   fun create(avatarIconsProvider: GHAvatarIconsProvider, author: GHUser,
-             @Nls(capitalization = Nls.Capitalization.Title) actionName: String = "Comment",
+             @NlsActions.ActionText actionName: String = "Comment",
              onCancel: (() -> Unit)? = null): JComponent {
 
     val textField = createTextField(actionName)
@@ -132,7 +133,7 @@ class GHSubmittableTextFieldFactory(private val model: GHSubmittableTextFieldMod
     }
   }
 
-  private fun createTextField(placeHolder: String): EditorTextField {
+  private fun createTextField(@Nls placeHolder: String): EditorTextField {
 
     return object : EditorTextField(model.document, null, FileTypes.PLAIN_TEXT) {
       //always paint pretty border

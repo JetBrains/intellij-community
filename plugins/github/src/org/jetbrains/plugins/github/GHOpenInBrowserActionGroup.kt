@@ -11,6 +11,7 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.VcsDataKeys
@@ -137,14 +138,22 @@ open class GHOpenInBrowserActionGroup
                val repository: GHRepositoryCoordinates,
                val gitRepoRoot: VirtualFile,
                val virtualFile: VirtualFile) : Data(project) {
-      override fun getName() = repository.toString().replace('_', ' ')
+      override fun getName(): String {
+        @NlsSafe
+        val formatted = repository.toString().replace('_', ' ')
+        return formatted
+      }
     }
 
     class Revision(project: Project, val repository: GHRepositoryCoordinates, val revisionHash: String) : Data(project) {
-      override fun getName() = repository.toString().replace('_', ' ')
+      override fun getName(): String {
+        @NlsSafe
+        val formatted = repository.toString().replace('_', ' ')
+        return formatted
+      }
     }
 
-    class URL(project: Project, val htmlUrl: String) : Data(project) {
+    class URL(project: Project, @NlsSafe val htmlUrl: String) : Data(project) {
       override fun getName() = htmlUrl
     }
   }

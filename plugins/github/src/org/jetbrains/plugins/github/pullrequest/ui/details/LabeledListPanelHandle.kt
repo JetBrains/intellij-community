@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.newui.HorizontalLayout
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.concurrency.annotations.RequiresEdt
@@ -28,7 +29,7 @@ import javax.swing.JPanel
 import kotlin.properties.Delegates
 
 internal abstract class LabeledListPanelHandle<T>(protected val model: GHPRDetailsModel,
-                                                  emptyText: String, notEmptyText: String) {
+                                                  @NlsContexts.Label emptyText: String, @NlsContexts.Label notEmptyText: String) {
 
   private var isBusy by Delegates.observable(false) { _, _, _ ->
     updateControls()

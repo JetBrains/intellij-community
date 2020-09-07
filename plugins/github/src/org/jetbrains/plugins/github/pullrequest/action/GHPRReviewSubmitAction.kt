@@ -14,6 +14,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.ui.ComponentContainer
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.EditorTextField
 import com.intellij.ui.IdeBorderFactory
@@ -69,6 +70,7 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
   private fun getPrefix(place: String) = if (place == ActionPlaces.DIFF_TOOLBAR) GithubBundle.message("pull.request.review.submit")
   else GithubBundle.message("pull.request.review.submit.review")
 
+  @NlsSafe
   private fun getText(pendingComments: Int?): String {
     val builder = StringBuilder()
     if (pendingComments != null) builder.append(" ($pendingComments)")

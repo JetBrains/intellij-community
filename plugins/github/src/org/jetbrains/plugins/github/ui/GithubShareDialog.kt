@@ -5,6 +5,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.layout.*
@@ -33,7 +34,10 @@ class GithubShareDialog(project: Project,
 
   private val repositoryTextField = JBTextField(project.name)
   private val privateCheckBox = JBCheckBox(GithubBundle.message("share.dialog.private"), false)
-  private val remoteTextField = JBTextField(if (existingRemotes.isEmpty()) "origin" else "github")
+
+  @NlsSafe
+  private val remoteName = if (existingRemotes.isEmpty()) "origin" else "github"
+  private val remoteTextField = JBTextField(remoteName)
   private val descriptionTextArea = JTextArea()
   private val accountSelector = GithubAccountCombobox(accounts, defaultAccount) { switchAccount(it) }
   private val existingRepoValidator = RecordUniqueValidator(repositoryTextField,
@@ -113,9 +117,14 @@ class GithubShareDialog(project: Project,
   override fun getDimensionServiceKey(): String = "Github.ShareDialog"
   override fun getPreferredFocusedComponent(): JBTextField = repositoryTextField
 
+  @NlsSafe
   fun getRepositoryName(): String = repositoryTextField.text
+
+  @NlsSafe
   fun getRemoteName(): String = remoteTextField.text
   fun isPrivate(): Boolean = privateCheckBox.isSelected
+
+  @NlsSafe
   fun getDescription(): String = descriptionTextArea.text
   fun getAccount(): GithubAccount = accountSelector.selectedItem as GithubAccount
 

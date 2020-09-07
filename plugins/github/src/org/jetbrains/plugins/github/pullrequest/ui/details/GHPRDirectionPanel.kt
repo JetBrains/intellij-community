@@ -6,6 +6,7 @@ import com.intellij.ide.IdeTooltipManager
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent
 import com.intellij.ui.CardLayoutPanel
@@ -127,7 +128,7 @@ internal class GHPRDirectionPanel : NonOpaquePanel() {
       object CheckoutActionUi : SingleActionUi("Github.PullRequest.Branch.Create", VcsBundle.message("vcs.command.name.checkout"))
       object UpdateActionUi : SingleActionUi("Github.PullRequest.Branch.Update", VcsBundle.message("vcs.command.name.update"))
 
-      abstract class SingleActionUi(private val actionId: String, private val actionName: String) : StateUi() {
+      abstract class SingleActionUi(private val actionId: String, @NlsContexts.LinkLabel private val actionName: String) : StateUi() {
         override fun createUi(): JComponent =
           ActionLink(actionName, null,
                      ActionManager.getInstance().getAction(actionId), null, BRANCH_ACTIONS_TOOLBAR)
