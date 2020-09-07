@@ -112,8 +112,7 @@ internal object SourceRootPropertiesHelper {
       is JavaResourceRootProperties -> diff.addJavaResourceRootEntity(
         sourceRoot = sourceRootEntity,
         generated = properties.isForGeneratedSources,
-        relativeOutputPath = properties.relativeOutputPath,
-        source = entitySource
+        relativeOutputPath = properties.relativeOutputPath
       )
 
       is JpsDummyElement, null -> Unit

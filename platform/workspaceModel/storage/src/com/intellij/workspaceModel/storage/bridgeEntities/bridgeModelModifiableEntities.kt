@@ -126,8 +126,8 @@ class ModifiableJavaResourceRootEntity : ModifiableWorkspaceEntityBase<JavaResou
 
 fun WorkspaceEntityStorageDiffBuilder.addJavaResourceRootEntity(sourceRoot: SourceRootEntity,
                                                                 generated: Boolean,
-                                                                relativeOutputPath: String, source: EntitySource) = addEntity(
-  ModifiableJavaResourceRootEntity::class.java, source) {
+                                                                relativeOutputPath: String) = addEntity(
+  ModifiableJavaResourceRootEntity::class.java, sourceRoot.entitySource) {
   this.sourceRoot = sourceRoot
   this.generated = generated
   this.relativeOutputPath = relativeOutputPath

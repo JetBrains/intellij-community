@@ -97,7 +97,7 @@ class MavenRootModelAdapterBridge(private val myMavenProject: MavenProject,
 
     when (rootType) {
       is JavaSourceRootType -> builder.addJavaSourceRootEntity(sourceRootEntity, generated, "")
-      is JavaResourceRootType -> builder.addJavaResourceRootEntity(sourceRootEntity, generated, "", entitySource)
+      is JavaResourceRootType -> builder.addJavaResourceRootEntity(sourceRootEntity, generated, "")
       else -> TODO()
     }
   }

@@ -247,7 +247,6 @@ class JavaSourceRootEntityData : WorkspaceEntityData<JavaSourceRootEntity>(), Wi
       |   Java root entity: $thisEntity
       """.trimMargin()
     }
-    println()
   }
 }
 
@@ -265,13 +264,27 @@ class JavaSourceRootEntity(
 fun SourceRootEntity.asJavaSourceRoot(): JavaSourceRootEntity? = referrers(JavaSourceRootEntity::sourceRoot).firstOrNull()
 
 @Suppress("unused")
-class JavaResourceRootEntityData : WorkspaceEntityData<JavaResourceRootEntity>() {
+class JavaResourceRootEntityData : WorkspaceEntityData<JavaResourceRootEntity>(), WithAssertableConsistency {
   var generated: Boolean = false
   lateinit var relativeOutputPath: String
 
   override fun createEntity(snapshot: WorkspaceEntityStorage): JavaResourceRootEntity = JavaResourceRootEntity(generated,
                                                                                                                relativeOutputPath).also {
     addMetaData(it, snapshot)
+  }
+
+  override fun assertConsistency(storage: WorkspaceEntityStorage) {
+    val thisEntity = this.createEntity(storage)
+    val attachedSourceRoot = thisEntity.sourceRoot
+    assert(thisEntity.entitySource == attachedSourceRoot.entitySource) {
+      """
+      |Entity source of source root entity and it's java resource root entity differs. 
+      |   Source root entity source: ${attachedSourceRoot.entitySource}
+      |   Java resource root source: ${thisEntity.entitySource}
+      |   Source root entity: $attachedSourceRoot
+      |   Java root entity: $thisEntity
+      """.trimMargin()
+    }
   }
 }
 
