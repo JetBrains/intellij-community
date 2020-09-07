@@ -20,6 +20,7 @@ public class SchemeConvertorEPBase<T> extends BaseKeyedLazyInstance<T> {
   public String name;
 
   @Attribute("nameKey")
+  @Nls(capitalization = Nls.Capitalization.Sentence)
   public String nameKey;
 
   @Attribute("nameBundle")

@@ -12,6 +12,7 @@ import com.intellij.lang.properties.ResourceBundleReference;
 import com.intellij.notification.impl.NotificationGroupEP;
 import com.intellij.openapi.options.ConfigurableEP;
 import com.intellij.openapi.options.OptionsBundle;
+import com.intellij.openapi.options.SchemeConvertorEPBase;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.Iconable;
@@ -54,6 +55,7 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
     private static final String INSPECTION_EP = InspectionEP.class.getName();
 
     private static final String NOTIFICATION_GROUP_EP = NotificationGroupEP.class.getName();
+    private static final String SCHEME_CONVERTER_EP = SchemeConvertorEPBase.class.getName();
 
     private static final String ICON_DESCRIPTION_BUNDLE_EP = IconDescriptionBundleEP.class.getName();
     private static final String TYPE_NAME_EP = TypeNameEP.class.getName();
@@ -79,6 +81,9 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
 
     registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"groupPathKey"}, Holder.INSPECTION_EP),
                                         new PropertyKeyReferenceProvider(false, "groupPathKey", "groupBundle"));
+
+    registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"nameKey"}, Holder.SCHEME_CONVERTER_EP),
+                                        new PropertyKeyReferenceProvider(false, "nameKey", "nameBundle"));
 
     registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"displayNameKey"},
                                                                   Holder.GROUP_CONFIGURABLE_EP),
@@ -140,6 +145,10 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
                                         bundleReferenceProvider);
     registrar.registerReferenceProvider(nestedExtensionAttributePattern(new String[]{"bundle", "groupBundle"},
                                                                         Holder.CONFIGURABLE_EP),
+                                        bundleReferenceProvider);
+
+    registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"nameBundle"},
+                                                                        Holder.SCHEME_CONVERTER_EP),
                                         bundleReferenceProvider);
 
     registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"resourceBundle"},
