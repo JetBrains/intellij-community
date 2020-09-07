@@ -1,12 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.diagnostic.dump
 
-import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.io.FileTooBigException
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.Base64
 import com.intellij.util.containers.ConcurrentBitSet
 import com.intellij.util.indexing.*
 import com.intellij.util.indexing.diagnostic.dump.paths.IndexedFilePath
@@ -27,7 +24,6 @@ object IndexContentDiagnosticDumper {
     val indexedFilePaths = arrayListOf<IndexedFilePath>()
     val providerNameToOriginalFileIds = hashMapOf<String, MutableSet<Int>>()
     val filesFromUnsupportedFileSystem = arrayListOf<IndexedFilePath>()
-    val indexedFileHashes = hashMapOf<Int, String>()
 
     for ((index, provider) in providers.withIndex()) {
       indicator.text2 = provider.debugName
@@ -46,19 +42,6 @@ object IndexContentDiagnosticDumper {
             filesFromUnsupportedFileSystem += indexedFilePath
             return@iterateFiles true
           }
-          try {
-            val fileContent = FileContentImpl.createByFile(fileOrDir) as FileContentImpl
-            val contentHash = runReadAction {
-              IndexedHashesSupport.getOrInitIndexedHash(fileContent)
-            }
-            indexedFileHashes[originalFileId] = Base64.encode(contentHash)
-          }
-          catch (e: FileTooBigException) {
-            indexedFileHashes[originalFileId] = IndexContentDiagnostic.TOO_LARGE_FILE
-          }
-          catch (e: Throwable) {
-            indexedFileHashes[originalFileId] = IndexContentDiagnostic.FAILED_TO_LOAD.format(e.javaClass.simpleName)
-          }
         }
         true
       }, visitedFiles)
@@ -67,8 +50,7 @@ object IndexContentDiagnosticDumper {
     return IndexContentDiagnostic(
       indexedFilePaths,
       filesFromUnsupportedFileSystem,
-      providerNameToOriginalFileIds,
-      indexedFileHashes
+      providerNameToOriginalFileIds
     )
   }
 
