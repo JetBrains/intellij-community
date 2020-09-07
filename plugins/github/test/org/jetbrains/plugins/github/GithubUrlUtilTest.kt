@@ -61,21 +61,6 @@ class GithubUrlUtilTest : TestCase() {
     runTestCase(tests) { `in` -> removeProtocolPrefix(`in`) }
   }
 
-  fun testRemovePort() {
-    val tests = TestCase<String>()
-
-    tests.add("github.com/user/repo/", "github.com/user/repo/")
-    tests.add("github.com", "github.com")
-    tests.add("github.com/", "github.com/")
-
-    tests.add("github.com:80/user/repo/", "github.com/user/repo/")
-    tests.add("github.com:80/user/repo", "github.com/user/repo")
-    tests.add("github.com:80/user", "github.com/user")
-    tests.add("github.com:80", "github.com")
-
-    runTestCase(tests) { `in` -> removePort(`in`) }
-  }
-
   fun testGetUserAndRepositoryFromRemoteUrl() {
     val tests = TestCase<GHRepositoryPath?>()
 
