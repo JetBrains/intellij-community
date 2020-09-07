@@ -248,7 +248,7 @@ public class EditContextDialog extends DialogWrapper {
 
     @Override
     public String getColumnName(int column) {
-      return column == 0 ? "Name" : "Expression";
+      return column == 0 ? XPathBundle.message("name") : XPathBundle.message("expression");
     }
 
     @Override
@@ -365,7 +365,7 @@ public class EditContextDialog extends DialogWrapper {
 
     @Override
     public String getColumnName(int column) {
-      return column == 0 ? "Prefix" : "URI";
+      return column == 0 ? XPathBundle.message("prefix") : XPathBundle.message("uri");
     }
 
     @Override

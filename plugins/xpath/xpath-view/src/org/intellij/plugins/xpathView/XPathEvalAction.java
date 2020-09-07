@@ -231,7 +231,7 @@ public class XPathEvalAction extends XPathAction {
                         showUsageView(editor, xpath, contextNode, list);
                     }
                     if (!cfg.SHOW_USAGE_VIEW && !cfg.HIGHLIGHT_RESULTS) {
-                        final String s = StringUtil.pluralize("match", list.size());
+                        final String s = StringUtil.pluralize(XPathBundle.message("dialog.message.match"), list.size());
                         Messages.showInfoMessage(project, XPathBundle.message("dialog.message.expression.produced") + list.size() + " " + s,
                                                  XPathBundle.message("dialog.title.xpath.result"));
                     }
@@ -245,10 +245,10 @@ public class XPathEvalAction extends XPathAction {
             } else if (result instanceof String) {
                 Messages.showMessageDialog("'" + result + "'", XPathBundle.message("dialog.title.xpath.result.string"), Messages.getInformationIcon());
             } else if (result instanceof Number) {
-              final String s = result.toString();
+              final String s = result.toString(); //NON-NLS
               Messages.showMessageDialog(s, XPathBundle.message("dialog.title.xpath.result.number"), Messages.getInformationIcon());
             } else if (result instanceof Boolean) {
-              final String s = result.toString();
+              final String s = result.toString(); //NON-NLS
               Messages.showMessageDialog(s, XPathBundle.message("dialog.title.xpath.result.boolean"), Messages.getInformationIcon());
             } else {
               LOG.error("Unknown XPath result: " + result);
@@ -256,8 +256,7 @@ public class XPathEvalAction extends XPathAction {
         } catch (XPathSyntaxException e) {
             LOG.debug(e);
             // TODO: Better layout of the error message with non-fixed size fonts
-          final String message = e.getMultilineMessage();
-          return Messages.showOkCancelDialog(project, message,
+          return Messages.showOkCancelDialog(project, e.getMultilineMessage(), //NON-NLS
                                              XPathBundle.message("dialog.title.xpath.syntax.error"),
                                              XPathBundle.message("button.edit.expression"),
                                              XPathBundle.message("button.cancel"), Messages.getErrorIcon()) == Messages.OK;
@@ -290,17 +289,17 @@ public class XPathEvalAction extends XPathAction {
         final UsageViewPresentation presentation = new UsageViewPresentation();
         presentation.setTargetsNodeText("XPath Expression");
         presentation.setCodeUsages(false);
-        presentation.setCodeUsagesString("Found Matches");
-        presentation.setNonCodeUsagesString("Result");
+        presentation.setCodeUsagesString(XPathBundle.message("list.item.found.matches"));
+        presentation.setNonCodeUsagesString(XPathBundle.message("list.item.result"));
         presentation.setUsagesString("XPath Result");
-        presentation.setUsagesWord("match");
+        presentation.setUsagesWord(XPathBundle.message("match"));
         final ItemPresentation targetPresentation = usageTarget.getPresentation();
         if (targetPresentation != null) {
           presentation
-            .setTabText(StringUtil.shortenTextWithEllipsis("XPath '" + targetPresentation.getPresentableText() + '\'', 60, 0, true));
+            .setTabText(StringUtil.shortenTextWithEllipsis(XPathBundle.message("tab.title.xpath", targetPresentation.getPresentableText()), 60, 0, true));
         }
         else {
-          presentation.setTabText("XPath");
+          presentation.setTabText("XPath"); //NON-NLS
         }
         presentation.setScopeText("XML Files");
 

@@ -56,7 +56,7 @@ public class AddNamespaceDialog extends DialogWrapper {
       myPrefix.setModel(new DefaultComboBoxModel<>(ArrayUtilRt.toStringArray(unresolvedPrefixes)));
         myPrefix.setEditable(mode == Mode.EDITABLE || mode == Mode.PREFIX_EDITABLE);
         if (unresolvedPrefixes.size() == 1) {
-            final String next = unresolvedPrefixes.iterator().next();
+            final String next = unresolvedPrefixes.iterator().next();  //NON-NLS
             myPrefix.setSelectedItem(next);
         }
         addUpdateListener(myPrefix);

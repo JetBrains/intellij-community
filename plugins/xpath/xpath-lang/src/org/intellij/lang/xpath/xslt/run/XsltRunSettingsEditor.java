@@ -160,7 +160,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
         protected void textChanged(@NotNull DocumentEvent e) {
           final String text = myXsltFile.getText();
           final JComboBox comboBox = myXmlInputFile.getComboBox();
-          final Object oldXml = getXmlInputFile();
+          final Object oldXml = getXmlInputFile(); //NON-NLS
           if (text.length() != 0) {
             final ComboBoxModel model = comboBox.getModel();
 
@@ -558,7 +558,7 @@ class XsltRunSettingsEditor extends SettingsEditor<XsltRunConfiguration>
 
       @Override
       public String getColumnName(int column) {
-        return column == 0 ? "Name" : "Value";
+        return column == 0 ? XPathBundle.message("attribute.descriptor.name") : XPathBundle.message("value");
       }
 
       @Override

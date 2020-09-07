@@ -111,7 +111,7 @@ public class ShowXPathAction extends XPathAction {
         final Config cfg = XPathAppComponent.getInstance().getConfig();
         final RangeHighlighter h = HighlighterUtil.highlightNode(editor, node, cfg.getContextAttributes(), cfg);
 
-        final String path = XPathSupport.getInstance().getUniquePath((XmlElement)node, null);
+        final String path = XPathSupport.getInstance().getUniquePath((XmlElement)node, null); //NON-NLS
 
         final JTextField label = new JTextField(path);
         //noinspection HardCodedStringLiteral

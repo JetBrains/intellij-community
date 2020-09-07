@@ -110,7 +110,7 @@ public final class XsltRunConfiguration extends LocatableConfigurationBase imple
 
     @Override
     public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment executionEnvironment) throws ExecutionException {
-        if (myXsltFile == null) throw new ExecutionException("No XSLT file selected");
+        if (myXsltFile == null) throw new ExecutionException(XPathBundle.message("dialog.message.no.xslt.file.selected"));
         final VirtualFile baseFile = myXsltFile.getFile();
 
         final XsltCommandLineState state = new XsltCommandLineState(this, executionEnvironment);
